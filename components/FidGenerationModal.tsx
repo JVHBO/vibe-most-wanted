@@ -48,8 +48,11 @@ export default function FidGenerationModal({
   const { lang, setLang } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0); // 0 = backstory, 1 = card
   const [showShareLangModal, setShowShareLangModal] = useState(false);
+  const [showFarcasterShareModal, setShowFarcasterShareModal] = useState(false);
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false);
 
-  const handleShareFarcaster = () => {
+  // Simple share to Farcaster (just text, no image generation)
+  const handleShareFarcasterSimple = () => {
     if (!fid || !generatedTraits) return;
 
     const rarityEmojis: Record<string, string> = {
@@ -75,6 +78,55 @@ ${emoji} ${generatedTraits.rarity}
 🎮 Mint yours! @jvhbo`;
 
     shareToFarcaster(text, shareUrl);
+  };
+
+  // Share to Farcaster with image generation (called after language selection)
+  const handleShareFarcasterWithLang = async (selectedLang: SupportedLanguage) => {
+    if (!fid || !generatedTraits || !backstoryData || !onShare) return;
+
+    setIsGeneratingShare(true);
+    setShowFarcasterShareModal(false);
+
+    try {
+      // Call the onShare prop to generate and upload the share image
+      await onShare(selectedLang);
+
+      // Get translations for selected language
+      const shareT = fidTranslations[selectedLang];
+
+      // After image is generated and uploaded, share to Farcaster
+      const rarityEmojis: Record<string, string> = {
+        'Mythic': '👑',
+        'Legendary': '⚡',
+        'Epic': '💎',
+        'Rare': '🔥',
+        'Common': '⭐'
+      };
+      const emoji = rarityEmojis[generatedTraits.rarity] || '🎴';
+      const foilEmoji = generatedTraits.foil === 'Prize' ? '✨' : generatedTraits.foil === 'Standard' ? '💫' : '';
+      const foilText = generatedTraits.foil !== 'None' ? ` ${generatedTraits.foil} Foil` : '';
+
+      const text = `🃏 ${shareT.shareTextMinted}
+
+${emoji} ${generatedTraits.rarity}${foilText}
+⚡ ${generatedTraits.power} ${shareT.shareTextPower} ${foilEmoji}
+🎯 FID #${fid}
+
+🎲 ${shareT.shareTextPlayPoker}
+🗡️ ${shareT.shareTextFightPvE}
+💰 ${shareT.shareTextEarnCoins}
+
+🎮 ${shareT.shareTextMintYours}`;
+
+      const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${fid}?lang=${selectedLang}&v=${Date.now()}`;
+      shareToFarcaster(text, shareUrl);
+    } catch (error) {
+      console.error('Share failed:', error);
+      // Fall back to simple share
+      handleShareFarcasterSimple();
+    } finally {
+      setIsGeneratingShare(false);
+    }
   };
 
   // Get translations for current language
@@ -348,11 +400,16 @@ ${emoji} ${generatedTraits.rarity}
                     <button
                       onClick={() => {
                         AudioManager.buttonClick();
-                        handleShareFarcaster();
+                        if (onShare) {
+                          setShowFarcasterShareModal(true);
+                        } else {
+                          handleShareFarcasterSimple();
+                        }
                       }}
-                      className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors text-xs sm:text-sm"
+                      disabled={isGeneratingShare}
+                      className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 transition-colors text-xs sm:text-sm disabled:opacity-50"
                     >
-                      🎭 Share
+                      {isGeneratingShare ? '⏳...' : '🎭 Share'}
                     </button>
                   </div>
 

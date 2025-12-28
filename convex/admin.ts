@@ -1002,3 +1002,99 @@ export const linkDuplicateProfile = internalMutation({
     };
   },
 });
+
+/**
+ * Merge duplicate profiles - transfers coins and links wallet
+ * More complete than linkDuplicateProfile - also transfers coins and TESTVBMS
+ */
+export const mergeDuplicateProfile = internalMutation({
+  args: {
+    primaryAddress: v.string(),
+    secondaryAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const primaryAddr = args.primaryAddress.toLowerCase();
+    const secondaryAddr = args.secondaryAddress.toLowerCase();
+
+    // Get primary profile
+    const primaryProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", primaryAddr))
+      .first();
+
+    if (!primaryProfile) {
+      console.log(`❌ Primary profile not found: ${primaryAddr}`);
+      return { success: false, error: "Primary profile not found" };
+    }
+
+    // Get secondary profile
+    const secondaryProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", secondaryAddr))
+      .first();
+
+    if (!secondaryProfile) {
+      console.log(`❌ Secondary profile not found: ${secondaryAddr}`);
+      return { success: false, error: "Secondary profile not found" };
+    }
+
+    const now = Date.now();
+    let coinsTransferred = 0;
+
+    // Transfer coins from secondary to primary
+    const secondaryCoins = secondaryProfile.coins || 0;
+
+    if (secondaryCoins > 0) {
+      const primaryCoins = primaryProfile.coins || 0;
+
+      await ctx.db.patch(primaryProfile._id, {
+        coins: primaryCoins + secondaryCoins,
+        lastUpdated: now,
+      });
+
+      coinsTransferred = secondaryCoins;
+      console.log(`💰 Transferred ${secondaryCoins} coins to @${primaryProfile.username}`);
+    }
+
+    // Check if link already exists
+    const existingLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", secondaryAddr))
+      .first();
+
+    if (!existingLink) {
+      // Create the address link
+      await ctx.db.insert("addressLinks", {
+        address: secondaryAddr,
+        primaryAddress: primaryAddr,
+        linkedAt: now,
+      });
+      console.log(`🔗 Created addressLink: ${secondaryAddr} → ${primaryAddr}`);
+    }
+
+    // Update primary profile's linkedAddresses array
+    const currentLinked = primaryProfile.linkedAddresses || [];
+    if (!currentLinked.includes(secondaryAddr)) {
+      await ctx.db.patch(primaryProfile._id, {
+        linkedAddresses: [...currentLinked, secondaryAddr],
+      });
+      console.log(`📝 Added ${secondaryAddr} to @${primaryProfile.username}'s linkedAddresses`);
+    }
+
+    // Remove FID and reset coins on secondary profile (orphan it)
+    await ctx.db.patch(secondaryProfile._id, {
+      farcasterFid: undefined,
+      fid: undefined,
+      coins: 0,
+    });
+    console.log(`🔓 Removed FID and reset balances from @${secondaryProfile.username}`);
+
+    console.log(`✅ Merged @${secondaryProfile.username} into @${primaryProfile.username}`);
+    return {
+      success: true,
+      primaryUsername: primaryProfile.username,
+      secondaryUsername: secondaryProfile.username,
+      coinsTransferred,
+    };
+  },
+});

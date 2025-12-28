@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
+import { query, mutation, internalMutation, internalQuery, QueryCtx, MutationCtx } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { normalizeAddress, isValidAddress } from "./utils";
 import { isBlacklisted, getBlacklistInfo } from "./blacklist";
@@ -9,6 +9,28 @@ import { isBlacklisted, getBlacklistInfo } from "./blacklist";
  *
  * Replaces ProfileService from Firebase
  */
+
+/**
+ * 🔗 MULTI-WALLET: Resolve primary address for linked wallets
+ * Returns the primary address if this address is linked, otherwise returns the address itself
+ */
+async function resolvePrimaryAddress(ctx: QueryCtx | MutationCtx, address: string): Promise<string> {
+  const normalizedAddress = normalizeAddress(address);
+
+  // Check if this address is linked to another profile
+  const link = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+    .first();
+
+  if (link) {
+    // This is a linked address - return the primary
+    return link.primaryAddress;
+  }
+
+  // Not a linked address - return as-is
+  return normalizedAddress;
+}
 
 // ============================================================================
 // QUERIES (read data)
@@ -286,14 +308,25 @@ export const getLeaderboardLite = query({
 
       // 🔄 CACHE MISS: Fall back to direct query (only happens on first load or stale cache)
       console.log("⚠️ Leaderboard cache miss - fetching from profiles");
+
+      // 🔗 Get all linked addresses to filter them out
+      const allLinks = await ctx.db.query("addressLinks").collect();
+      const linkedAddressSet = new Set(allLinks.map(l => l.address));
+
       const topProfiles = await ctx.db
         .query("profiles")
         .withIndex("by_defense_aura", (q) => q.eq("hasFullDefenseDeck", true))
         .order("desc")
-        .take(limit);
+        .take(limit + 50); // Fetch extra to account for filtered ones
+
+      // 🔗 Filter out linked addresses (orphan profiles)
+      const primaryProfiles = topProfiles.filter(p => {
+        if (!p.address) return false;
+        return !linkedAddressSet.has(p.address);
+      }).slice(0, limit);
 
       // Map to minimal fields
-      const mapped = topProfiles.map(p => {
+      const mapped = primaryProfiles.map(p => {
         const address = p.address || "unknown";
         const blacklisted = isBlacklisted(address);
         const blacklistInfo = blacklisted ? getBlacklistInfo(address) : null;
@@ -338,15 +371,31 @@ export const updateLeaderboardFullCache = internalMutation({
   args: {},
   handler: async (ctx) => {
     try {
+      // 🔗 Get all linked addresses to filter them out from leaderboard
+      // Linked wallets should not appear separately - only primary profiles
+      const allLinks = await ctx.db.query("addressLinks").collect();
+      const linkedAddressSet = new Set(allLinks.map(l => l.address));
+
       // Fetch top 200 profiles with defense deck
       const topProfiles = await ctx.db
         .query("profiles")
         .withIndex("by_defense_aura", (q) => q.eq("hasFullDefenseDeck", true))
         .order("desc")
-        .take(200);
+        .take(250); // Fetch extra to account for filtered ones
+
+      // 🔗 Filter out profiles whose address is a linked address (orphan profiles)
+      const primaryProfiles = topProfiles.filter(p => {
+        if (!p.address) return false;
+        // Skip if this address is linked to another profile
+        if (linkedAddressSet.has(p.address)) {
+          console.log(`📋 Leaderboard: Skipping orphan profile ${p.username} (${p.address}) - linked to another profile`);
+          return false;
+        }
+        return true;
+      }).slice(0, 200); // Take top 200 after filtering
 
       // Map to cached format
-      const cachedData = topProfiles.map(p => {
+      const cachedData = primaryProfiles.map(p => {
         const address = p.address || "unknown";
         const blacklisted = isBlacklisted(address);
         const blacklistInfo = blacklisted ? getBlacklistInfo(address) : null;
@@ -912,8 +961,15 @@ export const useLinkCode = mutation({
       });
     }
 
+    // 🧹 CLEANUP: Delete raid data from the linked wallet (prevents conflicts)
+    await ctx.scheduler.runAfter(0, internal.raidBoss.cleanupLinkedWalletRaidData, {
+      linkedAddress: walletToLink,
+    });
+
     // Mark code as used
     await ctx.db.patch(linkCode._id, { used: true });
+
+    console.log(`🔗 Wallet linked: ${walletToLink} → ${primaryAddress} (cleanup scheduled)`);
 
     return {
       success: true,
@@ -1159,12 +1215,20 @@ export const useMergeCode = mutation({
       });
     }
 
-    // 3. Delete the old profile
+    // 3. 🧹 CLEANUP: Delete raid data from the old wallet BEFORE deleting profile
+    // This prevents orphaned raid decks that could cause conflicts
+    await ctx.scheduler.runAfter(0, internal.raidBoss.cleanupLinkedWalletRaidData, {
+      linkedAddress: oldWalletAddress,
+    });
+
+    // 4. Delete the old profile (this removes defense deck automatically)
     const oldUsername = oldProfile.username;
     await ctx.db.delete(oldProfile._id);
 
-    // 4. Mark code as used
+    // 5. Mark code as used
     await ctx.db.patch(mergeCode._id, { used: true });
+
+    console.log(`🔀 Account merged: @${oldUsername} (${oldWalletAddress}) → @${fidProfile.username} (${primaryAddress})`);
 
     return {
       success: true,
@@ -1173,6 +1237,147 @@ export const useMergeCode = mutation({
       mergedWallet: oldWalletAddress,
       newProfile: fidProfile.username,
     };
+  },
+});
+
+/**
+ * 🔗 UNIFIED: Use any code (link or merge) - auto-detects which operation to perform
+ * Tries useLinkCode first, if it fails tries useMergeCode
+ */
+export const useUnifiedCode = mutation({
+  args: {
+    code: v.string(),
+    fidOwnerAddress: v.string(),
+  },
+  handler: async (ctx, { code, fidOwnerAddress }) => {
+    if (!isValidAddress(fidOwnerAddress)) {
+      throw new Error("Endereço inválido");
+    }
+
+    const normalizedFidOwner = normalizeAddress(fidOwnerAddress);
+
+    // Get the FID owner's profile (resolve links if needed)
+    const ownerLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedFidOwner))
+      .first();
+
+    const primaryAddress = ownerLink?.primaryAddress || normalizedFidOwner;
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Você precisa ter um perfil para usar códigos");
+    }
+
+    if (!profile.farcasterFid) {
+      throw new Error("Seu perfil precisa ter FID para linkar/mergear wallets");
+    }
+
+    // Find the code
+    const linkCode = await ctx.db
+      .query("walletLinkCodes")
+      .withIndex("by_code", (q) => q.eq("code", code))
+      .first();
+
+    if (!linkCode) {
+      throw new Error("Código inválido");
+    }
+
+    if (linkCode.used) {
+      throw new Error("Código já foi usado");
+    }
+
+    if (Date.now() > linkCode.expiresAt) {
+      await ctx.db.delete(linkCode._id);
+      throw new Error("Código expirado");
+    }
+
+    const targetAddress = linkCode.profileAddress;
+
+    // Can't link to the same wallet
+    if (primaryAddress === targetAddress) {
+      throw new Error("Não pode linkar/mergear consigo mesmo");
+    }
+
+    // Check if wallet is already linked somewhere
+    const existingLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", targetAddress))
+      .first();
+
+    if (existingLink) {
+      await ctx.db.patch(linkCode._id, { used: true });
+      if (existingLink.primaryAddress === primaryAddress) {
+        return { success: true, message: "Wallet já está linkada ao seu perfil", type: "already_linked" };
+      } else {
+        throw new Error("Esta wallet já está linkada a outro perfil");
+      }
+    }
+
+    // Check if the target address has a profile (determines if link or merge)
+    const targetProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", targetAddress))
+      .first();
+
+    let operationType: "link" | "merge" = "link";
+    let mergedUsername: string | undefined;
+
+    if (targetProfile) {
+      // MERGE: Target has a profile - delete it after linking
+      operationType = "merge";
+      mergedUsername = targetProfile.username;
+
+      // Delete the old profile
+      await ctx.db.delete(targetProfile._id);
+      console.log(`🔀 Merged profile @${mergedUsername} (${targetAddress}) into @${profile.username}`);
+    }
+
+    // Link the wallet to the FID profile
+    await ctx.db.insert("addressLinks", {
+      address: targetAddress,
+      primaryAddress: primaryAddress,
+      linkedAt: Date.now(),
+    });
+
+    // Update profile's linkedAddresses array
+    const currentLinked = profile.linkedAddresses || [];
+    if (!currentLinked.includes(targetAddress)) {
+      await ctx.db.patch(profile._id, {
+        linkedAddresses: [...currentLinked, targetAddress],
+      });
+    }
+
+    // 🧹 CLEANUP: Delete raid data from the linked/merged wallet
+    await ctx.scheduler.runAfter(0, internal.raidBoss.cleanupLinkedWalletRaidData, {
+      linkedAddress: targetAddress,
+    });
+
+    // Mark code as used
+    await ctx.db.patch(linkCode._id, { used: true });
+
+    if (operationType === "merge") {
+      console.log(`🔀 Account merged: @${mergedUsername} (${targetAddress}) → @${profile.username} (${primaryAddress})`);
+      return {
+        success: true,
+        type: "merge",
+        message: `Conta @${mergedUsername} mergeada com sucesso!`,
+        mergedUsername,
+        linkedWallet: targetAddress,
+      };
+    } else {
+      console.log(`🔗 Wallet linked: ${targetAddress} → @${profile.username} (${primaryAddress})`);
+      return {
+        success: true,
+        type: "link",
+        message: "Wallet linkada com sucesso!",
+        linkedWallet: targetAddress,
+      };
+    }
   },
 });
 
@@ -1366,6 +1571,7 @@ export const updateStats = mutation({
 
 /**
  * Update defense deck
+ * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
 export const updateDefenseDeck = mutation({
   args: {
@@ -1384,16 +1590,17 @@ export const updateDefenseDeck = mutation({
   },
   handler: async (ctx, { address, defenseDeck }) => {
     try {
-      const normalizedAddress = normalizeAddress(address);
+      // 🔗 Resolve to primary address if this is a linked wallet
+      const primaryAddress = await resolvePrimaryAddress(ctx, address);
 
       // 🚫 BLACKLIST CHECK: Exploiters cannot set defense decks
-      if (isBlacklisted(normalizedAddress)) {
+      if (isBlacklisted(primaryAddress)) {
         throw new Error("Account banned: Defense deck feature disabled for exploiters");
       }
 
       const profile = await ctx.db
         .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+        .withIndex("by_address", (q) => q.eq("address", primaryAddress))
         .first();
 
       if (!profile) {
@@ -1446,13 +1653,17 @@ export const updateDefenseDeck = mutation({
 /**
  * Get validated defense deck (removes cards player no longer owns)
  * SECURITY: Prevents using cards from sold/transferred NFTs
+ * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
 export const getValidatedDefenseDeck = mutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
+    // 🔗 Resolve to primary address if this is a linked wallet
+    const primaryAddress = await resolvePrimaryAddress(ctx, address);
+
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
       .first();
 
     if (!profile) {
@@ -1859,6 +2070,7 @@ export const cleanOldDefenseDecks = internalMutation({
  * @param allNFTs - All NFTs owned by player (from Alchemy/NFT fetch)
  * @param mode - Game mode ("attack", "pvp", "pve")
  * @returns Filtered NFT list with locked cards removed (for attack/pvp)
+ * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
 export const getAvailableCards = query({
   args: {
@@ -1866,9 +2078,12 @@ export const getAvailableCards = query({
     mode: v.union(v.literal("attack"), v.literal("pvp"), v.literal("pve")),
   },
   handler: async (ctx, { address, mode }) => {
+    // 🔗 Resolve to primary address if this is a linked wallet
+    const primaryAddress = await resolvePrimaryAddress(ctx, address);
+
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
       .first();
 
     if (!profile) {
@@ -1919,6 +2134,7 @@ export const getAvailableCards = query({
  * - Cards in defense deck cannot be used in raid
  * - Cards in raid deck cannot be used in defense
  * - VibeFID cards are EXEMPT from this restriction
+ * 🔗 MULTI-WALLET: Uses primary address for linked wallets
  */
 export const getLockedCardsForDeckBuilding = query({
   args: {
@@ -1926,18 +2142,19 @@ export const getLockedCardsForDeckBuilding = query({
     mode: v.union(v.literal("defense"), v.literal("raid")),
   },
   handler: async (ctx, { address, mode }) => {
-    const normalizedAddress = normalizeAddress(address);
+    // 🔗 Resolve to primary address if this is a linked wallet
+    const primaryAddress = await resolvePrimaryAddress(ctx, address);
 
     // Get profile for defense deck
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
       .first();
 
     // Get raid deck
     const raidDeck = await ctx.db
       .query("raidAttacks")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
       .first();
 
     // CRITICAL: Use collection:tokenId format to distinguish same tokenId across collections
