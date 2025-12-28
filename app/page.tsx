@@ -1502,7 +1502,7 @@ export default function TCGPage() {
       setErrorMsg(null);
 
       // 🔗 MULTI-WALLET: Get all linked addresses first
-      let allAddresses = [address];
+      let allAddresses: string[] = [address];
       try {
         const linkedData = await convex.query(api.profiles.getLinkedAddresses, { address });
         if (linkedData?.primary) {
