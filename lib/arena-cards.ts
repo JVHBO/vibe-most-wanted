@@ -504,7 +504,7 @@ export const GMVBRS_CARDS: ArenaCard[] = [
 export const VIBE_CARDS: ArenaCard[] = [
   {
     "tokenId": "3067",
-    "name": "Vibe Most Wanted #3067",
+    "name": "$VBMS #3067",
     "rarity": "Legendary",
     "power": 240,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2ba42b445cca1bfbdf6e3df92b6dc94f",
@@ -512,7 +512,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "5225",
-    "name": "Vibe Most Wanted #5225",
+    "name": "$VBMS #5225",
     "rarity": "Legendary",
     "power": 336,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ddd201991ef3b280a322b28b9b936ff2",
@@ -520,7 +520,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "5945",
-    "name": "Vibe Most Wanted #5945",
+    "name": "$VBMS #5945",
     "rarity": "Legendary",
     "power": 240,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0c83313af1b9017149b6984b2a40a135",
@@ -528,7 +528,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "6070",
-    "name": "Vibe Most Wanted #6070",
+    "name": "$VBMS #6070",
     "rarity": "Legendary",
     "power": 240,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/57a017be175af2ad40ff83c8687fa336",
@@ -536,7 +536,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "8549",
-    "name": "Vibe Most Wanted #8549",
+    "name": "$VBMS #8549",
     "rarity": "Legendary",
     "power": 240,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/175f83c4e0c6b1c2ca3d6fa1bdadceed",
@@ -544,7 +544,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "9454",
-    "name": "Vibe Most Wanted #9454",
+    "name": "$VBMS #9454",
     "rarity": "Legendary",
     "power": 240,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b59cf185562cf730730a6f7abeb7647c",
@@ -552,7 +552,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "9856",
-    "name": "Vibe Most Wanted #9856",
+    "name": "$VBMS #9856",
     "rarity": "Legendary",
     "power": 240,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/652f21a00056a93b93d7ed4cc55d0522",
@@ -560,7 +560,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "10869",
-    "name": "Vibe Most Wanted #10869",
+    "name": "$VBMS #10869",
     "rarity": "Legendary",
     "power": 240,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/bb7d32006efceb8a144245da3fef5bd3",
@@ -568,7 +568,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "9",
-    "name": "Vibe Most Wanted #9",
+    "name": "$VBMS #9",
     "rarity": "Epic",
     "power": 80,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2108ff44d8a68a96ffab496796a2b995",
@@ -576,7 +576,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "13",
-    "name": "Vibe Most Wanted #13",
+    "name": "$VBMS #13",
     "rarity": "Epic",
     "power": 80,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/15e53335b8893e83d0224636a0743931",
@@ -584,7 +584,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "15",
-    "name": "Vibe Most Wanted #15",
+    "name": "$VBMS #15",
     "rarity": "Epic",
     "power": 80,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d3d6ff5a72b9034600cee2f7843aed29",
@@ -592,7 +592,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "3",
-    "name": "Vibe Most Wanted #3",
+    "name": "$VBMS #3",
     "rarity": "Rare",
     "power": 20,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b90069fd9d9da42c2cd6416d12da4073",
@@ -600,7 +600,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "10",
-    "name": "Vibe Most Wanted #10",
+    "name": "$VBMS #10",
     "rarity": "Rare",
     "power": 28,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4143f5ab0e395293d12b44caa4fcc0c9",
@@ -608,7 +608,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "12",
-    "name": "Vibe Most Wanted #12",
+    "name": "$VBMS #12",
     "rarity": "Rare",
     "power": 20,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7712a941ed369a9afbc26042a0cc9ebf",
@@ -616,7 +616,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "17",
-    "name": "Vibe Most Wanted #17",
+    "name": "$VBMS #17",
     "rarity": "Rare",
     "power": 28,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/bf230ec7950f78ec953164e7f35dc250",
@@ -624,7 +624,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "1",
-    "name": "Vibe Most Wanted #1",
+    "name": "$VBMS #1",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d6566f25ad2ec36e99fc6b57c334bead",
@@ -632,7 +632,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "2",
-    "name": "Vibe Most Wanted #2",
+    "name": "$VBMS #2",
     "rarity": "Common",
     "power": 7,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a410e19f3dea9aff4b82aa382840babe",
@@ -640,7 +640,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "4",
-    "name": "Vibe Most Wanted #4",
+    "name": "$VBMS #4",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5e626f11d436fb81f604d034b708f7f1",
@@ -648,7 +648,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "5",
-    "name": "Vibe Most Wanted #5",
+    "name": "$VBMS #5",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e29e27e4888bf9f7adcc8ba6df63a8e6",
@@ -656,7 +656,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "6",
-    "name": "Vibe Most Wanted #6",
+    "name": "$VBMS #6",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9de74ccb4304a8afc706ca8fc126376d",
@@ -664,7 +664,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "7",
-    "name": "Vibe Most Wanted #7",
+    "name": "$VBMS #7",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/511915cc9b6f20839e2bf2999760530f",
@@ -672,7 +672,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "8",
-    "name": "Vibe Most Wanted #8",
+    "name": "$VBMS #8",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/66c92b454bad13c737d5aad5160423e9",
@@ -680,7 +680,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "11",
-    "name": "Vibe Most Wanted #11",
+    "name": "$VBMS #11",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4c325b4afbee433b694fd1d74ef1733d",
@@ -688,7 +688,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "14",
-    "name": "Vibe Most Wanted #14",
+    "name": "$VBMS #14",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6297be1687111c95500d587dc1f1ea46",
@@ -696,7 +696,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "16",
-    "name": "Vibe Most Wanted #16",
+    "name": "$VBMS #16",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5bf943bac86dcb092632995e7810cee0",
@@ -704,7 +704,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "18",
-    "name": "Vibe Most Wanted #18",
+    "name": "$VBMS #18",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f4e2bbf182afbf2aa5a1b1f665a7c5d6",
@@ -712,7 +712,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "19",
-    "name": "Vibe Most Wanted #19",
+    "name": "$VBMS #19",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5c844bd4db90082369bb6157fa8cde20",
@@ -720,7 +720,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "20",
-    "name": "Vibe Most Wanted #20",
+    "name": "$VBMS #20",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/574f5036b5ce6670196a24ef7f44519a",
@@ -728,7 +728,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "21",
-    "name": "Vibe Most Wanted #21",
+    "name": "$VBMS #21",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4e8cd2d7ff3f2007c1830af8b3d38d4f",
@@ -736,7 +736,7 @@ export const VIBE_CARDS: ArenaCard[] = [
   },
   {
     "tokenId": "22",
-    "name": "Vibe Most Wanted #22",
+    "name": "$VBMS #22",
     "rarity": "Common",
     "power": 5,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/83bcc2df46c9011ae7cc6caa04df1e6a",

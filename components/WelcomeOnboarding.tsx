@@ -144,7 +144,7 @@ export function WelcomeOnboarding({
               <div className="mb-6">
                 <div className="text-5xl mb-3">🎴</div>
                 <h1 className="font-display text-3xl text-vintage-gold tracking-wide mb-2">
-                  VIBE MOST WANTED
+                  $VBMS
                 </h1>
                 <p className="text-vintage-burnt-gold font-modern text-sm">
                   {t('onboardingTagline' as any) || 'The Ultimate Meme Card Battle Arena'}

@@ -12,26 +12,26 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   const launchUrl = baseUrl; // No ref parameter - referral rewards disabled
 
   return {
-    title: `${username} invited you to VIBE Most Wanted!`,
-    description: `Join ${username} in VIBE Most Wanted - the ultimate card battle game on Farcaster!`,
+    title: `${username} invited you to $VBMS!`,
+    description: `Join ${username} in $VBMS - the ultimate card battle game on Farcaster!`,
     openGraph: {
       title: `${username} invited you!`,
-      description: `Join ${username} in VIBE Most Wanted - the ultimate card battle game on Farcaster!`,
+      description: `Join ${username} in $VBMS - the ultimate card battle game on Farcaster!`,
       type: 'website',
-      siteName: 'VIBE Most Wanted',
+      siteName: '$VBMS',
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: `Join ${username} in VIBE Most Wanted`,
+          alt: `Join ${username} in $VBMS`,
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${username} invited you!`,
-      description: `Join ${username} in VIBE Most Wanted!`,
+      description: `Join ${username} in $VBMS!`,
       images: [imageUrl],
     },
     other: {
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
           title: 'JOIN US',
           action: {
             type: 'launch_miniapp',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: launchUrl,
           },
         },
@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
           title: 'JOIN US',
           action: {
             type: 'launch_miniapp',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: launchUrl,
           },
         },
@@ -75,7 +75,7 @@ export default async function InvitePage({ params }: { params: Promise<{ usernam
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
       <div className="text-center">
         <h1 className="text-4xl font-display font-bold text-vintage-gold mb-4">
-          VIBE MOST WANTED
+          $VBMS
         </h1>
         <p className="text-vintage-burnt-gold mb-2 text-xl">
           {sanitizedUsername} invited you!

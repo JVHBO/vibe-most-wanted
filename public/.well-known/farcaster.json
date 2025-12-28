@@ -6,7 +6,7 @@
   },
   "miniapp": {
     "version": "1",
-    "name": "VIBE MOST WANTED",
+    "name": "$VBMS",
     "iconUrl": "https://www.vibemostwanted.xyz/icon.png?v=xmas2025",
     "homeUrl": "https://www.vibemostwanted.xyz",
     "imageUrl": "https://www.vibemostwanted.xyz/screenshot-1.png?v=xmas2025",
@@ -33,7 +33,7 @@
     ],
     "heroImageUrl": "https://www.vibemostwanted.xyz/hero.jpg?v=xmas2025",
     "tagline": "Battle with meme cards",
-    "ogTitle": "VIBE MOST WANTED",
+    "ogTitle": "$VBMS",
     "ogDescription": "Battle with meme cards in PvE and PvP modes on Base!",
     "ogImageUrl": "https://www.vibemostwanted.xyz/og-image.png?v=xmas2025",
     "requiredCapabilities": [

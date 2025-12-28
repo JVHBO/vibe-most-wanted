@@ -19,7 +19,7 @@ export default function SharePageClient() {
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
       <div className="text-center">
         <h1 className="text-4xl font-display font-bold text-vintage-gold mb-4">
-          VIBE MOST WANTED
+          $VBMS
         </h1>
         <p className="text-vintage-burnt-gold mb-4">Redirecting to game...</p>
         <div className="animate-pulse text-6xl">🎮</div>

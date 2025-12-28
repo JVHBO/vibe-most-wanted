@@ -46,7 +46,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       description,
       url: `${baseUrl}/share/pack`,
       type: "website",
-      siteName: "VIBE MOST WANTED",
+      siteName: "$VBMS",
       images: [
         {
           url: imageUrl,
@@ -70,7 +70,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
           title: 'Open Packs',
           action: {
             type: 'launch_miniapp',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: baseUrl + '/shop',
           },
         },
@@ -84,7 +84,7 @@ export default function SharePackPage() {
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
       <div className="text-center">
         <h1 className="text-4xl font-display font-bold text-vintage-gold mb-4">
-          VIBE MOST WANTED
+          $VBMS
         </h1>
         <p className="text-vintage-burnt-gold mb-4">{"\u{1F3B4}"} Pack Opening!</p>
         <div className="animate-pulse text-6xl">{"\u{1F3B4}"}</div>

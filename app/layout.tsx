@@ -40,7 +40,7 @@ const rajdhani = Rajdhani({
 });
 
 export const metadata: Metadata = {
-  title: "VIBE MOST WANTED - Meme Card Game",
+  title: "$VBMS - Meme Card Game",
   description: "Battle with meme cards in PvE and PvP modes. The most wanted meme card game on Base!",
   manifest: "/.well-known/farcaster.json",
   icons: {
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "VIBE MOST WANTED - Meme Card Game",
+    title: "$VBMS - Meme Card Game",
     description: "Battle with meme cards in PvE and PvP modes",
     url: "https://www.vibemostwanted.xyz",
     images: [
@@ -64,15 +64,15 @@ export const metadata: Metadata = {
         url: "https://www.vibemostwanted.xyz/screenshot.jpg",
         width: 1200,
         height: 800,
-        alt: "VIBE MOST WANTED Game"
+        alt: "$VBMS Game"
       }
     ],
     type: "website",
-    siteName: "VIBE MOST WANTED",
+    siteName: "$VBMS",
   },
   twitter: {
     card: "summary_large_image",
-    title: "VIBE MOST WANTED - Meme Card Game",
+    title: "$VBMS - Meme Card Game",
     description: "Battle with meme cards in PvE and PvP modes",
     images: ["https://www.vibemostwanted.xyz/screenshot.jpg"],
   },
@@ -88,7 +88,7 @@ export const metadata: Metadata = {
         "title": "Play Now",
         "action": {
           "type": "launch_miniapp",
-          "name": "VIBE MOST WANTED",
+          "name": "$VBMS",
           "url": "https://www.vibemostwanted.xyz"
         }
       }
@@ -101,7 +101,7 @@ export const metadata: Metadata = {
         "title": "Play Now",
         "action": {
           "type": "launch_miniapp",
-          "name": "VIBE MOST WANTED",
+          "name": "$VBMS",
           "url": "https://www.vibemostwanted.xyz"
         }
       }

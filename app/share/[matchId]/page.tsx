@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
     title = isWin ? `🎮 Victory vs Mecha George Floyd!` : isTie ? `🎮 Tie vs Mecha George Floyd` : `🎮 Defeat vs Mecha George Floyd`;
   }
 
-  const description = `${playerPower} vs ${opponentPower} Power - VIBE Most Wanted Battle Result`;
+  const description = `${playerPower} vs ${opponentPower} Power - $VBMS Battle Result`;
 
   // Explicitly set the OpenGraph image URL with cache busting
   const baseUrl = 'https://www.vibemostwanted.xyz';
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
       title,
       description,
       type: 'website',
-      siteName: 'VIBE Most Wanted',
+      siteName: '$VBMS',
       images: [
         {
           url: imageUrl,
@@ -64,10 +64,10 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
         version: '1',
         imageUrl: imageUrl,
         button: {
-          title: 'Play VIBE Most Wanted',
+          title: 'Play $VBMS',
           action: {
             type: 'launch_miniapp',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: baseUrl,
           },
         },
@@ -76,10 +76,10 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
         version: '1',
         imageUrl: imageUrl,
         button: {
-          title: 'Play VIBE Most Wanted',
+          title: 'Play $VBMS',
           action: {
             type: 'launch_miniapp',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: baseUrl,
           },
         },
