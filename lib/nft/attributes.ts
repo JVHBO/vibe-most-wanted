@@ -5,6 +5,8 @@
  * These functions handle NFT metadata parsing across different formats
  */
 
+import { VIBEFID_POWER_CONFIG } from '../collections';
+
 /**
  * Find an attribute value from NFT metadata
  * Searches multiple possible locations for attribute data
@@ -100,6 +102,39 @@ export function isUnrevealed(nft: any): boolean {
 }
 
 /**
+ * Calculate VibeFID card power using the special VibeFID config
+ * VibeFID has different base powers and multipliers than regular cards
+ */
+export function calcVibeFIDPower(nft: any): number {
+  const foil = findAttr(nft, 'foil') || 'None';
+  const rarity = findAttr(nft, 'rarity') || 'Common';
+  const wear = findAttr(nft, 'wear') || 'Lightly Played';
+
+  // Base power from VIBEFID_POWER_CONFIG
+  const r = rarity.toLowerCase();
+  let base = VIBEFID_POWER_CONFIG.rarityBase.common;
+  if (r.includes('mythic')) base = VIBEFID_POWER_CONFIG.rarityBase.mythic;
+  else if (r.includes('legend')) base = VIBEFID_POWER_CONFIG.rarityBase.legendary;
+  else if (r.includes('epic')) base = VIBEFID_POWER_CONFIG.rarityBase.epic;
+  else if (r.includes('rare')) base = VIBEFID_POWER_CONFIG.rarityBase.rare;
+
+  // Wear multiplier from VIBEFID_POWER_CONFIG
+  let wearMult = VIBEFID_POWER_CONFIG.wearMultiplier.default;
+  const w = wear.toLowerCase();
+  if (w.includes('pristine')) wearMult = VIBEFID_POWER_CONFIG.wearMultiplier.pristine;
+  else if (w.includes('mint')) wearMult = VIBEFID_POWER_CONFIG.wearMultiplier.mint;
+
+  // Foil multiplier from VIBEFID_POWER_CONFIG
+  let foilMult = VIBEFID_POWER_CONFIG.foilMultiplier.none;
+  const f = foil.toLowerCase();
+  if (f.includes('prize')) foilMult = VIBEFID_POWER_CONFIG.foilMultiplier.prize;
+  else if (f.includes('standard')) foilMult = VIBEFID_POWER_CONFIG.foilMultiplier.standard;
+
+  const power = base * wearMult * foilMult;
+  return Math.max(1, Math.round(power));
+}
+
+/**
  * Calculate card power based on rarity, wear, and foil
  *
  * Power formula:
@@ -108,8 +143,16 @@ export function isUnrevealed(nft: any): boolean {
  * - Foil multiplier (Prize: ×15, Standard: ×2.5, None: ×1.0)
  *
  * Final power = Base × Wear × Foil (min 1)
+ *
+ * @param nft - NFT metadata object
+ * @param isVibeFID - If true, use VibeFID-specific power config
  */
-export function calcPower(nft: any): number {
+export function calcPower(nft: any, isVibeFID: boolean = false): number {
+  // VibeFID uses its own power config
+  if (isVibeFID) {
+    return calcVibeFIDPower(nft);
+  }
+
   const foil = findAttr(nft, 'foil') || 'None';
   const rarity = findAttr(nft, 'rarity') || 'Common';
   const wear = findAttr(nft, 'wear') || 'Lightly Played';
