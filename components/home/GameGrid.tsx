@@ -59,7 +59,7 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sub
     id: 'poker-cpu',
     icon: <SpadeIcon />,
     label: 'Battle Poker',
-    sublabel: 'vs CPU',
+    sublabel: '',
     cards: 10,
     iconColor: 'text-vintage-gold',
     accentColor: 'hover:border-vintage-gold/50',
