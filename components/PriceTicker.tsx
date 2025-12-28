@@ -2,28 +2,11 @@
 
 import { useCollectionPrices } from '@/lib/hooks/useCollectionPrices';
 import { useCachedYesterdayPrices } from '@/lib/convex-cache';
-import { useEffect, useState, memo } from 'react';
+import { useState, memo } from 'react';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { openMarketplace } from '@/lib/marketplace-utils';
 import { isMiniappMode } from '@/lib/utils/miniapp';
 import { useLanguage } from '@/contexts/LanguageContext';
-
-// Collection cover images (from Mecha Arena)
-const COLLECTION_COVERS: Record<string, string> = {
-  vibe: 'https://nft-cdn.alchemy.com/base-mainnet/511915cc9b6f20839e2bf2999760530f',
-  gmvbrs: 'https://nft-cdn.alchemy.com/base-mainnet/d0de7e9fa12eadb1ea2204e67d43e166',
-  viberuto: 'https://nft-cdn.alchemy.com/base-mainnet/ec58759f6df558aa4193d58ae9b0e74f',
-  meowverse: 'https://nft-cdn.alchemy.com/base-mainnet/16a8f93f75def1a771cca7e417b5d05e',
-  poorlydrawnpepes: 'https://nft-cdn.alchemy.com/base-mainnet/96282462557a81c42fad965a48c34f4c',
-  teampothead: 'https://nft-cdn.alchemy.com/base-mainnet/ae56485394d1e5f37322d498f0ea11a0',
-  tarot: 'https://nft-cdn.alchemy.com/base-mainnet/72ea458dbad1ce6a722306d811a42252',
-  americanfootball: 'https://nft-cdn.alchemy.com/base-mainnet/5c023b39577f02927478fbd60c26d75e',
-  baseballcabal: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F45e455d7-cd23-459b-7ea9-db14c6d36000%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
-  vibefx: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F5e6058d2-4c64-4cd9-ab57-66a939fec900%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
-  historyofcomputer: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fa1a0d189-44e1-43e3-60dc-e8b053ec0c00%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
-  cumioh: 'https://nft-cdn.alchemy.com/base-mainnet/91c81987744291bea206aaf0d4feff40',
-  viberotbangers: 'https://nft-cdn.alchemy.com/base-mainnet/1269ebe2e27ff8a041cb7253fb5687b6',
-};
 
 // Marketplace URLs for each collection
 const COLLECTION_MARKETPLACE: Record<string, string> = {
@@ -49,108 +32,126 @@ interface PriceTickerProps {
 // Memoize to prevent re-renders affecting siblings
 export const PriceTicker = memo(function PriceTicker({ className = '' }: PriceTickerProps) {
   const { prices, isLoading } = useCollectionPrices();
-  // 🚀 BANDWIDTH FIX: Use cached hook (prices change once per day, not real-time)
   const { prices: yesterdayPrices } = useCachedYesterdayPrices();
   const { t } = useLanguage();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isVisible, setIsVisible] = useState(true);
   const isInFarcaster = isMiniappMode();
+  const [confirmModal, setConfirmModal] = useState<{ show: boolean; url: string; name: string }>({ show: false, url: '', name: '' });
 
-  // Rotate through collections with fade effect
-  useEffect(() => {
-    if (prices.length <= 1) return;
-    const interval = setInterval(() => {
-      setIsVisible(false);
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % prices.length);
-        setIsVisible(true);
-      }, 200);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [prices.length]);
-
-  if (isLoading) {
-    return (
-      <div className={`h-[52px] flex items-center justify-center gap-2 py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
-        <span className="text-vintage-burnt-gold text-xs animate-pulse">{t('tickerLoading')}</span>
-      </div>
-    );
-  }
-
-  if (prices.length === 0) {
-    return (
-      <div className={`h-[52px] flex items-center justify-center gap-2 py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full ${className}`}>
-        <span className="text-vintage-burnt-gold text-xs">{t('tickerFetching')}</span>
-      </div>
-    );
-  }
-
-  const currentPrice = prices[currentIndex];
-  const coverUrl = COLLECTION_COVERS[currentPrice?.id] || '';
-  const marketplaceUrl = COLLECTION_MARKETPLACE[currentPrice?.id] || '';
-
-  // Handle click - open marketplace
-  const handleClick = async () => {
+  // Handle click - show confirmation modal
+  const handleClick = (collectionId: string, displayName: string) => {
+    const marketplaceUrl = COLLECTION_MARKETPLACE[collectionId];
     if (marketplaceUrl) {
-      await openMarketplace(marketplaceUrl, sdk, isInFarcaster);
+      setConfirmModal({ show: true, url: marketplaceUrl, name: displayName });
     }
   };
 
-  // Calculate price change direction
-  let priceDirection: 'up' | 'down' | 'neutral' = 'neutral';
-  let percentChange = 0;
-
-  if (yesterdayPrices?.prices && currentPrice) {
-    const yesterdayPrice = yesterdayPrices.prices[currentPrice.id];
-    if (yesterdayPrice) {
-      const currentUsd = parseFloat(currentPrice.priceUsd.replace('$', '').replace(',', ''));
-      const yesterdayUsd = yesterdayPrice.priceUsd;
-      if (currentUsd > yesterdayUsd) {
-        priceDirection = 'up';
-        percentChange = ((currentUsd - yesterdayUsd) / yesterdayUsd) * 100;
-      } else if (currentUsd < yesterdayUsd) {
-        priceDirection = 'down';
-        percentChange = ((yesterdayUsd - currentUsd) / yesterdayUsd) * 100;
-      }
+  const confirmOpen = async () => {
+    if (confirmModal.url) {
+      await openMarketplace(confirmModal.url, sdk, isInFarcaster);
     }
+    setConfirmModal({ show: false, url: '', name: '' });
+  };
+
+  // Calculate price direction for each collection
+  const getPriceDirection = (collectionId: string, currentPriceUsd: string): { direction: 'up' | 'down' | 'neutral'; percent: number } => {
+    if (!yesterdayPrices?.prices) return { direction: 'neutral', percent: 0 };
+    const yesterdayPrice = yesterdayPrices.prices[collectionId];
+    if (!yesterdayPrice) return { direction: 'neutral', percent: 0 };
+
+    const currentUsd = parseFloat(currentPriceUsd.replace('$', '').replace(',', ''));
+    const yesterdayUsd = yesterdayPrice.priceUsd;
+
+    if (currentUsd > yesterdayUsd) {
+      return { direction: 'up', percent: ((currentUsd - yesterdayUsd) / yesterdayUsd) * 100 };
+    } else if (currentUsd < yesterdayUsd) {
+      return { direction: 'down', percent: ((yesterdayUsd - currentUsd) / yesterdayUsd) * 100 };
+    }
+    return { direction: 'neutral', percent: 0 };
+  };
+
+  if (isLoading || prices.length === 0) {
+    return (
+      <div className={`h-6 flex items-center justify-center bg-vintage-deep-black/50 rounded-lg overflow-hidden ${className}`}>
+        <span className="text-vintage-burnt-gold text-[10px] animate-pulse">{t('tickerLoading')}</span>
+      </div>
+    );
   }
 
+  // Duplicate prices for seamless loop
+  const tickerItems = [...prices, ...prices];
+
   return (
-    <button
-      onClick={handleClick}
-      className={`tour-price-ticker overflow-hidden h-[52px] py-3 px-4 bg-vintage-deep-black rounded-xl border-2 border-vintage-gold/50 w-full hover:border-vintage-gold transition-colors cursor-pointer transform-gpu isolate ${className}`}
-      title={`Buy ${currentPrice?.displayName} Packs`}
-    >
-      <div
-        className={`flex items-center justify-center gap-2 text-xs whitespace-nowrap ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-      >
-        {coverUrl && (
-          <img
-            src={coverUrl}
-            alt={currentPrice?.displayName}
-            className="w-6 h-6 rounded-lg object-cover flex-shrink-0"
-          />
-        )}
-        <span className="text-vintage-burnt-gold font-bold truncate max-w-[100px]">{currentPrice?.displayName}</span>
-        <span className="text-vintage-gold font-mono">{currentPrice?.priceUsd}</span>
-        <span className="text-green-400 font-semibold animate-pulse flex-shrink-0">• {t('tickerBuyHere')}</span>
-        {/* Price direction indicator */}
-        {priceDirection !== 'neutral' && (
-          <span className={`flex items-center gap-0.5 flex-shrink-0 ${priceDirection === 'up' ? 'text-green-400' : 'text-red-400'}`}>
-            {priceDirection === 'up' ? (
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-            )}
-            <span className="font-semibold">{percentChange.toFixed(1)}%</span>
-          </span>
-        )}
+    <>
+      <div className={`h-6 bg-vintage-deep-black/50 rounded-lg overflow-hidden relative ${className}`}>
+        <div className="flex animate-ticker whitespace-nowrap">
+          {tickerItems.map((price, idx) => {
+            const { direction, percent } = getPriceDirection(price.id, price.priceUsd);
+            return (
+              <button
+                key={`${price.id}-${idx}`}
+                onClick={() => handleClick(price.id, price.displayName)}
+                className="inline-flex items-center gap-1 px-3 text-[10px] hover:bg-vintage-gold/20 transition-colors h-6"
+              >
+                <span className="text-vintage-burnt-gold/80">{price.emoji}</span>
+                <span className="text-vintage-burnt-gold font-medium">{price.displayName}</span>
+                <span className="text-vintage-gold font-mono">{price.priceUsd}</span>
+                {direction !== 'neutral' && (
+                  <span className={direction === 'up' ? 'text-green-400' : 'text-red-400'}>
+                    {direction === 'up' ? '▲' : '▼'}{percent.toFixed(1)}%
+                  </span>
+                )}
+                <span className="text-vintage-burnt-gold/30 mx-1">|</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
-    </button>
+
+      {/* Confirmation Modal */}
+      {confirmModal.show && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4">
+          <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-4 w-full max-w-sm">
+            <h3 className="text-vintage-gold font-display font-bold text-lg mb-3 text-center">
+              {t('confirmOpenMarket') || 'Open Vibe Market?'}
+            </h3>
+            <p className="text-vintage-ice/80 text-sm text-center mb-4">
+              {t('confirmOpenMarketDesc')?.replace('{name}', confirmModal.name) || `You will be redirected to Vibe Market to buy ${confirmModal.name} packs.`}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmModal({ show: false, url: '', name: '' })}
+                className="flex-1 py-2 bg-vintage-burnt-gold/30 hover:bg-vintage-burnt-gold/50 text-vintage-gold font-display font-bold rounded-xl transition-all"
+              >
+                {t('cancel') || 'Cancel'}
+              </button>
+              <button
+                onClick={confirmOpen}
+                className="flex-1 py-2 bg-vintage-gold hover:bg-yellow-500 text-vintage-black font-display font-bold rounded-xl transition-all"
+              >
+                {t('confirm') || 'Open'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes ticker {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        .animate-ticker {
+          animation: ticker 30s linear infinite;
+        }
+        .animate-ticker:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+    </>
   );
 });
 
