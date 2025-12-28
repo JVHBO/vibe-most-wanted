@@ -314,26 +314,33 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     setTimeout(() => loadNFTs(), 0);
   }, [address, loadNFTs]);
 
-  // 🔗 Reset state when address changes (for wallet switching)
+  // 🔗 Reset state and reload when address changes (for wallet switching)
   const previousAddressRef = useRef<string | undefined>(undefined);
   useEffect(() => {
+    // If address changed, force reload
     if (address && previousAddressRef.current && address.toLowerCase() !== previousAddressRef.current.toLowerCase()) {
-      console.log('[Context] 🔄 Address changed, resetting cards state');
+      console.log('[Context] 🔄 Address changed from', previousAddressRef.current.slice(0,8), 'to', address.slice(0,8));
       setNfts([]);
       setStatus('idle');
       setAttackSelectedCards([]);
+      previousAddressRef.current = address;
+      // Force reload after state reset
+      setTimeout(() => {
+        console.log('[Context] 🔄 Forcing reload after address change');
+        loadNFTs();
+      }, 100);
+      return;
     }
-    previousAddressRef.current = address;
-  }, [address]);
 
-  // Auto-load when address changes
-  useEffect(() => {
+    previousAddressRef.current = address;
+
+    // Auto-load when idle
     console.log('[Context] Auto-load check:', { address: address?.slice(0,8), status, nftsCount: nfts.length });
     if (address && status === 'idle') {
       console.log('[Context] Starting auto-load...');
       loadNFTs();
     }
-  }, [address, status, loadNFTs]);
+  }, [address, status, nfts.length, loadNFTs]);
 
   // Load user profile
   useEffect(() => {

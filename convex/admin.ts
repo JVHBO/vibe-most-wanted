@@ -866,3 +866,139 @@ export const cleanupReferralData = internalMutation({
     return { deletedReferrals, deletedStats, deletedClaims, hasMore };
   },
 });
+
+/**
+ * Remove FID from a profile (unlink Farcaster identity)
+ * Used to fix duplicate FID issues
+ * 🔒 INTERNAL ONLY
+ */
+export const unlinkFidFromProfile = internalMutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const normalizedAddress = args.address.toLowerCase();
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      console.log(`❌ Profile not found for address: ${normalizedAddress}`);
+      return { success: false, error: "Profile not found" };
+    }
+
+    const oldFid = profile.farcasterFid;
+    const oldUsername = profile.username;
+
+    // Remove FID fields
+    await ctx.db.patch(profile._id, {
+      farcasterFid: undefined,
+      fid: undefined,
+    });
+
+    console.log(`✅ Unlinked FID ${oldFid} from @${oldUsername} (${normalizedAddress})`);
+    return {
+      success: true,
+      unlinkedFid: oldFid,
+      username: oldUsername,
+      address: normalizedAddress
+    };
+  },
+});
+
+/**
+ * 🔗 MULTI-WALLET: Link an existing duplicate profile to the primary profile
+ * This is used to fix existing duplicate FID accounts
+ *
+ * @param primaryAddress - The main profile address (the one to keep)
+ * @param secondaryAddress - The duplicate profile address (to be linked)
+ *
+ * What this does:
+ * 1. Adds secondary address to addressLinks table
+ * 2. Adds secondary address to primary profile's linkedAddresses array
+ * 3. Removes FID from secondary profile (so it becomes orphaned)
+ *
+ * 🔒 INTERNAL ONLY
+ */
+export const linkDuplicateProfile = internalMutation({
+  args: {
+    primaryAddress: v.string(),
+    secondaryAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const primaryAddr = args.primaryAddress.toLowerCase();
+    const secondaryAddr = args.secondaryAddress.toLowerCase();
+
+    // Get primary profile
+    const primaryProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", primaryAddr))
+      .first();
+
+    if (!primaryProfile) {
+      console.log(`❌ Primary profile not found: ${primaryAddr}`);
+      return { success: false, error: "Primary profile not found" };
+    }
+
+    // Get secondary profile
+    const secondaryProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", secondaryAddr))
+      .first();
+
+    if (!secondaryProfile) {
+      console.log(`❌ Secondary profile not found: ${secondaryAddr}`);
+      return { success: false, error: "Secondary profile not found" };
+    }
+
+    const now = Date.now();
+
+    // Check if link already exists
+    const existingLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", secondaryAddr))
+      .first();
+
+    if (!existingLink) {
+      // Create the address link
+      await ctx.db.insert("addressLinks", {
+        address: secondaryAddr,
+        primaryAddress: primaryAddr,
+        linkedAt: now,
+      });
+      console.log(`🔗 Created addressLink: ${secondaryAddr} → ${primaryAddr}`);
+    } else {
+      console.log(`⚠️ Link already exists: ${secondaryAddr} → ${existingLink.primaryAddress}`);
+    }
+
+    // Update primary profile's linkedAddresses array
+    const currentLinked = primaryProfile.linkedAddresses || [];
+    if (!currentLinked.includes(secondaryAddr)) {
+      await ctx.db.patch(primaryProfile._id, {
+        linkedAddresses: [...currentLinked, secondaryAddr],
+        lastUpdated: now,
+      });
+      console.log(`📝 Added ${secondaryAddr} to @${primaryProfile.username}'s linkedAddresses`);
+    }
+
+    // Remove FID from secondary profile (orphan it)
+    if (secondaryProfile.farcasterFid) {
+      await ctx.db.patch(secondaryProfile._id, {
+        farcasterFid: undefined,
+        fid: undefined,
+      });
+      console.log(`🔓 Removed FID from @${secondaryProfile.username}`);
+    }
+
+    console.log(`✅ Linked @${secondaryProfile.username} (${secondaryAddr}) to @${primaryProfile.username} (${primaryAddr})`);
+    return {
+      success: true,
+      primaryUsername: primaryProfile.username,
+      secondaryUsername: secondaryProfile.username,
+      primaryAddress: primaryAddr,
+      secondaryAddress: secondaryAddr,
+    };
+  },
+});

@@ -9,12 +9,19 @@
 
 import { createPortal } from "react-dom";
 import { useEffect, useState } from "react";
-import { useLanguage } from "@/contexts/LanguageContext";
 import type { SupportedLanguage } from "@/lib/translations";
 
 interface SessionLockedModalProps {
   reason: string | null;
   onReconnect: () => void;
+}
+
+// Helper to get language from localStorage (since createPortal renders outside context)
+function getStoredLanguage(): SupportedLanguage {
+  if (typeof window === 'undefined') return 'en';
+  const stored = localStorage.getItem('vmw_language') as SupportedLanguage;
+  const validLanguages: SupportedLanguage[] = ['pt-BR', 'en', 'es', 'hi', 'ru', 'zh-CN', 'id', 'fr', 'ja'];
+  return stored && validLanguages.includes(stored) ? stored : 'en';
 }
 
 // Translations for session lock modal
@@ -145,12 +152,15 @@ export function SessionLockedModal({
   onReconnect,
 }: SessionLockedModalProps) {
   const [mounted, setMounted] = useState(false);
-  const { lang } = useLanguage();
-  const t = sessionLockTranslations[lang] || sessionLockTranslations['en'];
+  const [lang, setLang] = useState<SupportedLanguage>('en');
 
   useEffect(() => {
     setMounted(true);
+    // Get language from localStorage (createPortal renders outside LanguageProvider context)
+    setLang(getStoredLanguage());
   }, []);
+
+  const t = sessionLockTranslations[lang] || sessionLockTranslations['en'];
 
   if (!mounted) return null;
 

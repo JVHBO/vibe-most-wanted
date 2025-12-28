@@ -9,10 +9,12 @@ import { SOCIAL_QUESTS, type SocialQuest } from "@/lib/socialQuests";
 import { AudioManager } from "@/lib/audio-manager";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 
 export default function QuestsPage() {
   const router = useRouter();
-  const { address, isConnecting } = useAccount();
+  const { isConnecting } = useAccount();
+  const { primaryAddress: address } = usePrimaryAddress(); // 🔗 MULTI-WALLET: Use primary address
   const { t } = useLanguage();
 
   // Social Quests

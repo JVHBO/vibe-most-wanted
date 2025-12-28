@@ -524,38 +524,8 @@ export default function DexPage() {
           <h1 className="text-2xl font-display font-bold text-vintage-gold">
             {t.title}
           </h1>
-          {/* Language Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowLangDropdown(!showLangDropdown)}
-              className="flex items-center gap-2 bg-vintage-charcoal/80 px-3 py-1.5 rounded-lg border border-vintage-gold/30 hover:border-vintage-gold/60 transition"
-            >
-              <span className="text-lg">{currentLangOption.flag}</span>
-              <span className="text-sm text-vintage-gold">{currentLangOption.name}</span>
-              <svg className="w-4 h-4 text-vintage-gold/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {showLangDropdown && (
-              <div className="absolute right-0 mt-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg shadow-lg z-50 overflow-hidden">
-                {languageOptions.map((option) => (
-                  <button
-                    key={option.code}
-                    onClick={() => {
-                      setGlobalLang(option.code as any);
-                      setShowLangDropdown(false);
-                    }}
-                    className={`w-full flex items-center gap-2 px-4 py-2 hover:bg-vintage-gold/20 transition ${
-                      lang === option.code ? "bg-vintage-gold/10" : ""
-                    }`}
-                  >
-                    <span className="text-lg">{option.flag}</span>
-                    <span className="text-sm text-vintage-ice">{option.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* Spacer for layout balance */}
+          <div className="w-[60px]"></div>
         </div>
       </div>
 

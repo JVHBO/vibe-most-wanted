@@ -19,8 +19,8 @@ const generateSessionId = (): string => {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 };
 
-// Heartbeat interval: 30 seconds
-const HEARTBEAT_INTERVAL = 30 * 1000;
+// Heartbeat interval: 10 seconds (faster detection of session invalidation)
+const HEARTBEAT_INTERVAL = 10 * 1000;
 
 export interface SessionLockState {
   isSessionValid: boolean;
