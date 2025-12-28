@@ -61,6 +61,9 @@ import { useCachedDailyQuest } from "@/lib/convex-cache";
 // 📝 Development logger (silent in production)
 import { devLog, devError, devWarn } from "@/lib/utils/logger";
 import { openMarketplace } from "@/lib/marketplace-utils";
+// 🔒 Session Lock (prevents multi-device exploit)
+import { useSessionLock } from "@/lib/hooks/useSessionLock";
+import { SessionLockedModal } from "@/components/SessionLockedModal";
 // 🔊 Audio Manager
 import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
@@ -380,6 +383,9 @@ export default function TCGPage() {
 
   // 🚫 Ban check for exploiters
   const banCheck = useQuery(api.blacklist.checkBan, address ? { address } : "skip");
+
+  // 🔒 Session Lock (prevents multi-device exploit)
+  const { isSessionLocked, lockReason, forceReconnect } = useSessionLock();
 
   // Debug logging for address changes
   useEffect(() => {
@@ -3494,6 +3500,14 @@ export default function TCGPage() {
 
   return (
     <div className="min-h-screen game-background text-vintage-ice p-4 lg:p-6 overflow-x-hidden relative">
+      {/* 🔒 Session Lock Modal - blocks everything when another device takes over */}
+      {isSessionLocked && (
+        <SessionLockedModal
+          reason={lockReason}
+          onReconnect={forceReconnect}
+        />
+      )}
+
       {/* Card Loading Screen - shows while fetching NFTs */}
       <CardLoadingScreen
         isLoading={!skippedCardLoading && nfts.length === 0 && status !== 'loaded'}

@@ -54,6 +54,44 @@ export async function fetchNFTsFromAllCollections(owner: string): Promise<any[]>
 }
 
 /**
+ * 🔗 MULTI-WALLET: Busca NFTs de todas as wallets linkadas
+ * Agrega NFTs de todas as wallets em uma lista única
+ *
+ * @param addresses - Array de endereços (primary + linked)
+ */
+export async function fetchNFTsFromMultipleWallets(addresses: string[]): Promise<any[]> {
+  if (!addresses || addresses.length === 0) return [];
+
+  console.log(`🔗 [NFT] Fetching from ${addresses.length} wallet(s)...`);
+
+  const allNfts: any[] = [];
+
+  for (const address of addresses) {
+    try {
+      const nfts = await fetchNFTsFromAllCollections(address);
+      // Tag each NFT with the owner address for reference
+      const taggedNfts = nfts.map(nft => ({ ...nft, ownerAddress: address.toLowerCase() }));
+      allNfts.push(...taggedNfts);
+      console.log(`✓ Wallet ${address.slice(0,8)}...: ${nfts.length} NFTs`);
+    } catch (error) {
+      console.error(`✗ Wallet ${address.slice(0,8)}... failed:`, error);
+    }
+  }
+
+  // Deduplicate by collection + tokenId (same NFT might appear if transferred between linked wallets)
+  const seen = new Set<string>();
+  const deduplicated = allNfts.filter(nft => {
+    const key = `${nft.collection || 'default'}-${nft.tokenId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  console.log(`✅ [NFT] Total from all wallets: ${allNfts.length} → ${deduplicated.length} unique`);
+  return deduplicated;
+}
+
+/**
  * Processa NFTs raw em Cards utilizáveis
  * Já filtra cards unopened automaticamente
  * LÓGICA IDÊNTICA À HOME PAGE!

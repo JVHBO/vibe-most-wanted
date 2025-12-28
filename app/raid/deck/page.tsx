@@ -32,6 +32,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { usePlayerCards } from '@/contexts/PlayerCardsContext';
 import { sdk } from '@farcaster/miniapp-sdk';
 import Link from 'next/link';
+import { usePrimaryAddress } from '@/lib/hooks/usePrimaryAddress';
 
 type NFT = Card;
 
@@ -49,7 +50,8 @@ const COST_BY_RARITY: Record<string, number> = {
 
 export default function RaidDeckPage() {
   const router = useRouter();
-  const { address, isConnecting } = useAccount();
+  const { isConnecting } = useAccount();
+  const { primaryAddress: address } = usePrimaryAddress(); // 🔗 MULTI-WALLET: Use primary address
   const { t } = useLanguage();
   const { nfts: availableCards, isLoading: isLoadingCards } = usePlayerCards();
   const [soundEnabled] = useState<boolean>(true);

@@ -25,10 +25,12 @@ function PlayerRaidDeckView({
   playerAddress,
   playerUsername,
   onClose,
+  t,
 }: {
   playerAddress: string;
   playerUsername: string;
   onClose: () => void;
+  t: (key: string) => string;
 }) {
   const playerDeck = useQuery(api.raidBoss.getPlayerRaidDeckByAddress, {
     address: playerAddress,
@@ -45,7 +47,7 @@ function PlayerRaidDeckView({
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-display font-bold text-vintage-gold">
-            {playerUsername}'s Raid Team
+            {t('raidLeaderboardPlayerTeam').replace('{player}', playerUsername)}
           </h2>
           <button
             onClick={onClose}
@@ -58,32 +60,32 @@ function PlayerRaidDeckView({
         {playerDeck === undefined ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-4 border-vintage-gold border-t-transparent mx-auto mb-2"></div>
-            <p className="text-vintage-burnt-gold">Loading deck...</p>
+            <p className="text-vintage-burnt-gold">{t('raidLeaderboardLoadingDeck')}</p>
           </div>
         ) : playerDeck === null ? (
           <div className="text-center py-8">
-            <p className="text-vintage-burnt-gold text-lg">No raid deck set</p>
+            <p className="text-vintage-burnt-gold text-lg">{t('raidLeaderboardNoDeck')}</p>
             <p className="text-vintage-burnt-gold/70 text-sm mt-2">
-              This player hasn't configured their raid team yet.
+              {t('raidLeaderboardNoDeckDesc')}
             </p>
           </div>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 text-center">
-                <p className="text-vintage-gold text-xs font-bold">Deck Power</p>
+                <p className="text-vintage-gold text-xs font-bold">{t('raidLeaderboardDeckPower')}</p>
                 <p className="text-vintage-burnt-gold font-bold text-lg">
                   {playerDeck.deckPower?.toLocaleString() || 0}
                 </p>
               </div>
               <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 text-center">
-                <p className="text-amber-500 text-xs font-bold">Total Damage</p>
+                <p className="text-amber-500 text-xs font-bold">{t('raidLeaderboardTotalDamage')}</p>
                 <p className="text-vintage-burnt-gold font-bold text-lg">
                   {playerDeck.totalDamageDealt?.toLocaleString() || 0}
                 </p>
               </div>
               <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 text-center">
-                <p className="text-green-400 text-xs font-bold">Bosses Killed</p>
+                <p className="text-green-400 text-xs font-bold">{t('raidLeaderboardBossesKilled')}</p>
                 <p className="text-vintage-burnt-gold font-bold text-lg">
                   {playerDeck.bossesKilled || 0}
                 </p>
@@ -91,7 +93,7 @@ function PlayerRaidDeckView({
             </div>
 
             <h3 className="text-lg font-bold text-vintage-gold mb-3">
-              Attack Deck ({playerDeck.deck?.length || 0}/5)
+              {t('raidLeaderboardAttackDeck').replace('{count}', String(playerDeck.deck?.length || 0))}
             </h3>
             <div className="grid grid-cols-5 gap-2 mb-4">
               {playerDeck.deck?.map((card: any, index: number) => (
@@ -126,7 +128,7 @@ function PlayerRaidDeckView({
             {playerDeck.vibefidCard && (
               <>
                 <h3 className="text-lg font-bold text-purple-400 mb-3">
-                  VibeFID Card (Bonus Slot)
+                  {t('raidLeaderboardVibefidBonus')}
                 </h3>
                 <div className="flex justify-center mb-4">
                   <div className="relative w-24 bg-vintage-black rounded-lg overflow-hidden border-2 border-purple-500">
@@ -151,7 +153,7 @@ function PlayerRaidDeckView({
           onClick={onClose}
           className="w-full px-4 py-3 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-bold transition"
         >
-          Close
+          {t('raidBossClose')}
         </button>
       </div>
     </div>
@@ -215,7 +217,7 @@ function CurrentBossLeaderboard({
                 {currentBoss.name}
               </h2>
               <p className="text-vintage-burnt-gold text-sm">
-                {currentBoss.rarity} Boss • Currently Active
+                {currentBoss.rarity} Boss • {t('raidLeaderboardCurrentlyActive')}
               </p>
               <div className="mt-2">
                 <div className="w-full h-3 bg-vintage-black rounded-full overflow-hidden border border-vintage-gold/30">
@@ -232,17 +234,17 @@ function CurrentBossLeaderboard({
           </div>
           <div className="text-center">
             <p className="text-vintage-gold font-bold">
-              Reward Pool: {REWARD_POOL.toLocaleString()} $TESTVBMS
+              {t('raidLeaderboardRewardPool').replace('{amount}', REWARD_POOL.toLocaleString())}
             </p>
             <p className="text-vintage-burnt-gold text-xs mt-1">
-              Distributed proportionally based on damage dealt
+              {t('raidLeaderboardRewardPoolDesc')}
             </p>
           </div>
         </div>
 
         {/* Total Damage */}
         <div className="bg-vintage-charcoal/50 rounded-lg p-4 mb-6 text-center border border-vintage-gold/20">
-          <span className="text-vintage-burnt-gold text-sm">Total Community Damage</span>
+          <span className="text-vintage-burnt-gold text-sm">{t('raidLeaderboardCommunityDamage')}</span>
           <p className="text-vintage-gold font-bold text-2xl">
             {totalDamage.toLocaleString()}
           </p>
@@ -276,7 +278,7 @@ function CurrentBossLeaderboard({
                     <span className="text-vintage-burnt-gold font-bold">
                       {contributor.username}
                       {isUser && (
-                        <span className="text-vintage-gold ml-2">(You)</span>
+                        <span className="text-vintage-gold ml-2">{t('raidBossYou')}</span>
                       )}
                     </span>
                   </div>
@@ -287,12 +289,12 @@ function CurrentBossLeaderboard({
                     }}
                     className="px-3 py-1 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 text-sm rounded font-bold transition"
                   >
-                    View Team
+                    {t('raidLeaderboardViewTeam')}
                   </button>
                 </div>
 
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-vintage-burnt-gold text-sm">Damage</span>
+                  <span className="text-vintage-burnt-gold text-sm">{t('raidBossDamage')}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-vintage-gold font-bold">
                       {contributor.damageDealt.toLocaleString()}
@@ -309,7 +311,7 @@ function CurrentBossLeaderboard({
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-vintage-burnt-gold text-sm">Est. Reward</span>
+                  <span className="text-vintage-burnt-gold text-sm">{t('raidLeaderboardEstReward')}</span>
                   <span className="text-green-400 font-bold">
                     +{estimatedReward.toLocaleString()} coins
                   </span>
@@ -326,6 +328,7 @@ function CurrentBossLeaderboard({
           playerAddress={selectedPlayer.address}
           playerUsername={selectedPlayer.username}
           onClose={() => setSelectedPlayer(null)}
+          t={t}
         />
       )}
     </>
@@ -358,10 +361,10 @@ function HistoricalBossLeaderboard({
     return (
       <div className="max-w-md mx-auto bg-vintage-charcoal rounded-xl border-2 border-red-600 p-6 text-center">
         <h2 className="text-xl font-display font-bold text-red-400 mb-4">
-          No Leaderboard Found
+          {t('raidLeaderboardNoLeaderboard')}
         </h2>
         <p className="text-vintage-ice/70 mb-4">
-          This boss hasn't been defeated yet.
+          {t('raidLeaderboardNotDefeated')}
         </p>
       </div>
     );
@@ -407,30 +410,30 @@ function HistoricalBossLeaderboard({
                 {bossHistory.rarity}
               </span>
               <span className="text-vintage-burnt-gold/70 text-xs">
-                Boss #{bossIndex}
+                {t('raidLeaderboardBossNumber').replace('{number}', String(bossIndex))}
               </span>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
               <div>
-                <span className="text-vintage-burnt-gold/70">HP:</span>
+                <span className="text-vintage-burnt-gold/70">{t('raidLeaderboardHP')}:</span>
                 <span className="text-vintage-gold font-bold ml-1">
                   {bossHistory.maxHp.toLocaleString()}
                 </span>
               </div>
               <div>
-                <span className="text-vintage-burnt-gold/70">Duration:</span>
+                <span className="text-vintage-burnt-gold/70">{t('raidLeaderboardDuration')}:</span>
                 <span className="text-amber-500 font-bold ml-1">
                   {formatDuration(bossHistory.duration)}
                 </span>
               </div>
               <div>
-                <span className="text-vintage-burnt-gold/70">Players:</span>
+                <span className="text-vintage-burnt-gold/70">{t('raidLeaderboardPlayers')}:</span>
                 <span className="text-vintage-gold font-bold ml-1">
                   {bossHistory.totalPlayers}
                 </span>
               </div>
               <div>
-                <span className="text-vintage-burnt-gold/70">Attacks:</span>
+                <span className="text-vintage-burnt-gold/70">{t('raidLeaderboardAttacks')}:</span>
                 <span className="text-green-400 font-bold ml-1">
                   {bossHistory.totalAttacks.toLocaleString()}
                 </span>
@@ -440,7 +443,7 @@ function HistoricalBossLeaderboard({
         </div>
 
         <div className="mt-4 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 text-center">
-          <p className="text-vintage-gold font-bold text-sm">DEFEATED</p>
+          <p className="text-vintage-gold font-bold text-sm">{t('raidLeaderboardDefeated')}</p>
           <p className="text-vintage-burnt-gold/70 text-xs">
             {new Date(bossHistory.defeatedAt).toLocaleString()}
           </p>
@@ -451,23 +454,23 @@ function HistoricalBossLeaderboard({
       {userContribution && (
         <div className="p-4 bg-vintage-gold/10 border-b-2 border-vintage-gold/30">
           <h3 className="text-vintage-gold font-display font-bold mb-3 text-center">
-            Your Performance
+            {t('raidLeaderboardYourPerformance')}
           </h3>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="bg-vintage-charcoal/50 rounded-lg p-3">
-              <p className="text-vintage-burnt-gold/70 text-xs mb-1">Rank</p>
+              <p className="text-vintage-burnt-gold/70 text-xs mb-1">{t('raidLeaderboardRank')}</p>
               <p className="text-vintage-gold font-bold text-xl">
                 {userRank === 0 ? '🥇' : userRank === 1 ? '🥈' : userRank === 2 ? '🥉' : `#${userRank + 1}`}
               </p>
             </div>
             <div className="bg-vintage-charcoal/50 rounded-lg p-3">
-              <p className="text-vintage-burnt-gold/70 text-xs mb-1">Damage</p>
+              <p className="text-vintage-burnt-gold/70 text-xs mb-1">{t('raidBossDamage')}</p>
               <p className="text-vintage-gold font-bold text-lg">
                 {userContribution.damage.toLocaleString()}
               </p>
             </div>
             <div className="bg-vintage-charcoal/50 rounded-lg p-3">
-              <p className="text-vintage-burnt-gold/70 text-xs mb-1">Reward</p>
+              <p className="text-vintage-burnt-gold/70 text-xs mb-1">{t('raidLeaderboardReward')}</p>
               <p className="text-green-400 font-bold text-lg">
                 +{userContribution.reward}
               </p>
@@ -479,7 +482,7 @@ function HistoricalBossLeaderboard({
       {/* Leaderboard */}
       <div className="p-4">
         <h3 className="text-lg font-display font-bold text-vintage-gold mb-4 text-center">
-          Final Leaderboard
+          {t('raidLeaderboardFinalLeaderboard')}
         </h3>
 
         <div className="space-y-3">
@@ -517,14 +520,14 @@ function HistoricalBossLeaderboard({
                     <span className="text-vintage-burnt-gold font-bold">
                       {contributor.username}
                       {isUser && (
-                        <span className="text-vintage-gold ml-1 text-sm">(You)</span>
+                        <span className="text-vintage-gold ml-1 text-sm">{t('raidBossYou')}</span>
                       )}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-vintage-burnt-gold/70 text-xs">Damage</span>
+                  <span className="text-vintage-burnt-gold/70 text-xs">{t('raidBossDamage')}</span>
                   <div className="flex items-center gap-2">
                     <span className="text-vintage-gold font-bold">
                       {contributor.damage.toLocaleString()}
@@ -543,7 +546,7 @@ function HistoricalBossLeaderboard({
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-vintage-burnt-gold/70 text-xs">Reward</span>
+                  <span className="text-vintage-burnt-gold/70 text-xs">{t('raidLeaderboardReward')}</span>
                   <span className="text-green-400 font-bold">
                     +{contributor.reward.toLocaleString()} $TESTVBMS
                   </span>
@@ -555,7 +558,7 @@ function HistoricalBossLeaderboard({
 
         <div className="mt-4 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 text-center">
           <p className="text-vintage-gold font-bold">
-            Total Rewards Distributed: {bossHistory.topContributors.reduce((sum: number, c: { reward: number }) => sum + c.reward, 0).toLocaleString()} $TESTVBMS
+            {t('raidLeaderboardTotalRewards').replace('{amount}', bossHistory.topContributors.reduce((sum: number, c: { reward: number }) => sum + c.reward, 0).toLocaleString())}
           </p>
         </div>
       </div>
@@ -596,16 +599,16 @@ function LeaderboardContent() {
           <div className="text-center">
             <div className="text-6xl mb-4">🏆</div>
             <h1 className="text-2xl font-display font-bold text-vintage-gold mb-4">
-              Raid Leaderboard
+              {t('raidLeaderboardTitle')}
             </h1>
             <p className="text-vintage-burnt-gold text-lg mb-6">
-              Connect your wallet to view leaderboard
+              {t('raidLeaderboardConnectWallet')}
             </p>
             <Link
               href="/"
               className="inline-block px-6 py-3 bg-vintage-gold text-vintage-black rounded-lg font-bold hover:bg-vintage-ice transition-colors"
             >
-              Go to Home
+              {t('raidLeaderboardGoHome')}
             </Link>
           </div>
         </div>
@@ -627,10 +630,10 @@ function LeaderboardContent() {
             }}
             className="px-4 py-2 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-bold text-sm transition"
           >
-            ← Back
+            {t('raidLeaderboardBack')}
           </button>
           <h1 className="text-xl md:text-2xl font-display font-bold text-vintage-gold">
-            {isCurrentBoss ? 'Leaderboard' : `Boss #${bossIndex}`}
+            {isCurrentBoss ? t('raidLeaderboard') : t('raidLeaderboardBossNumber').replace('{number}', String(bossIndex))}
           </h1>
           <div className="w-24" />
         </div>
