@@ -95,6 +95,33 @@ export default function FidCardPage() {
   const [isRefreshingMetadata, setIsRefreshingMetadata] = useState(false);
   const [metadataRefreshed, setMetadataRefreshed] = useState(false);
 
+  // Share with language state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareLanguage, setShareLanguage] = useState(lang);
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false);
+
+  // Handle share with selected language
+  const handleShareWithLanguage = async (selectedLang: typeof lang) => {
+    if (!card) return;
+
+    // Close modal immediately - no generation needed, API does it dynamically!
+    setShowShareModal(false);
+
+    // Use share page with lang param - API generates image on-the-fly with Edge caching
+    const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}?lang=${selectedLang}&v=${Date.now()}`;
+
+    const rarityEmojiMap: Record<string, string> = {
+      'Mythic': '👑', 'Legendary': '⚡', 'Epic': '💎', 'Rare': '🔥', 'Common': '⭐'
+    };
+    const rarityEmoji = rarityEmojiMap[card.rarity] || '🎴';
+    const foilEmoji = currentTraits?.foil === 'Prize' ? '✨' : currentTraits?.foil === 'Standard' ? '💫' : '';
+    const foilText = currentTraits?.foil !== 'None' ? ` ${currentTraits?.foil} Foil` : '';
+    const castText = `🃏 Just minted my VibeFID!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${correctPower} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn coins\n\n🎮 Mint yours! @jvhbo`;
+
+    // Embed share page with lang param (miniapp button + dynamic image generation)
+    window.open(`https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`, '_blank');
+  };
+
   // Refresh OpenSea metadata
   const handleRefreshMetadata = async () => {
     if (!card) return;
@@ -519,36 +546,18 @@ export default function FidCardPage() {
               {/* Action Buttons */}
               <div className="mt-6 w-full max-w-md space-y-3">
                 <div className="flex gap-4">
-                  {/* Share to Farcaster */}
-                  <a
-                    href={(() => {
-                      const shareUrl = `https://www.vibemostwanted.xyz/share/fid/${card.fid}`;
-
-                      // Build dynamic share text with emojis
-                      const rarityEmojiMap: Record<string, string> = {
-                        'Mythic': '👑',
-                        'Legendary': '⚡',
-                        'Epic': '💎',
-                        'Rare': '🔥',
-                        'Common': '⭐'
-                      };
-                      const rarityEmoji = rarityEmojiMap[card.rarity] || '🎴';
-
-                      const foilEmoji = currentTraits?.foil === 'Prize' ? '✨' : currentTraits?.foil === 'Standard' ? '💫' : '';
-                      const foilText = currentTraits?.foil !== 'None' ? ` ${currentTraits?.foil} Foil` : '';
-
-                      const castText = `🃏 Just minted my VibeFID!\n\n${rarityEmoji} ${card.rarity}${foilText}\n⚡ ${correctPower} Power ${foilEmoji}\n🎯 FID #${card.fid}\n\n🎲 Play Poker Battles\n🗡️ Fight in PvE\n💰 Earn coins\n\n🎮 Mint yours! @jvhbo`;
-
-                      return `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                    })()}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  {/* Share with Language Selection */}
+                  <button
+                    onClick={() => {
+                      AudioManager.buttonClick();
+                      setShowShareModal(true);
+                    }}
                     className="flex-1 px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
                     <span className="text-xl">🔮</span>
                     <span className="hidden sm:inline">Share to Farcaster</span>
                     <span className="sm:hidden">Share</span>
-                  </a>
+                  </button>
 
                   {/* View on OpenSea */}
                   <a
@@ -918,6 +927,71 @@ export default function FidCardPage() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Share with Language Modal */}
+        {showShareModal && card && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 p-6 max-w-sm w-full">
+              <h2 className="text-xl font-bold text-vintage-gold mb-4 text-center">
+                📤 {t.shareToFarcaster || 'Share to Farcaster'}
+              </h2>
+
+              <p className="text-vintage-ice text-sm mb-4 text-center">
+                {t.selectLanguageForShare || 'Select language for share image:'}
+              </p>
+
+              {/* Language Options */}
+              <div className="grid grid-cols-3 gap-2 mb-6">
+                {[
+                  { code: 'en', flag: '🇺🇸', name: 'English' },
+                  { code: 'pt-BR', flag: '🇧🇷', name: 'Português' },
+                  { code: 'es', flag: '🇪🇸', name: 'Español' },
+                  { code: 'ja', flag: '🇯🇵', name: '日本語' },
+                  { code: 'zh-CN', flag: '🇨🇳', name: '中文' },
+                  { code: 'ru', flag: '🇷🇺', name: 'Русский' },
+                  { code: 'hi', flag: '🇮🇳', name: 'हिन्दी' },
+                  { code: 'fr', flag: '🇫🇷', name: 'Français' },
+                  { code: 'id', flag: '🇮🇩', name: 'Bahasa' },
+                ].map((langOption) => (
+                  <button
+                    key={langOption.code}
+                    onClick={() => {
+                      AudioManager.buttonClick();
+                      handleShareWithLanguage(langOption.code as typeof lang);
+                    }}
+                    disabled={isGeneratingShare}
+                    className={`p-3 rounded-lg border-2 transition-all ${
+                      isGeneratingShare
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:border-vintage-gold hover:bg-vintage-gold/10'
+                    } border-vintage-gold/30 bg-vintage-black/50`}
+                  >
+                    <span className="text-2xl block mb-1">{langOption.flag}</span>
+                    <span className="text-vintage-gold text-xs font-semibold">{langOption.name}</span>
+                  </button>
+                ))}
+              </div>
+
+              {isGeneratingShare && (
+                <div className="text-center mb-4">
+                  <p className="text-vintage-gold animate-pulse">⏳ Generating image...</p>
+                </div>
+              )}
+
+              {/* Cancel Button */}
+              <button
+                onClick={() => {
+                  AudioManager.buttonClick();
+                  setShowShareModal(false);
+                }}
+                disabled={isGeneratingShare}
+                className="w-full px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10 transition-colors disabled:opacity-50"
+              >
+                {t.cancel || 'Cancel'}
+              </button>
             </div>
           </div>
         )}

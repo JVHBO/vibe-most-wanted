@@ -658,7 +658,7 @@ export default function FidPage() {
       // Download share image
       const link = document.createElement('a');
       link.href = shareImageDataUrl;
-      link.download = `vibefid-${userData.fid}.png`;
+      link.download = `vibefid-${userData.fid}-${currentLang}.png`;
       link.click();
     } catch (err: any) {
       console.error('Failed to generate share image:', err);
@@ -1035,6 +1035,7 @@ export default function FidPage() {
               >
                 📊 {t.checkNeynarScore}
               </button>
+
             </div>
           </div>
         )}

@@ -589,8 +589,9 @@ export const getRecentFarcasterCards = query({
 export const updateCardImages = mutation({
   args: {
     fid: v.number(),
-    imageUrl: v.string(), // Video URL (MP4/WebM)
+    imageUrl: v.optional(v.string()), // Video URL (MP4/WebM)
     cardImageUrl: v.optional(v.string()), // Static PNG
+    shareImageUrl: v.optional(v.string()), // Share image with card + criminal text
   },
   handler: async (ctx, args) => {
     const card = await ctx.db
@@ -602,27 +603,33 @@ export const updateCardImages = mutation({
       throw new Error(`No card found for FID ${args.fid}`);
     }
 
-    const updates: Record<string, any> = {
-      imageUrl: args.imageUrl,
-    };
+    const updates: Record<string, any> = {};
+
+    if (args.imageUrl) {
+      updates.imageUrl = args.imageUrl;
+    }
 
     if (args.cardImageUrl) {
       updates.cardImageUrl = args.cardImageUrl;
     }
 
+    if (args.shareImageUrl) {
+      updates.shareImageUrl = args.shareImageUrl;
+    }
+
     await ctx.db.patch(card._id, updates);
 
     console.log(`✅ Card images updated for FID ${args.fid}`);
-    console.log(`   Video: ${args.imageUrl}`);
-    if (args.cardImageUrl) {
-      console.log(`   Static: ${args.cardImageUrl}`);
-    }
+    if (args.imageUrl) console.log(`   Video: ${args.imageUrl}`);
+    if (args.cardImageUrl) console.log(`   Static: ${args.cardImageUrl}`);
+    if (args.shareImageUrl) console.log(`   Share: ${args.shareImageUrl}`);
 
     return {
       success: true,
       fid: args.fid,
       imageUrl: args.imageUrl,
       cardImageUrl: args.cardImageUrl,
+      shareImageUrl: args.shareImageUrl,
     };
   },
 });

@@ -1500,9 +1500,42 @@ export default function TCGPage() {
     try {
       setStatus("fetching");
       setErrorMsg(null);
+
+      // 🔗 MULTI-WALLET: Get all linked addresses first
+      let allAddresses = [address];
+      try {
+        const linkedData = await convex.query(api.profiles.getLinkedAddresses, { address });
+        if (linkedData?.primary) {
+          // Build array of all addresses: primary + linked
+          allAddresses = [linkedData.primary, ...(linkedData.linked || [])];
+          // Remove duplicates (case-insensitive) and ensure current address is included
+          const seen = new Set<string>();
+          allAddresses = allAddresses.filter(addr => {
+            const lower = addr.toLowerCase();
+            if (seen.has(lower)) return false;
+            seen.add(lower);
+            return true;
+          });
+          if (!allAddresses.some(a => a.toLowerCase() === address.toLowerCase())) {
+            allAddresses.push(address);
+          }
+        }
+        devLog(`🔗 [Page] Fetching from ${allAddresses.length} wallet(s):`, allAddresses.map(a => a.slice(0,8)));
+      } catch (error) {
+        devWarn('⚠️ Failed to get linked addresses, using current only:', error);
+      }
+
+      // Fetch NFTs from all linked wallets
       devLog('📡 Fetching NFTs from all enabled collections...');
-      const raw = await fetchNFTsFromAllCollections(address);
-      devLog('✓ Received NFTs from all collections:', raw.length);
+      let raw: any[] = [];
+      for (const walletAddr of allAddresses) {
+        const walletNfts = await fetchNFTsFromAllCollections(walletAddr);
+        // Tag each NFT with owner address
+        const tagged = walletNfts.map(nft => ({ ...nft, ownerAddress: walletAddr.toLowerCase() }));
+        raw.push(...tagged);
+        devLog(`✓ Wallet ${walletAddr.slice(0,8)}...: ${walletNfts.length} NFTs`);
+      }
+      devLog('✓ Received NFTs from all wallets:', raw.length);
 
       const METADATA_BATCH_SIZE = 50;
       const enrichedRaw = [];
