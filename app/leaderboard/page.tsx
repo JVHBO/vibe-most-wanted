@@ -244,7 +244,7 @@ export default function LeaderboardPage() {
     // Check against primary and linked addresses
     if (linkedAddresses) {
       if (linkedAddresses.primary?.toLowerCase() === normalizedProfile) return true;
-      if (linkedAddresses.linked?.some(a => a.toLowerCase() === normalizedProfile)) return true;
+      if (linkedAddresses.linked?.some((a: string) => a.toLowerCase() === normalizedProfile)) return true;
     }
 
     return false;
