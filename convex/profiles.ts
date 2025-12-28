@@ -709,26 +709,33 @@ export const getLinkedAddresses = query({
 
     const normalizedAddress = normalizeAddress(address);
 
-    // First check if this is a primary address
-    let profile = await ctx.db
-      .query("profiles")
+    // 🔗 ALWAYS check addressLinks FIRST - this handles linked wallets correctly
+    // even if an orphan profile exists for the secondary wallet
+    const link = await ctx.db
+      .query("addressLinks")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
-    // If not found, check if it's a linked address
-    if (!profile) {
-      const link = await ctx.db
-        .query("addressLinks")
-        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+    if (link) {
+      // This is a linked wallet - get the primary profile
+      const primaryProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", link.primaryAddress))
         .first();
 
-      if (link) {
-        profile = await ctx.db
-          .query("profiles")
-          .withIndex("by_address", (q) => q.eq("address", link.primaryAddress))
-          .first();
+      if (primaryProfile) {
+        return {
+          primary: primaryProfile.address,
+          linked: primaryProfile.linkedAddresses || [],
+        };
       }
     }
+
+    // Not a linked wallet - check if this address is a primary
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
 
     if (!profile) {
       return { primary: null, linked: [] };

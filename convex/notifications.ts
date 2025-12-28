@@ -555,7 +555,9 @@ export const sendFeaturedCastNotification = internalAction({
       const body = winnerUsername
         ? `@${winnerUsername} won the auction! @${castAuthor} is now WANTED! Interact to earn VBMS 💰`
         : `@${castAuthor} is now WANTED! Interact to earn VBMS tokens! 💰`;
-      const targetUrl = warpcastUrl || "https://www.vibemostwanted.xyz";
+      // 🔧 FIX: MUST use app domain for targetUrl - Warpcast API requires it to match registered domain
+      // The warpcastUrl is the cast URL (farcaster.xyz) which causes "targetUrl does not match domain" error
+      const targetUrl = "https://www.vibemostwanted.xyz";
 
       // 1️⃣ NEYNAR TOKENS → Send via Neynar API (Base App)
       if (neynarTokens.length > 0 && process.env.NEYNAR_API_KEY) {
