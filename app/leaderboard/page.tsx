@@ -226,6 +226,30 @@ export default function LeaderboardPage() {
   const recordAttackResult = useMutation(api.economy.recordAttackResult);
   const [isClaimingWeeklyReward, setIsClaimingWeeklyReward] = useState(false);
 
+  // 🔗 LINKED WALLET SUPPORT: Get all addresses belonging to current user
+  const linkedAddresses = useQuery(
+    api.profiles.getLinkedAddresses,
+    address ? { address } : "skip"
+  );
+
+  // Helper to check if a profile address belongs to current user (including linked wallets)
+  const isCurrentUser = useCallback((profileAddress: string) => {
+    if (!address || !profileAddress) return false;
+    const normalizedProfile = profileAddress.toLowerCase();
+    const normalizedAddress = address.toLowerCase();
+
+    // Direct match
+    if (normalizedProfile === normalizedAddress) return true;
+
+    // Check against primary and linked addresses
+    if (linkedAddresses) {
+      if (linkedAddresses.primary?.toLowerCase() === normalizedProfile) return true;
+      if (linkedAddresses.linked?.some(a => a.toLowerCase() === normalizedProfile)) return true;
+    }
+
+    return false;
+  }, [address, linkedAddresses]);
+
   // Load leaderboard
   useEffect(() => {
     const loadLeaderboard = async () => {
@@ -381,12 +405,12 @@ export default function LeaderboardPage() {
     return `${hours}h ${minutes}m`;
   };
 
-  // Get user's rank
+  // Get user's rank (using linked wallet check)
   const userRank = useMemo(() => {
     if (!address || !filteredLeaderboard.length) return null;
-    const idx = filteredLeaderboard.findIndex(p => p.address.toLowerCase() === address.toLowerCase());
+    const idx = filteredLeaderboard.findIndex(p => isCurrentUser(p.address));
     return idx >= 0 ? idx + 1 : null;
-  }, [address, filteredLeaderboard]);
+  }, [address, filteredLeaderboard, isCurrentUser]);
 
   // Top 3 for podium
   const top3 = filteredLeaderboard.slice(0, 3);
@@ -531,7 +555,7 @@ export default function LeaderboardPage() {
                       </Link>
                       <p className="text-sm font-bold text-purple-400">{(top3[1].stats?.aura ?? 500).toLocaleString()}</p>
                       <p className="text-[10px] text-vintage-burnt-gold mb-2">{(top3[1].stats?.totalPower || 0).toLocaleString()} PWR</p>
-                      {top3[1].address.toLowerCase() !== address?.toLowerCase() && (
+                      {!isCurrentUser(top3[1].address) && (
                         <button
                           onClick={() => handleAttackClick(top3[1])}
                           disabled={attacksRemaining <= 0 || !top3[1].hasDefenseDeck || isLoadingCards || nfts.length === 0}
@@ -567,7 +591,7 @@ export default function LeaderboardPage() {
                       </Link>
                       <p className="text-lg md:text-xl font-bold text-purple-400">{(top3[0].stats?.aura ?? 500).toLocaleString()}</p>
                       <p className="text-xs text-vintage-burnt-gold mb-2">{(top3[0].stats?.totalPower || 0).toLocaleString()} PWR</p>
-                      {top3[0].address.toLowerCase() !== address?.toLowerCase() && (
+                      {!isCurrentUser(top3[0].address) && (
                         <button
                           onClick={() => handleAttackClick(top3[0])}
                           disabled={attacksRemaining <= 0 || !top3[0].hasDefenseDeck || isLoadingCards || nfts.length === 0}
@@ -603,7 +627,7 @@ export default function LeaderboardPage() {
                       </Link>
                       <p className="text-sm font-bold text-purple-400">{(top3[2].stats?.aura ?? 500).toLocaleString()}</p>
                       <p className="text-[10px] text-vintage-burnt-gold mb-2">{(top3[2].stats?.totalPower || 0).toLocaleString()} PWR</p>
-                      {top3[2].address.toLowerCase() !== address?.toLowerCase() && (
+                      {!isCurrentUser(top3[2].address) && (
                         <button
                           onClick={() => handleAttackClick(top3[2])}
                           disabled={attacksRemaining <= 0 || !top3[2].hasDefenseDeck || isLoadingCards || nfts.length === 0}
@@ -632,7 +656,7 @@ export default function LeaderboardPage() {
                       .slice((currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE, currentLeaderboardPage * LEADERBOARD_PER_PAGE)
                       .map((profile, sliceIndex) => {
                         const rank = 4 + (currentLeaderboardPage - 1) * LEADERBOARD_PER_PAGE + sliceIndex;
-                        const isYou = profile.address.toLowerCase() === address?.toLowerCase();
+                        const isYou = isCurrentUser(profile.address);
                         return (
                           <div
                             key={profile.address}

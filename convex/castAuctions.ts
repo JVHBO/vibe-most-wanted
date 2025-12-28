@@ -1,11 +1,28 @@
 import { v } from "convex/values";
-import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
+import { mutation, query, internalQuery, internalMutation, MutationCtx, QueryCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FEATURED CAST AUCTIONS - Bid VBMS to have casts featured
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// 🔗 LINKED WALLET SUPPORT: Resolve linked address to primary
+async function resolvePrimaryAddress(ctx: QueryCtx | MutationCtx, address: string): Promise<string> {
+  const normalizedAddress = address.toLowerCase();
+
+  // Check if this address is linked to another primary address
+  const link = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+    .first();
+
+  if (link) {
+    return link.primaryAddress;
+  }
+
+  return normalizedAddress;
+}
 
 // Configuration
 const AUCTION_RESET_HOUR_UTC = 20; // 20:00 UTC = 17:00 Brasília - DAILY RESET TIME
@@ -347,7 +364,8 @@ export const placeBid = mutation({
     castText: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const normalizedAddress = args.address.toLowerCase();
+    // 🔗 LINKED WALLET FIX: Always resolve to primary address
+    const normalizedAddress = await resolvePrimaryAddress(ctx, args.address);
 
     // 1. Validate slot number
     if (args.slotNumber < 0 || args.slotNumber >= TOTAL_SLOTS) {
@@ -562,7 +580,8 @@ export const placeBidWithVBMS = mutation({
     castText: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const normalizedAddress = args.address.toLowerCase();
+    // 🔗 LINKED WALLET FIX: Always resolve to primary address
+    const normalizedAddress = await resolvePrimaryAddress(ctx, args.address);
     const now = Date.now();
 
     // 1. Check TX hash not already used
@@ -761,7 +780,8 @@ export const addToPool = mutation({
     txHash: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const normalizedAddress = args.address.toLowerCase();
+    // 🔗 LINKED WALLET FIX: Always resolve to primary address
+    const normalizedAddress = await resolvePrimaryAddress(ctx, args.address);
     const now = Date.now();
 
     // 1. Get the auction
