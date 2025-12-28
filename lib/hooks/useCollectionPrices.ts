@@ -72,7 +72,7 @@ const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
 };
 
 const TICKER_COLLECTIONS: { id: string; displayName: string; emoji: string }[] = [
-  { id: 'vibe', displayName: '$VBMS', emoji: '🎭' },
+  { id: 'vibe', displayName: 'Vibe Most Wanted', emoji: '🎭' },
   { id: 'gmvbrs', displayName: 'GM VBRS', emoji: '🌅' },
   { id: 'viberuto', displayName: 'Viberuto', emoji: '🍥' },
   { id: 'meowverse', displayName: 'Meowverse', emoji: '🐱' },

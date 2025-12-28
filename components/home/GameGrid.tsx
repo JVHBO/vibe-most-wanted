@@ -4,7 +4,7 @@ import Link from "next/link";
 import { AudioManager } from "@/lib/audio-manager";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-type GameMode = 'poker-cpu' | 'poker-pvp' | 'battle-ai' | 'battle-pvp' | 'mecha' | 'raid';
+type GameMode = 'poker-cpu' | 'battle-ai' | 'mecha' | 'raid';
 
 interface GameGridProps {
   soundEnabled: boolean;
@@ -54,21 +54,12 @@ const SkullIcon = () => (
 );
 
 // Game mode configurations with translation keys
-const gameModeConfigs: { id: GameMode; icon: React.ReactNode; labelKey: string; sublabelKey: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string }[] = [
+const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string }[] = [
   {
     id: 'poker-cpu',
     icon: <SpadeIcon />,
-    labelKey: 'gamePoker',
-    sublabelKey: 'homeVsCpu',
-    cards: 10,
-    iconColor: 'text-vintage-gold',
-    accentColor: 'hover:border-vintage-gold/50',
-  },
-  {
-    id: 'poker-pvp',
-    icon: <DiamondIcon />,
-    labelKey: 'gamePoker',
-    sublabelKey: 'homeVsPlayer',
+    label: 'Battle Poker',
+    sublabel: 'vs CPU',
     cards: 10,
     iconColor: 'text-vintage-gold',
     accentColor: 'hover:border-vintage-gold/50',
@@ -76,26 +67,17 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; labelKey: string; 
   {
     id: 'battle-ai',
     icon: <RobotIcon />,
-    labelKey: 'gameBattle',
-    sublabelKey: 'homeVsAI',
+    label: 'Battle Auto',
+    sublabel: '',
     cards: 5,
     iconColor: 'text-cyan-400',
     accentColor: 'hover:border-cyan-400/50',
   },
   {
-    id: 'battle-pvp',
-    icon: <VsPlayersIcon />,
-    labelKey: 'gameBattle',
-    sublabelKey: 'homeVsPlayer',
-    cards: 5,
-    iconColor: 'text-orange-400',
-    accentColor: 'hover:border-orange-400/50',
-  },
-  {
     id: 'mecha',
     icon: <MechaIcon />,
-    labelKey: 'gameMecha',
-    sublabelKey: 'homeBetVbms',
+    label: 'Mecha Arena',
+    sublabel: '',
     cards: null,
     iconColor: 'text-green-400',
     accentColor: 'hover:border-green-400/50',
@@ -103,8 +85,8 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; labelKey: string; 
   {
     id: 'raid',
     icon: <SkullIcon />,
-    labelKey: 'gameRaid',
-    sublabelKey: 'homeBoss',
+    label: 'Raid Boss',
+    sublabel: '',
     cards: 'home5Plus1Cards',
     iconColor: 'text-red-400',
     accentColor: 'hover:border-red-400/50',
@@ -123,18 +105,20 @@ export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
   };
 
   return (
-    <div className="grid grid-cols-3 gap-2 px-1">
+    <div className="grid grid-cols-2 gap-2 px-1">
       {gameModeConfigs.map((mode) => {
         const buttonContent = (
           <>
             <div className={mode.iconColor}>{mode.icon}</div>
             <div className="flex flex-col items-center">
               <span className="text-vintage-gold font-display font-bold text-xs leading-tight">
-                {t(mode.labelKey as any)}
+                {mode.label}
               </span>
-              <span className="text-vintage-burnt-gold text-[10px] font-modern leading-tight">
-                {t(mode.sublabelKey as any)}
-              </span>
+              {mode.sublabel && (
+                <span className="text-vintage-burnt-gold text-[10px] font-modern leading-tight">
+                  {mode.sublabel}
+                </span>
+              )}
               {mode.cards !== null && (
                 <span className="text-vintage-burnt-gold/70 text-[9px] font-modern">
                   {typeof mode.cards === 'string' ? t(mode.cards as any) : `${mode.cards} ${t('gameCards')}`}
