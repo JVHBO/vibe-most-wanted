@@ -46,6 +46,7 @@ import { PokerBattleTable } from "@/components/PokerBattleTable";
 import { PokerMatchmaking } from "@/components/PokerMatchmaking";
 // RaidBossModal moved to /raid page
 import { PriceTicker } from "@/components/PriceTicker";
+import { AllCollectionsButton } from "@/components/AllCollectionsButton";
 import ShameList from "@/components/ShameList";
 import BannedScreen from "@/components/BannedScreen";
 import { SocialQuestsPanel } from "@/components/SocialQuestsPanel";
@@ -5251,8 +5252,9 @@ export default function TCGPage() {
 
           {/* Price Ticker - Miniapp only */}
           {isInFarcaster && (
-            <div className="flex justify-center mb-2 px-2">
+            <div className="flex flex-col items-center mb-2 px-2">
               <PriceTicker />
+              <AllCollectionsButton className="mt-1" />
             </div>
           )}
 
