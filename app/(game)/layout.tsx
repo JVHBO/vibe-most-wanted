@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Vibe Most Wanted - Game",
+  title: "$VBMS - Game",
   description: "NFT Card Battle Game",
 };
 

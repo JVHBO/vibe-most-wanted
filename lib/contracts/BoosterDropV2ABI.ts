@@ -1,6 +1,6 @@
 /**
  * BoosterDropV2 ABI
- * Contract: 0xf14c1dc8ce5fe65413379f76c43fa1460c31e728 (Vibe Most Wanted)
+ * Contract: 0xf14c1dc8ce5fe65413379f76c43fa1460c31e728 ($VBMS)
  */
 
 export const BOOSTER_DROP_V2_ABI = [

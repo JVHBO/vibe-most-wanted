@@ -27,14 +27,14 @@ export const CHANNEL_IDS = {
 
 // Social Quests Pool - Organized by creator with their channels
 export const SOCIAL_QUESTS: SocialQuest[] = [
-  // Vibe Most Wanted
+  // $VBMS
   {
     id: 'follow_jvhbo',
     type: 'follow',
     target: 'jvhbo',
     targetFid: 214746,
     displayName: 'Follow @jvhbo',
-    description: 'Follow Vibe Most Wanted creator',
+    description: 'Follow $VBMS creator',
     reward: 500,
     icon: '',
     url: 'https://warpcast.com/jvhbo',
@@ -45,7 +45,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     type: 'channel',
     target: 'vibe-most-wanted',
     displayName: 'Join /vibemostwanted',
-    description: 'Join the Vibe Most Wanted channel',
+    description: 'Join the $VBMS channel',
     reward: 500,
     icon: '',
     url: 'https://warpcast.com/~/channel/vibe-most-wanted',

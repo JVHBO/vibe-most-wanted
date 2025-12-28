@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'VibeFID Card - VIBE Most Wanted';
+export const alt = 'VibeFID Card - $VBMS';
 export const size = {
   width: 1200,
   height: 800,
@@ -200,7 +200,7 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
               {cardData.rarity}
             </div>
             <div style={{ color: '#FFD700', fontSize: 16, fontWeight: 700 }}>
-              VIBE MOST WANTED
+              $VBMS
             </div>
           </div>
         ),
@@ -225,7 +225,7 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
           }}
         >
           <div style={{ fontSize: '32px', fontWeight: 900 }}>
-            VIBE MOST WANTED
+            $VBMS
           </div>
           <div style={{ fontSize: '24px' }}>
             FID #{fid}
@@ -257,7 +257,7 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
             fontFamily: 'monospace',
           }}
         >
-          VIBE MOST WANTED
+          $VBMS
         </div>
       ),
       { ...size }

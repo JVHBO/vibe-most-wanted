@@ -7,7 +7,7 @@ export const docsTranslations = {
     // Navigation
     backToGame: "Voltar ao Jogo",
     documentation: "Documentação",
-    subtitle: "Guia completo do Vibe Most Wanted - Tudo que você precisa saber",
+    subtitle: "Guia completo do $VBMS - Tudo que você precisa saber",
     sections: "Seções",
 
     // Section titles
@@ -20,7 +20,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistema de Economia",
-    economyIntro: "Vibe Most Wanted é uma coleção de Liquid Trading Cards (LTC) no Vibe Market, inspirada nas cartas de baralho Most Wanted do Iraque. O jogo tem duas moedas: TESTVBMS (moeda in-game ganha jogando) e $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Atualmente em presale - compre/venda $VBMS pelo DEX no app.",
+    economyIntro: "$VBMS é uma coleção de Liquid Trading Cards (LTC) no Vibe Market, inspirada nas cartas de baralho Most Wanted do Iraque. O jogo tem duas moedas: TESTVBMS (moeda in-game ganha jogando) e $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Atualmente em presale - compre/venda $VBMS pelo DEX no app.",
 
     howToEarnCoins: "Como Ganhar Moedas",
     earnPve: "PvE (Jogador vs IA)",
@@ -114,7 +114,7 @@ export const docsTranslations = {
 
     // Cards section
     cardsTitle: "Sistema de Cartas",
-    cardsIntro: "Vibe Most Wanted usa Liquid Trading Cards (LTC) - um novo paradigma em colecionáveis digitais. Diferente de NFTs tradicionais, LTCs podem ser negociadas instantaneamente com liquidez garantida. Cada carta tem atributos únicos que determinam seu poder em batalha.",
+    cardsIntro: "$VBMS usa Liquid Trading Cards (LTC) - um novo paradigma em colecionáveis digitais. Diferente de NFTs tradicionais, LTCs podem ser negociadas instantaneamente com liquidez garantida. Cada carta tem atributos únicos que determinam seu poder em batalha.",
 
     cardAttributes: "Atributos das Cartas",
     cardRarity: "Raridade",
@@ -132,7 +132,7 @@ export const docsTranslations = {
     defenseDeckDesc: "Configure suas 5 melhores cartas para defender quando outros jogadores atacarem você. Atualize sempre que conseguir cartas mais fortes!",
 
     featuredCollections: "Coleções em Destaque",
-    featuredCollectionsDesc: "Colaborações com criadores do Vibe Market. Essas cartas podem ser usadas como as cartas Vibe Most Wanted, seguindo o mesmo sistema de cálculo de poder.",
+    featuredCollectionsDesc: "Colaborações com criadores do Vibe Market. Essas cartas podem ser usadas como as cartas $VBMS, seguindo o mesmo sistema de cálculo de poder.",
 
     nothingPacks: "Nothing Packs",
     nothingPacksDesc: "Cartas não-NFT que podem ser compradas com $VBMS e também queimadas (burn) para recuperar parte do valor.",
@@ -238,7 +238,7 @@ export const docsTranslations = {
     // Navigation
     backToGame: "Back to Game",
     documentation: "Documentation",
-    subtitle: "Complete Vibe Most Wanted guide - Everything you need to know",
+    subtitle: "Complete $VBMS guide - Everything you need to know",
     sections: "Sections",
 
     // Section titles
@@ -251,7 +251,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Economy System",
-    economyIntro: "Vibe Most Wanted is a Liquid Trading Cards (LTC) collection on Vibe Market, inspired by the Most Wanted Iraqi playing cards. The game has two currencies: TESTVBMS (in-game currency earned by playing) and $VBMS (blockchain token). 100,000 $VBMS = 1 pack. Currently in presale - buy/sell $VBMS through the in-app DEX.",
+    economyIntro: "$VBMS is a Liquid Trading Cards (LTC) collection on Vibe Market, inspired by the Most Wanted Iraqi playing cards. The game has two currencies: TESTVBMS (in-game currency earned by playing) and $VBMS (blockchain token). 100,000 $VBMS = 1 pack. Currently in presale - buy/sell $VBMS through the in-app DEX.",
 
     howToEarnCoins: "How to Earn Coins",
     earnPve: "PvE (Player vs AI)",
@@ -345,7 +345,7 @@ export const docsTranslations = {
 
     // Cards section
     cardsTitle: "Card System",
-    cardsIntro: "Vibe Most Wanted uses Liquid Trading Cards (LTC) - a new paradigm in digital collectibles. Unlike traditional NFTs, LTCs can be traded instantly with guaranteed liquidity. Each card has unique attributes that determine its battle power.",
+    cardsIntro: "$VBMS uses Liquid Trading Cards (LTC) - a new paradigm in digital collectibles. Unlike traditional NFTs, LTCs can be traded instantly with guaranteed liquidity. Each card has unique attributes that determine its battle power.",
 
     cardAttributes: "Card Attributes",
     cardRarity: "Rarity",
@@ -363,7 +363,7 @@ export const docsTranslations = {
     defenseDeckDesc: "Set up your 5 best cards to defend when other players attack you. Update whenever you get stronger cards!",
 
     featuredCollections: "Featured Collections",
-    featuredCollectionsDesc: "Collaborations with Vibe Market creators. These cards can be used just like Vibe Most Wanted cards, following the same power calculation system.",
+    featuredCollectionsDesc: "Collaborations with Vibe Market creators. These cards can be used just like $VBMS cards, following the same power calculation system.",
 
     nothingPacks: "Nothing Packs",
     nothingPacksDesc: "Non-NFT cards that can be purchased with $VBMS and also burned to recover part of the value.",
@@ -469,7 +469,7 @@ export const docsTranslations = {
     // Navigation
     backToGame: "Volver al Juego",
     documentation: "Documentación",
-    subtitle: "Guía completa de Vibe Most Wanted - Todo lo que necesitas saber",
+    subtitle: "Guía completa de $VBMS - Todo lo que necesitas saber",
     sections: "Secciones",
 
     // Section titles
@@ -482,7 +482,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistema de Economía",
-    economyIntro: "Vibe Most Wanted es una colección de Liquid Trading Cards (LTC) en Vibe Market, inspirada en las cartas Most Wanted de Irak. El juego tiene dos monedas: TESTVBMS (moneda in-game) y $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Actualmente en preventa - compra/vende $VBMS en el DEX de la app.",
+    economyIntro: "$VBMS es una colección de Liquid Trading Cards (LTC) en Vibe Market, inspirada en las cartas Most Wanted de Irak. El juego tiene dos monedas: TESTVBMS (moneda in-game) y $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Actualmente en preventa - compra/vende $VBMS en el DEX de la app.",
 
     howToEarnCoins: "Cómo Ganar Monedas",
     earnPve: "PvE (Jugador vs IA)",
@@ -576,7 +576,7 @@ export const docsTranslations = {
 
     // Cards section
     cardsTitle: "Sistema de Cartas",
-    cardsIntro: "Vibe Most Wanted usa Liquid Trading Cards (LTC) - un nuevo paradigma en coleccionables digitales. A diferencia de los NFTs tradicionales, las LTCs pueden intercambiarse instantáneamente con liquidez garantizada. Cada carta tiene atributos únicos que determinan su poder en batalla.",
+    cardsIntro: "$VBMS usa Liquid Trading Cards (LTC) - un nuevo paradigma en coleccionables digitales. A diferencia de los NFTs tradicionales, las LTCs pueden intercambiarse instantáneamente con liquidez garantizada. Cada carta tiene atributos únicos que determinan su poder en batalla.",
 
     cardAttributes: "Atributos de Cartas",
     cardRarity: "Rareza",
@@ -594,7 +594,7 @@ export const docsTranslations = {
     defenseDeckDesc: "Configura tus 5 mejores cartas para defender cuando otros jugadores te ataquen. ¡Actualiza cuando consigas cartas más fuertes!",
 
     featuredCollections: "Colecciones Destacadas",
-    featuredCollectionsDesc: "Colaboraciones con creadores de Vibe Market. Estas cartas pueden usarse como las de Vibe Most Wanted, siguiendo el mismo sistema de cálculo de poder.",
+    featuredCollectionsDesc: "Colaboraciones con creadores de Vibe Market. Estas cartas pueden usarse como las de $VBMS, siguiendo el mismo sistema de cálculo de poder.",
 
     nothingPacks: "Nothing Packs",
     nothingPacksDesc: "Cartas no-NFT que pueden comprarse con $VBMS y también quemarse para recuperar parte del valor.",
@@ -700,7 +700,7 @@ export const docsTranslations = {
     // Navigation
     backToGame: "गेम पर वापस जाएं",
     documentation: "दस्तावेज़ीकरण",
-    subtitle: "Vibe Most Wanted की पूरी गाइड - वह सब कुछ जो आपको जानने की ज़रूरत है",
+    subtitle: "$VBMS की पूरी गाइड - वह सब कुछ जो आपको जानने की ज़रूरत है",
     sections: "अनुभाग",
 
     // Section titles
@@ -713,7 +713,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated for brevity - full translation recommended)
     economyTitle: "अर्थव्यवस्था प्रणाली",
-    economyIntro: "Vibe Most Wanted एक Liquid Trading Cards (LTC) संग्रह है Vibe Market पर, इराक के Most Wanted कार्ड से प्रेरित। गेम में दो मुद्राएं हैं: TESTVBMS (इन-गेम) और $VBMS (ब्लॉकचेन टोकन)। 100,000 $VBMS = 1 पैक। वर्तमान में प्रीसेल में - ऐप के DEX पर $VBMS खरीदें/बेचें।",
+    economyIntro: "$VBMS एक Liquid Trading Cards (LTC) संग्रह है Vibe Market पर, इराक के Most Wanted कार्ड से प्रेरित। गेम में दो मुद्राएं हैं: TESTVBMS (इन-गेम) और $VBMS (ब्लॉकचेन टोकन)। 100,000 $VBMS = 1 पैक। वर्तमान में प्रीसेल में - ऐप के DEX पर $VBMS खरीदें/बेचें।",
 
     howToEarnCoins: "सिक्के कैसे कमाएं",
     earnPve: "PvE (खिलाड़ी बनाम AI)",
@@ -746,7 +746,7 @@ export const docsTranslations = {
     questsIntro: "अतिरिक्त सिक्के कमाने के लिए दैनिक और साप्ताहिक मिशन पूरे करें।",
 
     cardsTitle: "कार्ड प्रणाली",
-    cardsIntro: "Vibe Most Wanted Liquid Trading Cards (LTC) का उपयोग करता है - डिजिटल संग्रहणीय में एक नया प्रतिमान। पारंपरिक NFTs के विपरीत, LTCs को गारंटीड लिक्विडिटी के साथ तुरंत ट्रेड किया जा सकता है। प्रत्येक कार्ड में अद्वितीय विशेषताएं हैं।",
+    cardsIntro: "$VBMS Liquid Trading Cards (LTC) का उपयोग करता है - डिजिटल संग्रहणीय में एक नया प्रतिमान। पारंपरिक NFTs के विपरीत, LTCs को गारंटीड लिक्विडिटी के साथ तुरंत ट्रेड किया जा सकता है। प्रत्येक कार्ड में अद्वितीय विशेषताएं हैं।",
 
     faqTitle: "अक्सर पूछे जाने वाले प्रश्न",
 
@@ -908,7 +908,7 @@ export const docsTranslations = {
     // Navigation
     backToGame: "Вернуться к игре",
     documentation: "Документация",
-    subtitle: "Полное руководство Vibe Most Wanted - Все, что вам нужно знать",
+    subtitle: "Полное руководство $VBMS - Все, что вам нужно знать",
     sections: "Разделы",
 
     // Section titles
@@ -921,7 +921,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated - full translation recommended)
     economyTitle: "Экономическая система",
-    economyIntro: "Vibe Most Wanted - коллекция Liquid Trading Cards (LTC) на Vibe Market, вдохновлённая картами Most Wanted Ирака. В игре две валюты: TESTVBMS (внутриигровая) и $VBMS (блокчейн-токен). 100,000 $VBMS = 1 пак. Сейчас в пресейле - покупайте/продавайте $VBMS через DEX в приложении.",
+    economyIntro: "$VBMS - коллекция Liquid Trading Cards (LTC) на Vibe Market, вдохновлённая картами Most Wanted Ирака. В игре две валюты: TESTVBMS (внутриигровая) и $VBMS (блокчейн-токен). 100,000 $VBMS = 1 пак. Сейчас в пресейле - покупайте/продавайте $VBMS через DEX в приложении.",
 
     howToEarnCoins: "Как заработать монеты",
     earnPve: "PvE (Игрок против ИИ)",
@@ -1015,7 +1015,7 @@ export const docsTranslations = {
 
     // Cards section (abbreviated)
     cardsTitle: "Система карт",
-    cardsIntro: "Vibe Most Wanted использует Liquid Trading Cards (LTC) - новую парадигму цифровых коллекционных предметов. В отличие от традиционных NFT, LTC можно мгновенно обменивать с гарантированной ликвидностью. Каждая карта имеет уникальные атрибуты.",
+    cardsIntro: "$VBMS использует Liquid Trading Cards (LTC) - новую парадигму цифровых коллекционных предметов. В отличие от традиционных NFT, LTC можно мгновенно обменивать с гарантированной ликвидностью. Каждая карта имеет уникальные атрибуты.",
 
     cardAttributes: "Атрибуты карт",
     cardRarity: "Редкость",
@@ -1139,7 +1139,7 @@ export const docsTranslations = {
     // Navigation
     backToGame: "返回游戏",
     documentation: "文档",
-    subtitle: "Vibe Most Wanted 完整指南 - 您需要知道的一切",
+    subtitle: "$VBMS 完整指南 - 您需要知道的一切",
     sections: "部分",
 
     // Section titles
@@ -1152,7 +1152,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated)
     economyTitle: "经济系统",
-    economyIntro: "Vibe Most Wanted是Vibe Market上的Liquid Trading Cards (LTC)收藏，灵感来自伊拉克通缉令扑克牌。游戏有两种货币：TESTVBMS（游戏内）和$VBMS（区块链代币）。100,000 $VBMS = 1个卡包。目前处于预售阶段 - 通过应用内DEX买卖$VBMS。",
+    economyIntro: "$VBMS是Vibe Market上的Liquid Trading Cards (LTC)收藏，灵感来自伊拉克通缉令扑克牌。游戏有两种货币：TESTVBMS（游戏内）和$VBMS（区块链代币）。100,000 $VBMS = 1个卡包。目前处于预售阶段 - 通过应用内DEX买卖$VBMS。",
 
     howToEarnCoins: "如何赚取金币",
     earnPve: "PvE (玩家对AI)",
@@ -1246,7 +1246,7 @@ export const docsTranslations = {
 
     // Cards section (abbreviated)
     cardsTitle: "卡牌系统",
-    cardsIntro: "Vibe Most Wanted使用Liquid Trading Cards (LTC) - 数字收藏品的新范式。与传统NFT不同，LTC可以即时交易并保证流动性。每张卡牌都有独特的属性决定其战斗力。",
+    cardsIntro: "$VBMS使用Liquid Trading Cards (LTC) - 数字收藏品的新范式。与传统NFT不同，LTC可以即时交易并保证流动性。每张卡牌都有独特的属性决定其战斗力。",
 
     cardAttributes: "卡牌属性",
     cardRarity: "稀有度",
@@ -1369,7 +1369,7 @@ export const docsTranslations = {
     // Navigation
     backToGame: "Kembali ke Game",
     documentation: "Dokumentasi",
-    subtitle: "Panduan lengkap Vibe Most Wanted - Semua yang perlu kamu ketahui",
+    subtitle: "Panduan lengkap $VBMS - Semua yang perlu kamu ketahui",
     sections: "Bagian",
 
     // Section titles
@@ -1382,7 +1382,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistem Ekonomi",
-    economyIntro: "Vibe Most Wanted adalah koleksi Liquid Trading Cards (LTC) di Vibe Market, terinspirasi kartu Most Wanted Irak. Game ini punya dua mata uang: TESTVBMS (koin in-game dari bermain) dan $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Saat ini presale - beli/jual $VBMS melalui DEX in-app.",
+    economyIntro: "$VBMS adalah koleksi Liquid Trading Cards (LTC) di Vibe Market, terinspirasi kartu Most Wanted Irak. Game ini punya dua mata uang: TESTVBMS (koin in-game dari bermain) dan $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Saat ini presale - beli/jual $VBMS melalui DEX in-app.",
 
     howToEarnCoins: "Cara Dapat Koin",
     earnPve: "PvE (Pemain vs AI)",
@@ -1476,7 +1476,7 @@ export const docsTranslations = {
 
     // Cards section
     cardsTitle: "Sistem Kartu",
-    cardsIntro: "Vibe Most Wanted menggunakan Liquid Trading Cards (LTC) - paradigma baru dalam koleksi digital. Berbeda dengan NFT tradisional, LTC bisa diperdagangkan instan dengan likuiditas terjamin. Setiap kartu punya atribut unik yang menentukan kekuatan pertempuran.",
+    cardsIntro: "$VBMS menggunakan Liquid Trading Cards (LTC) - paradigma baru dalam koleksi digital. Berbeda dengan NFT tradisional, LTC bisa diperdagangkan instan dengan likuiditas terjamin. Setiap kartu punya atribut unik yang menentukan kekuatan pertempuran.",
 
     cardAttributes: "Atribut Kartu",
     cardRarity: "Kelangkaan",
@@ -1494,7 +1494,7 @@ export const docsTranslations = {
     defenseDeckDesc: "Atur 5 kartu terbaikmu untuk pertahanan saat pemain lain menyerang. Update kapan dapat kartu lebih kuat!",
 
     featuredCollections: "Koleksi Unggulan",
-    featuredCollectionsDesc: "Kolaborasi dengan kreator Vibe Market. Kartu-kartu ini bisa digunakan seperti kartu Vibe Most Wanted, mengikuti sistem perhitungan power yang sama.",
+    featuredCollectionsDesc: "Kolaborasi dengan kreator Vibe Market. Kartu-kartu ini bisa digunakan seperti kartu $VBMS, mengikuti sistem perhitungan power yang sama.",
 
     nothingPacks: "Nothing Packs",
     nothingPacksDesc: "Kartu non-NFT yang bisa dibeli dengan $VBMS dan juga dibakar untuk pulihkan sebagian nilai.",
@@ -1600,7 +1600,7 @@ export const docsTranslations = {
     // Navigation
     backToGame: "Retour au Jeu",
     documentation: "Documentation",
-    subtitle: "Guide complet de Vibe Most Wanted - Tout ce que vous devez savoir",
+    subtitle: "Guide complet de $VBMS - Tout ce que vous devez savoir",
     sections: "Sections",
 
     // Section titles
@@ -1613,7 +1613,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Système Économique",
-    economyIntro: "Vibe Most Wanted est une collection de Liquid Trading Cards (LTC) sur Vibe Market, inspirée des cartes Most Wanted irakiennes. Le jeu a deux devises : TESTVBMS (monnaie in-game gagnée en jouant) et $VBMS (token blockchain). 100 000 $VBMS = 1 pack. Actuellement en prévente - achetez/vendez $VBMS via le DEX in-app.",
+    economyIntro: "$VBMS est une collection de Liquid Trading Cards (LTC) sur Vibe Market, inspirée des cartes Most Wanted irakiennes. Le jeu a deux devises : TESTVBMS (monnaie in-game gagnée en jouant) et $VBMS (token blockchain). 100 000 $VBMS = 1 pack. Actuellement en prévente - achetez/vendez $VBMS via le DEX in-app.",
 
     howToEarnCoins: "Comment Gagner des Pièces",
     earnPve: "PvE (Joueur vs IA)",
@@ -1707,7 +1707,7 @@ export const docsTranslations = {
 
     // Cards section
     cardsTitle: "Système de Cartes",
-    cardsIntro: "Vibe Most Wanted utilise des Liquid Trading Cards (LTC) - un nouveau paradigme dans les collections numériques. Contrairement aux NFTs traditionnels, les LTCs peuvent être échangés instantanément avec une liquidité garantie. Chaque carte a des attributs uniques qui déterminent sa puissance de combat.",
+    cardsIntro: "$VBMS utilise des Liquid Trading Cards (LTC) - un nouveau paradigme dans les collections numériques. Contrairement aux NFTs traditionnels, les LTCs peuvent être échangés instantanément avec une liquidité garantie. Chaque carte a des attributs uniques qui déterminent sa puissance de combat.",
 
     cardAttributes: "Attributs de Carte",
     cardRarity: "Rareté",
@@ -1725,7 +1725,7 @@ export const docsTranslations = {
     defenseDeckDesc: "Configurez vos 5 meilleures cartes pour vous défendre quand d'autres joueurs vous attaquent. Mettez à jour dès que vous obtenez des cartes plus fortes !",
 
     featuredCollections: "Collections en Vedette",
-    featuredCollectionsDesc: "Collaborations avec les créateurs de Vibe Market. Ces cartes peuvent être utilisées comme les cartes Vibe Most Wanted, suivant le même système de calcul de puissance.",
+    featuredCollectionsDesc: "Collaborations avec les créateurs de Vibe Market. Ces cartes peuvent être utilisées comme les cartes $VBMS, suivant le même système de calcul de puissance.",
 
     nothingPacks: "Nothing Packs",
     nothingPacksDesc: "Cartes non-NFT achetables avec $VBMS et pouvant être brûlées pour récupérer une partie de la valeur.",

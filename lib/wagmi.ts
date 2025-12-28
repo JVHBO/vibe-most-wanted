@@ -25,7 +25,7 @@ const connectors = connectorsForWallets(
     },
   ],
   {
-    appName: 'VIBE MOST WANTED',
+    appName: '$VBMS',
     projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
   }
 );

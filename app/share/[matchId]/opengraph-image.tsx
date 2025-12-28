@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'Battle Result - VIBE Most Wanted';
+export const alt = 'Battle Result - $VBMS';
 export const size = {
   width: 1200,
   height: 630,
@@ -382,7 +382,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               zIndex: 2,
             }}
           >
-            VIBE MOST WANTED
+            $VBMS
           </div>
         </div>
       ),

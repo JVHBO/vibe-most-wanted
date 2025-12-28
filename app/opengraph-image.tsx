@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'VIBE MOST WANTED - Meme Card Game';
+export const alt = '$VBMS - Meme Card Game';
 export const size = {
   width: 1200,
   height: 630,
@@ -450,7 +450,7 @@ export default async function Image() {
               textShadow: '0 4px 30px rgba(212,175,55,0.5)',
             }}
           >
-            VIBE MOST WANTED
+            $VBMS
           </div>
 
           {/* Subtitle */}

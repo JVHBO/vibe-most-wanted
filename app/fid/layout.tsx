@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     title: 'VibeFID - Mint Your Farcaster Card',
     description: 'Transform your Farcaster profile into a playable NFT card with unique traits based on your FID and Neynar Score.',
     url: `${baseUrl}/fid`,
-    siteName: 'Vibe Most Wanted',
+    siteName: '$VBMS',
     locale: 'en_US',
     type: 'website',
     images: [
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
         title: 'Mint Your Card',
         action: {
           type: 'launch_miniapp',
-          name: 'VIBE MOST WANTED',
+          name: '$VBMS',
           url: `${baseUrl}/fid`,
         },
       },
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
         title: 'Mint Your Card',
         action: {
           type: 'launch_miniapp',
-          name: 'VIBE MOST WANTED',
+          name: '$VBMS',
           url: `${baseUrl}/fid`,
         },
       },

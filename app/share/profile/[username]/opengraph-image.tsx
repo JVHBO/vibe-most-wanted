@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 export const runtime = 'edge';
-export const alt = 'Profile - VIBE Most Wanted';
+export const alt = 'Profile - $VBMS';
 export const size = {
   width: 1200,
   height: 630,
@@ -307,7 +307,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
               display: 'flex',
             }}
           >
-            VIBE MOST WANTED
+            $VBMS
           </div>
         </div>
       </div>

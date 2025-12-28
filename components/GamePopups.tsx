@@ -662,7 +662,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
               <h2 className="text-2xl font-display font-bold text-vintage-gold">Welcome Gift!</h2>
             </div>
             <p className="text-vintage-ice mb-6 font-modern text-lg">
-              Welcome to Vibe Most Wanted! As a gift, you receive <span className="text-vintage-gold font-bold">1 FREE Basic Pack</span> to start your collection!
+              Welcome to $VBMS! As a gift, you receive <span className="text-vintage-gold font-bold">1 FREE Basic Pack</span> to start your collection!
             </p>
             <div className="flex gap-3">
               <button

@@ -77,6 +77,7 @@ interface AttackCardSelectionModalProps {
   recordAttackResult: (params: any) => Promise<any>;
   showVictory: () => void;
   getAvatarUrl: (data: any) => string | null;
+  forceReloadNFTs?: () => Promise<void>;
   convex: any;
   api: any;
   maxAttacks: number;
@@ -128,6 +129,7 @@ export function AttackCardSelectionModal({
   recordAttackResult,
   showVictory,
   getAvatarUrl,
+  forceReloadNFTs,
   convex,
   api,
   maxAttacks,
@@ -470,6 +472,23 @@ export function AttackCardSelectionModal({
           >
             {sortAttackByPower ? t('deckBuilderSortedByPower') : t('deckBuilderSortByPower')}
           </button>
+
+          {/* Refresh Button */}
+          {forceReloadNFTs && (
+            <button
+              onClick={async () => {
+                if (soundEnabled) AudioManager.buttonClick();
+                await forceReloadNFTs();
+              }}
+              className="px-4 py-2 rounded-lg font-bold text-sm transition-all bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30 flex items-center gap-1"
+              title="Refresh cards"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Refresh
+            </button>
+          )}
         </div>
 
         {/* Selected Attack Deck Display */}

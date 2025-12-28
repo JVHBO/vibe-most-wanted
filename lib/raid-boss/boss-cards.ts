@@ -252,7 +252,7 @@ export const GMVBRS_BOSSES: Record<CardRarity, BossCard> = {
 };
 
 /**
- * VBMS (Vibe Most Wanted) Boss Cards
+ * VBMS ($VBMS) Boss Cards
  * These will be fetched from JC's NFTs dynamically
  */
 export const VBMS_BOSSES: Record<CardRarity, BossCard> = {

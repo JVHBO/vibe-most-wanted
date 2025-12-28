@@ -726,7 +726,7 @@ export default function ProfilePage() {
 
                       // Farcaster cast text
                       // @ts-expect-error - honor field is added to schema but types not yet regenerated
-                      const castText = `Check out my Vibe Most Wanted profile!\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 First share = FREE pack! Daily shares = tokens!\n\n@jvhbo`;
+                      const castText = `Check out my $VBMS profile!\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 First share = FREE pack! Daily shares = tokens!\n\n@jvhbo`;
 
                       const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
 
@@ -770,7 +770,7 @@ export default function ProfilePage() {
                     onClick={async () => {
                       const profileUrl = `${window.location.origin}/profile/${profile.username}`;
                       // @ts-expect-error - honor field is added to schema but types not yet regenerated
-                      const tweetText = `Check out my Vibe Most Wanted profile! 🎮\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${totalWins}W-${totalLosses}L-${totalTies}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
+                      const tweetText = `Check out my $VBMS profile! 🎮\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${totalWins}W-${totalLosses}L-${totalTies}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
 
                       const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(profileUrl)}`;
 
@@ -1441,7 +1441,7 @@ export default function ProfilePage() {
                           // Build matchId with PFPs: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName
                           const matchId = `${match.result}_${match.playerPower}_${match.opponentPower}_${match.opponentUsername || 'Opponent'}_${encodeURIComponent(playerPfp)}_${encodeURIComponent(opponentPfp)}_${encodeURIComponent(profile.username)}`;
                           const shareUrl = `https://vibe-most-wanted.vercel.app/share/${matchId}`;
-                          const text = `I ${match.result === 'win' ? 'defeated' : match.result === 'tie' ? 'tied with' : 'battled'} ${match.opponentUsername || 'an opponent'} in VIBE Most Wanted!\n\n@jvhbo`;
+                          const text = `I ${match.result === 'win' ? 'defeated' : match.result === 'tie' ? 'tied with' : 'battled'} ${match.opponentUsername || 'an opponent'} in $VBMS!\n\n@jvhbo`;
 
                           return `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
                         })()}

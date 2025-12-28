@@ -133,7 +133,7 @@ export async function GET(
           }}
         >
           <div style={{ fontSize: '48px', fontWeight: 900, marginBottom: '20px' }}>
-            VIBE MOST WANTED
+            $VBMS
           </div>
           <div style={{ fontSize: '24px', opacity: 0.7 }}>
             FID: {fid}

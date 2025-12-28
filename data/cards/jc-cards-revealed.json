@@ -5,7 +5,7 @@
     "status": "Rarity Assigned",
     "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d7736da792bbea347a2630ed26c41f67",
-    "name": "Vibe Most Wanted #1971",
+    "name": "$VBMS #1971",
     "attributes": [
       {
         "display_type": "string",
@@ -43,7 +43,7 @@
     "status": "Burned",
     "power": 180,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0a40bdcf7ae5ffa3b5961230f3bc1764",
-    "name": "Vibe Most Wanted #5833",
+    "name": "$VBMS #5833",
     "attributes": [
       {
         "display_type": "string",
@@ -81,7 +81,7 @@
     "status": "Burned",
     "power": 150,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0c83313af1b9017149b6984b2a40a135",
-    "name": "Vibe Most Wanted #5945",
+    "name": "$VBMS #5945",
     "attributes": [
       {
         "display_type": "string",
@@ -115,7 +115,7 @@
   },
   {
     "tokenId": "6070",
-    "name": "Vibe Most Wanted #6070",
+    "name": "$VBMS #6070",
     "rarity": "Legendary",
     "power": 250,
     "status": "Burned",
@@ -150,11 +150,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "5225",
-    "name": "Vibe Most Wanted #5225",
+    "name": "$VBMS #5225",
     "rarity": "Legendary",
     "power": 250,
     "status": "Burned",
@@ -189,11 +189,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F52f68b3b-44b9-4f74-861c-79ee10e45300%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "3067",
-    "name": "Vibe Most Wanted #3067",
+    "name": "$VBMS #3067",
     "rarity": "Legendary",
     "power": 250,
     "status": "Burned",
@@ -228,11 +228,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1773ffd4-4400-4cfd-d98a-b5f0c3d4d900%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "8549",
-    "name": "Vibe Most Wanted #8549",
+    "name": "$VBMS #8549",
     "rarity": "Legendary",
     "power": 250,
     "status": "Burned",
@@ -267,11 +267,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fccd5b0a9-494e-4f37-3c67-0bf22c2f6700%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "4378",
-    "name": "Vibe Most Wanted #4378",
+    "name": "$VBMS #4378",
     "rarity": "Legendary",
     "power": 250,
     "status": "Burned",
@@ -306,11 +306,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "6465",
-    "name": "Vibe Most Wanted #6465",
+    "name": "$VBMS #6465",
     "rarity": "Legendary",
     "power": 250,
     "status": "Burned",
@@ -345,11 +345,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1773ffd4-4400-4cfd-d98a-b5f0c3d4d900%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "6452",
-    "name": "Vibe Most Wanted #6452",
+    "name": "$VBMS #6452",
     "rarity": "Legendary",
     "power": 250,
     "status": "Burned",
@@ -384,11 +384,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1773ffd4-4400-4cfd-d98a-b5f0c3d4d900%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "4664",
-    "name": "Vibe Most Wanted #4664",
+    "name": "$VBMS #4664",
     "rarity": "Legendary",
     "power": 375,
     "status": "Burned",
@@ -423,11 +423,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "7160",
-    "name": "Vibe Most Wanted #7160",
+    "name": "$VBMS #7160",
     "rarity": "Legendary",
     "power": 250,
     "status": "Burned",
@@ -462,11 +462,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "6071",
-    "name": "Vibe Most Wanted #6071",
+    "name": "$VBMS #6071",
     "rarity": "Legendary",
     "power": 250,
     "status": "Burned",
@@ -501,11 +501,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "6521",
-    "name": "Vibe Most Wanted #6521",
+    "name": "$VBMS #6521",
     "rarity": "Legendary",
     "power": 250,
     "status": "Burned",
@@ -540,11 +540,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F1773ffd4-4400-4cfd-d98a-b5f0c3d4d900%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "7948",
-    "name": "Vibe Most Wanted #7948",
+    "name": "$VBMS #7948",
     "rarity": "Legendary",
     "power": 250,
     "status": "Rarity Assigned",
@@ -579,11 +579,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fccd5b0a9-494e-4f37-3c67-0bf22c2f6700%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "7700",
-    "name": "Vibe Most Wanted #7700",
+    "name": "$VBMS #7700",
     "rarity": "Legendary",
     "power": 250,
     "status": "Rarity Assigned",
@@ -618,11 +618,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fccd5b0a9-494e-4f37-3c67-0bf22c2f6700%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "7431",
-    "name": "Vibe Most Wanted #7431",
+    "name": "$VBMS #7431",
     "rarity": "Legendary",
     "power": 250,
     "status": "Rarity Assigned",
@@ -657,11 +657,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "6729",
-    "name": "Vibe Most Wanted #6729",
+    "name": "$VBMS #6729",
     "rarity": "Legendary",
     "power": 250,
     "status": "Rarity Assigned",
@@ -696,11 +696,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F88c2a08b-97be-4a4a-6355-ae37bf54c800%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "3202",
-    "name": "Vibe Most Wanted #3202",
+    "name": "$VBMS #3202",
     "rarity": "Legendary",
     "power": 250,
     "status": "Rarity Assigned",
@@ -735,11 +735,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F52f68b3b-44b9-4f74-861c-79ee10e45300%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "2927",
-    "name": "Vibe Most Wanted #2927",
+    "name": "$VBMS #2927",
     "rarity": "Legendary",
     "power": 250,
     "status": "Rarity Assigned",
@@ -774,11 +774,11 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F6a90c3a0-3827-4e1d-e812-871f9f6afb00%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "6183",
-    "name": "Vibe Most Wanted #6183",
+    "name": "$VBMS #6183",
     "rarity": "Legendary",
     "power": 250,
     "status": "Rarity Assigned",
@@ -813,7 +813,7 @@
       }
     ],
     "image": "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F52f68b3b-44b9-4f74-861c-79ee10e45300%2Fpublic",
-    "description": "Buy Vibe Most Wanted Booster Packs on vibe.market"
+    "description": "Buy $VBMS Booster Packs on vibe.market"
   },
   {
     "tokenId": "1616",
@@ -821,7 +821,7 @@
     "status": "Burned",
     "power": 84,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/20aa3668e707ecbff2056dafda940df7",
-    "name": "Vibe Most Wanted #1616",
+    "name": "$VBMS #1616",
     "attributes": [
       {
         "display_type": "string",
@@ -859,7 +859,7 @@
     "status": "Burned",
     "power": 84,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dc2f39b6951dc0516b8f5d50d4055df0",
-    "name": "Vibe Most Wanted #3706",
+    "name": "$VBMS #3706",
     "attributes": [
       {
         "display_type": "string",
@@ -897,7 +897,7 @@
     "status": "Burned",
     "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/42f1b8232a42eb924b0aea49879c4946",
-    "name": "Vibe Most Wanted #114",
+    "name": "$VBMS #114",
     "attributes": [
       {
         "display_type": "string",
@@ -935,7 +935,7 @@
     "status": "Burned",
     "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2067f9899c7b238c4de27c65e547e752",
-    "name": "Vibe Most Wanted #271",
+    "name": "$VBMS #271",
     "attributes": [
       {
         "display_type": "string",
@@ -973,7 +973,7 @@
     "status": "Rarity Assigned",
     "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/77821de2dd224a76cb60d7ed8b6c2afc",
-    "name": "Vibe Most Wanted #1977",
+    "name": "$VBMS #1977",
     "attributes": [
       {
         "display_type": "string",
@@ -1011,7 +1011,7 @@
     "status": "Burned",
     "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0dfa1b763675005d883f263e283e1aaa",
-    "name": "Vibe Most Wanted #3714",
+    "name": "$VBMS #3714",
     "attributes": [
       {
         "display_type": "string",
@@ -1049,7 +1049,7 @@
     "status": "Rarity Assigned",
     "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/53081e77ea6084a3ea6a5c9803c4683e",
-    "name": "Vibe Most Wanted #4582",
+    "name": "$VBMS #4582",
     "attributes": [
       {
         "display_type": "string",
@@ -1087,7 +1087,7 @@
     "status": "Rarity Assigned",
     "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a3e295b5b00e1a671957bed1b3bbd277",
-    "name": "Vibe Most Wanted #4606",
+    "name": "$VBMS #4606",
     "attributes": [
       {
         "display_type": "string",
@@ -1125,7 +1125,7 @@
     "status": "Burned",
     "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4bad98460224ba9816aa346a6e68325a",
-    "name": "Vibe Most Wanted #5906",
+    "name": "$VBMS #5906",
     "attributes": [
       {
         "display_type": "string",
@@ -1163,7 +1163,7 @@
     "status": "Burned",
     "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/eec79c72eb2875b0b405661a0e319e1e",
-    "name": "Vibe Most Wanted #5937",
+    "name": "$VBMS #5937",
     "attributes": [
       {
         "display_type": "string",
@@ -1201,7 +1201,7 @@
     "status": "Burned",
     "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ba2bccb4c0a40976c9aedfadb70b55df",
-    "name": "Vibe Most Wanted #7031",
+    "name": "$VBMS #7031",
     "attributes": [
       {
         "display_type": "string",
@@ -1239,7 +1239,7 @@
     "status": "Burned",
     "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/41ad0e7e7d80a7ffdb3dc326d44b21e4",
-    "name": "Vibe Most Wanted #7059",
+    "name": "$VBMS #7059",
     "attributes": [
       {
         "display_type": "string",
@@ -1277,7 +1277,7 @@
     "status": "Burned",
     "power": 72,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b4520d5c98eefaeeb11c84c4f2b6bec6",
-    "name": "Vibe Most Wanted #8555",
+    "name": "$VBMS #8555",
     "attributes": [
       {
         "display_type": "string",
@@ -1315,7 +1315,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2108ff44d8a68a96ffab496796a2b995",
-    "name": "Vibe Most Wanted #9",
+    "name": "$VBMS #9",
     "attributes": [
       {
         "display_type": "string",
@@ -1353,7 +1353,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/15e53335b8893e83d0224636a0743931",
-    "name": "Vibe Most Wanted #13",
+    "name": "$VBMS #13",
     "attributes": [
       {
         "display_type": "string",
@@ -1391,7 +1391,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e5075d41444ee91267613fce0f97e286",
-    "name": "Vibe Most Wanted #39",
+    "name": "$VBMS #39",
     "attributes": [
       {
         "display_type": "string",
@@ -1429,7 +1429,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/906a13931024df2b4cc7268825f5d8bc",
-    "name": "Vibe Most Wanted #43",
+    "name": "$VBMS #43",
     "attributes": [
       {
         "display_type": "string",
@@ -1467,7 +1467,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f512bb158e8366d5de3928589d2af061",
-    "name": "Vibe Most Wanted #45",
+    "name": "$VBMS #45",
     "attributes": [
       {
         "display_type": "string",
@@ -1505,7 +1505,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8717debb2f0c419a8c22be87ab886b27",
-    "name": "Vibe Most Wanted #89",
+    "name": "$VBMS #89",
     "attributes": [
       {
         "display_type": "string",
@@ -1543,7 +1543,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f6b270e455635646a652cf7164f69673",
-    "name": "Vibe Most Wanted #125",
+    "name": "$VBMS #125",
     "attributes": [
       {
         "display_type": "string",
@@ -1581,7 +1581,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/93b868bb684f1d6b7c3aed98f4b9560d",
-    "name": "Vibe Most Wanted #218",
+    "name": "$VBMS #218",
     "attributes": [
       {
         "display_type": "string",
@@ -1619,7 +1619,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1a81ff2842cada1bb78b3fbb358c5b39",
-    "name": "Vibe Most Wanted #219",
+    "name": "$VBMS #219",
     "attributes": [
       {
         "display_type": "string",
@@ -1657,7 +1657,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e7160ee63b0a9774536f72717c574b98",
-    "name": "Vibe Most Wanted #223",
+    "name": "$VBMS #223",
     "attributes": [
       {
         "display_type": "string",
@@ -1695,7 +1695,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0702ed5a9fce4e3a0f34797581b352ba",
-    "name": "Vibe Most Wanted #717",
+    "name": "$VBMS #717",
     "attributes": [
       {
         "display_type": "string",
@@ -1733,7 +1733,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/abbf6a660f651605e16775efce44cd13",
-    "name": "Vibe Most Wanted #720",
+    "name": "$VBMS #720",
     "attributes": [
       {
         "display_type": "string",
@@ -1771,7 +1771,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8b21a49100a2770d32b7fd32ff43430b",
-    "name": "Vibe Most Wanted #1632",
+    "name": "$VBMS #1632",
     "attributes": [
       {
         "display_type": "string",
@@ -1809,7 +1809,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e37379e8f4bb143baf4605ac7fe1311b",
-    "name": "Vibe Most Wanted #1643",
+    "name": "$VBMS #1643",
     "attributes": [
       {
         "display_type": "string",
@@ -1847,7 +1847,7 @@
     "status": "Rarity Assigned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0ef4927a5d7b2fa75b46beb0d72b4fec",
-    "name": "Vibe Most Wanted #1965",
+    "name": "$VBMS #1965",
     "attributes": [
       {
         "display_type": "string",
@@ -1885,7 +1885,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6f8396af8c3e39697a496441bd960519",
-    "name": "Vibe Most Wanted #1980",
+    "name": "$VBMS #1980",
     "attributes": [
       {
         "display_type": "string",
@@ -1923,7 +1923,7 @@
     "status": "Burned",
     "power": 60,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/427a5cc4600e28a41b00460f9320182b",
-    "name": "Vibe Most Wanted #2889",
+    "name": "$VBMS #2889",
     "attributes": [
       {
         "display_type": "string",
@@ -1961,7 +1961,7 @@
     "status": "Rarity Assigned",
     "power": 225,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2e802f6cea40e0209ccc3c4981d6ecb3",
-    "name": "Vibe Most Wanted #1961",
+    "name": "$VBMS #1961",
     "attributes": [
       {
         "display_type": "string",
@@ -1999,7 +1999,7 @@
     "status": "Burned",
     "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f458103ac991a2b68c883eef45d79549",
-    "name": "Vibe Most Wanted #226",
+    "name": "$VBMS #226",
     "attributes": [
       {
         "display_type": "string",
@@ -2037,7 +2037,7 @@
     "status": "Rarity Assigned",
     "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/95717803bb57d92e13bbc4a7955bced1",
-    "name": "Vibe Most Wanted #4579",
+    "name": "$VBMS #4579",
     "attributes": [
       {
         "display_type": "string",
@@ -2075,7 +2075,7 @@
     "status": "Burned",
     "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b0068fe4ed6617d779a30ef269c1aeb2",
-    "name": "Vibe Most Wanted #5688",
+    "name": "$VBMS #5688",
     "attributes": [
       {
         "display_type": "string",
@@ -2113,7 +2113,7 @@
     "status": "Burned",
     "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d4a36e64f5e69214ffb63c6d85179d91",
-    "name": "Vibe Most Wanted #5710",
+    "name": "$VBMS #5710",
     "attributes": [
       {
         "display_type": "string",
@@ -2151,7 +2151,7 @@
     "status": "Rarity Assigned",
     "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c79a84f274277c382794300fac1f2652",
-    "name": "Vibe Most Wanted #7404",
+    "name": "$VBMS #7404",
     "attributes": [
       {
         "display_type": "string",
@@ -2189,7 +2189,7 @@
     "status": "Burned",
     "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d669d728e2b42172a69eeaa2e02c2ac0",
-    "name": "Vibe Most Wanted #7892",
+    "name": "$VBMS #7892",
     "attributes": [
       {
         "display_type": "string",
@@ -2227,7 +2227,7 @@
     "status": "Burned",
     "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e1090e0900758f93ffbe408d55623f3",
-    "name": "Vibe Most Wanted #7903",
+    "name": "$VBMS #7903",
     "attributes": [
       {
         "display_type": "string",
@@ -2265,7 +2265,7 @@
     "status": "Burned",
     "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/398566694a6479648eea48c7635a1cbd",
-    "name": "Vibe Most Wanted #7904",
+    "name": "$VBMS #7904",
     "attributes": [
       {
         "display_type": "string",
@@ -2303,7 +2303,7 @@
     "status": "Burned",
     "power": 21,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dfa5c0a650ece6e96698cfe1f1b84ddf",
-    "name": "Vibe Most Wanted #8586",
+    "name": "$VBMS #8586",
     "attributes": [
       {
         "display_type": "string",
@@ -2341,7 +2341,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4143f5ab0e395293d12b44caa4fcc0c9",
-    "name": "Vibe Most Wanted #10",
+    "name": "$VBMS #10",
     "attributes": [
       {
         "display_type": "string",
@@ -2379,7 +2379,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/35dabe4b823f238850f9755e4a006d01",
-    "name": "Vibe Most Wanted #32",
+    "name": "$VBMS #32",
     "attributes": [
       {
         "display_type": "string",
@@ -2417,7 +2417,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a845830f89e5eb2a32a0c5b5fbe06651",
-    "name": "Vibe Most Wanted #118",
+    "name": "$VBMS #118",
     "attributes": [
       {
         "display_type": "string",
@@ -2455,7 +2455,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/aeee4d71fef1ad213fb045265b1a961f",
-    "name": "Vibe Most Wanted #124",
+    "name": "$VBMS #124",
     "attributes": [
       {
         "display_type": "string",
@@ -2493,7 +2493,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e625aa5c370c3517f22cbbdff03fa59d",
-    "name": "Vibe Most Wanted #1964",
+    "name": "$VBMS #1964",
     "attributes": [
       {
         "display_type": "string",
@@ -2531,7 +2531,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/476e55dd6a6da0c7473325bc3223fb51",
-    "name": "Vibe Most Wanted #4373",
+    "name": "$VBMS #4373",
     "attributes": [
       {
         "display_type": "string",
@@ -2569,7 +2569,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/016f6b4b82a0f96aed61261737ed16d2",
-    "name": "Vibe Most Wanted #4401",
+    "name": "$VBMS #4401",
     "attributes": [
       {
         "display_type": "string",
@@ -2607,7 +2607,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/476e55dd6a6da0c7473325bc3223fb51",
-    "name": "Vibe Most Wanted #4652",
+    "name": "$VBMS #4652",
     "attributes": [
       {
         "display_type": "string",
@@ -2645,7 +2645,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/10f29515afd6a34b05a43ab768578caa",
-    "name": "Vibe Most Wanted #5699",
+    "name": "$VBMS #5699",
     "attributes": [
       {
         "display_type": "string",
@@ -2683,7 +2683,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/069cf7853364004e4ea05e26e2d15c8b",
-    "name": "Vibe Most Wanted #5763",
+    "name": "$VBMS #5763",
     "attributes": [
       {
         "display_type": "string",
@@ -2721,7 +2721,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b139656a051045b264b3df6cea916915",
-    "name": "Vibe Most Wanted #5844",
+    "name": "$VBMS #5844",
     "attributes": [
       {
         "display_type": "string",
@@ -2759,7 +2759,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9b552594b0646d3c37038c7ba9774892",
-    "name": "Vibe Most Wanted #6040",
+    "name": "$VBMS #6040",
     "attributes": [
       {
         "display_type": "string",
@@ -2797,7 +2797,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d77bbfb09b81e1f6d81ff576cdece822",
-    "name": "Vibe Most Wanted #6043",
+    "name": "$VBMS #6043",
     "attributes": [
       {
         "display_type": "string",
@@ -2835,7 +2835,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d279f7d5a9c8261c47c1333267fef5e5",
-    "name": "Vibe Most Wanted #7042",
+    "name": "$VBMS #7042",
     "attributes": [
       {
         "display_type": "string",
@@ -2873,7 +2873,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5d289aa9fd2cf2f14da426f7dc6a6d29",
-    "name": "Vibe Most Wanted #7056",
+    "name": "$VBMS #7056",
     "attributes": [
       {
         "display_type": "string",
@@ -2911,7 +2911,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ffed3320a67b187abb5cde899db8f3ed",
-    "name": "Vibe Most Wanted #7081",
+    "name": "$VBMS #7081",
     "attributes": [
       {
         "display_type": "string",
@@ -2949,7 +2949,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ddabe2d1132982bd9ecc52c3932be380",
-    "name": "Vibe Most Wanted #7086",
+    "name": "$VBMS #7086",
     "attributes": [
       {
         "display_type": "string",
@@ -2987,7 +2987,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/27e61d32979504a2e06514d4cbc540ad",
-    "name": "Vibe Most Wanted #7088",
+    "name": "$VBMS #7088",
     "attributes": [
       {
         "display_type": "string",
@@ -3025,7 +3025,7 @@
     "status": "Rarity Assigned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b6f7052645cf923e351c166dc6757790",
-    "name": "Vibe Most Wanted #7373",
+    "name": "$VBMS #7373",
     "attributes": [
       {
         "display_type": "string",
@@ -3063,7 +3063,7 @@
     "status": "Rarity Assigned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c137d8132639ff3d03e4dc3692930bac",
-    "name": "Vibe Most Wanted #7381",
+    "name": "$VBMS #7381",
     "attributes": [
       {
         "display_type": "string",
@@ -3101,7 +3101,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/01e703eea740929e6db01556e0dcb046",
-    "name": "Vibe Most Wanted #7525",
+    "name": "$VBMS #7525",
     "attributes": [
       {
         "display_type": "string",
@@ -3139,7 +3139,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0f61f3254d74b0a40e5640e73aa92553",
-    "name": "Vibe Most Wanted #7805",
+    "name": "$VBMS #7805",
     "attributes": [
       {
         "display_type": "string",
@@ -3177,7 +3177,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d7aa25e991c5d6097244be2e08a22bf9",
-    "name": "Vibe Most Wanted #7810",
+    "name": "$VBMS #7810",
     "attributes": [
       {
         "display_type": "string",
@@ -3215,7 +3215,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/43b2e052ae9709745b8ab8c97919d4a5",
-    "name": "Vibe Most Wanted #7843",
+    "name": "$VBMS #7843",
     "attributes": [
       {
         "display_type": "string",
@@ -3253,7 +3253,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/eab86eefc983547b8366ea642d3d022e",
-    "name": "Vibe Most Wanted #7862",
+    "name": "$VBMS #7862",
     "attributes": [
       {
         "display_type": "string",
@@ -3291,7 +3291,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/55431bd9d2400179af148d94adbcfcd6",
-    "name": "Vibe Most Wanted #7864",
+    "name": "$VBMS #7864",
     "attributes": [
       {
         "display_type": "string",
@@ -3329,7 +3329,7 @@
     "status": "Burned",
     "power": 18,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/77c8f116808574b0e41428b21eeef72f",
-    "name": "Vibe Most Wanted #8620",
+    "name": "$VBMS #8620",
     "attributes": [
       {
         "display_type": "string",
@@ -3367,7 +3367,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b90069fd9d9da42c2cd6416d12da4073",
-    "name": "Vibe Most Wanted #3",
+    "name": "$VBMS #3",
     "attributes": [
       {
         "display_type": "string",
@@ -3405,7 +3405,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7712a941ed369a9afbc26042a0cc9ebf",
-    "name": "Vibe Most Wanted #12",
+    "name": "$VBMS #12",
     "attributes": [
       {
         "display_type": "string",
@@ -3443,7 +3443,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9401bd8fecbcd865d63c3e537b7e544a",
-    "name": "Vibe Most Wanted #40",
+    "name": "$VBMS #40",
     "attributes": [
       {
         "display_type": "string",
@@ -3481,7 +3481,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fb15b03d340dc9481416f208c0fba80c",
-    "name": "Vibe Most Wanted #51",
+    "name": "$VBMS #51",
     "attributes": [
       {
         "display_type": "string",
@@ -3519,7 +3519,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3f3af5f75a995f2dbb714acafb37b5e2",
-    "name": "Vibe Most Wanted #54",
+    "name": "$VBMS #54",
     "attributes": [
       {
         "display_type": "string",
@@ -3557,7 +3557,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0a002eb5c988f97b44d44864d9f6a3c7",
-    "name": "Vibe Most Wanted #92",
+    "name": "$VBMS #92",
     "attributes": [
       {
         "display_type": "string",
@@ -3595,7 +3595,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/91e9fc9d9a886b905137d5033fd165aa",
-    "name": "Vibe Most Wanted #127",
+    "name": "$VBMS #127",
     "attributes": [
       {
         "display_type": "string",
@@ -3633,7 +3633,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e13241c64169b27d2fa88f324bba6644",
-    "name": "Vibe Most Wanted #131",
+    "name": "$VBMS #131",
     "attributes": [
       {
         "display_type": "string",
@@ -3671,7 +3671,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d38a74801dcf1eb537fc1fc072367d65",
-    "name": "Vibe Most Wanted #225",
+    "name": "$VBMS #225",
     "attributes": [
       {
         "display_type": "string",
@@ -3709,7 +3709,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e952ed5be5465780c9b179a149c7f5f5",
-    "name": "Vibe Most Wanted #252",
+    "name": "$VBMS #252",
     "attributes": [
       {
         "display_type": "string",
@@ -3747,7 +3747,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/25f92e7e692b1f0dc9606598401e7ae7",
-    "name": "Vibe Most Wanted #263",
+    "name": "$VBMS #263",
     "attributes": [
       {
         "display_type": "string",
@@ -3785,7 +3785,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/75af9a0068d09ecdfb4bde84f52535ff",
-    "name": "Vibe Most Wanted #363",
+    "name": "$VBMS #363",
     "attributes": [
       {
         "display_type": "string",
@@ -3823,7 +3823,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/33206084488267b383fbf5e04c1249ba",
-    "name": "Vibe Most Wanted #604",
+    "name": "$VBMS #604",
     "attributes": [
       {
         "display_type": "string",
@@ -3861,7 +3861,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2f2c04371ccc8cd5f3e4a73abef6cd97",
-    "name": "Vibe Most Wanted #605",
+    "name": "$VBMS #605",
     "attributes": [
       {
         "display_type": "string",
@@ -3899,7 +3899,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a249a98faf38ff3e350a81b62b327f7d",
-    "name": "Vibe Most Wanted #606",
+    "name": "$VBMS #606",
     "attributes": [
       {
         "display_type": "string",
@@ -3937,7 +3937,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/be17c48c1b83b9cce9aa6f4474546af3",
-    "name": "Vibe Most Wanted #608",
+    "name": "$VBMS #608",
     "attributes": [
       {
         "display_type": "string",
@@ -3975,7 +3975,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/96ab9acc5db8ffe1116312a9f14eb5f2",
-    "name": "Vibe Most Wanted #610",
+    "name": "$VBMS #610",
     "attributes": [
       {
         "display_type": "string",
@@ -4013,7 +4013,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1368d04fc119f63007fcb616db77130a",
-    "name": "Vibe Most Wanted #711",
+    "name": "$VBMS #711",
     "attributes": [
       {
         "display_type": "string",
@@ -4051,7 +4051,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/bef31672522d959f1b44104a4148bbb3",
-    "name": "Vibe Most Wanted #940",
+    "name": "$VBMS #940",
     "attributes": [
       {
         "display_type": "string",
@@ -4089,7 +4089,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dee699940d88b707d6c7c2059e6415a0",
-    "name": "Vibe Most Wanted #1593",
+    "name": "$VBMS #1593",
     "attributes": [
       {
         "display_type": "string",
@@ -4127,7 +4127,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9ee4d1535329ca7a549fa2d3d9b1b68a",
-    "name": "Vibe Most Wanted #1600",
+    "name": "$VBMS #1600",
     "attributes": [
       {
         "display_type": "string",
@@ -4165,7 +4165,7 @@
     "status": "Burned",
     "power": 15,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ca7acef9b47199d11d467887b1644f3a",
-    "name": "Vibe Most Wanted #1602",
+    "name": "$VBMS #1602",
     "attributes": [
       {
         "display_type": "string",
@@ -4203,7 +4203,7 @@
     "status": "Rarity Assigned",
     "power": 3,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a3bf2c213c9ce3bd6af78654f7819a5a",
-    "name": "Vibe Most Wanted #7394",
+    "name": "$VBMS #7394",
     "attributes": [
       {
         "display_type": "string",
@@ -4241,7 +4241,7 @@
     "status": "Burned",
     "power": 2,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e32e13435c7740ecd439ad12278a73ba",
-    "name": "Vibe Most Wanted #716",
+    "name": "$VBMS #716",
     "attributes": [
       {
         "display_type": "string",
@@ -4279,7 +4279,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d6566f25ad2ec36e99fc6b57c334bead",
-    "name": "Vibe Most Wanted #1",
+    "name": "$VBMS #1",
     "attributes": [
       {
         "display_type": "string",
@@ -4317,7 +4317,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a410e19f3dea9aff4b82aa382840babe",
-    "name": "Vibe Most Wanted #2",
+    "name": "$VBMS #2",
     "attributes": [
       {
         "display_type": "string",
@@ -4355,7 +4355,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5c844bd4db90082369bb6157fa8cde20",
-    "name": "Vibe Most Wanted #19",
+    "name": "$VBMS #19",
     "attributes": [
       {
         "display_type": "string",
@@ -4393,7 +4393,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/574f5036b5ce6670196a24ef7f44519a",
-    "name": "Vibe Most Wanted #20",
+    "name": "$VBMS #20",
     "attributes": [
       {
         "display_type": "string",
@@ -4431,7 +4431,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4e8cd2d7ff3f2007c1830af8b3d38d4f",
-    "name": "Vibe Most Wanted #21",
+    "name": "$VBMS #21",
     "attributes": [
       {
         "display_type": "string",
@@ -4469,7 +4469,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/83bcc2df46c9011ae7cc6caa04df1e6a",
-    "name": "Vibe Most Wanted #22",
+    "name": "$VBMS #22",
     "attributes": [
       {
         "display_type": "string",
@@ -4507,7 +4507,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f48084005ca1c3fe25947bfabe66df99",
-    "name": "Vibe Most Wanted #23",
+    "name": "$VBMS #23",
     "attributes": [
       {
         "display_type": "string",
@@ -4545,7 +4545,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ee7bad85b87bdbccecbef54220078e33",
-    "name": "Vibe Most Wanted #24",
+    "name": "$VBMS #24",
     "attributes": [
       {
         "display_type": "string",
@@ -4583,7 +4583,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1027fc257a7ad950dd96efa44b3f8ff7",
-    "name": "Vibe Most Wanted #28",
+    "name": "$VBMS #28",
     "attributes": [
       {
         "display_type": "string",
@@ -4621,7 +4621,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e2336a5f546e6d65d9808286edfe9f7e",
-    "name": "Vibe Most Wanted #29",
+    "name": "$VBMS #29",
     "attributes": [
       {
         "display_type": "string",
@@ -4659,7 +4659,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9e4ac9c426480cb4c0050f9ac9b43740",
-    "name": "Vibe Most Wanted #30",
+    "name": "$VBMS #30",
     "attributes": [
       {
         "display_type": "string",
@@ -4697,7 +4697,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0be4784d5666dec156687b97cf936762",
-    "name": "Vibe Most Wanted #31",
+    "name": "$VBMS #31",
     "attributes": [
       {
         "display_type": "string",
@@ -4735,7 +4735,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9f438d05e3dae6f90b84e2e4dddc31bd",
-    "name": "Vibe Most Wanted #33",
+    "name": "$VBMS #33",
     "attributes": [
       {
         "display_type": "string",
@@ -4773,7 +4773,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e5f554c280d5acdded2398fd63769245",
-    "name": "Vibe Most Wanted #34",
+    "name": "$VBMS #34",
     "attributes": [
       {
         "display_type": "string",
@@ -4811,7 +4811,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e62c0fd4b0e9ddfb68346f9940688178",
-    "name": "Vibe Most Wanted #35",
+    "name": "$VBMS #35",
     "attributes": [
       {
         "display_type": "string",
@@ -4849,7 +4849,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6aae3d5067e61a41e6ef79e992b664cb",
-    "name": "Vibe Most Wanted #36",
+    "name": "$VBMS #36",
     "attributes": [
       {
         "display_type": "string",
@@ -4887,7 +4887,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d4a789bd6274b8ce710ea21bc7b1e0a4",
-    "name": "Vibe Most Wanted #37",
+    "name": "$VBMS #37",
     "attributes": [
       {
         "display_type": "string",
@@ -4925,7 +4925,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ed1ddb232521ed7c12b3cf592fd24f28",
-    "name": "Vibe Most Wanted #38",
+    "name": "$VBMS #38",
     "attributes": [
       {
         "display_type": "string",
@@ -4963,7 +4963,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/8e97385519e6d0c594f5f3659c0dff51",
-    "name": "Vibe Most Wanted #41",
+    "name": "$VBMS #41",
     "attributes": [
       {
         "display_type": "string",
@@ -5001,7 +5001,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/08c01ecbc591a7268d8541bb411d2792",
-    "name": "Vibe Most Wanted #42",
+    "name": "$VBMS #42",
     "attributes": [
       {
         "display_type": "string",
@@ -5039,7 +5039,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/7be55e856db77c5839ab47eb3699933f",
-    "name": "Vibe Most Wanted #44",
+    "name": "$VBMS #44",
     "attributes": [
       {
         "display_type": "string",
@@ -5077,7 +5077,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/06c9f01a2326939d30799db68c8c72ef",
-    "name": "Vibe Most Wanted #46",
+    "name": "$VBMS #46",
     "attributes": [
       {
         "display_type": "string",
@@ -5115,7 +5115,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/440ddb343f7a7a0d7b1c429c7279d7a9",
-    "name": "Vibe Most Wanted #47",
+    "name": "$VBMS #47",
     "attributes": [
       {
         "display_type": "string",
@@ -5153,7 +5153,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f112ff01359fc803a9c1794eabc6acc2",
-    "name": "Vibe Most Wanted #48",
+    "name": "$VBMS #48",
     "attributes": [
       {
         "display_type": "string",
@@ -5191,7 +5191,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/05faf54af660b938ad866a879a8ba1da",
-    "name": "Vibe Most Wanted #49",
+    "name": "$VBMS #49",
     "attributes": [
       {
         "display_type": "string",
@@ -5229,7 +5229,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fd97a46279d1b80f45faf4739a245da1",
-    "name": "Vibe Most Wanted #50",
+    "name": "$VBMS #50",
     "attributes": [
       {
         "display_type": "string",
@@ -5267,7 +5267,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/56f5275f29d0ebed679cc76e5c660ca5",
-    "name": "Vibe Most Wanted #52",
+    "name": "$VBMS #52",
     "attributes": [
       {
         "display_type": "string",
@@ -5305,7 +5305,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0f50d1e59397fdcf973b8decd8d084a5",
-    "name": "Vibe Most Wanted #53",
+    "name": "$VBMS #53",
     "attributes": [
       {
         "display_type": "string",
@@ -5343,7 +5343,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/56f5275f29d0ebed679cc76e5c660ca5",
-    "name": "Vibe Most Wanted #56",
+    "name": "$VBMS #56",
     "attributes": [
       {
         "display_type": "string",
@@ -5381,7 +5381,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/24c5c7f1d94b92010640d56397fdcb7a",
-    "name": "Vibe Most Wanted #90",
+    "name": "$VBMS #90",
     "attributes": [
       {
         "value": "None",
@@ -5415,7 +5415,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/38917e07da58a769eaf9475ec1e76f6f",
-    "name": "Vibe Most Wanted #91",
+    "name": "$VBMS #91",
     "attributes": [
       {
         "display_type": "string",
@@ -5453,7 +5453,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/bd6fb17791983c31f503294f49ff7318",
-    "name": "Vibe Most Wanted #94",
+    "name": "$VBMS #94",
     "attributes": [
       {
         "value": "None",
@@ -5487,7 +5487,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0be5db5cc4a798a0c015b36c6af30026",
-    "name": "Vibe Most Wanted #95",
+    "name": "$VBMS #95",
     "attributes": [
       {
         "display_type": "string",
@@ -5525,7 +5525,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/efec68d0ab556b9c92ca2694fe7f71f4",
-    "name": "Vibe Most Wanted #96",
+    "name": "$VBMS #96",
     "attributes": [
       {
         "display_type": "string",
@@ -5563,7 +5563,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/65cbc442cc2e16c4ede8f959bb30aa79",
-    "name": "Vibe Most Wanted #97",
+    "name": "$VBMS #97",
     "attributes": [
       {
         "display_type": "string",
@@ -5601,7 +5601,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6fc203af35f0d5052a3485eaea414dec",
-    "name": "Vibe Most Wanted #111",
+    "name": "$VBMS #111",
     "attributes": [
       {
         "display_type": "string",
@@ -5639,7 +5639,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/011ec1411831c1b4de602f5e2bc50b1d",
-    "name": "Vibe Most Wanted #112",
+    "name": "$VBMS #112",
     "attributes": [
       {
         "display_type": "string",
@@ -5677,7 +5677,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5cbdd0fa53d0c6c90c747070f0109c12",
-    "name": "Vibe Most Wanted #113",
+    "name": "$VBMS #113",
     "attributes": [
       {
         "display_type": "string",
@@ -5715,7 +5715,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6058bf1b9063f7e45a415e43e839f521",
-    "name": "Vibe Most Wanted #116",
+    "name": "$VBMS #116",
     "attributes": [
       {
         "value": "None",
@@ -5749,7 +5749,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d1e908e990d959798d45b6e7b62a7060",
-    "name": "Vibe Most Wanted #117",
+    "name": "$VBMS #117",
     "attributes": [
       {
         "display_type": "string",
@@ -5787,7 +5787,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2a448bcaa58807ded3b7d41e01b9d796",
-    "name": "Vibe Most Wanted #119",
+    "name": "$VBMS #119",
     "attributes": [
       {
         "display_type": "string",
@@ -5825,7 +5825,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9de852b3468c07f2619a44ffb7ae44b5",
-    "name": "Vibe Most Wanted #120",
+    "name": "$VBMS #120",
     "attributes": [
       {
         "display_type": "string",
@@ -5863,7 +5863,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/71ed9129f85460e644b6b2e1721729ab",
-    "name": "Vibe Most Wanted #121",
+    "name": "$VBMS #121",
     "attributes": [
       {
         "display_type": "string",
@@ -5901,7 +5901,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/15a44d054e079b31052e734934a19d6c",
-    "name": "Vibe Most Wanted #122",
+    "name": "$VBMS #122",
     "attributes": [
       {
         "display_type": "string",
@@ -5939,7 +5939,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/bb096c610ec58a9e247c9fbcc32e52fc",
-    "name": "Vibe Most Wanted #123",
+    "name": "$VBMS #123",
     "attributes": [
       {
         "display_type": "string",
@@ -5977,7 +5977,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/b71aa66cc9f19505e1ee514728f28bd0",
-    "name": "Vibe Most Wanted #126",
+    "name": "$VBMS #126",
     "attributes": [
       {
         "value": "None",
@@ -6011,7 +6011,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3169f16e2c14bc319c99ea4193910ff5",
-    "name": "Vibe Most Wanted #128",
+    "name": "$VBMS #128",
     "attributes": [
       {
         "display_type": "string",
@@ -6049,7 +6049,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f51c61ad89a9816eb0ad3d60729af33e",
-    "name": "Vibe Most Wanted #129",
+    "name": "$VBMS #129",
     "attributes": [
       {
         "display_type": "string",
@@ -6087,7 +6087,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/debdbda6593e7355c634495e3d103191",
-    "name": "Vibe Most Wanted #213",
+    "name": "$VBMS #213",
     "attributes": [
       {
         "display_type": "string",
@@ -6125,7 +6125,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/524338f47360aa32fec8022e445a980e",
-    "name": "Vibe Most Wanted #214",
+    "name": "$VBMS #214",
     "attributes": [
       {
         "display_type": "string",
@@ -6163,7 +6163,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/046cee0bd5739c52ab0a1fc5bfcf5fd8",
-    "name": "Vibe Most Wanted #215",
+    "name": "$VBMS #215",
     "attributes": [
       {
         "display_type": "string",
@@ -6201,7 +6201,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0be4d11703ea1668faa722b22219f71a",
-    "name": "Vibe Most Wanted #216",
+    "name": "$VBMS #216",
     "attributes": [
       {
         "display_type": "string",
@@ -6239,7 +6239,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/40634aad5dd8065b62e253a191ec3bc0",
-    "name": "Vibe Most Wanted #217",
+    "name": "$VBMS #217",
     "attributes": [
       {
         "display_type": "string",
@@ -6277,7 +6277,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/770d5fa4881c25eefbaac246ed6895ab",
-    "name": "Vibe Most Wanted #220",
+    "name": "$VBMS #220",
     "attributes": [
       {
         "display_type": "string",
@@ -6315,7 +6315,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dc41737e517ae5174045ef07abeda80b",
-    "name": "Vibe Most Wanted #221",
+    "name": "$VBMS #221",
     "attributes": [
       {
         "display_type": "string",
@@ -6353,7 +6353,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/dcf772fed827bfbc357c76f54c4e669f",
-    "name": "Vibe Most Wanted #222",
+    "name": "$VBMS #222",
     "attributes": [
       {
         "display_type": "string",
@@ -6391,7 +6391,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d4d41cd019242d1c728f5964a7f021ae",
-    "name": "Vibe Most Wanted #224",
+    "name": "$VBMS #224",
     "attributes": [
       {
         "display_type": "string",
@@ -6429,7 +6429,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/10d35248db997d5edec086405384651b",
-    "name": "Vibe Most Wanted #227",
+    "name": "$VBMS #227",
     "attributes": [
       {
         "display_type": "string",
@@ -6467,7 +6467,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/d7c41cfee2e4a6197d83b590e2a878a7",
-    "name": "Vibe Most Wanted #261",
+    "name": "$VBMS #261",
     "attributes": [
       {
         "display_type": "string",
@@ -6505,7 +6505,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0353ae0ca936e43be5d5eaf361b8bfe6",
-    "name": "Vibe Most Wanted #262",
+    "name": "$VBMS #262",
     "attributes": [
       {
         "display_type": "string",
@@ -6543,7 +6543,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a9fe72f084bb3753977d32aab28ef67e",
-    "name": "Vibe Most Wanted #264",
+    "name": "$VBMS #264",
     "attributes": [
       {
         "display_type": "string",
@@ -6581,7 +6581,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0320e012ea556cd1749385dcd1a6aa77",
-    "name": "Vibe Most Wanted #273",
+    "name": "$VBMS #273",
     "attributes": [
       {
         "display_type": "string",
@@ -6619,7 +6619,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2df29f2401ce22c433ee159773059c14",
-    "name": "Vibe Most Wanted #361",
+    "name": "$VBMS #361",
     "attributes": [
       {
         "display_type": "string",
@@ -6657,7 +6657,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c1bfaddc976c187fb0a066583d3e2c50",
-    "name": "Vibe Most Wanted #362",
+    "name": "$VBMS #362",
     "attributes": [
       {
         "display_type": "string",
@@ -6695,7 +6695,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/784e0fe4b1d72c747fb2b6ed887cd822",
-    "name": "Vibe Most Wanted #364",
+    "name": "$VBMS #364",
     "attributes": [
       {
         "display_type": "string",
@@ -6733,7 +6733,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/24d0f59876b0e85f273b88cd3e757c9c",
-    "name": "Vibe Most Wanted #601",
+    "name": "$VBMS #601",
     "attributes": [
       {
         "display_type": "string",
@@ -6771,7 +6771,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/63840d85d719e0aa2133dfb994a624e6",
-    "name": "Vibe Most Wanted #602",
+    "name": "$VBMS #602",
     "attributes": [
       {
         "display_type": "string",
@@ -6809,7 +6809,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6c4c6e7d02678cd8d08aa4a174164121",
-    "name": "Vibe Most Wanted #603",
+    "name": "$VBMS #603",
     "attributes": [
       {
         "display_type": "string",
@@ -6847,7 +6847,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/deaa26ed6804f7764ff7b5c5cd93bae9",
-    "name": "Vibe Most Wanted #607",
+    "name": "$VBMS #607",
     "attributes": [
       {
         "display_type": "string",
@@ -6885,7 +6885,7 @@
     "status": "Rarity Assigned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e728aac976e8abd207ac1e006226bab6",
-    "name": "Vibe Most Wanted #7392",
+    "name": "$VBMS #7392",
     "attributes": [
       {
         "display_type": "string",
@@ -6923,7 +6923,7 @@
     "status": "Rarity Assigned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1884aae38bea566900b75fff717936f8",
-    "name": "Vibe Most Wanted #7393",
+    "name": "$VBMS #7393",
     "attributes": [
       {
         "display_type": "string",
@@ -6961,7 +6961,7 @@
     "status": "Rarity Assigned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9836f39ea97f53f0293fbffd96f73eb7",
-    "name": "Vibe Most Wanted #7395",
+    "name": "$VBMS #7395",
     "attributes": [
       {
         "display_type": "string",
@@ -6999,7 +6999,7 @@
     "status": "Rarity Assigned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/338501dd1c473ec963cbf76e5e5bc3f8",
-    "name": "Vibe Most Wanted #7396",
+    "name": "$VBMS #7396",
     "attributes": [
       {
         "display_type": "string",
@@ -7037,7 +7037,7 @@
     "status": "Rarity Assigned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/38f413713b019086f1f40f7d1de34e63",
-    "name": "Vibe Most Wanted #7397",
+    "name": "$VBMS #7397",
     "attributes": [
       {
         "display_type": "string",
@@ -7075,7 +7075,7 @@
     "status": "Rarity Assigned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/338501dd1c473ec963cbf76e5e5bc3f8",
-    "name": "Vibe Most Wanted #7401",
+    "name": "$VBMS #7401",
     "attributes": [
       {
         "display_type": "string",
@@ -7113,7 +7113,7 @@
     "status": "Rarity Assigned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/1884aae38bea566900b75fff717936f8",
-    "name": "Vibe Most Wanted #7403",
+    "name": "$VBMS #7403",
     "attributes": [
       {
         "display_type": "string",
@@ -7151,7 +7151,7 @@
     "status": "Rarity Assigned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c2271f25ece45a6ac7e8375927c12a07",
-    "name": "Vibe Most Wanted #7405",
+    "name": "$VBMS #7405",
     "attributes": [
       {
         "display_type": "string",
@@ -7189,7 +7189,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a7d6e4d6dff13c51f175ce0a665268c6",
-    "name": "Vibe Most Wanted #7506",
+    "name": "$VBMS #7506",
     "attributes": [
       {
         "display_type": "string",
@@ -7227,7 +7227,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2513d43c1d38e616465a36b7ba4a7135",
-    "name": "Vibe Most Wanted #7515",
+    "name": "$VBMS #7515",
     "attributes": [
       {
         "display_type": "string",
@@ -7265,7 +7265,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c4d9e3092b104e9e4802d7c1b680d059",
-    "name": "Vibe Most Wanted #7520",
+    "name": "$VBMS #7520",
     "attributes": [
       {
         "display_type": "string",
@@ -7303,7 +7303,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/37bdcb5af8c7165a3c2b0a3de1a9c3e3",
-    "name": "Vibe Most Wanted #7528",
+    "name": "$VBMS #7528",
     "attributes": [
       {
         "display_type": "string",
@@ -7341,7 +7341,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e85e51612d92642581ab72ef83160323",
-    "name": "Vibe Most Wanted #7529",
+    "name": "$VBMS #7529",
     "attributes": [
       {
         "display_type": "string",
@@ -7379,7 +7379,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c532612e24d464b35be5f2d112921346",
-    "name": "Vibe Most Wanted #7794",
+    "name": "$VBMS #7794",
     "attributes": [
       {
         "display_type": "string",
@@ -7417,7 +7417,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0e7b830ef151e13a82b9f81c04b8d7b6",
-    "name": "Vibe Most Wanted #7795",
+    "name": "$VBMS #7795",
     "attributes": [
       {
         "display_type": "string",
@@ -7455,7 +7455,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0e0ff97cbbbd0e4b9423cacfdee436b1",
-    "name": "Vibe Most Wanted #7796",
+    "name": "$VBMS #7796",
     "attributes": [
       {
         "display_type": "string",
@@ -7493,7 +7493,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4afc620ec07612ca6ed3a4021b1408d9",
-    "name": "Vibe Most Wanted #7797",
+    "name": "$VBMS #7797",
     "attributes": [
       {
         "display_type": "string",
@@ -7531,7 +7531,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/3f3a6dfd024af13410d21c55297584fa",
-    "name": "Vibe Most Wanted #7799",
+    "name": "$VBMS #7799",
     "attributes": [
       {
         "display_type": "string",
@@ -7569,7 +7569,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/158ebfd36c48ee52e1e6943854ac75f0",
-    "name": "Vibe Most Wanted #7800",
+    "name": "$VBMS #7800",
     "attributes": [
       {
         "display_type": "string",
@@ -7607,7 +7607,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c880ed3cd82c1f6666dc511631fc4397",
-    "name": "Vibe Most Wanted #7801",
+    "name": "$VBMS #7801",
     "attributes": [
       {
         "display_type": "string",
@@ -7645,7 +7645,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/158ebfd36c48ee52e1e6943854ac75f0",
-    "name": "Vibe Most Wanted #7802",
+    "name": "$VBMS #7802",
     "attributes": [
       {
         "display_type": "string",
@@ -7683,7 +7683,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6f6392d398809de8905ad9aa87b725f2",
-    "name": "Vibe Most Wanted #7806",
+    "name": "$VBMS #7806",
     "attributes": [
       {
         "display_type": "string",
@@ -7721,7 +7721,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/6e06bd97dbefe443f53078d5886cef6f",
-    "name": "Vibe Most Wanted #7809",
+    "name": "$VBMS #7809",
     "attributes": [
       {
         "display_type": "string",
@@ -7759,7 +7759,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5e83d8c89d9721fc1ceb4424874fc21a",
-    "name": "Vibe Most Wanted #7811",
+    "name": "$VBMS #7811",
     "attributes": [
       {
         "display_type": "string",
@@ -7797,7 +7797,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/71ce0a30020412536ada3cea8b481ec8",
-    "name": "Vibe Most Wanted #7813",
+    "name": "$VBMS #7813",
     "attributes": [
       {
         "display_type": "string",
@@ -7835,7 +7835,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/431b66fc8632acdaa2eb689a9824ae36",
-    "name": "Vibe Most Wanted #7814",
+    "name": "$VBMS #7814",
     "attributes": [
       {
         "display_type": "string",
@@ -7873,7 +7873,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/473d509d7beaee0bf0e62a7f09fb1231",
-    "name": "Vibe Most Wanted #7816",
+    "name": "$VBMS #7816",
     "attributes": [
       {
         "display_type": "string",
@@ -7911,7 +7911,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/668d945e1154d0d435b91b16b9aec6cf",
-    "name": "Vibe Most Wanted #7823",
+    "name": "$VBMS #7823",
     "attributes": [
       {
         "display_type": "string",
@@ -7949,7 +7949,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e30b786f5ac4f2414ef46bfc24386889",
-    "name": "Vibe Most Wanted #7824",
+    "name": "$VBMS #7824",
     "attributes": [
       {
         "display_type": "string",
@@ -7987,7 +7987,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e5774eb2ca751128e42aca1c0252abf3",
-    "name": "Vibe Most Wanted #7825",
+    "name": "$VBMS #7825",
     "attributes": [
       {
         "display_type": "string",
@@ -8025,7 +8025,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/da1544324968ded1f694f7356c33f326",
-    "name": "Vibe Most Wanted #7828",
+    "name": "$VBMS #7828",
     "attributes": [
       {
         "display_type": "string",
@@ -8063,7 +8063,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c532612e24d464b35be5f2d112921346",
-    "name": "Vibe Most Wanted #7832",
+    "name": "$VBMS #7832",
     "attributes": [
       {
         "display_type": "string",
@@ -8101,7 +8101,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e3329b34aea22a0d1b357c76e05baf88",
-    "name": "Vibe Most Wanted #7833",
+    "name": "$VBMS #7833",
     "attributes": [
       {
         "display_type": "string",
@@ -8139,7 +8139,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/a77be563ba41bcba112c8e1403521ec1",
-    "name": "Vibe Most Wanted #7836",
+    "name": "$VBMS #7836",
     "attributes": [
       {
         "display_type": "string",
@@ -8177,7 +8177,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/00a99b335483057db76c08b87b43707e",
-    "name": "Vibe Most Wanted #7837",
+    "name": "$VBMS #7837",
     "attributes": [
       {
         "display_type": "string",
@@ -8215,7 +8215,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2513d43c1d38e616465a36b7ba4a7135",
-    "name": "Vibe Most Wanted #7838",
+    "name": "$VBMS #7838",
     "attributes": [
       {
         "display_type": "string",
@@ -8253,7 +8253,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2263a19e05f9ceef0360019fc4edc901",
-    "name": "Vibe Most Wanted #7839",
+    "name": "$VBMS #7839",
     "attributes": [
       {
         "display_type": "string",
@@ -8291,7 +8291,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/2cc6448d4c358815d3a4bee36210a0db",
-    "name": "Vibe Most Wanted #7840",
+    "name": "$VBMS #7840",
     "attributes": [
       {
         "display_type": "string",
@@ -8329,7 +8329,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/92beafd1bdfb42f2bd02c763697afe28",
-    "name": "Vibe Most Wanted #7844",
+    "name": "$VBMS #7844",
     "attributes": [
       {
         "display_type": "string",
@@ -8367,7 +8367,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ef167bd11df536d5c4cf568543af1172",
-    "name": "Vibe Most Wanted #7846",
+    "name": "$VBMS #7846",
     "attributes": [
       {
         "display_type": "string",
@@ -8405,7 +8405,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5192b6325415bb35d873ec8ca41b671b",
-    "name": "Vibe Most Wanted #7847",
+    "name": "$VBMS #7847",
     "attributes": [
       {
         "display_type": "string",
@@ -8443,7 +8443,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/ac795899b823babbf1400c6fbf9a0693",
-    "name": "Vibe Most Wanted #7848",
+    "name": "$VBMS #7848",
     "attributes": [
       {
         "display_type": "string",
@@ -8481,7 +8481,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/e30b786f5ac4f2414ef46bfc24386889",
-    "name": "Vibe Most Wanted #7849",
+    "name": "$VBMS #7849",
     "attributes": [
       {
         "display_type": "string",
@@ -8519,7 +8519,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0063b3b1710c9fa153cf8c571811d800",
-    "name": "Vibe Most Wanted #7850",
+    "name": "$VBMS #7850",
     "attributes": [
       {
         "display_type": "string",
@@ -8557,7 +8557,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/49c7dce39540ce39d66dd39872342501",
-    "name": "Vibe Most Wanted #7851",
+    "name": "$VBMS #7851",
     "attributes": [
       {
         "display_type": "string",
@@ -8595,7 +8595,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/645476f59d3f0dc69c03279b47c3151b",
-    "name": "Vibe Most Wanted #7852",
+    "name": "$VBMS #7852",
     "attributes": [
       {
         "display_type": "string",
@@ -8633,7 +8633,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/eb7a3e3bd497062c075842fffdcc44cc",
-    "name": "Vibe Most Wanted #7853",
+    "name": "$VBMS #7853",
     "attributes": [
       {
         "display_type": "string",
@@ -8671,7 +8671,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/07d7dea1ae66392fa6708ce4ab89564f",
-    "name": "Vibe Most Wanted #7854",
+    "name": "$VBMS #7854",
     "attributes": [
       {
         "display_type": "string",
@@ -8709,7 +8709,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/9e35bc003a0bbf690b921e056b78a5f0",
-    "name": "Vibe Most Wanted #7855",
+    "name": "$VBMS #7855",
     "attributes": [
       {
         "display_type": "string",
@@ -8747,7 +8747,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/cc69cf4c16e9391cc87ef48b9b853550",
-    "name": "Vibe Most Wanted #7858",
+    "name": "$VBMS #7858",
     "attributes": [
       {
         "display_type": "string",
@@ -8785,7 +8785,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/536b4c14e05c6f5be5ae93c5d8886982",
-    "name": "Vibe Most Wanted #7859",
+    "name": "$VBMS #7859",
     "attributes": [
       {
         "display_type": "string",
@@ -8823,7 +8823,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/28a18797ace35915960e96580f6a56bf",
-    "name": "Vibe Most Wanted #7860",
+    "name": "$VBMS #7860",
     "attributes": [
       {
         "display_type": "string",
@@ -8861,7 +8861,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/5eca696b04772ace3a28bb227f16065d",
-    "name": "Vibe Most Wanted #7861",
+    "name": "$VBMS #7861",
     "attributes": [
       {
         "display_type": "string",
@@ -8899,7 +8899,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/c2657b0d9118b3febec00e881df56fe8",
-    "name": "Vibe Most Wanted #7865",
+    "name": "$VBMS #7865",
     "attributes": [
       {
         "display_type": "string",
@@ -8937,7 +8937,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/42d441a610f50659325c1a2c4a52e9b2",
-    "name": "Vibe Most Wanted #7867",
+    "name": "$VBMS #7867",
     "attributes": [
       {
         "display_type": "string",
@@ -8975,7 +8975,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/0a60dd4d76920b9f096aa572b00aec26",
-    "name": "Vibe Most Wanted #7871",
+    "name": "$VBMS #7871",
     "attributes": [
       {
         "display_type": "string",
@@ -9013,7 +9013,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/4e97faaf1ef320bbe6f9ffd68aef3728",
-    "name": "Vibe Most Wanted #7888",
+    "name": "$VBMS #7888",
     "attributes": [
       {
         "display_type": "string",
@@ -9051,7 +9051,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/f5375a82dfd3f457a1be86989200b7ea",
-    "name": "Vibe Most Wanted #7889",
+    "name": "$VBMS #7889",
     "attributes": [
       {
         "display_type": "string",
@@ -9089,7 +9089,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/017fd871c9695d4b81492cad0f8143fc",
-    "name": "Vibe Most Wanted #7890",
+    "name": "$VBMS #7890",
     "attributes": [
       {
         "display_type": "string",
@@ -9127,7 +9127,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/fbc6caacc1cbb4be2e33271a0ce9f330",
-    "name": "Vibe Most Wanted #7891",
+    "name": "$VBMS #7891",
     "attributes": [
       {
         "display_type": "string",
@@ -9165,7 +9165,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/778f6ba852da1eb85677696512cdecee",
-    "name": "Vibe Most Wanted #7893",
+    "name": "$VBMS #7893",
     "attributes": [
       {
         "display_type": "string",
@@ -9203,7 +9203,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/34603e4f23b6d87f086466892f7b7f8d",
-    "name": "Vibe Most Wanted #7894",
+    "name": "$VBMS #7894",
     "attributes": [
       {
         "display_type": "string",
@@ -9241,7 +9241,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/30dcb80ef1dcf52f131ea9bcddf07e45",
-    "name": "Vibe Most Wanted #7896",
+    "name": "$VBMS #7896",
     "attributes": [
       {
         "display_type": "string",
@@ -9279,7 +9279,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/34a2b815f3fdaeba2ae7197895ca07f8",
-    "name": "Vibe Most Wanted #7897",
+    "name": "$VBMS #7897",
     "attributes": [
       {
         "display_type": "string",
@@ -9317,7 +9317,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/669d4fa8ac080934c432eb2bf3a462bb",
-    "name": "Vibe Most Wanted #7898",
+    "name": "$VBMS #7898",
     "attributes": [
       {
         "display_type": "string",
@@ -9355,7 +9355,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/150ef0cd389f1b7e614e8e8aeb0a0650",
-    "name": "Vibe Most Wanted #7899",
+    "name": "$VBMS #7899",
     "attributes": [
       {
         "display_type": "string",
@@ -9393,7 +9393,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "https://nft-cdn.alchemy.com/base-mainnet/212d1f1adacf5388a8ce234541d07782",
-    "name": "Vibe Most Wanted #7901",
+    "name": "$VBMS #7901",
     "attributes": [
       {
         "display_type": "string",
@@ -9431,7 +9431,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "",
-    "name": "Vibe Most Wanted #8037",
+    "name": "$VBMS #8037",
     "attributes": [
       {
         "display_type": "string",
@@ -9455,7 +9455,7 @@
     "status": "Burned",
     "power": 1,
     "imageUrl": "",
-    "name": "Vibe Most Wanted #8042",
+    "name": "$VBMS #8042",
     "attributes": [
       {
         "display_type": "string",

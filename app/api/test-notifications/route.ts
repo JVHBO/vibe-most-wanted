@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
 
-    const title = body.title || '🎮 Vibe Most Wanted';
+    const title = body.title || '🎮 $VBMS';
     const message = body.body || 'Notifications are working! Ready to play?';
     const targetFid = body.fid; // Optional: send only to this FID
 

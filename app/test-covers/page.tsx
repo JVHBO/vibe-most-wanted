@@ -22,7 +22,7 @@ const COLLECTION_COVERS: Record<string, string> = {
 const COLLECTION_NAMES: Record<string, string> = {
   vibefid: "VibeFID",
   gmvbrs: "GM VBRS",
-  vibe: "Vibe Most Wanted",
+  vibe: "$VBMS",
   americanfootball: "American Football",
   viberuto: "Viberuto",
   meowverse: "Meowverse",

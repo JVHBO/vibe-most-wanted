@@ -3019,7 +3019,7 @@ export default function TCGPage() {
       welcome_gift: {
         icon: '/images/icons/coins.svg',
         title: 'Welcome Gift',
-        description: 'Welcome to Vibe Most Wanted!',
+        description: 'Welcome to $VBMS!',
       },
       vibefid_minted: {
         icon: '/images/icons/achievement.svg',
@@ -3716,6 +3716,23 @@ export default function TCGPage() {
                 }`}
               >
                 {defenseDeckSortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
+              </button>
+
+              {/* Refresh Button */}
+              <button
+                onClick={async () => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setStatus('idle');
+                  setNfts([]);
+                  setTimeout(() => loadNFTs(), 0);
+                }}
+                className="px-4 py-2 rounded-lg font-bold text-sm transition-all bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30 flex items-center gap-1"
+                title="Refresh cards"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
               </button>
             </div>
 
@@ -4855,7 +4872,7 @@ export default function TCGPage() {
           <div className="text-center relative">
             <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
             <h1 className="relative text-3xl md:text-5xl lg:text-6xl font-display font-black text-vintage-gold tracking-wider mb-1 md:mb-2" style={{textShadow: '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3)'}}>
-              VIBE MOST WANTED
+              $VBMS
             </h1>
             <p className="relative text-xs md:text-sm text-vintage-burnt-gold font-modern tracking-[0.2em] md:tracking-[0.3em] uppercase">{t('cardBattle')}</p>
           </div>

@@ -115,12 +115,12 @@ export const VIBEFID_POWER_CONFIG = {
  * Definição de todas as coleções disponíveis
  */
 export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
-  // Coleção original Vibe Most Wanted
+  // Coleção original $VBMS
   vibe: {
     id: 'vibe',
     name: 'vibe',
-    displayName: 'Vibe Most Wanted',
-    description: 'A coleção original de cartas Vibe Most Wanted',
+    displayName: '$VBMS',
+    description: 'A coleção original de cartas $VBMS',
     contractAddress: process.env.NEXT_PUBLIC_VIBE_CONTRACT || '0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728',
     chain: 'base-mainnet',
     ownerAddress: process.env.NEXT_PUBLIC_JC_CONTRACT || '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728',

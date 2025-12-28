@@ -93,7 +93,7 @@ export async function GET(
             bottom: 40,
           }}
         >
-          VIBE Most Wanted
+          $VBMS
         </div>
       </div>
     ),

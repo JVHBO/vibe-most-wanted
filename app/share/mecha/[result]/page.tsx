@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{ result: s
     ? `🎰 Won +${amount} coins in Mecha Arena!`
     : `💔 Lost ${amount} coins in Mecha Arena`;
 
-  const description = `Betting on CPU vs CPU battles - VIBE Most Wanted Mecha Arena`;
+  const description = `Betting on CPU vs CPU battles - $VBMS Mecha Arena`;
 
   const baseUrl = 'https://www.vibemostwanted.xyz';
   const imageUrl = `${baseUrl}/share/mecha/${result}/opengraph-image?v=1`;
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ result: s
       title,
       description,
       type: 'website',
-      siteName: 'VIBE Most Wanted',
+      siteName: '$VBMS',
       images: [
         {
           url: imageUrl,
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ result: s
           title: 'Play Mecha Arena',
           action: {
             type: 'launch_frame',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: baseUrl,
           },
         },

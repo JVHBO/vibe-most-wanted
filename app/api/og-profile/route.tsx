@@ -428,7 +428,7 @@ export async function GET(request: Request) {
                 display: 'flex',
               }}
             >
-              VIBE MOST WANTED
+              $VBMS
             </div>
             <div
               style={{

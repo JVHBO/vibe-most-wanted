@@ -14,26 +14,26 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const imageUrl = `${baseUrl}/share/raid/opengraph-image?v=1`;
 
   return {
-    title: "RAID BOSS BATTLE - VIBE Most Wanted",
+    title: "RAID BOSS BATTLE - $VBMS",
     description: "Join the raid! Battle the boss together and earn epic rewards!",
     openGraph: {
       title: "⚔️ RAID BOSS BATTLE",
       description: "Join the raid! Battle the boss together and earn epic rewards!",
       url: "https://www.vibemostwanted.xyz/share/raid",
       type: "website",
-      siteName: "VIBE MOST WANTED",
+      siteName: "$VBMS",
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 800,
-          alt: "VIBE MOST WANTED - Raid Boss Battle"
+          alt: "$VBMS - Raid Boss Battle"
         }
       ],
     },
     twitter: {
       card: "summary_large_image",
-      title: "⚔️ RAID BOSS BATTLE - VIBE Most Wanted",
+      title: "⚔️ RAID BOSS BATTLE - $VBMS",
       description: "Join the raid! Battle the boss together and earn epic rewards!",
       images: [imageUrl],
     },
@@ -46,7 +46,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
           title: 'Join Raid',
           action: {
             type: 'launch_miniapp',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: baseUrl + '/raid',
           },
         },
@@ -58,7 +58,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
           title: 'Join Raid',
           action: {
             type: 'launch_miniapp',
-            name: 'VIBE MOST WANTED',
+            name: '$VBMS',
             url: baseUrl + '/raid',
           },
         },
@@ -72,7 +72,7 @@ export default function ShareRaidPage() {
     <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
       <div className="text-center">
         <h1 className="text-4xl font-display font-bold text-vintage-gold mb-4">
-          VIBE MOST WANTED
+          $VBMS
         </h1>
         <p className="text-vintage-burnt-gold mb-4">⚔️ Join the Raid Boss Battle!</p>
         <div className="animate-pulse text-6xl">🎮</div>

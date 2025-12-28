@@ -247,7 +247,38 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
         ? await fetchNFTsFromMultipleWallets(allAddresses)
         : await fetchNFTsFromAllCollections(address);
 
-      const processed = await processNFTsToCards(raw); // Já filtra unopened!
+      // 🔄 METADATA REFRESH: Fetch fresh metadata from tokenUri (same as home page)
+      // This fixes cards showing as "unopened" when Alchemy has stale data
+      const METADATA_BATCH_SIZE = 50;
+      const enrichedRaw: any[] = [];
+
+      for (let i = 0; i < raw.length; i += METADATA_BATCH_SIZE) {
+        const batch = raw.slice(i, i + METADATA_BATCH_SIZE);
+        const batchResults = await Promise.all(
+          batch.map(async (nft) => {
+            const tokenUri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
+            if (!tokenUri) return nft;
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 2000);
+              const res = await fetch(tokenUri, { signal: controller.signal });
+              clearTimeout(timeoutId);
+              if (res.ok) {
+                const metadata = await res.json();
+                return { ...nft, metadata: metadata, raw: { ...nft.raw, metadata: metadata } };
+              }
+            } catch {
+              // Silent fail - use original data if refresh fails
+            }
+            return nft;
+          })
+        );
+        enrichedRaw.push(...batchResults);
+      }
+
+      console.log(`🔄 [Context] Metadata refresh complete: ${enrichedRaw.length} NFTs`);
+
+      const processed = await processNFTsToCards(enrichedRaw); // Já filtra unopened!
 
       // Deduplicate
       const seen = new Set<string>();
