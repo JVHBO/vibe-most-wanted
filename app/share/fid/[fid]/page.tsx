@@ -1,54 +1,20 @@
 import { Metadata } from 'next';
 import SharePageClient from './SharePageClient';
 
-export async function generateMetadata({ params }: { params: Promise<{ fid: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams
+}: {
+  params: Promise<{ fid: string }>;
+  searchParams: Promise<{ lang?: string; v?: string }>;
+}): Promise<Metadata> {
   const { fid } = await params;
+  const { lang = 'en' } = await searchParams;
   const baseUrl = 'https://www.vibemostwanted.xyz';
 
-  // Fetch card data from Convex to get IPFS URL directly
-  let imageUrl = `${baseUrl}/api/card-image/${fid}?v=7`; // Fallback
-
-  try {
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL;
-    if (convexUrl) {
-      const response = await fetch(`${convexUrl}/api/query`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          path: 'farcasterCards:getFarcasterCardByFid',
-          args: { fid: parseInt(fid) },
-          format: 'json',
-        }),
-        cache: 'no-store',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const card = data.value;
-
-        // Prefer shareImageUrl (card + criminal text), fallback to cardImageUrl (just card)
-        const sourceUrl = card?.shareImageUrl || card?.cardImageUrl;
-
-        // If card has share/card image, use IPFS directly (bypasses Vercel firewall)
-        if (sourceUrl) {
-          let ipfsUrl = sourceUrl;
-
-          // Convert to Filebase gateway if needed
-          if (ipfsUrl.startsWith('ipfs://')) {
-            const cid = ipfsUrl.replace('ipfs://', '');
-            imageUrl = `https://ipfs.filebase.io/ipfs/${cid}`;
-          } else if (ipfsUrl.includes('/ipfs/')) {
-            const cid = ipfsUrl.split('/ipfs/')[1];
-            imageUrl = `https://ipfs.filebase.io/ipfs/${cid}`;
-          } else {
-            imageUrl = ipfsUrl;
-          }
-        }
-      }
-    }
-  } catch (error) {
-    console.error('Failed to fetch card data for OG image:', error);
-  }
+  // Use dynamic API for share image with language support
+  // The API generates the image on-the-fly with Edge caching
+  const imageUrl = `${baseUrl}/api/share-image/${fid}?lang=${lang}`;
 
   return {
     title: `VibeFID Card #${fid} - VIBE Most Wanted`,
