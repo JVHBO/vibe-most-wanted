@@ -388,9 +388,9 @@ export const replaceCard = mutation({
         return ce;
       });
 
-      // Recalculate deck power with new VibeFID (10x power)
+      // Recalculate deck power with new VibeFID (2x power)
       const basePower = raidDeck.deck.reduce((sum, card) => sum + card.power, 0);
-      const newDeckPower = Math.floor((basePower + args.newCard.power * 10) * 1.10); // +10% bonus
+      const newDeckPower = Math.floor((basePower + args.newCard.power * 2) * 1.10); // +10% bonus
 
       await ctx.db.patch(raidDeck._id, {
         vibefidCard: newVibefidCard,
@@ -551,7 +551,7 @@ export const setRaidDeck = mutation({
     // Calculate total deck power (including VibeFID if present)
     let deckPower = args.deck.reduce((sum, card) => sum + card.power, 0);
     if (args.vibefidCard) {
-      deckPower += args.vibefidCard.power * 10;  // VibeFID gets 10x power
+      deckPower += args.vibefidCard.power * 2;  // VibeFID gets 2x power (same as collection buff)
       // Apply +10% deck bonus for having VibeFID
       deckPower = Math.floor(deckPower * (1 + VIBEFID_DECK_BONUS));
     }
@@ -816,9 +816,9 @@ export const processAutoAttacks = internalMutation({
           const isVibeFID = deckCard?.collection === 'vibefid' || deck.vibefidCard?.tokenId === cardEnergy.tokenId;
           // VibeFID cards don't have isFreeCard property, so use optional chaining
           if (deckCard && !('isFreeCard' in deckCard && deckCard.isFreeCard)) {
-            // VibeFID cards get 10x power against all bosses (SUPER ROUBADO!)
+            // VibeFID cards get 2x power (same as collection buff)
             if (isVibeFID) {
-              cardPower = Math.floor(cardPower * 10.0);
+              cardPower = Math.floor(cardPower * 2.0);
             }
             // Cards matching boss collection get 2x power (100% bonus)
             else if (deckCard.collection === boss.collection) {
