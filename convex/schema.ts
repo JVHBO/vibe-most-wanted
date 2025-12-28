@@ -296,14 +296,17 @@ export default defineSchema({
     .index("by_player", ["playerAddress"]),
 
   // Notification Tokens (for push notifications)
+  // 🔧 FIX: Support multiple tokens per FID (one per platform: warpcast, neynar)
   notificationTokens: defineTable({
     fid: v.string(), // Farcaster ID or user identifier
     token: v.string(), // Push notification token
     url: v.string(), // Farcaster notification URL (required)
+    platform: v.optional(v.string()), // "warpcast" or "neynar" (optional for backward compat)
     createdAt: v.number(),
     lastUpdated: v.number(),
   })
-    .index("by_fid", ["fid"]),
+    .index("by_fid", ["fid"])
+    .index("by_fid_platform", ["fid", "platform"]),
 
   // Tip Rotation State (tracks which tip to send next)
   tipRotationState: defineTable({
