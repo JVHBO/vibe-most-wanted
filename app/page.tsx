@@ -5198,7 +5198,7 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">Shop</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap">{t('navShop')}</span>
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                       <polyline points="9 22 9 12 15 12 15 22" />
@@ -5210,7 +5210,7 @@ export default function TCGPage() {
                       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                       <polyline points="9 22 9 12 15 12 15 22" />
                     </svg>
-                    <span className="hidden sm:inline">Shop</span>
+                    <span className="hidden sm:inline">{t('navShop')}</span>
                   </>
                 )}
               </Link>
@@ -5223,13 +5223,13 @@ export default function TCGPage() {
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">Quests</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap">{t('navQuests')}</span>
                     <span className="text-xl leading-none">◈</span>
                   </>
                 ) : (
                   <>
                     <span className="text-base md:text-lg">◈</span>
-                    <span className="hidden sm:inline">Quests</span>
+                    <span className="hidden sm:inline">{t('navQuests')}</span>
                   </>
                 )}
                 {hasClaimableMissions && (
