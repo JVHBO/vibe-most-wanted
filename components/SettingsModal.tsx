@@ -623,6 +623,9 @@ export function SettingsModal({
               <option value="ja" className="bg-vintage-charcoal text-vintage-ice">
                 🇯🇵 日本語
               </option>
+              <option value="it" className="bg-vintage-charcoal text-vintage-ice">
+                🇮🇹 Italiano
+              </option>
             </select>
             {/* 🇨🇳 Chinese Language Boost Warning */}
             {lang === 'zh-CN' && (

@@ -18,7 +18,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem('language') as SupportedLanguage;
-      const validLanguages: SupportedLanguage[] = ['pt-BR', 'en', 'es', 'hi', 'ru', 'zh-CN', 'id', 'fr', 'ja'];
+      const validLanguages: SupportedLanguage[] = ['pt-BR', 'en', 'es', 'hi', 'ru', 'zh-CN', 'id', 'fr', 'ja', 'it'];
       if (stored && validLanguages.includes(stored)) {
         setLangState(stored);
       }

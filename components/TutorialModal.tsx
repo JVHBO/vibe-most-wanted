@@ -19,6 +19,8 @@ const LANGUAGE_OPTIONS: { value: SupportedLanguage; label: string; flag: string 
   { value: 'zh-CN', label: 'ZH', flag: '🇨🇳' },
   { value: 'id', label: 'ID', flag: '🇮🇩' },
   { value: 'fr', label: 'FR', flag: '🇫🇷' },
+  { value: 'ja', label: 'JA', flag: '🇯🇵' },
+  { value: 'it', label: 'IT', flag: '🇮🇹' },
 ];
 
 interface TutorialSlide {
