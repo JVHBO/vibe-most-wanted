@@ -5,7 +5,7 @@
  * as a tribute to the Social Credit System aesthetic.
  */
 
-type SupportedLanguage = 'pt-BR' | 'en' | 'es' | 'hi' | 'ru' | 'zh-CN' | 'id' | 'fr' | 'ja';
+type SupportedLanguage = 'pt-BR' | 'en' | 'es' | 'hi' | 'ru' | 'zh-CN' | 'id' | 'fr' | 'ja' | 'it';
 
 /**
  * Check if current language has boost enabled

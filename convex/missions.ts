@@ -259,7 +259,8 @@ export const claimMission = mutation({
       v.literal("zh-CN"),
       v.literal("id"),
       v.literal("fr"),
-      v.literal("ja")
+      v.literal("ja"),
+      v.literal("it")
     )),
     skipCoins: v.optional(v.boolean()), // If true, only calculate reward without adding coins
   },
@@ -385,7 +386,8 @@ export const claimAllMissions = mutation({
       v.literal("zh-CN"),
       v.literal("id"),
       v.literal("fr"),
-      v.literal("ja")
+      v.literal("ja"),
+      v.literal("it")
     )),
   },
   handler: async (ctx, { playerAddress, language }) => {
