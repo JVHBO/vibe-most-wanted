@@ -2247,23 +2247,23 @@ export function PokerBattleTable({
                 </p>
                 <div className="flex items-center justify-center gap-2 text-blue-400">
                   <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                  <span className="text-sm">Game will begin when both players are ready</span>
+                  <span className="text-sm">{t('gameWillBegin')}</span>
                 </div>
               </div>
               {room && (
                 <div className="space-y-3">
                   <div className="flex justify-between items-center bg-vintage-black/30 rounded-lg p-3">
-                    <span className="text-vintage-burnt-gold">Host:</span>
+                    <span className="text-vintage-burnt-gold">{t('host')}:</span>
                     <span className="text-vintage-gold font-bold">{room.hostUsername || 'Player 1'}</span>
                   </div>
                   {room.guestUsername && (
                     <div className="flex justify-between items-center bg-vintage-black/30 rounded-lg p-3">
-                      <span className="text-vintage-burnt-gold">Guest:</span>
+                      <span className="text-vintage-burnt-gold">{t('guest')}:</span>
                       <span className="text-vintage-gold font-bold">{room.guestUsername}</span>
                     </div>
                   )}
                   <div className="flex justify-between items-center bg-vintage-black/30 rounded-lg p-3">
-                    <span className="text-vintage-burnt-gold">Stakes:</span>
+                    <span className="text-vintage-burnt-gold">{t('stakes')}:</span>
                     <span className="text-vintage-gold font-bold">{room.ante} {room.token}</span>
                   </div>
                 </div>
@@ -2322,10 +2322,10 @@ export function PokerBattleTable({
               {room && (
                 <div className="space-y-2 text-sm">
                   <div className="text-vintage-gold">
-                    <span className="text-vintage-burnt-gold">Stakes:</span> {room.ante} {room.token}
+                    <span className="text-vintage-burnt-gold">{t('stakes')}:</span> {room.ante} {room.token}
                   </div>
                   <div className="text-vintage-gold">
-                    <span className="text-vintage-burnt-gold">Players:</span> {room.hostUsername} vs {room.guestUsername}
+                    <span className="text-vintage-burnt-gold">{t('playersLabel')}:</span> {room.hostUsername} vs {room.guestUsername}
                   </div>
                 </div>
               )}
@@ -2516,13 +2516,13 @@ export function PokerBattleTable({
                     <EyeIcon className="inline-block text-blue-400" size={16} /> SPECTATOR MODE
                   </div>
                   {phase === 'card-selection' && (
-                    <div className="text-vintage-burnt-gold text-xs animate-pulse">Players selecting cards...</div>
+                    <div className="text-vintage-burnt-gold text-xs animate-pulse">{t('playersSelectingCards')}</div>
                   )}
                   {phase === 'reveal' && (
-                    <div className="text-yellow-400 text-xs animate-pulse">Cards revealed! Players choosing actions...</div>
+                    <div className="text-yellow-400 text-xs animate-pulse">{t('cardsRevealedChoosingActions')}</div>
                   )}
                   {phase === 'resolution' && (
-                    <div className="text-green-400 text-xs font-bold animate-pulse">Battle in progress!</div>
+                    <div className="text-green-400 text-xs font-bold animate-pulse">{t('battleInProgress')}</div>
                   )}
                 </div>
                 <div className="text-vintage-gold font-display font-bold">
@@ -2538,16 +2538,16 @@ export function PokerBattleTable({
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
                   <div className="bg-vintage-deep-black/90 border-4 border-vintage-gold rounded-full w-24 h-24 flex items-center justify-center shadow-2xl animate-in zoom-in duration-500">
                     <div className="text-center">
-                      <div className="text-vintage-gold font-display font-bold text-2xl">VS</div>
+                      <div className="text-vintage-gold font-display font-bold text-2xl">{t('vsLabel')}</div>
                       {phase === 'resolution' && (() => {
                         const playerPower = (playerSelectedCard?.power || 0) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1);
                         const opponentPower = (opponentSelectedCard?.power || 0) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1);
                         if (playerPower > opponentPower) {
-                          return <div className="text-blue-400 text-xs mt-1">HOST+</div>;
+                          return <div className="text-blue-400 text-xs mt-1">{t('hostPlus')}</div>;
                         } else if (opponentPower > playerPower) {
-                          return <div className="text-red-400 text-xs mt-1">GUEST+</div>;
+                          return <div className="text-red-400 text-xs mt-1">{t('guestPlus')}</div>;
                         } else {
-                          return <div className="text-yellow-400 text-xs mt-1">TIE</div>;
+                          return <div className="text-yellow-400 text-xs mt-1">{t('tieLabel')}</div>;
                         }
                       })()}
                     </div>
@@ -3153,7 +3153,7 @@ export function PokerBattleTable({
                           }`}
                         >
                           <SwordIcon className={playerBoostCoins >= getBoostPrice('BOOST') && selectedAnte !== 0 && !isSpectatorMode ? "text-black" : "text-gray-500"} size={isInFarcaster ? 20 : 24} />
-                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>BOOST</div>
+                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>{t('boostLabel')}</div>
                           <span className={isInFarcaster ? 'text-[8px]' : 'text-[8px] sm:text-[10px]'}>+30%</span>
                           <span className={`opacity-80 ${isInFarcaster ? 'text-[7px]' : 'text-[7px] sm:text-[9px]'}`}>{getBoostPrice('BOOST')}</span>
                         </button>
@@ -3170,8 +3170,8 @@ export function PokerBattleTable({
                           }`}
                         >
                           <ShieldIcon className={playerBoostCoins >= getBoostPrice('SHIELD') && selectedAnte !== 0 && !isSpectatorMode ? "text-white" : "text-gray-500"} size={isInFarcaster ? 20 : 24} />
-                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>SHIELD</div>
-                          <span className={isInFarcaster ? 'text-[8px]' : 'text-[8px] sm:text-[10px]'}>Block</span>
+                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>{t('shieldLabel')}</div>
+                          <span className={isInFarcaster ? 'text-[8px]' : 'text-[8px] sm:text-[10px]'}>{t('blockLabel')}</span>
                           <span className={`opacity-80 ${isInFarcaster ? 'text-[7px]' : 'text-[7px] sm:text-[9px]'}`}>{getBoostPrice('SHIELD')}</span>
                         </button>
 
@@ -3187,7 +3187,7 @@ export function PokerBattleTable({
                           }`}
                         >
                           <BoltIcon className={playerBoostCoins >= getBoostPrice('DOUBLE') && selectedAnte !== 0 && !isSpectatorMode ? "text-white" : "text-gray-500"} size={isInFarcaster ? 20 : 24} />
-                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>CRIT</div>
+                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>{t('critLabel')}</div>
                           <span className={isInFarcaster ? 'text-[8px]' : 'text-[8px] sm:text-[10px]'}>x2</span>
                           <span className={`opacity-80 ${isInFarcaster ? 'text-[7px]' : 'text-[7px] sm:text-[9px]'}`}>{getBoostPrice('DOUBLE')}</span>
                         </button>
@@ -3200,9 +3200,9 @@ export function PokerBattleTable({
                           }`}
                         >
                           <HandIcon className={selectedAnte === 0 || isSpectatorMode ? "text-gray-500" : "text-white"} size={isInFarcaster ? 20 : 24} />
-                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>PASS</div>
-                          <span className={isInFarcaster ? 'text-[8px]' : 'text-[8px] sm:text-[10px]'}>Free</span>
-                          <span className={`opacity-80 ${isInFarcaster ? 'text-[7px]' : 'text-[7px] sm:text-[9px]'}`}>Save $</span>
+                          <div className={`font-bold ${isInFarcaster ? 'text-[9px]' : 'text-[10px] sm:text-xs'}`}>{t('passLabel')}</div>
+                          <span className={isInFarcaster ? 'text-[8px]' : 'text-[8px] sm:text-[10px]'}>{t('freeLabel')}</span>
+                          <span className={`opacity-80 ${isInFarcaster ? 'text-[7px]' : 'text-[7px] sm:text-[9px]'}`}>{t('saveCoinsLabel')}</span>
                         </button>
                       </div>
                     </div>
