@@ -5,6 +5,7 @@ import { useFarcasterVBMSBalance, useFarcasterTransferVBMS, useFarcasterApproveV
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
 import { parseEther } from "viem";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SpectatorEntryModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export function SpectatorEntryModal({
   playerAddress,
   hideFreePick = false,
 }: SpectatorEntryModalProps) {
+  const { t } = useLanguage();
   const { address: wagmiAddress } = useAccount();
   // Use playerAddress (miniapp) OR wagmiAddress (web) - playerAddress takes priority
   const effectiveAddress = playerAddress || wagmiAddress;
@@ -155,7 +157,7 @@ export function SpectatorEntryModal({
               <div className="text-center">
                 <div className="text-5xl mb-3">💰</div>
                 <p className="text-purple-400 font-display font-bold text-lg mb-1">
-                  {hideFreePick ? 'Deposit VBMS to Enter' : 'With Betting'}
+                  {hideFreePick ? t('depositVbmsToEnter') : t('withBetting')}
                 </p>
                 <p className="text-vintage-ice/70 text-xs">
                   Bet on rounds
@@ -184,7 +186,7 @@ export function SpectatorEntryModal({
           <>
             <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4 mb-4">
               <p className="text-purple-400 text-sm mb-2">
-                💰 <span className="font-bold">Round Betting System</span>
+                💰 <span className="font-bold">{t("roundBettingSystem")}</span>
               </p>
               <ul className="text-vintage-ice/70 text-xs space-y-1">
                 <li>• Bet on each round (1-7)</li>
@@ -195,7 +197,7 @@ export function SpectatorEntryModal({
             </div>
 
             <div className="text-center mb-4">
-              <p className="text-vintage-gold font-bold mb-2">How much to deposit?</p>
+              <p className="text-vintage-gold font-bold mb-2">{t("howMuchToDeposit")}</p>
               <p className="text-vintage-ice/70 text-sm">
                 You'll receive 1:1 betting credits
               </p>
@@ -221,7 +223,7 @@ export function SpectatorEntryModal({
         {/* Balance - Only show in deposit flow */}
         {(step === "deposit-amount" || step === "approving" || step === "transferring") && (
           <div className="bg-vintage-black/40 rounded-lg p-4 mb-6">
-            <p className="text-vintage-ice/70 text-sm mb-1">Your VBMS Balance</p>
+            <p className="text-vintage-ice/70 text-sm mb-1">{t("yourVbmsBalance")}</p>
             <p className="text-2xl font-display font-bold text-purple-400">
               {parseFloat(vbmsBalance).toFixed(2)} VBMS
             </p>
@@ -304,23 +306,23 @@ export function SpectatorEntryModal({
         {step === "approving" && (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-vintage-gold border-t-transparent mx-auto mb-4"></div>
-            <p className="text-vintage-gold font-display font-bold text-xl">Approving VBMS...</p>
-            <p className="text-vintage-ice/70 text-sm mt-2">Please confirm in your wallet</p>
+            <p className="text-vintage-gold font-display font-bold text-xl">{t("approvingVbms")}...</p>
+            <p className="text-vintage-ice/70 text-sm mt-2">{t("confirmInWallet")}</p>
           </div>
         )}
 
         {step === "transferring" && (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-400 border-t-transparent mx-auto mb-4"></div>
-            <p className="text-purple-400 font-display font-bold text-xl">Transferring VBMS...</p>
-            <p className="text-vintage-ice/70 text-sm mt-2">Transaction in progress</p>
+            <p className="text-purple-400 font-display font-bold text-xl">{t("transferringVbms")}...</p>
+            <p className="text-vintage-ice/70 text-sm mt-2">{t("transactionInProgress")}</p>
           </div>
         )}
 
         {step === "done" && (
           <div className="text-center py-8">
             <div className="text-6xl mb-4">✅</div>
-            <p className="text-green-400 font-display font-bold text-xl mb-2">Success!</p>
+            <p className="text-green-400 font-display font-bold text-xl mb-2">{t("success")}!</p>
             <p className="text-vintage-ice/70">
               You received <span className="text-vintage-gold font-bold">{amount} Betting Credits</span>
             </p>

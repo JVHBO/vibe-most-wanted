@@ -6,6 +6,48 @@ export type TranslationKey = keyof typeof translations['pt-BR'];
 
 export const translations = {
   "pt-BR": {
+    transactionInProgress: 'Transação em andamento',
+
+    spectatorModeDesc: 'Assista a batalha e converse com os jogadores',
+    watchFree: 'Assistir Grátis',
+    chatAndWatch: 'Conversar & Assistir',
+    noBetting: 'Sem apostas',
+    depositVbmsToEnter: 'Deposite VBMS para Entrar',
+    withBetting: 'Com Apostas',
+    betOnRounds: 'Aposte nas rodadas',
+    depositVbms: 'Depositar VBMS',
+    backToArena: '← Voltar para Arena',
+    roundBettingSystem: 'Sistema de Apostas por Rodada',
+    howMuchToDeposit: 'Quanto depositar?',
+    receiveCredits: 'Você receberá créditos 1:1',
+    yourVbmsBalance: 'Seu Saldo VBMS',
+    amountToDeposit: 'Valor para Depositar',
+    depositAndEnter: 'Depositar & Entrar',
+    approvingVbms: 'Aprovando VBMS',
+    confirmInWallet: 'Por favor, confirme na sua carteira',
+    transferringVbms: 'Transferindo VBMS',
+    success: 'Sucesso',
+
+    completed: 'Concluído',
+
+    all: 'Todos',
+    unclaimed: 'Não resgatado',
+    rarity: 'Raridade',
+    foil: 'Brilhante',
+    claimAll: 'Resgatar Todos',
+    claim: 'Resgatar',
+
+    connectWalletToViewAchievements: 'Por favor, conecte sua carteira para ver conquistas',
+    achievementsSubtitle: 'Colecione cartas e desbloqueie conquistas para ganhar tokens $VBMS',
+    coinsToClaim: 'Moedas para Resgatar',
+    rewardsClaimed: 'Recompensas Resgatadas',
+    completion: 'Conclusão',
+    checking: 'Verificando',
+    refreshProgress: 'Atualizar Progresso',
+    pristine: 'Impecável',
+    progressive: 'Progressivo',
+    noAchievementsMatchFilter: 'Nenhuma conquista corresponde a este filtro',
+
     gameWillBegin: 'O jogo começará quando ambos os jogadores estiverem prontos',
     host: 'Anfitrião',
     guest: 'Convidado',
@@ -947,6 +989,17 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ Esta conta será apagada SOMENTE após a outra conta usar o código de merge.'
   },
   en: {
+    transactionInProgress: 'Transaction in progress',
+
+    completed: 'Completed',
+
+    all: 'All',
+    unclaimed: 'Unclaimed',
+    rarity: 'Rarity',
+    foil: 'Foil',
+    claimAll: 'Claim All',
+    claim: 'Claim',
+
     gameWillBegin: 'Game will begin when both players are ready',
     host: 'Host',
     guest: 'Guest',
@@ -1885,6 +1938,17 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ This account will be deleted ONLY after the other account uses the merge code.',
   },
   es: {
+    transactionInProgress: 'Transacción en progreso',
+
+    completed: 'Completado',
+
+    all: 'Todos',
+    unclaimed: 'Sin reclamar',
+    rarity: 'Rareza',
+    foil: 'Brillante',
+    claimAll: 'Reclamar Todo',
+    claim: 'Reclamar',
+
     gameWillBegin: 'El juego comenzará cuando ambos jugadores estén listos',
     host: 'Anfitrión',
     guest: 'Invitado',
@@ -2827,6 +2891,17 @@ export const translations = {
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
+    transactionInProgress: 'लेनदेन प्रगति में',
+
+    completed: 'पूर्ण',
+
+    all: 'सभी',
+    unclaimed: 'अदावा',
+    rarity: 'दुर्लभता',
+    foil: 'फॉइल',
+    claimAll: 'सभी दावा करें',
+    claim: 'दावा करें',
+
     gameWillBegin: 'दोनों खिलाड़ियों के तैयार होने पर खेल शुरू होगा',
     host: 'मेजबान',
     guest: 'अतिथि',
@@ -3768,6 +3843,17 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ यह अकाउंट तभी हटाया जाएगा जब दूसरा अकाउंट मर्ज कोड का उपयोग करेगा।',
   },
   ru: {
+    transactionInProgress: 'Транзакция выполняется',
+
+    completed: 'Завершено',
+
+    all: 'Все',
+    unclaimed: 'Неполученные',
+    rarity: 'Редкость',
+    foil: 'Фольга',
+    claimAll: 'Получить все',
+    claim: 'Получить',
+
     gameWillBegin: 'Игра начнется, когда оба игрока будут готовы',
     host: 'Хост',
     guest: 'Гость',
@@ -4706,6 +4792,17 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ Этот аккаунт будет удалён ТОЛЬКО после того, как другой аккаунт использует код объединения.',
   },
   "zh-CN": {
+    transactionInProgress: '交易进行中',
+
+    completed: '已完成',
+
+    all: '全部',
+    unclaimed: '未领取',
+    rarity: '稀有度',
+    foil: '闪卡',
+    claimAll: '全部领取',
+    claim: '领取',
+
     gameWillBegin: '游戏将在两名玩家都准备好后开始',
     host: '主持人',
     guest: '客人',
@@ -5644,6 +5741,17 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ 此账户仅在另一账户使用合并代码后才会被删除。',
   },
   id: {
+    transactionInProgress: 'Transaksi sedang berlangsung',
+
+    completed: 'Selesai',
+
+    all: 'Semua',
+    unclaimed: 'Belum diklaim',
+    rarity: 'Kelangkaan',
+    foil: 'Foil',
+    claimAll: 'Klaim Semua',
+    claim: 'Klaim',
+
     gameWillBegin: 'Permainan akan dimulai saat kedua pemain siap',
     host: 'Tuan Rumah',
     guest: 'Tamu',
@@ -6556,6 +6664,17 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ Akun ini akan dihapus HANYA setelah akun lain menggunakan kode gabung.',
   },
   fr: {
+    transactionInProgress: 'Transaction en cours',
+
+    completed: 'Terminé',
+
+    all: 'Tout',
+    unclaimed: 'Non réclamé',
+    rarity: 'Rareté',
+    foil: 'Brillant',
+    claimAll: 'Tout Réclamer',
+    claim: 'Réclamer',
+
     gameWillBegin: 'La partie commencera quand les deux joueurs seront prêts',
     host: 'Hôte',
     guest: 'Invité',
@@ -7468,6 +7587,17 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ Ce compte sera supprimé UNIQUEMENT après que l\'autre compte utilise le code de fusion.',
   },
   ja: {
+    transactionInProgress: 'トランザクション処理中',
+
+    completed: '完了',
+
+    all: 'すべて',
+    unclaimed: '未請求',
+    rarity: 'レアリティ',
+    foil: 'フォイル',
+    claimAll: 'すべて請求',
+    claim: '請求',
+
     gameWillBegin: '両プレイヤーの準備が整うとゲームが始まります',
     host: 'ホスト',
     guest: 'ゲスト',
@@ -8379,6 +8509,15 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ このアカウントは、他のアカウントが統合コードを使用した後にのみ削除されます。',
   },
   it: {
+    completed: 'Completato',
+
+    all: 'Tutti',
+    unclaimed: 'Non riscattato',
+    rarity: 'Rarità',
+    foil: 'Foil',
+    claimAll: 'Riscatta Tutto',
+    claim: 'Riscatta',
+
     gameWillBegin: 'Il gioco inizierà quando entrambi i giocatori sono pronti',
     host: 'Host',
     guest: 'Ospite',
@@ -8931,7 +9070,6 @@ export const translations = {
     disable: 'Disabilita',
     on: 'On',
     off: 'Off',
-    all: 'Tutto',
     none: 'Nessuno',
     select: 'Seleziona',
     deselect: 'Deseleziona',

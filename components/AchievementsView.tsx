@@ -5,6 +5,7 @@ import NextImage from "next/image";
 import { useAchievements } from "../hooks/useAchievements";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface AchievementsViewProps {
   playerAddress?: string;
@@ -36,6 +37,7 @@ export default function AchievementsView({
     onError,
   });
 
+  const { t } = useLanguage();
   const [filter, setFilter] = useState<string>("all");
   const [isClaiming, setIsClaiming] = useState(false);
 
@@ -122,8 +124,8 @@ export default function AchievementsView({
       <div className="min-h-screen bg-vintage-deep-black text-vintage-ice flex items-center justify-center p-4">
         <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-8 text-center max-w-md">
           <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-display font-bold text-vintage-gold mb-2">Connect Wallet</h2>
-          <p className="text-vintage-burnt-gold">Please connect your wallet to view achievements</p>
+          <h2 className="text-2xl font-display font-bold text-vintage-gold mb-2">{t("connectWallet")}</h2>
+          <p className="text-vintage-burnt-gold">{t("connectWalletToViewAchievements")}</p>
         </div>
       </div>
     );
@@ -135,10 +137,10 @@ export default function AchievementsView({
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-display font-bold mb-2 flex items-center gap-3 text-vintage-gold">
-            <NextImage src="/images/icons/achievement.svg" alt="Achievement" width={48} height={48} className="w-10 h-10 md:w-12 md:h-12" /> Achievements
+            <NextImage src="/images/icons/achievement.svg" alt="Achievement" width={48} height={48} className="w-10 h-10 md:w-12 md:h-12" /> {t("achievements")}
           </h1>
           <p className="text-vintage-burnt-gold font-modern">
-            Collect cards and unlock achievements to earn $VBMS tokens
+            {t("achievementsSubtitle")}
           </p>
         </div>
 
@@ -151,7 +153,7 @@ export default function AchievementsView({
               <div className="text-3xl font-bold text-vintage-gold font-modern">
                 {stats.completedCount}/{stats.totalAchievements}
               </div>
-              <div className="text-sm text-vintage-burnt-gold font-modern">Completed</div>
+              <div className="text-sm text-vintage-burnt-gold font-modern">{t("completed")}</div>
               <div className="mt-3 bg-vintage-black/50 rounded-full h-2 overflow-hidden">
                 <div
                   className="bg-gradient-to-r from-vintage-gold to-vintage-gold-dark h-2 rounded-full transition-all duration-500"
@@ -164,7 +166,7 @@ export default function AchievementsView({
             <div className="bg-vintage-charcoal/80 backdrop-blur-md rounded-xl p-6 border-2 border-vintage-gold/20 shadow-gold hover:border-vintage-gold/40 transition-colors">
               <NextImage src="/images/icons/coins.svg" alt="Coins" width={48} height={48} />
               <div className="text-3xl font-bold text-vintage-gold font-modern">{stats.unclaimedRewards}</div>
-              <div className="text-sm text-vintage-burnt-gold font-modern">Coins to Claim</div>
+              <div className="text-sm text-vintage-burnt-gold font-modern">{t("coinsToClaim")}</div>
               <div className="text-xs text-vintage-gold/70 mt-2 font-modern">
                 {stats.unclaimedCount} unclaimed
               </div>
@@ -174,14 +176,14 @@ export default function AchievementsView({
             <div className="bg-vintage-charcoal/80 backdrop-blur-md rounded-xl p-6 border-2 border-vintage-gold/20 shadow-gold hover:border-vintage-gold/40 transition-colors">
               <NextImage src="/images/icons/mission.svg" alt="Mission" width={48} height={48} />
               <div className="text-3xl font-bold text-vintage-gold font-modern">{stats.claimedCount}</div>
-              <div className="text-sm text-vintage-burnt-gold font-modern">Rewards Claimed</div>
+              <div className="text-sm text-vintage-burnt-gold font-modern">{t("rewardsClaimed")}</div>
             </div>
 
             {/* Completion % */}
             <div className="bg-vintage-charcoal/80 backdrop-blur-md rounded-xl p-6 border-2 border-vintage-gold/20 shadow-gold hover:border-vintage-gold/40 transition-colors">
               <NextImage src="/images/icons/achievement.svg" alt="Achievement" width={48} height={48} />
               <div className="text-3xl font-bold text-vintage-gold font-modern">{stats.completionPercentage}%</div>
-              <div className="text-sm text-vintage-burnt-gold font-modern">Completion</div>
+              <div className="text-sm text-vintage-burnt-gold font-modern">{t("completion")}</div>
             </div>
           </div>
         )}
@@ -193,7 +195,7 @@ export default function AchievementsView({
             disabled={isClaiming || !unclaimed || unclaimed.length === 0}
             className="px-6 py-3 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark rounded-lg font-bold font-modern text-vintage-black hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed shadow-gold"
           >
-            <NextImage src="/images/icons/coins.svg" alt="Coins" width={20} height={20} className="inline mr-2" /> Claim All ({stats?.unclaimedCount || 0})
+            <NextImage src="/images/icons/coins.svg" alt="Coins" width={20} height={20} className="inline mr-2" /> {t("claimAll")} ({stats?.unclaimedCount || 0})
           </button>
 
           <button
@@ -201,20 +203,20 @@ export default function AchievementsView({
             disabled={isChecking}
             className="px-6 py-3 bg-vintage-charcoal/80 border-2 border-vintage-gold/30 rounded-lg font-medium font-modern text-vintage-gold hover:border-vintage-gold hover:bg-vintage-charcoal transition-colors disabled:opacity-50"
           >
-            {isChecking ? "🔄 Checking..." : "🔍 Refresh Progress"}
+            {isChecking ? `🔄 ${t("checking")}...` : `🔍 ${t("refreshProgress")}`}
           </button>
         </div>
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-6">
           {[
-            { id: "all", label: "All", icon: "/images/icons/mission.svg" },
-            { id: "unclaimed", label: "Unclaimed", icon: "/images/icons/coins.svg" },
-            { id: "completed", label: "Completed", icon: "/images/icons/achievement.svg" },
-            { id: "rarity", label: "Rarity", icon: "/images/icons/cards.svg" },
-            { id: "wear", label: "Pristine", icon: "/images/icons/victory.svg" },
-            { id: "foil", label: "Foil", icon: "/images/icons/cards.svg" },
-            { id: "progressive", label: "Progressive", icon: "/images/icons/stats.svg" },
+            { id: "all", label: t("all"), icon: "/images/icons/mission.svg" },
+            { id: "unclaimed", label: t("unclaimed"), icon: "/images/icons/coins.svg" },
+            { id: "completed", label: t("completed"), icon: "/images/icons/achievement.svg" },
+            { id: "rarity", label: t("rarity"), icon: "/images/icons/cards.svg" },
+            { id: "wear", label: t("pristine"), icon: "/images/icons/victory.svg" },
+            { id: "foil", label: t("foil"), icon: "/images/icons/cards.svg" },
+            { id: "progressive", label: t("progressive"), icon: "/images/icons/stats.svg" },
           ].map((f) => (
             <button
               key={f.id}
@@ -283,7 +285,7 @@ export default function AchievementsView({
                           {progress}/{target}
                         </span>
                         <span className="text-vintage-gold font-bold flex items-center gap-1">
-                          <NextImage src="/images/icons/coins.svg" alt="Coins" width={16} height={16} /> {achievement.reward} coins
+                          <NextImage src="/images/icons/coins.svg" alt="Coins" width={16} height={16} /> {achievement.reward} {t("coins")}
                         </span>
                       </div>
                       <div className="bg-vintage-black/50 rounded-full h-3 overflow-hidden border border-vintage-gold/20">
@@ -305,7 +307,7 @@ export default function AchievementsView({
                         disabled={isClaiming}
                         className="w-full py-2 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black rounded-lg font-bold font-modern hover:scale-105 transition-transform disabled:opacity-50 shadow-gold"
                       >
-                        <NextImage src="/images/icons/coins.svg" alt="VBMS" width={16} height={16} className="inline mr-2" /> Claim {achievement.reward} VBMS
+                        <NextImage src="/images/icons/coins.svg" alt="VBMS" width={16} height={16} className="inline mr-2" /> {t("claim")} {achievement.reward} VBMS
                       </button>
                     )}
                   </div>
