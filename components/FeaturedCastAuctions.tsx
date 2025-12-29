@@ -5,6 +5,9 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import Link from "next/link";
+import { sdk } from "@farcaster/miniapp-sdk";
+import { openMarketplace } from "@/lib/marketplace-utils";
+import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
 import { Doc } from "@/convex/_generated/dataModel";
 import { useTransferVBMS } from "@/lib/hooks/useVBMSContracts";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS";
@@ -437,7 +440,7 @@ export function FeaturedCastAuctions({
               <div>
                 <span className="text-vintage-ice">{t('castAuctionGetBadge')}</span>
               </div>
-              <Link href="/fid" className="text-vintage-gold hover:text-vintage-gold/80 font-bold">{t('castAuctionMintBadge')}</Link>
+              <button onClick={() => openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, true)} className="text-vintage-gold hover:text-vintage-gold/80 font-bold cursor-pointer">{t('castAuctionMintBadge')}</button>
             </div>
           )}
 
