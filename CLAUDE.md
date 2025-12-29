@@ -96,3 +96,58 @@ npx vercel --prod
 - Blacklist is in `convex/blacklist.ts`
 - 106 exploiters currently banned
 - Security report: `SECURITY_INCIDENT_REPORT.md`
+
+## VibeFID Miniapp
+
+**VibeFID** is a standalone miniapp extracted from vibe-most-wanted.
+
+| Project | Repo | Miniapp URL |
+|---------|------|-------------|
+| VibeFID | `vibefid` | `https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid` |
+| VBMS (main) | `vibe-most-wanted` | `https://farcaster.xyz/miniapps/UpOGC4pheWVP/vbms` |
+
+### Shared Convex Backend
+Both projects use the SAME Convex deployment (`prod:agile-orca-761`). When deploying:
+- Deploy from `vibe-most-wanted` to ensure all functions are included
+- VibeFID-specific functions: `neynarScore`, `farcasterCards`
+
+### /fid Route Redirect
+The `/fid` route in vibe-most-wanted now **redirects to VibeFID miniapp**:
+- Existing Farcaster frame posts pointing to `vibemostwanted.xyz/fid` will open VibeFID
+- The page auto-redirects when Farcaster context is ready
+
+## Neynar Score Progress System
+
+The score progress feature tracks Neynar score changes over time:
+
+### Key Points
+1. **Mint-time score is ALWAYS the baseline** - stored in `farcasterCards.neynarScore`
+2. **Only saves if score changed** - prevents duplicate entries (uses 0.0001 threshold)
+3. **`getScoreHistory` query** - always uses mint-time score as "First Check"
+4. **Cleanup function** - `cleanupDuplicateScores` removes repeated values
+
+### On New Mint
+The `mintFarcasterCard` mutation saves initial score to `neynarScoreHistory` table:
+```typescript
+await ctx.db.insert("neynarScoreHistory", {
+  fid: args.fid,
+  username: args.username,
+  score: args.neynarScore,
+  rarity: args.rarity,
+  checkedAt: Date.now(),
+});
+```
+
+## File Modification Issues
+
+### Dev Server Race Conditions
+When Next.js dev server is running, the Edit tool may fail with "File has been unexpectedly modified".
+
+**Solution**: Use bash heredoc or node scripts:
+```bash
+cat > "path/to/file.ts" << 'ENDOFFILE'
+// file content here
+ENDOFFILE
+```
+
+Or create a `.cjs` script and run with `node script.cjs`.
