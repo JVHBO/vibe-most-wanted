@@ -4885,12 +4885,12 @@ export default function TCGPage() {
             <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('dexButtonSubtext')}</span>
           </button>
 
-          {/* VibeFID Button - Miniapp only, same row as Buy Cards */}
+          {/* VibeFID Button - Opens VibeFID miniapp */}
           {isInFarcaster && (
             <button
-              onClick={() => {
+              onClick={async () => {
                 if (soundEnabled) AudioManager.buttonClick();
-                window.location.href = '/fid';
+                await openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, isInFarcaster);
               }}
               className="tour-vibefid-btn px-3 md:px-6 py-3 md:py-3 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
             >
