@@ -60,6 +60,7 @@ const LANGUAGE_MUSIC: Record<SupportedLanguage, string> = {
   'id': getMusicPath('id'),
   'fr': getMusicPath('fr'),
   'ja': getMusicPath('ja'),
+  'it': getMusicPath('it'),
 };
 
 // Volume normalization multipliers - adjust these to make all tracks sound equal at 100%
@@ -74,6 +75,8 @@ const VOLUME_NORMALIZATION: Record<string, number> = {
   'zh-cn': 1.0,     // Adjust if needed
   'id': 1.0,        // Indonesian - Rungkad (mean: -13.8dB, close to reference)
   'fr': 1.8,        // French - Le Festin (mean: -19.1dB, 6dB quieter - boosted)
+  'it': 1.0,        // Italian - Tu vuò fà l'americano
+  'ja': 1.0,        // Japanese - Stay With Me
   'custom': 1.0,    // Custom music
 };
 
