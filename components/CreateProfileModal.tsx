@@ -27,6 +27,7 @@ const LANGUAGE_OPTIONS: { value: SupportedLanguage; label: string; flag: string 
   { value: 'id', label: 'Bahasa', flag: '🇮🇩' },
   { value: 'fr', label: 'Français', flag: '🇫🇷' },
   { value: 'ja', label: '日本語', flag: '🇯🇵' },
+  { value: 'it', label: 'Italiano', flag: '🇮🇹' },
 ];
 
 interface CreateProfileModalProps {

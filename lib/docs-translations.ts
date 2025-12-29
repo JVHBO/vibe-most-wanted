@@ -1,6 +1,6 @@
 // Translations for the /docs page
 
-export type DocsSupportedLanguage = 'pt-BR' | 'en' | 'es' | 'hi' | 'ru' | 'zh-CN' | 'id' | 'fr' | 'ja';
+export type DocsSupportedLanguage = 'pt-BR' | 'en' | 'es' | 'hi' | 'ru' | 'zh-CN' | 'id' | 'fr' | 'ja' | 'it';
 
 export const docsTranslations = {
   "pt-BR": {
@@ -1826,6 +1826,237 @@ export const docsTranslations = {
     vibeFIDBenefit1: "⚡ Boost de Puissance : Les cartes VibeFID reçoivent des multiplicateurs de puissance bonus en combat",
     vibeFIDBenefit2: "♾️ Énergie Infinie : Votre carte VibeFID ne manque jamais d'énergie - toujours prête à combattre",
     vibeFIDBenefit3: "🃏 Sans Restriction de Deck : Peut être utilisée dans n'importe quel deck sans restriction de collection",
+  },
+  "it": {
+    // Navigation
+    backToGame: "Torna al Gioco",
+    documentation: "Documentazione",
+    subtitle: "Guida completa $VBMS - Tutto quello che devi sapere",
+    sections: "Sezioni",
+
+    // Section titles
+    economy: "Economia",
+    battles: "Battaglie",
+    achievements: "Obiettivi",
+    quests: "Missioni",
+    cards: "Carte",
+    faq: "FAQ",
+
+    // Economy section
+    economyTitle: "Sistema Economico",
+    economyIntro: "$VBMS è una collezione di Liquid Trading Cards (LTC) su Vibe Market, ispirata alle carte Most Wanted irachene. Il gioco ha due valute: TESTVBMS (valuta in-game guadagnata giocando) e $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Attualmente in presale - compra/vendi $VBMS tramite il DEX in-app.",
+
+    howToEarnCoins: "Come Guadagnare Monete",
+    earnPve: "PvE (Giocatore vs IA)",
+    earnPveDesc: "Fino a 30 vittorie/giorno. Difficoltà: GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
+    earnPvp: "PvP (Giocatore vs Giocatore)",
+    earnPvpDesc: "Vittoria: +100 monete (bonus classifica). Sconfitta: -20 monete. Pareggio: 0 monete",
+    earnAttack: "Modalità Attacco",
+    earnAttackDesc: "Fino a 5 attacchi/giorno. Vittoria ruba punti onore avversario. GRATIS!",
+    earnAchievements: "Obiettivi",
+    earnAchievementsDesc: "63 obiettivi disponibili per un totale di 302.300 monete",
+    earnQuests: "Missioni Giornaliere e Settimanali",
+    earnQuestsDesc: "Completa obiettivi per guadagnare monete extra",
+
+    dailyLimit: "Limite Giornaliero",
+    dailyLimitDesc: "Puoi guadagnare un massimo di 1.500 monete al giorno (PvE + PvP + Obiettivi)",
+
+    entryFees: "Quote d'Ingresso",
+    entryFeeAttack: "Modalità Attacco: GRATIS!",
+    entryFeePvp: "PvP: 20 monete per partita",
+    entryFeePve: "PvE: Gratis (nessuna quota)",
+
+    // Battles section
+    battlesTitle: "Sistema di Battaglia",
+    battlesIntro: "Scegli tra 3 modalità di battaglia, ognuna con le proprie regole e ricompense.",
+
+    pveMode: "PvE - Giocatore vs IA",
+    pveModeDesc: "Combatti contro l'IA (Dealer) in 5 livelli di difficoltà. Nessuna quota d'ingresso. Limite di 30 vittorie al giorno per guadagnare monete.",
+    pveDifficulties: "Difficoltà",
+    pveGey: "GEY (+2 monete)",
+    pveTop: "GOOFY (+5 monete)",
+    pveG: "GOONER (+10 monete)",
+    pveMid: "GANGSTER (+20 monete)",
+    pveGigachad: "GIGACHAD (+40 monete)",
+
+    pvpMode: "PvP - Giocatore vs Giocatore",
+    pvpModeDesc: "Battaglie in tempo reale contro altri giocatori. Crea o unisciti alle stanze. Quota d'ingresso: 20 monete.",
+    pvpRewards: "Ricompense PvP",
+    pvpWin: "Vittoria: +100 monete (bonus se avversario è più in alto in classifica)",
+    pvpLoss: "Sconfitta: -20 monete (ridotte se avversario è più forte)",
+    pvpTie: "Pareggio: 0 monete",
+
+    attackMode: "Modalità Attacco",
+    attackModeDesc: "Attacca i giocatori in classifica per rubare i loro punti onore. Limite di 5 attacchi al giorno. GRATIS!",
+    attackHow: "Come Funziona",
+    attackStep1: "Scegli un avversario dalla classifica",
+    attackStep2: "Le tue 5 carte vs il mazzo di difesa dell'avversario",
+    attackStep3: "Vincere ruba punti, perdere non costa monete extra",
+
+    // Achievements section
+    achievementsTitle: "Sistema Obiettivi",
+    achievementsIntro: "63 obiettivi disponibili che ti premiano per collezionare carte rare e completare obiettivi.",
+    totalRewards: "Ricompense Totali: 302.300 monete",
+    achievementCount: "63 obiettivi",
+
+    rarityAchievements: "Obiettivi Rarità",
+    rarityDesc: "Colleziona carte di diverse rarità (Comune, Rara, Epica, Leggendaria, Mitica)",
+    rarityCount: "27 obiettivi basati sulla rarità",
+
+    wearAchievements: "Obiettivi Usura",
+    wearDesc: "Colleziona carte in diverse condizioni (Pristine, Mint, Leggermente Usata, Moderatamente Usata, Molto Usata)",
+    wearCount: "18 obiettivi basati sull'usura",
+
+    foilAchievements: "Obiettivi Foil",
+    foilDesc: "Colleziona carte foil lucide speciali",
+    foilCount: "6 obiettivi carte foil",
+
+    progressiveAchievements: "Obiettivi Progressivi",
+    progressiveDesc: "48 obiettivi basati su traguardi collezione (10, 25, 50, 100 carte)",
+
+    // Quests section
+    questsTitle: "Sistema Missioni",
+    questsIntro: "Completa missioni giornaliere e settimanali per guadagnare monete extra.",
+
+    dailyQuests: "Missioni Giornaliere",
+    dailyQuestsDesc: "Si resettano ogni giorno a mezzanotte UTC",
+    dailyQuest1: "Fortezza di Difesa: +100 monete per vincere 1 difesa PvP",
+
+    weeklyQuests: "Missioni Settimanali",
+    weeklyQuestsDesc: "Si resettano ogni lunedì alle 00:00 UTC",
+    weeklyQuest1: "Partite Totali: Gioca 50 partite (PvE, PvP, Attacco) - 500 monete",
+    weeklyQuest2: "Vittorie Attacco: Vinci 10 attacchi - 800 monete",
+    weeklyQuest3: "Vittorie Difesa: Difendi con successo 5 volte - 300 monete",
+    weeklyQuest4: "Serie PvE: Vinci 10 partite PvE di fila - 1.000 monete",
+
+    weeklyRewards: "Ricompense Settimanali",
+    weeklyRewardsDesc: "Distribuite automaticamente ogni domenica alle 00:00 UTC in base alla tua classifica potenza totale",
+    weeklyTier1: "1° Posto: 1.000 monete",
+    weeklyTier2: "2° Posto: 750 monete",
+    weeklyTier3: "3° Posto: 500 monete",
+    weeklyTier4: "4°-10° Posto: 300 monete ciascuno",
+
+    // Cards section
+    cardsTitle: "Sistema Carte",
+    cardsIntro: "$VBMS usa Liquid Trading Cards (LTC) - un nuovo paradigma nei collezionabili digitali. A differenza degli NFT tradizionali, le LTC possono essere scambiate istantaneamente con liquidità garantita. Ogni carta ha attributi unici che determinano la sua potenza in battaglia.",
+
+    cardAttributes: "Attributi Carta",
+    cardRarity: "Rarità",
+    cardRarityDesc: "Comune (5), Rara (20), Epica (80), Leggendaria (240), Mitica (800) - valori potenza base",
+    cardWear: "Condizione Usura",
+    cardWearDesc: "Pristine (×1.8), Mint (×1.4), Leggermente Usata (×1.0), Moderatamente Usata (×1.0), Molto Usata (×1.0)",
+    cardFoil: "Foil",
+    cardFoilDesc: "Prize Foil (×15), Standard Foil (×2.5), No Foil (×1.0) - moltiplicatori potenza",
+
+    powerCalculation: "Calcolo Potenza",
+    powerFormula: "Potenza = Potenza Base × Moltiplicatore Foil × Moltiplicatore Usura",
+    powerExample: "Esempio: Mitica (800) × Prize Foil (15.0) × Pristine (1.8) = 21.600 potenza",
+
+    defenseDeck: "Mazzo Difesa",
+    defenseDeckDesc: "Imposta le tue 5 carte migliori per difenderti quando altri giocatori ti attaccano. Aggiorna ogni volta che ottieni carte più forti!",
+
+    featuredCollections: "Collezioni in Evidenza",
+    featuredCollectionsDesc: "Collaborazioni con i creatori di Vibe Market. Queste carte possono essere usate come le carte $VBMS, seguendo lo stesso sistema di calcolo potenza.",
+
+    nothingPacks: "Nothing Packs",
+    nothingPacksDesc: "Carte non-NFT che possono essere acquistate con $VBMS e anche bruciate per recuperare parte del valore.",
+
+    // FAQ section
+    faqTitle: "Domande Frequenti",
+
+    faq1Q: "Devo pagare per giocare?",
+    faq1A: "No! PvE e Attacco sono completamente gratis. PvP ha una piccola quota d'ingresso (20 monete) che puoi guadagnare giocando PvE.",
+
+    faq2Q: "Come ottengo più carte?",
+    faq2A: "Compra pacchetti su Vibe Market o apri i tuoi pacchetti non aperti. Puoi anche scambiare carte con altri giocatori.",
+
+    faq3Q: "Posso perdere monete?",
+    faq3A: "In PvE, non perdi monete. In PvP, perdi 20 monete se perdi (meno se l'avversario è molto più forte). Modalità Attacco è GRATIS!",
+
+    faq4Q: "Quanto dura una partita?",
+    faq4A: "PvE: istantanea. PvP: 1-3 minuti. Attacco: istantaneo.",
+
+    faq5Q: "Cos'è la classifica potenza totale?",
+    faq5A: "La tua potenza totale è la somma della potenza delle tue 5 carte più forti. Questo valore determina la tua posizione in classifica e quanto puoi guadagnare nelle ricompense settimanali.",
+
+    faq6Q: "Posso attaccare lo stesso giocatore più volte?",
+    faq6A: "Sì, ma hai solo 5 attacchi al giorno in totale, quindi usali con saggezza!",
+
+    faq7Q: "Come funzionano gli obiettivi?",
+    faq7A: "Gli obiettivi vengono sbloccati automaticamente quando soddisfi i criteri (colleziona certe carte). Devi cliccare 'Riscatta' per ricevere le monete.",
+
+    faq8Q: "Cosa succede se non difendo un attacco?",
+    faq8A: "Il tuo mazzo difesa combatte automaticamente per te. Imposta le tue 5 carte migliori nel mazzo difesa!",
+
+    // Poker Battle section
+    pokerBattle: "Battaglia Poker",
+    pokerIntro: "Gioca a poker contro CPU o altri giocatori usando puntate VBMS.",
+    pokerStakes: "Puntate",
+    pokerRules: "Regole",
+    pokerRule1: "Migliore su 5 round - Il primo a vincere 4 round vince la partita",
+    pokerRule2: "Il vincitore prende il 95% del piatto (5% commissione casa)",
+    pokerRule3: "Sicurezza blockchain (contratto VBMS su Base)",
+    pokerRule4: "Le partite PvP sono dal vivo - entrambi i giocatori giocano simultaneamente",
+
+    // Mecha Arena section
+    mechaArena: "🤖 Arena Mecha",
+    mechaIntro: "Guarda battaglie CPU vs CPU e scommetti sul risultato! Osserva epiche battaglie di carte tra avversari IA.",
+    mechaHowItWorks: "Come Funziona",
+    mechaStep1: "Scegli tra 13 diverse collezioni dell'arena",
+    mechaStep2: "Due CPU combattono automaticamente usando carte da quella collezione",
+    mechaStep3: "Deposita VBMS per ottenere crediti scommessa",
+    mechaStep4: "Scommetti su ogni round (1-7) con quote crescenti",
+    mechaStep5: "Pagamenti istantanei quando i round si risolvono",
+    mechaBettingOdds: "Quote Scommesse",
+    mechaRounds13: "Round 1-3: quote 1.5x",
+    mechaRounds45: "Round 4-5: quote 1.8x",
+    mechaRounds67: "Round 6-7: quote 2.0x",
+    mechaTieBet: "Scommessa Pareggio: quote 3.5x",
+    mechaDailyBoost: "🔥 Boost Giornaliero",
+    mechaDailyBoostDesc: "Ogni giorno, una collezione dell'arena ottiene +0.5x quote bonus! Cerca il badge HOT.",
+    mechaCollections: "Collezioni",
+
+    // Raid Boss section
+    raidBoss: "👹 Raid Boss",
+    raidBossIntro: "Unisci le forze con altri giocatori per sconfiggere potenti boss e guadagnare ricompense esclusive!",
+    raidHowItWorks: "Come Funziona",
+    raidStep1: "I boss appaiono secondo una programmazione rotante",
+    raidStep2: "Seleziona carte dalla tua collezione per attaccare",
+    raidStep3: "Infliggi danni in base alla potenza delle tue carte",
+    raidStep4: "Contribuisci allo sforzo della comunità",
+    raidStep5: "Guadagna ricompense in base al contributo di danno",
+    raidRewards: "Ricompense",
+    raidReward1: "Monete TESTVBMS in base ai danni inflitti",
+    raidReward2: "Ricompense bonus per i migliori contributori",
+    raidReward3: "Obiettivi speciali per le sconfitte dei boss",
+    raidTips: "Consigli",
+    raidTip1: "Usa carte ad alta potenza per massimizzare i danni",
+    raidTip2: "Le carte dalla collezione del boss infliggono danni extra",
+    raidTip3: "Coordinati con altri giocatori per uccisioni più veloci",
+
+    // VibeFID section
+    vibeFID: "🆔 VibeFID",
+    vibeFIDIntro: "VibeFID è una carta NFT unica basata sulla tua identità Farcaster. Il tuo Punteggio Neynar (coinvolgimento e reputazione Farcaster) determina la rarità della tua carta, mentre il tuo numero FID determina i tratti visivi.",
+    vibeFIDHowItWorks: "Come Funziona",
+    vibeFIDStep1: "Connetti il tuo account Farcaster",
+    vibeFIDStep2: "Il tuo Punteggio Neynar determina la rarità della carta (basato su follower, cast, reazioni)",
+    vibeFIDStep3: "Il tuo numero FID determina i tratti di seme, foil e usura",
+    vibeFIDStep4: "Paga 0.0004 ETH per mintare la tua carta VibeFID unica su Base",
+    vibeFIDNeynarScore: "Punteggio Neynar → Rarità",
+    vibeFIDMythic: "Mitica (≥ 0.99): 800 potenza base - Top 1% utenti Farcaster",
+    vibeFIDLegendary: "Leggendaria (≥ 0.90): 240 potenza base - Top 10%",
+    vibeFIDEpic: "Epica (≥ 0.79): 80 potenza base - Top 21%",
+    vibeFIDRare: "Rara (≥ 0.70): 20 potenza base - Top 30%",
+    vibeFIDCommon: "Comune (< 0.70): 5 potenza base",
+    vibeFIDTraits: "FID → Tratti",
+    vibeFIDOG: "≤ 5.000 (OG): Prize Foil garantito + condizione Pristine",
+    vibeFIDTier2: "5.001 - 20.000: Alta probabilità di Prize Foil",
+    vibeFIDTier3: "20.001 - 100.000: Probabilità miste per tratti rari",
+    vibeFIDTier4: "> 100.000: Distribuzione tratti standard",
+    vibeFIDBenefits: "Vantaggi Possessori VibeFID",
+    vibeFIDBenefit1: "⚡ Boost Potenza: Le carte VibeFID ricevono moltiplicatori bonus di potenza in battaglia",
+    vibeFIDBenefit2: "♾️ Energia Infinita: La tua carta VibeFID non esaurisce mai l'energia - sempre pronta a combattere",
+    vibeFIDBenefit3: "🃏 Nessuna Restrizione Mazzo: Può essere usata in qualsiasi mazzo senza restrizioni di collezione",
   },
 };
 
