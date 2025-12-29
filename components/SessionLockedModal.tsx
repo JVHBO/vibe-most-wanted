@@ -20,7 +20,7 @@ interface SessionLockedModalProps {
 function getStoredLanguage(): SupportedLanguage {
   if (typeof window === 'undefined') return 'en';
   const stored = localStorage.getItem('vmw_language') as SupportedLanguage;
-  const validLanguages: SupportedLanguage[] = ['pt-BR', 'en', 'es', 'hi', 'ru', 'zh-CN', 'id', 'fr', 'ja'];
+  const validLanguages: SupportedLanguage[] = ['pt-BR', 'en', 'es', 'hi', 'ru', 'zh-CN', 'id', 'fr', 'ja', 'it'];
   return stored && validLanguages.includes(stored) ? stored : 'en';
 }
 
@@ -144,6 +144,18 @@ const sessionLockTranslations: Record<SupportedLanguage, {
     explanation: '「再接続」をクリックすると、他のセッションが切断され、このデバイスでアカウントを制御できるようになります。',
     reconnectButton: 'ここで再接続',
     autoDisconnect: '他のセッションは自動的に切断されます',
+},
+  'it': {
+    title: 'Sessione Bloccata',
+    sessionInvalidated: "È stata avviata un'altra sessione su un altro dispositivo.",
+    sessionExpired: 'La tua sessione è scaduta per inattività.',
+    noSession: 'Nessuna sessione attiva trovata.',
+    sessionEnded: 'La tua sessione è terminata.',
+    warning: 'Usa solo un dispositivo alla volta per evitare conflitti.',
+    howItWorks: 'Come funziona:',
+    explanation: "Cliccando su 'Riconnetti', l'altra sessione verrà disconnessa e prenderai il controllo dell'account su questo dispositivo.",
+    reconnectButton: 'Riconnetti Qui',
+    autoDisconnect: "L'altra sessione verrà disconnessa automaticamente",
   },
 };
 

@@ -130,6 +130,7 @@ export function generateCriminalBackstory(
     'id': 'kaki tangan yang dikenal',
     'fr': 'complices connus',
     'ja': '既知の共犯者',
+    'it': 'complici noti',
   };
   const associates = `${followerCount.toLocaleString()} ${associatesLabels[lang] || associatesLabels['en']}`;
 
@@ -144,6 +145,7 @@ export function generateCriminalBackstory(
     'id': 'Jaringan Farcaster',
     'fr': 'Réseau Farcaster',
     'ja': 'Farcasterネットワーク',
+    'it': 'Rete Farcaster',
   };
   const lastSeen = lastSeenLabels[lang] || lastSeenLabels['en'];
 
