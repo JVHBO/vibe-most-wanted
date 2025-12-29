@@ -4,7 +4,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 
 /**
  * Save a Neynar score check to history
@@ -61,102 +61,109 @@ export const getAllScoreHistory = query({
 
 /**
  * Get score history for a FID
- * If no history exists, checks farcasterCards for mint-time score
+ * ALWAYS uses mint-time score from farcasterCards as baseline (first check)
  */
 export const getScoreHistory = query({
   args: { fid: v.number() },
   handler: async (ctx, { fid }) => {
+    // Always get the card's mint-time score as baseline
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", fid))
+      .first();
+
     const history = await ctx.db
       .query("neynarScoreHistory")
       .withIndex("by_fid", (q) => q.eq("fid", fid))
       .order("desc")
       .take(50);
 
-    // If no history, check if there's a minted card with neynarScore
-    if (history.length === 0) {
-      const card = await ctx.db
-        .query("farcasterCards")
-        .withIndex("by_fid", (q) => q.eq("fid", fid))
-        .first();
+    // If no card exists, return null
+    if (!card || !card.neynarScore) {
+      if (history.length === 0) return null;
 
-      if (card && card.neynarScore) {
-        // Return mint-time score as first/only entry
-        return {
-          firstCheck: {
-            score: card.neynarScore,
-            rarity: card.rarity,
-            checkedAt: card.mintedAt || card._creationTime,
-          },
-          latestCheck: {
-            score: card.neynarScore,
-            rarity: card.rarity,
-            checkedAt: card.mintedAt || card._creationTime,
-          },
-          totalChecks: 1,
-          scoreDiff: 0,
-          percentChange: "0",
-          history: [{
-            _id: "mint" as any,
-            fid: card.fid,
-            username: card.username,
-            score: card.neynarScore,
-            rarity: card.rarity,
-            checkedAt: card.mintedAt || card._creationTime,
-          }],
-          isMintTimeOnly: true,
-        };
-      }
+      // No card but has history - use history only
+      const sorted = [...history].sort((a, b) => a.checkedAt - b.checkedAt);
+      const firstCheck = sorted[0];
+      const latestCheck = sorted[sorted.length - 1];
+      const scoreDiff = latestCheck.score - firstCheck.score;
+      const percentChange = firstCheck.score > 0
+        ? ((scoreDiff / firstCheck.score) * 100).toFixed(1)
+        : "0";
 
-      return null;
+      return {
+        firstCheck: { score: firstCheck.score, rarity: firstCheck.rarity, checkedAt: firstCheck.checkedAt },
+        latestCheck: { score: latestCheck.score, rarity: latestCheck.rarity, checkedAt: latestCheck.checkedAt },
+        totalChecks: history.length,
+        scoreDiff,
+        percentChange,
+        history: history.slice(0, 10),
+      };
     }
 
-    // Get first (oldest) and last (newest) entries
-    const sorted = [...history].sort((a, b) => a.checkedAt - b.checkedAt);
-    const firstCheck = sorted[0];
-    const latestCheck = sorted[sorted.length - 1];
+    // Create mint-time entry from card data
+    const mintTimeEntry = {
+      _id: "mint" as any,
+      fid: card.fid,
+      username: card.username,
+      score: card.neynarScore,
+      rarity: card.rarity,
+      checkedAt: card.mintedAt || card._creationTime,
+    };
 
-    // Calculate progress
+    // If no history, return just the mint-time score
+    if (history.length === 0) {
+      return {
+        firstCheck: { score: card.neynarScore, rarity: card.rarity, checkedAt: mintTimeEntry.checkedAt },
+        latestCheck: { score: card.neynarScore, rarity: card.rarity, checkedAt: mintTimeEntry.checkedAt },
+        totalChecks: 1,
+        scoreDiff: 0,
+        percentChange: "0",
+        history: [mintTimeEntry],
+        isMintTimeOnly: true,
+      };
+    }
+
+    // Combine mint-time with history, sorted by time
+    const allEntries = [...history, mintTimeEntry].sort((a, b) => a.checkedAt - b.checkedAt);
+
+    // First check is ALWAYS the mint-time score
+    const firstCheck = mintTimeEntry;
+    const latestCheck = allEntries[allEntries.length - 1];
+
+    // Calculate progress from mint-time to latest
     const scoreDiff = latestCheck.score - firstCheck.score;
     const percentChange = firstCheck.score > 0
       ? ((scoreDiff / firstCheck.score) * 100).toFixed(1)
       : "0";
 
+    // Return last 10 entries (most recent first)
+    const recentHistory = allEntries.slice(-10).reverse();
+
     return {
-      firstCheck: {
-        score: firstCheck.score,
-        rarity: firstCheck.rarity,
-        checkedAt: firstCheck.checkedAt,
-      },
-      latestCheck: {
-        score: latestCheck.score,
-        rarity: latestCheck.rarity,
-        checkedAt: latestCheck.checkedAt,
-      },
-      totalChecks: history.length,
+      firstCheck: { score: firstCheck.score, rarity: firstCheck.rarity, checkedAt: firstCheck.checkedAt },
+      latestCheck: { score: latestCheck.score, rarity: latestCheck.rarity, checkedAt: latestCheck.checkedAt },
+      totalChecks: allEntries.length,
       scoreDiff,
       percentChange,
-      history: history.slice(0, 10), // Last 10 checks
+      history: recentHistory,
+      mintTimeScore: card.neynarScore,
     };
   },
 });
 
 /**
  * Backfill score history from existing farcasterCards
- * Adds mint-time score as first entry for cards without history
  */
 export const backfillScoreHistory = mutation({
   args: {},
   handler: async (ctx) => {
-    // Get all farcaster cards
-    const cards = await ctx.db
-      .query("farcasterCards")
-      .collect();
+    const cards = await ctx.db.query("farcasterCards").collect();
 
     let backfilledCount = 0;
     let skippedCount = 0;
 
     for (const card of cards) {
-      // Check if this FID already has history
       const existingHistory = await ctx.db
         .query("neynarScoreHistory")
         .withIndex("by_fid", (q) => q.eq("fid", card.fid))
@@ -167,7 +174,6 @@ export const backfillScoreHistory = mutation({
         continue;
       }
 
-      // Add mint-time score as first entry
       await ctx.db.insert("neynarScoreHistory", {
         fid: card.fid,
         username: card.username,
@@ -177,14 +183,47 @@ export const backfillScoreHistory = mutation({
       });
 
       backfilledCount++;
-      console.log("Backfilled FID " + card.fid + " with score " + card.neynarScore);
     }
 
-    console.log("Backfill complete: " + backfilledCount + " added, " + skippedCount + " skipped");
-    return {
-      success: true,
-      backfilledCount,
-      skippedCount,
-    };
+    return { success: true, backfilledCount, skippedCount };
+  },
+});
+
+/**
+ * Delete duplicate score entries (entries with same score as previous)
+ */
+export const cleanupDuplicateScores = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allHistory = await ctx.db.query("neynarScoreHistory").collect();
+
+    // Group by FID
+    const byFid = new Map<number, typeof allHistory>();
+    for (const entry of allHistory) {
+      const list = byFid.get(entry.fid) || [];
+      list.push(entry);
+      byFid.set(entry.fid, list);
+    }
+
+    let deletedCount = 0;
+
+    for (const [fid, entries] of byFid) {
+      // Sort by time
+      const sorted = entries.sort((a, b) => a.checkedAt - b.checkedAt);
+
+      // Keep first entry, delete duplicates
+      let prevScore: number | null = null;
+      for (const entry of sorted) {
+        if (prevScore !== null && Math.abs(entry.score - prevScore) < 0.0001) {
+          await ctx.db.delete(entry._id);
+          deletedCount++;
+        } else {
+          prevScore = entry.score;
+        }
+      }
+    }
+
+    console.log("Cleanup complete: " + deletedCount + " duplicates deleted");
+    return { success: true, deletedCount };
   },
 });
