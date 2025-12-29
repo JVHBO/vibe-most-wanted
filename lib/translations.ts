@@ -8607,7 +8607,6 @@ export const translations = {
     revoke: 'Revoca',
     request: 'Richiedi',
     invite: 'Invita',
-    join: 'Unisciti',
     leave: 'Esci',
     kick: 'Espelli',
     ban: 'Bandisci',
