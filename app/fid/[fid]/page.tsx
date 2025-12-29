@@ -494,6 +494,7 @@ export default function FidCardPage() {
           <option value="id">🇮🇩 Bahasa</option>
           <option value="fr">🇫🇷 Français</option>
           <option value="ja">🇯🇵 日本語</option>
+          <option value="it">🇮🇹 Italiano</option>
         </select>
       </div>
 
@@ -999,6 +1000,7 @@ export default function FidCardPage() {
                   { code: 'hi', flag: '🇮🇳', name: 'हिन्दी' },
                   { code: 'fr', flag: '🇫🇷', name: 'Français' },
                   { code: 'id', flag: '🇮🇩', name: 'Bahasa' },
+                  { code: 'it', flag: '🇮🇹', name: 'Italiano' },
                 ].map((langOption) => (
                   <button
                     key={langOption.code}
