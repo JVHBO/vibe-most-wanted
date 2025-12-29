@@ -48,6 +48,16 @@ export default function FidPage() {
   const t = fidTranslations[lang];
   const router = useRouter();
 
+  // Redirect to VibeFID miniapp
+  useEffect(() => {
+    const redirectToVibeFIDMiniapp = async () => {
+      await openMarketplace(VIBEFID_MINIAPP_URL, sdk, farcasterContext.isInMiniapp);
+    };
+    if (farcasterContext.isReady) {
+      redirectToVibeFIDMiniapp();
+    }
+  }, [farcasterContext.isReady, farcasterContext.isInMiniapp]);
+
   // Auto-connect wallet in Farcaster miniapp
   useEffect(() => {
     const autoConnectWallet = async () => {

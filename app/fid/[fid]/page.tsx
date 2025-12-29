@@ -22,6 +22,9 @@ import { generateFarcasterCardImage } from '@/lib/generateFarcasterCard';
 import { generateCardVideo } from '@/lib/generateCardVideo';
 import { generateShareImage } from '@/lib/generateShareImage';
 import { convertIpfsToDataUrl } from '@/lib/ipfs-url-converter';
+import { openMarketplace } from '@/lib/marketplace-utils';
+
+const VIBEFID_MINIAPP_URL = 'https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid';
 
 export default function FidCardPage() {
   const params = useParams();
@@ -465,12 +468,12 @@ export default function FidCardPage() {
           <p className="text-vintage-ice mb-6">
             This FID hasn't been minted yet.
           </p>
-          <Link
-            href="/fid"
-            className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors inline-block"
+          <button
+            onClick={() => openMarketplace(VIBEFID_MINIAPP_URL, sdk, farcasterContext.isInMiniapp)}
+            className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors inline-block cursor-pointer"
           >
             Mint Your Card
-          </Link>
+          </button>
         </div>
       </div>
     );
@@ -501,12 +504,12 @@ export default function FidCardPage() {
       <div className="max-w-4xl mx-auto">
         {/* Mint Your Card Button - Top */}
         <div className="mb-6 text-center">
-          <Link
-            href="/fid"
-            className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors inline-block"
+          <button
+            onClick={() => openMarketplace(VIBEFID_MINIAPP_URL, sdk, farcasterContext.isInMiniapp)}
+            className="px-6 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors inline-block cursor-pointer"
           >
             ← Mint Your Card
-          </Link>
+          </button>
         </div>
 
         {/* Header */}
