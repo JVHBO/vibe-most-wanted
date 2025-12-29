@@ -121,6 +121,20 @@ export const mintFarcasterCard = mutation({
 
     console.log(`✅ Farcaster card minted: FID ${args.fid} (${args.rarity}) by ${normalizedAddress}`);
 
+    // Save initial Neynar score to history (first entry = mint time score)
+    try {
+      await ctx.db.insert("neynarScoreHistory", {
+        fid: args.fid,
+        username: args.username,
+        score: args.neynarScore,
+        rarity: args.rarity,
+        checkedAt: Date.now(),
+      });
+      console.log(`Initial Neynar score saved: ${args.neynarScore}`);
+    } catch (error) {
+      console.error("Failed to save initial score:", error);
+    }
+
     // Mark VibeFID minted mission as completed (one-time reward)
     try {
       await ctx.scheduler.runAfter(0, internal.missions.markVibeFIDMinted, {
