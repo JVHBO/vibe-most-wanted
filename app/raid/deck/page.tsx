@@ -31,6 +31,7 @@ import { NotEnoughCardsGuide } from '@/components/NotEnoughCardsGuide';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePlayerCards } from '@/contexts/PlayerCardsContext';
 import { sdk } from '@farcaster/miniapp-sdk';
+import { openMarketplace } from '@/lib/marketplace-utils';
 import Link from 'next/link';
 import { usePrimaryAddress } from '@/lib/hooks/usePrimaryAddress';
 
@@ -460,16 +461,16 @@ export default function RaidDeckPage() {
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-sm font-bold text-vintage-gold">VibeFID - 6th Slot Special Card</h3>
                       {!hasVibeFID && (
-                        <Link
-                          href="/fid"
-                          className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black text-sm font-bold rounded-lg transition"
-                          onClick={(e) => {
+                        <button
+                          onClick={async (e) => {
                             e.stopPropagation();
                             if (soundEnabled) AudioManager.buttonClick();
+                            await openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, true);
                           }}
+                          className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black text-sm font-bold rounded-lg transition cursor-pointer"
                         >
                           Mint VibeFID
-                        </Link>
+                        </button>
                       )}
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">

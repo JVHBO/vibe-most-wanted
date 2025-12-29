@@ -59,9 +59,9 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
     setConfirmModal({ show: false, url: '', name: '' });
   };
 
-  const handleVibeFidMint = () => {
+  const handleVibeFidMint = async () => {
     setShowModal(false);
-    window.location.href = '/fid';
+    await openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, isInFarcaster);
   };
 
   return (
