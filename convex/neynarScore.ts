@@ -121,11 +121,19 @@ export const getScoreHistory = query({
         percentChange: "0",
         history: [mintTimeEntry],
         isMintTimeOnly: true,
+        mintRarity: card.rarity, // Original mint rarity
       };
     }
 
     // Combine mint-time with history, sorted by time
     const allEntries = [...history, mintTimeEntry].sort((a, b) => a.checkedAt - b.checkedAt);
+
+    // Get the OLDEST history entry (first recorded rarity, before any upgrades)
+    const sortedHistory = [...history].sort((a, b) => a.checkedAt - b.checkedAt);
+    const oldestHistoryEntry = sortedHistory[0];
+
+    // The mint rarity is the rarity from the oldest history entry (recorded at or near mint time)
+    const mintRarity = oldestHistoryEntry?.rarity || card.rarity;
 
     // First check is ALWAYS the mint-time score
     const firstCheck = mintTimeEntry;
@@ -141,13 +149,14 @@ export const getScoreHistory = query({
     const recentHistory = allEntries.slice(-10).reverse();
 
     return {
-      firstCheck: { score: firstCheck.score, rarity: firstCheck.rarity, checkedAt: firstCheck.checkedAt },
+      firstCheck: { score: firstCheck.score, rarity: mintRarity, checkedAt: firstCheck.checkedAt },
       latestCheck: { score: latestCheck.score, rarity: latestCheck.rarity, checkedAt: latestCheck.checkedAt },
       totalChecks: allEntries.length,
       scoreDiff,
       percentChange,
       history: recentHistory,
       mintTimeScore: card.neynarScore,
+      mintRarity, // Original mint rarity from oldest history entry
     };
   },
 });
