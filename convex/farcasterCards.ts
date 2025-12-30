@@ -647,3 +647,61 @@ export const updateCardImages = mutation({
     };
   },
 });
+
+/**
+ * Get card images only (lightweight query for floating background)
+ * Returns only imageUrl/cardImageUrl - much faster than full card data
+ */
+export const getCardImagesOnly = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit || 8, 20);
+
+    const cards = await ctx.db
+      .query("farcasterCards")
+      .order("desc")
+      .take(limit);
+
+    // Return only what's needed for floating cards
+    return cards.map(card => ({
+      _id: card._id,
+      cardImageUrl: card.cardImageUrl,
+    }));
+  },
+});
+
+/**
+ * Get cards for gallery (lightweight)
+ * Returns only: _id, fid, username, cardImageUrl, pfpUrl
+ */
+export const getCardsForGallery = query({
+  args: {
+    searchTerm: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    let cards = await ctx.db
+      .query("farcasterCards")
+      .order("desc")
+      .take(100);
+
+    // Filter by search if provided
+    if (args.searchTerm && args.searchTerm.length > 0) {
+      const term = args.searchTerm.toLowerCase();
+      cards = cards.filter(c =>
+        c.username.toLowerCase().includes(term) ||
+        c.displayName.toLowerCase().includes(term) ||
+        c.fid.toString().includes(term)
+      );
+    }
+
+    return cards.map(c => ({
+      _id: c._id,
+      fid: c.fid,
+      username: c.username,
+      cardImageUrl: c.cardImageUrl,
+      pfpUrl: c.pfpUrl,
+    }));
+  },
+});
