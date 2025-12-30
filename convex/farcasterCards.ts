@@ -647,3 +647,107 @@ export const updateCardImages = mutation({
     };
   },
 });
+
+/**
+ * Get card images only (lightweight query for floating background)
+ * Returns only imageUrl/cardImageUrl - much faster than full card data
+ */
+export const getCardImagesOnly = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit || 8, 20);
+
+    const cards = await ctx.db
+      .query("farcasterCards")
+      .order("desc")
+      .take(limit);
+
+    // Return only what's needed for floating cards
+    return cards.map(card => ({
+      _id: card._id,
+      cardImageUrl: card.cardImageUrl,
+    }));
+  },
+});
+
+/**
+ * Get cards for gallery (lightweight)
+ * Returns only: _id, fid, username, cardImageUrl
+ */
+export const getCardsForGallery = query({
+  args: {
+    searchTerm: v.optional(v.string()),
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit || 12, 50);
+    const offset = args.offset || 0;
+    const searchTerm = args.searchTerm?.trim();
+
+    let cards;
+    let totalCount = 0;
+
+    if (!searchTerm || searchTerm.length === 0) {
+      const allRecent = await ctx.db
+        .query("farcasterCards")
+        .order("desc")
+        .take(offset + limit + 1);
+
+      cards = allRecent.slice(offset, offset + limit);
+      totalCount = allRecent.length > offset + limit ? offset + limit + 1 : allRecent.length;
+    } else {
+      const isNumericSearch = /^\d+$/.test(searchTerm);
+
+      if (isNumericSearch) {
+        const fid = parseInt(searchTerm, 10);
+        const exactMatch = await ctx.db
+          .query("farcasterCards")
+          .withIndex("by_fid", (q) => q.eq("fid", fid))
+          .first();
+
+        if (exactMatch) {
+          cards = [exactMatch];
+          totalCount = 1;
+        } else {
+          const recentCards = await ctx.db
+            .query("farcasterCards")
+            .order("desc")
+            .take(500);
+
+          const filtered = recentCards.filter(card =>
+            card.fid.toString().includes(searchTerm)
+          );
+          cards = filtered.slice(offset, offset + limit);
+          totalCount = filtered.length;
+        }
+      } else {
+        const searchResults = await ctx.db
+          .query("farcasterCards")
+          .withSearchIndex("search_username", (q) => q.search("username", searchTerm))
+          .take(offset + limit + 50);
+
+        cards = searchResults.slice(offset, offset + limit);
+        totalCount = searchResults.length;
+      }
+    }
+
+    const hasMore = totalCount > offset + limit;
+
+    // Return only essential fields for gallery
+    return {
+      cards: cards.map(card => ({
+        _id: card._id,
+        fid: card.fid,
+        username: card.username,
+        cardImageUrl: card.cardImageUrl,
+      })),
+      totalCount,
+      hasMore,
+      offset,
+      limit,
+    };
+  },
+});
