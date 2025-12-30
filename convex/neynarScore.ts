@@ -236,3 +236,123 @@ export const cleanupDuplicateScores = mutation({
     return { success: true, deletedCount };
   },
 });
+
+/**
+ * Get Most Wanted Rising - Cards with biggest Neynar Score increase since mint
+ */
+export const getMostWantedRising = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 10;
+
+    // Get all cards with their mint-time scores
+    const cards = await ctx.db.query("farcasterCards").collect();
+
+    // Get latest score check for each card
+    const results = [];
+
+    for (const card of cards) {
+      // Get the latest score check for this FID
+      const latestCheck = await ctx.db
+        .query("neynarScoreHistory")
+        .withIndex("by_fid", (q) => q.eq("fid", card.fid))
+        .order("desc")
+        .first();
+
+      if (!latestCheck) continue;
+
+      // Calculate score increase from mint
+      const mintScore = card.neynarScore;
+      const currentScore = latestCheck.score;
+      const scoreDiff = currentScore - mintScore;
+
+      // Only include cards with positive increase
+      if (scoreDiff > 0) {
+        results.push({
+          fid: card.fid,
+          username: card.username,
+          displayName: card.displayName,
+          pfpUrl: card.pfpUrl,
+          cardImageUrl: card.cardImageUrl,
+          mintScore,
+          currentScore,
+          scoreDiff,
+          percentChange: ((scoreDiff / mintScore) * 100).toFixed(1),
+          rarity: card.rarity,
+          currentRarity: latestCheck.rarity,
+          lastChecked: latestCheck.checkedAt,
+        });
+      }
+    }
+
+    // Sort by score difference (biggest increase first)
+    results.sort((a, b) => b.scoreDiff - a.scoreDiff);
+
+    return results.slice(0, limit);
+  },
+});
+
+/**
+ * Get Most Wanted Ranking for Gallery
+ * Similar to gallery query but includes score changes
+ */
+export const getMostWantedRanking = query({
+  args: {
+    limit: v.optional(v.number()),
+    offset: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit || 12, 50);
+    const offset = args.offset || 0;
+
+    // Get all cards
+    const allCards = await ctx.db
+      .query("farcasterCards")
+      .order("desc")
+      .collect();
+
+    // Calculate score changes for each card
+    const cardsWithScoreChange = [];
+
+    for (const card of allCards) {
+      // Get the latest score check for this FID
+      const latestCheck = await ctx.db
+        .query("neynarScoreHistory")
+        .withIndex("by_fid", (q) => q.eq("fid", card.fid))
+        .order("desc")
+        .first();
+
+      const mintScore = card.neynarScore;
+      const currentScore = latestCheck?.score || mintScore;
+      const scoreDiff = currentScore - mintScore;
+
+      cardsWithScoreChange.push({
+        _id: card._id,
+        fid: card.fid,
+        username: card.username,
+        displayName: card.displayName,
+        pfpUrl: card.pfpUrl,
+        cardImageUrl: card.cardImageUrl,
+        rarity: card.rarity,
+        mintScore,
+        currentScore,
+        scoreDiff,
+        percentChange: mintScore > 0 ? ((scoreDiff / mintScore) * 100) : 0,
+        hasScoreHistory: !!latestCheck,
+      });
+    }
+
+    // Sort by score difference (biggest increase first)
+    cardsWithScoreChange.sort((a, b) => b.scoreDiff - a.scoreDiff);
+
+    // Paginate
+    const paginatedCards = cardsWithScoreChange.slice(offset, offset + limit);
+    const totalCount = cardsWithScoreChange.length;
+
+    return {
+      cards: paginatedCards,
+      totalCount,
+      hasMore: offset + limit < totalCount,
+    };
+  },
+});

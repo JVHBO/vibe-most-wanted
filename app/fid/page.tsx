@@ -1,37 +1,8 @@
-"use client";
-
-import { useEffect } from "react";
-import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
-import { sdk } from "@farcaster/miniapp-sdk";
-import { AudioManager } from "@/lib/audio-manager";
+import Link from "next/link";
 
 const VIBEFID_MINIAPP_URL = 'https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid';
 
 export default function FidRedirectPage() {
-  const farcasterContext = useFarcasterContext();
-
-  // Auto-redirect when ready
-  useEffect(() => {
-    if (farcasterContext.isReady) {
-      handleOpenVibeFID();
-    }
-  }, [farcasterContext.isReady]);
-
-  const handleOpenVibeFID = async () => {
-    AudioManager.buttonClick();
-
-    if (farcasterContext.isInMiniapp) {
-      try {
-        await sdk.actions.openMiniApp({ url: VIBEFID_MINIAPP_URL });
-      } catch (err) {
-        console.error('Failed to open VibeFID miniapp:', err);
-        window.location.href = VIBEFID_MINIAPP_URL;
-      }
-    } else {
-      window.location.href = VIBEFID_MINIAPP_URL;
-    }
-  };
-
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-center p-4">
       {/* Background gradient */}
@@ -49,20 +20,13 @@ export default function FidRedirectPage() {
           </p>
         </div>
 
-        {/* Button */}
-        <button
-          onClick={handleOpenVibeFID}
-          className="px-8 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold text-xl rounded-xl shadow-lg shadow-yellow-500/30 transition-all duration-200 hover:scale-105 active:scale-95"
+        {/* Button - direct link */}
+        <a
+          href={VIBEFID_MINIAPP_URL}
+          className="inline-block px-8 py-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold text-xl rounded-xl shadow-lg shadow-yellow-500/30 transition-all duration-200 hover:scale-105 active:scale-95"
         >
           Open VibeFID Miniapp
-        </button>
-
-        {/* Loading indicator */}
-        {!farcasterContext.isReady && (
-          <p className="text-gray-500 text-sm animate-pulse">
-            Loading...
-          </p>
-        )}
+        </a>
       </div>
     </div>
   );

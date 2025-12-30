@@ -840,7 +840,9 @@ export default defineSchema({
     color: v.string(), // "red" or "black"
 
     // Farcaster Stats (frozen at mint time)
-    neynarScore: v.number(), // Neynar user score (0-1+)
+    neynarScore: v.number(),
+    latestNeynarScore: v.optional(v.number()), // Latest checked score
+    latestScoreCheckedAt: v.optional(v.number()), // When score was last checked // Neynar user score (0-1+)
     followerCount: v.number(),
     followingCount: v.number(),
     powerBadge: v.boolean(),
@@ -1532,4 +1534,56 @@ export default defineSchema({
   })
     .index("by_code", ["code"])
     .index("by_profile", ["profileAddress"]),
+
+  // 🗳️ VibeFID Card Votes - Daily voting system
+  cardVotes: defineTable({
+    cardFid: v.number(),
+    voterFid: v.number(),
+    voterAddress: v.string(),
+    date: v.string(),
+    isPaid: v.boolean(),
+    voteCount: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_card_date", ["cardFid", "date"])
+    .index("by_voter_date", ["voterFid", "date"])
+    .index("by_date", ["date"]),
+
+  // 📊 Daily Vote Leaderboard
+  dailyVoteLeaderboard: defineTable({
+    cardFid: v.number(),
+    username: v.string(),
+    displayName: v.string(),
+    pfpUrl: v.string(),
+    totalVotes: v.number(),
+    date: v.string(),
+    createdAt: v.number(),
+    lastUpdated: v.number(),
+  })
+    .index("by_date", ["date"])
+    .index("by_card_date", ["cardFid", "date"]),
+
+  // 🏆 Daily Prize Winners
+  dailyPrizeWinners: defineTable({
+    date: v.string(),
+    cardFid: v.number(),
+    username: v.string(),
+    displayName: v.string(),
+    pfpUrl: v.string(),
+    totalVotes: v.number(),
+    prizeAmount: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_date", ["date"]),
+
+  // 🎁 Vibe Rewards - VBMS rewards from votes
+  vibeRewards: defineTable({
+    fid: v.number(), // Card owner FID
+    pendingVbms: v.number(), // Unclaimed VBMS
+    claimedVbms: v.number(), // Already claimed VBMS
+    totalVotes: v.number(), // Total votes received
+    lastVoteAt: v.number(), // Last vote timestamp
+    lastClaimAt: v.optional(v.number()), // Last claim timestamp
+  })
+    .index("by_fid", ["fid"]),
 });
