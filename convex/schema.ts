@@ -302,7 +302,6 @@ export default defineSchema({
     token: v.string(), // Push notification token
     url: v.string(), // Farcaster notification URL (required)
     platform: v.optional(v.string()), // "warpcast" or "neynar" (optional for backward compat)
-    app: v.optional(v.string()), // "vbms" or "vibefid" (optional)
     createdAt: v.number(),
     lastUpdated: v.number(),
   })
@@ -1532,49 +1531,4 @@ export default defineSchema({
   })
     .index("by_code", ["code"])
     .index("by_profile", ["profileAddress"]),
-
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // VIBEFID CARD VOTING SYSTEM
-  // ═══════════════════════════════════════════════════════════════════════════════
-
-  // Card Votes
-  cardVotes: defineTable({
-    cardFid: v.number(),
-    voterFid: v.number(),
-    voterAddress: v.string(),
-    date: v.string(),
-    isPaid: v.boolean(),
-    voteCount: v.number(),
-    createdAt: v.number(),
-  })
-    .index("by_card_date", ["cardFid", "date"])
-    .index("by_voter_date", ["voterFid", "date"])
-    .index("by_date", ["date"]),
-
-  // Daily Vote Leaderboard
-  dailyVoteLeaderboard: defineTable({
-    cardFid: v.number(),
-    username: v.string(),
-    displayName: v.string(),
-    pfpUrl: v.string(),
-    totalVotes: v.number(),
-    date: v.string(),
-    createdAt: v.number(),
-    lastUpdated: v.number(),
-  })
-    .index("by_date", ["date"])
-    .index("by_card_date", ["cardFid", "date"]),
-
-  // Daily Prize Winners
-  dailyPrizeWinners: defineTable({
-    date: v.string(),
-    cardFid: v.number(),
-    username: v.string(),
-    displayName: v.string(),
-    pfpUrl: v.string(),
-    totalVotes: v.number(),
-    prizeAmount: v.number(),
-    createdAt: v.number(),
-  })
-    .index("by_date", ["date"]),
 });
