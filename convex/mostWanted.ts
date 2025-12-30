@@ -24,6 +24,20 @@ export const getRanking = query({
       .query("farcasterCards")
       .collect();
 
+    // Get today's votes
+    const today = new Date().toISOString().split('T')[0];
+    const allVotes = await ctx.db
+      .query("cardVotes")
+      .filter((q) => q.eq(q.field("date"), today))
+      .collect();
+
+    // Create vote count map
+    const voteMap = new Map<number, number>();
+    for (const vote of allVotes) {
+      const current = voteMap.get(vote.cardFid) || 0;
+      voteMap.set(vote.cardFid, current + vote.voteCount);
+    }
+
     // Calculate score diff and sort
     const withDiff = cards
       .filter(c => c.latestNeynarScore !== undefined && c.latestNeynarScore !== null)
@@ -38,6 +52,7 @@ export const getRanking = query({
         mintScore: card.neynarScore,
         currentScore: card.latestNeynarScore || card.neynarScore,
         scoreDiff: (card.latestNeynarScore || card.neynarScore) - card.neynarScore,
+        votes: voteMap.get(card.fid) || 0,
       }))
       .sort((a, b) => b.scoreDiff - a.scoreDiff);
 
