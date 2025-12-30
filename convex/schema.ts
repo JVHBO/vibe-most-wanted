@@ -302,6 +302,7 @@ export default defineSchema({
     token: v.string(), // Push notification token
     url: v.string(), // Farcaster notification URL (required)
     platform: v.optional(v.string()), // "warpcast" or "neynar" (optional for backward compat)
+    app: v.optional(v.string()), // "vbms" or "vibefid" (which app the token is for)
     createdAt: v.number(),
     lastUpdated: v.number(),
   })

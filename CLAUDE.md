@@ -91,6 +91,17 @@ npx convex deploy --env-file .env.prod
 npx vercel --prod
 ```
 
+### Bug #6: Schema mismatch after git revert
+- **Symptoms**: Convex deploy fails with "Object contains extra field" error
+- **Cause**: Data has fields that were added then reverted from schema
+- **Example**: `notificationTokens` has `app` field in data but not in schema
+- **Fix**: Add missing optional fields to schema before deploying:
+```typescript
+// Add to schema to match existing data
+app: v.optional(v.string()),
+```
+- **CRITICAL**: VBMS and VibeFID share the same Convex deployment. Never revert commits that change schema without fixing the schema first!
+
 ## Security
 
 - Blacklist is in `convex/blacklist.ts`
