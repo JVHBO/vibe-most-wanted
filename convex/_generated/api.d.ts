@@ -18,6 +18,7 @@ import type * as bettingCredits from "../bettingCredits.js";
 import type * as blacklist from "../blacklist.js";
 import type * as blockchainVerify from "../blockchainVerify.js";
 import type * as cardPacks from "../cardPacks.js";
+import type * as cardVotes from "../cardVotes.js";
 import type * as castAuctions from "../castAuctions.js";
 import type * as coinAudit from "../coinAudit.js";
 import type * as coinsInbox from "../coinsInbox.js";
@@ -38,6 +39,7 @@ import type * as migrations_cleanDefenseDecks from "../migrations/cleanDefenseDe
 import type * as migrations_fixVibeFIDCollections from "../migrations/fixVibeFIDCollections.js";
 import type * as migrations_normalizeUsernames from "../migrations/normalizeUsernames.js";
 import type * as missions from "../missions.js";
+import type * as mostWanted from "../mostWanted.js";
 import type * as neynarScore from "../neynarScore.js";
 import type * as nftCollections from "../nftCollections.js";
 import type * as notifications from "../notifications.js";
@@ -59,8 +61,10 @@ import type * as sessions from "../sessions.js";
 import type * as shopAnnouncement from "../shopAnnouncement.js";
 import type * as socialQuests from "../socialQuests.js";
 import type * as stats from "../stats.js";
+import type * as testHelpers from "../testHelpers.js";
 import type * as utils from "../utils.js";
 import type * as vbmsClaim from "../vbmsClaim.js";
+import type * as vibeRewards from "../vibeRewards.js";
 import type * as voiceChat from "../voiceChat.js";
 import type * as welcomePack from "../welcomePack.js";
 
@@ -81,6 +85,7 @@ declare const fullApi: ApiFromModules<{
   blacklist: typeof blacklist;
   blockchainVerify: typeof blockchainVerify;
   cardPacks: typeof cardPacks;
+  cardVotes: typeof cardVotes;
   castAuctions: typeof castAuctions;
   coinAudit: typeof coinAudit;
   coinsInbox: typeof coinsInbox;
@@ -101,6 +106,7 @@ declare const fullApi: ApiFromModules<{
   "migrations/fixVibeFIDCollections": typeof migrations_fixVibeFIDCollections;
   "migrations/normalizeUsernames": typeof migrations_normalizeUsernames;
   missions: typeof missions;
+  mostWanted: typeof mostWanted;
   neynarScore: typeof neynarScore;
   nftCollections: typeof nftCollections;
   notifications: typeof notifications;
@@ -122,8 +128,10 @@ declare const fullApi: ApiFromModules<{
   shopAnnouncement: typeof shopAnnouncement;
   socialQuests: typeof socialQuests;
   stats: typeof stats;
+  testHelpers: typeof testHelpers;
   utils: typeof utils;
   vbmsClaim: typeof vbmsClaim;
+  vibeRewards: typeof vibeRewards;
   voiceChat: typeof voiceChat;
   welcomePack: typeof welcomePack;
 }>;
