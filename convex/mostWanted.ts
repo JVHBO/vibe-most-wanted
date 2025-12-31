@@ -38,9 +38,9 @@ export const getRanking = query({
       voteMap.set(vote.cardFid, current + vote.voteCount);
     }
 
-    // Calculate score diff and sort
+    // Calculate score diff and sort - only include MINTED cards (with contractAddress)
     const withDiff = cards
-      .filter(c => c.latestNeynarScore !== undefined && c.latestNeynarScore !== null)
+      .filter(c => c.contractAddress) // Only cards that were actually minted on blockchain
       .map(card => ({
         _id: card._id,
         fid: card.fid,
@@ -50,8 +50,8 @@ export const getRanking = query({
         cardImageUrl: card.cardImageUrl,
         rarity: card.rarity,
         mintScore: card.neynarScore,
-        currentScore: card.latestNeynarScore || card.neynarScore,
-        scoreDiff: (card.latestNeynarScore || card.neynarScore) - card.neynarScore,
+        currentScore: card.latestNeynarScore ?? card.neynarScore,
+        scoreDiff: (card.latestNeynarScore ?? card.neynarScore) - card.neynarScore,
         votes: voteMap.get(card.fid) || 0,
       }))
       .sort((a, b) => b.scoreDiff - a.scoreDiff);

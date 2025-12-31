@@ -103,6 +103,8 @@ export const mintFarcasterCard = mutation({
 
       // Farcaster Stats
       neynarScore: args.neynarScore,
+      latestNeynarScore: args.neynarScore, // Initialize with mint score for Most Wanted ranking
+      latestScoreCheckedAt: Date.now(),
       followerCount: args.followerCount,
       followingCount: args.followingCount,
       powerBadge: args.powerBadge,
@@ -547,6 +549,7 @@ export const upgradeCardRarity = mutation({
     // Update rarity and power (power recalculated based on new rarity)
     await ctx.db.patch(card._id, {
       rarity: args.newRarity,
+      neynarScore: args.newNeynarScore, // Update card score to current score at upgrade time
       power: newPower,
       // Mark when upgraded
       upgradedAt: Date.now(),
@@ -668,5 +671,31 @@ export const getCardImagesOnly = query({
       fid: card.fid,
       cardImageUrl: card.cardImageUrl,
     }));
+  },
+});
+
+// Update neynarScore for card (used when regenerating after upgrade)
+export const updateNeynarScore = mutation({
+  args: {
+    fid: v.number(),
+    neynarScore: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (!card) {
+      throw new Error(`No card found for FID ${args.fid}`);
+    }
+
+    await ctx.db.patch(card._id, {
+      neynarScore: args.neynarScore,
+    });
+
+    console.log(`✅ Updated neynarScore for FID ${args.fid} to ${args.neynarScore}`);
+
+    return { success: true, fid: args.fid, neynarScore: args.neynarScore };
   },
 });
