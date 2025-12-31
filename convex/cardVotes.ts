@@ -5,7 +5,7 @@ import { v } from "convex/values";
  * VibeFID Card Voting System
  *
  * Features:
- * - 3 free votes per day per user
+ * - 1 free vote per day per user
  * - Paid votes (unlimited) cost 100 coins each
  * - Daily prize pool distributed to top voted card
  * - Vote history tracking
@@ -70,7 +70,7 @@ export const getUserFreeVotesRemaining = query({
       .collect();
 
     const freeVotesUsed = votesToday.length;
-    const maxFreeVotes = 3;
+    const maxFreeVotes = 1;
 
     return {
       remaining: Math.max(0, maxFreeVotes - freeVotesUsed),
@@ -80,7 +80,7 @@ export const getUserFreeVotesRemaining = query({
   },
 });
 
-// Vote for a card (free or paid)
+// Vote for a card (free or paid) with optional VibeMail message
 export const voteForCard = mutation({
   args: {
     cardFid: v.number(),
@@ -88,6 +88,9 @@ export const voteForCard = mutation({
     voterAddress: v.string(),
     isPaid: v.boolean(),
     voteCount: v.optional(v.number()), // For paid votes, can vote multiple times
+    // VibeMail - Anonymous message with vote
+    message: v.optional(v.string()), // Optional text message (max 200 chars)
+    audioId: v.optional(v.string()), // Optional meme sound ID
   },
   handler: async (ctx, args) => {
     const today = new Date().toISOString().split('T')[0];
@@ -124,7 +127,7 @@ export const voteForCard = mutation({
         ))
         .collect();
 
-      if (votesToday.length >= 3) {
+      if (votesToday.length >= 1) {
         return { success: false, error: "No free votes remaining today" };
       }
     }
@@ -155,7 +158,8 @@ export const voteForCard = mutation({
       });
     }
 
-    // Record the vote
+    // Record the vote with optional VibeMail message
+    const hasMessage = args.message && args.message.trim().length > 0;
     await ctx.db.insert("cardVotes", {
       cardFid: args.cardFid,
       voterFid: args.voterFid,
@@ -164,6 +168,10 @@ export const voteForCard = mutation({
       isPaid: args.isPaid,
       voteCount: voteCount,
       createdAt: now,
+      // VibeMail fields
+      message: hasMessage && args.message ? args.message.slice(0, 200) : undefined,
+      audioId: hasMessage ? args.audioId : undefined,
+      isRead: hasMessage ? false : undefined,
     });
 
     // Update daily leaderboard
@@ -412,5 +420,75 @@ export const distributeDailyPrize = mutation({
       prize: prizePool,
       votes: winner.totalVotes,
     };
+  },
+});
+
+// ============================================================================
+// VIBEMAIL - Anonymous messages with votes
+// ============================================================================
+
+// Get all messages for a card (inbox)
+export const getMessagesForCard = query({
+  args: {
+    cardFid: v.number(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 50;
+
+    // Get all votes with messages for this card
+    const allVotes = await ctx.db
+      .query("cardVotes")
+      .filter((q) => q.eq(q.field("cardFid"), args.cardFid))
+      .order("desc")
+      .collect();
+
+    // Filter to only votes with messages
+    const messages = allVotes
+      .filter(v => v.message !== undefined)
+      .slice(0, limit);
+
+    return messages.map(m => ({
+      _id: m._id,
+      message: m.message,
+      audioId: m.audioId,
+      isRead: m.isRead ?? false,
+      createdAt: m.createdAt,
+      voteCount: m.voteCount,
+      isPaid: m.isPaid,
+    }));
+  },
+});
+
+// Mark a message as read
+export const markMessageAsRead = mutation({
+  args: { messageId: v.id("cardVotes") },
+  handler: async (ctx, args) => {
+    const vote = await ctx.db.get(args.messageId);
+    if (!vote || !vote.message) {
+      return { success: false, error: "Message not found" };
+    }
+
+    await ctx.db.patch(args.messageId, { isRead: true });
+    return { success: true };
+  },
+});
+
+// Get unread message count for a card
+export const getUnreadMessageCount = query({
+  args: { cardFid: v.number() },
+  handler: async (ctx, args) => {
+    // Get all votes for this card
+    const allVotes = await ctx.db
+      .query("cardVotes")
+      .filter((q) => q.eq(q.field("cardFid"), args.cardFid))
+      .collect();
+
+    // Count unread messages
+    const unread = allVotes.filter(v =>
+      v.message !== undefined && v.isRead === false
+    );
+
+    return unread.length;
   },
 });
