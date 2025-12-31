@@ -1544,6 +1544,10 @@ export default defineSchema({
     isPaid: v.boolean(),
     voteCount: v.number(),
     createdAt: v.number(),
+    // VibeMail - Anonymous message with vote
+    message: v.optional(v.string()),
+    audioId: v.optional(v.string()),
+    isRead: v.optional(v.boolean()),
   })
     .index("by_card_date", ["cardFid", "date"])
     .index("by_voter_date", ["voterFid", "date"])
