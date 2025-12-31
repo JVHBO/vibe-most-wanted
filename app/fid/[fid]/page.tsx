@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -28,6 +28,7 @@ const VIBEFID_MINIAPP_URL = 'https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid
 
 export default function FidCardPage() {
   const params = useParams();
+  const router = useRouter();
   const fid = parseInt(params.fid as string);
   const { lang, setLang } = useLanguage();
   const farcasterContext = useFarcasterContext();
@@ -966,6 +967,8 @@ export default function FidCardPage() {
                           setEvolutionPhase('idle');
                           setEvolutionData(null);
                           setNeynarScoreData(null);
+                          // Force page refresh to show updated card data
+                          router.refresh();
                         }}
                         className="flex-1 px-3 py-3 sm:px-4 sm:py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold rounded-lg transition-colors text-sm sm:text-base"
                       >
