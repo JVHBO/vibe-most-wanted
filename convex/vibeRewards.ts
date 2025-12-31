@@ -37,7 +37,7 @@ export const recordVote = mutation({
         claimedVbms: 0,
         totalVotes: 1,
         lastVoteAt: Date.now(),
-        lastClaimAt: null,
+        lastClaimAt: undefined,
       });
     }
 
