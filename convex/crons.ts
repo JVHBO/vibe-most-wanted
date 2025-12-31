@@ -10,12 +10,12 @@ crons.interval(
   internal.pokerBattle.cleanupOldPokerRooms
 );
 
-// Daily gaming tips (21:00 UTC)
-crons.daily(
-  "send periodic gaming tips",
-  { hourUTC: 21, minuteUTC: 0 },
-  internal.notifications.sendPeriodicTip
-);
+// Daily gaming tips DISABLED - user requested removal
+// crons.daily(
+//   "send periodic gaming tips",
+//   { hourUTC: 21, minuteUTC: 0 },
+//   internal.notifications.sendPeriodicTip
+// );
 
 // Raid boss auto attacks (every 7 minutes) - optimized from 5 min
 crons.interval(
