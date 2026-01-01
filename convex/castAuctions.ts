@@ -508,6 +508,18 @@ export const placeBid = mutation({
       lastUpdated: now,
     });
 
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: normalizedAddress,
+      amount: -netDeduction,
+      type: "spend",
+      source: "auction_bid",
+      description: `Auction bid on slot ${args.slotNumber}`,
+      timestamp: now,
+      balanceBefore: currentCoins,
+      balanceAfter: currentCoins - netDeduction,
+    });
+
     // 9. Create bid record
     await ctx.db.insert("castAuctionBids", {
       auctionId: auction._id,
