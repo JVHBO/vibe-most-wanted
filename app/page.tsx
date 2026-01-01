@@ -556,7 +556,7 @@ export default function TCGPage() {
 
   // PvP Entry Fee & Reward System (VBMS entry → TESTVBMS inbox rewards)
   const useEntryFee = useMutation(api.pvp.useEntryFee);
-  const sendPvPRewardToInbox = useMutation(api.pvp.sendPvPRewardToInbox);
+  const claimPvPWinReward = useMutation(api.pvp.claimPvPWinReward);
 
   // 💎 VBMS Blockchain Contract Hooks (using Farcaster-compatible hook)
   const { balance: vbmsBlockchainBalance, refetch: refetchVBMSBalance } = useFarcasterVBMSBalance(address);
@@ -2771,11 +2771,7 @@ export default function TCGPage() {
                     if (isRanked && matchResult === 'win') {
                       // Ranked PvP Winner: Send TESTVBMS to inbox
                       const TESTVBMS_REWARD = 40; // 40 TESTVBMS reward for winning
-                      const reward = await sendPvPRewardToInbox({
-                        address,
-                        rewardAmount: TESTVBMS_REWARD,
-                        roomCode: roomCode || undefined
-                      });
+                      const reward = await claimPvPWinReward({ address, roomCode: roomCode || undefined });
 
                       if (reward?.success) {
                         coinsEarned = TESTVBMS_REWARD;
