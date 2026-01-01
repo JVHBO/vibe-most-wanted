@@ -164,19 +164,25 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
           </button>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex gap-1 p-2 border-b border-vintage-gold/20 overflow-x-auto">
-          {(['all', 'earn', 'convert', 'spend'] as FilterType[]).map((f) => (
+        {/* Filter Tabs - Fixed width buttons */}
+        <div className="grid grid-cols-4 gap-1.5 p-2 border-b border-vintage-gold/20">
+          {([
+            { key: 'all', label: 'All', color: 'bg-vintage-gold' },
+            { key: 'earn', label: 'Earned', color: 'bg-green-500' },
+            { key: 'convert', label: 'Converted', color: 'bg-purple-500' },
+            { key: 'spend', label: 'Spent', color: 'bg-red-500' },
+          ] as const).map((f) => (
             <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all ${
-                filter === f
+              key={f.key}
+              onClick={() => setFilter(f.key as FilterType)}
+              className={`py-2 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                filter === f.key
                   ? 'bg-vintage-gold text-vintage-deep-black'
                   : 'bg-vintage-black/50 text-vintage-gold/70 hover:bg-vintage-gold/20'
               }`}
             >
-              {f === 'all' ? '🔄 All' : f === 'earn' ? '💰 Earned' : f === 'convert' ? '⛓️ Converted' : '💸 Spent'}
+              <span className={`w-2 h-2 rounded-full ${f.color} flex-shrink-0`}></span>
+              <span className="truncate">{f.label}</span>
             </button>
           ))}
         </div>
