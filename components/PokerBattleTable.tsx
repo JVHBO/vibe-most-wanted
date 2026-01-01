@@ -160,9 +160,8 @@ export function PokerBattleTable({
   const finishGameMutation = useMutation(api.pokerBattle.finishGame);
   const recordMatchMutation = useMutation(api.matches.recordMatch);
 
-  // PvE and PvP claim mutations
-  const sendPveRewardToInbox = useMutation(api.vbmsClaim.sendPveRewardToInbox);
-  const sendPvpRewardToInbox = useMutation(api.vbmsClaim.sendPvpRewardToInbox);
+  // PvE and PvP claim mutations - using secure sendToInbox that validates matchId
+  const sendToInbox = useMutation(api.vbmsClaim.sendToInbox);
   const claimPveRewardNow = useAction(api.vbmsClaim.claimPveRewardNow);
   const recordImmediateClaim = useMutation(api.vbmsClaim.recordImmediateClaim);
 
@@ -1940,58 +1939,31 @@ export function PokerBattleTable({
           mode: isCPUMode ? 'CPU' : 'PvP'
         });
 
-        // Separate mutations for PvE and PvP to avoid type confusion
-        if (isCPUMode) {
-          // PvE mode - includes difficulty
-          sendPveRewardToInbox({
-            address: playerAddress,
-            amount: rewardAmount,
-            difficulty
-          })
-            .then((result) => {
-              console.log('[PokerBattle] ✅ coins sent to inbox (PvE):', result);
-              setBattleFinalized(true);
+        // Use secure sendToInbox with matchId validation
+        sendToInbox({
+          address: playerAddress,
+          matchId: createdMatchId,
+        })
+          .then((result) => {
+            console.log('[PokerBattle] ✅ coins sent to inbox:', result);
+            setBattleFinalized(true);
 
-              toast.success(`Victory! ${rewardAmount} coins sent to inbox!`, {
-                description: 'Check your inbox to claim',
-                duration: 5000,
-              });
-            })
-            .catch((error) => {
-              console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox (PvE):', error);
-              setBattleFinalized(true);
-
-              toast.error('Failed to send reward to inbox', {
-                description: error.message || 'Server error',
-              });
+            toast.success(`Victory! ${rewardAmount} coins sent to inbox!`, {
+              description: 'Check your inbox to claim',
+              duration: 5000,
             });
-        } else {
-          // PvP mode - no difficulty
-          sendPvpRewardToInbox({
-            address: playerAddress,
-            amount: rewardAmount
           })
-            .then((result) => {
-              console.log('[PokerBattle] ✅ coins sent to inbox (PvP):', result);
-              setBattleFinalized(true);
+          .catch((error) => {
+            console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox:', error);
+            setBattleFinalized(true);
 
-              toast.success(`Victory! ${rewardAmount} coins sent to inbox!`, {
-                description: 'Check your inbox to claim',
-                duration: 5000,
-              });
-            })
-            .catch((error) => {
-              console.error('[PokerBattle] ❌ Failed to send TESTVBMS to inbox (PvP):', error);
-              setBattleFinalized(true);
-
-              toast.error('Failed to send reward to inbox', {
-                description: error.message || 'Server error',
-              });
+            toast.error('Failed to send reward to inbox', {
+              description: error.message || 'Server error',
             });
-        }
+          });
       }
     }
-  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendPveRewardToInbox, sendPvpRewardToInbox, playerAddress, difficulty]);
+  }, [phase, isCPUMode, isSpectatorMode, battleFinalized, playerScore, opponentScore, createdMatchId, selectedAnte, selectedToken, sendToInbox, playerAddress, difficulty]);
 
   // Auto-delete finished rooms (V5: No TX needed, just cleanup Convex)
   // Triggers when: room.status === 'finished' OR when phase === 'game-over' in PvP
