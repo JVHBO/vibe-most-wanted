@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { createAuditLog } from "./coinAudit";
 
 /**
  * VibeFID Card Voting System
@@ -396,8 +397,25 @@ export const distributeDailyPrize = mutation({
         .first();
 
       if (profile) {
+        const balanceBefore = profile.coins || 0;
+        const balanceAfter = balanceBefore + prizePool;
         await ctx.db.patch(profile._id, {
-          coins: (profile.coins || 0) + prizePool,
+          coins: balanceAfter,
+          // 🔒 SECURITY FIX (2026-01-01): Track lifetimeEarned
+          lifetimeEarned: (profile.lifetimeEarned || 0) + prizePool,
+        });
+        // 🔒 AUDIT LOG
+        await createAuditLog(ctx, profile.address, "earn", prizePool, balanceBefore, balanceAfter, "cardVotes:distributeDailyPrize");
+        // 📊 Log transaction for history
+        await ctx.db.insert("coinTransactions", {
+          address: profile.address.toLowerCase(),
+          type: "earn",
+          amount: prizePool,
+          source: "leaderboard",
+          description: "Card voting prize - Top voter reward",
+          balanceBefore,
+          balanceAfter,
+          timestamp: Date.now(),
         });
       }
     }

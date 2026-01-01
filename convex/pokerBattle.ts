@@ -391,6 +391,18 @@ export const leaveSpectate = mutation({
           lifetimeEarned: (profile.lifetimeEarned || 0) + convertedAmount,
           lastUpdated: Date.now(),
         });
+
+        // 📊 Log transaction
+        await ctx.db.insert("coinTransactions", {
+          address: normalizedAddress,
+          amount: convertedAmount,
+          type: "earn",
+          source: "poker_credits_convert",
+          description: "Converted poker betting credits",
+          timestamp: Date.now(),
+          balanceBefore: currentBalance,
+          balanceAfter: currentBalance + convertedAmount,
+        });
       }
 
       // Reset betting credits to 0
@@ -1121,6 +1133,18 @@ export const placeBet = mutation({
       lifetimeSpent: (profile.lifetimeSpent || 0) + args.amount,
     });
 
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: bettorAddr,
+      amount: -args.amount,
+      type: "spend",
+      source: "poker_bet",
+      description: `Poker bet on ${args.betOn}`,
+      timestamp: Date.now(),
+      balanceBefore: currentCoins,
+      balanceAfter: currentCoins - args.amount,
+    });
+
     // Calculate odds (tie pays more since it's harder to hit)
     const odds = isTieBet ? 6 : 3; // 6x for tie, 3x for player win
     const betOnUsername = isTieBet
@@ -1223,6 +1247,18 @@ export const resolveBets = mutation({
           await ctx.db.patch(profile._id, {
             coins: currentBalance + payout,
             lifetimeEarned: (profile.lifetimeEarned || 0) + payout,
+          });
+
+          // 📊 Log transaction
+          await ctx.db.insert("coinTransactions", {
+            address: bet.bettor,
+            amount: payout,
+            type: "earn",
+            source: "poker_bet_win",
+            description: `Poker bet winnings (x${bet.odds})`,
+            timestamp: Date.now(),
+            balanceBefore: currentBalance,
+            balanceAfter: currentBalance + payout,
           });
 
           console.log(`💰 Poker bet winnings added to balance: ${payout} TESTVBMS for ${bet.bettor}. Balance: ${currentBalance} → ${currentBalance + payout}`);

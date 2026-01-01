@@ -5,7 +5,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 
 // Maximum attempts per day
 const MAX_POKER_CPU_ATTEMPTS = 5;
@@ -192,7 +192,8 @@ export const consumePveAttempt = mutation({
 });
 
 // Award coins to player for winning CPU poker game
-export const awardPokerWin = mutation({
+// 🔒 SECURITY FIX (2026-01-01): Changed from mutation to internalMutation
+export const awardPokerWin = internalMutation({
   args: {
     address: v.string(),
     difficulty: v.union(
@@ -224,6 +225,17 @@ export const awardPokerWin = mutation({
     });
 
     console.log(`💰 ${args.address} won ${args.coinsWon} coins on ${args.difficulty} difficulty (total: ${newCoins})`);
+    // 📊 Log transaction for history
+    await ctx.db.insert("coinTransactions", {
+      address: args.address.toLowerCase(),
+      type: "earn",
+      amount: args.coinsWon,
+      source: "pve",
+      description: `Poker CPU victory (${args.difficulty})`,
+      balanceBefore: currentCoins,
+      balanceAfter: newCoins,
+      timestamp: Date.now(),
+    });
 
     return {
       success: true,

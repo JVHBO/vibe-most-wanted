@@ -169,7 +169,8 @@ export const checkEntryFee = query({
  * Called when player wins a PvP battle
  * Sends TESTVBMS reward to player's inbox
  */
-export const sendPvPRewardToInbox = mutation({
+// 🔒 SECURITY FIX (2026-01-01): Changed from mutation to internalMutation
+export const sendPvPRewardToInbox = internalMutation({
   args: {
     address: v.string(),
     rewardAmount: v.number(),

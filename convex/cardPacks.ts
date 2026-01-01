@@ -464,6 +464,18 @@ export const buyPack = mutation({
       lifetimeSpent: (profile.lifetimeSpent || 0) + totalCost,
     });
 
+    // 📊 Log spend transaction for history
+    await ctx.db.insert("coinTransactions", {
+      address: address,
+      amount: -totalCost,
+      type: "spend",
+      source: `buy_pack_${args.packType}`,
+      description: `Bought ${args.quantity}x ${args.packType} pack`,
+      timestamp: Date.now(),
+      balanceBefore: coins,
+      balanceAfter: coins - totalCost,
+    });
+
     // Give packs to player
     // 🚀 PERF: Use compound index instead of filter
     const existingPack = await ctx.db
@@ -1278,6 +1290,19 @@ export const buyPackWithLuckBoost = mutation({
     await ctx.db.patch(profile._id, {
       coins: coins - totalCost,
       lifetimeSpent: (profile.lifetimeSpent || 0) + totalCost,
+    });
+
+    // 📊 Log spend transaction for history
+    const packTypeName = args.boosted ? "boosted" : "basic";
+    await ctx.db.insert("coinTransactions", {
+      address: address,
+      amount: -totalCost,
+      type: "spend",
+      source: `buy_pack_${packTypeName}`,
+      description: `Bought ${args.quantity}x ${packTypeName} pack`,
+      timestamp: Date.now(),
+      balanceBefore: coins,
+      balanceAfter: coins - totalCost,
     });
 
     // Create packs with special type for boosted

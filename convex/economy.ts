@@ -981,6 +981,18 @@ export const awardPvPCoins = mutation({
         },
       });
 
+      // 📊 Log transaction (PvP loss penalty)
+      await ctx.db.insert("coinTransactions", {
+        address: address.toLowerCase(),
+        amount: penalty, // negative
+        type: "spend",
+        source: "pvp_loss",
+        description: "PvP battle loss penalty",
+        timestamp: Date.now(),
+        balanceBefore: currentCoins,
+        balanceAfter: newCoins,
+      });
+
       // 🎯 Track weekly quest progress (async, non-blocking)
       // 🛡️ CRITICAL FIX: Use internal.quests (now internalMutation)
       try {
@@ -1039,12 +1051,25 @@ export const chargeEntryFee = mutation({
     }
 
     // Deduct fee
+    const balanceBefore = profile.coins || 0;
+    const balanceAfter = balanceBefore - fee;
     await ctx.db.patch(profile._id, {
-      coins: (profile.coins || 0) - fee,
+      coins: balanceAfter,
       lifetimeSpent: (profile.lifetimeSpent || 0) + fee,
     });
+    // 📊 Log transaction for history
+    await ctx.db.insert("coinTransactions", {
+      address: address.toLowerCase(),
+      type: "spend",
+      amount: fee,
+      source: "battle",
+      description: "Battle entry fee",
+      balanceBefore,
+      balanceAfter,
+      timestamp: Date.now(),
+    });
 
-    return { success: true, charged: fee, newBalance: (profile.coins || 0) - fee };
+    return { success: true, charged: fee, newBalance: balanceAfter };
   },
 });
 
@@ -1173,6 +1198,18 @@ export const claimShareBonus = mutation({
       hasSharedProfile: true,
     });
 
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: address.toLowerCase(),
+      amount: shareReward,
+      type: "earn",
+      source: "daily_share",
+      description: "Daily share bonus",
+      timestamp: Date.now(),
+      balanceBefore: currentCoins,
+      balanceAfter: newCoins,
+    });
+
     return {
       success: true,
       message: `+${shareReward} coins for sharing! Share daily for more rewards!`,
@@ -1238,6 +1275,18 @@ export const payEntryFee = mutation({
     await ctx.db.patch(profile._id, {
       coins: currentCoins - fee,
       lifetimeSpent: (profile.lifetimeSpent || 0) + fee,
+    });
+
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: address.toLowerCase(),
+      amount: -fee,
+      type: "spend",
+      source: `${mode}_entry`,
+      description: `${mode.toUpperCase()} entry fee`,
+      timestamp: Date.now(),
+      balanceBefore: currentCoins,
+      balanceAfter: currentCoins - fee,
     });
 
     console.log(`💸 Entry fee paid: ${fee} $TESTVBMS for ${mode} mode by ${address}`);
@@ -1317,6 +1366,18 @@ export const addCoins = internalMutation({
       undefined,
       { reason }
     );
+
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: address.toLowerCase(),
+      amount,
+      type: "bonus",
+      source: "admin_add",
+      description: reason || "Admin added coins",
+      timestamp: Date.now(),
+      balanceBefore: currentCoins,
+      balanceAfter: newCoins,
+    });
 
     console.log(`💰 Added ${amount} coins to ${address}: ${reason}`);
 

@@ -428,6 +428,18 @@ export const shameExploiter = mutation({
       lifetimeEarned: (profile.lifetimeEarned || 0) + SHAME_REWARD,
     });
 
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: normalizedPlayer,
+      amount: SHAME_REWARD,
+      type: "earn",
+      source: "shame_reward",
+      description: `Shame reward for reporting ${normalizedExploiter.slice(0, 8)}...`,
+      timestamp: Date.now(),
+      balanceBefore: currentCoins,
+      balanceAfter: newCoins,
+    });
+
     const exploiterInfo = getBlacklistInfo(normalizedExploiter);
 
     // 📊 LOG TRANSACTION

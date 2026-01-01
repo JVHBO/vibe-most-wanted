@@ -5,6 +5,7 @@
  */
 
 import { v } from "convex/values";
+import { createAuditLog } from "./coinAudit";
 import { mutation, query, internalMutation, internalQuery, QueryCtx, MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getCurrentBoss, getNextBoss, getBossRotationInfo, BOSS_HP_BY_RARITY, BOSS_REWARDS_BY_RARITY } from "../lib/raid-boss";
@@ -1172,6 +1173,18 @@ export const claimRaidRewards = mutation({
     await ctx.db.patch(profile._id, {
       coins: (profile.coins || 0) + totalReward,
       lifetimeEarned: (profile.lifetimeEarned || 0) + totalReward,
+    });
+
+    // 📊 Log earned transaction for history
+    await ctx.db.insert("coinTransactions", {
+      address: normalizedAddress,
+      amount: totalReward,
+      type: "earn",
+      source: "raid_boss_reward",
+      description: `Raid Boss rewards (x${unclaimedContributions.length} bosses)`,
+      timestamp: Date.now(),
+      balanceBefore: profile.coins || 0,
+      balanceAfter: (profile.coins || 0) + totalReward,
     });
 
     console.log("Claimed " + totalReward + " coins for " + normalizedAddress);

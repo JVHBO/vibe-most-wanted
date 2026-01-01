@@ -1,4 +1,4 @@
-/**
+﻿/**
  * COINS INBOX SYSTEM
  *
  * Manages the "claim later" feature for $TESTVBMS coins
@@ -42,7 +42,12 @@ export async function logTransaction(
 /**
  * Send battle rewards to inbox instead of claiming immediately
  */
-export const sendCoinsToInbox = mutation({
+/**
+ * Send battle rewards to inbox instead of claiming immediately
+ * 🔒 SECURITY FIX (2026-01-01): Changed from mutation to internalMutation
+ * EXPLOIT PATCHED: Anyone could call this directly to add unlimited coins
+ */
+export const sendCoinsToInbox = internalMutation({
   args: {
     address: v.string(),
     amount: v.number(),

@@ -9,6 +9,7 @@
 
 import { internalMutation, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { createAuditLog } from "./coinAudit";
 
 /**
  * Step 1: Reset all profiles (economy and stats)
@@ -428,10 +429,16 @@ export const claimAllCoinsInboxForAll = internalMutation({
     for (const profile of profiles) {
       const coinsInbox = profile.coinsInbox || 0;
       if (coinsInbox > 0) {
+        const balanceBefore = profile.coins || 0;
+        const balanceAfter = balanceBefore + coinsInbox;
         await ctx.db.patch(profile._id, {
-          coins: (profile.coins || 0) + coinsInbox,
+          coins: balanceAfter,
           coinsInbox: 0,
+          // 🔒 SECURITY FIX (2026-01-01): Track lifetimeEarned
+          lifetimeEarned: (profile.lifetimeEarned || 0) + coinsInbox,
         });
+        // 🔒 AUDIT LOG
+        await createAuditLog(ctx, profile.address, "earn", coinsInbox, balanceBefore, balanceAfter, "admin:claimAllCoinsInboxForAll");
         totalMoved += coinsInbox;
         updates.push({ address: profile.address, moved: coinsInbox });
       }
@@ -463,11 +470,15 @@ export const moveInboxToCoinsForAll = internalMutation({
     for (const profile of profiles) {
       const inbox = profile.inbox || 0;
       if (inbox > 0) {
+        const balanceBefore2 = profile.coins || 0;
+        const balanceAfter2 = balanceBefore2 + inbox;
         await ctx.db.patch(profile._id, {
-          coins: (profile.coins || 0) + inbox,
+          coins: balanceAfter2,
           inbox: 0,
           lifetimeEarned: (profile.lifetimeEarned || 0) + inbox,
         });
+        // 🔒 AUDIT LOG
+        await createAuditLog(ctx, profile.address, "earn", inbox, balanceBefore2, balanceAfter2, "admin:moveInboxToCoinsForAll");
         totalMoved += inbox;
         updates.push({ address: profile.address, moved: inbox });
       }

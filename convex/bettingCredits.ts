@@ -271,6 +271,18 @@ export const resolveBets = mutation({
             lifetimeEarned: (profile.lifetimeEarned || 0) + totalToInbox,
             lastUpdated: Date.now(),
           });
+
+          // 📊 Log transaction
+          await ctx.db.insert("coinTransactions", {
+            address: bet.bettor,
+            amount: totalToInbox,
+            type: "earn",
+            source: "betting_win",
+            description: "Betting winnings",
+            timestamp: Date.now(),
+            balanceBefore: currentBalance,
+            balanceAfter: currentBalance + totalToInbox,
+          });
         }
       }
 
@@ -320,6 +332,18 @@ export const resolveBets = mutation({
             coins: currentBalance + remainingCredits,
             lifetimeEarned: (profile.lifetimeEarned || 0) + remainingCredits,
             lastUpdated: Date.now(),
+          });
+
+          // 📊 Log transaction
+          await ctx.db.insert("coinTransactions", {
+            address: bet.bettor,
+            amount: remainingCredits,
+            type: "earn",
+            source: "betting_refund",
+            description: "Betting credits refund",
+            timestamp: Date.now(),
+            balanceBefore: currentBalance,
+            balanceAfter: currentBalance + remainingCredits,
           });
         }
       }
