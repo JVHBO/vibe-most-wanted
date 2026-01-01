@@ -146,6 +146,18 @@ export const claimCastInteractionReward = mutation({
       lastUpdated: Date.now(),
     });
 
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: normalizedAddress,
+      amount: reward,
+      type: "earn",
+      source: "featured_cast",
+      description: `Featured cast ${interactionType}`,
+      timestamp: Date.now(),
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
+    });
+
     // Record the claim
     await ctx.db.insert("castInteractions", {
       playerAddress: normalizedAddress,

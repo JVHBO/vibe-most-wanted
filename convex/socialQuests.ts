@@ -162,6 +162,18 @@ export const claimSocialQuestReward = mutation({
       lastUpdated: Date.now(),
     });
 
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: normalizedAddress,
+      amount: reward,
+      type: "earn",
+      source: "social_quest",
+      description: `Social quest: ${questId}`,
+      timestamp: Date.now(),
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
+    });
+
     console.log(`💰 Social quest reward: ${reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark as claimed
