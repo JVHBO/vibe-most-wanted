@@ -11,6 +11,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { logTransaction } from "./coinsInbox";
 
 /**
  * 🔒 SECURITY FIX: Crypto-secure random functions
@@ -1125,6 +1126,17 @@ export const burnCard = mutation({
       coins: currentCoins + burnValue,
     });
 
+    // 📊 Log burn transaction for history
+    await logTransaction(ctx, {
+      address,
+      type: 'earn',
+      amount: burnValue,
+      source: 'burn_card',
+      description: `Burned ${card.rarity} card for ${burnValue} TESTVBMS`,
+      balanceBefore: currentCoins,
+      balanceAfter: currentCoins + burnValue,
+    });
+
     console.log(`🔥 BURN: ${address} burned ${card.rarity} card for ${burnValue} VBMS`);
 
     return {
@@ -1221,6 +1233,18 @@ export const burnMultipleCards = mutation({
     const currentCoins = profile.coins || 0;
     await ctx.db.patch(profile._id, {
       coins: currentCoins + totalVBMS,
+    });
+
+    // 📊 Log burn transaction for history
+    const burnSummary = burnedCards.map(b => `${b.count}x ${b.rarity}`).join(", ");
+    await logTransaction(ctx, {
+      address,
+      type: 'earn',
+      amount: totalVBMS,
+      source: 'burn_cards',
+      description: `Burned ${args.cardIds.length} cards (${burnSummary}) for ${totalVBMS} TESTVBMS`,
+      balanceBefore: currentCoins,
+      balanceAfter: currentCoins + totalVBMS,
     });
 
     console.log(`🔥 MASS BURN: ${address} burned ${args.cardIds.length} cards for ${totalVBMS} VBMS`);
