@@ -1146,7 +1146,7 @@ export const convertTESTVBMStoVBMS = action({
     // 🔒 SECURITY: FID is required
     if (!fid || fid <= 0) {
       console.log(`[VBMS] ⛔ BLOCKED - No valid FID provided for ${address}`);
-      throw new Error("🔒 Farcaster authentication required. Please use the miniapp to claim.");
+      throw new Error("[CLAIM_FID_REQUIRED]");
     }
 
     // 🔒 Generate nonce FIRST so we can store it for on-chain verification
@@ -1178,13 +1178,19 @@ export const convertTESTVBMStoVBMS = action({
         nonce
       });
     } catch (signError: any) {
-      // 🚨 CRITICAL: If signing fails, restore coins immediately!
-      console.error(`[VBMS] ❌ Signature failed for ${address}, restoring ${result.claimAmount} coins:`, signError);
-      await ctx.runMutation(internal.vbmsClaim.restoreCoinsOnSignFailure, {
-        address,
-        amount: result.claimAmount
-      });
-      throw new Error(`Signature generation failed. Your ${result.claimAmount} coins have been restored. Please try again.`);
+      // 🚨 CRITICAL: If signing fails, try to restore coins (with on-chain verification)
+      console.error(`[VBMS] ❌ Signature failed for ${address}, attempting restore of ${result.claimAmount} coins:`, signError);
+      try {
+        await ctx.runAction(internal.vbmsClaim.restoreCoinsOnSignFailure, {
+          address,
+          amount: result.claimAmount
+        });
+        throw new Error(`[CLAIM_SIGNATURE_FAILED_RESTORED]${result.claimAmount}`);
+      } catch (restoreError: any) {
+        // If restore also failed (on-chain check failed, daily limit, etc.), user can try manual recovery
+        console.error(`[VBMS] ❌ Auto-restore also failed for ${address}:`, restoreError);
+        throw new Error("[CLAIM_SIGNATURE_FAILED_MANUAL]");
+      }
     }
 
     console.log(`💱 ${address} (FID: ${fid}) converting ${result.claimAmount} TESTVBMS → VBMS (nonce: ${nonce})`);
@@ -1227,7 +1233,7 @@ export const convertTESTVBMSInternal = internalMutation({
     if (isBlacklisted(address)) {
       const info = getBlacklistInfo(address);
       console.log(`🚫 [BLACKLIST] Blocked claim attempt from exploiter: ${address} (${info?.username})`);
-      throw new Error(`🚫 Address blacklisted: You exploited ${info?.amountStolen?.toLocaleString()} VBMS in December 2025. Claims permanently disabled.`);
+      throw new Error("[CLAIM_BLACKLISTED]");
     }
 
     const profile = await getProfile(ctx, address);
@@ -1247,23 +1253,24 @@ export const convertTESTVBMSInternal = internalMutation({
     const profileFid = profile.farcasterFid || (profile.fid ? Number(profile.fid) : null);
     if (!profileFid || profileFid !== fid) {
       console.log(`🚫 [SECURITY] FID mismatch! Provided: ${fid}, Profile FID: ${profileFid}, Address: ${address}`);
-      throw new Error("🔒 FID verification failed. Your Farcaster account does not match this wallet.");
+      throw new Error("[CLAIM_FID_MISMATCH]");
     }
 
     console.log(`✅ [SECURITY] FID verified: ${fid} for address ${address}`);
 
-    // ⏰ COOLDOWN CHECK - 3 minutes between conversions
-    const lastConversion = profile.lastClaimTimestamp || 0;
-    const timeSinceLastConversion = Date.now() - lastConversion;
-    if (lastConversion > 0 && timeSinceLastConversion < CONVERSION_COOLDOWN_MS) {
-      const remainingSeconds = Math.ceil((CONVERSION_COOLDOWN_MS - timeSinceLastConversion) / 1000);
-      throw new Error(`⏰ Cooldown active. Wait ${remainingSeconds} seconds before converting again.`);
+    // ⏰ COOLDOWN CHECK - 3 minutes between conversions (ATTEMPTS, not just successes)
+    // 🔒 SECURITY: Use lastConversionAttempt to track ALL attempts, not just successful claims
+    const lastAttempt = profile.lastConversionAttempt || profile.lastClaimTimestamp || 0;
+    const timeSinceLastAttempt = Date.now() - lastAttempt;
+    if (lastAttempt > 0 && timeSinceLastAttempt < CONVERSION_COOLDOWN_MS) {
+      const remainingSeconds = Math.ceil((CONVERSION_COOLDOWN_MS - timeSinceLastAttempt) / 1000);
+      throw new Error(`[CLAIM_COOLDOWN]${remainingSeconds}`);
     }
 
     const testVBMSBalance = profile.coins || 0;
 
     if (testVBMSBalance < MIN_CLAIM_AMOUNT) {
-      throw new Error(`Minimum ${MIN_CLAIM_AMOUNT} TESTVBMS required to convert. You have: ${testVBMSBalance}`);
+      throw new Error(`[CLAIM_MINIMUM_REQUIRED]${MIN_CLAIM_AMOUNT}|${testVBMSBalance}`);
     }
 
     // Use provided amount or default to max balance
@@ -1271,10 +1278,10 @@ export const convertTESTVBMSInternal = internalMutation({
     if (amount !== undefined) {
       // Validate user-provided amount
       if (amount < MIN_CLAIM_AMOUNT) {
-        throw new Error(`Minimum ${MIN_CLAIM_AMOUNT} TESTVBMS required to convert.`);
+        throw new Error(`[CLAIM_MINIMUM_REQUIRED]${MIN_CLAIM_AMOUNT}|${testVBMSBalance}`);
       }
       if (amount > testVBMSBalance) {
-        throw new Error(`Insufficient balance. You have ${testVBMSBalance} TESTVBMS but tried to convert ${amount}.`);
+        throw new Error(`[CLAIM_INSUFFICIENT_BALANCE]${testVBMSBalance}|${amount}`);
       }
       claimAmount = Math.min(amount, MAX_CLAIM_AMOUNT);
     } else {
@@ -1285,17 +1292,19 @@ export const convertTESTVBMSInternal = internalMutation({
     const remainingBalance = testVBMSBalance - claimAmount;
 
     if (claimAmount < MIN_CLAIM_AMOUNT) {
-      throw new Error(`Minimum ${MIN_CLAIM_AMOUNT} TESTVBMS required to convert. You have: ${testVBMSBalance}`);
+      throw new Error(`[CLAIM_MINIMUM_REQUIRED]${MIN_CLAIM_AMOUNT}|${testVBMSBalance}`);
     }
 
     // 🔒 SECURITY FIX: Deduct claim amount IMMEDIATELY to prevent multiple signature generation exploit
     // Keep remaining balance if user has more than max claim amount
     // Store nonce for on-chain verification during recovery (anti double-spend)
+    const now = Date.now();
     await ctx.db.patch(profile._id, {
       coins: remainingBalance, // Keep any amount over 100k
       pendingConversion: claimAmount, // Track pending conversion for recovery if needed
-      pendingConversionTimestamp: Date.now(),
+      pendingConversionTimestamp: now,
       pendingNonce: nonce, // 🔒 Store nonce to verify on-chain before allowing recovery
+      lastConversionAttempt: now, // 🔒 Track attempt time for cooldown (even if fails)
     });
 
     // 🔒 AUDIT LOG - Track TESTVBMS → VBMS conversion initiation
@@ -1347,7 +1356,7 @@ export const recordTESTVBMSConversion = mutation({
 
     if (existingClaim) {
       console.log(`⚠️ [SECURITY] Duplicate txHash rejected: ${txHash} for ${address}`);
-      throw new Error("Transaction already recorded");
+      throw new Error("[CLAIM_TX_RECORDED]");
     }
 
     const profile = await getProfile(ctx, address);
@@ -1425,14 +1434,21 @@ export const recoverFailedConversion = action({
     const profileInfo = await ctx.runQuery(internal.vbmsClaim.getRecoveryInfo, { address });
 
     if (profileInfo.pendingAmount === 0) {
-      throw new Error("No pending conversion to recover");
+      throw new Error("[CLAIM_NO_PENDING]");
+    }
+
+    // 🔒 Check daily recovery limit (max 3 per day)
+    const today = new Date().toISOString().slice(0, 10);
+    if (profileInfo.lastRecoveryDay === today && (profileInfo.dailyRecoveryCount || 0) >= 3) {
+      console.log(`🚫 [SECURITY] Daily recovery limit reached for ${address}`);
+      throw new Error("[CLAIM_DAILY_LIMIT]");
     }
 
     // Check time constraint (2 minutes)
     const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
     if (profileInfo.pendingTimestamp > twoMinutesAgo) {
       const waitSeconds = Math.ceil((profileInfo.pendingTimestamp - twoMinutesAgo) / 1000);
-      throw new Error(`Please wait ${waitSeconds} seconds before recovering. This prevents abuse.`);
+      throw new Error(`[CLAIM_WAIT_RECOVER]${waitSeconds}`);
     }
 
     // 🔒 CRITICAL SECURITY CHECK: Verify nonce was NOT used on-chain
@@ -1448,7 +1464,7 @@ export const recoverFailedConversion = action({
         // Clear the pending state but DON'T restore coins (they already got VBMS)
         await ctx.runMutation(internal.vbmsClaim.clearPendingWithoutRestore, { address });
 
-        throw new Error("🚫 Recovery blocked: This conversion was already claimed on the blockchain. Your VBMS tokens are in your wallet.");
+        throw new Error("[CLAIM_BLOCKED_ALREADY_CLAIMED]");
       }
     }
 
@@ -1457,6 +1473,8 @@ export const recoverFailedConversion = action({
       address,
       amount: profileInfo.pendingAmount,
       currentCoins: profileInfo.currentCoins,
+      today: today, // 🔒 For daily recovery counter
+      currentRecoveryCount: profileInfo.dailyRecoveryCount || 0,
     });
 
     console.log(`🔄 ${address} recovered ${profileInfo.pendingAmount} TESTVBMS from failed conversion (on-chain verified)`);
@@ -1465,7 +1483,7 @@ export const recoverFailedConversion = action({
   },
 });
 
-// Internal query to get recovery info
+// Internal query to get recovery info (enhanced with anti-exploit fields)
 export const getRecoveryInfo = internalQuery({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
@@ -1475,6 +1493,10 @@ export const getRecoveryInfo = internalQuery({
       pendingTimestamp: profile.pendingConversionTimestamp || 0,
       pendingNonce: profile.pendingNonce || null,
       currentCoins: profile.coins || 0,
+      // 🔒 Anti-exploit fields
+      dailyRecoveryCount: profile.dailyRecoveryCount || 0,
+      lastRecoveryDay: profile.lastRecoveryDay || null,
+      lastConversionAttempt: profile.lastConversionAttempt || 0,
     };
   },
 });
@@ -1507,8 +1529,10 @@ export const executeRecovery = internalMutation({
     address: v.string(),
     amount: v.number(),
     currentCoins: v.number(),
+    today: v.string(), // 🔒 For daily recovery tracking
+    currentRecoveryCount: v.number(), // 🔒 Current recovery count today
   },
-  handler: async (ctx, { address, amount, currentCoins }) => {
+  handler: async (ctx, { address, amount, currentCoins, today, currentRecoveryCount }) => {
     const profile = await getProfile(ctx, address);
 
     const newBalance = currentCoins + amount;
@@ -1518,6 +1542,9 @@ export const executeRecovery = internalMutation({
       pendingConversion: 0,
       pendingConversionTimestamp: undefined,
       pendingNonce: undefined,
+      // 🔒 Track daily recovery count
+      dailyRecoveryCount: currentRecoveryCount + 1,
+      lastRecoveryDay: today,
     });
 
     await createAuditLog(
@@ -1529,7 +1556,7 @@ export const executeRecovery = internalMutation({
       newBalance,
       "recoverFailedConversion",
       undefined,
-      { reason: "Recovered failed TESTVBMS conversion (on-chain verified)" }
+      { reason: `Recovered failed TESTVBMS conversion (on-chain verified) [${currentRecoveryCount + 1}/3 today]` }
     );
 
     return {
@@ -1567,26 +1594,79 @@ export const clearPendingWithoutRestore = internalMutation({
 });
 
 /**
- * 🚨 INTERNAL: Restore coins when signature generation fails
- * Called automatically by convertTESTVBMStoVBMS if signClaimMessage throws
+ * 🔒 SECURE: Restore coins when signature generation fails
+ * Now checks on-chain first (defense in depth) and has daily limit
  */
-export const restoreCoinsOnSignFailure = internalMutation({
+export const restoreCoinsOnSignFailure = internalAction({
   args: {
     address: v.string(),
     amount: v.number(),
   },
-  handler: async (ctx, { address, amount }) => {
+  handler: async (ctx, { address, amount }): Promise<void> => {
+    // Get pending nonce to verify on-chain
+    const recoveryInfo = await ctx.runQuery(internal.vbmsClaim.getRecoveryInfo, { address });
+
+    // 🔒 SECURITY: If there's a pending nonce, verify it wasn't used on-chain
+    if (recoveryInfo.pendingNonce) {
+      try {
+        const nonceUsedOnChain = await ctx.runAction(internal.vbmsClaim.checkNonceUsedOnChain, {
+          nonce: recoveryInfo.pendingNonce
+        });
+
+        if (nonceUsedOnChain) {
+          // 🚨 Already claimed on-chain! Don't restore coins
+          console.error(`🚨 [SECURITY] Blocked auto-restore for ${address} - nonce already used on-chain!`);
+          await ctx.runMutation(internal.vbmsClaim.clearPendingWithoutRestore, { address });
+          return; // Don't throw - just silently block
+        }
+      } catch (e) {
+        // On-chain check failed - be conservative, don't auto-restore
+        // User can use recoverFailedConversion which has mandatory on-chain check
+        console.error(`🚨 [SECURITY] On-chain check failed for ${address}, skipping auto-restore. User can try manual recovery.`);
+        return;
+      }
+    }
+
+    // 🔒 Check daily recovery limit (max 3 per day for auto-restores too)
+    const today = new Date().toISOString().slice(0, 10);
+    if (recoveryInfo.lastRecoveryDay === today && (recoveryInfo.dailyRecoveryCount || 0) >= 3) {
+      console.error(`🚨 [SECURITY] Daily recovery limit reached for ${address} - skipping auto-restore`);
+      // Keep coins locked - they can try again tomorrow via recoverFailedConversion
+      return;
+    }
+
+    // Safe to restore
+    await ctx.runMutation(internal.vbmsClaim.executeAutoRestore, {
+      address,
+      amount,
+      today,
+      currentRecoveryCount: recoveryInfo.dailyRecoveryCount || 0,
+    });
+
+    console.log(`🔄 [AUTO-RESTORE] ${address} - Restored ${amount} coins (on-chain verified)`);
+  },
+});
+
+// Internal mutation to execute the auto-restore after verification
+export const executeAutoRestore = internalMutation({
+  args: {
+    address: v.string(),
+    amount: v.number(),
+    today: v.string(),
+    currentRecoveryCount: v.number(),
+  },
+  handler: async (ctx, { address, amount, today, currentRecoveryCount }) => {
     const profile = await getProfile(ctx, address);
 
-    // Restore coins and clear pending (including nonce)
     await ctx.db.patch(profile._id, {
       coins: (profile.coins || 0) + amount,
       pendingConversion: 0,
       pendingConversionTimestamp: undefined,
-      pendingNonce: undefined, // 🔒 Clear nonce
+      pendingNonce: undefined,
+      dailyRecoveryCount: currentRecoveryCount + 1,
+      lastRecoveryDay: today,
     });
 
-    // Audit log
     await createAuditLog(
       ctx,
       address,
@@ -1596,10 +1676,8 @@ export const restoreCoinsOnSignFailure = internalMutation({
       (profile.coins || 0) + amount,
       "restoreCoinsOnSignFailure",
       undefined,
-      { reason: "Signature generation failed - coins auto-restored" }
+      { reason: `Signature failed - coins restored (on-chain verified) [${currentRecoveryCount + 1}/3 today]` }
     );
-
-    console.log(`🔄 [AUTO-RESTORE] ${address} - Restored ${amount} coins after signature failure`);
   },
 });
 

@@ -111,6 +111,11 @@ export default defineSchema({
     pendingConversionTimestamp: v.optional(v.number()), // When conversion was initiated
     pendingNonce: v.optional(v.string()), // 🔒 Nonce used for pending conversion (for on-chain verification)
 
+    // 🔒 Anti-exploit: Conversion attempt tracking
+    lastConversionAttempt: v.optional(v.number()), // Last conversion attempt (success or fail)
+    dailyRecoveryCount: v.optional(v.number()), // How many recovers today
+    lastRecoveryDay: v.optional(v.string()), // "2026-01-01" format for daily reset
+
     // Daily Limits for Economy
     dailyLimits: v.optional(v.object({
       pveWins: v.number(), // PvE wins today

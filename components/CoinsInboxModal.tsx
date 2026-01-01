@@ -18,6 +18,8 @@ import Image from "next/image";
 import { useBodyScrollLock, useEscapeKey } from "@/hooks";
 import { Z_INDEX } from "@/lib/z-index";
 import CoinsHistoryModal from "./CoinsHistoryModal";
+import { translateClaimError, isClaimErrorCode, getSupportText, SupportLink } from "@/lib/claimErrorTranslator";
+import { SupportedLanguage } from "@/lib/translations";
 
 const NextImage = Image;
 
@@ -36,7 +38,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const { address: wagmiAddress } = useAccount();
   // Use userAddress prop if provided (Farcaster mobile), otherwise wagmi
   const address = userAddress || wagmiAddress;
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -395,25 +397,41 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
       toast.dismiss("conversion-wait");
 
-      // Parse error message for user-friendly display
-      let userMessage = "Erro ao converter coins";
-      const errMsg = error.message?.toLowerCase() || '';
+      // Check if it's a claim error code that needs translation
+      if (isClaimErrorCode(error.message)) {
+        const { message: translatedMsg, showSupport } = translateClaimError(error.message, lang as SupportedLanguage);
+        if (showSupport) {
+          toast.error(
+            <div className="flex flex-col gap-1">
+              <span>{translatedMsg}</span>
+              <span className="text-sm opacity-80">{getSupportText(lang as SupportedLanguage)} <SupportLink /></span>
+            </div>,
+            { duration: 10000 }
+          );
+        } else {
+          toast.error(translatedMsg);
+        }
+      } else {
+        // Parse error message for user-friendly display (legacy handling)
+        let userMessage = "Erro ao converter coins";
+        const errMsg = error.message?.toLowerCase() || '';
 
-      if (errMsg.includes('daily') || errMsg.includes('limit')) {
-        userMessage = "Limite diário excedido no contrato. Aguarde o reset.";
-      } else if (errMsg.includes('insufficient') || errMsg.includes('balance')) {
-        userMessage = "Saldo insuficiente no pool do contrato.";
-      } else if (errMsg.includes('signature') || errMsg.includes('sign')) {
-        userMessage = "Assinatura cancelada ou inválida.";
-      } else if (errMsg.includes('rejected') || errMsg.includes('denied') || errMsg.includes('user denied') || errMsg.includes('user rejected')) {
-        userMessage = "Transação cancelada pelo usuário.";
-      } else if (errMsg.includes('nonce')) {
-        userMessage = "Nonce já usado. Tente novamente.";
-      } else if (error.message) {
-        userMessage = error.message;
+        if (errMsg.includes('daily') || errMsg.includes('limit')) {
+          userMessage = "Limite diário excedido no contrato. Aguarde o reset.";
+        } else if (errMsg.includes('insufficient') || errMsg.includes('balance')) {
+          userMessage = "Saldo insuficiente no pool do contrato.";
+        } else if (errMsg.includes('signature') || errMsg.includes('sign')) {
+          userMessage = "Assinatura cancelada ou inválida.";
+        } else if (errMsg.includes('rejected') || errMsg.includes('denied') || errMsg.includes('user denied') || errMsg.includes('user rejected')) {
+          userMessage = "Transação cancelada pelo usuário.";
+        } else if (errMsg.includes('nonce')) {
+          userMessage = "Nonce já usado. Tente novamente.";
+        } else if (error.message) {
+          userMessage = error.message;
+        }
+
+        toast.error(userMessage);
       }
-
-      toast.error(userMessage);
 
       // 🔄 Set pending conversion state for recovery UI
       setPendingConversion({ amount: selectedAmount, timestamp: Date.now() });
@@ -447,16 +465,42 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       }, 1500);
     } catch (error: any) {
       console.error('[CoinsInboxModal] Error recovering TESTVBMS:', error);
-      const errMsg = error.message?.toLowerCase() || '';
-      if (errMsg.includes('wait') || errMsg.includes('seconds')) {
-        // Show remaining time
-        toast.info(error.message);
-      } else if (errMsg.includes('blockchain') || errMsg.includes('already claimed')) {
-        // Conversion was successful on-chain, just clear pending
-        toast.success("✅ Sua conversão já foi processada com sucesso no blockchain!");
-        setPendingConversion(null);
+
+      // Check if it's a claim error code that needs translation
+      if (isClaimErrorCode(error.message)) {
+        const { message: translatedMsg, showSupport } = translateClaimError(error.message, lang as SupportedLanguage);
+
+        // Special handling for "already claimed" - it's actually success
+        if (error.message.includes('BLOCKED_ALREADY_CLAIMED')) {
+          toast.success("✅ Sua conversão já foi processada com sucesso no blockchain!");
+          setPendingConversion(null);
+        } else if (showSupport) {
+          toast.error(
+            <div className="flex flex-col gap-1">
+              <span>{translatedMsg}</span>
+              <span className="text-sm opacity-80">{getSupportText(lang as SupportedLanguage)} <SupportLink /></span>
+            </div>,
+            { duration: 10000 }
+          );
+        } else {
+          // For cooldown/wait errors, use info instead of error
+          if (error.message.includes('WAIT_RECOVER') || error.message.includes('COOLDOWN')) {
+            toast.info(translatedMsg);
+          } else {
+            toast.error(translatedMsg);
+          }
+        }
       } else {
-        toast.error(error.message || "Erro ao recuperar coins");
+        // Legacy error handling
+        const errMsg = error.message?.toLowerCase() || '';
+        if (errMsg.includes('wait') || errMsg.includes('seconds')) {
+          toast.info(error.message);
+        } else if (errMsg.includes('blockchain') || errMsg.includes('already claimed')) {
+          toast.success("✅ Sua conversão já foi processada com sucesso no blockchain!");
+          setPendingConversion(null);
+        } else {
+          toast.error(error.message || "Erro ao recuperar coins");
+        }
       }
     } finally {
       setIsProcessing(false);
