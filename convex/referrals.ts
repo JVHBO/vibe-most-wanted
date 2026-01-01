@@ -392,10 +392,23 @@ export const claimReferralReward = mutation({
     // Apply the reward based on type
     if (tierReward.type === "vbms") {
       // Add VBMS to player's coins
-      const newCoins = (profile.coins || 0) + tierReward.amount;
+      const currentCoins = profile.coins || 0;
+      const newCoins = currentCoins + tierReward.amount;
       await ctx.db.patch(profile._id, {
         coins: newCoins,
         lifetimeEarned: (profile.lifetimeEarned || 0) + tierReward.amount,
+      });
+
+      // 📊 Log transaction
+      await ctx.db.insert("coinTransactions", {
+        address: normalizedAddress,
+        amount: tierReward.amount,
+        type: "earn",
+        source: "referral_reward",
+        description: `Referral tier ${tier} reward`,
+        timestamp: now,
+        balanceBefore: currentCoins,
+        balanceAfter: newCoins,
       });
 
       // Update stats
@@ -464,10 +477,23 @@ export const claimReferralReward = mutation({
 
     } else if (tierReward.type === "badge") {
       // Give badge + VBMS
-      const newCoins = (profile.coins || 0) + tierReward.amount;
+      const currentCoins2 = profile.coins || 0;
+      const newCoins = currentCoins2 + tierReward.amount;
       await ctx.db.patch(profile._id, {
         coins: newCoins,
         lifetimeEarned: (profile.lifetimeEarned || 0) + tierReward.amount,
+      });
+
+      // 📊 Log transaction
+      await ctx.db.insert("coinTransactions", {
+        address: normalizedAddress,
+        amount: tierReward.amount,
+        type: "earn",
+        source: "referral_badge_reward",
+        description: `Referral tier ${tier} badge reward`,
+        timestamp: now,
+        balanceBefore: currentCoins2,
+        balanceAfter: newCoins,
       });
 
       // Update stats with badge

@@ -439,6 +439,19 @@ export const claimAllCoinsInboxForAll = internalMutation({
         });
         // 🔒 AUDIT LOG
         await createAuditLog(ctx, profile.address, "earn", coinsInbox, balanceBefore, balanceAfter, "admin:claimAllCoinsInboxForAll");
+
+        // 📊 Log transaction
+        await ctx.db.insert("coinTransactions", {
+          address: profile.address.toLowerCase(),
+          amount: coinsInbox,
+          type: "earn",
+          source: "admin_inbox_claim",
+          description: "Admin batch inbox claim",
+          timestamp: Date.now(),
+          balanceBefore,
+          balanceAfter,
+        });
+
         totalMoved += coinsInbox;
         updates.push({ address: profile.address, moved: coinsInbox });
       }
@@ -479,6 +492,19 @@ export const moveInboxToCoinsForAll = internalMutation({
         });
         // 🔒 AUDIT LOG
         await createAuditLog(ctx, profile.address, "earn", inbox, balanceBefore2, balanceAfter2, "admin:moveInboxToCoinsForAll");
+
+        // 📊 Log transaction
+        await ctx.db.insert("coinTransactions", {
+          address: profile.address.toLowerCase(),
+          amount: inbox,
+          type: "earn",
+          source: "admin_inbox_move",
+          description: "Admin moved inbox to coins",
+          timestamp: Date.now(),
+          balanceBefore: balanceBefore2,
+          balanceAfter: balanceAfter2,
+        });
+
         totalMoved += inbox;
         updates.push({ address: profile.address, moved: inbox });
       }
