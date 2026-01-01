@@ -200,3 +200,75 @@ export const sendPvPRewardToInbox = internalMutation({
     };
   },
 });
+
+/**
+ * CLAIM PVP WIN REWARD (PUBLIC MUTATION)
+ * Called by frontend when player wins a PvP battle
+ * Validates that player has a valid unused entry fee before giving reward
+ */
+export const claimPvPWinReward = mutation({
+  args: {
+    address: v.string(),
+    roomCode: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { address, roomCode } = args;
+    const normalizedAddress = address.toLowerCase();
+
+    // Check if player has a valid unused entry fee
+    const entryFee = await ctx.db
+      .query("pvpEntryFees")
+      .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+      .filter((q: any) => q.eq(q.field("used"), false))
+      .first();
+
+    if (!entryFee) {
+      return {
+        success: false,
+        error: "No valid entry fee found",
+      };
+    }
+
+    // Mark entry fee as used
+    await ctx.db.patch(entryFee._id, {
+      used: true,
+      usedAt: Date.now(),
+    });
+
+    // Fixed reward for PvP win
+    const REWARD_AMOUNT = 40;
+
+    // Get profile and add to coins
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (profile) {
+      const currentBalance = profile.coins || 0;
+      await ctx.db.patch(profile._id, {
+        coins: currentBalance + REWARD_AMOUNT,
+        lifetimeEarned: (profile.lifetimeEarned || 0) + REWARD_AMOUNT,
+      });
+
+      // Log transaction
+      await ctx.db.insert("coinTransactions", {
+        address: normalizedAddress,
+        amount: REWARD_AMOUNT,
+        type: "earn",
+        source: "pvp_win",
+        description: "PvP win reward",
+        timestamp: Date.now(),
+        balanceBefore: currentBalance,
+        balanceAfter: currentBalance + REWARD_AMOUNT,
+      });
+    }
+
+    console.log(`🏆 PvP reward claimed: ${REWARD_AMOUNT} TESTVBMS for ${normalizedAddress}`);
+
+    return {
+      success: true,
+      rewardAmount: REWARD_AMOUNT,
+    };
+  },
+});
