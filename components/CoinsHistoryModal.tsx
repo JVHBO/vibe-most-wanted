@@ -36,7 +36,10 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
     if (source === 'mission') return '🎯';
     if (source === 'daily_quest' || source === 'weekly_quest') return '📜';
     if (source === 'shame') return '🔔';
-    if (source === 'boss') return '👹';
+    if (source === 'boss' || source === 'raid_boss_reward') return '👹';
+    if (source?.startsWith('buy_pack')) return '🎴';
+    if (source === 'poker_cpu') return '🃏';
+    if (source === 'pvp_entry') return '🎲';
     if (source === 'leaderboard') return '🏆';
     if (source === 'blockchain') return '⛓️';
 
@@ -92,6 +95,13 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
       'leaderboard': 'Leaderboard',
       'blockchain': 'Blockchain',
       'inbox': 'Inbox',
+      'raid_boss_reward': 'Raid Boss',
+      'buy_pack_basic': 'Shop',
+      'buy_pack_boosted': 'Shop',
+      'buy_pack_premium': 'Shop',
+      'buy_pack_elite': 'Shop',
+      'poker_cpu': 'Poker',
+      'pvp_entry': 'PvP',
     };
     return labels[source] || source;
   };
@@ -128,7 +138,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
   const stats = transactions ? {
     totalEarned: transactions.filter((t: any) => t.type === 'earn' || t.type === 'bonus').reduce((sum: number, t: any) => sum + t.amount, 0),
     totalConverted: transactions.filter((t: any) => t.type === 'convert').reduce((sum: number, t: any) => sum + t.amount, 0),
-    totalSpent: transactions.filter((t: any) => t.type === 'spend').reduce((sum: number, t: any) => sum + t.amount, 0),
+    totalSpent: transactions.filter((t: any) => t.type === 'spend').reduce((sum: number, t: any) => sum + Math.abs(t.amount), 0),
   } : null;
 
   return createPortal(
@@ -230,7 +240,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
                     <div className="text-right flex-shrink-0">
                       <p className={`text-sm font-bold ${getTypeColor(tx.type)}`}>
                         {tx.type === 'earn' || tx.type === 'bonus' || tx.type === 'refund' ? '+' : tx.type === 'convert' ? '→' : '-'}
-                        {tx.amount.toLocaleString()}
+                        {Math.abs(tx.amount).toLocaleString()}
                       </p>
                     </div>
                   </div>

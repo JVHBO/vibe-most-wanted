@@ -443,6 +443,18 @@ export const convertCreditsToCoins = mutation({
       lastUpdated: Date.now(),
     });
 
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: address.toLowerCase(),
+      amount,
+      type: "earn",
+      source: "betting_convert",
+      description: "Converted betting credits to coins",
+      timestamp: Date.now(),
+      balanceBefore: profile.coins || 0,
+      balanceAfter: newBalance,
+    });
+
     // Reset betting credits to 0
     await ctx.db.patch(credits._id, {
       balance: 0,

@@ -29,6 +29,18 @@ export const sendShopAnnouncement = internalMutation({
         lifetimeEarned: (profile.lifetimeEarned || 0) + bonusAmount,
       });
 
+      // 📊 Log transaction
+      await ctx.db.insert("coinTransactions", {
+        address: profile.address.toLowerCase(),
+        amount: bonusAmount,
+        type: "bonus",
+        source: "shop_announcement",
+        description: "Shop announcement bonus",
+        timestamp: Date.now(),
+        balanceBefore: currentBalance,
+        balanceAfter: currentBalance + bonusAmount,
+      });
+
       console.log(`💰 Shop bonus added to balance: ${bonusAmount} TESTVBMS for ${profile.address}. Balance: ${currentBalance} → ${currentBalance + bonusAmount}`);
 
       notificationsSent++;
