@@ -444,6 +444,18 @@ export const claimAllMissions = mutation({
       lifetimeEarned: newLifetimeEarned,
     });
 
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: normalizedAddress,
+      amount: totalReward,
+      type: "earn",
+      source: "mission_batch",
+      description: `Claimed ${missions.length} missions`,
+      timestamp: Date.now(),
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
+    });
+
     console.log(`💰 Mission rewards added to balance: ${totalReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark all as claimed
