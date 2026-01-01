@@ -1307,6 +1307,17 @@ export const convertTESTVBMSInternal = internalMutation({
       lastConversionAttempt: now, // 🔒 Track attempt time for cooldown (even if fails)
     });
 
+    // 📊 Log pending conversion to transaction history
+    await logTransaction(ctx, {
+      address,
+      type: 'convert',
+      amount: -claimAmount,
+      source: 'pending_conversion',
+      description: `Converting ${claimAmount.toLocaleString()} TESTVBMS → VBMS (pending)`,
+      balanceBefore: testVBMSBalance,
+      balanceAfter: remainingBalance,
+    });
+
     // 🔒 AUDIT LOG - Track TESTVBMS → VBMS conversion initiation
     await createAuditLog(
       ctx,
@@ -1545,6 +1556,17 @@ export const executeRecovery = internalMutation({
       // 🔒 Track daily recovery count
       dailyRecoveryCount: currentRecoveryCount + 1,
       lastRecoveryDay: today,
+    });
+
+    // 📊 Log recovery to transaction history
+    await logTransaction(ctx, {
+      address,
+      type: 'refund',
+      amount: amount,
+      source: 'conversion_recovery',
+      description: `Recovered ${amount.toLocaleString()} TESTVBMS from failed conversion`,
+      balanceBefore: currentCoins,
+      balanceAfter: newBalance,
     });
 
     await createAuditLog(
