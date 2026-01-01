@@ -841,6 +841,18 @@ export const distributeWeeklyRewards = internalMutation({
           lifetimeEarned: (player.lifetimeEarned || 0) + reward,
         });
 
+        // 📊 Log transaction
+        await ctx.db.insert("coinTransactions", {
+          address: player.address.toLowerCase(),
+          amount: reward,
+          type: "earn",
+          source: "weekly_quest",
+          description: `Weekly quest reward (rank ${rank})`,
+          timestamp: Date.now(),
+          balanceBefore: player.coins || 0,
+          balanceAfter: (player.coins || 0) + reward,
+        });
+
         console.log(`💰 Weekly leaderboard reward added to balance: ${reward} TESTVBMS for ${player.address}. Balance: ${currentBalance} → ${currentBalance + reward}`);
 
         rewards.push({

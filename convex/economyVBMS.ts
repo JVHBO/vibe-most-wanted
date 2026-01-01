@@ -100,6 +100,20 @@ export const awardPvPVBMS = mutation({
       lifetimeEarned: (profile.lifetimeEarned || 0) + Math.max(0, reward),
     });
 
+    // 📊 Log transaction
+    if (reward > 0) {
+      await ctx.db.insert("coinTransactions", {
+        address: address.toLowerCase(),
+        amount: reward,
+        type: "earn",
+        source: "pvp_vbms",
+        description: `PvP VBMS reward (${won ? 'win' : 'draw'})`,
+        timestamp: Date.now(),
+        balanceBefore: profile.coinsInbox || 0,
+        balanceAfter: newInbox,
+      });
+    }
+
     console.log(`${won ? '🏆' : '💀'} ${address} ${won ? 'won' : 'lost'} PvP: ${reward > 0 ? '+' : ''}${reward} VBMS. Inbox: ${currentInbox} → ${newInbox}`);
 
     return {

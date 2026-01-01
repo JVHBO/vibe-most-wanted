@@ -259,7 +259,8 @@ export const restoreRewardsOnFailure = internalMutation({
  * Public mutation to restore rewards when TX is cancelled/fails
  * Called from frontend when user cancels or TX fails
  */
-export const restoreClaimOnTxFailure = mutation({
+// 🔒 SECURITY FIX (2026-01-01): Changed from mutation to internalMutation
+export const restoreClaimOnTxFailure = internalMutation({
   args: {
     fid: v.number(),
     amount: v.number(),

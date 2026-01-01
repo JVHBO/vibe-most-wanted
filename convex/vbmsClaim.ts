@@ -348,6 +348,18 @@ export const sendToInbox = mutation({
       lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
     });
 
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: address.toLowerCase(),
+      amount,
+      type: "earn",
+      source: "pve_match",
+      description: "PvE match reward",
+      timestamp: Date.now(),
+      balanceBefore: profile.coins || 0,
+      balanceAfter: newBalance,
+    });
+
     // Mark match as claimed
     await ctx.db.patch(matchId, {
       rewardsClaimed: true,
@@ -691,7 +703,8 @@ export const getFullTransactionHistory = query({
 
 // ========== MUTATION: Send Achievement to Inbox ==========
 
-export const sendAchievementToInbox = mutation({
+// 🔒 SECURITY FIX (2026-01-01): Changed from mutation to internalMutation
+export const sendAchievementToInbox = internalMutation({
   args: {
     address: v.string(),
     achievementId: v.string(),
@@ -706,6 +719,18 @@ export const sendAchievementToInbox = mutation({
     await ctx.db.patch(profile._id, {
       coins: newBalance,
       lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
+    });
+
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: address.toLowerCase(),
+      amount,
+      type: "earn",
+      source: "achievement",
+      description: `Achievement: ${achievementId}`,
+      timestamp: Date.now(),
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
     });
 
     // Track analytics
@@ -830,6 +855,18 @@ export const claimInboxAsTESTVBMS = mutation({
       lifetimeEarned: (profile.lifetimeEarned || 0) + inboxAmount,
     });
 
+    // 📊 Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: address.toLowerCase(),
+      amount: inboxAmount,
+      type: "earn",
+      source: "inbox_claim",
+      description: "Claimed inbox as TESTVBMS",
+      timestamp: Date.now(),
+      balanceBefore: currentCoins,
+      balanceAfter: newCoins,
+    });
+
     return {
       success: true,
       amount: inboxAmount,
@@ -844,7 +881,8 @@ export const claimInboxAsTESTVBMS = mutation({
 /**
  * Send PvE reward to inbox (CPU poker victories) - pays debt first if any
  */
-export const sendPveRewardToInbox = mutation({
+// 🔒 SECURITY FIX (2026-01-01): Changed from mutation to internalMutation
+export const sendPveRewardToInbox = internalMutation({
   args: {
     address: v.string(),
     amount: v.number(),
@@ -869,6 +907,17 @@ export const sendPveRewardToInbox = mutation({
     });
 
     console.log(`💰 ${address} received ${amount} TESTVBMS from PvE victory (difficulty: ${difficulty || 'N/A'}). Balance: ${currentBalance} → ${newBalance}`);
+    // 📊 Log transaction for history
+    await ctx.db.insert("coinTransactions", {
+      address: address.toLowerCase(),
+      type: "earn",
+      amount,
+      source: "pve",
+      description: `PvE victory (${difficulty || 'unknown'})`,
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
+      timestamp: Date.now(),
+    });
 
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
@@ -895,7 +944,8 @@ export const sendPveRewardToInbox = mutation({
 /**
  * Send PvP reward to inbox (poker battles PvP) - pays debt first if any
  */
-export const sendPvpRewardToInbox = mutation({
+// 🔒 SECURITY FIX (2026-01-01): Changed from mutation to internalMutation
+export const sendPvpRewardToInbox = internalMutation({
   args: {
     address: v.string(),
     amount: v.number(),
@@ -918,6 +968,17 @@ export const sendPvpRewardToInbox = mutation({
       });
 
       console.log(`💰 ${address} received ${amount} TESTVBMS from PvP victory. Balance: ${currentBalance} → ${newBalance}`);
+    // 📊 Log transaction for history
+    await ctx.db.insert("coinTransactions", {
+      address: address.toLowerCase(),
+      type: "earn",
+      amount,
+      source: "pvp",
+      description: "PvP victory reward",
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
+      timestamp: Date.now(),
+    });
 
       // Track analytics
       console.log(`[sendPvpRewardToInbox] Inserting analytics...`);
