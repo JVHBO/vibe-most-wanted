@@ -1444,10 +1444,10 @@ export const recoverFailedConversion = action({
       throw new Error("[CLAIM_DAILY_LIMIT]");
     }
 
-    // Check time constraint (2 minutes)
-    const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
-    if (profileInfo.pendingTimestamp > twoMinutesAgo) {
-      const waitSeconds = Math.ceil((profileInfo.pendingTimestamp - twoMinutesAgo) / 1000);
+    // Check time constraint (30 seconds)
+    const thirtySecondsAgo = Date.now() - 30 * 1000;
+    if (profileInfo.pendingTimestamp > thirtySecondsAgo) {
+      const waitSeconds = Math.ceil((profileInfo.pendingTimestamp - thirtySecondsAgo) / 1000);
       throw new Error(`[CLAIM_WAIT_RECOVER]${waitSeconds}`);
     }
 
@@ -1511,9 +1511,9 @@ export const getPendingConversionInfo = action({
       return { amount: 0, timestamp: 0, canRecover: false };
     }
 
-    // Can recover after 2 minutes
-    const twoMinutesAgo = Date.now() - 2 * 60 * 1000;
-    const canRecover = info.pendingTimestamp <= twoMinutesAgo;
+    // Can recover after 30 seconds
+    const thirtySecondsAgo = Date.now() - 30 * 1000;
+    const canRecover = info.pendingTimestamp <= thirtySecondsAgo;
 
     return {
       amount: info.pendingAmount,
