@@ -461,45 +461,53 @@ export const getFlaggedAccounts = query({
       let riskScore = 0;
       const flags: string[] = [];
 
-      const claims = logs.filter(l => l.type === "convert" || l.type === "claim");
+      // Only count ACTUAL on-chain claims, not conversion attempts
+      const actualClaims = logs.filter(l => l.type === "claim" && l.source === "recordTESTVBMSConversion");
       const earns = logs.filter(l => l.type === "earn");
-      const totalClaimed = claims.reduce((sum, l) => sum + l.amount, 0);
+      const totalClaimed = actualClaims.reduce((sum, l) => sum + l.amount, 0);
       const totalEarned = earns.reduce((sum, l) => sum + l.amount, 0);
 
-      // Risk factors
-      if (claims.length > 50) {
-        riskScore += 30;
-        flags.push(`High claim count: ${claims.length}`);
+      // Detect exploit patterns
+      const failedConversions = logs.filter(l => l.source === "restoreCoinsOnSignFailure");
+      const doubleSpendBlocked = logs.filter(l => l.source === "clearPendingWithoutRestore");
+
+      // 🚨 CRITICAL: Double-spend attempts are definitive exploit evidence
+      if (doubleSpendBlocked.length > 0) {
+        riskScore += 100;
+        flags.push(`🚨 DOUBLE-SPEND BLOCKED: ${doubleSpendBlocked.length}x`);
       }
 
-      if (totalClaimed > 1000000) {
+      // Many failed conversions in short time = trying to exploit race condition
+      if (failedConversions.length > 20) {
         riskScore += 40;
-        flags.push(`High total claimed: ${totalClaimed.toLocaleString()}`);
+        flags.push(`Suspicious: ${failedConversions.length} failed conversions`);
       }
 
-      if (logs.length > 200) {
-        riskScore += 20;
-        flags.push(`High transaction count: ${logs.length}`);
-      }
-
-      // Check for burst patterns
+      // Burst pattern: 10+ transactions in less than 1 minute
       const sortedLogs = [...logs].sort((a, b) => a.timestamp - b.timestamp);
       for (let i = 0; i < sortedLogs.length - 10; i++) {
         const timeWindow = sortedLogs[i + 10].timestamp - sortedLogs[i].timestamp;
         if (timeWindow < 60000) {
-          riskScore += 50;
-          flags.push("Burst pattern detected");
+          riskScore += 30;
+          flags.push("Burst pattern: 10+ txs in < 1min");
           break;
         }
       }
 
-      if (riskScore >= 30) {
+      // High claim count (actual on-chain claims, not attempts)
+      if (actualClaims.length > 30) {
+        riskScore += 20;
+        flags.push(`High claim count: ${actualClaims.length}`);
+      }
+
+      // Only flag if there's real evidence of exploit (not just high volume)
+      if (riskScore >= 40) {
         flagged.push({
           address,
           riskScore,
           totalClaimed,
           totalEarned,
-          claimCount: claims.length,
+          claimCount: actualClaims.length,
           transactionCount: logs.length,
           flags,
         });
