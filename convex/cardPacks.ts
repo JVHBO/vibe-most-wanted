@@ -1120,10 +1120,12 @@ export const burnCard = mutation({
       await ctx.db.delete(args.cardId);
     }
 
-    // Add VBMS to player's coins
+    // Add VBMS to player's coins AND update lifetimeEarned
     const currentCoins = profile.coins || 0;
+    const currentLifetimeEarned = profile.lifetimeEarned || 0;
     await ctx.db.patch(profile._id, {
       coins: currentCoins + burnValue,
+      lifetimeEarned: currentLifetimeEarned + burnValue,
     });
 
     // 📊 Log burn transaction for history
@@ -1229,10 +1231,12 @@ export const burnMultipleCards = mutation({
       });
     }
 
-    // Add VBMS to player's coins
+    // Add VBMS to player's coins AND update lifetimeEarned
     const currentCoins = profile.coins || 0;
+    const currentLifetimeEarned = profile.lifetimeEarned || 0;
     await ctx.db.patch(profile._id, {
       coins: currentCoins + totalVBMS,
+      lifetimeEarned: currentLifetimeEarned + totalVBMS,
     });
 
     // 📊 Log burn transaction for history
