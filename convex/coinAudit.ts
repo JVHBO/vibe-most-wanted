@@ -488,12 +488,20 @@ export const getFlaggedAccounts = query({
       if (doubleSpendBlocked.length > 0) {
         riskScore += 100;
         flags.push(`🚨 DOUBLE-SPEND: ${doubleSpendBlocked.length}x`);
+
+        // If they also have high ratio, it's even more suspicious
+        if (ratio > 5 && totalClaimedOnChain > 100000) {
+          riskScore += 50;
+          flags.push(`⚠️ RATIO: ${ratio.toFixed(1)}x`);
+        }
       }
 
-      // 🚨 CRITICAL: Claimed way more than earned (ratio > 5x and claimed > 100k)
-      if (ratio > 5 && totalClaimedOnChain > 100000) {
-        riskScore += 80;
-        flags.push(`⚠️ RATIO: ${ratio.toFixed(1)}x (claimed ${totalClaimedOnChain.toLocaleString()} vs earned ${lifetimeEarned.toLocaleString()})`);
+      // High ratio WITHOUT double-spend = might be legitimate burns
+      // Only flag if ratio is EXTREMELY high (>100x) AND no burn history
+      // Note: We can't verify burn history before today, so be lenient
+      if (doubleSpendBlocked.length === 0 && ratio > 100 && totalClaimedOnChain > 500000) {
+        riskScore += 40;
+        flags.push(`⚠️ Very high ratio: ${ratio.toFixed(1)}x (might be burns)`);
       }
 
       // High claim count in one week
