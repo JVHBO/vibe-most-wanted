@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
       packType,
       quantity,
       txHash,
+      vbmsAmount, // Pass actual VBMS spent for transaction history
     });
 
     console.log(`🎁 Packs minted: ${result.packsReceived}x ${packType}`);

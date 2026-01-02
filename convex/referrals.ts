@@ -11,6 +11,7 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { createAuditLog } from "./coinAudit";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // REFERRAL REWARD TIERS (x10 rewards)
@@ -411,6 +412,19 @@ export const claimReferralReward = mutation({
         balanceAfter: newCoins,
       });
 
+      // 🔒 Security audit log
+      await createAuditLog(
+        ctx,
+        normalizedAddress,
+        "earn",
+        tierReward.amount,
+        currentCoins,
+        newCoins,
+        "referral_reward",
+        `tier_${tier}`,
+        { reason: `Referral tier ${tier} VBMS reward` }
+      );
+
       // Update stats
       await ctx.db.patch(stats._id, {
         claimedTiers: [...stats.claimedTiers, tier],
@@ -495,6 +509,19 @@ export const claimReferralReward = mutation({
         balanceBefore: currentCoins2,
         balanceAfter: newCoins,
       });
+
+      // 🔒 Security audit log
+      await createAuditLog(
+        ctx,
+        normalizedAddress,
+        "earn",
+        tierReward.amount,
+        currentCoins2,
+        newCoins,
+        "referral_badge_reward",
+        `tier_${tier}`,
+        { reason: `Referral tier ${tier} badge + VBMS reward` }
+      );
 
       // Update stats with badge
       await ctx.db.patch(stats._id, {

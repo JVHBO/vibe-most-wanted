@@ -518,6 +518,7 @@ export const buyPackWithVBMS = mutation({
     packType: v.union(v.literal("basic"), v.literal("premium"), v.literal("elite"), v.literal("boosted")),
     quantity: v.number(),
     txHash: v.string(), // Transaction hash for verification
+    vbmsAmount: v.optional(v.number()), // VBMS amount spent (from API)
   },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
@@ -564,12 +565,14 @@ export const buyPackWithVBMS = mutation({
     }
 
     // 📊 Log VBMS purchase to transaction history
+    // Note: vbmsAmount is the actual VBMS spent on-chain, passed from API
+    const vbmsSpent = args.vbmsAmount || (packInfo.price * args.quantity); // fallback to calculated
     await ctx.db.insert("coinTransactions", {
       address: address,
-      amount: 0, // VBMS spent on-chain, not TESTVBMS
+      amount: vbmsSpent,
       type: "spend",
       source: `buy_pack_${actualPackType}_vbms`,
-      description: `Bought ${args.quantity}x ${actualPackType} pack with VBMS`,
+      description: `Bought ${args.quantity}x ${actualPackType} pack with ${vbmsSpent.toLocaleString()} VBMS`,
       timestamp: Date.now(),
       balanceBefore: 0,
       balanceAfter: 0,

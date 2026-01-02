@@ -1187,6 +1187,19 @@ export const claimRaidRewards = mutation({
       balanceAfter: (profile.coins || 0) + totalReward,
     });
 
+    // 🔒 Security audit log
+    await createAuditLog(
+      ctx,
+      normalizedAddress,
+      "earn",
+      totalReward,
+      profile.coins || 0,
+      (profile.coins || 0) + totalReward,
+      "raid_boss_reward",
+      `bosses_${unclaimedContributions.length}`,
+      { reason: `Raid Boss rewards for ${unclaimedContributions.length} boss kills` }
+    );
+
     console.log("Claimed " + totalReward + " coins for " + normalizedAddress);
 
     return {

@@ -162,8 +162,6 @@ export function PokerBattleTable({
 
   // PvE and PvP claim mutations - using secure sendToInbox that validates matchId
   const sendToInbox = useMutation(api.vbmsClaim.sendToInbox);
-  const claimPveRewardNow = useAction(api.vbmsClaim.claimPveRewardNow);
-  const recordImmediateClaim = useMutation(api.vbmsClaim.recordImmediateClaim);
 
   // VBMS Battle finalization hook
   const { finishBattle: finishVBMSBattle, isPending: isFinishingVBMS, isSuccess: vbmsFinished } = useFinishVBMSBattle();

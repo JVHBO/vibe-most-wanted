@@ -205,113 +205,6 @@ export const checkNonceUsedOnChain = internalAction({
   },
 });
 
-// ========== ACTION: Claim Battle Rewards Now (Immediate) ==========
-
-export const claimBattleRewardsNow = action({
-  args: {
-    address: v.string(),
-    matchId: v.id("matches"),
-  },
-  handler: async (ctx, { address, matchId }): Promise<{
-    amount: number;
-    baseAmount: number;
-    bonus: number;
-    bonusReasons: string[];
-    nonce: string;
-    signature: string;
-    message: string;
-  }> => {
-    // Get profile and match data, calculate bonus via internal mutation
-    const result = await ctx.runMutation(internal.vbmsClaim.claimBattleRewardsNowInternal, {
-      address,
-      matchId
-    });
-
-    // Generate signature for blockchain claim
-    const nonce = generateNonce();
-    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
-      address,
-      amount: result.totalAmount,
-      nonce
-    });
-
-    return {
-      amount: result.totalAmount,
-      baseAmount: result.baseAmount,
-      bonus: result.bonus,
-      bonusReasons: result.bonusReasons,
-      nonce,
-      signature,
-      message: `Claim ${result.totalAmount} VBMS`,
-    };
-  },
-});
-
-export const claimBattleRewardsNowInternal = internalMutation({
-  args: {
-    address: v.string(),
-    matchId: v.id("matches"),
-  },
-  handler: async (ctx, { address, matchId }): Promise<{
-    totalAmount: number;
-    baseAmount: number;
-    bonus: number;
-    bonusReasons: string[];
-  }> => {
-    const profile = await getProfile(ctx, address);
-
-    // Get match data
-    const match = await ctx.db.get(matchId);
-    if (!match) {
-      throw new Error("Match not found");
-    }
-
-    // Verify match belongs to this player
-    if (match.playerAddress.toLowerCase() !== address.toLowerCase()) {
-      throw new Error("Unauthorized: Match does not belong to this player");
-    }
-
-    // Check if rewards already claimed
-    if (match.rewardsClaimed) {
-      throw new Error("Rewards already claimed for this match");
-    }
-
-    const amount = match.coinsEarned || 0;
-
-    if (amount < 100) {
-      throw new Error("Minimum claim amount is 100 VBMS");
-    }
-
-    // Calculate bonus
-    const inboxAmount = profile.coinsInbox || 0;
-    const bonusData = calculateClaimBonus(profile, amount, inboxAmount);
-
-    // Mark match as claimed (will be finalized after blockchain confirmation)
-    await ctx.db.patch(matchId, {
-      rewardsClaimed: true,
-      claimedAt: Date.now(),
-      claimType: "immediate",
-    });
-
-    // Track analytics
-    await ctx.db.insert("claimAnalytics", {
-      playerAddress: address.toLowerCase(),
-      choice: "immediate",
-      amount,
-      inboxTotal: inboxAmount,
-      bonusAvailable: bonusData.bonus > 0,
-      timestamp: Date.now(),
-    });
-
-    return {
-      totalAmount: bonusData.totalAmount,
-      baseAmount: bonusData.baseAmount,
-      bonus: bonusData.bonus,
-      bonusReasons: bonusData.bonusReasons,
-    };
-  },
-});
-
 // ========== MUTATION: Send to Inbox (Deferred) ==========
 
 export const sendToInbox = mutation({
@@ -360,6 +253,19 @@ export const sendToInbox = mutation({
       balanceAfter: newBalance,
     });
 
+    // 🔒 Security audit log
+    await createAuditLog(
+      ctx,
+      address,
+      "earn",
+      amount,
+      profile.coins || 0,
+      newBalance,
+      "sendToInbox",
+      matchId,
+      { reason: "PvE match reward added to balance" }
+    );
+
     // Mark match as claimed
     await ctx.db.patch(matchId, {
       rewardsClaimed: true,
@@ -370,7 +276,7 @@ export const sendToInbox = mutation({
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
       playerAddress: address.toLowerCase(),
-      choice: "immediate",
+      choice: "inbox",
       amount,
       inboxTotal: newBalance,
       bonusAvailable: false,
@@ -493,43 +399,6 @@ export const recordInboxClaim = mutation({
   },
 });
 
-// ========== MUTATION: Record Immediate Claim (After Blockchain Confirmation) ==========
-
-export const recordImmediateClaim = mutation({
-  args: {
-    address: v.string(),
-    amount: v.number(),
-    bonus: v.number(),
-    bonusReasons: v.array(v.string()),
-    txHash: v.string(),
-  },
-  handler: async (ctx, { address, amount, bonus, bonusReasons, txHash }) => {
-    const profile = await getProfile(ctx, address);
-
-    // Update claimed tokens and timestamp
-    await ctx.db.patch(profile._id, {
-      claimedTokens: (profile.claimedTokens || 0) + amount,
-      lastClaimTimestamp: Date.now(),
-    });
-
-    // Save to claim history
-    await ctx.db.insert("claimHistory", {
-      playerAddress: address.toLowerCase(),
-      amount,
-      bonus,
-      bonusReasons,
-      txHash,
-      timestamp: Date.now(),
-      type: "immediate",
-    });
-
-    return {
-      success: true,
-      newClaimedTotal: (profile.claimedTokens || 0) + amount,
-    };
-  },
-});
-
 // ========== QUERY: Get Player Economy (with Inbox) ==========
 
 export const getPlayerEconomy = query({
@@ -545,9 +414,14 @@ export const getPlayerEconomy = query({
       return null;
     }
 
+    // Calculate available balance (coins minus any pending conversion)
+    const pendingAmount = profile.pendingConversion || 0;
+    const availableCoins = Math.max(0, (profile.coins || 0) - pendingAmount);
+
     return {
       // Virtual balance (in-app spending) - TESTVBMS
       coins: profile.coins || 0,
+      availableCoins, // Coins available (excluding pending conversion)
       lifetimeEarned: profile.lifetimeEarned || 0,
       lifetimeSpent: profile.lifetimeSpent || 0,
 
@@ -556,6 +430,11 @@ export const getPlayerEconomy = query({
       claimedTokens: profile.claimedTokens || 0,
       poolDebt: profile.poolDebt || 0,
       lastClaimTimestamp: profile.lastClaimTimestamp || 0,
+
+      // Pending conversion info
+      pendingConversion: pendingAmount,
+      pendingConversionTimestamp: profile.pendingConversionTimestamp || null,
+      hasPendingConversion: pendingAmount > 0,
 
       // Calculate claimable
       claimableBalance: Math.max(0, (profile.coinsInbox || 0) - (profile.poolDebt || 0)),
@@ -701,135 +580,6 @@ export const getFullTransactionHistory = query({
   },
 });
 
-// ========== MUTATION: Send Achievement to Inbox ==========
-
-// 🔒 SECURITY FIX (2026-01-01): Changed from mutation to internalMutation
-export const sendAchievementToInbox = internalMutation({
-  args: {
-    address: v.string(),
-    achievementId: v.string(),
-    amount: v.number(),
-  },
-  handler: async (ctx, { address, achievementId, amount }) => {
-    const profile = await getProfile(ctx, address);
-
-    const currentBalance = profile.coins || 0;
-    const newBalance = currentBalance + amount;
-
-    await ctx.db.patch(profile._id, {
-      coins: newBalance,
-      lifetimeEarned: (profile.lifetimeEarned || 0) + amount,
-    });
-
-    // 📊 Log transaction
-    await ctx.db.insert("coinTransactions", {
-      address: address.toLowerCase(),
-      amount,
-      type: "earn",
-      source: "achievement",
-      description: `Achievement: ${achievementId}`,
-      timestamp: Date.now(),
-      balanceBefore: currentBalance,
-      balanceAfter: newBalance,
-    });
-
-    // Track analytics
-    await ctx.db.insert("claimAnalytics", {
-      playerAddress: address.toLowerCase(),
-      choice: "immediate",
-      amount,
-      inboxTotal: newBalance,
-      bonusAvailable: false,
-      timestamp: Date.now(),
-    });
-
-    const message = `💰 ${amount} VBMS added to balance from achievement!`;
-
-    return {
-      newInbox: newBalance,
-      amountAdded: amount,
-      debtPaid: 0,
-      hadDebt: false,
-      message,
-    };
-  },
-});
-
-// ========== DISABLED: Claim Achievement Now (Immediate) ==========
-// TODO: Refactor to use action/internal mutation pattern (mutations cannot call ctx.runAction)
-// Currently not used by frontend
-
-/*
-export const claimAchievementNow = mutation({
-  args: {
-    address: v.string(),
-    achievementId: v.string(),
-    amount: v.number(),
-  },
-  handler: async (ctx, { address, achievementId, amount }) => {
-    const profile = await getProfile(ctx, address);
-
-    // 🔒 SECURITY: Verify achievement hasn't been claimed yet
-    const achievement = await ctx.db
-      .query("achievements")
-      .withIndex("by_player_achievement", (q) =>
-        q.eq("playerAddress", address.toLowerCase()).eq("achievementId", achievementId)
-      )
-      .first();
-
-    if (!achievement) {
-      throw new Error("Achievement not found");
-    }
-
-    if (!achievement.claimedAt) {
-      throw new Error("Achievement reward not claimed yet - call claimAchievementReward first");
-    }
-
-    // Check if blockchain claim already done (prevent double claim)
-    if ((achievement as any).blockchainClaimedAt) {
-      throw new Error("Achievement VBMS already claimed on blockchain");
-    }
-
-    if (amount < 100) {
-      throw new Error("Minimum claim amount is 100 VBMS");
-    }
-
-    // Calculate bonus
-    const inboxAmount = profile.coinsInbox || 0;
-    const bonusData = calculateClaimBonus(profile, amount, inboxAmount);
-
-    // Generate signature for smart contract
-    const nonce = generateNonce();
-    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, { address, amount: bonusData.totalAmount, nonce });
-
-    // 🔒 SECURITY: Mark blockchain claim to prevent reuse
-    await ctx.db.patch(achievement._id, {
-      blockchainClaimedAt: Date.now(),
-    } as any);
-
-    // Track analytics
-    await ctx.db.insert("claimAnalytics", {
-      playerAddress: address.toLowerCase(),
-      choice: "immediate",
-      amount,
-      inboxTotal: inboxAmount,
-      bonusAvailable: bonusData.bonus > 0,
-      timestamp: Date.now(),
-    });
-
-    return {
-      amount: bonusData.totalAmount,
-      baseAmount: bonusData.baseAmount,
-      bonus: bonusData.bonus,
-      bonusReasons: bonusData.bonusReasons,
-      nonce,
-      signature,
-      message: `Claim ${bonusData.totalAmount} VBMS from achievement`,
-    };
-  },
-});
-*/
-
 // ========== MUTATION: Claim Inbox as TESTVBMS (Virtual Coins) ==========
 
 export const claimInboxAsTESTVBMS = mutation({
@@ -866,6 +616,19 @@ export const claimInboxAsTESTVBMS = mutation({
       balanceBefore: currentCoins,
       balanceAfter: newCoins,
     });
+
+    // 🔒 Security audit log
+    await createAuditLog(
+      ctx,
+      address,
+      "earn",
+      inboxAmount,
+      currentCoins,
+      newCoins,
+      "claimInboxAsTESTVBMS",
+      undefined,
+      { reason: "Inbox claimed as TESTVBMS (no blockchain)" }
+    );
 
     return {
       success: true,
@@ -919,10 +682,23 @@ export const sendPveRewardToInbox = internalMutation({
       timestamp: Date.now(),
     });
 
+    // 🔒 Security audit log
+    await createAuditLog(
+      ctx,
+      address,
+      "earn",
+      amount,
+      currentBalance,
+      newBalance,
+      "sendPveRewardToInbox",
+      undefined,
+      { difficulty: difficulty || undefined, reason: "PvE poker victory reward" }
+    );
+
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
       playerAddress: address.toLowerCase(),
-      choice: "immediate",
+      choice: "pve",
       amount,
       inboxTotal: newBalance,
       bonusAvailable: false,
@@ -980,11 +756,24 @@ export const sendPvpRewardToInbox = internalMutation({
       timestamp: Date.now(),
     });
 
+      // 🔒 Security audit log
+      await createAuditLog(
+        ctx,
+        address,
+        "earn",
+        amount,
+        currentBalance,
+        newBalance,
+        "sendPvpRewardToInbox",
+        undefined,
+        { reason: "PvP poker victory reward" }
+      );
+
       // Track analytics
       console.log(`[sendPvpRewardToInbox] Inserting analytics...`);
       await ctx.db.insert("claimAnalytics", {
         playerAddress: address.toLowerCase(),
-        choice: "immediate",
+        choice: "pvp",
         amount,
         inboxTotal: newBalance,
         bonusAvailable: false,
@@ -1006,106 +795,6 @@ export const sendPvpRewardToInbox = internalMutation({
       console.error(`[sendPvpRewardToInbox] Error details:`, error.message, error.stack);
       throw new Error(`Failed to send PvP reward to inbox: ${error.message}`);
     }
-  },
-});
-
-/**
- * Claim PvE reward now (prepare blockchain TX)
- */
-export const claimPveRewardNow = action({
-  args: {
-    address: v.string(),
-    amount: v.number(),
-    difficulty: v.optional(v.union(
-      v.literal("gey"),
-      v.literal("goofy"),
-      v.literal("gooner"),
-      v.literal("gangster"),
-      v.literal("gigachad")
-    )),
-  },
-  handler: async (ctx, { address, amount, difficulty }): Promise<{
-    amount: number;
-    baseAmount: number;
-    bonus: number;
-    bonusReasons: string[];
-    nonce: string;
-    signature: string;
-    message: string;
-  }> => {
-    // Get profile, validate, calculate bonus via internal mutation
-    const result = await ctx.runMutation(internal.vbmsClaim.claimPveRewardNowInternal, {
-      address,
-      amount,
-      difficulty
-    });
-
-    // Generate signature for blockchain claim
-    const nonce = generateNonce();
-    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
-      address,
-      amount: result.totalAmount,
-      nonce
-    });
-
-    return {
-      amount: result.totalAmount,
-      baseAmount: result.baseAmount,
-      bonus: result.bonus,
-      bonusReasons: result.bonusReasons,
-      nonce,
-      signature,
-      message: `Claim ${result.totalAmount} VBMS from PvE victory`,
-    };
-  },
-});
-
-export const claimPveRewardNowInternal = internalMutation({
-  args: {
-    address: v.string(),
-    amount: v.number(),
-    difficulty: v.optional(v.union(
-      v.literal("gey"),
-      v.literal("goofy"),
-      v.literal("gooner"),
-      v.literal("gangster"),
-      v.literal("gigachad")
-    )),
-  },
-  handler: async (ctx, { address, amount, difficulty }): Promise<{
-    totalAmount: number;
-    baseAmount: number;
-    bonus: number;
-    bonusReasons: string[];
-  }> => {
-    const profile = await getProfile(ctx, address);
-
-    if (amount < 100) {
-      throw new Error("Minimum claim amount is 100 VBMS");
-    }
-
-    // Calculate bonus
-    const inboxAmount = profile.coinsInbox || 0;
-    const bonusData = calculateClaimBonus(profile, amount, inboxAmount);
-
-    console.log(`💰 ${address} claiming ${bonusData.totalAmount} VBMS now from PvE victory (difficulty: ${difficulty || 'N/A'}, base: ${amount}, bonus: ${bonusData.bonus})`);
-
-    // Track analytics
-    await ctx.db.insert("claimAnalytics", {
-      playerAddress: address.toLowerCase(),
-      choice: "immediate",
-      amount,
-      inboxTotal: inboxAmount,
-      bonusAvailable: bonusData.bonus > 0,
-      timestamp: Date.now(),
-    });
-
-    return {
-      totalAmount: bonusData.totalAmount,
-      baseAmount: bonusData.baseAmount,
-      bonus: bonusData.bonus,
-      bonusReasons: bonusData.bonusReasons,
-    };
   },
 });
 
@@ -1334,7 +1023,7 @@ export const convertTESTVBMSInternal = internalMutation({
     // Track analytics
     await ctx.db.insert("claimAnalytics", {
       playerAddress: address.toLowerCase(),
-      choice: "immediate",
+      choice: "convert",
       amount: claimAmount,
       inboxTotal: profile.coinsInbox || 0,
       bonusAvailable: false,
@@ -1714,7 +1403,10 @@ export const getClaimBehaviorAnalytics = query({
 
     const immediate = analytics.filter((a) => a.choice === "immediate").length;
     const inbox = analytics.filter((a) => a.choice === "inbox").length;
-    const total = immediate + inbox;
+    const pve = analytics.filter((a) => a.choice === "pve").length;
+    const pvp = analytics.filter((a) => a.choice === "pvp").length;
+    const convert = analytics.filter((a) => a.choice === "convert").length;
+    const total = analytics.length;
 
     const avgClaimAmount =
       analytics.reduce((sum, a) => sum + a.amount, 0) / total || 0;
@@ -1726,6 +1418,9 @@ export const getClaimBehaviorAnalytics = query({
       avgClaimAmount,
       immediate,
       inbox,
+      pve,
+      pvp,
+      convert,
     };
   },
 });

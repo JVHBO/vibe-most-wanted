@@ -108,6 +108,106 @@ app: v.optional(v.string()),
 - 106 exploiters currently banned
 - Security report: `SECURITY_INCIDENT_REPORT.md`
 
+### Coin Audit System (Jan 2026)
+
+All mutations that give coins MUST have audit logs. This enables exploit detection.
+
+#### Tables for Tracking
+| Table | Purpose |
+|-------|---------|
+| `coinTransactions` | User-facing transaction history |
+| `coinAuditLog` | Security audit trail (internal) |
+| `claimAnalytics` | Tracks claim behavior patterns |
+
+#### Mutations with Audit Logs
+Every mutation that adds coins must call `createAuditLog()` from `coinAudit.ts`:
+
+```typescript
+import { createAuditLog } from "./coinAudit";
+
+// After updating coins:
+await createAuditLog(
+  ctx,
+  playerAddress,
+  "earn",           // type: earn | spend | convert | claim | recover
+  amount,
+  balanceBefore,
+  balanceAfter,
+  "source_name",    // e.g., "pve_reward", "referral_reward"
+  sourceId,         // optional: specific identifier
+  { reason: "..." } // optional: metadata
+);
+```
+
+#### Covered Sources (as of Jan 2026)
+- `pve_reward` - PvE battle wins (economy.ts)
+- `pvp_reward` - PvP battle wins (economy.ts)
+- `attack_win` - Attack mode wins (economy.ts)
+- `daily_share` - Daily share bonus (economy.ts)
+- `referral_reward` - Referral tier claims (referrals.ts)
+- `referral_badge_reward` - Referral badge (tier 100) (referrals.ts)
+- `raid_boss_reward` - Raid boss rewards (raidBoss.ts)
+- `inbox_claim` - Inbox to balance (vbmsClaim.ts)
+- `pve_inbox` - PvE rewards to inbox (vbmsClaim.ts)
+- `pvp_inbox` - PvP rewards to inbox (vbmsClaim.ts)
+
+### Dead Code Cleanup (Jan 2026)
+
+Removed ~400 lines of dead code from `vbmsClaim.ts`:
+- `claimBattleRewardsNow` / `claimBattleRewardsNowInternal` - never used
+- `recordImmediateClaim` - never used
+- `claimPveRewardNow` / `claimPveRewardNowInternal` - never used
+- `sendAchievementToInbox` / `claimAchievementNow` - achievements removed
+
+**Lesson**: Frontend doesn't have "immediate claim" - all rewards go to inbox first.
+
+### Naming Gotcha: `sendToInbox`
+
+The function `sendToInbox` in `vbmsClaim.ts` is **misleadingly named**:
+- It does NOT send to `profile.coinsInbox`
+- It sends directly to `profile.coins` (balance)
+- Renaming is risky due to frontend dependencies
+
+**Actual flow**:
+1. `sendPveRewardToInbox` / `sendPvpRewardToInbox` → adds to `profile.coinsInbox`
+2. `claimInboxAsTESTVBMS` → moves from `coinsInbox` to `coins`
+3. `sendToInbox` → adds directly to `coins` (used for PvE/PvP immediate rewards)
+
+### Claim Analytics Tracking (Jan 2026)
+
+The `claimAnalytics` table tracks user behavior. Valid choices:
+- `inbox` - Claimed from inbox
+- `pve` - PvE reward sent to inbox
+- `pvp` - PvP reward sent to inbox
+- `convert` - TESTVBMS → VBMS conversion
+
+**Note**: `immediate` was removed - it was never used by frontend.
+
+Schema in `schema.ts`:
+```typescript
+choice: v.union(
+  v.literal("immediate"), // legacy, kept for old data
+  v.literal("inbox"),
+  v.literal("pve"),
+  v.literal("pvp"),
+  v.literal("convert")
+),
+```
+
+### Player Economy Query
+
+`getPlayerEconomy` now returns pending conversion info:
+```typescript
+{
+  coins: number,              // Total balance
+  availableCoins: number,     // coins - pendingConversion
+  pendingConversion: number,  // Amount locked for conversion
+  pendingConversionTimestamp: number | null,
+  hasPendingConversion: boolean,
+  // ... other fields
+}
+```
+
 ## VibeFID Miniapp
 
 **VibeFID** is a standalone miniapp extracted from vibe-most-wanted.

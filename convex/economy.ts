@@ -699,6 +699,19 @@ export const awardPvECoins = mutation({
         balanceAfter: currentBalance + totalReward,
       });
 
+      // 🔒 Security audit log
+      await createAuditLog(
+        ctx,
+        address,
+        "earn",
+        totalReward,
+        currentBalance,
+        currentBalance + totalReward,
+        "pve_reward",
+        difficulty,
+        { difficulty, reason: "PvE battle win" }
+      );
+
       console.log(`💰 PvE reward: ${totalReward} TESTVBMS + ${auraReward} aura for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Aura: ${currentAura} → ${currentAura + auraReward}`);
     }
 
@@ -923,6 +936,19 @@ export const awardPvPCoins = mutation({
         balanceBefore: currentBalance,
         balanceAfter: currentBalance + totalReward,
       });
+
+      // 🔒 Security audit log
+      await createAuditLog(
+        ctx,
+        address,
+        "earn",
+        totalReward,
+        currentBalance,
+        currentBalance + totalReward,
+        "pvp_reward",
+        `streak_${newStreak}`,
+        { reason: "PvP battle win" }
+      );
 
       console.log(`💰 PvP reward: ${totalReward} TESTVBMS + ${auraReward} aura for ${address}. Balance: ${currentBalance} → ${currentBalance + totalReward}, Aura: ${currentAura} → ${currentAura + auraReward}`);
 
@@ -1209,6 +1235,19 @@ export const claimShareBonus = mutation({
       balanceBefore: currentCoins,
       balanceAfter: newCoins,
     });
+
+    // 🔒 Security audit log
+    await createAuditLog(
+      ctx,
+      normalizedAddress,
+      "earn",
+      shareReward,
+      currentCoins,
+      newCoins,
+      "daily_share",
+      today,
+      { reason: "Daily share bonus" }
+    );
 
     return {
       success: true,
@@ -1864,6 +1903,19 @@ export const recordAttackResult = mutation({
           balanceAfter: updateData.coins,
           timestamp: Date.now(),
         });
+
+        // 🔒 Security audit log
+        await createAuditLog(
+          ctx,
+          normalizedPlayerAddress,
+          "earn",
+          totalReward,
+          currentBalance,
+          updateData.coins as number,
+          "attack_win",
+          args.opponentAddress,
+          { reason: `Attack win vs ${args.opponentUsername}` }
+        );
       } catch (txError) {
         console.error("⚠️ Failed to record attack transaction:", txError);
         // Continue - don't let transaction history failure break the attack
