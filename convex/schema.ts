@@ -501,7 +501,13 @@ export default defineSchema({
   // Claim Analytics (track player behavior)
   claimAnalytics: defineTable({
     playerAddress: v.string(),
-    choice: v.union(v.literal("immediate"), v.literal("inbox")),
+    choice: v.union(
+      v.literal("immediate"),
+      v.literal("inbox"),
+      v.literal("pve"),
+      v.literal("pvp"),
+      v.literal("convert")
+    ),
     amount: v.number(), // Amount of VBMS
     inboxTotal: v.number(), // Total in inbox at time of choice
     bonusAvailable: v.optional(v.boolean()), // Whether bonus was available
