@@ -1135,3 +1135,70 @@ export const mergeDuplicateProfile = internalMutation({
     };
   },
 });
+
+/**
+ * Backfill lifetimeEarned from burn transactions
+ * 🔒 INTERNAL ONLY - Run from dashboard
+ */
+export const backfillBurnEarnings = internalMutation({
+  args: {
+    batchSize: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const batchSize = args.batchSize || 100;
+    console.log("=== BACKFILL: Burn earnings to lifetimeEarned ===");
+
+    // Get all burn transactions from coinTransactions
+    const burnTxs = await ctx.db
+      .query("coinTransactions")
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("source"), "burn_card"),
+          q.eq(q.field("source"), "burn_cards")
+        )
+      )
+      .take(10000);
+
+    console.log(`Found ${burnTxs.length} burn transactions`);
+
+    // Group by address
+    const burnsByAddress: Record<string, number> = {};
+    for (const tx of burnTxs) {
+      const addr = tx.address.toLowerCase();
+      burnsByAddress[addr] = (burnsByAddress[addr] || 0) + tx.amount;
+    }
+
+    const addresses = Object.keys(burnsByAddress);
+    console.log(`Found ${addresses.length} unique addresses with burns`);
+
+    let updated = 0;
+    let skipped = 0;
+
+    for (const address of addresses.slice(0, batchSize)) {
+      const burnTotal = burnsByAddress[address];
+
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", address))
+        .first();
+
+      if (!profile) {
+        skipped++;
+        continue;
+      }
+
+      const currentLifetime = profile.lifetimeEarned || 0;
+      const newLifetime = currentLifetime + burnTotal;
+
+      await ctx.db.patch(profile._id, {
+        lifetimeEarned: newLifetime,
+      });
+
+      console.log(`✅ ${profile.username || address.slice(0,10)}: +${burnTotal.toLocaleString()} → ${newLifetime.toLocaleString()}`);
+      updated++;
+    }
+
+    console.log(`\n=== DONE: Updated ${updated}, Skipped ${skipped} ===`);
+    return { updated, skipped, total: addresses.length };
+  },
+});
