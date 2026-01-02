@@ -430,7 +430,7 @@ export const getFlaggedAccounts = query({
   handler: async (ctx) => {
     const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
 
-    // 🚀 BANDWIDTH FIX: Limit to 10000 logs for weekly analysis
+    // Get recent audit logs
     const recentLogs = await ctx.db
       .query("coinAuditLog")
       .withIndex("by_timestamp")
@@ -446,73 +446,76 @@ export const getFlaggedAccounts = query({
       byPlayer[log.playerAddress].push(log);
     });
 
-    // Calculate risk scores
+    // Analyze each player
     const flagged: Array<{
       address: string;
+      username: string;
       riskScore: number;
-      totalClaimed: number;
-      totalEarned: number;
+      totalClaimedOnChain: number;
+      lifetimeEarned: number;
+      ratio: number;
       claimCount: number;
-      transactionCount: number;
       flags: string[];
     }> = [];
 
-    Object.entries(byPlayer).forEach(([address, logs]) => {
+    const addresses = Object.keys(byPlayer);
+
+    for (const address of addresses) {
+      const logs = byPlayer[address];
       let riskScore = 0;
       const flags: string[] = [];
 
-      // Only count ACTUAL on-chain claims, not conversion attempts
-      const actualClaims = logs.filter(l => l.type === "claim" && l.source === "recordTESTVBMSConversion");
-      const earns = logs.filter(l => l.type === "earn");
-      const totalClaimed = actualClaims.reduce((sum, l) => sum + l.amount, 0);
-      const totalEarned = earns.reduce((sum, l) => sum + l.amount, 0);
+      // Get profile to check lifetimeEarned (complete history)
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", address))
+        .first();
 
-      // Detect exploit patterns
-      const failedConversions = logs.filter(l => l.source === "restoreCoinsOnSignFailure");
+      if (!profile) continue;
+
+      // Use profile data for accurate comparison
+      const totalClaimedOnChain = profile.claimedTokens || 0;
+      const lifetimeEarned = profile.lifetimeEarned || 0;
+
+      // Calculate ratio: claimed vs earned
+      const ratio = lifetimeEarned > 0 ? totalClaimedOnChain / lifetimeEarned : (totalClaimedOnChain > 0 ? 999 : 0);
+
+      // Detect exploit patterns from logs
       const doubleSpendBlocked = logs.filter(l => l.source === "clearPendingWithoutRestore");
+      const actualClaims = logs.filter(l => l.type === "claim" && l.source === "recordTESTVBMSConversion");
 
-      // 🚨 CRITICAL: Double-spend attempts are definitive exploit evidence
+      // 🚨 CRITICAL: Double-spend attempts = definitive exploit
       if (doubleSpendBlocked.length > 0) {
         riskScore += 100;
-        flags.push(`🚨 DOUBLE-SPEND BLOCKED: ${doubleSpendBlocked.length}x`);
+        flags.push(`🚨 DOUBLE-SPEND: ${doubleSpendBlocked.length}x`);
       }
 
-      // Many failed conversions in short time = trying to exploit race condition
-      if (failedConversions.length > 20) {
-        riskScore += 40;
-        flags.push(`Suspicious: ${failedConversions.length} failed conversions`);
+      // 🚨 CRITICAL: Claimed way more than earned (ratio > 5x and claimed > 100k)
+      if (ratio > 5 && totalClaimedOnChain > 100000) {
+        riskScore += 80;
+        flags.push(`⚠️ RATIO: ${ratio.toFixed(1)}x (claimed ${totalClaimedOnChain.toLocaleString()} vs earned ${lifetimeEarned.toLocaleString()})`);
       }
 
-      // Burst pattern: 10+ transactions in less than 1 minute
-      const sortedLogs = [...logs].sort((a, b) => a.timestamp - b.timestamp);
-      for (let i = 0; i < sortedLogs.length - 10; i++) {
-        const timeWindow = sortedLogs[i + 10].timestamp - sortedLogs[i].timestamp;
-        if (timeWindow < 60000) {
-          riskScore += 30;
-          flags.push("Burst pattern: 10+ txs in < 1min");
-          break;
-        }
-      }
-
-      // High claim count (actual on-chain claims, not attempts)
-      if (actualClaims.length > 30) {
+      // High claim count in one week
+      if (actualClaims.length > 20) {
         riskScore += 20;
-        flags.push(`High claim count: ${actualClaims.length}`);
+        flags.push(`High claims this week: ${actualClaims.length}`);
       }
 
-      // Only flag if there's real evidence of exploit (not just high volume)
-      if (riskScore >= 40) {
+      // Only flag if real evidence (ratio-based or double-spend)
+      if (riskScore >= 50) {
         flagged.push({
           address,
+          username: profile.username || profile.farcasterDisplayName || "unknown",
           riskScore,
-          totalClaimed,
-          totalEarned,
+          totalClaimedOnChain,
+          lifetimeEarned,
+          ratio: Math.round(ratio * 10) / 10,
           claimCount: actualClaims.length,
-          transactionCount: logs.length,
           flags,
         });
       }
-    });
+    }
 
     return flagged.sort((a, b) => b.riskScore - a.riskScore);
   },
