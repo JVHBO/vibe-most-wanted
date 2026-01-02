@@ -563,6 +563,19 @@ export const buyPackWithVBMS = mutation({
       });
     }
 
+    // 📊 Log VBMS purchase to transaction history
+    await ctx.db.insert("coinTransactions", {
+      address: address,
+      amount: 0, // VBMS spent on-chain, not TESTVBMS
+      type: "spend",
+      source: `buy_pack_${actualPackType}_vbms`,
+      description: `Bought ${args.quantity}x ${actualPackType} pack with VBMS`,
+      timestamp: Date.now(),
+      balanceBefore: 0,
+      balanceAfter: 0,
+      txHash: args.txHash,
+    });
+
     console.log(`💎 VBMS Purchase: ${address} bought ${args.quantity}x ${args.packType} (stored as ${actualPackType}) packs (tx: ${args.txHash.slice(0, 10)}...)`);
 
     return {
