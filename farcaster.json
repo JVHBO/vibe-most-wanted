@@ -1,6 +1,6 @@
 {
   "miniapp": {
-    "name": "$VBMS",
+    "name": "$VBMS - Game and Wanted Cast",
     "description": "NFT Card Battle Arena - Attack players and defend your deck!",
     "webhookUrl": "https://vibe-most-wanted.vercel.app/api/farcaster/webhook"
   }
