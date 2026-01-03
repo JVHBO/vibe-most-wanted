@@ -592,9 +592,8 @@ export const refreshCardScore = mutation({
 
     // Only update neynarScore - keep rarity and power unchanged
     await ctx.db.patch(card._id, {
-      neynarScore: args.newNeynarScore,
-      refreshedAt: Date.now(),
-      previousNeynarScore: card.neynarScore,
+      latestNeynarScore: args.newNeynarScore,
+      latestScoreCheckedAt: Date.now(),
     });
 
     console.log(`✅ Card refreshed: FID ${args.fid} score ${card.neynarScore} → ${args.newNeynarScore} (rarity unchanged: ${card.rarity})`);
