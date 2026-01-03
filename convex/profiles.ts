@@ -1008,6 +1008,173 @@ export const useLinkCode = mutation({
  * 🔗 Unlink a wallet from profile
  * Can only be called from a wallet connected to the profile (primary or linked)
  */
+
+
+/**
+ * 🔗 Generate a link code FROM a FID account
+ * This allows FID accounts to generate a code that other wallets can use to link to them
+ *
+ * FLOW:
+ * 1. FID account generates code (on phone/miniapp)
+ * 2. User opens website on desktop with different wallet
+ * 3. Desktop wallet enters code to link to the FID profile
+ */
+export const generateFidLinkCode = mutation({
+  args: { fidOwnerAddress: v.string() },
+  handler: async (ctx, { fidOwnerAddress }) => {
+    if (!isValidAddress(fidOwnerAddress)) {
+      throw new Error("Endereço inválido");
+    }
+
+    const normalizedAddress = normalizeAddress(fidOwnerAddress);
+
+    // Resolve links to get primary address
+    const ownerLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    const primaryAddress = ownerLink?.primaryAddress || normalizedAddress;
+
+    // Check if this wallet has a profile (required for FID flow)
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Você precisa ter um perfil para gerar código");
+    }
+
+    // Delete any existing codes for this profile
+    const existingCodes = await ctx.db
+      .query("walletLinkCodes")
+      .withIndex("by_profile", (q) => q.eq("profileAddress", primaryAddress))
+      .collect();
+
+    for (const code of existingCodes) {
+      await ctx.db.delete(code._id);
+    }
+
+    // Generate 6-digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const now = Date.now();
+    const expiresAt = now + 60 * 1000; // 60 seconds
+
+    await ctx.db.insert("walletLinkCodes", {
+      code,
+      profileAddress: primaryAddress, // The FID profile that will receive the linked wallet
+      createdAt: now,
+      expiresAt,
+      used: false,
+      isFidCode: true, // Mark as FID-generated code
+    });
+
+    console.log(`🔗 FID link code generated: ${code} for profile ${profile.username}`);
+
+    return { code, expiresAt };
+  },
+});
+
+/**
+ * 🔗 Use a FID link code to add YOUR wallet to the FID profile
+ * Called by a new wallet to link itself to a FID profile
+ */
+export const useFidLinkCode = mutation({
+  args: {
+    code: v.string(),
+    walletToLink: v.string(), // The new wallet that wants to be linked
+  },
+  handler: async (ctx, { code, walletToLink }) => {
+    if (!isValidAddress(walletToLink)) {
+      throw new Error("Endereço inválido");
+    }
+
+    const normalizedWallet = normalizeAddress(walletToLink);
+
+    // Check if this wallet already has a profile
+    const existingProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedWallet))
+      .first();
+
+    if (existingProfile) {
+      throw new Error("Esta wallet já tem um perfil. Use 'Merge Account' para transferir.");
+    }
+
+    // Check if already linked
+    const existingLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedWallet))
+      .first();
+
+    if (existingLink) {
+      throw new Error("Esta wallet já está linkada a outro perfil");
+    }
+
+    // Find the code
+    const linkCode = await ctx.db
+      .query("walletLinkCodes")
+      .withIndex("by_code", (q) => q.eq("code", code))
+      .first();
+
+    if (!linkCode) {
+      throw new Error("Código inválido");
+    }
+
+    if (linkCode.used) {
+      throw new Error("Código já foi usado");
+    }
+
+    if (Date.now() > linkCode.expiresAt) {
+      await ctx.db.delete(linkCode._id);
+      throw new Error("Código expirado");
+    }
+
+    // The FID profile is stored in profileAddress
+    const fidProfileAddress = linkCode.profileAddress;
+
+    // Get the profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", fidProfileAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Perfil do código não encontrado");
+    }
+
+    // Can't link to the same wallet
+    if (fidProfileAddress === normalizedWallet) {
+      throw new Error("Não pode linkar a mesma wallet");
+    }
+
+    // Create the link
+    await ctx.db.insert("addressLinks", {
+      address: normalizedWallet,
+      primaryAddress: fidProfileAddress,
+      linkedAt: Date.now(),
+    });
+
+    // 🧹 CLEANUP: Delete raid data from the linked wallet
+    await ctx.scheduler.runAfter(0, internal.raidBoss.cleanupLinkedWalletRaidData, {
+      linkedAddress: normalizedWallet,
+    });
+
+    // Mark code as used
+    await ctx.db.patch(linkCode._id, { used: true });
+
+    console.log(`🔗 Wallet linked via FID code: ${normalizedWallet} → ${fidProfileAddress}`);
+
+    return {
+      success: true,
+      message: "Wallet linkada com sucesso!",
+      profileUsername: profile.username,
+      linkedWallet: normalizedWallet,
+    };
+  },
+});
+
 export const unlinkWallet = mutation({
   args: {
     primaryAddress: v.string(), // The wallet making the request (must be primary)
