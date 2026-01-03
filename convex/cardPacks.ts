@@ -67,8 +67,8 @@ const PACK_TYPES = {
     description: "1 card with better odds",
     cards: 1,
     price: 5000, // 5x basic price for better odds on 1 card
-    // BALANCED: 74/19/6/1 gives ~0% PnL (break-even)
-    rarityOdds: { Common: 74, Rare: 19, Epic: 6, Legendary: 1 },
+    // NERFED: ROI ~0.68x (was 1.07x) - 82/14/3.5/0.5
+    rarityOdds: { Common: 82, Rare: 14, Epic: 3.5, Legendary: 0.5 },
   },
   mission: {
     name: "Mission Reward",
@@ -136,6 +136,7 @@ const CARD_IMAGES = {
 // Foil types (NERFED for FREE cards - much harder to get foil)
 const FOIL_TYPES = ["None", "Standard", "Prize"];
 const FOIL_ODDS = { None: 92, Standard: 7, Prize: 1 }; // Only 8% foil chance (was 30%)
+const BOOSTED_FOIL_ODDS = { None: 96, Standard: 3.5, Prize: 0.5 }; // NERFED for boosted packs - 4% foil chance
 
 // Wear levels (NERFED for FREE cards - harder to get good wear)
 const WEAR_LEVELS = ["Pristine", "Mint", "Lightly Played", "Moderately Played", "Heavily Played"];
@@ -184,14 +185,16 @@ function calculateCardPower(rarity: string, wear: string, foil?: string): number
 /**
  * Generate random card based on rarity
  */
-function generateRandomCard(rarity: string) {
+function generateRandomCard(rarity: string, packType?: string) {
   // Pick random card image from the rarity pool
   const rarityLower = rarity.toLowerCase();
   const imageCount = CARD_IMAGES[rarityLower as keyof typeof CARD_IMAGES] || 1;
   const imageIndex = cryptoRandomInt(imageCount);
 
   // Roll foil type
-  const foil = rollRarity(FOIL_ODDS);
+  // Use nerfed foil odds for boosted packs
+  const foilOdds = packType === 'boosted' ? BOOSTED_FOIL_ODDS : FOIL_ODDS;
+  const foil = rollRarity(foilOdds);
 
   // Roll wear level
   const wear = rollRarity(WEAR_ODDS);
@@ -624,7 +627,7 @@ export const openPack = mutation({
     const revealedCards = [];
     for (let i = 0; i < packInfo.cards; i++) {
       const rarity = rollRarity(packInfo.rarityOdds);
-      const card = generateRandomCard(rarity);
+      const card = generateRandomCard(rarity, pack.packType);
 
       // Check if player already has this card
       const existingCard = await ctx.db
@@ -707,7 +710,7 @@ export const openAllPacks = mutation({
       // Generate cards for this pack
       for (let i = 0; i < packInfo.cards; i++) {
         const rarity = rollRarity(packInfo.rarityOdds);
-        const card = generateRandomCard(rarity);
+        const card = generateRandomCard(rarity, pack.packType);
 
         // Check if player already has this card
         const existingCard = await ctx.db

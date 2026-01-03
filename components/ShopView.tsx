@@ -63,7 +63,7 @@ export function ShopView({ address }: ShopViewProps) {
 
   // Odds for display
   const NORMAL_ODDS = { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 };
-  const ELITE_ODDS = { Common: 74, Rare: 19, Epic: 6, Legendary: 1 };
+  const ELITE_ODDS = { Common: 82, Rare: 14, Epic: 3.5, Legendary: 0.5 }; // NERFED for ROI ~0.68x
   const currentOdds = luckBoost ? ELITE_ODDS : NORMAL_ODDS;
 
   // Handle purchase with VBMS (blockchain)
