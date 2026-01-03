@@ -4,7 +4,7 @@
  */
 
 import { v } from "convex/values";
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 
 /**
  * Get Most Wanted Ranking - Optimized version
@@ -24,11 +24,11 @@ export const getRanking = query({
       .query("farcasterCards")
       .collect();
 
-    // Get today's votes using index
+    // Get today's votes
     const today = new Date().toISOString().split('T')[0];
     const allVotes = await ctx.db
       .query("cardVotes")
-      .withIndex("by_date", (q) => q.eq("date", today))
+      .filter((q) => q.eq(q.field("date"), today))
       .collect();
 
     // Create vote count map
@@ -140,120 +140,5 @@ export const getFidsForScoreUpdate = query({
   handler: async (ctx) => {
     const cards = await ctx.db.query("farcasterCards").collect();
     return cards.map(c => c.fid);
-  },
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// CACHED RANKING (reduces bandwidth by ~90%)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Get Most Wanted Ranking from cache (FAST)
- * Returns pre-computed ranking data
- */
-export const getRankingCached = query({
-  args: {
-    limit: v.optional(v.number()),
-    offset: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const limit = Math.min(args.limit || 12, 200);
-    const offset = args.offset || 0;
-
-    // Get cached data
-    const cache = await ctx.db
-      .query("mostWantedCache")
-      .withIndex("by_type", (q) => q.eq("type", "most_wanted"))
-      .first();
-
-    if (!cache) {
-      // Fallback to direct query if cache doesn't exist
-      console.log("⚠️ Most Wanted cache not found, using direct query");
-      return { cards: [], totalCount: 0, hasMore: false, fromCache: false };
-    }
-
-    const cards = cache.data.slice(offset, offset + limit);
-    return {
-      cards,
-      totalCount: cache.totalCount,
-      hasMore: offset + limit < cache.totalCount,
-      fromCache: true,
-      cacheAge: Date.now() - cache.updatedAt,
-    };
-  },
-});
-
-/**
- * Update Most Wanted cache (called by cron)
- * Caches top 200 cards sorted by score diff
- */
-export const updateMostWantedCache = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    try {
-      // Get all minted cards
-      const cards = await ctx.db
-        .query("farcasterCards")
-        .filter((q) => q.neq(q.field("contractAddress"), undefined))
-        .collect();
-
-      // Get today's votes using index
-      const today = new Date().toISOString().split('T')[0];
-      const allVotes = await ctx.db
-        .query("cardVotes")
-        .withIndex("by_date", (q) => q.eq("date", today))
-        .collect();
-
-      // Create vote count map
-      const voteMap = new Map<number, number>();
-      for (const vote of allVotes) {
-        const current = voteMap.get(vote.cardFid) || 0;
-        voteMap.set(vote.cardFid, current + vote.voteCount);
-      }
-
-      // Calculate and sort
-      const rankedCards = cards
-        .map(card => ({
-          fid: card.fid,
-          username: card.username,
-          displayName: card.displayName,
-          pfpUrl: card.pfpUrl,
-          cardImageUrl: card.cardImageUrl,
-          rarity: card.rarity,
-          mintScore: card.neynarScore,
-          currentScore: card.latestNeynarScore ?? card.neynarScore,
-          scoreDiff: (card.latestNeynarScore ?? card.neynarScore) - card.neynarScore,
-          votes: voteMap.get(card.fid) || 0,
-        }))
-        .sort((a, b) => b.scoreDiff - a.scoreDiff)
-        .slice(0, 200); // Cache top 200
-
-      // Update or create cache
-      const existingCache = await ctx.db
-        .query("mostWantedCache")
-        .withIndex("by_type", (q) => q.eq("type", "most_wanted"))
-        .first();
-
-      if (existingCache) {
-        await ctx.db.patch(existingCache._id, {
-          data: rankedCards,
-          totalCount: cards.length,
-          updatedAt: Date.now(),
-        });
-      } else {
-        await ctx.db.insert("mostWantedCache", {
-          type: "most_wanted",
-          data: rankedCards,
-          totalCount: cards.length,
-          updatedAt: Date.now(),
-        });
-      }
-
-      console.log(`✅ Most Wanted cache updated: ${rankedCards.length} cards cached, ${cards.length} total`);
-      return { success: true, cached: rankedCards.length, total: cards.length };
-    } catch (error) {
-      console.error("❌ updateMostWantedCache error:", error);
-      return { success: false, error: String(error) };
-    }
   },
 });

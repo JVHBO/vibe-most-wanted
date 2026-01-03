@@ -514,16 +514,18 @@ export const markMessageAsRead = mutation({
 export const getUnreadMessageCount = query({
   args: { cardFid: v.number() },
   handler: async (ctx, args) => {
-    // Use index to get only unread messages for this card
-    const unreadMessages = await ctx.db
+    // Get all votes for this card
+    const allVotes = await ctx.db
       .query("cardVotes")
-      .withIndex("by_card_unread", (q) => 
-        q.eq("cardFid", args.cardFid).eq("isRead", false)
-      )
-      .filter((q) => q.neq(q.field("message"), undefined))
+      .filter((q) => q.eq(q.field("cardFid"), args.cardFid))
       .collect();
 
-    return unreadMessages.length;
+    // Count unread messages
+    const unread = allVotes.filter(v =>
+      v.message !== undefined && v.isRead === false
+    );
+
+    return unread.length;
   },
 });
 
@@ -922,75 +924,5 @@ export const clearAllVibeMails = mutation({
     }
     
     return { deleted };
-  },
-});
-
-// Broadcast personalized welcome VibeMail to all VibeFID card holders
-export const broadcastWelcomeVibeMail = mutation({
-  args: {
-    skipNotifications: v.optional(v.boolean()), // Skip notifications to avoid spam
-  },
-  handler: async (ctx, args) => {
-    const now = Date.now();
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Get all VibeFID cards
-    const allCards = await ctx.db.query("farcasterCards").collect();
-    console.log(`Found ${allCards.length} cards to send welcome to`);
-    
-    const results = [];
-    
-    for (const card of allCards) {
-      try {
-        // Generate personalized message
-        const message = `🎉 **Welcome to VibeFID, ${card.username}!**
-
-Your **${card.rarity}** card has been created!
-
-📱 **VibeFID** → Your Farcaster profile became a collectible card! Power is based on your Neynar Score.
-
-🎮 [Vibe Most Wanted](https://farcaster.xyz/miniapps/UpOGC4pheWVP/vbms) → Battle with your card in Poker and PvP. Bet VBMS in Mecha Arena and fight Raid Bosses!
-
-🃏 **Partner Collections** → Cards from partner projects also work in battles!
-
-🎯 **Wanted Cast** → Interact with featured posts and earn VBMS!
-
-📬 **VibeMail** → Your inbox for anonymous messages.
-
-Good luck! 🚀`;
-
-        // Insert VibeMail
-        await ctx.db.insert("cardVotes", {
-          cardFid: card.fid,
-          voterFid: 0, // System
-          voterAddress: "0x0000000000000000000000000000000000000000",
-          date: today,
-          createdAt: now,
-          voteCount: 0,
-          isPaid: false,
-          message,
-          isRead: false,
-        });
-
-        // Send notification (unless skipped)
-        if (!args.skipNotifications) {
-          await ctx.scheduler.runAfter(0, internal.notifications.sendVibemailNotification, {
-            recipientFid: card.fid,
-            hasAudio: false,
-          });
-        }
-
-        results.push({ fid: card.fid, username: card.username, success: true });
-      } catch (error: any) {
-        results.push({ fid: card.fid, username: card.username, success: false, error: error.message });
-      }
-    }
-
-    return {
-      success: true,
-      total: allCards.length,
-      sent: results.filter(r => r.success).length,
-      failed: results.filter(r => !r.success).length,
-    };
   },
 });
