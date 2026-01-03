@@ -514,16 +514,14 @@ export const markMessageAsRead = mutation({
 export const getUnreadMessageCount = query({
   args: { cardFid: v.number() },
   handler: async (ctx, args) => {
-    // Get all votes for this card
-    const allVotes = await ctx.db
+    // Use index to get only unread for this card
+    const unread = await ctx.db
       .query("cardVotes")
-      .filter((q) => q.eq(q.field("cardFid"), args.cardFid))
+      .withIndex("by_card_unread", (q) => 
+        q.eq("cardFid", args.cardFid).eq("isRead", false)
+      )
+      .filter((q) => q.neq(q.field("message"), undefined))
       .collect();
-
-    // Count unread messages
-    const unread = allVotes.filter(v =>
-      v.message !== undefined && v.isRead === false
-    );
 
     return unread.length;
   },

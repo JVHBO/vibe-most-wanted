@@ -24,11 +24,11 @@ export const getRanking = query({
       .query("farcasterCards")
       .collect();
 
-    // Get today's votes
+    // Get today's votes using index
     const today = new Date().toISOString().split('T')[0];
     const allVotes = await ctx.db
       .query("cardVotes")
-      .filter((q) => q.eq(q.field("date"), today))
+      .withIndex("by_date", (q) => q.eq("date", today))
       .collect();
 
     // Create vote count map
