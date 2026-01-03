@@ -29,13 +29,6 @@ export function QuestPanel({ playerAddress, soundEnabled, onClose }: QuestPanelP
     try {
       const result = await claimReward({ address: playerAddress.toLowerCase() });
 
-      // Play success sound if enabled
-      if (soundEnabled && typeof window !== 'undefined') {
-        const audio = new Audio('/marvin-victory.mp3');
-        audio.volume = 0.3;
-        audio.play().catch(() => {});
-      }
-
       // TESTVBMS added to balance - close panel
       if (result && result.success) {
         setTimeout(() => {

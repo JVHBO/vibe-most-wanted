@@ -571,6 +571,46 @@ export const upgradeCardRarity = mutation({
 });
 
 /**
+ * Refresh card score WITHOUT changing rarity
+ * Used when neynarScore changed but rarity didn't improve
+ * Only updates neynarScore - power and rarity stay the same
+ */
+export const refreshCardScore = mutation({
+  args: {
+    fid: v.number(),
+    newNeynarScore: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (!card) {
+      throw new Error(`No card found for FID ${args.fid}`);
+    }
+
+    // Only update neynarScore - keep rarity and power unchanged
+    await ctx.db.patch(card._id, {
+      neynarScore: args.newNeynarScore,
+      refreshedAt: Date.now(),
+      previousNeynarScore: card.neynarScore,
+    });
+
+    console.log(`✅ Card refreshed: FID ${args.fid} score ${card.neynarScore} → ${args.newNeynarScore} (rarity unchanged: ${card.rarity})`);
+
+    return {
+      success: true,
+      fid: args.fid,
+      rarity: card.rarity,
+      power: card.power,
+      oldScore: card.neynarScore,
+      newScore: args.newNeynarScore,
+    };
+  },
+});
+
+/**
  * Get recent Farcaster cards (latest 20)
  * Shows all cards until old cards from previous contracts are manually deleted
  */

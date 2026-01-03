@@ -150,6 +150,13 @@ export function SettingsModal({
   const [mergeSuccess, setMergeSuccess] = useState<string | null>(null);
   const generateMergeCodeMutation = useMutation(api.profiles.generateMergeCode);
 
+  // 🔗 FID CODE: Generate code for FID accounts
+  const [generatedFidCode, setGeneratedFidCode] = useState<string | null>(null);
+  const [fidCodeExpiresAt, setFidCodeExpiresAt] = useState<number | null>(null);
+  const [isGeneratingFidCode, setIsGeneratingFidCode] = useState(false);
+  const [fidCodeError, setFidCodeError] = useState<string | null>(null);
+  const generateFidLinkCodeMutation = useMutation(api.profiles.generateFidLinkCode);
+
   // 🔗 MULTI-WALLET: Detect wallet change and auto-link
   useEffect(() => {
     // If we're in linking mode and wallet changed to a different address
@@ -334,6 +341,35 @@ export function SettingsModal({
     } finally {
       setIsMerging(false);
     }
+  };
+
+  // 🔗 Generate FID link code
+  const handleGenerateFidCode = async () => {
+    if (!walletAddress) return;
+
+    setIsGeneratingFidCode(true);
+    setFidCodeError(null);
+
+    try {
+      const result = await generateFidLinkCodeMutation({
+        fidOwnerAddress: walletAddress,
+      });
+      setGeneratedFidCode(result.code);
+      setFidCodeExpiresAt(result.expiresAt);
+      if (soundEnabled) AudioManager.buttonSuccess();
+    } catch (error: any) {
+      setFidCodeError(error.message || 'Erro ao gerar código');
+      if (soundEnabled) AudioManager.buttonError();
+    } finally {
+      setIsGeneratingFidCode(false);
+    }
+  };
+
+  // Get FID code time remaining
+  const getFidCodeTimeRemaining = () => {
+    if (!fidCodeExpiresAt) return null;
+    const remaining = Math.max(0, Math.floor((fidCodeExpiresAt - Date.now()) / 1000));
+    return `${remaining}s`;
   };
 
   // Get merge code time remaining
@@ -1099,6 +1135,51 @@ export function SettingsModal({
                   {codeSuccess && (
                     <p className="text-green-400 text-xs text-center mt-2">{codeSuccess}</p>
                   )}
+
+                  {/* 🔗 Generate Code Section */}
+                  <div className="mt-4 pt-4 border-t border-vintage-gold/20">
+                    <p className="text-vintage-burnt-gold text-xs mb-3">
+                      {t('generateCodeDesc') || 'Generate a code to link wallet from another device'}
+                    </p>
+
+                    {generatedFidCode ? (
+                      <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
+                        <p className="text-center text-green-300 text-xs mb-2">
+                          {t('enterCodeOnOtherDevice') || 'Enter this code on your other device:'}
+                        </p>
+                        <p className="text-3xl font-mono font-bold text-center text-green-400 tracking-[0.3em] my-3">
+                          {generatedFidCode}
+                        </p>
+                        <p className="text-vintage-burnt-gold text-xs text-center">
+                          {t('expiresIn') || 'Expires in'} {getFidCodeTimeRemaining() || '...'}
+                        </p>
+                        <button
+                          onClick={handleGenerateFidCode}
+                          disabled={isGeneratingFidCode}
+                          className="w-full mt-3 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50"
+                        >
+                          {isGeneratingFidCode ? '...' : (t('generateNewCode') || 'Generate New Code')}
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={handleGenerateFidCode}
+                        disabled={isGeneratingFidCode}
+                        className="w-full px-4 py-3 bg-green-600/20 hover:bg-green-600/30 border border-green-500/50 text-green-400 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                      >
+                        {isGeneratingFidCode ? (
+                          <div className="animate-spin w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full" />
+                        ) : (
+                          '🔗'
+                        )}
+                        {t('generateLinkCode') || 'Generate Link Code'}
+                      </button>
+                    )}
+
+                    {fidCodeError && (
+                      <p className="text-red-400 text-xs text-center mt-2">{fidCodeError}</p>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
