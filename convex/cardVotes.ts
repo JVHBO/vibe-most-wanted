@@ -726,17 +726,28 @@ export const sendDirectVibeMail = mutation({
     message: v.string(),
     audioId: v.optional(v.string()),
     imageId: v.optional(v.string()),
-    isPaid: v.optional(v.boolean()), // true = 100 VBMS, false = free
   },
   handler: async (ctx, args) => {
     const now = Date.now();
     const today = new Date().toISOString().split('T')[0];
-    const isPaid = args.isPaid ?? false;
 
     // Cannot send to yourself
     if (args.senderFid === args.recipientFid) {
       throw new Error("Cannot send VibeMail to yourself");
     }
+
+    // Determine if paid based on free votes remaining (same logic as getUserFreeVotesRemaining)
+    const votesToday = await ctx.db
+      .query("cardVotes")
+      .filter((q) => q.and(
+        q.eq(q.field("voterFid"), args.senderFid),
+        q.eq(q.field("date"), today),
+        q.eq(q.field("isPaid"), false)
+      ))
+      .collect();
+    const freeVotesUsed = votesToday.length;
+    const maxFreeVotes = 1;
+    const isPaid = freeVotesUsed >= maxFreeVotes;
 
     // Get recipient card info
     const recipientCard = await ctx.db
@@ -876,5 +887,24 @@ export const replyToMessage = mutation({
     }
 
     return { success: true };
+  },
+});
+
+// Admin: Clear all VibeMails
+export const clearAllVibeMails = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allVotes = await ctx.db
+      .query("cardVotes")
+      .filter((q) => q.neq(q.field("message"), undefined))
+      .collect();
+    
+    let deleted = 0;
+    for (const vote of allVotes) {
+      await ctx.db.delete(vote._id);
+      deleted++;
+    }
+    
+    return { deleted };
   },
 });
