@@ -1564,6 +1564,10 @@ export default defineSchema({
     isSent: v.optional(v.boolean()),
     recipientFid: v.optional(v.number()),
     recipientUsername: v.optional(v.string()),
+    // NFT Gift
+    giftNftName: v.optional(v.string()),
+    giftNftImageUrl: v.optional(v.string()),
+    giftNftCollection: v.optional(v.string()),
   })
     .index("by_card_date", ["cardFid", "date"])
     .index("by_voter_date", ["voterFid", "date"])
@@ -1606,4 +1610,46 @@ export default defineSchema({
     lastClaimAt: v.optional(v.number()), // Last claim timestamp
   })
     .index("by_fid", ["fid"]),
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // NFT GIFTS - Gift NFTs via VibeMail
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  nftGifts: defineTable({
+    // Sender info
+    senderFid: v.number(),
+    senderAddress: v.string(),
+
+    // Recipient info
+    recipientFid: v.number(),
+    recipientAddress: v.string(),
+
+    // NFT info
+    contractAddress: v.string(),
+    collectionId: v.string(), // 'vibe', 'gmvbrs', etc.
+    collectionName: v.string(),
+    tokenId: v.string(),
+    nftName: v.optional(v.string()),
+    nftImageUrl: v.optional(v.string()),
+
+    // Transaction
+    txHash: v.string(), // On-chain transfer TX hash
+
+    // Link to VibeMail message (optional)
+    messageId: v.optional(v.id("cardVotes")),
+
+    // Status
+    status: v.union(
+      v.literal("pending"),    // TX sent, waiting confirmation
+      v.literal("confirmed"),  // TX confirmed
+      v.literal("failed")      // TX failed
+    ),
+
+    // Timestamps
+    createdAt: v.number(),
+    confirmedAt: v.optional(v.number()),
+  })
+    .index("by_sender", ["senderFid", "createdAt"])
+    .index("by_recipient", ["recipientFid", "createdAt"])
+    .index("by_txHash", ["txHash"]),
 });

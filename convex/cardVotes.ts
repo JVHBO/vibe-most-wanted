@@ -488,6 +488,10 @@ export const getMessagesForCard = query({
       createdAt: m.createdAt,
       voteCount: m.voteCount,
       isPaid: m.isPaid,
+      // NFT Gift fields
+      giftNftName: m.giftNftName,
+      giftNftImageUrl: m.giftNftImageUrl,
+      giftNftCollection: m.giftNftCollection,
     }));
   },
 });
@@ -680,6 +684,10 @@ export const getSentMessages = query({
           createdAt: m.createdAt,
           voteCount: m.voteCount,
           isPaid: m.isPaid,
+      // NFT Gift fields
+      giftNftName: m.giftNftName,
+      giftNftImageUrl: m.giftNftImageUrl,
+      giftNftCollection: m.giftNftCollection,
         };
       })
     );
@@ -728,6 +736,10 @@ export const sendDirectVibeMail = mutation({
     message: v.string(),
     audioId: v.optional(v.string()),
     imageId: v.optional(v.string()),
+    // NFT Gift fields
+    giftNftName: v.optional(v.string()),
+    giftNftImageUrl: v.optional(v.string()),
+    giftNftCollection: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -777,6 +789,10 @@ export const sendDirectVibeMail = mutation({
       isSent: true,
       recipientFid: args.recipientFid,
       recipientUsername: recipientCard.username,
+      // NFT Gift
+      giftNftName: args.giftNftName,
+      giftNftImageUrl: args.giftNftImageUrl,
+      giftNftCollection: args.giftNftCollection,
     });
 
     // Give 100 VBMS to recipient (always, both free and paid give rewards)
