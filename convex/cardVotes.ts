@@ -482,6 +482,8 @@ export const getMessagesForCard = query({
       _id: m._id,
       message: m.message,
       audioId: m.audioId,
+      imageId: m.imageId,
+      voterFid: m.voterFid,
       isRead: m.isRead ?? false,
       createdAt: m.createdAt,
       voteCount: m.voteCount,
