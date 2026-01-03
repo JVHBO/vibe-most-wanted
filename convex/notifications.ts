@@ -1214,3 +1214,106 @@ export const sendBossDefeatedNotifications = internalAction({
     }
   },
 });
+
+
+// ============================================================================
+// VIBEMAIL NOTIFICATIONS
+// ============================================================================
+
+/**
+ * Send notification when someone receives a VibeMail (anonymous message with vote)
+ * Sends via BOTH Neynar (Base App) AND Warpcast (Farcaster)
+ */
+export const sendVibemailNotification = internalAction({
+  args: {
+    recipientFid: v.number(),
+    hasAudio: v.boolean(),
+  },
+  handler: async (ctx, { recipientFid, hasAudio }) => {
+    const title = "💌 New VibeMail!";
+    const body = hasAudio
+      ? "Someone sent you a message with a sound! Check your inbox 🔊"
+      : "Someone sent you an anonymous message! Check your inbox 📬";
+    const targetUrl = "https://vibefid.xyz";
+
+    console.log(`💌 Sending VibeMail notification to FID ${recipientFid}...`);
+
+    let neynarSent = false;
+    let warpcastSent = false;
+
+    // 1️⃣ NEYNAR API (Base App)
+    if (process.env.NEYNAR_API_KEY) {
+      try {
+        const uuid = crypto.randomUUID();
+        const payload = {
+          target_fids: [recipientFid],
+          notification: { title, body, target_url: targetUrl, uuid }
+        };
+
+        const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": process.env.NEYNAR_API_KEY
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+          console.log(`📱 VibeMail notification sent via Neynar (Base App)`);
+          neynarSent = true;
+        } else {
+          const errorText = await response.text();
+          console.log(`📱 Neynar failed: ${errorText}`);
+        }
+      } catch (error: any) {
+        console.log(`📱 Neynar error: ${error.message}`);
+      }
+    }
+
+    // 2️⃣ WARPCAST TOKEN API (Farcaster)
+    try {
+      const tokenData = await ctx.runQuery(internal.notifications.getTokenByFidInternal, {
+        fid: String(recipientFid)
+      });
+
+      if (tokenData && !tokenData.url.includes("neynar")) {
+        const payload = {
+          notificationId: `vibemail_${Date.now()}_${recipientFid}`.slice(0, 128),
+          title,
+          body,
+          tokens: [tokenData.token],
+          targetUrl,
+        };
+
+        const response = await fetch(tokenData.url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          const data = result.result || result;
+          if (data.successfulTokens?.includes(tokenData.token)) {
+            console.log(`📬 VibeMail notification sent via Warpcast (Farcaster)`);
+            warpcastSent = true;
+          }
+        } else {
+          const errorText = await response.text();
+          console.log(`📬 Warpcast failed: ${errorText}`);
+        }
+      } else if (tokenData) {
+        console.log(`📬 Recipient has Neynar token only (already sent above)`);
+      } else {
+        console.log(`📬 No Warpcast token found for FID ${recipientFid}`);
+      }
+    } catch (error: any) {
+      console.log(`📬 Warpcast error: ${error.message}`);
+    }
+
+    const sent = neynarSent || warpcastSent;
+    console.log(`💌 VibeMail notification result: Neynar=${neynarSent}, Warpcast=${warpcastSent}`);
+    return { sent, neynarSent, warpcastSent };
+  },
+});

@@ -1558,7 +1558,11 @@ export default defineSchema({
     // VibeMail - Anonymous message with vote
     message: v.optional(v.string()),
     audioId: v.optional(v.string()),
+    imageId: v.optional(v.string()),
     isRead: v.optional(v.boolean()),
+    isSent: v.optional(v.boolean()),
+    recipientFid: v.optional(v.number()),
+    recipientUsername: v.optional(v.string()),
   })
     .index("by_card_date", ["cardFid", "date"])
     .index("by_voter_date", ["voterFid", "date"])

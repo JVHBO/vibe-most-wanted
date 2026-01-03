@@ -631,19 +631,25 @@ export const getRecentVibeMails = query({
   },
 });
 
-// Get sent messages by a user (voterFid)
+// Get sent messages by a user (voterFid or senderFid for backwards compatibility)
 export const getSentMessages = query({
   args: {
-    voterFid: v.number(),
+    voterFid: v.optional(v.number()),
+    senderFid: v.optional(v.number()), // backwards compatibility
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const limit = args.limit || 50;
+    const fid = args.voterFid || args.senderFid;
+
+    if (!fid) {
+      return [];
+    }
 
     // Get all votes sent by this user that have messages
     const allVotes = await ctx.db
       .query("cardVotes")
-      .withIndex("by_voter_date", (q) => q.eq("voterFid", args.voterFid))
+      .withIndex("by_voter_date", (q) => q.eq("voterFid", fid))
       .collect();
 
     // Filter to only votes with messages and sort by creation time
@@ -720,10 +726,12 @@ export const sendDirectVibeMail = mutation({
     message: v.string(),
     audioId: v.optional(v.string()),
     imageId: v.optional(v.string()),
+    isPaid: v.optional(v.boolean()), // true = 100 VBMS, false = free
   },
   handler: async (ctx, args) => {
     const now = Date.now();
     const today = new Date().toISOString().split('T')[0];
+    const isPaid = args.isPaid ?? false;
 
     // Cannot send to yourself
     if (args.senderFid === args.recipientFid) {
@@ -740,13 +748,13 @@ export const sendDirectVibeMail = mutation({
       throw new Error("Recipient card not found");
     }
 
-    // Insert as a vote with message (free vote with VibeMail)
+    // Insert as a vote with message
     await ctx.db.insert("cardVotes", {
       cardFid: args.recipientFid,
       voterFid: args.senderFid,
       voterAddress: args.senderAddress.toLowerCase(),
       date: today,
-      isPaid: false,
+      isPaid,
       voteCount: 1,
       createdAt: now,
       message: args.message.slice(0, 200),
@@ -758,7 +766,7 @@ export const sendDirectVibeMail = mutation({
       recipientUsername: recipientCard.username,
     });
 
-    // Give 100 VBMS to recipient
+    // Give 100 VBMS to recipient (always, both free and paid give rewards)
     const existingReward = await ctx.db
       .query("vibeRewards")
       .withIndex("by_fid", (q) => q.eq("fid", args.recipientFid))
@@ -777,6 +785,15 @@ export const sendDirectVibeMail = mutation({
         claimedVbms: 0,
         totalVotes: 1,
         lastVoteAt: now,
+      });
+    }
+
+    // Send notification
+    const hasContent = args.message?.trim() || args.imageId;
+    if (hasContent) {
+      await ctx.scheduler.runAfter(0, internal.notifications.sendVibemailNotification, {
+        recipientFid: args.recipientFid,
+        hasAudio: !!args.audioId,
       });
     }
 
