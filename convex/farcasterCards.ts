@@ -551,9 +551,10 @@ export const upgradeCardRarity = mutation({
       rarity: args.newRarity,
       neynarScore: args.newNeynarScore, // Update card score to current score at upgrade time
       power: newPower,
-      // Mark when upgraded
+      // Mark when upgraded - save history for tracking
       upgradedAt: Date.now(),
       previousRarity: card.rarity,
+      previousNeynarScore: card.neynarScore, // Save the score before upgrade
     });
 
     console.log(`✅ Card upgraded: FID ${args.fid} from ${card.rarity} to ${args.newRarity} (Power: ${card.power} → ${newPower})`);
@@ -671,6 +672,89 @@ export const getCardImagesOnly = query({
       fid: card.fid,
       cardImageUrl: card.cardImageUrl,
     }));
+  },
+});
+
+/**
+ * Reimport a Farcaster card from backup/blockchain data
+ * Used to restore accidentally deleted cards
+ */
+export const reimportCard = mutation({
+  args: {
+    fid: v.number(),
+    username: v.string(),
+    displayName: v.string(),
+    pfpUrl: v.string(),
+    bio: v.string(),
+    neynarScore: v.number(),
+    followerCount: v.number(),
+    followingCount: v.number(),
+    powerBadge: v.boolean(),
+    address: v.string(),
+    rarity: v.string(),
+    foil: v.string(),
+    wear: v.string(),
+    power: v.number(),
+    suit: v.string(),
+    rank: v.string(),
+    suitSymbol: v.string(),
+    color: v.string(),
+    imageUrl: v.string(),
+    cardImageUrl: v.optional(v.string()),
+    shareImageUrl: v.optional(v.string()),
+    contractAddress: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const normalizedAddress = args.address.toLowerCase();
+
+    // Check if card already exists
+    const existing = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (existing) {
+      return { success: false, error: "Card already exists", fid: args.fid };
+    }
+
+    const timestamp = Date.now();
+    const cardId = `farcaster_${args.fid}_${timestamp}`;
+
+    // Insert with ALL required fields
+    await ctx.db.insert("farcasterCards", {
+      fid: args.fid,
+      username: args.username,
+      displayName: args.displayName,
+      pfpUrl: args.pfpUrl,
+      bio: (args.bio || "").slice(0, 200),
+      address: normalizedAddress,
+      contractAddress: args.contractAddress || "0x60274a138d026e3cb337b40567100fdec3127565",
+      cardId,
+      rarity: args.rarity,
+      foil: args.foil,
+      wear: args.wear,
+      status: "Rarity Assigned",
+      power: args.power,
+      suit: args.suit,
+      rank: args.rank,
+      suitSymbol: args.suitSymbol,
+      color: args.color,
+      neynarScore: args.neynarScore,
+      latestNeynarScore: args.neynarScore,
+      latestScoreCheckedAt: timestamp,
+      followerCount: args.followerCount,
+      followingCount: args.followingCount,
+      powerBadge: args.powerBadge,
+      imageUrl: args.imageUrl,
+      cardImageUrl: args.cardImageUrl,
+      shareImageUrl: args.shareImageUrl,
+      // CRITICAL: These required fields were missing before!
+      equipped: false,
+      mintedAt: timestamp,
+    });
+
+    console.log(`✅ Reimported card: FID ${args.fid} (@${args.username}) - ${args.rarity}`);
+    return { success: true, fid: args.fid };
   },
 });
 
