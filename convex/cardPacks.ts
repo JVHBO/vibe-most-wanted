@@ -1576,3 +1576,131 @@ export const restoreCards = internalMutation({
   },
 });
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// GIFT PACK SYSTEM - Send packs via VibeMail
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Gift a pack to another user via VibeMail
+ * Sender pays with TESTVBMS balance, recipient receives the pack
+ *
+ * Pack prices (same as buyPack):
+ * - basic: 1,000 TESTVBMS (1 card)
+ * - boosted: 5,000 TESTVBMS (1 card, better odds)
+ * - premium: 10,000 TESTVBMS (5 cards)
+ * - elite: 100,000 TESTVBMS (5 cards, best odds)
+ */
+export const giftPack = mutation({
+  args: {
+    senderAddress: v.string(),
+    recipientAddress: v.string(),
+    packType: v.union(v.literal("basic"), v.literal("boosted"), v.literal("premium"), v.literal("elite")),
+  },
+  handler: async (ctx, args) => {
+    const senderAddress = args.senderAddress.toLowerCase();
+    const recipientAddress = args.recipientAddress.toLowerCase();
+
+    // Can't gift to yourself
+    if (senderAddress === recipientAddress) {
+      throw new Error("Não pode enviar pack para você mesmo");
+    }
+
+    // Get pack info
+    const packInfo = PACK_TYPES[args.packType];
+    if (!packInfo || packInfo.price === 0) {
+      throw new Error("Tipo de pack inválido");
+    }
+
+    const packPrice = packInfo.price;
+
+    // Get sender profile
+    const senderProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", senderAddress))
+      .first();
+
+    if (!senderProfile) {
+      throw new Error("Perfil do remetente não encontrado");
+    }
+
+    // Check sender has enough coins
+    const senderCoins = senderProfile.coins || 0;
+    if (senderCoins < packPrice) {
+      throw new Error(`Saldo insuficiente. Precisa de ${packPrice.toLocaleString()} TESTVBMS, tem ${senderCoins.toLocaleString()}`);
+    }
+
+    // Check recipient exists
+    const recipientProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", recipientAddress))
+      .first();
+
+    if (!recipientProfile) {
+      throw new Error("Perfil do destinatário não encontrado");
+    }
+
+    // Deduct coins from sender
+    await ctx.db.patch(senderProfile._id, {
+      coins: senderCoins - packPrice,
+      lifetimeSpent: (senderProfile.lifetimeSpent || 0) + packPrice,
+    });
+
+    // Log sender transaction
+    await logTransaction(ctx, {
+      address: senderAddress,
+      type: 'spend',
+      amount: -packPrice,
+      source: 'gift_pack',
+      description: `Gifted ${args.packType} pack to ${recipientProfile.username}`,
+      balanceBefore: senderCoins,
+      balanceAfter: senderCoins - packPrice,
+    });
+
+    // Give pack to recipient
+    const existingPack = await ctx.db
+      .query("cardPacks")
+      .withIndex("by_address_packType", (q) => q.eq("address", recipientAddress).eq("packType", args.packType))
+      .first();
+
+    if (existingPack) {
+      await ctx.db.patch(existingPack._id, {
+        unopened: existingPack.unopened + 1,
+      });
+    } else {
+      await ctx.db.insert("cardPacks", {
+        address: recipientAddress,
+        packType: args.packType,
+        unopened: 1,
+        earnedAt: Date.now(),
+        sourceId: `gift_from_${senderAddress}`,
+      });
+    }
+
+    console.log(`🎁 GIFT PACK: ${senderProfile.username} sent ${args.packType} pack to ${recipientProfile.username} (${packPrice} TESTVBMS)`);
+
+    return {
+      success: true,
+      packType: args.packType,
+      packPrice,
+      senderUsername: senderProfile.username,
+      recipientUsername: recipientProfile.username,
+      senderNewBalance: senderCoins - packPrice,
+    };
+  },
+});
+
+/**
+ * Get available gift pack options with prices
+ */
+export const getGiftPackOptions = query({
+  args: {},
+  handler: async () => {
+    return [
+      { type: "basic", name: "Basic Pack", price: 1000, cards: 1, description: "1 card" },
+      { type: "boosted", name: "Boosted Pack", price: 5000, cards: 1, description: "1 card, better odds" },
+      { type: "premium", name: "Premium Pack", price: 10000, cards: 5, description: "5 cards" },
+      { type: "elite", name: "Elite Pack", price: 100000, cards: 5, description: "5 cards, best odds" },
+    ];
+  },
+});
+

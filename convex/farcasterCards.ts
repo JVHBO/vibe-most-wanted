@@ -42,6 +42,9 @@ export const mintFarcasterCard = mutation({
 
     // Contract
     contractAddress: v.optional(v.string()), // NFT contract address
+    
+    // Optional: User language preference
+    language: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const normalizedAddress = args.address.toLowerCase();
@@ -139,6 +142,48 @@ export const mintFarcasterCard = mutation({
 
     // Mark VibeFID minted mission - handled by VBMS deployment
     // VibeFID standalone doesnt have the missions module
+
+    // Send welcome VibeMail
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const welcomeMessage = `🎉 **Welcome to VibeFID, ${args.username}!**
+
+Your **${args.rarity}** card has been created!
+
+📱 **VibeFID** → Your Farcaster profile became a collectible card! Power is based on your Neynar Score.
+
+🎮 [Vibe Most Wanted](https://farcaster.xyz/miniapps/UpOGC4pheWVP/vbms) → Battle with your card in Poker and PvP. Bet VBMS in Mecha Arena and fight Raid Bosses!
+
+🃏 **Partner Collections** → Cards from partner projects also work in battles!
+
+🎯 **Wanted Cast** → Interact with featured posts and earn VBMS!
+
+📬 **VibeMail** → Your inbox for anonymous messages.
+
+Good luck! 🚀`;
+
+      await ctx.db.insert("cardVotes", {
+        cardFid: args.fid,
+        voterFid: 0, // System
+        voterAddress: "0x0000000000000000000000000000000000000000",
+        date: today,
+        createdAt: Date.now(),
+        voteCount: 0,
+        isPaid: false,
+        message: welcomeMessage,
+        isRead: false,
+      });
+
+      // Send notification
+      await ctx.scheduler.runAfter(0, internal.notifications.sendVibemailNotification, {
+        recipientFid: args.fid,
+        hasAudio: false,
+      });
+
+      console.log(`📬 Welcome VibeMail sent to FID ${args.fid}`);
+    } catch (error) {
+      console.error("Failed to send welcome VibeMail:", error);
+    }
 
     return {
       success: true,
@@ -681,6 +726,31 @@ export const updateCardImages = mutation({
       cardImageUrl: args.cardImageUrl,
       shareImageUrl: args.shareImageUrl,
     };
+  },
+});
+
+
+/**
+ * Update card pfpUrl (admin only - for fixing broken profile pictures)
+ */
+export const updateCardPfp = mutation({
+  args: {
+    fid: v.number(),
+    pfpUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (!card) {
+      throw new Error(`No card found for FID ${args.fid}`);
+    }
+
+    await ctx.db.patch(card._id, { pfpUrl: args.pfpUrl });
+    console.log(`✅ Updated pfpUrl for FID ${args.fid}`);
+    return { success: true, fid: args.fid };
   },
 });
 
