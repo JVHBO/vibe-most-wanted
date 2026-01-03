@@ -62,6 +62,7 @@ import type * as shopAnnouncement from "../shopAnnouncement.js";
 import type * as socialQuests from "../socialQuests.js";
 import type * as stats from "../stats.js";
 import type * as testHelpers from "../testHelpers.js";
+import type * as txHistory from "../txHistory.js";
 import type * as utils from "../utils.js";
 import type * as vbmsClaim from "../vbmsClaim.js";
 import type * as vibeRewards from "../vibeRewards.js";
@@ -129,6 +130,7 @@ declare const fullApi: ApiFromModules<{
   socialQuests: typeof socialQuests;
   stats: typeof stats;
   testHelpers: typeof testHelpers;
+  txHistory: typeof txHistory;
   utils: typeof utils;
   vbmsClaim: typeof vbmsClaim;
   vibeRewards: typeof vibeRewards;
