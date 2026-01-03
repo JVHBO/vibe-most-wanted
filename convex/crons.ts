@@ -20,7 +20,7 @@ crons.interval(
 // Raid boss auto attacks (every 7 minutes) - optimized from 5 min
 crons.interval(
   "raid boss auto attacks",
-  { minutes: 15 },  // Increased from 7 to reduce bandwidth
+  { minutes: 7 },
   internal.raidBoss.processAutoAttacks
 );
 
@@ -53,14 +53,6 @@ crons.interval(
   "update full leaderboard cache",
   { minutes: 30 },
   internal.profiles.updateLeaderboardFullCache
-);
-
-// 🚀 Most Wanted ranking cache update (every 30 minutes)
-// Reduces getRanking bandwidth by ~90%
-crons.interval(
-  "update most wanted cache",
-  { minutes: 30 },
-  internal.mostWanted.updateMostWantedCache
 );
 
 // 🎯 Cast Auction lifecycle (every 5 minutes) - was 2 minutes

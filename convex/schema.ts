@@ -1335,26 +1335,6 @@ export default defineSchema({
   })
     .index("by_type", ["type"]),
 
-  // Most Wanted Ranking Cache (reduces getRanking bandwidth by ~90%)
-  mostWantedCache: defineTable({
-    type: v.literal("most_wanted"), // Cache type identifier
-    data: v.array(v.object({
-      fid: v.number(),
-      username: v.string(),
-      displayName: v.optional(v.string()),
-      pfpUrl: v.optional(v.string()),
-      cardImageUrl: v.optional(v.string()),
-      rarity: v.optional(v.string()),
-      mintScore: v.number(),
-      currentScore: v.number(),
-      scoreDiff: v.number(),
-      votes: v.number(),
-    })),
-    totalCount: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_type", ["type"]),
-
   // ═══════════════════════════════════════════════════════════════════════════════
   // FEATURED CAST AUCTIONS (Bid to feature casts)
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -1591,8 +1571,7 @@ export default defineSchema({
   })
     .index("by_card_date", ["cardFid", "date"])
     .index("by_voter_date", ["voterFid", "date"])
-    .index("by_date", ["date"])
-    .index("by_card_unread", ["cardFid", "isRead"]),  // For unread message count
+    .index("by_date", ["date"]),
 
   // 📊 Daily Vote Leaderboard
   dailyVoteLeaderboard: defineTable({
