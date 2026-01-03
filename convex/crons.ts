@@ -20,7 +20,7 @@ crons.interval(
 // Raid boss auto attacks (every 7 minutes) - optimized from 5 min
 crons.interval(
   "raid boss auto attacks",
-  { minutes: 7 },
+  { minutes: 15 },
   internal.raidBoss.processAutoAttacks
 );
 

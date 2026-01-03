@@ -1571,7 +1571,8 @@ export default defineSchema({
   })
     .index("by_card_date", ["cardFid", "date"])
     .index("by_voter_date", ["voterFid", "date"])
-    .index("by_date", ["date"]),
+    .index("by_date", ["date"])
+    .index("by_card_unread", ["cardFid", "isRead"]),
 
   // 📊 Daily Vote Leaderboard
   dailyVoteLeaderboard: defineTable({
