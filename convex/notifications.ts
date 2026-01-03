@@ -45,6 +45,22 @@ export const getTokenByFidInternal = internalQuery({
 });
 
 /**
+ * Get ALL notification tokens by FID (internal version)
+ * Returns all tokens (VBMS + VibeFID + Neynar) for a user
+ */
+export const getAllTokensByFidInternal = internalQuery({
+  args: { fid: v.string() },
+  handler: async (ctx, { fid }) => {
+    const tokens = await ctx.db
+      .query("notificationTokens")
+      .withIndex("by_fid", (q) => q.eq("fid", fid))
+      .collect();
+
+    return tokens;
+  },
+});
+
+/**
  * Get all notification tokens (for internal use only)
  * 🚀 BANDWIDTH FIX: Converted to internalQuery to prevent public abuse
  */
@@ -70,74 +86,71 @@ function getPlatformFromUrl(url: string): string {
 
 /**
  * Save or update notification token for a user
- * 🔧 FIX: Now supports multiple tokens per FID (one per platform)
+ * 🔧 FIX: Now supports multiple tokens per FID (one per platform + app)
  * User can receive notifications on BOTH Warpcast and Base App
+ * User can have separate tokens for VBMS and VibeFID apps
  */
 export const saveToken = mutation({
   args: {
     fid: v.string(),
     token: v.string(),
     url: v.string(),
+    app: v.optional(v.string()), // "vbms" or "vibefid"
   },
-  handler: async (ctx, { fid, token, url }) => {
+  handler: async (ctx, { fid, token, url, app }) => {
     const now = Date.now();
     const platform = getPlatformFromUrl(url);
+    const appName = app || "vbms"; // Default to vbms for backward compatibility
 
-    // 🔧 FIX: Check if token exists for this FID + PLATFORM combo
-    // This allows one token per platform (warpcast + neynar can coexist)
-    const existing = await ctx.db
+    // 🔧 FIX: Check if token exists for this FID + PLATFORM + APP combo
+    // This allows separate tokens for each app (vbms + vibefid can coexist)
+    const allTokens = await ctx.db
       .query("notificationTokens")
-      .withIndex("by_fid_platform", (q) => q.eq("fid", fid).eq("platform", platform))
-      .first();
+      .withIndex("by_fid", (q) => q.eq("fid", fid))
+      .collect();
+
+    // Find existing token for this platform + app combo
+    const existing = allTokens.find(t => t.platform === platform && t.app === appName);
 
     if (existing) {
-      // Update existing token for this platform
+      // Update existing token for this platform + app
       await ctx.db.patch(existing._id, {
         token,
         url,
         platform,
+        app: appName,
         lastUpdated: now,
       });
-      console.log(`✅ Updated ${platform} notification token for FID ${fid}`);
+      console.log(`✅ Updated ${platform}/${appName} notification token for FID ${fid}`);
       return existing._id;
     } else {
-      // Check if there's an OLD token without platform field (migration)
-      const legacyToken = await ctx.db
-        .query("notificationTokens")
-        .withIndex("by_fid", (q) => q.eq("fid", fid))
-        .filter((q) => q.eq(q.field("platform"), undefined))
-        .first();
+      // Check if there's an OLD token without app field (migration)
+      const legacyToken = allTokens.find(t => t.platform === platform && !t.app);
 
       if (legacyToken) {
-        // Migrate legacy token: add platform field
-        const legacyPlatform = getPlatformFromUrl(legacyToken.url);
-        await ctx.db.patch(legacyToken._id, { platform: legacyPlatform });
-        console.log(`🔄 Migrated legacy token for FID ${fid} to platform ${legacyPlatform}`);
-
-        // If same platform, update it
-        if (legacyPlatform === platform) {
-          await ctx.db.patch(legacyToken._id, {
-            token,
-            url,
-            platform,
-            lastUpdated: now,
-          });
-          console.log(`✅ Updated ${platform} notification token for FID ${fid}`);
-          return legacyToken._id;
-        }
-        // If different platform, create new entry (fall through)
+        // Migrate legacy token: add app field
+        await ctx.db.patch(legacyToken._id, {
+          app: appName,
+          token,
+          url,
+          platform,
+          lastUpdated: now,
+        });
+        console.log(`🔄 Migrated legacy token for FID ${fid} to ${platform}/${appName}`);
+        return legacyToken._id;
       }
 
-      // Create new token for this platform
+      // Create new token for this platform + app
       const newId = await ctx.db.insert("notificationTokens", {
         fid,
         token,
         url,
         platform,
+        app: appName,
         createdAt: now,
         lastUpdated: now,
       });
-      console.log(`✅ Created ${platform} notification token for FID ${fid}`);
+      console.log(`✅ Created ${platform}/${appName} notification token for FID ${fid}`);
       return newId;
     }
   },
@@ -1222,7 +1235,7 @@ export const sendBossDefeatedNotifications = internalAction({
 
 /**
  * Send notification when someone receives a VibeMail (anonymous message with vote)
- * Sends via BOTH Neynar (Base App) AND Warpcast (Farcaster)
+ * 🔧 FIX: Sends to ALL tokens for the user (VBMS + VibeFID + Neynar)
  */
 export const sendVibemailNotification = internalAction({
   args: {
@@ -1232,31 +1245,30 @@ export const sendVibemailNotification = internalAction({
   handler: async (ctx, { recipientFid, hasAudio }) => {
     const title = "💌 New VibeMail!";
     const body = hasAudio
-      ? "Someone sent you a message with a sound! Check your inbox 🔊"
-      : "Someone sent you an anonymous message! Check your inbox 📬";
-    
-    // 🔧 FIX: Get token first to determine which app/domain to use
-    const tokenData = await ctx.runQuery(internal.notifications.getTokenByFidInternal, {
-      fid: String(recipientFid)
-    });
-    
-    // Use domain based on which app the token was registered from
-    const targetUrl = tokenData?.app === "vibefid" 
-      ? "https://vibefid.xyz" 
-      : "https://www.vibemostwanted.xyz";
+      ? "Someone sent you a message with a sound! Check your inbox"
+      : "Someone sent you an anonymous message! Check your inbox";
 
     console.log(`💌 Sending VibeMail notification to FID ${recipientFid}...`);
 
-    let neynarSent = false;
-    let warpcastSent = false;
+    // Get ALL tokens for this FID (VBMS + VibeFID + Neynar)
+    const allTokens = await ctx.runQuery(internal.notifications.getAllTokensByFidInternal, {
+      fid: String(recipientFid)
+    });
 
-    // 1️⃣ NEYNAR API (Base App)
+    console.log(`💌 Found ${allTokens.length} tokens for FID ${recipientFid}`);
+
+    let neynarSent = false;
+    let warpcastSent = 0;
+    let vibefidSent = 0;
+
+    // 1️⃣ NEYNAR API (Base App) - sends to all Neynar tokens
     if (process.env.NEYNAR_API_KEY) {
       try {
         const uuid = crypto.randomUUID();
+        // Use VBMS domain for Neynar (Base App users)
         const payload = {
           target_fids: [recipientFid],
-          notification: { title, body, target_url: targetUrl, uuid }
+          notification: { title, body, target_url: "https://vibefid.xyz", uuid }
         };
 
         const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
@@ -1280,12 +1292,18 @@ export const sendVibemailNotification = internalAction({
       }
     }
 
-    // 2️⃣ WARPCAST TOKEN API (Farcaster)
-    try {
+    // 2️⃣ WARPCAST TOKEN API - send to ALL non-Neynar tokens
+    const warpcastTokens = allTokens.filter(t => !t.url.includes("neynar"));
 
-      if (tokenData && !tokenData.url.includes("neynar")) {
+    for (const tokenData of warpcastTokens) {
+      try {
+        // Use correct domain based on app
+        const targetUrl = tokenData.app === "vibefid"
+          ? "https://vibefid.xyz"
+          : "https://www.vibemostwanted.xyz";
+
         const payload = {
-          notificationId: `vibemail_${Date.now()}_${recipientFid}`.slice(0, 128),
+          notificationId: `vibemail_${Date.now()}_${recipientFid}_${tokenData.app || 'vbms'}`.slice(0, 128),
           title,
           body,
           tokens: [tokenData.token],
@@ -1301,25 +1319,27 @@ export const sendVibemailNotification = internalAction({
         if (response.ok) {
           const result = await response.json();
           const data = result.result || result;
-          if (data.successfulTokens?.includes(tokenData.token)) {
-            console.log(`📬 VibeMail notification sent via Warpcast (Farcaster)`);
-            warpcastSent = true;
+          if (data.successfulTokens?.includes(tokenData.token) ||
+              (!data.invalidTokens && !data.rateLimitedTokens)) {
+            if (tokenData.app === "vibefid") {
+              vibefidSent++;
+              console.log(`📬 VibeMail sent to VibeFID app`);
+            } else {
+              warpcastSent++;
+              console.log(`📬 VibeMail sent to VBMS/Warpcast`);
+            }
           }
         } else {
           const errorText = await response.text();
-          console.log(`📬 Warpcast failed: ${errorText}`);
+          console.log(`📬 Warpcast failed for ${tokenData.app || 'vbms'}: ${errorText}`);
         }
-      } else if (tokenData) {
-        console.log(`📬 Recipient has Neynar token only (already sent above)`);
-      } else {
-        console.log(`📬 No Warpcast token found for FID ${recipientFid}`);
+      } catch (error: any) {
+        console.log(`📬 Warpcast error for ${tokenData.app || 'vbms'}: ${error.message}`);
       }
-    } catch (error: any) {
-      console.log(`📬 Warpcast error: ${error.message}`);
     }
 
-    const sent = neynarSent || warpcastSent;
-    console.log(`💌 VibeMail notification result: Neynar=${neynarSent}, Warpcast=${warpcastSent}`);
-    return { sent, neynarSent, warpcastSent };
+    const sent = neynarSent || warpcastSent > 0 || vibefidSent > 0;
+    console.log(`💌 VibeMail result: Neynar=${neynarSent}, Warpcast=${warpcastSent}, VibeFID=${vibefidSent}`);
+    return { sent, neynarSent, warpcastSent, vibefidSent };
   },
 });
