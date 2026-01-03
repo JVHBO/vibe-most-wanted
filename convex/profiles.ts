@@ -188,8 +188,9 @@ export const getProfileDashboard = query({
     const pveRemaining = Math.max(0, MAX_PVE_ATTEMPTS - pveUsed);
 
     // Cooldown for conversion (3 minutes)
+    // 🔧 FIX: Use lastConversionAttempt (persists after conversion), not pendingConversionTimestamp (cleared after)
     const COOLDOWN_MS = 3 * 60 * 1000;
-    const lastConversion = profile.pendingConversionTimestamp || 0;
+    const lastConversion = profile.lastConversionAttempt || profile.pendingConversionTimestamp || 0;
     const timeSinceLastConversion = Date.now() - lastConversion;
     const cooldownRemaining = lastConversion > 0 && timeSinceLastConversion < COOLDOWN_MS
       ? Math.ceil((COOLDOWN_MS - timeSinceLastConversion) / 1000)
@@ -708,6 +709,10 @@ export const linkWallet = mutation({
       .first();
 
     if (existingProfile && existingProfile._id !== profile._id) {
+      // 🔒 SECURITY: Check if profiles have different FIDs
+      if (existingProfile.farcasterFid && existingProfile.farcasterFid !== args.fid) {
+        throw new Error("Não é possível linkar wallets com FIDs diferentes. Use 'Merge Account' se quiser unir contas.");
+      }
       throw new Error("This wallet already has a profile. Cannot link.");
     }
 
@@ -1375,6 +1380,14 @@ export const useMergeCode = mutation({
 
     if (!oldProfile) {
       throw new Error("Perfil antigo não encontrado");
+    }
+
+    // 🔒 SECURITY: Prevent merging accounts with DIFFERENT FIDs
+    // Only allow merge if:
+    // 1. Old profile has no FID (can be absorbed by any FID account)
+    // 2. Old profile has the SAME FID (legitimate multi-wallet user)
+    if (oldProfile.farcasterFid && oldProfile.farcasterFid !== fidProfile.farcasterFid) {
+      throw new Error("Não é possível mergear contas com FIDs diferentes. Ambas as contas têm FIDs distintos.");
     }
 
     // Check if old wallet is already linked somewhere else
