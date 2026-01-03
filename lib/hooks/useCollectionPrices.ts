@@ -63,7 +63,6 @@ const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
   poorlydrawnpepes: '0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8',
   teampothead: '0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea',
   tarot: '0x34d639c63384a00a2d25a58f73bea73856aa0550',
-  americanfootball: '0xe3910325daaef5d969e6db5eca1ff0117bb160ae',
   baseballcabal: '0x3ff41af61d092657189b1d4f7d74d994514724bb',
   vibefx: '0xc7f2d8c035b2505f30a5417c0374ac0299d88553',
   historyofcomputer: '0x319b12e8eba0be2eae1112b357ba75c2c178b567',
@@ -79,7 +78,6 @@ const TICKER_COLLECTIONS: { id: string; displayName: string; emoji: string }[] =
   { id: 'poorlydrawnpepes', displayName: 'Poorly Drawn Pepes', emoji: '🐸' },
   { id: 'teampothead', displayName: 'Team Pothead', emoji: '🌿' },
   { id: 'tarot', displayName: 'Tarot', emoji: '🔮' },
-  { id: 'americanfootball', displayName: 'American Football', emoji: '🏈' },
   { id: 'baseballcabal', displayName: 'Baseball Cabal', emoji: '⚾' },
   { id: 'vibefx', displayName: 'Vibe FX', emoji: '✨' },
   { id: 'historyofcomputer', displayName: 'History of Computer', emoji: '💻' },
@@ -155,7 +153,6 @@ export function useCollectionPrices() {
   const meowverse = usePrice(COLLECTION_CONTRACTS.meowverse);
   const poorlydrawnpepes = usePrice(COLLECTION_CONTRACTS.poorlydrawnpepes);
   const teampothead = usePrice(COLLECTION_CONTRACTS.teampothead);
-  const americanfootball = usePrice(COLLECTION_CONTRACTS.americanfootball);
   const vibefx = usePrice(COLLECTION_CONTRACTS.vibefx);
   const viberotbangers = usePrice(COLLECTION_CONTRACTS.viberotbangers);
 
@@ -173,7 +170,7 @@ export function useCollectionPrices() {
 
   const priceData: Record<string, { priceWei: bigint | undefined; priceEth: string; isLoading: boolean }> = {
     vibe, gmvbrs, viberuto, meowverse, poorlydrawnpepes,
-    teampothead, tarot, americanfootball, baseballcabal, vibefx, historyofcomputer, cumioh, viberotbangers,
+    teampothead, tarot, baseballcabal, vibefx, historyofcomputer, cumioh, viberotbangers,
   };
 
   const isLoading = Object.values(priceData).some(p => p.isLoading) ||
