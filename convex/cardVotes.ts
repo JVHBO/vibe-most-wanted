@@ -537,12 +537,15 @@ export const broadcastVibeMail = mutation({
     recipientFids: v.array(v.number()), // List of FIDs to send to
     message: v.string(),
     audioId: v.optional(v.string()),
+    imageId: v.optional(v.string()), // Meme image
+    senderAddress: v.optional(v.string()), // Sender address
     senderFid: v.optional(v.number()), // Admin sender FID (default: 0 for system)
   },
   handler: async (ctx, args) => {
     const now = Date.now();
     const today = new Date().toISOString().split('T')[0];
-    const senderFid = args.senderFid || 0; // 0 = system message
+    const senderFid = args.senderFid || 0;
+    const senderAddress = args.senderAddress?.toLowerCase() || "0x0000000000000000000000000000000000000000";
 
     const results = [];
 
@@ -552,13 +555,14 @@ export const broadcastVibeMail = mutation({
         await ctx.db.insert("cardVotes", {
           cardFid: recipientFid,
           voterFid: senderFid,
-          voterAddress: "0x0000000000000000000000000000000000000000", // System address
+          voterAddress: senderAddress,
           date: today,
           createdAt: now,
           voteCount: 0, // No vote, just message
           isPaid: false,
           message: args.message.slice(0, 1000), // Increased limit for system messages
           audioId: args.audioId,
+          imageId: args.imageId,
           isRead: false,
         });
 
@@ -733,7 +737,7 @@ export const sendDirectVibeMail = mutation({
     senderAddress: v.string(),
     message: v.string(),
     audioId: v.optional(v.string()),
-    imageId: v.optional(v.string()),
+    imageId: v.optional(v.string()), // Meme image
     // NFT Gift fields
     giftNftName: v.optional(v.string()),
     giftNftImageUrl: v.optional(v.string()),
@@ -782,7 +786,7 @@ export const sendDirectVibeMail = mutation({
       createdAt: now,
       message: args.message.slice(0, 200),
       audioId: args.audioId,
-      imageId: args.imageId,
+          imageId: args.imageId,
       isRead: false,
       isSent: true,
       recipientFid: args.recipientFid,
@@ -836,7 +840,7 @@ export const replyToMessage = mutation({
     senderAddress: v.string(),
     message: v.string(),
     audioId: v.optional(v.string()),
-    imageId: v.optional(v.string()),
+    imageId: v.optional(v.string()), // Meme image
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -922,5 +926,92 @@ export const clearAllVibeMails = mutation({
     }
     
     return { deleted };
+  },
+});
+
+// Get a random card (excluding sender)
+export const getRandomCard = query({
+  args: { excludeFid: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const allCards = await ctx.db
+      .query("farcasterCards")
+      .collect();
+
+    // Filter out the sender's card
+    const eligibleCards = args.excludeFid
+      ? allCards.filter(c => c.fid !== args.excludeFid)
+      : allCards;
+
+    if (eligibleCards.length === 0) return null;
+
+    // Pick a random card
+    const randomIndex = Math.floor(Math.random() * eligibleCards.length);
+    const card = eligibleCards[randomIndex];
+
+    return {
+      fid: card.fid,
+      username: card.username,
+      pfpUrl: card.pfpUrl,
+      displayName: card.displayName,
+    };
+  },
+});
+
+// Get multiple random cards for broadcast
+export const getRandomCards = query({
+  args: {
+    count: v.number(),
+    excludeFid: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const allCards = await ctx.db
+      .query("farcasterCards")
+      .collect();
+
+    // Filter out the sender's card
+    const eligibleCards = args.excludeFid
+      ? allCards.filter(c => c.fid !== args.excludeFid)
+      : allCards;
+
+    if (eligibleCards.length === 0) return [];
+
+    // Shuffle and pick count cards
+    const shuffled = [...eligibleCards].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, Math.min(args.count, eligibleCards.length));
+
+    return selected.map(card => ({
+      fid: card.fid,
+      username: card.username,
+      pfpUrl: card.pfpUrl,
+    }));
+  },
+});
+
+// Get a random card (mutation version for non-cached results)
+export const getRandomCardMutation = mutation({
+  args: { excludeFid: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const allCards = await ctx.db
+      .query("farcasterCards")
+      .collect();
+
+    // Filter out the sender's card
+    const eligibleCards = args.excludeFid
+      ? allCards.filter(c => c.fid !== args.excludeFid)
+      : allCards;
+
+    if (eligibleCards.length === 0) return null;
+
+    // Pick a random card
+    const randomIndex = Math.floor(Math.random() * eligibleCards.length);
+    const card = eligibleCards[randomIndex];
+
+    return {
+      fid: card.fid,
+      username: card.username,
+      pfpUrl: card.pfpUrl,
+      displayName: card.displayName,
+      address: card.address,
+    };
   },
 });
