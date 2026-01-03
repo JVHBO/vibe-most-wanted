@@ -1234,7 +1234,16 @@ export const sendVibemailNotification = internalAction({
     const body = hasAudio
       ? "Someone sent you a message with a sound! Check your inbox 🔊"
       : "Someone sent you an anonymous message! Check your inbox 📬";
-    const targetUrl = "https://vibefid.xyz";
+    
+    // 🔧 FIX: Get token first to determine which app/domain to use
+    const tokenData = await ctx.runQuery(internal.notifications.getTokenByFidInternal, {
+      fid: String(recipientFid)
+    });
+    
+    // Use domain based on which app the token was registered from
+    const targetUrl = tokenData?.app === "vibefid" 
+      ? "https://vibefid.xyz" 
+      : "https://www.vibemostwanted.xyz";
 
     console.log(`💌 Sending VibeMail notification to FID ${recipientFid}...`);
 
@@ -1273,9 +1282,6 @@ export const sendVibemailNotification = internalAction({
 
     // 2️⃣ WARPCAST TOKEN API (Farcaster)
     try {
-      const tokenData = await ctx.runQuery(internal.notifications.getTokenByFidInternal, {
-        fid: String(recipientFid)
-      });
 
       if (tokenData && !tokenData.url.includes("neynar")) {
         const payload = {
