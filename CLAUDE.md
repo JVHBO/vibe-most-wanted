@@ -262,3 +262,44 @@ ENDOFFILE
 ```
 
 Or create a `.cjs` script and run with `node script.cjs`.
+
+### Bug #7: mintFarcasterCard missing `language` field (Jan 2026)
+- **Symptoms**: Cards minted on-chain but not saved to Convex
+- **Error**: `ArgumentValidationError: Object contains extra field 'language' that is not in the validator`
+- **Cause**: Frontend sends `language` field for welcome message localization, but Convex mutation didn't accept it
+- **Fix**: Added `language: v.optional(v.string())` to `mintFarcasterCard` args
+- **Affected FIDs**: 213263, 285604, 520247, 264335
+
+### Bug #8: Welcome VibeMail not sent on mint (Jan 2026)
+- **Symptoms**: New card holders don't receive welcome message
+- **Cause**: `mintFarcasterCard` didn't have welcome VibeMail logic
+- **Fix**: Added `ctx.db.insert("cardVotes", {...})` with welcome message after card creation
+- **Note**: Use `voterFid: 0` and system address for automated messages
+
+### Card Regeneration Admin Page
+- **Location**: `/admin/regenerate` in vibe-most-wanted
+- **Purpose**: Regenerate card video + PNG for broken cards
+- **Process**:
+  1. Generates card image (client-side canvas)
+  2. Uploads PNG to IPFS via `/api/upload-nft-image`
+  3. Generates video with foil animation (3s static, 5s animated PFP)
+  4. Uploads video to IPFS via `/api/upload-nft-video`
+  5. Updates Convex with `updateCardImages`
+  6. Refreshes OpenSea metadata
+
+### VibeFID Card URLs
+- **imageUrl**: Video (WebM) - shown on OpenSea as animation
+- **cardImageUrl**: Static PNG - for sharing/thumbnails
+- **shareImageUrl**: Share image with criminal backstory text
+
+### OpenSea Refresh
+```bash
+curl -X POST "https://api.opensea.io/api/v2/chain/base/contract/0x60274A138d026E3cB337B40567100FdEC3127565/nfts/{FID}/refresh" -H "X-API-KEY: YOUR_KEY"
+```
+- Can take 1-5 minutes to process
+- Check with API: `GET /nfts/{FID}` and look for `animation_url`
+
+### Animated PFP (GIF) Cards
+- Videos are 5 seconds instead of 3 seconds
+- GIF frames are extracted and animated in the video
+- Check PFP type: `curl -sI {pfp_url} | grep Content-Type`

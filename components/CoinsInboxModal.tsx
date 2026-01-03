@@ -146,7 +146,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const { balance: vbmsWalletBalance } = useFarcasterVBMSBalance(address);
 
   // Get daily claim limits from contract
-  const { remaining: dailyRemaining, resetTime, isLoading: isLoadingLimits, hasError: hasLimitError } = useDailyClaimInfo(address as `0x${string}` | undefined);
+  const { remaining: dailyRemaining, resetTime, isLoading: isLoadingLimits, hasError: hasLimitError, refetch: refetchDailyLimit } = useDailyClaimInfo(address as `0x${string}` | undefined);
   const dailyRemainingNum = parseFloat(dailyRemaining);
   const canCheckLimit = !isLoadingLimits && !hasLimitError && dailyRemainingNum > 0;
 
@@ -377,6 +377,9 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
       toast.dismiss("conversion-wait");
       toast.success(`✅ ${result.amount.toLocaleString()} coins convertidos para VBMS!`);
+
+      // 🔄 Refetch daily limit after successful conversion
+      refetchDailyLimit();
 
       setTimeout(() => {
         onClose();

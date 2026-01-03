@@ -164,8 +164,9 @@ export const getInboxStatus = query({
     }
 
     // Calculate cooldown remaining (3 minutes = 180000ms)
+    // 🔧 FIX: Use lastConversionAttempt (persists after conversion), not pendingConversionTimestamp (cleared after)
     const COOLDOWN_MS = 3 * 60 * 1000;
-    const lastConversion = profile.pendingConversionTimestamp || 0;
+    const lastConversion = profile.lastConversionAttempt || profile.pendingConversionTimestamp || 0;
     const timeSinceLastConversion = Date.now() - lastConversion;
     const cooldownRemaining = lastConversion > 0 && timeSinceLastConversion < COOLDOWN_MS
       ? Math.ceil((COOLDOWN_MS - timeSinceLastConversion) / 1000)
