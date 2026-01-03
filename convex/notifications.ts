@@ -1245,101 +1245,44 @@ export const sendVibemailNotification = internalAction({
   handler: async (ctx, { recipientFid, hasAudio }) => {
     const title = "💌 New VibeMail!";
     const body = hasAudio
-      ? "Someone sent you a message with a sound! Check your inbox"
+      ? "Someone sent you a message with a sound! 🎵 Check your inbox"
       : "Someone sent you an anonymous message! Check your inbox";
 
-    console.log(`💌 Sending VibeMail notification to FID ${recipientFid}...`);
+    console.log();
 
-    // Get ALL tokens for this FID (VBMS + VibeFID + Neynar)
-    const allTokens = await ctx.runQuery(internal.notifications.getAllTokensByFidInternal, {
-      fid: String(recipientFid)
-    });
-
-    console.log(`💌 Found ${allTokens.length} tokens for FID ${recipientFid}`);
-
-    let neynarSent = false;
-    let warpcastSent = 0;
-    let vibefidSent = 0;
-
-    // 1️⃣ NEYNAR API (Base App) - sends to all Neynar tokens
-    if (process.env.NEYNAR_API_KEY) {
-      try {
-        const uuid = crypto.randomUUID();
-        // Use VBMS domain for Neynar (Base App users)
-        const payload = {
-          target_fids: [recipientFid],
-          notification: { title, body, target_url: "https://vibefid.xyz", uuid }
-        };
-
-        const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": process.env.NEYNAR_API_KEY
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-          console.log(`📱 VibeMail notification sent via Neynar (Base App)`);
-          neynarSent = true;
-        } else {
-          const errorText = await response.text();
-          console.log(`📱 Neynar failed: ${errorText}`);
-        }
-      } catch (error: any) {
-        console.log(`📱 Neynar error: ${error.message}`);
-      }
+    // Only use Neynar API - sends to VibeFID
+    if (!process.env.NEYNAR_API_KEY) {
+      console.log("📱 No NEYNAR_API_KEY configured");
+      return { sent: false };
     }
 
-    // 2️⃣ WARPCAST TOKEN API - send to ALL non-Neynar tokens
-    const warpcastTokens = allTokens.filter(t => !t.url.includes("neynar"));
+    try {
+      const uuid = crypto.randomUUID();
+      const payload = {
+        target_fids: [recipientFid],
+        notification: { title, body, target_url: "https://vibefid.xyz", uuid }
+      };
 
-    for (const tokenData of warpcastTokens) {
-      try {
-        // Use correct domain based on app
-        const targetUrl = tokenData.app === "vibefid"
-          ? "https://vibefid.xyz"
-          : "https://www.vibemostwanted.xyz";
+      const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": process.env.NEYNAR_API_KEY
+        },
+        body: JSON.stringify(payload)
+      });
 
-        const payload = {
-          notificationId: `vibemail_${Date.now()}_${recipientFid}_${tokenData.app || 'vbms'}`.slice(0, 128),
-          title,
-          body,
-          tokens: [tokenData.token],
-          targetUrl,
-        };
-
-        const response = await fetch(tokenData.url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          const data = result.result || result;
-          if (data.successfulTokens?.includes(tokenData.token) ||
-              (!data.invalidTokens && !data.rateLimitedTokens)) {
-            if (tokenData.app === "vibefid") {
-              vibefidSent++;
-              console.log(`📬 VibeMail sent to VibeFID app`);
-            } else {
-              warpcastSent++;
-              console.log(`📬 VibeMail sent to VBMS/Warpcast`);
-            }
-          }
-        } else {
-          const errorText = await response.text();
-          console.log(`📬 Warpcast failed for ${tokenData.app || 'vbms'}: ${errorText}`);
-        }
-      } catch (error: any) {
-        console.log(`📬 Warpcast error for ${tokenData.app || 'vbms'}: ${error.message}`);
+      if (response.ok) {
+        console.log();
+        return { sent: true };
+      } else {
+        const errorText = await response.text();
+        console.log();
+        return { sent: false };
       }
+    } catch (error: any) {
+      console.log();
+      return { sent: false };
     }
-
-    const sent = neynarSent || warpcastSent > 0 || vibefidSent > 0;
-    console.log(`💌 VibeMail result: Neynar=${neynarSent}, Warpcast=${warpcastSent}, VibeFID=${vibefidSent}`);
-    return { sent, neynarSent, warpcastSent, vibefidSent };
   },
 });
