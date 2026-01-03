@@ -1268,7 +1268,7 @@ export const sendVibemailNotification = internalAction({
         // Use VBMS domain for Neynar (Base App users)
         const payload = {
           target_fids: [recipientFid],
-          notification: { title, body, target_url: "https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid", uuid }
+          notification: { title, body, target_url: "https://vibefid.xyz", uuid }
         };
 
         const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
@@ -1299,7 +1299,7 @@ export const sendVibemailNotification = internalAction({
       try {
         // Use correct domain based on app
         const targetUrl = tokenData.app === "vibefid"
-          ? "https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid"
+          ? "https://vibefid.xyz"
           : "https://www.vibemostwanted.xyz";
 
         const payload = {
