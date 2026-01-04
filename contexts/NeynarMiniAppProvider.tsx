@@ -9,7 +9,9 @@ interface NeynarMiniAppProviderProps {
 
 export function NeynarMiniAppProvider({ children }: NeynarMiniAppProviderProps) {
   return (
-    <MiniAppProvider>
+    <MiniAppProvider
+      analyticsEnabled={true}
+    >
       {children}
     </MiniAppProvider>
   );
