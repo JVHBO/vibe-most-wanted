@@ -892,3 +892,27 @@ export const updateNeynarScore = mutation({
     return { success: true, fid: args.fid, neynarScore: args.neynarScore };
   },
 });
+
+// Fix card address (admin function)
+export const fixCardAddress = mutation({
+  args: {
+    fid: v.number(),
+    newAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (!card) {
+      throw new Error(`Card with FID ${args.fid} not found`);
+    }
+
+    await ctx.db.patch(card._id, {
+      address: args.newAddress.toLowerCase(),
+    });
+
+    return { success: true, fid: args.fid, oldAddress: card.address, newAddress: args.newAddress.toLowerCase() };
+  },
+});
