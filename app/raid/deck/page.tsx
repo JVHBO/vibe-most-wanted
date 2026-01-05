@@ -143,7 +143,13 @@ export default function RaidDeckPage() {
     const isFree = (card as any).isFreeCard;
     if (isFree) return null;
     if (card.collection === 'vibefid') {
-      return { multiplier: 10.0, label: '10x', color: 'text-red-400' };
+      return { multiplier: 5.0, label: '5x', color: 'text-purple-400' };
+    }
+    if (card.collection === 'vibe') {
+      return { multiplier: 2.0, label: '2x', color: 'text-yellow-400' };
+    }
+    if (card.collection === 'nothing') {
+      return { multiplier: 0.5, label: '-50%', color: 'text-red-400' };
     }
     if (currentBoss && card.collection === currentBoss.collection) {
       return { multiplier: 2.0, label: '2x', color: 'text-blue-400' };
@@ -346,7 +352,7 @@ export default function RaidDeckPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="text-lg">💥</span>
-                  <div className="font-bold text-red-400">10x Card Damage!</div>
+                  <div className="font-bold text-purple-400">5x Card Damage!</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg">👥</span>
@@ -389,7 +395,7 @@ export default function RaidDeckPage() {
                       <CardMedia src={card.imageUrl} alt={card.name} className="rounded-lg aspect-[3/4] object-cover" />
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 rounded-b-lg">
                         <div className="text-white text-xs font-bold truncate">{card.name}</div>
-                        <div className="text-purple-400 text-xs">{card.power} <span className="text-red-400">(10x = {card.power * 10})</span></div>
+                        <div className="text-purple-400 text-xs">{card.power} <span className="text-purple-300">(5x = {card.power * 5})</span></div>
                       </div>
                       {isSelected && (
                         <div className="absolute inset-0 bg-purple-500/20 rounded-lg flex items-center justify-center">
@@ -476,7 +482,7 @@ export default function RaidDeckPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
                       <div className="flex items-center gap-1">
                         <span className="text-red-400">💥</span>
-                        <span className="text-vintage-burnt-gold">10x Card Damage!</span>
+                        <span className="text-purple-400">5x Card Damage!</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-yellow-400">👥</span>

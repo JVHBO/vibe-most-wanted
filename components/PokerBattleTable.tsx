@@ -82,6 +82,16 @@ interface Card {
   wear?: string; // Optional for NFTs
 }
 
+// Helper to get buffed power for display (VibeFID 5x, VBMS 2x, Nothing 0.5x)
+const getDisplayPower = (card: Card | null | undefined): number => {
+  if (!card) return 0;
+  const base = card.power || 0;
+  if (card.collection === 'vibefid') return Math.floor(base * 5);
+  if (card.collection === 'vibe') return Math.floor(base * 2);
+  if (card.collection === 'nothing') return Math.floor(base * 0.5);
+  return base;
+};
+
 interface PokerBattleTableProps {
   onClose: () => void;
   playerCards: Card[]; // Player's full collection
@@ -2365,11 +2375,11 @@ export function PokerBattleTable({
                             style={{ background: getRarityGradient(selectedDeck[i].rarity) }}
                           >
                             <div className="text-white text-xs font-bold text-center mb-1">{selectedDeck[i].name}</div>
-                            <div className="text-white text-lg font-bold">{Math.round(selectedDeck[i].power || 0).toLocaleString()}</div>
+                            <div className="text-white text-lg font-bold">{Math.round(getDisplayPower(selectedDeck[i])).toLocaleString()}</div>
                           </div>
                         )}
                         <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-0.5 text-vintage-gold text-xs font-bold text-center">
-                          {Math.round(selectedDeck[i].power || 0).toLocaleString()}
+                          {Math.round(getDisplayPower(selectedDeck[i])).toLocaleString()}
                         </div>
                       </>
                     ) : (
@@ -2407,11 +2417,11 @@ export function PokerBattleTable({
                         style={{ background: getRarityGradient(card.rarity) }}
                       >
                         <div className="text-white text-[0.5rem] font-bold text-center mb-0.5 leading-tight">{card.name}</div>
-                        <div className="text-white text-sm font-bold">{Math.round(card.power || 0).toLocaleString()}</div>
+                        <div className="text-white text-sm font-bold">{Math.round(getDisplayPower(card)).toLocaleString()}</div>
                       </div>
                     )}
                     <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-0.5 text-vintage-gold text-[0.6rem] font-bold text-center">
-                      {Math.round(card.power || 0).toLocaleString()}
+                      {Math.round(getDisplayPower(card)).toLocaleString()}
                     </div>
                     {isSelected && (
                       <div className="absolute inset-0 bg-vintage-gold/20 flex items-center justify-center">
@@ -2510,8 +2520,8 @@ export function PokerBattleTable({
                     <div className="text-center">
                       <div className="text-vintage-gold font-display font-bold text-2xl">{t('vsLabel')}</div>
                       {phase === 'resolution' && (() => {
-                        const playerPower = (playerSelectedCard?.power || 0) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1);
-                        const opponentPower = (opponentSelectedCard?.power || 0) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1);
+                        const playerPower = getDisplayPower(playerSelectedCard) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1);
+                        const opponentPower = getDisplayPower(opponentSelectedCard) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1);
                         if (playerPower > opponentPower) {
                           return <div className="text-blue-400 text-xs mt-1">{t('hostPlus')}</div>;
                         } else if (opponentPower > playerPower) {
@@ -2563,11 +2573,11 @@ export function PokerBattleTable({
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(playerSelectedCard?.rarity) }}>
                             <div className="text-white text-xs font-bold text-center">{playerSelectedCard?.name}</div>
-                            <div className="text-white text-lg font-bold">{Math.round(playerSelectedCard?.power || 0)}</div>
+                            <div className="text-white text-lg font-bold">{Math.round(getDisplayPower(playerSelectedCard))}</div>
                           </div>
                         )}
                         <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-center text-blue-300 ${isInFarcaster ? 'text-xs' : 'text-[10px]'} flex items-center justify-center gap-0.5`}>
-                          {Math.round((playerSelectedCard?.power || 0) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1))}
+                          {Math.round(getDisplayPower(playerSelectedCard) * (playerAction === 'BOOST' ? 1.3 : playerAction === 'DOUBLE' ? 2 : 1))}
                           {playerAction === 'BOOST' && <SwordIcon className="inline-block text-blue-300" size={12} />}
                           {playerAction === 'DOUBLE' && <BoltIcon className="inline-block text-blue-300" size={12} />}
                           {playerAction === 'SHIELD' && <ShieldIcon className="inline-block text-blue-300" size={12} />}
@@ -2630,11 +2640,11 @@ export function PokerBattleTable({
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-2 rounded-lg" style={{ background: getRarityGradient(opponentSelectedCard?.rarity) }}>
                             <div className="text-white text-xs font-bold text-center">{opponentSelectedCard?.name}</div>
-                            <div className="text-white text-lg font-bold">{Math.round(opponentSelectedCard?.power || 0)}</div>
+                            <div className="text-white text-lg font-bold">{Math.round(getDisplayPower(opponentSelectedCard))}</div>
                           </div>
                         )}
                         <div className={`absolute bottom-0 left-0 right-0 bg-black/80 p-0.5 text-center text-red-300 ${isInFarcaster ? 'text-xs' : 'text-[10px]'} flex items-center justify-center gap-0.5`}>
-                          {Math.round((opponentSelectedCard?.power || 0) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1))}
+                          {Math.round(getDisplayPower(opponentSelectedCard) * (opponentAction === 'BOOST' ? 1.3 : opponentAction === 'DOUBLE' ? 2 : 1))}
                           {opponentAction === 'BOOST' && <SwordIcon className="inline-block text-red-300" size={12} />}
                           {opponentAction === 'DOUBLE' && <BoltIcon className="inline-block text-red-300" size={12} />}
                           {opponentAction === 'SHIELD' && <ShieldIcon className="inline-block text-red-300" size={12} />}
@@ -2850,13 +2860,13 @@ export function PokerBattleTable({
                                   style={{ background: getRarityGradient(opponentSelectedCard.rarity) }}
                                 >
                                   <div className="text-white text-xs font-bold text-center mb-1">{opponentSelectedCard.name}</div>
-                                  <div className="text-white text-2xl font-bold">{Math.round(opponentSelectedCard.power || 0).toLocaleString()}</div>
+                                  <div className="text-white text-2xl font-bold">{Math.round(getDisplayPower(opponentSelectedCard)).toLocaleString()}</div>
                                 </div>
                               )}
                             </FoilCardEffect>
                             <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1 text-xs text-vintage-gold font-bold text-center">
                               <div className="flex items-center justify-center gap-1">
-                                {Math.round((opponentSelectedCard.power || 0) * (
+                                {Math.round(getDisplayPower(opponentSelectedCard) * (
                                   opponentAction === 'BOOST' ? 1.3 :
                                   opponentAction === 'DOUBLE' ? 2 : 1
                                 )).toLocaleString()}
@@ -2925,13 +2935,13 @@ export function PokerBattleTable({
                                   style={{ background: getRarityGradient(playerSelectedCard.rarity) }}
                                 >
                                   <div className="text-white text-xs font-bold text-center mb-1">{playerSelectedCard.name}</div>
-                                  <div className="text-white text-2xl font-bold">{Math.round(playerSelectedCard.power || 0).toLocaleString()}</div>
+                                  <div className="text-white text-2xl font-bold">{Math.round(getDisplayPower(playerSelectedCard)).toLocaleString()}</div>
                                 </div>
                               )}
                             </FoilCardEffect>
                             <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1 text-xs text-vintage-gold font-bold text-center">
                               <div className="flex items-center justify-center gap-1">
-                                {Math.round((playerSelectedCard.power || 0) * (
+                                {Math.round(getDisplayPower(playerSelectedCard) * (
                                   playerAction === 'BOOST' ? 1.3 :
                                   playerAction === 'DOUBLE' ? 2 : 1
                                 )).toLocaleString()}
@@ -3036,9 +3046,9 @@ export function PokerBattleTable({
                     </div>
                     {phase === 'resolution' && playerSelectedCard && opponentSelectedCard && (
                       <div className="mt-3 text-vintage-burnt-gold font-modern text-sm">
-                        Your card: {playerSelectedCard.name} ({Math.round(playerSelectedCard.power || 0).toLocaleString()})
+                        Your card: {playerSelectedCard.name} ({Math.round(getDisplayPower(playerSelectedCard)).toLocaleString()})
                         <br/>
-                        vs Opponent: {opponentSelectedCard.name} ({Math.round(opponentSelectedCard.power || 0).toLocaleString()})
+                        vs Opponent: {opponentSelectedCard.name} ({Math.round(getDisplayPower(opponentSelectedCard)).toLocaleString()})
                       </div>
                     )}
                   </div>
@@ -3083,14 +3093,14 @@ export function PokerBattleTable({
                                 style={{ background: getRarityGradient(card.rarity) }}
                               >
                                 <div className="text-white text-[0.5rem] font-bold text-center mb-1">{card.name}</div>
-                                <div className="text-white text-sm font-bold">{Math.round(card.power || 0).toLocaleString()}</div>
+                                <div className="text-white text-sm font-bold">{Math.round(getDisplayPower(card)).toLocaleString()}</div>
                               </div>
                             )}
                           </FoilCardEffect>
                         )}
                         {!isSpectatorMode && (
                           <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-1 text-xs text-vintage-gold font-bold transition-colors">
-                            {Math.round(card.power || 0).toLocaleString()}
+                            {Math.round(getDisplayPower(card)).toLocaleString()}
                           </div>
                         )}
                       </button>

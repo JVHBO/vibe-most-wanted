@@ -26,11 +26,11 @@ const getAvatarUrl = (twitterData?: string | null | { twitter?: string; twitterP
   return null;
 };
 
-// Calculate attack power (VibeFID gets 10x)
+// Calculate attack power (VibeFID 10x, VBMS 2x, Nothing 0.5x)
 const calculateLeaderboardAttackPower = (cards: Card[]): number => {
   return cards.reduce((sum, card) => {
-    const multiplier = card.collection === 'vibefid' ? 10 : 1;
-    return sum + ((card.power || 0) * multiplier);
+    const multiplier = card.collection === 'vibefid' ? 10 : card.collection === 'vibe' ? 2 : card.collection === 'nothing' ? 0.5 : 1;
+    return sum + Math.floor((card.power || 0) * multiplier);
   }, 0);
 };
 
