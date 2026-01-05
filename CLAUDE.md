@@ -303,3 +303,64 @@ curl -X POST "https://api.opensea.io/api/v2/chain/base/contract/0x60274A138d026E
 - Videos are 5 seconds instead of 3 seconds
 - GIF frames are extracted and animated in the video
 - Check PFP type: `curl -sI {pfp_url} | grep Content-Type`
+
+## Power System (Jan 2026)
+
+### Collection Power Multipliers
+
+**CRITICAL**: Power multipliers must be applied consistently across ALL game modes!
+
+| Collection | General Battles | Leaderboard Attacks | Raid Boss |
+|------------|-----------------|---------------------|-----------|
+| **VibeFID** | 5x | 10x | 5x + 50% team buff |
+| **VBMS (vibe)** | 2x | 2x | 2x |
+| **Nothing** | 0.5x (-50%) | 0.5x | 0.5x |
+| **Boss Collection** | - | - | 2x (matching boss) |
+| **Others** | 1x | 1x | 1x |
+
+### Files with Power Calculations
+
+**ALL these files MUST have consistent multipliers:**
+
+| File | Function | Purpose |
+|------|----------|---------|
+| `lib/power-utils.ts` | `getCollectionMultiplier()` | **Centralized** (use this!) |
+| `hooks/useCardCalculations.ts` | `useTotalPower()` | Memoized total power |
+| `hooks/useBattleOptimizations.ts` | `calculateBattleResult()` | PvE/PvP battles |
+| `app/page.tsx` | `calculateLeaderboardAttackPower()` | Leaderboard attacks |
+| `contexts/PlayerCardsContext.tsx` | `calculateLeaderboardAttackPower()` | Context version |
+| `app/leaderboard/page.tsx` | inline calculation | Leaderboard page |
+| `components/PokerBattleTable.tsx` | `getDisplayPower()` | Poker battles |
+| `components/AttackCardSelectionModal.tsx` | `getDisplayPower()` | Attack modal |
+| `components/PveCardSelectionModal.tsx` | `getDisplayPower()` | PvE modal |
+| `components/RaidDeckSelectionModal.tsx` | `getDisplayPower()` | Raid deck modal |
+| `app/raid/deck/page.tsx` | `getCardBuff()` | Raid deck page |
+| `convex/raidBoss.ts` | `setRaidDeck`, `attackBoss` | Backend raid |
+
+### Common Mistakes
+
+1. **Forgetting Nothing 0.5x** - UI says "-50% power" but code didn't apply it
+2. **Inconsistent VibeFID** - Some places had 10x, others 5x
+3. **Missing VBMS 2x in leaderboard** - Only VibeFID had multiplier
+4. **Defense deck without multipliers** - `dealerTotal` used raw power
+
+### Adding New Multipliers
+
+When adding a new collection buff, update ALL files above:
+
+```typescript
+// Pattern for multiplier calculation
+const multiplier =
+  c.collection === 'vibefid' ? (isLeaderboard ? 10 : 5) :
+  c.collection === 'vibe' ? 2 :
+  c.collection === 'nothing' ? 0.5 :
+  1;
+return sum + Math.floor((c.power || 0) * multiplier);
+```
+
+## UI Alignment Issues
+
+### Button Centering
+- **Problem**: Buttons appear off-center due to hidden `ml-*` classes
+- **Fix**: Use `justify-center` on parent container and remove margin classes
+- **Example**: VibeFID button had `ml-2` causing misalignment with buttons below
