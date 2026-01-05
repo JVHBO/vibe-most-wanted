@@ -38,160 +38,51 @@ export const BOSS_REWARDS_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
 // Boss Rotation Order (75 bosses total)
 // 15 collections cycling through 5 rarities = 75 bosses
 // Pattern: Each round has all 15 collections, rarities rotate
+// AFCL removed from rotation - 70 bosses total (14 collections x 5 rarities)
 export const BOSS_ROTATION_ORDER: CollectionId[] = [
-  // Round 1 (indices 0-14): C, R, E, L, M, C, R, E, L, M, C, R, E, L, M
-  'gmvbrs',           // 0. Common
-  'vibe',             // 1. Rare
-  'vibefid',          // 2. Epic
-  'americanfootball', // 3. Legendary
-  'viberuto',         // 4. Common
-  'meowverse',        // 6. Rare
-  'poorlydrawnpepes', // 7. Epic
-  'teampothead',      // 8. Legendary
-  'tarot',            // 9. Mythic
-  'baseballcabal',    // 10. Common
-  'vibefx',           // 11. Rare
-  'historyofcomputer',// 12. Epic
-  'cumioh',           // 13. Legendary
-  'viberotbangers',   // 14. Mythic
-  // Round 2 (indices 15-29): M, C, R, E, L, M, C, R, E, L, M, C, R, E, L
-  'gmvbrs',           // 15. Mythic
-  'vibe',             // 16. Common
-  'vibefid',          // 17. Rare
-  'americanfootball', // 18. Epic
-  'viberuto',         // 19. Mythic
-  'meowverse',        // 21. Common
-  'poorlydrawnpepes', // 22. Rare
-  'teampothead',      // 23. Epic
-  'tarot',            // 24. Legendary
-  'baseballcabal',    // 25. Mythic
-  'vibefx',           // 26. Common
-  'historyofcomputer',// 27. Rare
-  'cumioh',           // 28. Epic
-  'viberotbangers',   // 29. Legendary
-  // Round 3 (indices 30-44): L, M, C, R, E, L, M, C, R, E, L, M, C, R, E
-  'gmvbrs',           // 30. Legendary
-  'vibe',             // 31. Mythic
-  'vibefid',          // 32. Common
-  'americanfootball', // 33. Rare
-  'viberuto',         // 34. Legendary
-  'meowverse',        // 36. Mythic
-  'poorlydrawnpepes', // 37. Common
-  'teampothead',      // 38. Rare
-  'tarot',            // 39. Epic
-  'baseballcabal',    // 40. Legendary
-  'vibefx',           // 41. Mythic
-  'historyofcomputer',// 42. Common
-  'cumioh',           // 43. Rare
-  'viberotbangers',   // 44. Epic
-  // Round 4 (indices 45-59): E, L, M, C, R, E, L, M, C, R, E, L, M, C, R
-  'gmvbrs',           // 45. Epic
-  'vibe',             // 46. Legendary
-  'vibefid',          // 47. Mythic
-  'americanfootball', // 48. Common
-  'viberuto',         // 49. Epic
-  'meowverse',        // 51. Legendary
-  'poorlydrawnpepes', // 52. Mythic
-  'teampothead',      // 53. Common
-  'tarot',            // 54. Rare
-  'baseballcabal',    // 55. Epic
-  'vibefx',           // 56. Legendary
-  'historyofcomputer',// 57. Mythic
-  'cumioh',           // 58. Common
-  'viberotbangers',   // 59. Rare
-  // Round 5 (indices 60-74): R, E, L, M, C, R, E, L, M, C, R, E, L, M, C
-  'gmvbrs',           // 60. Rare
-  'vibe',             // 61. Epic
-  'vibefid',          // 62. Legendary
-  'americanfootball', // 63. Mythic
-  'viberuto',         // 64. Rare
-  'meowverse',        // 66. Epic
-  'poorlydrawnpepes', // 67. Legendary
-  'teampothead',      // 68. Mythic
-  'tarot',            // 69. Common
-  'baseballcabal',    // 70. Rare
-  'vibefx',           // 71. Epic
-  'historyofcomputer',// 72. Legendary
-  'cumioh',           // 73. Mythic
-  'viberotbangers',   // 74. Common
+  // Round 1 (indices 0-13)
+  'gmvbrs', 'vibe', 'vibefid', 'viberuto', 'meowverse',
+  'poorlydrawnpepes', 'teampothead', 'tarot', 'baseballcabal', 'vibefx',
+  'historyofcomputer', 'cumioh', 'viberotbangers', 'gmvbrs',
+  // Round 2 (indices 14-27)
+  'vibe', 'vibefid', 'viberuto', 'meowverse', 'poorlydrawnpepes',
+  'teampothead', 'tarot', 'baseballcabal', 'vibefx', 'historyofcomputer',
+  'cumioh', 'viberotbangers', 'gmvbrs', 'vibe',
+  // Round 3 (indices 28-41)
+  'vibefid', 'viberuto', 'meowverse', 'poorlydrawnpepes', 'teampothead',
+  'tarot', 'baseballcabal', 'vibefx', 'historyofcomputer', 'cumioh',
+  'viberotbangers', 'gmvbrs', 'vibe', 'vibefid',
+  // Round 4 (indices 42-55)
+  'viberuto', 'meowverse', 'poorlydrawnpepes', 'teampothead', 'tarot',
+  'baseballcabal', 'vibefx', 'historyofcomputer', 'cumioh', 'viberotbangers',
+  'gmvbrs', 'vibe', 'vibefid', 'viberuto',
+  // Round 5 (indices 56-69)
+  'meowverse', 'poorlydrawnpepes', 'teampothead', 'tarot', 'baseballcabal',
+  'vibefx', 'historyofcomputer', 'cumioh', 'viberotbangers', 'gmvbrs',
+  'vibe', 'vibefid', 'viberuto', 'meowverse',
 ];
 
 export const BOSS_RARITY_ORDER: CardRarity[] = [
-  // Round 1 (indices 0-14)
-  'Common',    // 0. gmvbrs
-  'Rare',      // 1. vibe
-  'Epic',      // 2. vibefid
-  'Legendary', // 3. americanfootball
-  'Common',    // 4. viberuto
-  'Rare',      // 6. meowverse
-  'Epic',      // 7. poorlydrawnpepes
-  'Legendary', // 8. teampothead
-  'Mythic',    // 9. tarot
-  'Common',    // 10. baseballcabal
-  'Rare',      // 11. vibefx
-  'Epic',      // 12. historyofcomputer
-  'Legendary', // 13. cumioh
-  'Mythic',    // 14. viberotbangers
-  // Round 2 (indices 15-29)
-  'Mythic',    // 15. gmvbrs
-  'Common',    // 16. vibe
-  'Rare',      // 17. vibefid
-  'Epic',      // 18. americanfootball
-  'Mythic',    // 19. viberuto
-  'Common',    // 21. meowverse
-  'Rare',      // 22. poorlydrawnpepes
-  'Epic',      // 23. teampothead
-  'Legendary', // 24. tarot
-  'Mythic',    // 25. baseballcabal
-  'Common',    // 26. vibefx
-  'Rare',      // 27. historyofcomputer
-  'Epic',      // 28. cumioh
-  'Legendary', // 29. viberotbangers
-  // Round 3 (indices 30-44)
-  'Legendary', // 30. gmvbrs
-  'Mythic',    // 31. vibe
-  'Common',    // 32. vibefid
-  'Rare',      // 33. americanfootball
-  'Legendary', // 34. viberuto
-  'Mythic',    // 36. meowverse
-  'Common',    // 37. poorlydrawnpepes
-  'Rare',      // 38. teampothead
-  'Epic',      // 39. tarot
-  'Legendary', // 40. baseballcabal
-  'Mythic',    // 41. vibefx
-  'Common',    // 42. historyofcomputer
-  'Rare',      // 43. cumioh
-  'Epic',      // 44. viberotbangers
-  // Round 4 (indices 45-59)
-  'Epic',      // 45. gmvbrs
-  'Legendary', // 46. vibe
-  'Mythic',    // 47. vibefid
-  'Common',    // 48. americanfootball
-  'Epic',      // 49. viberuto
-  'Legendary', // 51. meowverse
-  'Mythic',    // 52. poorlydrawnpepes
-  'Common',    // 53. teampothead
-  'Rare',      // 54. tarot
-  'Epic',      // 55. baseballcabal
-  'Legendary', // 56. vibefx
-  'Mythic',    // 57. historyofcomputer
-  'Common',    // 58. cumioh
-  'Rare',      // 59. viberotbangers
-  // Round 5 (indices 60-74)
-  'Rare',      // 60. gmvbrs
-  'Epic',      // 61. vibe
-  'Legendary', // 62. vibefid
-  'Mythic',    // 63. americanfootball
-  'Rare',      // 64. viberuto
-  'Epic',      // 66. meowverse
-  'Legendary', // 67. poorlydrawnpepes
-  'Mythic',    // 68. teampothead
-  'Common',    // 69. tarot
-  'Rare',      // 70. baseballcabal
-  'Epic',      // 71. vibefx
-  'Legendary', // 72. historyofcomputer
-  'Mythic',    // 73. cumioh
-  'Common',    // 74. viberotbangers
+  // Round 1 (indices 0-13)
+  'Common', 'Rare', 'Epic', 'Legendary', 'Mythic',
+  'Common', 'Rare', 'Epic', 'Legendary', 'Mythic',
+  'Common', 'Rare', 'Epic', 'Legendary',
+  // Round 2 (indices 14-27)
+  'Mythic', 'Common', 'Rare', 'Epic', 'Legendary',
+  'Mythic', 'Common', 'Rare', 'Epic', 'Legendary',
+  'Mythic', 'Common', 'Rare', 'Epic',
+  // Round 3 (indices 28-41)
+  'Legendary', 'Mythic', 'Common', 'Rare', 'Epic',
+  'Legendary', 'Mythic', 'Common', 'Rare', 'Epic',
+  'Legendary', 'Mythic', 'Common', 'Rare',
+  // Round 4 (indices 42-55)
+  'Epic', 'Legendary', 'Mythic', 'Common', 'Rare',
+  'Epic', 'Legendary', 'Mythic', 'Common', 'Rare',
+  'Epic', 'Legendary', 'Mythic', 'Common',
+  // Round 5 (indices 56-69)
+  'Rare', 'Epic', 'Legendary', 'Mythic', 'Common',
+  'Rare', 'Epic', 'Legendary', 'Mythic', 'Common',
+  'Rare', 'Epic', 'Legendary', 'Mythic',
 ];
 
 /**
@@ -1038,7 +929,7 @@ export function getBossCard(collection: CollectionId, rarity: CardRarity): BossC
  * @param bossIndex - Current boss index (0-24)
  */
 export function getCurrentBoss(bossIndex: number): BossCard | undefined {
-  const normalizedIndex = bossIndex % 75; // Loop through 30 bosses
+  const normalizedIndex = bossIndex % 70; // Loop through 70 bosses
   const collection = BOSS_ROTATION_ORDER[normalizedIndex];
   const rarity = BOSS_RARITY_ORDER[normalizedIndex];
 
@@ -1063,7 +954,7 @@ export function getPreviousBoss(currentBossIndex: number): BossCard | undefined 
  * Get boss rotation info
  */
 export function getBossRotationInfo(bossIndex: number) {
-  const normalizedIndex = bossIndex % 75;
+  const normalizedIndex = bossIndex % 70;
   return {
     index: normalizedIndex,
     collection: BOSS_ROTATION_ORDER[normalizedIndex],

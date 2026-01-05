@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCollectionPrices } from '@/lib/hooks/useCollectionPrices';
 import { openMarketplace } from '@/lib/marketplace-utils';
 import { sdk } from '@farcaster/miniapp-sdk';
@@ -38,6 +39,7 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
   const { prices, ethUsdPrice } = useCollectionPrices();
   const isInFarcaster = isMiniappMode();
   const { t } = useLanguage();
+  const router = useRouter();
 
   // Calculate VibeFID price in USD
   const vibeFidPriceEth = parseFloat(MINT_PRICE);
@@ -79,7 +81,7 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
           <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-4 w-full max-w-md max-h-[80vh] flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-vintage-gold font-display font-bold text-lg">
-                📊 {t('ltcCollections') || 'LTC Collections'}
+                📊 {t('gameCollections') || 'Game Collections'}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
@@ -89,13 +91,29 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
               </button>
             </div>
             <div className="flex-1 overflow-y-auto space-y-2">
-              {/* VibeFID - Special Entry (First) */}
+              {/* Nothing Pack - goes to /shop */}
+              <button
+                onClick={() => { setShowModal(false); router.push('/shop'); }}
+                className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-gray-800/50 to-gray-700/50 hover:from-gray-700/50 hover:to-gray-600/50 rounded-xl transition-all group text-left border border-gray-500/50"
+              >
+                <span className="text-vintage-ice text-sm font-medium group-hover:text-vintage-gold truncate flex-1">
+                  🎁 Nothing Pack <span className="text-red-400 text-xs">(-50% power)</span>
+                </span>
+                <div className="flex items-center gap-2 ml-2">
+                  <span className="text-yellow-400 text-sm font-bold">FREE</span>
+                  <span className="px-2 py-1 bg-gray-600 hover:bg-gray-500 text-white text-xs font-bold rounded-lg">
+                    Shop →
+                  </span>
+                </div>
+              </button>
+
+              {/* VibeFID - Special Entry */}
               <button
                 onClick={handleVibeFidMint}
                 className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-purple-900/50 to-pink-900/50 hover:from-purple-800/50 hover:to-pink-800/50 rounded-xl transition-all group text-left border border-purple-500/50"
               >
                 <span className="text-vintage-ice text-sm font-medium group-hover:text-vintage-gold truncate flex-1">
-                  🆔 VibeFID
+                  🆔 VibeFID <span className="text-purple-400 text-xs">(5x power)</span>
                 </span>
                 <div className="flex items-center gap-2 ml-2">
                   <span className="text-green-400 text-sm font-bold">
@@ -115,7 +133,7 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
                   className="w-full flex items-center justify-between p-3 bg-vintage-black/50 hover:bg-vintage-gold/20 rounded-xl transition-all group text-left border border-vintage-gold/30"
                 >
                   <span className="text-vintage-ice text-sm font-medium group-hover:text-vintage-gold truncate flex-1">
-                    {priceData.emoji} {priceData.displayName}
+                    {priceData.emoji} {priceData.displayName} {priceData.id === 'vibe' && <span className="text-green-400 text-xs">(2x power)</span>}
                   </span>
                   <div className="flex items-center gap-2 ml-2">
                     <span className="text-green-400 text-sm font-bold">
@@ -125,6 +143,8 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
                 </button>
               ))}
             </div>
+            
+
             <button
               onClick={() => setShowModal(false)}
               className="mt-4 w-full py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold font-display font-bold rounded-xl transition-all"

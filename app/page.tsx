@@ -901,9 +901,20 @@ export default function TCGPage() {
   }, [setIsMusicEnabled]);
 
   // Show tutorial for ALL players once (existing and new)
+  // Also supports ?tutorial=true URL param to force show tutorial
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (!address || !userProfile) return; // Wait until user is logged in
+
+    // Check for ?tutorial=true URL param to force show
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('tutorial') === 'true') {
+      localStorage.removeItem('tutorialSeenV2');
+      setShowTutorial(true);
+      // Clean URL without reload
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
 
     const tutorialSeen = localStorage.getItem('tutorialSeenV2');
     if (!tutorialSeen) {
@@ -3008,7 +3019,6 @@ export default function TCGPage() {
       welcome_gift: {
         icon: '/images/icons/coins.svg',
         title: 'Welcome Gift',
-        description: 'Welcome to $VBMS!',
       },
       vibefid_minted: {
         icon: '/images/icons/achievement.svg',
@@ -3537,25 +3547,9 @@ export default function TCGPage() {
         cardsLoaded={nfts.length}
       />
 
-      {/* Ambient floating particles */}
-      {isMounted && (
-        <div className="fixed inset-0 pointer-events-none z-0">
-          {particleConfigs.map((config, i) => (
-            <div
-              key={i}
-              className="floating-particle"
-              style={{
-                left: `${config.left}%`,
-                animationDuration: `${config.duration}s`,
-                animationDelay: `${config.delay}s`,
-              }}
-            />
-          ))}
-        </div>
-      )}
 
       {/* Content wrapper with z-index */}
-      <div className={`relative z-10 ${!isInFarcaster ? 'max-w-7xl mx-auto' : ''}`}>
+      <div className={`relative z-10 w-full ${!isInFarcaster ? 'max-w-7xl mx-auto' : ''}`}>
       {/* Game Popups (Victory, Loss, Tie, Error, Success, Daily Claim, Welcome Pack) */}
       <GamePopups
         showWinPopup={showWinPopup}
@@ -3718,7 +3712,7 @@ export default function TCGPage() {
                 className="px-4 py-2 rounded-lg font-bold text-sm transition-all bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30 flex items-center gap-1"
                 title="Refresh cards"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 Refresh
@@ -3966,7 +3960,7 @@ export default function TCGPage() {
             {/* Rewards List */}
             <div className="p-4 space-y-3">
               <div className="flex items-center justify-between p-3 bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 rounded-lg border border-yellow-500/30">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full">
                   <span className="text-2xl">🥇</span>
                   <span className="font-bold text-yellow-400">1st Place</span>
                 </div>
@@ -3974,7 +3968,7 @@ export default function TCGPage() {
               </div>
 
               <div className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-400/20 to-gray-500/10 rounded-lg border border-gray-400/30">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center gap-3">
                   <span className="text-2xl">🥈</span>
                   <span className="font-bold text-gray-300">2nd Place</span>
                 </div>
@@ -3990,7 +3984,7 @@ export default function TCGPage() {
               </div>
 
               <div className="flex items-center justify-between p-3 bg-gradient-to-r from-vintage-gold/10 to-vintage-gold/5 rounded-lg border border-vintage-gold/20">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 justify-center w-full">
                   <span className="text-2xl">🎖️</span>
                   <span className="font-bold text-vintage-gold">4th - 10th Place</span>
                 </div>
@@ -4856,31 +4850,17 @@ export default function TCGPage() {
 
       {/* Old inline tutorial removed - Now using WelcomeOnboarding component */}
 
-      <header className={`flex flex-col items-center ${isInFarcaster ? 'gap-1 mb-0 p-1.5 w-full max-w-[304px] mx-auto' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg ${isInFarcaster ? 'mt-[60px]' : ''}`}>
+      <header className={`tour-header flex flex-col items-center ${isInFarcaster ? 'gap-1 mb-0 py-1.5 w-full max-w-[304px] mx-auto' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg ${isInFarcaster ? 'mt-[60px]' : ''}`}>
         {!isInFarcaster && (
           <div className="text-center relative">
             <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
             <h1 className="relative text-3xl md:text-5xl lg:text-6xl font-display font-black text-vintage-gold tracking-wider mb-1 md:mb-2" style={{textShadow: '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3)'}}>
-              $VBMS
             </h1>
             <p className="relative text-xs md:text-sm text-vintage-burnt-gold font-modern tracking-[0.2em] md:tracking-[0.3em] uppercase">{t('cardBattle')}</p>
           </div>
         )}
 
-        <div className="flex flex-row items-center gap-2 w-full md:w-auto flex-wrap justify-center">
-          <button
-            onClick={() => {
-              if (soundEnabled) AudioManager.buttonClick();
-              window.location.href = '/dex';
-            }}
-            className="tour-dex-btn px-3 md:px-6 py-3 md:py-3 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
-          >
-            <div className="flex items-center justify-center gap-2">
-              <span className="hidden md:inline">BUY / SELL $VBMS</span><span className="md:hidden">DEX</span>
-            </div>
-            <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('dexButtonSubtext')}</span>
-          </button>
-
+        <div className="flex items-center gap-2">
           {/* VibeFID Button - Opens VibeFID miniapp */}
           {isInFarcaster && (
             <button
@@ -4888,10 +4868,10 @@ export default function TCGPage() {
                 if (soundEnabled) AudioManager.buttonClick();
                 await openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, isInFarcaster);
               }}
-              className="tour-vibefid-btn px-3 md:px-6 py-3 md:py-3 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
+              className="tour-vibefid-btn px-8 md:px-12 ml-2 py-2 md:py-2 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
             >
-              <div className="flex items-center justify-center gap-2">
-                <svg className="w-4 h-4" viewBox="0 0 1000 1000" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M257.778 155.556H742.222V844.444H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.444H257.778V155.556Z" /><path d="M128.889 253.333L157.778 351.111H182.222V746.667C169.949 746.667 160 756.616 160 768.889V795.556H155.556C143.283 795.556 133.333 805.505 133.333 817.778V844.444H382.222V817.778C382.222 805.505 372.273 795.556 360 795.556H355.556V768.889C355.556 756.616 345.606 746.667 333.333 746.667H306.667V253.333H128.889Z" /><path d="M675.556 746.667C663.283 746.667 653.333 756.616 653.333 768.889V795.556H648.889C636.616 795.556 626.667 805.505 626.667 817.778V844.444H875.556V817.778C875.556 805.505 865.606 795.556 853.333 795.556H848.889V768.889C848.889 756.616 838.94 746.667 826.667 746.667V351.111H851.111L880 253.333H702.222V746.667H675.556Z" /></svg> {t('vibefidMint')}
+              <div className="flex items-center justify-center gap-1">
+                <span className="text-sm font-bold">{t("vibefidMint")}</span>
               </div>
               <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('vibefidCheckScore')}</span>
             </button>
@@ -4909,7 +4889,7 @@ export default function TCGPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 justify-center w-full">
           {/* REMOVED: Referrals Button - System disabled */}
 
           <button
@@ -5047,13 +5027,13 @@ export default function TCGPage() {
           <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`}>
             <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-1 md:p-3 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30`}>
               <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3">
+                {/* Left: Profile */}
                 <div className="flex items-center gap-2">
-                  {/* Profile Button */}
                   {userProfile ? (
                     <Link
                       href={`/profile/${userProfile.username}`}
                       onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
-                      className="flex items-center gap-2 px-4 py-2 bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/40 rounded-lg transition"
+                      className="flex items-center gap-2 px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg transition"
                     >
                       {userProfile.twitter ? (
                         <img
@@ -5068,7 +5048,7 @@ export default function TCGPage() {
                         </div>
                       )}
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-white">@{userProfile.username}</span>
+                        <span className="text-sm font-semibold text-vintage-gold">@{userProfile.username}</span>
                         <BadgeList badges={getUserBadges(userProfile.address, userProfile.userIndex ?? 9999, userProfile.hasVibeBadge)} size="sm" />
                       </div>
                     </Link>
@@ -5083,32 +5063,29 @@ export default function TCGPage() {
                       {t('createProfile')}
                     </button>
                   )}
-
-                  {/* VBMS Balance Display - Shows real on-chain balance */}
-                  {address && userProfile && (
-                    <div className="bg-vintage-gold/10 border border-vintage-gold/40 px-3 md:px-4 py-1.5 md:py-2 rounded-lg flex items-center gap-2">
-                      <span className="text-vintage-gold text-xl md:text-2xl font-bold">$</span>
-                      <div className="flex flex-col">
-                        <span className="text-vintage-gold font-display font-bold text-xs md:text-sm leading-none">
-                          {Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                        </span>
-                        <span className="text-vintage-burnt-gold font-modern text-[8px] md:text-[10px] leading-none mt-0.5">
-                          $VBMS
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Coins Inbox removed from header - use navigation tab "Claim" button instead */}
-                  {/* {userProfile && !isInFarcaster && <CoinsInboxDisplay />} */}
                 </div>
 
-                {/* Price Ticker - Website only (right side of user bar) */}
-                {!isInFarcaster && (
-                  <div className="hidden md:block">
-                    <PriceTicker className="-mt-2" />
-                  </div>
-                )}
+                {/* Right: VBMS Balance */}
+                <div className="flex items-center gap-2">
+                  {address && userProfile && (
+                    <Link
+                      href="/dex"
+                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
+                      className="tour-dex-btn bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 px-2 md:px-3 py-1.5 md:py-2 rounded-lg flex items-baseline justify-center gap-0 transition"
+                    >
+                      <span className="text-vintage-gold text-base md:text-lg font-bold leading-none">$</span>
+                      <span className="text-vintage-gold font-display font-bold text-base md:text-lg leading-none ml-0.5">
+                        {Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </span>
+                      <span className="text-vintage-gold text-base md:text-lg font-bold leading-none ml-1">+</span>
+                    </Link>
+                  )}
+                  {!isInFarcaster && (
+                    <div className="tour-price-ticker hidden md:block">
+                      <PriceTicker className="-mt-2" />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -5242,7 +5219,7 @@ export default function TCGPage() {
           {isInFarcaster && (
             <div className="flex flex-col items-center py-1 w-full max-w-[304px] mx-auto mt-2">
               <PriceTicker className="w-full" />
-              <AllCollectionsButton className="mt-3" />
+              <AllCollectionsButton className="mt-1" />
             </div>
           )}
 
@@ -5284,7 +5261,7 @@ export default function TCGPage() {
                 </div>
               </div>
               {/* WANTED CAST - SAME GAP AS GAMEMODE TO CARDS */}
-              <div className="fixed top-[78%] left-1/2 -translate-x-1/2 w-full max-w-xs px-2 z-10">
+              <div className="tour-wanted-cast fixed top-[78%] left-1/2 -translate-x-1/2 w-full max-w-xs px-2 z-10">
                 <WantedCast soundEnabled={soundEnabled} />
               </div>
             </>
@@ -5308,7 +5285,7 @@ export default function TCGPage() {
                   }}
                 />
               </div>
-              <div className="mt-2 w-full max-w-xs">
+              <div className="tour-wanted-cast mt-2 w-full max-w-xs">
                 <WantedCast soundEnabled={soundEnabled} />
               </div>
             </div>
@@ -5417,7 +5394,7 @@ export default function TCGPage() {
                       className="inline-block px-6 py-3 border-2 border-red-600 text-white font-modern font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer text-lg"
                       style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                     >
-                      <div className="flex items-center justify-center gap-2">
+                      <div className="flex items-center justify-center gap-1">
                         <span className="text-xl">◆</span>
                         <span>{t('buyPacksOnVibeMarket')}</span>
                       </div>
@@ -5480,7 +5457,7 @@ export default function TCGPage() {
                         className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer"
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1">
                           <span className="text-base md:text-lg">◆</span>
                           <span>{COLLECTIONS[selectedCollections[0]].buttonText || 'GET NOTHING CARDS'}</span>
                         </div>
@@ -5491,7 +5468,7 @@ export default function TCGPage() {
                         className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1">
                           <span className="text-base md:text-lg">◆</span>
                           <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
                         </div>
@@ -5505,7 +5482,7 @@ export default function TCGPage() {
                         className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer"
                         style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
                       >
-                        <div className="flex items-center justify-center gap-2">
+                        <div className="flex items-center justify-center gap-1">
                           <span className="text-base md:text-lg">◆</span>
                           <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
                         </div>
@@ -5588,7 +5565,7 @@ export default function TCGPage() {
                 </div>
 
                 {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-6">
+                  <div className="flex items-center justify-center gap-1 mt-6">
                     <button
                       onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                       disabled={currentPage === 1}

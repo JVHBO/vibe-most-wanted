@@ -143,8 +143,8 @@ const WEAR_LEVELS = ["Pristine", "Mint", "Lightly Played", "Moderately Played", 
 const WEAR_ODDS = { Pristine: 2, Mint: 10, "Lightly Played": 33, "Moderately Played": 35, "Heavily Played": 20 }; // More bad wear
 
 /**
- * Calculate card power (FREE cards have 20% less power than NFTs)
- * Formula: power = rarity_base × wear_multiplier × foil_multiplier × 0.8 (FREE penalty)
+ * Calculate card power (FREE cards have 50% less power than NFTs)
+ * Formula: power = rarity_base × wear_multiplier × foil_multiplier × 0.5 (FREE penalty)
  */
 function calculateCardPower(rarity: string, wear: string, foil?: string): number {
   // Base power by rarity (exact NFT values)
@@ -176,8 +176,8 @@ function calculateCardPower(rarity: string, wear: string, foil?: string): number
   const wearMult = wearMultiplier[wear] || 1.0;
   const foilMult = foil ? (foilMultiplier[foil] || 1.0) : 1.0;
 
-  // FREE cards have 20% less power (×0.8)
-  const power = base * wearMult * foilMult * 0.8;
+  // FREE cards have 50% less power (×0.5)
+  const power = base * wearMult * foilMult * 0.5;
 
   return Math.max(1, Math.round(power));
 }

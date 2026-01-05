@@ -201,12 +201,22 @@ export function ShopView({ address }: ShopViewProps) {
     }
   };
 
-  // Handle daily free claim - gives a pack to open
+  // Handle daily free claim - gives a pack to open (requires 0 VBMS TX for verification)
   const handleClaimDailyFree = async () => {
-    if (!address || claimingDaily) return;
+    if (!address || claimingDaily || !effectiveAddress) return;
 
     setClaimingDaily(true);
     try {
+      // Step 1: Send 0 VBMS TX to contract (for verification/tracking)
+      setNotification({
+        type: 'success',
+        message: t('shopTransferring')
+      });
+
+      const txHash = await transfer(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther("0"));
+      console.log('✅ Free pack TX:', txHash);
+
+      // Step 2: Claim the pack in backend
       await claimDailyFree({ address });
       setNotification({
         type: 'success',
