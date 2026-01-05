@@ -771,11 +771,11 @@ export default function TCGPage() {
 
   // 🚀 Performance: Memoized battle card power totals (for UI display)
   const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
-  // VibeFID gets 10x power in leaderboard attacks
+  // Collection power multipliers for leaderboard attacks (VibeFID 10x, VBMS 2x, Nothing 0.5x)
   const calculateLeaderboardAttackPower = (cards: any[]) => {
     return cards.reduce((sum, c) => {
-      const multiplier = c.collection === 'vibefid' ? 10 : 1;
-      return sum + ((c.power || 0) * multiplier);
+      const multiplier = c.collection === 'vibefid' ? 10 : c.collection === 'vibe' ? 2 : c.collection === 'nothing' ? 0.5 : 1;
+      return sum + Math.floor((c.power || 0) * multiplier);
     }, 0);
   };
   const attackSelectedCardsPower = calculateLeaderboardAttackPower(attackSelectedCards);

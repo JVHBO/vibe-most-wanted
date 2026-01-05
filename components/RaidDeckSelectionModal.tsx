@@ -78,11 +78,12 @@ export function RaidDeckSelectionModal({
   const [cardsLoaded, setCardsLoaded] = useState(false); // Track if cards finished loading
   const CARDS_PER_PAGE = 50;
 
-  // Helper to get buffed power for display (VibeFID 5x, VBMS 2x)
+  // Helper to get buffed power for display (VibeFID 5x, VBMS 2x, Nothing 0.5x)
   const getDisplayPower = (card: any) => {
     const base = card.power || 0;
     if (card.collection === 'vibefid') return Math.floor(base * 5);
     if (card.collection === 'vibe') return Math.floor(base * 2);
+    if (card.collection === 'nothing') return Math.floor(base * 0.5);
     return base;
   };
 

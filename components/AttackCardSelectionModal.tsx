@@ -139,11 +139,12 @@ export function AttackCardSelectionModal({
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const CARDS_PER_PAGE = 50;
 
-  // Helper to get buffed power for display (VibeFID 5x, VBMS 2x)
+  // Helper to get buffed power for display (VibeFID 5x, VBMS 2x, Nothing 0.5x)
   const getDisplayPower = (card: any) => {
     const base = card.power || 0;
     if (card.collection === 'vibefid') return Math.floor(base * 5);
     if (card.collection === 'vibe') return Math.floor(base * 2);
+    if (card.collection === 'nothing') return Math.floor(base * 0.5);
     return base;
   };
 
@@ -300,12 +301,15 @@ export function AttackCardSelectionModal({
     if (soundEnabled) AudioManager.playHand();
 
     // Calculate power totals
-    // VibeFID gets 5x power, VBMS gets 2x power
-      const playerTotal = attackSelectedCards.reduce((sum: number, c: Card) => {
-        const multiplier = c.collection === 'vibefid' ? 5 : (c.collection === 'vibe' ? 2 : 1);
-        return sum + ((c.power || 0) * multiplier);
-      }, 0);
-    const dealerTotal = defenderCards.reduce((sum: number, c: Card) => sum + (c.power || 0), 0);
+    // VibeFID 5x, VBMS 2x, Nothing 0.5x
+    const playerTotal = attackSelectedCards.reduce((sum: number, c: Card) => {
+      const multiplier = c.collection === 'vibefid' ? 5 : c.collection === 'vibe' ? 2 : c.collection === 'nothing' ? 0.5 : 1;
+      return sum + Math.floor((c.power || 0) * multiplier);
+    }, 0);
+    const dealerTotal = defenderCards.reduce((sum: number, c: Card) => {
+      const multiplier = c.collection === 'vibefid' ? 5 : c.collection === 'vibe' ? 2 : c.collection === 'nothing' ? 0.5 : 1;
+      return sum + Math.floor((c.power || 0) * multiplier);
+    }, 0);
 
     // Animate battle
     setTimeout(() => {

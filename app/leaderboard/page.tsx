@@ -965,12 +965,15 @@ export default function LeaderboardPage() {
 
                     if (soundEnabled) AudioManager.playHand();
 
-                    // Calculate power totals (VibeFID 10x)
+                    // Calculate power totals (VibeFID 10x, VBMS 2x, Nothing 0.5x for leaderboard attacks)
                     const playerTotal = attackSelectedCards.reduce((sum: number, c: any) => {
-                      const multiplier = c.collection === 'vibefid' ? 10 : 1;
-                      return sum + ((c.power || 0) * multiplier);
+                      const multiplier = c.collection === 'vibefid' ? 10 : c.collection === 'vibe' ? 2 : c.collection === 'nothing' ? 0.5 : 1;
+                      return sum + Math.floor((c.power || 0) * multiplier);
                     }, 0);
-                    const dealerTotal = defenderCards.reduce((sum: number, c: any) => sum + (c.power || 0), 0);
+                    const dealerTotal = defenderCards.reduce((sum: number, c: any) => {
+                      const multiplier = c.collection === 'vibefid' ? 10 : c.collection === 'vibe' ? 2 : c.collection === 'nothing' ? 0.5 : 1;
+                      return sum + Math.floor((c.power || 0) * multiplier);
+                    }, 0);
 
                     // Animate battle phases
                     setTimeout(() => {

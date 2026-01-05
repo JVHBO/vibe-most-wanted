@@ -96,12 +96,13 @@ export function useBattleResult(
   powerDifference: number;
 } {
   return useMemo(() => {
-    // 🚀 Apply collection buffs (VBMS 2x, VibeFID 5x)
+    // 🚀 Apply collection buffs (VibeFID 5x, VBMS 2x, Nothing 0.5x)
     const playerPower = playerCards.reduce((sum, c) => {
       const basePower = c.power || 0;
       const collection = (c as any).collection;
       if (collection === 'vibefid') return sum + basePower * 5;
       if (collection === 'vibe') return sum + basePower * 2;
+      if (collection === 'nothing') return sum + Math.floor(basePower * 0.5);
       return sum + basePower;
     }, 0);
     const opponentPower = opponentCards.reduce((sum, c) => {
@@ -109,6 +110,7 @@ export function useBattleResult(
       const collection = (c as any).collection;
       if (collection === 'vibefid') return sum + basePower * 5;
       if (collection === 'vibe') return sum + basePower * 2;
+      if (collection === 'nothing') return sum + Math.floor(basePower * 0.5);
       return sum + basePower;
     }, 0);
 
