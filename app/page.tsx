@@ -4861,7 +4861,7 @@ export default function TCGPage() {
           </div>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           {/* VibeFID Button - Opens VibeFID miniapp */}
           {isInFarcaster && (
             <button
@@ -4869,7 +4869,7 @@ export default function TCGPage() {
                 if (soundEnabled) AudioManager.buttonClick();
                 await openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, isInFarcaster);
               }}
-              className="tour-vibefid-btn px-8 md:px-12 ml-2 py-2 md:py-2 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
+              className="tour-vibefid-btn px-8 md:px-12 py-2 md:py-2 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
             >
               <div className="flex items-center justify-center gap-1">
                 <span className="text-sm font-bold">{t("vibefidMint")}</span>
