@@ -1010,7 +1010,7 @@ export function RaidBossModal({
                           <div className={`absolute top-1 left-1 text-white text-sm px-2 py-1 rounded font-bold ${
                             hasCollectionBuff ? 'bg-yellow-500' : 'bg-red-600'
                           }`}>
-                            {isVibeFID ? Math.floor(card.power * 10) : hasCollectionBuff ? Math.floor(card.power * 2) : card.power}
+                            {isVibeFID ? Math.floor(card.power * 5) : hasCollectionBuff ? Math.floor(card.power * 2) : card.power}
                           </div>
                           {/* Collection Buff Badge */}
                           {hasCollectionBuff && (

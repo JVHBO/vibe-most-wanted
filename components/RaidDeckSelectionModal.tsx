@@ -78,6 +78,14 @@ export function RaidDeckSelectionModal({
   const [cardsLoaded, setCardsLoaded] = useState(false); // Track if cards finished loading
   const CARDS_PER_PAGE = 50;
 
+  // Helper to get buffed power for display (VibeFID 5x, VBMS 2x)
+  const getDisplayPower = (card: any) => {
+    const base = card.power || 0;
+    if (card.collection === 'vibefid') return Math.floor(base * 5);
+    if (card.collection === 'vibe') return Math.floor(base * 2);
+    return base;
+  };
+
   // Translations
   const { t: translate } = useLanguage();
 
@@ -582,7 +590,7 @@ export function RaidDeckSelectionModal({
                       className="w-full h-full object-cover rounded-md"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-0.5 text-vintage-gold text-[9px] font-bold text-center">
-                      ⚡{selectedCards[i].power?.toLocaleString()}
+                      ⚡{getDisplayPower(selectedCards[i]).toLocaleString()}
                     </div>
                   </>
                 ) : (

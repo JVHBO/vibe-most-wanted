@@ -54,6 +54,14 @@ export function PveCardSelectionModal({
   const [cardsLoaded, setCardsLoaded] = useState(false);
   const CARDS_PER_PAGE = 50;
 
+  // Helper to get buffed power for display (VibeFID 5x, VBMS 2x)
+  const getDisplayPower = (card: any) => {
+    const base = card.power || 0;
+    if (card.collection === 'vibefid') return Math.floor(base * 5);
+    if (card.collection === 'vibe') return Math.floor(base * 2);
+    return base;
+  };
+
   // Track when cards have finished loading
   useEffect(() => {
     if (sortedPveNfts !== undefined) {
@@ -210,7 +218,7 @@ export function PveCardSelectionModal({
                       className="w-full h-full object-cover rounded-lg"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-0.5 text-vintage-neon-blue text-xs font-bold text-center">
-                      {pveSelectedCards[i].power?.toLocaleString()}
+                      {getDisplayPower(pveSelectedCards[i]).toLocaleString()}
                     </div>
                   </>
                 ) : (
@@ -253,7 +261,7 @@ export function PveCardSelectionModal({
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
-                      {nft.power?.toLocaleString()}
+                      {getDisplayPower(nft).toLocaleString()}
                     </div>
                     {isSelected && (
                       <div className="absolute inset-0 bg-vintage-neon-blue/20 flex items-center justify-center">

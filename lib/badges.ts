@@ -1,18 +1,9 @@
 // Badge configuration
 export const BADGES_CONFIG = {
-  // Developer wallet address
   DEV_WALLET: '0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52',
-
-  // Gey badge wallet
   GEY_WALLET: '0x673a827c0df98274fa94ef194f7f9d1a8a00bbb9',
-
-  // AI badge wallet - Claude
   AI_WALLET: '0xBb4c7d8B2E32c7C99d358Be999377c208cCE53c2',
-
-  // Big Dog badge wallet
   BIGDOG_WALLET: '0xba918b37cd34cb8f123081a01c8f5733996a3682',
-
-  // Trash badge wallet
   TRASH_WALLET: '0xb620e9f63188245fcc3e737f77f811e8aa5338fe',
 };
 
@@ -31,70 +22,69 @@ export interface Badge {
 export const BADGES: Record<BadgeType, Badge> = {
   dev: {
     type: 'dev',
-    label: 'dev',
+    label: '',
     description: '',
-    icon: '',
-    color: 'bg-gradient-to-r from-vintage-gold/30 to-vintage-burnt-gold/30',
-    borderColor: 'bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold',
+    icon: '⚡',
+    color: 'bg-vintage-black',
+    borderColor: 'bg-vintage-gold',
     textColor: 'text-vintage-gold',
   },
   gey: {
     type: 'gey',
-    label: 'gey',
+    label: '',
     description: '',
-    icon: '',
-    color: 'bg-gradient-to-r from-pink-500/30 via-purple-500/30 to-blue-500/30',
-    borderColor: 'bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500',
-    textColor: 'text-pink-400',
+    icon: '🌈',
+    color: 'bg-vintage-black',
+    borderColor: 'bg-vintage-gold',
+    textColor: 'text-vintage-gold',
   },
   ai: {
     type: 'ai',
-    label: 'IA',
-    description: 'Artificial Intelligence Player',
+    label: '',
+    description: '',
     icon: '🤖',
-    color: 'bg-gradient-to-r from-purple-600/30 via-blue-500/30 to-cyan-500/30',
-    borderColor: 'bg-gradient-to-r from-purple-600 via-blue-500 to-cyan-500',
-    textColor: 'text-cyan-300',
+    color: 'bg-vintage-black',
+    borderColor: 'bg-vintage-gold',
+    textColor: 'text-vintage-gold',
   },
   bigdog: {
     type: 'bigdog',
-    label: 'BIG DOG',
-    description: 'Big Dog',
+    label: '',
+    description: '',
     icon: '🐕',
-    color: 'bg-gradient-to-r from-orange-600/30 via-amber-500/30 to-yellow-500/30',
-    borderColor: 'bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500',
-    textColor: 'text-orange-400',
+    color: 'bg-vintage-black',
+    borderColor: 'bg-vintage-gold',
+    textColor: 'text-vintage-gold',
   },
   exploiter: {
     type: 'exploiter',
-    label: 'ULTRA VIRGIN',
-    description: 'Exploited the game and got caught',
+    label: 'EXPLOITER',
+    description: 'Exploited the game',
     icon: '🚨',
-    color: 'bg-gradient-to-r from-red-900/50 via-red-800/50 to-red-700/50',
-    borderColor: 'bg-gradient-to-r from-red-600 via-red-500 to-red-400',
+    color: 'bg-red-900/50',
+    borderColor: 'bg-red-500',
     textColor: 'text-red-400',
   },
   trash: {
     type: 'trash',
-    label: 'TRASH',
-    description: 'Trash player',
+    label: '',
+    description: '',
     icon: '🗑️',
-    color: 'bg-gradient-to-r from-stone-700/50 via-stone-600/50 to-stone-500/50',
-    borderColor: 'bg-gradient-to-r from-stone-600 via-stone-500 to-stone-400',
-    textColor: 'text-stone-400',
+    color: 'bg-vintage-black',
+    borderColor: 'bg-vintage-gold',
+    textColor: 'text-vintage-gold',
   },
   vibe: {
     type: 'vibe',
-    label: 'VIBE',
-    description: 'VibeFID Holder - 2x coins in Wanted Cast',
+    label: '',
+    description: '',
     icon: '✨',
-    color: 'bg-gradient-to-r from-yellow-500/30 via-amber-500/30 to-orange-500/30',
-    borderColor: 'bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-500',
-    textColor: 'text-yellow-400',
+    color: 'bg-vintage-black',
+    borderColor: 'bg-vintage-gold',
+    textColor: 'text-vintage-gold',
   },
 };
 
-// Hardcoded exploiter blacklist (same as convex/blacklist.ts)
 const EXPLOITER_BLACKLIST = [
   "0x0395df57f73ae2029fc27a152cd87070bcfbd4a4",
   "0xbb367d00000f5e37ac702aab769725c299be2fc3",
@@ -121,44 +111,36 @@ const EXPLOITER_BLACKLIST = [
   "0x705d7d414c6d94a8d1a06aeffc7cd92882480bd9",
 ];
 
-// Check if address is the developer
 export function isDev(address: string): boolean {
   return address.toLowerCase() === BADGES_CONFIG.DEV_WALLET.toLowerCase();
 }
 
-// Check if address is an exploiter (blacklisted)
 export function isExploiter(address: string): boolean {
   return EXPLOITER_BLACKLIST.includes(address.toLowerCase());
 }
 
-// Check if address has the gey badge
 export function isGey(address: string): boolean {
   return address.toLowerCase() === BADGES_CONFIG.GEY_WALLET.toLowerCase();
 }
 
-// Check if address is AI
 export function isAI(address: string): boolean {
   return address.toLowerCase() === BADGES_CONFIG.AI_WALLET.toLowerCase();
 }
 
-// Check if address is Big Dog
 export function isBigDog(address: string): boolean {
   return address.toLowerCase() === BADGES_CONFIG.BIGDOG_WALLET.toLowerCase();
 }
 
-// Check if address is Trash
 export function isTrash(address: string): boolean {
   return address.toLowerCase() === BADGES_CONFIG.TRASH_WALLET.toLowerCase();
 }
 
-// Get badges for a user
 export function getUserBadges(address: string, userIndex: number, hasVibeBadge?: boolean): Badge[] {
   const badges: Badge[] = [];
 
-  // Exploiter badge takes priority and is shown first
   if (isExploiter(address)) {
     badges.push(BADGES.exploiter);
-    return badges; // Only show exploiter badge, nothing else
+    return badges;
   }
 
   if (isDev(address)) {
@@ -181,7 +163,6 @@ export function getUserBadges(address: string, userIndex: number, hasVibeBadge?:
     badges.push(BADGES.trash);
   }
 
-  // VIBE badge for VibeFID holders (claimed via missions)
   if (hasVibeBadge) {
     badges.push(BADGES.vibe);
   }

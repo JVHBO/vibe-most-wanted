@@ -139,6 +139,14 @@ export function AttackCardSelectionModal({
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const CARDS_PER_PAGE = 50;
 
+  // Helper to get buffed power for display (VibeFID 5x, VBMS 2x)
+  const getDisplayPower = (card: any) => {
+    const base = card.power || 0;
+    if (card.collection === 'vibefid') return Math.floor(base * 5);
+    if (card.collection === 'vibe') return Math.floor(base * 2);
+    return base;
+  };
+
   // Modal close handler (defined early for ESC key hook)
   const closeModal = () => {
     if (soundEnabled) AudioManager.buttonNav();
@@ -292,9 +300,9 @@ export function AttackCardSelectionModal({
     if (soundEnabled) AudioManager.playHand();
 
     // Calculate power totals
-    // VibeFID gets 10x power in leaderboard attacks
+    // VibeFID gets 5x power, VBMS gets 2x power
       const playerTotal = attackSelectedCards.reduce((sum: number, c: Card) => {
-        const multiplier = c.collection === 'vibefid' ? 10 : 1;
+        const multiplier = c.collection === 'vibefid' ? 5 : (c.collection === 'vibe' ? 2 : 1);
         return sum + ((c.power || 0) * multiplier);
       }, 0);
     const dealerTotal = defenderCards.reduce((sum: number, c: Card) => sum + (c.power || 0), 0);
@@ -507,7 +515,7 @@ export function AttackCardSelectionModal({
                       className="w-full h-full object-cover rounded-lg"
                     />
                     <div className={`absolute bottom-0 left-0 right-0 py-0.5 text-xs font-bold text-center ${attackSelectedCards[i].collection === 'vibefid' ? 'bg-purple-900/90 text-purple-300' : 'bg-black/80 text-red-500'}`}>
-                      {attackSelectedCards[i].collection === 'vibefid' ? `${((attackSelectedCards[i].power || 0) * 10).toLocaleString()} (10x)` : attackSelectedCards[i].power?.toLocaleString()}
+                      {attackSelectedCards[i].collection === 'vibefid' ? `${((attackSelectedCards[i].power || 0) * 5).toLocaleString()} (5x)` : attackSelectedCards[i].power?.toLocaleString()}
                     </div>
                   </>
                 ) : (
@@ -572,7 +580,7 @@ export function AttackCardSelectionModal({
                       className="w-full h-full object-cover"
                     />
                     <div className={`absolute top-0 left-0 text-xs px-1 rounded-br font-bold ${nft.collection === 'vibefid' ? 'bg-purple-600 text-white' : 'bg-vintage-gold text-vintage-black'}`}>
-                      {nft.collection === 'vibefid' ? `${((nft.power || 0) * 10).toLocaleString()} ★` : nft.power?.toLocaleString()}
+                      {nft.collection === 'vibefid' ? `${getDisplayPower(nft).toLocaleString()} ★` : nft.collection === 'vibe' ? `${getDisplayPower(nft).toLocaleString()} (2x)` : nft.power?.toLocaleString()}
                     </div>
 
                     {isLocked && (

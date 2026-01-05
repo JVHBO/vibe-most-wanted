@@ -23,7 +23,14 @@ export interface NFT {
  */
 export function useTotalPower(cards: NFT[]): number {
   return useMemo(() => {
-    return cards.reduce((sum, card) => sum + (card.power || 0), 0);
+    // 🚀 Apply collection buffs (VBMS 2x, VibeFID 5x)
+    return cards.reduce((sum, card) => {
+      const basePower = card.power || 0;
+      const collection = (card as any).collection;
+      if (collection === 'vibefid') return sum + basePower * 5;
+      if (collection === 'vibe') return sum + basePower * 2;
+      return sum + basePower;
+    }, 0);
   }, [cards]);
 }
 

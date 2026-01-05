@@ -55,6 +55,7 @@ export default function RaidPage() {
   const [replacingVibeFID, setReplacingVibeFID] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showAllBosses, setShowAllBosses] = useState(false);
   const [isClearingDeck, setIsClearingDeck] = useState(false);
 
   // Visual attack animation states
@@ -413,7 +414,7 @@ export default function RaidPage() {
       const result = await claimRewardsMutation({ address: address.toLowerCase() });
       if (result.success) {
         if (soundEnabled) AudioManager.win();
-        alert(`🎁 Claimed ${result.totalClaimed} TESTVBMS from ${result.claimedCount} raid battles!`);
+        alert(`🎁 Claimed ${result.totalClaimed} coins from ${result.claimedCount} raid battles!`);
       }
     } catch (error: any) {
       console.error('Error claiming rewards:', error);
@@ -813,7 +814,7 @@ export default function RaidPage() {
 
                         {/* Power Badge */}
                         <div className={`absolute top-0.5 left-0.5 text-white text-[10px] px-1 rounded font-bold ${hasCollectionBuff ? 'bg-yellow-500' : 'bg-black/70'}`}>
-                          {hasCollectionBuff ? Math.floor(card.power * 2) : card.power}
+                          {hasCollectionBuff ? Math.floor(card.power * 5) : card.power}
                         </div>
 
                         {/* Collection Buff */}
@@ -862,10 +863,10 @@ export default function RaidPage() {
 
                         {/* Power Badge */}
                         <div className="absolute top-0.5 left-0.5 bg-purple-600 text-white text-[10px] px-1 rounded font-bold">
-                          {Math.floor(card.power * 10)}
+                          {Math.floor(card.power * 5)}
                         </div>
 
-                        {/* 10x Multiplier */}
+                        {/* 2x Multiplier */}
                         <div className="absolute bottom-0.5 left-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[8px] px-1 py-0.5 rounded font-bold">
                           10x
                         </div>
@@ -894,6 +895,81 @@ export default function RaidPage() {
           )}
         </div>
       </div>
+
+      {/* All Bosses Modal */}
+      {showAllBosses && (
+        <div
+          className="fixed inset-0 bg-black/95 flex items-center justify-center z-[300] p-4"
+          onClick={() => setShowAllBosses(false)}
+        >
+          <div
+            className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 max-w-md w-full max-h-[80vh] flex flex-col shadow-neon"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-vintage-gold/20">
+              <h2 className="text-lg font-display font-bold text-vintage-gold text-center">
+                Boss Rotation ({BOSS_ROTATION_ORDER.length} bosses)
+              </h2>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3">
+              <div className="space-y-1">
+                {BOSS_ROTATION_ORDER.map((collection, idx) => {
+                  const rarity = BOSS_RARITY_ORDER[idx];
+                  const boss = getBossCard(collection as any, rarity as any);
+                  const isCurrent = currentBoss && idx === currentBoss.bossIndex;
+                  const isPast = currentBoss && idx < currentBoss.bossIndex;
+                  const collectionInfo = COLLECTIONS[collection as keyof typeof COLLECTIONS];
+
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        if (isPast) router.push(`/raid/leaderboard?boss=${idx}`);
+                        else if (isCurrent) {
+                          setShowAllBosses(false);
+                        }
+                      }}
+                      className={`${
+                        isCurrent
+                          ? 'bg-vintage-gold/30 border-vintage-gold'
+                          : isPast
+                          ? 'bg-vintage-gold/10 border-vintage-gold/30 hover:bg-vintage-gold/20'
+                          : 'bg-black/30 border-white/10'
+                      } border rounded-lg p-2 flex items-center gap-2 w-full transition`}
+                    >
+                      <span className={`text-[10px] font-mono w-6 ${isCurrent ? 'text-vintage-gold' : isPast ? 'text-vintage-gold/60' : 'text-white/40'}`}>
+                        #{idx + 1}
+                      </span>
+                      <span className={`flex-1 text-left text-xs ${isCurrent ? 'text-vintage-gold font-bold' : isPast ? 'text-vintage-burnt-gold' : 'text-white/50'}`}>
+                        {boss?.name || collection}
+                      </span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded ${
+                        rarity === 'Mythic' ? 'bg-purple-600/50 text-purple-300' :
+                        rarity === 'Legendary' ? 'bg-yellow-600/50 text-yellow-300' :
+                        rarity === 'Epic' ? 'bg-blue-600/50 text-blue-300' :
+                        rarity === 'Rare' ? 'bg-green-600/50 text-green-300' :
+                        'bg-gray-600/50 text-gray-300'
+                      }`}>
+                        {rarity}
+                      </span>
+                      {isCurrent && <span className="text-vintage-gold text-xs">⚔️</span>}
+                      {isPast && <span className="text-vintage-gold/50 text-xs">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="p-3 border-t border-vintage-gold/20">
+              <button
+                onClick={() => setShowAllBosses(false)}
+                className="w-full px-4 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold border border-vintage-gold/50 rounded-lg font-bold text-sm transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Help Modal */}
       {showHelp && (

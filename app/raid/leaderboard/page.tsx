@@ -139,7 +139,7 @@ function PlayerRaidDeckView({
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1">
                       <p className="text-purple-400 text-xs text-center font-bold">
-                        {((playerDeck.vibefidCard.power || 0) * 10).toLocaleString()} <span className="text-vintage-gold">(10x)</span>
+                        {((playerDeck.vibefidCard.power || 0) * 5).toLocaleString()} <span className="text-vintage-gold">(5x)</span>
                       </p>
                     </div>
                   </div>
@@ -548,7 +548,7 @@ function HistoricalBossLeaderboard({
                 <div className="flex items-center justify-between">
                   <span className="text-vintage-burnt-gold/70 text-xs">{t('raidLeaderboardReward')}</span>
                   <span className="text-green-400 font-bold">
-                    +{contributor.reward.toLocaleString()} $TESTVBMS
+                    +{contributor.reward.toLocaleString()} coins
                   </span>
                 </div>
               </div>

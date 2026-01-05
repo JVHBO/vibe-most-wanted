@@ -389,9 +389,13 @@ export const replaceCard = mutation({
         return ce;
       });
 
-      // Recalculate deck power with new VibeFID (2x power)
-      const basePower = raidDeck.deck.reduce((sum, card) => sum + card.power, 0);
-      const newDeckPower = Math.floor((basePower + args.newCard.power * 2) * 1.10); // +10% bonus
+      // Recalculate deck power with new VibeFID (5x power for VibeFID, 2x for VBMS)
+      const basePower = raidDeck.deck.reduce((sum, card) => {
+        const p = card.power || 0;
+        if (card.collection === 'vibe') return sum + p * 2; // VBMS 2x
+        return sum + p; // Others 1x
+      }, 0);
+      const newDeckPower = Math.floor((basePower + args.newCard.power * 5) * 1.10); // VibeFID 5x + 10% bonus
 
       await ctx.db.patch(raidDeck._id, {
         vibefidCard: newVibefidCard,
@@ -550,9 +554,14 @@ export const setRaidDeck = mutation({
     }
 
     // Calculate total deck power (including VibeFID if present)
-    let deckPower = args.deck.reduce((sum, card) => sum + card.power, 0);
+    // 🚀 Apply collection buffs (VBMS 2x)
+    let deckPower = args.deck.reduce((sum, card) => {
+      const basePower = card.power || 0;
+      if (card.collection === 'vibe') return sum + basePower * 2;
+      return sum + basePower;
+    }, 0);
     if (args.vibefidCard) {
-      deckPower += args.vibefidCard.power * 2;  // VibeFID gets 2x power (same as collection buff)
+      deckPower += args.vibefidCard.power * 5;  // VibeFID gets 5x power (same as collection buff)
       // Apply +10% deck bonus for having VibeFID
       deckPower = Math.floor(deckPower * (1 + VIBEFID_DECK_BONUS));
     }
@@ -817,9 +826,9 @@ export const processAutoAttacks = internalMutation({
           const isVibeFID = deckCard?.collection === 'vibefid' || deck.vibefidCard?.tokenId === cardEnergy.tokenId;
           // VibeFID cards don't have isFreeCard property, so use optional chaining
           if (deckCard && !('isFreeCard' in deckCard && deckCard.isFreeCard)) {
-            // VibeFID cards get 2x power (same as collection buff)
+            // VibeFID cards get 5x power
             if (isVibeFID) {
-              cardPower = Math.floor(cardPower * 2.0);
+              cardPower = Math.floor(cardPower * 5.0);
             }
             // Cards matching boss collection get 2x power (100% bonus)
             else if (deckCard.collection === boss.collection) {
@@ -1367,6 +1376,42 @@ export const cleanupLinkedWalletRaidData = internalMutation({
     return {
       deletedRaidDeck: !!raidDeck,
       deletedContributions: contributions.length,
+    };
+  },
+});
+
+/**
+ * Admin: Force kill current boss and spawn next one
+ * Used to skip bosses that are stuck or unwanted
+ */
+export const adminForceKillBoss = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const now = Date.now();
+
+    // Get current active boss
+    const activeBoss = await ctx.db
+      .query("raidBoss")
+      .filter((q) => q.eq(q.field("status"), "active"))
+      .first();
+
+    if (!activeBoss) {
+      return { success: false, message: "No active boss found" };
+    }
+
+    // Set boss to transitioning (will be processed by cron)
+    await ctx.db.patch(activeBoss._id, {
+      currentHp: 0,
+      status: "transitioning",
+      defeatedAt: now,
+    });
+
+    console.log(`🔪 Admin force-killed boss: ${activeBoss.name} (index ${activeBoss.bossIndex})`);
+
+    return {
+      success: true,
+      killedBoss: activeBoss.name,
+      bossIndex: activeBoss.bossIndex,
     };
   },
 });
