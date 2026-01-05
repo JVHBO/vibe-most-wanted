@@ -3019,6 +3019,7 @@ export default function TCGPage() {
       welcome_gift: {
         icon: '/images/icons/coins.svg',
         title: 'Welcome Gift',
+        description: 'Receive your welcome bonus!',
       },
       vibefid_minted: {
         icon: '/images/icons/achievement.svg',
