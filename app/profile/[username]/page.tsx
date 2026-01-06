@@ -704,7 +704,7 @@ export default function ProfilePage() {
                 {/* VibeFID Card Link - Opens VibeFID miniapp */}
                 {profile.fid && (
                   <button
-                    onClick={() => openMarketplace(`https://vibefid.xyz/fid/${profile.fid}`, sdk, true)}
+                    onClick={() => openMarketplace(`https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid/fid/${profile.fid}`, sdk, true)}
                     className="text-vintage-gold hover:text-vintage-burnt-gold inline-flex items-center gap-1 font-modern transition-colors cursor-pointer"
                   >
                     ♦ VibeFID Card
