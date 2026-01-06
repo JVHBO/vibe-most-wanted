@@ -1067,3 +1067,34 @@ export const getRandomCardMutation = mutation({
     };
   },
 });
+
+// Get VibeMail stats for a user (VBMS sent to others, VBMS received from others)
+export const getVibeMailStats = query({
+  args: { fid: v.number() },
+  handler: async (ctx, args) => {
+    // Get all paid VibeMails SENT by this user (voterFid = fid, isPaid = true, has message)
+    const sentMessages = await ctx.db
+      .query("cardVotes")
+      .withIndex("by_voter_date", (q) => q.eq("voterFid", args.fid))
+      .collect();
+
+    const paidSent = sentMessages.filter(v => v.isPaid && v.message !== undefined);
+    const totalVbmsSent = paidSent.reduce((sum, v) => sum + (v.voteCount || 1) * 100, 0);
+
+    // Get all paid VibeMails RECEIVED by this user (cardFid = fid, isPaid = true, has message)
+    const receivedMessages = await ctx.db
+      .query("cardVotes")
+      .withIndex("by_card_date", (q) => q.eq("cardFid", args.fid))
+      .collect();
+
+    const paidReceived = receivedMessages.filter(v => v.isPaid && v.message !== undefined);
+    const totalVbmsReceived = paidReceived.reduce((sum, v) => sum + (v.voteCount || 1) * 100, 0);
+
+    return {
+      totalVbmsSent,           // Total VBMS spent on VibeMails
+      totalVbmsReceived,       // Total VBMS earned from VibeMails
+      paidMessagesSent: paidSent.length,
+      paidMessagesReceived: paidReceived.length,
+    };
+  },
+});
