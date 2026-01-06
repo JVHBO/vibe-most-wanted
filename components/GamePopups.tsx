@@ -17,6 +17,7 @@ import { AudioManager } from '@/lib/audio-manager';
 import { FarcasterIcon } from '@/components/PokerIcons';
 import { useMusic } from '@/contexts/MusicContext';
 import { shareToFarcaster } from '@/lib/share-utils';
+import { getAssetUrl } from '@/lib/ipfs-assets';
 
 // Pre-generated random positions for victory-3 animation (avoid recalculating on each render)
 const VICTORY3_TONGUE_POSITIONS = Array.from({ length: 25 }, (_, i) => ({
@@ -192,7 +193,7 @@ export function GamePopups({
   return (
     <>
       {/* Preload tie.mp4 and davyjones.mp4 for faster display */}
-      <link rel="preload" href="/tie.mp4" as="video" type="video/mp4" />
+      <link rel="preload" href={getAssetUrl("/tie.mp4")} as="video" type="video/mp4" />
 
       {/* Victory Popup */}
       {showWinPopup && (
@@ -312,16 +313,6 @@ export function GamePopups({
           )}
 
           <div className="relative flex flex-col items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            {/* Victory 4 - Video (littlebird) */}
-            {currentVictoryImage === '/littlebird.mp4' ? (
-              <video
-                src={currentVictoryImage}
-                autoPlay
-                loop
-                muted={!soundEnabled}
-                playsInline
-                className="max-w-[85vw] max-h-[50vh] object-contain rounded-xl shadow-2xl shadow-blue-500/50 border-2 border-blue-400"
-              />
             ) : (
               <img
                 src={currentVictoryImage}
@@ -453,7 +444,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
             {/* Loss screen - Video or Image */}
             {currentLossMedia.isVideo ? (
               <video
-                src={currentLossMedia.media}
+                src={currentLossMedia.media.startsWith("http") ? currentLossMedia.media : getAssetUrl(currentLossMedia.media)}
                 autoPlay
                 loop
                 muted={!soundEnabled}
@@ -462,7 +453,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
               />
             ) : (
               <img
-                src={currentLossMedia.media}
+                src={currentLossMedia.media.startsWith("http") ? currentLossMedia.media : getAssetUrl(currentLossMedia.media)}
                 alt="You Lost"
                 className="max-w-[85vw] max-h-[50vh] object-contain rounded-xl shadow-2xl shadow-red-500/50 border-2 border-red-500"
               />
@@ -550,7 +541,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowTiePopup(false)}>
           <div className="relative flex flex-col items-center gap-2">
             <video
-              src="/tie.mp4"
+              src={getAssetUrl("/tie.mp4")}
               autoPlay
               loop
               muted

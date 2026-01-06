@@ -700,14 +700,16 @@ export default function ProfilePage() {
                     FID: {profile.fid}
                   </span>
                 )}
-                {/* VibeFID Card Link */}
+                {/* VibeFID Card Link - Opens VibeFID miniapp */}
                 {profile.fid && (
-                  <Link
-                    href={`/fid/${profile.fid}`}
+                  <a
+                    href={`https://vibefid.xyz/fid/${profile.fid}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-vintage-gold hover:text-vintage-burnt-gold inline-flex items-center gap-1 font-modern transition-colors"
                   >
                     ♦ VibeFID Card
-                  </Link>
+                  </a>
                 )}
               </div>
 

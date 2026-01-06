@@ -141,7 +141,7 @@ export default function LeaderboardPage() {
     '/victory-1.jpg',   // Gigachad
     '/victory-2.jpg',   // Hearts
     '/victory-3.jpg',   // Sensual
-    '/littlebird.mp4',  // Little Bird (video)
+
     '/bom.jpg',         // Bom
   ];
   const [currentVictoryImage, setCurrentVictoryImage] = useState<string>(VICTORY_IMAGES[0]);
