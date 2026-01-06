@@ -18,6 +18,7 @@ import { GiftIcon, FarcasterIcon } from '@/components/PokerIcons';
 import { filterCardsByCollections, COLLECTIONS, type CollectionId, getCardUniqueId } from "@/lib/collections/index";
 import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+import { openMarketplace } from '@/lib/marketplace-utils';
 import { isUnrevealed as isUnrevealedShared, findAttr, calcPower } from '@/lib/nft/attributes';
 import { isSameCard, findCard, getCardKey } from '@/lib/nft';
 
@@ -702,14 +703,12 @@ export default function ProfilePage() {
                 )}
                 {/* VibeFID Card Link - Opens VibeFID miniapp */}
                 {profile.fid && (
-                  <a
-                    href={`https://vibefid.xyz/fid/${profile.fid}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-vintage-gold hover:text-vintage-burnt-gold inline-flex items-center gap-1 font-modern transition-colors"
+                  <button
+                    onClick={() => openMarketplace(`https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid/fid/${profile.fid}`, sdk, true)}
+                    className="text-vintage-gold hover:text-vintage-burnt-gold inline-flex items-center gap-1 font-modern transition-colors cursor-pointer"
                   >
                     ♦ VibeFID Card
-                  </a>
+                  </button>
                 )}
               </div>
 
