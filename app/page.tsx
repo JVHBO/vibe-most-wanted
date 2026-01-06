@@ -11,6 +11,8 @@ import { BadgeList } from "@/components/Badge";
 import { getUserBadges } from "@/lib/badges";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useMusic } from "@/contexts/MusicContext";
+import { getAssetUrl } from "@/lib/ipfs-assets";
+import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useAccount, useDisconnect, useConnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery, useMutation, useConvex } from "convex/react";
@@ -126,31 +128,46 @@ const getAvatarFallback = (): string => {
  */
 async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: number, cards: number) => void): Promise<any[]> {
   const enabledCollections = getEnabledCollections();
-  devLog('🎴 Fetching NFTs from', enabledCollections.length, 'enabled collections');
+  devLog('🎴 Fetching NFTs from', enabledCollections.length, 'enabled collections IN BATCHES');
 
   const allNfts: any[] = [];
   const collectionCounts: Record<string, number> = {};
+  let totalCards = 0;
 
-  for (const collection of enabledCollections) {
-    try {
-      devLog(`📡 Fetching from ${collection.displayName} (${collection.contractAddress})`);
-      const nfts = await fetchNFTs(owner, collection.contractAddress, onProgress);
-      // Tag each NFT with its collection
-      const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
-      allNfts.push(...tagged);
-      collectionCounts[collection.displayName] = nfts.length;
-      devLog(`✓ Found ${nfts.length} NFTs from ${collection.displayName}`);
-    } catch (error) {
-      collectionCounts[collection.displayName] = -1; // Mark as failed
-      devError(`✗ Failed to fetch from ${collection.displayName}:`, error);
+  // 🚀 BATCHED FETCH - 3 collections at a time to avoid rate limiting
+  const BATCH_SIZE = 3;
+  for (let i = 0; i < enabledCollections.length; i += BATCH_SIZE) {
+    const batch = enabledCollections.slice(i, i + BATCH_SIZE);
+
+    const results = await Promise.allSettled(
+      batch.map(async (collection) => {
+        devLog(`📡 Fetching from ${collection.displayName}`);
+        const nfts = await fetchNFTs(owner, collection.contractAddress);
+        const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
+        collectionCounts[collection.displayName] = nfts.length;
+        totalCards += nfts.length;
+        if (onProgress) onProgress(Object.keys(collectionCounts).length, totalCards);
+        return tagged;
+      })
+    );
+
+    results.forEach((result, idx) => {
+      if (result.status === 'fulfilled') {
+        allNfts.push(...result.value);
+      } else {
+        collectionCounts[batch[idx].displayName] = -1;
+        devError(`✗ Failed: ${batch[idx].displayName}`, result.reason);
+      }
+    });
+
+    // Small delay between batches to avoid rate limiting
+    if (i + BATCH_SIZE < enabledCollections.length) {
+      await new Promise(r => setTimeout(r, 200));
     }
   }
 
-  // Log summary for debugging inconsistencies
   console.log('📊 CARD FETCH SUMMARY:', JSON.stringify(collectionCounts));
   console.log(`📊 Total raw NFTs: ${allNfts.length}`);
-
-  devLog(`✅ Total NFTs from all collections: ${allNfts.length}`);
   return allNfts;
 }
 
@@ -349,6 +366,7 @@ export default function TCGPage() {
 
   // State for Farcaster context detection
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
+  const [farcasterFidState, setFarcasterFidState] = useState<number | undefined>(undefined);
   const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(false);
 
   // 🔧 DEV MODE: Force admin wallet for testing
@@ -384,6 +402,7 @@ export default function TCGPage() {
 
   // 🚫 Ban check for exploiters
   const banCheck = useQuery(api.blacklist.checkBan, address ? { address } : "skip");
+
 
   // 🔒 Session Lock (prevents multi-device exploit)
   const { isSessionLocked, lockReason, forceReconnect } = useSessionLock();
@@ -462,6 +481,9 @@ export default function TCGPage() {
   const [status, setStatus] = useState<string>("idle");
   const [skippedCardLoading, setSkippedCardLoading] = useState<boolean>(false);
   
+  // 🔗 Get cards from shared context (persists across routes!)
+  const { nfts: contextNfts, status: contextStatus } = usePlayerCards();
+
   // Check sessionStorage on mount to skip loading if already loaded this session
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -471,6 +493,18 @@ export default function TCGPage() {
       }
     }
   }, []);
+
+  // 🔗 Sync with context: If context has cards, use them (prevents reload on navigation)
+  useEffect(() => {
+    if (contextStatus === 'loaded' && contextNfts.length > 0 && nfts.length === 0) {
+      console.log('📦 Syncing from context:', contextNfts.length, 'cards');
+      setNfts([...contextNfts]);
+      setStatus('loaded');
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('vbms_cards_loaded', 'true');
+      }
+    }
+  }, [contextNfts, contextStatus, nfts.length]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<any[]>([]);
   const [playerPower, setPlayerPower] = useState<number>(0);
@@ -495,7 +529,7 @@ export default function TCGPage() {
     '/victory-1.jpg',   // Gigachad
     '/victory-2.jpg',   // Hearts
     '/victory-3.jpg',   // Sensual
-    '/littlebird.mp4',  // Little Bird (video)
+
     '/bom.jpg',         // Bom
   ];
   const [currentVictoryImage, setCurrentVictoryImage] = useState<string>(VICTORY_IMAGES[0]);
@@ -689,6 +723,10 @@ export default function TCGPage() {
   }, [currentView]);
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // 📬 VibeMail unread count for notification dot on VibeFID button
+  const userFidForVibemail = farcasterFidState || userProfile?.farcasterFid || (userProfile?.fid ? parseInt(userProfile.fid) : undefined);
+  const unreadVibeMailCount = useQuery(api.cardVotes.getUnreadMessageCount, userFidForVibemail ? { cardFid: userFidForVibemail } : "skip");
   const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
   const [profileUsername, setProfileUsername] = useState<string>('');
   const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
@@ -859,7 +897,7 @@ export default function TCGPage() {
   // Preload tie.mp4 to prevent loading delay
   useEffect(() => {
     const video = document.createElement('video');
-    video.src = '/tie.mp4';
+    video.src = getAssetUrl('/tie.mp4');
     video.oncanplaythrough = () => setTieGifLoaded(true);
     video.load();
   }, []);
@@ -963,6 +1001,7 @@ export default function TCGPage() {
           }
 
           console.log('[Farcaster] ✅ Farcaster miniapp confirmed - FID:', context.user.fid);
+          setFarcasterFidState(context.user.fid);
         } catch (contextError) {
           console.log('[Farcaster] ⚠️ Failed to get valid SDK context:', contextError);
           setIsInFarcaster(false);
@@ -1730,11 +1769,16 @@ export default function TCGPage() {
   }, [address]);
 
   useEffect(() => {
+    // Skip if cards are already loaded (prevents reload on navigation)
+    if (status === 'loaded' && nfts.length > 0) {
+      devLog('📦 Skipping NFT load - already loaded', nfts.length, 'cards');
+      return;
+    }
     if (address) {
       devLog('📦 Address changed, loading NFTs:', address);
       loadNFTs();
     }
-  }, [address, loadNFTs]);
+  }, [address, loadNFTs, status, nfts.length]);
 
   const loadJCNFTs = useCallback(async () => {
     try {
@@ -3542,8 +3586,9 @@ export default function TCGPage() {
       )}
 
       {/* Card Loading Screen - shows while fetching NFTs */}
+      {/* Don't show if context already has cards (they'll sync immediately) */}
       <CardLoadingScreen
-        isLoading={!skippedCardLoading && nfts.length === 0 && status !== 'loaded'}
+        isLoading={!skippedCardLoading && nfts.length === 0 && status !== 'loaded' && !(contextStatus === 'loaded' && contextNfts.length > 0)}
         onSkip={() => setSkippedCardLoading(true)}
         cardsLoaded={nfts.length}
       />
@@ -4413,6 +4458,7 @@ export default function TCGPage() {
         jcNfts={jcNfts}
         setIsDifficultyModalOpen={setIsDifficultyModalOpen}
         pveSelectedCardsPower={pveSelectedCardsPower}
+        loadingStatus={status}
       />
 
       {/* ✅ PvP Preview Modal - Shows potential gains/losses before battle */}
@@ -4869,8 +4915,12 @@ export default function TCGPage() {
                 if (soundEnabled) AudioManager.buttonClick();
                 await openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, isInFarcaster);
               }}
-              className="tour-vibefid-btn px-8 md:px-12 py-2 md:py-2 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
+              className="tour-vibefid-btn relative px-8 md:px-12 py-2 md:py-2 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
             >
+              {/* 📬 Red notification dot when there are unread VibeMails */}
+              {typeof unreadVibeMailCount === 'number' && unreadVibeMailCount > 0 && (
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
+              )}
               <div className="flex items-center justify-center gap-1">
                 <span className="text-sm font-bold">{t("vibefidMint")}</span>
               </div>
@@ -5242,7 +5292,7 @@ export default function TCGPage() {
                 <div className="tour-game-grid">
                   <GameGrid
                     soundEnabled={soundEnabled}
-                    disabled={!userProfile}
+                    disabled={!userProfile || (status !== 'loaded' && status !== 'failed' && contextStatus !== 'loaded')}
                     onSelect={handleGameModeSelect}
                   />
                 </div>
@@ -5271,7 +5321,7 @@ export default function TCGPage() {
               <div className="tour-game-grid w-full max-w-xs">
                 <GameGrid
                   soundEnabled={soundEnabled}
-                  disabled={!userProfile}
+                  disabled={!userProfile || (status !== 'loaded' && status !== 'failed')}
                   onSelect={handleGameModeSelect}
                 />
               </div>
