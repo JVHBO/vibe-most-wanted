@@ -31,6 +31,7 @@ interface PveCardSelectionModalProps {
   jcNfts: any[];
   setIsDifficultyModalOpen: (open: boolean) => void;
   pveSelectedCardsPower: number;
+  loadingStatus?: string;
 }
 
 export function PveCardSelectionModal({
@@ -48,10 +49,12 @@ export function PveCardSelectionModal({
   jcNfts,
   setIsDifficultyModalOpen,
   pveSelectedCardsPower,
+  loadingStatus = "loaded",
 }: PveCardSelectionModalProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
-  const [cardsLoaded, setCardsLoaded] = useState(false);
+  // Cards loaded when status is loaded or failed
+  const cardsLoaded = loadingStatus === "loaded" || loadingStatus === "failed";
   const CARDS_PER_PAGE = 50;
 
   // Helper to get buffed power for display (VibeFID 5x, VBMS 2x, Nothing 0.5x)
@@ -62,16 +65,6 @@ export function PveCardSelectionModal({
     if (card.collection === 'nothing') return Math.floor(base * 0.5);
     return base;
   };
-
-  // Track when cards have finished loading
-  useEffect(() => {
-    if (sortedPveNfts !== undefined) {
-      const timer = setTimeout(() => {
-        setCardsLoaded(true);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [sortedPveNfts]);
 
   // Apply collection filter
   const filteredCards = useMemo(() => {
