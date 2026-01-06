@@ -313,8 +313,7 @@ export function GamePopups({
           )}
 
           <div className="relative flex flex-col items-center gap-2" onClick={(e) => e.stopPropagation()}>
-            ) : (
-              <img
+            <img
                 src={currentVictoryImage}
                 alt="Victory!"
                 className={`rounded-xl shadow-2xl border-2 object-contain ${
@@ -325,7 +324,6 @@ export function GamePopups({
                     : 'max-w-[85vw] max-h-[50vh] shadow-yellow-500/50 border-yellow-400'
                 }`}
               />
-            )}
             <div className="text-center px-2">
               <p className="text-lg md:text-xl font-bold text-yellow-400 animate-pulse">
                 {lastBattleResult?.type === 'mecha' && lastBattleResult?.coinsEarned !== undefined
