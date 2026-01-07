@@ -144,7 +144,7 @@ export const PriceTicker = memo(function PriceTicker({ className = '' }: PriceTi
           }
         }
         .animate-ticker {
-          animation: ticker 10s linear infinite;
+          animation: ticker ${prices.length * 3}s linear infinite;
         }
         .animate-ticker:hover {
           animation-play-state: paused;
