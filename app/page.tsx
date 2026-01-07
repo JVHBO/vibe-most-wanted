@@ -75,6 +75,7 @@ import { CardLoadingScreen } from "@/components/CardLoadingScreen";
 // 💎 VBMS Blockchain Contracts
 import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
+import { useBondingProgress } from "@/lib/hooks/useBondingProgress";
 import { CONTRACTS } from "@/lib/contracts";
 
 import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, type CollectionId } from "@/lib/collections/index";
@@ -594,6 +595,7 @@ export default function TCGPage() {
 
   // 💎 VBMS Blockchain Contract Hooks (using Farcaster-compatible hook)
   const { balance: vbmsBlockchainBalance, refetch: refetchVBMSBalance } = useFarcasterVBMSBalance(address);
+  const bondingProgress = useBondingProgress();
   const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const { createBattle, isPending: isCreatingBattle } = useCreateBattle();
   const { joinBattle, isPending: isJoiningBattle } = useJoinBattle();
@@ -5122,13 +5124,18 @@ export default function TCGPage() {
                     <Link
                       href="/dex"
                       onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
-                      className="tour-dex-btn bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 px-2 md:px-3 py-1.5 md:py-2 rounded-lg flex items-baseline justify-center gap-0 transition"
+                      className="tour-dex-btn bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 px-2 md:px-3 py-1.5 md:py-2 rounded-lg flex flex-col items-center gap-1 transition"
                     >
-                      <span className="text-vintage-gold text-base md:text-lg font-bold leading-none">$</span>
-                      <span className="text-vintage-gold font-display font-bold text-base md:text-lg leading-none ml-0.5">
-                        {Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                      </span>
-                      <span className="text-vintage-gold text-base md:text-lg font-bold leading-none ml-1">+</span>
+                      <div className="flex items-baseline justify-center gap-0">
+                        <span className="text-vintage-gold text-base md:text-lg font-bold leading-none">$</span>
+                        <span className="text-vintage-gold font-display font-bold text-base md:text-lg leading-none ml-0.5">
+                          {Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </span>
+                        <span className="text-vintage-gold text-base md:text-lg font-bold leading-none ml-1">+</span>
+                      </div>
+                      <div className="w-full h-1 bg-vintage-deep-black rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-vintage-gold to-green-400 transition-all" style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }} />
+                      </div>
                     </Link>
                   )}
                   {!isInFarcaster && (

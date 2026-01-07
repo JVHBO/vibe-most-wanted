@@ -2710,6 +2710,56 @@ export const listAll = internalQuery({
 });
 
 /**
+ * Get profile by FID (for admin scripts)
+ */
+export const getProfileByFid = query({
+  args: { fid: v.number() },
+  handler: async (ctx, { fid }) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_fid", (q) => q.eq("farcasterFid", fid))
+      .first();
+
+    if (!profile) return null;
+
+    return {
+      username: profile.username || "Unknown",
+      fid: profile.farcasterFid,
+      address: profile.address,
+      coins: profile.coins || 0,
+      coinsInbox: profile.coinsInbox || 0,
+      lifetimeEarned: profile.lifetimeEarned || 0,
+      totalCards: profile.stats?.totalCards || 0,
+      wins: (profile.stats?.pveWins || 0) + (profile.stats?.pvpWins || 0),
+    };
+  },
+});
+
+/**
+ * Get top players by coins (for admin scripts)
+ */
+export const getTopByCoins = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit = 10 }) => {
+    const profiles = await ctx.db.query("profiles").take(500);
+
+    // Sort by coins descending
+    const sorted = profiles
+      .filter(p => (p.coins || 0) > 0)
+      .sort((a, b) => (b.coins || 0) - (a.coins || 0))
+      .slice(0, limit);
+
+    return sorted.map(p => ({
+      username: p.username || "Unknown",
+      fid: p.farcasterFid,
+      coins: p.coins || 0,
+      coinsInbox: p.coinsInbox || 0,
+      lifetimeEarned: p.lifetimeEarned || 0,
+    }));
+  },
+});
+
+/**
  * Count profiles with legacy fid (string) that need migration to farcasterFid (number)
  * Run this to check if migration is needed
  */

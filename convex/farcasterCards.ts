@@ -755,6 +755,29 @@ export const updateCardPfp = mutation({
 });
 
 /**
+ * Delete a card that was never minted on-chain (admin only)
+ */
+export const deleteUnmintedCard = mutation({
+  args: {
+    fid: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (!card) {
+      throw new Error(`No card found for FID ${args.fid}`);
+    }
+
+    await ctx.db.delete(card._id);
+    console.log(`🗑️ Deleted unminted card for FID ${args.fid} (${card.username})`);
+    return { success: true, fid: args.fid, username: card.username };
+  },
+});
+
+/**
  * Get card images only (lightweight query for floating background)
  * Returns only imageUrl/cardImageUrl - much faster than full card data
  */
@@ -914,5 +937,94 @@ export const fixCardAddress = mutation({
     });
 
     return { success: true, fid: args.fid, oldAddress: card.address, newAddress: args.newAddress.toLowerCase() };
+  },
+});
+
+
+// Fix card rarity (admin function - for correcting wrong rarities)
+export const fixCardRarity = mutation({
+  args: {
+    fid: v.number(),
+    newRarity: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (!card) {
+      throw new Error(`Card with FID ${args.fid} not found`);
+    }
+
+    const oldRarity = card.rarity;
+    await ctx.db.patch(card._id, {
+      rarity: args.newRarity,
+    });
+
+    return { success: true, fid: args.fid, oldRarity, newRarity: args.newRarity };
+  },
+});
+
+// Fix card rarity AND power (admin function)
+export const fixCardRarityAndPower = mutation({
+  args: {
+    fid: v.number(),
+    newRarity: v.string(),
+    newPower: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (!card) {
+      throw new Error(`Card with FID ${args.fid} not found`);
+    }
+
+    const oldRarity = card.rarity;
+    const oldPower = card.power;
+    await ctx.db.patch(card._id, {
+      rarity: args.newRarity,
+      power: args.newPower,
+    });
+
+    return { success: true, fid: args.fid, oldRarity, newRarity: args.newRarity, oldPower, newPower: args.newPower };
+  },
+});
+// Fix card foil and power (admin function for FID-based deterministic foil)
+export const fixCardFoilAndPower = mutation({
+  args: {
+    fid: v.number(),
+    newFoil: v.string(),
+    newPower: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    if (!card) {
+      throw new Error(`Card with FID ${args.fid} not found`);
+    }
+
+    const oldFoil = card.foil;
+    const oldPower = card.power;
+
+    await ctx.db.patch(card._id, {
+      foil: args.newFoil,
+      power: args.newPower,
+    });
+
+    return {
+      success: true,
+      fid: args.fid,
+      oldFoil,
+      newFoil: args.newFoil,
+      oldPower,
+      newPower: args.newPower
+    };
   },
 });

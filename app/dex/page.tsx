@@ -15,6 +15,7 @@ import {
   SellStep,
 } from "@/lib/hooks/useVBMSDex";
 import { useVBMSMarketCap } from "@/lib/hooks/useVBMSMarketCap";
+import { useBondingProgress } from "@/lib/hooks/useBondingProgress";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { isMiniappMode } from "@/lib/utils/miniapp";
 import { openMarketplace } from "@/lib/marketplace-utils";
@@ -80,6 +81,17 @@ const dexTranslations = {
     zazzaMiniapp: "Poorly Drawn Binders",
     zazzaDescription: "Buy, list, and trade tokens from any Vibechain collection",
     viewMiniapp: "Open Miniapp",
+    // Bonding Info Modal
+    bondingInfoTitle: "What is VBMS?",
+    bondingInfoDesc1: "VBMS is the native token of Vibe Most Wanted, a collectible card game on Base.",
+    bondingInfoDesc2: "The token uses a bonding curve mechanism where price increases as more tokens are bought.",
+    bondingInfoPhase1: "Bonding Phase",
+    bondingInfoPhase1Desc: "Currently active. Buy/sell directly on the curve. Price adjusts automatically.",
+    bondingInfoPhase2: "Uniswap Phase",
+    bondingInfoPhase2Desc: "When $10k ETH is reached, liquidity moves to Uniswap for open trading.",
+    bondingInfoTarget: "Target: $10,000 USD in ETH",
+    bondingInfoLearnMore: "Learn more about market phases",
+    bondingInfoClose: "Got it!",
   },
   "pt-BR": {
     title: "DEX",
@@ -138,6 +150,17 @@ const dexTranslations = {
     zazzaMiniapp: "Poorly Drawn Binders",
     zazzaDescription: "Compre, liste e negocie tokens de qualquer coleção da Vibechain",
     viewMiniapp: "Abrir Miniapp",
+    // Bonding Info Modal
+    bondingInfoTitle: "O que é VBMS?",
+    bondingInfoDesc1: "VBMS é o token nativo do Vibe Most Wanted, um jogo de cartas colecionáveis na Base.",
+    bondingInfoDesc2: "O token usa um mecanismo de bonding curve onde o preço aumenta conforme mais tokens são comprados.",
+    bondingInfoPhase1: "Fase Bonding",
+    bondingInfoPhase1Desc: "Atualmente ativa. Compre/venda diretamente na curva. Preço ajusta automaticamente.",
+    bondingInfoPhase2: "Fase Uniswap",
+    bondingInfoPhase2Desc: "Quando $10k ETH for atingido, a liquidez vai para a Uniswap para trading aberto.",
+    bondingInfoTarget: "Meta: $10,000 USD em ETH",
+    bondingInfoLearnMore: "Saiba mais sobre as fases do mercado",
+    bondingInfoClose: "Entendi!",
   },
   es: {
     title: "DEX",
@@ -406,6 +429,7 @@ export default function DexPage() {
 
   // Buy warning modal state
   const [showBuyWarning, setShowBuyWarning] = useState(false);
+  const [showBondingInfo, setShowBondingInfo] = useState(false);
 
   const handleBuyClick = () => {
     setMode("buy");
@@ -444,6 +468,7 @@ export default function DexPage() {
 
   // VBMS Market Cap
   const marketCap = useVBMSMarketCap();
+  const bondingProgress = useBondingProgress();
 
   // Refresh balances after swap
   const refreshBalances = useCallback(() => {
@@ -529,22 +554,48 @@ export default function DexPage() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto p-6">
-        {/* Market Cap */}
-        <div className="flex items-center justify-center gap-2 mb-4 text-sm">
-          <span className="text-vintage-burnt-gold">Market Cap:</span>
-          <span className="text-vintage-gold font-mono font-bold">{marketCap.isLoading ? "..." : marketCap.marketCapFormatted}</span>
+            <div className="max-w-lg mx-auto p-4">
+        {/* Market Cap & Bonding Progress - Compact */}
+        <div className="mb-3 bg-vintage-charcoal/50 rounded-xl p-3 border border-vintage-gold/20">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-vintage-burnt-gold text-xs">Market Cap:</span>
+            <span className="text-vintage-gold font-mono font-bold text-sm">{marketCap.isLoading ? "..." : marketCap.marketCapFormatted}</span>
+          </div>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-vintage-burnt-gold text-xs">ETH Price:</span>
+            <span className="text-vintage-gold font-mono font-bold text-sm">{bondingProgress.ethPrice ? "$" + bondingProgress.ethPrice.toLocaleString() : "..."}</span>
+          </div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-vintage-burnt-gold text-xs">Contract:</span>
+            <a href="https://basescan.org/token/0xb03439567cd22f278b21e1ffcdfb8e1696763827" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 font-mono text-xs underline">0xb034...3827</a>
+          </div>
+          {/* Bonding Progress Bar */}
+          <div className="mt-2">
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span className="text-vintage-burnt-gold">Bonding Curve:</span>
+              <div className="flex items-center gap-1">
+                <span className="text-vintage-gold font-mono font-bold">${bondingProgress.usdBalance.toFixed(0)}</span>
+                <span className="text-vintage-ice/50">/ $10,000</span>
+                <button onClick={() => setShowBondingInfo(true)} className="ml-1 w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-xs font-bold">?</button>
+              </div>
+            </div>
+            <div className="h-2 bg-vintage-deep-black rounded-full overflow-hidden border border-vintage-gold/20">
+              <div
+                className="h-full bg-gradient-to-r from-vintage-gold via-yellow-400 to-green-400 transition-all duration-500"
+                style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] mt-0.5">
+              <span className="text-vintage-ice/40">{bondingProgress.ethBalance.toFixed(4)} ETH</span>
+              <span className="text-vintage-ice/40">{bondingProgress.progress.toFixed(1)}%</span>
+            </div>
+          </div>
         </div>
-        
-        {/* Buy VBMS Packs Link */}
-        <button
-          onClick={() => openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isMiniappMode())}
-          className="mb-4 w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider cursor-pointer"
-          style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}
-        >
-          <span className="text-lg">◆</span>
+
+        {/* Buy VBMS Packs Link - Compact */}
+        <button onClick={() => openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isMiniappMode())} className="mb-3 w-full flex items-center justify-center gap-2 px-3 py-2 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider cursor-pointer text-sm" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}>
+          <span>◆</span>
           <span>Buy VBMS Packs</span>
-          <span className="text-xs opacity-75">or open your packs</span>
         </button>
 
         {/* Swap Card */}
@@ -827,6 +878,100 @@ export default function DexPage() {
           </p>
         </div>
       </div>
+
+      {/* Bonding Info Modal */}
+      {showBondingInfo && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-vintage-deep-black border-2 border-vintage-gold/50 rounded-2xl max-w-md w-full p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <span className="text-2xl">💎</span>
+              <h3 className="text-lg font-bold text-vintage-gold">VBMS Token & Bonding Curve</h3>
+            </div>
+
+            {/* Vibe Market Badge */}
+            <div className="bg-purple-500/20 border border-purple-500/40 rounded-lg p-2 mb-3 text-center">
+              <p className="text-purple-300 text-xs">Powered by <span className="font-bold">Vibe Market</span> Bonding Curve</p>
+              <p className="text-purple-300/60 text-[10px]">Created: Sep 29, 2025 at 14:16</p>
+            </div>
+
+            {/* What is VBMS */}
+            <div className="mb-3">
+              <h4 className="text-vintage-gold font-bold text-sm mb-1">🎴 What is VBMS?</h4>
+              <p className="text-vintage-ice/80 text-xs">VBMS is the native token of <span className="text-vintage-gold">Vibe Most Wanted</span>, a collectible card battle game on Base chain. Unopened packs contain 100,000 VBMS. Once opened, the amount depends on the card rarity.</p>
+            </div>
+
+            {/* What is Bonding Curve */}
+            <div className="mb-3">
+              <h4 className="text-vintage-gold font-bold text-sm mb-1">📈 What is a Bonding Curve?</h4>
+              <p className="text-vintage-ice/80 text-xs mb-2">A bonding curve is a smart contract on <span className="text-purple-400 font-bold">Vibe Market</span> that automatically sets token prices based on supply:</p>
+              <ul className="text-vintage-ice/70 text-xs space-y-1 ml-3">
+                <li>• <span className="text-green-400">Buy</span> → Price goes UP</li>
+                <li>• <span className="text-red-400">Sell</span> → Price goes DOWN</li>
+                <li>• No order books, instant trades</li>
+                <li>• Liquidity always available</li>
+              </ul>
+            </div>
+
+            {/* Market Phases */}
+            <div className="mb-3">
+              <h4 className="text-vintage-gold font-bold text-sm mb-2">🔄 Market Phases</h4>
+              <div className="space-y-2">
+                {/* Phase 1 */}
+                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400 text-lg">●</span>
+                    <span className="text-green-400 font-bold text-xs">PHASE 1: Bonding Curve</span>
+                    <span className="text-green-400 text-[10px] ml-auto bg-green-500/20 px-1.5 py-0.5 rounded">ACTIVE</span>
+                  </div>
+                  <p className="text-vintage-ice/70 text-[11px] mt-1 ml-6">Trade directly on Vibe Market curve. Price adjusts with each trade.</p>
+                </div>
+
+                {/* Phase 2 */}
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-2 opacity-70">
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-400 text-lg">○</span>
+                    <span className="text-blue-400 font-bold text-xs">PHASE 2: Uniswap</span>
+                    <span className="text-blue-400/60 text-[10px] ml-auto bg-blue-500/20 px-1.5 py-0.5 rounded">NEXT</span>
+                  </div>
+                  <p className="text-vintage-ice/60 text-[11px] mt-1 ml-6">When $10k ETH collected, liquidity migrates to Uniswap V3.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bonding Curve Balance */}
+            <div className="bg-vintage-charcoal/50 rounded-lg p-3 mb-3">
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-vintage-burnt-gold">Bonding Curve Balance</span>
+              </div>
+              <div className="flex items-center justify-center gap-2 py-2">
+                <span className="text-vintage-gold font-mono text-xl font-bold">{bondingProgress.ethBalance.toFixed(4)} ETH</span>
+                <span className="text-vintage-ice/50 text-sm">(~${bondingProgress.usdBalance.toFixed(0)})</span>
+              </div>
+            </div>
+
+            {/* Learn More Link */}
+            <a
+              href="https://docs.wield.xyz/docs/vibemarket#market-phases"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1 text-purple-400 hover:text-purple-300 text-xs mb-3"
+            >
+              <span>📚</span>
+              <span className="underline">Vibe Market Docs - Market Phases</span>
+              <span>→</span>
+            </a>
+
+            {/* Close Button */}
+            <button
+              onClick={() => setShowBondingInfo(false)}
+              className="w-full py-2.5 rounded-xl bg-vintage-gold hover:bg-yellow-500 text-vintage-black font-bold transition text-sm"
+            >
+              Got it! ✓
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Buy Warning Modal */}
       {showBuyWarning && (

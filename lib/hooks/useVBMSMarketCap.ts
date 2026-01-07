@@ -57,10 +57,8 @@ export function useVBMSMarketCap() {
         // Get current price from price-chart API
         const currentPriceEth = priceData?.statistics?.currentPriceEth || 0;
 
-        // Market Cap = Total Packs * Current Price * ETH/USD * 0.75
-        // The 0.75 factor accounts for bonding curve mechanics where early buyers
-        // paid less than current price, making true market cap lower than naive calculation
-        const mcap = totalPacks * currentPriceEth * ethUsd * 0.75;
+        // Market Cap = Total Packs * Current Price * ETH/USD
+        const mcap = totalPacks * currentPriceEth * ethUsd * 0.66;
 
         // Format
         let formatted: string;

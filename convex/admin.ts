@@ -7,7 +7,7 @@
  * Dangerous operations - run step by step
  */
 
-import { internalMutation, mutation } from "./_generated/server";
+import { internalMutation, mutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { createAuditLog } from "./coinAudit";
 
@@ -1137,6 +1137,75 @@ export const mergeDuplicateProfile = internalMutation({
 });
 
 /**
+ * ADMIN: Give coins to a player by FID
+ * 🔒 INTERNAL ONLY - Run via npx convex run admin:giveCoinsToPlayer
+ */
+export const giveCoinsToPlayer = internalMutation({
+  args: {
+    fid: v.number(),
+    amount: v.number(),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_fid", (q) => q.eq("farcasterFid", args.fid))
+      .first();
+
+    if (!profile) {
+      console.log(`❌ Profile not found for FID: ${args.fid}`);
+      return { success: false, error: "Profile not found" };
+    }
+
+    const balanceBefore = profile.coins || 0;
+    const balanceAfter = balanceBefore + args.amount;
+
+    await ctx.db.patch(profile._id, {
+      coins: balanceAfter,
+      lifetimeEarned: (profile.lifetimeEarned || 0) + args.amount,
+      lastUpdated: Date.now(),
+    });
+
+    // Audit log
+    await createAuditLog(
+      ctx,
+      profile.address,
+      "earn",
+      args.amount,
+      balanceBefore,
+      balanceAfter,
+      "admin:giveCoins",
+      undefined,
+      { reason: args.reason || "Admin grant" }
+    );
+
+    // Transaction log
+    await ctx.db.insert("coinTransactions", {
+      address: profile.address.toLowerCase(),
+      amount: args.amount,
+      type: "earn",
+      source: "admin_grant",
+      description: args.reason || "Admin granted coins",
+      timestamp: Date.now(),
+      balanceBefore,
+      balanceAfter,
+    });
+
+    console.log(`✅ Gave ${args.amount.toLocaleString()} coins to @${profile.username} (FID ${args.fid})`);
+    console.log(`   Balance: ${balanceBefore.toLocaleString()} → ${balanceAfter.toLocaleString()}`);
+
+    return {
+      success: true,
+      username: profile.username,
+      fid: args.fid,
+      amount: args.amount,
+      balanceBefore,
+      balanceAfter,
+    };
+  },
+});
+
+/**
  * Backfill lifetimeEarned from burn transactions
  * 🔒 INTERNAL ONLY - Run from dashboard
  */
@@ -1200,5 +1269,43 @@ export const backfillBurnEarnings = internalMutation({
 
     console.log(`\n=== DONE: Updated ${updated}, Skipped ${skipped} ===`);
     return { updated, skipped, total: addresses.length };
+  },
+});
+
+/**
+ * Count notification tokens by platform and app
+ * 🔒 INTERNAL ONLY - For admin dashboard
+ */
+export const countNotificationTokens = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const allTokens = await ctx.db.query("notificationTokens").collect();
+    
+    const stats = {
+      total: allTokens.length,
+      byPlatform: {} as Record<string, number>,
+      byApp: {} as Record<string, number>,
+      withUrl: 0,
+      withoutUrl: 0,
+    };
+    
+    for (const token of allTokens) {
+      // Count by platform
+      const platform = token.platform || "unknown";
+      stats.byPlatform[platform] = (stats.byPlatform[platform] || 0) + 1;
+      
+      // Count by app
+      const app = token.app || "vbms";
+      stats.byApp[app] = (stats.byApp[app] || 0) + 1;
+      
+      // Count with/without URL
+      if (token.url) {
+        stats.withUrl++;
+      } else {
+        stats.withoutUrl++;
+      }
+    }
+    
+    return stats;
   },
 });
