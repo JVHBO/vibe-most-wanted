@@ -1339,7 +1339,6 @@ export default function LeaderboardPage() {
                 <option value="meowverse">MEOVV</option>
                 <option value="viberuto">VBRTO</option>
                 <option value="vibefid">VIBEFID</option>
-                <option value="americanfootball">AFCL</option>
                 <option value="gmvbrs">VBRS</option>
                 <option value="nothing">NOTHING</option>
               </select>

@@ -16,7 +16,6 @@ export const ARENA_COLLECTIONS = [
   "poorlydrawnpepes",
   "teampothead",
   "tarot",
-  "americanfootball",
   "vibefid",
   "baseballcabal",
   "vibefx",

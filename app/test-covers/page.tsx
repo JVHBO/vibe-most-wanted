@@ -8,7 +8,6 @@ import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 const COLLECTION_COVERS: Record<string, string> = {
   gmvbrs: 'https://nft-cdn.alchemy.com/base-mainnet/d0de7e9fa12eadb1ea2204e67d43e166',
   vibe: 'https://nft-cdn.alchemy.com/base-mainnet/511915cc9b6f20839e2bf2999760530f',
-  americanfootball: 'https://nft-cdn.alchemy.com/base-mainnet/5c023b39577f02927478fbd60c26d75e',
   viberuto: 'https://nft-cdn.alchemy.com/base-mainnet/ec58759f6df558aa4193d58ae9b0e74f',
   meowverse: 'https://nft-cdn.alchemy.com/base-mainnet/16a8f93f75def1a771cca7e417b5d05e',
   poorlydrawnpepes: 'https://nft-cdn.alchemy.com/base-mainnet/96282462557a81c42fad965a48c34f4c',
@@ -23,7 +22,6 @@ const COLLECTION_NAMES: Record<string, string> = {
   vibefid: "VibeFID",
   gmvbrs: "GM VBRS",
   vibe: "$VBMS",
-  americanfootball: "American Football",
   viberuto: "Viberuto",
   meowverse: "Meowverse",
   poorlydrawnpepes: "Poorly Drawn Pepes",
