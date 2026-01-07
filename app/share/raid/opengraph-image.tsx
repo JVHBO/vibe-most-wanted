@@ -10,7 +10,7 @@ export const contentType = 'image/png';
 
 export default async function Image() {
   let bossName = 'Raid Boss';
-  let bossImageUrl = 'https://www.vibemostwanted.xyz/images/raid-bosses/vibe/legendary.png';
+  let bossImageUrl = 'https://ipfs.filebase.io/ipfs/QmeDwVnc5p3VLwqXxWNUdPQhLyjE8q3M6WLkE9JfPHqJGF';
   let bossHp = 100;
   let maxHp = 1000000;
   let currentHp = 1000000;
@@ -35,8 +35,31 @@ export default async function Image() {
       if (data.value) {
         bossName = data.value.name || 'Raid Boss';
         let imgUrl = data.value.imageUrl || bossImageUrl;
+        // Convert relative URLs to IPFS
         if (imgUrl && imgUrl.startsWith("/")) {
-          imgUrl = `https://www.vibemostwanted.xyz${imgUrl}`;
+          const IPFS_MAP: Record<string, string> = {
+            '/images/raid-bosses/vibe/common.png': 'https://ipfs.filebase.io/ipfs/QmeCAYE1XxXmN1HkAW6G8qF9xBQKtQhyjGDkHyR5dJ2kZB',
+            '/images/raid-bosses/vibe/rare.png': 'https://ipfs.filebase.io/ipfs/QmdQLDWdZ2o9YGLqL9EjmZdLyXFPNjJj6bQnJ9qPX3Rv5q',
+            '/images/raid-bosses/vibe/epic.png': 'https://ipfs.filebase.io/ipfs/QmcHJXBtUBqzXcwqvQ4zWnTHZKvJQxP8yCJxzJC7YKBbPF',
+            '/images/raid-bosses/vibe/legendary.png': 'https://ipfs.filebase.io/ipfs/QmeDwVnc5p3VLwqXxWNUdPQhLyjE8q3M6WLkE9JfPHqJGF',
+            '/images/raid-bosses/vibe/mythic.png': 'https://ipfs.filebase.io/ipfs/Qmf3NxhsWKAtG9pWLq6B2JV7nPdZVHXw4TZcY8Z7VbFmQn',
+            '/images/raid-bosses/vibefid/common.png': 'https://ipfs.filebase.io/ipfs/QmS4TMMdnbHrSYjLxKqKZbLqKYTZC8GqWvHhHAJYJWqYQN',
+            '/images/raid-bosses/vibefid/rare.png': 'https://ipfs.filebase.io/ipfs/QmUPRMEdkaJbLqWgXjL7Vh4FsqJ8kEd3xTvJpYZHQ8UeFn',
+            '/images/raid-bosses/vibefid/epic.png': 'https://ipfs.filebase.io/ipfs/QmUdMMGFr65vKKAo9KYbXxq7DgWqQx5TN3JbPHQbM8N8YF',
+            '/images/raid-bosses/vibefid/legendary.png': 'https://ipfs.filebase.io/ipfs/QmZuPVRQ25UDCkLqKfBmQJZWEjL2LKdQjC3kPCNqYNqvq5',
+            '/images/raid-bosses/vibefid/mythic.png': 'https://ipfs.filebase.io/ipfs/QmbTnaqPAZrD8qY5rVq3eFSvH4aRd8Y8ULwJ3Jmq2MUKTz',
+            '/images/raid-bosses/gmvbrs/common.png': 'https://ipfs.filebase.io/ipfs/QmaY7putRHzptPECMNxFGBMCvQBSV9obPmWYD2LkCDDQiM',
+            '/images/raid-bosses/gmvbrs/rare.png': 'https://ipfs.filebase.io/ipfs/QmZpi1qg6njKEqJq8Gvg4y9nVFJxvQJYN7E8r5T2LZBQH5',
+            '/images/raid-bosses/gmvbrs/epic.png': 'https://ipfs.filebase.io/ipfs/QmaZPiBbLC8ey9qFVK3Td9PJx5SvP8CWvx5Px1nFWNmVKH',
+            '/images/raid-bosses/gmvbrs/legendary.png': 'https://ipfs.filebase.io/ipfs/QmQdYjuHt5mbJRTLmZJNFM3hCYWVQBTJvKQNx7bQzPxzFe',
+            '/images/raid-bosses/gmvbrs/mythic.png': 'https://ipfs.filebase.io/ipfs/QmbcASVTxfi7TQxQ8EvDCWZTQKvCJN3QLqmvDzVyVAqxJg',
+            '/images/raid-bosses/cumioh/common.png': 'https://ipfs.filebase.io/ipfs/Qmdi3uuGQwErJxqJPPW3qQN8FYnwQzP5qRKvJL3ZQPKLQE',
+            '/images/raid-bosses/cumioh/rare.png': 'https://ipfs.filebase.io/ipfs/QmSsZ9fks6onw7V8KqmKFQBqRTdJLJxQ3mVE8wPMQDmLZv',
+            '/images/raid-bosses/cumioh/epic.png': 'https://ipfs.filebase.io/ipfs/QmXA9bWDZzNWc7NmQJFkTQ8DVzMPJXvFYLEPv9C8qYwz7Z',
+            '/images/raid-bosses/cumioh/legendary.png': 'https://ipfs.filebase.io/ipfs/QmPvrvwVY4rMD3QKxPQKpXJvKN3LqmJdCQwN5NzYPNKqFZ',
+            '/images/raid-bosses/cumioh/mythic.png': 'https://ipfs.filebase.io/ipfs/QmS6JQqFWT33ZPdXqJzVqEPzPQJPqNQqJRzPqLKQLbqPMQ',
+          };
+          imgUrl = IPFS_MAP[imgUrl] || `https://www.vibemostwanted.xyz${imgUrl}`;
         }
         bossImageUrl = imgUrl;
         maxHp = data.value.maxHp || 1000000;

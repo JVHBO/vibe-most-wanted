@@ -866,9 +866,9 @@ export default function RaidPage() {
                           {Math.floor(card.power * 5)}
                         </div>
 
-                        {/* 2x Multiplier */}
+                        {/* 5x Multiplier (VibeFID bonus in Raid) */}
                         <div className="absolute bottom-0.5 left-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[8px] px-1 py-0.5 rounded font-bold">
-                          10x
+                          5x
                         </div>
                       </div>
 

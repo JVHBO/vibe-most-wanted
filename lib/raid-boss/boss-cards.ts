@@ -11,6 +11,7 @@
 
 import type { Card, CardRarity } from '@/lib/types/card';
 import type { CollectionId } from '@/lib/collections';
+import { getAssetUrl } from '@/lib/ipfs-assets';
 
 export interface BossCard extends Card {
   hp: number; // Boss HP based on rarity
@@ -921,7 +922,13 @@ export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> 
  * Get boss card by collection and rarity
  */
 export function getBossCard(collection: CollectionId, rarity: CardRarity): BossCard | undefined {
-  return ALL_BOSS_CARDS[collection]?.[rarity];
+  const boss = ALL_BOSS_CARDS[collection]?.[rarity];
+  if (!boss) return undefined;
+  // Convert imageUrl to IPFS URL in production
+  return {
+    ...boss,
+    imageUrl: getAssetUrl(boss.imageUrl),
+  };
 }
 
 /**

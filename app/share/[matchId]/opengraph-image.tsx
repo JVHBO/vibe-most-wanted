@@ -337,7 +337,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               isPlayer={true}
               isLosing={playerIsLosing}
               pfpUrl={finalPlayerPfpUrl}
-              backgroundImage="https://vibe-most-wanted.vercel.app/fundo1.jpg"
+              backgroundImage="https://ipfs.filebase.io/ipfs/QmPTVKUq9nEY3hYGFsKbLhLCqfCAuRpjCaE6fjyJ5N1iyQ"
             />
 
             {/* VS badge */}
@@ -368,7 +368,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               isPlayer={false}
               isLosing={!playerIsLosing}
               pfpUrl={finalOpponentPfpUrl}
-              backgroundImage="https://vibe-most-wanted.vercel.app/fundo2.jpg"
+              backgroundImage="https://ipfs.filebase.io/ipfs/QmfBb7a2nBh78xmz7Y8fRZdAqXwW4nLT7kLHqN8cxKyLmF"
             />
           </div>
 
