@@ -1723,7 +1723,6 @@ export const getAvailableCollections = query({
       "poorlydrawnpepes",
       "teampothead",
       "tarot",
-      "americanfootball",
       "vibefid",
       "baseballcabal",
       "vibefx",

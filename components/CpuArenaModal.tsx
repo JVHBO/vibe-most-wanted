@@ -35,7 +35,6 @@ const COLLECTION_INFO: Record<string, { name: string; emoji: string; color: stri
   poorlydrawnpepes: { name: "Poorly Drawn Pepes", emoji: "🐸", color: "from-green-500 to-emerald-600" },
   teampothead: { name: "Team Pothead", emoji: "🌿", color: "from-green-600 to-lime-500" },
   tarot: { name: "Tarot", emoji: "🔮", color: "from-indigo-600 to-purple-600" },
-  americanfootball: { name: "American Football", emoji: "🏈", color: "from-amber-600 to-orange-600" },
   vibefid: { name: "VibeFID", emoji: "🆔", color: "from-cyan-500 to-blue-600" },
   baseballcabal: { name: "Baseball Cabal", emoji: "⚾", color: "from-red-600 to-blue-700" },
   vibefx: { name: "Vibe FX", emoji: "✨", color: "from-fuchsia-500 to-violet-600" },

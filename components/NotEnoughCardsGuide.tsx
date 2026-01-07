@@ -23,7 +23,6 @@ const COLLECTION_MARKETPLACE: Record<string, string> = {
   poorlydrawnpepes: 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
   teampothead: 'https://vibechain.com/market/team-pothead?ref=XCLR1DJ6LQTT',
   tarot: 'https://vibechain.com/market/tarot?ref=XCLR1DJ6LQTT',
-  americanfootball: 'https://vibechain.com/market/american-football?ref=XCLR1DJ6LQTT',
   baseballcabal: 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
   vibefx: 'https://vibechain.com/market/vibe-fx?ref=XCLR1DJ6LQTT',
   historyofcomputer: 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',

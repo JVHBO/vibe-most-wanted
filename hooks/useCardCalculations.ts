@@ -228,20 +228,18 @@ export function usePowerDistribution(nfts: NFT[]): Record<number, number> {
  *
  * @example
  * const powers = usePowerByCollection(nfts);
- * // { vibePower: 500, vbrsPower: 300, vibefidPower: 200, afclPower: 100 }
+ * // { vibePower: 500, vbrsPower: 300, vibefidPower: 200 }
  */
 export function usePowerByCollection(nfts: NFT[]): {
   vibePower: number;
   vbrsPower: number;
   vibefidPower: number;
-  afclPower: number;
 } {
   return useMemo(() => {
     const powers = {
       vibePower: 0,
       vbrsPower: 0,
       vibefidPower: 0,
-      afclPower: 0,
     };
 
     nfts.forEach((nft) => {
@@ -255,8 +253,6 @@ export function usePowerByCollection(nfts: NFT[]): {
         powers.vbrsPower += power;
       } else if (collectionId === 'vibefid') {
         powers.vibefidPower += power;
-      } else if (collectionId === 'americanfootball') {
-        powers.afclPower += power;
       } else {
         // Default to vibe for unknown collections
         powers.vibePower += power;

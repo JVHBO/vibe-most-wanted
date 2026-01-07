@@ -531,8 +531,7 @@ export function RaidDeckSelectionModal({
               <span className="text-blue-400">
                 {currentBoss.collection === 'vibe' ? 'VBMS' :
                  currentBoss.collection === 'gmvbrs' ? 'GM VBRS' :
-                 currentBoss.collection === 'vibefid' ? 'VibeFID' :
-                 currentBoss.collection === 'americanfootball' ? 'AFCL' : currentBoss.collection}: 2x
+                 currentBoss.collection === 'vibefid' ? 'VibeFID' : currentBoss.collection}: 2x
               </span>
             </div>
           )}

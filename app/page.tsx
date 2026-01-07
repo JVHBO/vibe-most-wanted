@@ -1647,8 +1647,6 @@ export default function TCGPage() {
             if (contractAddr) {
               if (isVibeFID) {
                 collection = 'vibefid';
-              } else if (contractAddr === getCollectionContract('americanfootball')?.toLowerCase()) {
-                collection = 'americanfootball';
               } else if (contractAddr === getCollectionContract('gmvbrs')?.toLowerCase()) {
                 collection = 'gmvbrs';
               } else if (contractAddr === getCollectionContract('viberotbangers')?.toLowerCase()) {
@@ -3308,12 +3306,10 @@ export default function TCGPage() {
           acc.vbrsPower = (acc.vbrsPower || 0) + power;
         } else if (collection === 'vibefid') {
           acc.vibefidPower = (acc.vibefidPower || 0) + power;
-        } else if (collection === 'americanfootball') {
-          acc.afclPower = (acc.afclPower || 0) + power;
         }
 
         return acc;
-      }, {} as { vibePower?: number; vbrsPower?: number; vibefidPower?: number; afclPower?: number });
+      }, {} as { vibePower?: number; vbrsPower?: number; vibefidPower?: number });
 
       devLog('📊 Collection powers:', collectionPowers);
 
@@ -3731,7 +3727,6 @@ export default function TCGPage() {
                 <option value="meowverse">MEOVV</option>
                 <option value="viberuto">VBRTO</option>
                 <option value="vibefid">VIBEFID</option>
-                <option value="americanfootball">AFCL</option>
                 <option value="gmvbrs">VBRS</option>
                 <option value="nothing">NOTHING</option>
               </select>
@@ -5394,7 +5389,6 @@ export default function TCGPage() {
                         <option value="meowverse" className="bg-vintage-charcoal text-vintage-gold">MEOVV</option>
                         <option value="viberuto" className="bg-vintage-charcoal text-vintage-gold">VBRTO</option>
                         <option value="vibefid" className="bg-vintage-charcoal text-vintage-gold">VIBEFID</option>
-                        <option value="americanfootball" className="bg-vintage-charcoal text-vintage-gold">AFCL</option>
                         <option value="gmvbrs" className="bg-vintage-charcoal text-vintage-gold">VBRS</option>
                         <option value="nothing" className="bg-vintage-charcoal text-vintage-gold">NOTHING</option>
                       </select>

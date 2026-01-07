@@ -68,23 +68,11 @@ export const IPFS_ASSETS: Record<string, string> = {
   "/images/raid-bosses/gmvbrs/legendary.png": "https://ipfs.filebase.io/ipfs/QmQdYjuHt5mbJRTLmZJNFM3hCYWVQBTJvKQNx7bQzPxzFe",
   "/images/raid-bosses/gmvbrs/mythic.png": "https://ipfs.filebase.io/ipfs/QmbcASVTxfi7TQxQ8EvDCWZTQKvCJN3QLqmvDzVyVAqxJg",
 
-  "/images/raid-bosses/afcl/common.png": "https://ipfs.filebase.io/ipfs/Qma98Pu6DV6cCQvPHQNvBpQx4q6gKZ4MzQ4xLqKNpNPzLD",
-  "/images/raid-bosses/afcl/rare.png": "https://ipfs.filebase.io/ipfs/QmNhAiDciT1WQJbPQmV4aGk5RYPz7x8K3yT5RqLZqM2C8d",
-  "/images/raid-bosses/afcl/epic.png": "https://ipfs.filebase.io/ipfs/QmSUP35WQJvH3q9qN5Zx5EvnPDKq8V7dM8E4VBxTTmKRnQ",
-  "/images/raid-bosses/afcl/legendary.png": "https://ipfs.filebase.io/ipfs/QmdxNYKzuj6yqK9dFnWLKgNJDXQvC2xZ2pD8z3yQZJzNPZ",
-  "/images/raid-bosses/afcl/mythic.png": "https://ipfs.filebase.io/ipfs/QmNeL91kfYGzC9Kxz4K9VdSqJp2MqKp7C5MvxVX3p4MZJQ",
-
   "/images/raid-bosses/cumioh/common.png": "https://ipfs.filebase.io/ipfs/Qmdi3uuGQwErJxqJPPW3qQN8FYnwQzP5qRKvJL3ZQPKLQE",
   "/images/raid-bosses/cumioh/rare.png": "https://ipfs.filebase.io/ipfs/QmSsZ9fks6onw7V8KqmKFQBqRTdJLJxQ3mVE8wPMQDmLZv",
   "/images/raid-bosses/cumioh/epic.png": "https://ipfs.filebase.io/ipfs/QmXA9bWDZzNWc7NmQJFkTQ8DVzMPJXvFYLEPv9C8qYwz7Z",
   "/images/raid-bosses/cumioh/legendary.png": "https://ipfs.filebase.io/ipfs/QmPvrvwVY4rMD3QKxPQKpXJvKN3LqmJdCQwN5NzYPNKqFZ",
   "/images/raid-bosses/cumioh/mythic.png": "https://ipfs.filebase.io/ipfs/QmS6JQqFWT33ZPdXqJzVqEPzPQJPqNQqJRzPqLKQLbqPMQ",
-
-  "/images/raid-bosses/coquettish/common.png": "https://ipfs.filebase.io/ipfs/QmU1BuwF7hVPbz7pZYJ6XT7mNQPWdqDvkqTWELQFNvZrqE",
-  "/images/raid-bosses/coquettish/rare.png": "https://ipfs.filebase.io/ipfs/QmfXcTH6QYxPJ7XK3Qwv8P5qKzTZQJQPJzTQKLzQJQPz7Z",
-  "/images/raid-bosses/coquettish/epic.png": "https://ipfs.filebase.io/ipfs/Qmb6ji5iKGFvQZRvPJLQvNZJQNKQPJLQVNPJLQvNZJQNKQ",
-  "/images/raid-bosses/coquettish/legendary.png": "https://ipfs.filebase.io/ipfs/QmVJPx5zARM8PJxQvNZJQNKQPJLQVNPJLQvNZJQNKQPJLQ",
-  "/images/raid-bosses/coquettish/mythic.png": "https://ipfs.filebase.io/ipfs/QmV4BM4SVnrsE5XqN7vFqKzTQJQPJzTQKLzQJQPz7ZQJQP",
 
   // Card backs and misc
   "/card-back.png": "https://ipfs.filebase.io/ipfs/QmZrRir8uDx3jKrx6hfDFhRJXmxXaU3rfQJAbTqqk9Bod5",

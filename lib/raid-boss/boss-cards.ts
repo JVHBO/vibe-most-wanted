@@ -258,63 +258,6 @@ export const VIBEFID_BOSSES: Record<CardRarity, BossCard> = {
 };
 
 /**
- * American Football Boss Cards
- * TODO: Add actual card images and tokenIds
- */
-export const AFCL_BOSSES: Record<CardRarity, BossCard> = {
-  Common: {
-    tokenId: 'afcl-boss-common',
-    collection: 'americanfootball',
-    name: 'Rookie Crusher',
-    rarity: 'Common',
-    power: 15,
-    imageUrl: '/images/raid-bosses/afcl/common.png',
-    hp: BOSS_HP_BY_RARITY.common,
-    description: 'Fresh talent eager to prove themselves',
-  },
-  Rare: {
-    tokenId: 'afcl-boss-rare',
-    collection: 'americanfootball',
-    name: 'Pro Bowl Dominator',
-    rarity: 'Rare',
-    power: 20,
-    imageUrl: '/images/raid-bosses/afcl/rare.png',
-    hp: BOSS_HP_BY_RARITY.rare,
-    description: 'All-star athlete with incredible skills',
-  },
-  Epic: {
-    tokenId: 'afcl-boss-epic',
-    collection: 'americanfootball',
-    name: 'Super Bowl Champion',
-    rarity: 'Epic',
-    power: 80,
-    imageUrl: '/images/raid-bosses/afcl/epic.png',
-    hp: BOSS_HP_BY_RARITY.epic,
-    description: 'Championship winner with rings to prove it',
-  },
-  Legendary: {
-    tokenId: 'afcl-boss-legendary',
-    collection: 'americanfootball',
-    name: 'Hall of Fame Legend',
-    rarity: 'Legendary',
-    power: 240,
-    imageUrl: '/images/raid-bosses/afcl/legendary.png',
-    hp: BOSS_HP_BY_RARITY.legendary,
-    description: 'Immortalized in football history forever',
-  },
-  Mythic: {
-    tokenId: 'afcl-boss-mythic',
-    collection: 'americanfootball',
-    name: 'The G.O.A.T.',
-    rarity: 'Mythic',
-    power: 800,
-    imageUrl: '/images/raid-bosses/afcl/mythic.png',
-    hp: BOSS_HP_BY_RARITY.mythic,
-    description: 'The Greatest Of All Time - unmatched perfection',
-  },
-};
-
-/**
  * Viberuto Boss Cards
  */
 export const VIBERUTO_BOSSES: Record<CardRarity, BossCard> = {
@@ -892,7 +835,6 @@ export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> 
   gmvbrs: GMVBRS_BOSSES,
   vibe: VBMS_BOSSES,
   vibefid: VIBEFID_BOSSES,
-  americanfootball: AFCL_BOSSES,
   viberuto: VIBERUTO_BOSSES,
 
   meowverse: MEOWVERSE_BOSSES,
