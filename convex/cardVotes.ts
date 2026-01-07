@@ -1068,6 +1068,36 @@ export const getRandomCardMutation = mutation({
   },
 });
 
+// Get multiple random cards (mutation version for non-cached results)
+export const getRandomCardsMutation = mutation({
+  args: {
+    count: v.number(),
+    excludeFid: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const allCards = await ctx.db
+      .query("farcasterCards")
+      .collect();
+
+    // Filter out the sender's card
+    const eligibleCards = args.excludeFid
+      ? allCards.filter(c => c.fid !== args.excludeFid)
+      : allCards;
+
+    if (eligibleCards.length === 0) return [];
+
+    // Shuffle and pick count cards
+    const shuffled = [...eligibleCards].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, Math.min(args.count, eligibleCards.length));
+
+    return selected.map(card => ({
+      fid: card.fid,
+      username: card.username,
+      pfpUrl: card.pfpUrl,
+    }));
+  },
+});
+
 // Get VibeMail stats for a user (VBMS sent to others, VBMS received from others)
 export const getVibeMailStats = query({
   args: { fid: v.number() },
