@@ -11,6 +11,111 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { CONTRACTS, POOL_ABI } from '@/lib/contracts';
 import { encodeFunctionData, parseEther } from 'viem';
 import { BUILDER_CODE, dataSuffix } from '@/lib/hooks/useWriteContractWithAttribution';
+import { useLanguage } from '@/contexts/LanguageContext';
+
+// Roulette translations
+const rouletteTranslations = {
+  en: {
+    title: "Daily Roulette",
+    connectWallet: "Connect wallet to spin!",
+    testMode: "Test Mode (unlimited spins)",
+    spinsRemaining: "Spins remaining",
+    noSpinsToday: "No spins today",
+    freeSpin: "1 free spin",
+    vibefidBonus: "+2 VibeFID",
+    spin: "SPIN",
+    spinning: "Spinning...",
+    youWon: "You won",
+    vbms: "VBMS",
+    claim: "Claim",
+    claiming: "Claiming...",
+    spinAgain: "Spin Again",
+    close: "Close",
+    shareWin: "Share Win",
+    alreadySpun: "Already spun today",
+    error: "Error",
+  },
+  "pt-BR": {
+    title: "Roleta Diaria",
+    connectWallet: "Conecte a carteira para girar!",
+    testMode: "Modo Teste (spins ilimitados)",
+    spinsRemaining: "Spins restantes",
+    noSpinsToday: "Sem spins hoje",
+    freeSpin: "1 spin gratis",
+    vibefidBonus: "+2 VibeFID",
+    spin: "GIRAR",
+    spinning: "Girando...",
+    youWon: "Voce ganhou",
+    vbms: "VBMS",
+    claim: "Resgatar",
+    claiming: "Resgatando...",
+    spinAgain: "Girar Novamente",
+    close: "Fechar",
+    shareWin: "Compartilhar",
+    alreadySpun: "Ja girou hoje",
+    error: "Erro",
+  },
+  es: {
+    title: "Ruleta Diaria",
+    connectWallet: "Conecta tu wallet para girar!",
+    testMode: "Modo Prueba (spins ilimitados)",
+    spinsRemaining: "Spins restantes",
+    noSpinsToday: "Sin spins hoy",
+    freeSpin: "1 spin gratis",
+    vibefidBonus: "+2 VibeFID",
+    spin: "GIRAR",
+    spinning: "Girando...",
+    youWon: "Ganaste",
+    vbms: "VBMS",
+    claim: "Reclamar",
+    claiming: "Reclamando...",
+    spinAgain: "Girar de Nuevo",
+    close: "Cerrar",
+    shareWin: "Compartir",
+    alreadySpun: "Ya giraste hoy",
+    error: "Error",
+  },
+  ru: {
+    title: "Ежедневная Рулетка",
+    connectWallet: "Подключите кошелек!",
+    testMode: "Тестовый режим (безлимит)",
+    spinsRemaining: "Осталось спинов",
+    noSpinsToday: "Нет спинов сегодня",
+    freeSpin: "1 бесплатный спин",
+    vibefidBonus: "+2 VibeFID",
+    spin: "КРУТИТЬ",
+    spinning: "Кручу...",
+    youWon: "Вы выиграли",
+    vbms: "VBMS",
+    claim: "Забрать",
+    claiming: "Забираю...",
+    spinAgain: "Крутить снова",
+    close: "Закрыть",
+    shareWin: "Поделиться",
+    alreadySpun: "Уже крутили сегодня",
+    error: "Ошибка",
+  },
+  hi: {
+    title: "दैनिक रूलेट",
+    connectWallet: "स्पिन के लिए वॉलेट कनेक्ट करें!",
+    testMode: "टेस्ट मोड (असीमित स्पिन)",
+    spinsRemaining: "बाकी स्पिन",
+    noSpinsToday: "आज कोई स्पिन नहीं",
+    freeSpin: "1 फ्री स्पिन",
+    vibefidBonus: "+2 VibeFID",
+    spin: "स्पिन",
+    spinning: "स्पिन हो रहा है...",
+    youWon: "आपने जीता",
+    vbms: "VBMS",
+    claim: "क्लेम",
+    claiming: "क्लेम हो रहा है...",
+    spinAgain: "फिर से स्पिन",
+    close: "बंद करें",
+    shareWin: "शेयर करें",
+    alreadySpun: "आज पहले से स्पिन किया",
+    error: "त्रुटि",
+  },
+};
 
 const PRIZES = [
   { amount: 1, label: "1", color: "#8B0000", image: "https://ipfs.filebase.io/ipfs/QmTzbEj7fpBNaTQr1CWdykNb1iwcNBW273e2bbNTruwN4e" },
@@ -30,6 +135,8 @@ interface RouletteProps {
 
 export function Roulette({ onClose }: RouletteProps) {
   const { address } = useAccount();
+  const { lang } = useLanguage();
+  const t = rouletteTranslations[lang as keyof typeof rouletteTranslations] || rouletteTranslations.en;
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<{ prize: number; index: number } | null>(null);
@@ -393,7 +500,7 @@ export function Roulette({ onClose }: RouletteProps) {
   if (!address) {
     return (
       <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-6 text-center">
-        <p className="text-vintage-gold">Connect wallet to spin!</p>
+        <p className="text-vintage-gold">{t.connectWallet}</p>
       </div>
     );
   }
@@ -404,7 +511,7 @@ export function Roulette({ onClose }: RouletteProps) {
     }`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-vintage-gold font-bold text-xl">Daily Roulette</h2>
+        <h2 className="text-vintage-gold font-bold text-xl">{t.title}</h2>
         {onClose && (
           <button
             onClick={onClose}
@@ -419,18 +526,18 @@ export function Roulette({ onClose }: RouletteProps) {
       {!showResult && (
         <div className="text-center mb-3 text-sm">
           {canSpinData?.testMode ? (
-            <span className="text-yellow-400">Modo Teste (spins ilimitados)</span>
+            <span className="text-yellow-400">{t.testMode}</span>
           ) : (
             <>
               <span className="text-vintage-ice">
                 {spinsRemaining > 0 ? (
-                  <>Spins restantes: <span className="text-vintage-gold font-bold">{spinsRemaining}</span></>
+                  <>{t.spinsRemaining}: <span className="text-vintage-gold font-bold">{spinsRemaining}</span></>
                 ) : (
-                  <span className="text-red-400">Sem spins hoje</span>
+                  <span className="text-red-400">{t.noSpinsToday}</span>
                 )}
               </span>
               <span className="text-vintage-ice/50 ml-2">
-                (1 free spin{isVibeFidHolder && <span className="text-purple-400"> +2 VibeFID</span>})
+                ({t.freeSpin}{isVibeFidHolder && <span className="text-purple-400"> {t.vibefidBonus}</span>})
               </span>
             </>
           )}
@@ -563,7 +670,7 @@ export function Roulette({ onClose }: RouletteProps) {
                 : 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white'
             }`}
           >
-            {isClaiming || isClaimPending ? 'RESGATANDO...' : `CLAIM ${result.prize.toLocaleString()} VBMS`}
+            {isClaiming || isClaimPending ? t.claiming : `${t.claim} ${result.prize.toLocaleString()} VBMS`}
           </button>
 
           {/* Share Button */}
@@ -591,7 +698,7 @@ export function Roulette({ onClose }: RouletteProps) {
                 : 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black hover:from-yellow-400 hover:to-vintage-gold shadow-gold hover:shadow-gold-lg transform hover:scale-105'
             }`}
           >
-            {isSpinning ? 'GIRANDO...' : canSpin ? 'GIRAR!' : 'Volte amanha!'}
+            {isSpinning ? t.spinning : canSpin ? t.spin : t.noSpinsToday}
           </button>
 
           {/* Info */}
