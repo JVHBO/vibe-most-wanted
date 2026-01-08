@@ -81,8 +81,8 @@ export function PveCardSelectionModal({
     (currentPage + 1) * CARDS_PER_PAGE
   );
 
-  // Loading state
-  const isLoading = sortedPveNfts.length === 0;
+  // Loading state - use loadingStatus, not array length
+  const isLoading = loadingStatus === "loading";
 
   // Early return AFTER all hooks
   if (!isOpen || isDifficultyModalOpen) return null;

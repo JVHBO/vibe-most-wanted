@@ -88,8 +88,8 @@ const dexTranslations = {
     bondingInfoPhase1: "Bonding Phase",
     bondingInfoPhase1Desc: "Currently active. Buy/sell directly on the curve. Price adjusts automatically.",
     bondingInfoPhase2: "Uniswap Phase",
-    bondingInfoPhase2Desc: "When $10k ETH is reached, liquidity moves to Uniswap for open trading.",
-    bondingInfoTarget: "Target: $10,000 USD in ETH",
+    bondingInfoPhase2Desc: "When 2.5 ETH is reached, liquidity moves to Uniswap for open trading.",
+    bondingInfoTarget: "Target: 2.5 ETH",
     bondingInfoLearnMore: "Learn more about market phases",
     bondingInfoClose: "Got it!",
   },
@@ -157,8 +157,8 @@ const dexTranslations = {
     bondingInfoPhase1: "Fase Bonding",
     bondingInfoPhase1Desc: "Atualmente ativa. Compre/venda diretamente na curva. Preço ajusta automaticamente.",
     bondingInfoPhase2: "Fase Uniswap",
-    bondingInfoPhase2Desc: "Quando $10k ETH for atingido, a liquidez vai para a Uniswap para trading aberto.",
-    bondingInfoTarget: "Meta: $10,000 USD em ETH",
+    bondingInfoPhase2Desc: "Quando 2.5 ETH for atingido, a liquidez vai para a Uniswap para trading aberto.",
+    bondingInfoTarget: "Meta: 2.5 ETH",
     bondingInfoLearnMore: "Saiba mais sobre as fases do mercado",
     bondingInfoClose: "Entendi!",
   },
@@ -574,8 +574,8 @@ export default function DexPage() {
             <div className="flex items-center justify-between text-xs mb-1">
               <span className="text-vintage-burnt-gold">Bonding Curve:</span>
               <div className="flex items-center gap-1">
-                <span className="text-vintage-gold font-mono font-bold">${bondingProgress.usdBalance.toFixed(0)}</span>
-                <span className="text-vintage-ice/50">/ $10,000</span>
+                <span className="text-vintage-gold font-mono font-bold">{bondingProgress.ethBalance.toFixed(4)}</span>
+                <span className="text-vintage-ice/50">/2.5 ETH</span>
                 <button onClick={() => setShowBondingInfo(true)} className="ml-1 w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-xs font-bold">?</button>
               </div>
             </div>
@@ -585,10 +585,7 @@ export default function DexPage() {
                 style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }}
               />
             </div>
-            <div className="flex justify-between text-[10px] mt-0.5">
-              <span className="text-vintage-ice/40">{bondingProgress.ethBalance.toFixed(4)} ETH</span>
-              <span className="text-vintage-ice/40">{bondingProgress.progress.toFixed(1)}%</span>
-            </div>
+            <div className="flex justify-end text-[10px] mt-0.5"><span className="text-vintage-ice/40">{bondingProgress.progress.toFixed(1)}%</span></div>
           </div>
         </div>
 
@@ -934,7 +931,7 @@ export default function DexPage() {
                     <span className="text-blue-400 font-bold text-xs">PHASE 2: Uniswap</span>
                     <span className="text-blue-400/60 text-[10px] ml-auto bg-blue-500/20 px-1.5 py-0.5 rounded">NEXT</span>
                   </div>
-                  <p className="text-vintage-ice/60 text-[11px] mt-1 ml-6">When $10k ETH collected, liquidity migrates to Uniswap V3.</p>
+                  <p className="text-vintage-ice/60 text-[11px] mt-1 ml-6">When 2.5 ETH collected, liquidity migrates to Uniswap V3.</p>
                 </div>
               </div>
             </div>

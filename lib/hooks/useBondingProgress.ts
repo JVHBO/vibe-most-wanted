@@ -1,6 +1,6 @@
 /**
  * Hook to get VBMS bonding curve progress
- * When ETH reaches $10k USD equivalent, liquidity transfers to Uniswap
+ * When ETH reaches 2.5 ETH, liquidity transfers to Uniswap
  */
 
 import { useState, useEffect } from 'react';
@@ -8,7 +8,7 @@ import { useState, useEffect } from 'react';
 const BOOSTER_TOKEN_ADDRESS = '0xb03439567cd22f278b21e1ffcdfb8e1696763827';
 const BASE_RPC = 'https://mainnet.base.org';
 const ETH_USD_API = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd';
-const TARGET_USD = 10000; // $10k target for Uniswap migration
+const TARGET_ETH = 2.5; // 2.5 ETH target for Uniswap migration
 const CACHE_KEY = 'vbms_bonding_progress';
 
 export function useBondingProgress() {
@@ -56,7 +56,7 @@ export function useBondingProgress() {
 
         // Calculate USD and progress
         const usd = eth * ethPrice;
-        const prog = Math.min((usd / TARGET_USD) * 100, 100);
+        const prog = Math.min((eth / TARGET_ETH) * 100, 100);
 
         setEthBalance(eth);
         setUsdBalance(usd);
@@ -84,7 +84,7 @@ export function useBondingProgress() {
     ethBalance,
     usdBalance,
     progress,
-    targetUsd: TARGET_USD,
+    targetEth: TARGET_ETH,
     isLoading,
     isComplete: progress >= 100,
     ethPrice,

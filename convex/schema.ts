@@ -175,6 +175,9 @@ export default defineSchema({
     // Badges
     hasVibeBadge: v.optional(v.boolean()), // VIBE badge - claimed by VibeFID holders (bonus coins in Wanted Cast)
 
+    // Roulette
+    rouletteTestMode: v.optional(v.boolean()), // Admin: unlimited spins for testing
+
     // Metadata
     userIndex: v.optional(v.number()),
     createdAt: v.number(), // timestamp
@@ -491,7 +494,8 @@ export default defineSchema({
       v.literal("inbox_collect"), // Collected from inbox
       v.literal("immediate"), // Claimed immediately after battle
       v.literal("manual"), // Manual claim
-      v.literal("testvbms_conversion") // TESTVBMS to VBMS conversion
+      v.literal("testvbms_conversion"), // TESTVBMS to VBMS conversion
+      v.literal("roulette") // Daily roulette claim
     ),
   })
     .index("by_player", ["playerAddress", "timestamp"])
@@ -1653,4 +1657,18 @@ export default defineSchema({
     .index("by_sender", ["senderFid", "createdAt"])
     .index("by_recipient", ["recipientFid", "createdAt"])
     .index("by_txHash", ["txHash"]),
+
+  // Roulette daily spins
+  rouletteSpins: defineTable({
+    address: v.string(),
+    date: v.string(), // YYYY-MM-DD
+    prizeAmount: v.number(),
+    prizeIndex: v.number(),
+    spunAt: v.number(),
+    claimed: v.optional(v.boolean()), // Whether prize was claimed
+    claimedAt: v.optional(v.number()), // When claimed
+    txHash: v.optional(v.string()), // Claim transaction hash
+  })
+    .index("by_address_date", ["address", "date"])
+    .index("by_date", ["date"]),
 });

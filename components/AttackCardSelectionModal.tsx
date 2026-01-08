@@ -179,7 +179,7 @@ export function AttackCardSelectionModal({
   if (!showAttackCardSelection || !targetPlayer) return null;
 
   // Loading state
-  const isLoading = isLoadingCards || sortedAttackNfts.length === 0;
+  const isLoading = isLoadingCards;
 
   const handleAttack = async () => {
     devLog('🔴 handleAttack called!', {
