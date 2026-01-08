@@ -247,36 +247,43 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
         ? await fetchNFTsFromMultipleWallets(allAddresses)
         : await fetchNFTsFromAllCollections(address);
 
-      // 🔄 METADATA REFRESH: Fetch fresh metadata from tokenUri (same as home page)
-      // This fixes cards showing as "unopened" when Alchemy has stale data
-      const METADATA_BATCH_SIZE = 50;
-      const enrichedRaw: any[] = [];
+      // 🔄 METADATA REFRESH: Only refresh stale cards (reduces API calls)
+      const enrichedRaw = [];
+      const staleCards = [];
 
-      for (let i = 0; i < raw.length; i += METADATA_BATCH_SIZE) {
-        const batch = raw.slice(i, i + METADATA_BATCH_SIZE);
-        const batchResults = await Promise.all(
-          batch.map(async (nft) => {
+      // Identify stale cards (unopened or missing metadata)
+      for (const nft of raw) {
+        const meta = nft?.raw?.metadata || nft?.metadata;
+        const hasName = meta?.name && !meta.name.includes("Unopened");
+        const hasAttributes = meta?.attributes?.length > 0;
+        if (hasName && hasAttributes) {
+          enrichedRaw.push(nft);
+        } else {
+          staleCards.push(nft);
+        }
+      }
+
+      console.log(`🔄 [Context] ${raw.length} cards: ${enrichedRaw.length} fresh, ${staleCards.length} stale`);
+
+      // Only fetch metadata for stale cards
+      if (staleCards.length > 0) {
+        for (let i = 0; i < staleCards.length; i += 20) {
+          const batch = staleCards.slice(i, i + 20);
+          const results = await Promise.all(batch.map(async (nft) => {
             const tokenUri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
             if (!tokenUri) return nft;
             try {
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 2000);
-              const res = await fetch(tokenUri, { signal: controller.signal });
-              clearTimeout(timeoutId);
+              const res = await fetch(tokenUri, { signal: AbortSignal.timeout(2000) });
               if (res.ok) {
                 const metadata = await res.json();
-                return { ...nft, metadata: metadata, raw: { ...nft.raw, metadata: metadata } };
+                return { ...nft, metadata, raw: { ...nft.raw, metadata } };
               }
-            } catch {
-              // Silent fail - use original data if refresh fails
-            }
+            } catch {}
             return nft;
-          })
-        );
-        enrichedRaw.push(...batchResults);
+          }));
+          enrichedRaw.push(...results);
+        }
       }
-
-      console.log(`🔄 [Context] Metadata refresh complete: ${enrichedRaw.length} NFTs`);
 
       const processed = await processNFTsToCards(enrichedRaw); // Já filtra unopened!
 
@@ -368,12 +375,12 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     previousAddressRef.current = address;
 
     // Auto-load when idle
-    console.log('[Context] Auto-load check:', { address: address?.slice(0,8), status, nftsCount: nfts.length });
+    console.log('[Context] Auto-load check:', { address: address?.slice(0,8), status });
     if (address && status === 'idle') {
       console.log('[Context] Starting auto-load...');
       loadNFTs();
     }
-  }, [address, status, nfts.length, loadNFTs]);
+  }, [address, status, loadNFTs]);
 
   // Load user profile
   useEffect(() => {
