@@ -54,6 +54,7 @@ import BannedScreen from "@/components/BannedScreen";
 import { SocialQuestsPanel } from "@/components/SocialQuestsPanel";
 // New Home Components
 import { HomeHeader, BottomNavigation, GameGrid, CardsPreview, WantedCast } from "@/components/home";
+import { Roulette } from "@/components/Roulette";
 // TEMPORARILY DISABLED - Causing performance issues
 // import { MobileDebugConsole } from "@/components/MobileDebugConsole";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
@@ -521,6 +522,7 @@ export default function TCGPage() {
   const [battleOpponentPfp, setBattleOpponentPfp] = useState<string | null>(null);
   const [showLossPopup, setShowLossPopup] = useState<boolean>(false);
   const [showWinPopup, setShowWinPopup] = useState<boolean>(false);
+  const [showRoulette, setShowRoulette] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
   // Miniapp: 12 cards (1.5 rows), Website: 24 cards (3 full rows of 8)
   const CARDS_PER_PAGE = isInFarcaster ? 12 : 24;
@@ -4110,6 +4112,13 @@ export default function TCGPage() {
         t={t}
       />
 
+      {/* Daily Roulette Modal */}
+      {showRoulette && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4">
+          <Roulette onClose={() => setShowRoulette(false)} />
+        </div>
+      )}
+
       {/* Game Mode Selection - Now handled directly by GameGrid */}
 
       {/* REMOVED: Referrals Modal - System disabled */}
@@ -5317,6 +5326,16 @@ export default function TCGPage() {
               <div className="tour-wanted-cast fixed top-[78%] left-1/2 -translate-x-1/2 w-full max-w-xs px-2 z-10">
                 <WantedCast soundEnabled={soundEnabled} />
               </div>
+              {/* ROULETTE BUTTON */}
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setShowRoulette(true);
+                }}
+                className="fixed top-[88%] right-4 z-20 bg-gradient-to-r from-vintage-gold to-yellow-500 text-black font-bold py-2 px-4 rounded-full shadow-gold animate-pulse hover:scale-105 transition-transform"
+              >
+                SPIN
+              </button>
             </>
           ) : (
             <div className="flex flex-col items-center px-2">

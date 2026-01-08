@@ -1235,7 +1235,7 @@ export const sendBossDefeatedNotifications = internalAction({
 
 /**
  * Send notification when someone receives a VibeMail (anonymous message with vote)
- * 🔧 FIX: Sends to ALL tokens for the user (VBMS + VibeFID + Neynar)
+ * 🔧 Uses VibeFID's Neynar API key so notifications show in VibeFID's base.dev panel
  */
 export const sendVibemailNotification = internalAction({
   args: {
@@ -1248,11 +1248,11 @@ export const sendVibemailNotification = internalAction({
       ? "Someone sent you a message with a sound! 🎵 Check your inbox"
       : "Someone sent you an anonymous message! Check your inbox";
 
-    console.log();
+    // Use VibeFID's API key for VibeMail notifications
+    const apiKey = process.env.NEYNAR_API_KEY_VIBEFID || process.env.NEYNAR_API_KEY;
 
-    // Only use Neynar API - sends to VibeFID
-    if (!process.env.NEYNAR_API_KEY) {
-      console.log("📱 No NEYNAR_API_KEY configured");
+    if (!apiKey) {
+      console.log("📱 No NEYNAR_API_KEY_VIBEFID configured");
       return { sent: false };
     }
 
@@ -1267,21 +1267,21 @@ export const sendVibemailNotification = internalAction({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": process.env.NEYNAR_API_KEY
+          "x-api-key": apiKey
         },
         body: JSON.stringify(payload)
       });
 
       if (response.ok) {
-        console.log();
+        console.log(`✅ VibeMail notification sent to FID ${recipientFid}`);
         return { sent: true };
       } else {
         const errorText = await response.text();
-        console.log();
+        console.log(`❌ VibeMail notification failed: ${errorText}`);
         return { sent: false };
       }
     } catch (error: any) {
-      console.log();
+      console.log(`❌ VibeMail notification error: ${error.message}`);
       return { sent: false };
     }
   },

@@ -56,6 +56,7 @@ import type * as raidBoss from "../raidBoss.js";
 import type * as referrals from "../referrals.js";
 import type * as rewardsChoice from "../rewardsChoice.js";
 import type * as rooms from "../rooms.js";
+import type * as roulette from "../roulette.js";
 import type * as roundBetting from "../roundBetting.js";
 import type * as scheduledTips from "../scheduledTips.js";
 import type * as sessions from "../sessions.js";
@@ -125,6 +126,7 @@ declare const fullApi: ApiFromModules<{
   referrals: typeof referrals;
   rewardsChoice: typeof rewardsChoice;
   rooms: typeof rooms;
+  roulette: typeof roulette;
   roundBetting: typeof roundBetting;
   scheduledTips: typeof scheduledTips;
   sessions: typeof sessions;
