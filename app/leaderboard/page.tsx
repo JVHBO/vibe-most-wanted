@@ -797,6 +797,17 @@ export default function LeaderboardPage() {
             )}
 
             {/* Divider */}
+            <div className="w-px h-4 bg-vintage-gold/20" />
+
+            {/* Card Count */}
+            <div className="flex items-center gap-2">
+              <span className="text-vintage-burnt-gold uppercase tracking-wide">Cards</span>
+              <span className={`font-bold ${nfts.length > 0 ? 'text-vintage-gold' : 'text-red-400'}`}>
+                {nfts.length}
+              </span>
+            </div>
+
+            {/* Divider */}
             <div className="hidden md:block w-px h-4 bg-vintage-gold/20" />
 
             {/* Reset Timer */}

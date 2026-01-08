@@ -363,7 +363,7 @@ export const sendLowEnergyNotifications = internalAction({
             title: title.slice(0, 32),
             body: body.slice(0, 128),
             tokens: [tokenData.token],
-            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
+            targetUrl: (tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://www.vibemostwanted.xyz"),
           };
 
           const response = await fetch(tokenData.url, {
@@ -643,7 +643,7 @@ export const sendFeaturedCastNotification = internalAction({
               title,
               body,
               tokens: [tokenData.token],
-              targetUrl,
+              targetUrl: tokenData.app === "vibefid" ? "https://vibefid.xyz" : targetUrl,
             };
 
             const response = await fetch(tokenData.url, {
@@ -1062,7 +1062,7 @@ export const sendCustomNotification = action({
             title: validatedTitle,
             body: validatedBody,
             tokens: [tokenData.token],
-            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
+            targetUrl: tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://www.vibemostwanted.xyz",
           };
 
           const response = await fetch(tokenData.url, {
@@ -1183,7 +1183,7 @@ export const sendBossDefeatedNotifications = internalAction({
             title: title.slice(0, 32),
             body: body.slice(0, 128),
             tokens: [tokenData.token],
-            targetUrl: "https://www.vibemostwanted.xyz".slice(0, 1024),
+            targetUrl: tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://www.vibemostwanted.xyz",
           };
 
           const response = await fetch(tokenData.url, {

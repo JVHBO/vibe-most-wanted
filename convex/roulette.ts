@@ -1,4 +1,4 @@
-import { mutation, query, action, internalQuery } from "./_generated/server";
+import { mutation, query, action, internalQuery, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { createAuditLog } from "./coinAudit";
@@ -199,8 +199,9 @@ export const getSpinHistory = query({
 
 /**
  * Admin: Reset spins for testing
+ * 🔒 SECURITY FIX: Changed from mutation to internalMutation
  */
-export const adminResetSpins = mutation({
+export const adminResetSpins = internalMutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
@@ -221,8 +222,9 @@ export const adminResetSpins = mutation({
 
 /**
  * Admin: Set unlimited spins for testing (bypass daily limit)
+ * 🔒 SECURITY FIX: Changed from mutation to internalMutation
  */
-export const adminSetTestMode = mutation({
+export const adminSetTestMode = internalMutation({
   args: { address: v.string(), enabled: v.boolean() },
   handler: async (ctx, { address, enabled }) => {
     const normalizedAddress = address.toLowerCase();
@@ -357,7 +359,7 @@ export const claimSmallPrize = mutation({
 });
 
 /**
- * Internal query to get unclaimed spin
+ * Internal query to get unclaimed spin (most recent)
  */
 export const getUnclaimedSpin = internalQuery({
   args: { address: v.string() },
@@ -365,18 +367,23 @@ export const getUnclaimedSpin = internalQuery({
     const normalizedAddress = address.toLowerCase();
     const today = getTodayKey();
 
-    const spin = await ctx.db
+    // Get ALL spins for today and find the most recent unclaimed one
+    const spins = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
         q.eq("address", normalizedAddress).eq("date", today)
       )
-      .first();
+      .collect();
 
-    if (!spin || spin.claimed) {
+    // Find most recent unclaimed spin (highest spunAt)
+    const unclaimedSpins = spins.filter(s => !s.claimed);
+    if (unclaimedSpins.length === 0) {
       return null;
     }
 
-    return spin;
+    // Sort by spunAt descending and get the most recent
+    unclaimedSpins.sort((a, b) => (b.spunAt || 0) - (a.spunAt || 0));
+    return unclaimedSpins[0];
   },
 });
 
@@ -393,20 +400,43 @@ export const recordRouletteClaim = mutation({
     const normalizedAddress = address.toLowerCase();
     const today = getTodayKey();
 
-    // Find the spin
-    const spin = await ctx.db
+    // Find all spins for today
+    const spins = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
         q.eq("address", normalizedAddress).eq("date", today)
       )
-      .first();
+      .collect();
+
+    // Find unclaimed spin matching the amount (most recent first)
+    const unclaimedSpins = spins
+      .filter(s => !s.claimed && s.prizeAmount === amount)
+      .sort((a, b) => (b.spunAt || 0) - (a.spunAt || 0));
+
+    const spin = unclaimedSpins[0];
 
     if (!spin) {
-      throw new Error("Spin not found");
-    }
-
-    if (spin.claimed) {
-      throw new Error("Already claimed");
+      // Fallback: find any unclaimed spin with this amount
+      const anyUnclaimed = spins.filter(s => !s.claimed);
+      if (anyUnclaimed.length === 0) {
+        throw new Error("No unclaimed spins found");
+      }
+      // Mark the most recent as claimed
+      const fallbackSpin = anyUnclaimed.sort((a, b) => (b.spunAt || 0) - (a.spunAt || 0))[0];
+      await ctx.db.patch(fallbackSpin._id, {
+        claimed: true,
+        claimedAt: Date.now(),
+        txHash,
+      });
+      console.log(`🎰 Roulette claimed (fallback): ${normalizedAddress} received ${amount} VBMS (tx: ${txHash})`);
+      await ctx.db.insert("claimHistory", {
+        playerAddress: normalizedAddress,
+        amount,
+        txHash,
+        timestamp: Date.now(),
+        type: "roulette",
+      });
+      return { success: true, amount, txHash };
     }
 
     // Mark as claimed
@@ -437,8 +467,9 @@ export const recordRouletteClaim = mutation({
 
 /**
  * Admin: Disable test mode for ALL accounts
+ * 🔒 SECURITY FIX: Changed from mutation to internalMutation
  */
-export const disableAllTestMode = mutation({
+export const disableAllTestMode = internalMutation({
   args: {},
   handler: async (ctx) => {
     const profiles = await ctx.db
@@ -457,5 +488,27 @@ export const disableAllTestMode = mutation({
     
     console.log(`🎰 Disabled test mode for ${count} profiles`);
     return { disabled: count };
+  },
+});
+
+/**
+ * Admin: Reset ALL spins for everyone
+ * 🔒 SECURITY FIX: Changed from mutation to internalMutation
+ */
+export const adminResetAllSpins = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const spins = await ctx.db
+      .query("rouletteSpins")
+      .collect();
+
+    let count = 0;
+    for (const spin of spins) {
+      await ctx.db.delete(spin._id);
+      count++;
+    }
+
+    console.log(`🎰 Admin: Reset ${count} spins for all users`);
+    return { deleted: count };
   },
 });

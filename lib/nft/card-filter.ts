@@ -8,32 +8,49 @@
 import type { Card } from '@/lib/types/card';
 
 /**
- * Filtra cartas não reveladas (unopened)
- * LÓGICA IDÊNTICA À HOME PAGE!
- * Checa rarity E status !== 'unopened'
+ * Coleções onde rarity="Unopened" é o padrão e NÃO deve filtrar
  */
-export function filterUnopened<T extends { rarity?: string; status?: string }>(cards: T[]): T[] {
+const SKIP_RARITY_FILTER = ['viberotbangers'];
+
+/**
+ * Filtra cartas não reveladas (unopened)
+ * Checa rarity E status !== 'unopened'
+ * EXCEÇÃO: viberotbangers tem rarity="Unopened" como padrão
+ */
+export function filterUnopened<T extends { rarity?: string; status?: string; collection?: string }>(cards: T[]): T[] {
   return cards.filter(card => {
     const rarity = ((card as any).rarity || '').toLowerCase();
     const status = ((card as any).status || '').toLowerCase();
+    const collection = ((card as any).collection || '').toLowerCase();
+
+    // Viberotbangers: só filtra por status, não por rarity
+    if (SKIP_RARITY_FILTER.includes(collection)) {
+      return status !== 'unopened';
+    }
+
     return rarity !== 'unopened' && status !== 'unopened';
   });
 }
 
 /**
  * Verifica se uma carta está revelada
- * LÓGICA IDÊNTICA À HOME PAGE!
  */
-export function isRevealed(card: { rarity?: string; status?: string }): boolean {
+export function isRevealed(card: { rarity?: string; status?: string; collection?: string }): boolean {
   const rarity = ((card as any).rarity || '').toLowerCase();
   const status = ((card as any).status || '').toLowerCase();
+  const collection = ((card as any).collection || '').toLowerCase();
+
+  if (SKIP_RARITY_FILTER.includes(collection)) {
+    return status !== 'unopened';
+  }
+
   return rarity !== 'unopened' && status !== 'unopened';
 }
 
 /**
  * Verifica se uma carta NÃO está revelada
  */
-export function isUnopened(card: { rarity?: string; status?: string }): boolean {
+export function isUnopened(card: { rarity?: string; status?: string; collection?: string }): boolean {
   return !isRevealed(card);
 }
 
