@@ -72,7 +72,7 @@ export const canSpin = query({
     // Check if user has VibeFID card
     const vibeFidCard = await ctx.db
       .query("farcasterCards")
-      .withIndex("by_ownerAddress", (q) => q.eq("ownerAddress", normalizedAddress))
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
     const isVibeFidHolder = !!vibeFidCard;
@@ -122,7 +122,7 @@ export const spin = mutation({
     if (!isTestMode) {
       const vibeFidCard = await ctx.db
         .query("farcasterCards")
-        .withIndex("by_ownerAddress", (q) => q.eq("ownerAddress", normalizedAddress))
+        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
         .first();
 
       const isVibeFidHolder = !!vibeFidCard;
