@@ -484,7 +484,7 @@ export default function TCGPage() {
   const [skippedCardLoading, setSkippedCardLoading] = useState<boolean>(false);
   
   // 🔗 Get cards from shared context (persists across routes!)
-  const { nfts: contextNfts, status: contextStatus } = usePlayerCards();
+  const { nfts: contextNfts, status: contextStatus, syncNftsFromHome } = usePlayerCards();
 
   // Check sessionStorage on mount to skip loading if already loaded this session
   useEffect(() => {
@@ -1613,10 +1613,15 @@ export default function TCGPage() {
 
       // Filter unopened cards AFTER metadata refresh (not before)
       // This ensures we have fresh attributes to check
+      // EXCEÇÃO: viberotbangers tem rarity="Unopened" como padrão
       const revealed = enrichedRaw.filter((nft) => {
         const rarity = findAttr(nft, 'rarity').toLowerCase();
         const status = findAttr(nft, 'status').toLowerCase();
-        // Keep cards that are NOT unopened
+        const collection = (nft.collection || '').toLowerCase();
+        // Viberotbangers: só filtra por status, não por rarity
+        if (collection === 'viberotbangers') {
+          return status !== 'unopened';
+        }
         return rarity !== 'unopened' && status !== 'unopened';
       });
 
@@ -1738,6 +1743,10 @@ export default function TCGPage() {
 
       setNfts([...deduplicated]);
       setStatus("loaded");
+
+      // 🔗 SYNC TO CONTEXT: All other pages use these same cards!
+      syncNftsFromHome(deduplicated);
+
       // Mark cards as loaded for this session (prevents loading screen on navigation)
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('vbms_cards_loaded', 'true');
@@ -1771,16 +1780,26 @@ export default function TCGPage() {
   }, [address]);
 
   useEffect(() => {
-    // Skip if cards are already loaded (prevents reload on navigation)
+    // Skip if cards are already loaded locally (prevents reload on navigation)
     if (status === 'loaded' && nfts.length > 0) {
-      devLog('📦 Skipping NFT load - already loaded', nfts.length, 'cards');
+      devLog('📦 Skipping NFT load - already loaded locally', nfts.length, 'cards');
+      return;
+    }
+    // 🚀 CRITICAL: Skip if Context already has cards (prevents duplicate API calls!)
+    if (contextStatus === 'loaded' && contextNfts.length > 0) {
+      devLog('📦 Skipping NFT load - Context already has', contextNfts.length, 'cards (will sync)');
+      return;
+    }
+    // 🚀 CRITICAL: Skip if Context is currently loading (prevents duplicate API calls!)
+    if (contextStatus === 'fetching') {
+      devLog('📦 Skipping NFT load - Context is already fetching');
       return;
     }
     if (address) {
       devLog('📦 Address changed, loading NFTs:', address);
       loadNFTs();
     }
-  }, [address, loadNFTs, status, nfts.length]);
+  }, [address, loadNFTs, status, nfts.length, contextStatus, contextNfts.length]);
 
   const loadJCNFTs = useCallback(async () => {
     try {

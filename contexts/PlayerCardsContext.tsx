@@ -4,14 +4,62 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useEf
 import { useAccount } from 'wagmi';
 import { useConvex, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { devLog, devError } from '@/lib/utils/logger';
-import { getEnabledCollections } from '@/lib/collections/index';
-import { fetchNFTsFromAllCollections, fetchNFTsFromMultipleWallets, processNFTsToCards, getCardKey } from '@/lib/nft';
+import { devLog, devError, devWarn } from '@/lib/utils/logger';
+import { getEnabledCollections, getCollectionContract, type CollectionId } from '@/lib/collections/index';
+import { getCardKey } from '@/lib/nft';
+import { findAttr, calcPower } from '@/lib/nft/attributes';
+import { getImage, fetchNFTs } from '@/lib/nft/fetcher';
+import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { HAND_SIZE, getMaxAttacks } from '@/lib/config';
 import type { Card, CardRarity, CardFoil } from '@/lib/types/card';
-import type { CollectionId } from '@/lib/collections/index';
+
+/**
+ * 🎴 FETCH NFTs - SAME LOGIC AS HOME PAGE!
+ * Batched fetch to avoid rate limiting
+ */
+async function fetchNFTsFromAllCollections(owner: string): Promise<any[]> {
+  const enabledCollections = getEnabledCollections();
+  devLog('🎴 [Context] Fetching NFTs from', enabledCollections.length, 'enabled collections IN BATCHES');
+
+  const allNfts: any[] = [];
+  const collectionCounts: Record<string, number> = {};
+  let totalCards = 0;
+
+  const BATCH_SIZE = 3;
+  for (let i = 0; i < enabledCollections.length; i += BATCH_SIZE) {
+    const batch = enabledCollections.slice(i, i + BATCH_SIZE);
+
+    const results = await Promise.allSettled(
+      batch.map(async (collection) => {
+        devLog(`📡 [Context] Fetching from ${collection.displayName}`);
+        const nfts = await fetchNFTs(owner, collection.contractAddress);
+        const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
+        collectionCounts[collection.displayName] = nfts.length;
+        totalCards += nfts.length;
+        return tagged;
+      })
+    );
+
+    results.forEach((result, idx) => {
+      if (result.status === 'fulfilled') {
+        allNfts.push(...result.value);
+      } else {
+        collectionCounts[batch[idx].displayName] = -1;
+        devError(`✗ [Context] Failed: ${batch[idx].displayName}`, result.reason);
+      }
+    });
+
+    if (i + BATCH_SIZE < enabledCollections.length) {
+      await new Promise(r => setTimeout(r, 200));
+    }
+  }
+
+  devLog('📊 [Context] CARD FETCH SUMMARY:', JSON.stringify(collectionCounts));
+  devLog(`📊 [Context] Total raw NFTs: ${allNfts.length}`);
+  return allNfts;
+}
 
 // Avatar URL helper
 const getAvatarUrl = (twitterData?: string | null | { twitter?: string; twitterProfileImageUrl?: string }): string | null => {
@@ -51,6 +99,7 @@ interface PlayerCardsContextType {
   errorMsg: string | null;
   loadNFTs: () => Promise<void>;
   forceReloadNFTs: () => Promise<void>;
+  syncNftsFromHome: (cards: Card[]) => void; // 🔗 Sync cards from home page
 
   // Sorted for attack
   sortedAttackNfts: Card[];
@@ -199,27 +248,27 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
   // Mutations
   const payAttackEntryFee = useMutation(api.economy.payEntryFee);
 
-  // Load NFTs function - usa módulo centralizado @/lib/nft
+  // 🎴 LOAD NFTs - SAME LOGIC AS HOME PAGE!
   // 🔗 MULTI-WALLET: Busca NFTs de todas as wallets linkadas
   const loadNFTs = useCallback(async () => {
     if (!address) {
-      console.log('! [Context] loadNFTs called but no address');
+      devLog('! [Context] loadNFTs called but no address');
       return;
     }
 
     // Don't reload if already loaded
     if (status === 'loaded' && nfts.length > 0) {
-      console.log('📦 [Context] Cards already loaded:', nfts.length);
+      devLog('📦 [Context] Cards already loaded:', nfts.length);
       return;
     }
 
     // Don't load if already fetching
     if (status === 'fetching') {
-      console.log('⏳ [Context] Already fetching, skipping');
+      devLog('⏳ [Context] Already fetching, skipping');
       return;
     }
 
-    console.log('🎴 [Context] Loading NFTs for:', address);
+    devLog('🎴 [Context] Loading NFTs for:', address);
 
     try {
       setStatus('fetching');
@@ -230,73 +279,133 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
       try {
         const linkedData = await convex.query(api.profiles.getLinkedAddresses, { address });
         if (linkedData?.primary) {
-          // Build array of all addresses: primary + linked (all lowercase for proper deduplication)
           const primaryLower = linkedData.primary.toLowerCase();
           const linkedLower = (linkedData.linked || []).map((a: string) => a.toLowerCase());
           allAddresses = [primaryLower, ...linkedLower];
-          // Remove duplicates and ensure current address is included (case-insensitive)
           allAddresses = [...new Set([...allAddresses, address.toLowerCase()])];
         }
-        console.log(`🔗 [Context] Fetching from ${allAddresses.length} wallet(s):`, allAddresses.map(a => a.slice(0,8)));
+        devLog(`🔗 [Context] Fetching from ${allAddresses.length} wallet(s):`, allAddresses.map(a => a.slice(0,8)));
       } catch (error) {
         console.warn('⚠️ Failed to get linked addresses, using current only:', error);
       }
 
-      // Fetch NFTs from all wallets
-      const raw = allAddresses.length > 1
-        ? await fetchNFTsFromMultipleWallets(allAddresses)
-        : await fetchNFTsFromAllCollections(address);
-
-      // 🔄 METADATA REFRESH: Only refresh stale cards (reduces API calls)
-      const enrichedRaw = [];
-      const staleCards = [];
-
-      // Identify stale cards (unopened or missing metadata)
-      for (const nft of raw) {
-        const meta = nft?.raw?.metadata || nft?.metadata;
-        const hasName = meta?.name && !meta.name.includes("Unopened");
-        const hasAttributes = meta?.attributes?.length > 0;
-        if (hasName && hasAttributes) {
-          enrichedRaw.push(nft);
-        } else {
-          staleCards.push(nft);
-        }
+      // 🎴 FETCH NFTs - SAME AS HOME PAGE!
+      let raw: any[] = [];
+      for (const walletAddr of allAddresses) {
+        const walletNfts = await fetchNFTsFromAllCollections(walletAddr);
+        const tagged = walletNfts.map(nft => ({ ...nft, ownerAddress: walletAddr.toLowerCase() }));
+        raw.push(...tagged);
+        devLog(`✓ [Context] Wallet ${walletAddr.slice(0,8)}...: ${walletNfts.length} NFTs`);
       }
+      devLog('✓ [Context] Received NFTs from all wallets:', raw.length);
 
-      console.log(`🔄 [Context] ${raw.length} cards: ${enrichedRaw.length} fresh, ${staleCards.length} stale`);
-
-      // Only fetch metadata for stale cards
-      if (staleCards.length > 0) {
-        for (let i = 0; i < staleCards.length; i += 20) {
-          const batch = staleCards.slice(i, i + 20);
-          const results = await Promise.all(batch.map(async (nft) => {
+      // 🔄 METADATA REFRESH - SAME AS HOME PAGE!
+      const METADATA_BATCH_SIZE = 50;
+      const enrichedRaw = [];
+      for (let i = 0; i < raw.length; i += METADATA_BATCH_SIZE) {
+        const batch = raw.slice(i, i + METADATA_BATCH_SIZE);
+        const batchResults = await Promise.all(
+          batch.map(async (nft) => {
             const tokenUri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
             if (!tokenUri) return nft;
             try {
-              const res = await fetch(tokenUri, { signal: AbortSignal.timeout(2000) });
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 2000);
+              const res = await fetch(tokenUri, { signal: controller.signal });
+              clearTimeout(timeoutId);
               if (res.ok) {
                 const metadata = await res.json();
-                return { ...nft, metadata, raw: { ...nft.raw, metadata } };
+                return { ...nft, metadata: metadata, raw: { ...nft.raw, metadata: metadata } };
               }
-            } catch {}
+            } catch (error) {
+              devWarn(`⚠️ [Context] Failed to refresh metadata for NFT #${nft.tokenId}:`, error);
+            }
             return nft;
-          }));
-          enrichedRaw.push(...results);
-        }
+          })
+        );
+        enrichedRaw.push(...batchResults);
       }
 
-      const processed = await processNFTsToCards(enrichedRaw); // Já filtra unopened!
-
-      // Deduplicate
-      const seen = new Set<string>();
-      const deduplicated = processed.filter(card => {
-        const key = `${card.collection || 'default'}-${card.tokenId}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
+      // 🔍 FILTER UNOPENED - SAME AS HOME PAGE!
+      const revealed = enrichedRaw.filter((nft) => {
+        const rarity = findAttr(nft, 'rarity').toLowerCase();
+        const status = findAttr(nft, 'status').toLowerCase();
+        const collection = (nft.collection || '').toLowerCase();
+        // Viberotbangers: só filtra por status, não por rarity
+        if (collection === 'viberotbangers') {
+          return status !== 'unopened';
+        }
+        return rarity !== 'unopened' && status !== 'unopened';
       });
 
-      // 🔗 MULTI-WALLET: Load FREE cards from cardInventory for ALL wallets
+      const filtered = enrichedRaw.length - revealed.length;
+      devLog(`📊 [Context] NFT Stats: Total=${enrichedRaw.length}, Revealed=${revealed.length}, Filtered=${filtered}`);
+
+      // 🖼️ PROCESS IMAGES - SAME AS HOME PAGE!
+      const IMAGE_BATCH_SIZE = 50;
+      const processed: Card[] = [];
+
+      for (let i = 0; i < revealed.length; i += IMAGE_BATCH_SIZE) {
+        const batch = revealed.slice(i, i + IMAGE_BATCH_SIZE);
+        const enriched = await Promise.all(
+          batch.map(async (nft) => {
+            // 🎯 Detect collection from contract address
+            let collection: CollectionId = 'vibe';
+            const contractAddr = nft?.contract?.address?.toLowerCase();
+            const isVibeFID = contractAddr === getCollectionContract('vibefid')?.toLowerCase();
+
+            // 🎬 Get image URL
+            let imageUrl: string;
+            if (isVibeFID) {
+              imageUrl = await getImage(nft, 'vibefid');
+            } else {
+              imageUrl = await getImage(nft);
+            }
+
+            if (contractAddr) {
+              if (isVibeFID) {
+                collection = 'vibefid';
+              } else if (contractAddr === getCollectionContract('gmvbrs')?.toLowerCase()) {
+                collection = 'gmvbrs';
+              } else if (contractAddr === getCollectionContract('viberotbangers')?.toLowerCase()) {
+                collection = 'viberotbangers';
+              } else if (contractAddr === getCollectionContract('cumioh')?.toLowerCase()) {
+                collection = 'cumioh';
+              } else if (contractAddr === getCollectionContract('historyofcomputer')?.toLowerCase()) {
+                collection = 'historyofcomputer';
+              } else if (contractAddr === getCollectionContract('vibefx')?.toLowerCase()) {
+                collection = 'vibefx';
+              } else if (contractAddr === getCollectionContract('baseballcabal')?.toLowerCase()) {
+                collection = 'baseballcabal';
+              } else if (contractAddr === getCollectionContract('tarot')?.toLowerCase()) {
+                collection = 'tarot';
+              } else if (contractAddr === getCollectionContract('teampothead')?.toLowerCase()) {
+                collection = 'teampothead';
+              } else if (contractAddr === getCollectionContract('poorlydrawnpepes')?.toLowerCase()) {
+                collection = 'poorlydrawnpepes';
+              } else if (contractAddr === getCollectionContract('meowverse')?.toLowerCase()) {
+                collection = 'meowverse';
+              } else if (contractAddr === getCollectionContract('viberuto')?.toLowerCase()) {
+                collection = 'viberuto';
+              }
+            }
+
+            return {
+              tokenId: nft.tokenId,
+              name: nft.title || nft.name || `Card #${nft.tokenId}`,
+              imageUrl,
+              collection,
+              rarity: findAttr(nft, 'rarity') as CardRarity,
+              foil: findAttr(nft, 'foil') as CardFoil || 'None',
+              power: calcPower(nft, isVibeFID),
+              isFreeCard: false,
+            };
+          })
+        );
+        processed.push(...enriched);
+      }
+
+      // 🆓 LOAD FREE CARDS - SAME AS HOME PAGE!
       try {
         let allFreeCards: any[] = [];
         for (const walletAddr of allAddresses) {
@@ -305,7 +414,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
             allFreeCards.push(...freeCards);
           }
         }
-        console.log('🆓 FREE cards loaded from all wallets:', allFreeCards.length);
+        devLog('🆓 [Context] FREE cards loaded from all wallets:', allFreeCards.length);
 
         if (allFreeCards.length > 0) {
           const freeCardsFormatted = allFreeCards.map((card: any) => ({
@@ -318,25 +427,29 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
             collection: 'nothing' as CollectionId,
             isFreeCard: true,
           }));
-
-          // Deduplicate free cards
-          const seenFree = new Set<string>();
-          const uniqueFreeCards = freeCardsFormatted.filter((card: any) => {
-            if (seenFree.has(card.tokenId)) return false;
-            seenFree.add(card.tokenId);
-            return true;
-          });
-
-          deduplicated.push(...uniqueFreeCards);
+          processed.push(...freeCardsFormatted);
         }
       } catch (error) {
-        console.warn('⚠️ Failed to load FREE cards:', error);
+        console.warn('⚠️ [Context] Failed to load FREE cards:', error);
       }
 
-      console.log('[Context] Setting NFTs:', deduplicated.length);
+      // 🔒 DEDUPLICATION - SAME AS HOME PAGE!
+      const seenCards = new Set<string>();
+      const deduplicated = processed.filter((card: any) => {
+        const uniqueId = `${card.collection || 'vibe'}_${card.tokenId}`;
+        if (seenCards.has(uniqueId)) {
+          devLog(`⚠️ [Context] Removing duplicate card: ${uniqueId}`);
+          return false;
+        }
+        seenCards.add(uniqueId);
+        return true;
+      });
+
+      // Final count
+      devLog(`📊 [Context] Cards loaded: ${deduplicated.length} (from ${raw.length} raw)`);
+
       setNfts(deduplicated);
       setStatus('loaded');
-      console.log('🎉 [Context] Cards loaded! Status set to loaded');
 
     } catch (error) {
       devError('[Context] Error loading NFTs:', error);
@@ -354,19 +467,28 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     setTimeout(() => loadNFTs(), 0);
   }, [address, loadNFTs]);
 
+  // 🔗 SYNC FROM HOME: Home page loads cards and syncs here
+  // This ensures ALL pages use the SAME cards loaded by home
+  const syncNftsFromHome = useCallback((cards: Card[]) => {
+    devLog('[Context] 🔗 Syncing', cards.length, 'cards from home page');
+    setNfts(cards);
+    setStatus('loaded');
+    setErrorMsg(null);
+  }, []);
+
   // 🔗 Reset state and reload when address changes (for wallet switching)
   const previousAddressRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     // If address changed, force reload
     if (address && previousAddressRef.current && address.toLowerCase() !== previousAddressRef.current.toLowerCase()) {
-      console.log('[Context] 🔄 Address changed from', previousAddressRef.current.slice(0,8), 'to', address.slice(0,8));
+      devLog('[Context] 🔄 Address changed from', previousAddressRef.current.slice(0,8), 'to', address.slice(0,8));
       setNfts([]);
       setStatus('idle');
       setAttackSelectedCards([]);
       previousAddressRef.current = address;
       // Force reload after state reset
       setTimeout(() => {
-        console.log('[Context] 🔄 Forcing reload after address change');
+        devLog('[Context] 🔄 Forcing reload after address change');
         loadNFTs();
       }, 100);
       return;
@@ -375,9 +497,9 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     previousAddressRef.current = address;
 
     // Auto-load when idle
-    console.log('[Context] Auto-load check:', { address: address?.slice(0,8), status });
+    devLog('[Context] Auto-load check:', { address: address?.slice(0,8), status });
     if (address && status === 'idle') {
-      console.log('[Context] Starting auto-load...');
+      devLog('[Context] Starting auto-load...');
       loadNFTs();
     }
   }, [address, status, loadNFTs]);
@@ -475,6 +597,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     errorMsg,
     loadNFTs,
     forceReloadNFTs,
+    syncNftsFromHome, // 🔗 Sync from home page
 
     // Sorted for attack
     sortedAttackNfts,

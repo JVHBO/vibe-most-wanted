@@ -27,6 +27,7 @@ import { CONTRACTS } from '@/lib/contracts';
 import { parseEther } from 'viem';
 import { NotEnoughCardsGuide } from './NotEnoughCardsGuide';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { devLog } from '@/lib/nft';
 
 type NFT = Card;
 
@@ -131,16 +132,6 @@ export function RaidDeckSelectionModal({
   // Always use Farcaster hooks (works for both miniapp and web via wagmi)
   const farcasterTransfer = useFarcasterTransferVBMS();
   const { transfer: transferVBMS, isPending: isTransferring } = farcasterTransfer;
-
-  // Debug log
-  if (typeof window !== 'undefined') {
-    console.log('[RaidDeckSelection] Environment:', {
-      isInMiniapp,
-      inIframe: window.parent !== window,
-      hasSDK: !!(window as any).sdk?.wallet,
-      isFarcasterDomain: window.location.href.includes('frames.farcaster.xyz'),
-    });
-  }
 
   // Convex queries and mutations
   const currentBoss = useQuery(api.raidBoss.getCurrentRaidBoss);
@@ -266,7 +257,7 @@ export function RaidDeckSelectionModal({
     try {
       if (soundEnabled) AudioManager.buttonClick();
 
-      console.log(`💰 Transferring ${totalCost} VBMS to pool for raid deck entry...`);
+      devLog(`💰 Transferring ${totalCost} VBMS to pool for raid deck entry...`);
 
       // Transfer dynamic cost to pool
       const txHash = await transferVBMS(
@@ -274,7 +265,7 @@ export function RaidDeckSelectionModal({
         parseEther(totalCost.toString())
       );
 
-      console.log('✅ Transfer successful, txHash:', txHash);
+      devLog('✅ Transfer successful, txHash:', txHash);
 
       // Format deck for Convex (5 regular cards)
       const deckData = selectedCards.map((card) => ({
@@ -307,7 +298,7 @@ export function RaidDeckSelectionModal({
         txHash,
       });
 
-      console.log('✅ Raid deck set successfully!');
+      devLog('✅ Raid deck set successfully!');
       onConfirm(selectedCards);
 
     } catch (error: any) {
@@ -520,8 +511,12 @@ export function RaidDeckSelectionModal({
           );
         })()}
 
-        {/* Info */}
+        {/* Info + Card Count */}
         <div className="text-center mb-1 flex-shrink-0">
+          <div className="bg-vintage-gold/20 border border-vintage-gold/50 rounded-lg px-3 py-1 inline-block mb-1">
+            <span className="text-vintage-gold font-bold text-lg">{filteredCards.length}</span>
+            <span className="text-vintage-burnt-gold text-xs ml-1">cards available</span>
+          </div>
           <p className="text-vintage-burnt-gold text-[10px] font-modern">
             Select {DECK_SIZE} cards • Fee: {totalCost > 0 ? `${totalCost} VBMS` : 'Based on rarities'} • Selected {selectedCards.length}/{DECK_SIZE}
           </p>
