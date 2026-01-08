@@ -270,7 +270,7 @@ export const prepareRouletteClaim = action({
 
     // Get signature from roulette-specific signing endpoint (no minimum)
     // TODO: Change back to 'https://www.vibemostwanted.xyz' for production
-    const apiUrl = 'https://nano-spanking-kodak-supplied.trycloudflare.com';
+    const apiUrl = 'https://www.vibemostwanted.xyz';
     const response = await fetch(`${apiUrl}/api/vbms/sign-roulette`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
