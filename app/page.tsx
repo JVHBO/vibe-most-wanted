@@ -1368,14 +1368,6 @@ export default function TCGPage() {
 
   // 🛡️ Show defense deck warning if player has no defense deck set up
   useEffect(() => {
-    console.log('[DEBUG] Defense deck check:', {
-      hasAddress: !!address,
-      hasProfile: !!userProfile,
-      hasDefenseDeck: userProfile?.hasDefenseDeck,
-      defenseDeckLength: userProfile?.defenseDeck?.length,
-      dismissed: defenseDeckWarningDismissed,
-      nftsCount: nfts.length
-    });
     // Only show if: has profile, no defense deck, hasn't been dismissed, and has cards to select
     if (
       address &&

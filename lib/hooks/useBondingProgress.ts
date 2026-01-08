@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 
 const BOOSTER_TOKEN_ADDRESS = '0xb03439567cd22f278b21e1ffcdfb8e1696763827';
 const BASE_RPC = 'https://mainnet.base.org';
-const ETH_USD_API = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd';
+const ETH_USD_CHAINLINK = '0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70'; // Chainlink ETH/USD on Base
 const TARGET_ETH = 2.5; // 2.5 ETH target for Uniswap migration
 const CACHE_KEY = 'vbms_bonding_progress';
 
@@ -47,10 +47,25 @@ export function useBondingProgress() {
         const weiBalance = BigInt(balanceData.result);
         const eth = Number(weiBalance) / 1e18;
 
-        // Get ETH price
-        const ethRes = await fetch(ETH_USD_API);
-        const ethData = await ethRes.json();
-        const fetchedEthPrice = parseFloat(ethData?.ethereum?.usd) || 3500;
+        // Get ETH price from Chainlink oracle (no CORS issues)
+        const priceRes = await fetch(BASE_RPC, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'eth_call',
+            params: [{
+              to: ETH_USD_CHAINLINK,
+              data: '0xfeaf968c', // latestRoundData()
+            }, 'latest'],
+            id: 2,
+          }),
+        });
+        const priceData = await priceRes.json();
+        // Result is ABI encoded: (roundId, answer, startedAt, updatedAt, answeredInRound)
+        // answer is at bytes 32-64 (index 1), price has 8 decimals
+        const priceHex = priceData.result ? '0x' + priceData.result.slice(66, 130) : '0x0';
+        const fetchedEthPrice = Number(BigInt(priceHex)) / 1e8 || 3500;
         setEthPrice(fetchedEthPrice);
         const ethPrice = fetchedEthPrice;
 
