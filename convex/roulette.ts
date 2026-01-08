@@ -434,3 +434,28 @@ export const recordRouletteClaim = mutation({
     };
   },
 });
+
+/**
+ * Admin: Disable test mode for ALL accounts
+ */
+export const disableAllTestMode = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const profiles = await ctx.db
+      .query("profiles")
+      .collect();
+    
+    let count = 0;
+    for (const profile of profiles) {
+      if (profile.rouletteTestMode === true) {
+        await ctx.db.patch(profile._id, {
+          rouletteTestMode: false,
+        });
+        count++;
+      }
+    }
+    
+    console.log(`🎰 Disabled test mode for ${count} profiles`);
+    return { disabled: count };
+  },
+});

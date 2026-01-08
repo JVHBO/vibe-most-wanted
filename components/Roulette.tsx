@@ -429,12 +429,9 @@ export function Roulette({ onClose }: RouletteProps) {
                   <span className="text-red-400">Sem spins hoje</span>
                 )}
               </span>
-              {isVibeFidHolder && (
-                <span className="text-purple-400 ml-2">(VibeFID: 3/dia)</span>
-              )}
-              {!isVibeFidHolder && (
-                <span className="text-vintage-ice/50 ml-2">(1/dia)</span>
-              )}
+              <span className="text-vintage-ice/50 ml-2">
+                (1 free spin{isVibeFidHolder && <span className="text-purple-400"> +2 VibeFID</span>})
+              </span>
             </>
           )}
         </div>
