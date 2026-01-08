@@ -415,6 +415,31 @@ export function Roulette({ onClose }: RouletteProps) {
         )}
       </div>
 
+      {/* Spins Info */}
+      {!showResult && (
+        <div className="text-center mb-3 text-sm">
+          {canSpinData?.testMode ? (
+            <span className="text-yellow-400">Modo Teste (spins ilimitados)</span>
+          ) : (
+            <>
+              <span className="text-vintage-ice">
+                {spinsRemaining > 0 ? (
+                  <>Spins restantes: <span className="text-vintage-gold font-bold">{spinsRemaining}</span></>
+                ) : (
+                  <span className="text-red-400">Sem spins hoje</span>
+                )}
+              </span>
+              {isVibeFidHolder && (
+                <span className="text-purple-400 ml-2">(VibeFID: 3/dia)</span>
+              )}
+              {!isVibeFidHolder && (
+                <span className="text-vintage-ice/50 ml-2">(1/dia)</span>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {/* Wheel Container - hide when showing result */}
       {!showResult && (
         <div className="relative w-72 h-72 mx-auto mb-4">
