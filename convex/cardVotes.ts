@@ -893,6 +893,10 @@ export const replyToMessage = mutation({
     message: v.string(),
     audioId: v.optional(v.string()),
     imageId: v.optional(v.string()), // Meme image
+    // NFT Gift fields (optional)
+    giftNftName: v.optional(v.string()),
+    giftNftImageUrl: v.optional(v.string()),
+    giftNftCollection: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
@@ -906,6 +910,11 @@ export const replyToMessage = mutation({
 
     // Reply goes to the original sender (voterFid)
     const recipientFid = originalMessage.voterFid;
+
+    // Cannot reply to system messages (voterFid = 0)
+    if (recipientFid === 0) {
+      throw new Error("Cannot reply to system messages");
+    }
 
     // Cannot reply to yourself
     if (args.senderFid === recipientFid) {
@@ -934,6 +943,10 @@ export const replyToMessage = mutation({
       isSent: true,
       recipientFid: recipientFid,
       recipientUsername: recipientCard?.username || `FID ${recipientFid}`,
+      // NFT Gift fields
+      giftNftName: args.giftNftName,
+      giftNftImageUrl: args.giftNftImageUrl,
+      giftNftCollection: args.giftNftCollection,
     });
 
     // Give 100 VBMS to recipient
