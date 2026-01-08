@@ -27,7 +27,7 @@ import { CONTRACTS } from '@/lib/contracts';
 import { parseEther } from 'viem';
 import { NotEnoughCardsGuide } from './NotEnoughCardsGuide';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { devLog } from '@/lib/nft';
+import { devLog } from '@/lib/utils/logger';
 
 type NFT = Card;
 
