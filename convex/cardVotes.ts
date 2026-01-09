@@ -1115,29 +1115,38 @@ export const getRandomCardsMutation = mutation({
 export const getVibeMailStats = query({
   args: { fid: v.number() },
   handler: async (ctx, args) => {
-    // Get all paid VibeMails SENT by this user (voterFid = fid, isPaid = true, has message)
+    // Get all VibeMails SENT by this user
     const sentMessages = await ctx.db
       .query("cardVotes")
       .withIndex("by_voter_date", (q) => q.eq("voterFid", args.fid))
       .collect();
 
+    // Only PAID messages cost VBMS when sending
     const paidSent = sentMessages.filter(v => v.isPaid && v.message !== undefined);
     const totalVbmsSent = paidSent.reduce((sum, v) => sum + (v.voteCount || 1) * 100, 0);
 
-    // Get all paid VibeMails RECEIVED by this user (cardFid = fid, isPaid = true, has message)
+    // Get vibeRewards for RECEIVED - this is the actual earned VBMS
+    const vibeRewards = await ctx.db
+      .query("vibeRewards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+
+    // Total received = pending + already claimed
+    const totalVbmsReceived = vibeRewards
+      ? vibeRewards.pendingVbms + vibeRewards.claimedVbms
+      : 0;
+
+    // Count all messages received (for stats)
     const receivedMessages = await ctx.db
       .query("cardVotes")
       .withIndex("by_card_date", (q) => q.eq("cardFid", args.fid))
       .collect();
 
-    const paidReceived = receivedMessages.filter(v => v.isPaid && v.message !== undefined);
-    const totalVbmsReceived = paidReceived.reduce((sum, v) => sum + (v.voteCount || 1) * 100, 0);
-
     return {
-      totalVbmsSent,           // Total VBMS spent on VibeMails
-      totalVbmsReceived,       // Total VBMS earned from VibeMails
+      totalVbmsSent,           // Total VBMS spent on paid VibeMails
+      totalVbmsReceived,       // Total VBMS earned from ALL votes (pending + claimed)
       paidMessagesSent: paidSent.length,
-      paidMessagesReceived: paidReceived.length,
+      messagesReceived: receivedMessages.length,
     };
   },
 });
