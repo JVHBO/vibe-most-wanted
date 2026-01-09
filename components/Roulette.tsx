@@ -218,9 +218,8 @@ const rouletteTranslations = {
 };
 
 const PRIZES = [
-  { amount: 1, label: "1", color: "#8B0000", image: "https://ipfs.filebase.io/ipfs/QmTzbEj7fpBNaTQr1CWdykNb1iwcNBW273e2bbNTruwN4e" },
-  { amount: 10, label: "10", color: "#006400", image: "https://ipfs.filebase.io/ipfs/QmaWpsAeMKMC796hRUtmKWfs2gnqpDNo2YpnKFxi8bK9oq" },   // Dark green
   { amount: 100, label: "100", color: "#00008B", image: "https://ipfs.filebase.io/ipfs/QmeLCtF8Ytq7FKKzY5r9AiYCwQPzxtvfYz1GPGvfRHAL2U" }, // Dark blue
+  { amount: 500, label: "500", color: "#006400", image: "https://ipfs.filebase.io/ipfs/QmaWpsAeMKMC796hRUtmKWfs2gnqpDNo2YpnKFxi8bK9oq" }, // Dark green
   { amount: 1000, label: "1K", color: "#8B8B00", image: "https://ipfs.filebase.io/ipfs/QmZxc6QK1mPkVLha4Kr1Bh3bwQX351998TsJ3MxoWL8Av5" }, // Dark yellow
   { amount: 10000, label: "10K", color: "#4B0082", image: "https://ipfs.filebase.io/ipfs/QmTCd36KKyTSbY3NRrewz8NzdcRAAg3zBQnhfudgAVkyWd" }, // Indigo
   { amount: 50000, label: "50K", color: "#FFD700", image: "https://ipfs.filebase.io/ipfs/QmdjNEN5URcfQtyG4VWMBjGcsFm8FXYMm56uL3qyB6jZNF" }, // Gold
@@ -677,30 +676,20 @@ export function Roulette({ onClose }: RouletteProps) {
       {/* Result */}
       {showResult && result && (
         <div className="text-center mb-4 space-y-3">
-          {/* Special video for 1 VBMS prize */}
-          {result.prize === 1 && (
-            <video
-              src="https://ipfs.filebase.io/ipfs/QmZnXW6eh76nBc9YBr3BSY3htcuCrVX9EYEvgEEqQZ6hxY"
-              autoPlay
-              loop
-              playsInline
-              className="w-full max-w-md max-h-[50vh] object-contain rounded-xl mb-3"
-            />
-          )}
-          {/* Special video for 10 VBMS prize */}
-          {result.prize === 10 && (
-            <video
-              src="https://ipfs.filebase.io/ipfs/QmTTM6dmwWieeBWv6nA9NfY7qWq8Ckt8dqdB2T5Mvtc8yR"
-              autoPlay
-              loop
-              playsInline
-              className="w-full max-w-md max-h-[50vh] object-contain rounded-xl mb-3"
-            />
-          )}
           {/* Special video for 100 VBMS prize */}
           {result.prize === 100 && (
             <video
               src="https://ipfs.filebase.io/ipfs/Qmf8tTdyMgeFSZJmYUSfKCUTtRFtsXgBzMD8WxJ1bAtyqq"
+              autoPlay
+              loop
+              playsInline
+              className="w-full max-w-md max-h-[50vh] object-contain rounded-xl mb-3"
+            />
+          )}
+          {/* Special video for 500 VBMS prize */}
+          {result.prize === 500 && (
+            <video
+              src="https://ipfs.filebase.io/ipfs/QmTTM6dmwWieeBWv6nA9NfY7qWq8Ckt8dqdB2T5Mvtc8yR"
               autoPlay
               loop
               playsInline
