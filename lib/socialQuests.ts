@@ -7,14 +7,14 @@
 
 export interface SocialQuest {
   id: string;
-  type: 'follow' | 'channel';
-  target: string; // username for follow, channel ID for channel
+  type: 'follow' | 'channel' | 'notification' | 'miniapp';
+  target: string; // username for follow, channel ID for channel, '' for SDK actions
   targetFid?: number; // FID for follow quests
   displayName: string;
   description: string;
   reward: number;
   icon: string;
-  url: string; // Link to complete the quest
+  url: string; // Link to complete the quest (empty for SDK actions)
   collection?: string; // Related collection (optional)
 }
 
@@ -27,6 +27,28 @@ export const CHANNEL_IDS = {
 
 // Social Quests Pool - Organized by creator with their channels
 export const SOCIAL_QUESTS: SocialQuest[] = [
+  // 🔔 SDK Actions (Notifications & Miniapp) - TOP PRIORITY
+  {
+    id: 'enable_notifications',
+    type: 'notification',
+    target: '',
+    displayName: '🔔 Enable Notifications',
+    description: 'Get game updates & rewards',
+    reward: 1000,
+    icon: '🔔',
+    url: '',
+  },
+  {
+    id: 'add_miniapp',
+    type: 'miniapp',
+    target: '',
+    displayName: '⭐ Add to Favorites',
+    description: 'Add VBMS to your favorites',
+    reward: 1000,
+    icon: '⭐',
+    url: '',
+  },
+
   // $VBMS
   {
     id: 'follow_jvhbo',

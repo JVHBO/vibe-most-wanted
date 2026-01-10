@@ -779,11 +779,11 @@ export const SOCIAL_ACHIEVEMENTS: AchievementDefinition[] = [
  * ALL ACHIEVEMENTS (Combined)
  */
 export const ALL_ACHIEVEMENTS: AchievementDefinition[] = [
+  ...SOCIAL_ACHIEVEMENTS, // Social achievements first (notifications, miniapp)
   ...RARITY_ACHIEVEMENTS,
   ...WEAR_ACHIEVEMENTS,
   ...FOIL_ACHIEVEMENTS,
   ...PROGRESSIVE_ACHIEVEMENTS,
-  ...SOCIAL_ACHIEVEMENTS,
 ];
 
 /**
