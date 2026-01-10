@@ -93,10 +93,17 @@ async function checkSingleBalance(
     }
 
     if (json.result && json.result !== '0x') {
-      return parseInt(json.result, 16);
+      const balance = parseInt(json.result, 16);
+      // Valid balance response
+      if (!isNaN(balance)) {
+        return balance;
+      }
     }
 
-    return 0;
+    // '0x' or empty result could be rate limit - treat as error to force Alchemy fetch
+    // This is safer: if user has 0 NFTs, Alchemy returns empty array (no harm)
+    // If RPC lied due to rate limit, we still fetch from Alchemy
+    return -1;
   } catch {
     return -1;
   }
