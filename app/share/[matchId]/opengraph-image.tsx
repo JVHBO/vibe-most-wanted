@@ -110,6 +110,10 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     finalPlayerPfpUrl = proxyUrl(finalPlayerPfpUrl);
     finalOpponentPfpUrl = proxyUrl(finalOpponentPfpUrl);
 
+    // Background images - proxy IPFS URLs for Edge Runtime
+    const playerBgImage = proxyUrl('https://ipfs.filebase.io/ipfs/QmPTVKUq9nEY3hYGFsKbLhLCqfCAuRpjCaE6fjyJ5N1iyQ');
+    const opponentBgImage = proxyUrl('https://ipfs.filebase.io/ipfs/QmfBb7a2nBh78xmz7Y8fRZdAqXwW4nLT7kLHqN8cxKyLmF');
+
     const isWin = result === 'win';
 
     // Determine which card should be red (losing side)
@@ -337,7 +341,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               isPlayer={true}
               isLosing={playerIsLosing}
               pfpUrl={finalPlayerPfpUrl}
-              backgroundImage="https://ipfs.filebase.io/ipfs/QmPTVKUq9nEY3hYGFsKbLhLCqfCAuRpjCaE6fjyJ5N1iyQ"
+              backgroundImage={playerBgImage}
             />
 
             {/* VS badge */}
@@ -368,7 +372,7 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
               isPlayer={false}
               isLosing={!playerIsLosing}
               pfpUrl={finalOpponentPfpUrl}
-              backgroundImage="https://ipfs.filebase.io/ipfs/QmfBb7a2nBh78xmz7Y8fRZdAqXwW4nLT7kLHqN8cxKyLmF"
+              backgroundImage={opponentBgImage}
             />
           </div>
 
