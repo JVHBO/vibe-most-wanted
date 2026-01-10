@@ -129,6 +129,48 @@ export default function QuestsPage() {
 
   // Social Quest handlers
   const verifyQuest = async (quest: SocialQuest) => {
+    // Handle SDK action quests (notification & miniapp)
+    if (quest.type === 'notification' || quest.type === 'miniapp') {
+      if (!userFid || !address) {
+        AudioManager.buttonClick();
+        return;
+      }
+
+      setVerifying(quest.id);
+      try {
+        const { sdk } = await import('@farcaster/miniapp-sdk');
+        const result = await sdk.actions.addMiniApp();
+        console.log('[QuestsPage] addMiniApp result:', result, 'quest:', quest.id);
+
+        if (result) {
+          // For miniapp quest - user added miniapp
+          if (quest.type === 'miniapp') {
+            await markCompleted({ address: address.toLowerCase(), questId: quest.id });
+            setLocalCompleted((prev) => new Set([...prev, quest.id]));
+            AudioManager.buttonSuccess();
+          }
+
+          // For notification quest - check if notifications enabled
+          if (quest.type === 'notification') {
+            if (result.notificationDetails) {
+              await markCompleted({ address: address.toLowerCase(), questId: quest.id });
+              setLocalCompleted((prev) => new Set([...prev, quest.id]));
+              AudioManager.buttonSuccess();
+            } else {
+              AudioManager.buttonClick();
+            }
+          }
+        }
+      } catch (error) {
+        console.error("[QuestsPage] SDK error:", error);
+        AudioManager.buttonClick();
+      } finally {
+        setVerifying(null);
+      }
+      return;
+    }
+
+    // Regular quests (follow/channel)
     if (!visitedQuests.has(quest.id)) {
       window.open(quest.url, "_blank");
       setVisitedQuests((prev) => new Set([...prev, quest.id]));
@@ -250,6 +292,65 @@ export default function QuestsPage() {
 
           {/* Missions */}
           <div className="flex-1 overflow-y-auto space-y-3 max-h-[calc(100vh-180px)]">
+              {/* 🎁 BONUS QUESTS - SDK Actions (TOP PRIORITY - FIRST!) */}
+              <div className="bg-gradient-to-b from-vintage-gold/30 to-vintage-charcoal/90 rounded-xl border-2 border-vintage-gold/50 p-3 shadow-lg">
+                <p className="text-vintage-gold text-sm font-bold mb-2 flex items-center gap-2">
+                  🎁 BONUS QUESTS (+2000 VBMS)
+                </p>
+                <div className="space-y-2">
+                  {SOCIAL_QUESTS.filter(q => q.type === 'notification' || q.type === 'miniapp').map((quest) => {
+                    const status = getQuestStatus(quest);
+                    const isVerifying = verifying === quest.id;
+                    const isClaimingSocial = claiming === quest.id;
+
+                    return (
+                      <div
+                        key={quest.id}
+                        className={`p-2 rounded-lg border transition-all ${
+                          status === "claimed"
+                            ? "bg-green-900/20 border-green-500/30 opacity-60"
+                            : status === "completed"
+                            ? "bg-vintage-gold/10 border-vintage-gold/50 animate-pulse"
+                            : "bg-vintage-black/30 border-vintage-gold/30"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-xl">{quest.type === 'notification' ? '🔔' : '⭐'}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-vintage-gold font-bold text-xs truncate">{quest.displayName}</p>
+                              <p className="text-vintage-burnt-gold text-[10px] truncate">{quest.description}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-vintage-gold font-bold text-xs">+{quest.reward}</span>
+                            {status === "claimed" ? (
+                              <span className="text-green-400 text-[10px]">{t('questsDone')}</span>
+                            ) : status === "completed" ? (
+                              <button
+                                onClick={() => handleClaimSocial(quest)}
+                                disabled={isClaimingSocial}
+                                className="px-2 py-1 rounded bg-vintage-gold text-black font-bold text-[10px]"
+                              >
+                                {isClaimingSocial ? "..." : t('questsClaim')}
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => verifyQuest(quest)}
+                                disabled={isVerifying}
+                                className="px-3 py-1.5 rounded-lg bg-vintage-gold text-vintage-black font-bold text-[10px] hover:bg-vintage-gold/90 transition-all"
+                              >
+                                {isVerifying ? "..." : quest.type === 'notification' ? '🔔 Ativar' : '⭐ Adicionar'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Personal Missions (Welcome, VibeFID, etc) */}
               <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
                 <div className="flex items-center justify-between mb-2">
@@ -352,11 +453,11 @@ export default function QuestsPage() {
                 )}
               </div>
 
-              {/* Social Quests */}
+              {/* Social Quests (Follow & Join) */}
               <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
                 <p className="text-vintage-gold text-xs font-bold mb-2">{t('questsSocialQuests')}</p>
                 <div className="space-y-2">
-                  {SOCIAL_QUESTS.map((quest) => {
+                  {SOCIAL_QUESTS.filter(q => q.type !== 'notification' && q.type !== 'miniapp').map((quest) => {
                     const status = getQuestStatus(quest);
                     const isVerifying = verifying === quest.id;
                     const isClaimingSocial = claiming === quest.id;
