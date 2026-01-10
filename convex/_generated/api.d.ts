@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as accessAnalytics from "../accessAnalytics.js";
 import type * as achievementDefinitions from "../achievementDefinitions.js";
 import type * as achievements from "../achievements.js";
 import type * as admin from "../admin.js";
@@ -78,6 +79,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  accessAnalytics: typeof accessAnalytics;
   achievementDefinitions: typeof achievementDefinitions;
   achievements: typeof achievements;
   admin: typeof admin;
