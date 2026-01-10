@@ -26,12 +26,14 @@ export function FarcasterNotificationRegistration() {
 
         const fid = context.user.fid.toString();
 
-        // Request notification permission and get token (re-import to ensure sdk is available)
+        // Request to add miniapp (includes notification permission)
+        // NOTE: addMiniApp() replaced deprecated addFrame()
         const { sdk: sdkActions } = await import('@farcaster/miniapp-sdk');
-        const notificationDetails = await sdkActions.actions.addFrame();
+        const result = await sdkActions.actions.addMiniApp();
+        console.log('[FarcasterNotification] addMiniApp result:', result);
 
-        if (notificationDetails?.notificationDetails) {
-          const { token, url } = notificationDetails.notificationDetails;
+        if (result?.notificationDetails) {
+          const { token, url } = result.notificationDetails;
 
           // Save to Convex
           await saveToken({
@@ -39,6 +41,7 @@ export function FarcasterNotificationRegistration() {
             token,
             url,
           });
+          console.log('[FarcasterNotification] ✅ Token saved for FID:', fid);
         }
       } catch (error) {
         console.error('Error registering notification token:', error);
