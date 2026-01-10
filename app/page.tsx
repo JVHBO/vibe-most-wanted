@@ -1208,22 +1208,11 @@ export default function TCGPage() {
 
     devLog(`🎲 Random victory screen selected: ${victoryImage} (index: ${randomIndex})`);
 
-    // Play audio based on which screen was selected
-    if (randomIndex === 0) {
-      // victory-1.jpg - Play default win sound
-      if (soundEnabled) AudioManager.win();
-    } else if (randomIndex === 1) {
-      // victory-2.jpg - Play Marvin audio
-      const audio = new Audio('/marvin-victory.mp3');
-      audio.volume = 0.5;
-      audio.play().catch(err => devLog('Audio play failed:', err));
-      victoryAudioRef.current = audio;
-    } else if (randomIndex === 4) {
-      // bom.jpg - Play default win sound
-      if (soundEnabled) AudioManager.win();
-    }
-    // victory-3.jpg (index 2) - audio plays automatically via GamePopups component
-    // littlebird.mp4 (index 3) - video has its own audio
+    // Audio is now handled entirely by GamePopups component to avoid duplication
+    // victory-1.jpg → /win-sound.mp3 (via GamePopups)
+    // victory-2.jpg → /marvin-victory.mp3 (via GamePopups)
+    // victory-3.jpg → /victory-3.mp3 loop (via GamePopups)
+    // bom.jpg → /victory-sound.mp3 (via GamePopups)
 
     setCurrentVictoryImage(victoryImage);
 
@@ -2436,7 +2425,7 @@ export default function TCGPage() {
                     showVictory();
                   } else if (finalResult === 'loss') {
                     setShowLossPopup(true);
-                    if (soundEnabled) AudioManager.lose();
+                    // Audio handled by GamePopups
                   } else {
                     setShowTiePopup(true);
                     if (soundEnabled) AudioManager.tie();
@@ -2581,7 +2570,7 @@ export default function TCGPage() {
               showVictory();
             } else if (matchResult === 'loss') {
               setShowLossPopup(true);
-              if (soundEnabled) AudioManager.lose();
+              // Audio handled by GamePopups
             } else {
               setShowTiePopup(true);
               if (soundEnabled) AudioManager.tie();
@@ -3020,7 +3009,7 @@ export default function TCGPage() {
                       showVictory();
                     } else if (matchResult === 'loss') {
                       setShowLossPopup(true);
-                      if (soundEnabled) AudioManager.lose();
+                      // Audio handled by GamePopups
                     } else {
                       setShowTiePopup(true);
                       if (soundEnabled) AudioManager.tie();
@@ -4868,7 +4857,7 @@ export default function TCGPage() {
                           showVictory();
                         } else if (matchResult === 'loss') {
                           setShowLossPopup(true);
-                          if (soundEnabled) AudioManager.lose();
+                          // Audio handled by GamePopups
                         }
                         // Note: Tie popup is already shown above
                       }, 100);

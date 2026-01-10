@@ -8,6 +8,14 @@ export const size = {
 };
 export const contentType = 'image/png';
 
+// Proxy external images for Edge Runtime
+const proxyUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('https://www.vibemostwanted.xyz/')) return url;
+  if (url.startsWith('https://vibe-most-wanted.vercel.app/')) return url;
+  return `https://www.vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
+};
+
 export default async function Image() {
   let bossName = 'Raid Boss';
   let bossImageUrl = 'https://ipfs.filebase.io/ipfs/QmeDwVnc5p3VLwqXxWNUdPQhLyjE8q3M6WLkE9JfPHqJGF';
@@ -81,6 +89,9 @@ export default async function Image() {
 
   const hpColor = getHpColor(bossHp);
 
+  // Proxy IPFS URLs for Edge Runtime compatibility
+  const finalBossImageUrl = proxyUrl(bossImageUrl);
+
   return new ImageResponse(
     (
       <div
@@ -128,7 +139,7 @@ export default async function Image() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={bossImageUrl}
+              src={finalBossImageUrl}
               alt={bossName}
               width={400}
               height={400}
