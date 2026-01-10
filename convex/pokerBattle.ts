@@ -16,6 +16,19 @@ import { internal, api } from "./_generated/api";
 import { COLLECTION_CARDS, AVAILABLE_COLLECTIONS } from "./arenaCardsData";
 
 /**
+ * ⚡ Collection Power Multipliers
+ * VibeFID: 5x, VBMS (vibe): 2x, Nothing: 0.5x, Others: 1x
+ */
+function getCardDisplayPower(card: { power?: number; collection?: string } | null | undefined): number {
+  if (!card) return 0;
+  const base = card.power || 0;
+  if (card.collection === 'vibefid') return Math.floor(base * 5);
+  if (card.collection === 'vibe') return Math.floor(base * 2);
+  if (card.collection === 'nothing') return Math.floor(base * 0.5);
+  return base;
+}
+
+/**
  * 🔒 SECURITY FIX: Cryptographic shuffle using crypto.getRandomValues()
  * Math.random() is predictable and can be exploited for game manipulation
  * Fisher-Yates shuffle with crypto-secure random
@@ -751,9 +764,9 @@ export const resolveRound = mutation({
       return { success: false, reason: "Missing card selections" };
     }
 
-    // Calculate winner server-side
-    let hostPower = hostCard.power;
-    let guestPower = guestCard.power;
+    // Calculate winner server-side with collection multipliers
+    let hostPower = getCardDisplayPower(hostCard);
+    let guestPower = getCardDisplayPower(guestCard);
 
     // Apply actions with shield logic
     const hostHasShield = hostAction === 'SHIELD';
@@ -2006,8 +2019,9 @@ export const cpuResolveRound = internalMutation({
     const guestAction = gameState.guestAction;
 
     // Determine winner - APPLY ACTIONS (BOOST, SHIELD, DOUBLE)!
-    let hostPower = hostCard.power || 0;
-    let guestPower = guestCard.power || 0;
+    // Use collection multipliers (VibeFID 5x, VBMS 2x, Nothing 0.5x)
+    let hostPower = getCardDisplayPower(hostCard);
+    let guestPower = getCardDisplayPower(guestCard);
 
     // Check for shields
     const hostHasShield = hostAction === 'SHIELD';

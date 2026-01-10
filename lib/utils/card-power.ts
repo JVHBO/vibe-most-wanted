@@ -7,6 +7,7 @@
 
 import type { Card, CardRarity, CardWear, CardFoil, PowerCalculationParams, PowerCalculationResult } from '../types/card';
 import { getCollectionPowerConfig, DEFAULT_POWER_CONFIG, type CollectionId } from '../collections';
+import { getCardDisplayPower } from '../power-utils';
 
 /**
  * Extrai um atributo específico de um NFT
@@ -174,18 +175,20 @@ export function updateCardPower(card: Card): Card {
 }
 
 /**
- * Calcula o power total de um deck
+ * Calcula o power total de um deck com multiplicadores de coleção
  */
 export function calculateDeckPower(cards: Card[]): number {
-  return cards.reduce((total, card) => total + card.power, 0);
+  return cards.reduce((total, card) => total + getCardDisplayPower(card), 0);
 }
 
 /**
- * Ordena cartas por power (descendente)
+ * Ordena cartas por power com multiplicadores de coleção (VibeFID 5x, VBMS 2x, Nothing 0.5x)
  */
 export function sortCardsByPower(cards: Card[], ascending = false): Card[] {
   return [...cards].sort((a, b) => {
-    return ascending ? a.power - b.power : b.power - a.power;
+    const powerA = getCardDisplayPower(a);
+    const powerB = getCardDisplayPower(b);
+    return ascending ? powerA - powerB : powerB - powerA;
   });
 }
 

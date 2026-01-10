@@ -8,6 +8,7 @@
 import { api } from "@/convex/_generated/api";
 import { ConvexHttpClient } from "convex/browser";
 import { devLog, devError } from '@/lib/utils/logger';
+import { calculateTotalPower } from '@/lib/power-utils';
 
 // Lazy initialization to avoid build-time errors
 let convex: ConvexHttpClient | null = null;
@@ -153,7 +154,8 @@ export class ConvexPvPService {
 
     try {
       const normalizedAddress = playerAddress.toLowerCase();
-      const power = cards.reduce((sum, c) => sum + (c.power || 0), 0);
+      // Calculate power with collection multipliers (VibeFID 5x, VBMS 2x, Nothing 0.5x)
+      const power = calculateTotalPower(cards);
 
       await getConvex().mutation(api.rooms.updateCards, {
         code,
