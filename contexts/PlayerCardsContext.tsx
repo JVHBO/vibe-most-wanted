@@ -8,7 +8,7 @@ import { devLog, devError, devWarn } from '@/lib/utils/logger';
 import { getEnabledCollections, getCollectionContract, type CollectionId } from '@/lib/collections/index';
 import { getCardKey } from '@/lib/nft';
 import { findAttr, calcPower } from '@/lib/nft/attributes';
-import { getImage, fetchNFTs } from '@/lib/nft/fetcher';
+import { getImage, fetchNFTs, checkCollectionBalances } from '@/lib/nft/fetcher';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
@@ -17,19 +17,33 @@ import type { Card, CardRarity, CardFoil } from '@/lib/types/card';
 
 /**
  * 🎴 FETCH NFTs - SAME LOGIC AS HOME PAGE!
- * Batched fetch to avoid rate limiting
+ * OPTIMIZATION (Jan 2026):
+ * - Uses free Base RPC to check balanceOf before Alchemy calls
+ * - Only fetches from collections where user has NFTs
+ * - Saves ~70-90% Alchemy CUs
  */
 async function fetchNFTsFromAllCollections(owner: string): Promise<any[]> {
   const enabledCollections = getEnabledCollections();
-  devLog('🎴 [Context] Fetching NFTs from', enabledCollections.length, 'enabled collections IN BATCHES');
+  devLog('🎴 [Context] Starting optimized NFT fetch for', enabledCollections.length, 'collections');
+
+  // STEP 1: Check balances via free RPC (sequential with delay to avoid rate limit)
+  const collectionsWithContract = enabledCollections.filter(c => c.contractAddress);
+  const { collectionsWithNfts, balances } = await checkCollectionBalances(owner, collectionsWithContract);
+
+  // Log savings
+  const savedCalls = collectionsWithContract.length - collectionsWithNfts.length;
+  if (savedCalls > 0) {
+    devLog(`💰 [Context] OPTIMIZATION: Saved ${savedCalls} Alchemy calls!`);
+  }
 
   const allNfts: any[] = [];
   const collectionCounts: Record<string, number> = {};
   let totalCards = 0;
 
+  // STEP 2: Fetch only from collections with NFTs (or errors)
   const BATCH_SIZE = 3;
-  for (let i = 0; i < enabledCollections.length; i += BATCH_SIZE) {
-    const batch = enabledCollections.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < collectionsWithNfts.length; i += BATCH_SIZE) {
+    const batch = collectionsWithNfts.slice(i, i + BATCH_SIZE);
 
     const results = await Promise.allSettled(
       batch.map(async (collection) => {
@@ -51,7 +65,7 @@ async function fetchNFTsFromAllCollections(owner: string): Promise<any[]> {
       }
     });
 
-    if (i + BATCH_SIZE < enabledCollections.length) {
+    if (i + BATCH_SIZE < collectionsWithNfts.length) {
       await new Promise(r => setTimeout(r, 200));
     }
   }

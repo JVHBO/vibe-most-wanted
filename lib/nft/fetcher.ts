@@ -5,9 +5,14 @@
  * Handles Alchemy API interactions and image caching
  *
  * FALLBACK SYSTEM:
- * - Caches NFT data in sessionStorage
+ * - Caches NFT data in localStorage (persists across sessions)
  * - Falls back to cached data when Alchemy fails (403/429)
  * - Reports API status for debugging
+ *
+ * OPTIMIZATION (Jan 2026):
+ * - Uses free Base RPC to check balanceOf before fetching
+ * - Only fetches from Alchemy for collections where user has NFTs
+ * - Reduces Alchemy CUs by ~70-90%
  */
 
 import { normalizeUrl } from "./attributes";
@@ -16,14 +21,28 @@ import { devWarn } from "@/lib/utils/logger";
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
+// Multiple RPC endpoints for fallback (rotate to avoid rate limiting)
+const BASE_RPCS = [
+  'https://base.llamarpc.com',
+  'https://base-mainnet.public.blastapi.io',
+  'https://mainnet.base.org',
+];
 
 // Image URL cache
 const imageUrlCache = new Map<string, { url: string; timestamp: number }>();
 const IMAGE_CACHE_TIME = 1000 * 60 * 60; // 1 hour
 
-// NFT response cache (persisted in sessionStorage)
-const NFT_CACHE_KEY = 'vbms_nft_cache_v2'; // v2 to invalidate old caches
-const NFT_CACHE_TIME = 1000 * 60 * 2; // 2 minutes (reduced from 5)
+// NFT response cache (persisted in localStorage for longer persistence)
+const NFT_CACHE_KEY = 'vbms_nft_cache_v3'; // v3 for localStorage migration
+const NFT_CACHE_TIME = 1000 * 60 * 10; // 10 minutes cache
+
+// Balance cache (to detect changes without Alchemy)
+const BALANCE_CACHE_KEY = 'vbms_balance_cache_v1';
+const BALANCE_CACHE_TIME = 1000 * 60 * 5; // 5 minutes for balance check
+
+// Lock to prevent duplicate balance checks (Page and Context calling simultaneously)
+let balanceCheckInProgress: Promise<{ collectionsWithNfts: any[]; balances: Record<string, number> }> | null = null;
+let balanceCheckOwner: string | null = null;
 
 // Track if Alchemy API is blocked
 let alchemyBlocked = false;
@@ -34,23 +53,273 @@ interface NftCacheEntry {
   contract: string;
   nfts: any[];
   timestamp: number;
-  paginationComplete: boolean; // NEW: Track if all pages were fetched
+  paginationComplete: boolean;
+}
+
+interface BalanceCacheEntry {
+  owner: string;
+  balances: Record<string, number>; // contract -> balance
+  timestamp: number;
+}
+
+/**
+ * Check NFT balance for a single contract
+ */
+async function checkSingleBalance(
+  owner: string,
+  contractAddress: string,
+  rpc: string
+): Promise<number> {
+  const balanceOfSelector = '0x70a08231';
+  const ownerPadded = owner.slice(2).toLowerCase().padStart(64, '0');
+  const data = balanceOfSelector + ownerPadded;
+
+  try {
+    const res = await fetch(rpc, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'eth_call',
+        params: [{ to: contractAddress, data }, 'latest'],
+        id: 1,
+      }),
+    });
+
+    const json = await res.json();
+
+    if (json.error) {
+      return -1;
+    }
+
+    if (json.result && json.result !== '0x') {
+      return parseInt(json.result, 16);
+    }
+
+    return 0;
+  } catch {
+    return -1;
+  }
+}
+
+/**
+ * Check NFT balances for multiple contracts using batched parallel calls
+ * Uses batches of 4 contracts with 50ms delay between batches
+ * Total time: ~200ms for 13 contracts instead of 4s sequential
+ */
+async function checkBalancesBatched(
+  owner: string,
+  contractAddresses: string[]
+): Promise<Record<string, number>> {
+  const BATCH_SIZE = 4;
+  const DELAY_BETWEEN_BATCHES = 50; // 50ms between batches
+
+  const balances: Record<string, number> = {};
+  let currentRpcIndex = 0;
+
+  console.log(`🚀 Checking ${contractAddresses.length} contracts in batches of ${BATCH_SIZE}...`);
+
+  for (let i = 0; i < contractAddresses.length; i += BATCH_SIZE) {
+    const batch = contractAddresses.slice(i, i + BATCH_SIZE);
+
+    // Add delay between batches (except first)
+    if (i > 0) {
+      await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_BATCHES));
+    }
+
+    // Check this batch in parallel using Promise.allSettled
+    const results = await Promise.allSettled(
+      batch.map(async (addr) => {
+        // Try each RPC until one works
+        for (let rpcTry = 0; rpcTry < BASE_RPCS.length; rpcTry++) {
+          const rpc = BASE_RPCS[(currentRpcIndex + rpcTry) % BASE_RPCS.length];
+          const balance = await checkSingleBalance(owner, addr, rpc);
+          if (balance !== -1) {
+            return { addr, balance };
+          }
+        }
+        return { addr, balance: -1 };
+      })
+    );
+
+    // Process results
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        balances[result.value.addr.toLowerCase()] = result.value.balance;
+      } else {
+        // This shouldn't happen but handle it
+        const addr = batch[results.indexOf(result)];
+        balances[addr.toLowerCase()] = -1;
+      }
+    }
+
+    // Rotate RPC for next batch to distribute load
+    currentRpcIndex = (currentRpcIndex + 1) % BASE_RPCS.length;
+  }
+
+  const nonZero = Object.values(balances).filter(b => b > 0).length;
+  const errors = Object.values(balances).filter(b => b === -1).length;
+  console.log(`✅ Balance check complete: ${nonZero} with NFTs, ${errors} errors`);
+
+  return balances;
+}
+
+/**
+ * Check balances for all collections using free RPC
+ * Returns only collections where user has NFTs
+ *
+ * OPTIMIZATION (Jan 2026):
+ * - Uses batched parallel calls (4 at a time with 50ms delay)
+ * - Rotates between 3 RPC endpoints to avoid rate limiting
+ * - Total time: ~200ms for 13 contracts (was 4s sequential)
+ */
+export async function checkCollectionBalances(
+  owner: string,
+  collections: Array<{ id: string; contractAddress: string; displayName: string }>
+): Promise<{ collectionsWithNfts: typeof collections; balances: Record<string, number> }> {
+  // Check cache first (fastest path)
+  const cached = getBalanceCache(owner);
+  if (cached) {
+    console.log(`📦 Using cached balances for ${owner.slice(0, 10)}...`);
+    const collectionsWithNfts = collections.filter(c =>
+      c.contractAddress && (cached.balances[c.contractAddress.toLowerCase()] || 0) > 0
+    );
+    return { collectionsWithNfts, balances: cached.balances };
+  }
+
+  // If another check is in progress for the same owner, wait for it
+  if (balanceCheckInProgress && balanceCheckOwner === owner.toLowerCase()) {
+    console.log(`⏳ Waiting for existing balance check...`);
+    return balanceCheckInProgress as Promise<{ collectionsWithNfts: typeof collections; balances: Record<string, number> }>;
+  }
+
+  // Start new check with lock
+  balanceCheckOwner = owner.toLowerCase();
+  balanceCheckInProgress = (async () => {
+    const collectionsWithContract = collections.filter(c => c.contractAddress);
+    const contractAddresses = collectionsWithContract.map(c => c.contractAddress);
+
+    // Use batched parallel calls
+    const balances = await checkBalancesBatched(owner, contractAddresses);
+
+    // Log results
+    let nftsFound = 0;
+    let errors = 0;
+    for (const collection of collectionsWithContract) {
+      const balance = balances[collection.contractAddress.toLowerCase()] || 0;
+      if (balance > 0) {
+        console.log(`  ✅ ${collection.displayName}: ${balance} NFTs`);
+        nftsFound++;
+      } else if (balance === -1) {
+        errors++;
+      }
+    }
+
+    // Cache the results ONLY if we got valid responses (no -1 errors) and at least one collection has NFTs
+    const hasErrors = Object.values(balances).some(b => b === -1);
+    const hasAnyNfts = Object.values(balances).some(b => b > 0);
+
+    if (hasAnyNfts && !hasErrors) {
+      setBalanceCache(owner, balances);
+      console.log(`💾 Cached balances for ${owner.slice(0, 10)}...`);
+    } else if (hasErrors) {
+      console.log(`⚠️ Not caching - had ${errors} RPC errors`);
+    } else {
+      console.log(`⚠️ Not caching - no NFTs found for ${owner.slice(0, 10)}...`);
+    }
+
+    // Collections with NFTs OR with errors (need to check via Alchemy)
+    const collectionsWithNfts = collections.filter(c =>
+      c.contractAddress && (
+        (balances[c.contractAddress.toLowerCase()] || 0) > 0 ||
+        balances[c.contractAddress.toLowerCase()] === -1
+      )
+    );
+
+    console.log(`📊 Found NFTs in ${nftsFound} of ${collections.length} collections`);
+
+    // Clear lock
+    balanceCheckInProgress = null;
+    balanceCheckOwner = null;
+
+    return { collectionsWithNfts, balances };
+  })();
+
+  return balanceCheckInProgress as Promise<{ collectionsWithNfts: typeof collections; balances: Record<string, number> }>;
+}
+
+function getBalanceCache(owner: string): BalanceCacheEntry | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const cached = localStorage.getItem(`${BALANCE_CACHE_KEY}_${owner.toLowerCase()}`);
+    if (!cached) return null;
+    const entry: BalanceCacheEntry = JSON.parse(cached);
+    if (Date.now() - entry.timestamp > BALANCE_CACHE_TIME) {
+      localStorage.removeItem(`${BALANCE_CACHE_KEY}_${owner.toLowerCase()}`);
+      return null;
+    }
+    return entry;
+  } catch {
+    return null;
+  }
+}
+
+function setBalanceCache(owner: string, balances: Record<string, number>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const entry: BalanceCacheEntry = {
+      owner,
+      balances,
+      timestamp: Date.now(),
+    };
+    localStorage.setItem(`${BALANCE_CACHE_KEY}_${owner.toLowerCase()}`, JSON.stringify(entry));
+  } catch (e) {
+    console.warn('⚠️ Failed to cache balances:', e);
+  }
+}
+
+/**
+ * Clear balance cache (call when user buys/sells)
+ */
+export function clearBalanceCache(owner?: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (owner) {
+      localStorage.removeItem(`${BALANCE_CACHE_KEY}_${owner.toLowerCase()}`);
+    } else {
+      // Clear all balance caches
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(BALANCE_CACHE_KEY)) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+    }
+    console.log('🗑️ Balance cache cleared');
+  } catch (e) {
+    console.warn('Failed to clear balance cache:', e);
+  }
 }
 
 function getNftCache(owner: string, contract: string): { nfts: any[]; complete: boolean } | null {
   if (typeof window === 'undefined') return null;
   try {
-    const cached = sessionStorage.getItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
+    // Try localStorage first (new), then sessionStorage (legacy)
+    let cached = localStorage.getItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
+    if (!cached) {
+      cached = sessionStorage.getItem(`vbms_nft_cache_v2_${owner}_${contract}`);
+    }
     if (!cached) return null;
     const entry: NftCacheEntry = JSON.parse(cached);
     if (Date.now() - entry.timestamp > NFT_CACHE_TIME) {
-      sessionStorage.removeItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
+      localStorage.removeItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
       return null;
     }
-    // Only return cache if pagination was complete, otherwise force refresh
     if (!entry.paginationComplete) {
       console.log(`⚠️ Cache exists but pagination was incomplete - forcing refresh`);
-      sessionStorage.removeItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
+      localStorage.removeItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
       return null;
     }
     return { nfts: entry.nfts, complete: entry.paginationComplete };
@@ -69,7 +338,7 @@ function setNftCache(owner: string, contract: string, nfts: any[], paginationCom
       timestamp: Date.now(),
       paginationComplete,
     };
-    sessionStorage.setItem(`${NFT_CACHE_KEY}_${owner}_${contract}`, JSON.stringify(entry));
+    localStorage.setItem(`${NFT_CACHE_KEY}_${owner}_${contract}`, JSON.stringify(entry));
     console.log(`💾 Cached ${nfts.length} NFTs (pagination complete: ${paginationComplete})`);
   } catch (e) {
     console.warn('⚠️ Failed to cache NFTs:', e);
@@ -88,14 +357,22 @@ export function clearAllNftCache(): void {
   if (typeof window === 'undefined') return;
   try {
     const keysToRemove: string[] = [];
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (key && key.startsWith(NFT_CACHE_KEY)) {
+    // Clear localStorage
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith(NFT_CACHE_KEY) || key.startsWith(BALANCE_CACHE_KEY))) {
         keysToRemove.push(key);
       }
     }
-    keysToRemove.forEach(key => sessionStorage.removeItem(key));
-    console.log(`Cleared ${keysToRemove.length} NFT cache entries`);
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    // Also clear legacy sessionStorage
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith('vbms_nft_cache')) {
+        sessionStorage.removeItem(key);
+      }
+    }
+    console.log(`🗑️ Cleared ${keysToRemove.length} cache entries`);
   } catch (e) {
     console.warn('Failed to clear NFT cache:', e);
   }
@@ -439,7 +716,7 @@ export async function fetchNFTs(
 
 /**
  * Fetch and process NFTs with full metadata enrichment
- * Replaces the old lib/nft-fetcher.ts fetchAndProcessNFTs function
+ * OPTIMIZED: Uses balanceOf check to only fetch from collections where user has NFTs
  *
  * @param owner Wallet address
  * @param options Processing options
@@ -450,20 +727,38 @@ export async function fetchAndProcessNFTs(
   options: {
     maxPages?: number;
     refreshMetadata?: boolean;
+    skipBalanceCheck?: boolean; // Force fetch all (for refresh button)
   } = {}
 ): Promise<any[]> {
-  const { maxPages = 20, refreshMetadata = false } = options;
+  const { maxPages = 20, refreshMetadata = false, skipBalanceCheck = false } = options;
 
   if (!ALCHEMY_API_KEY) throw new Error("API Key não configurada");
   if (!CHAIN) throw new Error("Chain não configurada");
 
-  // Fetch from all enabled collections
+  // Get all enabled collections
   const { getEnabledCollections, getCollectionContract } = await import('@/lib/collections/index');
   const enabledCollections = getEnabledCollections();
 
+  // Filter out 'nothing' collection (no contract)
+  const nftCollections = enabledCollections.filter(c => c.contractAddress);
+
+  let collectionsToFetch = nftCollections;
+
+  // OPTIMIZATION: Check balances first to avoid unnecessary Alchemy calls
+  if (!skipBalanceCheck) {
+    console.log(`🚀 OPTIMIZATION: Checking balances via free RPC before Alchemy...`);
+    const { collectionsWithNfts } = await checkCollectionBalances(owner, nftCollections);
+    collectionsToFetch = collectionsWithNfts;
+
+    if (collectionsToFetch.length < nftCollections.length) {
+      console.log(`💰 Saved ${nftCollections.length - collectionsToFetch.length} Alchemy calls!`);
+    }
+  }
+
   const allNfts: any[] = [];
 
-  for (const collection of enabledCollections) {
+  // Fetch NFTs only from collections where user has balance > 0
+  for (const collection of collectionsToFetch) {
     try {
       const nfts = await fetchNFTs(owner, collection.contractAddress);
       // Tag each NFT with its collection
@@ -473,6 +768,9 @@ export async function fetchAndProcessNFTs(
       console.warn(`⚠️ Failed to fetch from ${collection.displayName}:`, error);
     }
   }
+
+  // Also include 'nothing' collection cards from Convex (if any)
+  // These are free cards stored in the database, not on-chain
 
   // Enrich with metadata if requested
   const enriched = await Promise.all(

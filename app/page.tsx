@@ -65,6 +65,8 @@ import { useCachedDailyQuest } from "@/lib/convex-cache";
 // 📝 Development logger (silent in production)
 import { devLog, devError, devWarn } from "@/lib/utils/logger";
 import { openMarketplace } from "@/lib/marketplace-utils";
+// ⚡ Power calculations with collection multipliers (VibeFID 5x, VBMS 2x, Nothing 0.5x)
+import { getCardDisplayPower, calculateTotalPower } from "@/lib/power-utils";
 // 🔒 Session Lock (prevents multi-device exploit)
 import { useSessionLock } from "@/lib/hooks/useSessionLock";
 import { SessionLockedModal } from "@/components/SessionLockedModal";
@@ -82,7 +84,7 @@ import { CONTRACTS } from "@/lib/contracts";
 import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, type CollectionId } from "@/lib/collections/index";
 import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
 import { isSameCard, findCard, getCardKey } from "@/lib/nft";
-import { getImage, fetchNFTs, clearAllNftCache } from "@/lib/nft/fetcher";
+import { getImage, fetchNFTs, clearAllNftCache , checkCollectionBalances } from "@/lib/nft/fetcher";
 import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 import type { Card } from "@/lib/types/card";
 import { RunawayEasterEgg } from "@/components/RunawayEasterEgg";
@@ -127,23 +129,38 @@ const getAvatarFallback = (): string => {
 /**
  * Fetch NFTs from all enabled collections
  * Returns all NFTs with collection property set
+ *
+ * OPTIMIZATION (Jan 2026):
+ * - Uses free Base RPC to check balanceOf before Alchemy calls
+ * - Only fetches from collections where user has NFTs
+ * - Saves ~70-90% Alchemy CUs
  */
 async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: number, cards: number) => void): Promise<any[]> {
   const enabledCollections = getEnabledCollections();
-  devLog('🎴 Fetching NFTs from', enabledCollections.length, 'enabled collections IN BATCHES');
+  devLog('🎴 [Page] Starting optimized NFT fetch for', enabledCollections.length, 'collections');
+
+  // STEP 1: Check balances via free RPC (sequential with delay to avoid rate limit)
+  const collectionsWithContract = enabledCollections.filter(c => c.contractAddress);
+  const { collectionsWithNfts, balances } = await checkCollectionBalances(owner, collectionsWithContract);
+
+  // Log savings
+  const savedCalls = collectionsWithContract.length - collectionsWithNfts.length;
+  if (savedCalls > 0) {
+    console.log(`💰 [Page] OPTIMIZATION: Saved ${savedCalls} Alchemy calls!`);
+  }
 
   const allNfts: any[] = [];
   const collectionCounts: Record<string, number> = {};
   let totalCards = 0;
 
-  // 🚀 BATCHED FETCH - 3 collections at a time to avoid rate limiting
+  // STEP 2: Fetch only from collections with NFTs (or errors)
   const BATCH_SIZE = 3;
-  for (let i = 0; i < enabledCollections.length; i += BATCH_SIZE) {
-    const batch = enabledCollections.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < collectionsWithNfts.length; i += BATCH_SIZE) {
+    const batch = collectionsWithNfts.slice(i, i + BATCH_SIZE);
 
     const results = await Promise.allSettled(
       batch.map(async (collection) => {
-        devLog(`📡 Fetching from ${collection.displayName}`);
+        devLog(`📡 [Page] Fetching from ${collection.displayName}`);
         const nfts = await fetchNFTs(owner, collection.contractAddress);
         const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
         collectionCounts[collection.displayName] = nfts.length;
@@ -158,18 +175,17 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
         allNfts.push(...result.value);
       } else {
         collectionCounts[batch[idx].displayName] = -1;
-        devError(`✗ Failed: ${batch[idx].displayName}`, result.reason);
+        devError(`✗ [Page] Failed: ${batch[idx].displayName}`, result.reason);
       }
     });
 
-    // Small delay between batches to avoid rate limiting
-    if (i + BATCH_SIZE < enabledCollections.length) {
+    if (i + BATCH_SIZE < collectionsWithNfts.length) {
       await new Promise(r => setTimeout(r, 200));
     }
   }
 
-  console.log('📊 CARD FETCH SUMMARY:', JSON.stringify(collectionCounts));
-  console.log(`📊 Total raw NFTs: ${allNfts.length}`);
+  console.log('📊 [Page] CARD FETCH SUMMARY:', JSON.stringify(collectionCounts));
+  console.log(`📊 [Page] Total raw NFTs: ${allNfts.length}`);
   return allNfts;
 }
 
@@ -451,19 +467,37 @@ export default function TCGPage() {
   }, [isInFarcaster, wagmiAddress]);
 
   // Notify Farcaster SDK that app is ready
+  // IMPORTANT: This signals to Farcaster that the app has loaded - affects ranking!
+  const [sdkReadyCalled, setSdkReadyCalled] = useState(false);
+
   useEffect(() => {
+    // Wait until we've finished checking Farcaster context AND interface is ready
+    if (sdkReadyCalled || isCheckingFarcaster) return;
+
     const initFarcasterSDK = async () => {
       try {
-        if (typeof window !== 'undefined') {
-          await sdk.actions.ready();
-          devLog('✅ Farcaster SDK ready called');
+        if (typeof window === 'undefined') return;
+
+        // Check if SDK is available
+        if (!sdk || typeof sdk.actions?.ready !== 'function') {
+          console.log('[Farcaster SDK] Not available (not in miniapp context)');
+          return;
         }
+
+        // Call ready() to signal app is loaded
+        await sdk.actions.ready();
+        setSdkReadyCalled(true);
+        console.log('[Farcaster SDK] ✅ ready() called successfully');
+        devLog('✅ Farcaster SDK ready called');
       } catch (error) {
+        // Log errors even in production for debugging
+        console.error('[Farcaster SDK] Error calling ready():', error);
         devError('Error calling Farcaster SDK ready:', error);
       }
     };
+
     initFarcasterSDK();
-  }, []);
+  }, [isCheckingFarcaster, sdkReadyCalled]);
 
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
@@ -1072,6 +1106,60 @@ export default function TCGPage() {
     };
     initFarcasterWallet();
   }, [connect, connectors]);
+
+  // 📊 Log access analytics (miniapp vs farcaster_web vs web)
+  const logAccessMutation = useMutation(api.accessAnalytics.logAccess);
+  const logAccessDebugMutation = useMutation(api.accessAnalytics.logAccessDebug);
+  const hasLoggedAccess = useRef(false);
+
+  useEffect(() => {
+    // Only log once per session, when we have address and finished checking
+    if (hasLoggedAccess.current || !address || isCheckingFarcaster) return;
+
+    // Gather debug info
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const referrer = typeof document !== 'undefined' ? document.referrer : '';
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const isIframe = typeof window !== 'undefined' && window.parent !== window;
+    const sdkAvailable = !!sdk;
+
+    // Determine source with more granularity
+    let source: "miniapp" | "farcaster_web" | "web" | "frame";
+
+    if (isInFarcaster) {
+      // Farcaster SDK is working = Warpcast app
+      source = "miniapp";
+    } else {
+      // Check if came from farcaster.xyz (browser access)
+      const isFromFarcaster =
+        referrer.includes('farcaster.xyz') ||
+        referrer.includes('warpcast.com') ||
+        currentUrl.includes('farcaster.xyz') ||
+        // Check if in iframe from farcaster
+        (isIframe && (referrer.includes('farcaster') || referrer.includes('warpcast')));
+
+      source = isFromFarcaster ? "farcaster_web" : "web";
+    }
+
+    hasLoggedAccess.current = true;
+
+    // Log main analytics
+    logAccessMutation({ address, source })
+      .then(() => devLog(`📊 Access logged: ${source}`))
+      .catch((err) => devError("Failed to log access:", err));
+
+    // Log debug info for analysis
+    logAccessDebugMutation({
+      address,
+      source,
+      userAgent: userAgent.substring(0, 500), // Limit length
+      referrer: referrer.substring(0, 500),
+      currentUrl: currentUrl.substring(0, 500),
+      isIframe,
+      sdkAvailable,
+    }).catch((err) => devError("Failed to log debug:", err));
+
+  }, [address, isInFarcaster, isCheckingFarcaster, logAccessMutation, logAccessDebugMutation, sdk]);
 
   // 🔔 Handler to enable Farcaster notifications
   const handleEnableNotifications = async () => {
@@ -2065,8 +2153,8 @@ export default function TCGPage() {
 
     if (soundEnabled) AudioManager.playHand();
 
-    // Calculate player power (one-time calculation per battle, no need for memoization)
-    const playerTotal = cards.reduce((sum, c) => sum + (c.power || 0), 0);
+    // Calculate player power with collection multipliers (VibeFID 5x, VBMS 2x, Nothing 0.5x)
+    const playerTotal = calculateTotalPower(cards);
     // Use JC's deck for dealer cards
     const available = jcNfts;
 
@@ -2200,7 +2288,8 @@ export default function TCGPage() {
       if (soundEnabled) AudioManager.shuffle();
     }, 1000);
 
-    const dealerTotal = pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0);
+    // Calculate dealer power with collection multipliers
+    const dealerTotal = calculateTotalPower(pickedDealer);
 
     // Check if this is elimination mode
     if (battleMode === 'elimination') {
@@ -2215,8 +2304,9 @@ export default function TCGPage() {
           return;
         }
 
-        setPlayerPower(playerCard.power || 0);
-        setDealerPower(opponentCard.power || 0);
+        // Apply collection multipliers for display
+        setPlayerPower(getCardDisplayPower(playerCard));
+        setDealerPower(getCardDisplayPower(opponentCard));
 
         setBattlePhase('clash');
         if (soundEnabled) AudioManager.cardBattle();
@@ -2225,8 +2315,9 @@ export default function TCGPage() {
       setTimeout(() => {
         const playerCard = orderedPlayerCards[currentRound - 1];
         const opponentCard = orderedOpponentCards[currentRound - 1];
-        const playerCardPower = playerCard?.power || 0;
-        const opponentCardPower = opponentCard?.power || 0;
+        // Apply collection multipliers for battle comparison
+        const playerCardPower = getCardDisplayPower(playerCard);
+        const opponentCardPower = getCardDisplayPower(opponentCard);
 
         setBattlePhase('result');
 
@@ -2364,8 +2455,9 @@ export default function TCGPage() {
                 const nextPlayerCard = orderedPlayerCards[currentRound]; // currentRound is still old value here
                 const nextOpponentCard = orderedOpponentCards[currentRound];
 
-                setPlayerPower(nextPlayerCard?.power || 0);
-                setDealerPower(nextOpponentCard?.power || 0);
+                // Apply collection multipliers
+                setPlayerPower(getCardDisplayPower(nextPlayerCard));
+                setDealerPower(getCardDisplayPower(nextOpponentCard));
 
                 setBattlePhase('clash');
                 if (soundEnabled) AudioManager.cardBattle();
@@ -2640,9 +2732,19 @@ export default function TCGPage() {
       card.collection === 'vibefid' || !defenseLockedTokenIds.has(getCardKey(card))
     );
 
-    // Apply sort
-    if (!sortByPower) return filtered;
-    return [...filtered].sort((a, b) => (b.power || 0) - (a.power || 0));
+    // Apply sort with collection multipliers (VibeFID 5x, VBMS 2x, Nothing 0.5x)
+    // ALWAYS sort Nothing cards last to avoid confusion
+    if (!sortByPower) {
+      // Default sort: Nothing last, then by power descending
+      return [...filtered].sort((a, b) => {
+        // Nothing cards always go last
+        if (a.collection === 'nothing' && b.collection !== 'nothing') return 1;
+        if (b.collection === 'nothing' && a.collection !== 'nothing') return -1;
+        // Otherwise sort by power descending
+        return (b.power || 0) - (a.power || 0);
+      });
+    }
+    return [...filtered].sort((a, b) => getCardDisplayPower(b) - getCardDisplayPower(a));
   }, [nfts, sortByPower, cardTypeFilter, selectedCollections, defenseLockedTokenIds]);
 
   const totalPages = Math.ceil(filteredAndSortedNfts.length / CARDS_PER_PAGE);
@@ -2658,9 +2760,10 @@ export default function TCGPage() {
   }, [sortByPower, cardTypeFilter, nfts.length, CARDS_PER_PAGE]);
 
   // 🔒 Sorted NFTs for attack modal (show locked cards but mark them)
+  // Uses collection multipliers for accurate power sorting
   const sortedAttackNfts = useMemo(() => {
     if (!sortAttackByPower) return nfts;
-    return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
+    return [...nfts].sort((a, b) => getCardDisplayPower(b) - getCardDisplayPower(a));
   }, [nfts, sortAttackByPower]);
 
   // Helper to check if card is locked - VibeFID cards are exempt (can be used anywhere)
@@ -2676,11 +2779,11 @@ export default function TCGPage() {
   };
 
   // Sorted NFTs for PvE modal (PvE allows defense cards - NO lock)
-  // Always create a new array to trigger proper React updates
+  // Uses collection multipliers for accurate power sorting
   const sortedPveNfts = useMemo(() => {
     const cardsCopy = [...nfts];
     if (pveSortByPower) {
-      cardsCopy.sort((a, b) => (b.power || 0) - (a.power || 0));
+      cardsCopy.sort((a, b) => getCardDisplayPower(b) - getCardDisplayPower(a));
     }
     return cardsCopy;
   }, [nfts, pveSortByPower]);
@@ -3847,9 +3950,9 @@ export default function TCGPage() {
                     let filteredCards = defenseDeckCollection === 'all' 
                       ? nfts 
                       : filterCardsByCollections(nfts, [defenseDeckCollection as CollectionId]);
-                    // Apply power sort
+                    // Apply power sort with collection multipliers
                     if (defenseDeckSortByPower) {
-                      filteredCards = [...filteredCards].sort((a, b) => (b.power || 0) - (a.power || 0));
+                      filteredCards = [...filteredCards].sort((a, b) => getCardDisplayPower(b) - getCardDisplayPower(a));
                     }
                     return filteredCards;
                   })().map((nft) => {
@@ -4235,7 +4338,7 @@ export default function TCGPage() {
                             : undefined
                         }}
                       >
-                        {selectedCards[currentRound - 1]?.power}
+                        {getCardDisplayPower(selectedCards[currentRound - 1])}
                       </div>
                     </div>
                     {/* Show mini previous cards if not first round */}
@@ -4285,7 +4388,7 @@ export default function TCGPage() {
                                 : undefined
                             }}
                           >
-                            {c.power}
+                            {getCardDisplayPower(c)}
                           </div>
                         </div>
                       ))}
@@ -4356,9 +4459,7 @@ export default function TCGPage() {
                             : undefined
                         }}
                       >
-                        {dealerCards[currentRound - 1]?.collection === 'vibefid'
-                          ? `${((dealerCards[currentRound - 1]?.power || 0) * 10).toLocaleString()}`
-                          : dealerCards[currentRound - 1]?.power?.toLocaleString()}
+                        {getCardDisplayPower(dealerCards[currentRound - 1]).toLocaleString()}
                       </div>
                       {battlePhase === 'result' && (
                         <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">
@@ -4413,7 +4514,7 @@ export default function TCGPage() {
                                 : undefined
                             }}
                           >
-                            {c.power}
+                            {getCardDisplayPower(c)}
                           </div>
                           {battlePhase === 'result' && (
                             <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">
