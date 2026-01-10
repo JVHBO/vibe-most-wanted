@@ -94,31 +94,46 @@ export function SocialQuestsPanel({
   }, [featuredCasts]);
 
   const verifyQuest = async (quest: SocialQuest) => {
-    // Handle SDK action quests (notification & miniapp)
+    // Handle SDK action quests (notification & miniapp) - only works inside Farcaster
     if (quest.type === 'notification' || quest.type === 'miniapp') {
+      // Need to be in Farcaster context
+      if (!userFid) {
+        if (soundEnabled) AudioManager.buttonClick();
+        return;
+      }
+
       setVerifying(quest.id);
       try {
         const { sdk } = await import('@farcaster/miniapp-sdk');
         const result = await sdk.actions.addMiniApp();
+        console.log('[SocialQuest] addMiniApp result:', result, 'quest:', quest.id);
 
+        // addMiniApp succeeded
         if (result) {
-          // addMiniApp succeeded = user added miniapp
+          // For miniapp quest - user added miniapp
           if (quest.type === 'miniapp') {
+            console.log('[SocialQuest] Marking miniapp quest complete');
             await markCompleted({ address, questId: quest.id });
             setLocalCompleted((prev) => new Set([...prev, quest.id]));
             if (soundEnabled) AudioManager.buttonSuccess();
           }
 
-          // If notification details exist = user enabled notifications
-          if (result.notificationDetails && quest.type === 'notification') {
-            await markCompleted({ address, questId: quest.id });
-            setLocalCompleted((prev) => new Set([...prev, quest.id]));
-            if (soundEnabled) AudioManager.buttonSuccess();
+          // For notification quest - check if notifications enabled
+          if (quest.type === 'notification') {
+            if (result.notificationDetails) {
+              console.log('[SocialQuest] Notifications enabled, marking complete');
+              await markCompleted({ address, questId: quest.id });
+              setLocalCompleted((prev) => new Set([...prev, quest.id]));
+              if (soundEnabled) AudioManager.buttonSuccess();
+            } else {
+              console.log('[SocialQuest] No notification details in result');
+              if (soundEnabled) AudioManager.buttonClick();
+            }
           }
         }
       } catch (error) {
-        console.error("Error with SDK action:", error);
-        if (soundEnabled) AudioManager.buttonError();
+        console.error("[SocialQuest] SDK error:", error);
+        if (soundEnabled) AudioManager.buttonClick();
       } finally {
         setVerifying(null);
       }
@@ -515,12 +530,23 @@ export function SocialQuestsPanel({
         </div>
       )}
 
+      {/* SDK Quests - Notifications & Add Miniapp (TOP PRIORITY) */}
+      <div className="bg-gradient-to-b from-vintage-gold/20 to-vintage-charcoal/90 rounded-2xl border-2 border-vintage-gold/40 p-5 backdrop-blur-sm shadow-gold">
+        <h4 className="text-vintage-gold font-bold text-base mb-3 flex items-center gap-2">
+          🎁 BONUS QUESTS (+2000 VBMS)
+        </h4>
+        <div className="space-y-2">
+          {SOCIAL_QUESTS.filter(q => q.type === 'notification' || q.type === 'miniapp').map(renderQuest)}
+        </div>
+      </div>
+
+      {/* Follow & Join Quests */}
       <div className="bg-gradient-to-b from-vintage-charcoal/90 to-vintage-black/80 rounded-2xl border border-vintage-gold/20 p-5 backdrop-blur-sm shadow-lg">
         <h4 className="text-vintage-gold font-bold text-sm mb-3 flex items-center gap-2">
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" /></svg>
           {t('socialQuestFollowJoin')}
         </h4>
-        <div className="space-y-2">{SOCIAL_QUESTS.map(renderQuest)}</div>
+        <div className="space-y-2">{SOCIAL_QUESTS.filter(q => q.type !== 'notification' && q.type !== 'miniapp').map(renderQuest)}</div>
       </div>
       {!userFid && (
         <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-xl p-4">

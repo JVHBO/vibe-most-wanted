@@ -11,6 +11,9 @@ import { normalizeAddress } from "./utils";
 
 // Social Quest Rewards (must match lib/socialQuests.ts)
 const QUEST_REWARDS: Record<string, number> = {
+  // SDK Actions (notifications & miniapp - 1000 VBMS each)
+  enable_notifications: 1000,
+  add_miniapp: 1000,
   // Channels
   join_vibe_most_wanted: 500,
   join_cumioh: 500,
