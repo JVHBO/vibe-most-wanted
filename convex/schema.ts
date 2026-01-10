@@ -1671,4 +1671,34 @@ export default defineSchema({
   })
     .index("by_address_date", ["address", "date"])
     .index("by_date", ["date"]),
+
+  // Access analytics - track miniapp vs web visits
+  accessAnalytics: defineTable({
+    date: v.string(), // YYYY-MM-DD
+    source: v.union(
+      v.literal("miniapp"),       // Farcaster miniapp (SDK context present) - Warpcast app
+      v.literal("farcaster_web"), // farcaster.xyz in browser (no SDK but farcaster referrer)
+      v.literal("web"),           // Direct website access
+      v.literal("frame")          // Farcaster frame (legacy)
+    ),
+    uniqueUsers: v.number(),  // Count of unique addresses
+    sessions: v.number(),     // Total sessions
+    addresses: v.array(v.string()), // List of addresses (for dedup)
+  })
+    .index("by_date", ["date"])
+    .index("by_date_source", ["date", "source"]),
+
+  // Access debug logs - detailed info for debugging access detection
+  accessDebugLogs: defineTable({
+    address: v.string(),
+    source: v.string(),
+    userAgent: v.optional(v.string()),
+    referrer: v.optional(v.string()),
+    currentUrl: v.optional(v.string()),
+    isIframe: v.optional(v.boolean()),
+    sdkAvailable: v.optional(v.boolean()),
+    timestamp: v.number(),
+  })
+    .index("by_address", ["address"])
+    .index("by_timestamp", ["timestamp"]),
 });
