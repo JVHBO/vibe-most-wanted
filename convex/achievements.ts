@@ -426,7 +426,7 @@ export const grantSocialAchievementByFid = mutation({
     // Look up profile by FID
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_fid", (q) => q.eq("fid", fid))
+      .withIndex("by_fid", (q) => q.eq("farcasterFid", fid))
       .first();
 
     if (!profile) {
