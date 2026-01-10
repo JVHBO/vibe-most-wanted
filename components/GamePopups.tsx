@@ -19,26 +19,26 @@ import { useMusic } from '@/contexts/MusicContext';
 import { shareToFarcaster } from '@/lib/share-utils';
 import { getAssetUrl } from '@/lib/ipfs-assets';
 
-// Pre-generated random positions for victory-3 animation (avoid recalculating on each render)
-const VICTORY3_TONGUE_POSITIONS = Array.from({ length: 25 }, (_, i) => ({
-  left: `${(i * 4) % 100}%`,
-  animationDelay: `${(i * 0.12) % 3}s`,
-  animationDuration: `${2 + (i % 3)}s`,
-  rotation: `${(i * 14.4) % 360}deg`,
+// Pre-generated random positions for victory-3 animation (REDUCED for mobile performance)
+const VICTORY3_TONGUE_POSITIONS = Array.from({ length: 8 }, (_, i) => ({
+  left: `${(i * 12.5) % 100}%`,
+  animationDelay: `${(i * 0.3) % 2}s`,
+  animationDuration: `${2.5 + (i % 2)}s`,
+  rotation: `${(i * 45) % 360}deg`,
 }));
 
-const VICTORY3_PEACH_POSITIONS = Array.from({ length: 12 }, (_, i) => ({
-  left: `${(i * 8.33) % 100}%`,
-  top: `${(i * 8.33) % 100}%`,
-  animationDelay: `${(i * 0.17) % 2}s`,
-  animationDuration: `${1.5 + (i % 2) * 0.75}s`,
+const VICTORY3_PEACH_POSITIONS = Array.from({ length: 4 }, (_, i) => ({
+  left: `${(i * 25) % 100}%`,
+  top: `${(i * 25) % 100}%`,
+  animationDelay: `${(i * 0.4) % 2}s`,
+  animationDuration: `${1.5 + (i % 2) * 0.5}s`,
 }));
 
-const VICTORY3_DROP_POSITIONS = Array.from({ length: 15 }, (_, i) => ({
-  left: `${(i * 6.67) % 100}%`,
-  top: `${(i * 6.67) % 100}%`,
-  animationDelay: `${(i * 0.2) % 3}s`,
-  animationDuration: `${2 + (i % 3)}s`,
+const VICTORY3_DROP_POSITIONS = Array.from({ length: 4 }, (_, i) => ({
+  left: `${(i * 25) % 100}%`,
+  top: `${(i * 25) % 100}%`,
+  animationDelay: `${(i * 0.5) % 2}s`,
+  animationDuration: `${2 + (i % 2)}s`,
 }));
 
 // Loss screen configurations - randomly selected

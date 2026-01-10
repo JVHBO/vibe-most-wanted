@@ -1063,7 +1063,7 @@ export default function LeaderboardPage() {
                           showVictoryWithAudio();
                         } else if (matchResult === 'loss') {
                           setShowLossPopup(true);
-                          if (soundEnabled) AudioManager.lose();
+                          // Audio handled by GamePopups
                         }
                       }, 100);
                     }, 4500);

@@ -68,7 +68,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
   };
 
   const finalPfpUrl = proxyUrl(pfpUrl);
-  const backgroundUrl = 'https://ipfs.filebase.io/ipfs/QmemgMVC1LN78M2z7QzWGQRFYKvJm7x2N5JJuLoq8JEQxP';
+  const backgroundUrl = proxyUrl('https://ipfs.filebase.io/ipfs/QmemgMVC1LN78M2z7QzWGQRFYKvJm7x2N5JJuLoq8JEQxP');
 
   return new ImageResponse(
     (
