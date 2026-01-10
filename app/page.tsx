@@ -467,12 +467,13 @@ export default function TCGPage() {
   }, [isInFarcaster, wagmiAddress]);
 
   // Notify Farcaster SDK that app is ready
-  // IMPORTANT: This signals to Farcaster that the app has loaded - affects ranking!
+  // CRITICAL: Call ready() IMMEDIATELY - affects ranking and $10k reward pool!
+  // Do NOT wait for wallet connection - Farcaster counts daily users via ready()
   const [sdkReadyCalled, setSdkReadyCalled] = useState(false);
 
   useEffect(() => {
-    // Wait until we've finished checking Farcaster context AND interface is ready
-    if (sdkReadyCalled || isCheckingFarcaster) return;
+    // Only call once
+    if (sdkReadyCalled) return;
 
     const initFarcasterSDK = async () => {
       try {
@@ -484,20 +485,18 @@ export default function TCGPage() {
           return;
         }
 
-        // Call ready() to signal app is loaded
+        // Call ready() IMMEDIATELY - DO NOT wait for wallet connection!
         await sdk.actions.ready();
         setSdkReadyCalled(true);
-        console.log('[Farcaster SDK] ✅ ready() called successfully');
-        devLog('✅ Farcaster SDK ready called');
+        console.log('[Farcaster SDK] ✅ ready() called IMMEDIATELY on app load');
       } catch (error) {
-        // Log errors even in production for debugging
         console.error('[Farcaster SDK] Error calling ready():', error);
-        devError('Error calling Farcaster SDK ready:', error);
       }
     };
 
+    // Execute immediately on mount
     initFarcasterSDK();
-  }, [isCheckingFarcaster, sdkReadyCalled]);
+  }, [sdkReadyCalled]);
 
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
