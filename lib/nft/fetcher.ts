@@ -748,7 +748,7 @@ export async function fetchAndProcessNFTs(
   if (!skipBalanceCheck) {
     console.log(`🚀 OPTIMIZATION: Checking balances via free RPC before Alchemy...`);
     const { collectionsWithNfts } = await checkCollectionBalances(owner, nftCollections);
-    collectionsToFetch = collectionsWithNfts;
+    collectionsToFetch = collectionsWithNfts as typeof nftCollections;
 
     if (collectionsToFetch.length < nftCollections.length) {
       console.log(`💰 Saved ${nftCollections.length - collectionsToFetch.length} Alchemy calls!`);
