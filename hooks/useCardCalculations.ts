@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
+import { getCardDisplayPower } from '@/lib/power-utils';
 
 /**
  * 🚀 PERFORMANCE OPTIMIZED HOOKS
  *
  * Custom hooks for expensive card calculations.
  * Uses React.useMemo to prevent re-computing on every render.
+ * All power calculations use collection multipliers (VibeFID 5x, VBMS 2x, Nothing 0.5x)
  */
 
 export interface NFT {
@@ -12,6 +14,7 @@ export interface NFT {
   power?: number;
   rarity?: string;
   status?: string;
+  collection?: string;
   [key: string]: any;
 }
 
@@ -37,13 +40,14 @@ export function useTotalPower(cards: NFT[]): number {
 
 /**
  * Sort NFTs by power (descending, memoized)
+ * Uses collection multipliers (VibeFID 5x, VBMS 2x, Nothing 0.5x)
  *
  * @example
  * const sortedNFTs = useSortedByPower(nfts);
  */
 export function useSortedByPower(nfts: NFT[]): NFT[] {
   return useMemo(() => {
-    return [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
+    return [...nfts].sort((a, b) => getCardDisplayPower(b) - getCardDisplayPower(a));
   }, [nfts]);
 }
 
@@ -98,13 +102,14 @@ export function useFilterLegendaries(nfts: NFT[]): NFT[] {
 
 /**
  * Get strongest N cards (memoized)
+ * Uses collection multipliers (VibeFID 5x, VBMS 2x, Nothing 0.5x)
  *
  * @example
  * const top5 = useStrongestCards(nfts, 5);
  */
 export function useStrongestCards(nfts: NFT[], count: number): NFT[] {
   return useMemo(() => {
-    const sorted = [...nfts].sort((a, b) => (b.power || 0) - (a.power || 0));
+    const sorted = [...nfts].sort((a, b) => getCardDisplayPower(b) - getCardDisplayPower(a));
     return sorted.slice(0, count);
   }, [nfts, count]);
 }
