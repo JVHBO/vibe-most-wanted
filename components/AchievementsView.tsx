@@ -213,6 +213,7 @@ export default function AchievementsView({
             { id: "all", label: t("all"), icon: "/images/icons/mission.svg" },
             { id: "unclaimed", label: t("unclaimed"), icon: "/images/icons/coins.svg" },
             { id: "completed", label: t("completed"), icon: "/images/icons/achievement.svg" },
+            { id: "social", label: "Social", icon: "/images/icons/notification.svg" },
             { id: "rarity", label: t("rarity"), icon: "/images/icons/cards.svg" },
             { id: "wear", label: t("pristine"), icon: "/images/icons/victory.svg" },
             { id: "foil", label: t("foil"), icon: "/images/icons/cards.svg" },
