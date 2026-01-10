@@ -7,9 +7,14 @@ import { api } from '@/convex/_generated/api';
 /**
  * Component to register Farcaster notification token
  * Runs automatically when user opens the app in Farcaster
+ *
+ * Also grants social achievements:
+ * - "add_miniapp" when user adds the app to favorites
+ * - "enable_notifications" when user enables notifications
  */
 export function FarcasterNotificationRegistration() {
   const saveToken = useMutation(api.notifications.saveToken);
+  const grantSocialAchievement = useMutation(api.achievements.grantSocialAchievementByFid);
 
   useEffect(() => {
     async function registerNotificationToken() {
@@ -32,6 +37,22 @@ export function FarcasterNotificationRegistration() {
         const result = await sdkActions.actions.addMiniApp();
         console.log('[FarcasterNotification] addMiniApp result:', result);
 
+        // If addMiniApp succeeded, user added the miniapp to favorites
+        if (result) {
+          // Grant "add_miniapp" achievement (1000 VBMS reward)
+          try {
+            const miniappResult = await grantSocialAchievement({
+              fid,
+              achievementId: 'add_miniapp',
+            });
+            if (miniappResult.success && !miniappResult.alreadyGranted) {
+              console.log('[FarcasterNotification] ✅ Granted add_miniapp achievement for FID:', fid);
+            }
+          } catch (err) {
+            console.log('[FarcasterNotification] Could not grant add_miniapp achievement:', err);
+          }
+        }
+
         if (result?.notificationDetails) {
           const { token, url } = result.notificationDetails;
 
@@ -42,6 +63,19 @@ export function FarcasterNotificationRegistration() {
             url,
           });
           console.log('[FarcasterNotification] ✅ Token saved for FID:', fid);
+
+          // Grant "enable_notifications" achievement (1000 VBMS reward)
+          try {
+            const notifResult = await grantSocialAchievement({
+              fid,
+              achievementId: 'enable_notifications',
+            });
+            if (notifResult.success && !notifResult.alreadyGranted) {
+              console.log('[FarcasterNotification] ✅ Granted enable_notifications achievement for FID:', fid);
+            }
+          } catch (err) {
+            console.log('[FarcasterNotification] Could not grant enable_notifications achievement:', err);
+          }
         }
       } catch (error) {
         console.error('Error registering notification token:', error);
@@ -49,7 +83,7 @@ export function FarcasterNotificationRegistration() {
     }
 
     registerNotificationToken();
-  }, [saveToken]);
+  }, [saveToken, grantSocialAchievement]);
 
   return null; // This component doesn't render anything
 }

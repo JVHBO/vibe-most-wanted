@@ -13,9 +13,9 @@ export interface AchievementDefinition {
   name: string;
   description: string;
   icon: string;
-  category: "rarity" | "wear" | "foil" | "progressive";
+  category: "rarity" | "wear" | "foil" | "progressive" | "social";
   requirement: {
-    type: string; // "have_rarity", "have_wear", "have_foil", "collect_count"
+    type: string; // "have_rarity", "have_wear", "have_foil", "collect_count", "enable_notifications", "add_miniapp"
     count: number;
     rarity?: string;
     wear?: string;
@@ -745,6 +745,37 @@ export const PROGRESSIVE_ACHIEVEMENTS: AchievementDefinition[] = [
 ];
 
 /**
+ * 🔔 SOCIAL ACHIEVEMENTS
+ * Reward for enabling notifications and adding the miniapp
+ */
+export const SOCIAL_ACHIEVEMENTS: AchievementDefinition[] = [
+  {
+    id: "enable_notifications",
+    name: "Stay Connected",
+    description: "Enable notifications to receive game updates",
+    icon: "🔔",
+    category: "social",
+    requirement: {
+      type: "enable_notifications",
+      count: 1,
+    },
+    reward: 1000,
+  },
+  {
+    id: "add_miniapp",
+    name: "VBMS Fan",
+    description: "Add VBMS to your Farcaster favorites",
+    icon: "⭐",
+    category: "social",
+    requirement: {
+      type: "add_miniapp",
+      count: 1,
+    },
+    reward: 1000,
+  },
+];
+
+/**
  * ALL ACHIEVEMENTS (Combined)
  */
 export const ALL_ACHIEVEMENTS: AchievementDefinition[] = [
@@ -752,6 +783,7 @@ export const ALL_ACHIEVEMENTS: AchievementDefinition[] = [
   ...WEAR_ACHIEVEMENTS,
   ...FOIL_ACHIEVEMENTS,
   ...PROGRESSIVE_ACHIEVEMENTS,
+  ...SOCIAL_ACHIEVEMENTS,
 ];
 
 /**
