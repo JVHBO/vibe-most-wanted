@@ -423,10 +423,16 @@ export const grantSocialAchievementByFid = mutation({
       return { success: false, reason: "invalid_achievement" };
     }
 
-    // Look up profile by FID
+    // Look up profile by FID (convert string to number for index)
+    const fidNumber = parseInt(fid, 10);
+    if (isNaN(fidNumber)) {
+      console.log(`[grantSocialAchievementByFid] Invalid FID format: ${fid}`);
+      return { success: false, reason: "invalid_fid" };
+    }
+
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_fid", (q) => q.eq("farcasterFid", fid))
+      .withIndex("by_fid", (q) => q.eq("farcasterFid", fidNumber))
       .first();
 
     if (!profile) {
