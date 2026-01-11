@@ -1382,45 +1382,84 @@ export const addVibeFIDToOwnedTokens = mutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
-    
+
     // Get profile
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
-    
+
     if (!profile) {
       throw new Error("Profile not found");
     }
-    
+
     // Get VibeFID cards
     const vibefidCards = await ctx.db
       .query("farcasterCards")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .collect();
-    
+
     if (vibefidCards.length === 0) {
       return { added: 0, message: "No VibeFID cards found" };
     }
-    
+
     // Get missing tokens
     const currentTokens = profile.ownedTokenIds || [];
     const missingTokens = vibefidCards
       .map(c => c.fid.toString())
       .filter(tokenId => !currentTokens.includes(tokenId));
-    
+
     if (missingTokens.length === 0) {
       return { added: 0, message: "All VibeFID tokens already in ownedTokenIds" };
     }
-    
+
     // Add missing tokens
     const newTokens = [...currentTokens, ...missingTokens];
     await ctx.db.patch(profile._id, { ownedTokenIds: newTokens });
-    
-    return { 
-      added: missingTokens.length, 
+
+    return {
+      added: missingTokens.length,
       tokens: missingTokens,
-      message: `Added ${missingTokens.length} VibeFID token(s)` 
+      message: `Added ${missingTokens.length} VibeFID token(s)`
+    };
+  },
+});
+
+/**
+ * Add arbitrary tokens to ownedTokenIds
+ * Used for manually syncing NFT tokens that weren't picked up
+ */
+export const addTokensToProfile = mutation({
+  args: {
+    address: v.string(),
+    tokenIds: v.array(v.string())
+  },
+  handler: async (ctx, { address, tokenIds }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const currentTokens = profile.ownedTokenIds || [];
+    const missingTokens = tokenIds.filter(id => !currentTokens.includes(id));
+
+    if (missingTokens.length === 0) {
+      return { added: 0, message: "All tokens already in ownedTokenIds" };
+    }
+
+    const newTokens = [...currentTokens, ...missingTokens];
+    await ctx.db.patch(profile._id, { ownedTokenIds: newTokens });
+
+    return {
+      added: missingTokens.length,
+      tokens: missingTokens,
+      message: `Added ${missingTokens.length} token(s)`
     };
   },
 });

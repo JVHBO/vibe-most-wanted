@@ -767,8 +767,11 @@ export async function fetchAndProcessNFTs(
 
   let collectionsToFetch = nftCollections;
 
-  // OPTIMIZATION: Check balances first to avoid unnecessary Alchemy calls
-  if (!skipBalanceCheck) {
+  // OPTIMIZATION DISABLED: RPC balance check causes missing cards
+  // RPCs sometimes return 0 even when user has NFTs (silent rate limit)
+  // Always fetch all collections from Alchemy to ensure no cards are missed
+  // TODO: Re-enable with better rate limit detection
+  if (!skipBalanceCheck && false) { // DISABLED
     console.log(`🚀 OPTIMIZATION: Checking balances via free RPC before Alchemy...`);
     const { collectionsWithNfts } = await checkCollectionBalances(owner, nftCollections);
     collectionsToFetch = collectionsWithNfts as typeof nftCollections;
@@ -776,6 +779,8 @@ export async function fetchAndProcessNFTs(
     if (collectionsToFetch.length < nftCollections.length) {
       console.log(`💰 Saved ${nftCollections.length - collectionsToFetch.length} Alchemy calls!`);
     }
+  } else {
+    console.log(`📦 Fetching ALL ${nftCollections.length} collections from Alchemy (balance check disabled)`);
   }
 
   const allNfts: any[] = [];
