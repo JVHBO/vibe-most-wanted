@@ -190,7 +190,7 @@ export async function checkCollectionBalances(
     console.log(`📦 Using cached balances for ${owner.slice(0, 10)}...`);
     // BUG FIX: If contract is NOT in cache, include it (need to fetch)
     // Only skip if contract IS in cache AND has balance 0
-    const collectionsWithNfts = collections.filter(c => {
+    let collectionsWithNfts = collections.filter(c => {
       if (!c.contractAddress) return false;
       const contractLower = c.contractAddress.toLowerCase();
       if (!(contractLower in cached.balances)) {
@@ -244,13 +244,18 @@ export async function checkCollectionBalances(
     }
 
     // Collections with NFTs OR with errors (need to check via Alchemy)
-    const collectionsWithNfts = collections.filter(c =>
+    let collectionsWithNfts = collections.filter(c =>
       c.contractAddress && (
         (balances[c.contractAddress.toLowerCase()] || 0) > 0 ||
         balances[c.contractAddress.toLowerCase()] === -1
       )
     );
 
+    // 🔧 FIX: If ALL returned 0 (RPC rate limit), fetch ALL
+    if (collectionsWithNfts.length === 0 && collections.length > 0) {
+      console.warn('All RPCs returned 0 - forcing fetch ALL');
+      collectionsWithNfts = collections.filter(c => c.contractAddress);
+    }
     console.log(`📊 Found NFTs in ${nftsFound} of ${collections.length} collections`);
 
     // Clear lock

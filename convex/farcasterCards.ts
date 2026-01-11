@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { validateCardTraits } from "./cardValidation";
 
 /**
  * Mint a Farcaster Card
@@ -48,6 +49,7 @@ export const mintFarcasterCard = mutation({
   },
   handler: async (ctx, args) => {
     const normalizedAddress = args.address.toLowerCase();
+// 🔒 SECURITY: Server-side validation of card traits    const validation = validateCardTraits(      args.fid,      args.neynarScore,      args.rarity,      args.foil,      args.wear,      args.power    );    if (!validation.valid) {      console.warn(`⚠️ SECURITY: Invalid card traits for FID ${args.fid}:`, validation.errors);    }    // Use server-calculated values (ignore client values)    const finalRarity = validation.correctedValues!.rarity;    const finalFoil = validation.correctedValues!.foil;    const finalWear = validation.correctedValues!.wear;    const finalPower = validation.correctedValues!.power;
 
     // CRITICAL FIX: Check if FID already exists to prevent orphan duplicates
     const existingCards = await ctx.db
@@ -225,6 +227,7 @@ export const getFarcasterCardsByAddress = query({
   },
   handler: async (ctx, args) => {
     const normalizedAddress = args.address.toLowerCase();
+// 🔒 SECURITY: Server-side validation of card traits    const validation = validateCardTraits(      args.fid,      args.neynarScore,      args.rarity,      args.foil,      args.wear,      args.power    );    if (!validation.valid) {      console.warn(`⚠️ SECURITY: Invalid card traits for FID ${args.fid}:`, validation.errors);    }    // Use server-calculated values (ignore client values)    const finalRarity = validation.correctedValues!.rarity;    const finalFoil = validation.correctedValues!.foil;    const finalWear = validation.correctedValues!.wear;    const finalPower = validation.correctedValues!.power;
 
     const cards = await ctx.db
       .query("farcasterCards")
@@ -283,6 +286,7 @@ export const toggleEquipFarcasterCard = mutation({
   },
   handler: async (ctx, args) => {
     const normalizedAddress = args.address.toLowerCase();
+// 🔒 SECURITY: Server-side validation of card traits    const validation = validateCardTraits(      args.fid,      args.neynarScore,      args.rarity,      args.foil,      args.wear,      args.power    );    if (!validation.valid) {      console.warn(`⚠️ SECURITY: Invalid card traits for FID ${args.fid}:`, validation.errors);    }    // Use server-calculated values (ignore client values)    const finalRarity = validation.correctedValues!.rarity;    const finalFoil = validation.correctedValues!.foil;    const finalWear = validation.correctedValues!.wear;    const finalPower = validation.correctedValues!.power;
 
     // Find the card
     const card = await ctx.db
@@ -859,6 +863,7 @@ export const reimportCard = mutation({
   },
   handler: async (ctx, args) => {
     const normalizedAddress = args.address.toLowerCase();
+// 🔒 SECURITY: Server-side validation of card traits    const validation = validateCardTraits(      args.fid,      args.neynarScore,      args.rarity,      args.foil,      args.wear,      args.power    );    if (!validation.valid) {      console.warn(`⚠️ SECURITY: Invalid card traits for FID ${args.fid}:`, validation.errors);    }    // Use server-calculated values (ignore client values)    const finalRarity = validation.correctedValues!.rarity;    const finalFoil = validation.correctedValues!.foil;    const finalWear = validation.correctedValues!.wear;    const finalPower = validation.correctedValues!.power;
 
     // Check if card already exists
     const existing = await ctx.db
