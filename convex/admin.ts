@@ -1424,3 +1424,45 @@ export const addVibeFIDToOwnedTokens = mutation({
     };
   },
 });
+
+/**
+ * Sync defenseDeck tokens to ownedTokenIds
+ * Fixes profiles where defenseDeck has cards not in ownedTokenIds
+ */
+export const syncDefenseDeckToOwned = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const defenseDeck = profile.defenseDeck || [];
+    if (defenseDeck.length === 0) {
+      return { added: 0, message: "No defense deck" };
+    }
+
+    const currentTokens = profile.ownedTokenIds || [];
+    const defenseTokenIds = defenseDeck.map((c: any) => c.tokenId);
+    const missingTokens = defenseTokenIds.filter((id: string) => !currentTokens.includes(id));
+
+    if (missingTokens.length === 0) {
+      return { added: 0, message: "All defense deck tokens already in ownedTokenIds" };
+    }
+
+    const newTokens = [...currentTokens, ...missingTokens];
+    await ctx.db.patch(profile._id, { ownedTokenIds: newTokens });
+
+    return {
+      added: missingTokens.length,
+      tokens: missingTokens,
+      message: `Added ${missingTokens.length} defense deck token(s)`
+    };
+  },
+});

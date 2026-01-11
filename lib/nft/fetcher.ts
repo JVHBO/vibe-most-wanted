@@ -188,9 +188,17 @@ export async function checkCollectionBalances(
   const cached = getBalanceCache(owner);
   if (cached) {
     console.log(`📦 Using cached balances for ${owner.slice(0, 10)}...`);
-    const collectionsWithNfts = collections.filter(c =>
-      c.contractAddress && (cached.balances[c.contractAddress.toLowerCase()] || 0) > 0
-    );
+    // BUG FIX: If contract is NOT in cache, include it (need to fetch)
+    // Only skip if contract IS in cache AND has balance 0
+    const collectionsWithNfts = collections.filter(c => {
+      if (!c.contractAddress) return false;
+      const contractLower = c.contractAddress.toLowerCase();
+      if (!(contractLower in cached.balances)) {
+        console.log(`⚠️ ${c.displayName} not in cache - will fetch`);
+        return true;
+      }
+      return cached.balances[contractLower] > 0;
+    });
     return { collectionsWithNfts, balances: cached.balances };
   }
 
