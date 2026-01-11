@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import sdk from '@farcaster/miniapp-sdk';
+import haptics from '@/lib/haptics';
 
 interface PackOpeningAnimationProps {
   cards: any[];
@@ -43,6 +44,7 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
     if (revealedCards.has(index) || shakingCard !== null) return;
 
     setShakingCard(index);
+    haptics.cardReveal(); // Haptic when card clicked
     playSound('/sounds/espera.mp3');
 
     setTimeout(() => {
@@ -53,6 +55,10 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
         Common: '/sounds/common-pull.mp3',
       };
       playSound(soundMap[rarity] || soundMap.Common);
+      // Haptic based on rarity
+      if (rarity === 'Legendary' || rarity === 'Mythic') haptics.rareCard();
+      else if (rarity === 'Epic') haptics.success();
+      else haptics.confirm();
       setRevealedCards(prev => new Set([...prev, index]));
       setShakingCard(null);
     }, 1800);
