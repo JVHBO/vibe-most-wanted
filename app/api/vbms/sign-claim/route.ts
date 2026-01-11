@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // SECURITY: Rate limiting
-    if (!(await checkRateLimitDistributed(address, request))) {
+    if (!(await checkDistributedRateLimit(address, mintRateLimit)).success) {
       console.warn('⚠️ Rate limited:', address);
       return NextResponse.json(
         { error: 'Too many requests. Please wait 10 seconds.' },
