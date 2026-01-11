@@ -298,7 +298,16 @@ export default function QuestsPage() {
                   🎁 BONUS QUESTS (+2000 VBMS)
                 </p>
                 <div className="space-y-2">
-                  {SOCIAL_QUESTS.filter(q => q.type === 'notification' || q.type === 'miniapp').map((quest) => {
+                  {SOCIAL_QUESTS
+                  .filter(q => (q.type === 'notification' || q.type === 'miniapp') && getQuestStatus(q) !== 'claimed')
+                  .sort((a, b) => {
+                    const statusA = getQuestStatus(a);
+                    const statusB = getQuestStatus(b);
+                    if (statusA === 'completed' && statusB !== 'completed') return -1;
+                    if (statusB === 'completed' && statusA !== 'completed') return 1;
+                    return 0;
+                  })
+                  .map((quest) => {
                     const status = getQuestStatus(quest);
                     const isVerifying = verifying === quest.id;
                     const isClaimingSocial = claiming === quest.id;
@@ -383,7 +392,14 @@ export default function QuestsPage() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    {missions.map((mission: any) => {
+                    {missions
+                    .filter((m: any) => !m.claimed)
+                    .sort((a: any, b: any) => {
+                      if (a.completed && !b.completed) return -1;
+                      if (b.completed && !a.completed) return 1;
+                      return 0;
+                    })
+                    .map((mission: any) => {
                       const isClaiming = claimingMission === mission._id;
                       const isPlaceholder = mission._id.startsWith('placeholder_');
                       const isVibeBadge = mission.missionType === 'claim_vibe_badge';
@@ -457,7 +473,16 @@ export default function QuestsPage() {
               <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
                 <p className="text-vintage-gold text-xs font-bold mb-2">{t('questsSocialQuests')}</p>
                 <div className="space-y-2">
-                  {SOCIAL_QUESTS.filter(q => q.type !== 'notification' && q.type !== 'miniapp').map((quest) => {
+                  {SOCIAL_QUESTS
+                  .filter(q => q.type !== 'notification' && q.type !== 'miniapp' && getQuestStatus(q) !== 'claimed')
+                  .sort((a, b) => {
+                    const statusA = getQuestStatus(a);
+                    const statusB = getQuestStatus(b);
+                    if (statusA === 'completed' && statusB !== 'completed') return -1;
+                    if (statusB === 'completed' && statusA !== 'completed') return 1;
+                    return 0;
+                  })
+                  .map((quest) => {
                     const status = getQuestStatus(quest);
                     const isVerifying = verifying === quest.id;
                     const isClaimingSocial = claiming === quest.id;
