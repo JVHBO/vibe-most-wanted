@@ -292,7 +292,8 @@ export default function QuestsPage() {
 
           {/* Missions */}
           <div className="flex-1 overflow-y-auto space-y-3 max-h-[calc(100vh-180px)]">
-              {/* 🎁 BONUS QUESTS - SDK Actions (TOP PRIORITY - FIRST!) */}
+              {/* 🎁 BONUS QUESTS - Hide if all claimed */}
+              {SOCIAL_QUESTS.filter(q => (q.type === 'notification' || q.type === 'miniapp') && getQuestStatus(q) !== 'claimed').length > 0 && (
               <div className="bg-gradient-to-b from-vintage-gold/30 to-vintage-charcoal/90 rounded-xl border-2 border-vintage-gold/50 p-3 shadow-lg">
                 <p className="text-vintage-gold text-sm font-bold mb-2 flex items-center gap-2">
                   🎁 BONUS QUESTS (+2000 VBMS)
@@ -359,6 +360,7 @@ export default function QuestsPage() {
                   })}
                 </div>
               </div>
+              )}
 
               {/* Personal Missions (Welcome, VibeFID, etc) */}
               <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
