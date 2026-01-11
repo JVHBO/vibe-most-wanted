@@ -13,8 +13,10 @@ type HapticIntensity = "light" | "medium" | "heavy";
  */
 export async function haptic(intensity: HapticIntensity = "medium"): Promise<void> {
   try {
-    if (sdk?.actions?.haptic?.impactOccurred) {
-      await sdk.actions.haptic.impactOccurred(intensity);
+    // Cast to any to access haptic API (may not be in SDK types yet)
+    const actions = sdk?.actions as any;
+    if (actions?.haptic?.impactOccurred) {
+      await actions.haptic.impactOccurred(intensity);
     }
   } catch {
     // Silently fail - haptics are optional UX enhancement
