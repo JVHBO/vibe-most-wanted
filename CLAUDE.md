@@ -378,3 +378,52 @@ return sum + Math.floor((c.power || 0) * multiplier);
 - **Problem**: Buttons appear off-center due to hidden `ml-*` classes
 - **Fix**: Use `justify-center` on parent container and remove margin classes
 - **Example**: VibeFID button had `ml-2` causing misalignment with buttons below
+
+## Debugging NFT Issues
+
+### Player não vê seus NFTs
+1. **Primeiro**: Verificar on-chain com Alchemy API diretamente
+```bash
+curl -s "https://base-mainnet.g.alchemy.com/nft/v3/API_KEY/getNFTsForOwner?owner=ADDRESS&contractAddresses[]=CONTRACT&withMetadata=false"
+```
+
+2. **Contratos corretos** (não confundir!):
+| Collection | Contract |
+|------------|----------|
+| vibe (VBMS) | `0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728` |
+| viberotbangers | `0x120c612d79a3187a3b8b4f4bb924cebe41eb407a` |
+| vibefid | `0x60274A138d026E3cB337B40567100FdEC3127565` |
+| meowverse | `0xF0BF71bcD1F1aeb1bA6BE0AfBc38A1ABe9aa9150` |
+| nothing | `0xfeabae8bdb41b2ae507972180df02e70148b38e1` |
+
+3. **Alchemy marca como SPAM** - Isso é normal, não filtramos por `isSpam`
+
+4. **Sincronização do ownedTokenIds**:
+   - Só acontece quando player carrega a home page
+   - Frontend busca NFTs da Alchemy → chama `updateStats` → atualiza `ownedTokenIds`
+   - Se player não carrega página, fica desatualizado
+
+5. **Fix manual para player específico**:
+```bash
+# Ver o que tem on-chain vs no profile
+npx convex run profiles:getProfile '{"address": "0x..."}' --env-file .env.prod
+
+# Adicionar tokens faltando
+npx convex run profiles:updateStats '{"address": "0x...", "stats": {...}, "tokenIds": [...]}' --env-file .env.prod
+```
+
+6. **Mutations de admin úteis**:
+   - `admin:addVibeFIDToOwnedTokens` - Adiciona VibeFID faltando
+   - `admin:syncDefenseDeckToOwned` - Sincroniza defenseDeck → ownedTokenIds
+
+## VibeFID vs VBMS Notifications
+
+### Neynar Apps Separados
+| App | Neynar App ID | API Key |
+|-----|---------------|---------|
+| VBMS | `e4b053fc-a6bd-4975-a6bc-a3174e617d19` | (no Vercel) |
+| VibeFID | `f595d65b-e6d3-458b-abe0-0545bdf393f5` | `26C827AF-2DE5-4EF7-A258-795DA4B592F0` |
+
+- Cada app tem sua própria API key no dashboard do Neynar
+- VibeFID usa Neynar-only (não salva tokens no Convex)
+- VBMS também usa Neynar managed webhooks
