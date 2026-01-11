@@ -7,7 +7,7 @@
  * Dangerous operations - run step by step
  */
 
-import { internalMutation, mutation, internalQuery } from "./_generated/server";
+import { internalMutation, mutation, internalQuery, query } from "./_generated/server";
 import { v } from "convex/values";
 import { createAuditLog } from "./coinAudit";
 
@@ -1307,5 +1307,70 @@ export const countNotificationTokens = internalQuery({
     }
     
     return stats;
+  },
+});
+
+/**
+ * Public query to get notification and app stats
+ * Run: npx convex run admin:getAppStats --env-file .env.prod
+ */
+export const getAppStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const allTokens = await ctx.db.query("notificationTokens").collect();
+    const now = Date.now();
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    const thirtyDays = 30 * 24 * 60 * 60 * 1000;
+
+    const stats = {
+      total: allTokens.length,
+      last7Days: 0,
+      last30Days: 0,
+      byDay: {} as Record<string, number>,
+      byPlatform: {} as Record<string, number>,
+      byApp: {} as Record<string, number>,
+    };
+
+    for (const token of allTokens) {
+      const age = now - token._creationTime;
+
+      // Recent counts
+      if (age < sevenDays) {
+        stats.last7Days++;
+        const date = new Date(token._creationTime).toISOString().split("T")[0];
+        stats.byDay[date] = (stats.byDay[date] || 0) + 1;
+      }
+      if (age < thirtyDays) {
+        stats.last30Days++;
+      }
+
+      // By platform
+      const platform = token.platform || "unknown";
+      stats.byPlatform[platform] = (stats.byPlatform[platform] || 0) + 1;
+
+      // By app
+      const app = token.app || "vbms";
+      stats.byApp[app] = (stats.byApp[app] || 0) + 1;
+    }
+
+    return stats;
+  },
+});
+
+/**
+ * Get recent notification tokens with platform info
+ * Run: npx convex run admin:getRecentTokens --env-file .env.prod
+ */
+export const getRecentTokens = query({
+  args: {},
+  handler: async (ctx) => {
+    const tokens = await ctx.db.query("notificationTokens").order("desc").take(50);
+    return tokens.map(t => ({
+      fid: t.fid,
+      platform: t.platform || "unknown",
+      app: t.app || "vbms",
+      url: t.url ? (t.url.includes("neynar") ? "neynar" : "warpcast") : "no-url",
+      created: new Date(t._creationTime).toISOString().split("T")[0],
+    }));
   },
 });

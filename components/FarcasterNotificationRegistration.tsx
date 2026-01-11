@@ -5,19 +5,21 @@ import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 
 /**
- * Component to register Farcaster notification token
+ * Component to prompt user to add miniapp and enable notifications
  * Runs automatically when user opens the app in Farcaster
+ *
+ * NOTE: Tokens are managed by Neynar via webhook (configured in farcaster.json)
+ * We don't need to save tokens ourselves - just call addMiniApp() to prompt user
  *
  * Also grants social achievements:
  * - "add_miniapp" when user adds the app to favorites
  * - "enable_notifications" when user enables notifications
  */
 export function FarcasterNotificationRegistration() {
-  const saveToken = useMutation(api.notifications.saveToken);
   const grantSocialAchievement = useMutation(api.achievements.grantSocialAchievementByFid);
 
   useEffect(() => {
-    async function registerNotificationToken() {
+    async function promptAddMiniApp() {
       try {
         // Dynamic import to prevent SSR/non-Farcaster errors
         const { sdk } = await import('@farcaster/miniapp-sdk');
@@ -32,7 +34,7 @@ export function FarcasterNotificationRegistration() {
         const fid = context.user.fid.toString();
 
         // Request to add miniapp (includes notification permission)
-        // NOTE: addMiniApp() replaced deprecated addFrame()
+        // Neynar receives the token via webhook configured in farcaster.json
         const { sdk: sdkActions } = await import('@farcaster/miniapp-sdk');
         const result = await sdkActions.actions.addMiniApp();
         console.log('[FarcasterNotification] addMiniApp result:', result);
@@ -53,16 +55,10 @@ export function FarcasterNotificationRegistration() {
           }
         }
 
+        // If user enabled notifications, grant achievement
+        // Token is sent to Neynar via webhook - we just track the achievement
         if (result?.notificationDetails) {
-          const { token, url } = result.notificationDetails;
-
-          // Save to Convex
-          await saveToken({
-            fid,
-            token,
-            url,
-          });
-          console.log('[FarcasterNotification] ✅ Token saved for FID:', fid);
+          console.log('[FarcasterNotification] ✅ Notifications enabled for FID:', fid, '(token managed by Neynar)');
 
           // Grant "enable_notifications" achievement (1000 VBMS reward)
           try {
@@ -78,12 +74,12 @@ export function FarcasterNotificationRegistration() {
           }
         }
       } catch (error) {
-        console.error('Error registering notification token:', error);
+        console.error('Error in addMiniApp flow:', error);
       }
     }
 
-    registerNotificationToken();
-  }, [saveToken, grantSocialAchievement]);
+    promptAddMiniApp();
+  }, [grantSocialAchievement]);
 
   return null; // This component doesn't render anything
 }

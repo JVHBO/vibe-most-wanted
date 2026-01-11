@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useMusic } from "@/contexts/MusicContext";
 import { getAssetUrl } from "@/lib/ipfs-assets";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { useAccount, useDisconnect, useConnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery, useMutation, useConvex } from "convex/react";
@@ -385,7 +386,7 @@ export default function TCGPage() {
   // State for Farcaster context detection
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
   const [farcasterFidState, setFarcasterFidState] = useState<number | undefined>(undefined);
-  const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(false);
+  const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(true); // Start true to wait for Farcaster check
 
   // 🔧 DEV MODE: Force admin wallet for testing
   const DEV_WALLET_BYPASS = false; // DISABLED: Only for localhost testing
@@ -759,7 +760,8 @@ export default function TCGPage() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentView]);
 
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  // Profile from context (persists across navigation)
+  const { userProfile, isLoadingProfile: isLoadingProfileFromContext, setUserProfile, refreshProfile } = useProfile();
 
   // 📬 VibeMail unread count for notification dot on VibeFID button
   const userFidForVibemail = farcasterFidState || userProfile?.farcasterFid || (userProfile?.fid ? parseInt(userProfile.fid) : undefined);
@@ -770,7 +772,7 @@ export default function TCGPage() {
   // REMOVED: Referral system disabled
   // Leaderboard moved to /leaderboard page
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
-  const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(false);
+  const isLoadingProfile = isLoadingProfileFromContext; // From ProfileContext
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
   // REMOVED: showReferrals - Referral system disabled
@@ -916,10 +918,7 @@ export default function TCGPage() {
         setSuccessMessage(result.message);
         setSharesRemaining(result.remaining);
         // Refresh profile to update coins
-        const updatedProfile = await ConvexProfileService.getProfile(address);
-        if (updatedProfile) {
-          setUserProfile(updatedProfile);
-        }
+        await refreshProfile();
       } else {
         // Already claimed or limit reached - just show message
         if (result.message) {
@@ -1014,15 +1013,16 @@ export default function TCGPage() {
           hasEthProvider: !!sdk?.wallet?.ethProvider,
         });
 
-        // CRITICAL: Don't use iframe detection - check if Farcaster SDK is ACTUALLY functional
-        // The SDK only exists and works in real Farcaster miniapp context
-        if (!sdk || typeof sdk.wallet === 'undefined' || !sdk.wallet.ethProvider) {
-          console.log('[Farcaster] ⚠️ Not in Farcaster miniapp - SDK not available');
+        // STEP 1: Check if SDK exists at all
+        if (!sdk) {
+          console.log('[Farcaster] ⚠️ No SDK available - not in Farcaster');
           setIsInFarcaster(false);
+          setIsCheckingFarcaster(false);
           return;
         }
 
-        // Verify SDK context is valid with a timeout (prevent hanging)
+        // STEP 2: Check if SDK context has valid FID (proves we're in Farcaster)
+        // This check is SEPARATE from wallet availability - fixes analytics misclassification
         try {
           const contextPromise = sdk.context;
           const timeoutPromise = new Promise((_, reject) =>
@@ -1034,20 +1034,29 @@ export default function TCGPage() {
           if (!context || !context.user || !context.user.fid) {
             console.log('[Farcaster] ⚠️ SDK present but invalid context - not in miniapp');
             setIsInFarcaster(false);
+            setIsCheckingFarcaster(false);
             return;
           }
 
+          // ✅ We ARE in Farcaster miniapp - set this EARLY for correct analytics
           console.log('[Farcaster] ✅ Farcaster miniapp confirmed - FID:', context.user.fid);
           setFarcasterFidState(context.user.fid);
+          setIsInFarcaster(true); // Set BEFORE wallet check!
         } catch (contextError) {
           console.log('[Farcaster] ⚠️ Failed to get valid SDK context:', contextError);
           setIsInFarcaster(false);
+          setIsCheckingFarcaster(false);
           return;
         }
 
-        console.log('[Farcaster] ✅ Enabling miniapp mode and connecting wallet');
-        setIsInFarcaster(true);
-        setIsCheckingFarcaster(true);
+        // STEP 3: Now try to connect wallet (user is still in Farcaster even if this fails)
+        if (typeof sdk.wallet === 'undefined' || !sdk.wallet.ethProvider) {
+          console.log('[Farcaster] ⚠️ Wallet not available yet - user is in Farcaster but wallet not ready');
+          setIsCheckingFarcaster(false);
+          return;
+        }
+
+        console.log('[Farcaster] ✅ Wallet available, connecting...');
 
         try {
           // Find the Farcaster miniapp connector
@@ -1101,6 +1110,7 @@ export default function TCGPage() {
       } catch (err) {
         devLog('! Not in Farcaster context or wallet unavailable:', err);
         setIsInFarcaster(false);
+        setIsCheckingFarcaster(false);
       }
     };
     initFarcasterWallet();
@@ -1287,8 +1297,7 @@ export default function TCGPage() {
           if (soundEnabled) AudioManager.buttonSuccess();
 
           // Refresh profile to show new balance
-          const updatedProfile = await ConvexProfileService.getProfile(address);
-          setUserProfile(updatedProfile);
+          await refreshProfile();
         }
 
         setLoginBonusClaimed(true);
@@ -1530,12 +1539,7 @@ export default function TCGPage() {
         devLog('✓ Twitter connected via popup:', event.data.username);
         if (address) {
           // Reload profile from Convex to get the updated Twitter handle
-          ConvexProfileService.getProfile(address).then((profile) => {
-            if (profile) {
-              setUserProfile(profile);
-              devLog('✓ Profile reloaded with Twitter:', profile.twitter);
-            }
-          });
+          refreshProfile();
         }
       } else if (event.data.type === 'twitter_error') {
         alert('✗ Failed to connect Twitter. Please try again.');
@@ -2673,10 +2677,7 @@ export default function TCGPage() {
         }, 3000);
 
         // Reload profile to get updated defense deck
-        const updatedProfile = await ConvexProfileService.getProfile(address);
-        if (updatedProfile) {
-          setUserProfile(updatedProfile);
-        }
+        await refreshProfile();
       }
     } catch (error: any) {
       devError('Error saving defense deck:', error);
@@ -3089,40 +3090,7 @@ export default function TCGPage() {
     }
   }, [pvpMode, isSearching, address]);
 
-  // Load user profile when wallet connects
-  useEffect(() => {
-    if (address) {
-      setIsLoadingProfile(true);
-      console.log('[DEBUG] Loading profile for address:', address);
-      ConvexProfileService.getProfile(address).then((profile) => {
-        console.log('[DEBUG] Profile loaded:', {
-          username: profile?.username,
-          hasDefenseDeck: profile?.hasDefenseDeck,
-          defenseDeckLength: profile?.defenseDeck?.length,
-          address: profile?.address
-        });
-        setUserProfile(profile);
-        setIsLoadingProfile(false);
-
-        // Only show create profile if profile is actually null (not exists in DB)
-        if (!profile) {
-          devLog('🆕 New user detected - forcing profile creation');
-          setShowCreateProfile(true);
-        } else {
-          setShowCreateProfile(false);
-        }
-
-        // Load match history
-        if (profile) {
-          ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
-        }
-      });
-    } else {
-      setUserProfile(null);
-      setMatchHistory([]);
-      setShowCreateProfile(false);
-    }
-  }, [address]);
+  // Profile loading moved to ProfileContext - no local useEffect needed
 
   // Load missions when address changes
   useEffect(() => {
@@ -3300,8 +3268,7 @@ export default function TCGPage() {
 
         // Reload missions and profile to update UI
         await loadMissions();
-        const updatedProfile = await ConvexProfileService.getProfile(address);
-        setUserProfile(updatedProfile);
+        await refreshProfile();
       } catch (error: any) {
         devError('Error claiming VIBE badge:', error);
         if (soundEnabled) AudioManager.buttonError();
@@ -3333,9 +3300,8 @@ export default function TCGPage() {
 
       // Reload missions and profile to update UI
       await loadMissions();
-      const updatedProfile = await ConvexProfileService.getProfile(address);
-      setUserProfile(updatedProfile);
-    } catch (error: any) {
+      await refreshProfile();
+      } catch (error: any) {
       devError('Error claiming mission:', error);
       if (soundEnabled) AudioManager.buttonError();
       alert(error.message || 'Failed to claim mission');
@@ -3361,8 +3327,7 @@ export default function TCGPage() {
 
         // Reload missions and profile
         await loadMissions();
-        const updatedProfile = await ConvexProfileService.getProfile(address);
-        setUserProfile(updatedProfile);
+        await refreshProfile();
       } else {
         if (soundEnabled) AudioManager.buttonClick();
         alert('No missions to claim!');
@@ -5186,7 +5151,11 @@ export default function TCGPage() {
               <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3">
                 {/* Left: Profile */}
                 <div className="flex items-center gap-2">
-                  {userProfile ? (
+                  { isLoadingProfile ? (
+                    <div className="px-4 py-2 bg-vintage-black/50 border border-vintage-gold/20 rounded-lg">
+                      <div className="w-20 h-4 bg-vintage-gold/20 rounded animate-pulse" />
+                    </div>
+                  ) : userProfile ? (
                     <Link
                       href={`/profile/${userProfile.username}`}
                       onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}

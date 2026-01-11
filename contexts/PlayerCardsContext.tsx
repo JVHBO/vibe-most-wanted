@@ -7,7 +7,7 @@ import { api } from '@/convex/_generated/api';
 import { devLog, devError, devWarn } from '@/lib/utils/logger';
 import { getEnabledCollections, getCollectionContract, type CollectionId } from '@/lib/collections/index';
 import { getCardKey } from '@/lib/nft';
-import { findAttr, calcPower } from '@/lib/nft/attributes';
+import { findAttr, calcPower, isUnrevealed } from '@/lib/nft/attributes';
 import { getImage, fetchNFTs, checkCollectionBalances } from '@/lib/nft/fetcher';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { AudioManager } from '@/lib/audio-manager';
@@ -320,15 +320,19 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
         const batch = raw.slice(i, i + METADATA_BATCH_SIZE);
         const batchResults = await Promise.all(
           batch.map(async (nft) => {
-            const tokenUri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
+            // Handle tokenUri as string or object with gateway property
+            const tokenUri = typeof nft?.tokenUri === 'string'
+              ? nft.tokenUri
+              : (nft?.tokenUri?.gateway || nft?.raw?.tokenUri);
             if (!tokenUri) return nft;
             try {
               const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 2000);
+              const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
               const res = await fetch(tokenUri, { signal: controller.signal });
               clearTimeout(timeoutId);
               if (res.ok) {
                 const metadata = await res.json();
+                console.log(`✅ [Context] Refreshed metadata for NFT #${nft.tokenId}`);
                 return { ...nft, metadata: metadata, raw: { ...nft.raw, metadata: metadata } };
               }
             } catch (error) {
@@ -340,16 +344,11 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
         enrichedRaw.push(...batchResults);
       }
 
-      // 🔍 FILTER UNOPENED - SAME AS HOME PAGE!
+      // 🔍 FILTER UNOPENED - Use isUnrevealed for better detection (handles stale Alchemy data)
       const revealed = enrichedRaw.filter((nft) => {
-        const rarity = findAttr(nft, 'rarity').toLowerCase();
-        const status = findAttr(nft, 'status').toLowerCase();
-        const collection = (nft.collection || '').toLowerCase();
-        // Viberotbangers: só filtra por status, não por rarity
-        if (collection === 'viberotbangers') {
-          return status !== 'unopened';
-        }
-        return rarity !== 'unopened' && status !== 'unopened';
+        // isUnrevealed checks for Wear/Foil/Character attributes which prove the card is revealed
+        // even if Alchemy has stale rarity="Unopened" data
+        return !isUnrevealed(nft);
       });
 
       const filtered = enrichedRaw.length - revealed.length;

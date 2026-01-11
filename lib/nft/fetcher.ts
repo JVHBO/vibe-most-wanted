@@ -407,7 +407,10 @@ async function fetchVibeFIDFromConvex(owner: string): Promise<any[]> {
 function extractUrl(val: any): string | null {
   if (!val) return null;
   if (typeof val === 'string') return val;
-  if (typeof val === 'object' && val.url) return val.url;
+  if (typeof val === 'object') {
+    // Alchemy can return { gateway: "...", raw: "..." } or { url: "..." }
+    return val.gateway || val.url || val.raw || null;
+  }
   return null;
 }
 
@@ -566,12 +569,12 @@ export async function getImage(nft: any, collection?: string): Promise<string> {
     }
   }
 
-  // Try Alchemy URLs
+  // Try Alchemy URLs - cachedUrl first (reliable), thumbnail LAST (tiny 72x72!)
   const alchemyUrls = [
-    extractUrl(nft?.image?.cachedUrl),
-    extractUrl(nft?.image?.thumbnailUrl),
-    extractUrl(nft?.image?.pngUrl),
-    extractUrl(nft?.image?.originalUrl),
+    extractUrl(nft?.image?.cachedUrl),    // Good quality - Alchemy CDN (most reliable)
+    extractUrl(nft?.image?.originalUrl),  // Best quality - original from IPFS
+    extractUrl(nft?.image?.pngUrl),       // Good quality - PNG version
+    extractUrl(nft?.image?.thumbnailUrl), // LOW QUALITY - only as last resort!
   ].filter(Boolean);
 
   for (const url of alchemyUrls) {
