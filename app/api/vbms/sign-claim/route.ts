@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
-import { mintRateLimit, checkRateLimit, getClientIdentifier } from '@/lib/security';
+import { mintRateLimit, checkRateLimit as checkDistributedRateLimit, getClientIdentifier } from '@/lib/security';
 
 // Rate limiting: track last request time per address
 const rateLimitMap = new Map<string, number>();
@@ -22,7 +22,7 @@ const RATE_LIMIT_MS = 10000; // 10 seconds between requests
 const MIN_CLAIM_AMOUNT = 100; // 100 VBMS minimum
 const MAX_CLAIM_AMOUNT = 500000; // 500k VBMS maximum (contract has 750k, site uses 500k for buffer)
 
-function checkRateLimit(address: string): boolean {
+function checkLocalRateLimit(address: string): boolean {
   const now = Date.now();
   const lastRequest = rateLimitMap.get(address.toLowerCase());
 
