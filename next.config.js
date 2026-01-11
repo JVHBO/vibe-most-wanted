@@ -1,4 +1,6 @@
 module.exports = {
+  // Silence Turbopack warning
+  turbopack: {},
   webpack: (config) => {
     // Fix for MetaMask SDK trying to import React Native modules
     config.resolve.fallback = {
