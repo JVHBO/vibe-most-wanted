@@ -11,6 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
+import { mintRateLimit, checkRateLimit, getClientIdentifier } from '@/lib/security';
 
 // Rate limiting: track last request time per address
 const rateLimitMap = new Map<string, number>();
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     // SECURITY: Rate limiting
-    if (!checkRateLimit(address)) {
+    if (!(await checkRateLimitDistributed(address, request))) {
       console.warn('⚠️ Rate limited:', address);
       return NextResponse.json(
         { error: 'Too many requests. Please wait 10 seconds.' },
