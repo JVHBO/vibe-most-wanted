@@ -20,6 +20,7 @@ import type * as blacklist from "../blacklist.js";
 import type * as blockchainVerify from "../blockchainVerify.js";
 import type * as cardPacks from "../cardPacks.js";
 import type * as cardSchema from "../cardSchema.js";
+import type * as cardValidation from "../cardValidation.js";
 import type * as cardVotes from "../cardVotes.js";
 import type * as castAuctions from "../castAuctions.js";
 import type * as coinAudit from "../coinAudit.js";
@@ -92,6 +93,7 @@ declare const fullApi: ApiFromModules<{
   blockchainVerify: typeof blockchainVerify;
   cardPacks: typeof cardPacks;
   cardSchema: typeof cardSchema;
+  cardValidation: typeof cardValidation;
   cardVotes: typeof cardVotes;
   castAuctions: typeof castAuctions;
   coinAudit: typeof coinAudit;
