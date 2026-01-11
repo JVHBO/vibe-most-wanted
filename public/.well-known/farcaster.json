@@ -31,13 +31,16 @@
       "pvp",
       "base"
     ],
-    "heroImageUrl": "https://www.vibemostwanted.xyz/hero.jpg",
+    "heroImageUrl": "https://www.vibemostwanted.xyz/hero.png",
     "tagline": "Battle with meme cards",
     "ogTitle": "VBMS - Meme Card Game",
     "ogDescription": "Battle with meme cards in PvE and PvP modes on Base!",
     "ogImageUrl": "https://www.vibemostwanted.xyz/og-image.png",
+    "requiredChains": ["eip155:8453"],
     "requiredCapabilities": [
-      "wallet.getEthereumProvider"
+      "wallet.getEthereumProvider",
+      "actions.composeCast",
+      "actions.addMiniApp"
     ],
     "noindex": false
   },
