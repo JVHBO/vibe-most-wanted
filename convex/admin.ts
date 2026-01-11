@@ -1374,3 +1374,53 @@ export const getRecentTokens = query({
     }));
   },
 });
+
+/**
+ * Fix missing VibeFID tokens in ownedTokenIds
+ */
+export const addVibeFIDToOwnedTokens = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+    
+    // Get profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+    
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+    
+    // Get VibeFID cards
+    const vibefidCards = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .collect();
+    
+    if (vibefidCards.length === 0) {
+      return { added: 0, message: "No VibeFID cards found" };
+    }
+    
+    // Get missing tokens
+    const currentTokens = profile.ownedTokenIds || [];
+    const missingTokens = vibefidCards
+      .map(c => c.fid.toString())
+      .filter(tokenId => !currentTokens.includes(tokenId));
+    
+    if (missingTokens.length === 0) {
+      return { added: 0, message: "All VibeFID tokens already in ownedTokenIds" };
+    }
+    
+    // Add missing tokens
+    const newTokens = [...currentTokens, ...missingTokens];
+    await ctx.db.patch(profile._id, { ownedTokenIds: newTokens });
+    
+    return { 
+      added: missingTokens.length, 
+      tokens: missingTokens,
+      message: `Added ${missingTokens.length} VibeFID token(s)` 
+    };
+  },
+});
