@@ -10,6 +10,7 @@
  */
 
 import { v } from "convex/values";
+import { deckCardValidator } from "./cardSchema";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { applyLanguageBoost } from "./languageBoost";
@@ -1447,7 +1448,7 @@ export const recordAttackResult = mutation({
     // Player info
     playerAddress: v.string(),
     playerPower: v.number(),
-    playerCards: v.array(v.any()),
+    playerCards: v.array(deckCardValidator), // 🔒 SECURITY
     playerUsername: v.string(),
 
     // Match result
@@ -1461,7 +1462,7 @@ export const recordAttackResult = mutation({
     opponentAddress: v.string(),
     opponentUsername: v.string(),
     opponentPower: v.number(),
-    opponentCards: v.array(v.any()),
+    opponentCards: v.array(deckCardValidator), // 🔒 SECURITY
 
     // Economy
     entryFeePaid: v.optional(v.number()),

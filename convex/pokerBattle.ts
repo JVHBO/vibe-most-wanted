@@ -10,6 +10,7 @@
  */
 
 import { v } from "convex/values";
+import { deckCardValidator, wagerCardValidator } from "./cardSchema";
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { internal, api } from "./_generated/api";
@@ -221,8 +222,8 @@ export const setPlayerReady = mutation({
   args: {
     roomId: v.string(),
     address: v.string(),
-    deck: v.array(v.any()), // Array of 10 cards
-    wagers: v.optional(v.array(v.any())), // Optional array of wagered NFT cards (1-5)
+    deck: v.array(deckCardValidator), // 🔒 SECURITY: Strict schema
+    wagers: v.optional(v.array(wagerCardValidator)), // 🔒 SECURITY: Strict schema
   },
   handler: async (ctx, args) => {
     // 🚀 BANDWIDTH FIX: Use index instead of filter
