@@ -152,8 +152,11 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
   const collectionCounts: Record<string, number> = {};
   let totalCards = 0;
 
-  // Fetch from all collections
+  // Fetch from all collections with retry logic
   const BATCH_SIZE = 3;
+  const MAX_RETRIES = 2;
+  const failedCollections: typeof collectionsWithNfts = [];
+
   for (let i = 0; i < collectionsWithNfts.length; i += BATCH_SIZE) {
     const batch = collectionsWithNfts.slice(i, i + BATCH_SIZE);
 
@@ -173,7 +176,7 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
       if (result.status === 'fulfilled') {
         allNfts.push(...result.value);
       } else {
-        collectionCounts[batch[idx].displayName] = -1;
+        failedCollections.push(batch[idx]);
         devError(`✗ [Page] Failed: ${batch[idx].displayName}`, result.reason);
       }
     });
@@ -181,6 +184,41 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
     if (i + BATCH_SIZE < collectionsWithNfts.length) {
       await new Promise(r => setTimeout(r, 200));
     }
+  }
+
+  // Retry failed collections
+  if (failedCollections.length > 0) {
+    console.log(`🔄 [Page] Retrying ${failedCollections.length} failed collections...`);
+    await new Promise(r => setTimeout(r, 500));
+
+    for (let retry = 0; retry < MAX_RETRIES; retry++) {
+      const stillFailed: typeof collectionsWithNfts = [];
+
+      for (const collection of failedCollections) {
+        try {
+          devLog(`🔄 [Page] Retry ${retry + 1} for ${collection.displayName}`);
+          const nfts = await fetchNFTs(owner, collection.contractAddress);
+          const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
+          collectionCounts[collection.displayName] = nfts.length;
+          totalCards += nfts.length;
+          allNfts.push(...tagged);
+          console.log(`✅ [Page] Retry success: ${collection.displayName} - ${nfts.length} NFTs`);
+        } catch (err) {
+          stillFailed.push(collection);
+          devError(`✗ [Page] Retry ${retry + 1} failed: ${collection.displayName}`, err);
+        }
+        await new Promise(r => setTimeout(r, 300));
+      }
+
+      if (stillFailed.length === 0) break;
+      failedCollections.length = 0;
+      failedCollections.push(...stillFailed);
+    }
+
+    // Mark any still-failed collections
+    failedCollections.forEach(c => {
+      collectionCounts[c.displayName] = -1;
+    });
   }
 
   console.log('📊 [Page] CARD FETCH SUMMARY:', JSON.stringify(collectionCounts));
