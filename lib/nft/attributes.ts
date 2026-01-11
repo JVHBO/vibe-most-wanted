@@ -83,13 +83,29 @@ export function isUnrevealed(nft: any): boolean {
     return false;
   }
 
-  // PRIORITY 3: Check for explicit unopened indicators
+  // PRIORITY 3: Check if name indicates revealed card
+  // VibeFID/VMW cards have username as name when revealed (e.g. 'zurkchad', 'jvhbo')
+  // Unrevealed have generic names like 'VibeFID #123' or 'Unopened'
+  const isGenericName = (
+    n === 'unopened' ||
+    n === '' ||
+    n.includes('sealed pack') ||
+    /^vibefid\s*#?\d+$/i.test(n) ||
+    /^vibe\s*most\s*wanted\s*#?\d+$/i.test(n)
+  );
+
+  // If name is NOT generic, card is revealed even with stale Alchemy data
+  if (!isGenericName && n.length > 0) {
+    return false;
+  }
+
+  // PRIORITY 4: Check for explicit unopened indicators
   const s = (findAttr(nft, 'status') || '').toLowerCase();
   if (r === 'unopened' || s === 'unopened' || n === 'unopened' || n.includes('sealed pack')) {
     return true;
   }
 
-  // PRIORITY 4: Fallback - check if has image OR rarity
+  // PRIORITY 5: Fallback - check if has image OR rarity
   const hasImage = !!(
     nft?.image?.cachedUrl ||
     nft?.image?.originalUrl ||
