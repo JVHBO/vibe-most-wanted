@@ -102,6 +102,20 @@ app: v.optional(v.string()),
 ```
 - **CRITICAL**: VBMS and VibeFID share the same Convex deployment. Never revert commits that change schema without fixing the schema first!
 
+### Bug #9: Balance cache skipping new collections (Jan 2026)
+- **Symptoms**: Player's NFTs not showing, ownedTokenIds missing cards they own on-chain
+- **Cause**: `checkCollectionBalances()` in `lib/nft/fetcher.ts` was skipping contracts not in cache
+- **Location**: Line ~191 in `lib/nft/fetcher.ts`
+- **Fix**: Changed filter to include contracts NOT in cache (treat as unknown, fetch them)
+```typescript
+// OLD (buggy): If contract not in cache, assumed balance = 0, skipped fetch
+cached.balances[contractLower] || 0) > 0
+
+// NEW (fixed): If contract not in cache, include it to fetch
+if (!(contractLower in cached.balances)) return true; // need to fetch
+```
+- **Related**: Alchemy marks some collections as "spam" but still returns them
+
 ## Security
 
 - Blacklist is in `convex/blacklist.ts`
