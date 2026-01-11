@@ -138,23 +138,21 @@ const getAvatarFallback = (): string => {
  */
 async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: number, cards: number) => void): Promise<any[]> {
   const enabledCollections = getEnabledCollections();
-  devLog('🎴 [Page] Starting optimized NFT fetch for', enabledCollections.length, 'collections');
+  devLog('🎴 [Page] Starting NFT fetch for', enabledCollections.length, 'collections');
 
-  // STEP 1: Check balances via free RPC (sequential with delay to avoid rate limit)
+  // OPTIMIZATION DISABLED: RPC balance check causes missing cards
+  // RPCs sometimes return 0 even when user has NFTs (silent rate limit)
+  // Fetch ALL collections from Alchemy directly
   const collectionsWithContract = enabledCollections.filter(c => c.contractAddress);
-  const { collectionsWithNfts, balances } = await checkCollectionBalances(owner, collectionsWithContract);
+  const collectionsWithNfts = collectionsWithContract; // Fetch ALL
 
-  // Log savings
-  const savedCalls = collectionsWithContract.length - collectionsWithNfts.length;
-  if (savedCalls > 0) {
-    console.log(`💰 [Page] OPTIMIZATION: Saved ${savedCalls} Alchemy calls!`);
-  }
+  console.log(`📦 [Page] Fetching ALL ${collectionsWithNfts.length} collections from Alchemy`);
 
   const allNfts: any[] = [];
   const collectionCounts: Record<string, number> = {};
   let totalCards = 0;
 
-  // STEP 2: Fetch only from collections with NFTs (or errors)
+  // Fetch from all collections
   const BATCH_SIZE = 3;
   for (let i = 0; i < collectionsWithNfts.length; i += BATCH_SIZE) {
     const batch = collectionsWithNfts.slice(i, i + BATCH_SIZE);
