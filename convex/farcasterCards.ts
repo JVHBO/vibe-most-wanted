@@ -185,6 +185,27 @@ Good luck! 🚀`;
       console.error("Failed to send welcome VibeMail:", error);
     }
 
+    // 🔧 FIX: Add VibeFID tokenId to profile's ownedTokenIds
+    try {
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+        .first();
+
+      if (profile) {
+        const currentTokens = profile.ownedTokenIds || [];
+        const fidString = args.fid.toString();
+        if (!currentTokens.includes(fidString)) {
+          await ctx.db.patch(profile._id, {
+            ownedTokenIds: [...currentTokens, fidString],
+          });
+          console.log(`✅ Added VibeFID ${fidString} to profile's ownedTokenIds`);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to update ownedTokenIds:", error);
+    }
+
     return {
       success: true,
       cardId,
