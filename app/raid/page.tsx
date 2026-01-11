@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
+import haptics from '@/lib/haptics';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { CardReplacementModal } from '@/components/CardReplacementModal';
@@ -208,8 +209,10 @@ export default function RaidPage() {
       if (soundEnabled) {
         if (isCritical) {
           AudioManager.criticalHit?.();
+          haptics.jackpot(); // Heavy haptic for critical!
         } else {
           AudioManager.cardBattle?.();
+          haptics.attack();
         }
       }
     }, 2000 + Math.random() * 1000);
@@ -412,6 +415,7 @@ export default function RaidPage() {
     try {
       if (soundEnabled) AudioManager.buttonClick();
       const result = await claimRewardsMutation({ address: address.toLowerCase() });
+      haptics.victory(); // Haptic on reward claim
       if (result.success) {
         if (soundEnabled) AudioManager.win();
         alert(`🎁 Claimed ${result.totalClaimed} coins from ${result.claimedCount} raid battles!`);

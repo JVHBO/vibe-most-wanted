@@ -8,6 +8,7 @@ import { AudioManager } from '@/lib/audio-manager';
 import { useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
 import { toast } from 'sonner';
 import { sdk } from '@farcaster/miniapp-sdk';
+import haptics from '@/lib/haptics';
 import { CONTRACTS, POOL_ABI } from '@/lib/contracts';
 import { encodeFunctionData, parseEther } from 'viem';
 import { BUILDER_CODE, dataSuffix } from '@/lib/hooks/useWriteContractWithAttribution';
@@ -391,6 +392,7 @@ export function Roulette({ onClose }: RouletteProps) {
     if (!address || isSpinning || !canSpin) return;
 
     AudioManager.buttonClick();
+    haptics.action(); // Haptic on spin start
     setIsSpinning(true);
     setShowResult(false);
     setResult(null);
@@ -448,6 +450,7 @@ export function Roulette({ onClose }: RouletteProps) {
           const currentSegment = Math.floor(normalizedRotation / SEGMENT_ANGLE);
           if (currentSegment !== lastTickSegment.current) {
             playTick();
+            haptics.tick(); // Haptic on each segment
             lastTickSegment.current = currentSegment;
           }
 
@@ -459,6 +462,7 @@ export function Roulette({ onClose }: RouletteProps) {
             setShowResult(true);
             setIsSpinning(false);
             AudioManager.win();
+            haptics.spinResult(); // Heavy haptic on result
           }
         };
 

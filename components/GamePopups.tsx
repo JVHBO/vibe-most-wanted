@@ -18,6 +18,7 @@ import { FarcasterIcon } from '@/components/PokerIcons';
 import { useMusic } from '@/contexts/MusicContext';
 import { shareToFarcaster } from '@/lib/share-utils';
 import { getAssetUrl } from '@/lib/ipfs-assets';
+import haptics from '@/lib/haptics';
 
 // Pre-generated random positions for victory-3 animation (REDUCED for mobile performance)
 const VICTORY3_TONGUE_POSITIONS = Array.from({ length: 8 }, (_, i) => ({
@@ -175,6 +176,10 @@ export function GamePopups({
 
     // Only pause when popup first opens (transition from closed to open)
     if (isAnyPopupOpen && !popupWasOpenRef.current) {
+      // Haptic feedback based on popup type
+      if (showWinPopup) haptics.victory();
+      else if (showLossPopup) haptics.defeat();
+      else if (showTiePopup) haptics.action();
       popupWasOpenRef.current = true;
       wasPausedBeforePopup.current = isPaused;
       if (!isPaused) {
