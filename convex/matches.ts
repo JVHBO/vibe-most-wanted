@@ -6,6 +6,7 @@
  */
 
 import { v } from "convex/values";
+import { deckCardValidator } from "./cardSchema";
 import { query, mutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { normalizeAddress } from "./utils";
@@ -88,8 +89,8 @@ export const recordMatch = mutation({
     ),
     playerPower: v.number(),
     opponentPower: v.number(),
-    playerCards: v.array(v.any()),
-    opponentCards: v.array(v.any()),
+    playerCards: v.array(deckCardValidator), // 🔒 SECURITY
+    opponentCards: v.array(deckCardValidator), // 🔒 SECURITY
     opponentAddress: v.optional(v.string()),
     opponentUsername: v.optional(v.string()),
     coinsEarned: v.optional(v.number()), // $TESTVBMS earned from this match
