@@ -41,6 +41,32 @@ function determinePrize(): { amount: number; index: number } {
   // Fallback to smallest prize
   return { amount: PRIZES[0].amount, index: 0 };
 }
+// Helper to find profile by address (including linked addresses)
+async function findProfileByAddress(ctx: any, normalizedAddress: string) {
+  let profile = await ctx.db.query("profiles").withIndex("by_address", (q: any) => q.eq("address", normalizedAddress)).first();
+  if (!profile) {
+    const allProfiles = await ctx.db.query("profiles").collect();
+    profile = allProfiles.find((p: any) => p.linkedAddresses?.some((linked: string) => linked.toLowerCase() === normalizedAddress)) || null;
+  }
+  return profile;
+}
+
+// Helper to find VibeFID card by address (including linked addresses)
+async function findVibeFidByAddress(ctx: any, normalizedAddress: string) {
+  let vibeFidCard = await ctx.db.query("farcasterCards").withIndex("by_address", (q: any) => q.eq("address", normalizedAddress)).first();
+  if (!vibeFidCard) {
+    const profile = await findProfileByAddress(ctx, normalizedAddress);
+    if (profile) {
+      const addressesToCheck = [profile.address, ...(profile.linkedAddresses || [])];
+      for (const addr of addressesToCheck) {
+        vibeFidCard = await ctx.db.query("farcasterCards").withIndex("by_address", (q: any) => q.eq("address", addr.toLowerCase())).first();
+        if (vibeFidCard) break;
+      }
+    }
+  }
+  return vibeFidCard;
+}
+
 
 /**
  * Check if player can spin today
@@ -51,11 +77,8 @@ export const canSpin = query({
     const today = getTodayKey();
     const normalizedAddress = address.toLowerCase();
 
-    // Check for test mode
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    // Check for profile (including linked addresses)
+    const profile = await findProfileByAddress(ctx, normalizedAddress);
 
     const isTestMode = profile?.rouletteTestMode === true;
 
@@ -69,11 +92,8 @@ export const canSpin = query({
       };
     }
 
-    // Check if user has VibeFID card
-    const vibeFidCard = await ctx.db
-      .query("farcasterCards")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    // Check if user has VibeFID card (including linked addresses)
+    const vibeFidCard = await findVibeFidByAddress(ctx, normalizedAddress);
 
     const isVibeFidHolder = !!vibeFidCard;
     const maxSpins = isVibeFidHolder ? 3 : 1;
@@ -110,20 +130,15 @@ export const spin = mutation({
     const today = getTodayKey();
     const normalizedAddress = address.toLowerCase();
 
-    // Check for test mode
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    // Check for profile (including linked addresses)
+    const profile = await findProfileByAddress(ctx, normalizedAddress);
 
     const isTestMode = profile?.rouletteTestMode === true;
 
     // Check spin limit (VibeFID = 3, regular = 1)
     if (!isTestMode) {
-      const vibeFidCard = await ctx.db
-        .query("farcasterCards")
-        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-        .first();
+      // Check VibeFID (including linked addresses)
+      const vibeFidCard = await findVibeFidByAddress(ctx, normalizedAddress);
 
       const isVibeFidHolder = !!vibeFidCard;
       const maxSpins = isVibeFidHolder ? 3 : 1;
@@ -510,5 +525,95 @@ export const adminResetAllSpins = internalMutation({
 
     console.log(`🎰 Admin: Reset ${count} spins for all users`);
     return { deleted: count };
+  },
+});
+
+
+// Cost for paid spin (in VBMS coins - not tokens)
+const PAID_SPIN_COST = 500;
+
+/**
+ * Buy a paid spin using VBMS coins
+ * Deducts coins and allows an extra spin
+ */
+export const buyPaidSpin = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    // Get profile
+    const profile = await findProfileByAddress(ctx, normalizedAddress);
+    if (!profile) {
+      return {
+        success: false,
+        error: "Profile not found",
+      };
+    }
+
+    // Check if user has enough coins
+    const currentCoins = profile.coins || 0;
+    if (currentCoins < PAID_SPIN_COST) {
+      return {
+        success: false,
+        error: `Not enough coins. Need ${PAID_SPIN_COST}, have ${currentCoins}`,
+        required: PAID_SPIN_COST,
+        current: currentCoins,
+      };
+    }
+
+    // Deduct coins
+    const balanceBefore = currentCoins;
+    const balanceAfter = currentCoins - PAID_SPIN_COST;
+
+    await ctx.db.patch(profile._id, {
+      coins: balanceAfter,
+    });
+
+    // Create audit log
+    await createAuditLog(
+      ctx,
+      normalizedAddress,
+      "spend",
+      PAID_SPIN_COST,
+      balanceBefore,
+      balanceAfter,
+      "paid_spin",
+      undefined,
+      { reason: "Purchased paid roulette spin" }
+    );
+
+    // Determine prize
+    const { amount, index } = determinePrize();
+
+    // Record paid spin
+    await ctx.db.insert("rouletteSpins", {
+      address: normalizedAddress,
+      date: getTodayKey(),
+      prizeAmount: amount,
+      prizeIndex: index,
+      spunAt: Date.now(),
+      claimed: false,
+      isPaidSpin: true, // Mark as paid spin
+    });
+
+    console.log(`🎰 Paid Spin: ${normalizedAddress} paid ${PAID_SPIN_COST} coins, won ${amount} VBMS`);
+
+    return {
+      success: true,
+      prize: amount,
+      prizeIndex: index,
+      coinsDeducted: PAID_SPIN_COST,
+      newBalance: balanceAfter,
+    };
+  },
+});
+
+/**
+ * Get paid spin cost
+ */
+export const getPaidSpinCost = query({
+  args: {},
+  handler: async () => {
+    return { cost: PAID_SPIN_COST };
   },
 });

@@ -35,6 +35,10 @@ const rouletteTranslations = {
     shareWin: "Share Win",
     alreadySpun: "Already spun today",
     error: "Error",
+    paidSpin: "Buy Spin",
+    paidSpinCost: "coins",
+    notEnoughCoins: "Not enough coins",
+    buyingPaidSpin: "Buying...",
   },
   "pt-BR": {
     title: "Roleta Diaria",
@@ -55,6 +59,10 @@ const rouletteTranslations = {
     shareWin: "Compartilhar",
     alreadySpun: "Ja girou hoje",
     error: "Erro",
+    paidSpin: "Купить Спин",
+    paidSpinCost: "coins",
+    notEnoughCoins: "Недостаточно монет",
+    buyingPaidSpin: "Покупаю...",
   },
   es: {
     title: "Ruleta Diaria",
@@ -75,6 +83,10 @@ const rouletteTranslations = {
     shareWin: "Compartir",
     alreadySpun: "Ya giraste hoy",
     error: "Error",
+    paidSpin: "Comprar Spin",
+    paidSpinCost: "coins",
+    notEnoughCoins: "Coins insuficientes",
+    buyingPaidSpin: "Comprando...",
   },
   ru: {
     title: "Ежедневная Рулетка",
@@ -95,6 +107,10 @@ const rouletteTranslations = {
     shareWin: "Поделиться",
     alreadySpun: "Уже крутили сегодня",
     error: "Ошибка",
+    paidSpin: "स्पिन खरीदें",
+    paidSpinCost: "coins",
+    notEnoughCoins: "पर्याप्त coins नहीं",
+    buyingPaidSpin: "खरीद रहा है...",
   },
   hi: {
     title: "दैनिक रूलेट",
@@ -115,6 +131,10 @@ const rouletteTranslations = {
     shareWin: "शेयर करें",
     alreadySpun: "आज पहले से स्पिन किया",
     error: "त्रुटि",
+    paidSpin: "购买旋转",
+    paidSpinCost: "coins",
+    notEnoughCoins: "coins不足",
+    buyingPaidSpin: "购买中...",
   },
   "zh-CN": {
     title: "每日轮盘",
@@ -135,6 +155,10 @@ const rouletteTranslations = {
     shareWin: "分享",
     alreadySpun: "今日已转",
     error: "错误",
+    paidSpin: "Beli Spin",
+    paidSpinCost: "coins",
+    notEnoughCoins: "Koin tidak cukup",
+    buyingPaidSpin: "Membeli...",
   },
   id: {
     title: "Roulette Harian",
@@ -155,6 +179,10 @@ const rouletteTranslations = {
     shareWin: "Bagikan",
     alreadySpun: "Sudah spin hari ini",
     error: "Error",
+    paidSpin: "Comprar Spin",
+    paidSpinCost: "coins",
+    notEnoughCoins: "Coins insuficientes",
+    buyingPaidSpin: "Comprando...",
   },
   fr: {
     title: "Roulette Quotidienne",
@@ -175,6 +203,10 @@ const rouletteTranslations = {
     shareWin: "Partager",
     alreadySpun: "Déjà joué aujourd'hui",
     error: "Erreur",
+    paidSpin: "Acheter Spin",
+    paidSpinCost: "coins",
+    notEnoughCoins: "Coins insuffisants",
+    buyingPaidSpin: "Achat en cours...",
   },
   ja: {
     title: "デイリールーレット",
@@ -195,6 +227,10 @@ const rouletteTranslations = {
     shareWin: "シェア",
     alreadySpun: "本日スピン済み",
     error: "エラー",
+    paidSpin: "スピン購入",
+    paidSpinCost: "coins",
+    notEnoughCoins: "コイン不足",
+    buyingPaidSpin: "購入中...",
   },
   it: {
     title: "Roulette Giornaliera",
@@ -215,6 +251,10 @@ const rouletteTranslations = {
     shareWin: "Condividi",
     alreadySpun: "Già girato oggi",
     error: "Errore",
+    paidSpin: "Compra Spin",
+    paidSpinCost: "coins",
+    notEnoughCoins: "Coins insufficienti",
+    buyingPaidSpin: "Acquistando...",
   },
 };
 
@@ -250,6 +290,8 @@ export function Roulette({ onClose }: RouletteProps) {
     address ? { address } : "skip"
   );
   const spinMutation = useMutation(api.roulette.spin);
+  const buyPaidSpinMutation = useMutation(api.roulette.buyPaidSpin);
+  const paidSpinCostData = useQuery(api.roulette.getPaidSpinCost);
   const prepareClaimAction = useAction(api.roulette.prepareRouletteClaim);
   const recordClaimMutation = useMutation(api.roulette.recordRouletteClaim);
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
@@ -258,6 +300,7 @@ export function Roulette({ onClose }: RouletteProps) {
   const spinsRemaining = canSpinData?.spinsRemaining ?? 0;
   const isVibeFidHolder = canSpinData?.isVibeFidHolder ?? false;
   const [isClaiming, setIsClaiming] = useState(false);
+  const [isBuyingPaidSpin, setIsBuyingPaidSpin] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
 
   // Check for Farcaster SDK
@@ -475,6 +518,80 @@ export function Roulette({ onClose }: RouletteProps) {
       setIsSpinning(false);
     }
   };
+
+  // Handle paid spin
+  const handlePaidSpin = async () => {
+    if (!address || isSpinning || isBuyingPaidSpin) return;
+
+    AudioManager.buttonClick();
+    setIsBuyingPaidSpin(true);
+    setShowResult(false);
+    setResult(null);
+    lastTickSegment.current = -1;
+
+    try {
+      const response = await buyPaidSpinMutation({ address });
+
+      if (!response.success) {
+        toast.error(response.error || 'Failed to buy spin');
+        setIsBuyingPaidSpin(false);
+        return;
+      }
+
+      // Start spinning animation
+      setIsSpinning(true);
+      setIsBuyingPaidSpin(false);
+      haptics.action();
+
+      // Calculate final rotation (same as free spin)
+      const targetIndex = response.prizeIndex!;
+      const spins = Math.floor(5 + Math.random() * 3);
+      const offset = 0.3 + Math.random() * 0.4;
+      const targetFinalAngle = (SEGMENT_COUNT - targetIndex - offset) * SEGMENT_ANGLE;
+      const currentMod = ((rotation % 360) + 360) % 360;
+      let additionalRotation = targetFinalAngle - currentMod;
+      if (additionalRotation < 0) additionalRotation += 360;
+      const totalRotation = spins * 360 + additionalRotation;
+
+      // Animate
+      const startRotation = rotation;
+      const startTime = Date.now();
+      const duration = 5000;
+
+      const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const currentRotation = startRotation + totalRotation * easeOut;
+        setRotation(currentRotation);
+
+        const normalizedRotation = currentRotation % 360;
+        const currentSegment = Math.floor(normalizedRotation / SEGMENT_ANGLE);
+        if (currentSegment !== lastTickSegment.current) {
+          playTick();
+          haptics.tick();
+          lastTickSegment.current = currentSegment;
+        }
+
+        if (progress < 1) {
+          animationRef.current = requestAnimationFrame(animate);
+        } else {
+          setResult({ prize: response.prize!, index: response.prizeIndex! });
+          setShowResult(true);
+          setIsSpinning(false);
+          AudioManager.win();
+          haptics.spinResult();
+        }
+      };
+
+      animationRef.current = requestAnimationFrame(animate);
+    } catch (error: any) {
+      console.error('Paid spin error:', error);
+      toast.error(error.message || 'Failed to buy spin');
+      setIsBuyingPaidSpin(false);
+    }
+  };
+
 
   // Create wheel segments with dividers
   const createWheelSegments = () => {
@@ -731,7 +848,7 @@ export function Roulette({ onClose }: RouletteProps) {
             />
           )}
           <div className="bg-gradient-to-r from-vintage-gold/20 to-yellow-500/20 border-2 border-vintage-gold rounded-xl p-4">
-            <p className="text-vintage-ice text-sm mb-1">Voce ganhou</p>
+            <p className="text-vintage-ice text-sm mb-1">{t.youWon}</p>
             <p className="text-vintage-gold text-3xl font-bold animate-pulse">
               {result.prize.toLocaleString()} VBMS
             </p>
@@ -766,6 +883,21 @@ export function Roulette({ onClose }: RouletteProps) {
           >
             {isSpinning ? t.spinning : canSpin ? t.spin : t.noSpinsToday}
           </button>
+
+          {/* Paid Spin Button - show when no free spins left */}
+          {!canSpin && paidSpinCostData && (
+            <button
+              onClick={handlePaidSpin}
+              disabled={isSpinning || isBuyingPaidSpin}
+              className={`w-full py-3 mt-3 rounded-xl font-bold text-lg transition-all ${
+                isSpinning || isBuyingPaidSpin
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-500 hover:to-purple-400 shadow-lg'
+              }`}
+            >
+              {isBuyingPaidSpin ? t.buyingPaidSpin : `${t.paidSpin} (${paidSpinCostData.cost} ${t.paidSpinCost})`}
+            </button>
+          )}
 
           {/* Info */}
           <p className="text-center text-vintage-ice/50 text-xs mt-3">

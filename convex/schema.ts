@@ -1665,7 +1665,8 @@ export default defineSchema({
     prizeAmount: v.number(),
     prizeIndex: v.number(),
     spunAt: v.number(),
-    claimed: v.optional(v.boolean()), // Whether prize was claimed
+    claimed: v.optional(v.boolean()),
+    isPaidSpin: v.optional(v.boolean()), // Whether prize was claimed
     claimedAt: v.optional(v.number()), // When claimed
     txHash: v.optional(v.string()), // Claim transaction hash
   })
