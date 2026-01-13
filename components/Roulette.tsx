@@ -10,8 +10,8 @@ import { toast } from 'sonner';
 import { sdk } from '@farcaster/miniapp-sdk';
 import haptics from '@/lib/haptics';
 import { CONTRACTS, POOL_ABI } from '@/lib/contracts';
-import { encodeFunctionData, parseEther } from 'viem';
-import { BUILDER_CODE, dataSuffix } from '@/lib/hooks/useWriteContractWithAttribution';
+import { encodeFunctionData, parseEther, erc20Abi } from 'viem';
+import { encodeBuilderCodeSuffix, BUILDER_CODE } from '@/lib/builder-code';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 // Roulette translations
@@ -290,7 +290,11 @@ export function Roulette({ onClose }: RouletteProps) {
     address ? { address } : "skip"
   );
   const spinMutation = useMutation(api.roulette.spin);
-  const buyPaidSpinMutation = useMutation(api.roulette.buyPaidSpin);
+  const recordPaidSpinMutation = useMutation(api.roulette.recordPaidSpin);
+  const canBuyPaidSpinData = useQuery(
+    api.roulette.canBuyPaidSpin,
+    address ? { address } : "skip"
+  );
   const paidSpinCostData = useQuery(api.roulette.getPaidSpinCost);
   const prepareClaimAction = useAction(api.roulette.prepareRouletteClaim);
   const recordClaimMutation = useMutation(api.roulette.recordRouletteClaim);
@@ -327,6 +331,8 @@ export function Roulette({ onClose }: RouletteProps) {
       args: [parseEther(amount), nonce as `0x${string}`, signature as `0x${string}`],
     });
 
+    // Add builder code for Base attribution
+    const dataSuffix = encodeBuilderCodeSuffix(BUILDER_CODE);
     const dataWithBuilderCode = (data + dataSuffix.slice(2)) as `0x${string}`;
 
     const txHash = await provider.request({
@@ -519,9 +525,13 @@ export function Roulette({ onClose }: RouletteProps) {
     }
   };
 
-  // Handle paid spin
+  // Handle paid spin with VBMS token transfer
   const handlePaidSpin = async () => {
     if (!address || isSpinning || isBuyingPaidSpin) return;
+    if (!canBuyPaidSpinData?.canBuy) {
+      toast.error(t.notEnoughCoins || 'Daily limit reached');
+      return;
+    }
 
     AudioManager.buttonClick();
     setIsBuyingPaidSpin(true);
@@ -530,13 +540,65 @@ export function Roulette({ onClose }: RouletteProps) {
     lastTickSegment.current = -1;
 
     try {
-      const response = await buyPaidSpinMutation({ address });
+      toast.info("🔐 Sign transfer of 500 VBMS...");
+
+      // 1. Transfer 500 VBMS to pool with builder code
+      const transferData = encodeFunctionData({
+        abi: erc20Abi,
+        functionName: 'transfer',
+        args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther('500')],
+      });
+
+      // Append builder code for Base attribution
+      const dataSuffix = encodeBuilderCodeSuffix(BUILDER_CODE);
+      const dataWithBuilderCode = (transferData + dataSuffix.slice(2)) as `0x${string}`;
+      console.log('[Roulette] Paid spin with builder code:', BUILDER_CODE);
+
+      let txHash: string;
+
+      if (useFarcasterSDK) {
+        const provider = await sdk.wallet.getEthereumProvider();
+        if (!provider) throw new Error("Farcaster wallet not available");
+
+        txHash = await provider.request({
+          method: 'eth_sendTransaction',
+          params: [{
+            from: address as `0x${string}`,
+            to: CONTRACTS.VBMSToken as `0x${string}`,
+            data: dataWithBuilderCode,
+          }],
+        }) as string;
+      } else {
+        // Use wagmi/viem for non-Farcaster with builder code
+        const { sendTransaction } = await import('wagmi/actions');
+        const { config } = await import('@/lib/wagmi');
+        const result = await sendTransaction(config, {
+          to: CONTRACTS.VBMSToken as `0x${string}`,
+          data: dataWithBuilderCode,
+        });
+        txHash = result;
+      }
+
+      toast.loading("⏳ Confirming transfer...", { id: "paid-spin-tx" });
+
+      // Wait for confirmation
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // 2. Record paid spin in backend
+      const response = await recordPaidSpinMutation({
+        address,
+        txHash: txHash as string,
+      });
+
+      toast.dismiss("paid-spin-tx");
 
       if (!response.success) {
-        toast.error(response.error || 'Failed to buy spin');
+        toast.error(response.error || 'Failed to record spin');
         setIsBuyingPaidSpin(false);
         return;
       }
+
+      toast.success("✅ 500 VBMS paid! Spinning...");
 
       // Start spinning animation
       setIsSpinning(true);
@@ -587,7 +649,8 @@ export function Roulette({ onClose }: RouletteProps) {
       animationRef.current = requestAnimationFrame(animate);
     } catch (error: any) {
       console.error('Paid spin error:', error);
-      toast.error(error.message || 'Failed to buy spin');
+      toast.dismiss("paid-spin-tx");
+      toast.error(error.message || 'Transaction failed');
       setIsBuyingPaidSpin(false);
     }
   };
@@ -648,6 +711,23 @@ export function Roulette({ onClose }: RouletteProps) {
                 clipPath={`url(#segment-clip-${i})`}
                 preserveAspectRatio="xMidYMid slice"
               />
+              {/* Prize value label on top of image */}
+              <text
+                x={textX}
+                y={textY}
+                fill="white"
+                fontSize="8"
+                fontWeight="bold"
+                textAnchor="middle"
+                dominantBaseline="middle"
+                style={{
+                  textShadow: '2px 2px 4px black, -2px -2px 4px black, 0 0 8px black',
+                  transform: `rotate(${midAngle + 90}deg)`,
+                  transformOrigin: `${textX}px ${textY}px`
+                }}
+              >
+                {prize.label}
+              </text>
             </>
           ) : (
             <>
@@ -885,18 +965,23 @@ export function Roulette({ onClose }: RouletteProps) {
           </button>
 
           {/* Paid Spin Button - show when no free spins left */}
-          {!canSpin && paidSpinCostData && (
-            <button
-              onClick={handlePaidSpin}
-              disabled={isSpinning || isBuyingPaidSpin}
-              className={`w-full py-3 mt-3 rounded-xl font-bold text-lg transition-all ${
-                isSpinning || isBuyingPaidSpin
-                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-500 hover:to-purple-400 shadow-lg'
-              }`}
-            >
-              {isBuyingPaidSpin ? t.buyingPaidSpin : `${t.paidSpin} (${paidSpinCostData.cost} ${t.paidSpinCost})`}
-            </button>
+          {!canSpin && paidSpinCostData && canBuyPaidSpinData && (
+            <div className="mt-3 space-y-2">
+              <button
+                onClick={handlePaidSpin}
+                disabled={isSpinning || isBuyingPaidSpin || !canBuyPaidSpinData.canBuy}
+                className={`w-full py-3 rounded-xl font-bold text-lg transition-all ${
+                  isSpinning || isBuyingPaidSpin || !canBuyPaidSpinData.canBuy
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-500 hover:to-purple-400 shadow-lg'
+                }`}
+              >
+                {isBuyingPaidSpin ? t.buyingPaidSpin : `${t.paidSpin} (${paidSpinCostData.cost} VBMS)`}
+              </button>
+              <p className="text-center text-vintage-ice/50 text-xs">
+                {canBuyPaidSpinData.remaining}/{canBuyPaidSpinData.maxPaidSpins} paid spins remaining today
+              </p>
+            </div>
           )}
 
           {/* Info */}

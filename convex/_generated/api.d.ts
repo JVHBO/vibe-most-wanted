@@ -12,6 +12,7 @@ import type * as accessAnalytics from "../accessAnalytics.js";
 import type * as achievementDefinitions from "../achievementDefinitions.js";
 import type * as achievements from "../achievements.js";
 import type * as admin from "../admin.js";
+import type * as alchemyTracking from "../alchemyTracking.js";
 import type * as arenaCardsData from "../arenaCardsData.js";
 import type * as audioStorage from "../audioStorage.js";
 import type * as auth from "../auth.js";
@@ -87,6 +88,7 @@ declare const fullApi: ApiFromModules<{
   achievementDefinitions: typeof achievementDefinitions;
   achievements: typeof achievements;
   admin: typeof admin;
+  alchemyTracking: typeof alchemyTracking;
   arenaCardsData: typeof arenaCardsData;
   audioStorage: typeof audioStorage;
   auth: typeof auth;

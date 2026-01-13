@@ -37,6 +37,8 @@ export const logTransaction = internalMutation({
       txHash: v.optional(v.string()),
       nonce: v.optional(v.string()),
       reason: v.optional(v.string()),
+      prizeIndex: v.optional(v.number()),
+      spinId: v.optional(v.string()),
     })),
   },
   handler: async (ctx, args) => {
@@ -547,6 +549,8 @@ export async function createAuditLog(
     txHash?: string;
     nonce?: string;
     reason?: string;
+    prizeIndex?: number;
+    spinId?: string;
   }
 ) {
   await ctx.db.insert("coinAuditLog", {
