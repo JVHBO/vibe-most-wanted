@@ -155,7 +155,7 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
 
       // Convert to expected format and report progress
       const enabledCollectionIds = new Set(enabledCollections.map(c => c.id));
-      const filteredNfts = convexNfts.filter(nft => enabledCollectionIds.has(nft.collection));
+      const filteredNfts = convexNfts.filter(nft => nft.collection && enabledCollectionIds.has(nft.collection));
 
       if (onProgress) {
         onProgress(enabledCollections.length, filteredNfts.length);
