@@ -10,19 +10,12 @@ import { fetchNFTs, getImage } from "@/lib/nft/fetcher";
 import { findAttr } from "@/lib/nft/attributes";
 import { COLLECTIONS, type CollectionId } from "@/lib/collections";
 
-// Collections that can be gifted via VibeMail
+// Collections that can be gifted via VibeMail (only active collections)
 const GIFTABLE_COLLECTIONS: CollectionId[] = [
   'vibe',           // $VBMS
   'gmvbrs',         // GM VBRS
   'viberuto',       // Viberuto
   'meowverse',      // Meowverse
-  'poorlydrawnpepes', // Poorly Drawn Pepes
-  'teampothead',    // Team Pothead
-  'tarot',          // Tarot
-  'baseballcabal',  // Baseball Cabal
-  'vibefx',         // Vibe FX
-  'historyofcomputer', // History of Computer
-  'cumioh',         // $CU-MI-OH!
   'viberotbangers', // Vibe Rot Bangers
 ];
 

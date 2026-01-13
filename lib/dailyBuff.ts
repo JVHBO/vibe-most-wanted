@@ -7,19 +7,14 @@
  * - Based on UTC day to ensure consistency worldwide
  */
 
-// All collections in the Mecha Arena
+// All collections in the Mecha Arena (only active collections)
 export const ARENA_COLLECTIONS = [
   "gmvbrs",
   "vibe",
   "viberuto",
   "meowverse",
-  "poorlydrawnpepes",
-  "teampothead",
-  "tarot",
   "vibefid",
-  "baseballcabal",
-  "vibefx",
-  "historyofcomputer",
+  "viberotbangers",
 ] as const;
 
 export type ArenaCollection = (typeof ARENA_COLLECTIONS)[number];

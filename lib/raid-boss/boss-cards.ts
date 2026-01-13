@@ -36,54 +36,34 @@ export const BOSS_REWARDS_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
   mythic: 1_000_000,     // 1,000,000 $TESTVBMS
 };
 
-// Boss Rotation Order (75 bosses total)
-// 15 collections cycling through 5 rarities = 75 bosses
-// Pattern: Each round has all 15 collections, rarities rotate
-// AFCL removed from rotation - 70 bosses total (14 collections x 5 rarities)
+// Boss Rotation Order (35 bosses total)
+// 7 active collections cycling through 5 rarities = 35 bosses
+// Pattern: Each round has all 7 collections, rarities rotate
+// Active collections: gmvbrs, vibe, vibefid, viberuto, meowverse, viberotbangers, nothing
 export const BOSS_ROTATION_ORDER: CollectionId[] = [
-  // Round 1 (indices 0-13)
-  'gmvbrs', 'vibe', 'vibefid', 'viberuto', 'meowverse',
-  'poorlydrawnpepes', 'teampothead', 'tarot', 'baseballcabal', 'vibefx',
-  'historyofcomputer', 'cumioh', 'viberotbangers', 'gmvbrs',
-  // Round 2 (indices 14-27)
-  'vibe', 'vibefid', 'viberuto', 'meowverse', 'poorlydrawnpepes',
-  'teampothead', 'tarot', 'baseballcabal', 'vibefx', 'historyofcomputer',
-  'cumioh', 'viberotbangers', 'gmvbrs', 'vibe',
-  // Round 3 (indices 28-41)
-  'vibefid', 'viberuto', 'meowverse', 'poorlydrawnpepes', 'teampothead',
-  'tarot', 'baseballcabal', 'vibefx', 'historyofcomputer', 'cumioh',
-  'viberotbangers', 'gmvbrs', 'vibe', 'vibefid',
-  // Round 4 (indices 42-55)
-  'viberuto', 'meowverse', 'poorlydrawnpepes', 'teampothead', 'tarot',
-  'baseballcabal', 'vibefx', 'historyofcomputer', 'cumioh', 'viberotbangers',
-  'gmvbrs', 'vibe', 'vibefid', 'viberuto',
-  // Round 5 (indices 56-69)
-  'meowverse', 'poorlydrawnpepes', 'teampothead', 'tarot', 'baseballcabal',
-  'vibefx', 'historyofcomputer', 'cumioh', 'viberotbangers', 'gmvbrs',
-  'vibe', 'vibefid', 'viberuto', 'meowverse',
+  // Round 1 (indices 0-6)
+  'gmvbrs', 'vibe', 'vibefid', 'viberuto', 'meowverse', 'viberotbangers', 'gmvbrs',
+  // Round 2 (indices 7-13)
+  'vibe', 'vibefid', 'viberuto', 'meowverse', 'viberotbangers', 'gmvbrs', 'vibe',
+  // Round 3 (indices 14-20)
+  'vibefid', 'viberuto', 'meowverse', 'viberotbangers', 'gmvbrs', 'vibe', 'vibefid',
+  // Round 4 (indices 21-27)
+  'viberuto', 'meowverse', 'viberotbangers', 'gmvbrs', 'vibe', 'vibefid', 'viberuto',
+  // Round 5 (indices 28-34)
+  'meowverse', 'viberotbangers', 'gmvbrs', 'vibe', 'vibefid', 'viberuto', 'meowverse',
 ];
 
 export const BOSS_RARITY_ORDER: CardRarity[] = [
-  // Round 1 (indices 0-13)
-  'Common', 'Rare', 'Epic', 'Legendary', 'Mythic',
-  'Common', 'Rare', 'Epic', 'Legendary', 'Mythic',
-  'Common', 'Rare', 'Epic', 'Legendary',
-  // Round 2 (indices 14-27)
-  'Mythic', 'Common', 'Rare', 'Epic', 'Legendary',
-  'Mythic', 'Common', 'Rare', 'Epic', 'Legendary',
-  'Mythic', 'Common', 'Rare', 'Epic',
-  // Round 3 (indices 28-41)
-  'Legendary', 'Mythic', 'Common', 'Rare', 'Epic',
-  'Legendary', 'Mythic', 'Common', 'Rare', 'Epic',
-  'Legendary', 'Mythic', 'Common', 'Rare',
-  // Round 4 (indices 42-55)
-  'Epic', 'Legendary', 'Mythic', 'Common', 'Rare',
-  'Epic', 'Legendary', 'Mythic', 'Common', 'Rare',
-  'Epic', 'Legendary', 'Mythic', 'Common',
-  // Round 5 (indices 56-69)
-  'Rare', 'Epic', 'Legendary', 'Mythic', 'Common',
-  'Rare', 'Epic', 'Legendary', 'Mythic', 'Common',
-  'Rare', 'Epic', 'Legendary', 'Mythic',
+  // Round 1 (indices 0-6)
+  'Common', 'Rare', 'Epic', 'Legendary', 'Mythic', 'Common', 'Rare',
+  // Round 2 (indices 7-13)
+  'Epic', 'Legendary', 'Mythic', 'Common', 'Rare', 'Epic', 'Legendary',
+  // Round 3 (indices 14-20)
+  'Mythic', 'Common', 'Rare', 'Epic', 'Legendary', 'Mythic', 'Common',
+  // Round 4 (indices 21-27)
+  'Rare', 'Epic', 'Legendary', 'Mythic', 'Common', 'Rare', 'Epic',
+  // Round 5 (indices 28-34)
+  'Legendary', 'Mythic', 'Common', 'Rare', 'Epic', 'Legendary', 'Mythic',
 ];
 
 /**

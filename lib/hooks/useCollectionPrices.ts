@@ -47,42 +47,27 @@ const UNISWAP_V3_POOL_ABI = [
 
 // Uniswap V3 pool addresses for collections with closed mint (token price * 100k = pack price)
 // isToken0Weth: true if WETH is token0 in the pool (lower address)
+// NOTE: Most pools disabled to reduce costs - only active collections
 const UNISWAP_V3_POOLS: Record<string, { pool: `0x${string}`; isToken0Weth: boolean }> = {
-  baseballcabal: { pool: '0x1a19B0A5F06D18359Bcaa65968e983c67de453ca', isToken0Weth: false },
-  historyofcomputer: { pool: '0x16DfA3C73674213A00F08EfEb2f8b29A13716Da5', isToken0Weth: true },
-  tarot: { pool: '0xa959386125F54DdC39bc9d9200de932EC023049D', isToken0Weth: true },
-  cumioh: { pool: '0x7A6788b9B6E7a1Cb78f01BD18217f67CfaDDBaEE', isToken0Weth: true },
+  // All disabled collections removed
 };
 
-// Hardcoded contract addresses (lowercase, same format as VBMS_CONTRACTS)
+// Hardcoded contract addresses (lowercase, only active collections)
 const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
   vibe: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728',
   gmvbrs: '0xefe512e73ca7356c20a21aa9433bad5fc9342d46',
   viberuto: '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f',
   meowverse: '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150',
-  poorlydrawnpepes: '0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8',
-  teampothead: '0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea',
-  tarot: '0x34d639c63384a00a2d25a58f73bea73856aa0550',
-  baseballcabal: '0x3ff41af61d092657189b1d4f7d74d994514724bb',
-  vibefx: '0xc7f2d8c035b2505f30a5417c0374ac0299d88553',
-  historyofcomputer: '0x319b12e8eba0be2eae1112b357ba75c2c178b567',
-  cumioh: '0xfeabae8bdb41b2ae507972180df02e70148b38e1',
   viberotbangers: '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a',
 };
 
+// Only active collections for ticker
 const TICKER_COLLECTIONS: { id: string; displayName: string; emoji: string }[] = [
   { id: 'vibe', displayName: 'Vibe Most Wanted', emoji: '🎭' },
   { id: 'gmvbrs', displayName: 'GM VBRS', emoji: '🌅' },
   { id: 'viberuto', displayName: 'Viberuto', emoji: '🍥' },
   { id: 'meowverse', displayName: 'Meowverse', emoji: '🐱' },
-  { id: 'poorlydrawnpepes', displayName: 'Poorly Drawn Pepes', emoji: '🐸' },
-  { id: 'teampothead', displayName: 'Team Pothead', emoji: '🌿' },
-  { id: 'tarot', displayName: 'Tarot', emoji: '🔮' },
-  { id: 'baseballcabal', displayName: 'Baseball Cabal', emoji: '⚾' },
-  { id: 'vibefx', displayName: 'Vibe FX', emoji: '✨' },
-  { id: 'historyofcomputer', displayName: 'History of Computer', emoji: '💻' },
-  { id: 'cumioh', displayName: '$CU-MI-OH!', emoji: '🎴' },
-  { id: 'viberotbangers', displayName: 'Vibe Rot Bangers', emoji: '🤮' },
+  { id: 'viberotbangers', displayName: 'Vibe Rot Bangers', emoji: '🧟' },
 ];
 
 export interface CollectionPrice {

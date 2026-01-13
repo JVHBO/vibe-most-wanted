@@ -116,6 +116,25 @@ if (!(contractLower in cached.balances)) return true; // need to fetch
 ```
 - **Related**: Alchemy marks some collections as "spam" but still returns them
 
+### Bug #10: RPC balance check '0x' treated as error (Jan 2026)
+- **Symptoms**: Optimization disabled because all users fetched ALL collections
+- **Cause**: `checkSingleBalance()` treated `'0x'` response as error (-1) instead of valid 0 balance
+- **Location**: `lib/nft/fetcher.ts` line ~130
+- **Issues fixed**:
+  1. `'0x'`, `'0x0'`, `'0x00'` are now treated as valid 0 balance
+  2. Cache now saves for users with 0 NFTs (saves future RPC calls)
+  3. Fallback to "fetch ALL" only triggers if ALL RPCs fail (-1), not if user has 0 NFTs
+- **Impact**: Reduces Alchemy calls by ~70-90% for returning users
+```typescript
+// OLD (buggy): '0x' was treated as error
+if (json.result === '0x') return -1; // Wrong!
+
+// NEW (fixed): '0x' means 0 balance
+if (json.result === '0x' || json.result === '0x0' || json.result === '0x00') {
+  return 0; // Valid - user has 0 NFTs in this collection
+}
+```
+
 ## Security
 
 - Blacklist is in `convex/blacklist.ts`

@@ -90,6 +90,10 @@ interface BalanceCacheEntry {
 
 /**
  * Check NFT balance for a single contract
+ * Returns: number >= 0 for valid balance, -1 for RPC error
+ *
+ * FIX (Jan 2026): '0x' is now treated as valid 0 balance, not an error
+ * This prevents unnecessary Alchemy calls for users with 0 NFTs
  */
 async function checkSingleBalance(
   owner: string,
@@ -110,28 +114,35 @@ async function checkSingleBalance(
         params: [{ to: contractAddress, data }, 'latest'],
         id: 1,
       }),
+      signal: AbortSignal.timeout(5000), // 5s timeout
     });
+
+    if (!res.ok) {
+      return -1; // HTTP error
+    }
 
     const json = await res.json();
 
     if (json.error) {
-      return -1;
+      return -1; // RPC error
     }
 
-    if (json.result && json.result !== '0x') {
+    // '0x' means 0 balance - this is VALID, not an error!
+    if (json.result === '0x' || json.result === '0x0' || json.result === '0x00') {
+      return 0;
+    }
+
+    if (json.result) {
       const balance = parseInt(json.result, 16);
-      // Valid balance response
-      if (!isNaN(balance)) {
+      if (!isNaN(balance) && balance >= 0) {
         return balance;
       }
     }
 
-    // '0x' or empty result could be rate limit - treat as error to force Alchemy fetch
-    // This is safer: if user has 0 NFTs, Alchemy returns empty array (no harm)
-    // If RPC lied due to rate limit, we still fetch from Alchemy
+    // Empty or invalid result = RPC issue
     return -1;
   } catch {
-    return -1;
+    return -1; // Network error or timeout
   }
 }
 
@@ -256,17 +267,16 @@ export async function checkCollectionBalances(
       }
     }
 
-    // Cache the results ONLY if we got valid responses (no -1 errors) and at least one collection has NFTs
+    // Cache the results if we got valid responses (no -1 errors)
+    // IMPORTANT: Cache even if user has 0 NFTs - this is valid and saves future RPC calls!
     const hasErrors = Object.values(balances).some(b => b === -1);
     const hasAnyNfts = Object.values(balances).some(b => b > 0);
 
-    if (hasAnyNfts && !hasErrors) {
+    if (!hasErrors) {
       setBalanceCache(owner, balances);
-      console.log(`💾 Cached balances for ${owner.slice(0, 10)}...`);
-    } else if (hasErrors) {
-      console.log(`⚠️ Not caching - had ${errors} RPC errors`);
+      console.log(`💾 Cached balances for ${owner.slice(0, 10)}... (${hasAnyNfts ? nftsFound + ' NFTs found' : '0 NFTs - user has none'})`);
     } else {
-      console.log(`⚠️ Not caching - no NFTs found for ${owner.slice(0, 10)}...`);
+      console.log(`⚠️ Not caching - had ${errors} RPC errors`);
     }
 
     // Collections with NFTs OR with errors (need to check via Alchemy)
@@ -277,10 +287,15 @@ export async function checkCollectionBalances(
       )
     );
 
-    // 🔧 FIX: If ALL returned 0 (RPC rate limit), fetch ALL
-    if (collectionsWithNfts.length === 0 && collections.length > 0) {
-      console.warn('All RPCs returned 0 - forcing fetch ALL');
+    // Only fetch ALL if EVERY single RPC failed (all -1 errors)
+    // If user genuinely has 0 NFTs (all 0s, no errors), return empty - that's correct!
+    const allFailed = Object.values(balances).every(b => b === -1);
+    if (allFailed && collections.length > 0) {
+      console.warn('⚠️ All RPCs failed (-1) - fetching ALL as fallback');
       collectionsWithNfts = collections.filter(c => c.contractAddress);
+    } else if (collectionsWithNfts.length === 0 && collections.length > 0 && !hasErrors) {
+      // User genuinely has 0 NFTs across all collections - this is valid!
+      console.log('✅ User has 0 NFTs across all collections - no Alchemy calls needed');
     }
     console.log(`📊 Found NFTs in ${nftsFound} of ${collections.length} collections`);
 
@@ -835,20 +850,23 @@ export async function fetchAndProcessNFTs(
 
   let collectionsToFetch = nftCollections;
 
-  // OPTIMIZATION DISABLED: RPC balance check causes missing cards
-  // RPCs sometimes return 0 even when user has NFTs (silent rate limit)
-  // Always fetch all collections from Alchemy to ensure no cards are missed
-  // TODO: Re-enable with better rate limit detection
-  if (!skipBalanceCheck && false) { // DISABLED
+  // OPTIMIZATION RE-ENABLED (Jan 2026): Fixed RPC balance check
+  // - '0x' is now correctly treated as 0 balance (not error)
+  // - Caching works for users with 0 NFTs
+  // - Only falls back to Alchemy ALL if ALL RPCs fail
+  if (!skipBalanceCheck) {
     console.log(`🚀 OPTIMIZATION: Checking balances via free RPC before Alchemy...`);
     const { collectionsWithNfts } = await checkCollectionBalances(owner, nftCollections);
     collectionsToFetch = collectionsWithNfts as typeof nftCollections;
 
     if (collectionsToFetch.length < nftCollections.length) {
       console.log(`💰 Saved ${nftCollections.length - collectionsToFetch.length} Alchemy calls!`);
+    } else if (collectionsToFetch.length === 0) {
+      console.log(`✅ User has 0 NFTs - no Alchemy calls needed`);
+      return [];
     }
   } else {
-    console.log(`📦 Fetching ALL ${nftCollections.length} collections from Alchemy (balance check disabled)`);
+    console.log(`📦 Fetching ALL ${nftCollections.length} collections from Alchemy (balance check skipped)`);
   }
 
   const allNfts: any[] = [];

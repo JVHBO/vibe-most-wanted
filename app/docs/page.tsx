@@ -301,16 +301,8 @@ export default function DocsPage() {
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🎭 $VBMS</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🍥 Viberuto</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🐱 Meowverse</span>
-                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🐸 Poorly Drawn Pepes</span>
-                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🌿 Team Pothead</span>
-                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🔮 Tarot</span>
-                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🏈 American Football</span>
                   <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🆔 VibeFID</span>
-                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">⚾ Baseball Cabal</span>
-                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">✨ Vibe FX</span>
-                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">💻 History of Computer</span>
-                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🍜 Cumioh</span>
-                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🎸 Vibe Rot Bangers</span>
+                  <span className="bg-vintage-black/50 px-2 py-1 rounded text-sm">🧟 Vibe Rot Bangers</span>
                 </div>
               </div>
             </div>

@@ -193,7 +193,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection Poorly Drawn Pepes NFT',
     contractAddress: '0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8',
     chain: 'base-mainnet',
-    enabled: true,
+    enabled: false, // Disabled to reduce Alchemy costs
     marketplaceUrl: 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY PDP PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
@@ -207,7 +207,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection Team Pothead NFT',
     contractAddress: '0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea',
     chain: 'base-mainnet',
-    enabled: true,
+    enabled: false, // Disabled to reduce Alchemy costs
     marketplaceUrl: 'https://vibechain.com/market/team-pothead?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY TMPT PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
@@ -222,7 +222,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection Tarot NFT',
     contractAddress: '0x34d639c63384a00a2d25a58f73bea73856aa0550',
     chain: 'base-mainnet',
-    enabled: true,
+    enabled: false, // Disabled to reduce Alchemy costs
     marketplaceUrl: 'https://vibechain.com/market/tarot?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY TRT PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
@@ -236,7 +236,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection Baseball Cabal NFT',
     contractAddress: '0x3ff41af61d092657189b1d4f7d74d994514724bb',
     chain: 'base-mainnet',
-    enabled: true,
+    enabled: false, // Disabled to reduce Alchemy costs
     marketplaceUrl: 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY BBCL PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
@@ -250,7 +250,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection Vibe FX NFT',
     contractAddress: '0xc7f2d8c035b2505f30a5417c0374ac0299d88553',
     chain: 'base-mainnet',
-    enabled: true,
+    enabled: false, // Disabled to reduce Alchemy costs
     marketplaceUrl: 'https://vibechain.com/market/vibe-fx?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY VBFX PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
@@ -264,7 +264,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection History of Computer NFT',
     contractAddress: '0x319b12e8eba0be2eae1112b357ba75c2c178b567',
     chain: 'base-mainnet',
-    enabled: true,
+    enabled: false, // Disabled to reduce Alchemy costs
     marketplaceUrl: 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY HSTR PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
@@ -278,7 +278,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection $CU-MI-OH! NFT',
     contractAddress: '0xfeabae8bdb41b2ae507972180df02e70148b38e1',
     chain: 'base-mainnet',
-    enabled: true,
+    enabled: false, // Disabled to reduce Alchemy costs
     marketplaceUrl: 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY CUMIO PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,

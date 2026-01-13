@@ -1728,20 +1728,13 @@ export const getCpuVsCpuRooms = query({
 export const getAvailableCollections = query({
   args: {},
   handler: async () => {
-    // Return all available collections
+    // Return all available collections (only active ones)
     return [
       "gmvbrs",
       "vibe",
       "viberuto",
       "meowverse",
-      "poorlydrawnpepes",
-      "teampothead",
-      "tarot",
       "vibefid",
-      "baseballcabal",
-      "vibefx",
-      "historyofcomputer",
-      "cumioh",
       "viberotbangers",
     ];
   },

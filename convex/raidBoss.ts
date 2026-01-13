@@ -46,7 +46,7 @@ function cryptoRandomFloat(): number {
 const ENTRY_FEE = 5; // 5 VBMS to set raid deck (5 regular + 1 VibeFID special)
 const REFUEL_COST_PER_CARD = 1; // 1 VBMS per card
 const REFUEL_COST_ALL = 4; // 4 VBMS for all 5 cards (discount)
-const ATTACK_INTERVAL = 5 * 60 * 1000; // Cards attack every 5 minutes
+const ATTACK_INTERVAL = 12 * 60 * 60 * 1000; // Cards attack every 12 hours
 
 // Card replacement cost by rarity (cost to swap a new card in)
 const REPLACE_COST_BY_RARITY: Record<string, number> = {

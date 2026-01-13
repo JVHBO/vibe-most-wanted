@@ -26,20 +26,13 @@ interface CpuArenaModalProps {
   isInFarcaster?: boolean;
 }
 
-// Collection display names and emojis
+// Collection display names and emojis (only active collections)
 const COLLECTION_INFO: Record<string, { name: string; emoji: string; color: string }> = {
   gmvbrs: { name: "GM VBRS", emoji: "🌅", color: "from-orange-600 to-yellow-600" },
   vibe: { name: "$VBMS", emoji: "🎭", color: "from-purple-600 to-pink-600" },
   viberuto: { name: "Viberuto", emoji: "🍥", color: "from-orange-500 to-red-500" },
   meowverse: { name: "Meowverse", emoji: "🐱", color: "from-blue-500 to-purple-500" },
-  poorlydrawnpepes: { name: "Poorly Drawn Pepes", emoji: "🐸", color: "from-green-500 to-emerald-600" },
-  teampothead: { name: "Team Pothead", emoji: "🌿", color: "from-green-600 to-lime-500" },
-  tarot: { name: "Tarot", emoji: "🔮", color: "from-indigo-600 to-purple-600" },
   vibefid: { name: "VibeFID", emoji: "🆔", color: "from-cyan-500 to-blue-600" },
-  baseballcabal: { name: "Baseball Cabal", emoji: "⚾", color: "from-red-600 to-blue-700" },
-  vibefx: { name: "Vibe FX", emoji: "✨", color: "from-fuchsia-500 to-violet-600" },
-  historyofcomputer: { name: "History of Computer", emoji: "💻", color: "from-gray-600 to-slate-700" },
-  cumioh: { name: "$CU-MI-OH!", emoji: "🎴", color: "from-yellow-500 to-amber-600" },
   viberotbangers: { name: "Vibe Rot Bangers", emoji: "🧟", color: "from-red-600 to-purple-700" },
 };
 

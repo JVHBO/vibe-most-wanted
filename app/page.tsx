@@ -140,13 +140,23 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
   const enabledCollections = getEnabledCollections();
   devLog('🎴 [Page] Starting NFT fetch for', enabledCollections.length, 'collections');
 
-  // OPTIMIZATION DISABLED: RPC balance check causes missing cards
-  // RPCs sometimes return 0 even when user has NFTs (silent rate limit)
-  // Fetch ALL collections from Alchemy directly
+  // OPTIMIZATION RE-ENABLED (Jan 2026): Fixed RPC balance check
+  // - '0x' is now correctly treated as 0 balance (not error)
+  // - Caching works for users with 0 NFTs
+  // - Only falls back to Alchemy ALL if ALL RPCs fail
   const collectionsWithContract = enabledCollections.filter(c => c.contractAddress);
-  const collectionsWithNfts = collectionsWithContract; // Fetch ALL
 
-  console.log(`📦 [Page] Fetching ALL ${collectionsWithNfts.length} collections from Alchemy`);
+  console.log(`🚀 [Page] Checking balances via free RPC before Alchemy...`);
+  const { collectionsWithNfts, balances } = await checkCollectionBalances(owner, collectionsWithContract);
+
+  if (collectionsWithNfts.length < collectionsWithContract.length) {
+    console.log(`💰 [Page] Saved ${collectionsWithContract.length - collectionsWithNfts.length} Alchemy calls!`);
+  } else if (collectionsWithNfts.length === 0) {
+    console.log(`✅ [Page] User has 0 NFTs - no Alchemy calls needed`);
+    return [];
+  }
+
+  console.log(`📦 [Page] Fetching ${collectionsWithNfts.length} of ${collectionsWithContract.length} collections from Alchemy`);
 
   const allNfts: any[] = [];
   const collectionCounts: Record<string, number> = {};
