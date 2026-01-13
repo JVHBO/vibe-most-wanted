@@ -58,7 +58,7 @@ export function useFarcasterContext(): FarcasterContext {
         try {
           const contextPromise = sdk.context;
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('SDK context timeout')), 2000)
+            setTimeout(() => reject(new Error('SDK context timeout')), 5000)
           );
           sdkContext = await Promise.race([contextPromise, timeoutPromise]) as any;
         } catch (contextError) {

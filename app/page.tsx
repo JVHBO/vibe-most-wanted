@@ -809,6 +809,54 @@ export default function TCGPage() {
   // Leaderboard moved to /leaderboard page
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
   const isLoadingProfile = isLoadingProfileFromContext; // From ProfileContext
+
+  // 🆕 AUTO-CREATE: Mutation to auto-create profile from Farcaster
+  const upsertProfileFromFarcaster = useMutation(api.profiles.upsertProfileFromFarcaster);
+  const hasAutoCreatedProfile = useRef(false);
+
+  // 🆕 AUTO-CREATE PROFILE: When user enters via Farcaster with FID + wallet but no profile
+  useEffect(() => {
+    const autoCreateProfile = async () => {
+      // Only run once, when we have all required data
+      if (hasAutoCreatedProfile.current) return;
+      if (!address) return;
+      if (!isInFarcaster) return;
+      if (!farcasterFidState) return;
+      if (isCheckingFarcaster) return;
+      if (userProfile) return; // Already has profile
+      if (isLoadingProfile) return; // Still loading
+
+      // Get Farcaster context for username/displayName/pfpUrl
+      try {
+        const context = await sdk.context;
+        if (!context?.user) return;
+
+        const { fid, username, displayName, pfpUrl } = context.user;
+        if (!fid) return;
+
+        console.log('[AutoCreate] 🆕 Creating profile for Farcaster user:', { fid, username, address });
+        hasAutoCreatedProfile.current = true;
+
+        await upsertProfileFromFarcaster({
+          address,
+          fid,
+          username: username || `fid${fid}`,
+          displayName: displayName || undefined,
+          pfpUrl: pfpUrl || undefined,
+        });
+
+        console.log('[AutoCreate] ✅ Profile created successfully!');
+
+        // Refresh profile to get the new data
+        await refreshProfile();
+      } catch (error) {
+        console.error('[AutoCreate] ❌ Failed to auto-create profile:', error);
+        hasAutoCreatedProfile.current = false; // Allow retry
+      }
+    };
+
+    autoCreateProfile();
+  }, [address, isInFarcaster, farcasterFidState, isCheckingFarcaster, userProfile, isLoadingProfile, upsertProfileFromFarcaster, refreshProfile]);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
   // REMOVED: showReferrals - Referral system disabled
@@ -1062,7 +1110,7 @@ export default function TCGPage() {
         try {
           const contextPromise = sdk.context;
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('SDK context timeout')), 2000)
+            setTimeout(() => reject(new Error('SDK context timeout')), 5000)
           );
 
           const context = await Promise.race([contextPromise, timeoutPromise]) as any;
@@ -1086,8 +1134,20 @@ export default function TCGPage() {
         }
 
         // STEP 3: Now try to connect wallet (user is still in Farcaster even if this fails)
-        if (typeof sdk.wallet === 'undefined' || !sdk.wallet.ethProvider) {
-          console.log('[Farcaster] ⚠️ Wallet not available yet - user is in Farcaster but wallet not ready');
+        // iOS: Retry wallet check up to 3 times with delay (wallet may take longer to initialize)
+        let walletAvailable = typeof sdk.wallet !== 'undefined' && !!sdk.wallet.ethProvider;
+        let retries = 0;
+        const maxRetries = 3;
+
+        while (!walletAvailable && retries < maxRetries) {
+          console.log(`[Farcaster] ⏳ Wallet not ready, retry ${retries + 1}/${maxRetries}...`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
+          walletAvailable = typeof sdk.wallet !== 'undefined' && !!sdk.wallet.ethProvider;
+          retries++;
+        }
+
+        if (!walletAvailable) {
+          console.log('[Farcaster] ⚠️ Wallet not available after retries - user is in Farcaster but wallet not ready');
           setIsCheckingFarcaster(false);
           return;
         }
@@ -5197,7 +5257,14 @@ export default function TCGPage() {
                       onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
                       className="flex items-center gap-2 px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg transition"
                     >
-                      {userProfile.twitter ? (
+                      {userProfile.farcasterPfpUrl ? (
+                        <img
+                          src={userProfile.farcasterPfpUrl}
+                          alt={userProfile.username}
+                          className="w-6 h-6 rounded-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).src = getAvatarFallback(); }}
+                        />
+                      ) : userProfile.twitter ? (
                         <img
                           src={getAvatarUrl({ twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl }) || ''}
                           alt={userProfile.username}
