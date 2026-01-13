@@ -28,6 +28,17 @@ function getConvexClient(): ConvexHttpClient {
 }
 
 /**
+ * Check if NFT has complete metadata (not a placeholder)
+ */
+function hasCompleteMetadata(nft: any): boolean {
+  // Filter out NFTs that are placeholders (no image, no proper name)
+  if (!nft.imageUrl || nft.imageUrl === "") return false;
+  if (nft.metadataFetchedAt === 0) return false;
+  if (nft.rarity === "Unknown") return false;
+  return true;
+}
+
+/**
  * Convert Convex NFT record to CardWithMetadata format
  */
 function convexNftToCard(nft: any): CardWithMetadata {
@@ -72,10 +83,12 @@ export async function fetchNFTsFromConvex(
       ownerAddress: owner,
     });
 
-    console.log(`[Convex] Found ${nfts.length} NFTs for ${owner.slice(0, 8)}...`);
+    // Filter out incomplete NFTs (placeholders without metadata)
+    const completeNfts = nfts.filter(hasCompleteMetadata);
+    console.log(`[Convex] Found ${completeNfts.length} complete NFTs (${nfts.length - completeNfts.length} incomplete filtered) for ${owner.slice(0, 8)}...`);
 
     // Convert to Card format
-    return nfts.map(convexNftToCard);
+    return completeNfts.map(convexNftToCard);
 
   } catch (error) {
     console.error("[Convex] Error fetching NFTs:", error);
@@ -115,9 +128,11 @@ export async function fetchNFTsFromConvexMultiple(
       ownerAddresses: addresses,
     });
 
-    console.log(`[Convex] Found ${nfts.length} NFTs across ${addresses.length} wallets`);
+    // Filter out incomplete NFTs (placeholders without metadata)
+    const completeNfts = nfts.filter(hasCompleteMetadata);
+    console.log(`[Convex] Found ${completeNfts.length} complete NFTs (${nfts.length - completeNfts.length} incomplete filtered) across ${addresses.length} wallets`);
 
-    return nfts.map(convexNftToCard);
+    return completeNfts.map(convexNftToCard);
 
   } catch (error) {
     console.error("[Convex] Error fetching NFTs for multiple addresses:", error);
