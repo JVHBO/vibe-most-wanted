@@ -1711,41 +1711,6 @@ export default defineSchema({
     .index("by_timestamp", ["timestamp"]),
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // ALCHEMY API TRACKING - Track which project makes API calls
-  // ═══════════════════════════════════════════════════════════════════════════════
-
-  // Individual API call tracking
-  alchemyTracking: defineTable({
-    source: v.union(v.literal("vbms"), v.literal("vibefid"), v.literal("unknown")),
-    endpoint: v.string(), // e.g., "getNFTsForOwner"
-    contractAddress: v.optional(v.string()),
-    ownerAddress: v.optional(v.string()),
-    pageNumber: v.optional(v.number()),
-    cached: v.optional(v.boolean()),
-    responseTime: v.optional(v.number()),
-    success: v.optional(v.boolean()),
-    errorMessage: v.optional(v.string()),
-    timestamp: v.number(),
-    date: v.string(), // YYYY-MM-DD
-    hour: v.number(), // 0-23
-  })
-    .index("by_timestamp", ["timestamp"])
-    .index("by_date", ["date"])
-    .index("by_source", ["source", "timestamp"]),
-
-  // Daily aggregated stats
-  alchemyDailyStats: defineTable({
-    date: v.string(), // YYYY-MM-DD
-    source: v.union(v.literal("vbms"), v.literal("vibefid"), v.literal("unknown")),
-    totalCalls: v.number(),
-    cachedCalls: v.number(),
-    failedCalls: v.number(),
-    lastCallAt: v.number(),
-  })
-    .index("by_date", ["date"])
-    .index("by_date_source", ["date", "source"]),
-
-  // ═══════════════════════════════════════════════════════════════════════════════
   // NFT OWNERSHIP TRACKING (Source of Truth - updated via Alchemy Webhooks)
   // ═══════════════════════════════════════════════════════════════════════════════
 
