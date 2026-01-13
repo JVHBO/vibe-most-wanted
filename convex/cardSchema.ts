@@ -79,6 +79,20 @@ export const deckCardValidator = v.object({
   suitSymbol: v.optional(v.string()),
   color: v.optional(v.string()),
   contractAddress: v.optional(v.string()),
+  // Free card fields
+  badgeType: v.optional(v.string()),
+  isFreeCard: v.optional(v.boolean()),
+  description: v.optional(v.string()),
+  title: v.optional(v.string()),
+  status: v.optional(v.string()),
+  // NFT metadata fields
+  acquiredAt: v.optional(v.any()),
+  character: v.optional(v.string()),
+  // NFT attributes array
+  attributes: v.optional(v.array(v.object({
+    trait_type: v.string(),
+    value: v.union(v.string(), v.number()),
+  }))),
 });
 
 /**

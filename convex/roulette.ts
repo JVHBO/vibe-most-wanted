@@ -264,6 +264,7 @@ export const adminSetTestMode = internalMutation({
 /**
  * Prepare roulette claim - generates nonce and signature for blockchain TX
  * Uses dedicated roulette signing endpoint (no minimum amount)
+ * 🔒 SECURITY: Marks spin as pending BEFORE signing to prevent double-claims
  */
 export const prepareRouletteClaim = action({
   args: { address: v.string() },
@@ -275,18 +276,21 @@ export const prepareRouletteClaim = action({
   }> => {
     const normalizedAddress = address.toLowerCase();
 
-    // Find unclaimed spin
+    // Find unclaimed spin (excludes pending spins)
     const unclaimed = await ctx.runQuery(internal.roulette.getUnclaimedSpin, { address: normalizedAddress });
 
     if (!unclaimed) {
       throw new Error("No unclaimed spin found");
     }
 
+    // 🔒 SECURITY: Mark as pending BEFORE generating signature
+    // This prevents calling prepareRouletteClaim multiple times
+    await ctx.runMutation(internal.roulette.markSpinAsPending, { spinId: unclaimed._id });
+
     // Generate nonce for blockchain TX
     const nonce = generateNonce();
 
     // Get signature from roulette-specific signing endpoint (no minimum)
-    // TODO: Change back to 'https://www.vibemostwanted.xyz' for production
     const apiUrl = 'https://www.vibemostwanted.xyz';
     const response = await fetch(`${apiUrl}/api/vbms/sign-roulette`, {
       method: 'POST',
@@ -363,6 +367,19 @@ export const claimSmallPrize = mutation({
       txHash: "inbox", // Mark as inbox claim
     });
 
+    // 🔒 SECURITY: Add audit log for small prize claims
+    await createAuditLog(
+      ctx,
+      normalizedAddress,
+      "earn",
+      spin.prizeAmount,
+      profile.coinsInbox || 0,
+      (profile.coinsInbox || 0) + spin.prizeAmount,
+      "roulette_small_prize",
+      "inbox",
+      { spinId: spin._id, prizeIndex: spin.prizeIndex }
+    );
+
     console.log(`🎰 Roulette small prize: ${normalizedAddress} received ${spin.prizeAmount} VBMS to inbox`);
 
     return {
@@ -375,6 +392,7 @@ export const claimSmallPrize = mutation({
 
 /**
  * Internal query to get unclaimed spin (most recent)
+ * 🔒 SECURITY: Excludes spins with claimPending to prevent double-signing
  */
 export const getUnclaimedSpin = internalQuery({
   args: { address: v.string() },
@@ -390,8 +408,8 @@ export const getUnclaimedSpin = internalQuery({
       )
       .collect();
 
-    // Find most recent unclaimed spin (highest spunAt)
-    const unclaimedSpins = spins.filter(s => !s.claimed);
+    // 🔒 SECURITY: Filter out claimed AND pending spins (prevents infinite claim exploit)
+    const unclaimedSpins = spins.filter(s => !s.claimed && !s.claimPending);
     if (unclaimedSpins.length === 0) {
       return null;
     }
@@ -399,6 +417,40 @@ export const getUnclaimedSpin = internalQuery({
     // Sort by spunAt descending and get the most recent
     unclaimedSpins.sort((a, b) => (b.spunAt || 0) - (a.spunAt || 0));
     return unclaimedSpins[0];
+  },
+});
+
+/**
+ * 🔒 SECURITY: Mark spin as pending before generating signature
+ * Prevents infinite claim exploit by blocking double-signing
+ */
+export const markSpinAsPending = internalMutation({
+  args: { spinId: v.string() },
+  handler: async (ctx, { spinId }) => {
+    // Find the spin by its string ID (from _id field)
+    const today = getTodayKey();
+    const allSpins = await ctx.db.query("rouletteSpins").collect();
+    const spin = allSpins.find(s => s._id.toString() === spinId);
+
+    if (!spin) {
+      throw new Error("Spin not found");
+    }
+
+    if (spin.claimed) {
+      throw new Error("Spin already claimed");
+    }
+
+    if (spin.claimPending) {
+      throw new Error("Claim already in progress");
+    }
+
+    // Mark as pending with timestamp
+    await ctx.db.patch(spin._id, {
+      claimPending: true,
+      claimPendingAt: Date.now(),
+    });
+
+    return { success: true };
   },
 });
 
@@ -451,6 +503,27 @@ export const recordRouletteClaim = mutation({
         timestamp: Date.now(),
         type: "roulette",
       });
+
+      // 🔒 SECURITY: Add audit log for fallback claims
+      const profileFallback = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+        .first();
+
+      if (profileFallback) {
+        await createAuditLog(
+          ctx,
+          normalizedAddress,
+          "earn",
+          amount,
+          profileFallback.coins || 0,
+          (profileFallback.coins || 0) + amount,
+          "roulette_claim_fallback",
+          txHash,
+          { spinId: fallbackSpin._id }
+        );
+      }
+
       return { success: true, amount, txHash };
     }
 
@@ -469,6 +542,26 @@ export const recordRouletteClaim = mutation({
       timestamp: Date.now(),
       type: "roulette",
     });
+
+    // 🔒 SECURITY: Add audit log for roulette claims
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (profile) {
+      await createAuditLog(
+        ctx,
+        normalizedAddress,
+        "earn",
+        amount,
+        profile.coins || 0,
+        (profile.coins || 0) + amount,
+        "roulette_claim",
+        txHash,
+        { spinId: spin._id, prizeIndex: spin.prizeIndex }
+      );
+    }
 
     console.log(`🎰 Roulette claimed: ${normalizedAddress} received ${amount} VBMS (tx: ${txHash})`);
 
@@ -529,58 +622,81 @@ export const adminResetAllSpins = internalMutation({
 });
 
 
-// Cost for paid spin (in VBMS coins - not tokens)
+// Cost for paid spin (in VBMS tokens - 500 VBMS)
 const PAID_SPIN_COST = 500;
+const MAX_PAID_SPINS_PER_DAY = 20;
 
 /**
- * Buy a paid spin using VBMS coins
- * Deducts coins and allows an extra spin
+ * Check if user can buy a paid spin
  */
-export const buyPaidSpin = mutation({
+export const canBuyPaidSpin = query({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
+    const today = getTodayKey();
 
-    // Get profile
-    const profile = await findProfileByAddress(ctx, normalizedAddress);
-    if (!profile) {
+    // Count paid spins today
+    const paidSpins = await ctx.db
+      .query("rouletteSpins")
+      .withIndex("by_address_date", (q) =>
+        q.eq("address", normalizedAddress).eq("date", today)
+      )
+      .collect();
+
+    const paidSpinsToday = paidSpins.filter(s => s.isPaidSpin === true).length;
+    const canBuy = paidSpinsToday < MAX_PAID_SPINS_PER_DAY;
+
+    return {
+      canBuy,
+      paidSpinsToday,
+      maxPaidSpins: MAX_PAID_SPINS_PER_DAY,
+      remaining: MAX_PAID_SPINS_PER_DAY - paidSpinsToday,
+      cost: PAID_SPIN_COST,
+    };
+  },
+});
+
+/**
+ * Record paid spin after TX is confirmed
+ * Called after user sends VBMS to pool
+ */
+export const recordPaidSpin = mutation({
+  args: {
+    address: v.string(),
+    txHash: v.string(),
+  },
+  handler: async (ctx, { address, txHash }) => {
+    const normalizedAddress = address.toLowerCase();
+    const today = getTodayKey();
+
+    // Check daily limit
+    const paidSpins = await ctx.db
+      .query("rouletteSpins")
+      .withIndex("by_address_date", (q) =>
+        q.eq("address", normalizedAddress).eq("date", today)
+      )
+      .collect();
+
+    const paidSpinsToday = paidSpins.filter(s => s.isPaidSpin === true).length;
+    if (paidSpinsToday >= MAX_PAID_SPINS_PER_DAY) {
       return {
         success: false,
-        error: "Profile not found",
+        error: `Daily limit reached (${MAX_PAID_SPINS_PER_DAY} paid spins)`,
       };
     }
 
-    // Check if user has enough coins
-    const currentCoins = profile.coins || 0;
-    if (currentCoins < PAID_SPIN_COST) {
+    // Check if txHash already used
+    const existingTx = await ctx.db
+      .query("rouletteSpins")
+      .filter((q) => q.eq(q.field("paidTxHash"), txHash))
+      .first();
+
+    if (existingTx) {
       return {
         success: false,
-        error: `Not enough coins. Need ${PAID_SPIN_COST}, have ${currentCoins}`,
-        required: PAID_SPIN_COST,
-        current: currentCoins,
+        error: "Transaction already used",
       };
     }
-
-    // Deduct coins
-    const balanceBefore = currentCoins;
-    const balanceAfter = currentCoins - PAID_SPIN_COST;
-
-    await ctx.db.patch(profile._id, {
-      coins: balanceAfter,
-    });
-
-    // Create audit log
-    await createAuditLog(
-      ctx,
-      normalizedAddress,
-      "spend",
-      PAID_SPIN_COST,
-      balanceBefore,
-      balanceAfter,
-      "paid_spin",
-      undefined,
-      { reason: "Purchased paid roulette spin" }
-    );
 
     // Determine prize
     const { amount, index } = determinePrize();
@@ -588,22 +704,21 @@ export const buyPaidSpin = mutation({
     // Record paid spin
     await ctx.db.insert("rouletteSpins", {
       address: normalizedAddress,
-      date: getTodayKey(),
+      date: today,
       prizeAmount: amount,
       prizeIndex: index,
       spunAt: Date.now(),
       claimed: false,
-      isPaidSpin: true, // Mark as paid spin
+      isPaidSpin: true,
+      paidTxHash: txHash,
     });
 
-    console.log(`🎰 Paid Spin: ${normalizedAddress} paid ${PAID_SPIN_COST} coins, won ${amount} VBMS`);
+    console.log(`🎰 Paid Spin (TX): ${normalizedAddress} paid 500 VBMS, won ${amount} VBMS (tx: ${txHash})`);
 
     return {
       success: true,
       prize: amount,
       prizeIndex: index,
-      coinsDeducted: PAID_SPIN_COST,
-      newBalance: balanceAfter,
     };
   },
 });
@@ -614,6 +729,9 @@ export const buyPaidSpin = mutation({
 export const getPaidSpinCost = query({
   args: {},
   handler: async () => {
-    return { cost: PAID_SPIN_COST };
+    return {
+      cost: PAID_SPIN_COST,
+      maxPerDay: MAX_PAID_SPINS_PER_DAY,
+    };
   },
 });
