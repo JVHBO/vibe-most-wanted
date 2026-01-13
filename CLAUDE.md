@@ -416,6 +416,67 @@ npx convex run profiles:updateStats '{"address": "0x...", "stats": {...}, "token
    - `admin:addVibeFIDToOwnedTokens` - Adiciona VibeFID faltando
    - `admin:syncDefenseDeckToOwned` - Sincroniza defenseDeck → ownedTokenIds
 
+## Convex NFT Ownership System (Em Progresso - Jan 2026)
+
+### Objetivo
+Eliminar 44M+ chamadas Alchemy/mês usando Convex como fonte única de verdade para NFT ownership.
+
+### Status: PAUSADO (precisa de sync inicial)
+
+### O que foi feito:
+1. ✅ Criado `convex/nftOwnership.ts` - tabela e mutations para NFT tracking
+2. ✅ Criado `lib/nft/convex-fetcher.ts` - funções para buscar do Convex
+3. ✅ Criado `app/api/webhook/alchemy/route.ts` - webhook handler para 13 coleções
+4. ✅ Configurado webhook no Alchemy Dashboard com todos os 13 contratos
+5. ✅ Adicionado `ALCHEMY_WEBHOOK_SIGNING_KEY` no Vercel
+
+### Contratos configurados no webhook:
+| Collection | Contract |
+|------------|----------|
+| VBMS | `0xf14c1dc8ce5fe65413379f76c43fa1460c31e728` |
+| GM VBRS | `0xefe512e73ca7356c20a21aa9433bad5fc9342d46` |
+| VibeFID | `0x60274a138d026e3cb337b40567100fdec3127565` |
+| Viberuto | `0x70b4005a83a0b39325d27cf31bd4a7a30b15069f` |
+| Meowverse | `0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150` |
+| Poorly Drawn Pepes | `0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8` |
+| Team Pothead | `0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea` |
+| Tarot | `0x34d639c63384a00a2d25a58f73bea73856aa0550` |
+| Baseball Cabal | `0x3ff41af61d092657189b1d4f7d74d994514724bb` |
+| Vibe FX | `0xc7f2d8c035b2505f30a5417c0374ac0299d88553` |
+| History of Computer | `0x319b12e8eba0be2eae1112b357ba75c2c178b567` |
+| $CU-MI-OH! | `0xfeabae8bdb41b2ae507972180df02e70148b38e1` |
+| Vibe Rot Bangers | `0x120c612d79a3187a3b8b4f4bb924cebe41eb407a` |
+
+### Problema encontrado:
+- Webhook registra transfers mas NÃO tem metadata (imageUrl, rarity, etc.)
+- Cards apareciam sem imagem porque Convex só tinha placeholders
+- Revertemos para Alchemy-only até resolver sync inicial
+
+### Próximos passos para ativar:
+1. **Criar script de sync inicial**:
+   - Buscar TODOS os NFTs de todos os contratos via Alchemy
+   - Popular Convex com metadata completa (imageUrl, rarity, power, etc.)
+   - Só rodar UMA vez por coleção
+
+2. **Melhorar webhook handler**:
+   - Quando receber transfer sem metadata, buscar metadata do Alchemy
+   - Salvar com dados completos no Convex
+
+3. **Testar fluxo completo**:
+   - Verificar que Convex tem dados completos
+   - Ativar Convex-first no `page.tsx`
+   - Verificar fallback para Alchemy funciona
+
+### Arquivos relevantes:
+- `convex/nftOwnership.ts` - Mutations e queries (PRONTO)
+- `lib/nft/convex-fetcher.ts` - Client-side fetcher (DESATIVADO)
+- `app/api/webhook/alchemy/route.ts` - Webhook handler (ATIVO mas dados incompletos)
+- `app/page.tsx` - Usa Alchemy direto (REVERTIDO)
+
+### Webhook signing key:
+- Variável: `ALCHEMY_WEBHOOK_SIGNING_KEY`
+- Valor: `whsec_okGN8R5CG0vXZFLMvXjt5nNp`
+
 ## VibeFID vs VBMS Notifications
 
 ### Neynar Apps Separados
