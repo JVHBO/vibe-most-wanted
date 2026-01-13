@@ -14,7 +14,7 @@
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 import { internal } from "@/convex/_generated/api";
-import type { Card } from "@/lib/types/card";
+import type { CardWithMetadata } from "@/lib/types/card";
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "";
 
@@ -29,9 +29,9 @@ function getConvexClient(): ConvexHttpClient {
 }
 
 /**
- * Convert Convex NFT record to Card format
+ * Convert Convex NFT record to CardWithMetadata format
  */
-function convexNftToCard(nft: any): Card {
+function convexNftToCard(nft: any): CardWithMetadata {
   return {
     tokenId: nft.tokenId,
     name: nft.name,
@@ -43,10 +43,7 @@ function convexNftToCard(nft: any): Card {
     character: nft.character,
     collection: nft.collectionId,
     ownerAddress: nft.ownerAddress,
-    // Additional fields from Convex
     contractAddress: nft.contractAddress,
-    ownedSince: nft.ownedSince,
-    metadataFetchedAt: nft.metadataFetchedAt,
   };
 }
 
@@ -56,7 +53,7 @@ function convexNftToCard(nft: any): Card {
  */
 export async function fetchNFTsFromConvex(
   ownerAddress: string
-): Promise<Card[] | null> {
+): Promise<CardWithMetadata[] | null> {
   try {
     const convex = getConvexClient();
     const owner = ownerAddress.toLowerCase();
@@ -92,7 +89,7 @@ export async function fetchNFTsFromConvex(
  */
 export async function fetchNFTsFromConvexMultiple(
   ownerAddresses: string[]
-): Promise<Card[] | null> {
+): Promise<CardWithMetadata[] | null> {
   try {
     const convex = getConvexClient();
     const addresses = ownerAddresses.map(a => a.toLowerCase());
