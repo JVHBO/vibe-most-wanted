@@ -13,7 +13,6 @@
 
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
-import { internal } from "@/convex/_generated/api";
 import type { CardWithMetadata } from "@/lib/types/card";
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "";
@@ -178,7 +177,7 @@ export async function syncNFTsToConvex(
     }));
 
     // Bulk upsert to Convex
-    await convex.mutation(internal.nftOwnership.bulkUpsertNFTs, {
+    await convex.mutation(api.nftOwnership.bulkUpsertNFTs, {
       nfts: nftsToSync,
     });
 
@@ -215,7 +214,7 @@ export async function clearConvexCacheForOwner(ownerAddress: string): Promise<bo
     const convex = getConvexClient();
     const owner = ownerAddress.toLowerCase();
 
-    await convex.mutation(internal.nftOwnership.clearNFTsForOwner, {
+    await convex.mutation(api.nftOwnership.clearNFTsForOwner, {
       ownerAddress: owner,
     });
 

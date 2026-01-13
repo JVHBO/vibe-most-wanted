@@ -319,7 +319,7 @@ export const fetchAndSaveMetadata = internalMutation({
  * Bulk upsert NFTs (for initial sync)
  * More efficient than individual inserts
  */
-export const bulkUpsertNFTs = internalMutation({
+export const bulkUpsertNFTs = mutation({
   args: {
     nfts: v.array(v.object({
       contractAddress: v.string(),
@@ -434,7 +434,7 @@ export const updateSyncStatus = internalMutation({
 /**
  * Delete all NFTs for an owner (used when re-syncing)
  */
-export const clearNFTsForOwner = internalMutation({
+export const clearNFTsForOwner = mutation({
   args: {
     ownerAddress: v.string(),
   },
