@@ -64,36 +64,9 @@ function convexNftToCard(nft: any): CardWithMetadata {
 export async function fetchNFTsFromConvex(
   ownerAddress: string
 ): Promise<CardWithMetadata[] | null> {
-  try {
-    const convex = getConvexClient();
-    const owner = ownerAddress.toLowerCase();
-
-    // Check if we have any data for this owner
-    const hasData = await convex.query(api.nftOwnership.hasNFTDataForOwner, {
-      ownerAddress: owner,
-    });
-
-    if (!hasData) {
-      console.log(`[Convex] No NFT data for ${owner.slice(0, 8)}... - needs sync`);
-      return null; // Signal that sync is needed
-    }
-
-    // Fetch all NFTs from Convex
-    const nfts = await convex.query(api.nftOwnership.getNFTsByOwner, {
-      ownerAddress: owner,
-    });
-
-    // Filter out incomplete NFTs (placeholders without metadata)
-    const completeNfts = nfts.filter(hasCompleteMetadata);
-    console.log(`[Convex] Found ${completeNfts.length} complete NFTs (${nfts.length - completeNfts.length} incomplete filtered) for ${owner.slice(0, 8)}...`);
-
-    // Convert to Card format
-    return completeNfts.map(convexNftToCard);
-
-  } catch (error) {
-    console.error("[Convex] Error fetching NFTs:", error);
-    return null;
-  }
+  // TEMPORARILY DISABLED - Convex data is incomplete, using Alchemy directly
+  console.log(`[Convex] DISABLED - falling back to Alchemy`);
+  return null;
 }
 
 /**
@@ -102,42 +75,9 @@ export async function fetchNFTsFromConvex(
 export async function fetchNFTsFromConvexMultiple(
   ownerAddresses: string[]
 ): Promise<CardWithMetadata[] | null> {
-  try {
-    const convex = getConvexClient();
-    const addresses = ownerAddresses.map(a => a.toLowerCase());
-
-    // Check if we have data for any address
-    let hasAnyData = false;
-    for (const addr of addresses) {
-      const hasData = await convex.query(api.nftOwnership.hasNFTDataForOwner, {
-        ownerAddress: addr,
-      });
-      if (hasData) {
-        hasAnyData = true;
-        break;
-      }
-    }
-
-    if (!hasAnyData) {
-      console.log(`[Convex] No NFT data for any linked wallet - needs sync`);
-      return null;
-    }
-
-    // Fetch all NFTs
-    const nfts = await convex.query(api.nftOwnership.getNFTsByOwners, {
-      ownerAddresses: addresses,
-    });
-
-    // Filter out incomplete NFTs (placeholders without metadata)
-    const completeNfts = nfts.filter(hasCompleteMetadata);
-    console.log(`[Convex] Found ${completeNfts.length} complete NFTs (${nfts.length - completeNfts.length} incomplete filtered) across ${addresses.length} wallets`);
-
-    return completeNfts.map(convexNftToCard);
-
-  } catch (error) {
-    console.error("[Convex] Error fetching NFTs for multiple addresses:", error);
-    return null;
-  }
+  // TEMPORARILY DISABLED - Convex data is incomplete, using Alchemy directly
+  console.log(`[Convex] DISABLED - falling back to Alchemy`);
+  return null;
 }
 
 /**
