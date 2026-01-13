@@ -86,6 +86,7 @@ import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollec
 import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
 import { isSameCard, findCard, getCardKey } from "@/lib/nft";
 import { getImage, fetchNFTs, clearAllNftCache , checkCollectionBalances } from "@/lib/nft/fetcher";
+import { fetchNFTsFromConvex, fetchNFTsFromConvexMultiple, syncNFTsToConvex } from "@/lib/nft/convex-fetcher";
 import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 import type { Card } from "@/lib/types/card";
 import { RunawayEasterEgg } from "@/components/RunawayEasterEgg";
@@ -140,13 +141,42 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
   const enabledCollections = getEnabledCollections();
   devLog('🎴 [Page] Starting NFT fetch for', enabledCollections.length, 'collections');
 
-  // OPTIMIZATION DISABLED: RPC balance check causes missing cards
-  // RPCs sometimes return 0 even when user has NFTs (silent rate limit)
-  // Fetch ALL collections from Alchemy directly
-  const collectionsWithContract = enabledCollections.filter(c => c.contractAddress);
-  const collectionsWithNfts = collectionsWithContract; // Fetch ALL
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // CONVEX-FIRST: Try to load from Convex database first (instant, consistent)
+  // Falls back to Alchemy only if Convex has no data (initial sync)
+  // ═══════════════════════════════════════════════════════════════════════════════
 
-  console.log(`📦 [Page] Fetching ALL ${collectionsWithNfts.length} collections from Alchemy`);
+  try {
+    console.log(`🔷 [Page] Checking Convex for NFT data...`);
+    const convexNfts = await fetchNFTsFromConvex(owner.toLowerCase());
+
+    if (convexNfts && convexNfts.length > 0) {
+      console.log(`✅ [Page] Loaded ${convexNfts.length} NFTs from Convex (no Alchemy calls!)`);
+
+      // Convert to expected format and report progress
+      const enabledCollectionIds = new Set(enabledCollections.map(c => c.id));
+      const filteredNfts = convexNfts.filter(nft => enabledCollectionIds.has(nft.collection));
+
+      if (onProgress) {
+        onProgress(enabledCollections.length, filteredNfts.length);
+      }
+
+      console.log(`📊 [Page] Convex NFTs (enabled collections): ${filteredNfts.length}`);
+      return filteredNfts;
+    }
+
+    console.log(`⚠️ [Page] No NFT data in Convex, falling back to Alchemy...`);
+  } catch (convexError) {
+    console.error(`❌ [Page] Convex fetch failed, falling back to Alchemy:`, convexError);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // FALLBACK: Fetch from Alchemy (only on first load or Convex error)
+  // After fetching, sync to Convex so next load is instant
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  const collectionsWithContract = enabledCollections.filter(c => c.contractAddress);
+  console.log(`📦 [Page] Fetching ${collectionsWithContract.length} collections from Alchemy (will sync to Convex)`);
 
   const allNfts: any[] = [];
   const collectionCounts: Record<string, number> = {};
@@ -155,10 +185,10 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
   // Fetch from all collections with retry logic
   const BATCH_SIZE = 3;
   const MAX_RETRIES = 2;
-  const failedCollections: typeof collectionsWithNfts = [];
+  const failedCollections: typeof collectionsWithContract = [];
 
-  for (let i = 0; i < collectionsWithNfts.length; i += BATCH_SIZE) {
-    const batch = collectionsWithNfts.slice(i, i + BATCH_SIZE);
+  for (let i = 0; i < collectionsWithContract.length; i += BATCH_SIZE) {
+    const batch = collectionsWithContract.slice(i, i + BATCH_SIZE);
 
     const results = await Promise.allSettled(
       batch.map(async (collection) => {
@@ -168,20 +198,26 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
         collectionCounts[collection.displayName] = nfts.length;
         totalCards += nfts.length;
         if (onProgress) onProgress(Object.keys(collectionCounts).length, totalCards);
-        return tagged;
+        return { nfts: tagged, collection };
       })
     );
 
     results.forEach((result, idx) => {
       if (result.status === 'fulfilled') {
-        allNfts.push(...result.value);
+        allNfts.push(...result.value.nfts);
+
+        // Sync this collection's NFTs to Convex in background
+        if (result.value.nfts.length > 0) {
+          syncNFTsToConvex(owner, result.value.nfts, result.value.collection.id)
+            .catch(err => console.error(`[Page] Convex sync failed for ${result.value.collection.displayName}:`, err));
+        }
       } else {
         failedCollections.push(batch[idx]);
         devError(`✗ [Page] Failed: ${batch[idx].displayName}`, result.reason);
       }
     });
 
-    if (i + BATCH_SIZE < collectionsWithNfts.length) {
+    if (i + BATCH_SIZE < collectionsWithContract.length) {
       await new Promise(r => setTimeout(r, 200));
     }
   }
@@ -192,7 +228,7 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
     await new Promise(r => setTimeout(r, 500));
 
     for (let retry = 0; retry < MAX_RETRIES; retry++) {
-      const stillFailed: typeof collectionsWithNfts = [];
+      const stillFailed: typeof collectionsWithContract = [];
 
       for (const collection of failedCollections) {
         try {
@@ -203,6 +239,12 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
           totalCards += nfts.length;
           allNfts.push(...tagged);
           console.log(`✅ [Page] Retry success: ${collection.displayName} - ${nfts.length} NFTs`);
+
+          // Sync to Convex
+          if (tagged.length > 0) {
+            syncNFTsToConvex(owner, tagged, collection.id)
+              .catch(err => console.error(`[Page] Convex sync failed for ${collection.displayName}:`, err));
+          }
         } catch (err) {
           stillFailed.push(collection);
           devError(`✗ [Page] Retry ${retry + 1} failed: ${collection.displayName}`, err);
@@ -222,7 +264,7 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
   }
 
   console.log('📊 [Page] CARD FETCH SUMMARY:', JSON.stringify(collectionCounts));
-  console.log(`📊 [Page] Total raw NFTs: ${allNfts.length}`);
+  console.log(`📊 [Page] Total raw NFTs: ${allNfts.length} (synced to Convex for next load)`);
   return allNfts;
 }
 

@@ -1666,7 +1666,8 @@ export default defineSchema({
     prizeIndex: v.number(),
     spunAt: v.number(),
     claimed: v.optional(v.boolean()),
-    isPaidSpin: v.optional(v.boolean()), // Whether prize was claimed
+    isPaidSpin: v.optional(v.boolean()),
+    paidTxHash: v.optional(v.string()), // Whether prize was claimed
     claimedAt: v.optional(v.number()), // When claimed
     txHash: v.optional(v.string()), // Claim transaction hash
   })
@@ -1702,4 +1703,51 @@ export default defineSchema({
   })
     .index("by_address", ["address"])
     .index("by_timestamp", ["timestamp"]),
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // NFT OWNERSHIP TRACKING (Source of Truth - updated via Alchemy Webhooks)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Tracks current ownership of all NFTs across all collections
+  // Updated in real-time by Alchemy webhooks on transfer events
+  // Eliminates need for Alchemy API calls on page load
+  nftOwnership: defineTable({
+    // Identity
+    contractAddress: v.string(),  // Collection contract (lowercase)
+    tokenId: v.string(),          // NFT token ID
+    ownerAddress: v.string(),     // Current owner (lowercase)
+    collectionId: v.string(),     // Collection ID ('vibe', 'vibefid', 'gmvbrs', etc.)
+
+    // Cached metadata (avoids additional Alchemy/IPFS calls)
+    name: v.string(),
+    imageUrl: v.string(),
+    rarity: v.string(),
+    wear: v.optional(v.string()),
+    foil: v.optional(v.string()),
+    power: v.number(),
+    character: v.optional(v.string()),
+
+    // Raw attributes for edge cases
+    attributes: v.optional(v.any()),
+
+    // Tracking timestamps
+    ownedSince: v.number(),           // When current owner received it
+    metadataFetchedAt: v.number(),    // When metadata was last fetched
+    lastWebhookAt: v.optional(v.number()), // Last webhook update
+  })
+    .index("by_owner", ["ownerAddress"])
+    .index("by_owner_collection", ["ownerAddress", "collectionId"])
+    .index("by_contract_token", ["contractAddress", "tokenId"])
+    .index("by_collection", ["collectionId"]),
+
+  // Webhook sync status - tracks last processed block per contract
+  // Used for reconciliation if webhooks miss events
+  webhookSyncStatus: defineTable({
+    contractAddress: v.string(),
+    collectionId: v.string(),
+    lastProcessedBlock: v.number(),
+    lastSyncAt: v.number(),
+    totalNftsTracked: v.number(),
+  })
+    .index("by_contract", ["contractAddress"]),
 });
