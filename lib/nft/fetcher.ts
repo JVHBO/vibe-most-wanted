@@ -822,12 +822,6 @@ export async function fetchAndProcessNFTs(
         return null;
       }
 
-      // Skip cards without valid image (placeholder or empty)
-      if (!imageUrl || imageUrl.includes('placeholder.com') || imageUrl === '') {
-        console.log(`⚠️ Skipping card without image: ${nft.tokenId}`);
-        return null;
-      }
-
       return {
         ...nft,
         imageUrl,
