@@ -6234,8 +6234,9 @@ export default function TCGPage() {
                   userFid={userProfile?.farcasterFid || (userProfile?.fid ? parseInt(userProfile.fid) : undefined)}
                   soundEnabled={soundEnabled}
                   hasVibeBadge={userProfile?.hasVibeBadge}
+                  hasVibeFID={nfts.some(c => c.collection === 'vibefid')}
                   onRewardClaimed={(amount: number) => {
-                    setSuccessMessage(`Claimed ${amount} $TESTVBMS!`);
+                    setSuccessMessage(`Claimed ${amount} coins!`);
                   }}
                 />
               )}

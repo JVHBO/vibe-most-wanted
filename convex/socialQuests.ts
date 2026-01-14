@@ -8,30 +8,55 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { normalizeAddress } from "./utils";
+import { createAuditLog } from "./coinAudit";
 
 // Social Quest Rewards (must match lib/socialQuests.ts)
+// REDUCED Jan 14 2026 - Sybil attack mitigation
+// Removed collections no longer on site: cumioh, history-of-computer, tarot
 const QUEST_REWARDS: Record<string, number> = {
-  // SDK Actions (notifications & miniapp - 1000 VBMS each)
-  enable_notifications: 1000,
-  add_miniapp: 1000,
-  // Channels
-  join_vibe_most_wanted: 500,
-  join_cumioh: 500,
-  join_fidmfers: 500,
-  // Follows
-  follow_jvhbo: 500,
-  follow_betobutter: 500,
-  follow_morlacos: 500,
-  follow_jayabs: 500,
-  follow_degencummunist: 500,
-  follow_smolemaru: 500,
-  follow_denkurhq: 500,
-  follow_zazza: 500,
-  follow_loground: 500,
-  follow_sartocrates: 500,
-  follow_bradenwolf: 500,
-  follow_viberotbangers_creator: 500,
+  // SDK Actions (notifications & miniapp - 500 VBMS each)
+  enable_notifications: 500,
+  add_miniapp: 500,
+  // Channels - 200 each
+  join_vibe_most_wanted: 200,
+  join_fidmfers: 200,
+  // Follows - 100 each (only active collections)
+  follow_jvhbo: 100,
+  follow_betobutter: 100,
+  follow_jayabs: 100,
+  follow_smolemaru: 100,
+  follow_denkurhq: 100,
+  follow_zazza: 100,
+  follow_bradenwolf: 100,
+  follow_viberotbangers_creator: 100,
 };
+
+// VibeFID contract for 2x bonus check
+const VIBEFID_CONTRACT = "0x60274a138d026e3cb337b40567100fdec3127565";
+
+/**
+ * Check if player has 2x bonus (VibeFID or VIBE Badge)
+ */
+async function has2xBonus(ctx: any, playerAddress: string): Promise<{ has2x: boolean; reason: string }> {
+  const profile = await ctx.db
+    .query("profiles")
+    .withIndex("by_address", (q: any) => q.eq("address", playerAddress))
+    .first();
+
+  if (!profile) return { has2x: false, reason: "" };
+
+  // Check VIBE Badge first (stored in profile)
+  if (profile.hasVibeBadge) {
+    return { has2x: true, reason: "VIBE Badge" };
+  }
+
+  // Check VibeFID ownership
+  if (profile.ownedTokenIds?.some((id: string) => id.toLowerCase().startsWith("vibefid:"))) {
+    return { has2x: true, reason: "VibeFID" };
+  }
+
+  return { has2x: false, reason: "" };
+}
 
 /**
  * Get social quest progress for a player
@@ -118,9 +143,9 @@ export const claimSocialQuestReward = mutation({
   handler: async (ctx, { address, questId }) => {
     const normalizedAddress = normalizeAddress(address);
 
-    // Get reward amount
-    const reward = QUEST_REWARDS[questId];
-    if (!reward) {
+    // Get base reward amount
+    const baseReward = QUEST_REWARDS[questId];
+    if (!baseReward) {
       throw new Error("Invalid quest ID");
     }
 
@@ -154,6 +179,12 @@ export const claimSocialQuestReward = mutation({
       throw new Error("Profile not found");
     }
 
+    // Check for 2x bonus (VibeFID or VIBE Badge)
+    const bonusCheck = await has2xBonus(ctx, normalizedAddress);
+    const multiplier = bonusCheck.has2x ? 2 : 1;
+    const reward = baseReward * multiplier;
+    const bonusText = bonusCheck.has2x ? ` (2x ${bonusCheck.reason})` : "";
+
     // Add coins to balance
     const currentBalance = profile.coins || 0;
     const newBalance = currentBalance + reward;
@@ -171,13 +202,26 @@ export const claimSocialQuestReward = mutation({
       amount: reward,
       type: "earn",
       source: "social_quest",
-      description: `Social quest: ${questId}`,
+      description: `Social quest: ${questId}${bonusText}`,
       timestamp: Date.now(),
       balanceBefore: currentBalance,
       balanceAfter: newBalance,
     });
 
-    console.log(`💰 Social quest reward: ${reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
+    // 🔒 SECURITY: Add audit log for tracking
+    await createAuditLog(
+      ctx,
+      normalizedAddress,
+      "earn",
+      reward,
+      currentBalance,
+      newBalance,
+      "social_quest",
+      questId,
+      { reason: `Social quest completed: ${questId}${bonusText}` }
+    );
+
+    console.log(`💰 Social quest reward: ${reward} coins for ${normalizedAddress}${bonusText}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark as claimed
     await ctx.db.patch(progress._id, {

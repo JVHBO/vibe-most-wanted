@@ -25,16 +25,18 @@ export const CHANNEL_IDS = {
   'fidmfers': 'fidmfers',
 } as const;
 
-// Social Quests Pool - Organized by creator with their channels
+// Social Quests Pool - REDUCED Jan 14 2026 (Sybil attack mitigation)
+// VibeFID holders get 2x rewards (checked in backend)
+// Removed: cumioh, history-of-computer, tarot, baseball-cabal
 export const SOCIAL_QUESTS: SocialQuest[] = [
-  // 🔔 SDK Actions (Notifications & Miniapp) - TOP PRIORITY
+  // 🔔 SDK Actions (Notifications & Miniapp) - 500 VBMS each
   {
     id: 'enable_notifications',
     type: 'notification',
     target: '',
     displayName: '🔔 Enable Notifications',
     description: 'Get game updates & rewards',
-    reward: 1000,
+    reward: 500,
     icon: '🔔',
     url: '',
   },
@@ -44,12 +46,12 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     target: '',
     displayName: '⭐ Add to Favorites',
     description: 'Add VBMS to your favorites',
-    reward: 1000,
+    reward: 500,
     icon: '⭐',
     url: '',
   },
 
-  // $VBMS
+  // $VBMS - 100 follow, 200 channel
   {
     id: 'follow_jvhbo',
     type: 'follow',
@@ -57,7 +59,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 214746,
     displayName: 'Follow @jvhbo',
     description: 'Follow $VBMS creator',
-    reward: 500,
+    reward: 100,
     icon: '',
     url: 'https://warpcast.com/jvhbo',
     collection: 'vibe-most-wanted',
@@ -68,7 +70,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     target: 'vibe-most-wanted',
     displayName: 'Join /vibemostwanted',
     description: 'Join the $VBMS channel',
-    reward: 500,
+    reward: 200,
     icon: '',
     url: 'https://warpcast.com/~/channel/vibe-most-wanted',
     collection: 'vibe-most-wanted',
@@ -82,24 +84,10 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 1009776,
     displayName: 'Follow @betobutter',
     description: 'Follow Team Pothead creator',
-    reward: 500,
+    reward: 100,
     icon: '',
     url: 'https://warpcast.com/betobutter',
     collection: 'team-pothead',
-  },
-
-  // Baseball Cabal
-  {
-    id: 'follow_morlacos',
-    type: 'follow',
-    target: 'morlacos.base.eth',
-    targetFid: 1137158,
-    displayName: 'Follow @morlacos',
-    description: 'Follow Baseball Cabal creator',
-    reward: 500,
-    icon: '',
-    url: 'https://warpcast.com/morlacos.base.eth',
-    collection: 'baseball-cabal',
   },
 
   // GM VBRS
@@ -110,35 +98,10 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 274150,
     displayName: 'Follow @jayabs',
     description: 'Follow GM VBRS creator',
-    reward: 500,
+    reward: 100,
     icon: '',
     url: 'https://warpcast.com/jayabs',
     collection: 'gm-vbrs',
-  },
-
-  // Cu-mi-oh - Creator then Channel
-  {
-    id: 'follow_degencummunist',
-    type: 'follow',
-    target: 'degencummunist.eth',
-    targetFid: 17355,
-    displayName: 'Follow @degencummunist',
-    description: 'Follow Cu-mi-oh creator',
-    reward: 500,
-    icon: '',
-    url: 'https://warpcast.com/degencummunist.eth',
-    collection: 'cu-mi-oh',
-  },
-  {
-    id: 'join_cumioh',
-    type: 'channel',
-    target: 'scum',
-    displayName: 'Join /scum',
-    description: 'Join the Cu-mi-oh channel',
-    reward: 500,
-    icon: '',
-    url: 'https://warpcast.com/~/channel/scum',
-    collection: 'cu-mi-oh',
   },
 
   // Viberuto - Creator then FID Mfers Channel
@@ -149,7 +112,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 1076846,
     displayName: 'Follow @smolemaru',
     description: 'Follow Viberuto creator',
-    reward: 500,
+    reward: 100,
     icon: '',
     url: 'https://warpcast.com/smolemaru',
     collection: 'viberuto',
@@ -160,7 +123,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     target: 'fidmfers',
     displayName: 'Join /fidmfers',
     description: 'Join the FID Mfers channel',
-    reward: 500,
+    reward: 200,
     icon: '',
     url: 'https://warpcast.com/~/channel/fidmfers',
   },
@@ -173,7 +136,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 439094,
     displayName: 'Follow @denkurhq',
     description: 'Follow Meowverse creator',
-    reward: 500,
+    reward: 100,
     icon: '',
     url: 'https://warpcast.com/denkurhq',
     collection: 'meowverse',
@@ -187,38 +150,10 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 16851,
     displayName: 'Follow @zazza',
     description: 'Follow Poorly Drawn Pepes creator',
-    reward: 500,
+    reward: 100,
     icon: '',
     url: 'https://warpcast.com/zazza',
     collection: 'poorly-drawn-pepes',
-  },
-
-  // Tarot
-  {
-    id: 'follow_loground',
-    type: 'follow',
-    target: 'loground',
-    targetFid: 320996,
-    displayName: 'Follow @loground',
-    description: 'Follow Tarot creator',
-    reward: 500,
-    icon: '',
-    url: 'https://warpcast.com/loground',
-    collection: 'tarot',
-  },
-
-  // History of Computer
-  {
-    id: 'follow_sartocrates',
-    type: 'follow',
-    target: 'sartocrates',
-    targetFid: 248216,
-    displayName: 'Follow @sartocrates',
-    description: 'Follow History of Computer creator',
-    reward: 500,
-    icon: '',
-    url: 'https://warpcast.com/sartocrates',
-    collection: 'history-of-computer',
   },
 
   // Vibe FX
@@ -229,11 +164,12 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 1012281,
     displayName: 'Follow @bradenwolf',
     description: 'Follow Vibe FX creator',
-    reward: 500,
+    reward: 100,
     icon: '',
     url: 'https://warpcast.com/bradenwolf',
     collection: 'vibe-fx',
   },
+
   // Vibe Rot Bangers
   {
     id: 'follow_viberotbangers_creator',
@@ -242,7 +178,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 1101604,
     displayName: 'Follow @zk420',
     description: 'Follow Vibe Rot Bangers creator',
-    reward: 500,
+    reward: 100,
     icon: '',
     url: 'https://warpcast.com/zk420',
     collection: 'viberotbangers',

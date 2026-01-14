@@ -18,22 +18,22 @@ export interface BossCard extends Card {
   description?: string; // Flavor text for the boss
 }
 
-// HP Scaling by Rarity (10x original values for longer boss battles)
+// HP Scaling by Rarity - REDUCED Jan 14 2026 (was 10x too high)
 export const BOSS_HP_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
-  common: 10_000_000,       // 10M HP
-  rare: 50_000_000,         // 50M HP
-  epic: 250_000_000,        // 250M HP
-  legendary: 500_000_000,    // 500M HP
-  mythic: 1_000_000_000,     // 1B HP
+  common: 1_000_000,        // 1M HP
+  rare: 5_000_000,          // 5M HP
+  epic: 25_000_000,         // 25M HP
+  legendary: 50_000_000,    // 50M HP
+  mythic: 100_000_000,      // 100M HP
 };
 
-// Reward Pool by Rarity (scales with difficulty/HP) - 10x multiplier
+// Reward Pool by Rarity - REDUCED Jan 14 2026
 export const BOSS_REWARDS_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
-  common: 5_000,          // 5,000 $TESTVBMS
-  rare: 25_000,          // 25,000 $TESTVBMS
-  epic: 125_000,         // 125,000 $TESTVBMS
-  legendary: 500_000,    // 500,000 $TESTVBMS
-  mythic: 1_000_000,     // 1,000,000 $TESTVBMS
+  common: 1_000,           // 1k coins
+  rare: 5_000,             // 5k coins
+  epic: 25_000,            // 25k coins
+  legendary: 100_000,      // 100k coins
+  mythic: 500_000,         // 500k coins
 };
 
 // Boss Rotation Order (35 bosses total)

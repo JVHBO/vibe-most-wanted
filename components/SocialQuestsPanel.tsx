@@ -16,6 +16,7 @@ interface SocialQuestsPanelProps {
   soundEnabled?: boolean;
   onRewardClaimed?: (amount: number) => void;
   hasVibeBadge?: boolean;
+  hasVibeFID?: boolean;
 }
 
 export function SocialQuestsPanel({
@@ -24,10 +25,14 @@ export function SocialQuestsPanel({
   soundEnabled = true,
   onRewardClaimed,
   hasVibeBadge = false,
+  hasVibeFID = false,
 }: SocialQuestsPanelProps) {
   const { t } = useLanguage();
-  // Cast interaction reward: 300 base, 600 with VIBE badge (2x)
-  const castInteractionReward = hasVibeBadge ? 600 : 300;
+  // 2x bonus if player has VibeFID or VIBE Badge
+  const has2xBonus = hasVibeFID || hasVibeBadge;
+  const bonusSource = hasVibeBadge ? "VIBE Badge" : hasVibeFID ? "VibeFID" : "";
+  // Cast interaction reward: 300 base, 600 with 2x bonus
+  const castInteractionReward = has2xBonus ? 600 : 300;
   const [verifying, setVerifying] = useState<string | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(new Set());
@@ -386,8 +391,46 @@ export function SocialQuestsPanel({
     return "now";
   };
 
+  // Open VibeFID miniapp to mint
+  const openVibeFIDMint = () => {
+    window.open('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', '_blank');
+  };
+
   return (
     <div className="space-y-5">
+      {/* Header with 2x Bonus Status */}
+      <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold p-4">
+        <h1 className="text-2xl md:text-3xl font-display font-bold text-vintage-gold text-center mb-3">
+          👥 SOCIAL QUESTS
+        </h1>
+
+        {/* 2x Bonus Status Banner */}
+        {has2xBonus ? (
+          <div className="p-3 bg-vintage-gold/15 border border-vintage-gold/50 rounded-xl flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-vintage-gold text-lg">🎖️</span>
+              <div>
+                <span className="text-vintage-gold font-bold text-sm">{bonusSource} Active</span>
+                <span className="text-vintage-ice ml-2 text-xs">2x coins on all quests!</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="p-3 bg-gradient-to-r from-vintage-gold/20 to-vintage-gold/10 border border-vintage-gold/50 rounded-xl flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✨</span>
+              <span className="text-vintage-ice text-sm font-medium">Get 2x rewards on all quests!</span>
+            </div>
+            <button
+              onClick={openVibeFIDMint}
+              className="px-4 py-2 rounded-lg bg-vintage-gold text-vintage-black font-bold text-xs hover:bg-vintage-gold/90 transition-all shadow-lg animate-pulse"
+            >
+              Mint VibeFID
+            </button>
+          </div>
+        )}
+      </div>
+
       {featuredCasts && featuredCasts.length > 0 && (
         <div className="bg-gradient-to-b from-vintage-charcoal/90 to-vintage-black/80 rounded-2xl border border-vintage-gold/20 p-5 backdrop-blur-sm shadow-lg">
           <div className="flex items-center justify-between mb-3">
