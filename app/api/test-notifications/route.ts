@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       notification: {
         title: title.slice(0, 32),
         body: message.slice(0, 128),
-        targetUrl: 'https://vibemostwanted.xyz',
+        target_url: 'https://vibemostwanted.xyz',
       },
     });
 
