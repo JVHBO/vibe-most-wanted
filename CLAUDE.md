@@ -494,15 +494,15 @@ Eliminar 44M+ chamadas Alchemy/mês usando Convex como fonte única de verdade p
 
 ### Webhook signing key:
 - Variável: `ALCHEMY_WEBHOOK_SIGNING_KEY`
-- Valor: `whsec_okGN8R5CG0vXZFLMvXjt5nNp`
+- Valor: (ver Vercel env vars)
 
 ## VibeFID vs VBMS Notifications
 
 ### Neynar Apps Separados
 | App | Neynar App ID | API Key |
 |-----|---------------|---------|
-| VBMS | `e4b053fc-a6bd-4975-a6bc-a3174e617d19` | (no Vercel) |
-| VibeFID | `f595d65b-e6d3-458b-abe0-0545bdf393f5` | `26C827AF-2DE5-4EF7-A258-795DA4B592F0` |
+| VBMS | `e4b053fc-a6bd-4975-a6bc-a3174e617d19` | (ver Vercel) |
+| VibeFID | `f595d65b-e6d3-458b-abe0-0545bdf393f5` | (ver Vercel) |
 
 - Cada app tem sua própria API key no dashboard do Neynar
 - VibeFID usa Neynar-only (não salva tokens no Convex)
