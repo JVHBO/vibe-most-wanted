@@ -13,10 +13,10 @@ function generateNonce(): string {
 // Prize tiers with probabilities (must sum to 100)
 // Minimum 100 VBMS to allow on-chain claims
 const PRIZES = [
-  { amount: 100, probability: 75, label: "100 VBMS" },
-  { amount: 500, probability: 15, label: "500 VBMS" },
-  { amount: 1000, probability: 7, label: "1K VBMS" },
-  { amount: 10000, probability: 2.5, label: "10K VBMS" },
+  { amount: 100, probability: 88, label: "100 VBMS" },
+  { amount: 500, probability: 8, label: "500 VBMS" },
+  { amount: 1000, probability: 2.5, label: "1K VBMS" },
+  { amount: 10000, probability: 1, label: "10K VBMS" },
   { amount: 50000, probability: 0.5, label: "50K VBMS" },
 ];
 
