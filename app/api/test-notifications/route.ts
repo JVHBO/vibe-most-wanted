@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ConvexHttpClient } from 'convex/browser';
-import { api } from '@/convex/_generated/api';
-import { devLog, devError } from '@/lib/utils/logger';
+import { NeynarAPIClient } from '@neynar/nodejs-sdk';
 
 /**
- * API endpoint to send test notification
+ * API endpoint to send test notification via Neynar
  *
  * Call with: POST /api/test-notifications
- * Optional body: { title: "...", body: "...", fid: "123456" }
+ * Body: { title?: "...", body?: "...", fid?: "123456" }
  * If fid is provided, sends only to that user. Otherwise sends to all.
  */
 export async function POST(request: NextRequest) {
@@ -16,95 +14,41 @@ export async function POST(request: NextRequest) {
 
     const title = body.title || '🎮 $VBMS';
     const message = body.body || 'Notifications are working! Ready to play?';
-    const targetFid = body.fid; // Optional: send only to this FID
+    const targetFid = body.fid ? Number(body.fid) : undefined;
 
-    devLog('📢 Sending test notifications...', targetFid ? `to FID ${targetFid}` : 'to all');
+    console.log('📢 Sending test notification via Neynar...', targetFid ? `to FID ${targetFid}` : 'to all');
 
-    // Initialize Convex
-    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
-    // Get tokens - either single user or all
-    let tokens;
-    if (targetFid) {
-      const singleToken = await convex.query(api.notifications.getTokenByFid, { fid: String(targetFid) });
-      tokens = singleToken ? [singleToken] : [];
-    } else {
-      tokens = await convex.query(api.notifications.getAllTokens);
-    }
-
-    if (!tokens || tokens.length === 0) {
+    // Initialize Neynar client
+    const apiKey = process.env.NEYNAR_API_KEY;
+    if (!apiKey) {
       return NextResponse.json({
-        success: true,
-        message: 'No tokens found in Convex',
-        sent: 0,
-      });
+        success: false,
+        error: 'NEYNAR_API_KEY not configured',
+      }, { status: 500 });
     }
 
-    devLog(`📱 Found ${tokens.length} users with notifications enabled`);
+    const client = new NeynarAPIClient({ apiKey });
 
-    let sent = 0;
-    let failed = 0;
-    const results = [];
+    // Send notification via Neynar
+    const response = await client.publishFrameNotifications({
+      targetFids: targetFid ? [targetFid] : [], // Empty = all users who enabled notifications
+      notification: {
+        title: title.slice(0, 32),
+        body: message.slice(0, 128),
+        targetUrl: 'https://vibemostwanted.xyz',
+      },
+    });
 
-    // Send to each user
-    for (const tokenData of tokens) {
-      try {
-        const payload = {
-          notificationId: `test_${tokenData.fid}_${Date.now()}`,
-          title: title.slice(0, 32),
-          body: message.slice(0, 128),
-          tokens: [tokenData.token],
-          targetUrl: 'https://vibemostwanted.xyz',
-        };
-
-        const response = await fetch(tokenData.url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-
-          if (result.invalidTokens?.includes(tokenData.token)) {
-            failed++;
-            results.push({ fid: tokenData.fid, status: 'invalid_token' });
-          } else if (result.rateLimitedTokens?.includes(tokenData.token)) {
-            failed++;
-            results.push({ fid: tokenData.fid, status: 'rate_limited' });
-          } else {
-            sent++;
-            results.push({ fid: tokenData.fid, status: 'sent' });
-          }
-        } else {
-          failed++;
-          results.push({ fid: tokenData.fid, status: 'failed', error: response.statusText });
-        }
-
-        // Wait 100ms between notifications to avoid rate limits
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-      } catch (error: any) {
-        failed++;
-        results.push({ fid: tokenData.fid, status: 'error', error: error.message });
-      }
-    }
-
-    devLog(`📊 Results: ${sent} sent, ${failed} failed`);
+    console.log('📊 Neynar response:', JSON.stringify(response));
 
     return NextResponse.json({
       success: true,
-      message: `Sent ${sent} notifications, ${failed} failed`,
-      total: tokens.length,
-      sent,
-      failed,
-      results,
+      message: 'Notification sent via Neynar',
+      response,
     });
 
   } catch (error: any) {
-    devError('❌ Error sending notifications:', error);
+    console.error('❌ Error sending notification:', error);
     return NextResponse.json(
       {
         success: false,

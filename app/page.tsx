@@ -5107,7 +5107,7 @@ export default function TCGPage() {
 
           {!isInFarcaster && (
             <a
-              href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
+              href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 text-purple-300 hover:text-purple-100 bg-purple-900/50 hover:bg-purple-800/60 font-modern font-semibold rounded-lg transition-all duration-300 tracking-wider flex items-center gap-2 text-sm md:text-base"

@@ -154,7 +154,7 @@ Your **${args.rarity}** card has been created!
 
 📱 **VibeFID** → Your Farcaster profile became a collectible card! Power is based on your Neynar Score.
 
-🎮 [Vibe Most Wanted](https://farcaster.xyz/miniapps/UpOGC4pheWVP/vbms) → Battle with your card in Poker and PvP. Bet VBMS in Mecha Arena and fight Raid Bosses!
+🎮 [Vibe Most Wanted](https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast) → Battle with your card in Poker and PvP. Bet VBMS in Mecha Arena and fight Raid Bosses!
 
 🃏 **Partner Collections** → Cards from partner projects also work in battles!
 

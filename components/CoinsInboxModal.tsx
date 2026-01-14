@@ -710,7 +710,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
                 {t('convertMiniappOnly')}
               </p>
               <a
-                href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
+                href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-block bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-2 rounded-lg transition-all"

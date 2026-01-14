@@ -300,7 +300,7 @@ export function CreateProfileModal({
 
               {/* Option 1: Open Farcaster */}
               <a
-                href="https://farcaster.xyz/miniapps/UpOGC4pheWVP/vibe-most-wanted"
+                href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white text-center rounded-lg font-semibold text-sm transition-all mb-2"

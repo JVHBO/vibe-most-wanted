@@ -248,7 +248,7 @@ choice: v.union(
 | Project | Repo | Miniapp URL |
 |---------|------|-------------|
 | VibeFID | `vibefid` | `https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid` |
-| VBMS (main) | `vibe-most-wanted` | `https://farcaster.xyz/miniapps/UpOGC4pheWVP/vbms` |
+| VBMS (main) | `vibe-most-wanted` | `https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast` |
 
 ### Shared Convex Backend
 Both projects use the SAME Convex deployment (`prod:agile-orca-761`). When deploying:
