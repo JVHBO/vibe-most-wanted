@@ -232,6 +232,68 @@ export const importTokens = mutation({
 });
 
 // ============================================================================
+// NEYNAR NOTIFICATION HELPER
+// ============================================================================
+
+/**
+ * Send notification via Neynar API
+ * @param targetFids - Array of FIDs to notify (empty = all users with notifications enabled)
+ * @param title - Notification title (max 32 chars)
+ * @param body - Notification body (max 128 chars)
+ * @param targetUrl - URL to open when clicked
+ * @returns { success_count, failure_count, not_attempted_count }
+ */
+async function sendViaNeynar(
+  targetFids: number[],
+  title: string,
+  body: string,
+  targetUrl: string = "https://vibemostwanted.xyz"
+): Promise<{ success_count: number; failure_count: number; not_attempted_count: number }> {
+  const apiKey = process.env.NEYNAR_API_KEY;
+  if (!apiKey) {
+    console.error("❌ NEYNAR_API_KEY not configured");
+    return { success_count: 0, failure_count: targetFids.length || 0, not_attempted_count: 0 };
+  }
+
+  try {
+    const payload = {
+      target_fids: targetFids,
+      notification: {
+        title: title.slice(0, 32),
+        body: body.slice(0, 128),
+        target_url: targetUrl,
+        uuid: crypto.randomUUID(),
+      },
+    };
+
+    const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ Neynar API error: ${response.status} - ${errorText}`);
+      return { success_count: 0, failure_count: targetFids.length || 0, not_attempted_count: 0 };
+    }
+
+    const result = await response.json();
+    return {
+      success_count: result.success_count || 0,
+      failure_count: result.failure_count || 0,
+      not_attempted_count: result.not_attempted_count || 0,
+    };
+  } catch (error: any) {
+    console.error(`❌ Neynar fetch error: ${error.message}`);
+    return { success_count: 0, failure_count: targetFids.length || 0, not_attempted_count: 0 };
+  }
+}
+
+// ============================================================================
 // RAID BOSS LOW ENERGY NOTIFICATIONS
 // ============================================================================
 
@@ -339,11 +401,9 @@ export const sendLowEnergyNotifications = internalAction({
             continue;
           }
 
-          // Get notification token
-          const tokenData = await ctx.runQuery(internal.notifications.getTokenByFidInternal, { fid });
-
-          if (!tokenData) {
-            console.log(`⚠️ No notification token for FID ${fid}`);
+          const fidNumber = parseInt(fid);
+          if (isNaN(fidNumber)) {
+            console.log(`⚠️ Invalid FID for ${deck.address}: ${fid}`);
             continue;
           }
 
@@ -358,42 +418,20 @@ export const sendLowEnergyNotifications = internalAction({
           const minutes = Math.round(LOW_ENERGY_THRESHOLD / 60000);
           const body = `${lowEnergyCards} card${lowEnergyCards > 1 ? 's' : ''} will run out of energy in less than ${minutes} minutes!`;
 
-          const payload = {
-            notificationId: `raid_energy_${deck.address}_${now}`.slice(0, 128),
-            title: title.slice(0, 32),
-            body: body.slice(0, 128),
-            tokens: [tokenData.token],
-            targetUrl: (tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://vibemostwanted.xyz"),
-          };
+          // Send via Neynar API (no need to fetch tokens from Convex)
+          const result = await sendViaNeynar([fidNumber], title, body, "https://vibemostwanted.xyz");
 
-          const response = await fetch(tokenData.url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-          });
-
-         if (response.ok) {
-            const result = await response.json();
-            const data = result.result || result;
-            if (data.successfulTokens?.includes(tokenData.token) ||
-                (!data.invalidTokens?.includes(tokenData.token) && !data.rateLimitedTokens?.includes(tokenData.token))) {
-              sent++;
-
-              await ctx.runMutation(internal.notificationsHelpers.updateLowEnergyNotification, {
-                address: deck.address,
-                lowEnergyCount: lowEnergyCards,
-                expiredCount: expiredCards,
-              });
-
-              console.log(`✅ Sent low energy notification to FID ${fid}`);
-            } else {
-              failed++;
-            }
+          if (result.success_count > 0) {
+            sent++;
+            await ctx.runMutation(internal.notificationsHelpers.updateLowEnergyNotification, {
+              address: deck.address,
+              lowEnergyCount: lowEnergyCards,
+              expiredCount: expiredCards,
+            });
+            console.log(`✅ Sent low energy notification to FID ${fid}`);
           } else {
             failed++;
-            console.error(`❌ Failed for FID ${fid}: ${response.status}`);
+            console.log(`❌ Failed for FID ${fid}`);
           }
 
         } catch (error) {
@@ -460,93 +498,16 @@ export const sendDailyLoginReminder = internalAction({
   // @ts-ignore
   handler: async (ctx) => {
     try {
-      const tokens = await ctx.runQuery(internal.notificationsHelpers.getAllTokens);
-
-      if (tokens.length === 0) {
-        console.log("⚠️ No notification tokens found");
-        return { sent: 0, failed: 0, total: 0 };
-      }
-
-      console.log(`📬 Sending daily login reminder to ${tokens.length} users...`);
-
-      const neynarTokens = tokens.filter(t => t.url.includes("neynar"));
-      const warpcastTokens = tokens.filter(t => !t.url.includes("neynar"));
-
-      let sent = 0;
-      let failed = 0;
+      console.log("📬 Sending daily login reminder via Neynar...");
 
       const title = "💰 Daily Login Bonus!";
       const body = "Claim your free coins! Don't miss today's reward 🎁";
-      const targetUrl = "https://vibemostwanted.xyz";
 
-      // 1️⃣ NEYNAR TOKENS
-      if (neynarTokens.length > 0 && process.env.NEYNAR_API_KEY) {
-        const neynarFids = neynarTokens.map(t => parseInt(t.fid)).filter(fid => !isNaN(fid));
-        try {
-          const neynarPayload = {
-            target_fids: neynarFids,
-            notification: { title, body, target_url: targetUrl, uuid: crypto.randomUUID() }
-          };
+      // Send to ALL users with notifications enabled (empty array = broadcast)
+      const result = await sendViaNeynar([], title, body, "https://vibemostwanted.xyz");
 
-          const neynarResponse = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-api-key": process.env.NEYNAR_API_KEY || ""
-            },
-            body: JSON.stringify(neynarPayload)
-          });
-
-          if (neynarResponse.ok) {
-            const neynarResult = await neynarResponse.json();
-            sent += neynarResult.success_count || 0;
-          } else {
-            failed += neynarFids.length;
-          }
-        } catch (e) {
-          failed += neynarTokens.length;
-        }
-      }
-
-      // 2️⃣ WARPCAST TOKENS
-      if (warpcastTokens.length > 0) {
-        for (let i = 0; i < warpcastTokens.length; i++) {
-          const tokenData = warpcastTokens[i];
-          try {
-            const payload = {
-              notificationId: `daily_login_${new Date().toISOString().split('T')[0]}_${tokenData.fid}`.slice(0, 128),
-              title, body, tokens: [tokenData.token], targetUrl
-            };
-
-            const response = await fetch(tokenData.url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            });
-
-            if (response.ok) {
-              const result = await response.json();
-              const data = result.result || result;
-              if (data.successfulTokens?.includes(tokenData.token) || (!data.successfulTokens && !data.invalidTokens)) {
-                sent++;
-              } else {
-                failed++;
-              }
-            } else {
-              failed++;
-            }
-          } catch (e) {
-            failed++;
-          }
-
-          if (i < warpcastTokens.length - 1) {
-            await sleep(100);
-          }
-        }
-      }
-
-      console.log(`📊 Daily login: ${sent} sent, ${failed} failed`);
-      return { sent, failed, total: tokens.length };
+      console.log(`📊 Daily login: ${result.success_count} sent, ${result.failure_count} failed`);
+      return { sent: result.success_count, failed: result.failure_count, total: result.success_count + result.failure_count + result.not_attempted_count };
 
     } catch (error: any) {
       console.error("❌ Error in sendDailyLoginReminder:", error);
@@ -572,117 +533,18 @@ export const sendFeaturedCastNotification = internalAction({
   // @ts-ignore
   handler: async (ctx, { castAuthor, warpcastUrl, winnerUsername }) => {
     try {
-      const tokens = await ctx.runQuery(internal.notificationsHelpers.getAllTokens);
-
-      if (tokens.length === 0) {
-        console.log("⚠️ No notification tokens found for featured cast notification");
-        return { sent: 0, failed: 0, total: 0 };
-      }
-
-      console.log(`🎬 Sending featured cast notification to ${tokens.length} users...`);
-
-      // Separate tokens: Neynar (Base App) vs Farcaster/Warpcast
-      const neynarTokens = tokens.filter(t => t.url.includes("neynar"));
-      const warpcastTokens = tokens.filter(t => !t.url.includes("neynar"));
-
-      let sent = 0;
-      let failed = 0;
+      console.log("🎬 Sending featured cast notification via Neynar...");
 
       const title = "🎯 New Wanted Cast!";
       const body = winnerUsername
         ? `@${winnerUsername} won the auction! @${castAuthor} is now WANTED! Interact to earn VBMS 💰`
         : `@${castAuthor} is now WANTED! Interact to earn VBMS tokens! 💰`;
-      const targetUrl = "https://vibemostwanted.xyz";
 
-      // 1️⃣ NEYNAR TOKENS → Send via Neynar API (Base App users)
-      if (neynarTokens.length > 0 && process.env.NEYNAR_API_KEY) {
-        const neynarFids = neynarTokens.map(t => parseInt(t.fid)).filter(fid => !isNaN(fid));
-        console.log(`📱 Sending to ${neynarFids.length} Base App users via Neynar API...`);
+      // Send to ALL users with notifications enabled (empty array = broadcast)
+      const result = await sendViaNeynar([], title, body, "https://vibemostwanted.xyz");
 
-        try {
-          const uuid = crypto.randomUUID();
-          const neynarPayload = {
-            target_fids: neynarFids,
-            notification: { title, body, target_url: targetUrl, uuid }
-          };
-
-          const neynarResponse = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-api-key": process.env.NEYNAR_API_KEY || ""
-            },
-            body: JSON.stringify(neynarPayload)
-          });
-
-          const neynarResult = await neynarResponse.json();
-          if (neynarResponse.ok) {
-            const neynarSent = neynarResult.success_count || 0;
-            sent += neynarSent;
-            console.log(`📱 Neynar: ${neynarSent} sent`);
-          } else {
-            console.log(`📱 Neynar failed: ${neynarResponse.status}`);
-            failed += neynarFids.length;
-          }
-        } catch (neynarError: any) {
-          console.log(`📱 Neynar error:`, neynarError?.message);
-          failed += neynarTokens.length;
-        }
-      }
-
-      // 2️⃣ WARPCAST/FARCASTER TOKENS → Send via token API directly
-      if (warpcastTokens.length > 0) {
-        console.log(`📬 Sending to ${warpcastTokens.length} Warpcast users via token API...`);
-        const DELAY_MS = 50;
-
-        for (let i = 0; i < warpcastTokens.length; i++) {
-          const tokenData = warpcastTokens[i];
-          try {
-            const payload = {
-              notificationId: `featured_cast_${Date.now()}_${tokenData.fid}`.slice(0, 128),
-              title,
-              body,
-              tokens: [tokenData.token],
-              targetUrl: tokenData.app === "vibefid" ? "https://vibefid.xyz" : targetUrl,
-            };
-
-            const response = await fetch(tokenData.url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            });
-
-            if (response.ok) {
-              const result = await response.json();
-              const data = result.result || result;
-              if (data.successfulTokens?.includes(tokenData.token)) {
-                sent++;
-              } else if (data.invalidTokens?.includes(tokenData.token) || data.rateLimitedTokens?.includes(tokenData.token)) {
-                failed++;
-              } else if (!data.successfulTokens && !data.invalidTokens) {
-                sent++; // Old API format - assume success if 200 OK
-              } else {
-                failed++;
-              }
-            } else {
-              failed++;
-              if (i < 5) {
-                const errorText = await response.text();
-                console.log(`❌ HTTP ${response.status} for FID ${tokenData.fid}: ${errorText.slice(0, 100)}`);
-              }
-            }
-          } catch (error: any) {
-            failed++;
-          }
-
-          if (i < warpcastTokens.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, DELAY_MS));
-          }
-        }
-      }
-
-      console.log(`📊 Featured cast notification: ${sent} sent, ${failed} failed`);
-      return { sent, failed, total: tokens.length };
+      console.log(`📊 Featured cast notification: ${result.success_count} sent, ${result.failure_count} failed`);
+      return { sent: result.success_count, failed: result.failure_count, total: result.success_count + result.failure_count + result.not_attempted_count };
 
     } catch (error: any) {
       console.error("❌ Error in sendFeaturedCastNotification:", error);
@@ -693,7 +555,6 @@ export const sendFeaturedCastNotification = internalAction({
 
 /**
  * 🏆 Send notification to the WINNER of a cast auction
- * Sends via BOTH Neynar (Base App) AND Warpcast (Farcaster)
  */
 export const sendWinnerNotification = internalAction({
   args: {
@@ -705,87 +566,14 @@ export const sendWinnerNotification = internalAction({
   handler: async (ctx, { winnerFid, winnerUsername, bidAmount, castAuthor }) => {
     const title = "🏆 Your Cast Won!";
     const body = `Congrats @${winnerUsername}! Your bid of ${bidAmount.toLocaleString()} VBMS won! @${castAuthor} is now WANTED!`;
-    const targetUrl = "https://vibemostwanted.xyz";
 
     console.log(`🏆 Sending winner notification to FID ${winnerFid} (@${winnerUsername})...`);
 
-    let neynarSent = false;
-    let warpcastSent = false;
+    const result = await sendViaNeynar([winnerFid], title, body, "https://vibemostwanted.xyz");
 
-    // 1️⃣ NEYNAR API (Base App)
-    if (process.env.NEYNAR_API_KEY) {
-      try {
-        const uuid = crypto.randomUUID();
-        const payload = {
-          target_fids: [winnerFid],
-          notification: { title, body, target_url: targetUrl, uuid }
-        };
-
-        const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-key": process.env.NEYNAR_API_KEY
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (response.ok) {
-          console.log(`📱 Winner notification sent via Neynar (Base App)`);
-          neynarSent = true;
-        } else {
-          const errorText = await response.text();
-          console.log(`📱 Neynar failed: ${errorText}`);
-        }
-      } catch (error: any) {
-        console.log(`📱 Neynar error: ${error.message}`);
-      }
-    }
-
-    // 2️⃣ WARPCAST TOKEN API (Farcaster)
-    try {
-      const tokenData = await ctx.runQuery(internal.notifications.getTokenByFidInternal, {
-        fid: String(winnerFid)
-      });
-
-      if (tokenData && !tokenData.url.includes("neynar")) {
-        const payload = {
-          notificationId: `winner_${Date.now()}_${winnerFid}`.slice(0, 128),
-          title,
-          body,
-          tokens: [tokenData.token],
-          targetUrl,
-        };
-
-        const response = await fetch(tokenData.url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          const data = result.result || result;
-          if (data.successfulTokens?.includes(tokenData.token)) {
-            console.log(`📬 Winner notification sent via Warpcast (Farcaster)`);
-            warpcastSent = true;
-          }
-        } else {
-          const errorText = await response.text();
-          console.log(`📬 Warpcast failed: ${errorText}`);
-        }
-      } else if (tokenData) {
-        console.log(`📬 Winner has Neynar token only (already sent above)`);
-      } else {
-        console.log(`📬 No Warpcast token found for FID ${winnerFid}`);
-      }
-    } catch (error: any) {
-      console.log(`📬 Warpcast error: ${error.message}`);
-    }
-
-    const sent = neynarSent || warpcastSent;
-    console.log(`🏆 Winner notification result: Neynar=${neynarSent}, Warpcast=${warpcastSent}`);
-    return { sent, neynarSent, warpcastSent };
+    const sent = result.success_count > 0;
+    console.log(`🏆 Winner notification: ${sent ? "sent" : "failed"}`);
+    return { sent, neynarSent: sent, warpcastSent: false };
   },
 });
 
@@ -886,14 +674,7 @@ export const sendPeriodicTip = internalAction({
     const { api } = await import("./_generated/api");
 
     try {
-      console.log("💡 Starting periodic tip notification...");
-
-      const tokens = await ctx.runQuery(internal.notificationsHelpers.getAllTokens);
-
-      if (tokens.length === 0) {
-        console.log("⚠️ No notification tokens found");
-        return { sent: 0, failed: 0, total: 0, tipIndex: 0 };
-      }
+      console.log("💡 Starting periodic tip notification via Neynar...");
 
       let tipState = await ctx.runQuery(internal.notificationsHelpers.getTipState);
       if (!tipState._id) {
@@ -903,79 +684,8 @@ export const sendPeriodicTip = internalAction({
 
       const currentTip = GAMING_TIPS[tipState.currentTipIndex % GAMING_TIPS.length];
 
-      const neynarTokens = tokens.filter(t => t.url.includes("neynar"));
-      const warpcastTokens = tokens.filter(t => !t.url.includes("neynar"));
-
-      let sent = 0;
-      let failed = 0;
-      const title = currentTip.title.slice(0, 32);
-      const body = currentTip.body.slice(0, 128);
-      const targetUrl = "https://vibemostwanted.xyz";
-
-      // 1️⃣ NEYNAR TOKENS
-      if (neynarTokens.length > 0 && process.env.NEYNAR_API_KEY) {
-        const neynarFids = neynarTokens.map(t => parseInt(t.fid)).filter(fid => !isNaN(fid));
-        try {
-          const neynarPayload = {
-            target_fids: neynarFids,
-            notification: { title, body, target_url: targetUrl, uuid: crypto.randomUUID() }
-          };
-
-          const neynarResponse = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "x-api-key": process.env.NEYNAR_API_KEY || ""
-            },
-            body: JSON.stringify(neynarPayload)
-          });
-
-          if (neynarResponse.ok) {
-            const neynarResult = await neynarResponse.json();
-            sent += neynarResult.success_count || 0;
-          } else {
-            failed += neynarFids.length;
-          }
-        } catch (e) {
-          failed += neynarTokens.length;
-        }
-      }
-
-      // 2️⃣ WARPCAST TOKENS
-      if (warpcastTokens.length > 0) {
-        for (let i = 0; i < warpcastTokens.length; i++) {
-          const tokenData = warpcastTokens[i];
-          try {
-            const payload = {
-              notificationId: `tip_${tipState.currentTipIndex}_${tokenData.fid}_${Date.now()}`.slice(0, 128),
-              title, body, tokens: [tokenData.token], targetUrl
-            };
-
-            const response = await fetch(tokenData.url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            });
-
-            if (response.ok) {
-              const result = await response.json();
-              if (!result.invalidTokens?.includes(tokenData.token) && !result.rateLimitedTokens?.includes(tokenData.token)) {
-                sent++;
-              } else {
-                failed++;
-              }
-            } else {
-              failed++;
-            }
-          } catch (e) {
-            failed++;
-          }
-
-          if (i < warpcastTokens.length - 1) {
-            await sleep(100);
-          }
-        }
-      }
+      // Send to ALL users with notifications enabled (empty array = broadcast)
+      const result = await sendViaNeynar([], currentTip.title, currentTip.body, "https://vibemostwanted.xyz");
 
       // Update tip rotation state
       const nextTipIndex = (tipState.currentTipIndex + 1) % GAMING_TIPS.length;
@@ -984,10 +694,10 @@ export const sendPeriodicTip = internalAction({
         currentTipIndex: nextTipIndex,
       });
 
-      console.log(`📊 Periodic tip: ${sent} sent, ${failed} failed`);
+      console.log(`📊 Periodic tip: ${result.success_count} sent, ${result.failure_count} failed`);
       console.log(`📝 Sent tip ${tipState.currentTipIndex + 1}/${GAMING_TIPS.length}: "${currentTip.title}"`);
 
-      return { sent, failed, total: tokens.length, tipIndex: tipState.currentTipIndex };
+      return { sent: result.success_count, failed: result.failure_count, total: result.success_count + result.failure_count + result.not_attempted_count, tipIndex: tipState.currentTipIndex };
 
     } catch (error: any) {
       console.error("❌ Error in sendPeriodicTip:", error);
@@ -1035,68 +745,13 @@ export const sendCustomNotification = action({
   },
   handler: async (ctx, { title, body }) => {
     try {
-      console.log(`📬 Sending custom notification: "${title}"`);
+      console.log(`📬 Sending custom notification via Neynar: "${title}"`);
 
-      // Get all notification tokens using internal query
-      const tokens = await ctx.runQuery(internal.notifications.getAllTokens);
+      // Send to ALL users with notifications enabled (empty array = broadcast)
+      const result = await sendViaNeynar([], title, body, "https://vibemostwanted.xyz");
 
-      if (tokens.length === 0) {
-        console.log("⚠️ No notification tokens found");
-      }
-
-      console.log(`📊 Found ${tokens.length} notification tokens`);
-
-      // Send to all users
-      let sent = 0;
-      let failed = 0;
-
-      for (const tokenData of tokens) {
-        try {
-          // Validar tamanhos conforme limites do Farcaster
-          const notificationId = `custom_${tokenData.fid}_${Date.now()}`.slice(0, 128);
-          const validatedTitle = title.slice(0, 32);
-          const validatedBody = body.slice(0, 128);
-
-          const payload = {
-            notificationId,
-            title: validatedTitle,
-            body: validatedBody,
-            tokens: [tokenData.token],
-            targetUrl: tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://vibemostwanted.xyz",
-          };
-
-          const response = await fetch(tokenData.url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            if (!result.invalidTokens?.includes(tokenData.token) &&
-                !result.rateLimitedTokens?.includes(tokenData.token)) {
-              sent++;
-              console.log(`✅ Sent to FID ${tokenData.fid}`);
-            } else {
-              failed++;
-              console.log(`❌ Invalid/rate-limited token for FID ${tokenData.fid}`);
-            }
-          } else {
-            const errorText = await response.text();
-            console.error(`❌ Failed for FID ${tokenData.fid}: ${response.status} - ${errorText}`);
-            failed++;
-          }
-        } catch (error) {
-          console.error(`❌ Exception for FID ${tokenData.fid}:`, error);
-          failed++;
-        }
-      }
-
-      console.log(`📊 Custom notification sent: ${sent} successful, ${failed} failed out of ${tokens.length} total`);
-
-      return { sent, failed, total: tokens.length };
+      console.log(`📊 Custom notification: ${result.success_count} sent, ${result.failure_count} failed`);
+      return { sent: result.success_count, failed: result.failure_count, total: result.success_count + result.failure_count + result.not_attempted_count };
     } catch (error: any) {
       console.error("❌ Error in sendCustomNotification:", error);
       throw error;
@@ -1122,104 +777,52 @@ export const sendBossDefeatedNotifications = internalAction({
   },
   // @ts-ignore
   handler: async (ctx, { bossName, bossRarity, totalContributors, contributorAddresses }) => {
-    // Import api here to avoid circular reference
-    // @ts-ignore
-    const { api } = await import("./_generated/api");
-
     try {
       console.log("🐉 Sending boss defeated notifications for: " + bossName);
 
-      let sent = 0;
-      let failed = 0;
-      const DELAY_MS = 100;
+      // Collect all contributor FIDs
+      const contributorFids: number[] = [];
 
-      // Send to all contributors
-      for (let i = 0; i < contributorAddresses.length; i++) {
-        const address = contributorAddresses[i];
-
+      for (const address of contributorAddresses) {
         try {
-          // Get player profile to find FID
-          const profile = await ctx.runQuery(internal.notifications.getProfileByAddress, {
-            address,
-          });
+          const profile = await ctx.runQuery(internal.notifications.getProfileByAddress, { address });
+          if (!profile) continue;
 
-          if (!profile) {
-            console.log("⚠️ No profile found for " + address);
-            continue;
-          }
-
-          // Get FID (try both fields)
           const fid = profile.fid || (profile.farcasterFid ? profile.farcasterFid.toString() : null);
+          if (!fid) continue;
 
-          if (!fid) {
-            console.log("⚠️ No FID found for " + address);
-            continue;
+          const fidNumber = parseInt(fid);
+          if (!isNaN(fidNumber)) {
+            contributorFids.push(fidNumber);
           }
-
-          // Get notification token
-          const tokenData = await ctx.runQuery(internal.notifications.getTokenByFidInternal, { fid });
-
-          if (!tokenData) {
-            console.log("⚠️ No notification token for FID " + fid);
-            continue;
-          }
-
-          // Build notification message
-          const rarityEmojis: Record<string, string> = {
-            common: "⚪",
-            rare: "🔵",
-            epic: "🟣",
-            legendary: "🟡",
-            mythic: "🔴",
-          };
-          const rarityEmoji = rarityEmojis[bossRarity.toLowerCase()] || "⚫";
-
-          const notificationId = "boss_defeated_" + bossName + "_" + Date.now() + "_" + fid;
-          const title = "🎉 Boss Defeated!";
-          const body = rarityEmoji + " " + bossName + " was slain! Claim your reward now! 💰";
-
-          const payload = {
-            notificationId: notificationId.slice(0, 128),
-            title: title.slice(0, 32),
-            body: body.slice(0, 128),
-            tokens: [tokenData.token],
-            targetUrl: tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://vibemostwanted.xyz",
-          };
-
-          const response = await fetch(tokenData.url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-          });
-
-          if (response.ok) {
-            const result = await response.json();
-            if (!result.invalidTokens?.includes(tokenData.token) &&
-                !result.rateLimitedTokens?.includes(tokenData.token)) {
-              sent++;
-            } else {
-              failed++;
-            }
-          } else {
-            failed++;
-            console.error("❌ Failed for FID " + fid + ": " + response.status);
-          }
-
         } catch (error) {
-          console.error("❌ Exception for " + address + ":", error);
-          failed++;
-        }
-
-        // Add delay between notifications
-        if (i < contributorAddresses.length - 1) {
-          await sleep(DELAY_MS);
+          console.error("❌ Error getting FID for " + address + ":", error);
         }
       }
 
-      console.log("📊 Boss defeated notifications: " + sent + " sent, " + failed + " failed out of " + totalContributors + " contributors");
-      return { sent, failed, total: totalContributors };
+      if (contributorFids.length === 0) {
+        console.log("⚠️ No contributor FIDs found");
+        return { sent: 0, failed: 0, total: totalContributors };
+      }
+
+      // Build notification message
+      const rarityEmojis: Record<string, string> = {
+        common: "⚪",
+        rare: "🔵",
+        epic: "🟣",
+        legendary: "🟡",
+        mythic: "🔴",
+      };
+      const rarityEmoji = rarityEmojis[bossRarity.toLowerCase()] || "⚫";
+
+      const title = "🎉 Boss Defeated!";
+      const body = rarityEmoji + " " + bossName + " was slain! Claim your reward now! 💰";
+
+      // Send to all contributors via Neynar
+      const result = await sendViaNeynar(contributorFids, title, body, "https://vibemostwanted.xyz");
+
+      console.log("📊 Boss defeated notifications: " + result.success_count + " sent, " + result.failure_count + " failed out of " + totalContributors + " contributors");
+      return { sent: result.success_count, failed: result.failure_count, total: totalContributors };
 
     } catch (error: any) {
       console.error("❌ Error in sendBossDefeatedNotifications:", error);
