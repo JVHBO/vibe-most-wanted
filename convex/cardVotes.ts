@@ -19,12 +19,12 @@ export const getCardVotes = query({
   handler: async (ctx, args) => {
     const today = new Date().toISOString().split('T')[0];
 
+    // 🔧 OPTIMIZED: Use index instead of full table scan
     const votes = await ctx.db
       .query("cardVotes")
-      .filter((q) => q.and(
-        q.eq(q.field("cardFid"), args.fid),
-        q.eq(q.field("date"), today)
-      ))
+      .withIndex("by_card_date", (q) =>
+        q.eq("cardFid", args.fid).eq("date", today)
+      )
       .collect();
 
     return {
@@ -43,13 +43,13 @@ export const hasUserVoted = query({
   handler: async (ctx, args) => {
     const today = new Date().toISOString().split('T')[0];
 
+    // 🔧 OPTIMIZED: Use index + filter (votes per user/day are limited)
     const vote = await ctx.db
       .query("cardVotes")
-      .filter((q) => q.and(
-        q.eq(q.field("cardFid"), args.cardFid),
-        q.eq(q.field("voterFid"), args.voterFid),
-        q.eq(q.field("date"), today)
-      ))
+      .withIndex("by_voter_date", (q) =>
+        q.eq("voterFid", args.voterFid).eq("date", today)
+      )
+      .filter((q) => q.eq(q.field("cardFid"), args.cardFid))
       .first();
 
     return !!vote;
@@ -62,13 +62,13 @@ export const getUserFreeVotesRemaining = query({
   handler: async (ctx, args) => {
     const today = new Date().toISOString().split('T')[0];
 
+    // 🔧 OPTIMIZED: Use index instead of full table scan
     const votesToday = await ctx.db
       .query("cardVotes")
-      .filter((q) => q.and(
-        q.eq(q.field("voterFid"), args.voterFid),
-        q.eq(q.field("date"), today),
-        q.eq(q.field("isPaid"), false)
-      ))
+      .withIndex("by_voter_date", (q) =>
+        q.eq("voterFid", args.voterFid).eq("date", today)
+      )
+      .filter((q) => q.eq(q.field("isPaid"), false))
       .collect();
 
     const freeVotesUsed = votesToday.length;
@@ -107,13 +107,13 @@ export const voteForCard = mutation({
 
     // Check if already voted today (for free votes)
     if (!args.isPaid) {
+      // 🔧 OPTIMIZED: Use index + filter
       const existingVote = await ctx.db
         .query("cardVotes")
-        .filter((q) => q.and(
-          q.eq(q.field("cardFid"), args.cardFid),
-          q.eq(q.field("voterFid"), args.voterFid),
-          q.eq(q.field("date"), today)
-        ))
+        .withIndex("by_voter_date", (q) =>
+          q.eq("voterFid", args.voterFid).eq("date", today)
+        )
+        .filter((q) => q.eq(q.field("cardFid"), args.cardFid))
         .first();
 
       if (existingVote) {
@@ -121,13 +121,13 @@ export const voteForCard = mutation({
       }
 
       // Check free votes remaining
+      // 🔧 OPTIMIZED: Use index + filter
       const votesToday = await ctx.db
         .query("cardVotes")
-        .filter((q) => q.and(
-          q.eq(q.field("voterFid"), args.voterFid),
-          q.eq(q.field("date"), today),
-          q.eq(q.field("isPaid"), false)
-        ))
+        .withIndex("by_voter_date", (q) =>
+          q.eq("voterFid", args.voterFid).eq("date", today)
+        )
+        .filter((q) => q.eq(q.field("isPaid"), false))
         .collect();
 
       if (votesToday.length >= 1) {
@@ -277,22 +277,20 @@ export const getDailyPrizeInfo = query({
   handler: async (ctx) => {
     const today = new Date().toISOString().split('T')[0];
 
-    // Count paid votes today (each paid vote adds to prize pool)
+    // 🔧 OPTIMIZED: Use by_date index + filter for isPaid
     const paidVotes = await ctx.db
       .query("cardVotes")
-      .filter((q) => q.and(
-        q.eq(q.field("date"), today),
-        q.eq(q.field("isPaid"), true)
-      ))
+      .withIndex("by_date", (q) => q.eq("date", today))
+      .filter((q) => q.eq(q.field("isPaid"), true))
       .collect();
 
     const totalPaidVotes = paidVotes.reduce((sum, v) => sum + v.voteCount, 0);
     const prizePool = totalPaidVotes * 50; // 50% of vote cost goes to prize pool
 
-    // Get current leader
+    // 🔧 OPTIMIZED: Use by_date index
     const leaders = await ctx.db
       .query("dailyVoteLeaderboard")
-      .filter((q) => q.eq(q.field("date"), today))
+      .withIndex("by_date", (q) => q.eq("date", today))
       .collect();
 
     const topLeader = leaders.sort((a, b) => b.totalVotes - a.totalVotes)[0];
@@ -466,10 +464,10 @@ export const getMessagesForCard = query({
   handler: async (ctx, args) => {
     const limit = args.limit || 50;
 
-    // Get all votes with messages for this card
+    // 🔧 OPTIMIZED: Use partial index on cardFid
     const allVotes = await ctx.db
       .query("cardVotes")
-      .filter((q) => q.eq(q.field("cardFid"), args.cardFid))
+      .withIndex("by_card_date", (q) => q.eq("cardFid", args.cardFid))
       .order("desc")
       .collect();
 
