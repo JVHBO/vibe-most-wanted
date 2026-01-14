@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ matchId: 
   const description = `${playerPower} vs ${opponentPower} Power - $VBMS Battle Result`;
 
   // Explicitly set the OpenGraph image URL with cache busting
-  const baseUrl = 'https://www.vibemostwanted.xyz';
+  const baseUrl = 'https://vibemostwanted.xyz';
   const imageUrl = `${baseUrl}/share/${matchId}/opengraph-image?v=14`;
 
   return {

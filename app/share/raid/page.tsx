@@ -7,7 +7,7 @@ type Props = {
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const resolvedParams = await searchParams;
-  const baseUrl = 'https://www.vibemostwanted.xyz';
+  const baseUrl = 'https://vibemostwanted.xyz';
 
   // Use Next.js opengraph-image route (same as profile shares)
   // Add timestamp to bust Farcaster cache
@@ -19,7 +19,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     openGraph: {
       title: "⚔️ RAID BOSS BATTLE",
       description: "Join the raid! Battle the boss together and earn epic rewards!",
-      url: "https://www.vibemostwanted.xyz/share/raid",
+      url: "https://vibemostwanted.xyz/share/raid",
       type: "website",
       siteName: "$VBMS",
       images: [

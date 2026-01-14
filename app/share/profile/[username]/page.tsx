@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
-  const baseUrl = 'https://www.vibemostwanted.xyz';
+  const baseUrl = 'https://vibemostwanted.xyz';
 
   // Use Next.js opengraph-image route (same as victory shares)
   // Add timestamp to bust Farcaster cache

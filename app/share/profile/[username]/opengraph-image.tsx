@@ -62,9 +62,9 @@ export default async function Image({ params }: { params: Promise<{ username: st
   // Proxy external images for Edge Runtime
   const proxyUrl = (url: string) => {
     if (!url) return '';
-    if (url.startsWith('https://www.vibemostwanted.xyz/')) return url;
+    if (url.startsWith('https://vibemostwanted.xyz/')) return url;
     if (url.startsWith('https://vibe-most-wanted.vercel.app/')) return url;
-    return `https://www.vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
+    return `https://vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
   };
 
   const finalPfpUrl = proxyUrl(pfpUrl);

@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ result: s
 
   const description = `Betting on CPU vs CPU battles - $VBMS Mecha Arena`;
 
-  const baseUrl = 'https://www.vibemostwanted.xyz';
+  const baseUrl = 'https://vibemostwanted.xyz';
   const imageUrl = `${baseUrl}/share/mecha/${result}/opengraph-image?v=1`;
 
   return {

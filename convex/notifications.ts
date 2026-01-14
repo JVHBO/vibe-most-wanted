@@ -363,7 +363,7 @@ export const sendLowEnergyNotifications = internalAction({
             title: title.slice(0, 32),
             body: body.slice(0, 128),
             tokens: [tokenData.token],
-            targetUrl: (tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://www.vibemostwanted.xyz"),
+            targetUrl: (tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://vibemostwanted.xyz"),
           };
 
           const response = await fetch(tokenData.url, {
@@ -477,7 +477,7 @@ export const sendDailyLoginReminder = internalAction({
 
       const title = "💰 Daily Login Bonus!";
       const body = "Claim your free coins! Don't miss today's reward 🎁";
-      const targetUrl = "https://www.vibemostwanted.xyz";
+      const targetUrl = "https://vibemostwanted.xyz";
 
       // 1️⃣ NEYNAR TOKENS
       if (neynarTokens.length > 0 && process.env.NEYNAR_API_KEY) {
@@ -592,7 +592,7 @@ export const sendFeaturedCastNotification = internalAction({
       const body = winnerUsername
         ? `@${winnerUsername} won the auction! @${castAuthor} is now WANTED! Interact to earn VBMS 💰`
         : `@${castAuthor} is now WANTED! Interact to earn VBMS tokens! 💰`;
-      const targetUrl = "https://www.vibemostwanted.xyz";
+      const targetUrl = "https://vibemostwanted.xyz";
 
       // 1️⃣ NEYNAR TOKENS → Send via Neynar API (Base App users)
       if (neynarTokens.length > 0 && process.env.NEYNAR_API_KEY) {
@@ -705,7 +705,7 @@ export const sendWinnerNotification = internalAction({
   handler: async (ctx, { winnerFid, winnerUsername, bidAmount, castAuthor }) => {
     const title = "🏆 Your Cast Won!";
     const body = `Congrats @${winnerUsername}! Your bid of ${bidAmount.toLocaleString()} VBMS won! @${castAuthor} is now WANTED!`;
-    const targetUrl = "https://www.vibemostwanted.xyz";
+    const targetUrl = "https://vibemostwanted.xyz";
 
     console.log(`🏆 Sending winner notification to FID ${winnerFid} (@${winnerUsername})...`);
 
@@ -811,7 +811,7 @@ export const testNeynarNotification = internalAction({
       notification: {
         title,
         body,
-        target_url: "https://www.vibemostwanted.xyz",
+        target_url: "https://vibemostwanted.xyz",
         uuid
       }
     };
@@ -910,7 +910,7 @@ export const sendPeriodicTip = internalAction({
       let failed = 0;
       const title = currentTip.title.slice(0, 32);
       const body = currentTip.body.slice(0, 128);
-      const targetUrl = "https://www.vibemostwanted.xyz";
+      const targetUrl = "https://vibemostwanted.xyz";
 
       // 1️⃣ NEYNAR TOKENS
       if (neynarTokens.length > 0 && process.env.NEYNAR_API_KEY) {
@@ -1062,7 +1062,7 @@ export const sendCustomNotification = action({
             title: validatedTitle,
             body: validatedBody,
             tokens: [tokenData.token],
-            targetUrl: tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://www.vibemostwanted.xyz",
+            targetUrl: tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://vibemostwanted.xyz",
           };
 
           const response = await fetch(tokenData.url, {
@@ -1183,7 +1183,7 @@ export const sendBossDefeatedNotifications = internalAction({
             title: title.slice(0, 32),
             body: body.slice(0, 128),
             tokens: [tokenData.token],
-            targetUrl: tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://www.vibemostwanted.xyz",
+            targetUrl: tokenData.app === "vibefid" ? "https://vibefid.xyz" : "https://vibemostwanted.xyz",
           };
 
           const response = await fetch(tokenData.url, {

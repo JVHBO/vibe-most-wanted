@@ -105,7 +105,7 @@ export const signClaimMessage = internalAction({
   },
   handler: async (ctx, args): Promise<string> => {
     const { address, amount, nonce } = args;
-    const apiUrl = 'https://www.vibemostwanted.xyz';
+    const apiUrl = 'https://vibemostwanted.xyz';
 
     console.log(`[VBMS Sign Claim] Calling API at: ${apiUrl}/api/vbms/sign-claim`);
     console.log(`[VBMS Sign Claim] Request: address=${address}, amount=${amount}, nonce=${nonce}`);

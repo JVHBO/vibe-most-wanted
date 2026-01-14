@@ -27,8 +27,8 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     const battleType = parts[5] || 'pve';
 
     // Check for special opponents and use their images
-    const mechaUrl = 'https://www.vibemostwanted.xyz/images/mecha-george-floyd.jpg';
-    const nicoUrl = 'https://www.vibemostwanted.xyz/images/nico.png';
+    const mechaUrl = 'https://vibemostwanted.xyz/images/mecha-george-floyd.jpg';
+    const nicoUrl = 'https://vibemostwanted.xyz/images/nico.png';
 
     let finalPlayerPfpUrl = '';
     let finalOpponentPfpUrl = '';
@@ -102,9 +102,9 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     // Convert external URLs to use proxy for Edge Runtime compatibility
     const proxyUrl = (url: string) => {
       if (!url) return '';
-      if (url.startsWith('https://www.vibemostwanted.xyz/')) return url;
+      if (url.startsWith('https://vibemostwanted.xyz/')) return url;
       if (url.startsWith('https://vibe-most-wanted.vercel.app/')) return url;
-      return `https://www.vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
+      return `https://vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
     };
 
     finalPlayerPfpUrl = proxyUrl(finalPlayerPfpUrl);

@@ -154,7 +154,7 @@ export const prepareVibeRewardsClaim = action({
     const nonce = generateNonce();
 
     // Get signature from API
-    const apiUrl = 'https://www.vibemostwanted.xyz';
+    const apiUrl = 'https://vibemostwanted.xyz';
     console.log(`[VibeRewards] Signing claim: ${claimerAddress}, amount: ${result.claimAmount}, nonce: ${nonce}`);
 
     try {

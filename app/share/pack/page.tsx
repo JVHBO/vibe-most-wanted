@@ -18,7 +18,7 @@ type Props = {
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const resolvedParams = await searchParams;
-  const baseUrl = 'https://www.vibemostwanted.xyz';
+  const baseUrl = 'https://vibemostwanted.xyz';
   const packType = resolvedParams.packType || 'Pack';
 
   const params = new URLSearchParams();

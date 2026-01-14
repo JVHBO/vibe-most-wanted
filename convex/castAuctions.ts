@@ -1344,7 +1344,7 @@ export const activateFeaturedCast = internalMutation({
     try {
       await ctx.scheduler.runAfter(0, internal.notifications.sendFeaturedCastNotification, {
         castAuthor: auction.castAuthorUsername || "unknown",
-        warpcastUrl: auction.warpcastUrl || "https://www.vibemostwanted.xyz",
+        warpcastUrl: auction.warpcastUrl || "https://vibemostwanted.xyz",
         winnerUsername: auction.bidderUsername,
       });
     } catch (notifError) {

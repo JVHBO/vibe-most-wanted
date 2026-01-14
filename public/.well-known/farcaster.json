@@ -7,21 +7,21 @@
   "miniapp": {
     "version": "1",
     "name": "$VBMS - Game and Wanted Cast",
-    "iconUrl": "https://www.vibemostwanted.xyz/icon.gif",
-    "homeUrl": "https://www.vibemostwanted.xyz",
-    "imageUrl": "https://www.vibemostwanted.xyz/screenshot-1.png",
+    "iconUrl": "https://vibemostwanted.xyz/icon.gif",
+    "homeUrl": "https://vibemostwanted.xyz",
+    "imageUrl": "https://vibemostwanted.xyz/screenshot-1.png",
     "aspectRatio": "3:2",
     "buttonTitle": "Play Now",
-    "splashImageUrl": "https://www.vibemostwanted.xyz/splash.gif",
+    "splashImageUrl": "https://vibemostwanted.xyz/splash.gif",
     "splashBackgroundColor": "#0C0C0C",
     "webhookUrl": "https://api.neynar.com/f/app/e4b053fc-a6bd-4975-a6bc-a3174e617d19/event",
-    "castShareUrl": "https://www.vibemostwanted.xyz",
+    "castShareUrl": "https://vibemostwanted.xyz",
     "subtitle": "Meme Card Game",
     "description": "Battle with meme cards in PvE and PvP modes. The most wanted meme card game on Base!",
     "screenshotUrls": [
-      "https://www.vibemostwanted.xyz/screenshot-1.png",
-      "https://www.vibemostwanted.xyz/screenshot-2.png",
-      "https://www.vibemostwanted.xyz/screenshot-3.png"
+      "https://vibemostwanted.xyz/screenshot-1.png",
+      "https://vibemostwanted.xyz/screenshot-2.png",
+      "https://vibemostwanted.xyz/screenshot-3.png"
     ],
     "primaryCategory": "games",
     "tags": [
@@ -31,11 +31,11 @@
       "pvp",
       "base"
     ],
-    "heroImageUrl": "https://www.vibemostwanted.xyz/hero.png",
+    "heroImageUrl": "https://vibemostwanted.xyz/hero.png",
     "tagline": "Battle with meme cards",
     "ogTitle": "VBMS - Meme Card Game",
     "ogDescription": "Battle with meme cards in PvE and PvP modes on Base!",
-    "ogImageUrl": "https://www.vibemostwanted.xyz/og-image.png",
+    "ogImageUrl": "https://vibemostwanted.xyz/og-image.png",
     "requiredChains": ["eip155:8453"],
     "requiredCapabilities": [
       "wallet.getEthereumProvider",

@@ -298,7 +298,7 @@ export const prepareRouletteClaim = action({
     const nonce = generateNonce();
 
     // Get signature from roulette-specific signing endpoint (no minimum)
-    const apiUrl = 'https://www.vibemostwanted.xyz';
+    const apiUrl = 'https://vibemostwanted.xyz';
     const response = await fetch(`${apiUrl}/api/vbms/sign-roulette`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

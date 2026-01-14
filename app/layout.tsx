@@ -59,10 +59,10 @@ export const metadata: Metadata = {
   openGraph: {
     title: "$VBMS - Meme Card Game",
     description: "Battle with meme cards in PvE and PvP modes",
-    url: "https://www.vibemostwanted.xyz",
+    url: "https://vibemostwanted.xyz",
     images: [
       {
-        url: "https://www.vibemostwanted.xyz/screenshot.jpg",
+        url: "https://vibemostwanted.xyz/screenshot.jpg",
         width: 1200,
         height: 800,
         alt: "$VBMS Game"
@@ -75,7 +75,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "$VBMS - Meme Card Game",
     description: "Battle with meme cards in PvE and PvP modes",
-    images: ["https://www.vibemostwanted.xyz/screenshot.jpg"],
+    images: ["https://vibemostwanted.xyz/screenshot.jpg"],
   },
   other: {
     // Base.dev App ID (REQUIRED FOR ANALYTICS)
@@ -84,14 +84,14 @@ export const metadata: Metadata = {
     // v=4 cache bust - more cards, removed coquettish/viberuto/baseball
     "fc:miniapp": JSON.stringify({
       "version": "1",
-      "imageUrl": "https://www.vibemostwanted.xyz/opengraph-image?v=4",
+      "imageUrl": "https://vibemostwanted.xyz/opengraph-image?v=4",
       "button": {
         "title": "Play Now",
         "action": {
           "type": "launch_miniapp",
           "name": "$VBMS",
-          "url": "https://www.vibemostwanted.xyz",
-          "splashImageUrl": "https://www.vibemostwanted.xyz/splash.gif",
+          "url": "https://vibemostwanted.xyz",
+          "splashImageUrl": "https://vibemostwanted.xyz/splash.gif",
           "splashBackgroundColor": "#0C0C0C"
         }
       }
@@ -99,14 +99,14 @@ export const metadata: Metadata = {
     // Backward compatibility with old frame spec
     "fc:frame": JSON.stringify({
       "version": "1",
-      "imageUrl": "https://www.vibemostwanted.xyz/opengraph-image?v=4",
+      "imageUrl": "https://vibemostwanted.xyz/opengraph-image?v=4",
       "button": {
         "title": "Play Now",
         "action": {
           "type": "launch_miniapp",
           "name": "$VBMS",
-          "url": "https://www.vibemostwanted.xyz",
-          "splashImageUrl": "https://www.vibemostwanted.xyz/splash.gif",
+          "url": "https://vibemostwanted.xyz",
+          "splashImageUrl": "https://vibemostwanted.xyz/splash.gif",
           "splashBackgroundColor": "#0C0C0C"
         }
       }

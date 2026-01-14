@@ -11,9 +11,9 @@ export const contentType = 'image/png';
 // Proxy external images for Edge Runtime
 const proxyUrl = (url: string) => {
   if (!url) return '';
-  if (url.startsWith('https://www.vibemostwanted.xyz/')) return url;
+  if (url.startsWith('https://vibemostwanted.xyz/')) return url;
   if (url.startsWith('https://vibe-most-wanted.vercel.app/')) return url;
-  return `https://www.vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
+  return `https://vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
 };
 
 export default async function Image() {
@@ -67,7 +67,7 @@ export default async function Image() {
             '/images/raid-bosses/cumioh/legendary.png': 'https://ipfs.filebase.io/ipfs/QmPvrvwVY4rMD3QKxPQKpXJvKN3LqmJdCQwN5NzYPNKqFZ',
             '/images/raid-bosses/cumioh/mythic.png': 'https://ipfs.filebase.io/ipfs/QmS6JQqFWT33ZPdXqJzVqEPzPQJPqNQqJRzPqLKQLbqPMQ',
           };
-          imgUrl = IPFS_MAP[imgUrl] || `https://www.vibemostwanted.xyz${imgUrl}`;
+          imgUrl = IPFS_MAP[imgUrl] || `https://vibemostwanted.xyz${imgUrl}`;
         }
         bossImageUrl = imgUrl;
         maxHp = data.value.maxHp || 1000000;

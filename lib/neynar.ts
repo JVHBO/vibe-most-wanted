@@ -390,7 +390,7 @@ export async function sendNeynarNotification(
   title: string,
   body: string,
   targetFids: number[] = [],
-  targetUrl: string = 'https://www.vibemostwanted.xyz'
+  targetUrl: string = 'https://vibemostwanted.xyz'
 ): Promise<{
   success: boolean;
   deliveries: NotificationDelivery[];
@@ -469,7 +469,7 @@ export async function sendNeynarNotification(
 export async function broadcastNeynarNotification(
   title: string,
   body: string,
-  targetUrl: string = 'https://www.vibemostwanted.xyz'
+  targetUrl: string = 'https://vibemostwanted.xyz'
 ): Promise<{
   success: boolean;
   successCount: number;

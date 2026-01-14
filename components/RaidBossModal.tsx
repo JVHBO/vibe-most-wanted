@@ -470,7 +470,7 @@ export function RaidBossModal({
 
     const castText = `⚔️ RAID BOSS BATTLE ⚔️\n\nMy Deck Power: ${deckPower.toLocaleString()}\nVs ${bossName}\nBoss HP: ${bossHp}%\n\nJoin the raid! 🎮\n\n@jvhbo`;
 
-    const shareUrl = 'https://www.vibemostwanted.xyz/share/raid';
+    const shareUrl = 'https://vibemostwanted.xyz/share/raid';
     shareToFarcaster(castText, shareUrl);
 
     if (soundEnabled) AudioManager.buttonClick();

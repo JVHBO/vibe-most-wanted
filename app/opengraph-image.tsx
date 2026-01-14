@@ -11,7 +11,7 @@ export const contentType = 'image/png';
 export const revalidate = 604800;
 
 export default async function Image() {
-  const baseUrl = 'https://www.vibemostwanted.xyz';
+  const baseUrl = 'https://vibemostwanted.xyz';
 
   // Background image
   const backgroundImg = fetch(`${baseUrl}/images/og-cards/background.jpg`).then(res => res.arrayBuffer());

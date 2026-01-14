@@ -10,7 +10,7 @@ import { broadcastNeynarNotification, sendNeynarNotification } from "@/lib/neyna
  * - title: string (max 32 chars)
  * - body: string (max 128 chars)
  * - targetFids?: number[] (optional, empty = all users)
- * - targetUrl?: string (optional, default = https://www.vibemostwanted.xyz)
+ * - targetUrl?: string (optional, default = https://vibemostwanted.xyz)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
         title,
         body,
         targetFids,
-        targetUrl || "https://www.vibemostwanted.xyz"
+        targetUrl || "https://vibemostwanted.xyz"
       );
 
       return NextResponse.json({
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       const result = await broadcastNeynarNotification(
         title,
         body,
-        targetUrl || "https://www.vibemostwanted.xyz"
+        targetUrl || "https://vibemostwanted.xyz"
       );
 
       return NextResponse.json({

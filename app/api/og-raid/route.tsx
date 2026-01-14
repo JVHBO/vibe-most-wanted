@@ -29,7 +29,7 @@ export async function GET(request: Request) {
         // Use absolute URL for the image
         const imageUrl = bossImage.startsWith('http')
           ? bossImage
-          : `https://www.vibemostwanted.xyz${bossImage}`;
+          : `https://vibemostwanted.xyz${bossImage}`;
 
         // Fetch with longer timeout and proper headers
         const controller = new AbortController();

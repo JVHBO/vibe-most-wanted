@@ -147,7 +147,7 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
       foilStandard: String(foilCounts.Standard),
       cards: String(totalCards),
     });
-    const shareUrl = 'https://www.vibemostwanted.xyz/share/pack?' + shareParams.toString();
+    const shareUrl = 'https://vibemostwanted.xyz/share/pack?' + shareParams.toString();
 
     // Use SDK composeCast when in miniapp, fallback to URL
     if (isInMiniApp && sdk.actions?.composeCast) {

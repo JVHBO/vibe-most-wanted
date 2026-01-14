@@ -43,7 +43,6 @@ import type * as mostWanted from "../mostWanted.js";
 import type * as neynarScore from "../neynarScore.js";
 import type * as nftCollections from "../nftCollections.js";
 import type * as nftGifts from "../nftGifts.js";
-import type * as nftOwnership from "../nftOwnership.js";
 import type * as notifications from "../notifications.js";
 import type * as notificationsHelpers from "../notificationsHelpers.js";
 import type * as pokerBattle from "../pokerBattle.js";
@@ -113,7 +112,6 @@ declare const fullApi: ApiFromModules<{
   neynarScore: typeof neynarScore;
   nftCollections: typeof nftCollections;
   nftGifts: typeof nftGifts;
-  nftOwnership: typeof nftOwnership;
   notifications: typeof notifications;
   notificationsHelpers: typeof notificationsHelpers;
   pokerBattle: typeof pokerBattle;
