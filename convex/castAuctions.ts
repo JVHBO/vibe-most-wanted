@@ -1469,13 +1469,8 @@ export const processAuctionLifecycle = internalMutation({
     // 1. Get all ended auctions
     const endedAuctions = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("status"), "bidding"),
-          q.lte(q.field("auctionEndsAt"), now)
-        )
-      )
+      .withIndex("by_status", (q) => q.eq("status", "bidding"))
+      .filter((q) => q.lte(q.field("auctionEndsAt"), now))
       .collect();
 
     // 2. Separate auctions with bids from those without
@@ -1530,13 +1525,8 @@ export const processAuctionLifecycle = internalMutation({
     // 7. Complete expired features (active -> completed, start new auction)
     const expiredFeatures = await ctx.db
       .query("castAuctions")
-      .withIndex("by_status")
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("status"), "active"),
-          q.lte(q.field("featureEndsAt"), now)
-        )
-      )
+      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .filter((q) => q.lte(q.field("featureEndsAt"), now))
       .collect();
 
     for (const auction of expiredFeatures) {

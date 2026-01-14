@@ -12,7 +12,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 // ========== INTERNAL: Log Transaction ==========
@@ -255,7 +255,8 @@ export const getRecentSuspiciousActivity = query({
 /**
  * 🚀 BANDWIDTH FIX: Use .take() instead of .collect()
  */
-export const getAllAuditLogs = query({
+// 🔒 SECURITY: Changed to internalQuery - sensitive audit data
+export const getAllAuditLogs = internalQuery({
   args: {
     limit: v.optional(v.number()),
   },
@@ -291,7 +292,8 @@ const ALERT_THRESHOLDS = {
 
 // ========== QUERY: Real-Time Security Monitor ==========
 
-export const getSecurityAlerts = query({
+// 🔒 SECURITY: Changed to internalQuery - sensitive security data
+export const getSecurityAlerts = internalQuery({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
@@ -427,7 +429,8 @@ export const getSecurityAlerts = query({
 
 // ========== QUERY: Get Flagged Accounts ==========
 
-export const getFlaggedAccounts = query({
+// 🔒 SECURITY: Changed to internalQuery - sensitive flagged accounts data
+export const getFlaggedAccounts = internalQuery({
   args: {},
   handler: async (ctx) => {
     const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
@@ -448,6 +451,25 @@ export const getFlaggedAccounts = query({
       byPlayer[log.playerAddress].push(log);
     });
 
+    const addresses = Object.keys(byPlayer);
+
+    // 🚀 BANDWIDTH FIX: Batch fetch all profiles at once instead of N+1 queries
+    const profilePromises = addresses.map(address =>
+      ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", address))
+        .first()
+    );
+    const profiles = await Promise.all(profilePromises);
+
+    // Create address -> profile map
+    const profileMap: Record<string, typeof profiles[0]> = {};
+    addresses.forEach((address, i) => {
+      if (profiles[i]) {
+        profileMap[address] = profiles[i];
+      }
+    });
+
     // Analyze each player
     const flagged: Array<{
       address: string;
@@ -460,20 +482,14 @@ export const getFlaggedAccounts = query({
       flags: string[];
     }> = [];
 
-    const addresses = Object.keys(byPlayer);
-
     for (const address of addresses) {
       const logs = byPlayer[address];
-      let riskScore = 0;
-      const flags: string[] = [];
-
-      // Get profile to check lifetimeEarned (complete history)
-      const profile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", address))
-        .first();
+      const profile = profileMap[address];
 
       if (!profile) continue;
+
+      let riskScore = 0;
+      const flags: string[] = [];
 
       // Use profile data for accurate comparison
       const totalClaimedOnChain = profile.claimedTokens || 0;

@@ -253,6 +253,7 @@ async function updateDailyLeaderboard(ctx: any, cardFid: number, date: string, v
 }
 
 // Get today's vote leaderboard
+// 🚀 BANDWIDTH FIX: Use by_date index instead of filter
 export const getDailyLeaderboard = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
@@ -261,7 +262,7 @@ export const getDailyLeaderboard = query({
 
     const leaders = await ctx.db
       .query("dailyVoteLeaderboard")
-      .filter((q) => q.eq(q.field("date"), today))
+      .withIndex("by_date", (q) => q.eq("date", today))
       .collect();
 
     // Sort by votes and take top N

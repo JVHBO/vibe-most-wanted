@@ -1243,7 +1243,6 @@ export function SettingsModal({
                         <li>{t('mergeCoinsLose')}</li>
                         <li>{t('mergeAchievementsLose')}</li>
                         <li>{t('mergeMissionsLose')}</li>
-                        <li>{t('mergeReferralsLose')}</li>
                       </ul>
                     </div>
 

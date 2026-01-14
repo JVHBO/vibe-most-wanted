@@ -202,53 +202,61 @@ function calculateDailyEarned(profile: any): number {
 
 /**
  * Reset daily limits (called at midnight UTC)
- * 🚀 BANDWIDTH FIX: Process in batches instead of loading all profiles
+ * 🚀 BANDWIDTH FIX V2: Uses scheduler to process ALL profiles in batches
+ * Schedules next batch after each batch completes (no timeout issues)
  */
 export const resetDailyLimits = internalMutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { cursor: v.optional(v.number()) },
+  handler: async (ctx, args) => {
     const today = new Date().toISOString().split('T')[0];
-
-    // 🚀 BANDWIDTH FIX: Process in batches of 100 instead of loading all
-    const BATCH_SIZE = 100;
+    const BATCH_SIZE = 200;
     let resetsApplied = 0;
-    let cursor: string | null = null;
 
-    // Paginate through profiles
-    while (true) {
-      const profilesQuery = ctx.db.query("profiles");
-      const batch = cursor
-        ? await profilesQuery.take(BATCH_SIZE)
-        : await profilesQuery.take(BATCH_SIZE);
+    // Build query - use cursor to paginate
+    let query = ctx.db.query("profiles").order("asc");
 
-      if (batch.length === 0) break;
-
-      for (const profile of batch) {
-        if (profile.dailyLimits && profile.dailyLimits.lastResetDate !== today) {
-          await ctx.db.patch(profile._id, {
-            dailyLimits: {
-              pveWins: 0,
-              pvpMatches: 0,
-              lastResetDate: today,
-              firstPveBonus: false,
-              firstPvpBonus: false,
-              loginBonus: false,
-              streakBonus: false,
-            },
-          });
-          resetsApplied++;
-        }
-      }
-
-      // If we got less than batch size, we're done
-      if (batch.length < BATCH_SIZE) break;
-
-      // For now, break after first batch to avoid timeout
-      // The cron will catch remaining profiles on next run
-      break;
+    if (args.cursor) {
+      const cursorValue = args.cursor;
+      query = query.filter((q) => q.gt(q.field("_creationTime"), cursorValue));
     }
 
-    return { success: true, resetsApplied };
+    const batch = await query.take(BATCH_SIZE);
+
+    if (batch.length === 0) {
+      console.log(`[ResetDailyLimits] ✅ Complete! No more profiles to process.`);
+      return { success: true, resetsApplied: 0, done: true };
+    }
+
+    // Process this batch
+    for (const profile of batch) {
+      if (profile.dailyLimits && profile.dailyLimits.lastResetDate !== today) {
+        await ctx.db.patch(profile._id, {
+          dailyLimits: {
+            pveWins: 0,
+            pvpMatches: 0,
+            lastResetDate: today,
+            firstPveBonus: false,
+            firstPvpBonus: false,
+            loginBonus: false,
+            streakBonus: false,
+          },
+        });
+        resetsApplied++;
+      }
+    }
+
+    // Schedule next batch if there might be more
+    if (batch.length === BATCH_SIZE) {
+      const lastProfile = batch[batch.length - 1];
+      await ctx.scheduler.runAfter(100, internal.economy.resetDailyLimits, {
+        cursor: lastProfile._creationTime,
+      });
+      console.log(`[ResetDailyLimits] 📦 Batch done: ${resetsApplied} resets. Scheduling next batch...`);
+    } else {
+      console.log(`[ResetDailyLimits] ✅ Final batch: ${resetsApplied} resets. All profiles processed!`);
+    }
+
+    return { success: true, resetsApplied, done: batch.length < BATCH_SIZE };
   },
 });
 

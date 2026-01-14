@@ -310,21 +310,26 @@ export const getLeaderboardLite = query({
       // 🔄 CACHE MISS: Fall back to direct query (only happens on first load or stale cache)
       console.log("⚠️ Leaderboard cache miss - fetching from profiles");
 
-      // 🔗 Get all linked addresses to filter them out
-      const allLinks = await ctx.db.query("addressLinks").collect();
-      const linkedAddressSet = new Set(allLinks.map(l => l.address));
-
+      // 🚀 BANDWIDTH FIX: Fetch more profiles and filter linked addresses individually
       const topProfiles = await ctx.db
         .query("profiles")
         .withIndex("by_defense_aura", (q) => q.eq("hasFullDefenseDeck", true))
         .order("desc")
-        .take(limit + 50); // Fetch extra to account for filtered ones
+        .take(limit + 100); // Fetch extra to account for filtered ones
 
-      // 🔗 Filter out linked addresses (orphan profiles)
-      const primaryProfiles = topProfiles.filter(p => {
-        if (!p.address) return false;
-        return !linkedAddressSet.has(p.address);
-      }).slice(0, limit);
+      // 🔗 Filter out linked addresses (orphan profiles) using individual indexed queries
+      const primaryProfiles = [];
+      for (const p of topProfiles) {
+        if (!p.address) continue;
+        // Check if this address is linked (meaning it's an orphan)
+        const isLinked = await ctx.db
+          .query("addressLinks")
+          .withIndex("by_address", (q) => q.eq("address", p.address))
+          .first();
+        if (isLinked) continue; // Skip linked addresses
+        primaryProfiles.push(p);
+        if (primaryProfiles.length >= limit) break;
+      }
 
       // Map to minimal fields
       const mapped = primaryProfiles.map(p => {
@@ -372,28 +377,33 @@ export const updateLeaderboardFullCache = internalMutation({
   args: {},
   handler: async (ctx) => {
     try {
-      // 🔗 Get all linked addresses to filter them out from leaderboard
-      // Linked wallets should not appear separately - only primary profiles
-      const allLinks = await ctx.db.query("addressLinks").collect();
-      const linkedAddressSet = new Set(allLinks.map(l => l.address));
-
-      // Fetch top 200 profiles with defense deck
+      // Fetch top 250 profiles with defense deck (extra to account for filtered ones)
       const topProfiles = await ctx.db
         .query("profiles")
         .withIndex("by_defense_aura", (q) => q.eq("hasFullDefenseDeck", true))
         .order("desc")
-        .take(250); // Fetch extra to account for filtered ones
+        .take(250);
 
-      // 🔗 Filter out profiles whose address is a linked address (orphan profiles)
-      const primaryProfiles = topProfiles.filter(p => {
-        if (!p.address) return false;
-        // Skip if this address is linked to another profile
-        if (linkedAddressSet.has(p.address)) {
+      // 🚀 BANDWIDTH FIX: Check each profile individually with index instead of loading ALL addressLinks
+      // OLD: const allLinks = await ctx.db.query("addressLinks").collect(); // Loaded entire table!
+      const primaryProfiles = [];
+      for (const p of topProfiles) {
+        if (!p.address) continue;
+
+        // Check if this address is a linked (secondary) address using index
+        const isLinked = await ctx.db
+          .query("addressLinks")
+          .withIndex("by_address", (q) => q.eq("address", p.address))
+          .first();
+
+        if (isLinked) {
           console.log(`📋 Leaderboard: Skipping orphan profile ${p.username} (${p.address}) - linked to another profile`);
-          return false;
+          continue;
         }
-        return true;
-      }).slice(0, 200); // Take top 200 after filtering
+
+        primaryProfiles.push(p);
+        if (primaryProfiles.length >= 200) break;
+      }
 
       // Map to cached format
       const cachedData = primaryProfiles.map(p => {

@@ -1,6 +1,7 @@
 import { mutation, query, action, internalQuery, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 import { createAuditLog } from "./coinAudit";
 
 // Generate secure nonce for blockchain transactions
@@ -42,11 +43,17 @@ function determinePrize(): { amount: number; index: number } {
   return { amount: PRIZES[0].amount, index: 0 };
 }
 // Helper to find profile by address (including linked addresses)
+// 🚀 BANDWIDTH FIX: Use addressLinks index instead of full table scan
 async function findProfileByAddress(ctx: any, normalizedAddress: string) {
+  // Try direct lookup first
   let profile = await ctx.db.query("profiles").withIndex("by_address", (q: any) => q.eq("address", normalizedAddress)).first();
-  if (!profile) {
-    const allProfiles = await ctx.db.query("profiles").collect();
-    profile = allProfiles.find((p: any) => p.linkedAddresses?.some((linked: string) => linked.toLowerCase() === normalizedAddress)) || null;
+  if (profile) return profile;
+
+  // Check if this is a linked address
+  const link = await ctx.db.query("addressLinks").withIndex("by_address", (q: any) => q.eq("address", normalizedAddress)).first();
+  if (link) {
+    // Found a link - get the primary profile
+    profile = await ctx.db.query("profiles").withIndex("by_address", (q: any) => q.eq("address", link.primaryAddress)).first();
   }
   return profile;
 }
@@ -427,10 +434,10 @@ export const getUnclaimedSpin = internalQuery({
 export const markSpinAsPending = internalMutation({
   args: { spinId: v.string() },
   handler: async (ctx, { spinId }) => {
-    // Find the spin by its string ID (from _id field)
-    const today = getTodayKey();
-    const allSpins = await ctx.db.query("rouletteSpins").collect();
-    const spin = allSpins.find(s => s._id.toString() === spinId);
+    // 🚀 BANDWIDTH FIX: Use direct ID lookup instead of full table scan
+    // OLD: const allSpins = await ctx.db.query("rouletteSpins").collect();
+    // OLD: const spin = allSpins.find(s => s._id.toString() === spinId);
+    const spin = await ctx.db.get(spinId as Id<"rouletteSpins">);
 
     if (!spin) {
       throw new Error("Spin not found");

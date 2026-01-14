@@ -12,6 +12,7 @@ import { v } from "convex/values";
 import { mutation, query, internalQuery, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { logTransaction } from "./coinsInbox";
+import { createAuditLog } from "./coinAudit";
 
 /**
  * 🔒 SECURITY FIX: Crypto-secure random functions
@@ -1158,6 +1159,19 @@ export const burnCard = mutation({
       balanceAfter: currentCoins + burnValue,
     });
 
+    // 🔒 SECURITY: Add audit log for tracking
+    await createAuditLog(
+      ctx,
+      address,
+      "earn",
+      burnValue,
+      currentCoins,
+      currentCoins + burnValue,
+      "burn_card",
+      args.cardId.toString(),
+      { reason: `Burned ${card.rarity} card` }
+    );
+
     console.log(`🔥 BURN: ${address} burned ${card.rarity} card for ${burnValue} VBMS`);
 
     return {
@@ -1269,6 +1283,19 @@ export const burnMultipleCards = mutation({
       balanceBefore: currentCoins,
       balanceAfter: currentCoins + totalVBMS,
     });
+
+    // 🔒 SECURITY: Add audit log for tracking
+    await createAuditLog(
+      ctx,
+      address,
+      "earn",
+      totalVBMS,
+      currentCoins,
+      currentCoins + totalVBMS,
+      "burn_cards",
+      `${args.cardIds.length}_cards`,
+      { reason: `Burned ${args.cardIds.length} cards: ${burnSummary}` }
+    );
 
     console.log(`🔥 MASS BURN: ${address} burned ${args.cardIds.length} cards for ${totalVBMS} VBMS`);
 

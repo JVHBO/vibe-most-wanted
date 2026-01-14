@@ -456,6 +456,20 @@ export const claimAllMissions = mutation({
       balanceAfter: newBalance,
     });
 
+    // 🔒 AUDIT LOG - Track batch mission claim
+    const missionTypes = missions.map(m => m.missionType).join(", ");
+    await createAuditLog(
+      ctx,
+      normalizedAddress,
+      "earn",
+      totalReward,
+      currentBalance,
+      newBalance,
+      "mission_batch",
+      `${missions.length}_missions`,
+      { reason: `Claimed ${missions.length} missions: ${missionTypes}` }
+    );
+
     console.log(`💰 Mission rewards added to balance: ${totalReward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark all as claimed

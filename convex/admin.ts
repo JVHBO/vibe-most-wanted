@@ -228,8 +228,8 @@ export const resetFreeCards = internalMutation({
         // Check if player already has a pack
         const existingPack = await ctx.db
           .query("cardPacks")
-          .withIndex("by_address", (q) => q.eq("address", address))
-          .filter((q) => q.eq(q.field("packType"), "basic"))
+          // 🚀 BANDWIDTH FIX: Use compound index instead of filter
+          .withIndex("by_address_packType", (q) => q.eq("address", address).eq("packType", "basic"))
           .first();
 
         if (existingPack) {
@@ -564,56 +564,6 @@ export const resetDailyFreeClaims = internalMutation({
   },
 });
 
-/**
- * Set test referrals for an address (for testing referral rewards)
- */
-// 🔒 SECURITY FIX: Changed from mutation to internalMutation
-export const setTestReferrals = internalMutation({
-  args: {
-    address: v.string(),
-    count: v.number(),
-  },
-  handler: async (ctx, { address, count }) => {
-    const normalizedAddress = address.toLowerCase();
-
-    // Check if referralStats exists
-    const existingStats = await ctx.db
-      .query("referralStats")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
-
-    const now = Date.now();
-
-    if (existingStats) {
-      // Update existing stats
-      await ctx.db.patch(existingStats._id, {
-        totalReferrals: count,
-        claimedTiers: [], // Reset claimed tiers for testing
-        updatedAt: now,
-      });
-      console.log(`Updated referral stats for ${normalizedAddress}: ${count} referrals`);
-      return { success: true, updated: true, totalReferrals: count };
-    } else {
-      // Create new stats with all required fields
-      await ctx.db.insert("referralStats", {
-        address: normalizedAddress,
-        username: "test_user",
-        totalReferrals: count,
-        qualifiedReferrals: count,
-        pendingReferrals: 0,
-        claimedTiers: [],
-        totalVbmsEarned: 0,
-        totalPacksEarned: 0,
-        hasBadge: false,
-        createdAt: now,
-        updatedAt: now,
-      });
-      console.log(`Created referral stats for ${normalizedAddress}: ${count} referrals`);
-      return { success: true, created: true, totalReferrals: count };
-    }
-  },
-});
-
 // ========== BLACKLIST: Exploiter addresses ==========
 
 const EXPLOITER_BLACKLIST: Record<string, { username: string; fid: number; amountStolen: number }> = {
@@ -785,13 +735,6 @@ export const countOldRecordsForCleanup = internalMutation({
       .take(100);
     results.coinTransactions = oldCoinTx.length >= LIMIT ? LIMIT + "+" : String(oldCoinTx.length);
 
-    const referrals = await ctx.db.query("referrals").take(100);
-    const referralStats = await ctx.db.query("referralStats").take(100);
-    const referralClaims = await ctx.db.query("referralClaims").take(100);
-    results.referrals = referrals.length >= LIMIT ? LIMIT + "+" : String(referrals.length);
-    results.referralStats = referralStats.length >= LIMIT ? LIMIT + "+" : String(referralStats.length);
-    results.referralClaims = referralClaims.length >= LIMIT ? LIMIT + "+" : String(referralClaims.length);
-
     console.log("Records older than " + daysOld + " days:", results);
 
     return {
@@ -877,30 +820,6 @@ export const cleanupOldCoinTransactions = internalMutation({
 
     console.log("Deleted " + oldTx.length + " old coin transactions");
     return { deleted: oldTx.length, hasMore: oldTx.length === 100 };
-  },
-});
-
-/**
- * Clear all referral data (system disabled)
- * INTERNAL ONLY - Only use if referral system is permanently disabled
- */
-export const cleanupReferralData = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    let deletedReferrals = 0, deletedStats = 0, deletedClaims = 0;
-
-    const referrals = await ctx.db.query("referrals").take(100);
-    for (const r of referrals) { await ctx.db.delete(r._id); deletedReferrals++; }
-
-    const stats = await ctx.db.query("referralStats").take(100);
-    for (const s of stats) { await ctx.db.delete(s._id); deletedStats++; }
-
-    const claims = await ctx.db.query("referralClaims").take(100);
-    for (const c of claims) { await ctx.db.delete(c._id); deletedClaims++; }
-
-    const hasMore = referrals.length === 100 || stats.length === 100 || claims.length === 100;
-    console.log("Referral cleanup: referrals=" + deletedReferrals + " stats=" + deletedStats + " claims=" + deletedClaims);
-    return { deletedReferrals, deletedStats, deletedClaims, hasMore };
   },
 });
 
@@ -1311,10 +1230,10 @@ export const countNotificationTokens = internalQuery({
 });
 
 /**
- * Public query to get notification and app stats
+ * 🔒 SECURITY: Changed to internalQuery - app statistics
  * Run: npx convex run admin:getAppStats --env-file .env.prod
  */
-export const getAppStats = query({
+export const getAppStats = internalQuery({
   args: {},
   handler: async (ctx) => {
     const allTokens = await ctx.db.query("notificationTokens").collect();
@@ -1358,10 +1277,10 @@ export const getAppStats = query({
 });
 
 /**
- * Get recent notification tokens with platform info
+ * 🔒 SECURITY: Changed to internalQuery - notification tokens
  * Run: npx convex run admin:getRecentTokens --env-file .env.prod
  */
-export const getRecentTokens = query({
+export const getRecentTokens = internalQuery({
   args: {},
   handler: async (ctx) => {
     const tokens = await ctx.db.query("notificationTokens").order("desc").take(50);

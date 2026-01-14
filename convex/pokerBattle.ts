@@ -1004,6 +1004,7 @@ export const getPokerRoom = query({
 });
 
 // Get player's current poker room (if any)
+// 🚀 BANDWIDTH FIX: Use indexes instead of full table filter
 export const getMyPokerRoom = query({
   args: {
     address: v.string(),
@@ -1012,26 +1013,43 @@ export const getMyPokerRoom = query({
     const now = Date.now();
     const addr = args.address.toLowerCase();
 
-    // Find room where player is host or guest and game is active
-    const room = await ctx.db
+    const validStatuses = ["waiting", "ready", "in-progress"];
+
+    // Check if player is host (using index)
+    const roomAsHost = await ctx.db
       .query("pokerRooms")
+      .withIndex("by_host", (q) => q.eq("hostAddress", addr))
       .filter((q) =>
-        q.or(
-          q.eq(q.field("hostAddress"), addr),
-          q.eq(q.field("guestAddress"), addr)
+        q.and(
+          q.or(
+            q.eq(q.field("status"), "waiting"),
+            q.eq(q.field("status"), "ready"),
+            q.eq(q.field("status"), "in-progress")
+          ),
+          q.gt(q.field("expiresAt"), now)
         )
       )
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("status"), "waiting"),
-          q.eq(q.field("status"), "ready"),
-          q.eq(q.field("status"), "in-progress")
-        )
-      )
-      .filter((q) => q.gt(q.field("expiresAt"), now))
       .first();
 
-    return room;
+    if (roomAsHost) return roomAsHost;
+
+    // Check if player is guest (using index)
+    const roomAsGuest = await ctx.db
+      .query("pokerRooms")
+      .withIndex("by_guest", (q) => q.eq("guestAddress", addr))
+      .filter((q) =>
+        q.and(
+          q.or(
+            q.eq(q.field("status"), "waiting"),
+            q.eq(q.field("status"), "ready"),
+            q.eq(q.field("status"), "in-progress")
+          ),
+          q.gt(q.field("expiresAt"), now)
+        )
+      )
+      .first();
+
+    return roomAsGuest;
   },
 });
 

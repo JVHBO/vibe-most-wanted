@@ -79,19 +79,20 @@ const VIBEFID_DECK_BONUS = 0.10; // +10% power to entire deck
  * Get current active raid boss
  * Also returns transitioning/defeated boss to prevent re-initialization during transition
  */
+// 🚀 BANDWIDTH FIX: Use by_status index instead of filter
 export const getCurrentRaidBoss = query({
   handler: async (ctx) => {
-    // First try to get active boss
+    // First try to get active boss (using index)
     let boss = await ctx.db
       .query("raidBoss")
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .first();
 
     // If no active boss, check for transitioning (being processed after defeat)
     if (!boss) {
       boss = await ctx.db
         .query("raidBoss")
-        .filter((q) => q.eq(q.field("status"), "transitioning"))
+        .withIndex("by_status", (q) => q.eq("status", "transitioning"))
         .first();
     }
 
@@ -99,7 +100,7 @@ export const getCurrentRaidBoss = query({
     if (!boss) {
       boss = await ctx.db
         .query("raidBoss")
-        .filter((q) => q.eq(q.field("status"), "defeated"))
+        .withIndex("by_status", (q) => q.eq("status", "defeated"))
         .first();
     }
 
@@ -184,9 +185,10 @@ export const getPlayerContribution = query({
     // 🔗 Resolve to primary address if this is a linked wallet
     const primaryAddress = await resolvePrimaryAddress(ctx, args.address);
 
+    // 🚀 BANDWIDTH FIX: Use index instead of filter
     const boss = await ctx.db
       .query("raidBoss")
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .first();
 
     if (!boss) return null;
@@ -210,9 +212,10 @@ export const getTopContributors = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    // 🚀 BANDWIDTH FIX: Use index instead of filter
     const boss = await ctx.db
       .query("raidBoss")
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .first();
 
     if (!boss) return [];
@@ -767,9 +770,10 @@ export const processAutoAttacks = internalMutation({
     const now = Date.now();
 
     // Get current active boss
+    // 🚀 BANDWIDTH FIX: Use index instead of filter
     const boss = await ctx.db
       .query("raidBoss")
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .first();
 
     if (!boss) {
@@ -982,6 +986,7 @@ export const defeatBossAndSpawnNext = internalMutation({
     const bossRarity = defeatedBoss.rarity.toLowerCase() as Lowercase<CardRarity>;
     const REWARD_POOL = BOSS_REWARDS_BY_RARITY[bossRarity];
 
+    // 🚀 BANDWIDTH FIX: Removed unused profile fetch from loop (was N+1 pattern)
     for (const contribution of contributions) {
       const contributionPercent = totalDamage > 0 ? contribution.damageDealt / totalDamage : 0;
       // Minimum 1 coin for anyone who participated
@@ -990,13 +995,6 @@ export const defeatBossAndSpawnNext = internalMutation({
       await ctx.db.patch(contribution._id, {
         rewardEarned: reward,
       });
-
-      // Mark reward as earned but NOT claimed - player must click claim button
-      const profile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", contribution.address))
-        .first();
-
       // Reward saved in contribution, player must claim via UI
     }
 
