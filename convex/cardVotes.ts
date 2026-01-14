@@ -704,16 +704,18 @@ export const getSentMessages = query({
       return [];
     }
 
-    // Get all votes sent by this user that have messages
+    // 🔧 OPTIMIZED: Use order + take instead of collect + filter
+    // Fetch more than limit to account for filtering, but cap at reasonable amount
+    const fetchLimit = Math.min(limit * 3, 200);
     const allVotes = await ctx.db
       .query("cardVotes")
       .withIndex("by_voter_date", (q) => q.eq("voterFid", fid))
-      .collect();
+      .order("desc")
+      .take(fetchLimit);
 
-    // Filter to only votes with messages and sort by creation time
+    // Filter to only votes with messages
     const messages = allVotes
       .filter(v => v.message !== undefined && v.isSent !== false)
-      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
       .slice(0, limit);
 
     // Get recipient info for each message
@@ -758,15 +760,33 @@ export const searchCardsForVibeMail = query({
     const limit = args.limit || 5;
     const searchLower = args.searchTerm.toLowerCase();
 
-    // Search by username
-    const allCards = await ctx.db
-      .query("farcasterCards")
-      .collect();
+    // 🔧 OPTIMIZED: Check if searching by FID first (use index)
+    const fidSearch = parseInt(args.searchTerm);
+    if (!isNaN(fidSearch)) {
+      const cardByFid = await ctx.db
+        .query("farcasterCards")
+        .withIndex("by_fid", (q) => q.eq("fid", fidSearch))
+        .first();
+      
+      if (cardByFid) {
+        return [{
+          fid: cardByFid.fid,
+          username: cardByFid.username,
+          pfpUrl: cardByFid.pfpUrl,
+        }];
+      }
+    }
 
-    const matches = allCards
+    // 🔧 OPTIMIZED: For username search, limit scan instead of .collect()
+    // Fetch recent cards (more likely to be searched) with a cap
+    const recentCards = await ctx.db
+      .query("farcasterCards")
+      .order("desc")
+      .take(500);
+
+    const matches = recentCards
       .filter(card =>
-        card.username.toLowerCase().includes(searchLower) ||
-        card.fid.toString() === args.searchTerm
+        card.username.toLowerCase().includes(searchLower)
       )
       .slice(0, limit)
       .map(card => ({
@@ -1113,16 +1133,18 @@ export const getRandomCardsMutation = mutation({
 export const getVibeMailStats = query({
   args: { fid: v.number() },
   handler: async (ctx, args) => {
-    // Get all VibeMails SENT by this user (any message sent, paid or not)
+    // 🔧 OPTIMIZED: Use .take() with reasonable limit instead of .collect()
+    const MAX_SCAN = 1000;
+
+    // Get VibeMails SENT by this user (limited scan)
     const sentMessages = await ctx.db
       .query("cardVotes")
       .withIndex("by_voter_date", (q) => q.eq("voterFid", args.fid))
-      .collect();
+      .take(MAX_SCAN);
 
-    // Count ALL messages sent (with message field) - each costs 100 VBMS
-    // Include both paid votes and replies/broadcasts
+    // Count messages sent (with message field)
     const allSent = sentMessages.filter(v => v.message !== undefined && v.message !== "");
-    const totalVbmsSent = allSent.length * 100; // Each VibeMail costs 100 VBMS
+    const totalVbmsSent = allSent.length * 100;
 
     // Get vibeRewards for RECEIVED - this is the actual earned VBMS
     const vibeRewards = await ctx.db
@@ -1130,20 +1152,19 @@ export const getVibeMailStats = query({
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
       .first();
 
-    // Total received = pending + already claimed
     const totalVbmsReceived = vibeRewards
       ? vibeRewards.pendingVbms + vibeRewards.claimedVbms
       : 0;
 
-    // Count all messages received (for stats)
+    // 🔧 OPTIMIZED: Count received messages (limited scan)
     const receivedMessages = await ctx.db
       .query("cardVotes")
       .withIndex("by_card_date", (q) => q.eq("cardFid", args.fid))
-      .collect();
+      .take(MAX_SCAN);
 
     return {
-      totalVbmsSent,           // Total VBMS spent on ALL VibeMails sent
-      totalVbmsReceived,       // Total VBMS earned from ALL votes (pending + claimed)
+      totalVbmsSent,
+      totalVbmsReceived,
       messagesSent: allSent.length,
       messagesReceived: receivedMessages.length,
     };
