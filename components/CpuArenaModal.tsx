@@ -207,23 +207,22 @@ export function CpuArenaModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-vintage-deep-black/95 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-2 border-purple-500/50 max-w-5xl w-full max-h-[95vh] overflow-y-auto shadow-2xl"
+        className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-2xl border-2 border-vintage-gold/50 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ============ PASSWORD VIEW ============ */}
         {viewMode === "password" && (
-          <div className="p-6 sm:p-8">
+          <div className="p-6">
             {/* Header */}
-            <div className="text-center mb-8">
-              <div className="text-6xl mb-4">🔐</div>
-              <h1 className="text-2xl sm:text-3xl font-display font-bold text-purple-400 mb-2">
+            <div className="text-center mb-6">
+              <h1 className="text-xl font-display font-bold text-vintage-gold mb-1">
                 {t('mechaPasswordTitle')}
               </h1>
-              <p className="text-vintage-ice/70">
+              <p className="text-vintage-ice/60 text-sm">
                 {t('mechaPasswordSubtitle')}
               </p>
             </div>
@@ -240,8 +239,8 @@ export function CpuArenaModal({
                 onKeyDown={(e) => e.key === "Enter" && handlePasswordSubmit()}
                 placeholder={t('mechaPasswordPlaceholder')}
                 className={`w-full px-4 py-3 bg-vintage-black/50 border-2 ${
-                  passwordError ? "border-red-500" : "border-purple-500/50"
-                } rounded-xl text-vintage-ice placeholder-vintage-ice/50 focus:outline-none focus:border-purple-400 text-center text-lg`}
+                  passwordError ? "border-red-500" : "border-vintage-gold/40"
+                } rounded-lg text-vintage-ice placeholder-vintage-ice/50 focus:outline-none focus:border-vintage-gold text-center`}
                 autoFocus
               />
               {passwordError && (
@@ -252,14 +251,14 @@ export function CpuArenaModal({
 
               <button
                 onClick={handlePasswordSubmit}
-                className="w-full mt-4 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl transition-all transform hover:scale-105"
+                className="w-full mt-4 py-3 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold/50 text-vintage-gold font-bold rounded-lg transition-all"
               >
                 {t('mechaEnterArena')}
               </button>
 
               <button
                 onClick={onClose}
-                className="w-full mt-3 py-2 text-vintage-ice/70 hover:text-vintage-ice transition-colors"
+                className="w-full mt-3 py-2 text-vintage-ice/50 hover:text-vintage-ice text-sm transition-colors"
               >
                 {t('mechaCancel')}
               </button>
@@ -271,186 +270,94 @@ export function CpuArenaModal({
         {viewMode === "rooms" && (
           <>
             {/* Header */}
-            <div className="bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-purple-600/20 border-b-2 border-purple-500/30 p-4 sm:p-6">
+            <div className="border-b border-vintage-gold/30 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-2xl sm:text-4xl font-display font-bold text-purple-400 flex items-center gap-3">
-                    <span className="text-3xl sm:text-5xl">🤖</span>
+                  <h1 className="text-xl font-display font-bold text-vintage-gold">
                     {t('mechaTitle')}
                   </h1>
-                  <p className="text-sm sm:text-base text-purple-300/70 mt-1">
+                  <p className="text-xs text-vintage-burnt-gold">
                     {t('mechaSubtitle')}
                   </p>
                 </div>
                 <button
                   onClick={onClose}
-                  className="text-vintage-gold hover:text-vintage-burnt-gold text-3xl"
+                  className="w-8 h-8 flex items-center justify-center text-vintage-gold hover:text-vintage-burnt-gold text-xl rounded-full hover:bg-vintage-gold/10"
                 >
-                  ×
+                  X
                 </button>
               </div>
             </div>
 
             {/* Daily Buff Banner */}
-            <div className="mx-4 sm:mx-6 mt-4 bg-gradient-to-r from-orange-500/20 via-yellow-500/20 to-orange-500/20 border-2 border-orange-400/50 rounded-xl p-4 relative overflow-hidden">
-              {/* Animated fire glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-yellow-500/20 to-orange-500/10 animate-pulse"></div>
-
-              <div className="relative flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="text-4xl animate-bounce">🔥</div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-orange-400 font-bold text-lg">{t('mechaDailyBoost')}</span>
-                      <span className="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
-                        {t('mechaOddsBonus').replace('{bonus}', String(BUFF_CONFIG.oddsBonus))}
-                      </span>
-                    </div>
-                    <p className="text-vintage-ice/80 text-sm">
-                      {t('mechaTodayBoosted')} <span className="text-orange-300 font-bold">{buffedCollectionInfo?.name || buffedCollection}</span> {buffedCollectionInfo?.emoji}
-                    </p>
-                  </div>
+            <div className="mx-4 mt-3 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-vintage-gold text-sm font-bold">
+                    +{BUFF_CONFIG.oddsBonus}x {buffedCollectionInfo?.name || buffedCollection}
+                  </p>
+                  <p className="text-vintage-ice/50 text-xs">
+                    {t('mechaResetsIn')} {String(buffCountdown.hours).padStart(2, '0')}:{String(buffCountdown.minutes).padStart(2, '0')}:{String(buffCountdown.seconds).padStart(2, '0')}
+                  </p>
                 </div>
-
-                <div className="flex flex-col items-center sm:items-end gap-2">
-                  <div className="text-center sm:text-right">
-                    <p className="text-vintage-ice/60 text-xs">{t('mechaResetsIn')}</p>
-                    <p className="text-orange-400 font-mono font-bold">
-                      {String(buffCountdown.hours).padStart(2, '0')}:
-                      {String(buffCountdown.minutes).padStart(2, '0')}:
-                      {String(buffCountdown.seconds).padStart(2, '0')}
-                    </p>
-                  </div>
-                  {/* Buy button for boosted collection */}
-                  {(() => {
-                    const collectionConfig = COLLECTIONS[buffedCollection as CollectionId];
-                    const marketUrl = collectionConfig?.marketplaceUrl;
-                    if (!marketUrl) return null;
-                    return (
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          await openMarketplace(marketUrl, sdk, isInFarcaster);
-                        }}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 rounded-full text-white text-xs font-bold transition-all shadow-lg hover:shadow-orange-500/30 cursor-pointer"
-                      >
-                        🛒 {collectionConfig?.buttonText || 'BUY PACKS'}
-                      </button>
-                    );
-                  })()}
-                </div>
+                {(() => {
+                  const collectionConfig = COLLECTIONS[buffedCollection as CollectionId];
+                  const marketUrl = collectionConfig?.marketplaceUrl;
+                  if (!marketUrl) return null;
+                  return (
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await openMarketplace(marketUrl, sdk, isInFarcaster);
+                      }}
+                      className="px-3 py-1 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold/50 rounded-lg text-vintage-gold text-xs font-bold transition-all"
+                    >
+                      BUY
+                    </button>
+                  );
+                })()}
               </div>
             </div>
 
             {/* Available Rooms */}
-            <div className="p-4 sm:p-6">
-              <h2 className="text-xl font-display font-bold text-vintage-gold mb-4 flex items-center gap-2">
-                <span>🎮</span> {t('mechaAvailableArenas')}
-              </h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="p-4">
+              <div className="space-y-2">
                 {availableCollections?.map((collection: string) => {
-                  const info = COLLECTION_INFO[collection] || {
-                    name: collection,
-                    emoji: "🎴",
-                    color: "from-gray-600 to-gray-700"
-                  };
-
-                  // Get spectator count for this collection
+                  const info = COLLECTION_INFO[collection] || { name: collection, emoji: "", color: "" };
                   const roomData = cpuRooms?.find((r: any) => r.collection === collection);
                   const spectatorCount = roomData?.spectatorCount || 0;
-
-                  // Check if this collection is buffed today
                   const isBuffed = collection === buffedCollection;
 
                   return (
                     <button
                       key={collection}
                       onClick={() => handleSelectRoom(collection)}
-                      className={`relative group bg-gradient-to-br ${info.color} hover:scale-105 border-2 ${
+                      className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${
                         isBuffed
-                          ? "border-orange-400 ring-2 ring-orange-400/50 shadow-orange-500/30"
-                          : "border-white/20 hover:border-white/40"
-                      } rounded-xl p-5 transition-all shadow-lg hover:shadow-xl`}
+                          ? "bg-vintage-gold/10 border-vintage-gold/50 hover:bg-vintage-gold/20"
+                          : "bg-vintage-black/30 border-vintage-gold/20 hover:border-vintage-gold/40 hover:bg-vintage-black/50"
+                      }`}
                     >
-                      {/* Buff badge */}
-                      {isBuffed && (
-                        <>
-                          {/* Fire glow effect */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-orange-500/30 to-transparent rounded-xl animate-pulse"></div>
-
-                          {/* HOT badge */}
-                          <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce z-10 flex items-center gap-1">
-                            <span>🔥</span>
-                            <span>{t('mechaHot')}</span>
-                          </div>
-
-                          {/* Odds bonus badge */}
-                          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-orange-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg z-10">
-                            +{BUFF_CONFIG.oddsBonus}x ODDS
-                          </div>
-                        </>
-                      )}
-
-                      {/* Glow effect */}
-                      <div className={`absolute inset-0 ${isBuffed ? "bg-orange-400/20" : "bg-white/10"} blur-xl rounded-xl opacity-0 group-hover:opacity-100 transition-opacity -z-10`}></div>
-
-                      <div className="text-center">
-                        <div className="text-5xl mb-3">{info.emoji}</div>
-                        <p className="text-white font-display font-bold text-lg mb-1">
+                      <div className="text-left">
+                        <p className={`font-bold text-sm ${isBuffed ? 'text-vintage-gold' : 'text-vintage-ice'}`}>
                           {info.name}
                         </p>
-                        <p className="text-white/70 text-sm">
-                          {t('mechaArena')}
-                        </p>
-
-                        {/* Spectator count and status */}
-                        <div className="mt-3 flex items-center justify-center gap-3">
-                          <div className="flex items-center gap-1">
-                            <span className="text-lg">👁️</span>
-                            <span className="text-white font-bold">{spectatorCount}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <div className={`w-2 h-2 ${isBuffed ? "bg-orange-400" : "bg-green-400"} rounded-full animate-pulse`}></div>
-                            <span className="text-white/80 text-xs">{isBuffed ? t('mechaBoosted') : t('mechaLive')}</span>
-                          </div>
-                        </div>
-
-                        {/* Buy Collection Button */}
-                        {(() => {
-                          const collectionConfig = COLLECTIONS[collection as CollectionId];
-                          const marketUrl = collectionConfig?.marketplaceUrl;
-                          if (!marketUrl) return null;
-                          const isInternal = marketUrl.startsWith('/');
-                          return (
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                await openMarketplace(marketUrl, sdk, isInFarcaster);
-                              }}
-                              className="mt-3 inline-flex items-center gap-1 px-3 py-1 bg-black/40 hover:bg-black/60 border border-white/30 hover:border-white/50 rounded-full text-white/90 text-xs font-medium transition-all cursor-pointer"
-                            >
-                              🛒 {collectionConfig?.buttonText || 'BUY PACKS'}
-                            </button>
-                          );
-                        })()}
+                        {isBuffed && <span className="text-xs text-vintage-burnt-gold">+{BUFF_CONFIG.oddsBonus}x bonus</span>}
+                      </div>
+                      <div className="flex items-center gap-3 text-vintage-ice/50 text-xs">
+                        <span>{spectatorCount} watching</span>
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                       </div>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Info box */}
-              <div className="mt-6 bg-purple-500/10 border border-purple-500/30 rounded-xl p-4">
-                <h3 className="text-purple-400 font-bold mb-2">💡 {t('mechaHowItWorks')}</h3>
-                <ul className="text-vintage-ice/70 text-sm space-y-1">
-                  <li>• {t('mechaHowItWorks1')}</li>
-                  <li>• {t('mechaHowItWorks2')}</li>
-                  <li>• {t('mechaHowItWorks3')}</li>
-                  <li>• {t('mechaHowItWorks4')}</li>
-                  <li>• <span className="text-orange-400 font-bold">🔥 {t('mechaDailyBoost')}:</span> {t('mechaHowItWorks5').replace('{bonus}', String(BUFF_CONFIG.oddsBonus))}</li>
-                  <li>• {t('mechaHowItWorks6')}</li>
-                </ul>
+              {/* Info */}
+              <div className="mt-4 pt-3 border-t border-vintage-gold/20">
+                <p className="text-vintage-ice/40 text-xs text-center">
+                  {t('mechaHowItWorks1')}
+                </p>
               </div>
             </div>
           </>
@@ -459,16 +366,13 @@ export function CpuArenaModal({
 
         {/* ============ ROOM CHOICE VIEW ============ */}
         {viewMode === "room-choice" && selectedCollection && (
-          <div className="p-6 sm:p-8">
+          <div className="p-4">
             {/* Header */}
-            <div className="text-center mb-6">
-              <div className="text-5xl mb-3">
-                {COLLECTION_INFO[selectedCollection]?.emoji || "🎮"}
-              </div>
-              <h2 className="text-2xl font-display font-bold text-purple-400 mb-2">
-                {COLLECTION_INFO[selectedCollection]?.name || selectedCollection} Arena
+            <div className="mb-4 pb-3 border-b border-vintage-gold/30">
+              <h2 className="text-lg font-display font-bold text-vintage-gold">
+                {COLLECTION_INFO[selectedCollection]?.name || selectedCollection}
               </h2>
-              <p className="text-vintage-ice/70">
+              <p className="text-xs text-vintage-burnt-gold">
                 {t('mechaActiveBattle')}
               </p>
             </div>
@@ -478,26 +382,26 @@ export function CpuArenaModal({
               const activeRoom = cpuRooms?.find((r: any) => r.collection === selectedCollection);
               if (!activeRoom) return null;
               return (
-                <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 mb-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-purple-300 font-bold">{t('mechaCurrentBattle')}</span>
+                <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-vintage-gold text-sm font-bold">{t('mechaCurrentBattle')}</span>
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-green-400 text-sm">{t('mechaLive')}</span>
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-green-400 text-xs">{t('mechaLive')}</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-center">
+                  <div className="grid grid-cols-3 gap-3 text-center">
                     <div>
-                      <p className="text-vintage-ice/60 text-xs">{t('mechaRound')}</p>
-                      <p className="text-vintage-gold font-bold text-xl">{activeRoom.currentRound || 1}/7</p>
+                      <p className="text-vintage-ice/50 text-xs">{t('mechaRound')}</p>
+                      <p className="text-vintage-gold font-bold">{activeRoom.currentRound || 1}/7</p>
                     </div>
                     <div>
-                      <p className="text-vintage-ice/60 text-xs">{t('mechaScore')}</p>
-                      <p className="text-vintage-gold font-bold text-xl">{activeRoom.hostScore || 0} - {activeRoom.guestScore || 0}</p>
+                      <p className="text-vintage-ice/50 text-xs">{t('mechaScore')}</p>
+                      <p className="text-vintage-gold font-bold">{activeRoom.hostScore || 0} - {activeRoom.guestScore || 0}</p>
                     </div>
                     <div>
-                      <p className="text-vintage-ice/60 text-xs">{t('mechaSpectators')}</p>
-                      <p className="text-vintage-gold font-bold text-xl">{activeRoom.spectatorCount || 0}</p>
+                      <p className="text-vintage-ice/50 text-xs">{t('mechaSpectators')}</p>
+                      <p className="text-vintage-gold font-bold">{activeRoom.spectatorCount || 0}</p>
                     </div>
                   </div>
                 </div>
@@ -505,26 +409,24 @@ export function CpuArenaModal({
             })()}
 
             {/* Choice buttons */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <button
                 onClick={handleJoinExisting}
-                className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold rounded-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                className="w-full flex items-center justify-between p-3 bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/40 hover:border-vintage-gold/60 rounded-lg transition-all"
               >
-                <span className="text-2xl">👁️</span>
                 <div className="text-left">
-                  <p className="text-lg">{t('mechaJoinCurrent')}</p>
-                  <p className="text-xs text-white/70">{t('mechaWatchOngoing')}</p>
+                  <p className="text-vintage-gold font-bold text-sm">{t('mechaJoinCurrent')}</p>
+                  <p className="text-xs text-vintage-ice/50">{t('mechaWatchOngoing')}</p>
                 </div>
               </button>
 
               <button
                 onClick={handleCreateNew}
-                className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl transition-all transform hover:scale-105 flex items-center justify-center gap-3"
+                className="w-full flex items-center justify-between p-3 bg-vintage-black/30 hover:bg-vintage-black/50 border border-vintage-gold/20 hover:border-vintage-gold/40 rounded-lg transition-all"
               >
-                <span className="text-2xl">🆕</span>
                 <div className="text-left">
-                  <p className="text-lg">{t('mechaStartNew')}</p>
-                  <p className="text-xs text-white/70">{t('mechaCreateFresh')}</p>
+                  <p className="text-vintage-ice font-bold text-sm">{t('mechaStartNew')}</p>
+                  <p className="text-xs text-vintage-ice/50">{t('mechaCreateFresh')}</p>
                 </div>
               </button>
 
@@ -533,9 +435,9 @@ export function CpuArenaModal({
                   setViewMode("rooms");
                   setSelectedCollection(null);
                 }}
-                className="w-full py-3 text-vintage-ice/70 hover:text-vintage-ice transition-colors"
+                className="w-full py-2 text-vintage-ice/50 hover:text-vintage-ice text-sm transition-colors"
               >
-                ← {t('mechaBackToArenas')}
+                {t('mechaBackToArenas')}
               </button>
             </div>
           </div>
@@ -558,10 +460,10 @@ export function CpuArenaModal({
 
         {/* Loading state */}
         {isJoining && (
-          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-vintage-black/90 flex items-center justify-center z-50 rounded-2xl">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
-              <p className="text-vintage-gold font-bold">{t('mechaJoining')}</p>
+              <div className="animate-spin rounded-full h-10 w-10 border-3 border-vintage-gold border-t-transparent mx-auto mb-3"></div>
+              <p className="text-vintage-gold font-bold text-sm">{t('mechaJoining')}</p>
             </div>
           </div>
         )}

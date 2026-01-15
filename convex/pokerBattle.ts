@@ -1697,8 +1697,8 @@ export const createCpuVsCpuRoom = mutation({
 
     console.log(`🤖 CPU vs CPU room created: ${roomId} (${collection})`);
 
-    // Schedule CPU to make first move after 3 seconds
-    await ctx.scheduler.runAfter(3000, internal.pokerBattle.cpuMakeMove, {
+    // Schedule CPU to make first move after 1 second
+    await ctx.scheduler.runAfter(1000, internal.pokerBattle.cpuMakeMove, {
       roomId,
       isHost: true,
     });
@@ -1864,10 +1864,10 @@ export const cpuMakeMove = internalMutation({
       // Check if both CPUs have selected - if so, move to reveal
       const otherSelected = isHost ? updatedRoom.gameState.guestSelectedCard : updatedRoom.gameState.hostSelectedCard;
       if (otherSelected) {
-        // Both selected, wait 15 seconds (give spectators time to bet) then reveal
-        // If someone bets, the window will be shortened to 5 seconds via shortenBettingWindow
-        const bettingWindowEndsAt = Date.now() + 15000; // 15 seconds from now
-        console.log(`🤖 Both CPUs selected - waiting 15s for spectator bets before reveal (will shorten to 5s if bet placed)`);
+        // Both selected, wait 8 seconds (give spectators time to bet) then reveal
+        // If someone bets, the window will be shortened to 3 seconds via shortenBettingWindow
+        const bettingWindowEndsAt = Date.now() + 8000; // 8 seconds from now
+        console.log(`🤖 Both CPUs selected - waiting 8s for spectator bets before reveal (will shorten to 3s if bet placed)`);
 
         await ctx.db.patch(updatedRoom._id, {
           gameState: {
@@ -1877,12 +1877,12 @@ export const cpuMakeMove = internalMutation({
           },
         });
 
-        await ctx.scheduler.runAfter(15000, internal.pokerBattle.cpuRevealRound, {
+        await ctx.scheduler.runAfter(8000, internal.pokerBattle.cpuRevealRound, {
           roomId,
         });
       } else {
-        // Schedule other CPU to select after 2 seconds
-        await ctx.scheduler.runAfter(2000, internal.pokerBattle.cpuMakeMove, {
+        // Schedule other CPU to select after 800ms (faster pacing)
+        await ctx.scheduler.runAfter(800, internal.pokerBattle.cpuMakeMove, {
           roomId,
           isHost: !isHost,
         });
@@ -1913,11 +1913,11 @@ export const shortenBettingWindow = internalMutation({
     if (!gameState.bettingWindowEndsAt) return;
 
     const now = Date.now();
-    const newEndsAt = now + 5000; // 5 seconds from now
+    const newEndsAt = now + 3000; // 3 seconds from now
 
     // Only shorten if the new time is sooner than the current window
     if (newEndsAt < gameState.bettingWindowEndsAt) {
-      console.log(`⚡ Bet placed! Shortening betting window to 5s for round ${currentRound}`);
+      console.log(`⚡ Bet placed! Shortening betting window to 3s for round ${currentRound}`);
 
       await ctx.db.patch(room._id, {
         gameState: {
@@ -1927,12 +1927,12 @@ export const shortenBettingWindow = internalMutation({
         },
       });
 
-      // Schedule reveal for 5 seconds (the original 15s reveal will be ignored via revealScheduledFor check)
-      await ctx.scheduler.runAfter(5000, internal.pokerBattle.cpuRevealRound, {
+      // Schedule reveal for 3 seconds (the original 8s reveal will be ignored via revealScheduledFor check)
+      await ctx.scheduler.runAfter(3000, internal.pokerBattle.cpuRevealRound, {
         roomId,
       });
 
-      console.log(`⏰ Scheduled new reveal for 5s, original 15s reveal will be skipped`);
+      console.log(`⏰ Scheduled new reveal for 3s, original 8s reveal will be skipped`);
     }
   },
 });
@@ -2190,8 +2190,8 @@ export const cpuResolveRound = internalMutation({
         },
       });
 
-      // After 5 seconds, start next round (more time to see result)
-      await ctx.scheduler.runAfter(5000, internal.pokerBattle.cpuStartNextRound, {
+      // After 2.5 seconds, start next round
+      await ctx.scheduler.runAfter(2500, internal.pokerBattle.cpuStartNextRound, {
         roomId,
         nextRound,
       });
@@ -2236,8 +2236,8 @@ export const cpuStartNextRound = internalMutation({
 
     console.log(`🎮 CPU vs CPU starting round ${nextRound}`);
 
-    // Schedule CPU host to select card after 2 seconds
-    await ctx.scheduler.runAfter(2000, internal.pokerBattle.cpuMakeMove, {
+    // Schedule CPU host to select card after 800ms (faster pacing)
+    await ctx.scheduler.runAfter(800, internal.pokerBattle.cpuMakeMove, {
       roomId,
       isHost: true,
     });
@@ -2299,8 +2299,8 @@ export const cpuRestartGame = internalMutation({
 
     console.log(`🔄 CPU vs CPU game restarted: ${roomId}`);
 
-    // Schedule first move
-    await ctx.scheduler.runAfter(3000, internal.pokerBattle.cpuMakeMove, {
+    // Schedule first move after 1 second
+    await ctx.scheduler.runAfter(1000, internal.pokerBattle.cpuMakeMove, {
       roomId,
       isHost: true,
     });
