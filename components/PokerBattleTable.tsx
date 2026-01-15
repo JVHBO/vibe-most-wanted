@@ -10,7 +10,7 @@ import { PokerMatchmaking } from './PokerMatchmaking';
 import { PokerWaitingRoom } from './PokerWaitingRoom';
 import FoilCardEffect from './FoilCardEffect';
 import { CardMedia } from './CardMedia';
-import { SwordIcon, ShieldIcon, BoltIcon, HandIcon, TrophyIcon, SkullIcon, ChatIcon, EyeIcon, ClockIcon, CloseIcon } from './PokerIcons';
+import { SwordIcon, ShieldIcon, BoltIcon, HandIcon, TrophyIcon, SkullIcon, ChatIcon, EyeIcon, ClockIcon, CloseIcon, HelpIcon } from './PokerIcons';
 import { useGroupVoiceChat } from '@/lib/hooks/useGroupVoiceChat';
 import { VoiceChannelPanel } from './VoiceChannelPanel';
 import { useFinishVBMSBattle, useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
@@ -203,6 +203,7 @@ export function PokerBattleTable({
   const sendMessageMutation = useMutation(api.pokerChat.sendMessage);
   const [chatInput, setChatInput] = useState('');
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [floatingMessages, setFloatingMessages] = useState<Array<{id: number, sender: string, message: string, isOwnMessage: boolean}>>([]);
   const [floatingEmojis, setFloatingEmojis] = useState<Array<{id: number, emoji: string, x: number, y: number}>>([]);
   const currentMemeAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -626,21 +627,26 @@ export function PokerBattleTable({
   }, [phase, isCPUMode, room?.isCpuVsCpu]); // Only depend on phase and CPU modes
 
   // CPU vs CPU betting window timer (for Mecha Arena spectators)
-  // FIX: Check room?.isCpuVsCpu for spectator mode, not just isCPUMode
-  useEffect(() => {
-    // Only run for CPU modes (local CPU or Mecha Arena spectator)
-    if (!isCPUMode && !room?.isCpuVsCpu) return;
+  // Uses bettingWindowEndsAt from backend to show countdown
+  const isMechaArena = room?.isCpuVsCpu ?? false;
+  const bettingWindowEndsAt = room?.gameState?.bettingWindowEndsAt;
+  const roomPhase = room?.gameState?.phase;
 
-    // If no betting window, show phase-appropriate message
-    if (!room?.gameState?.bettingWindowEndsAt) {
-      // During card-selection, CPUs are picking cards - no timer needed
-      // During reveal/resolution, show 0 to indicate no betting
-      setTimeRemaining(0);
+  useEffect(() => {
+    // Only run for Mecha Arena (CPU vs CPU) spectators
+    if (!isMechaArena) return;
+
+    // If in reveal or resolution phase, show 0 (REVEALING...)
+    if (roomPhase === 'reveal' || roomPhase === 'resolution') {
+      setTimeRemaining(0); // 0 = revealing/resolving
       return;
     }
 
-    // Capture value to preserve type narrowing inside callback
-    const bettingWindowEndsAt = room.gameState.bettingWindowEndsAt;
+    // If no betting window active during card-selection, show -1 (SELECTING...)
+    if (!bettingWindowEndsAt) {
+      setTimeRemaining(-1); // -1 = waiting for CPUs to select
+      return;
+    }
 
     const updateTimer = () => {
       const now = Date.now();
@@ -651,11 +657,11 @@ export function PokerBattleTable({
     // Update immediately
     updateTimer();
 
-    // Update every second
-    const interval = setInterval(updateTimer, 1000);
+    // Update every 100ms for smoother countdown
+    const interval = setInterval(updateTimer, 100);
 
     return () => clearInterval(interval);
-  }, [isCPUMode, room?.isCpuVsCpu, room?.gameState?.bettingWindowEndsAt]);
+  }, [isMechaArena, bettingWindowEndsAt, roomPhase]);
 
   // Timer countdown for actions
   useEffect(() => {
@@ -2975,34 +2981,71 @@ export function PokerBattleTable({
                   {(phase === 'card-selection' || phase === 'reveal') && (
                     <div className="mt-2 sm:mt-3">
                       <div className={`inline-block px-3 sm:px-6 py-1 sm:py-2 rounded-lg border-2 transition-all ${
-                        timeRemaining === 0 && phase === 'card-selection'
-                          ? 'bg-purple-900/50 border-purple-500 animate-pulse'
-                          : timeRemaining <= 5
-                          ? 'bg-red-900/50 border-red-500 animate-pulse'
-                          : timeRemaining <= 10
-                          ? 'bg-yellow-900/50 border-yellow-500'
-                          : 'bg-vintage-deep-black/50 border-vintage-gold'
+                        room?.isCpuVsCpu ? (
+                          // Mecha Arena timer styles
+                          timeRemaining === -1
+                            ? 'bg-purple-900/50 border-purple-500 animate-pulse'
+                            : timeRemaining === 0
+                            ? 'bg-vintage-gold/30 border-vintage-gold animate-pulse'
+                            : timeRemaining <= 3
+                            ? 'bg-red-900/50 border-red-500 animate-pulse'
+                            : 'bg-vintage-deep-black/50 border-vintage-gold'
+                        ) : (
+                          // Regular game timer styles
+                          timeRemaining === 0 && phase === 'card-selection'
+                            ? 'bg-purple-900/50 border-purple-500 animate-pulse'
+                            : timeRemaining <= 5
+                            ? 'bg-red-900/50 border-red-500 animate-pulse'
+                            : timeRemaining <= 10
+                            ? 'bg-yellow-900/50 border-yellow-500'
+                            : 'bg-vintage-deep-black/50 border-vintage-gold'
+                        )
                       }`}>
                         <div className={`font-display font-bold text-lg sm:text-2xl ${
-                          timeRemaining === 0 && phase === 'card-selection'
-                            ? 'text-purple-300'
-                            : timeRemaining <= 5
-                            ? 'text-red-300'
-                            : timeRemaining <= 10
-                            ? 'text-yellow-300'
-                            : 'text-vintage-gold'
-                        }`}>
-                          {timeRemaining === 0 && phase === 'card-selection' ? (
-                            <>REVEALING...</>
+                          room?.isCpuVsCpu ? (
+                            // Mecha Arena timer colors
+                            timeRemaining === -1
+                              ? 'text-purple-300'
+                              : timeRemaining === 0
+                              ? 'text-vintage-gold'
+                              : timeRemaining <= 3
+                              ? 'text-red-300'
+                              : 'text-vintage-gold'
                           ) : (
-                            <><ClockIcon className="inline-block" size={24} /> {timeRemaining}s</>
+                            // Regular game timer colors
+                            timeRemaining === 0 && phase === 'card-selection'
+                              ? 'text-purple-300'
+                              : timeRemaining <= 5
+                              ? 'text-red-300'
+                              : timeRemaining <= 10
+                              ? 'text-yellow-300'
+                              : 'text-vintage-gold'
+                          )
+                        }`}>
+                          {room?.isCpuVsCpu ? (
+                            // Mecha Arena timer display
+                            timeRemaining === -1 ? (
+                              <>SELECTING...</>
+                            ) : timeRemaining === 0 ? (
+                              <>REVEALING...</>
+                            ) : (
+                              <><ClockIcon className="inline-block" size={24} /> {timeRemaining}s</>
+                            )
+                          ) : (
+                            // Regular game timer display
+                            timeRemaining === 0 && phase === 'card-selection' ? (
+                              <>REVEALING...</>
+                            ) : (
+                              <><ClockIcon className="inline-block" size={24} /> {timeRemaining}s</>
+                            )
                           )}
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Phase indicator */}
+                  {/* Phase indicator - Hide for Mecha Arena spectators */}
+                  {!room?.isCpuVsCpu && (
                   <div className="mt-2 sm:mt-4">
                     <div className="inline-block bg-vintage-gold/20 border-2 border-vintage-gold px-3 sm:px-6 py-1 sm:py-2 rounded-lg animate-in fade-in slide-in-from-top-2 duration-500">
                       <div className="text-vintage-gold font-display font-bold text-sm sm:text-lg">
@@ -3048,6 +3091,7 @@ export function PokerBattleTable({
                       </div>
                     )}
                   </div>
+                  )}
                 </div>
 
                 {/* PLAYER SECTION - YOUR HAND */}
@@ -3559,6 +3603,59 @@ export function PokerBattleTable({
           lastRoundWinner={lastRoundWinnerAddress}
           showResultAnimation={showBetResult}
         />
+      )}
+
+      {/* Help Button for Mecha Arena - Bottom Left */}
+      {isSpectatorMode && room?.isCpuVsCpu && (
+        <>
+          <button
+            onClick={() => setIsHelpOpen(!isHelpOpen)}
+            className={`fixed ${isInFarcaster ? 'bottom-4 left-4' : 'bottom-6 left-6'} z-[300] ${
+              isHelpOpen ? 'bg-vintage-gold' : 'bg-vintage-gold/80'
+            } hover:bg-vintage-gold text-vintage-black rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center font-bold text-lg sm:text-xl shadow-2xl transition-all hover:scale-110 active:scale-95`}
+            title="Help"
+          >
+            {isHelpOpen ? <CloseIcon className="text-vintage-black" size={24} /> : <HelpIcon className="text-vintage-black" size={24} />}
+          </button>
+
+          {/* Help Panel */}
+          {isHelpOpen && (
+            <div className={`fixed ${isInFarcaster ? 'bottom-20 left-2 right-2' : 'bottom-24 left-6'} z-[250] bg-vintage-charcoal border-2 border-vintage-gold rounded-xl shadow-2xl ${
+              isInFarcaster ? 'max-h-[300px]' : 'w-80 max-h-96'
+            } overflow-y-auto`}>
+              {/* Help Header */}
+              <div className="bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold p-2 rounded-t-lg sticky top-0">
+                <h3 className="font-display font-bold text-vintage-black text-center text-sm sm:text-base flex items-center justify-center gap-2">
+                  <HelpIcon className="text-vintage-black" size={18} /> How to Play
+                </h3>
+              </div>
+
+              {/* Help Content */}
+              <div className="p-3 space-y-3 text-xs sm:text-sm">
+                <div>
+                  <h4 className="text-vintage-gold font-bold mb-1">🎰 Betting</h4>
+                  <p className="text-vintage-ice/80">Bet on which MECHA will win each round. Tap a player's name to bet on them, or TIE for draws.</p>
+                </div>
+                <div>
+                  <h4 className="text-vintage-gold font-bold mb-1">💰 Odds</h4>
+                  <p className="text-vintage-ice/80">Early rounds: 1.5x • Mid rounds: 1.8x • Final rounds: 2.0x • TIE: 3.5x</p>
+                </div>
+                <div>
+                  <h4 className="text-vintage-gold font-bold mb-1">⏱️ Timer</h4>
+                  <p className="text-vintage-ice/80">You have 8 seconds to place your bet after both MECHAs select cards. Timer shortens to 3s after first bet.</p>
+                </div>
+                <div>
+                  <h4 className="text-vintage-gold font-bold mb-1">🏆 Winning</h4>
+                  <p className="text-vintage-ice/80">Higher power wins! If you bet correctly, you win credits × odds. Credits convert to coins when you exit.</p>
+                </div>
+                <div>
+                  <h4 className="text-vintage-gold font-bold mb-1">📊 Stats</h4>
+                  <p className="text-vintage-ice/80">Track your wins/losses in the Bets panel (top right). Green = win, Red = loss.</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Sound Feedback - Shows when a meme sound is played */}

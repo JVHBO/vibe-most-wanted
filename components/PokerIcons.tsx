@@ -82,6 +82,14 @@ export const CloseIcon = ({ className = "", size = 24 }: IconProps) => (
   </svg>
 );
 
+export const HelpIcon = ({ className = "", size = 24 }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className}>
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2"/>
+    <path d="M9.5 9.5C9.5 8.11929 10.6193 7 12 7C13.3807 7 14.5 8.11929 14.5 9.5C14.5 10.8807 13.3807 12 12 12V13.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    <circle cx="12" cy="16.5" r="1" fill="currentColor"/>
+  </svg>
+);
+
 export const FarcasterIcon = ({ className = "", size = 24 }: IconProps) => (
   <svg width={size} height={size} viewBox="128.889 155.556 751.111 688.889" fill="currentColor" className={className}>
     <path d="M257.778 155.556h484.444v688.889h-71.111V528.889h-.697c-7.86-87.212-81.156-155.556-170.414-155.556s-162.554 68.344-170.414 155.556h-.697v315.556h-71.111z"/>
