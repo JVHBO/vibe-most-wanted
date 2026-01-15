@@ -2178,7 +2178,7 @@ export function PokerBattleTable({
         <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[200] p-4">
           <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold max-w-lg w-full p-4 shadow-neon">
             <h2 className="text-xl font-display font-bold text-center mb-2 text-vintage-gold">
-              🃏 POKER BATTLE 🃏
+              POKER BATTLE
             </h2>
             <NotEnoughCardsGuide
               currentCards={playerCards.length}
@@ -2211,21 +2211,20 @@ export function PokerBattleTable({
               onClick={onClose}
               className="absolute top-4 right-4 z-10 bg-vintage-gold text-vintage-black w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl hover:bg-vintage-burnt-gold transition"
             >
-              ×
+              X
             </button>
 
             <div className="text-center">
-              <div className="text-6xl mb-4">👁️</div>
-              <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">
+              <h2 className="text-2xl font-display font-bold text-vintage-gold mb-4">
                 SPECTATING
               </h2>
-              <div className="bg-vintage-black/50 border-2 border-vintage-gold/30 rounded-xl p-6 mb-6">
-                <p className="text-vintage-burnt-gold text-lg mb-2">
+              <div className="bg-vintage-black/50 border border-vintage-gold/30 rounded-lg p-4 mb-4">
+                <p className="text-vintage-burnt-gold text-base mb-2">
                   Waiting for the game to start...
                 </p>
-                <div className="flex items-center justify-center gap-2 text-blue-400">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                  <span className="text-sm">{t('gameWillBegin')}</span>
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-2 h-2 bg-vintage-gold rounded-full animate-pulse"></div>
+                  <span className="text-sm text-vintage-ice/70">{t('gameWillBegin')}</span>
                 </div>
               </div>
               {room && (
@@ -2276,35 +2275,34 @@ export function PokerBattleTable({
           onClick={isSpectatorMode ? handleSpectatorExitClick : onClose}
           className="absolute -top-2 -right-2 z-10 bg-vintage-gold text-vintage-black w-10 h-10 rounded-full flex items-center justify-center font-bold text-xl hover:bg-vintage-burnt-gold transition"
         >
-          ×
+          X
         </button>
 
         {/* SPECTATOR VIEW - Deck Building Phase */}
         {phase === 'deck-building' && isSpectatorMode && (
-          <div className="bg-vintage-charcoal rounded-xl sm:rounded-2xl border-2 sm:border-4 border-vintage-gold p-8 h-full flex items-center justify-center">
+          <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-xl border-2 border-vintage-gold/50 p-6 h-full flex items-center justify-center">
             <div className="text-center">
-              <div className="text-7xl mb-6 animate-pulse">👁️</div>
-              <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">
+              <h2 className="text-2xl font-display font-bold text-vintage-gold mb-3">
                 SPECTATING
               </h2>
-              <div className="bg-vintage-black/50 border-2 border-vintage-gold/30 rounded-xl p-6 mb-4">
-                <p className="text-vintage-burnt-gold text-xl mb-3">
+              <div className="bg-vintage-black/50 border border-vintage-gold/30 rounded-lg p-4 mb-4">
+                <p className="text-vintage-burnt-gold text-base mb-3">
                   Players are building their decks...
                 </p>
-                <div className="flex items-center justify-center gap-2 text-blue-400">
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce"></div>
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-3 h-3 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-2 h-2 bg-vintage-gold rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-vintage-gold rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-vintage-gold rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
               {room && (
-                <div className="space-y-2 text-sm">
-                  <div className="text-vintage-gold">
-                    <span className="text-vintage-burnt-gold">{t('stakes')}:</span> {room.ante} {room.token}
-                  </div>
-                  <div className="text-vintage-gold">
-                    <span className="text-vintage-burnt-gold">{t('playersLabel')}:</span> {room.hostUsername} vs {room.guestUsername}
-                  </div>
+                <div className="space-y-1 text-sm">
+                  <p className="text-vintage-ice/70">
+                    {room.ante} {room.token}
+                  </p>
+                  <p className="text-vintage-gold">
+                    {room.hostUsername} vs {room.guestUsername}
+                  </p>
                 </div>
               )}
             </div>
@@ -2352,7 +2350,7 @@ export function PokerBattleTable({
             </div>
 
             {/* Selected Deck Display */}
-            <div className="mb-3 sm:mb-4 bg-green-900/40 border-2 border-vintage-gold/50 rounded-lg sm:rounded-xl p-2 sm:p-3 flex-shrink-0">
+            <div className="mb-3 sm:mb-4 bg-vintage-black/40 border-2 border-vintage-gold/50 rounded-lg sm:rounded-xl p-2 sm:p-3 flex-shrink-0">
               <div className="grid grid-cols-5 sm:grid-cols-5 md:grid-cols-10 gap-1 sm:gap-2">
                 {Array.from({ length: 10 }).map((_, i) => (
                   <div
@@ -2423,7 +2421,7 @@ export function PokerBattleTable({
                     </div>
                     {isSelected && (
                       <div className="absolute inset-0 bg-vintage-gold/20 flex items-center justify-center">
-                        <span className="text-4xl">✓</span>
+                        <span className="text-4xl text-vintage-gold font-bold">OK</span>
                       </div>
                     )}
                   </button>
@@ -2676,65 +2674,65 @@ export function PokerBattleTable({
 
             {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
-            {/* Meme Sound Panel - Collapsible on LEFT side */}
+            {/* Sound Panel - Collapsible on LEFT side */}
             <div className="absolute left-2 top-12 sm:top-14 z-20">
               {showSoundsPanel ? (
-                <div className="bg-vintage-charcoal/95 border border-vintage-gold/50 rounded-lg p-1 shadow-lg">
+                <div className="bg-vintage-charcoal/95 border border-vintage-gold/30 rounded-lg p-1.5 shadow-lg">
                   <button
                     onClick={() => setShowSoundsPanel(false)}
-                    className="w-full text-vintage-gold font-display font-bold text-[8px] mb-1 text-center hover:text-vintage-burnt-gold"
+                    className="w-full text-vintage-gold font-bold text-[9px] mb-1 text-center hover:text-vintage-burnt-gold"
                   >
-                    🔊 SOUNDS ✕
+                    SFX X
                   </button>
-                  <div className="grid grid-cols-4 gap-0.5">
+                  <div className="grid grid-cols-4 gap-1">
                     <button
-                      onClick={() => playMemeSound('/let-him-cook-now.mp3', 'LET HIM COOK 👨‍🍳', '👨‍🍳')}
-                      className="bg-orange-500/20 hover:bg-orange-500/40 border border-orange-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      onClick={() => playMemeSound('/let-him-cook-now.mp3', 'COOK', '')}
+                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Let Him Cook"
                     >
-                      <div className="text-[10px]">👨‍🍳</div>
+                      COOK
                     </button>
                     <button
-                      onClick={() => playMemeSound('/nya_ZtXOXLx.mp3', 'NYA~ 😺', '😺')}
-                      className="bg-pink-500/20 hover:bg-pink-500/40 border border-pink-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      onClick={() => playMemeSound('/nya_ZtXOXLx.mp3', 'NYA', '')}
+                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Nya~"
                     >
-                      <div className="text-[10px]">😺</div>
+                      NYA
                     </button>
                     <button
-                      onClick={() => playMemeSound('/quandale-dingle-meme.mp3', 'QUANDALE 🤪', '🤪')}
-                      className="bg-purple-500/20 hover:bg-purple-500/40 border border-purple-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      onClick={() => playMemeSound('/quandale-dingle-meme.mp3', 'QD', '')}
+                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Quandale"
                     >
-                      <div className="text-[10px]">🤪</div>
+                      QD
                     </button>
                     <button
-                      onClick={() => playMemeSound('/this-is-not-poker.mp3', 'NOT POKER 🃏', '🃏')}
-                      className="bg-red-500/20 hover:bg-red-500/40 border border-red-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      onClick={() => playMemeSound('/this-is-not-poker.mp3', 'NP', '')}
+                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Not Poker"
                     >
-                      <div className="text-[10px]">🃏</div>
+                      NP
                     </button>
                     <button
-                      onClick={() => playMemeSound('/sounds/receba-luva.mp3', 'RECEBA! 🧤', '🧤')}
-                      className="bg-yellow-500/20 hover:bg-yellow-500/40 border border-yellow-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      onClick={() => playMemeSound('/sounds/receba-luva.mp3', 'REC', '')}
+                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Receba"
                     >
-                      <div className="text-[10px]">🧤</div>
+                      REC
                     </button>
                     <button
-                      onClick={() => playMemeSound('/sounds/dry-fart.mp3', 'FART 💨', '💨')}
-                      className="bg-green-500/20 hover:bg-green-500/40 border border-green-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      onClick={() => playMemeSound('/sounds/dry-fart.mp3', 'FRT', '')}
+                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Fart"
                     >
-                      <div className="text-[10px]">💨</div>
+                      FRT
                     </button>
                     <button
-                      onClick={() => playMemeSound('/sounds/corteze.MP3', 'CORTEZE 🏳️‍🌈', '🏳️‍🌈')}
-                      className="bg-pink-500/20 hover:bg-pink-500/40 border border-pink-500/30 rounded transition-all hover:scale-105 active:scale-95 p-1"
+                      onClick={() => playMemeSound('/sounds/corteze.MP3', 'CTZ', '')}
+                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Corteze"
                     >
-                      <div className="text-[10px]">🏳️‍🌈</div>
+                      CTZ
                     </button>
                   </div>
                   {/* Voice Chat - PvP and Mecha Arena spectators */}
@@ -2750,71 +2748,50 @@ export function PokerBattleTable({
               ) : (
                 <button
                   onClick={() => setShowSoundsPanel(true)}
-                  className="bg-vintage-charcoal/95 border border-vintage-gold/50 rounded-lg p-1.5 shadow-lg hover:bg-vintage-gold/20 transition-all"
+                  className="bg-vintage-charcoal/95 border border-vintage-gold/30 rounded-lg px-2 py-1 shadow-lg hover:bg-vintage-gold/10 transition-all text-vintage-gold text-[10px] font-bold"
                   title="Open Sounds"
                 >
-                  <span className="text-[12px]">🔊</span>
+                  SFX
                 </button>
               )}
             </div>
 
             {/* Game info header */}
-            <div className={`bg-vintage-charcoal border-2 border-vintage-gold rounded-t-2xl ${
+            <div className={`bg-vintage-charcoal border-b-2 border-vintage-gold/50 ${
               isInFarcaster
                 ? 'p-1.5 flex flex-col gap-1 text-[11px]'
                 : 'p-2 md:p-3 flex justify-between items-center text-sm md:text-base'
             }`}>
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className={`text-vintage-gold font-display font-bold ${isInFarcaster ? 'text-[11px]' : ''}`}>
-                  ROUND {currentRound}/7 • {playerScore}-{opponentScore}
+                  R{currentRound}/7 | {playerScore}-{opponentScore}
                 </div>
                 {(selectedAnte === 0 || isSpectatorMode) && (
-                  <div className={`bg-blue-500/20 text-blue-400 font-bold rounded-full border border-blue-500/50 flex items-center gap-1 animate-pulse ${
-                    isInFarcaster ? 'px-1.5 py-0.5 text-[9px]' : 'px-3 py-1 text-xs'
+                  <div className={`bg-vintage-gold/10 text-vintage-burnt-gold font-bold rounded border border-vintage-gold/30 flex items-center gap-1 ${
+                    isInFarcaster ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-xs'
                   }`}>
-                    <EyeIcon className="inline-block text-blue-400" size={isInFarcaster ? 12 : 16} /> SPEC
+                    <EyeIcon className="inline-block text-vintage-burnt-gold" size={isInFarcaster ? 12 : 14} /> SPEC
                   </div>
                 )}
               </div>
-              <div className={`text-vintage-gold font-display font-bold ${isInFarcaster ? 'text-sm' : 'text-2xl'}`}>
+              <div className={`text-vintage-gold font-display font-bold ${isInFarcaster ? 'text-sm' : 'text-lg'}`}>
                 {isCPUMode ? (
-                  `${getCollectionDisplayName(room?.cpuCollection)} Table`
+                  getCollectionDisplayName(room?.cpuCollection)
                 ) : (
                   `POT: ${pot} ${selectedToken}`
                 )}
               </div>
-              <div className={`text-vintage-neon-blue font-modern font-bold ${isInFarcaster ? 'text-[10px]' : ''}`}>
-                🪙 Boost: {playerBoostCoins}
+              <div className={`text-vintage-burnt-gold font-bold ${isInFarcaster ? 'text-[10px]' : 'text-sm'}`}>
+                Boost: {playerBoostCoins}
               </div>
             </div>
 
-            {/* POKER TABLE - GREEN FELT */}
+            {/* BATTLE TABLE - Vintage Dark Style */}
             <div
-              className="flex-1 relative rounded-b-2xl overflow-hidden"
-              style={{
-                background: 'radial-gradient(ellipse at center, #0d5e3a 0%, #0a4a2e 50%, #073d25 100%)',
-                backgroundImage: `
-                  radial-gradient(ellipse at center, #0d5e3a 0%, #0a4a2e 50%, #073d25 100%),
-                  repeating-linear-gradient(
-                    90deg,
-                    rgba(0,0,0,0.03) 0px,
-                    rgba(0,0,0,0.03) 1px,
-                    transparent 1px,
-                    transparent 2px
-                  ),
-                  repeating-linear-gradient(
-                    0deg,
-                    rgba(0,0,0,0.03) 0px,
-                    rgba(0,0,0,0.03) 1px,
-                    transparent 1px,
-                    transparent 2px
-                  )
-                `,
-                boxShadow: 'inset 0 0 50px rgba(0,0,0,0.3)'
-              }}
+              className="flex-1 relative rounded-b-2xl overflow-hidden bg-gradient-to-b from-vintage-charcoal to-vintage-black"
             >
               {/* Border - vintage gold */}
-              <div className="absolute inset-0 border-4 border-vintage-gold rounded-b-2xl pointer-events-none" />
+              <div className="absolute inset-0 border-2 border-vintage-gold/30 rounded-b-2xl pointer-events-none" />
 
               {/* Table content */}
               <div className={`relative h-full flex flex-col justify-between ${
@@ -2836,12 +2813,12 @@ export function PokerBattleTable({
                       }`}>
                         <span className="max-w-[100px] truncate inline-block">{isSpectatorMode && room?.guestUsername ? room.guestUsername.toUpperCase() : 'OPPONENT'}</span>
                       </div>
-                      <div className={`aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
+                      <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 transition-all duration-700 ${
                         isInFarcaster ? 'w-20' : isSpectatorMode ? 'w-28 sm:w-32 md:w-36' : 'w-24 sm:w-28 md:w-32'
                       } ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
-                          ? 'border-red-500 shadow-lg shadow-red-500/50 animate-pulse'
-                          : 'border-vintage-gold/50'
+                          ? 'border-vintage-gold shadow-lg shadow-vintage-gold/30'
+                          : 'border-vintage-gold/30'
                       }`}>
                         {opponentSelectedCard && (phase === 'card-reveal-animation' || phase === 'resolution' || showRoundWinner) ? (
                           <div className={`relative w-full h-full ${isSpectator ? 'animate-[flip_0.6s_ease-out,glow_1.5s_ease-in-out_infinite]' : 'animate-in fade-in zoom-in duration-700'}`}>
@@ -2911,12 +2888,12 @@ export function PokerBattleTable({
                       }`}>
                         <span className="max-w-[100px] truncate inline-block">{isSpectatorMode && room?.hostUsername ? room.hostUsername.toUpperCase() : 'YOU'}</span>
                       </div>
-                      <div className={`aspect-[2/3] rounded-lg overflow-hidden border-4 transition-all duration-700 ${
+                      <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 transition-all duration-700 ${
                         isInFarcaster ? 'w-20' : isSpectatorMode ? 'w-28 sm:w-32 md:w-36' : 'w-32 sm:w-40 md:w-48'
                       } ${
                         phase === 'card-reveal-animation' || phase === 'resolution'
-                          ? 'border-green-500 shadow-lg shadow-green-500/50 animate-pulse'
-                          : 'border-vintage-gold/50'
+                          ? 'border-vintage-gold shadow-lg shadow-vintage-gold/30'
+                          : 'border-vintage-gold/30'
                       }`}>
                         {playerSelectedCard && (phase === 'card-reveal-animation' || phase === 'resolution' || showRoundWinner) ? (
                           <div className={`relative w-full h-full ${isSpectator ? 'animate-[flip_0.6s_ease-out,glow_1.5s_ease-in-out_infinite]' : 'animate-in fade-in zoom-in duration-700'}`}>
@@ -2995,7 +2972,7 @@ export function PokerBattleTable({
                             : 'text-vintage-gold'
                         }`}>
                           {timeRemaining === 0 && phase === 'card-selection' ? (
-                            <>⚡ REVEALING...</>
+                            <>REVEALING...</>
                           ) : (
                             <><ClockIcon className="inline-block" size={24} /> {timeRemaining}s</>
                           )}
@@ -3010,16 +2987,16 @@ export function PokerBattleTable({
                       <div className="text-vintage-gold font-display font-bold text-sm sm:text-lg">
                         {phase === 'card-selection' && !isCPUMode && playerSelectedCard && !opponentSelectedCard && (
                           <span className="animate-pulse">
-                            {isInFarcaster ? '⏳ WAITING...' : '⏳ WAITING FOR OPPONENT TO SELECT CARD...'}
+                            {isInFarcaster ? 'WAITING...' : 'WAITING FOR OPPONENT TO SELECT CARD...'}
                           </span>
                         )}
                         {phase === 'card-selection' && (isCPUMode || !playerSelectedCard) && (
-                          isInFarcaster ? '📋 SELECT CARD' : '📋 SELECT A CARD FROM YOUR HAND'
+                          isInFarcaster ? 'SELECT CARD' : 'SELECT A CARD FROM YOUR HAND'
                         )}
 
                         {phase === 'reveal' && !isCPUMode && playerAction && !opponentAction && (
                           <span className="animate-pulse">
-                            {isInFarcaster ? '⏳ WAITING...' : '⏳ WAITING FOR OPPONENT TO CHOOSE ACTION...'}
+                            {isInFarcaster ? 'WAITING...' : 'WAITING FOR OPPONENT TO CHOOSE ACTION...'}
                           </span>
                         )}
                         {phase === 'reveal' && (isCPUMode || !playerAction) && (
@@ -3031,13 +3008,13 @@ export function PokerBattleTable({
 
                         {phase === 'card-reveal-animation' && (
                           <span className="animate-pulse text-xl sm:text-2xl">
-                            🎴 REVEALING CARDS...
+                            REVEALING CARDS...
                           </span>
                         )}
 
                         {phase === 'resolution' && (
                           <span className="animate-pulse">
-                            {isInFarcaster ? '⏳ CALCULATING...' : '⏳ CALCULATING WINNER...'}
+                            {isInFarcaster ? 'CALCULATING...' : 'CALCULATING WINNER...'}
                           </span>
                         )}
                       </div>
@@ -3110,10 +3087,10 @@ export function PokerBattleTable({
                     <div className={`animate-in fade-in slide-in-from-bottom duration-500 w-full mx-auto ${
                       isInFarcaster ? 'space-y-1' : 'space-y-1 sm:space-y-2 max-w-md'
                     }`}>
-                      <div className={`text-center text-vintage-neon-blue font-bold mb-1 ${
+                      <div className={`text-center text-vintage-burnt-gold font-bold mb-1 ${
                         isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm'
                       }`}>
-                        🪙 BOOST SHOP - {playerBoostCoins} Coins
+                        BOOST SHOP - {playerBoostCoins}
                       </div>
                       {/* Mobile/Farcaster: 2x2 Grid, Desktop: 4 buttons in row */}
                       <div className={`grid gap-1 ${
@@ -3196,48 +3173,37 @@ export function PokerBattleTable({
         {/* SPECTATOR SCREEN - Shows game result for spectators */}
         {phase === 'game-over' && gameOverShown && isSpectatorMode && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[400]">
-            <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-vintage-gold p-6 sm:p-8 text-center shadow-2xl max-w-lg mx-4">
-              {/* Winner Badge */}
-              <div className="mb-6">
-                {playerScore > opponentScore ? (
-                  <div className="mb-2 animate-bounce flex justify-center"><TrophyIcon className="text-vintage-gold" size={80} /></div>
-                ) : playerScore < opponentScore ? (
-                  <div className="text-6xl sm:text-7xl mb-2 animate-bounce">👑</div>
-                ) : (
-                  <div className="text-6xl sm:text-7xl mb-2">🤝</div>
-                )}
-              </div>
-
-              <h2 className="text-3xl sm:text-4xl font-display font-bold text-vintage-gold mb-4">
+            <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-xl border-2 border-vintage-gold/50 p-6 text-center shadow-2xl max-w-md mx-4">
+              <h2 className="text-2xl font-display font-bold text-vintage-gold mb-4">
                 GAME OVER
               </h2>
 
               {/* Score Display */}
-              <div className="bg-vintage-deep-black/50 rounded-xl p-4 sm:p-6 mb-4 border-2 border-vintage-gold/30">
-                <p className="text-lg sm:text-xl text-vintage-burnt-gold mb-3">Final Score</p>
-                <div className="flex justify-center items-center gap-4 mb-4">
+              <div className="bg-vintage-black/50 rounded-lg p-4 mb-4 border border-vintage-gold/30">
+                <p className="text-sm text-vintage-burnt-gold mb-3">Final Score</p>
+                <div className="flex justify-center items-center gap-4 mb-3">
                   <div className="text-center">
-                    <p className="text-xs text-vintage-gold/60 mb-1 max-w-[100px] truncate">{room?.hostUsername || 'Player 1'}</p>
-                    <p className={`text-4xl sm:text-5xl font-bold ${playerScore > opponentScore ? 'text-green-400' : playerScore < opponentScore ? 'text-red-400' : 'text-vintage-gold'}`}>
+                    <p className="text-xs text-vintage-ice/50 mb-1 max-w-[100px] truncate">{room?.hostUsername || 'Player 1'}</p>
+                    <p className={`text-3xl font-bold ${playerScore > opponentScore ? 'text-vintage-gold' : 'text-vintage-ice/70'}`}>
                       {playerScore}
                     </p>
                   </div>
-                  <span className="text-2xl text-vintage-gold">-</span>
+                  <span className="text-xl text-vintage-gold/50">-</span>
                   <div className="text-center">
-                    <p className="text-xs text-vintage-gold/60 mb-1 max-w-[100px] truncate">{room?.guestUsername || 'Player 2'}</p>
-                    <p className={`text-4xl sm:text-5xl font-bold ${opponentScore > playerScore ? 'text-green-400' : opponentScore < playerScore ? 'text-red-400' : 'text-vintage-gold'}`}>
+                    <p className="text-xs text-vintage-ice/50 mb-1 max-w-[100px] truncate">{room?.guestUsername || 'Player 2'}</p>
+                    <p className={`text-3xl font-bold ${opponentScore > playerScore ? 'text-vintage-gold' : 'text-vintage-ice/70'}`}>
                       {opponentScore}
                     </p>
                   </div>
                 </div>
-                <p className="text-xl sm:text-2xl font-bold text-vintage-gold">
-                  {playerScore > opponentScore ? `🎉 ${room?.hostUsername || 'Player 1'} Wins!` : playerScore < opponentScore ? `🎉 ${room?.guestUsername || 'Player 2'} Wins!` : "🤝 It's a Tie!"}
+                <p className="text-lg font-bold text-vintage-gold">
+                  {playerScore > opponentScore ? `${room?.hostUsername || 'Player 1'} Wins` : playerScore < opponentScore ? `${room?.guestUsername || 'Player 2'} Wins` : "Tie"}
                 </p>
               </div>
 
               <button
                 onClick={onClose}
-                className="w-full px-6 sm:px-8 py-3 sm:py-4 bg-vintage-gold text-vintage-black font-bold text-lg sm:text-xl rounded-lg hover:bg-vintage-burnt-gold transition-all hover:scale-105 active:scale-95 shadow-lg"
+                className="w-full py-3 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold/50 text-vintage-gold font-bold rounded-lg transition-all"
               >
                 CLOSE
               </button>
@@ -3429,7 +3395,7 @@ export function PokerBattleTable({
                     })
                   ) : (
                     <div className="text-center text-vintage-gold/50 text-sm mt-8">
-                      No messages yet. Say hi! 👋
+                      No messages yet. Say hi!
                     </div>
                   )}
                 </div>
@@ -3491,11 +3457,11 @@ export function PokerBattleTable({
       {/* Incoming Voice Call Modal - "John Pork is calling" */}
       {showIncomingCall && !groupVoice.isInChannel && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[500] p-4">
-          <div className="bg-gradient-to-b from-gray-900/98 to-black/98 rounded-3xl border border-gray-700 max-w-sm w-full p-6 shadow-2xl">
+          <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-3xl border-2 border-vintage-gold/50 max-w-sm w-full p-6 shadow-2xl shadow-vintage-gold/20">
             {/* John Pork Profile Picture */}
             <div className="flex justify-center mb-4">
               <div className="relative">
-                <div className="w-28 h-28 rounded-full border-4 border-green-500 overflow-hidden animate-pulse shadow-lg shadow-green-500/50">
+                <div className="w-28 h-28 rounded-full border-4 border-vintage-gold overflow-hidden animate-pulse shadow-lg shadow-vintage-gold/50">
                   <img
                     src="/john-pork.jpg"
                     alt="John Pork"
@@ -3503,31 +3469,31 @@ export function PokerBattleTable({
                   />
                 </div>
                 {/* Ringing indicator */}
-                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center animate-bounce">
-                  <span className="text-lg">📞</span>
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-vintage-gold rounded-full flex items-center justify-center animate-bounce">
+                  <span className="text-lg text-vintage-black font-bold">!</span>
                 </div>
               </div>
             </div>
 
             {/* Caller Info */}
             <div className="text-center mb-6">
-              <p className="text-gray-400 text-sm mb-1">incoming call...</p>
-              <h2 className="text-2xl font-bold text-white mb-1">
+              <p className="text-vintage-burnt-gold text-sm mb-1">incoming call...</p>
+              <h2 className="text-2xl font-display font-bold text-vintage-gold mb-1">
                 {incomingCaller?.username || 'Someone'}
               </h2>
-              <p className="text-green-400 text-sm font-medium">
+              <p className="text-vintage-ice text-sm font-medium">
                 wants to voice chat
               </p>
             </div>
 
-            {/* Accept/Reject Buttons - iPhone style */}
+            {/* Accept/Reject Buttons */}
             <div className="flex justify-center gap-16">
               <button
                 onClick={handleRejectCall}
                 className="flex flex-col items-center gap-2"
               >
                 <div className="w-16 h-16 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center transition-all hover:scale-110 shadow-lg shadow-red-500/30">
-                  <span className="text-2xl">📵</span>
+                  <CloseIcon className="text-white" size={28} />
                 </div>
                 <span className="text-red-400 text-xs font-medium">Decline</span>
               </button>
@@ -3535,10 +3501,10 @@ export function PokerBattleTable({
                 onClick={handleAcceptCall}
                 className="flex flex-col items-center gap-2"
               >
-                <div className="w-16 h-16 bg-green-600 hover:bg-green-700 rounded-full flex items-center justify-center transition-all hover:scale-110 animate-pulse shadow-lg shadow-green-500/30">
-                  <span className="text-2xl">📞</span>
+                <div className="w-16 h-16 bg-vintage-gold hover:bg-vintage-burnt-gold rounded-full flex items-center justify-center transition-all hover:scale-110 animate-pulse shadow-lg shadow-vintage-gold/30">
+                  <span className="text-vintage-black font-bold text-xl">OK</span>
                 </div>
-                <span className="text-green-400 text-xs font-medium">Accept</span>
+                <span className="text-vintage-gold text-xs font-medium">Accept</span>
               </button>
             </div>
           </div>
@@ -3577,8 +3543,8 @@ export function PokerBattleTable({
       {/* Exit Confirmation Modal for Spectators */}
       {showExitConfirmation && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[300] animate-in fade-in duration-300">
-          <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-yellow-500 p-6 text-center shadow-2xl max-w-md mx-4 animate-in zoom-in duration-300">
-            <div className="text-5xl mb-4">💰</div>
+          <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-vintage-gold p-6 text-center shadow-2xl max-w-md mx-4 animate-in zoom-in duration-300">
+            <div className="text-5xl mb-4 text-vintage-gold font-bold">$</div>
             <h3 className="text-2xl font-display font-bold text-vintage-gold mb-4">
               Exit CPU Arena?
             </h3>
@@ -3594,7 +3560,7 @@ export function PokerBattleTable({
               {room?.isCpuVsCpu && room?.spectators?.length === 1 && (
                 <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
                   <p className="text-orange-300 text-sm">
-                    ⚠️ You are the last spectator. The CPU Arena room will be closed.
+                    Warning: You are the last spectator. The CPU Arena room will be closed.
                   </p>
                 </div>
               )}
@@ -3628,10 +3594,9 @@ export function PokerBattleTable({
 
       {/* Free Spectator Badge - Show if watching for free */}
       {isSpectatorMode && spectatorType === 'free' && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-blue-600/90 backdrop-blur-md border-2 border-blue-400 rounded-lg px-4 py-2">
-          <p className="text-white text-sm font-bold text-center flex items-center gap-2">
-            <span>👁️</span>
-            <span>Free Viewer</span>
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] bg-vintage-charcoal/90 backdrop-blur-md border border-vintage-gold/50 rounded-lg px-3 py-1.5">
+          <p className="text-vintage-gold text-xs font-bold">
+            Free Viewer
           </p>
         </div>
       )}
