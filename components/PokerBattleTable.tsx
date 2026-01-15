@@ -3626,7 +3626,7 @@ export function PokerBattleTable({
               {/* Help Header */}
               <div className="bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold p-2 rounded-t-lg sticky top-0">
                 <h3 className="font-display font-bold text-vintage-black text-center text-sm sm:text-base flex items-center justify-center gap-2">
-                  <HelpIcon className="text-vintage-black" size={18} /> How to Play
+                  <HelpIcon className="text-vintage-black" size={18} /> {t('mechaHelpTitle')}
                 </h3>
               </div>
 
@@ -3634,23 +3634,23 @@ export function PokerBattleTable({
               <div className="p-3 space-y-3 text-xs sm:text-sm">
                 <div>
                   <h4 className="text-vintage-gold font-bold mb-1">🎰 Betting</h4>
-                  <p className="text-vintage-ice/80">Bet on which MECHA will win each round. Tap a player's name to bet on them, or TIE for draws.</p>
+                  <p className="text-vintage-ice/80">{t('mechaHelpBetting')}</p>
                 </div>
                 <div>
                   <h4 className="text-vintage-gold font-bold mb-1">💰 Odds</h4>
-                  <p className="text-vintage-ice/80">Early rounds: 1.5x • Mid rounds: 1.8x • Final rounds: 2.0x • TIE: 3.5x</p>
+                  <p className="text-vintage-ice/80">{t('mechaHelpOdds')}</p>
                 </div>
                 <div>
                   <h4 className="text-vintage-gold font-bold mb-1">⏱️ Timer</h4>
-                  <p className="text-vintage-ice/80">You have 8 seconds to place your bet after both MECHAs select cards. Timer shortens to 3s after first bet.</p>
+                  <p className="text-vintage-ice/80">{t('mechaHelpTimer')}</p>
                 </div>
                 <div>
                   <h4 className="text-vintage-gold font-bold mb-1">🏆 Winning</h4>
-                  <p className="text-vintage-ice/80">Higher power wins! If you bet correctly, you win credits × odds. Credits convert to coins when you exit.</p>
+                  <p className="text-vintage-ice/80">{t('mechaHelpWinning')}</p>
                 </div>
                 <div>
                   <h4 className="text-vintage-gold font-bold mb-1">📊 Stats</h4>
-                  <p className="text-vintage-ice/80">Track your wins/losses in the Bets panel (top right). Green = win, Red = loss.</p>
+                  <p className="text-vintage-ice/80">{t('mechaHelpStats')}</p>
                 </div>
               </div>
             </div>
