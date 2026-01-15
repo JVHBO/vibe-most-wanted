@@ -19,7 +19,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 type AuctionDoc = Doc<"castAuctions">;
 type BidDoc = Doc<"castAuctionBids">;
 
-const MAX_BID = 120000;
+const MAX_BID = 10000000;
 const POOL_ADDRESS = CONTRACTS.VBMSPoolTroll as `0x${string}`;
 
 interface FeaturedCastAuctionsProps {

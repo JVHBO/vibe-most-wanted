@@ -38,7 +38,7 @@ function getNextResetTime(now: number = Date.now()): number {
   return date.getTime();
 }
 const MINIMUM_BID = 10000; // Minimum first bid: 10,000 VBMS
-const MAXIMUM_BID = 120000; // Maximum bid: 120,000 VBMS
+const MAXIMUM_BID = 10000000; // Maximum bid: 10,000,000 VBMS
 const BID_INCREMENT_PERCENT = 10; // Must bid at least 10% more than current
 const MINIMUM_INCREMENT = 1000; // Minimum increment: 1,000 VBMS
 const TOTAL_SLOTS = 2; // 2 featured cast positions (always last 2 winners)
