@@ -595,11 +595,16 @@ export function PokerBattleTable({
               AudioManager.buttonSuccess();
             }
 
-            // Dramatic pause before resolving (2.5 seconds)
-            setTimeout(() => {
-              console.log('[PokerBattle] Cards revealed! Calling resolveRound from room sync');
-              resolveRound();
-            }, 2500);
+            // OPTIMIZATION: Don't call resolveRound for CPU vs CPU (Mecha Arena)
+            // Backend handles resolution via cpuResolveRound scheduler
+            // Calling it here causes duplicate mutations and state desync
+            if (!room?.isCpuVsCpu) {
+              // Dramatic pause before resolving (2.5 seconds) - PvP only
+              setTimeout(() => {
+                console.log('[PokerBattle] Cards revealed! Calling resolveRound from room sync');
+                resolveRound();
+              }, 2500);
+            }
           }
         }
       }
@@ -607,9 +612,9 @@ export function PokerBattleTable({
   }, [room, isCPUMode]);
 
   // Reset timer when phase changes (separate effect to ensure it runs)
-  // Skip in CPU mode - betting window timer handles it there
+  // Skip in CPU mode and Mecha Arena - betting window timer handles it there
   useEffect(() => {
-    if (isCPUMode) return; // CPU mode uses bettingWindowEndsAt timer instead
+    if (isCPUMode || room?.isCpuVsCpu) return; // CPU modes use bettingWindowEndsAt timer
 
     if (phase === 'card-selection') {
       console.log('[PokerBattle] Timer reset to 30s for card-selection phase');
@@ -618,14 +623,18 @@ export function PokerBattleTable({
       console.log('[PokerBattle] Timer reset to 90s for reveal phase');
       setTimeRemaining(90); // More time for choosing boost action (increased to 90s for testing)
     }
-  }, [phase, isCPUMode]); // Only depend on phase and isCPUMode
+  }, [phase, isCPUMode, room?.isCpuVsCpu]); // Only depend on phase and CPU modes
 
   // CPU vs CPU betting window timer (for Mecha Arena spectators)
+  // FIX: Check room?.isCpuVsCpu for spectator mode, not just isCPUMode
   useEffect(() => {
-    if (!isCPUMode) return;
+    // Only run for CPU modes (local CPU or Mecha Arena spectator)
+    if (!isCPUMode && !room?.isCpuVsCpu) return;
 
-    // If no betting window, reset timer to 0 (waiting for CPUs to select)
+    // If no betting window, show phase-appropriate message
     if (!room?.gameState?.bettingWindowEndsAt) {
+      // During card-selection, CPUs are picking cards - no timer needed
+      // During reveal/resolution, show 0 to indicate no betting
       setTimeRemaining(0);
       return;
     }
@@ -646,12 +655,13 @@ export function PokerBattleTable({
     const interval = setInterval(updateTimer, 1000);
 
     return () => clearInterval(interval);
-  }, [isCPUMode, room?.gameState?.bettingWindowEndsAt]);
+  }, [isCPUMode, room?.isCpuVsCpu, room?.gameState?.bettingWindowEndsAt]);
 
   // Timer countdown for actions
   useEffect(() => {
     // Skip timer if in CPU vs CPU mode (betting window timer handles it)
-    if (isCPUMode) return;
+    // FIX: Also skip for Mecha Arena spectators (room?.isCpuVsCpu)
+    if (isCPUMode || room?.isCpuVsCpu) return;
 
     // Clear any existing timer when effect runs
     if (timerRef.current) {
@@ -709,7 +719,7 @@ export function PokerBattleTable({
         timerRef.current = null;
       }
     };
-  }, [phase, playerSelectedCard, playerAction]);
+  }, [phase, playerSelectedCard, playerAction, room?.isCpuVsCpu]);
 
   // Betting
   const [playerBankroll, setPlayerBankroll] = useState(0);
@@ -1721,73 +1731,84 @@ export function PokerBattleTable({
   }, [room, isCPUMode, isHost, currentView]);
 
   // Sync game state from room for PvP mode
+  // OPTIMIZATION: Use functional setState to only re-render when values actually change
   useEffect(() => {
     if (!isCPUMode && room && room.gameState && currentView === 'game') {
       const gs = room.gameState;
 
-      // Sync phase
-      if (gs.phase) setPhase(gs.phase as GamePhase);
-
-      // Sync round
-      if (gs.currentRound) setCurrentRound(gs.currentRound);
-
-      // Sync pot
-      if (gs.pot !== undefined) setPot(gs.pot);
-
-      // Sync scores
-      if (gs.hostScore !== undefined && gs.guestScore !== undefined) {
-        if (isHost) {
-          setPlayerScore(gs.hostScore);
-          setOpponentScore(gs.guestScore);
-        } else {
-          setPlayerScore(gs.guestScore);
-          setOpponentScore(gs.hostScore);
-        }
+      // Sync phase - only update if changed
+      if (gs.phase) {
+        setPhase(prev => prev !== gs.phase ? gs.phase as GamePhase : prev);
       }
 
-      // Sync opponent's selected card (only show after they select)
+      // Sync round - only update if changed
+      if (gs.currentRound) {
+        setCurrentRound(prev => prev !== gs.currentRound ? gs.currentRound : prev);
+      }
+
+      // Sync pot - only update if changed
+      if (gs.pot !== undefined) {
+        setPot(prev => prev !== gs.pot ? gs.pot : prev);
+      }
+
+      // Sync scores - only update if changed
+      if (gs.hostScore !== undefined && gs.guestScore !== undefined) {
+        const myScore = isHost ? gs.hostScore : gs.guestScore;
+        const theirScore = isHost ? gs.guestScore : gs.hostScore;
+        setPlayerScore(prev => prev !== myScore ? myScore : prev);
+        setOpponentScore(prev => prev !== theirScore ? theirScore : prev);
+      }
+
+      // Sync selected cards - only update if changed (compare by tokenId to avoid object reference issues)
       if (isSpectatorMode) {
         // Spectators see both cards
-        setPlayerSelectedCard(gs.hostSelectedCard);
-        setOpponentSelectedCard(gs.guestSelectedCard);
+        setPlayerSelectedCard(prev => {
+          if (!gs.hostSelectedCard && !prev) return prev;
+          if (!gs.hostSelectedCard || !prev) return gs.hostSelectedCard;
+          return prev.tokenId !== gs.hostSelectedCard.tokenId ? gs.hostSelectedCard : prev;
+        });
+        setOpponentSelectedCard(prev => {
+          if (!gs.guestSelectedCard && !prev) return prev;
+          if (!gs.guestSelectedCard || !prev) return gs.guestSelectedCard;
+          return prev.tokenId !== gs.guestSelectedCard.tokenId ? gs.guestSelectedCard : prev;
+        });
       } else if (isHost && gs.guestSelectedCard) {
-        setOpponentSelectedCard(gs.guestSelectedCard);
+        setOpponentSelectedCard(prev => {
+          if (!prev) return gs.guestSelectedCard;
+          return prev.tokenId !== gs.guestSelectedCard.tokenId ? gs.guestSelectedCard : prev;
+        });
       } else if (!isHost && gs.hostSelectedCard) {
-        setOpponentSelectedCard(gs.hostSelectedCard);
+        setOpponentSelectedCard(prev => {
+          if (!prev) return gs.hostSelectedCard;
+          return prev.tokenId !== gs.hostSelectedCard.tokenId ? gs.hostSelectedCard : prev;
+        });
       }
 
-      // Sync opponent's action
+      // Sync actions - only update if changed
       if (isSpectatorMode) {
-        // Spectators see both actions
-        setPlayerAction(gs.hostAction as CardAction);
-        setOpponentAction(gs.guestAction as CardAction);
+        setPlayerAction(prev => prev !== gs.hostAction ? (gs.hostAction as CardAction) : prev);
+        setOpponentAction(prev => prev !== gs.guestAction ? (gs.guestAction as CardAction) : prev);
       } else if (isHost && gs.guestAction) {
-        setOpponentAction(gs.guestAction as CardAction);
+        setOpponentAction(prev => prev !== gs.guestAction ? (gs.guestAction as CardAction) : prev);
       } else if (!isHost && gs.hostAction) {
-        setOpponentAction(gs.hostAction as CardAction);
+        setOpponentAction(prev => prev !== gs.hostAction ? (gs.hostAction as CardAction) : prev);
       }
 
-      // Sync bankrolls and boost coins from room
+      // Sync bankrolls - only update if changed
       if (room.hostBankroll !== undefined && room.guestBankroll !== undefined) {
-        if (isHost) {
-          setPlayerBankroll(room.hostBankroll);
-          setOpponentBankroll(room.guestBankroll);
-        } else {
-          setPlayerBankroll(room.guestBankroll);
-          setOpponentBankroll(room.hostBankroll);
-        }
+        const myBankroll = isHost ? room.hostBankroll : room.guestBankroll;
+        const theirBankroll = isHost ? room.guestBankroll : room.hostBankroll;
+        setPlayerBankroll(prev => prev !== myBankroll ? myBankroll : prev);
+        setOpponentBankroll(prev => prev !== theirBankroll ? theirBankroll : prev);
       }
 
-      // Sync boost coins from room (default to 1000 if not set for old rooms)
-      if (isHost) {
-        setPlayerBoostCoins(room.hostBoostCoins ?? 1000);
-        setOpponentBoostCoins(room.guestBoostCoins ?? 1000);
-      } else {
-        setPlayerBoostCoins(room.guestBoostCoins ?? 1000);
-        setOpponentBoostCoins(room.hostBoostCoins ?? 1000);
-      }
+      // Sync boost coins - only update if changed
+      const myBoostCoins = isHost ? (room.hostBoostCoins ?? 1000) : (room.guestBoostCoins ?? 1000);
+      const theirBoostCoins = isHost ? (room.guestBoostCoins ?? 1000) : (room.hostBoostCoins ?? 1000);
+      setPlayerBoostCoins(prev => prev !== myBoostCoins ? myBoostCoins : prev);
+      setOpponentBoostCoins(prev => prev !== theirBoostCoins ? theirBoostCoins : prev);
     }
-  }, [room, isCPUMode, isHost, currentView]);
+  }, [room, isCPUMode, isHost, currentView, isSpectatorMode]);
 
   // Play audio when game ends (for players, not spectators)
   useEffect(() => {
@@ -2069,16 +2090,14 @@ export function PokerBattleTable({
         });
 
         // Show appropriate popup based on profit/loss
+        // Audio is now handled by GamePopups component via useEffect
         if (netGain > 0) {
           setCurrentVictoryImage(victoryConfig.image);
           setShowWinPopup(true);
-          if (soundEnabled) AudioManager.win();
         } else if (netGain < 0) {
           setShowLossPopup(true);
-          if (soundEnabled) AudioManager.lose();
         } else {
           setShowTiePopup(true);
-          if (soundEnabled) AudioManager.tie();
         }
       }).catch((err) => {
         console.error('[PokerBattle] Failed to fetch betting results:', err);
@@ -2109,6 +2128,7 @@ export function PokerBattleTable({
     const opponentName = room?.guestUsername || room?.hostUsername || 'Opponent';
 
     // Configure victory/defeat/tie popups - batch state updates
+    // Audio is now handled by GamePopups component via useEffect
     if (playerScore > opponentScore) {
       setCurrentVictoryImage(victoryConfig.image);
       setLastBattleResult({
@@ -2682,86 +2702,73 @@ export function PokerBattleTable({
 
             {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
-            {/* Sound Panel - Collapsible on LEFT side */}
+            {/* Sound Panel - Always open on LEFT side */}
             <div className={`absolute left-2 z-20 ${isCPUMode ? 'top-2' : 'top-12 sm:top-14'}`}>
-              {showSoundsPanel ? (
-                <div className="bg-vintage-charcoal/95 border border-vintage-gold/30 rounded-lg p-1.5 shadow-lg">
-                  <button
-                    onClick={() => setShowSoundsPanel(false)}
-                    className="w-full text-vintage-gold font-bold text-[9px] mb-1 text-center hover:text-vintage-burnt-gold"
-                  >
-                    SFX X
-                  </button>
-                  <div className="grid grid-cols-4 gap-1">
-                    <button
-                      onClick={() => playMemeSound('/let-him-cook-now.mp3', 'COOK', '🔥')}
-                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
-                      title="Let Him Cook"
-                    >
-                      COOK
-                    </button>
-                    <button
-                      onClick={() => playMemeSound('/nya_ZtXOXLx.mp3', 'NYA', '🐱')}
-                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
-                      title="Nya~"
-                    >
-                      NYA
-                    </button>
-                    <button
-                      onClick={() => playMemeSound('/quandale-dingle-meme.mp3', 'QD', '😈')}
-                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
-                      title="Quandale"
-                    >
-                      QD
-                    </button>
-                    <button
-                      onClick={() => playMemeSound('/this-is-not-poker.mp3', 'NP', '🃏')}
-                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
-                      title="Not Poker"
-                    >
-                      NP
-                    </button>
-                    <button
-                      onClick={() => playMemeSound('/sounds/receba-luva.mp3', 'REC', '🥊')}
-                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
-                      title="Receba"
-                    >
-                      REC
-                    </button>
-                    <button
-                      onClick={() => playMemeSound('/sounds/dry-fart.mp3', 'FRT', '💨')}
-                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
-                      title="Fart"
-                    >
-                      FRT
-                    </button>
-                    <button
-                      onClick={() => playMemeSound('/sounds/corteze.MP3', 'CTZ', '🎤')}
-                      className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
-                      title="Corteze"
-                    >
-                      CTZ
-                    </button>
-                  </div>
-                  {/* Voice Chat - PvP and Mecha Arena spectators */}
-                  <VoiceChannelPanel
-                    voiceState={groupVoice}
-                    onJoinChannel={handleJoinVoice}
-                    onLeaveChannel={groupVoice.leaveChannel}
-                    onToggleMute={groupVoice.toggleMute}
-                    onToggleUserMute={groupVoice.toggleUserMute}
-                    onSetUserVolume={groupVoice.setUserVolume}
-                  />
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowSoundsPanel(true)}
-                  className="bg-vintage-charcoal/95 border border-vintage-gold/30 rounded-lg px-2 py-1 shadow-lg hover:bg-vintage-gold/10 transition-all text-vintage-gold text-[10px] font-bold"
-                  title="Open Sounds"
-                >
+              <div className="bg-vintage-charcoal/95 border border-vintage-gold/30 rounded-lg p-1.5 shadow-lg">
+                <div className="text-vintage-gold font-bold text-[9px] mb-1 text-center">
                   SFX
-                </button>
-              )}
+                </div>
+                <div className="grid grid-cols-4 gap-1">
+                  <button
+                    onClick={() => playMemeSound('/let-him-cook-now.mp3', 'COOK', '🔥')}
+                    className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
+                    title="Let Him Cook"
+                  >
+                    COOK
+                  </button>
+                  <button
+                    onClick={() => playMemeSound('/nya_ZtXOXLx.mp3', 'NYA', '🐱')}
+                    className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
+                    title="Nya~"
+                  >
+                    NYA
+                  </button>
+                  <button
+                    onClick={() => playMemeSound('/quandale-dingle-meme.mp3', 'QD', '😈')}
+                    className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
+                    title="Quandale"
+                  >
+                    QD
+                  </button>
+                  <button
+                    onClick={() => playMemeSound('/this-is-not-poker.mp3', 'NP', '🃏')}
+                    className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
+                    title="Not Poker"
+                  >
+                    NP
+                  </button>
+                  <button
+                    onClick={() => playMemeSound('/sounds/receba-luva.mp3', 'REC', '🥊')}
+                    className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
+                    title="Receba"
+                  >
+                    REC
+                  </button>
+                  <button
+                    onClick={() => playMemeSound('/sounds/dry-fart.mp3', 'FRT', '💨')}
+                    className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
+                    title="Fart"
+                  >
+                    FRT
+                  </button>
+                  <button
+                    onClick={() => playMemeSound('/sounds/corteze.MP3', 'CTZ', '🎤')}
+                    className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
+                    title="Corteze"
+                  >
+                    CTZ
+                  </button>
+                </div>
+                {/* Voice Chat - PvP and Mecha Arena spectators */}
+                <VoiceChannelPanel
+                  voiceState={groupVoice}
+                  onJoinChannel={handleJoinVoice}
+                  onLeaveChannel={groupVoice.leaveChannel}
+                  onToggleMute={groupVoice.toggleMute}
+                  onToggleUserMute={groupVoice.toggleUserMute}
+                  onSetUserVolume={groupVoice.setUserVolume}
+                />
+              </div>
             </div>
 
             {/* Game info header - Simplified for Mecha Arena (CPU vs CPU), full for PvP */}
@@ -3185,7 +3192,7 @@ export function PokerBattleTable({
         )}
 
         {/* SPECTATOR SCREEN - Shows game result for spectators (PvP only, not Mecha Arena) */}
-        {phase === 'game-over' && gameOverShown && isSpectatorMode && !isCPUMode && (
+        {phase === 'game-over' && gameOverShown && isSpectatorMode && !isCPUMode && !room?.isCpuVsCpu && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[400]">
             <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-xl border-2 border-vintage-gold/50 p-6 text-center shadow-2xl max-w-md mx-4">
               <h2 className="text-2xl font-display font-bold text-vintage-gold mb-4">

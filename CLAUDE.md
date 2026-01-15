@@ -1,32 +1,28 @@
 # Claude Code Instructions for VIBE Most Wanted
 
-## Convex Deployments
+## Convex Deployment
 
-**IMPORTANT:** This project has TWO Convex deployments:
+**CRITICAL: ALWAYS USE PRODUCTION - NEVER USE DEV!**
 
-| Environment | Deployment | URL |
-|-------------|------------|-----|
-| Development | `dev:dazzling-hedgehog-496` | dazzling-hedgehog-496.convex.cloud |
-| **Production** | `prod:agile-orca-761` | agile-orca-761.convex.cloud |
+| Deployment | URL |
+|------------|-----|
+| `prod:agile-orca-761` | agile-orca-761.convex.cloud |
+
+The `.env.local` file MUST point to production:
+```
+CONVEX_DEPLOYMENT=prod:agile-orca-761
+NEXT_PUBLIC_CONVEX_URL=https://agile-orca-761.convex.cloud
+```
 
 ### Deploy to Production
 
-**ALWAYS use `--env-file .env.prod` for production operations!**
-
 ```bash
-# Deploy to production
+# Deploy Convex
 npx convex deploy --env-file .env.prod
 
-# Run queries in production
+# Run queries
 npx convex run <function> --env-file .env.prod
-
-# Example
-npx convex run profiles:getProfile '{"address": "0x..."}' --env-file .env.prod
 ```
-
-### Why this matters
-
-The `.env.local` file points to DEV (`dazzling-hedgehog-496`). If you run `npx convex deploy` without `--env-file .env.prod`, it will deploy to DEV instead of PROD!
 
 ## Known Issues (Bugs)
 

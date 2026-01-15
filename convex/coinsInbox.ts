@@ -205,6 +205,7 @@ export const hasUnclaimedCoins = query({
 
 /**
  * Get transaction history for player
+ * Includes both coin transactions AND betting transactions (for Mecha Arena)
  */
 export const getTransactionHistory = query({
   args: {
@@ -214,13 +215,73 @@ export const getTransactionHistory = query({
   handler: async (ctx, { address, limit = 50 }) => {
     const normalizedAddress = address.toLowerCase();
 
-    const transactions = await ctx.db
+    // Get coin transactions
+    const coinTxs = await ctx.db
       .query("coinTransactions")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .order("desc")
       .take(limit);
 
-    return transactions;
+    // Get betting transactions (wins, losses, deposits, withdrawals)
+    const bettingTxs = await ctx.db
+      .query("bettingTransactions")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .order("desc")
+      .take(limit);
+
+    // Convert betting transactions to same format as coin transactions
+    const formattedBettingTxs = bettingTxs.map((tx) => {
+      let type: string;
+      let description: string;
+      const amount = tx.amount;
+
+      switch (tx.type) {
+        case "win":
+          type = "earn";
+          description = `Won ${Math.abs(amount)} credits betting (Mecha Arena)`;
+          break;
+        case "loss":
+          type = "spend";
+          description = `Lost ${Math.abs(amount)} credits betting (Mecha Arena)`;
+          break;
+        case "deposit":
+          type = "convert";
+          description = `Deposited ${Math.abs(amount)} coins for betting credits`;
+          break;
+        case "withdraw":
+          type = "earn";
+          description = `Converted ${Math.abs(amount)} betting credits to coins`;
+          break;
+        case "refund":
+          type = "refund";
+          description = `Refunded ${Math.abs(amount)} credits (tie round)`;
+          break;
+        default:
+          type = "spend";
+          description = `Bet ${Math.abs(amount)} credits`;
+      }
+
+      return {
+        _id: tx._id,
+        _creationTime: tx._creationTime,
+        address: tx.address,
+        type,
+        amount: Math.abs(amount),
+        source: "mecha_arena",
+        description,
+        balanceBefore: 0, // Not tracked for betting
+        balanceAfter: 0, // Not tracked for betting
+        timestamp: tx.timestamp,
+        txHash: tx.txHash,
+      };
+    });
+
+    // Combine and sort by timestamp (descending)
+    const allTxs = [...coinTxs, ...formattedBettingTxs]
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, limit);
+
+    return allTxs;
   },
 });
 

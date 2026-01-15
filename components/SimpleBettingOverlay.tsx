@@ -183,12 +183,12 @@ export function SimpleBettingOverlay({
               {isAllIn ? 'ALL IN ACTIVE (3x)' : 'Click for ALL IN (3x)'}
             </button>
             <p className={`font-bold text-sm ${isAllIn ? 'text-vintage-gold' : 'text-vintage-burnt-gold'}`}>
-              {odds}x - {credits?.balance || 0}
+              {odds}x
             </p>
           </div>
         ) : (
           <p className="text-vintage-gold font-bold text-sm">
-            {odds}x - {credits?.balance || 0}
+            {odds}x
           </p>
         )}
       </div>

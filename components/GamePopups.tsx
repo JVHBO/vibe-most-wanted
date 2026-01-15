@@ -155,6 +155,69 @@ export function GamePopups({
   // Track which loss media to show (randomly selected on popup open)
   const [currentLossMedia, setCurrentLossMedia] = useState(LOSS_CONFIGS[0]);
 
+  // Audio refs to control playback
+  const victoryAudioRef = useRef<HTMLAudioElement | null>(null);
+  const victory3AudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Play victory audio when popup opens (using JS instead of <audio> for Farcaster compatibility)
+  useEffect(() => {
+    if (showWinPopup && soundEnabled) {
+      // Map victory images to their audio files
+      const audioMap: Record<string, string> = {
+        '/victory-1.jpg': '/win-sound.mp3',
+        '/victory-2.jpg': '/marvin-victory.mp3',
+        '/bom.jpg': '/victory-sound.mp3',
+        '/victory-3.jpg': '/victory-3.mp3',
+      };
+
+      const audioFile = audioMap[currentVictoryImage];
+      if (audioFile) {
+        // Stop any existing audio
+        if (victoryAudioRef.current) {
+          victoryAudioRef.current.pause();
+          victoryAudioRef.current = null;
+        }
+        if (victory3AudioRef.current) {
+          victory3AudioRef.current.pause();
+          victory3AudioRef.current = null;
+        }
+
+        // Play the correct audio
+        const audio = new Audio(audioFile);
+        audio.volume = 0.7;
+        // victory-3 loops
+        if (currentVictoryImage === '/victory-3.jpg') {
+          audio.loop = true;
+          victory3AudioRef.current = audio;
+        } else {
+          victoryAudioRef.current = audio;
+        }
+        audio.play().catch(err => console.error('Failed to play victory audio:', err));
+      }
+    }
+
+    // Cleanup when popup closes
+    return () => {
+      if (victoryAudioRef.current) {
+        victoryAudioRef.current.pause();
+        victoryAudioRef.current = null;
+      }
+      if (victory3AudioRef.current) {
+        victory3AudioRef.current.pause();
+        victory3AudioRef.current = null;
+      }
+    };
+  }, [showWinPopup, currentVictoryImage, soundEnabled]);
+
+  // Play loss audio when popup opens
+  useEffect(() => {
+    if (showLossPopup && soundEnabled && !currentLossMedia.isVideo) {
+      const audio = new Audio('/lose-sound.mp3');
+      audio.volume = 0.7;
+      audio.play().catch(err => console.error('Failed to play loss audio:', err));
+    }
+  }, [showLossPopup, soundEnabled, currentLossMedia.isVideo]);
+
   // Select loss media when popup opens (forced or random)
   useEffect(() => {
     if (showLossPopup) {
@@ -166,6 +229,33 @@ export function GamePopups({
       }
     }
   }, [showLossPopup, forcedLossMedia]);
+
+  // Tie audio ref
+  const tieAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Play tie audio when popup opens
+  useEffect(() => {
+    if (showTiePopup && soundEnabled && tieGifLoaded) {
+      // Stop existing tie audio
+      if (tieAudioRef.current) {
+        tieAudioRef.current.pause();
+        tieAudioRef.current = null;
+      }
+
+      const audio = new Audio('/tie-music.mp3');
+      audio.volume = 0.7;
+      audio.loop = true;
+      tieAudioRef.current = audio;
+      audio.play().catch(err => console.error('Failed to play tie audio:', err));
+    }
+
+    return () => {
+      if (tieAudioRef.current) {
+        tieAudioRef.current.pause();
+        tieAudioRef.current = null;
+      }
+    };
+  }, [showTiePopup, soundEnabled, tieGifLoaded]);
 
   // Pause/Resume background music when result popups are shown
   // Track if popup was already open to prevent multiple pause/play calls
@@ -203,26 +293,7 @@ export function GamePopups({
       {/* Victory Popup */}
       {showWinPopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseVictoryScreen}>
-          {/* Victory audio for victory-1 (win-sound) */}
-          {currentVictoryImage === '/victory-1.jpg' && !isInFarcaster && soundEnabled && (
-            <audio autoPlay>
-              <source src="/win-sound.mp3" type="audio/mpeg" />
-            </audio>
-          )}
-
-          {/* Victory audio for victory-2 (marvin-victory) */}
-          {currentVictoryImage === '/victory-2.jpg' && !isInFarcaster && soundEnabled && (
-            <audio autoPlay>
-              <source src="/marvin-victory.mp3" type="audio/mpeg" />
-            </audio>
-          )}
-
-          {/* Victory audio for bom.jpg (victory-sound) */}
-          {currentVictoryImage === '/bom.jpg' && !isInFarcaster && soundEnabled && (
-            <audio autoPlay>
-              <source src="/victory-sound.mp3" type="audio/mpeg" />
-            </audio>
-          )}
+          {/* Victory audio is now played via useEffect for Farcaster compatibility */}
 
           {/* 🌈 GAY VIBES - Floating hearts effect for victory-2 (reduced from 20 to 8 for performance) */}
           {currentVictoryImage === '/victory-2.jpg' && !isInFarcaster && (
@@ -254,15 +325,9 @@ export function GamePopups({
           )}
 
           {/* 👅 VICTORY 3 - Sensual tongues floating effect (optimized with pre-generated positions) */}
+          {/* Audio for victory-3 is now played via useEffect for Farcaster compatibility */}
           {currentVictoryImage === '/victory-3.jpg' && !isInFarcaster && (
             <>
-              {/* Audio for victory-3 (disabled in miniapp for performance) - respects soundEnabled */}
-              {soundEnabled && (
-                <audio autoPlay loop>
-                  <source src="/victory-3.mp3" type="audio/mpeg" />
-                </audio>
-              )}
-
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
                 {/* Tongues floating and licking - using pre-generated positions */}
                 {VICTORY3_TONGUE_POSITIONS.map((pos, i) => (
@@ -437,12 +502,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
       {/* Loss Popup */}
       {showLossPopup && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseDefeatScreen}>
-          {/* Loss audio - only for image, video has embedded audio */}
-          {!currentLossMedia.isVideo && !isInFarcaster && soundEnabled && (
-            <audio autoPlay>
-              <source src="/lose-sound.mp3" type="audio/mpeg" />
-            </audio>
-          )}
+          {/* Loss audio is now played via useEffect for Farcaster compatibility */}
           <div className="relative flex flex-col items-center gap-2">
             {/* Loss screen - Video or Image */}
             {currentLossMedia.isVideo ? (
@@ -554,12 +614,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
             <p className="text-lg md:text-xl font-bold text-gray-400 animate-pulse px-2 text-center">
               {t('tieResult')}
             </p>
-            {/* Only play audio after GIF is preloaded - respects soundEnabled */}
-            {tieGifLoaded && soundEnabled && (
-              <audio autoPlay loop>
-                <source src="/tie-music.mp3" type="audio/mpeg" />
-              </audio>
-            )}
+            {/* Tie audio is now played via useEffect for Farcaster compatibility */}
             <button
               onClick={() => setShowTiePopup(false)}
               className="absolute top-2 right-2 bg-gray-400 hover:bg-gray-500 text-vintage-black rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold shadow-lg"
