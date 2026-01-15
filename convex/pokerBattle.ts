@@ -1556,16 +1556,16 @@ export const forceDeleteRoom = internalMutation({
 
 // CPU Names for Mecha Arena battles
 const CPU_BATTLE_NAMES = [
-  { name: "Mecha Alpha", emoji: "🤖" },
-  { name: "Mecha Prime", emoji: "🦾" },
-  { name: "Mecha Nova", emoji: "💎" },
-  { name: "Mecha Striker", emoji: "⚡" },
-  { name: "Mecha Titan", emoji: "🧠" },
-  { name: "Mecha Zero", emoji: "🔮" },
-  { name: "Mecha Fury", emoji: "🔥" },
-  { name: "Mecha Storm", emoji: "🌪️" },
-  { name: "Mecha Blade", emoji: "⚔️" },
-  { name: "Mecha Shadow", emoji: "👤" },
+  { name: "Mecha Alpha" },
+  { name: "Mecha Prime" },
+  { name: "Mecha Nova" },
+  { name: "Mecha Striker" },
+  { name: "Mecha Titan" },
+  { name: "Mecha Zero" },
+  { name: "Mecha Fury" },
+  { name: "Mecha Storm" },
+  { name: "Mecha Blade" },
+  { name: "Mecha Shadow" },
 ];
 
 /**
@@ -1654,7 +1654,7 @@ export const createCpuVsCpuRoom = mutation({
 
       // CPU 1 (Host)
       hostAddress: `cpu1-${collection}`.toLowerCase(),
-      hostUsername: `${cpu1.emoji} ${cpu1.name}`,
+      hostUsername: cpu1.name,
       hostDeck: cpu1Deck,
       hostReady: true,
       hostBankroll: 1000,
@@ -1662,7 +1662,7 @@ export const createCpuVsCpuRoom = mutation({
 
       // CPU 2 (Guest)
       guestAddress: `cpu2-${collection}`.toLowerCase(),
-      guestUsername: `${cpu2.emoji} ${cpu2.name}`,
+      guestUsername: cpu2.name,
       guestDeck: cpu2Deck,
       guestReady: true,
       guestBankroll: 1000,

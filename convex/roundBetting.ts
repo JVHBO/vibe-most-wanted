@@ -210,33 +210,8 @@ export const placeBetOnRound = mutation({
       await ctx.runMutation(internal.pokerBattle.shortenBettingWindow, { roomId });
     }
 
-    // Get bettor's username for chat message
-    const bettorProfile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
-
-    // Get player's username that was bet on or "Tie"
-    let betOnUsername = "Player";
-    if (isTieBet) {
-      betOnUsername = "Tie/Draw";
-    } else {
-      const betOnProfile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", normalizedBetOn))
-        .first();
-      betOnUsername = betOnProfile?.username || "Player";
-    }
-
-    // Send chat message visible to everyone
-    await ctx.db.insert("pokerChatMessages", {
-      roomId,
-      sender: normalizedAddress,
-      senderUsername: bettorProfile?.username || "Spectator",
-      message: `🎰 Bet ${amount} credits on ${betOnUsername} at ${odds}x odds${isBuffed ? " 🔥" : ""} for Round ${roundNumber}`,
-      timestamp: Date.now(),
-      type: "text" as const,
-    });
+    // NOTE: Chat message for bets removed - bettor already has feedback via SimpleBettingOverlay
+    // and SpectatorBetFeedback shows bet history to all spectators
 
     return {
       success: true,

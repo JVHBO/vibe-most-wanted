@@ -110,8 +110,8 @@ export function SpectatorBetFeedback({
             }`}
           >
             <div className="text-center">
-              <div className="text-6xl mb-4 animate-bounce">
-                {animationResult === 'won' ? '🎉' : '💔'}
+              <div className="text-6xl mb-4 animate-bounce text-center font-bold">
+                {animationResult === 'won' ? 'WIN' : 'LOSS'}
               </div>
               <h2
                 className={`text-4xl font-display font-bold mb-2 ${
@@ -129,47 +129,47 @@ export function SpectatorBetFeedback({
       )}
 
       {/* Bet History Panel - Collapsible at top right */}
-      <div className="fixed top-20 right-2 z-[200]">
+      <div className="fixed top-14 right-2 z-[200]">
         {isPanelExpanded ? (
-          <div className="bg-vintage-charcoal/95 backdrop-blur-md border border-purple-500/50 rounded-lg p-1.5 shadow-xl w-32 text-[10px]">
+          <div className="bg-vintage-charcoal/95 backdrop-blur-md border border-vintage-gold/50 rounded-lg p-2 shadow-xl min-w-[120px] text-[10px]">
             {/* Header with close button */}
             <button
               onClick={() => setIsPanelExpanded(false)}
-              className="w-full flex items-center justify-between mb-1 pb-1 border-b border-purple-500/30 hover:opacity-80"
+              className="w-full flex items-center justify-between mb-1.5 pb-1 border-b border-vintage-gold/30 hover:opacity-80"
             >
-              <span className="text-purple-400 font-bold">🎰 Bets</span>
-              <span className="text-vintage-gold font-bold">💰{credits?.balance || 0} ✕</span>
+              <span className="text-vintage-gold font-bold">Bets</span>
+              <span className="text-vintage-gold font-bold">{credits?.balance || 0}c X</span>
             </button>
 
-            {/* Compact Stats Row */}
-            <div className="flex justify-between mb-1 text-center text-[9px]">
-              <span className="text-green-400">{wins}W</span>
-              <span className="text-red-400">{losses}L</span>
-              <span className={netProfit >= 0 ? 'text-green-400' : 'text-red-400'}>
+            {/* Compact Stats Row - Grid for alignment */}
+            <div className="grid grid-cols-3 gap-1 mb-1.5 text-center text-[9px]">
+              <span className="text-green-400 font-bold">{wins}W</span>
+              <span className="text-red-400 font-bold">{losses}L</span>
+              <span className={`font-bold ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {netProfit >= 0 ? '+' : ''}{netProfit}
               </span>
             </div>
 
-            {/* Bet History List */}
+            {/* Bet History List - Grid for alignment */}
             {totalBets > 0 ? (
               <div className="max-h-24 overflow-y-auto space-y-0.5">
                 {myBets?.sort((a: RoundBet, b: RoundBet) => b.roundNumber - a.roundNumber).map((bet: RoundBet, idx: number) => (
                   <div
                     key={idx}
-                    className={`flex items-center justify-between px-1 py-0.5 rounded ${
+                    className={`grid grid-cols-3 gap-1 px-1 py-0.5 rounded text-center ${
                       bet.status === 'won'
                         ? 'bg-green-500/20 text-green-300'
                         : bet.status === 'lost'
                         ? 'bg-red-500/20 text-red-300'
                         : bet.status === 'refunded'
                         ? 'bg-yellow-500/20 text-yellow-300'
-                        : 'bg-purple-500/20 text-purple-300'
+                        : 'bg-vintage-gold/20 text-vintage-gold'
                     }`}
                   >
                     <span>R{bet.roundNumber}</span>
                     <span className="font-mono">{bet.amount}c</span>
                     <span className="font-bold">
-                      {bet.status === 'won' ? `+${bet.payout}` : bet.status === 'lost' ? `-${bet.amount}` : '⏳'}
+                      {bet.status === 'won' ? `+${bet.payout}` : bet.status === 'lost' ? `-${bet.amount}` : '-'}
                     </span>
                   </div>
                 ))}
@@ -183,9 +183,9 @@ export function SpectatorBetFeedback({
         ) : (
           <button
             onClick={() => setIsPanelExpanded(true)}
-            className="bg-vintage-charcoal/95 backdrop-blur-md border border-purple-500/50 rounded-lg px-2 py-1 shadow-xl hover:bg-purple-500/20 transition-all"
+            className="bg-vintage-charcoal/95 backdrop-blur-md border border-vintage-gold/50 rounded-lg px-2 py-1 shadow-xl hover:bg-vintage-gold/20 transition-all"
           >
-            <span className="text-purple-400 font-bold text-[10px]">🎰 {wins}W {losses}L</span>
+            <span className="text-vintage-gold font-bold text-[10px]">{wins}W {losses}L</span>
             <span className={`ml-1 font-bold text-[10px] ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {netProfit >= 0 ? '+' : ''}{netProfit}
             </span>

@@ -151,9 +151,9 @@ export function SimpleBettingOverlay({
   if (existingBet) {
     const displayOdds = getExistingBetOdds();
     return (
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] bg-green-600/80 backdrop-blur-sm border border-green-400 rounded-lg px-2 py-1">
-        <p className="text-white text-[10px] font-bold text-center">
-          ✅ {existingBet.amount}c → {getBetDisplayName(existingBet.betOn)} (+{Math.floor(existingBet.amount * displayOdds)}c)
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] bg-vintage-gold/80 backdrop-blur-sm border border-vintage-gold rounded-lg px-2 py-1">
+        <p className="text-vintage-black text-[10px] font-bold text-center">
+          BET: {existingBet.amount}c on {getBetDisplayName(existingBet.betOn)} (+{Math.floor(existingBet.amount * displayOdds)}c)
         </p>
       </div>
     );
@@ -162,42 +162,42 @@ export function SimpleBettingOverlay({
   return (
     <div className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] backdrop-blur-md rounded-lg p-2 shadow-xl w-72 sm:w-96 transition-all ${
       isFinalRound && isAllIn
-        ? 'bg-gradient-to-br from-yellow-900/95 to-orange-900/95 border-2 border-yellow-500 animate-pulse'
+        ? 'bg-gradient-to-br from-vintage-charcoal to-vintage-black border-2 border-vintage-gold animate-pulse'
         : isFinalRound
-        ? 'bg-gradient-to-br from-red-900/95 to-purple-900/95 border-2 border-red-500'
-        : 'bg-vintage-charcoal/95 border border-purple-500'
+        ? 'bg-gradient-to-br from-vintage-charcoal to-vintage-black border-2 border-vintage-burnt-gold'
+        : 'bg-vintage-charcoal/95 border border-vintage-gold/50'
     }`}>
       {/* Header with ALL IN toggle for final round */}
       <div className="text-center mb-2">
         {isFinalRound ? (
           <div className="space-y-1">
-            <p className="text-red-400 font-bold text-xs animate-pulse">🔥 FINAL ROUND 🔥</p>
+            <p className="text-vintage-gold font-bold text-xs animate-pulse">FINAL ROUND</p>
             <button
               onClick={() => setIsAllIn(!isAllIn)}
               className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${
                 isAllIn
-                  ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-black animate-pulse shadow-lg shadow-yellow-500/50'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  ? 'bg-vintage-gold text-vintage-black animate-pulse shadow-lg shadow-vintage-gold/50'
+                  : 'bg-vintage-black text-vintage-burnt-gold hover:bg-vintage-gold/20 border border-vintage-gold/50'
               }`}
             >
-              {isAllIn ? '🎰 ALL IN ACTIVE (3x)' : 'Click for ALL IN (3x)'}
+              {isAllIn ? 'ALL IN ACTIVE (3x)' : 'Click for ALL IN (3x)'}
             </button>
-            <p className={`font-bold text-sm ${isAllIn ? 'text-yellow-400' : 'text-purple-400'}`}>
-              {odds}x • 💰{credits?.balance || 0}
+            <p className={`font-bold text-sm ${isAllIn ? 'text-vintage-gold' : 'text-vintage-burnt-gold'}`}>
+              {odds}x - {credits?.balance || 0}
             </p>
           </div>
         ) : (
-          <p className="text-purple-400 font-bold text-sm">
-            {odds}x • 💰{credits?.balance || 0}
+          <p className="text-vintage-gold font-bold text-sm">
+            {odds}x - {credits?.balance || 0}
           </p>
         )}
       </div>
 
       {/* ALL IN warning */}
       {isFinalRound && isAllIn && (
-        <div className="mb-2 bg-yellow-500/20 border border-yellow-500/50 rounded px-2 py-1">
-          <p className="text-yellow-300 text-[10px] text-center font-bold">
-            ⚠️ ALL IN: Betting {allInAmount} credits!
+        <div className="mb-2 bg-vintage-gold/20 border border-vintage-gold/50 rounded px-2 py-1">
+          <p className="text-vintage-gold text-[10px] text-center font-bold">
+            ALL IN: Betting {allInAmount} credits!
           </p>
         </div>
       )}
@@ -209,12 +209,12 @@ export function SimpleBettingOverlay({
           disabled={isBetting || !credits || credits.balance < betAmount}
           className={`rounded-lg py-2 px-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
             isFinalRound && isAllIn
-              ? 'bg-yellow-600/50 hover:bg-yellow-500/70 border-2 border-yellow-500'
-              : 'bg-purple-600/40 hover:bg-purple-500/60 border border-purple-500/50'
+              ? 'bg-vintage-gold/30 hover:bg-vintage-gold/50 border-2 border-vintage-gold'
+              : 'bg-vintage-gold/20 hover:bg-vintage-gold/40 border border-vintage-gold/50'
           }`}
         >
-          <p className="text-vintage-gold font-bold text-xs truncate">⚔️ {getShortName(player1Username)}</p>
-          <p className={`text-[10px] ${isAllIn ? 'text-yellow-300 font-bold' : 'text-purple-300'}`}>
+          <p className="text-vintage-gold font-bold text-xs truncate">{getShortName(player1Username)}</p>
+          <p className={`text-[10px] ${isAllIn ? 'text-vintage-gold font-bold' : 'text-vintage-burnt-gold'}`}>
             +{Math.floor(betAmount * odds)}c
           </p>
         </button>
@@ -223,10 +223,10 @@ export function SimpleBettingOverlay({
         <button
           onClick={() => handleBet("tie", "TIE")}
           disabled={isBetting || !credits || credits.balance < betAmount}
-          className="rounded-lg py-2 px-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-gradient-to-b from-gray-600/60 to-gray-700/60 hover:from-gray-500/70 hover:to-gray-600/70 border border-gray-400/50"
+          className="rounded-lg py-2 px-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-vintage-black/60 hover:bg-vintage-black/80 border border-vintage-ice/30"
         >
-          <p className="text-gray-200 font-bold text-xs">🤝 TIE</p>
-          <p className="text-[10px] text-gray-300">
+          <p className="text-vintage-ice font-bold text-xs">TIE</p>
+          <p className="text-[10px] text-vintage-ice/70">
             {tieOdds}x (+{Math.floor(betAmount * tieOdds)}c)
           </p>
         </button>
@@ -236,12 +236,12 @@ export function SimpleBettingOverlay({
           disabled={isBetting || !credits || credits.balance < betAmount}
           className={`rounded-lg py-2 px-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
             isFinalRound && isAllIn
-              ? 'bg-orange-600/50 hover:bg-orange-500/70 border-2 border-orange-500'
-              : 'bg-pink-600/40 hover:bg-pink-500/60 border border-pink-500/50'
+              ? 'bg-vintage-burnt-gold/30 hover:bg-vintage-burnt-gold/50 border-2 border-vintage-burnt-gold'
+              : 'bg-vintage-burnt-gold/20 hover:bg-vintage-burnt-gold/40 border border-vintage-burnt-gold/50'
           }`}
         >
-          <p className="text-vintage-gold font-bold text-xs truncate">🛡️ {getShortName(player2Username)}</p>
-          <p className={`text-[10px] ${isAllIn ? 'text-orange-300 font-bold' : 'text-pink-300'}`}>
+          <p className="text-vintage-burnt-gold font-bold text-xs truncate">{getShortName(player2Username)}</p>
+          <p className={`text-[10px] ${isAllIn ? 'text-vintage-burnt-gold font-bold' : 'text-vintage-burnt-gold/70'}`}>
             +{Math.floor(betAmount * odds)}c
           </p>
         </button>
@@ -250,7 +250,7 @@ export function SimpleBettingOverlay({
       {/* Loading state */}
       {isBetting && (
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-lg flex items-center justify-center">
-          <div className="text-white text-sm">{isAllIn ? '🎰 ALL IN...' : 'Betting...'}</div>
+          <div className="text-vintage-gold text-sm font-bold">{isAllIn ? 'ALL IN...' : 'Betting...'}</div>
         </div>
       )}
     </div>

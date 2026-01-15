@@ -206,9 +206,14 @@ export function PokerBattleTable({
   const [floatingMessages, setFloatingMessages] = useState<Array<{id: number, sender: string, message: string, isOwnMessage: boolean}>>([]);
   const [floatingEmojis, setFloatingEmojis] = useState<Array<{id: number, emoji: string, x: number, y: number}>>([]);
   const currentMemeAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [lastPlayedSound, setLastPlayedSound] = useState<{name: string, timestamp: number} | null>(null);
 
   // Meme sound sync function
   const playMemeSound = async (soundUrl: string, soundName: string, emoji: string) => {
+    // Show feedback for sound played
+    setLastPlayedSound({ name: soundName, timestamp: Date.now() });
+    setTimeout(() => setLastPlayedSound(null), 3000);
+
     // In CPU mode, play locally immediately
     if (isCPUMode || !roomId) {
       console.log('[PokerBattle] Playing meme sound locally (CPU mode):', soundName, soundUrl);
@@ -2067,10 +2072,13 @@ export function PokerBattleTable({
         if (netGain > 0) {
           setCurrentVictoryImage(victoryConfig.image);
           setShowWinPopup(true);
+          if (soundEnabled) AudioManager.win();
         } else if (netGain < 0) {
           setShowLossPopup(true);
+          if (soundEnabled) AudioManager.lose();
         } else {
           setShowTiePopup(true);
+          if (soundEnabled) AudioManager.tie();
         }
       }).catch((err) => {
         console.error('[PokerBattle] Failed to fetch betting results:', err);
@@ -2202,8 +2210,8 @@ export function PokerBattleTable({
   }
 
   if (currentView === 'waiting') {
-    if (isSpectatorMode) {
-      // Spectator view for waiting room
+    // Spectator view for waiting room (PvP only, NOT for Mecha Arena)
+    if (isSpectatorMode && !room?.isCpuVsCpu && !gameOverShown) {
       return (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
           <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-3xl border-4 border-vintage-gold/50 max-w-2xl w-full p-8 shadow-2xl shadow-vintage-gold/20">
@@ -2278,8 +2286,8 @@ export function PokerBattleTable({
           X
         </button>
 
-        {/* SPECTATOR VIEW - Deck Building Phase */}
-        {phase === 'deck-building' && isSpectatorMode && (
+        {/* SPECTATOR VIEW - Deck Building Phase (PvP only, NOT for Mecha Arena) */}
+        {phase === 'deck-building' && isSpectatorMode && !room?.isCpuVsCpu && !gameOverShown && (
           <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-xl border-2 border-vintage-gold/50 p-6 h-full flex items-center justify-center">
             <div className="text-center">
               <h2 className="text-2xl font-display font-bold text-vintage-gold mb-3">
@@ -2675,7 +2683,7 @@ export function PokerBattleTable({
             {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
             {/* Sound Panel - Collapsible on LEFT side */}
-            <div className="absolute left-2 top-12 sm:top-14 z-20">
+            <div className={`absolute left-2 z-20 ${isCPUMode ? 'top-2' : 'top-12 sm:top-14'}`}>
               {showSoundsPanel ? (
                 <div className="bg-vintage-charcoal/95 border border-vintage-gold/30 rounded-lg p-1.5 shadow-lg">
                   <button
@@ -2686,49 +2694,49 @@ export function PokerBattleTable({
                   </button>
                   <div className="grid grid-cols-4 gap-1">
                     <button
-                      onClick={() => playMemeSound('/let-him-cook-now.mp3', 'COOK', '')}
+                      onClick={() => playMemeSound('/let-him-cook-now.mp3', 'COOK', '🔥')}
                       className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Let Him Cook"
                     >
                       COOK
                     </button>
                     <button
-                      onClick={() => playMemeSound('/nya_ZtXOXLx.mp3', 'NYA', '')}
+                      onClick={() => playMemeSound('/nya_ZtXOXLx.mp3', 'NYA', '🐱')}
                       className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Nya~"
                     >
                       NYA
                     </button>
                     <button
-                      onClick={() => playMemeSound('/quandale-dingle-meme.mp3', 'QD', '')}
+                      onClick={() => playMemeSound('/quandale-dingle-meme.mp3', 'QD', '😈')}
                       className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Quandale"
                     >
                       QD
                     </button>
                     <button
-                      onClick={() => playMemeSound('/this-is-not-poker.mp3', 'NP', '')}
+                      onClick={() => playMemeSound('/this-is-not-poker.mp3', 'NP', '🃏')}
                       className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Not Poker"
                     >
                       NP
                     </button>
                     <button
-                      onClick={() => playMemeSound('/sounds/receba-luva.mp3', 'REC', '')}
+                      onClick={() => playMemeSound('/sounds/receba-luva.mp3', 'REC', '🥊')}
                       className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Receba"
                     >
                       REC
                     </button>
                     <button
-                      onClick={() => playMemeSound('/sounds/dry-fart.mp3', 'FRT', '')}
+                      onClick={() => playMemeSound('/sounds/dry-fart.mp3', 'FRT', '💨')}
                       className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Fart"
                     >
                       FRT
                     </button>
                     <button
-                      onClick={() => playMemeSound('/sounds/corteze.MP3', 'CTZ', '')}
+                      onClick={() => playMemeSound('/sounds/corteze.MP3', 'CTZ', '🎤')}
                       className="bg-vintage-gold/10 hover:bg-vintage-gold/20 border border-vintage-gold/30 rounded text-[8px] text-vintage-ice p-1"
                       title="Corteze"
                     >
@@ -2756,35 +2764,41 @@ export function PokerBattleTable({
               )}
             </div>
 
-            {/* Game info header */}
-            <div className={`bg-vintage-charcoal border-b-2 border-vintage-gold/50 ${
-              isInFarcaster
-                ? 'p-1.5 flex flex-col gap-1 text-[11px]'
-                : 'p-2 md:p-3 flex justify-between items-center text-sm md:text-base'
-            }`}>
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className={`text-vintage-gold font-display font-bold ${isInFarcaster ? 'text-[11px]' : ''}`}>
-                  R{currentRound}/7 | {playerScore}-{opponentScore}
+            {/* Game info header - Simplified for Mecha Arena (CPU vs CPU), full for PvP */}
+            {room?.isCpuVsCpu ? (
+              /* Mecha Arena: Only show round info */
+              <div className="bg-vintage-charcoal border-b-2 border-vintage-gold/50 p-2 flex justify-center">
+                <div className="text-vintage-gold font-display font-bold text-sm">
+                  Round {currentRound}/7 | {playerScore}-{opponentScore}
                 </div>
-                {(selectedAnte === 0 || isSpectatorMode) && (
-                  <div className={`bg-vintage-gold/10 text-vintage-burnt-gold font-bold rounded border border-vintage-gold/30 flex items-center gap-1 ${
-                    isInFarcaster ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-xs'
-                  }`}>
-                    <EyeIcon className="inline-block text-vintage-burnt-gold" size={isInFarcaster ? 12 : 14} /> SPEC
+              </div>
+            ) : !isCPUMode && (
+              /* PvP: Full header with POT and Boost */
+              <div className={`bg-vintage-charcoal border-b-2 border-vintage-gold/50 ${
+                isInFarcaster
+                  ? 'p-1.5 flex flex-col gap-1 text-[11px]'
+                  : 'p-2 md:p-3 flex justify-between items-center text-sm md:text-base'
+              }`}>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className={`text-vintage-gold font-display font-bold ${isInFarcaster ? 'text-[11px]' : ''}`}>
+                    R{currentRound}/7 | {playerScore}-{opponentScore}
                   </div>
-                )}
+                  {(selectedAnte === 0 || isSpectatorMode) && (
+                    <div className={`bg-vintage-gold/10 text-vintage-burnt-gold font-bold rounded border border-vintage-gold/30 flex items-center gap-1 ${
+                      isInFarcaster ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-xs'
+                    }`}>
+                      <EyeIcon className="inline-block text-vintage-burnt-gold" size={isInFarcaster ? 12 : 14} /> SPEC
+                    </div>
+                  )}
+                </div>
+                <div className={`text-vintage-gold font-display font-bold ${isInFarcaster ? 'text-sm' : 'text-lg'}`}>
+                  POT: {pot} {selectedToken}
+                </div>
+                <div className={`text-vintage-burnt-gold font-bold ${isInFarcaster ? 'text-[10px]' : 'text-sm'}`}>
+                  Boost: {playerBoostCoins}
+                </div>
               </div>
-              <div className={`text-vintage-gold font-display font-bold ${isInFarcaster ? 'text-sm' : 'text-lg'}`}>
-                {isCPUMode ? (
-                  getCollectionDisplayName(room?.cpuCollection)
-                ) : (
-                  `POT: ${pot} ${selectedToken}`
-                )}
-              </div>
-              <div className={`text-vintage-burnt-gold font-bold ${isInFarcaster ? 'text-[10px]' : 'text-sm'}`}>
-                Boost: {playerBoostCoins}
-              </div>
-            </div>
+            )}
 
             {/* BATTLE TABLE - Vintage Dark Style */}
             <div
@@ -3170,8 +3184,8 @@ export function PokerBattleTable({
           </div>
         )}
 
-        {/* SPECTATOR SCREEN - Shows game result for spectators */}
-        {phase === 'game-over' && gameOverShown && isSpectatorMode && (
+        {/* SPECTATOR SCREEN - Shows game result for spectators (PvP only, not Mecha Arena) */}
+        {phase === 'game-over' && gameOverShown && isSpectatorMode && !isCPUMode && (
           <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[400]">
             <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-xl border-2 border-vintage-gold/50 p-6 text-center shadow-2xl max-w-md mx-4">
               <h2 className="text-2xl font-display font-bold text-vintage-gold mb-4">
@@ -3538,6 +3552,15 @@ export function PokerBattleTable({
           lastRoundWinner={lastRoundWinnerAddress}
           showResultAnimation={showBetResult}
         />
+      )}
+
+      {/* Sound Feedback - Shows when a meme sound is played */}
+      {lastPlayedSound && (
+        <div className="fixed bottom-20 right-4 z-[200] bg-vintage-charcoal/90 backdrop-blur-sm border border-vintage-gold/50 rounded-lg px-3 py-1.5 animate-in slide-in-from-right duration-300">
+          <p className="text-vintage-gold text-[11px] font-bold">
+            SFX: {lastPlayedSound.name}
+          </p>
+        </div>
       )}
 
       {/* Exit Confirmation Modal for Spectators */}
