@@ -226,11 +226,8 @@ export default function LeaderboardPage() {
   const recordAttackResult = useMutation(api.economy.recordAttackResult);
   const [isClaimingWeeklyReward, setIsClaimingWeeklyReward] = useState(false);
 
-  // 🔗 LINKED WALLET SUPPORT: Get all addresses belonging to current user
-  const linkedAddresses = useQuery(
-    api.profiles.getLinkedAddresses,
-    address ? { address } : "skip"
-  );
+  // 🚀 BANDWIDTH FIX: Use userProfile from context instead of separate getLinkedAddresses query
+  // userProfile already includes linkedAddresses array
 
   // Helper to check if a profile address belongs to current user (including linked wallets)
   const isCurrentUser = useCallback((profileAddress: string) => {
@@ -241,14 +238,14 @@ export default function LeaderboardPage() {
     // Direct match
     if (normalizedProfile === normalizedAddress) return true;
 
-    // Check against primary and linked addresses
-    if (linkedAddresses) {
-      if (linkedAddresses.primary?.toLowerCase() === normalizedProfile) return true;
-      if (linkedAddresses.linked?.some((a: string) => a.toLowerCase() === normalizedProfile)) return true;
+    // Check against primary and linked addresses from userProfile
+    if (userProfile) {
+      if (userProfile.address?.toLowerCase() === normalizedProfile) return true;
+      if (userProfile.linkedAddresses?.some((a: string) => a.toLowerCase() === normalizedProfile)) return true;
     }
 
     return false;
-  }, [address, linkedAddresses]);
+  }, [address, userProfile]);
 
   // Load leaderboard
   useEffect(() => {

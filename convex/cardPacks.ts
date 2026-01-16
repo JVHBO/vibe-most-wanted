@@ -241,11 +241,12 @@ function generateRandomCard(rarity: string, packType?: string) {
 export const getPlayerPacks = query({
   args: { address: v.string() },
   handler: async (ctx, args) => {
+    // 🚀 BANDWIDTH FIX: Players rarely have >100 pack types
     const packs = await ctx.db
       .query("cardPacks")
       .withIndex("by_address", (q) => q.eq("address", args.address.toLowerCase()))
       .filter((q) => q.gt(q.field("unopened"), 0))
-      .collect();
+      .take(100);
 
     return packs.map(pack => ({
       ...pack,
@@ -273,10 +274,11 @@ export const getShopPacks = query({
 export const getPlayerCards = query({
   args: { address: v.string() },
   handler: async (ctx, args) => {
+    // 🚀 BANDWIDTH FIX: Limit cards per player - can paginate if needed
     const cards = await ctx.db
       .query("cardInventory")
       .withIndex("by_address", (q) => q.eq("address", args.address.toLowerCase()))
-      .collect();
+      .take(1000);
 
     return cards;
   },

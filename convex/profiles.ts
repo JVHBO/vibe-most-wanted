@@ -149,6 +149,8 @@ export const getProfileLite = query({
       preferredCollection: profile.preferredCollection,
       createdAt: profile.createdAt,
       lastUpdated: profile.lastUpdated,
+      // 🚀 BANDWIDTH FIX: Include linked addresses (small array, saves separate query)
+      linkedAddresses: profile.linkedAddresses || [],
     };
   },
 });
@@ -941,10 +943,11 @@ export const generateLinkCode = mutation({
     }
 
     // Delete any existing codes for this wallet
+    // 🚀 BANDWIDTH FIX: Codes expire in 30s, rarely more than a few
     const existingCodes = await ctx.db
       .query("walletLinkCodes")
       .withIndex("by_profile", (q) => q.eq("profileAddress", normalizedAddress))
-      .collect();
+      .take(50);
 
     for (const code of existingCodes) {
       await ctx.db.delete(code._id);
@@ -1123,10 +1126,11 @@ export const generateFidLinkCode = mutation({
     }
 
     // Delete any existing codes for this profile
+    // 🚀 BANDWIDTH FIX: Codes expire in 60s, rarely more than a few
     const existingCodes = await ctx.db
       .query("walletLinkCodes")
       .withIndex("by_profile", (q) => q.eq("profileAddress", primaryAddress))
-      .collect();
+      .take(50);
 
     for (const code of existingCodes) {
       await ctx.db.delete(code._id);
@@ -1349,10 +1353,11 @@ export const generateMergeCode = mutation({
     }
 
     // Delete any existing merge codes for this wallet
+    // 🚀 BANDWIDTH FIX: Codes expire in 60s, rarely more than a few
     const existingCodes = await ctx.db
       .query("walletLinkCodes")
       .withIndex("by_profile", (q) => q.eq("profileAddress", normalizedAddress))
-      .collect();
+      .take(50);
 
     for (const code of existingCodes) {
       await ctx.db.delete(code._id);

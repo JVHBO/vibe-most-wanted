@@ -107,6 +107,8 @@ export interface UserProfile {
   hasVibeBadge?: boolean; // VIBE badge for VibeFID holders (2x Wanted Cast)
   createdAt: number;
   lastUpdated: number;
+  // 🚀 BANDWIDTH FIX: Linked addresses for self-check (replaces getLinkedAddresses query)
+  linkedAddresses?: string[];
 }
 
 export interface MatchHistory {

@@ -91,6 +91,7 @@ export const getAnalytics = query({
     })();
 
     // Get all records in date range
+    // 🚀 BANDWIDTH FIX: Add .take() limit - analytics rarely exceeds 365 days × 4 sources
     const records = await ctx.db
       .query("accessAnalytics")
       .withIndex("by_date")
@@ -100,7 +101,7 @@ export const getAnalytics = query({
           q.lte(q.field("date"), end)
         )
       )
-      .collect();
+      .take(1500);
 
     // Aggregate by source
     const totals: Record<string, { uniqueUsers: number; sessions: number }> = {
@@ -192,10 +193,11 @@ export const getTodayAnalytics = query({
   handler: async (ctx) => {
     const today = getTodayKey();
 
+    // 🚀 BANDWIDTH FIX: Only 4 sources possible per day
     const records = await ctx.db
       .query("accessAnalytics")
       .withIndex("by_date", (q) => q.eq("date", today))
-      .collect();
+      .take(10);
 
     const sources = {
       miniapp: { uniqueUsers: 0, sessions: 0 },
@@ -283,10 +285,11 @@ export const getAccessDebugByAddress = query({
     address: v.string(),
   },
   handler: async (ctx, { address }) => {
+    // 🚀 BANDWIDTH FIX: Limit debug logs per user
     const logs = await ctx.db
       .query("accessDebugLogs")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .collect();
+      .take(500);
 
     return logs;
   },
