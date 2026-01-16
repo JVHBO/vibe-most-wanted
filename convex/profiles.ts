@@ -153,6 +153,50 @@ export const getProfileLite = query({
 });
 
 /**
+ * 🚀 BANDWIDTH FIX: Get only defense deck for battles
+ * Used by leaderboard attacks and AttackCardSelectionModal
+ * Returns ~2KB instead of ~8KB full profile
+ * Saves ~75% bandwidth per attack
+ */
+export const getDefenseDeckOnly = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    if (!address || address.length === 0 || !isValidAddress(address)) {
+      return null;
+    }
+
+    const normalizedAddress = normalizeAddress(address);
+
+    // Check if linked address
+    const addressLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    const targetAddress = addressLink ? addressLink.primaryAddress : normalizedAddress;
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", targetAddress))
+      .first();
+
+    if (!profile) return null;
+
+    // Return ONLY what's needed for battles
+    return {
+      address: profile.address,
+      username: profile.username,
+      defenseDeck: profile.defenseDeck || [],
+      hasDefenseDeck: (profile.defenseDeck?.length || 0) === 5,
+      stats: {
+        totalPower: profile.stats?.totalPower || 0,
+        aura: profile.stats?.aura ?? 500,
+      },
+    };
+  },
+});
+
+/**
  * 🚀 BANDWIDTH FIX: Consolidated dashboard query
  * Replaces 5 separate queries with 1:
  * - getPlayerEconomy (economy.ts)

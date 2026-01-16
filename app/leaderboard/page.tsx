@@ -938,18 +938,19 @@ export default function LeaderboardPage() {
                   try {
                     // Leaderboard attacks are FREE - no entry fee
 
-                    // Fetch opponent's defense deck
-                    const completeProfile = await convex.query(api.profiles.getProfile, {
+                    // 🚀 BANDWIDTH FIX: Use getDefenseDeckOnly instead of full profile
+                    // Saves ~75% bandwidth per attack (~6KB saved)
+                    const defenseData = await convex.query(api.profiles.getDefenseDeckOnly, {
                       address: targetPlayer.address
                     });
 
-                    if (!completeProfile || !completeProfile.defenseDeck) {
+                    if (!defenseData || !defenseData.defenseDeck) {
                       setErrorMessage('Could not load opponent defense deck');
                       setIsAttacking(false);
                       return;
                     }
 
-                    const defenderCards = completeProfile.defenseDeck
+                    const defenderCards = defenseData.defenseDeck
                       .filter((card: any): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string } => typeof card === 'object')
                       .map((card: any) => ({
                         tokenId: card.tokenId,

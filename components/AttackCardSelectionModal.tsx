@@ -224,21 +224,22 @@ export function AttackCardSelectionModal({
     // Prevent multiple clicks
     setIsAttacking(true);
 
-    // Fetch complete profile to get defense deck (leaderboard doesn't include it for performance)
-    let completeProfile;
+    // 🚀 BANDWIDTH FIX: Use getDefenseDeckOnly instead of full profile
+    // Saves ~75% bandwidth per attack (~6KB saved)
+    let defenseData;
     try {
-      completeProfile = await convex.query(api.profiles.getProfile, {
+      defenseData = await convex.query(api.profiles.getDefenseDeckOnly, {
         address: targetPlayer.address
       });
 
-      if (!completeProfile) {
+      if (!defenseData) {
         setErrorMessage(`Could not load ${targetPlayer.username}'s profile. Please try again.`);
         setIsAttacking(false);
         if (soundEnabled) AudioManager.buttonError();
         return;
       }
     } catch (error) {
-      devError('Error fetching target player profile:', error);
+      devError('Error fetching target player defense deck:', error);
       setErrorMessage(`Error loading ${targetPlayer.username}'s profile. Please try again.`);
       setIsAttacking(false);
       if (soundEnabled) AudioManager.buttonError();
@@ -246,7 +247,7 @@ export function AttackCardSelectionModal({
     }
 
     // Validate opponent has a complete defense deck
-    if (!completeProfile.defenseDeck || completeProfile.defenseDeck.length !== HAND_SIZE) {
+    if (!defenseData.defenseDeck || defenseData.defenseDeck.length !== HAND_SIZE) {
       setErrorMessage(`${targetPlayer.username} doesn't have a defense deck set up. You can only attack players with a complete defense deck (${HAND_SIZE} cards).`);
       setIsAttacking(false);
       if (soundEnabled) AudioManager.buttonError();
@@ -269,7 +270,7 @@ export function AttackCardSelectionModal({
     devLog(`✦ ATTACKING: ${targetPlayer.username}`);
     devLog(`◆ Using saved defense deck data (no NFT fetch needed)`);
 
-    const defenderCards = (completeProfile.defenseDeck || [])
+    const defenderCards = (defenseData.defenseDeck || [])
       .filter((card: string | { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string }): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string } => typeof card === 'object')
       .map((card: { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string; collection?: string }, i: number) => {
         devLog(`🃏 Card ${i+1}: ID=${card.tokenId}, Power=${card.power}, Name="${card.name}", Rarity="${card.rarity}"`);

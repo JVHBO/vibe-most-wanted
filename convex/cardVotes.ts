@@ -465,15 +465,19 @@ export const getMessagesForCard = query({
   handler: async (ctx, args) => {
     const limit = args.limit || 50;
 
-    // 🔧 OPTIMIZED: Use partial index on cardFid
-    const allVotes = await ctx.db
+    // 🚀 BANDWIDTH FIX: Use .take() with larger batch instead of .collect()
+    // Assumes ~20% of votes have messages, so fetch 5x limit
+    // This avoids loading potentially thousands of empty votes
+    const batchSize = Math.min(limit * 5, 500); // Cap at 500 to avoid huge fetches
+
+    const votes = await ctx.db
       .query("cardVotes")
       .withIndex("by_card_date", (q) => q.eq("cardFid", args.cardFid))
       .order("desc")
-      .collect();
+      .take(batchSize);
 
     // Filter to only votes with messages
-    const messages = allVotes
+    const messages = votes
       .filter(v => v.message !== undefined)
       .slice(0, limit);
 
@@ -1014,21 +1018,24 @@ export const clearAllVibeMails = mutation({
 });
 
 // Get a random card (excluding sender)
+// 🚀 BANDWIDTH FIX: Use .take() with sample instead of loading ALL cards
 export const getRandomCard = query({
   args: { excludeFid: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const allCards = await ctx.db
+    // Sample 100 recent cards instead of loading all (typically 1000+)
+    const sampleCards = await ctx.db
       .query("farcasterCards")
-      .collect();
+      .order("desc")
+      .take(100);
 
     // Filter out the sender's card
     const eligibleCards = args.excludeFid
-      ? allCards.filter(c => c.fid !== args.excludeFid)
-      : allCards;
+      ? sampleCards.filter(c => c.fid !== args.excludeFid)
+      : sampleCards;
 
     if (eligibleCards.length === 0) return null;
 
-    // Pick a random card
+    // Pick a random card from sample
     const randomIndex = Math.floor(Math.random() * eligibleCards.length);
     const card = eligibleCards[randomIndex];
 
@@ -1042,20 +1049,24 @@ export const getRandomCard = query({
 });
 
 // Get multiple random cards for broadcast
+// 🚀 BANDWIDTH FIX: Use .take() with sample instead of loading ALL cards
 export const getRandomCards = query({
   args: {
     count: v.number(),
     excludeFid: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const allCards = await ctx.db
+    // Sample enough cards to have variety (5x requested count, min 100)
+    const sampleSize = Math.max(args.count * 5, 100);
+    const sampleCards = await ctx.db
       .query("farcasterCards")
-      .collect();
+      .order("desc")
+      .take(sampleSize);
 
     // Filter out the sender's card
     const eligibleCards = args.excludeFid
-      ? allCards.filter(c => c.fid !== args.excludeFid)
-      : allCards;
+      ? sampleCards.filter(c => c.fid !== args.excludeFid)
+      : sampleCards;
 
     if (eligibleCards.length === 0) return [];
 
@@ -1072,21 +1083,24 @@ export const getRandomCards = query({
 });
 
 // Get a random card (mutation version for non-cached results)
+// 🚀 BANDWIDTH FIX: Use .take() with sample instead of loading ALL cards
 export const getRandomCardMutation = mutation({
   args: { excludeFid: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    const allCards = await ctx.db
+    // Sample 100 recent cards instead of loading all
+    const sampleCards = await ctx.db
       .query("farcasterCards")
-      .collect();
+      .order("desc")
+      .take(100);
 
     // Filter out the sender's card
     const eligibleCards = args.excludeFid
-      ? allCards.filter(c => c.fid !== args.excludeFid)
-      : allCards;
+      ? sampleCards.filter(c => c.fid !== args.excludeFid)
+      : sampleCards;
 
     if (eligibleCards.length === 0) return null;
 
-    // Pick a random card
+    // Pick a random card from sample
     const randomIndex = Math.floor(Math.random() * eligibleCards.length);
     const card = eligibleCards[randomIndex];
 
@@ -1101,20 +1115,24 @@ export const getRandomCardMutation = mutation({
 });
 
 // Get multiple random cards (mutation version for non-cached results)
+// 🚀 BANDWIDTH FIX: Use .take() with sample instead of loading ALL cards
 export const getRandomCardsMutation = mutation({
   args: {
     count: v.number(),
     excludeFid: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const allCards = await ctx.db
+    // Sample enough cards to have variety (5x requested count, min 100)
+    const sampleSize = Math.max(args.count * 5, 100);
+    const sampleCards = await ctx.db
       .query("farcasterCards")
-      .collect();
+      .order("desc")
+      .take(sampleSize);
 
     // Filter out the sender's card
     const eligibleCards = args.excludeFid
-      ? allCards.filter(c => c.fid !== args.excludeFid)
-      : allCards;
+      ? sampleCards.filter(c => c.fid !== args.excludeFid)
+      : sampleCards;
 
     if (eligibleCards.length === 0) return [];
 
