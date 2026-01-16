@@ -220,6 +220,7 @@ Good luck! 🚀`;
 
 /**
  * Get Farcaster cards owned by an address
+ * 🚀 BANDWIDTH FIX: Limited to 100 cards per address
  */
 export const getFarcasterCardsByAddress = query({
   args: {
@@ -227,12 +228,12 @@ export const getFarcasterCardsByAddress = query({
   },
   handler: async (ctx, args) => {
     const normalizedAddress = args.address.toLowerCase();
-// 🔒 SECURITY: Server-side validation of card traits    const validation = validateCardTraits(      args.fid,      args.neynarScore,      args.rarity,      args.foil,      args.wear,      args.power    );    if (!validation.valid) {      console.warn(`⚠️ SECURITY: Invalid card traits for FID ${args.fid}:`, validation.errors);    }    // Use server-calculated values (ignore client values)    const finalRarity = validation.correctedValues!.rarity;    const finalFoil = validation.correctedValues!.foil;    const finalWear = validation.correctedValues!.wear;    const finalPower = validation.correctedValues!.power;
 
+    // 🚀 BANDWIDTH FIX: Use .take() with limit instead of .collect()
     const cards = await ctx.db
       .query("farcasterCards")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .collect();
+      .take(100); // Most users have 1-10 cards, cap at 100
 
     return cards;
   },
@@ -241,25 +242,29 @@ export const getFarcasterCardsByAddress = query({
 /**
  * Get a specific Farcaster card by FID (first mint only)
  */
+// 🚀 BANDWIDTH FIX: Use .take() with limit instead of .collect()
 export const getFarcasterCardByFid = query({
   args: {
     fid: v.number(),
   },
   handler: async (ctx, args) => {
-    // Get all cards for this FID and return the most recent one
+    // Get cards for this FID (limit 20 - most users have 1-5)
     const cards = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
-      .collect();
+      .take(20);
+
+    if (cards.length === 0) return null;
 
     // Sort by creation time (most recent first) and return the first one
     const sortedCards = cards.sort((a, b) => b._creationTime - a._creationTime);
-    return sortedCards[0] || null;
+    return sortedCards[0];
   },
 });
 
 /**
  * Get ALL Farcaster cards for a specific FID (all mints)
+ * 🚀 BANDWIDTH FIX: Limited to 50 cards (more than any user would have)
  */
 export const getFarcasterCardsByFid = query({
   args: {
@@ -269,7 +274,7 @@ export const getFarcasterCardsByFid = query({
     const cards = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
-      .collect();
+      .take(50); // Most users have 1-5, cap at 50 to prevent abuse
 
     // Sort manually by creation time (most recent first)
     return cards.sort((a, b) => b._creationTime - a._creationTime);
@@ -451,16 +456,20 @@ export const searchFarcasterCards = query({
 
 /**
  * Get Farcaster cards by rarity
+ * 🚀 BANDWIDTH FIX: Limited to 100 cards (rarity queries could return thousands)
+ * Note: Currently unused but keeping safe limit for future use
  */
 export const getFarcasterCardsByRarity = query({
   args: {
     rarity: v.string(),
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const maxLimit = Math.min(args.limit || 50, 100);
     const cards = await ctx.db
       .query("farcasterCards")
       .withIndex("by_rarity", (q) => q.eq("rarity", args.rarity))
-      .collect();
+      .take(maxLimit);
 
     return cards;
   },
