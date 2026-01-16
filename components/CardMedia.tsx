@@ -113,8 +113,18 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
       loading={loading}
       onClick={onClick}
       style={{ display: 'block' }}
+      onLoad={() => {
+        console.log('✅ Image loaded successfully:', src);
+      }}
       onError={(e) => {
-        console.error('Image failed to load:', src);
+        const target = e.target as HTMLImageElement;
+        console.error('❌ Image failed to load:', {
+          src,
+          naturalWidth: target.naturalWidth,
+          naturalHeight: target.naturalHeight,
+          complete: target.complete,
+          currentSrc: target.currentSrc,
+        });
         setError(true);
       }}
     />
