@@ -47,6 +47,7 @@ export const getTokenByFidInternal = internalQuery({
 /**
  * Get ALL notification tokens by FID (internal version)
  * Returns all tokens (VBMS + VibeFID + Neynar) for a user
+ * 🚀 BANDWIDTH FIX: Limited to 10 tokens per FID (covers all platform/app combos)
  */
 export const getAllTokensByFidInternal = internalQuery({
   args: { fid: v.string() },
@@ -54,7 +55,7 @@ export const getAllTokensByFidInternal = internalQuery({
     const tokens = await ctx.db
       .query("notificationTokens")
       .withIndex("by_fid", (q) => q.eq("fid", fid))
-      .collect();
+      .take(10); // Max 10 tokens per FID (2 platforms × 2 apps × 2 buffer)
 
     return tokens;
   },
@@ -62,12 +63,12 @@ export const getAllTokensByFidInternal = internalQuery({
 
 /**
  * Get all notification tokens (for internal use only)
- * 🚀 BANDWIDTH FIX: Converted to internalQuery to prevent public abuse
+ * 🚀 BANDWIDTH FIX: Added limit to prevent loading entire table
  */
 export const getAllTokens = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const tokens = await ctx.db.query("notificationTokens").collect();
+    const tokens = await ctx.db.query("notificationTokens").take(50000);
     return tokens;
   },
 });
@@ -104,10 +105,11 @@ export const saveToken = mutation({
 
     // 🔧 FIX: Check if token exists for this FID + PLATFORM + APP combo
     // This allows separate tokens for each app (vbms + vibefid can coexist)
+    // 🚀 BANDWIDTH FIX: Limited to 10 tokens per FID
     const allTokens = await ctx.db
       .query("notificationTokens")
       .withIndex("by_fid", (q) => q.eq("fid", fid))
-      .collect();
+      .take(10);
 
     // Find existing token for this platform + app combo
     const existing = allTokens.find(t => t.platform === platform && t.app === appName);

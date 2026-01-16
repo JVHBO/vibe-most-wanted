@@ -521,23 +521,27 @@ export const getFullTransactionHistory = query({
   handler: async (ctx, { address, limit = 500 }) => {
     const normalizedAddress = address.toLowerCase();
 
+    // 🚀 BANDWIDTH FIX: Use .take(limit) instead of .collect() to avoid loading entire tables
     // Get claim history (blockchain claims)
     const claimHistory = await ctx.db
       .query("claimHistory")
       .withIndex("by_player", (q: any) => q.eq("playerAddress", normalizedAddress))
-      .collect();
+      .order("desc")
+      .take(limit);
 
     // Get audit log (all TESTVBMS transactions)
     const auditLog = await ctx.db
       .query("coinAuditLog")
       .withIndex("by_player", (q: any) => q.eq("playerAddress", normalizedAddress))
-      .collect();
+      .order("desc")
+      .take(limit);
 
     // Get claim analytics
     const analytics = await ctx.db
       .query("claimAnalytics")
       .withIndex("by_player", (q: any) => q.eq("playerAddress", normalizedAddress))
-      .collect();
+      .order("desc")
+      .take(limit);
 
     // Combine and sort by timestamp
     const allTransactions = [

@@ -246,10 +246,18 @@ choice: v.union(
 | VibeFID | `vibefid` | `https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid` |
 | VBMS (main) | `vibe-most-wanted` | `https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast` |
 
-### Shared Convex Backend
-Both projects use the SAME Convex deployment (`prod:agile-orca-761`). When deploying:
-- Deploy from `vibe-most-wanted` to ensure all functions are included
-- VibeFID-specific functions: `neynarScore`, `farcasterCards`
+### Separate Convex Backends (Updated Jan 2026)
+**VibeFID now has its own Convex deployment!** Each project manages its own data:
+- VBMS: `prod:agile-orca-761` (this repo)
+- VibeFID: Has its own separate Convex deployment
+
+**What VBMS still uses from VibeFID data:**
+- `cardVotes.getUnreadMessageCount` - Red dot notification on VibeFID button
+- `farcasterCards.*` - Card minting, querying (shared table for now)
+
+**Dead code removed from VBMS (Jan 2026):**
+- `cardVotes.ts` - Removed ~1160 lines of VibeMail/voting code (now in VibeFID)
+- Only `getUnreadMessageCount` kept for red dot notification
 
 ### /fid Route Redirect
 The `/fid` route in vibe-most-wanted now **redirects to VibeFID miniapp**:
@@ -503,3 +511,79 @@ Eliminar 44M+ chamadas Alchemy/mês usando Convex como fonte única de verdade p
 - Cada app tem sua própria API key no dashboard do Neynar
 - VibeFID usa Neynar-only (não salva tokens no Convex)
 - VBMS também usa Neynar managed webhooks
+
+## Convex Bandwidth Optimization (Jan 2026)
+
+### Critical Rules - ALWAYS Follow
+
+1. **NEVER use `.collect()` without `.take()` limit**
+```typescript
+// ❌ BAD - Loads entire table
+const items = await ctx.db.query("table").collect();
+
+// ✅ GOOD - Limited load
+const items = await ctx.db.query("table").take(100);
+```
+
+2. **ALWAYS use indexes instead of filters when possible**
+```typescript
+// ❌ BAD - Full table scan
+const items = await ctx.db.query("items")
+  .filter(q => q.eq(q.field("address"), addr))
+  .collect();
+
+// ✅ GOOD - Index lookup
+const items = await ctx.db.query("items")
+  .withIndex("by_address", q => q.eq("address", addr))
+  .take(100);
+```
+
+3. **NEVER do N+1 queries in loops**
+```typescript
+// ❌ BAD - N queries
+for (const item of items) {
+  const profile = await ctx.db.query("profiles")...first();
+}
+
+// ✅ GOOD - Batch load with Promise.all
+const addresses = [...new Set(items.map(i => i.address))];
+const profilePromises = addresses.map(addr =>
+  ctx.db.query("profiles").withIndex("by_address", q => q.eq("address", addr)).first()
+);
+const profiles = await Promise.all(profilePromises);
+const profileMap = new Map(profiles.filter(Boolean).map(p => [p.address, p]));
+```
+
+### Optimized Files (Jan 2026)
+
+| File | Function | Fix |
+|------|----------|-----|
+| `profiles.ts` | `updateLeaderboardFullCache` | 250 queries → 1 batch with Set lookup |
+| `profiles.ts` | `getDefenseDeckOnly` | New lightweight query for attacks |
+| `vbmsClaim.ts` | `getFullTransactionHistory` | 3x `.collect()` → 3x `.take(limit)` |
+| `notifications.ts` | `getAllTokens` | `.collect()` → `.take(50000)` |
+| `notifications.ts` | `saveToken` | `.collect()` → `.take(10)` |
+| `raidBoss.ts` | `defeatBossAndSpawnNext` | `.collect()` → `.take(10000)` + batch updates |
+| `raidBoss.ts` | `getUnclaimedRewards` | `.collect()` → `.take(100)` |
+| `cardVotes.ts` | Entire file | Removed ~1160 lines of dead code |
+
+### Common Limits to Use
+
+| Context | Recommended Limit |
+|---------|------------------|
+| Per-player queries | 100-500 |
+| Leaderboard entries | 250-500 |
+| Notification tokens per FID | 10 |
+| Raid contributions per boss | 10,000 |
+| Transaction history | 500 |
+| Active raid decks | 5,000 |
+
+### Bandwidth Savings Achieved
+
+- **Before**: ~400MB/day
+- **Target**: ~100MB/day
+- **Key wins**:
+  - Leaderboard cache: 250 queries → 1 (saved ~75MB/day)
+  - Defense deck query: Full profile → minimal data (~75% reduction per attack)
+  - Transaction history: Unbounded → limited (saves ~3MB per heavy user)
+  - Dead VibeFID code removed: Eliminates unused query paths

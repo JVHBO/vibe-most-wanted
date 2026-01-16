@@ -783,11 +783,12 @@ export const processAutoAttacks = internalMutation({
 
     // 🚀 BANDWIDTH OPTIMIZATION: Only fetch decks updated in last 2 hours
     // This filters out inactive players who haven't refueled/attacked recently
+    // 🚀 BANDWIDTH FIX: Added limit to cap active players per cycle
     const twoHoursAgo = now - 2 * 60 * 60 * 1000;
     const allDecks = await ctx.db
       .query("raidAttacks")
       .withIndex("by_last_updated", (q) => q.gt("lastUpdated", twoHoursAgo))
-      .collect();
+      .take(5000); // Cap at 5K active players per attack cycle
 
     // 🚀 BANDWIDTH FIX: Batch-load all profiles BEFORE the loop
     // This reduces N queries (one per deck) to just one batch query
@@ -973,10 +974,11 @@ export const defeatBossAndSpawnNext = internalMutation({
     }
 
     // Get all contributions for this boss
+    // 🚀 BANDWIDTH FIX: Added limit to prevent loading too many contributors
     const contributions = await ctx.db
       .query("raidContributions")
       .withIndex("by_boss", (q) => q.eq("bossIndex", defeatedBoss.bossIndex))
-      .collect();
+      .take(10000); // Cap at 10K contributors per boss
 
     // Calculate total damage
     const totalDamage = contributions.reduce((sum, c) => sum + c.damageDealt, 0);
@@ -1029,18 +1031,18 @@ export const defeatBossAndSpawnNext = internalMutation({
     });
 
     // Update player boss kill counts
-    for (const contribution of contributions) {
-      const raidDeck = await ctx.db
-        .query("raidAttacks")
-        .withIndex("by_address", (q) => q.eq("address", contribution.address))
-        .first();
+    // 🚀 BANDWIDTH FIX: Batch fetch all raid decks in parallel instead of N sequential queries
+    const uniqueAddresses = [...new Set(contributions.map(c => c.address))];
+    const raidDeckPromises = uniqueAddresses.map(addr =>
+      ctx.db.query("raidAttacks").withIndex("by_address", (q) => q.eq("address", addr)).first()
+    );
+    const raidDecks = await Promise.all(raidDeckPromises);
 
-      if (raidDeck) {
-        await ctx.db.patch(raidDeck._id, {
-          bossesKilled: raidDeck.bossesKilled + 1,
-        });
-      }
-    }
+    // Update all decks in parallel
+    const updatePromises = raidDecks
+      .filter((deck): deck is NonNullable<typeof deck> => deck !== null)
+      .map(deck => ctx.db.patch(deck._id, { bossesKilled: deck.bossesKilled + 1 }));
+    await Promise.all(updatePromises);
 
     // Delete old boss
     await ctx.db.delete(defeatedBoss._id);
@@ -1102,6 +1104,7 @@ export const getUnclaimedRewards = query({
     const normalizedAddress = address.toLowerCase();
 
     // Get all unclaimed contributions with rewards
+    // 🚀 BANDWIDTH FIX: Limited to 100 unclaimed bosses per player
     const unclaimedContributions = await ctx.db
       .query("raidContributions")
       .withIndex("by_player", (q) => q.eq("address", normalizedAddress))
@@ -1111,7 +1114,7 @@ export const getUnclaimedRewards = query({
           q.gt(q.field("rewardEarned"), 0)
         )
       )
-      .collect();
+      .take(100);
 
     const totalUnclaimed = unclaimedContributions.reduce(
       (sum, c) => sum + c.rewardEarned,
@@ -1135,6 +1138,7 @@ export const claimRaidRewards = mutation({
     const normalizedAddress = address.toLowerCase();
 
     // Get all unclaimed contributions
+    // 🚀 BANDWIDTH FIX: Limited to 100 unclaimed bosses per player
     const unclaimedContributions = await ctx.db
       .query("raidContributions")
       .withIndex("by_player", (q) => q.eq("address", normalizedAddress))
@@ -1144,7 +1148,7 @@ export const claimRaidRewards = mutation({
           q.gt(q.field("rewardEarned"), 0)
         )
       )
-      .collect();
+      .take(100);
 
     if (unclaimedContributions.length === 0) {
       return {
@@ -1239,10 +1243,11 @@ export const manualDistributeRewards = internalMutation({
   args: { bossIndex: v.number() },
   handler: async (ctx, { bossIndex }) => {
     // Get all contributions for this boss
+    // 🚀 BANDWIDTH FIX: Limited to 10K contributors per boss
     const contributions = await ctx.db
       .query("raidContributions")
       .withIndex("by_boss_player", (q) => q.eq("bossIndex", bossIndex))
-      .collect();
+      .take(10000);
 
     if (contributions.length === 0) {
       return { success: false, message: "No contributions found for this boss" };
@@ -1358,10 +1363,11 @@ export const cleanupLinkedWalletRaidData = internalMutation({
     }
 
     // Find and delete all contributions for this address
+    // 🚀 BANDWIDTH FIX: Use index + limit instead of filter + collect
     const contributions = await ctx.db
       .query("raidContributions")
-      .filter((q) => q.eq(q.field("address"), address))
-      .collect();
+      .withIndex("by_player", (q) => q.eq("address", address))
+      .take(1000);
 
     for (const contribution of contributions) {
       await ctx.db.delete(contribution._id);
