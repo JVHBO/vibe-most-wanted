@@ -565,14 +565,14 @@ export default function RaidPage() {
 
       {/* Boss Background - Full Screen */}
       {currentBoss && (
-        <div className={`absolute inset-0 ${bossIsHit ? 'animate-boss-hit' : ''}`}>
+        <div className={`absolute inset-0 flex items-center justify-center ${bossIsHit ? 'animate-boss-hit' : ''}`}>
           <CardMedia
             src={currentBoss.imageUrl}
             alt={currentBoss.name}
-            className="w-full h-full object-contain opacity-70"
+            className="max-w-full max-h-full w-auto h-auto object-contain opacity-70 z-[1]"
           />
           {/* Dark gradient overlay - lighter on sides */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40 z-[2] pointer-events-none" />
 
           {/* Damage Numbers */}
           {damageNumbers.map((dmg) => (
