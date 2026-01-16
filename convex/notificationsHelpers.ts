@@ -12,8 +12,8 @@ import { query, mutation, internalQuery, internalMutation } from "./_generated/s
 export const getAllTokens = internalQuery({
   args: {},
   handler: async (ctx) => {
-    // Get all tokens (no limit for internal use - currently ~1700 users)
-    const tokens = await ctx.db.query("notificationTokens").collect();
+    // 🚀 BANDWIDTH FIX: Added .take() limit (currently ~1700 users)
+    const tokens = await ctx.db.query("notificationTokens").take(50000);
     return tokens;
   },
 });
@@ -26,7 +26,8 @@ export const getAllTokens = internalQuery({
 export const getAllTokensPublic = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const tokens = await ctx.db.query("notificationTokens").collect();
+    // 🚀 BANDWIDTH FIX: Added .take() limit
+    const tokens = await ctx.db.query("notificationTokens").take(50000);
     return tokens;
   },
 });
@@ -171,7 +172,8 @@ export const updateLowEnergyNotification = internalMutation({
 export const cleanupStaleTokens = mutation({
   args: {},
   handler: async (ctx) => {
-    const tokens = await ctx.db.query("notificationTokens").collect();
+    // 🚀 BANDWIDTH FIX: Added .take() limit for safety
+    const tokens = await ctx.db.query("notificationTokens").take(5000);
 
     let deletedOldUrl = 0;
     let deletedInvalidFormat = 0;
@@ -198,11 +200,12 @@ export const cleanupStaleTokens = mutation({
 
 /**
  * Get stats about notification tokens (for debugging)
+ * 🚀 BANDWIDTH FIX: Added .take() limit
  */
 export const getTokenStats = query({
   args: {},
   handler: async (ctx) => {
-    const tokens = await ctx.db.query("notificationTokens").collect();
+    const tokens = await ctx.db.query("notificationTokens").take(10000);
 
     const stats = {
       total: tokens.length,

@@ -17,13 +17,14 @@ export const getUnreadMessageCount = query({
   args: { cardFid: v.number() },
   handler: async (ctx, args) => {
     // Use index to get only unread for this card
+    // 🚀 BANDWIDTH FIX: Added .take() limit - most users have <10 unread
     const unread = await ctx.db
       .query("cardVotes")
       .withIndex("by_card_unread", (q) =>
         q.eq("cardFid", args.cardFid).eq("isRead", false)
       )
       .filter((q) => q.neq(q.field("message"), undefined))
-      .collect();
+      .take(100); // Cap at 100 for notification badge
 
     return unread.length;
   },
