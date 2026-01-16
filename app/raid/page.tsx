@@ -566,8 +566,6 @@ export default function RaidPage() {
       {/* Boss Background - Full Screen */}
       {currentBoss && (
         <div className={`absolute inset-0 flex items-center justify-center ${bossIsHit ? 'animate-boss-hit' : ''}`}>
-          {/* Debug: Log boss image URL */}
-          {console.log('🐉 Boss image URL:', currentBoss.imageUrl)}
           <CardMedia
             src={currentBoss.imageUrl}
             alt={currentBoss.name}
