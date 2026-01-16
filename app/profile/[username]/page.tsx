@@ -284,7 +284,7 @@ export default function ProfilePage() {
           try {
             const cache = profileData.revealedCardsCache || [];
             const cacheMap = new Map(cache.map(c => [c.tokenId, c]));
-            const ownedIds = new Set(enriched.map(nft => nft.tokenId));
+            const ownedIds = new Set(enriched.map((nft: any) => nft.tokenId));
 
             // For each owned NFT, use cache if Alchemy data is missing
             for (let i = 0; i < enriched.length; i++) {
@@ -300,8 +300,8 @@ export default function ProfilePage() {
 
             // Collect newly revealed cards to update cache
             const revealedCards = enriched
-              .filter(nft => nft.wear || nft.character || nft.power)
-              .map(nft => ({
+              .filter((nft: any) => nft.wear || nft.character || nft.power)
+              .map((nft: any) => ({
                 tokenId: nft.tokenId,
                 name: nft.name || '',
                 imageUrl: nft.imageUrl || '',
@@ -331,9 +331,9 @@ export default function ProfilePage() {
 
           if (isOwnProfile) {
             try {
-              const openedCards = enriched.filter(nft => !isUnrevealed(nft)).length;
-              const unopenedCards = enriched.filter(nft => isUnrevealed(nft)).length;
-              const totalPower = enriched.reduce((sum, nft) => sum + (nft.power || 0), 0);
+              const openedCards = enriched.filter((nft: any) => !isUnrevealed(nft)).length;
+              const unopenedCards = enriched.filter((nft: any) => isUnrevealed(nft)).length;
+              const totalPower = enriched.reduce((sum: number, nft: any) => sum + (nft.power || 0), 0);
 
               devLog('📊 Updating own profile stats in database:', {
                 totalCards: enriched.length,
