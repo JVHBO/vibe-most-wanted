@@ -239,56 +239,29 @@ export default function ProfilePage() {
         // ✅ Profile is loaded - show page immediately
         setLoading(false);
 
-        // Carrega NFTs do jogador usando a MESMA lógica da home page
+        // Carrega NFTs do jogador via API com cache server-side
+        // 🚀 OPTIMIZATION: Reduces Alchemy calls by caching on server
         setLoadingNFTs(true);
         try {
           devLog('🔍 Fetching NFTs for address:', address);
           devLog('📊 Expected cards from profile:', profileData.stats?.totalCards || 0);
 
-          // ✅ Use the SAME approach as home page (fetchNFTsFromAllCollections + processing)
-          const { fetchNFTsFromAllCollections, processNFTsToCards } = await import('@/lib/nft');
-          const { api } = await import('@/convex/_generated/api');
-          const { ConvexHttpClient } = await import('convex/browser');
+          // 🚀 Use cached API endpoint instead of direct Alchemy calls
+          const res = await fetch(`/api/profile-nfts?address=${encodeURIComponent(address)}`);
+          if (!res.ok) {
+            throw new Error(`API error: ${res.status}`);
+          }
+          const data = await res.json();
 
-          const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || '';
-          const convex = new ConvexHttpClient(convexUrl);
-
-          // Step 1: Fetch NFTs from all collections (same as home)
-          const raw = await fetchNFTsFromAllCollections(address);
-          devLog('📊 Raw NFTs fetched:', raw.length);
-
-          // Step 2: Process to cards (filters unopened, enriches metadata)
-          const nftCards = await processNFTsToCards(raw);
-          devLog('📊 NFT cards after processing:', nftCards.length);
-
-          // Step 3: Load FREE cards from Convex (same as home page!)
-          let allCards: any[] = [...nftCards];
-          try {
-            const freeCards = await convex.query(api.cardPacks.getPlayerCards, { address });
-            devLog('🆓 FREE cards loaded:', freeCards?.length || 0);
-
-            if (freeCards && freeCards.length > 0) {
-              const freeCardsFormatted = freeCards.map((card: any) => ({
-                tokenId: card.cardId,
-                name: card.name || `FREE ${card.rarity} Card`,
-                imageUrl: card.imageUrl,
-                rarity: card.rarity,
-                wear: card.wear,
-                foil: card.foil || 'None',
-                power: card.power,
-                badgeType: card.badgeType,
-                isFreeCard: true,
-                collection: 'nothing' as const,
-              }));
-              allCards.push(...freeCardsFormatted);
-            }
-          } catch (freeError) {
-            devWarn('⚠️ Failed to load FREE cards:', freeError);
+          if (!data.success) {
+            throw new Error(data.error || 'Failed to fetch NFTs');
           }
 
-          // Step 4: Deduplicate
+          devLog(`📦 [Profile] Got ${data.totalCards} cards (cached: ${data.cached})`);
+
+          // Deduplicate (API should already do this, but just in case)
           const seenCards = new Set<string>();
-          const enriched = allCards.filter((card: any) => {
+          const enriched = (data.cards || []).filter((card: any) => {
             const uniqueId = `${card.collection || 'vibe'}_${card.tokenId}`;
             if (seenCards.has(uniqueId)) {
               devLog(`⚠️ Removing duplicate card: ${uniqueId}`);
@@ -298,12 +271,12 @@ export default function ProfilePage() {
             return true;
           });
 
-          devLog('✅ NFTs fully enriched:', enriched.length);
+          devLog('✅ NFTs loaded:', enriched.length);
           devLog('📊 Comparison: Profile says', profileData.stats?.totalCards, 'cards, fetched', enriched.length);
 
           // ⚠️ Warning if mismatch (for debugging)
           if (enriched.length < (profileData.stats?.totalCards || 0)) {
-            devWarn('⚠️ Fetched fewer cards than expected! Profile stats may be outdated or maxPages still too low.');
+            devWarn('⚠️ Fetched fewer cards than expected! Profile stats may be outdated.');
           }
 
           // 🎴 HYBRID CACHE SYSTEM: Merge Alchemy data with cached metadata

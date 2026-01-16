@@ -32,6 +32,10 @@ export async function GET() {
     const balanceCheckTotal = stats.balance_check_total || 0;
     const balanceCheckCached = stats.balance_check_cached || 0;
 
+    // Profile NFTs API stats
+    const profileNftsTotal = stats.profile_nfts_total || 0;
+    const profileNftsCacheHit = stats.profile_nfts_cache_hit || 0;
+
     return NextResponse.json({
       status: "ok",
       stats: {
@@ -64,6 +68,15 @@ export async function GET() {
           cached: balanceCheckCached,
           cacheRate: (balanceCheckTotal + balanceCheckCached) > 0
             ? `${((balanceCheckCached / (balanceCheckTotal + balanceCheckCached)) * 100).toFixed(1)}%`
+            : "N/A",
+        },
+        // Profile NFTs API (server-side cache)
+        profileApi: {
+          total: profileNftsTotal,
+          cacheHits: profileNftsCacheHit,
+          alchemyCalls: profileNftsTotal - profileNftsCacheHit,
+          cacheRate: profileNftsTotal > 0
+            ? `${((profileNftsCacheHit / profileNftsTotal) * 100).toFixed(1)}%`
             : "N/A",
         },
         raw: stats,
