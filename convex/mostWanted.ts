@@ -19,17 +19,18 @@ export const getRanking = query({
     const limit = Math.min(args.limit || 12, 20000);
     const offset = args.offset || 0;
 
-    // Get all cards that have score history
+    // 🚀 BANDWIDTH FIX: Added .take() limit
     const cards = await ctx.db
       .query("farcasterCards")
-      .collect();
+      .take(10000); // Cap at 10K cards
 
     // Get today's votes using index
+    // 🚀 BANDWIDTH FIX: Added .take() limit
     const today = new Date().toISOString().split('T')[0];
     const allVotes = await ctx.db
       .query("cardVotes")
       .withIndex("by_date", (q) => q.eq("date", today))
-      .collect();
+      .take(50000); // Cap at 50K votes per day
 
     // Create vote count map
     const voteMap = new Map<number, number>();
@@ -138,7 +139,8 @@ export const batchUpdateScores = mutation({
 export const getFidsForScoreUpdate = query({
   args: {},
   handler: async (ctx) => {
-    const cards = await ctx.db.query("farcasterCards").collect();
+    // 🚀 BANDWIDTH FIX: Added .take() limit
+    const cards = await ctx.db.query("farcasterCards").take(10000);
     return cards.map(c => c.fid);
   },
 });

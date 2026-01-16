@@ -52,17 +52,15 @@ export const mintFarcasterCard = mutation({
 // 🔒 SECURITY: Server-side validation of card traits    const validation = validateCardTraits(      args.fid,      args.neynarScore,      args.rarity,      args.foil,      args.wear,      args.power    );    if (!validation.valid) {      console.warn(`⚠️ SECURITY: Invalid card traits for FID ${args.fid}:`, validation.errors);    }    // Use server-calculated values (ignore client values)    const finalRarity = validation.correctedValues!.rarity;    const finalFoil = validation.correctedValues!.foil;    const finalWear = validation.correctedValues!.wear;    const finalPower = validation.correctedValues!.power;
 
     // CRITICAL FIX: Check if FID already exists to prevent orphan duplicates
-    const existingCards = await ctx.db
+    // 🚀 BANDWIDTH FIX: Use .first() instead of .collect() - only 1 card per FID
+    const existingCard = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
-      .collect();
+      .first();
 
-    if (existingCards.length > 0) {
+    if (existingCard) {
       console.error(`❌ DUPLICATE PREVENTION: FID ${args.fid} already exists in database!`);
-      console.error(`   Existing cards: ${existingCards.length}`);
-      existingCards.forEach((card, idx) => {
-        console.error(`   ${idx + 1}. ${card.rank}${card.suitSymbol} (${card.rarity}) - ID: ${card._id}`);
-      });
+      console.error(`   Existing card: ${existingCard.rank}${existingCard.suitSymbol} (${existingCard.rarity}) - ID: ${existingCard._id}`);
 
       throw new Error(
         `FID ${args.fid} already minted! Each FID can only be minted once. ` +
