@@ -48,6 +48,25 @@ let balanceCheckOwner: string | null = null;
 let alchemyBlocked = false;
 let lastAlchemyError: string | null = null;
 
+// 📊 STATS TRACKING (for debugging Alchemy usage)
+let stats = {
+  rpcCalls: 0,
+  rpcSuccess: 0,
+  rpcFailed: 0,
+  alchemyCalls: 0,
+  cacheHits: 0,
+  lastReset: Date.now(),
+};
+
+function logStats() {
+  const hoursSinceReset = (Date.now() - stats.lastReset) / (1000 * 60 * 60);
+  if (hoursSinceReset >= 1) {
+    const rpcSuccessRate = stats.rpcCalls > 0 ? ((stats.rpcSuccess / stats.rpcCalls) * 100).toFixed(1) : 'N/A';
+    console.log(`📊 [NFT STATS] Hourly: RPC=${stats.rpcCalls} (${rpcSuccessRate}% success), Alchemy=${stats.alchemyCalls}, Cache=${stats.cacheHits}`);
+    stats = { rpcCalls: 0, rpcSuccess: 0, rpcFailed: 0, alchemyCalls: 0, cacheHits: 0, lastReset: Date.now() };
+  }
+}
+
 interface NftCacheEntry {
   owner: string;
   contract: string;
@@ -92,31 +111,41 @@ async function checkSingleBalance(
       signal: AbortSignal.timeout(5000), // 5s timeout
     });
 
+    stats.rpcCalls++;
+    logStats();
+
     if (!res.ok) {
+      stats.rpcFailed++;
       return -1; // HTTP error
     }
 
     const json = await res.json();
 
     if (json.error) {
+      stats.rpcFailed++;
       return -1; // RPC error
     }
 
     // '0x' means 0 balance - this is VALID, not an error!
     if (json.result === '0x' || json.result === '0x0' || json.result === '0x00') {
+      stats.rpcSuccess++;
       return 0;
     }
 
     if (json.result) {
       const balance = parseInt(json.result, 16);
       if (!isNaN(balance) && balance >= 0) {
+        stats.rpcSuccess++;
         return balance;
       }
     }
 
     // Empty or invalid result = RPC issue
+    stats.rpcFailed++;
     return -1;
   } catch {
+    stats.rpcCalls++;
+    stats.rpcFailed++;
     return -1; // Network error or timeout
   }
 }
@@ -686,11 +715,15 @@ export async function fetchNFTs(
   const cached = getNftCache(owner, contract, currentBalance);
 
   if (cached && cached.nfts.length > 0 && cached.complete) {
+    stats.cacheHits++;
+    logStats();
     console.log(`📦 Using cached NFTs for ${contract.slice(0, 10)}...: ${cached.nfts.length} cards`);
     if (onProgress) onProgress(1, cached.nfts.length);
     return cached.nfts;
   }
 
+  stats.alchemyCalls++;
+  logStats();
   console.log(`🔄 Fetching fresh NFTs for ${contract.slice(0, 10)}... (cache miss or balance changed)`)
 
   let allNfts: any[] = [];

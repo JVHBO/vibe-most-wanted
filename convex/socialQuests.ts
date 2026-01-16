@@ -6,7 +6,7 @@
  */
 
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { normalizeAddress } from "./utils";
 import { createAuditLog } from "./coinAudit";
 
@@ -86,9 +86,13 @@ export const getSocialQuestProgress = query({
 });
 
 /**
- * Mark a social quest as completed (called after API verification)
+ * Mark a social quest as completed
+ *
+ * 🔒 SECURITY FIX (2026-01-16): Changed from mutation to internalMutation
+ * EXPLOIT PATCHED: Anyone could call this directly without verification
+ * Now must be called from a verified API route after Neynar verification
  */
-export const markQuestCompleted = mutation({
+export const markQuestCompleted = internalMutation({
   args: {
     address: v.string(),
     questId: v.string(),

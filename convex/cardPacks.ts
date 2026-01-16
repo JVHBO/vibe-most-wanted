@@ -1072,12 +1072,22 @@ const BURN_FOIL_MULTIPLIER: Record<string, number> = {
 // Default pack price for cards without sourcePackType (legacy cards)
 const DEFAULT_PACK_PRICE = 1000; // Basic pack price
 
-// Helper function to get pack price
+// 🔒 SECURITY FIX (2026-01-16): Free packs use REDUCED burn value
+// Prevents exploit where Legendary+Prize free card = 200k VBMS
+const FREE_PACK_BURN_PRICE = 100; // 10% of paid pack value
+
+// Helper function to get pack price for burn calculations
 function getPackPrice(packType?: string): number {
   if (!packType) return DEFAULT_PACK_PRICE;
   const pack = PACK_TYPES[packType as keyof typeof PACK_TYPES];
-  // For free packs (price 0), use basic pack price as minimum
-  return pack ? (pack.price > 0 ? pack.price : DEFAULT_PACK_PRICE) : DEFAULT_PACK_PRICE;
+  if (!pack) return DEFAULT_PACK_PRICE;
+
+  // 🔒 FREE PACKS: Use reduced burn value (was full price = exploit)
+  // Legendary+Prize: 100*40*5 = 20,000 VBMS (was 200,000)
+  // Epic+Prize: 100*4*5 = 2,000 VBMS (was 20,000)
+  if (pack.price === 0) return FREE_PACK_BURN_PRICE;
+
+  return pack.price;
 }
 
 // Legacy BURN_VALUES for backwards compatibility (getBurnValues query)

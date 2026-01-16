@@ -162,6 +162,7 @@ export default defineSchema({
     hasClaimedSharePack: v.optional(v.boolean()), // One-time FREE pack for sharing profile
     totalShareBonus: v.optional(v.number()), // Lifetime share bonus earned
     hasReceivedWelcomePack: v.optional(v.boolean()), // One-time welcome pack (1 Basic Pack)
+    hasReceivedWelcomeGift: v.optional(v.boolean()), // 🔒 SECURITY: Prevents duplicate welcome_gift mission
 
     // Daily Reminders
     lastActiveDate: v.optional(v.number()), // Last time player was active (for reminder eligibility)

@@ -82,10 +82,10 @@ import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Minia
 import { useBondingProgress } from "@/lib/hooks/useBondingProgress";
 import { CONTRACTS } from "@/lib/contracts";
 
-import { filterCardsByCollections, getEnabledCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, type CollectionId } from "@/lib/collections/index";
+import { filterCardsByCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, type CollectionId } from "@/lib/collections/index"; // getEnabledCollections removed - now only used by Context
 import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
 import { isSameCard, findCard, getCardKey } from "@/lib/nft";
-import { getImage, fetchNFTs, clearAllNftCache , checkCollectionBalances } from "@/lib/nft/fetcher";
+import { getImage, fetchNFTs, clearAllNftCache } from "@/lib/nft/fetcher"; // checkCollectionBalances removed - now only used by Context
 import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 import type { Card } from "@/lib/types/card";
 import { RunawayEasterEgg } from "@/components/RunawayEasterEgg";
@@ -127,118 +127,9 @@ const getAvatarFallback = (): string => {
 // ✅ NFT attribute functions moved to lib/nft/attributes.ts
 // ✅ NFT fetching functions moved to lib/nft/fetcher.ts
 
-/**
- * Fetch NFTs from all enabled collections
- * Returns all NFTs with collection property set
- *
- * OPTIMIZATION (Jan 2026):
- * - Uses free Base RPC to check balanceOf before Alchemy calls
- * - Only fetches from collections where user has NFTs
- * - Saves ~70-90% Alchemy CUs
- */
-async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: number, cards: number) => void): Promise<any[]> {
-  const enabledCollections = getEnabledCollections();
-  devLog('🎴 [Page] Starting NFT fetch for', enabledCollections.length, 'collections');
-
-  // OPTIMIZATION RE-ENABLED (Jan 2026): Fixed RPC balance check
-  // - '0x' is now correctly treated as 0 balance (not error)
-  // - Caching works for users with 0 NFTs
-  // - Only falls back to Alchemy ALL if ALL RPCs fail
-  const collectionsWithContract = enabledCollections.filter(c => c.contractAddress);
-
-  console.log(`🚀 [Page] Checking balances via free RPC before Alchemy...`);
-  const { collectionsWithNfts, balances } = await checkCollectionBalances(owner, collectionsWithContract);
-
-  if (collectionsWithNfts.length < collectionsWithContract.length) {
-    console.log(`💰 [Page] Saved ${collectionsWithContract.length - collectionsWithNfts.length} Alchemy calls!`);
-  } else if (collectionsWithNfts.length === 0) {
-    console.log(`✅ [Page] User has 0 NFTs - no Alchemy calls needed`);
-    return [];
-  }
-
-  console.log(`📦 [Page] Fetching ${collectionsWithNfts.length} of ${collectionsWithContract.length} collections from Alchemy`);
-
-  const allNfts: any[] = [];
-  const collectionCounts: Record<string, number> = {};
-  let totalCards = 0;
-
-  // Fetch from all collections with retry logic
-  const BATCH_SIZE = 3;
-  const MAX_RETRIES = 2;
-  const failedCollections: typeof collectionsWithNfts = [];
-
-  for (let i = 0; i < collectionsWithNfts.length; i += BATCH_SIZE) {
-    const batch = collectionsWithNfts.slice(i, i + BATCH_SIZE);
-
-    const results = await Promise.allSettled(
-      batch.map(async (collection) => {
-        devLog(`📡 [Page] Fetching from ${collection.displayName}`);
-        // 🚀 OPTIMIZATION: Pass balance to enable smart caching
-        const balance = balances[collection.contractAddress.toLowerCase()];
-        const nfts = await fetchNFTs(owner, collection.contractAddress, undefined, balance);
-        const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
-        collectionCounts[collection.displayName] = nfts.length;
-        totalCards += nfts.length;
-        if (onProgress) onProgress(Object.keys(collectionCounts).length, totalCards);
-        return tagged;
-      })
-    );
-
-    results.forEach((result, idx) => {
-      if (result.status === 'fulfilled') {
-        allNfts.push(...result.value);
-      } else {
-        failedCollections.push(batch[idx]);
-        devError(`✗ [Page] Failed: ${batch[idx].displayName}`, result.reason);
-      }
-    });
-
-    if (i + BATCH_SIZE < collectionsWithNfts.length) {
-      await new Promise(r => setTimeout(r, 200));
-    }
-  }
-
-  // Retry failed collections
-  if (failedCollections.length > 0) {
-    console.log(`🔄 [Page] Retrying ${failedCollections.length} failed collections...`);
-    await new Promise(r => setTimeout(r, 500));
-
-    for (let retry = 0; retry < MAX_RETRIES; retry++) {
-      const stillFailed: typeof collectionsWithNfts = [];
-
-      for (const collection of failedCollections) {
-        try {
-          devLog(`🔄 [Page] Retry ${retry + 1} for ${collection.displayName}`);
-          // 🚀 OPTIMIZATION: Pass balance to enable smart caching
-          const balance = balances[collection.contractAddress.toLowerCase()];
-          const nfts = await fetchNFTs(owner, collection.contractAddress, undefined, balance);
-          const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
-          collectionCounts[collection.displayName] = nfts.length;
-          totalCards += nfts.length;
-          allNfts.push(...tagged);
-          console.log(`✅ [Page] Retry success: ${collection.displayName} - ${nfts.length} NFTs`);
-        } catch (err) {
-          stillFailed.push(collection);
-          devError(`✗ [Page] Retry ${retry + 1} failed: ${collection.displayName}`, err);
-        }
-        await new Promise(r => setTimeout(r, 300));
-      }
-
-      if (stillFailed.length === 0) break;
-      failedCollections.length = 0;
-      failedCollections.push(...stillFailed);
-    }
-
-    // Mark any still-failed collections
-    failedCollections.forEach(c => {
-      collectionCounts[c.displayName] = -1;
-    });
-  }
-
-  console.log('📊 [Page] CARD FETCH SUMMARY:', JSON.stringify(collectionCounts));
-  console.log(`📊 [Page] Total raw NFTs: ${allNfts.length}`);
-  return allNfts;
-}
+// 🚀 BANDWIDTH FIX (Jan 2026): REMOVED fetchNFTsFromAllCollections function (~110 lines)
+// NFT fetching is now ONLY done by PlayerCardsContext.tsx
+// This eliminates duplicate Alchemy API calls!
 
 const NFTCard = memo(({ nft, selected, onSelect, locked = false, lockedReason }: { nft: any; selected: boolean; onSelect: (nft: any) => void; locked?: boolean; lockedReason?: string }) => {
   const tid = nft.tokenId;
@@ -596,7 +487,8 @@ export default function TCGPage() {
   const [skippedCardLoading, setSkippedCardLoading] = useState<boolean>(false);
   
   // 🔗 Get cards from shared context (persists across routes!)
-  const { nfts: contextNfts, status: contextStatus, syncNftsFromHome } = usePlayerCards();
+  // 🚀 BANDWIDTH FIX: Use context's loadNFTs instead of local duplicate
+  const { nfts: contextNfts, status: contextStatus, syncNftsFromHome, loadNFTs: contextLoadNFTs, forceReloadNFTs: contextForceReloadNFTs } = usePlayerCards();
 
   // Check sessionStorage on mount to skip loading if already loaded this session
   useEffect(() => {
@@ -609,6 +501,7 @@ export default function TCGPage() {
   }, []);
 
   // 🔗 Sync with context: If context has cards, use them (prevents reload on navigation)
+  // 🚀 BANDWIDTH FIX (Jan 2026): Context is now the single source of truth for NFT loading
   useEffect(() => {
     if (contextStatus === 'loaded' && contextNfts.length > 0 && nfts.length === 0) {
       console.log('📦 Syncing from context:', contextNfts.length, 'cards');
@@ -667,6 +560,20 @@ export default function TCGPage() {
 
   // Convex client for imperative queries
   const convex = useConvex();
+
+  // 🎯 Check VibeFID achievement when cards load (moved from removed local loadNFTs)
+  useEffect(() => {
+    if (nfts.length > 0 && address) {
+      const hasVibeFID = nfts.some((card: any) => card.collection === 'vibefid');
+      if (hasVibeFID) {
+        convex.mutation(api.missions.markVibeFIDMinted, {
+          playerAddress: address.toLowerCase(),
+        }).catch((error: any) => {
+          devWarn('⚠️ Failed to mark VibeFID achievement:', error);
+        });
+      }
+    }
+  }, [nfts, address, convex]);
 
   // 🚀 Performance: Memoized NFT calculations (only recomputes when nfts change)
   const totalNftPower = useTotalPower(nfts);
@@ -1755,249 +1662,15 @@ export default function TCGPage() {
     devLog('🔌 Desconectado');
   }, [soundEnabled, disconnect]);
 
-  const loadNFTs = useCallback(async () => {
-    if (!address) {
-      devLog('! loadNFTs called but no address');
-      return;
-    }
-    devLog('🎴 Starting to load NFTs for address:', address);
-    try {
-      setStatus("fetching");
-      setErrorMsg(null);
+  // 🚀 BANDWIDTH FIX (Jan 2026): REMOVED 220 LINES OF DUPLICATE loadNFTs!
+  // NFT loading is now ONLY done by PlayerCardsContext.tsx
+  // This page syncs from context via useEffect above (line 612-633)
+  // This eliminates 26M+ duplicate Alchemy calls/month!
 
-      // 🚀 BANDWIDTH FIX: Use allWalletAddresses from profileDashboard
-      // Eliminates separate getLinkedAddresses query (~16MB/day savings)
-      const allAddresses = allWalletAddresses.length > 0 ? allWalletAddresses : [address];
-      devLog(`🔗 [Page] Fetching from ${allAddresses.length} wallet(s):`, allAddresses.map(a => a.slice(0,8)));
-
-      // Fetch NFTs from all linked wallets
-      devLog('📡 Fetching NFTs from all enabled collections...');
-      let raw: any[] = [];
-      for (const walletAddr of allAddresses) {
-        const walletNfts = await fetchNFTsFromAllCollections(walletAddr);
-        // Tag each NFT with owner address
-        const tagged = walletNfts.map(nft => ({ ...nft, ownerAddress: walletAddr.toLowerCase() }));
-        raw.push(...tagged);
-        devLog(`✓ Wallet ${walletAddr.slice(0,8)}...: ${walletNfts.length} NFTs`);
-      }
-      devLog('✓ Received NFTs from all wallets:', raw.length);
-
-      const METADATA_BATCH_SIZE = 50;
-      const enrichedRaw = [];
-
-      for (let i = 0; i < raw.length; i += METADATA_BATCH_SIZE) {
-        const batch = raw.slice(i, i + METADATA_BATCH_SIZE);
-        const batchResults = await Promise.all(
-          batch.map(async (nft) => {
-            const tokenUri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
-            if (!tokenUri) return nft;
-            try {
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 2000);
-              const res = await fetch(tokenUri, { signal: controller.signal });
-              clearTimeout(timeoutId);
-              if (res.ok) {
-                const metadata = await res.json();
-                return { ...nft, metadata: metadata, raw: { ...nft.raw, metadata: metadata } };
-              }
-            } catch (error) {
-              devWarn(`⚠️ Failed to refresh metadata for NFT #${nft.tokenId}:`, error);
-            }
-            return nft;
-          })
-        );
-        enrichedRaw.push(...batchResults);
-      }
-
-      // Filter unopened cards AFTER metadata refresh (not before)
-      // This ensures we have fresh attributes to check
-      // EXCEÇÃO: viberotbangers tem rarity="Unopened" como padrão
-      const revealed = enrichedRaw.filter((nft) => {
-        const rarity = findAttr(nft, 'rarity').toLowerCase();
-        const status = findAttr(nft, 'status').toLowerCase();
-        const collection = (nft.collection || '').toLowerCase();
-        // Viberotbangers: só filtra por status, não por rarity
-        if (collection === 'viberotbangers') {
-          return status !== 'unopened';
-        }
-        return rarity !== 'unopened' && status !== 'unopened';
-      });
-
-      const filtered = enrichedRaw.length - revealed.length;
-      setFilteredCount(filtered);
-      devLog(`📊 NFT Stats: Total=${enrichedRaw.length}, Revealed=${revealed.length}, Filtered=${filtered}`);
-
-
-      const IMAGE_BATCH_SIZE = 50;
-      const processed = [];
-
-      for (let i = 0; i < revealed.length; i += IMAGE_BATCH_SIZE) {
-        const batch = revealed.slice(i, i + IMAGE_BATCH_SIZE);
-        const enriched = await Promise.all(
-          batch.map(async (nft) => {
-            // 🎯 CRITICAL: Detect collection from contract address FIRST
-            let collection: CollectionId = 'vibe'; // default
-            const contractAddr = nft?.contract?.address?.toLowerCase();
-            const isVibeFID = contractAddr === getCollectionContract('vibefid')?.toLowerCase();
-
-            // 🎬 Get image URL - getImage handles VibeFID video detection automatically
-            let imageUrl: string;
-            if (isVibeFID) {
-              // VibeFID: Use getImage with 'vibefid' hint for video URL detection
-              imageUrl = await getImage(nft, 'vibefid');
-            } else {
-              imageUrl = await getImage(nft);
-            }
-
-            if (contractAddr) {
-              if (isVibeFID) {
-                collection = 'vibefid';
-              } else if (contractAddr === getCollectionContract('gmvbrs')?.toLowerCase()) {
-                collection = 'gmvbrs';
-              } else if (contractAddr === getCollectionContract('viberotbangers')?.toLowerCase()) {
-                collection = 'viberotbangers';
-              } else if (contractAddr === getCollectionContract('cumioh')?.toLowerCase()) {
-                collection = 'cumioh';
-              } else if (contractAddr === getCollectionContract('historyofcomputer')?.toLowerCase()) {
-                collection = 'historyofcomputer';
-              } else if (contractAddr === getCollectionContract('vibefx')?.toLowerCase()) {
-                collection = 'vibefx';
-              } else if (contractAddr === getCollectionContract('baseballcabal')?.toLowerCase()) {
-                collection = 'baseballcabal';
-              } else if (contractAddr === getCollectionContract('tarot')?.toLowerCase()) {
-                collection = 'tarot';
-              
-              } else if (contractAddr === getCollectionContract('teampothead')?.toLowerCase()) {
-                collection = 'teampothead';
-              } else if (contractAddr === getCollectionContract('poorlydrawnpepes')?.toLowerCase()) {
-                collection = 'poorlydrawnpepes';
-              } else if (contractAddr === getCollectionContract('meowverse')?.toLowerCase()) {
-                collection = 'meowverse';
-              } else if (contractAddr === getCollectionContract('viberuto')?.toLowerCase()) {
-                collection = 'viberuto';
-              }
-            }
-
-            return {
-              ...nft,
-              imageUrl,
-              name: nft.title || nft.name || `Card #${nft.tokenId}`, // Add name for Card type compatibility
-              collection, // 🎯 ADD COLLECTION FIELD
-              rarity: findAttr(nft, 'rarity'),
-              status: findAttr(nft, 'status'),
-              wear: findAttr(nft, 'wear'),
-              foil: findAttr(nft, 'foil'),
-              power: calcPower(nft, isVibeFID),
-              badgeType: 'NFT', // Explicitly mark as NFT (not FREE_CARD)
-              isFreeCard: false, // Explicitly mark as not a free card
-            };
-          })
-        );
-        processed.push(...enriched);
-      }
-
-      // Load FREE cards from cardInventory
-      try {
-        const freeCards = await convex.query(api.cardPacks.getPlayerCards, { address });
-        devLog('🆓 FREE cards loaded:', freeCards?.length || 0);
-
-        if (freeCards && freeCards.length > 0) {
-          const freeCardsFormatted = freeCards.map((card: any) => ({
-            tokenId: card.cardId,
-            title: `FREE ${card.rarity} Card`,
-            name: card.name || `FREE ${card.rarity} Card`, // Add name for Card type compatibility
-            description: `Free card from pack opening`,
-            imageUrl: card.imageUrl,
-            rarity: card.rarity,
-            status: 'revealed',
-            wear: card.wear,
-            foil: card.foil || 'None',
-            power: card.power,
-            badgeType: card.badgeType, // 'FREE_CARD'
-            isFreeCard: true,
-            collection: 'nothing', // Collection for filtering
-          }));
-          processed.push(...freeCardsFormatted);
-        }
-      } catch (error) {
-        devWarn('⚠️ Failed to load FREE cards:', error);
-      }
-
-      // 🔒 DEDUPLICATION: Remove duplicate cards (same collection + tokenId)
-      const seenCards = new Set<string>();
-      const deduplicated = processed.filter((card: any) => {
-        const uniqueId = `${card.collection || 'vibe'}_${card.tokenId}`;
-        if (seenCards.has(uniqueId)) {
-          devLog(`⚠️ Removing duplicate card: ${uniqueId}`);
-          return false;
-        }
-        seenCards.add(uniqueId);
-        return true;
-      });
-
-      if (processed.length !== deduplicated.length) {
-        devLog(`📊 Deduplication: ${processed.length} -> ${deduplicated.length} cards`);
-      }
-
-      setNfts([...deduplicated]);
-      setStatus("loaded");
-
-      // 🔗 SYNC TO CONTEXT: All other pages use these same cards!
-      syncNftsFromHome(deduplicated);
-
-      // Mark cards as loaded for this session (prevents loading screen on navigation)
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('vbms_cards_loaded', 'true');
-      }
-      // DETAILED LOGGING for debugging inconsistency
-      console.log('📊 FINAL CARD COUNT SUMMARY:');
-      console.log(`   Raw from collections: ${raw.length}`);
-      console.log(`   After metadata refresh: ${enrichedRaw.length}`);
-      console.log(`   After unopened filter: ${revealed.length} (filtered ${filtered})`);
-      console.log(`   After image processing + FREE: ${processed.length}`);
-      console.log(`   After deduplication: ${deduplicated.length}`);
-      devLog('🎉 Cards loaded successfully (NFTs + FREE):', deduplicated.length);
-
-      // Check if player has VibeFID and mark achievement
-      const hasVibeFID = processed.some((card: any) => card.collection === 'vibefid');
-      if (hasVibeFID && address) {
-        try {
-          await convex.mutation(api.missions.markVibeFIDMinted, {
-            playerAddress: address.toLowerCase(),
-          });
-          devLog('✅ VibeFID achievement checked');
-        } catch (error) {
-          devWarn('⚠️ Failed to mark VibeFID achievement:', error);
-        }
-      }
-    } catch (e: any) {
-      devLog('✗ Error loading NFTs:', e);
-      setStatus("failed");
-      setErrorMsg(e.message);
-    }
-  }, [address, allWalletAddresses]);
-
-  useEffect(() => {
-    // Skip if cards are already loaded locally (prevents reload on navigation)
-    if (status === 'loaded' && nfts.length > 0) {
-      devLog('📦 Skipping NFT load - already loaded locally', nfts.length, 'cards');
-      return;
-    }
-    // 🚀 CRITICAL: Skip if Context already has cards (prevents duplicate API calls!)
-    if (contextStatus === 'loaded' && contextNfts.length > 0) {
-      devLog('📦 Skipping NFT load - Context already has', contextNfts.length, 'cards (will sync)');
-      return;
-    }
-    // 🚀 CRITICAL: Skip if Context is currently loading (prevents duplicate API calls!)
-    if (contextStatus === 'fetching') {
-      devLog('📦 Skipping NFT load - Context is already fetching');
-      return;
-    }
-    if (address) {
-      devLog('📦 Address changed, loading NFTs:', address);
-      loadNFTs();
-    }
-  }, [address, loadNFTs, status, nfts.length, contextStatus, contextNfts.length]);
+  // 🚀 BANDWIDTH FIX (Jan 2026): Removed duplicate loadNFTs call
+  // Context already auto-loads NFTs when address is set (PlayerCardsContext.tsx line 536-540)
+  // Page just syncs from context via the useEffect above (line 612-621)
+  // This eliminates 26M+ duplicate Alchemy calls/month!
 
   const loadJCNFTs = useCallback(async () => {
     try {
@@ -3972,7 +3645,7 @@ export default function TCGPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                   setStatus('idle');
                   setNfts([]);
-                  setTimeout(() => loadNFTs(), 0);
+                  contextForceReloadNFTs(); // 🚀 Use context instead of local loadNFTs
                 }}
                 className="px-4 py-2 rounded-lg font-bold text-sm transition-all bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30 flex items-center gap-1"
                 title="Refresh cards"
@@ -5518,7 +5191,7 @@ export default function TCGPage() {
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
               <p className="text-red-400 font-bold">✗ {t('error')}</p>
               <p className="text-red-300 text-sm mt-1">{errorMsg}</p>
-              <button onClick={() => { clearAllNftCache(); loadNFTs(); }} className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm">{t('retryButton')}</button>
+              <button onClick={() => { clearAllNftCache(); contextForceReloadNFTs(); }} className="mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm">{t('retryButton')}</button>
             </div>
           )}
 
@@ -5606,8 +5279,8 @@ export default function TCGPage() {
                   {nfts.length > 0 && (
                     <div className="flex gap-2 flex-wrap">
                       <button
-                        onClick={() => { clearAllNftCache(); loadNFTs(); }}
-                        disabled={status === 'fetching'}
+                        onClick={() => { clearAllNftCache(); contextForceReloadNFTs(); }}
+                        disabled={status === 'fetching' || contextStatus === 'fetching'}
                         className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-modern font-semibold transition-all"
                         title="Refresh cards and metadata"
                       >

@@ -494,13 +494,38 @@ export const claimAllMissions = mutation({
 /**
  * Ensure welcome gift exists for player (migration for old users)
  * Creates welcome_gift mission if it doesn't exist
+ *
+ * 🔒 SECURITY FIX (2026-01-16): Uses profile flag to prevent race condition
+ * EXPLOIT PATCHED: Multiple parallel calls could create duplicate welcome_gift
  */
 export const ensureWelcomeGift = mutation({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
     const normalizedAddress = playerAddress.toLowerCase();
 
-    // Check if welcome_gift already exists
+    // 🔒 STEP 1: Check profile flag FIRST (atomic check)
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      // No profile = no welcome gift possible
+      return { created: false };
+    }
+
+    // 🔒 If flag is already set, skip everything (prevents race condition)
+    if (profile.hasReceivedWelcomeGift) {
+      return { created: false };
+    }
+
+    // 🔒 STEP 2: Set flag BEFORE checking missions (atomic write)
+    // This prevents race condition: if another call comes in, it will see the flag
+    await ctx.db.patch(profile._id, {
+      hasReceivedWelcomeGift: true,
+    });
+
+    // STEP 3: Check if welcome_gift mission already exists (for old users)
     const existing = await ctx.db
       .query("personalMissions")
       .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))

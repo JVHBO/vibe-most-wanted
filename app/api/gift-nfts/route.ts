@@ -3,6 +3,10 @@
  *
  * Fetches user's NFTs from giftable collections (LTC collections).
  * Excludes: AFCL, VibeFID, Nothing, Custom
+ *
+ * 🚀 OPTIMIZATION (Jan 2026): Added server-side caching + logging
+ * - Cache results for 5 minutes per address
+ * - Log requests to track usage patterns
  */
 
 import { NextResponse } from "next/server";
@@ -19,6 +23,29 @@ const GIFTABLE_COLLECTIONS: CollectionId[] = [
   'viberotbangers', // Vibe Rot Bangers
 ];
 
+// 🚀 SERVER-SIDE CACHE (5 min TTL)
+const serverCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// 📊 REQUEST TRACKING (for debugging Alchemy usage)
+let requestCount = 0;
+let lastResetTime = Date.now();
+
+function logRequest(address: string, cached: boolean) {
+  requestCount++;
+  const now = Date.now();
+  const hoursSinceReset = (now - lastResetTime) / (1000 * 60 * 60);
+
+  // Reset counter every hour
+  if (hoursSinceReset >= 1) {
+    console.log(`📊 [gift-nfts] HOURLY STATS: ${requestCount} requests in last hour`);
+    requestCount = 1;
+    lastResetTime = now;
+  }
+
+  console.log(`📡 [gift-nfts] Request #${requestCount} for ${address.slice(0, 10)}... (${cached ? 'CACHE HIT' : 'ALCHEMY CALL'})`);
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -27,6 +54,17 @@ export async function GET(request: Request) {
     if (!address) {
       return NextResponse.json({ error: "Missing address" }, { status: 400 });
     }
+
+    const cacheKey = address.toLowerCase();
+
+    // 🚀 CHECK SERVER CACHE FIRST
+    const cached = serverCache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+      logRequest(address, true);
+      return NextResponse.json(cached.data);
+    }
+
+    logRequest(address, false);
 
     // Fetch NFTs from each giftable collection
     const allNfts: any[] = [];
@@ -100,7 +138,8 @@ export async function GET(request: Request) {
       groupedByCollection[collectionId].push(nft);
     }
 
-    return NextResponse.json({
+    // Build response
+    const responseData = {
       success: true,
       totalNfts: validNfts.length,
       collections: groupedByCollection,
@@ -109,7 +148,23 @@ export async function GET(request: Request) {
         name: COLLECTIONS[id].displayName,
         count: groupedByCollection[id]?.length || 0,
       })).filter(c => c.count > 0),
-    });
+    };
+
+    // 🚀 SAVE TO SERVER CACHE
+    serverCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+    console.log(`💾 [gift-nfts] Cached ${validNfts.length} NFTs for ${address.slice(0, 10)}...`);
+
+    // Clean old cache entries (prevent memory leak)
+    if (serverCache.size > 1000) {
+      const now = Date.now();
+      for (const [key, value] of serverCache.entries()) {
+        if (now - value.timestamp > CACHE_TTL) {
+          serverCache.delete(key);
+        }
+      }
+    }
+
+    return NextResponse.json(responseData);
 
   } catch (error: any) {
     console.error("Error fetching gift NFTs:", error);
