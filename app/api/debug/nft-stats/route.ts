@@ -14,28 +14,57 @@ export async function GET() {
   try {
     const stats = await convex.query(api.apiStats.getAll);
 
-    const total = stats.gift_nfts_total || 0;
-    const cacheHits = stats.gift_nfts_cache_hit || 0;
+    // Gift API stats
+    const giftTotal = stats.gift_nfts_total || 0;
+    const giftCacheHits = stats.gift_nfts_cache_hit || 0;
+
+    // Client-side fetcher stats
     const alchemyCalls = stats.alchemy_calls || 0;
+    const alchemyCacheHit = stats.alchemy_cache_hit || 0;
+    const fetchNftsTotal = stats.fetch_nfts_total || 0;
+
+    // RPC stats
     const rpcTotal = stats.rpc_total || 0;
+    const rpcSuccess = stats.rpc_success || 0;
     const rpcFailed = stats.rpc_failed || 0;
+
+    // Balance check stats
+    const balanceCheckTotal = stats.balance_check_total || 0;
+    const balanceCheckCached = stats.balance_check_cached || 0;
 
     return NextResponse.json({
       status: "ok",
       stats: {
+        // Server-side gift API
         giftApi: {
-          total,
-          cacheHits,
-          alchemyCalls: total - cacheHits,
-          cacheRate: total > 0 ? `${((cacheHits / total) * 100).toFixed(1)}%` : "N/A",
+          total: giftTotal,
+          cacheHits: giftCacheHits,
+          alchemyCalls: giftTotal - giftCacheHits,
+          cacheRate: giftTotal > 0 ? `${((giftCacheHits / giftTotal) * 100).toFixed(1)}%` : "N/A",
         },
+        // Client-side NFT fetcher (main culprit!)
+        clientFetcher: {
+          alchemyCalls,
+          cacheHits: alchemyCacheHit,
+          total: alchemyCalls + alchemyCacheHit,
+          cacheRate: (alchemyCalls + alchemyCacheHit) > 0
+            ? `${((alchemyCacheHit / (alchemyCalls + alchemyCacheHit)) * 100).toFixed(1)}%`
+            : "N/A",
+        },
+        // RPC balance checks (free)
         rpc: {
           total: rpcTotal,
+          success: rpcSuccess,
           failed: rpcFailed,
-          successRate: rpcTotal > 0 ? `${(((rpcTotal - rpcFailed) / rpcTotal) * 100).toFixed(1)}%` : "N/A",
+          successRate: rpcTotal > 0 ? `${((rpcSuccess / rpcTotal) * 100).toFixed(1)}%` : "N/A",
         },
-        alchemy: {
-          calls: alchemyCalls,
+        // Balance check optimization
+        balanceCheck: {
+          total: balanceCheckTotal,
+          cached: balanceCheckCached,
+          cacheRate: (balanceCheckTotal + balanceCheckCached) > 0
+            ? `${((balanceCheckCached / (balanceCheckTotal + balanceCheckCached)) * 100).toFixed(1)}%`
+            : "N/A",
         },
         raw: stats,
       },

@@ -58,6 +58,16 @@ let stats = {
   lastReset: Date.now(),
 };
 
+// 🚀 PERSISTENT STATS: Send to Convex via API (fire-and-forget)
+function trackStatPersistent(key: string, amount: number = 1) {
+  if (typeof window === 'undefined') return; // Skip on server
+  fetch('/api/track-stat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key, amount }),
+  }).catch(() => {}); // Fire-and-forget
+}
+
 function logStats() {
   const hoursSinceReset = (Date.now() - stats.lastReset) / (1000 * 60 * 60);
   if (hoursSinceReset >= 1) {
@@ -112,10 +122,12 @@ async function checkSingleBalance(
     });
 
     stats.rpcCalls++;
+    trackStatPersistent('rpc_total');
     logStats();
 
     if (!res.ok) {
       stats.rpcFailed++;
+      trackStatPersistent('rpc_failed');
       return -1; // HTTP error
     }
 
@@ -123,12 +135,14 @@ async function checkSingleBalance(
 
     if (json.error) {
       stats.rpcFailed++;
+      trackStatPersistent('rpc_failed');
       return -1; // RPC error
     }
 
     // '0x' means 0 balance - this is VALID, not an error!
     if (json.result === '0x' || json.result === '0x0' || json.result === '0x00') {
       stats.rpcSuccess++;
+      trackStatPersistent('rpc_success');
       return 0;
     }
 
@@ -136,16 +150,20 @@ async function checkSingleBalance(
       const balance = parseInt(json.result, 16);
       if (!isNaN(balance) && balance >= 0) {
         stats.rpcSuccess++;
+        trackStatPersistent('rpc_success');
         return balance;
       }
     }
 
     // Empty or invalid result = RPC issue
     stats.rpcFailed++;
+    trackStatPersistent('rpc_failed');
     return -1;
   } catch {
     stats.rpcCalls++;
     stats.rpcFailed++;
+    trackStatPersistent('rpc_total');
+    trackStatPersistent('rpc_failed');
     return -1; // Network error or timeout
   }
 }
@@ -228,6 +246,7 @@ export async function checkCollectionBalances(
   // Check cache first (fastest path)
   const cached = getBalanceCache(owner);
   if (cached) {
+    trackStatPersistent('balance_check_cached');
     console.log(`📦 Using cached balances for ${owner.slice(0, 10)}...`);
     // BUG FIX: If contract is NOT in cache, include it (need to fetch)
     // Only skip if contract IS in cache AND has balance 0
@@ -251,6 +270,7 @@ export async function checkCollectionBalances(
 
   // Start new check with lock
   balanceCheckOwner = owner.toLowerCase();
+  trackStatPersistent('balance_check_total');
   balanceCheckInProgress = (async () => {
     const collectionsWithContract = collections.filter(c => c.contractAddress);
     const contractAddresses = collectionsWithContract.map(c => c.contractAddress);
@@ -716,6 +736,7 @@ export async function fetchNFTs(
 
   if (cached && cached.nfts.length > 0 && cached.complete) {
     stats.cacheHits++;
+    trackStatPersistent('alchemy_cache_hit');
     logStats();
     console.log(`📦 Using cached NFTs for ${contract.slice(0, 10)}...: ${cached.nfts.length} cards`);
     if (onProgress) onProgress(1, cached.nfts.length);
@@ -723,6 +744,8 @@ export async function fetchNFTs(
   }
 
   stats.alchemyCalls++;
+  trackStatPersistent('alchemy_calls');
+  trackStatPersistent('fetch_nfts_total');
   logStats();
   console.log(`🔄 Fetching fresh NFTs for ${contract.slice(0, 10)}... (cache miss or balance changed)`)
 
