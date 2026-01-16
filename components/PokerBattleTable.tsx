@@ -388,12 +388,6 @@ export function PokerBattleTable({
     roomId ? { roomId } : "skip"
   );
 
-  // Get caller's profile for their pfp
-  const callerProfile = useQuery(
-    api.notifications.getProfileByAddress,
-    incomingCaller?.address ? { address: incomingCaller.address } : "skip"
-  );
-
   // Track previous voice participants count for detecting new joins
   const prevVoiceParticipantsRef = useRef<number>(0);
 

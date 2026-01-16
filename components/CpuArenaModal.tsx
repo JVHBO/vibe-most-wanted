@@ -89,9 +89,10 @@ export function CpuArenaModal({
   const createCpuRoom = useMutation(api.pokerBattle.createCpuVsCpuRoom);
   const spectateRoom = useMutation(api.pokerBattle.spectateRoom);
 
-  // Get profile for username
+  // 🚀 BANDWIDTH FIX: Use getProfileDashboard instead of getProfile
+  // Only needs username - saves ~8KB per query
   const profile = useQuery(
-    api.profiles.getProfile,
+    api.profiles.getProfileDashboard,
     address && address.length > 0 ? { address } : "skip"
   );
 

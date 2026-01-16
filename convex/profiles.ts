@@ -170,9 +170,14 @@ export const getProfileDashboard = query({
       return null;
     }
 
+    // 🚀 BANDWIDTH FIX: Resolve primary address for linked wallets
+    // This allows the dashboard to work with linked wallets too
+    const primaryAddress = await resolvePrimaryAddress(ctx, address);
+    const isLinkedWallet = primaryAddress !== normalizeAddress(address);
+
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(address)))
+      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
       .first();
 
     if (!profile) return null;
@@ -200,6 +205,25 @@ export const getProfileDashboard = query({
     const DAILY_CAP = 100000;
     const dailyEarned = isToday ? (profile.lifetimeEarned || 0) : 0; // Simplified
     const canEarnMore = dailyEarned < DAILY_CAP;
+
+    // 🚀 BANDWIDTH FIX: Extract locked token IDs from defense deck
+    // Replaces getAvailableCards queries (~64MB/day savings)
+    // VibeFID cards are exempt - they can be used in both attack and defense
+    const lockedTokenIds: string[] = [];
+    if (profile.defenseDeck && profile.defenseDeck.length > 0) {
+      for (const card of profile.defenseDeck) {
+        if (typeof card === 'object' && card !== null && 'tokenId' in card) {
+          // Skip VibeFID cards - they're exempt from the lock system
+          if (card.collection === 'vibefid') continue;
+          // Use collection:tokenId format for proper comparison
+          const cardKey = `${card.collection || 'default'}:${card.tokenId}`;
+          lockedTokenIds.push(cardKey);
+        } else if (typeof card === 'string') {
+          // Legacy format - assume default collection
+          lockedTokenIds.push(`default:${card}`);
+        }
+      }
+    }
 
     return {
       // Core profile
@@ -237,6 +261,16 @@ export const getProfileDashboard = query({
       farcasterFid: profile.farcasterFid,
       farcasterPfpUrl: profile.farcasterPfpUrl,
       hasVibeBadge: profile.hasVibeBadge || false,
+
+      // 🚀 BANDWIDTH FIX: Locked cards for attack/pvp modes
+      // Replaces getAvailableCards queries
+      lockedTokenIds,
+
+      // 🚀 BANDWIDTH FIX: Linked addresses info
+      // Replaces getLinkedAddresses query for pages using dashboard
+      primaryAddress: profile.address,
+      linkedAddresses: profile.linkedAddresses || [],
+      isLinkedWallet,
     };
   },
 });
@@ -1731,7 +1765,62 @@ export const updateFarcasterPfp = mutation({
 });
 
 /**
- * Update profile stats
+ * 🚀 BANDWIDTH FIX: Lightweight stats update for card counts only
+ * Preserves battle stats, only updates card-related fields
+ * Saves ~28MB/day by not requiring full stats object
+ */
+export const updateStatsLite = mutation({
+  args: {
+    address: v.string(),
+    totalCards: v.number(),
+    openedCards: v.number(),
+    unopenedCards: v.number(),
+    totalPower: v.number(),
+    vibePower: v.optional(v.number()),
+    vbrsPower: v.optional(v.number()),
+    vibefidPower: v.optional(v.number()),
+    afclPower: v.optional(v.number()),
+    tokenIds: v.optional(v.array(v.string())),
+  },
+  handler: async (ctx, args) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizeAddress(args.address)))
+      .first();
+
+    if (!profile) {
+      throw new Error(`Profile not found: ${args.address}`);
+    }
+
+    // Preserve existing battle stats, only update card-related fields
+    const updatedStats = {
+      ...profile.stats,
+      totalCards: args.totalCards,
+      openedCards: args.openedCards,
+      unopenedCards: args.unopenedCards,
+      totalPower: args.totalPower,
+      ...(args.vibePower !== undefined && { vibePower: args.vibePower }),
+      ...(args.vbrsPower !== undefined && { vbrsPower: args.vbrsPower }),
+      ...(args.vibefidPower !== undefined && { vibefidPower: args.vibefidPower }),
+      ...(args.afclPower !== undefined && { afclPower: args.afclPower }),
+    };
+
+    const updates: any = {
+      stats: updatedStats,
+      lastUpdated: Date.now(),
+    };
+
+    // Only update ownedTokenIds if provided (saves bandwidth)
+    if (args.tokenIds) {
+      updates.ownedTokenIds = args.tokenIds;
+    }
+
+    await ctx.db.patch(profile._id, updates);
+  },
+});
+
+/**
+ * Update profile stats (legacy - full stats object required)
  */
 export const updateStats = mutation({
   args: {

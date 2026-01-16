@@ -445,6 +445,33 @@ export default function TCGPage() {
   // 🚀 BANDWIDTH FIX: Consolidated dashboard query (replaces 5 separate queries)
   const profileDashboard = useQuery(api.profiles.getProfileDashboard, address ? { address } : "skip");
 
+  // 🚀 BANDWIDTH FIX: Get all wallet addresses from dashboard (replaces getLinkedAddresses query)
+  const allWalletAddresses = useMemo(() => {
+    if (!address) return [];
+    if (!profileDashboard?.primaryAddress) return [address];
+
+    // Build array of all addresses: primary + linked
+    const primary = profileDashboard.primaryAddress;
+    const linked = profileDashboard.linkedAddresses || [];
+    const all = [primary, ...linked];
+
+    // Remove duplicates (case-insensitive) and ensure current address is included
+    const seen = new Set<string>();
+    const unique = all.filter(addr => {
+      const lower = addr.toLowerCase();
+      if (seen.has(lower)) return false;
+      seen.add(lower);
+      return true;
+    });
+
+    // Ensure connected address is included
+    if (!unique.some(a => a.toLowerCase() === address.toLowerCase())) {
+      unique.push(address);
+    }
+
+    return unique;
+  }, [address, profileDashboard?.primaryAddress, profileDashboard?.linkedAddresses]);
+
   // Derived values for backward compatibility
   const playerEconomy = profileDashboard ? {
     coins: profileDashboard.coins,
@@ -718,38 +745,45 @@ export default function TCGPage() {
   } : null;
   const consumePveAttempt = useMutation(api.pokerCpu.consumePveAttempt);
 
-  // 🔒 Defense Lock System - Get locked cards for Attack/PvP modes
-  const attackLockedCards = useQuery(
-    api.profiles.getAvailableCards,
-    address ? { address, mode: "attack" } : "skip"
-  );
-  const pvpLockedCards = useQuery(
-    api.profiles.getAvailableCards,
-    address ? { address, mode: "pvp" } : "skip"
+  // 🚀 BANDWIDTH FIX: Get locked cards from profileDashboard instead of separate queries
+  // Saves ~64MB/day by eliminating 2 redundant getAvailableCards queries
+  // Attack and PvP modes have the same locked cards (defense deck)
+  const lockedTokenIds = useMemo(() =>
+    profileDashboard?.lockedTokenIds || [],
+    [profileDashboard?.lockedTokenIds]
   );
 
-  // 🔒 Defense/Raid Lock System - Cards in raid cannot be used in defense and vice-versa
-  const defenseLockedCards = useQuery(
-    api.profiles.getLockedCardsForDeckBuilding,
-    address ? { address, mode: "defense" } : "skip"
-  );
-  const defenseLockedTokenIds = useMemo(() =>
-    new Set(defenseLockedCards?.lockedTokenIds || []),
-    [defenseLockedCards]
-  );
-
-  // 🔋 Raid Deck Energy - Check for expired cards to show red dot on button
-  const raidDeckEnergy = useQuery(
+  // 🔋 Raid Deck - Used for energy check AND locked cards derivation
+  const raidDeckData = useQuery(
     api.raidBoss.getPlayerRaidDeck,
     address ? { address } : "skip"
   );
   const hasExpiredRaidCards = useMemo(() => {
-    if (!raidDeckEnergy?.cardEnergy) return false;
+    if (!raidDeckData?.cardEnergy) return false;
     const now = Date.now();
-    return raidDeckEnergy.cardEnergy.some(
+    return raidDeckData.cardEnergy.some(
       (ce: { energyExpiresAt: number }) => ce.energyExpiresAt !== 0 && now > ce.energyExpiresAt
     );
-  }, [raidDeckEnergy?.cardEnergy]);
+  }, [raidDeckData?.cardEnergy]);
+
+  // 🚀 BANDWIDTH FIX: Derive raid locked cards from raidDeckData
+  // Eliminates getLockedCardsForDeckBuilding query (~16MB/day savings)
+  // Cards in raid deck are locked when building defense deck
+  const defenseLockedTokenIds = useMemo(() => {
+    const locked: string[] = [];
+    if (raidDeckData?.deck) {
+      for (const card of raidDeckData.deck) {
+        // VibeFID cards are exempt from lock
+        if (card.collection === 'vibefid') continue;
+        locked.push(`${card.collection || 'default'}:${card.tokenId}`);
+      }
+    }
+    // Also check VibeFID slot if it has a non-VibeFID card
+    if (raidDeckData?.vibefidCard && raidDeckData.vibefidCard.collection !== 'vibefid') {
+      locked.push(`${raidDeckData.vibefidCard.collection || 'default'}:${raidDeckData.vibefidCard.tokenId}`);
+    }
+    return new Set(locked);
+  }, [raidDeckData?.deck, raidDeckData?.vibefidCard]);
 
   // Clean conflicting cards from defense deck on load
   const cleanConflictingDefense = useMutation(api.profiles.cleanConflictingDefenseCards);
@@ -1726,29 +1760,10 @@ export default function TCGPage() {
       setStatus("fetching");
       setErrorMsg(null);
 
-      // 🔗 MULTI-WALLET: Get all linked addresses first
-      let allAddresses: string[] = [address];
-      try {
-        const linkedData = await convex.query(api.profiles.getLinkedAddresses, { address });
-        if (linkedData?.primary) {
-          // Build array of all addresses: primary + linked
-          allAddresses = [linkedData.primary, ...(linkedData.linked || [])];
-          // Remove duplicates (case-insensitive) and ensure current address is included
-          const seen = new Set<string>();
-          allAddresses = allAddresses.filter(addr => {
-            const lower = addr.toLowerCase();
-            if (seen.has(lower)) return false;
-            seen.add(lower);
-            return true;
-          });
-          if (!allAddresses.some(a => a.toLowerCase() === address.toLowerCase())) {
-            allAddresses.push(address);
-          }
-        }
-        devLog(`🔗 [Page] Fetching from ${allAddresses.length} wallet(s):`, allAddresses.map(a => a.slice(0,8)));
-      } catch (error) {
-        devWarn('⚠️ Failed to get linked addresses, using current only:', error);
-      }
+      // 🚀 BANDWIDTH FIX: Use allWalletAddresses from profileDashboard
+      // Eliminates separate getLinkedAddresses query (~16MB/day savings)
+      const allAddresses = allWalletAddresses.length > 0 ? allWalletAddresses : [address];
+      devLog(`🔗 [Page] Fetching from ${allAddresses.length} wallet(s):`, allAddresses.map(a => a.slice(0,8)));
 
       // Fetch NFTs from all linked wallets
       devLog('📡 Fetching NFTs from all enabled collections...');
@@ -1955,7 +1970,7 @@ export default function TCGPage() {
       setStatus("failed");
       setErrorMsg(e.message);
     }
-  }, [address]);
+  }, [address, allWalletAddresses]);
 
   useEffect(() => {
     // Skip if cards are already loaded locally (prevents reload on navigation)
@@ -2861,16 +2876,16 @@ export default function TCGPage() {
     return [...nfts].sort((a, b) => getCardDisplayPower(b) - getCardDisplayPower(a));
   }, [nfts, sortAttackByPower]);
 
-  // Helper to check if card is locked - VibeFID cards are exempt (can be used anywhere)
-  // Now takes a card object for proper collection+tokenId comparison
-  const isCardLocked = (card: { tokenId: string; collection?: string }, mode: 'attack' | 'pvp') => {
+  // 🚀 BANDWIDTH FIX: Helper to check if card is locked
+  // Uses lockedTokenIds from profileDashboard (attack and pvp have same locked cards)
+  // VibeFID cards are exempt (can be used anywhere)
+  const isCardLocked = (card: { tokenId: string; collection?: string }, _mode: 'attack' | 'pvp') => {
     // VibeFID cards are never locked - they can be used in attack even if in defense deck
     if (card?.collection === 'vibefid') return false;
 
-    const lockedCards = mode === 'attack' ? attackLockedCards : pvpLockedCards;
     // Use getCardKey for proper collection+tokenId comparison
     const cardKey = getCardKey(card);
-    return (lockedCards?.lockedTokenIds as string[] | undefined)?.includes(cardKey) || false;
+    return lockedTokenIds.includes(cardKey);
   };
 
   // Sorted NFTs for PvE modal (PvE allows defense cards - NO lock)
@@ -3488,15 +3503,40 @@ export default function TCGPage() {
 
       devLog('📊 Collection powers:', collectionPowers);
 
-      // Update stats and reload profile to show updated values
-      ConvexProfileService.updateStats(address, nfts.length, openedCardsCount, unopenedCardsCount, totalNftPower, nftTokenIds, collectionPowers)
+      // 🚀 BANDWIDTH FIX: Only send tokenIds when count changes
+      // This saves ~20MB/day by not sending thousands of IDs on every update
+      const currentStoredCount = userProfile?.stats?.totalCards || 0;
+      const shouldSendTokenIds = nfts.length !== currentStoredCount;
+
+      if (shouldSendTokenIds) {
+        devLog('📊 Token count changed, sending tokenIds:', { stored: currentStoredCount, current: nfts.length });
+      }
+
+      // 🚀 BANDWIDTH FIX: Don't reload profile after update
+      // The stats we're sending ARE the current stats, no need to refetch
+      ConvexProfileService.updateStats(
+        address,
+        nfts.length,
+        openedCardsCount,
+        unopenedCardsCount,
+        totalNftPower,
+        shouldSendTokenIds ? nftTokenIds : undefined, // Only send when count changed
+        collectionPowers
+      )
         .then(() => {
-          // Reload profile to get updated stats
-          return ConvexProfileService.getProfile(address);
-        })
-        .then((updatedProfile) => {
-          if (updatedProfile) {
-            setUserProfile(updatedProfile);
+          // Update local state with the stats we just sent (no refetch needed)
+          if (userProfile) {
+            setUserProfile({
+              ...userProfile,
+              stats: {
+                ...userProfile.stats,
+                totalCards: nfts.length,
+                openedCards: openedCardsCount,
+                unopenedCards: unopenedCardsCount,
+                totalPower: totalNftPower,
+                ...collectionPowers,
+              },
+            });
           }
         })
         .catch((error) => {
@@ -3696,12 +3736,12 @@ export default function TCGPage() {
   // Clean conflicting cards from defense deck on initial load
   // (cards that are now in raid deck should be removed from defense)
   useEffect(() => {
-    if (address && defenseLockedCards?.lockedTokenIds?.length) {
+    if (address && defenseLockedTokenIds.size > 0) {
       cleanConflictingDefense({ address }).catch(err => {
         console.error('Error cleaning conflicting defense cards:', err);
       });
     }
-  }, [address, defenseLockedCards?.lockedTokenIds?.length, cleanConflictingDefense]);
+  }, [address, defenseLockedTokenIds.size, cleanConflictingDefense]);
 
   // Load defenses received (attacks from other players)
   useEffect(() => {

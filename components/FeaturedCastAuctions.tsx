@@ -86,8 +86,9 @@ export function FeaturedCastAuctions({
   const recentRefunds = useQuery(api.castAuctions.getRecentRefunds, address ? { address } : "skip");
   const [dismissedRefunds, setDismissedRefunds] = useState(false);
 
-  // Get profile for username
-  const profile = useQuery(api.profiles.getProfile, address ? { address } : "skip");
+  // 🚀 BANDWIDTH FIX: Use getProfileDashboard instead of getProfile
+  // Only needs hasVibeBadge - saves ~8KB per query
+  const profile = useQuery(api.profiles.getProfileDashboard, address ? { address } : "skip");
 
   // Get real VBMS balance from wallet
   const { balance: vbmsBalance, refetch: refetchBalance } = useFarcasterVBMSBalance(address);

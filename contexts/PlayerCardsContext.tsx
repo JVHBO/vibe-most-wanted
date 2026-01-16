@@ -256,8 +256,27 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
   // User profile
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // Locked cards (cards in defense deck)
-  const [attackLockedCards, setAttackLockedCards] = useState<{ lockedTokenIds: string[] } | null>(null);
+  // 🚀 BANDWIDTH FIX: Derive locked cards from userProfile.defenseDeck
+  // No need for separate getAvailableCards query - saves ~16MB/day
+  const lockedTokenIds = useMemo(() => {
+    if (!userProfile?.defenseDeck || userProfile.defenseDeck.length === 0) {
+      return [];
+    }
+    const locked: string[] = [];
+    for (const card of userProfile.defenseDeck) {
+      if (typeof card === 'object' && card !== null && 'tokenId' in card) {
+        // Skip VibeFID cards - they're exempt from lock
+        if (card.collection === 'vibefid') continue;
+        locked.push(`${card.collection || 'default'}:${card.tokenId}`);
+      } else if (typeof card === 'string') {
+        locked.push(`default:${card}`);
+      }
+    }
+    return locked;
+  }, [userProfile?.defenseDeck]);
+
+  // Legacy: Keep attackLockedCards for backward compat (derived from lockedTokenIds)
+  const attackLockedCards = useMemo(() => ({ lockedTokenIds }), [lockedTokenIds]);
 
   // Mutations
   const payAttackEntryFee = useMutation(api.economy.payEntryFee);
@@ -545,16 +564,9 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     }
   }, [userProfile?.lastAttackDate, userProfile?.attacksToday, maxAttacks, address]);
 
-  // Load locked cards (defense deck) - same as page.tsx
-  useEffect(() => {
-    if (address && convex) {
-      convex.query(api.profiles.getAvailableCards, { address, mode: 'attack' }).then(result => {
-        setAttackLockedCards(result || null);
-      }).catch(e => {
-        devError('Error loading locked cards:', e);
-      });
-    }
-  }, [address, convex]);
+  // 🚀 BANDWIDTH FIX: Removed getAvailableCards useEffect
+  // lockedTokenIds is now derived from userProfile.defenseDeck (see line ~260)
+  // Saves ~16MB/day bandwidth
 
   // Clear on disconnect
   useEffect(() => {
@@ -578,18 +590,16 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     return calculateLeaderboardAttackPower(attackSelectedCards);
   }, [attackSelectedCards]);
 
-  // Helper: Check if card is locked - now takes card object for proper collection+tokenId comparison
-  const isCardLocked = useCallback((card: { tokenId: string; collection?: string }, mode: 'attack' | 'pvp') => {
+  // 🚀 BANDWIDTH FIX: Helper to check if card is locked
+  // Uses lockedTokenIds derived from userProfile.defenseDeck
+  const isCardLocked = useCallback((card: { tokenId: string; collection?: string }, _mode: 'attack' | 'pvp') => {
     // VibeFID cards are never locked
     if (card?.collection === 'vibefid') return false;
 
-    if (mode === 'attack') {
-      // Use getCardKey for proper collection:tokenId comparison
-      const cardKey = getCardKey(card);
-      return attackLockedCards?.lockedTokenIds?.includes(cardKey) || false;
-    }
-    return false;
-  }, [attackLockedCards]);
+    // Use getCardKey for proper collection:tokenId comparison
+    const cardKey = getCardKey(card);
+    return lockedTokenIds.includes(cardKey);
+  }, [lockedTokenIds]);
 
   // Helper: Show victory
   const showVictory = useCallback(() => {

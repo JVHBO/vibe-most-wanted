@@ -26,12 +26,13 @@ export default function QuestsPage() {
   const claimSocialReward = useMutation(api.socialQuests.claimSocialQuestReward);
 
 
-  // Get user FID from profile
-  const profile = useQuery(
-    api.profiles.getProfile,
+  // 🚀 BANDWIDTH FIX: Use getProfileDashboard instead of getProfile
+  // Only needs fid, saves ~50KB per call
+  const profileDashboard = useQuery(
+    api.profiles.getProfileDashboard,
     address ? { address: address.toLowerCase() } : "skip"
   );
-  const userFid = profile?.fid;
+  const userFid = profileDashboard?.fid;
 
   // State
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -477,8 +478,9 @@ export default function QuestsPage() {
 
                 {/* 2x Bonus Banner */}
                 {(() => {
-                  const hasVibeFID = profile?.ownedTokenIds?.some((id: string) => id.toLowerCase().startsWith('vibefid:'));
-                  const hasVibeBadge = profile?.hasVibeBadge;
+                  // 🚀 BANDWIDTH FIX: Use fid from profileDashboard instead of checking ownedTokenIds
+                  const hasVibeFID = !!profileDashboard?.fid;
+                  const hasVibeBadge = profileDashboard?.hasVibeBadge;
                   const has2xBonus = hasVibeFID || hasVibeBadge;
                   const bonusSource = hasVibeBadge ? "VIBE Badge" : hasVibeFID ? "VibeFID" : "";
 

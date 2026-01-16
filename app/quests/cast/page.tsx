@@ -19,13 +19,14 @@ export default function CastQuestsPage() {
   const featuredCasts = useQuery(api.featuredCasts.getActiveCasts);
   const claimCastReward = useMutation(api.featuredCasts.claimCastInteractionReward);
 
-  // Get user FID from profile
-  const profile = useQuery(
-    api.profiles.getProfile,
+  // 🚀 BANDWIDTH FIX: Use getProfileDashboard instead of getProfile
+  // Only needs fid and hasVibeBadge, saves ~50KB per call
+  const profileDashboard = useQuery(
+    api.profiles.getProfileDashboard,
     address ? { address: address.toLowerCase() } : "skip"
   );
-  const userFid = profile?.fid;
-  const hasVibeBadge = profile?.hasVibeBadge;
+  const userFid = profileDashboard?.fid;
+  const hasVibeBadge = profileDashboard?.hasVibeBadge;
   const castInteractionReward = hasVibeBadge ? 600 : 300;
 
   // State

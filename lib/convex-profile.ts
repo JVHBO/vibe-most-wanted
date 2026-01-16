@@ -53,6 +53,7 @@ export interface UserProfile {
     name: string;
     rarity: string;
     foil?: string;
+    collection?: string; // Collection ID ('vibe', 'vibefid', etc.)
   })[];
   hasDefenseDeck?: boolean; // Flag for leaderboard (true if defenseDeck has 5 cards)
   attacksToday: number;
@@ -279,6 +280,7 @@ export class ConvexProfileService {
 
   /**
    * Update profile stats
+   * 🚀 BANDWIDTH FIX: Removed getProfile call - stats are passed from frontend
    */
   static async updateStats(
     address: string,
@@ -297,23 +299,19 @@ export class ConvexProfileService {
     try {
       const normalizedAddress = address.toLowerCase();
 
-      // Get current profile to preserve other stats
-      const profile = await this.getProfile(normalizedAddress);
-      if (!profile) {
-        throw new Error("Profile not found");
-      }
-
-      await getConvex().mutation(api.profiles.updateStats, {
+      // 🚀 BANDWIDTH FIX: Use updateStatsLite which preserves battle stats
+      // No need to fetch full profile just to update card stats
+      await getConvex().mutation(api.profiles.updateStatsLite, {
         address: normalizedAddress,
-        stats: {
-          ...profile.stats,
-          totalCards,
-          openedCards,
-          unopenedCards,
-          totalPower,
-          ...(collectionPowers || {}), // Spread collection powers if provided
-        },
-        tokenIds, // Pass tokenIds for validation
+        totalCards,
+        openedCards,
+        unopenedCards,
+        totalPower,
+        vibePower: collectionPowers?.vibePower,
+        vbrsPower: collectionPowers?.vbrsPower,
+        vibefidPower: collectionPowers?.vibefidPower,
+        afclPower: collectionPowers?.afclPower,
+        tokenIds,
       });
     } catch (error: any) {
       devError("❌ updateStats error:", error);
