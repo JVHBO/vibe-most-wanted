@@ -173,7 +173,9 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
     const results = await Promise.allSettled(
       batch.map(async (collection) => {
         devLog(`📡 [Page] Fetching from ${collection.displayName}`);
-        const nfts = await fetchNFTs(owner, collection.contractAddress);
+        // 🚀 OPTIMIZATION: Pass balance to enable smart caching
+        const balance = balances[collection.contractAddress.toLowerCase()];
+        const nfts = await fetchNFTs(owner, collection.contractAddress, undefined, balance);
         const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
         collectionCounts[collection.displayName] = nfts.length;
         totalCards += nfts.length;
@@ -207,7 +209,9 @@ async function fetchNFTsFromAllCollections(owner: string, onProgress?: (page: nu
       for (const collection of failedCollections) {
         try {
           devLog(`🔄 [Page] Retry ${retry + 1} for ${collection.displayName}`);
-          const nfts = await fetchNFTs(owner, collection.contractAddress);
+          // 🚀 OPTIMIZATION: Pass balance to enable smart caching
+          const balance = balances[collection.contractAddress.toLowerCase()];
+          const nfts = await fetchNFTs(owner, collection.contractAddress, undefined, balance);
           const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
           collectionCounts[collection.displayName] = nfts.length;
           totalCards += nfts.length;

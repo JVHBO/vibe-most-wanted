@@ -48,7 +48,10 @@ async function fetchNFTsFromAllCollections(owner: string): Promise<any[]> {
     const results = await Promise.allSettled(
       batch.map(async (collection) => {
         devLog(`📡 [Context] Fetching from ${collection.displayName}`);
-        const nfts = await fetchNFTs(owner, collection.contractAddress);
+        // 🚀 OPTIMIZATION: Pass balance to enable smart caching
+        // If balance unchanged, uses cache indefinitely (no Alchemy call!)
+        const balance = balances[collection.contractAddress.toLowerCase()];
+        const nfts = await fetchNFTs(owner, collection.contractAddress, undefined, balance);
         const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
         collectionCounts[collection.displayName] = nfts.length;
         totalCards += nfts.length;

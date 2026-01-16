@@ -14,9 +14,9 @@ export * from './card-filter';
 export { findAttr, calcPower, normalizeUrl, isUnrevealed } from './attributes';
 
 // Re-export funções de fetcher
-export { getImage, fetchNFTs, getAlchemyStatus } from './fetcher';
+export { getImage, fetchNFTs, getAlchemyStatus, checkCollectionBalances } from './fetcher';
 
-import { fetchNFTs, getImage } from './fetcher';
+import { fetchNFTs, getImage, checkCollectionBalances } from './fetcher';
 import { findAttr, calcPower } from './attributes';
 import { filterUnopened } from './card-filter';
 import { getEnabledCollections, type CollectionId } from '@/lib/collections/index';
@@ -26,24 +26,38 @@ import type { Card, CardRarity, CardFoil } from '@/lib/types/card';
 /**
  * Busca NFTs de todas as coleções habilitadas para um endereço
  *
- * 🚀 OPTIMIZATION: Parallel fetching with batches of 3 collections
- * - 3-5x faster than sequential fetching
- * - 200ms delay between batches to avoid Alchemy rate limits
+ * 🚀 OPTIMIZATION (Jan 2026):
+ * - Uses free Base RPC to check balanceOf before Alchemy calls
+ * - Passes balance to fetchNFTs for smart caching
+ * - If balance unchanged, uses cached NFTs indefinitely (no Alchemy call!)
+ * - Parallel fetching with batches of 3 collections
+ * - 200ms delay between batches to avoid rate limits
  */
 export async function fetchNFTsFromAllCollections(owner: string): Promise<any[]> {
   const enabledCollections = getEnabledCollections().filter(c => c.contractAddress);
-  console.log('🎴 [NFT] Fetching from', enabledCollections.length, 'collections in parallel batches');
+  console.log('🎴 [NFT] Fetching from', enabledCollections.length, 'collections with smart caching');
+
+  // STEP 1: Check balances via free RPC (for smart caching)
+  const { collectionsWithNfts, balances } = await checkCollectionBalances(owner, enabledCollections);
+
+  // Log savings from RPC optimization
+  const savedCalls = enabledCollections.length - collectionsWithNfts.length;
+  if (savedCalls > 0) {
+    console.log(`💰 [NFT] RPC Optimization: Saved ${savedCalls} Alchemy calls (no NFTs)`);
+  }
 
   const allNfts: any[] = [];
-  const COLLECTION_BATCH_SIZE = 3; // Same as PlayerCardsContext
+  const COLLECTION_BATCH_SIZE = 3;
 
-  // Process collections in parallel batches
-  for (let i = 0; i < enabledCollections.length; i += COLLECTION_BATCH_SIZE) {
-    const batch = enabledCollections.slice(i, i + COLLECTION_BATCH_SIZE);
+  // STEP 2: Fetch only from collections with NFTs, passing balance for smart caching
+  for (let i = 0; i < collectionsWithNfts.length; i += COLLECTION_BATCH_SIZE) {
+    const batch = collectionsWithNfts.slice(i, i + COLLECTION_BATCH_SIZE);
 
     const results = await Promise.allSettled(
       batch.map(async (collection) => {
-        const nfts = await fetchNFTs(owner, collection.contractAddress);
+        // 🚀 SMART CACHING: Pass balance - if unchanged, uses cached data indefinitely
+        const balance = balances[collection.contractAddress.toLowerCase()];
+        const nfts = await fetchNFTs(owner, collection.contractAddress, undefined, balance);
         return nfts.map(nft => ({ ...nft, collection: collection.id }));
       })
     );
@@ -60,7 +74,7 @@ export async function fetchNFTsFromAllCollections(owner: string): Promise<any[]>
     });
 
     // 200ms delay between batches to avoid rate limits
-    if (i + COLLECTION_BATCH_SIZE < enabledCollections.length) {
+    if (i + COLLECTION_BATCH_SIZE < collectionsWithNfts.length) {
       await new Promise(r => setTimeout(r, 200));
     }
   }
