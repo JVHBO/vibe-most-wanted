@@ -144,6 +144,7 @@ export const getProfileLite = query({
       farcasterPfpUrl: profile.farcasterPfpUrl,
       twitter: profile.twitter,
       twitterHandle: profile.twitterHandle,
+      twitterProfileImageUrl: profile.twitterProfileImageUrl,
       hasDefenseDeck: (profile.defenseDeck?.length || 0) === 5,
       preferredCollection: profile.preferredCollection,
       createdAt: profile.createdAt,

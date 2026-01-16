@@ -141,6 +141,27 @@ export class ConvexProfileService {
   }
 
   /**
+   * 🚀 BANDWIDTH FIX: Get a LITE profile (excludes heavy arrays)
+   * Use this instead of getProfile when you don't need:
+   * - defenseDeck (5 full card objects)
+   * - revealedCardsCache (100+ cards)
+   * - ownedTokenIds (thousands of IDs)
+   * Saves ~95% bandwidth per profile fetch
+   */
+  static async getProfileLite(address: string): Promise<Partial<UserProfile> | null> {
+    try {
+      const normalizedAddress = address.toLowerCase();
+      const profile = await getConvex().query(api.profiles.getProfileLite, {
+        address: normalizedAddress,
+      });
+      return profile;
+    } catch (error: any) {
+      devError("❌ getProfileLite error:", error);
+      return null;
+    }
+  }
+
+  /**
    * Get leaderboard (top players by power)
    * Shows all players (increased limit to 1000)
    */

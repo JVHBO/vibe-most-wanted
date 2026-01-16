@@ -523,7 +523,8 @@ export default function TCGPage() {
         const fid = context?.user?.fid;
         if (fid) {
           devLog('📱 Saving FID to profile:', fid);
-          const profile = await ConvexProfileService.getProfile(wagmiAddress);
+          // 🚀 BANDWIDTH FIX: Use lite profile (only need fid field)
+          const profile = await ConvexProfileService.getProfileLite(wagmiAddress);
           if (profile && (!profile.fid || profile.fid !== fid.toString())) {
             await ConvexProfileService.updateProfile(wagmiAddress, {
               fid: fid.toString(),
@@ -2711,7 +2712,8 @@ export default function TCGPage() {
     try {
       // ✓ Verify profile exists in Convex first
       devLog('🔍 Verifying profile exists...');
-      const existingProfile = await ConvexProfileService.getProfile(address);
+      // 🚀 BANDWIDTH FIX: Use lite profile (only need existence check)
+      const existingProfile = await ConvexProfileService.getProfileLite(address);
       if (!existingProfile) {
         devError('✗ Profile not found in Convex!');
         alert('Error: Your profile was not found. Please create a profile first.');
@@ -2974,11 +2976,12 @@ export default function TCGPage() {
             const playerName = isHost ? (room.hostUsername || 'You') : (room.guestUsername || 'You');
 
             // Busca perfil do oponente para pegar Twitter
+            // 🚀 BANDWIDTH FIX: Use lite profile (only need twitter fields)
             let opponentTwitter = undefined;
             let opponentPfpUrl = undefined;
             if (opponentAddress) {
               try {
-                const opponentProfile = await ConvexProfileService.getProfile(opponentAddress);
+                const opponentProfile = await ConvexProfileService.getProfileLite(opponentAddress);
                 opponentTwitter = opponentProfile?.twitter;
                 opponentPfpUrl = opponentProfile?.twitterProfileImageUrl;
                 devLog('Opponent profile loaded:', opponentProfile?.username, 'twitter:', opponentTwitter);
