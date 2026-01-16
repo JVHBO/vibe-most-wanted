@@ -1314,8 +1314,9 @@ export default defineSchema({
     .index("by_type", ["type"]),
 
   // 🚀 FULL Leaderboard Cache (reduces bandwidth by ~99% for getLeaderboardLite)
-  // Stores pre-computed leaderboard data, updated every 10 minutes
-  // Saves ~1.4GB/month by avoiding full profile fetches on every page load
+  // Stores pre-computed leaderboard data, updated 1x per day
+  // 🚀 BANDWIDTH FIX v4: Only stores fields used by UI
+  // Note: Legacy fields kept as optional for backward compatibility with existing cache
   leaderboardFullCache: defineTable({
     type: v.literal("full_leaderboard"), // Cache type identifier
     data: v.array(v.object({
@@ -1325,18 +1326,20 @@ export default defineSchema({
       farcasterPfpUrl: v.optional(v.string()),
       aura: v.number(),
       totalPower: v.number(),
-      vibePower: v.number(),
-      vbrsPower: v.number(),
-      vibefidPower: v.number(),
-      afclPower: v.number(),
-      pveWins: v.number(),
-      pveLosses: v.number(),
-      pvpWins: v.number(),
-      pvpLosses: v.number(),
-      openedCards: v.number(),
       hasDefenseDeck: v.boolean(),
       userIndex: v.number(),
       isBlacklisted: v.boolean(),
+      hasVibeBadge: v.optional(v.boolean()), // 🐛 FIX: Added for UI badge display
+      // Legacy fields - kept for backward compat with existing cache data
+      vibePower: v.optional(v.number()),
+      vbrsPower: v.optional(v.number()),
+      vibefidPower: v.optional(v.number()),
+      afclPower: v.optional(v.number()),
+      pveWins: v.optional(v.number()),
+      pveLosses: v.optional(v.number()),
+      pvpWins: v.optional(v.number()),
+      pvpLosses: v.optional(v.number()),
+      openedCards: v.optional(v.number()),
     })),
     updatedAt: v.number(),
   })
