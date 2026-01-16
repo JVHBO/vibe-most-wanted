@@ -360,8 +360,8 @@ export const getLeaderboardLite = query({
         const cacheMaxAge = 35 * 60 * 1000; // 35 minutes (cron runs every 30min)
 
         if (cacheAge < cacheMaxAge) {
-          // Return cached data (already formatted correctly)
-          return cache.data.slice(0, limit).map(p => ({
+          // 🚀 BANDWIDTH FIX v4: Return only fields actually needed by UI
+          return cache.data.slice(0, limit).map((p: any) => ({
             address: p.address,
             username: p.username,
             twitterProfileImageUrl: p.twitterProfileImageUrl,
@@ -369,19 +369,11 @@ export const getLeaderboardLite = query({
             stats: {
               aura: p.aura,
               totalPower: p.totalPower,
-              vibePower: p.vibePower,
-              vbrsPower: p.vbrsPower,
-              vibefidPower: p.vibefidPower,
-              afclPower: p.afclPower,
-              pveWins: p.pveWins,
-              pveLosses: p.pveLosses,
-              pvpWins: p.pvpWins,
-              pvpLosses: p.pvpLosses,
-              openedCards: p.openedCards,
             },
             hasDefenseDeck: p.hasDefenseDeck,
             userIndex: p.userIndex,
             isBlacklisted: p.isBlacklisted,
+            hasVibeBadge: p.hasVibeBadge, // 🐛 FIX: Was missing!
           }));
         }
       }
@@ -397,7 +389,8 @@ export const getLeaderboardLite = query({
         .take(limit + 100); // Fetch extra to account for filtered ones
 
       // 🚀 BANDWIDTH FIX v2: Load all linked addresses ONCE instead of N individual queries!
-      const allLinks = await ctx.db.query("addressLinks").collect();
+      // 🚀 BANDWIDTH FIX v3: Added .take() limit (table is small but just in case)
+      const allLinks = await ctx.db.query("addressLinks").take(1000);
       const linkedAddressSet = new Set(allLinks.map(link => link.address.toLowerCase()));
 
       const primaryProfiles = [];
@@ -409,7 +402,8 @@ export const getLeaderboardLite = query({
         if (primaryProfiles.length >= limit) break;
       }
 
-      // Map to minimal fields
+      // Map to minimal fields (same as cache format)
+      // 🚀 BANDWIDTH FIX v4: Only include fields actually used by UI
       const mapped = primaryProfiles.map(p => {
         const address = p.address || "unknown";
         const blacklisted = isBlacklisted(address);
@@ -419,22 +413,16 @@ export const getLeaderboardLite = query({
         return {
           address,
           username: p.username || "unknown",
+          twitterProfileImageUrl: p.twitterProfileImageUrl,
+          farcasterPfpUrl: p.farcasterPfpUrl,
           stats: {
             aura: blacklisted ? -punishment : (p.stats?.aura ?? 500),
             totalPower: blacklisted ? -punishment : (p.stats?.totalPower || 0),
-            vibePower: blacklisted ? 0 : (p.stats?.vibePower || 0),
-            vbrsPower: blacklisted ? 0 : (p.stats?.vbrsPower || 0),
-            vibefidPower: blacklisted ? 0 : (p.stats?.vibefidPower || 0),
-            afclPower: blacklisted ? 0 : (p.stats?.afclPower || 0),
-            pveWins: p.stats?.pveWins || 0,
-            pveLosses: p.stats?.pveLosses || 0,
-            pvpWins: p.stats?.pvpWins || 0,
-            pvpLosses: p.stats?.pvpLosses || 0,
-            openedCards: p.stats?.openedCards || 0,
           },
           hasDefenseDeck: p.hasFullDefenseDeck === true || (p.defenseDeck?.length || 0) === 5,
           userIndex: p.userIndex || 0,
           isBlacklisted: blacklisted,
+          hasVibeBadge: p.hasVibeBadge || false,
         };
       });
 
@@ -465,7 +453,8 @@ export const updateLeaderboardFullCache = internalMutation({
       // 🚀 BANDWIDTH FIX v2: Load all linked addresses ONCE instead of 250 individual queries!
       // This reduces 250 queries to just 1 query + in-memory Set lookup
       // addressLinks table is small (only users who linked wallets, typically <100 entries)
-      const allLinks = await ctx.db.query("addressLinks").collect();
+      // 🚀 BANDWIDTH FIX v3: Added .take() limit
+      const allLinks = await ctx.db.query("addressLinks").take(1000);
       const linkedAddressSet = new Set(allLinks.map(link => link.address.toLowerCase()));
 
       const primaryProfiles = [];
@@ -482,6 +471,9 @@ export const updateLeaderboardFullCache = internalMutation({
       }
 
       // Map to cached format
+      // 🚀 BANDWIDTH FIX v4: Only include fields actually used by leaderboard UI
+      // Removed: vibePower, vbrsPower, vibefidPower, afclPower, pveWins, pveLosses, pvpWins, pvpLosses, openedCards
+      // Added: hasVibeBadge (was missing!)
       const cachedData = primaryProfiles.map(p => {
         const address = p.address || "unknown";
         const blacklisted = isBlacklisted(address);
@@ -495,18 +487,10 @@ export const updateLeaderboardFullCache = internalMutation({
           farcasterPfpUrl: p.farcasterPfpUrl,
           aura: blacklisted ? -punishment : (p.stats?.aura ?? 500),
           totalPower: blacklisted ? -punishment : (p.stats?.totalPower || 0),
-          vibePower: blacklisted ? 0 : (p.stats?.vibePower || 0),
-          vbrsPower: blacklisted ? 0 : (p.stats?.vbrsPower || 0),
-          vibefidPower: blacklisted ? 0 : (p.stats?.vibefidPower || 0),
-          afclPower: blacklisted ? 0 : (p.stats?.afclPower || 0),
-          pveWins: p.stats?.pveWins || 0,
-          pveLosses: p.stats?.pveLosses || 0,
-          pvpWins: p.stats?.pvpWins || 0,
-          pvpLosses: p.stats?.pvpLosses || 0,
-          openedCards: p.stats?.openedCards || 0,
           hasDefenseDeck: true,
           userIndex: p.userIndex || 0,
           isBlacklisted: blacklisted,
+          hasVibeBadge: p.hasVibeBadge || false, // 🐛 FIX: Was missing from cache!
         };
       });
 
