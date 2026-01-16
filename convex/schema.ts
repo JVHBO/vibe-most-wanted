@@ -1760,4 +1760,12 @@ export default defineSchema({
     totalNftsTracked: v.number(),
   })
     .index("by_contract", ["contractAddress"]),
+
+  // API Stats for debugging (Alchemy usage tracking)
+  apiStats: defineTable({
+    key: v.string(), // e.g., "gift_nfts_total", "alchemy_calls"
+    value: v.number(),
+    lastUpdated: v.number(),
+  })
+    .index("by_key", ["key"]),
 });

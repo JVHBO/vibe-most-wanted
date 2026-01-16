@@ -1,102 +1,64 @@
 /**
  * Debug endpoint to check NFT fetching stats
- * GET /api/debug/nft-stats
+ * GET /api/debug/nft-stats - Get stats
+ * POST /api/debug/nft-stats - Reset stats
  */
 
 import { NextResponse } from "next/server";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
 
-// Import stats from fetcher (we need to export them)
-// For now, create local tracking that persists in serverless function memory
-
-let debugStats = {
-  rpcCalls: 0,
-  rpcSuccess: 0,
-  rpcFailed: 0,
-  alchemyCalls: 0,
-  cacheHits: 0,
-  giftApiCalls: 0,
-  giftApiCacheHits: 0,
-  lastReset: Date.now(),
-  errors: [] as string[],
-};
-
-// Export for other modules to update
-export function trackRpc(success: boolean) {
-  debugStats.rpcCalls++;
-  if (success) debugStats.rpcSuccess++;
-  else debugStats.rpcFailed++;
-}
-
-export function trackAlchemy() {
-  debugStats.alchemyCalls++;
-}
-
-export function trackCacheHit() {
-  debugStats.cacheHits++;
-}
-
-export function trackGiftApi(cached: boolean) {
-  debugStats.giftApiCalls++;
-  if (cached) debugStats.giftApiCacheHits++;
-}
-
-export function trackError(msg: string) {
-  debugStats.errors.push(`${new Date().toISOString()}: ${msg}`);
-  if (debugStats.errors.length > 50) debugStats.errors.shift();
-}
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "");
 
 export async function GET() {
-  const now = Date.now();
-  const uptimeMs = now - debugStats.lastReset;
-  const uptimeMin = Math.floor(uptimeMs / 60000);
+  try {
+    const stats = await convex.query(api.apiStats.getAll);
 
-  const rpcSuccessRate = debugStats.rpcCalls > 0
-    ? ((debugStats.rpcSuccess / debugStats.rpcCalls) * 100).toFixed(1)
-    : 'N/A';
+    const total = stats.gift_nfts_total || 0;
+    const cacheHits = stats.gift_nfts_cache_hit || 0;
+    const alchemyCalls = stats.alchemy_calls || 0;
+    const rpcTotal = stats.rpc_total || 0;
+    const rpcFailed = stats.rpc_failed || 0;
 
-  const giftCacheRate = debugStats.giftApiCalls > 0
-    ? ((debugStats.giftApiCacheHits / debugStats.giftApiCalls) * 100).toFixed(1)
-    : 'N/A';
-
-  return NextResponse.json({
-    status: 'ok',
-    uptime: `${uptimeMin} minutes`,
-    stats: {
-      rpc: {
-        total: debugStats.rpcCalls,
-        success: debugStats.rpcSuccess,
-        failed: debugStats.rpcFailed,
-        successRate: `${rpcSuccessRate}%`,
+    return NextResponse.json({
+      status: "ok",
+      stats: {
+        giftApi: {
+          total,
+          cacheHits,
+          alchemyCalls: total - cacheHits,
+          cacheRate: total > 0 ? `${((cacheHits / total) * 100).toFixed(1)}%` : "N/A",
+        },
+        rpc: {
+          total: rpcTotal,
+          failed: rpcFailed,
+          successRate: rpcTotal > 0 ? `${(((rpcTotal - rpcFailed) / rpcTotal) * 100).toFixed(1)}%` : "N/A",
+        },
+        alchemy: {
+          calls: alchemyCalls,
+        },
+        raw: stats,
       },
-      alchemy: {
-        calls: debugStats.alchemyCalls,
-        cacheHits: debugStats.cacheHits,
-        saved: debugStats.cacheHits > 0 ? `${((debugStats.cacheHits / (debugStats.alchemyCalls + debugStats.cacheHits)) * 100).toFixed(1)}%` : 'N/A',
-      },
-      giftApi: {
-        calls: debugStats.giftApiCalls,
-        cacheHits: debugStats.giftApiCacheHits,
-        cacheRate: `${giftCacheRate}%`,
-      },
-    },
-    recentErrors: debugStats.errors.slice(-10),
-    note: 'Stats reset when serverless function cold starts',
-  });
+    });
+  } catch (error: any) {
+    return NextResponse.json({
+      status: "error",
+      error: error.message
+    }, { status: 500 });
+  }
 }
 
-// Reset endpoint
 export async function POST() {
-  debugStats = {
-    rpcCalls: 0,
-    rpcSuccess: 0,
-    rpcFailed: 0,
-    alchemyCalls: 0,
-    cacheHits: 0,
-    giftApiCalls: 0,
-    giftApiCacheHits: 0,
-    lastReset: Date.now(),
-    errors: [],
-  };
-
-  return NextResponse.json({ status: 'reset', timestamp: new Date().toISOString() });
+  try {
+    await convex.mutation(api.apiStats.resetAll);
+    return NextResponse.json({
+      status: "reset",
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    return NextResponse.json({
+      status: "error",
+      error: error.message
+    }, { status: 500 });
+  }
 }

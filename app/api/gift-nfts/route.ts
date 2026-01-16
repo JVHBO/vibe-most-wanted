@@ -13,6 +13,16 @@ import { NextResponse } from "next/server";
 import { fetchNFTs, getImage } from "@/lib/nft/fetcher";
 import { findAttr } from "@/lib/nft/attributes";
 import { COLLECTIONS, type CollectionId } from "@/lib/collections";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
+
+// Convex client for stats tracking
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL || "");
+
+// Fire-and-forget stat tracking (don't await, don't block response)
+function trackStat(key: string) {
+  convex.mutation(api.apiStats.increment, { key }).catch(() => {});
+}
 
 // Collections that can be gifted via VibeMail (only active collections)
 const GIFTABLE_COLLECTIONS: CollectionId[] = [
@@ -61,10 +71,14 @@ export async function GET(request: Request) {
     const cached = serverCache.get(cacheKey);
     if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
       logRequest(address, true);
+      trackStat("gift_nfts_total");
+      trackStat("gift_nfts_cache_hit");
       return NextResponse.json(cached.data);
     }
 
     logRequest(address, false);
+    trackStat("gift_nfts_total");
+    trackStat("alchemy_calls");
 
     // Fetch NFTs from each giftable collection
     const allNfts: any[] = [];
