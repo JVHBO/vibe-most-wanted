@@ -58,6 +58,7 @@ async function checkBalance(owner: string, contract: string): Promise<number> {
   const data = balanceOfSelector + ownerPadded;
 
   for (const rpc of BASE_RPCS) {
+    trackStat("rpc_total");
     try {
       const res = await fetch(rpc, {
         method: "POST",
@@ -76,6 +77,7 @@ async function checkBalance(owner: string, contract: string): Promise<number> {
       if (json.error) continue;
 
       if (json.result === "0x" || json.result === "0x0" || json.result === "0x00") {
+        trackStat("rpc_success");
         return 0;
       }
 
