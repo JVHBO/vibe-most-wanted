@@ -323,13 +323,13 @@ export function PokerBattleTable({
     }
   }, [messages, playerAddress]);
 
-  // Get player profiles for avatars
+  // 🚀 BANDWIDTH FIX: Use getProfileDashboard for avatars (only needs twitterProfileImageUrl)
   const hostProfile = useQuery(
-    api.profiles.getProfile,
+    api.profiles.getProfileDashboard,
     room?.hostAddress ? { address: room.hostAddress } : "skip"
   );
   const guestProfile = useQuery(
-    api.profiles.getProfile,
+    api.profiles.getProfileDashboard,
     room?.guestAddress ? { address: room.guestAddress } : "skip"
   );
 

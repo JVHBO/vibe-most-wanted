@@ -260,6 +260,7 @@ export const getProfileDashboard = query({
       fid: profile.fid,
       farcasterFid: profile.farcasterFid,
       farcasterPfpUrl: profile.farcasterPfpUrl,
+      twitterProfileImageUrl: profile.twitterProfileImageUrl, // 🚀 For PokerBattleTable avatars
       hasVibeBadge: profile.hasVibeBadge || false,
 
       // 🚀 BANDWIDTH FIX: Locked cards for attack/pvp modes
@@ -344,23 +345,22 @@ export const getLeaderboardLite = query({
       // 🔄 CACHE MISS: Fall back to direct query (only happens on first load or stale cache)
       console.log("⚠️ Leaderboard cache miss - fetching from profiles");
 
-      // 🚀 BANDWIDTH FIX: Fetch more profiles and filter linked addresses individually
+      // 🚀 BANDWIDTH FIX: Fetch more profiles and filter linked addresses
       const topProfiles = await ctx.db
         .query("profiles")
         .withIndex("by_defense_aura", (q) => q.eq("hasFullDefenseDeck", true))
         .order("desc")
         .take(limit + 100); // Fetch extra to account for filtered ones
 
-      // 🔗 Filter out linked addresses (orphan profiles) using individual indexed queries
+      // 🚀 BANDWIDTH FIX v2: Load all linked addresses ONCE instead of N individual queries!
+      const allLinks = await ctx.db.query("addressLinks").collect();
+      const linkedAddressSet = new Set(allLinks.map(link => link.address.toLowerCase()));
+
       const primaryProfiles = [];
       for (const p of topProfiles) {
         if (!p.address) continue;
-        // Check if this address is linked (meaning it's an orphan)
-        const isLinked = await ctx.db
-          .query("addressLinks")
-          .withIndex("by_address", (q) => q.eq("address", p.address))
-          .first();
-        if (isLinked) continue; // Skip linked addresses
+        // O(1) Set lookup instead of DB query
+        if (linkedAddressSet.has(p.address.toLowerCase())) continue;
         primaryProfiles.push(p);
         if (primaryProfiles.length >= limit) break;
       }
@@ -418,21 +418,19 @@ export const updateLeaderboardFullCache = internalMutation({
         .order("desc")
         .take(250);
 
-      // 🚀 BANDWIDTH FIX: Check each profile individually with index instead of loading ALL addressLinks
-      // OLD: const allLinks = await ctx.db.query("addressLinks").collect(); // Loaded entire table!
+      // 🚀 BANDWIDTH FIX v2: Load all linked addresses ONCE instead of 250 individual queries!
+      // This reduces 250 queries to just 1 query + in-memory Set lookup
+      // addressLinks table is small (only users who linked wallets, typically <100 entries)
+      const allLinks = await ctx.db.query("addressLinks").collect();
+      const linkedAddressSet = new Set(allLinks.map(link => link.address.toLowerCase()));
+
       const primaryProfiles = [];
       for (const p of topProfiles) {
         if (!p.address) continue;
 
-        // Check if this address is a linked (secondary) address using index
-        const isLinked = await ctx.db
-          .query("addressLinks")
-          .withIndex("by_address", (q) => q.eq("address", p.address))
-          .first();
-
-        if (isLinked) {
-          console.log(`📋 Leaderboard: Skipping orphan profile ${p.username} (${p.address}) - linked to another profile`);
-          continue;
+        // Check if this address is a linked (secondary) address - O(1) Set lookup
+        if (linkedAddressSet.has(p.address.toLowerCase())) {
+          continue; // Skip linked addresses silently (no console.log spam)
         }
 
         primaryProfiles.push(p);
