@@ -212,4 +212,5 @@ public/images/raid-bosses/*
 !public/images/raid-bosses/vibefx/
 !public/images/raid-bosses/historyofcomputer/
 !public/images/raid-bosses/cumioh/
+!public/images/raid-bosses/viberotbangers/
 .env*.local
