@@ -39,19 +39,21 @@ crons.hourly(
   internal.notifications.sendLowEnergyNotifications
 );
 
-// 🚀 Top 10 Leaderboard cache update (every 30 minutes) - was 10 minutes
+// 🚀 Top 10 Leaderboard cache update (every 60 minutes) - was 30 minutes
 // Reduces bandwidth by ~95% for checkWeeklyRewardEligibility
+// 🚀 BANDWIDTH FIX v2: Increased from 30min to 60min (saves ~12MB/day)
 crons.interval(
   "update leaderboard cache",
-  { minutes: 30 },
+  { minutes: 60 },
   internal.quests.updateLeaderboardCache
 );
 
-// 🚀 FULL Leaderboard cache update (every 30 minutes) - was 10 minutes
+// 🚀 FULL Leaderboard cache update (every 60 minutes) - was 30 minutes
 // Reduces bandwidth by ~99% for getLeaderboardLite (saves ~1.4GB/month)
+// 🚀 BANDWIDTH FIX v2: Increased from 30min to 60min (saves ~40MB/day)
 crons.interval(
   "update full leaderboard cache",
-  { minutes: 30 },
+  { minutes: 60 },
   internal.profiles.updateLeaderboardFullCache
 );
 
