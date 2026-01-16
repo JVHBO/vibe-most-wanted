@@ -85,7 +85,26 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
     );
   }
 
-  // Regular image rendering (or fallback for non-VibeFID IPFS)
+  // Error fallback for non-VibeFID images - show placeholder
+  if (error) {
+    return (
+      <div
+        className={className}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+          color: '#ffd700',
+          fontSize: '12px',
+        }}
+      >
+        <span>⚠️ Image unavailable</span>
+      </div>
+    );
+  }
+
+  // Regular image rendering
   return (
     <img
       src={src}
@@ -93,6 +112,7 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
       className={className}
       loading={loading}
       onClick={onClick}
+      style={{ display: 'block' }}
       onError={(e) => {
         console.error('Image failed to load:', src);
         setError(true);
