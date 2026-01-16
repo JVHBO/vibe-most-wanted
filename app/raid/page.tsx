@@ -567,7 +567,7 @@ export default function RaidPage() {
       {currentBoss && (
         <div className={`absolute inset-0 flex items-center justify-center ${bossIsHit ? 'animate-boss-hit' : ''}`}>
           <CardMedia
-            src={currentBoss.imageUrl}
+            src={`${currentBoss.imageUrl}?v=2`}
             alt={currentBoss.name}
             className="max-w-full max-h-full w-auto h-auto object-contain opacity-70 z-[1]"
           />
