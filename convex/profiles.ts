@@ -716,9 +716,11 @@ export const upsertProfileFromFarcaster = mutation({
       earnedAt: now,
     });
 
-    // Mark welcome pack as received on the profile
+    // Mark welcome pack AND welcome gift as received on the profile
+    // 🔒 SECURITY FIX: hasReceivedWelcomeGift prevents duplicate welcome_gift exploit
     await ctx.db.patch(newId, {
       hasReceivedWelcomePack: true,
+      hasReceivedWelcomeGift: true,
     });
 
     console.log(`🆕 New profile created for FID ${args.fid} (@${username}) at ${address} - Welcome pack given!`);

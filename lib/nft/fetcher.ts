@@ -271,7 +271,6 @@ async function checkBalancesBatched(
   const DELAY_BETWEEN_BATCHES = 50; // 50ms between batches
 
   const balances: Record<string, number> = {};
-  let currentRpcIndex = 0;
 
   console.log(`🚀 Checking ${contractAddresses.length} contracts in batches of ${BATCH_SIZE}...`);
 
@@ -284,17 +283,11 @@ async function checkBalancesBatched(
     }
 
     // Check this batch in parallel using Promise.allSettled
+    // NOTE: checkSingleBalance already tries ALL 13 RPCs in parallel, no need for extra loop!
     const results = await Promise.allSettled(
       batch.map(async (addr) => {
-        // Try each RPC until one works
-        for (let rpcTry = 0; rpcTry < BASE_RPCS.length; rpcTry++) {
-          const rpc = BASE_RPCS[(currentRpcIndex + rpcTry) % BASE_RPCS.length];
-          const balance = await checkSingleBalance(owner, addr, rpc);
-          if (balance !== -1) {
-            return { addr, balance };
-          }
-        }
-        return { addr, balance: -1 };
+        const balance = await checkSingleBalance(owner, addr, '');
+        return { addr, balance };
       })
     );
 

@@ -54,7 +54,7 @@ export function SocialQuestsPanel({
     address ? { address } : "skip"
   );
 
-  const markCompleted = useMutation(api.socialQuests.markQuestCompleted);
+  // 🔒 SECURITY: markQuestCompleted is now internalMutation - called via API routes
   const claimReward = useMutation(api.socialQuests.claimSocialQuestReward);
 
   // Fetch cast data for all featured casts
@@ -117,8 +117,13 @@ export function SocialQuestsPanel({
         if (result) {
           // For miniapp quest - user added miniapp
           if (quest.type === 'miniapp') {
-            console.log('[SocialQuest] Marking miniapp quest complete');
-            await markCompleted({ address, questId: quest.id });
+            console.log('[SocialQuest] Marking miniapp quest complete via API');
+            // 🔒 SECURITY: Use API to mark quest (markQuestCompleted is internalMutation)
+            await fetch("/api/social-quest/verify-sdk", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ questId: quest.id, address }),
+            });
             setLocalCompleted((prev) => new Set([...prev, quest.id]));
             if (soundEnabled) AudioManager.buttonSuccess();
           }
@@ -126,8 +131,13 @@ export function SocialQuestsPanel({
           // For notification quest - check if notifications enabled
           if (quest.type === 'notification') {
             if (result.notificationDetails) {
-              console.log('[SocialQuest] Notifications enabled, marking complete');
-              await markCompleted({ address, questId: quest.id });
+              console.log('[SocialQuest] Notifications enabled, marking complete via API');
+              // 🔒 SECURITY: Use API to mark quest (markQuestCompleted is internalMutation)
+              await fetch("/api/social-quest/verify-sdk", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ questId: quest.id, address }),
+              });
               setLocalCompleted((prev) => new Set([...prev, quest.id]));
               if (soundEnabled) AudioManager.buttonSuccess();
             } else {
@@ -161,14 +171,15 @@ export function SocialQuestsPanel({
 
     setVerifying(quest.id);
     try {
+      // 🔒 SECURITY: API now marks quest as completed after verification (server-side)
       const response = await fetch("/api/social-quest/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ questId: quest.id, userFid }),
+        body: JSON.stringify({ questId: quest.id, userFid, address }),
       });
       const data = await response.json();
       if (data.completed) {
-        await markCompleted({ address, questId: quest.id });
+        // Quest is now marked as completed by the API (no need to call markCompleted)
         setLocalCompleted((prev) => new Set([...prev, quest.id]));
         if (soundEnabled) AudioManager.buttonSuccess();
       } else {

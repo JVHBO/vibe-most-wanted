@@ -91,7 +91,7 @@ export function useBondingProgress() {
     }
 
     fetchProgress();
-    const interval = setInterval(fetchProgress, 30000); // Update every 30s
+    const interval = setInterval(fetchProgress, 30000);
     return () => clearInterval(interval);
   }, []);
 

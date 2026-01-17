@@ -4,17 +4,26 @@
  * Verifies if user has completed a social quest using Neynar API
  * - Follow: Check if user follows target FID
  * - Channel: Auto-verified (API requires paid plan)
+ *
+ * 🔒 SECURITY: This API now marks quest as completed after verification
+ * The frontend can no longer call markQuestCompleted directly (internalMutation)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { SOCIAL_QUESTS } from '@/lib/socialQuests';
+import { ConvexHttpClient } from 'convex/browser';
+import { internal } from '@/convex/_generated/api';
 
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
 const NEYNAR_API_BASE = 'https://api.neynar.com/v2';
 
+// Convex client for internal mutations
+const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+
 interface VerifyRequest {
   questId: string;
   userFid: number;
+  address?: string; // Player's wallet address to mark quest as completed
 }
 
 /**
@@ -71,7 +80,7 @@ function checkChannelMembership(): boolean {
 export async function POST(request: NextRequest) {
   try {
     const body: VerifyRequest = await request.json();
-    const { questId, userFid } = body;
+    const { questId, userFid, address } = body;
 
     if (!questId || !userFid) {
       return NextResponse.json(
@@ -96,6 +105,22 @@ export async function POST(request: NextRequest) {
     } else if (quest.type === 'channel') {
       // Auto-verify channel quests (Neynar API is paid)
       completed = checkChannelMembership();
+    }
+
+    // 🔒 SECURITY: Mark quest as completed in Convex after verification
+    // This is now done server-side to prevent exploit (markQuestCompleted is internalMutation)
+    if (completed && address) {
+      try {
+        await convex.mutation(internal.socialQuests.markQuestCompleted, {
+          address,
+          questId,
+        });
+        console.log(`✅ Quest ${questId} marked completed for ${address}`);
+      } catch (err) {
+        console.error(`Failed to mark quest ${questId} completed:`, err);
+        // Still return completed=true so frontend knows verification passed
+        // User can retry claim later
+      }
     }
 
     return NextResponse.json({
