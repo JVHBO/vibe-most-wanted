@@ -21,12 +21,24 @@ import { devWarn } from "@/lib/utils/logger";
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
-// Multiple RPC endpoints for fallback (rotate to avoid rate limiting)
+// Multiple RPC endpoints for fallback - 12 RPCs for maximum reliability
 const BASE_RPCS = [
   'https://base.llamarpc.com',
   'https://base-mainnet.public.blastapi.io',
   'https://mainnet.base.org',
+  'https://base.meowrpc.com',
+  'https://1rpc.io/base',
+  'https://base.drpc.org',
+  'https://base.publicnode.com',
+  'https://base-rpc.publicnode.com',
+  'https://rpc.ankr.com/base',
+  'https://base.gateway.tenderly.co',
+  'https://gateway.tenderly.co/public/base',
+  'https://base.blockpi.network/v1/rpc/public',
 ];
+
+// Basescan API key for fallback
+const BASESCAN_API_KEY = process.env.NEXT_PUBLIC_BASESCAN_API_KEY || '1ZFQ27H4QDE5ESCVWPIJUNTFP3776Y1AJ5';
 
 // Image URL cache
 const imageUrlCache = new Map<string, { url: string; timestamp: number }>();
@@ -93,21 +105,14 @@ interface BalanceCacheEntry {
 }
 
 /**
- * Check NFT balance for a single contract
- * Returns: number >= 0 for valid balance, -1 for RPC error
- *
- * FIX (Jan 2026): '0x' is now treated as valid 0 balance, not an error
- * This prevents unnecessary Alchemy calls for users with 0 NFTs
+ * Single RPC attempt with timeout (helper function)
  */
-async function checkSingleBalance(
-  owner: string,
+async function tryRpcCall(
+  rpc: string,
+  data: string,
   contractAddress: string,
-  rpc: string
-): Promise<number> {
-  const balanceOfSelector = '0x70a08231';
-  const ownerPadded = owner.slice(2).toLowerCase().padStart(64, '0');
-  const data = balanceOfSelector + ownerPadded;
-
+  timeout: number
+): Promise<number | null> {
   try {
     const res = await fetch(rpc, {
       method: 'POST',
@@ -118,54 +123,139 @@ async function checkSingleBalance(
         params: [{ to: contractAddress, data }, 'latest'],
         id: 1,
       }),
-      signal: AbortSignal.timeout(5000), // 5s timeout
+      signal: AbortSignal.timeout(timeout),
     });
 
-    stats.rpcCalls++;
-    trackStatPersistent('rpc_total');
-    logStats();
-
-    if (!res.ok) {
-      stats.rpcFailed++;
-      trackStatPersistent('rpc_failed');
-      return -1; // HTTP error
-    }
-
+    if (!res.ok) return null;
     const json = await res.json();
-
-    if (json.error) {
-      stats.rpcFailed++;
-      trackStatPersistent('rpc_failed');
-      return -1; // RPC error
-    }
+    if (json.error) return null;
 
     // '0x' means 0 balance - this is VALID, not an error!
     if (json.result === '0x' || json.result === '0x0' || json.result === '0x00') {
-      stats.rpcSuccess++;
-      trackStatPersistent('rpc_success');
       return 0;
     }
 
     if (json.result) {
       const balance = parseInt(json.result, 16);
       if (!isNaN(balance) && balance >= 0) {
-        stats.rpcSuccess++;
-        trackStatPersistent('rpc_success');
         return balance;
       }
     }
-
-    // Empty or invalid result = RPC issue
-    stats.rpcFailed++;
-    trackStatPersistent('rpc_failed');
-    return -1;
+    return null;
   } catch {
-    stats.rpcCalls++;
-    stats.rpcFailed++;
-    trackStatPersistent('rpc_total');
-    trackStatPersistent('rpc_failed');
-    return -1; // Network error or timeout
+    return null;
   }
+}
+
+/**
+ * Try Basescan API as last resort (different REST format)
+ */
+async function tryBasescan(owner: string, contractAddress: string): Promise<number | null> {
+  const balanceOfSelector = '0x70a08231';
+  const ownerPadded = owner.slice(2).toLowerCase().padStart(64, '0');
+  const data = balanceOfSelector + ownerPadded;
+
+  try {
+    const url = `https://api.basescan.org/api?module=proxy&action=eth_call&to=${contractAddress}&data=${data}&tag=latest&apikey=${BASESCAN_API_KEY}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+
+    if (json.error || json.message === 'NOTOK') return null;
+
+    const result = json.result;
+    if (result === '0x' || result === '0x0' || result === '0x00') {
+      return 0;
+    }
+
+    if (result) {
+      const balance = parseInt(result, 16);
+      if (!isNaN(balance) && balance >= 0) {
+        return balance;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Try all RPCs in parallel, return first success
+ */
+async function tryAllRpcsParallel(
+  data: string,
+  contractAddress: string,
+  owner: string,
+  timeout: number
+): Promise<number | null> {
+  const rpcPromises = BASE_RPCS.map(rpc => tryRpcCall(rpc, data, contractAddress, timeout));
+  const basescanPromise = tryBasescan(owner, contractAddress);
+  const allPromises = [...rpcPromises, basescanPromise];
+
+  return new Promise<number | null>((resolve) => {
+    let pending = allPromises.length;
+    let resolved = false;
+
+    allPromises.forEach(promise => {
+      promise.then(result => {
+        if (!resolved && result !== null) {
+          resolved = true;
+          resolve(result);
+        } else {
+          pending--;
+          if (pending === 0 && !resolved) {
+            resolve(null);
+          }
+        }
+      }).catch(() => {
+        pending--;
+        if (pending === 0 && !resolved) {
+          resolve(null);
+        }
+      });
+    });
+  });
+}
+
+/**
+ * Check NFT balance for a single contract - ALL RPCs in parallel for speed and reliability
+ * Returns: number >= 0 for valid balance, -1 for RPC error
+ */
+async function checkSingleBalance(
+  owner: string,
+  contractAddress: string,
+  _rpc: string // ignored, we use all RPCs in parallel
+): Promise<number> {
+  const balanceOfSelector = '0x70a08231';
+  const ownerPadded = owner.slice(2).toLowerCase().padStart(64, '0');
+  const data = balanceOfSelector + ownerPadded;
+
+  stats.rpcCalls++;
+  trackStatPersistent('rpc_total');
+  logStats();
+
+  // Try ALL 13 sources in parallel - first success wins
+  let result = await tryAllRpcsParallel(data, contractAddress, owner, 5000);
+  if (result !== null) {
+    stats.rpcSuccess++;
+    trackStatPersistent('rpc_success');
+    return result;
+  }
+
+  // Retry with longer timeout
+  result = await tryAllRpcsParallel(data, contractAddress, owner, 10000);
+  if (result !== null) {
+    stats.rpcSuccess++;
+    trackStatPersistent('rpc_success');
+    return result;
+  }
+
+  // All 13 sources failed twice - extremely rare
+  stats.rpcFailed++;
+  trackStatPersistent('rpc_failed');
+  return -1;
 }
 
 /**
