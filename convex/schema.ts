@@ -1768,4 +1768,145 @@ export default defineSchema({
     lastUpdated: v.number(),
   })
     .index("by_key", ["key"]),
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // BACCARAT CASINO (Simple card game - bet VBMS, win cards)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Baccarat Tables - Active game sessions
+  baccaratTables: defineTable({
+    // Table Info
+    tableId: v.string(), // Unique table ID
+    status: v.union(
+      v.literal("waiting"),    // Waiting for bets
+      v.literal("dealing"),    // Cards being dealt
+      v.literal("finished")    // Round complete
+    ),
+
+    // Betting Phase
+    bettingEndsAt: v.number(), // Timestamp when betting closes
+
+    // Cards (standard 52-card deck values)
+    playerCards: v.optional(v.array(v.object({
+      suit: v.string(),    // "hearts", "diamonds", "clubs", "spades"
+      rank: v.string(),    // "A", "2"-"10", "J", "Q", "K"
+      value: v.number(),   // Baccarat value: A=1, 2-9=face, 10/J/Q/K=0
+    }))),
+    bankerCards: v.optional(v.array(v.object({
+      suit: v.string(),
+      rank: v.string(),
+      value: v.number(),
+    }))),
+
+    // Scores (sum mod 10)
+    playerScore: v.optional(v.number()), // 0-9
+    bankerScore: v.optional(v.number()), // 0-9
+
+    // Result
+    winner: v.optional(v.union(
+      v.literal("player"),
+      v.literal("banker"),
+      v.literal("tie")
+    )),
+
+    // Prize Pool
+    totalPot: v.number(), // Total VBMS bet this round
+    prizeCards: v.optional(v.array(v.object({ // Cards to be won
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      rarity: v.string(),
+      collection: v.string(),
+    }))),
+
+    // Stats
+    totalBets: v.number(), // Number of bets placed
+    playerBets: v.number(), // Total bet on player
+    bankerBets: v.number(), // Total bet on banker
+    tieBets: v.number(), // Total bet on tie
+
+    // Timestamps
+    createdAt: v.number(),
+    dealtAt: v.optional(v.number()),
+    finishedAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status"])
+    .index("by_table_id", ["tableId"]),
+
+  // Baccarat Bets - Individual player bets
+  baccaratBets: defineTable({
+    // Table Reference
+    tableId: v.string(),
+
+    // Player Info
+    playerAddress: v.string(),
+    playerUsername: v.string(),
+
+    // Bet Details
+    betOn: v.union(
+      v.literal("player"),  // 1:1 payout
+      v.literal("banker"),  // 0.95:1 payout (5% commission)
+      v.literal("tie")      // 8:1 payout
+    ),
+    amount: v.number(), // VBMS amount bet
+
+    // Result
+    status: v.union(
+      v.literal("pending"),   // Waiting for result
+      v.literal("won"),       // Bet won
+      v.literal("lost"),      // Bet lost
+      v.literal("push")       // Tie (money returned on player/banker bets)
+    ),
+    payout: v.optional(v.number()), // Amount won (including original bet)
+    cardWon: v.optional(v.object({ // Card won (if any)
+      tokenId: v.string(),
+      name: v.string(),
+      imageUrl: v.string(),
+      rarity: v.string(),
+      collection: v.string(),
+    })),
+
+    // Timestamps
+    placedAt: v.number(),
+    resolvedAt: v.optional(v.number()),
+  })
+    .index("by_table", ["tableId"])
+    .index("by_player", ["playerAddress", "placedAt"])
+    .index("by_table_player", ["tableId", "playerAddress"]),
+
+  // Baccarat History - Completed rounds for stats
+  baccaratHistory: defineTable({
+    tableId: v.string(),
+
+    // Result
+    winner: v.union(
+      v.literal("player"),
+      v.literal("banker"),
+      v.literal("tie")
+    ),
+    playerScore: v.number(),
+    bankerScore: v.number(),
+
+    // Cards dealt
+    playerCards: v.array(v.object({
+      suit: v.string(),
+      rank: v.string(),
+      value: v.number(),
+    })),
+    bankerCards: v.array(v.object({
+      suit: v.string(),
+      rank: v.string(),
+      value: v.number(),
+    })),
+
+    // Stats
+    totalPot: v.number(),
+    totalBets: v.number(),
+    winnersCount: v.number(),
+    totalPayout: v.number(),
+
+    // Timestamps
+    finishedAt: v.number(),
+  })
+    .index("by_finished", ["finishedAt"]),
 });

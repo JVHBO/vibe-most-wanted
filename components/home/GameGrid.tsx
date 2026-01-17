@@ -4,7 +4,7 @@ import Link from "next/link";
 import { AudioManager } from "@/lib/audio-manager";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-type GameMode = 'poker-cpu' | 'battle-ai' | 'mecha' | 'raid';
+type GameMode = 'poker-cpu' | 'battle-ai' | 'mecha' | 'raid' | 'baccarat';
 
 interface GameGridProps {
   soundEnabled: boolean;
@@ -53,8 +53,17 @@ const SkullIcon = () => (
   </svg>
 );
 
+// Casino chip icon for Baccarat
+const CasinoIcon = () => (
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
+    <circle cx="12" cy="12" r="6" fill="currentColor"/>
+    <text x="12" y="16" textAnchor="middle" fontSize="10" fill="white" fontWeight="bold">$</text>
+  </svg>
+);
+
 // Game mode configurations with translation keys
-const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string }[] = [
+const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string; fullWidth?: boolean; comingSoon?: boolean }[] = [
   {
     id: 'poker-cpu',
     icon: <SpadeIcon />,
@@ -93,6 +102,17 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sub
     isLink: true,
     href: '/raid',
   },
+  {
+    id: 'baccarat',
+    icon: <CasinoIcon />,
+    label: 'Baccarat',
+    sublabel: 'homeBetVbms',
+    cards: null,
+    iconColor: 'text-emerald-400',
+    accentColor: 'hover:border-emerald-400/50',
+    fullWidth: true,
+    comingSoon: true,
+  },
 ];
 
 export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
@@ -105,22 +125,22 @@ export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2 px-1">
+    <div className="grid grid-cols-2 gap-1.5 px-1">
       {gameModeConfigs.map((mode) => {
         const buttonContent = (
           <>
-            <div className={mode.iconColor}>{mode.icon}</div>
+            <div className={`${mode.iconColor} scale-90`}>{mode.icon}</div>
             <div className="flex flex-col items-center">
-              <span className="text-vintage-gold font-display font-bold text-xs leading-tight">
+              <span className="text-vintage-gold font-display font-bold text-[10px] leading-tight">
                 {mode.label}
               </span>
               {mode.sublabel && (
-                <span className="text-vintage-burnt-gold text-[10px] font-modern leading-tight">
+                <span className="text-vintage-burnt-gold text-[8px] font-modern leading-tight">
                   {t(mode.sublabel as any)}
                 </span>
               )}
               {mode.cards !== null && (
-                <span className="text-vintage-burnt-gold/70 text-[9px] font-modern">
+                <span className="text-vintage-burnt-gold/70 text-[8px] font-modern">
                   {typeof mode.cards === 'string' ? t(mode.cards as any) : `${mode.cards} ${t('gameCards')}`}
                 </span>
               )}
@@ -128,15 +148,18 @@ export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
           </>
         );
 
+        const isDisabled = disabled || mode.comingSoon;
         const buttonClasses = `
-          flex flex-col items-center justify-center gap-1.5
-          py-3 px-2 rounded-xl
+          flex flex-col items-center justify-center gap-0.5
+          py-1.5 px-1 rounded-lg
           bg-vintage-charcoal/80
           border border-vintage-gold/20
-          ${mode.accentColor}
-          hover:bg-vintage-charcoal
+          ${mode.comingSoon ? '' : mode.accentColor}
+          ${mode.comingSoon ? '' : 'hover:bg-vintage-charcoal'}
           transition-all duration-200
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.97]'}
+          ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.97]'}
+          ${mode.fullWidth ? 'col-span-2' : ''}
+          relative
         `;
 
         if (mode.isLink && mode.href) {
@@ -155,11 +178,16 @@ export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
         return (
           <button
             key={mode.id}
-            onClick={() => handleClick(mode.id)}
-            disabled={disabled}
+            onClick={() => !mode.comingSoon && handleClick(mode.id)}
+            disabled={isDisabled}
             className={buttonClasses}
           >
             {buttonContent}
+            {mode.comingSoon && (
+              <span className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg">
+                <span className="text-vintage-gold font-display font-bold text-xs tracking-wider">SOON</span>
+              </span>
+            )}
           </button>
         );
       })}

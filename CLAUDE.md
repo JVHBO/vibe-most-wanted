@@ -587,3 +587,52 @@ const profileMap = new Map(profiles.filter(Boolean).map(p => [p.address, p]));
   - Defense deck query: Full profile → minimal data (~75% reduction per attack)
   - Transaction history: Unbounded → limited (saves ~3MB per heavy user)
   - Dead VibeFID code removed: Eliminates unused query paths
+
+## Baccarat Casino Mode (Em Desenvolvimento - Jan 2026)
+
+### Status: COMING SOON (botão desabilitado)
+
+O modo Baccarat está parcialmente implementado mas com bugs. Botão está com "SOON" overlay.
+
+### O que foi feito:
+1. ✅ Backend completo em `convex/baccarat.ts`:
+   - Tabelas: `baccaratTables`, `baccaratBets`
+   - Mutations: `createOrGetTable`, `placeBet`, `dealAndResolve`, `cashOut`
+   - Query: `getActiveTable`
+   - Regras oficiais de Baccarat (third card rules, etc.)
+
+2. ✅ Frontend em `components/BaccaratModal.tsx`:
+   - Sistema de depósito VBMS → betting credits (igual Mecha Arena)
+   - 52 cartas customizadas com personagens VBMS em `public/images/baccarat/`
+   - Mapeamento de cartas: `CARD_IMAGES` (A_hearts → "ace hearts, anon.png")
+   - UI de apostas (Player/Banker/Tie)
+   - Visualização de cartas com imagens customizadas
+
+3. ✅ Botão no GameGrid com `comingSoon: true`
+
+### O que precisa ser corrigido:
+1. **Cron não funciona para dealing** - Convex crons são em minutos, betting é 20s
+   - Solução: Frontend deve chamar `dealAndResolve` quando timer = 0
+   - O código está em `useEffect` linha 171-173 mas pode ter race conditions
+
+2. **Race conditions no timer** - Múltiplos clientes podem tentar deal ao mesmo tempo
+
+3. **Testar fluxo completo**:
+   - Depósito VBMS → credits
+   - Apostar → esperar → ver cartas
+   - Cash out → TESTVBMS
+
+### Arquivos:
+| Arquivo | Descrição |
+|---------|-----------|
+| `convex/baccarat.ts` | Backend mutations/queries |
+| `convex/schema.ts` | Tabelas baccaratTables, baccaratBets |
+| `components/BaccaratModal.tsx` | Frontend completo |
+| `components/home/GameGrid.tsx` | Botão com "SOON" |
+| `public/images/baccarat/` | 52 cartas PNG customizadas |
+
+### Cartas Customizadas:
+Formato: `"{rank} {suit}, {personagem}.png"`
+- Exemplo: `ace hearts, anon.png`, `king spades, nico.png`
+- Mapeamento em `CARD_IMAGES` no BaccaratModal
+- Backend usa: `rank: 'A'|'2'|...|'K'`, `suit: 'hearts'|'diamonds'|'clubs'|'spades'`

@@ -16,6 +16,7 @@ import type * as apiStats from "../apiStats.js";
 import type * as arenaCardsData from "../arenaCardsData.js";
 import type * as audioStorage from "../audioStorage.js";
 import type * as auth from "../auth.js";
+import type * as baccarat from "../baccarat.js";
 import type * as backup from "../backup.js";
 import type * as bettingCredits from "../bettingCredits.js";
 import type * as blacklist from "../blacklist.js";
@@ -86,6 +87,7 @@ declare const fullApi: ApiFromModules<{
   arenaCardsData: typeof arenaCardsData;
   audioStorage: typeof audioStorage;
   auth: typeof auth;
+  baccarat: typeof baccarat;
   backup: typeof backup;
   bettingCredits: typeof bettingCredits;
   blacklist: typeof blacklist;
