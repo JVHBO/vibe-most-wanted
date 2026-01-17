@@ -212,8 +212,8 @@ async function getFirstTokenId(owner: string, contract: string): Promise<string 
   const indexPadded = "0".padStart(64, "0"); // index 0
   const data = selector + ownerPadded + indexPadded;
 
-  // Try first 3 RPCs in parallel (don't need all 13 for this)
-  const promises = BASE_RPCS.slice(0, 3).map(async (rpc) => {
+  // Try first 6 RPCs in parallel for better reliability
+  const promises = BASE_RPCS.slice(0, 6).map(async (rpc) => {
     try {
       const res = await fetch(rpc, {
         method: "POST",
@@ -334,13 +334,31 @@ export async function GET(request: Request) {
         console.log(`🔄 [profile-nfts] Balance changed for ${address.slice(0, 10)}... (${cached.totalBalance} → ${totalBalance})`);
         profileCache.delete(cacheKey);
       } else {
-        // Balance same - check if any firstTokenId changed
+        // Balance same - check if any firstTokenId changed or new collection appeared
         let tokenIdsMatch = true;
+
+        // Check if new collection appeared (not in cached)
         for (const contract of Object.keys(firstTokenIds)) {
+          if (!(contract in cached.firstTokenIds)) {
+            console.log(`🔄 [profile-nfts] New collection for ${contract.slice(0, 10)}...`);
+            tokenIdsMatch = false;
+            break;
+          }
           if (cached.firstTokenIds[contract] !== firstTokenIds[contract]) {
             console.log(`🔄 [profile-nfts] TokenId changed for ${contract.slice(0, 10)}...`);
             tokenIdsMatch = false;
             break;
+          }
+        }
+
+        // Check if collection was removed (in cached but not in current)
+        if (tokenIdsMatch) {
+          for (const contract of Object.keys(cached.firstTokenIds)) {
+            if (!(contract in firstTokenIds)) {
+              console.log(`🔄 [profile-nfts] Collection removed for ${contract.slice(0, 10)}...`);
+              tokenIdsMatch = false;
+              break;
+            }
           }
         }
 
@@ -366,21 +384,22 @@ export async function GET(request: Request) {
       console.log(`💰 [profile-nfts] Saved ${savedCalls} Alchemy calls via RPC balance check`);
     }
 
-    // Step 2: Fetch NFTs from Alchemy for collections with balance
+    // Step 2: Fetch NFTs from Alchemy for collections with balance (PARALLEL)
     const allNfts: any[] = [];
 
-    for (const col of collectionsToFetch) {
+    const fetchPromises = collectionsToFetch.map(async (col) => {
       try {
         trackStat("alchemy_calls");
         const nfts = await fetchNFTsFromAlchemy(address, col.contract);
 
         // Tag and process NFTs
+        const processedNfts: any[] = [];
         for (const nft of nfts) {
           if (isUnopened(nft)) continue;
 
           const isVibeFID = col.id === "vibefid";
 
-          allNfts.push({
+          processedNfts.push({
             tokenId: nft.tokenId,
             name: nft?.raw?.metadata?.name || nft?.name || `#${nft.tokenId}`,
             imageUrl: nft?.image?.cachedUrl || nft?.image?.thumbnailUrl || nft?.raw?.metadata?.image || "",
@@ -392,10 +411,15 @@ export async function GET(request: Request) {
             collectionName: col.name,
           });
         }
+        return processedNfts;
       } catch (error) {
         console.error(`[profile-nfts] Error fetching ${col.name}:`, error);
+        return [];
       }
-    }
+    });
+
+    const fetchResults = await Promise.all(fetchPromises);
+    fetchResults.forEach(nfts => allNfts.push(...nfts));
 
     // Step 3: Get free cards from Convex
     let freeCards: any[] = [];
