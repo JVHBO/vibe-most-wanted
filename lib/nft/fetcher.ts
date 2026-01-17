@@ -301,9 +301,6 @@ async function checkBalancesBatched(
         balances[addr.toLowerCase()] = -1;
       }
     }
-
-    // Rotate RPC for next batch to distribute load
-    currentRpcIndex = (currentRpcIndex + 1) % BASE_RPCS.length;
   }
 
   const nonZero = Object.values(balances).filter(b => b > 0).length;
