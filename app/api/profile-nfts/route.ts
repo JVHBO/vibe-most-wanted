@@ -19,8 +19,13 @@ function trackStat(key: string) {
   convex.mutation(api.apiStats.increment, { key }).catch(() => {});
 }
 
-// Server-side cache
-const profileCache = new Map<string, { data: any; timestamp: number }>();
+// Server-side cache - stores data + balance + firstTokenIds for validation
+const profileCache = new Map<string, {
+  data: any;
+  timestamp: number;
+  totalBalance: number;
+  firstTokenIds: Record<string, string | null>; // contract -> first tokenId
+}>();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // Alchemy config
@@ -198,6 +203,49 @@ async function checkBalance(owner: string, contract: string): Promise<number> {
   return -1;
 }
 
+// Get first tokenId from a collection using tokenOfOwnerByIndex(owner, 0)
+// This helps detect when NFTs changed even if balance stayed the same
+async function getFirstTokenId(owner: string, contract: string): Promise<string | null> {
+  // tokenOfOwnerByIndex(address,uint256) selector
+  const selector = "0x2f745c59";
+  const ownerPadded = owner.slice(2).toLowerCase().padStart(64, "0");
+  const indexPadded = "0".padStart(64, "0"); // index 0
+  const data = selector + ownerPadded + indexPadded;
+
+  // Try first 3 RPCs in parallel (don't need all 13 for this)
+  const promises = BASE_RPCS.slice(0, 3).map(async (rpc) => {
+    try {
+      const res = await fetch(rpc, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "eth_call",
+          params: [{ to: contract, data }, "latest"],
+          id: 1,
+        }),
+        signal: AbortSignal.timeout(3000),
+      });
+
+      if (!res.ok) return null;
+      const json = await res.json();
+      if (json.error) return null;
+
+      // Result is the tokenId as uint256
+      if (json.result && json.result !== "0x") {
+        return json.result; // Return the raw hex tokenId
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Return first successful result
+  const results = await Promise.all(promises);
+  return results.find(r => r !== null) || null;
+}
+
 // Fetch NFTs from Alchemy
 async function fetchNFTsFromAlchemy(owner: string, contract: string): Promise<any[]> {
   const url = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100`;
@@ -252,25 +300,63 @@ export async function GET(request: Request) {
 
     const cacheKey = address.toLowerCase();
 
-    // Check cache first
-    const cached = profileCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      trackStat("profile_nfts_cache_hit");
-      trackStat("profile_nfts_total");
-      console.log(`📦 [profile-nfts] Cache hit for ${address.slice(0, 10)}...`);
-      return NextResponse.json(cached.data);
-    }
-
     trackStat("profile_nfts_total");
-    console.log(`🔄 [profile-nfts] Fetching for ${address.slice(0, 10)}...`);
 
-    // Step 1: Check balances via RPC (free) to avoid unnecessary Alchemy calls
+    // Step 1: Always check balances first (uses balance cache, very fast)
     const balanceChecks = await Promise.all(
       COLLECTIONS.map(async (col) => {
         const balance = await checkBalance(address, col.contract);
         return { ...col, balance };
       })
     );
+
+    // Calculate total balance across all collections
+    const totalBalance = balanceChecks.reduce((sum, c) => sum + (c.balance > 0 ? c.balance : 0), 0);
+
+    // Get first tokenId from each collection with balance > 0 (for cache validation)
+    const collectionsWithBalance = balanceChecks.filter(c => c.balance > 0);
+    const firstTokenIds: Record<string, string | null> = {};
+
+    if (collectionsWithBalance.length > 0) {
+      const tokenIdPromises = collectionsWithBalance.map(async (col) => {
+        const tokenId = await getFirstTokenId(address, col.contract);
+        return { contract: col.contract.toLowerCase(), tokenId };
+      });
+      const tokenIdResults = await Promise.all(tokenIdPromises);
+      tokenIdResults.forEach(r => { firstTokenIds[r.contract] = r.tokenId; });
+    }
+
+    // Check profile cache - validate balance AND firstTokenIds
+    const cached = profileCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      // Check if balance changed
+      if (cached.totalBalance !== totalBalance) {
+        console.log(`🔄 [profile-nfts] Balance changed for ${address.slice(0, 10)}... (${cached.totalBalance} → ${totalBalance})`);
+        profileCache.delete(cacheKey);
+      } else {
+        // Balance same - check if any firstTokenId changed
+        let tokenIdsMatch = true;
+        for (const contract of Object.keys(firstTokenIds)) {
+          if (cached.firstTokenIds[contract] !== firstTokenIds[contract]) {
+            console.log(`🔄 [profile-nfts] TokenId changed for ${contract.slice(0, 10)}...`);
+            tokenIdsMatch = false;
+            break;
+          }
+        }
+
+        if (tokenIdsMatch) {
+          trackStat("profile_nfts_cache_hit");
+          console.log(`📦 [profile-nfts] Cache hit for ${address.slice(0, 10)}... (balance: ${totalBalance})`);
+          return NextResponse.json(cached.data);
+        }
+
+        profileCache.delete(cacheKey);
+      }
+    }
+
+    console.log(`🔄 [profile-nfts] Fetching for ${address.slice(0, 10)}... (balance: ${totalBalance})`);
+
+    // Step 1 already done above - balanceChecks is ready
 
     // Only fetch from collections with NFTs (or RPC errors)
     const collectionsToFetch = balanceChecks.filter((c) => c.balance > 0 || c.balance === -1);
@@ -344,9 +430,14 @@ export async function GET(request: Request) {
       timestamp: Date.now(),
     };
 
-    // Save to cache
-    profileCache.set(cacheKey, { data: { ...responseData, cached: true }, timestamp: Date.now() });
-    console.log(`💾 [profile-nfts] Cached ${allNfts.length} cards for ${address.slice(0, 10)}...`);
+    // Save to cache with totalBalance and firstTokenIds for validation
+    profileCache.set(cacheKey, {
+      data: { ...responseData, cached: true },
+      timestamp: Date.now(),
+      totalBalance,
+      firstTokenIds
+    });
+    console.log(`💾 [profile-nfts] Cached ${allNfts.length} cards for ${address.slice(0, 10)}... (balance: ${totalBalance})`);
 
     // Cleanup old cache entries
     if (profileCache.size > 500) {
