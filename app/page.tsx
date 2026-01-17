@@ -5216,7 +5216,7 @@ export default function TCGPage() {
                   <CardsPreview
                     cards={nfts}
                     soundEnabled={soundEnabled}
-                    loading={status === 'fetching'}
+                    loading={status === 'fetching' || contextStatus === 'fetching' || (status === 'idle' && nfts.length === 0 && contextStatus !== 'loaded')}
                     onViewAll={() => {
                       if (soundEnabled) AudioManager.buttonClick();
                       setShowMyCardsModal(true);
@@ -5252,7 +5252,7 @@ export default function TCGPage() {
                 <CardsPreview
                   cards={nfts}
                   soundEnabled={soundEnabled}
-                  loading={status === 'fetching'}
+                  loading={status === 'fetching' || contextStatus === 'fetching' || (status === 'idle' && nfts.length === 0 && contextStatus !== 'loaded')}
                   onViewAll={() => {
                     if (soundEnabled) AudioManager.buttonClick();
                     setShowMyCardsModal(true);

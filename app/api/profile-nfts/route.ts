@@ -27,74 +27,175 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || "base-mainnet";
 
-// Collections to fetch (same as profile page)
+// Collections to fetch - only the 6 NFT collections used in the game
+// (Nothing/Free cards come from Convex, not blockchain)
 const COLLECTIONS = [
   { id: "vibe", contract: "0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728", name: "VBMS" },
-  { id: "gmvbrs", contract: "0xefe512e73ca7356c20a21aa9433bad5fc9342d46", name: "GM VBRS" },
   { id: "vibefid", contract: "0x60274A138d026E3cB337B40567100FdEC3127565", name: "VibeFID" },
+  { id: "gmvbrs", contract: "0xefe512e73ca7356c20a21aa9433bad5fc9342d46", name: "GM VBRS" },
   { id: "viberuto", contract: "0x70b4005a83a0b39325d27cf31bd4a7a30b15069f", name: "Viberuto" },
   { id: "meowverse", contract: "0xF0BF71bcD1F1aeb1bA6BE0AfBc38A1ABe9aa9150", name: "Meowverse" },
   { id: "viberotbangers", contract: "0x120c612d79a3187a3b8b4f4bb924cebe41eb407a", name: "Vibe Rot Bangers" },
-  { id: "poorlydrawnpepes", contract: "0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8", name: "Poorly Drawn Pepes" },
-  { id: "teampothead", contract: "0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea", name: "Team Pothead" },
-  { id: "tarot", contract: "0x34d639c63384a00a2d25a58f73bea73856aa0550", name: "Tarot" },
-  { id: "baseballcabal", contract: "0x3ff41af61d092657189b1d4f7d74d994514724bb", name: "Baseball Cabal" },
-  { id: "vibefx", contract: "0xc7f2d8c035b2505f30a5417c0374ac0299d88553", name: "Vibe FX" },
-  { id: "historyofcomputer", contract: "0x319b12e8eba0be2eae1112b357ba75c2c178b567", name: "History of Computer" },
-  { id: "nothing", contract: "0xfeabae8bdb41b2ae507972180df02e70148b38e1", name: "$CU-MI-OH!" },
 ];
 
-// RPC endpoints for balance check
+// RPC endpoints for balance check - 12 RPCs for maximum reliability
 const BASE_RPCS = [
   "https://base.llamarpc.com",
   "https://base-mainnet.public.blastapi.io",
   "https://mainnet.base.org",
+  "https://base.meowrpc.com",
+  "https://1rpc.io/base",
+  "https://base.drpc.org",
+  "https://base.publicnode.com",
+  "https://base-rpc.publicnode.com",
+  "https://rpc.ankr.com/base",
+  "https://base.gateway.tenderly.co",
+  "https://gateway.tenderly.co/public/base",
+  "https://base.blockpi.network/v1/rpc/public",
 ];
 
-// Check balance via RPC (free)
-async function checkBalance(owner: string, contract: string): Promise<number> {
+// Basescan API (different format)
+const BASESCAN_API_KEY = process.env.BASESCAN_API_KEY || "1ZFQ27H4QDE5ESCVWPIJUNTFP3776Y1AJ5";
+
+// Balance cache - avoid re-checking same address/contract combo
+const balanceCache = new Map<string, { balance: number; timestamp: number }>();
+const BALANCE_CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+// Single RPC attempt with timeout
+async function tryRpc(rpc: string, data: string, contract: string, timeout: number): Promise<number | null> {
+  try {
+    const res = await fetch(rpc, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "eth_call",
+        params: [{ to: contract, data }, "latest"],
+        id: 1,
+      }),
+      signal: AbortSignal.timeout(timeout),
+    });
+
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (json.error) return null;
+
+    if (json.result === "0x" || json.result === "0x0" || json.result === "0x00") {
+      return 0;
+    }
+
+    if (json.result) {
+      const balance = parseInt(json.result, 16);
+      if (!isNaN(balance) && balance >= 0) {
+        return balance;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Try Basescan API (different format - REST API)
+async function tryBasescan(owner: string, contract: string): Promise<number | null> {
   const balanceOfSelector = "0x70a08231";
   const ownerPadded = owner.slice(2).toLowerCase().padStart(64, "0");
   const data = balanceOfSelector + ownerPadded;
 
-  for (const rpc of BASE_RPCS) {
-    trackStat("rpc_total");
-    try {
-      const res = await fetch(rpc, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "eth_call",
-          params: [{ to: contract, data }, "latest"],
-          id: 1,
-        }),
-        signal: AbortSignal.timeout(3000),
-      });
+  try {
+    const url = `https://api.basescan.org/api?module=proxy&action=eth_call&to=${contract}&data=${data}&tag=latest&apikey=${BASESCAN_API_KEY}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
 
-      if (!res.ok) continue;
-      const json = await res.json();
-      if (json.error) continue;
+    if (!res.ok) return null;
+    const json = await res.json();
 
-      if (json.result === "0x" || json.result === "0x0" || json.result === "0x00") {
-        trackStat("rpc_success");
-        return 0;
-      }
+    if (json.error || json.message === "NOTOK") return null;
 
-      if (json.result) {
-        const balance = parseInt(json.result, 16);
-        if (!isNaN(balance) && balance >= 0) {
-          trackStat("rpc_success");
-          return balance;
-        }
-      }
-    } catch {
-      continue;
+    const result = json.result;
+    if (result === "0x" || result === "0x0" || result === "0x00") {
+      return 0;
     }
+
+    if (result) {
+      const balance = parseInt(result, 16);
+      if (!isNaN(balance) && balance >= 0) {
+        return balance;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Try all RPCs in parallel, return first success
+async function tryAllRpcsParallel(data: string, contract: string, owner: string, timeout: number): Promise<number | null> {
+  const rpcPromises = BASE_RPCS.map(rpc => tryRpc(rpc, data, contract, timeout));
+  const basescanPromise = tryBasescan(owner, contract);
+  const allPromises = [...rpcPromises, basescanPromise];
+
+  return new Promise<number | null>((resolve) => {
+    let pending = allPromises.length;
+    let resolved = false;
+
+    allPromises.forEach(promise => {
+      promise.then(result => {
+        if (!resolved && result !== null) {
+          resolved = true;
+          resolve(result);
+        } else {
+          pending--;
+          if (pending === 0 && !resolved) {
+            resolve(null);
+          }
+        }
+      }).catch(() => {
+        pending--;
+        if (pending === 0 && !resolved) {
+          resolve(null);
+        }
+      });
+    });
+  });
+}
+
+// Check balance via RPC (free) - with cache and retry for 100% reliability
+async function checkBalance(owner: string, contract: string): Promise<number> {
+  const cacheKey = `${owner.toLowerCase()}_${contract.toLowerCase()}`;
+
+  // Check cache first
+  const cached = balanceCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < BALANCE_CACHE_TTL) {
+    return cached.balance;
   }
 
+  const balanceOfSelector = "0x70a08231";
+  const ownerPadded = owner.slice(2).toLowerCase().padStart(64, "0");
+  const data = balanceOfSelector + ownerPadded;
+
+  trackStat("rpc_total");
+
+  // First attempt - 5s timeout, all 13 sources in parallel
+  let result = await tryAllRpcsParallel(data, contract, owner, 5000);
+
+  if (result !== null) {
+    trackStat("rpc_success");
+    balanceCache.set(cacheKey, { balance: result, timestamp: Date.now() });
+    return result;
+  }
+
+  // Retry with longer timeout - 10s
+  result = await tryAllRpcsParallel(data, contract, owner, 10000);
+
+  if (result !== null) {
+    trackStat("rpc_success");
+    balanceCache.set(cacheKey, { balance: result, timestamp: Date.now() });
+    return result;
+  }
+
+  // All 13 sources failed twice - extremely rare
   trackStat("rpc_failed");
-  return -1; // All RPCs failed
+  return -1;
 }
 
 // Fetch NFTs from Alchemy
