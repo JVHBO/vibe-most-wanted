@@ -1,12 +1,13 @@
 "use client";
 
 import { useAccount } from "wagmi";
-import { useQuery } from "convex/react";
+import { useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 
 /**
  * 🔗 MULTI-WALLET HOOK
+ * 🚀 BANDWIDTH FIX: Uses manual query with sessionStorage cache instead of useQuery subscription
  *
  * Returns the primary profile address for the connected user.
  * If the user is connected with a linked (secondary) wallet,
@@ -30,12 +31,64 @@ import { useMemo } from "react";
  */
 export function usePrimaryAddress() {
   const { address: connectedAddress, isConnected } = useAccount();
+  const convex = useConvex();
 
-  // Query linked addresses from Convex
-  const linkedData = useQuery(
-    api.profiles.getLinkedAddresses,
-    connectedAddress ? { address: connectedAddress } : "skip"
-  );
+  // 🚀 BANDWIDTH FIX: Use state instead of useQuery subscription
+  const [linkedData, setLinkedData] = useState<{ primary: string; linked: string[] } | null | undefined>(undefined);
+  const loadedRef = useRef<string | null>(null);
+
+  // 🚀 BANDWIDTH FIX: Manual query with sessionStorage cache
+  useEffect(() => {
+    if (!connectedAddress || !isConnected) {
+      setLinkedData(null);
+      loadedRef.current = null;
+      return;
+    }
+
+    // Prevent re-fetching for same address
+    if (loadedRef.current === connectedAddress.toLowerCase()) {
+      return;
+    }
+
+    const fetchLinkedAddresses = async () => {
+      const cacheKey = `vbms_linked_${connectedAddress.toLowerCase()}`;
+
+      // Check sessionStorage cache (1 hour TTL)
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Date.now() - parsed.timestamp < 60 * 60 * 1000) {
+            setLinkedData(parsed.data);
+            loadedRef.current = connectedAddress.toLowerCase();
+            return;
+          }
+        }
+      } catch (e) {
+        // Ignore cache errors
+      }
+
+      // Fetch from Convex
+      try {
+        const result = await convex.query(api.profiles.getLinkedAddresses, { address: connectedAddress });
+        setLinkedData(result);
+        loadedRef.current = connectedAddress.toLowerCase();
+
+        // Cache result
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify({ data: result, timestamp: Date.now() }));
+        } catch (e) {
+          // Ignore cache write errors
+        }
+      } catch (e) {
+        console.error("Error fetching linked addresses:", e);
+        setLinkedData(null);
+        loadedRef.current = connectedAddress.toLowerCase();
+      }
+    };
+
+    fetchLinkedAddresses();
+  }, [connectedAddress, isConnected, convex]);
 
   const result = useMemo(() => {
     // Not connected
@@ -61,7 +114,7 @@ export function usePrimaryAddress() {
     }
 
     // No profile or no linked addresses
-    if (!linkedData.primary) {
+    if (!linkedData?.primary) {
       return {
         primaryAddress: connectedAddress,
         connectedAddress,

@@ -10,7 +10,7 @@ import { devLog, devError } from '@/lib/utils/logger';
 import { createPortal } from "react-dom";
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
-import { useMutation, useQuery } from 'convex/react';
+import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useFarcasterContext } from '@/lib/hooks/useFarcasterContext';
@@ -379,11 +379,12 @@ export function SettingsModal({
     return `${remaining}s`;
   };
 
-  // 🔗 MULTI-WALLET: Get linked addresses
-  const linkedAddresses = useQuery(
-    api.profiles.getLinkedAddresses,
-    walletAddress ? { address: walletAddress } : "skip"
-  );
+  // 🔗 MULTI-WALLET: Get linked addresses from userProfile (already loaded)
+  // 🚀 BANDWIDTH FIX: Use userProfile.linkedAddresses instead of separate useQuery
+  const linkedAddresses = userProfile ? {
+    primary: userProfile.address || walletAddress,
+    linked: (userProfile as any).linkedAddresses || [],
+  } : null;
 
   // Handle show link wallet instructions
   const handleShowLinkInstructions = () => {

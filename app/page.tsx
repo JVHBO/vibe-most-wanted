@@ -3016,9 +3016,24 @@ export default function TCGPage() {
       ];
 
       // Check VIBE badge eligibility (VibeFID holder check)
-      const vibeBadgeEligibility = await convex.query(api.missions.checkVibeBadgeEligibility, {
-        playerAddress: address,
-      });
+      // 🚀 BANDWIDTH FIX: Cache badge eligibility per session (rarely changes)
+      let vibeBadgeEligibility = null;
+      const badgeCacheKey = `vbms_badge_${address.toLowerCase()}`;
+      try {
+        const cached = sessionStorage.getItem(badgeCacheKey);
+        if (cached) {
+          vibeBadgeEligibility = JSON.parse(cached);
+        }
+      } catch (e) { /* ignore */ }
+
+      if (!vibeBadgeEligibility) {
+        vibeBadgeEligibility = await convex.query(api.missions.checkVibeBadgeEligibility, {
+          playerAddress: address,
+        });
+        try {
+          sessionStorage.setItem(badgeCacheKey, JSON.stringify(vibeBadgeEligibility));
+        } catch (e) { /* ignore */ }
+      }
 
       // Merge with existing missions from DB
       const completeMissionsList = allMissionTypes.map((missionDef) => {
