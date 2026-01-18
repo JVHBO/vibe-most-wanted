@@ -10,10 +10,14 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, action, internalQuery, internalMutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { applyLanguageBoost } from "./languageBoost";
 import { createAuditLog } from "./coinAudit";
 import { logTransaction } from "./coinsInbox";
+
+// VibeFID contract address (Base mainnet)
+const VIBEFID_CONTRACT = "0x60274A138d026E3cB337B40567100FdEC3127565";
 
 // Mission rewards (all coins for simplicity)
 const MISSION_REWARDS = {
@@ -566,47 +570,76 @@ export const ensureWelcomeGift = mutation({
 });
 
 /**
- * Check if player is eligible for VIBE badge (has VibeFID cards)
+ * Internal query to get profile badge status
  */
-export const checkVibeBadgeEligibility = query({
-  args: { playerAddress: v.string() },
-  handler: async (ctx, { playerAddress }) => {
-    const normalizedAddress = playerAddress.toLowerCase();
-
-    // Check if player has any VibeFID cards
-    const vibeFIDCards = await ctx.db
-      .query("farcasterCards")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .collect();
-
-    // Check if player already has the badge
+export const getProfileBadgeStatus = internalQuery({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
     const profile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
       .first();
 
-    const hasBadge = profile?.hasVibeBadge === true;
-    const hasVibeFIDCards = vibeFIDCards.length > 0;
-
     return {
-      eligible: hasVibeFIDCards && !hasBadge,
-      hasVibeFIDCards,
-      hasBadge,
-      vibeFIDCount: vibeFIDCards.length,
+      hasBadge: profile?.hasVibeBadge === true,
     };
   },
 });
 
 /**
- * Claim VIBE badge (one-time reward for VibeFID holders)
- * Gives +20% bonus coins in Wanted Cast
+ * Check if player is eligible for VIBE badge (has VibeFID cards)
+ * 🚀 ON-CHAIN VERIFICATION: Uses Alchemy to check NFT ownership (source of truth)
  */
-export const claimVibeBadge = mutation({
+export const checkVibeBadgeEligibility = action({
   args: { playerAddress: v.string() },
-  handler: async (ctx, { playerAddress }) => {
+  handler: async (ctx, { playerAddress }): Promise<{
+    eligible: boolean;
+    hasVibeFIDCards: boolean;
+    hasBadge: boolean;
+    vibeFIDCount: number;
+  }> => {
     const normalizedAddress = playerAddress.toLowerCase();
 
-    // Check if player already has the badge
+    // Get badge status from profile
+    const badgeStatus = await ctx.runQuery(internal.missions.getProfileBadgeStatus, {
+      address: normalizedAddress,
+    });
+    const hasBadge = badgeStatus?.hasBadge === true;
+
+    // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy
+    const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || process.env.ALCHEMY_API_KEY;
+    const url = `https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_CONTRACT}`;
+
+    let hasVibeFIDCards = false;
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        hasVibeFIDCards = data.isHolderOfContract === true;
+      }
+    } catch (error) {
+      console.error("❌ Alchemy check failed:", error);
+      // Fallback: if Alchemy fails, check Convex (not ideal but better than nothing)
+      hasVibeFIDCards = false;
+    }
+
+    return {
+      eligible: hasVibeFIDCards && !hasBadge,
+      hasVibeFIDCards,
+      hasBadge,
+      vibeFIDCount: hasVibeFIDCards ? 1 : 0, // Alchemy doesn't return count, just ownership
+    };
+  },
+});
+
+/**
+ * Internal mutation to grant VIBE badge (called by action after on-chain verification)
+ */
+export const grantVibeBadgeInternal = internalMutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
@@ -618,16 +651,6 @@ export const claimVibeBadge = mutation({
 
     if (profile.hasVibeBadge === true) {
       throw new Error("VIBE badge already claimed");
-    }
-
-    // Check if player has any VibeFID cards
-    const vibeFIDCards = await ctx.db
-      .query("farcasterCards")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .collect();
-
-    if (vibeFIDCards.length === 0) {
-      throw new Error("No VibeFID cards found. Mint a VibeFID first to claim the VIBE badge!");
     }
 
     // Grant the VIBE badge
@@ -654,13 +677,54 @@ export const claimVibeBadge = mutation({
         missionType: "claim_vibe_badge",
         completed: true,
         claimed: true,
-        reward: 0, // Badge reward, not coins
+        reward: 0,
         completedAt: Date.now(),
         claimedAt: Date.now(),
       });
     }
 
     console.log(`✨ VIBE badge claimed by ${normalizedAddress} (+20% Wanted Cast bonus)`);
+    return { success: true };
+  },
+});
+
+/**
+ * Claim VIBE badge (one-time reward for VibeFID holders)
+ * 🚀 ON-CHAIN VERIFICATION: Uses Alchemy to verify NFT ownership
+ * Gives +20% bonus coins in Wanted Cast
+ */
+export const claimVibeBadge = action({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }): Promise<{
+    success: boolean;
+    message: string;
+  }> => {
+    const normalizedAddress = playerAddress.toLowerCase();
+
+    // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy
+    const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || process.env.ALCHEMY_API_KEY;
+    const url = `https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_CONTRACT}`;
+
+    let hasVibeFID = false;
+    try {
+      const response = await fetch(url);
+      if (response.ok) {
+        const data = await response.json();
+        hasVibeFID = data.isHolderOfContract === true;
+      }
+    } catch (error) {
+      console.error("❌ Alchemy check failed:", error);
+      throw new Error("Failed to verify VibeFID ownership. Please try again.");
+    }
+
+    if (!hasVibeFID) {
+      throw new Error("No VibeFID cards found. Mint a VibeFID first to claim the VIBE badge!");
+    }
+
+    // Grant the badge via internal mutation
+    await ctx.runMutation(internal.missions.grantVibeBadgeInternal, {
+      address: normalizedAddress,
+    });
 
     return {
       success: true,

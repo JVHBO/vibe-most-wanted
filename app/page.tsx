@@ -3027,7 +3027,8 @@ export default function TCGPage() {
       } catch (e) { /* ignore */ }
 
       if (!vibeBadgeEligibility) {
-        vibeBadgeEligibility = await convex.query(api.missions.checkVibeBadgeEligibility, {
+        // 🚀 ON-CHAIN: Now uses action with Alchemy verification
+        vibeBadgeEligibility = await convex.action(api.missions.checkVibeBadgeEligibility, {
           playerAddress: address,
         });
         try {
@@ -3099,7 +3100,8 @@ export default function TCGPage() {
     if (missionType === 'claim_vibe_badge') {
       setIsClaimingMission(missionId);
       try {
-        const result = await convex.mutation(api.missions.claimVibeBadge, {
+        // 🚀 ON-CHAIN: Now uses action with Alchemy verification
+        const result = await convex.action(api.missions.claimVibeBadge, {
           playerAddress: address,
         });
 

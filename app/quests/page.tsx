@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
@@ -49,11 +49,15 @@ export default function QuestsPage() {
   const claimAllMissions = useMutation(api.missions.claimAllMissions);
   const ensureWelcomeGift = useMutation(api.missions.ensureWelcomeGift);
   const markDailyLogin = useMutation(api.missions.markDailyLogin);
-  const vibeBadgeEligibility = useQuery(
-    api.missions.checkVibeBadgeEligibility,
-    address ? { playerAddress: address.toLowerCase() } : "skip"
-  );
-  const claimVibeBadge = useMutation(api.missions.claimVibeBadge);
+  // 🚀 ON-CHAIN: VibeFID verification now uses action with Alchemy
+  const convex = useConvex();
+  const [vibeBadgeEligibility, setVibeBadgeEligibility] = useState<{
+    eligible: boolean;
+    hasVibeFIDCards: boolean;
+    hasBadge: boolean;
+    vibeFIDCount: number;
+  } | null>(null);
+  const claimVibeBadge = useAction(api.missions.claimVibeBadge);
   const [claimingMission, setClaimingMission] = useState<string | null>(null);
   const [claimingBadge, setClaimingBadge] = useState(false);
   const [missions, setMissions] = useState<any[]>([]);
@@ -95,6 +99,27 @@ export default function QuestsPage() {
     };
     init();
   }, [address]);
+
+  // 🚀 ON-CHAIN: Load VibeFID badge eligibility via Alchemy action
+  useEffect(() => {
+    if (!address) {
+      setVibeBadgeEligibility(null);
+      return;
+    }
+
+    const checkBadge = async () => {
+      try {
+        const result = await convex.action(api.missions.checkVibeBadgeEligibility, {
+          playerAddress: address.toLowerCase(),
+        });
+        setVibeBadgeEligibility(result);
+      } catch (e) {
+        console.error('Error checking badge eligibility:', e);
+        setVibeBadgeEligibility(null);
+      }
+    };
+    checkBadge();
+  }, [address, convex]);
 
   // Build complete missions list from personalMissions + ALL_MISSION_TYPES
   useEffect(() => {

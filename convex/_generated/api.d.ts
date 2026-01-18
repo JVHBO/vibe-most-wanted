@@ -43,6 +43,7 @@ import type * as matches from "../matches.js";
 import type * as missions from "../missions.js";
 import type * as mostWanted from "../mostWanted.js";
 import type * as neynarScore from "../neynarScore.js";
+import type * as nftCache from "../nftCache.js";
 import type * as nftCollections from "../nftCollections.js";
 import type * as nftGifts from "../nftGifts.js";
 import type * as notifications from "../notifications.js";
@@ -114,6 +115,7 @@ declare const fullApi: ApiFromModules<{
   missions: typeof missions;
   mostWanted: typeof mostWanted;
   neynarScore: typeof neynarScore;
+  nftCache: typeof nftCache;
   nftCollections: typeof nftCollections;
   nftGifts: typeof nftGifts;
   notifications: typeof notifications;
