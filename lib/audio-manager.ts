@@ -352,6 +352,25 @@ export const AudioManager = {
       devLog('Erro ao tocar som de derrota:', e);
     }
   },
+  // Evil laugh sound for when player loses in casino games
+  async evilLaugh() {
+    if (!canPlaySound('evilLaugh', 500)) return;
+    // Generate a "hehehe" laugh sound with descending tones
+    const laughTones = [
+      { freq: 380, dur: 0.12, delay: 0 },
+      { freq: 420, dur: 0.1, delay: 120 },
+      { freq: 360, dur: 0.14, delay: 220 },
+      { freq: 400, dur: 0.1, delay: 340 },
+      { freq: 340, dur: 0.16, delay: 440 },
+      { freq: 300, dur: 0.2, delay: 580 },
+    ];
+    for (const tone of laughTones) {
+      setTimeout(() => {
+        this.playTone(tone.freq, tone.dur, 0.25, { type: 'sawtooth', randomize: true });
+      }, tone.delay);
+    }
+    this.hapticFeedback('medium');
+  },
   async tie() {
     if (!canPlaySound('tie', 300)) return;
     // Tie sound - neutral draw effect with variation

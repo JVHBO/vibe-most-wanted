@@ -12,14 +12,23 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { createAuditLog } from "./coinAudit";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const BETTING_DURATION = 30000; // 30 seconds to place bets
-const MIN_BET = 10; // Minimum bet in VBMS
-const MAX_BET = 1000; // Maximum bet in VBMS
+const MIN_BET = 1;    // Minimum bet per area
+const MAX_BET = 1000; // Maximum TOTAL bet per round (protects the house pool)
+
+// Payout multipliers (conservative to protect house pool)
+// House edge: ~15-20%
+const PAYOUTS = {
+  PLAYER: 1.8,  // 0.8:1 (was 1:1)
+  BANKER: 1.7,  // 0.7:1 (was 0.95:1)
+  TIE: 5,       // 4:1 (was 8:1)
+};
 
 // Card values in Baccarat
 const CARD_VALUES: Record<string, number> = {
@@ -209,6 +218,71 @@ export const getRecentHistory = query({
   },
 });
 
+// Get daily plays count for a player (PvE mode)
+export const getDailyPlays = query({
+  args: { address: v.string() },
+  handler: async (ctx, args) => {
+    const playerAddress = args.address.toLowerCase();
+
+    // Get start of today (UTC)
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+    // Count PvE games played today by this player
+    // We look at bettingTransactions with type "bet" and roomId starting with "pve_"
+    const todayBets = await ctx.db
+      .query("bettingTransactions")
+      .withIndex("by_address", (q) => q.eq("address", playerAddress))
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("timestamp"), todayStart),
+          q.eq(q.field("type"), "bet")
+        )
+      )
+      .collect();
+
+    // Filter for PvE games only (roomId starts with "pve_")
+    const pveGames = todayBets.filter(tx => tx.roomId?.startsWith("pve_"));
+
+    return {
+      count: pveGames.length,
+      todayStart,
+      lastPlayedAt: pveGames.length > 0 ? pveGames[0].timestamp : null,
+    };
+  },
+});
+
+// Admin: Reset daily plays for testing
+export const adminResetDailyPlays = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, args) => {
+    const playerAddress = args.address.toLowerCase();
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+    // Find today's PvE bets for this player
+    const todayBets = await ctx.db
+      .query("bettingTransactions")
+      .withIndex("by_address", (q) => q.eq("address", playerAddress))
+      .filter((q) =>
+        q.and(
+          q.gte(q.field("timestamp"), todayStart),
+          q.eq(q.field("type"), "bet")
+        )
+      )
+      .collect();
+
+    const pveBets = todayBets.filter(tx => tx.roomId?.startsWith("pve_"));
+
+    // Delete them
+    for (const bet of pveBets) {
+      await ctx.db.delete(bet._id);
+    }
+
+    return { deleted: pveBets.length };
+  },
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MUTATIONS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -352,6 +426,7 @@ export const placeBet = mutation({
 });
 
 // Deal cards and resolve round (called by cron or manually)
+// IDEMPOTENT: If table already resolved, returns existing result
 export const dealAndResolve = mutation({
   args: { tableId: v.string() },
   handler: async (ctx, args) => {
@@ -366,6 +441,21 @@ export const dealAndResolve = mutation({
 
     if (!table) {
       throw new Error("Table not found");
+    }
+
+    // IDEMPOTENT: If already finished, return existing result (prevents race condition)
+    if (table.status === "finished") {
+      console.log(`🎴 Table ${tableId} already resolved, returning cached result`);
+      return {
+        winner: table.winner,
+        playerScore: table.playerScore,
+        bankerScore: table.bankerScore,
+        playerCards: table.playerCards,
+        bankerCards: table.bankerCards,
+        winnersCount: 0,
+        totalPayout: 0,
+        alreadyResolved: true,
+      };
     }
 
     if (table.status !== "waiting") {
@@ -403,13 +493,12 @@ export const dealAndResolve = mutation({
         bankerCards.push(deck[deckIndex++]);
         bankerScore = calculateHandValue(bankerCards);
       }
-    } else {
-      // Player stood - banker draws on 0-5
-      if (bankerScore <= 5) {
-        bankerCards.push(deck[deckIndex++]);
-        bankerScore = calculateHandValue(bankerCards);
-      }
+    } else if (firstCheck.bankerDraws) {
+      // Player stood (6-7) and no natural - banker draws on 0-5
+      bankerCards.push(deck[deckIndex++]);
+      bankerScore = calculateHandValue(bankerCards);
     }
+    // Note: if natural (8 or 9), firstCheck.bankerDraws is false, so no third card
 
     // Determine winner
     const winner = determineWinner(playerScore, bankerScore);
@@ -532,7 +621,7 @@ export const dealAndResolve = mutation({
   },
 });
 
-// Cash out - convert betting credits back to TESTVBMS (coins)
+// Cash out - convert betting credits back to TESTVBMS (coins) [LEGACY - not used anymore]
 export const cashOut = mutation({
   args: {
     address: v.string(),
@@ -595,12 +684,73 @@ export const cashOut = mutation({
       timestamp: now,
     });
 
+    // Audit log for security tracking
+    await createAuditLog(
+      ctx,
+      playerAddress,
+      "earn",
+      amount,
+      currentCoins,
+      currentCoins + amount,
+      "baccarat_cashout",
+      undefined,
+      { reason: "Betting credits cashout" }
+    );
+
     console.log(`💰 Baccarat cashout: ${playerAddress} cashed out ${amount} credits`);
 
     return {
       success: true,
       cashedOut: amount,
+      totalDeposited: credits.totalDeposited || amount,
       newBalance: currentCoins + amount,
+    };
+  },
+});
+
+// Process withdraw - clear credits after VBMS TX is sent (called by API)
+export const processWithdraw = mutation({
+  args: {
+    address: v.string(),
+    amount: v.number(),
+    txHash: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const playerAddress = args.address.toLowerCase();
+    const now = Date.now();
+
+    // Get betting credits
+    const credits = await ctx.db
+      .query("bettingCredits")
+      .withIndex("by_address", (q) => q.eq("address", playerAddress))
+      .first();
+
+    if (!credits) {
+      throw new Error("No credits record found");
+    }
+
+    const totalDeposited = credits.totalDeposited || args.amount;
+
+    // Reset betting credits to 0
+    await ctx.db.patch(credits._id, {
+      balance: 0,
+      totalWithdrawn: (credits.totalWithdrawn || 0) + args.amount,
+    });
+
+    // Log transaction
+    await ctx.db.insert("bettingTransactions", {
+      address: playerAddress,
+      type: "withdraw",
+      amount: args.amount,
+      txHash: args.txHash,
+      timestamp: now,
+    });
+
+    console.log(`💸 Baccarat VBMS withdraw: ${playerAddress} withdrew ${args.amount} VBMS, TX: ${args.txHash}`);
+
+    return {
+      success: true,
+      totalDeposited,
     };
   },
 });
@@ -651,10 +801,12 @@ export const checkAndResolveExpiredTables = mutation({
             bankerCards.push(deck[deckIndex++]);
             bankerScore = calculateHandValue(bankerCards);
           }
-        } else if (bankerScore <= 5) {
+        } else if (firstCheck.bankerDraws) {
+          // Player stood (6-7) and no natural - banker draws on 0-5
           bankerCards.push(deck[deckIndex++]);
           bankerScore = calculateHandValue(bankerCards);
         }
+        // Note: if natural (8 or 9), firstCheck.bankerDraws is false, so no third card
 
         const winner = determineWinner(playerScore, bankerScore);
 
@@ -763,5 +915,204 @@ export const checkAndResolveExpiredTables = mutation({
     }
 
     return { resolved };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PvE MODE - Single Player vs House (Instant Play)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Play a single round of Baccarat against the house (PvE mode)
+ * No waiting for other players - instant dealing
+ */
+export const playPvE = mutation({
+  args: {
+    address: v.string(),
+    username: v.string(),
+    betOn: v.union(v.literal("player"), v.literal("banker"), v.literal("tie")),
+    amount: v.number(),
+    // New: individual bet amounts for multi-area betting
+    playerBet: v.optional(v.number()),
+    bankerBet: v.optional(v.number()),
+    tieBet: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { address, username, betOn, amount } = args;
+    const playerAddress = address.toLowerCase();
+    const now = Date.now();
+
+    // Use individual bets if provided, otherwise use legacy single bet
+    const playerBet = args.playerBet ?? (betOn === "player" ? amount : 0);
+    const bankerBet = args.bankerBet ?? (betOn === "banker" ? amount : 0);
+    const tieBet = args.tieBet ?? (betOn === "tie" ? amount : 0);
+    const totalBet = playerBet + bankerBet + tieBet;
+
+    // Validate bet amount
+    if (totalBet < MIN_BET) {
+      throw new Error(`Minimum bet is ${MIN_BET} credits`);
+    }
+    if (totalBet > MAX_BET) {
+      throw new Error(`Maximum bet is ${MAX_BET} credits`);
+    }
+
+    // Get betting credits
+    const credits = await ctx.db
+      .query("bettingCredits")
+      .withIndex("by_address", (q) => q.eq("address", playerAddress))
+      .first();
+
+    if (!credits) {
+      throw new Error("No betting credits. Deposit VBMS first!");
+    }
+
+    if (credits.balance < totalBet) {
+      throw new Error(`Insufficient credits. You have ${credits.balance} credits`);
+    }
+
+    // Deduct total bet amount
+    await ctx.db.patch(credits._id, {
+      balance: credits.balance - totalBet,
+    });
+
+    // Create and shuffle deck
+    const deck = createDeck();
+    let deckIndex = 0;
+
+    // Deal initial 2 cards to each
+    const playerCards = [deck[deckIndex++], deck[deckIndex++]];
+    const bankerCards = [deck[deckIndex++], deck[deckIndex++]];
+
+    let playerScore = calculateHandValue(playerCards);
+    let bankerScore = calculateHandValue(bankerCards);
+
+    // Check for third card draws (standard Baccarat rules)
+    const firstCheck = shouldDrawThirdCard(playerScore, bankerScore, false);
+
+    if (firstCheck.playerDraws) {
+      const thirdCard = deck[deckIndex++];
+      playerCards.push(thirdCard);
+      playerScore = calculateHandValue(playerCards);
+
+      const bankerCheck = shouldDrawThirdCard(
+        calculateHandValue(playerCards.slice(0, 2)),
+        bankerScore,
+        true,
+        thirdCard.value
+      );
+
+      if (bankerCheck.bankerDraws) {
+        bankerCards.push(deck[deckIndex++]);
+        bankerScore = calculateHandValue(bankerCards);
+      }
+    } else if (firstCheck.bankerDraws) {
+      // Player stood (6-7) and no natural - banker draws on 0-5
+      bankerCards.push(deck[deckIndex++]);
+      bankerScore = calculateHandValue(bankerCards);
+    }
+    // Note: if natural (8 or 9), firstCheck.bankerDraws is false, so no third card
+
+    // Determine winner
+    const winner = determineWinner(playerScore, bankerScore);
+
+    // Calculate payout for EACH bet area (multi-bet support)
+    let payout = 0;
+    let status: "won" | "lost" | "push" = "lost";
+
+    if (winner === "tie") {
+      // Tie wins: pay tie bet at 5x
+      if (tieBet > 0) {
+        payout += Math.floor(tieBet * PAYOUTS.TIE);
+        status = "won";
+      }
+      // Push: return player and banker bets
+      payout += playerBet + bankerBet;
+      if (playerBet > 0 || bankerBet > 0) {
+        if (status !== "won") status = "push";
+      }
+    } else if (winner === "player") {
+      // Player wins: pay player bet at 1.8x
+      if (playerBet > 0) {
+        payout += Math.floor(playerBet * PAYOUTS.PLAYER);
+        status = "won";
+      }
+      // Banker bet is lost (no payout)
+      // Tie bet is lost (no payout)
+    } else if (winner === "banker") {
+      // Banker wins: pay banker bet at 1.7x
+      if (bankerBet > 0) {
+        payout += Math.floor(bankerBet * PAYOUTS.BANKER);
+        status = "won";
+      }
+      // Player bet is lost (no payout)
+      // Tie bet is lost (no payout)
+    }
+
+    // If no winning bets but had some payout from push, mark as push
+    if (payout > 0 && status === "lost") {
+      status = "push";
+    }
+
+    // Pay out winnings
+    if (payout > 0) {
+      await ctx.db.patch(credits._id, {
+        balance: credits.balance - totalBet + payout,
+      });
+    }
+
+    // Generate unique game ID
+    const gameId = `pve_${now}_${Math.random().toString(36).substr(2, 9)}`;
+
+    // Log to history
+    await ctx.db.insert("baccaratHistory", {
+      tableId: gameId,
+      winner,
+      playerScore,
+      bankerScore,
+      playerCards,
+      bankerCards,
+      totalPot: totalBet,
+      totalBets: 1,
+      winnersCount: status === "won" ? 1 : 0,
+      totalPayout: payout,
+      finishedAt: now,
+    });
+
+    // Log bet transaction
+    await ctx.db.insert("bettingTransactions", {
+      address: playerAddress,
+      type: "bet",
+      amount: -totalBet,
+      roomId: gameId,
+      timestamp: now,
+    });
+
+    if (payout > 0) {
+      await ctx.db.insert("bettingTransactions", {
+        address: playerAddress,
+        type: status === "won" ? "win" : "refund",
+        amount: payout,
+        roomId: gameId,
+        timestamp: now,
+      });
+    }
+
+    const newBalance = credits.balance - totalBet + payout;
+
+    console.log(`🎴 PvE Baccarat: ${username} bet ${totalBet} (P:${playerBet}/B:${bankerBet}/T:${tieBet}), ${winner} won, ${status}! Payout: ${payout}`);
+
+    return {
+      gameId,
+      winner,
+      playerScore,
+      bankerScore,
+      playerCards,
+      bankerCards,
+      betOn,
+      betAmount: amount,
+      status,
+      payout,
+      newBalance,
+    };
   },
 });

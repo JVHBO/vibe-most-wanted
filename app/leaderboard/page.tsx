@@ -1005,6 +1005,7 @@ export default function LeaderboardPage() {
                       } else {
                         matchResult = 'tie';
                         setShowTiePopup(true);
+                        if (soundEnabled) AudioManager.tie();
                         setTimeout(() => setShowTiePopup(false), 3000);
                       }
 

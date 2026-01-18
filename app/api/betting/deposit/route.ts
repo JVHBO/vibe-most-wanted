@@ -15,7 +15,11 @@ import { verifyERC20TransferByLogs } from '@/lib/blockchain/tx-utils';
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 const VBMS_TOKEN = '0xb03439567cd22f278b21e1ffcdfb8e1696763827';
-const VBMS_BETTING = '0x668c8d288b8670fdb9005fa91be046e4c2585af4';
+const VBMS_POOL = '0x062b914668f3fd35c3ae02e699cb82e1cf4be18b'; // VBMSPoolTroll - deposit goes to pool
+
+// Deposit limits to protect the house pool
+const MIN_DEPOSIT = 100;
+const MAX_DEPOSIT = 5000;
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,6 +29,21 @@ export async function POST(request: NextRequest) {
     if (!address || !amount || !txHash) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Validate deposit limits
+    const amountNum = parseFloat(amount);
+    if (amountNum < MIN_DEPOSIT) {
+      return NextResponse.json(
+        { error: `Minimum deposit is ${MIN_DEPOSIT} VBMS` },
+        { status: 400 }
+      );
+    }
+    if (amountNum > MAX_DEPOSIT) {
+      return NextResponse.json(
+        { error: `Maximum deposit is ${MAX_DEPOSIT} VBMS` },
         { status: 400 }
       );
     }
@@ -39,7 +58,7 @@ export async function POST(request: NextRequest) {
     const verification = await verifyERC20TransferByLogs(
       txHash as `0x${string}`,
       address,          // expected from (token holder)
-      VBMS_BETTING,     // expected to (betting contract)
+      VBMS_POOL,        // expected to (pool contract)
       expectedAmount,   // minimum amount
       VBMS_TOKEN        // token contract
     );
@@ -48,7 +67,7 @@ export async function POST(request: NextRequest) {
       throw new Error(verification.error || 'Transfer verification failed');
     }
 
-    console.log(`✅ Transaction verified: ${amount} VBMS from ${verification.actualFrom} to betting contract`);
+    console.log(`✅ Transaction verified: ${amount} VBMS from ${verification.actualFrom} to pool contract`);
 
     // Add betting credits in Convex
     const convex = new ConvexHttpClient(CONVEX_URL);

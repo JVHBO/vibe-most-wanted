@@ -2098,6 +2098,7 @@ export function PokerBattleTable({
           setShowLossPopup(true);
         } else {
           setShowTiePopup(true);
+          if (soundEnabled) AudioManager.tie();
         }
       }).catch((err) => {
         console.error('[PokerBattle] Failed to fetch betting results:', err);
@@ -2111,6 +2112,7 @@ export function PokerBattleTable({
           opponentName: 'Mecha Arena',
         });
         setShowTiePopup(true);
+        if (soundEnabled) AudioManager.tie();
       });
 
       return;
@@ -2157,8 +2159,9 @@ export function PokerBattleTable({
         opponentName,
       });
       setShowTiePopup(true);
+      if (soundEnabled) AudioManager.tie();
     }
-  }, [phase, playerScore, opponentScore, selectedAnte, isCPUMode, room, isSpectatorMode, spectatorType, playerAddress, roomId]);
+  }, [phase, playerScore, opponentScore, selectedAnte, isCPUMode, room, isSpectatorMode, spectatorType, playerAddress, roomId, soundEnabled]);
 
   // REMOVED: Auto-close room (user wants to see victory screen without auto-closing)
   // Room is marked as 'finished' in database but UI stays open for user to close manually
