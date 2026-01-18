@@ -58,9 +58,11 @@ export const getPlayerMissions = query({
 
     // Return only essential fields to reduce bandwidth
     return missions.map(m => ({
+      _id: m._id, // Needed for claimMission
       missionType: m.missionType,
       completed: m.completed,
       claimed: m.claimed,
+      reward: m.reward,
       date: m.date,
       claimedAt: m.claimedAt,
     }));

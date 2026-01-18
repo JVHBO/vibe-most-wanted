@@ -6,75 +6,21 @@
  * - Channel: Auto-verified (API requires paid plan)
  *
  * 🔒 SECURITY: This API now marks quest as completed after verification
- * The frontend can no longer call markQuestCompleted directly (internalMutation)
+ * Uses verifyAndCompleteQuest action which does verification server-side
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { SOCIAL_QUESTS } from '@/lib/socialQuests';
 import { ConvexHttpClient } from 'convex/browser';
-import { internal } from '@/convex/_generated/api';
+import { api } from '@/convex/_generated/api';
 
-const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
-const NEYNAR_API_BASE = 'https://api.neynar.com/v2';
-
-// Convex client for internal mutations
+// Convex client for actions
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 interface VerifyRequest {
   questId: string;
   userFid: number;
   address?: string; // Player's wallet address to mark quest as completed
-}
-
-/**
- * Check if user follows target FID
- */
-async function checkFollow(userFid: number, targetFid: number): Promise<boolean> {
-  if (!NEYNAR_API_KEY) {
-    throw new Error('NEYNAR_API_KEY not configured');
-  }
-
-  try {
-    // Use the "user bulk" endpoint with viewer_fid to check following status
-    const response = await fetch(
-      `${NEYNAR_API_BASE}/farcaster/user/bulk?fids=${targetFid}&viewer_fid=${userFid}`,
-      {
-        headers: {
-          'accept': 'application/json',
-          'api_key': NEYNAR_API_KEY,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      console.error(`Neynar API error: ${response.status}`);
-      return false;
-    }
-
-    const data = await response.json();
-
-    if (!data.users || data.users.length === 0) {
-      return false;
-    }
-
-    // Check if viewer (userFid) follows the target
-    const targetUser = data.users[0];
-    return targetUser.viewer_context?.following === true;
-  } catch (error) {
-    console.error('Error checking follow:', error);
-    return false;
-  }
-}
-
-/**
- * Check if user is member of channel
- * NOTE: Neynar channel membership API requires paid plan
- * Auto-verify channel quests (trust-based) until we upgrade
- */
-function checkChannelMembership(): boolean {
-  // Channel membership API is paid on Neynar
-  // Auto-complete channel quests for now (trust-based)
-  return true;
 }
 
 export async function POST(request: NextRequest) {
@@ -98,28 +44,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let completed = false;
-
-    if (quest.type === 'follow' && quest.targetFid) {
-      completed = await checkFollow(userFid, quest.targetFid);
-    } else if (quest.type === 'channel') {
-      // Auto-verify channel quests (Neynar API is paid)
-      completed = checkChannelMembership();
+    // Only allow follow/channel quests through this endpoint
+    if (quest.type !== 'follow' && quest.type !== 'channel') {
+      return NextResponse.json(
+        { error: 'Invalid quest type for this endpoint' },
+        { status: 400 }
+      );
     }
 
-    // 🔒 SECURITY: Mark quest as completed in Convex after verification
-    // This is now done server-side to prevent exploit (markQuestCompleted is internalMutation)
-    if (completed && address) {
+    let completed = false;
+
+    if (address) {
+      // Use the Convex action which does verification AND marks complete
       try {
-        await convex.mutation(internal.socialQuests.markQuestCompleted, {
+        const result = await convex.action(api.socialQuests.verifyAndCompleteQuest, {
           address,
           questId,
+          userFid,
         });
-        console.log(`✅ Quest ${questId} marked completed for ${address}`);
+        completed = result.completed;
+        if (completed) {
+          console.log(`✅ Quest ${questId} verified and marked completed for ${address}`);
+        }
       } catch (err) {
-        console.error(`Failed to mark quest ${questId} completed:`, err);
-        // Still return completed=true so frontend knows verification passed
-        // User can retry claim later
+        console.error(`Failed to verify quest ${questId}:`, err);
+        // Return false so user can retry
+        completed = false;
       }
     }
 

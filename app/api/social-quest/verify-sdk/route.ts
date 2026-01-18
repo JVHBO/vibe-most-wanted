@@ -5,15 +5,14 @@
  * These are verified by the Farcaster SDK on the client
  *
  * 🔒 SECURITY: Only accepts specific SDK quest types
- * The frontend can no longer call markQuestCompleted directly (internalMutation)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { SOCIAL_QUESTS } from '@/lib/socialQuests';
 import { ConvexHttpClient } from 'convex/browser';
-import { internal } from '@/convex/_generated/api';
+import { api } from '@/convex/_generated/api';
 
-// Convex client for internal mutations
+// Convex client for mutations
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 // Only allow these quest types through this endpoint
@@ -53,9 +52,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mark quest as completed
+    // Mark quest as completed using the public mutation
+    // The mutation itself validates that only SDK quest types are allowed
     try {
-      await convex.mutation(internal.socialQuests.markQuestCompleted, {
+      await convex.mutation(api.socialQuests.markQuestCompleted, {
         address,
         questId,
       });

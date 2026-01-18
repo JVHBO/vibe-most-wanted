@@ -6,7 +6,8 @@
  */
 
 import { v } from "convex/values";
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation, action } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { normalizeAddress } from "./utils";
 import { createAuditLog } from "./coinAudit";
 
@@ -86,19 +87,78 @@ export const getSocialQuestProgress = query({
 });
 
 /**
- * Mark a social quest as completed
+ * Mark a social quest as completed (internal use only)
  *
  * 🔒 SECURITY FIX (2026-01-16): Changed from mutation to internalMutation
  * EXPLOIT PATCHED: Anyone could call this directly without verification
- * Now must be called from a verified API route after Neynar verification
+ * Now must be called from verified server-side code
  */
-export const markQuestCompleted = internalMutation({
+export const markQuestCompletedInternal = internalMutation({
   args: {
     address: v.string(),
     questId: v.string(),
   },
   handler: async (ctx, { address, questId }) => {
     const normalizedAddress = normalizeAddress(address);
+
+    // Check if quest exists in rewards
+    if (!QUEST_REWARDS[questId]) {
+      throw new Error("Invalid quest ID");
+    }
+
+    // Check if already marked
+    const existing = await ctx.db
+      .query("socialQuestProgress")
+      .withIndex("by_player_quest", (q) =>
+        q.eq("playerAddress", normalizedAddress).eq("questId", questId)
+      )
+      .first();
+
+    if (existing) {
+      if (!existing.completed) {
+        await ctx.db.patch(existing._id, {
+          completed: true,
+          completedAt: Date.now(),
+        });
+      }
+      return { success: true, alreadyCompleted: existing.completed };
+    }
+
+    // Create new progress entry
+    await ctx.db.insert("socialQuestProgress", {
+      playerAddress: normalizedAddress,
+      questId,
+      completed: true,
+      completedAt: Date.now(),
+      claimed: false,
+    });
+
+    return { success: true, alreadyCompleted: false };
+  },
+});
+
+// SDK quest types that can be marked complete from frontend
+// These are verified client-side by Farcaster SDK
+const SDK_QUEST_TYPES = ["enable_notifications", "add_miniapp"];
+
+/**
+ * Mark SDK quest as completed (for notification/miniapp quests)
+ *
+ * These quests are verified client-side via Farcaster SDK, so they can be
+ * marked complete directly from frontend without server verification.
+ */
+export const markQuestCompleted = mutation({
+  args: {
+    address: v.string(),
+    questId: v.string(),
+  },
+  handler: async (ctx, { address, questId }) => {
+    const normalizedAddress = normalizeAddress(address);
+
+    // Only allow SDK quest types from frontend
+    if (!SDK_QUEST_TYPES.includes(questId)) {
+      throw new Error("This quest type requires server verification");
+    }
 
     // Check if quest exists in rewards
     if (!QUEST_REWARDS[questId]) {
@@ -277,5 +337,88 @@ export const getClaimableSocialRewards = query({
       claimableQuests,
       count: claimableQuests.length,
     };
+  },
+});
+
+// Quest configuration for verification
+const QUEST_CONFIG: Record<string, { type: string; targetFid?: number }> = {
+  // Channels (auto-verified - Neynar API requires paid plan)
+  join_vibe_most_wanted: { type: "channel" },
+  join_fidmfers: { type: "channel" },
+  // Follows
+  follow_jvhbo: { type: "follow", targetFid: 893424 },
+  follow_betobutter: { type: "follow", targetFid: 17715 },
+  follow_jayabs: { type: "follow", targetFid: 9314 },
+  follow_smolemaru: { type: "follow", targetFid: 5966 },
+  follow_denkurhq: { type: "follow", targetFid: 545270 },
+  follow_zazza: { type: "follow", targetFid: 193506 },
+  follow_bradenwolf: { type: "follow", targetFid: 20911 },
+  follow_viberotbangers_creator: { type: "follow", targetFid: 17715 },
+};
+
+/**
+ * Verify and complete a follow/channel quest
+ *
+ * This action verifies the quest completion via Neynar API and marks it complete.
+ * Used for follow/channel quests that need server-side verification.
+ */
+export const verifyAndCompleteQuest = action({
+  args: {
+    address: v.string(),
+    questId: v.string(),
+    userFid: v.number(),
+  },
+  handler: async (ctx, { address, questId, userFid }) => {
+    const config = QUEST_CONFIG[questId];
+    if (!config) {
+      throw new Error("Invalid quest ID for verification");
+    }
+
+    let completed = false;
+
+    if (config.type === "follow" && config.targetFid) {
+      // Verify follow via Neynar
+      const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
+      if (!NEYNAR_API_KEY) {
+        throw new Error("NEYNAR_API_KEY not configured");
+      }
+
+      try {
+        const response = await fetch(
+          `https://api.neynar.com/v2/farcaster/user/bulk?fids=${config.targetFid}&viewer_fid=${userFid}`,
+          {
+            headers: {
+              accept: "application/json",
+              api_key: NEYNAR_API_KEY,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.users && data.users.length > 0) {
+            completed = data.users[0].viewer_context?.following === true;
+          }
+        }
+      } catch (error) {
+        console.error("Neynar verification failed:", error);
+        throw new Error("Failed to verify quest. Please try again.");
+      }
+    } else if (config.type === "channel") {
+      // Auto-verify channel quests (Neynar API requires paid plan)
+      completed = true;
+    }
+
+    if (!completed) {
+      return { completed: false, message: "Quest not completed yet" };
+    }
+
+    // Mark as completed via internal mutation
+    await ctx.runMutation(internal.socialQuests.markQuestCompletedInternal, {
+      address,
+      questId,
+    });
+
+    return { completed: true, message: "Quest verified and marked complete!" };
   },
 });

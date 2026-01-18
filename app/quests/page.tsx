@@ -10,12 +10,14 @@ import { AudioManager } from "@/lib/audio-manager";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
+import { useProfile } from "@/contexts/ProfileContext";
 
 export default function QuestsPage() {
   const router = useRouter();
   const { isConnecting } = useAccount();
   const { primaryAddress: address } = usePrimaryAddress(); // 🔗 MULTI-WALLET: Use primary address
   const { t } = useLanguage();
+  const { refreshProfile } = useProfile();
 
   // Social Quests
   const socialQuestProgress = useQuery(
@@ -23,6 +25,7 @@ export default function QuestsPage() {
     address ? { address: address.toLowerCase() } : "skip"
   );
   const markCompleted = useMutation(api.socialQuests.markQuestCompleted);
+  const verifyAndCompleteQuest = useAction(api.socialQuests.verifyAndCompleteQuest);
   const claimSocialReward = useMutation(api.socialQuests.claimSocialQuestReward);
 
 
@@ -219,14 +222,13 @@ export default function QuestsPage() {
 
     setVerifying(quest.id);
     try {
-      const response = await fetch("/api/social-quest/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ questId: quest.id, userFid }),
+      // Use Convex action to verify and mark complete in one call
+      const result = await verifyAndCompleteQuest({
+        address: address.toLowerCase(),
+        questId: quest.id,
+        userFid,
       });
-      const data = await response.json();
-      if (data.completed) {
-        await markCompleted({ address: address.toLowerCase(), questId: quest.id });
+      if (result.completed) {
         setLocalCompleted((prev) => new Set([...prev, quest.id]));
         AudioManager.buttonSuccess();
       } else {
@@ -470,6 +472,8 @@ export default function QuestsPage() {
                                     try {
                                       if (isVibeBadge) {
                                         await claimVibeBadge({ playerAddress: address.toLowerCase() });
+                                        // 🔄 Refresh profile to update hasVibeBadge in cache
+                                        await refreshProfile();
                                       } else {
                                         await claimMission({
                                           playerAddress: address.toLowerCase(),
