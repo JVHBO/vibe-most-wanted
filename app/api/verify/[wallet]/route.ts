@@ -12,8 +12,8 @@ export async function GET(
 
     if (!wallet || !wallet.match(/^0x[a-fA-F0-9]{40}$/)) {
       return NextResponse.json(
-        { verified: false, error: 'Invalid wallet address' },
-        { status: 400 }
+        { verified: false, reason: 'Invalid wallet address' },
+        { status: 200 }
       );
     }
 
@@ -28,22 +28,22 @@ export async function GET(
       const data = await response.json();
       if (data.isHolderOfContract) {
         return NextResponse.json(
-          { verified: true, wallet: walletLower },
+          { verified: true },
           { status: 200 }
         );
       }
     }
 
     return NextResponse.json(
-      { verified: false, error: 'Wallet does not hold VibeFID' },
-      { status: 400 }
+      { verified: false, reason: 'Not eligible' },
+      { status: 200 }
     );
 
   } catch (error) {
     console.error('[verify] Error:', error);
     return NextResponse.json(
-      { verified: false, error: 'Verification failed' },
-      { status: 500 }
+      { verified: false, reason: 'Verification failed' },
+      { status: 200 }
     );
   }
 }

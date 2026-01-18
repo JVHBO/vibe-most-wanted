@@ -85,7 +85,8 @@ const CARD_IMAGES: Record<string, string> = {
 const getCardImageUrl = (rank: string, suit: string) => {
   const key = `${rank}_${suit}`;
   const filename = CARD_IMAGES[key];
-  return filename ? `/images/baccarat/${encodeURIComponent(filename)}` : null;
+  // Don't encode - Next.js public folder handles spaces, encode only special chars
+  return filename ? `/images/baccarat/${filename.replace(/ /g, '%20')}` : null;
 };
 
 const getBaccaratValue = (rank: string): number => {
@@ -631,8 +632,8 @@ export default function BaccaratPage() {
             setTimeout(() => AudioManager.evilLaugh(), 400);
           }
         }
-        // Show full-screen result modal after a brief delay
-        setTimeout(() => setShowResultModal(true), 800);
+        // Skip result modal - go straight to next round
+        // setTimeout(() => setShowResultModal(true), 800);
       }, resultDelay);
 
     } catch (err: any) {
@@ -1429,92 +1430,7 @@ export default function BaccaratPage() {
         </div>
       )}
 
-      {/* Round Result Modal - Full Screen */}
-      {showResultModal && gameResult && (
-        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="max-w-sm w-full text-center">
-            {/* Result Icon */}
-            <div className={`text-7xl mb-4 ${gameResult.actualWin > 0 ? 'animate-bounce' : 'animate-pulse'}`}>
-              {gameResult.actualWin > 0 ? '🎉' : gameResult.actualWin === 0 ? '🤝' : '😈'}
-            </div>
-
-            {/* Result Title */}
-            <h2 className={`text-3xl font-display font-bold mb-2 ${
-              gameResult.actualWin > 0 ? 'text-emerald-400' :
-              gameResult.actualWin === 0 ? 'text-vintage-gold' :
-              'text-red-400'
-            }`}>
-              {gameResult.actualWin > 0 ? 'YOU WIN!' :
-               gameResult.actualWin === 0 ? 'PUSH' :
-               'HOUSE WINS'}
-            </h2>
-
-            {/* Winner info */}
-            <p className="text-vintage-burnt-gold text-sm font-modern mb-4">
-              {gameResult.winner?.toUpperCase()} {gameResult.playerScore} - {gameResult.bankerScore}
-            </p>
-
-            {/* Result Box */}
-            <div className="bg-vintage-charcoal/80 rounded-2xl border-2 border-vintage-gold/40 p-5 mb-4">
-              {/* Your Bets */}
-              <p className="text-vintage-burnt-gold/60 text-xs font-modern mb-2">Your Bets</p>
-              <div className="flex justify-center gap-3 mb-4">
-                {gameResult.bets?.player > 0 && (
-                  <div className={`px-3 py-1 rounded-lg ${gameResult.winner === 'player' ? 'bg-emerald-900/50 border border-emerald-500/50' : 'bg-red-900/30 border border-red-500/30'}`}>
-                    <span className="text-vintage-neon-blue text-xs">P</span>
-                    <span className="text-vintage-ice text-sm ml-1">{gameResult.bets.player}</span>
-                  </div>
-                )}
-                {gameResult.bets?.banker > 0 && (
-                  <div className={`px-3 py-1 rounded-lg ${gameResult.winner === 'banker' ? 'bg-emerald-900/50 border border-emerald-500/50' : 'bg-red-900/30 border border-red-500/30'}`}>
-                    <span className="text-red-300 text-xs">B</span>
-                    <span className="text-vintage-ice text-sm ml-1">{gameResult.bets.banker}</span>
-                  </div>
-                )}
-                {gameResult.bets?.tie > 0 && (
-                  <div className={`px-3 py-1 rounded-lg ${gameResult.winner === 'tie' ? 'bg-emerald-900/50 border border-emerald-500/50' : 'bg-red-900/30 border border-red-500/30'}`}>
-                    <span className="text-vintage-gold text-xs">T</span>
-                    <span className="text-vintage-ice text-sm ml-1">{gameResult.bets.tie}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Profit/Loss */}
-              <div className={`pt-3 border-t border-vintage-gold/20 ${
-                gameResult.actualWin > 0 ? 'text-emerald-400' :
-                gameResult.actualWin === 0 ? 'text-vintage-gold' :
-                'text-red-400'
-              }`}>
-                <span className="text-4xl font-bold font-display">
-                  {gameResult.actualWin >= 0 ? '+' : ''}{gameResult.actualWin}
-                </span>
-                <p className="text-sm font-modern opacity-70 mt-1">
-                  {gameResult.actualWin > 0 ? 'Profit' :
-                   gameResult.actualWin === 0 ? 'Returned' :
-                   'Loss'}
-                </p>
-              </div>
-            </div>
-
-            {/* New Balance */}
-            <p className="text-vintage-burnt-gold/60 text-sm font-modern mb-4">
-              Balance: <span className="text-vintage-gold font-bold">{credits}</span> credits
-            </p>
-
-            {/* Continue Button */}
-            <button
-              onClick={handlePlayAgain}
-              className={`w-full py-4 rounded-xl font-display text-xl transition-all shadow-lg border-2 ${
-                gameResult.actualWin >= 0
-                  ? 'bg-gradient-to-r from-emerald-900 to-emerald-800 hover:from-emerald-800 hover:to-emerald-700 border-emerald-500/50 text-vintage-ice'
-                  : 'bg-gradient-to-r from-vintage-wine to-red-900 hover:from-red-800 hover:to-red-700 border-red-500/50 text-vintage-ice'
-              }`}
-            >
-              CONTINUE
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Round Result Modal - REMOVED (user requested to only show cashout modal) */}
     </div>
   );
 }
