@@ -28,7 +28,7 @@ const BET_LIMITS = {
 // Daily play limits based on VibeFID Badge status
 const DAILY_LIMITS = {
   NO_BADGE: 5,           // Players without VibeFID Badge
-  WITH_BADGE: 999,       // VibeFID Badge holders (unlimited)
+  WITH_BADGE: 50,        // VibeFID Badge holders
 };
 
 // Chip values and colors - vintage elegant style
@@ -1176,7 +1176,7 @@ export default function BaccaratPage() {
                   You've played {currentPlays}/{dailyLimit} rounds today.
                 </p>
                 <p className="text-vintage-ice/80 text-sm mb-6 font-modern">
-                  Get a <span className="text-vintage-gold font-bold">VibeFID card</span> and claim the <span className="text-vintage-gold font-bold">VIBE Badge</span> in missions to unlock unlimited plays!
+                  Get a <span className="text-vintage-gold font-bold">VibeFID card</span> and claim the <span className="text-vintage-gold font-bold">VIBE Badge</span> in missions to get {DAILY_LIMITS.WITH_BADGE} plays/day!
                 </p>
                 <button
                   onClick={() => router.push('/fid')}
