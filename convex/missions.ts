@@ -32,6 +32,7 @@ const MISSION_REWARDS = {
 
 /**
  * Get all player missions (claimable and claimed)
+ * 🚀 BANDWIDTH FIX: Returns only essential fields, not full documents
  */
 export const getPlayerMissions = query({
   args: { playerAddress: v.string() },
@@ -51,7 +52,14 @@ export const getPlayerMissions = query({
       )
       .collect();
 
-    return missions;
+    // Return only essential fields to reduce bandwidth
+    return missions.map(m => ({
+      missionType: m.missionType,
+      completed: m.completed,
+      claimed: m.claimed,
+      date: m.date,
+      claimedAt: m.claimedAt,
+    }));
   },
 });
 

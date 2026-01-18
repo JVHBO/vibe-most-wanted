@@ -2968,15 +2968,24 @@ export default function TCGPage() {
 
     setIsLoadingMissions(true);
     try {
-      // Ensure welcome_gift exists for this player (migration for old users)
-      await convex.mutation(api.missions.ensureWelcomeGift, {
-        playerAddress: address,
-      });
+      // 🚀 BANDWIDTH FIX: Only call these mutations once per session
+      const sessionKey = `vbms_missions_init_${address.toLowerCase()}`;
+      const today = new Date().toISOString().split('T')[0];
+      const cached = sessionStorage.getItem(sessionKey);
 
-      // Mark daily login mission as completed (auto-unlock on login)
-      await convex.mutation(api.missions.markDailyLogin, {
-        playerAddress: address,
-      });
+      if (cached !== today) {
+        // Ensure welcome_gift exists for this player (migration for old users)
+        await convex.mutation(api.missions.ensureWelcomeGift, {
+          playerAddress: address,
+        });
+
+        // Mark daily login mission as completed (auto-unlock on login)
+        await convex.mutation(api.missions.markDailyLogin, {
+          playerAddress: address,
+        });
+
+        sessionStorage.setItem(sessionKey, today);
+      }
 
       // Get completed missions from database
       const playerMissions = await convex.query(api.missions.getPlayerMissions, {
@@ -3188,17 +3197,26 @@ export default function TCGPage() {
 
       devLog('📊 Collection powers:', collectionPowers);
 
-      // 🚀 BANDWIDTH FIX: Only send tokenIds when count changes
-      // This saves ~20MB/day by not sending thousands of IDs on every update
-      const currentStoredCount = userProfile?.stats?.totalCards || 0;
-      const shouldSendTokenIds = nfts.length !== currentStoredCount;
+      // 🚀 BANDWIDTH FIX: Only update if stats actually changed
+      const currentStats = userProfile?.stats;
+      const statsChanged =
+        nfts.length !== (currentStats?.totalCards || 0) ||
+        totalNftPower !== (currentStats?.totalPower || 0) ||
+        openedCardsCount !== (currentStats?.openedCards || 0);
+
+      if (!statsChanged) {
+        devLog('📊 Stats unchanged, skipping update');
+        updateStatsInProgress.current = false;
+        return;
+      }
+
+      const shouldSendTokenIds = nfts.length !== (currentStats?.totalCards || 0);
 
       if (shouldSendTokenIds) {
-        devLog('📊 Token count changed, sending tokenIds:', { stored: currentStoredCount, current: nfts.length });
+        devLog('📊 Token count changed, sending tokenIds:', { stored: currentStats?.totalCards, current: nfts.length });
       }
 
       // 🚀 BANDWIDTH FIX: Don't reload profile after update
-      // The stats we're sending ARE the current stats, no need to refetch
       ConvexProfileService.updateStats(
         address,
         nfts.length,
@@ -3420,8 +3438,11 @@ export default function TCGPage() {
 
   // Clean conflicting cards from defense deck on initial load
   // (cards that are now in raid deck should be removed from defense)
+  // 🚀 BANDWIDTH FIX: Only run once per session
+  const cleanedDefenseRef = useRef(false);
   useEffect(() => {
-    if (address && defenseLockedTokenIds.size > 0) {
+    if (address && defenseLockedTokenIds.size > 0 && !cleanedDefenseRef.current) {
+      cleanedDefenseRef.current = true;
       cleanConflictingDefense({ address }).catch(err => {
         console.error('Error cleaning conflicting defense cards:', err);
       });

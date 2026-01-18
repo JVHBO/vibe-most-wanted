@@ -229,7 +229,6 @@ export const getDailyPlays = query({
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
     // Count PvE games played today by this player
-    // We look at bettingTransactions with type "bet" and roomId starting with "pve_"
     const todayBets = await ctx.db
       .query("bettingTransactions")
       .withIndex("by_address", (q) => q.eq("address", playerAddress))

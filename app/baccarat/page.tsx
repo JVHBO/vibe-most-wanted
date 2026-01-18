@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import { useFarcasterVBMSBalance, useFarcasterTransferVBMS, useFarcasterApproveVBMS } from "@/lib/hooks/useFarcasterVBMS";
@@ -12,6 +12,8 @@ import { parseEther } from "viem";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useAccount } from "wagmi";
+import { sdk } from "@farcaster/miniapp-sdk";
+import { openMarketplace } from "@/lib/marketplace-utils";
 
 type BetChoice = "player" | "banker" | "tie";
 type GamePhase = "betting" | "dealing" | "result";
@@ -226,6 +228,22 @@ export default function BaccaratPage() {
   const { userProfile } = useProfile();
   const { address } = useAccount();
   const soundEnabled = true;
+  const [isInFarcaster, setIsInFarcaster] = useState(false);
+
+  // Detect Farcaster context
+  useEffect(() => {
+    const checkFarcaster = async () => {
+      try {
+        const context = await sdk.context;
+        if (context?.client?.clientFid) {
+          setIsInFarcaster(true);
+        }
+      } catch {
+        setIsInFarcaster(false);
+      }
+    };
+    checkFarcaster();
+  }, []);
 
   // Game state
   const [gamePhase, setGamePhase] = useState<GamePhase>("betting");
@@ -413,9 +431,28 @@ export default function BaccaratPage() {
   const { transfer } = useFarcasterTransferVBMS();
 
   // Queries
+  const convex = useConvex();
   const bettingCredits = useQuery(api.bettingCredits.getBettingCredits, address ? { address } : "skip");
   const recentHistory = useQuery(api.baccarat.getRecentHistory);
-  const dailyPlaysQuery = useQuery(api.baccarat.getDailyPlays, address ? { address } : "skip");
+
+  // 🚀 BANDWIDTH FIX: Manual query with cache instead of reactive useQuery
+  const [dailyPlaysCount, setDailyPlaysCount] = useState<number>(0);
+  const dailyPlaysLoaded = useRef(false);
+
+  useEffect(() => {
+    if (!address || dailyPlaysLoaded.current) return;
+
+    const fetchDailyPlays = async () => {
+      try {
+        const result = await convex.query(api.baccarat.getDailyPlays, { address });
+        setDailyPlaysCount(result?.count || 0);
+        dailyPlaysLoaded.current = true;
+      } catch (e) {
+        console.error("Failed to fetch daily plays:", e);
+      }
+    };
+    fetchDailyPlays();
+  }, [address, convex]);
 
   // Mutations
   const playPvE = useMutation(api.baccarat.playPvE);
@@ -433,7 +470,7 @@ export default function BaccaratPage() {
   // Calculate daily limit based on VibeFID Badge
   const dailyLimit = hasVibeBadge ? DAILY_LIMITS.WITH_BADGE : DAILY_LIMITS.NO_BADGE;
 
-  const currentPlays = dailyPlaysQuery?.count || 0;
+  const currentPlays = dailyPlaysCount;
   const playsRemaining = Math.max(0, dailyLimit - currentPlays);
   const isLimitReached = playsRemaining === 0;
 
@@ -1051,11 +1088,15 @@ export default function BaccaratPage() {
                 {t('baccaratRebet')}
               </button>
               <button
-                onClick={handleDeal}
-                disabled={totalBet === 0 || isPlaying || isLimitReached}
-                className="flex-[2] py-3 bg-gradient-to-r from-vintage-wine to-red-900 hover:from-red-800 hover:to-red-700 border-2 border-red-400/50 rounded-xl text-vintage-ice font-display text-xl transition-all disabled:opacity-30 shadow-lg"
+                onClick={isLimitReached ? () => setShowLimitModal(true) : handleDeal}
+                disabled={!isLimitReached && (totalBet === 0 || isPlaying)}
+                className={`flex-[2] py-3 border-2 rounded-xl font-display text-xl transition-all shadow-lg ${
+                  isLimitReached
+                    ? 'bg-gradient-to-r from-yellow-900 to-amber-900 hover:from-yellow-800 hover:to-amber-800 border-yellow-500/50 text-yellow-300 cursor-pointer'
+                    : 'bg-gradient-to-r from-vintage-wine to-red-900 hover:from-red-800 hover:to-red-700 border-red-400/50 text-vintage-ice disabled:opacity-30'
+                }`}
               >
-                {isPlaying ? "..." : isLimitReached ? "LIMIT" : t('baccaratDeal')}
+                {isPlaying ? "..." : isLimitReached ? "🔒 LIMIT" : t('baccaratDeal')}
               </button>
             </div>
           </div>
@@ -1179,10 +1220,16 @@ export default function BaccaratPage() {
                   Get a <span className="text-vintage-gold font-bold">VibeFID card</span> and claim the <span className="text-vintage-gold font-bold">VIBE Badge</span> in missions to get {DAILY_LIMITS.WITH_BADGE} plays/day!
                 </p>
                 <button
-                  onClick={() => router.push('/fid')}
-                  className="w-full py-3 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold rounded-xl text-vintage-gold font-bold font-modern transition-all mb-3"
+                  onClick={() => openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, isInFarcaster)}
+                  className="w-full py-3 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold rounded-xl text-vintage-gold font-bold font-modern transition-all mb-2"
                 >
-                  Get VibeFID
+                  Get VibeFID ↗
+                </button>
+                <button
+                  onClick={() => { setShowLimitModal(false); router.push('/missions'); }}
+                  className="w-full py-3 bg-emerald-900/30 hover:bg-emerald-900/50 border border-emerald-600/50 rounded-xl text-emerald-400 font-bold font-modern transition-all mb-3"
+                >
+                  Claim Badge in Missions
                 </button>
               </>
             ) : (

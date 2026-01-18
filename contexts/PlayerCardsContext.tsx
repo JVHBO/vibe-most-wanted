@@ -16,65 +16,38 @@ import { HAND_SIZE, getMaxAttacks } from '@/lib/config';
 import type { Card, CardRarity, CardFoil } from '@/lib/types/card';
 
 /**
- * 🎴 FETCH NFTs - SAME LOGIC AS HOME PAGE!
+ * 🎴 FETCH NFTs - localStorage cache only (no Convex bandwidth)
  * OPTIMIZATION (Jan 2026):
- * - Uses free Base RPC to check balanceOf before Alchemy calls
- * - Only fetches from collections where user has NFTs
- * - Saves ~70-90% Alchemy CUs
+ * - Uses localStorage cache (30 min TTL)
+ * - RPC balance check to skip empty collections
+ * - No Convex usage = minimal bandwidth cost
  */
-async function fetchNFTsFromAllCollections(owner: string): Promise<any[]> {
-  const enabledCollections = getEnabledCollections();
-  devLog('🎴 [Context] Starting optimized NFT fetch for', enabledCollections.length, 'collections');
+async function fetchNFTsFromAllCollections(owner: string, forceRefresh: boolean = false): Promise<any[]> {
+  devLog('🎴 [Context] Starting NFT fetch (localStorage cache)...');
 
-  // STEP 1: Check balances via free RPC (sequential with delay to avoid rate limit)
+  const enabledCollections = getEnabledCollections();
   const collectionsWithContract = enabledCollections.filter(c => c.contractAddress);
+
+  // RPC balance check - skips collections where user has 0 NFTs
   const { collectionsWithNfts, balances } = await checkCollectionBalances(owner, collectionsWithContract);
 
-  // Log savings
-  const savedCalls = collectionsWithContract.length - collectionsWithNfts.length;
-  if (savedCalls > 0) {
-    devLog(`💰 [Context] OPTIMIZATION: Saved ${savedCalls} Alchemy calls!`);
-  }
+  devLog(`📊 [Context] ${collectionsWithNfts.length}/${collectionsWithContract.length} collections have NFTs`);
 
   const allNfts: any[] = [];
-  const collectionCounts: Record<string, number> = {};
-  let totalCards = 0;
 
-  // STEP 2: Fetch only from collections with NFTs (or errors)
-  const BATCH_SIZE = 3;
-  for (let i = 0; i < collectionsWithNfts.length; i += BATCH_SIZE) {
-    const batch = collectionsWithNfts.slice(i, i + BATCH_SIZE);
-
-    const results = await Promise.allSettled(
-      batch.map(async (collection) => {
-        devLog(`📡 [Context] Fetching from ${collection.displayName}`);
-        // 🚀 OPTIMIZATION: Pass balance to enable smart caching
-        // If balance unchanged, uses cache indefinitely (no Alchemy call!)
-        const balance = balances[collection.contractAddress.toLowerCase()];
-        const nfts = await fetchNFTs(owner, collection.contractAddress, undefined, balance);
-        const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
-        collectionCounts[collection.displayName] = nfts.length;
-        totalCards += nfts.length;
-        return tagged;
-      })
-    );
-
-    results.forEach((result, idx) => {
-      if (result.status === 'fulfilled') {
-        allNfts.push(...result.value);
-      } else {
-        collectionCounts[batch[idx].displayName] = -1;
-        devError(`✗ [Context] Failed: ${batch[idx].displayName}`, result.reason);
-      }
-    });
-
-    if (i + BATCH_SIZE < collectionsWithNfts.length) {
-      await new Promise(r => setTimeout(r, 200));
+  for (const collection of collectionsWithNfts) {
+    try {
+      const balance = balances[collection.contractAddress.toLowerCase()];
+      // fetchNFTs uses localStorage cache internally (30 min TTL)
+      const nfts = await fetchNFTs(owner, collection.contractAddress, undefined, balance);
+      const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
+      allNfts.push(...tagged);
+    } catch (err) {
+      devError(`✗ [Context] Failed: ${collection.displayName}`, err);
     }
   }
 
-  devLog('📊 [Context] CARD FETCH SUMMARY:', JSON.stringify(collectionCounts));
-  devLog(`📊 [Context] Total raw NFTs: ${allNfts.length}`);
+  devLog(`✅ [Context] Fetched ${allNfts.length} NFTs total`);
   return allNfts;
 }
 
@@ -311,9 +284,25 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
       setErrorMsg(null);
 
       // 🔗 MULTI-WALLET: Get all linked addresses
+      // 🚀 BANDWIDTH FIX: Cache linked addresses in sessionStorage (1 hour)
       let allAddresses = [address.toLowerCase()];
       try {
-        const linkedData = await convex.query(api.profiles.getLinkedAddresses, { address });
+        const cacheKey = `vbms_linked_${address.toLowerCase()}`;
+        const cached = sessionStorage.getItem(cacheKey);
+        let linkedData = null;
+
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Date.now() - parsed.timestamp < 60 * 60 * 1000) { // 1 hour cache
+            linkedData = parsed.data;
+          }
+        }
+
+        if (!linkedData) {
+          linkedData = await convex.query(api.profiles.getLinkedAddresses, { address });
+          sessionStorage.setItem(cacheKey, JSON.stringify({ data: linkedData, timestamp: Date.now() }));
+        }
+
         if (linkedData?.primary) {
           const primaryLower = linkedData.primary.toLowerCase();
           const linkedLower = (linkedData.linked || []).map((a: string) => a.toLowerCase());

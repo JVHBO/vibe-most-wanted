@@ -74,13 +74,21 @@ export default function QuestsPage() {
   ];
 
   // Initialize missions on mount
+  // 🚀 BANDWIDTH FIX: Only call these mutations once per session/day
   useEffect(() => {
     if (!address) return;
     const init = async () => {
+      const sessionKey = `vbms_missions_init_${address.toLowerCase()}`;
+      const today = new Date().toISOString().split('T')[0];
+      const cached = sessionStorage.getItem(sessionKey);
+
+      if (cached === today) return; // Already initialized today
+
       try {
         // Ensure missions exist
         await ensureWelcomeGift({ playerAddress: address.toLowerCase() });
         await markDailyLogin({ playerAddress: address.toLowerCase() });
+        sessionStorage.setItem(sessionKey, today);
       } catch (e) {
         console.error('Error initializing:', e);
       }
