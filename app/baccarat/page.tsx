@@ -25,11 +25,10 @@ const BET_LIMITS = {
   MAX_TOTAL: 1000,   // Maximum total bet per round
 };
 
-// Daily play limits based on VibeFID status
+// Daily play limits based on VibeFID Badge status
 const DAILY_LIMITS = {
-  NO_VIBEFID: 999,        // TEMP: Unlimited for testing
-  VIBEFID_NO_BADGE: 999, // TEMP: Unlimited for testing
-  VIBEFID_WITH_BADGE: 999, // TEMP: Unlimited for testing
+  NO_BADGE: 5,           // Players without VibeFID Badge
+  WITH_BADGE: 999,       // VibeFID Badge holders (unlimited)
 };
 
 // Chip values and colors - vintage elegant style
@@ -428,14 +427,11 @@ export default function BaccaratPage() {
   const totalBet = bets.player + bets.banker + bets.tie;
   const DEPOSIT_PRESETS = [100, 500, 1000, 2500];
 
-  // Check VibeFID status from profile
-  const hasVibeFID = userProfile?.ownedTokenIds?.some((id: string) => id.startsWith('vibefid-')) || false;
-  const hasVibeFIDBadge = userProfile?.claimedAchievements?.includes('vibefid_holder') || false;
+  // Check VibeFID Badge status from profile
+  const hasVibeBadge = userProfile?.hasVibeBadge || false;
 
-  // Calculate daily limit based on VibeFID status
-  const dailyLimit = hasVibeFIDBadge ? DAILY_LIMITS.VIBEFID_WITH_BADGE :
-                     hasVibeFID ? DAILY_LIMITS.VIBEFID_NO_BADGE :
-                     DAILY_LIMITS.NO_VIBEFID;
+  // Calculate daily limit based on VibeFID Badge
+  const dailyLimit = hasVibeBadge ? DAILY_LIMITS.WITH_BADGE : DAILY_LIMITS.NO_BADGE;
 
   const currentPlays = dailyPlaysQuery?.count || 0;
   const playsRemaining = Math.max(0, dailyLimit - currentPlays);
@@ -983,7 +979,7 @@ export default function BaccaratPage() {
             </div>
             <div className={`flex items-center gap-1 ${playsRemaining <= 2 ? 'text-red-400' : ''}`}>
               <span>{t('baccaratPlays')}: {currentPlays}/{dailyLimit}</span>
-              {!hasVibeFID && <span className="text-vintage-gold">🔒</span>}
+              {!hasVibeBadge && <span className="text-vintage-gold">🔒</span>}
             </div>
           </div>
 
@@ -1174,34 +1170,19 @@ export default function BaccaratPage() {
             <div className="text-5xl mb-4">🎰</div>
             <h3 className="text-vintage-gold font-display text-xl mb-3">Daily Limit Reached</h3>
 
-            {!hasVibeFID ? (
+            {!hasVibeBadge ? (
               <>
                 <p className="text-vintage-burnt-gold text-sm mb-4 font-modern">
                   You've played {currentPlays}/{dailyLimit} rounds today.
                 </p>
                 <p className="text-vintage-ice/80 text-sm mb-6 font-modern">
-                  Mint a <span className="text-vintage-gold font-bold">VibeFID card</span> to increase your daily limit to {DAILY_LIMITS.VIBEFID_NO_BADGE} rounds!
+                  Get a <span className="text-vintage-gold font-bold">VibeFID card</span> and claim the <span className="text-vintage-gold font-bold">VIBE Badge</span> in missions to unlock unlimited plays!
                 </p>
                 <button
                   onClick={() => router.push('/fid')}
                   className="w-full py-3 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold rounded-xl text-vintage-gold font-bold font-modern transition-all mb-3"
                 >
-                  Mint VibeFID
-                </button>
-              </>
-            ) : !hasVibeFIDBadge ? (
-              <>
-                <p className="text-vintage-burnt-gold text-sm mb-4 font-modern">
-                  You've played {currentPlays}/{dailyLimit} rounds today.
-                </p>
-                <p className="text-vintage-ice/80 text-sm mb-6 font-modern">
-                  Claim your <span className="text-vintage-gold font-bold">VibeFID Badge</span> in the missions to increase your limit to {DAILY_LIMITS.VIBEFID_WITH_BADGE} rounds!
-                </p>
-                <button
-                  onClick={() => router.push('/missions')}
-                  className="w-full py-3 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold rounded-xl text-vintage-gold font-bold font-modern transition-all mb-3"
-                >
-                  Go to Missions
+                  Get VibeFID
                 </button>
               </>
             ) : (
