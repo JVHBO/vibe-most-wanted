@@ -132,7 +132,9 @@ export class ConvexProfileService {
   static async getProfile(address: string): Promise<UserProfile | null> {
     try {
       const normalizedAddress = address.toLowerCase();
-      const profile = await getConvex().query(api.profiles.getProfile, {
+      // 🚀 BANDWIDTH FIX: Use getProfileDashboard (lightweight) instead of getProfile (heavy)
+      // getProfile returns full arrays (defenseDeck, ownedTokenIds) which are rarely needed
+      const profile = await getConvex().query(api.profiles.getProfileDashboard, {
         address: normalizedAddress,
       });
       return profile;

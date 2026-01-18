@@ -588,6 +588,142 @@ const profileMap = new Map(profiles.filter(Boolean).map(p => [p.address, p]));
   - Transaction history: Unbounded → limited (saves ~3MB per heavy user)
   - Dead VibeFID code removed: Eliminates unused query paths
 
+## Frontend Bandwidth Optimization (Jan 2026)
+
+### Critical: useQuery Creates WebSocket Subscriptions!
+
+The biggest bandwidth consumer is NOT the queries themselves, but the **WebSocket subscriptions** that `useQuery` creates. Each `useQuery` opens a persistent connection that syncs data continuously.
+
+### Pattern 1: Replace useQuery with Manual Queries
+
+```typescript
+// ❌ BAD - Creates persistent WebSocket subscription
+const questProgress = useQuery(api.quests.getQuestProgress, address ? { address } : "skip");
+
+// ✅ GOOD - One-time HTTP request, no subscription
+const convex = useConvex();
+const [questProgress, setQuestProgress] = useState<any>(null);
+const questsLoadedRef = useRef(false);
+
+useEffect(() => {
+  if (!address || questsLoadedRef.current) return;
+  questsLoadedRef.current = true;
+
+  const loadData = async () => {
+    const result = await convex.query(api.quests.getQuestProgress, { address });
+    setQuestProgress(result);
+  };
+  loadData();
+}, [address, convex]);
+```
+
+### Pattern 2: SessionStorage Cache for Mutations
+
+Prevent redundant mutation calls within the same session:
+
+```typescript
+// ❌ BAD - Calls ensureWelcomeGift on every mount
+useEffect(() => {
+  if (!address) return;
+  ensureWelcomeGift({ playerAddress: address });
+}, [address]);
+
+// ✅ GOOD - Only calls once per day per session
+useEffect(() => {
+  if (!address) return;
+  const init = async () => {
+    const sessionKey = `vbms_missions_init_${address.toLowerCase()}`;
+    const today = new Date().toISOString().split('T')[0];
+    const cached = sessionStorage.getItem(sessionKey);
+    if (cached === today) return; // Already done today
+
+    await ensureWelcomeGift({ playerAddress: address.toLowerCase() });
+    sessionStorage.setItem(sessionKey, today);
+  };
+  init();
+}, [address]);
+```
+
+### Pattern 3: Use Context Instead of Duplicate useQuery
+
+```typescript
+// ❌ BAD - Duplicate subscription (ProfileContext already has this!)
+const profileDashboard = useQuery(api.profiles.getProfileDashboard,
+  address ? { address } : "skip"
+);
+
+// ✅ GOOD - Reuse existing ProfileContext
+const { userProfile } = useProfile();
+const profileDashboard = userProfile; // Already loaded!
+```
+
+### Pattern 4: Skip Redundant Mutations with Ref Checks
+
+```typescript
+// ❌ BAD - Updates stats even if nothing changed
+useEffect(() => {
+  if (address && stats) {
+    updateStatsLite({ address, stats });
+  }
+}, [address, stats]);
+
+// ✅ GOOD - Only update if values actually changed
+const prevStatsRef = useRef<string>("");
+useEffect(() => {
+  if (!address || !stats) return;
+  const statsKey = JSON.stringify(stats);
+  if (prevStatsRef.current === statsKey) return;
+  prevStatsRef.current = statsKey;
+  updateStatsLite({ address, stats });
+}, [address, stats]);
+```
+
+### Pattern 5: One-Time Effects with Refs
+
+```typescript
+// ❌ BAD - Runs every time deps change
+useEffect(() => {
+  cleanConflictingDefenseCards({ address });
+}, [address]);
+
+// ✅ GOOD - Run only once per session
+const cleanedDefenseRef = useRef(false);
+useEffect(() => {
+  if (!address || cleanedDefenseRef.current) return;
+  cleanedDefenseRef.current = true;
+  cleanConflictingDefenseCards({ address });
+}, [address]);
+```
+
+### Files Optimized (Jan 2026)
+
+| File | Optimization |
+|------|-------------|
+| `app/page.tsx` | Converted 4 useQuery → manual queries, added sessionStorage cache, refs for one-time effects |
+| `app/quests/page.tsx` | SessionStorage cache for mission initialization |
+| `app/baccarat/page.tsx` | Manual query for dailyPlays |
+| `lib/convex-profile.ts` | Uses `getProfileDashboard` (lightweight) instead of `getProfile` (heavy) |
+| `contexts/PlayerCardsContext.tsx` | SessionStorage cache for linked addresses |
+| `convex/missions.ts` | Returns only essential fields (not full documents) |
+
+### When to Use useQuery vs Manual Query
+
+| Scenario | Use |
+|----------|-----|
+| Data needs real-time updates (chat, live scores) | `useQuery` |
+| Data loaded once per session (quests, profile) | Manual query |
+| Data that rarely changes (settings, missions) | Manual query + sessionStorage |
+| Heavy data (arrays, lists) | Manual query with pagination |
+
+### Measuring Impact
+
+Bandwidth optimizations may NOT show immediate results because:
+1. **Cumulative metrics** - Dashboard shows totals, not deltas
+2. **Session caching** - Old sessions still use old code until refresh
+3. **Traffic variance** - More users = more bandwidth regardless of optimization
+
+**True test**: Compare bandwidth per unique user over 24-48 hours after deploy
+
 ## Baccarat Casino Mode (Em Desenvolvimento - Jan 2026)
 
 ### Status: COMING SOON (botão desabilitado)

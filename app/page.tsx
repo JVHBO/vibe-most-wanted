@@ -338,37 +338,30 @@ export default function TCGPage() {
 
   // Debug bypass (removed console.log for production)
 
-  // 🚀 BANDWIDTH FIX: Consolidated dashboard query (replaces 5 separate queries)
-  const profileDashboard = useQuery(api.profiles.getProfileDashboard, address ? { address } : "skip");
+  // 🚀 BANDWIDTH FIX: Move useProfile to top for early access to profileDashboard
+  const { userProfile, isLoadingProfile: isLoadingProfileFromContext, setUserProfile, refreshProfile } = useProfile();
+  const profileDashboard = userProfile as any; // Alias for backward compatibility
+  const isLoadingProfile = isLoadingProfileFromContext;
 
-  // 🚀 BANDWIDTH FIX: Get all wallet addresses from dashboard (replaces getLinkedAddresses query)
+  // 🚀 BANDWIDTH FIX: Derived wallet addresses from profile
   const allWalletAddresses = useMemo(() => {
     if (!address) return [];
     if (!profileDashboard?.primaryAddress) return [address];
-
-    // Build array of all addresses: primary + linked
     const primary = profileDashboard.primaryAddress;
     const linked = profileDashboard.linkedAddresses || [];
     const all = [primary, ...linked];
-
-    // Remove duplicates (case-insensitive) and ensure current address is included
     const seen = new Set<string>();
-    const unique = all.filter(addr => {
+    return all.filter((addr: string) => {
       const lower = addr.toLowerCase();
       if (seen.has(lower)) return false;
       seen.add(lower);
       return true;
-    });
+    }).concat(
+      all.some((a: string) => a.toLowerCase() === address.toLowerCase()) ? [] : [address]
+    );
+  }, [address, profileDashboard]);
 
-    // Ensure connected address is included
-    if (!unique.some(a => a.toLowerCase() === address.toLowerCase())) {
-      unique.push(address);
-    }
-
-    return unique;
-  }, [address, profileDashboard?.primaryAddress, profileDashboard?.linkedAddresses]);
-
-  // Derived values for backward compatibility
+  // Derived economy values
   const playerEconomy = profileDashboard ? {
     coins: profileDashboard.coins,
     lifetimeEarned: profileDashboard.lifetimeEarned,
@@ -380,16 +373,38 @@ export default function TCGPage() {
 
   // 🚀 BANDWIDTH FIX: Daily quest changes once per day - use cached hook
   const { quest: dailyQuest } = useCachedDailyQuest();
-  const questProgress = useQuery(api.quests.getQuestProgress, address ? { address } : "skip");
 
-  // 🎯 Weekly Quests & Missions
-  const weeklyProgress = useQuery(api.quests.getWeeklyProgress, address ? { address } : "skip");
+  // 🚀 BANDWIDTH FIX: Use manual queries instead of useQuery subscriptions
+  // This eliminates WebSocket subscription overhead (saves ~15MB/day)
+  const convex = useConvex();
+  const [questProgress, setQuestProgress] = useState<any>(null);
+  const [weeklyProgress, setWeeklyProgress] = useState<any>(null);
+  const [playerMissions, setPlayerMissions] = useState<any[]>([]);
+  const [banCheck, setBanCheck] = useState<any>(null);
+  const questsLoadedRef = useRef(false);
 
-  // 🎴 Personal missions (VibeFID, welcome gift, etc.)
-  const playerMissions = useQuery(api.missions.getPlayerMissions, address ? { playerAddress: address } : "skip");
+  useEffect(() => {
+    if (!address || questsLoadedRef.current) return;
+    questsLoadedRef.current = true;
 
-  // 🚫 Ban check for exploiters
-  const banCheck = useQuery(api.blacklist.checkBan, address ? { address } : "skip");
+    const loadQuestData = async () => {
+      try {
+        const [qp, wp, pm, bc] = await Promise.all([
+          convex.query(api.quests.getQuestProgress, { address }),
+          convex.query(api.quests.getWeeklyProgress, { address }),
+          convex.query(api.missions.getPlayerMissions, { playerAddress: address }),
+          convex.query(api.blacklist.checkBan, { address }),
+        ]);
+        setQuestProgress(qp);
+        setWeeklyProgress(wp);
+        setPlayerMissions(pm || []);
+        setBanCheck(bc);
+      } catch (e) {
+        console.error('Error loading quest data:', e);
+      }
+    };
+    loadQuestData();
+  }, [address, convex]);
 
 
   // 🔒 Session Lock (prevents multi-device exploit)
@@ -559,8 +574,7 @@ export default function TCGPage() {
   const [eliminationDifficulty, setEliminationDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
   const [pokerCpuDifficulty, setPokerCpuDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
 
-  // Convex client for imperative queries
-  const convex = useConvex();
+  // Convex client for imperative queries (already declared above)
 
   // 🎯 Check VibeFID achievement when cards load (moved from removed local loadNFTs)
   useEffect(() => {
@@ -753,9 +767,6 @@ export default function TCGPage() {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentView]);
 
-  // Profile from context (persists across navigation)
-  const { userProfile, isLoadingProfile: isLoadingProfileFromContext, setUserProfile, refreshProfile } = useProfile();
-
   // 📬 VibeMail unread count for notification dot on VibeFID button
   const userFidForVibemail = farcasterFidState || userProfile?.farcasterFid || (userProfile?.fid ? parseInt(userProfile.fid) : undefined);
   const unreadVibeMailCount = useQuery(api.cardVotes.getUnreadMessageCount, userFidForVibemail ? { cardFid: userFidForVibemail } : "skip");
@@ -765,7 +776,6 @@ export default function TCGPage() {
   // REMOVED: Referral system disabled
   // Leaderboard moved to /leaderboard page
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
-  const isLoadingProfile = isLoadingProfileFromContext; // From ProfileContext
 
   // 🆕 AUTO-CREATE: Mutation to auto-create profile from Farcaster
   const upsertProfileFromFarcaster = useMutation(api.profiles.upsertProfileFromFarcaster);
