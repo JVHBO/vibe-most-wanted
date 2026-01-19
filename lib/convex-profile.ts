@@ -109,6 +109,8 @@ export interface UserProfile {
   lastUpdated: number;
   // 🚀 BANDWIDTH FIX: Linked addresses for self-check (replaces getLinkedAddresses query)
   linkedAddresses?: string[];
+  // 🚀 BANDWIDTH FIX: Skip ensureWelcomeGift mutation if already received
+  hasReceivedWelcomeGift?: boolean;
 }
 
 export interface MatchHistory {
@@ -137,7 +139,9 @@ export class ConvexProfileService {
       const profile = await getConvex().query(api.profiles.getProfileDashboard, {
         address: normalizedAddress,
       });
-      return profile;
+      // Cast to UserProfile - getProfileDashboard returns a subset of fields
+      // The missing fields (attacksToday, etc.) are optional for most use cases
+      return profile as UserProfile | null;
     } catch (error: any) {
       devError("❌ getProfile error:", error);
       return null;

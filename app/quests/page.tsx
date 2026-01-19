@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useAction, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
@@ -44,16 +44,48 @@ export default function QuestsPage() {
   const [visitedQuests, setVisitedQuests] = useState<Set<string>>(new Set());
 
   // Personal Missions (Welcome, VibeFID, Daily Login, etc)
-  const personalMissions = useQuery(
-    api.missions.getPlayerMissions,
-    address ? { playerAddress: address.toLowerCase() } : "skip"
-  );
+  // 🚀 BANDWIDTH FIX: Converted from useQuery to manual query to avoid WebSocket subscription
+  const convex = useConvex();
+  const [personalMissions, setPersonalMissions] = useState<any[] | undefined>(undefined);
+  const missionsLoadedRef = useRef(false);
+
+  // Load missions once on mount
+  useEffect(() => {
+    if (!address || missionsLoadedRef.current) return;
+    missionsLoadedRef.current = true;
+
+    const loadMissions = async () => {
+      try {
+        const result = await convex.query(api.missions.getPlayerMissions, {
+          playerAddress: address.toLowerCase(),
+        });
+        setPersonalMissions(result || []);
+      } catch (e) {
+        console.error('Error loading missions:', e);
+        setPersonalMissions([]);
+      }
+    };
+    loadMissions();
+  }, [address, convex]);
+
+  // Refresh missions after claim
+  const refreshMissions = async () => {
+    if (!address) return;
+    try {
+      const result = await convex.query(api.missions.getPlayerMissions, {
+        playerAddress: address.toLowerCase(),
+      });
+      setPersonalMissions(result || []);
+    } catch (e) {
+      console.error('Error refreshing missions:', e);
+    }
+  };
+
   const claimMission = useMutation(api.missions.claimMission);
   const claimAllMissions = useMutation(api.missions.claimAllMissions);
   const ensureWelcomeGift = useMutation(api.missions.ensureWelcomeGift);
   const markDailyLogin = useMutation(api.missions.markDailyLogin);
   // 🚀 ON-CHAIN: VibeFID verification now uses action with Alchemy
-  const convex = useConvex();
   const [vibeBadgeEligibility, setVibeBadgeEligibility] = useState<{
     eligible: boolean;
     hasVibeFIDCards: boolean;
@@ -82,8 +114,9 @@ export default function QuestsPage() {
 
   // Initialize missions on mount
   // 🚀 BANDWIDTH FIX: Only call these mutations once per session/day
+  // 🚀 BANDWIDTH FIX #2: Skip ensureWelcomeGift if user already has it
   useEffect(() => {
-    if (!address) return;
+    if (!address || profileDashboard === undefined) return;
     const init = async () => {
       const sessionKey = `vbms_missions_init_${address.toLowerCase()}`;
       const today = new Date().toISOString().split('T')[0];
@@ -92,8 +125,11 @@ export default function QuestsPage() {
       if (cached === today) return; // Already initialized today
 
       try {
-        // Ensure missions exist
-        await ensureWelcomeGift({ playerAddress: address.toLowerCase() });
+        // 🚀 BANDWIDTH FIX: Only call ensureWelcomeGift if user doesn't have it yet
+        // This saves ~10MB/day by skipping the mutation for users who already have the gift
+        if (!profileDashboard?.hasReceivedWelcomeGift) {
+          await ensureWelcomeGift({ playerAddress: address.toLowerCase() });
+        }
         await markDailyLogin({ playerAddress: address.toLowerCase() });
         sessionStorage.setItem(sessionKey, today);
       } catch (e) {
@@ -101,7 +137,7 @@ export default function QuestsPage() {
       }
     };
     init();
-  }, [address]);
+  }, [address, profileDashboard]);
 
   // 🚀 ON-CHAIN: Load VibeFID badge eligibility via Alchemy action
   useEffect(() => {
@@ -226,7 +262,7 @@ export default function QuestsPage() {
       const result = await verifyAndCompleteQuest({
         address: address.toLowerCase(),
         questId: quest.id,
-        userFid,
+        userFid: parseInt(userFid as string) || 0,
       });
       if (result.completed) {
         setLocalCompleted((prev) => new Set([...prev, quest.id]));
@@ -410,6 +446,7 @@ export default function QuestsPage() {
                         try {
                           await claimAllMissions({ playerAddress: address.toLowerCase() });
                           AudioManager.win();
+                          await refreshMissions(); // 🚀 BANDWIDTH FIX: Refresh after claim
                         } catch (e) {
                           console.error(e);
                         } finally {
@@ -481,6 +518,7 @@ export default function QuestsPage() {
                                         });
                                       }
                                       AudioManager.win();
+                                      await refreshMissions(); // 🚀 BANDWIDTH FIX: Refresh after claim
                                     } catch (e) {
                                       console.error(e);
                                     } finally {

@@ -344,13 +344,19 @@ export const sendLowEnergyNotifications = internalAction({
       const now = Date.now();
       let sent = 0;
       let failed = 0;
-      let skipped = 0; // 👈 FALTOU ESTA LINHA!
+      let skipped = 0;
       const DELAY_MS = 100;
 
-      for (let i = 0; i < raidDecks.length; i++) {
-        const deck = raidDecks[i];
+      // 🚀 BANDWIDTH FIX: Pre-filter decks with low energy cards, then batch load profiles
+      // Phase 1: Identify decks needing notifications (low energy cards only, no expired)
+      interface DeckWithEnergy {
+        address: string;
+        lowEnergyCards: number;
+        expiredCards: number;
+      }
+      const decksNeedingNotification: DeckWithEnergy[] = [];
 
-        // Check each card's energy
+      for (const deck of raidDecks) {
         let lowEnergyCards = 0;
         let expiredCards = 0;
 
@@ -367,13 +373,33 @@ export const sendLowEnergyNotifications = internalAction({
           }
         }
 
-        // Only notify if there are low or expired cards
-        if (lowEnergyCards === 0 && expiredCards === 0) continue;
+        // Only include decks with low energy cards (not expired - those use UI indicator)
+        if (lowEnergyCards > 0 && expiredCards === 0) {
+          decksNeedingNotification.push({ address: deck.address, lowEnergyCards, expiredCards });
+        }
+      }
+
+      if (decksNeedingNotification.length === 0) {
+        console.log("✅ No decks need low energy notifications");
+        return { sent: 0, failed: 0, skipped: 0, total: raidDecks.length };
+      }
+
+      console.log(`📊 ${decksNeedingNotification.length} decks have low energy cards`);
+
+      // 🚀 BANDWIDTH FIX: Batch load all profiles at once instead of N queries
+      const addressesToFetch = decksNeedingNotification.map(d => d.address);
+      const profileMap = await ctx.runQuery(internal.notifications.getProfilesByAddresses, {
+        addresses: addressesToFetch,
+      });
+
+      // Phase 2: Process filtered decks with batch-loaded profiles
+      for (let i = 0; i < decksNeedingNotification.length; i++) {
+        const deck = decksNeedingNotification[i];
 
         try {
-          // 👇 ADICIONE ESTE BLOCO DE VERIFICAÇÃO DE COOLDOWN
+          // Check cooldown
           const lastNotification = await ctx.runQuery(
-            internal.notificationsHelpers.getLastLowEnergyNotification, 
+            internal.notificationsHelpers.getLastLowEnergyNotification,
             { address: deck.address }
           );
 
@@ -383,12 +409,9 @@ export const sendLowEnergyNotifications = internalAction({
             skipped++;
             continue;
           }
-          // 👆 FIM DO BLOCO
 
-          // Get player profile to find FID
-          const profile = await ctx.runQuery(internal.notifications.getProfileByAddress, {
-            address: deck.address,
-          });
+          // Get profile from batch-loaded map
+          const profile = profileMap[deck.address.toLowerCase()];
 
           if (!profile) {
             console.log(`⚠️ No profile found for ${deck.address}`);
@@ -409,16 +432,10 @@ export const sendLowEnergyNotifications = internalAction({
             continue;
           }
 
-          // 🔴 Skip "Raid Cards Exhausted" notification - use red dot indicator on button instead
-          if (expiredCards > 0) {
-            console.log(`⏭️ Skipping expired cards notification for ${deck.address} - using UI indicator instead`);
-            continue;
-          }
-
           // Build notification message (only for low energy warning now)
           const title = "⚡ Low Energy Warning!";
           const minutes = Math.round(LOW_ENERGY_THRESHOLD / 60000);
-          const body = `${lowEnergyCards} card${lowEnergyCards > 1 ? 's' : ''} will run out of energy in less than ${minutes} minutes!`;
+          const body = `${deck.lowEnergyCards} card${deck.lowEnergyCards > 1 ? 's' : ''} will run out of energy in less than ${minutes} minutes!`;
 
           // Send via Neynar API (no need to fetch tokens from Convex)
           const result = await sendViaNeynar([fidNumber], title, body, "https://vibemostwanted.xyz");
@@ -427,8 +444,8 @@ export const sendLowEnergyNotifications = internalAction({
             sent++;
             await ctx.runMutation(internal.notificationsHelpers.updateLowEnergyNotification, {
               address: deck.address,
-              lowEnergyCount: lowEnergyCards,
-              expiredCount: expiredCards,
+              lowEnergyCount: deck.lowEnergyCards,
+              expiredCount: deck.expiredCards,
             });
             console.log(`✅ Sent low energy notification to FID ${fid}`);
           } else {
@@ -442,7 +459,7 @@ export const sendLowEnergyNotifications = internalAction({
         }
 
         // Add delay between notifications
-        if (i < raidDecks.length - 1) {
+        if (i < decksNeedingNotification.length - 1) {
           await sleep(DELAY_MS);
         }
       }
@@ -483,6 +500,40 @@ export const getProfileByAddress = internalQuery({
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
       .first();
     return profile;
+  },
+});
+
+/**
+ * 🚀 BANDWIDTH FIX: Batch get profiles by addresses
+ * Fixes N+1 query pattern - single query instead of N queries
+ * Returns a map of address -> { fid, farcasterFid } for FID lookups
+ */
+export const getProfilesByAddresses = internalQuery({
+  args: { addresses: v.array(v.string()) },
+  handler: async (ctx, { addresses }) => {
+    // Normalize and dedupe addresses
+    const uniqueAddresses = [...new Set(addresses.map(a => a.toLowerCase()))];
+
+    // Batch load all profiles in parallel
+    const profilePromises = uniqueAddresses.map(addr =>
+      ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", addr))
+        .first()
+    );
+    const profiles = await Promise.all(profilePromises);
+
+    // Build map of address -> { fid, farcasterFid }
+    const result: Record<string, { fid: string | undefined; farcasterFid: number | undefined }> = {};
+    for (const profile of profiles) {
+      if (profile) {
+        result[profile.address] = {
+          fid: profile.fid,
+          farcasterFid: profile.farcasterFid,
+        };
+      }
+    }
+    return result;
   },
 });
 
@@ -782,23 +833,24 @@ export const sendBossDefeatedNotifications = internalAction({
     try {
       console.log("🐉 Sending boss defeated notifications for: " + bossName);
 
-      // Collect all contributor FIDs
+      // 🚀 BANDWIDTH FIX: Batch load all profiles at once instead of N queries
+      const profileMap = await ctx.runQuery(internal.notifications.getProfilesByAddresses, {
+        addresses: contributorAddresses,
+      });
+
+      // Collect all contributor FIDs from batch result
       const contributorFids: number[] = [];
 
       for (const address of contributorAddresses) {
-        try {
-          const profile = await ctx.runQuery(internal.notifications.getProfileByAddress, { address });
-          if (!profile) continue;
+        const profile = profileMap[address.toLowerCase()];
+        if (!profile) continue;
 
-          const fid = profile.fid || (profile.farcasterFid ? profile.farcasterFid.toString() : null);
-          if (!fid) continue;
+        const fid = profile.fid || (profile.farcasterFid ? profile.farcasterFid.toString() : null);
+        if (!fid) continue;
 
-          const fidNumber = parseInt(fid);
-          if (!isNaN(fidNumber)) {
-            contributorFids.push(fidNumber);
-          }
-        } catch (error) {
-          console.error("❌ Error getting FID for " + address + ":", error);
+        const fidNumber = parseInt(fid);
+        if (!isNaN(fidNumber)) {
+          contributorFids.push(fidNumber);
         }
       }
 

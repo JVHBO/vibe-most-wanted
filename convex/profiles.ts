@@ -303,6 +303,9 @@ export const getProfileDashboard = query({
       // Welcome pack (replaces hasReceivedWelcomePack)
       hasReceivedWelcomePack: profile.hasReceivedWelcomePack || false,
 
+      // 🚀 BANDWIDTH FIX: Skip ensureWelcomeGift mutation if already received
+      hasReceivedWelcomeGift: profile.hasReceivedWelcomeGift || false,
+
       // Extras needed by UI
       fid: profile.fid,
       farcasterFid: profile.farcasterFid,
@@ -343,8 +346,8 @@ export const getProfileDashboard = query({
  */
 /**
  * 🚀 OPTIMIZED: Get leaderboard from CACHE (saves ~99% bandwidth)
- * Cache is updated every 10 minutes by updateLeaderboardFullCache cron
- * Falls back to direct query if cache is empty/stale
+ * Cache is updated daily at 00:05 UTC by updateLeaderboardFullCache cron
+ * Falls back to direct query if cache is empty/stale (rare)
  */
 export const getLeaderboardLite = query({
   args: { limit: v.optional(v.number()) },
@@ -357,10 +360,10 @@ export const getLeaderboardLite = query({
         .first();
 
       // 🚀 BANDWIDTH FIX: Cache TTL > cron interval to avoid cache misses
-      // Cron updates every 30 min, TTL is 35 min for overlap
+      // Cron runs daily at 00:05 UTC, TTL is 25 hours for overlap
       if (cache && cache.data && cache.data.length > 0) {
         const cacheAge = Date.now() - cache.updatedAt;
-        const cacheMaxAge = 35 * 60 * 1000; // 35 minutes (cron runs every 30min)
+        const cacheMaxAge = 25 * 60 * 60 * 1000; // 25 hours (cron runs daily)
 
         if (cacheAge < cacheMaxAge) {
           // 🚀 BANDWIDTH FIX v4: Return only fields actually needed by UI

@@ -2980,10 +2980,13 @@ export default function TCGPage() {
       const cached = sessionStorage.getItem(sessionKey);
 
       if (cached !== today) {
-        // Ensure welcome_gift exists for this player (migration for old users)
-        await convex.mutation(api.missions.ensureWelcomeGift, {
-          playerAddress: address,
-        });
+        // 🚀 BANDWIDTH FIX: Only call ensureWelcomeGift if user doesn't have it yet
+        // This saves ~10MB/day by skipping the mutation for users who already have the gift
+        if (!userProfile?.hasReceivedWelcomeGift) {
+          await convex.mutation(api.missions.ensureWelcomeGift, {
+            playerAddress: address,
+          });
+        }
 
         // Mark daily login mission as completed (auto-unlock on login)
         await convex.mutation(api.missions.markDailyLogin, {
@@ -3199,6 +3202,17 @@ export default function TCGPage() {
     if (address && userProfile && nfts.length > 0) {
       updateStatsInProgress.current = true;
 
+      // 🚀 BANDWIDTH FIX v2: SessionStorage cache to skip duplicate updates in same session
+      const statsKey = `vbms_stats_${address.toLowerCase()}`;
+      const currentHash = `${nfts.length}-${openedCardsCount}-${totalNftPower}`;
+      const cachedHash = sessionStorage.getItem(statsKey);
+
+      if (cachedHash === currentHash) {
+        devLog('📊 Stats already sent this session, skipping');
+        updateStatsInProgress.current = false;
+        return;
+      }
+
       // 🚀 Performance: Using pre-computed memoized values
       devLog('📊 Updating profile stats:', { totalCards: nfts.length, openedCards: openedCardsCount, totalPower: totalNftPower, tokenIds: nftTokenIds.length });
 
@@ -3220,7 +3234,7 @@ export default function TCGPage() {
 
       devLog('📊 Collection powers:', collectionPowers);
 
-      // 🚀 BANDWIDTH FIX: Only update if stats actually changed
+      // 🚀 BANDWIDTH FIX: Only update if stats actually changed from profile
       const currentStats = userProfile?.stats;
       const statsChanged =
         nfts.length !== (currentStats?.totalCards || 0) ||
@@ -3229,6 +3243,7 @@ export default function TCGPage() {
 
       if (!statsChanged) {
         devLog('📊 Stats unchanged, skipping update');
+        sessionStorage.setItem(statsKey, currentHash); // Cache so we skip next time too
         updateStatsInProgress.current = false;
         return;
       }
@@ -3250,6 +3265,9 @@ export default function TCGPage() {
         collectionPowers
       )
         .then(() => {
+          // 🚀 BANDWIDTH FIX v2: Cache the stats we just sent
+          sessionStorage.setItem(statsKey, currentHash);
+
           // Update local state with the stats we just sent (no refetch needed)
           if (userProfile) {
             setUserProfile({
@@ -3461,15 +3479,18 @@ export default function TCGPage() {
 
   // Clean conflicting cards from defense deck on initial load
   // (cards that are now in raid deck should be removed from defense)
-  // 🚀 BANDWIDTH FIX: Only run once per session
-  const cleanedDefenseRef = useRef(false);
+  // 🚀 BANDWIDTH FIX: Only run once per session using sessionStorage
   useEffect(() => {
-    if (address && defenseLockedTokenIds.size > 0 && !cleanedDefenseRef.current) {
-      cleanedDefenseRef.current = true;
-      cleanConflictingDefense({ address }).catch(err => {
-        console.error('Error cleaning conflicting defense cards:', err);
-      });
-    }
+    if (!address || defenseLockedTokenIds.size === 0) return;
+
+    // Throttle to once per session using sessionStorage
+    const sessionKey = `vbms_clean_defense_${address.toLowerCase()}`;
+    if (sessionStorage.getItem(sessionKey)) return;
+
+    sessionStorage.setItem(sessionKey, '1');
+    cleanConflictingDefense({ address }).catch(err => {
+      console.error('Error cleaning conflicting defense cards:', err);
+    });
   }, [address, defenseLockedTokenIds.size, cleanConflictingDefense]);
 
   // Load defenses received (attacks from other players)
