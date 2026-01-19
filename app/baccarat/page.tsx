@@ -93,8 +93,8 @@ const getCardImageUrl = (rank: string, suit: string) => {
     console.warn('[Baccarat] No image found for key:', key);
     return null;
   }
-  // Next.js public folder handles spaces/special chars, just encode spaces for browser compatibility
-  return `/images/baccarat/${filename.replace(/ /g, '%20')}`;
+  // Encode the full filename for URL compatibility
+  return `/images/baccarat/${encodeURIComponent(filename)}`;
 };
 
 const getBaccaratValue = (rank: string): number => {
