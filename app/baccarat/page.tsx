@@ -637,19 +637,6 @@ export default function BaccaratPage() {
       setTimeout(() => {
         setDealPhase(5);
         setGamePhase("result");
-        // Play win/lose/tie sound
-        if (soundEnabled) {
-          if (result.winner === "tie" && bets.tie > 0) {
-            AudioManager.win();
-          } else if (payout > totalBet) {
-            AudioManager.win();
-          } else if (payout === totalBet) {
-            AudioManager.tie();
-          } else {
-            AudioManager.lose();
-            setTimeout(() => AudioManager.evilLaugh(), 400);
-          }
-        }
         // Skip result modal - go straight to next round
         // setTimeout(() => setShowResultModal(true), 800);
       }, resultDelay);
