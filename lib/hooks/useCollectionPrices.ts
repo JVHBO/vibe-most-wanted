@@ -47,26 +47,27 @@ const UNISWAP_V3_POOL_ABI = [
 
 // Uniswap V3 pool addresses for collections with closed mint (token price * 100k = pack price)
 // isToken0Weth: true if WETH is token0 in the pool (lower address)
-// NOTE: Most pools disabled to reduce costs - only active collections
 const UNISWAP_V3_POOLS: Record<string, { pool: `0x${string}`; isToken0Weth: boolean }> = {
-  // All disabled collections removed
+  cumioh: { pool: '0x7A6788b9B6E7a1Cb78f01BD18217f67CfaDDBaEE', isToken0Weth: true },
 };
 
-// Hardcoded contract addresses (lowercase, only active collections)
+// Hardcoded contract addresses (lowercase)
 const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
   vibe: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728',
   gmvbrs: '0xefe512e73ca7356c20a21aa9433bad5fc9342d46',
   viberuto: '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f',
   meowverse: '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150',
+  cumioh: '0xfeabae8bdb41b2ae507972180df02e70148b38e1',
   viberotbangers: '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a',
 };
 
-// Only active collections for ticker
+// Collections for ticker
 const TICKER_COLLECTIONS: { id: string; displayName: string; emoji: string }[] = [
   { id: 'vibe', displayName: 'Vibe Most Wanted', emoji: '🎭' },
   { id: 'gmvbrs', displayName: 'GM VBRS', emoji: '🌅' },
   { id: 'viberuto', displayName: 'Viberuto', emoji: '🍥' },
   { id: 'meowverse', displayName: 'Meowverse', emoji: '🐱' },
+  { id: 'cumioh', displayName: '$CU-MI-OH!', emoji: '🎴' },
   { id: 'viberotbangers', displayName: 'Vibe Rot Bangers', emoji: '🧟' },
 ];
 

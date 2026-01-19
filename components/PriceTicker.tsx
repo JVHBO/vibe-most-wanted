@@ -8,12 +8,13 @@ import { openMarketplace } from '@/lib/marketplace-utils';
 import { isMiniappMode } from '@/lib/utils/miniapp';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-// Marketplace URLs for each collection (only active collections)
+// Marketplace URLs for each collection
 const COLLECTION_MARKETPLACE: Record<string, string> = {
   vibe: 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
   gmvbrs: 'https://vibechain.com/market/gm-vbrs?ref=XCLR1DJ6LQTT',
   viberuto: 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
   meowverse: 'https://vibechain.com/market/meowverse?ref=XCLR1DJ6LQTT',
+  cumioh: 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
   viberotbangers: 'https://vibechain.com/market/vibe-rot-bangers?ref=XCLR1DJ6LQTT',
 };
 
