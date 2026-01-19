@@ -1612,17 +1612,6 @@ export default defineSchema({
   })
     .index("by_date", ["date"]),
 
-  // 🎁 Vibe Rewards - VBMS rewards from votes
-  vibeRewards: defineTable({
-    fid: v.number(), // Card owner FID
-    pendingVbms: v.number(), // Unclaimed VBMS
-    claimedVbms: v.number(), // Already claimed VBMS
-    totalVotes: v.number(), // Total votes received
-    lastVoteAt: v.number(), // Last vote timestamp
-    lastClaimAt: v.optional(v.number()), // Last claim timestamp
-  })
-    .index("by_fid", ["fid"]),
-
   // ═══════════════════════════════════════════════════════════════════════════════
   // NFT GIFTS - Gift NFTs via VibeMail
   // ═══════════════════════════════════════════════════════════════════════════════

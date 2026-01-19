@@ -83,10 +83,18 @@ const CARD_IMAGES: Record<string, string> = {
 };
 
 const getCardImageUrl = (rank: string, suit: string) => {
+  if (!rank || !suit) {
+    console.warn('[Baccarat] Card missing rank or suit:', { rank, suit });
+    return null;
+  }
   const key = `${rank}_${suit}`;
   const filename = CARD_IMAGES[key];
-  // Don't encode - Next.js public folder handles spaces, encode only special chars
-  return filename ? `/images/baccarat/${filename.replace(/ /g, '%20')}` : null;
+  if (!filename) {
+    console.warn('[Baccarat] No image found for key:', key);
+    return null;
+  }
+  // Next.js public folder handles spaces/special chars, just encode spaces for browser compatibility
+  return `/images/baccarat/${filename.replace(/ /g, '%20')}`;
 };
 
 const getBaccaratValue = (rank: string): number => {
@@ -182,6 +190,7 @@ function ChipStack({ total, small = false }: { total: number; small?: boolean })
 // Card component
 function Card({ card, delay = 0, revealed = true, small = false }: { card: any; delay?: number; revealed?: boolean; small?: boolean }) {
   const [isFlipped, setIsFlipped] = useState(!revealed);
+  const [imgError, setImgError] = useState(false);
   const imgUrl = getCardImageUrl(card.rank, card.suit);
   const baccaratValue = getBaccaratValue(card.rank);
   const isRed = card.suit === 'hearts' || card.suit === 'diamonds';
@@ -196,12 +205,21 @@ function Card({ card, delay = 0, revealed = true, small = false }: { card: any; 
   }, [revealed, delay]);
 
   const sizeClass = small ? "w-10 h-14" : "w-14 h-20 sm:w-16 sm:h-24";
+  const showImage = imgUrl && !imgError;
 
   return (
     <div className={`relative ${sizeClass} transition-transform duration-500 ${isFlipped ? 'rotate-y-180' : ''}`} style={{ perspective: '1000px' }}>
       <div className={`absolute inset-0 rounded-lg shadow-xl border-2 border-vintage-gold/50 overflow-hidden transition-all duration-500 ${isFlipped ? 'opacity-0' : 'opacity-100'}`}>
-        {imgUrl ? (
-          <img src={imgUrl} alt={`${card.rank} ${card.suit}`} className="w-full h-full object-cover" />
+        {showImage ? (
+          <img
+            src={imgUrl}
+            alt={`${card.rank} ${card.suit}`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              console.warn('[Baccarat] Image failed to load:', imgUrl);
+              setImgError(true);
+            }}
+          />
         ) : (
           <div className="w-full h-full bg-white flex flex-col items-center justify-center">
             <span className={`${small ? "text-sm" : "text-lg"} font-bold ${isRed ? "text-red-500" : "text-black"}`}>{card.rank}</span>

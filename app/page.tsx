@@ -279,7 +279,7 @@ const NFTCard = memo(({ nft, selected, onSelect, locked = false, lockedReason }:
 
             <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/90 to-transparent p-1.5 pointer-events-none z-20">
               <div className="flex items-center justify-between">
-                <span className={`font-bold text-xs drop-shadow-lg bg-gradient-to-r ${getRarityColor(nft.rarity || '')} bg-clip-text text-transparent`}>{nft.power || 0}</span>
+                <span className={`font-bold text-xs drop-shadow-lg bg-gradient-to-r ${getRarityColor(nft.rarity || '')} bg-clip-text text-transparent`}>{getCardDisplayPower(nft)}</span>
                 {selected && (
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="drop-shadow-lg">
                     <path d="M20 6L9 17L4 12" stroke="#D4AF37" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1553,16 +1553,12 @@ export default function TCGPage() {
     }
   }, [searchParams, address, userProfile, nfts.length]);
 
-  // Sync login bonus claimed status and show popup on login
+  // Sync login bonus claimed status
   useEffect(() => {
     if (playerEconomy?.dailyLimits?.loginBonus) {
       setLoginBonusClaimed(true);
     } else {
       setLoginBonusClaimed(false);
-      // Show daily claim popup on login if bonus not claimed
-      if (address && userProfile && playerEconomy) {
-        setShowDailyClaimPopup(true);
-      }
     }
   }, [playerEconomy, address, userProfile]);
 
@@ -3723,7 +3719,7 @@ export default function TCGPage() {
                     className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold cursor-pointer hover:ring-red-500 transition-all group"
                   >
                     <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
-                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
+                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{getCardDisplayPower(c)}</div>
                     <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/30 flex items-center justify-center transition-all">
                       <span className="opacity-0 group-hover:opacity-100 text-white text-2xl font-bold">×</span>
                     </div>
@@ -3807,7 +3803,7 @@ export default function TCGPage() {
                         } ${selectedCards.length >= HAND_SIZE && !isSelected ? 'opacity-40 cursor-not-allowed' : ''}`}
                       >
                         <CardMedia src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
-                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{nft.power}</div>
+                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{getCardDisplayPower(nft)}</div>
                         {isSelected && (
                           <div className="absolute inset-0 bg-vintage-gold/30 flex items-center justify-center">
                             <span className="text-white text-2xl font-bold">✓</span>
@@ -4600,7 +4596,7 @@ export default function TCGPage() {
 
                     // Calculate power totals (one-time calculation per attack, no need for memoization)
                     const playerTotal = calculateLeaderboardAttackPower(attackSelectedCards);
-                    const dealerTotal = defenderCards.reduce((sum, c) => sum + (c.power || 0), 0);
+                    const dealerTotal = calculateTotalPower(defenderCards);
 
                     setTimeout(() => {
                       setBattlePhase('clash');
@@ -5836,7 +5832,7 @@ export default function TCGPage() {
                         {dealerCards.map((c, i) => (
                           <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500 shadow-lg shadow-red-500/30">
                             <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
-                            <div className="absolute top-0 left-0 bg-red-500 text-white text-xs px-1 rounded-br">{c.collection === 'vibefid' ? ((c.power || 0) * 10).toLocaleString() : c.power}</div>
+                            <div className="absolute top-0 left-0 bg-red-500 text-white text-xs px-1 rounded-br">{getCardDisplayPower(c).toLocaleString()}</div>
                             <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">#{c.tokenId}</div>
                           </FoilCardEffect>
                         ))}

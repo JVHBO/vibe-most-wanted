@@ -94,6 +94,7 @@ nul
 *.csv
 *.sol
 *.png
+!public/images/baccarat/*.png
 *.webm
 *.html
 *.mp4

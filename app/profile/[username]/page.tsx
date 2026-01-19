@@ -21,6 +21,8 @@ import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { openMarketplace } from '@/lib/marketplace-utils';
 import { isUnrevealed as isUnrevealedShared, findAttr, calcPower } from '@/lib/nft/attributes';
 import { isSameCard, findCard, getCardKey } from '@/lib/nft';
+import { usePlayerCards } from '@/contexts/PlayerCardsContext';
+import { getCardDisplayPower } from '@/lib/power-utils';
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -64,12 +66,23 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [nfts, setNfts] = useState<any[]>([]);
+  const [localNfts, setLocalNfts] = useState<any[]>([]);
   const [loadingNFTs, setLoadingNFTs] = useState(false);
+
+  // 🎴 Use cards from context (already loaded on home page)
+  const { nfts: contextNfts, isLoading: contextLoading, status: contextStatus } = usePlayerCards();
+
+  // 🔗 Determine if viewing own profile
+  const isOwnProfile = profile && currentUserAddress && profile.address.toLowerCase() === currentUserAddress.toLowerCase();
+
+  // 🎴 Use context cards for own profile, localNfts for others
+  const nfts = isOwnProfile ? contextNfts : localNfts;
+  const isNftsLoading = isOwnProfile ? contextLoading : loadingNFTs;
+
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [currentNFTPage, setCurrentNFTPage] = useState(1);
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
-  const NFT_PER_PAGE = 12;
+  const NFT_PER_PAGE = 30;
   const [rematchesRemaining, setRematchesRemaining] = useState<number>(5);
   const MAX_REMATCHES = 5;
   const [farcasterUsername, setFarcasterUsername] = useState<string>('');
@@ -98,7 +111,6 @@ export default function ProfilePage() {
   // Filtros
   const [filterRarity, setFilterRarity] = useState<string>('all');
   const [filterFoil, setFilterFoil] = useState<string>('all');
-  const [filterRevealed, setFilterRevealed] = useState<string>('all');
 
   // Force metadata refresh state (check localStorage on mount)
   const [forceMetadataRefresh, setForceMetadataRefresh] = useState<boolean>(() => {
@@ -239,131 +251,38 @@ export default function ProfilePage() {
         // ✅ Profile is loaded - show page immediately
         setLoading(false);
 
-        // Carrega NFTs do jogador via API com cache server-side
-        // 🚀 OPTIMIZATION: Reduces Alchemy calls by caching on server
-        setLoadingNFTs(true);
-        try {
-          devLog('🔍 Fetching NFTs for address:', address);
-          devLog('📊 Expected cards from profile:', profileData.stats?.totalCards || 0);
+        // 🎴 Only fetch NFTs for OTHER users' profiles
+        // Own profile uses PlayerCardsContext (already loaded on home page)
+        const viewingOwnProfile = currentUserAddress && currentUserAddress.toLowerCase() === address.toLowerCase();
 
-          // 🚀 Use cached API endpoint instead of direct Alchemy calls
-          const res = await fetch(`/api/profile-nfts?address=${encodeURIComponent(address)}`);
-          if (!res.ok) {
-            throw new Error(`API error: ${res.status}`);
-          }
-          const data = await res.json();
-
-          if (!data.success) {
-            throw new Error(data.error || 'Failed to fetch NFTs');
-          }
-
-          devLog(`📦 [Profile] Got ${data.totalCards} cards (cached: ${data.cached})`);
-
-          // Deduplicate (API should already do this, but just in case)
-          const seenCards = new Set<string>();
-          const enriched = (data.cards || []).filter((card: any) => {
-            const uniqueId = `${card.collection || 'vibe'}_${card.tokenId}`;
-            if (seenCards.has(uniqueId)) {
-              devLog(`⚠️ Removing duplicate card: ${uniqueId}`);
-              return false;
-            }
-            seenCards.add(uniqueId);
-            return true;
-          });
-
-          devLog('✅ NFTs loaded:', enriched.length);
-          devLog('📊 Comparison: Profile says', profileData.stats?.totalCards, 'cards, fetched', enriched.length);
-
-          // ⚠️ Warning if mismatch (for debugging)
-          if (enriched.length < (profileData.stats?.totalCards || 0)) {
-            devWarn('⚠️ Fetched fewer cards than expected! Profile stats may be outdated.');
-          }
-
-          // 🎴 HYBRID CACHE SYSTEM: Merge Alchemy data with cached metadata
-          // This ensures revealed cards don't disappear when Alchemy fails
+        if (!viewingOwnProfile) {
+          setLoadingNFTs(true);
           try {
-            const cache = profileData.revealedCardsCache || [];
-            const cacheMap = new Map(cache.map(c => [c.tokenId, c]));
-            const ownedIds = new Set(enriched.map((nft: any) => nft.tokenId));
+            devLog('🔍 Fetching NFTs for other user:', address);
+            const res = await fetch(`/api/profile-nfts?address=${encodeURIComponent(address)}`);
+            if (!res.ok) throw new Error(`API error: ${res.status}`);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error || 'Failed to fetch NFTs');
 
-            // For each owned NFT, use cache if Alchemy data is missing
-            for (let i = 0; i < enriched.length; i++) {
-              const nft = enriched[i];
-              const fromCache = cacheMap.get(nft.tokenId);
+            // Deduplicate
+            const seenCards = new Set<string>();
+            const enriched = (data.cards || []).filter((card: any) => {
+              const uniqueId = `${card.collection || 'vibe'}_${card.tokenId}`;
+              if (seenCards.has(uniqueId)) return false;
+              seenCards.add(uniqueId);
+              return true;
+            });
 
-              // If Alchemy failed to load metadata but we have cache → use cache
-              if (fromCache && !nft.wear && !nft.character && !nft.power) {
-                devLog(`🎴 Using cached metadata for token ${nft.tokenId}`);
-                enriched[i] = { ...nft, ...fromCache };
-              }
-            }
-
-            // Collect newly revealed cards to update cache
-            const revealedCards = enriched
-              .filter((nft: any) => nft.wear || nft.character || nft.power)
-              .map((nft: any) => ({
-                tokenId: nft.tokenId,
-                name: nft.name || '',
-                imageUrl: nft.imageUrl || '',
-                rarity: nft.rarity || '',
-                wear: nft.wear,
-                foil: nft.foil,
-                character: nft.character,
-                power: nft.power,
-                attributes: nft.attributes,
-              }));
-
-            // Save to cache (non-blocking, fire and forget)
-            if (revealedCards.length > 0) {
-              ConvexProfileService.updateRevealedCardsCache(address, revealedCards)
-                .then(result => devLog(`✅ Cache updated: ${result.newlyCached} new cards`))
-                .catch(err => devWarn('⚠️ Failed to update cache:', err));
-            }
-          } catch (cacheErr: any) {
-            devWarn('⚠️ Cache merge failed:', cacheErr.message || cacheErr);
-            // Non-critical, continue with Alchemy data
+            devLog('✅ Other user NFTs loaded:', enriched.length);
+            setLocalNfts(enriched);
+          } catch (err: any) {
+            devError('❌ Error loading NFTs:', err.message || err);
+            setLocalNfts([]);
           }
-
-          // ✅ UPDATE STATS: Only update when the owner visits their own profile
-          // This prevents leaderboard spam and unnecessary re-renders
-          const isOwnProfile = currentUserAddress &&
-                               currentUserAddress.toLowerCase() === address.toLowerCase();
-
-          if (isOwnProfile) {
-            try {
-              const openedCards = enriched.filter((nft: any) => !isUnrevealed(nft)).length;
-              const unopenedCards = enriched.filter((nft: any) => isUnrevealed(nft)).length;
-              const totalPower = enriched.reduce((sum: number, nft: any) => sum + (nft.power || 0), 0);
-
-              devLog('📊 Updating own profile stats in database:', {
-                totalCards: enriched.length,
-                openedCards,
-                unopenedCards,
-                totalPower
-              });
-
-              // Fire-and-forget update (non-blocking, no re-render)
-              ConvexProfileService.updateStats(
-                address,
-                enriched.length,
-                openedCards,
-                unopenedCards,
-                totalPower
-              ).catch(err => devWarn('⚠️ Failed to update profile stats:', err));
-
-              devLog('✅ Profile stats update queued');
-            } catch (updateErr: any) {
-              devWarn('⚠️ Failed to queue profile stats update:', updateErr.message || updateErr);
-            }
-          }
-
-          setNfts(enriched);
-        } catch (err: any) {
-          devError('❌ Error loading NFTs:', err.message || err);
-          // Se falhar, deixa array vazio
-          setNfts([]);
+          setLoadingNFTs(false);
+        } else {
+          devLog('🔗 Using context cards for own profile');
         }
-        setLoadingNFTs(false);
       } catch (err: any) {
         devError('Error loading profile:', err);
         setError(t('failedToLoadProfile'));
@@ -453,25 +372,21 @@ export default function ProfilePage() {
 
     // STEP 2: Apply filters
     let filtered = dedupedNfts.filter(nft => {
-      // Use enriched data directly
       const rarity = nft.rarity || '';
       const foilTrait = nft.foil || '';
-      const revealed = !isUnrevealed(nft);
 
-      // Filtro de revelação
-      if (filterRevealed === 'revealed' && !revealed) return false;
-      if (filterRevealed === 'unrevealed' && revealed) return false;
-
-      // Filtro de raridade (só aplica em cartas reveladas)
-      if (revealed && filterRarity !== 'all') {
+      // Filtro de raridade
+      if (filterRarity !== 'all') {
         if (!rarity.toLowerCase().includes(filterRarity.toLowerCase())) return false;
       }
 
-      // Filtro de foil (só aplica em cartas reveladas)
-      if (revealed && filterFoil !== 'all') {
-        if (filterFoil === 'none' && foilTrait) return false;
-        if (filterFoil === 'standard' && !foilTrait.toLowerCase().includes('standard')) return false;
-        if (filterFoil === 'prize' && !foilTrait.toLowerCase().includes('prize')) return false;
+      // Filtro de foil
+      if (filterFoil !== 'all') {
+        const foilLower = foilTrait.toLowerCase();
+        const hasFoil = foilLower && foilLower !== 'none' && foilLower !== '';
+        if (filterFoil === 'none' && hasFoil) return false;
+        if (filterFoil === 'standard' && !foilLower.includes('standard')) return false;
+        if (filterFoil === 'prize' && !foilLower.includes('prize')) return false;
       }
 
       return true;
@@ -483,7 +398,7 @@ export default function ProfilePage() {
     }
 
     return filtered;
-  }, [nfts, filterRevealed, filterRarity, filterFoil, selectedCollections]);
+  }, [nfts, filterRarity, filterFoil, selectedCollections]);
 
   if (loading) {
     return (
@@ -547,508 +462,143 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-vintage-black text-vintage-ice p-4 lg:p-8 overflow-x-hidden">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto mb-6">
-        <button
-          onClick={() => router.push('/')}
-          className="text-vintage-gold hover:text-vintage-gold-dark transition-colors mb-4 flex items-center gap-2 font-modern font-semibold"
-        >
-          ← Back to Game
-        </button>
-      </div>
+    <div className="min-h-screen bg-vintage-black text-vintage-ice p-3 md:p-6 overflow-x-hidden">
+      {/* Compact Profile Header */}
+      <div className="max-w-6xl mx-auto mb-4">
+        <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/50 p-4 md:p-5">
+          {/* Back button */}
+          <button
+            onClick={() => router.push('/')}
+            className="text-vintage-gold hover:text-vintage-gold-dark text-sm font-modern mb-3"
+          >
+            ← Back
+          </button>
 
-      {/* Profile Header */}
-      <div className="max-w-6xl mx-auto mb-8">
-        <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-8 shadow-gold">
-          <div className="flex flex-col md:flex-row items-center gap-6">
+          {/* Main profile row */}
+          <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className="w-32 h-32 bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold rounded-full flex items-center justify-center text-6xl font-display font-bold shadow-gold overflow-hidden">
-              {(() => {
-                // Priority 1: Use twitterProfileImageUrl if available (Twitter CDN or local images)
-                if (profile.twitterProfileImageUrl) {
-                  // For Twitter CDN URLs, use high-res version
-                  const imageUrl = profile.twitterProfileImageUrl.includes('pbs.twimg.com')
-                    ? profile.twitterProfileImageUrl.replace('_normal', '_400x400')
-                    : profile.twitterProfileImageUrl;
-
-                  return (
-                    <img
-                      src={imageUrl}
-                      alt={profile.username}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        // Fallback to Farcaster PFP if available, otherwise hide image
-                        const img = e.target as HTMLImageElement;
-                        if (farcasterPfp) {
-                          img.src = farcasterPfp;
-                        } else {
-                          img.style.display = 'none';
-                        }
-                      }}
-                    />
-                  );
-                }
-
-                // Priority 2: Use Farcaster PFP if available
-                if (farcasterPfp) {
-                  return (
-                    <img
-                      src={farcasterPfp}
-                      alt={profile.username}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        // Hide image on error, show initials instead
-                        const img = e.target as HTMLImageElement;
-                        img.style.display = 'none';
-                      }}
-                    />
-                  );
-                }
-
-                // Priority 3: Use initials as fallback
-                return <span>{profile.username.substring(0, 2).toUpperCase()}</span>;
-              })()}
-            </div>
-
-            {/* Profile Info */}
-            <div className="flex-1 text-center md:text-left">
-              <div className="flex flex-col md:flex-row items-center md:items-start gap-3 mb-2">
-                <h1 className="text-4xl md:text-5xl font-display font-bold text-vintage-gold">
-                  {profile.username}
-                </h1>
-                <div className="flex items-center gap-2">
-                  <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999, profile.hasVibeBadge)} size="md" />
-                </div>
-              </div>
-              <div className="flex items-center gap-2 justify-center md:justify-start mb-2 max-w-full">
-                <p className="text-vintage-burnt-gold font-mono text-sm">
-                  {/* Mobile/miniapp: truncated format */}
-                  <span className="md:hidden">
-                    {profile.address.slice(0, 6)}...{profile.address.slice(-4)}
-                  </span>
-                  {/* Desktop: full address */}
-                  <span className="hidden md:inline">
-                    {profile.address}
-                  </span>
-                </p>
-                <button
-                  onClick={copyAddress}
-                  className="px-2 py-1 bg-vintage-charcoal hover:bg-vintage-gold/20 border border-vintage-gold/50 rounded text-vintage-gold hover:text-vintage-ice transition-all text-xs font-modern font-semibold flex-shrink-0"
-                  title="Copy wallet address"
-                >
-                  {copiedAddress ? t('addressCopied') : t('copyAddress')}
-                </button>
-              </div>
-              <div className="flex flex-col gap-1">
-                {profile.twitter && (
-                  <a
-                    href={`https://twitter.com/${profile.twitter.replace('@', '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-vintage-neon-blue hover:text-vintage-gold inline-flex items-center gap-1 font-modern"
-                  >
-                    𝕏 @{profile.twitter.replace('@', '')}
-                  </a>
-                )}
-                {profile.fid && farcasterUsername && (
-                  <a
-                    href={`https://warpcast.com/${farcasterUsername}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-purple-400 hover:text-vintage-gold inline-flex items-center gap-1 font-modern"
-                  >
-                    <svg width="16" height="16" viewBox="128.889 155.556 751.111 688.889" fill="currentColor" className="inline">
-                      <path d="M257.778 155.556h484.444v688.889h-71.111V528.889h-.697c-7.86-87.212-81.156-155.556-170.414-155.556s-162.554 68.344-170.414 155.556h-.697v315.556h-71.111z"/>
-                      <path d="M128.889 253.333l28.889 97.778h24.444v395.556c-12.273 0-22.222 9.949-22.222 22.222v26.667h-4.444c-12.273 0-22.223 9.949-22.223 22.222v26.667h248.889v-26.667c0-12.273-9.949-22.222-22.222-22.222h-4.444v-26.667c0-12.273-9.95-22.222-22.223-22.222h-26.666V253.333zM675.556 746.667c-12.273 0-22.223 9.949-22.223 22.222v26.667h-4.444c-12.273 0-22.222 9.949-22.222 22.222v26.667h248.889v-26.667c0-12.273-9.95-22.222-22.223-22.222h-4.444v-26.667c0-12.273-9.949-22.222-22.222-22.222V351.111h24.444L880 253.333H702.222v493.334z"/>
-                    </svg>
-                    @{farcasterUsername}
-                  </a>
-                )}
-                {profile.fid && !farcasterUsername && (
-                  <span className="text-purple-400 inline-flex items-center gap-1 font-modern">
-                    <svg width="16" height="16" viewBox="128.889 155.556 751.111 688.889" fill="currentColor" className="inline">
-                      <path d="M257.778 155.556h484.444v688.889h-71.111V528.889h-.697c-7.86-87.212-81.156-155.556-170.414-155.556s-162.554 68.344-170.414 155.556h-.697v315.556h-71.111z"/>
-                      <path d="M128.889 253.333l28.889 97.778h24.444v395.556c-12.273 0-22.222 9.949-22.222 22.222v26.667h-4.444c-12.273 0-22.223 9.949-22.223 22.222v26.667h248.889v-26.667c0-12.273-9.949-22.222-22.222-22.222h-4.444v-26.667c0-12.273-9.95-22.222-22.223-22.222h-26.666V253.333zM675.556 746.667c-12.273 0-22.223 9.949-22.223 22.222v26.667h-4.444c-12.273 0-22.222 9.949-22.222 22.222v26.667h248.889v-26.667c0-12.273-9.95-22.222-22.223-22.222h-4.444v-26.667c0-12.273-9.949-22.222-22.222-22.222V351.111h24.444L880 253.333H702.222v493.334z"/>
-                    </svg>
-                    FID: {profile.fid}
-                  </span>
-                )}
-                {/* VibeFID Card Link - Opens VibeFID miniapp */}
-                {profile.fid && (
-                  <button
-                    onClick={() => openMarketplace(`https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid/fid/${profile.fid}`, sdk, true)}
-                    className="text-vintage-gold hover:text-vintage-burnt-gold inline-flex items-center gap-1 font-modern transition-colors cursor-pointer"
-                  >
-                    ♦ VibeFID Card
-                  </button>
-                )}
-              </div>
-
-              {/* Share Profile Buttons */}
-              <div className="flex flex-col gap-2 mt-3">
-                <div className="flex gap-2">
-                  <button
-                    onClick={async () => {
-                      // Calculate win rate for profile
-                      const wins = totalWins || 0;
-                      const losses = totalLosses || 0;
-                      const ties = totalTies || 0;
-
-                      // Share URL with meta tags (add version param to bust Farcaster cache)
-                      const shareUrl = `${window.location.origin}/share/profile/${encodeURIComponent(profile.username)}?v=3`;
-
-                      // Farcaster cast text
-                      // @ts-expect-error - honor field is added to schema but types not yet regenerated
-                      const castText = `Check out my $VBMS profile!\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Total Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${wins}W-${losses}L-${ties}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs\n\n🎁 First share = FREE pack! Daily shares = tokens!\n\n@jvhbo`;
-
-                      const url = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-
-                      // Open share in new tab
-                      window.open(url, '_blank');
-
-                      // Award reward if it's the user's own profile
-                      if (currentUserAddress?.toLowerCase() === profile.address.toLowerCase()) {
-                        try {
-                          // Try FREE pack first (one-time)
-                          const packResult = await rewardProfileShare({ address: profile.address });
-                          if (packResult.success) {
-                            setShareRewardMessage(packResult.message);
-                            setShowShareReward(true);
-                            setTimeout(() => setShowShareReward(false), 5000);
-                          } else {
-                            // Pack already claimed, give daily tokens instead
-                            const tokenResult = await claimShareBonus({
-                              address: profile.address,
-                              type: "dailyShare"
-                            });
-                            // Only show modal if actually got reward (prevents loop on repeated clicks)
-                            if (tokenResult.success) {
-                              setShareRewardMessage(tokenResult.message);
-                              setShowShareReward(true);
-                              setTimeout(() => setShowShareReward(false), 5000);
-                            }
-                          }
-                        } catch (error: any) {
-                          console.error('Share reward error:', error);
-                        }
-                      }
-                    }}
-                    className="px-4 py-2 bg-vintage-neon-blue/20 hover:bg-vintage-neon-blue/30 border border-vintage-neon-blue rounded-lg text-vintage-neon-blue hover:text-white transition-all font-modern font-semibold text-sm flex items-center gap-2 cursor-pointer"
-                  >
-                    <FarcasterIcon size={16} />
-                    <span>Share</span>
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      const profileUrl = `${window.location.origin}/profile/${profile.username}`;
-                      // @ts-expect-error - honor field is added to schema but types not yet regenerated
-                      const tweetText = `Check out my $VBMS profile! 🎮\n\n⚔️ Honor: ${(profile.stats.honor ?? 500).toLocaleString()}\n💪 Power: ${(profile.stats.totalPower || 0).toLocaleString()}\n🏆 Record: ${totalWins}W-${totalLosses}L-${totalTies}T\n🃏 ${nfts.length || profile.stats.totalCards} NFTs`;
-
-                      const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(profileUrl)}`;
-
-                      // Open share in new tab
-                      window.open(url, '_blank');
-
-                      // Award reward if it's the user's own profile
-                      if (currentUserAddress?.toLowerCase() === profile.address.toLowerCase()) {
-                        try {
-                          // Try FREE pack first (one-time)
-                          const packResult = await rewardProfileShare({ address: profile.address });
-                          if (packResult.success) {
-                            setShareRewardMessage(packResult.message);
-                            setShowShareReward(true);
-                            setTimeout(() => setShowShareReward(false), 5000);
-                          } else {
-                            // Pack already claimed, give daily tokens instead
-                            const tokenResult = await claimShareBonus({
-                              address: profile.address,
-                              type: "dailyShare"
-                            });
-                            // Only show modal if actually got reward (prevents loop on repeated clicks)
-                            if (tokenResult.success) {
-                              setShareRewardMessage(tokenResult.message);
-                              setShowShareReward(true);
-                              setTimeout(() => setShowShareReward(false), 5000);
-                            }
-                          }
-                        } catch (error: any) {
-                          console.error('Share reward error:', error);
-                        }
-                      }
-                    }}
-                    className="px-4 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold rounded-lg text-vintage-gold hover:text-vintage-ice transition-all font-modern font-semibold text-sm flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>𝕏</span>
-                    <span>Share</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="flex gap-4">
-              <div className="bg-vintage-black/50 px-6 py-3 rounded-xl border-2 border-vintage-gold text-center">
-                <p className="text-3xl font-bold text-vintage-gold">{totalWins}</p>
-                <p className="text-xs text-vintage-burnt-gold font-modern">WINS</p>
-              </div>
-              <div className="bg-vintage-black/50 px-6 py-3 rounded-xl border-2 border-vintage-silver text-center">
-                <p className="text-3xl font-bold text-vintage-silver">{totalLosses}</p>
-                <p className="text-xs text-vintage-burnt-gold font-modern">LOSSES</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="max-w-6xl mx-auto mb-8">
-        <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
-          <span className="text-3xl">♦</span> Statistics
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold/50">
-            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">♠ TOTAL CARDS</p>
-            <p className="text-3xl font-bold text-vintage-gold">{nfts.length || profile.stats.totalCards}</p>
-          </div>
-          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold/50">
-            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">◆ TOTAL POWER</p>
-            <p className="text-3xl font-bold text-vintage-gold">{(profile.stats.totalPower || 0).toLocaleString()}</p>
-          </div>
-          <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-purple-400/50">
-            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern">⚔️ HONOR</p>
-            {/* @ts-expect-error - honor field is added to schema but types not yet regenerated */}
-            <p className="text-3xl font-bold text-purple-400">{(profile.stats.honor ?? 500).toLocaleString()}</p>
-          </div>
-          <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-burnt-gold/20 p-6 rounded-xl border-2 border-vintage-gold shadow-[0_0_15px_rgba(255,215,0,0.2)]">
-            <p className="text-xs text-vintage-burnt-gold mb-1 font-modern flex items-center gap-1">💰 BALANCE</p>
-            <p className="text-3xl font-bold text-vintage-gold">
-              {(() => {
-                const balance = Number(vbmsBalance || 0);
-                if (balance >= 1_000_000) return `${(balance / 1_000_000).toFixed(1)}M`;
-                if (balance >= 1_000) return `${(balance / 1_000).toFixed(1)}K`;
-                return balance.toLocaleString(undefined, { maximumFractionDigits: 0 });
-              })()}
-            </p>
-            <p className="text-[10px] text-vintage-burnt-gold font-modern mt-1">$VBMS</p>
-          </div>
-        </div>
-
-        {/* Win Rate */}
-        <div className="mt-4 bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-vintage-burnt-gold font-modern font-semibold">OVERALL WIN RATE</p>
-            <p className="text-3xl font-bold text-vintage-gold">{winRate}%</p>
-          </div>
-          <div className="w-full bg-vintage-black rounded-full h-4 overflow-hidden border border-vintage-gold/30">
-            <div
-              className="bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold h-full transition-all duration-500"
-              style={{ width: `${winRate}%` }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Defense Deck */}
-      {profile.defenseDeck && profile.defenseDeck.length === 5 && (() => {
-        // Validate defense deck data - filter only object format, skip legacy strings
-        const validCards = profile.defenseDeck
-          .filter((card): card is { tokenId: string; power: number; imageUrl: string; name: string; rarity: string; foil?: string } =>
-            typeof card === 'object' && card !== null
-          )
-          .filter(card =>
-            card.tokenId &&
-            typeof card.power === 'number' &&
-            !isNaN(card.power) &&
-            card.imageUrl &&
-            card.imageUrl !== 'undefined' &&
-            card.imageUrl !== ''
-          );
-
-        const hasInvalidData = validCards.length !== 5;
-
-        return (
-          <div className="max-w-6xl mx-auto mb-8">
-            <h2 className="text-2xl font-display font-bold mb-4 flex items-center gap-2 text-vintage-gold">
-              <span className="text-3xl">🛡️</span> Defense Deck
-            </h2>
-            <div className="bg-vintage-charcoal p-6 rounded-xl border-2 border-vintage-gold">
-              {hasInvalidData ? (
-                <div className="text-center py-8">
-                  <p className="text-vintage-burnt-gold mb-4">⚠️ Defense deck has corrupted data</p>
-                  <p className="text-sm text-vintage-silver">Player needs to reset their defense deck</p>
-                </div>
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold rounded-full flex-shrink-0 overflow-hidden">
+              {profile.twitterProfileImageUrl ? (
+                <img
+                  src={profile.twitterProfileImageUrl.includes('pbs.twimg.com') ? profile.twitterProfileImageUrl.replace('_normal', '_400x400') : profile.twitterProfileImageUrl}
+                  alt={profile.username}
+                  className="w-full h-full object-cover"
+                  onError={(e) => { const img = e.target as HTMLImageElement; if (farcasterPfp) img.src = farcasterPfp; else img.style.display = 'none'; }}
+                />
+              ) : farcasterPfp ? (
+                <img src={farcasterPfp} alt={profile.username} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
               ) : (
-                <>
-                  <p className="text-sm text-vintage-burnt-gold mb-4 font-modern">
-                    These cards will defend when this player is attacked
-                  </p>
-                  <div className="grid grid-cols-5 gap-4">
-                    {validCards.map((card, i) => (
-                      <FoilCardEffect key={i} foilType={(card.foil === 'Standard' || card.foil === 'Prize') ? card.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-lg shadow-vintage-gold/30">
-                        <CardMedia
-                          src={convertIpfsUrl(card.imageUrl) || card.imageUrl}
-                          alt={`#${card.tokenId}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-sm px-2 py-1 rounded-br font-bold">
-                          {card.power}
-                        </div>
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-vintage-black/90 to-transparent p-2">
-                          <p className="text-xs text-vintage-gold font-modern">#{card.tokenId}</p>
-                        </div>
-                      </FoilCardEffect>
-                    ))}
-                  </div>
-                  <div className="mt-4 text-center">
-                    <p className="text-xs text-vintage-burnt-gold">Total Defense Power</p>
-                    <p className="text-3xl font-bold text-vintage-gold">
-                      {validCards.reduce((sum, card) => sum + (Number(card.power) || 0), 0)}
-                    </p>
-                  </div>
-                </>
+                <div className="w-full h-full flex items-center justify-center text-2xl font-bold">{profile.username.substring(0, 2).toUpperCase()}</div>
               )}
             </div>
+
+            {/* Name + Links */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl md:text-2xl font-display font-bold text-vintage-gold truncate">{profile.username}</h1>
+                <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999, profile.hasVibeBadge)} size="sm" />
+              </div>
+              <div className="flex items-center gap-2 mt-1 flex-wrap text-xs">
+                <button onClick={copyAddress} className="text-vintage-burnt-gold hover:text-vintage-gold font-mono">
+                  {profile.address.slice(0, 6)}...{profile.address.slice(-4)} {copiedAddress ? '✓' : ''}
+                </button>
+                {profile.fid && farcasterUsername && (
+                  <a href={`https://warpcast.com/${farcasterUsername}`} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300">@{farcasterUsername}</a>
+                )}
+                {profile.twitter && (
+                  <a href={`https://twitter.com/${profile.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-vintage-neon-blue hover:text-blue-400">𝕏</a>
+                )}
+                {profile.fid && (
+                  <button onClick={() => openMarketplace(`https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid/fid/${profile.fid}`, sdk, true)} className="text-vintage-gold hover:text-vintage-burnt-gold">♦ VibeFID</button>
+                )}
+              </div>
+            </div>
+
           </div>
-        );
-      })()}
+
+          {/* Stats row - compact horizontal */}
+          <div className="grid grid-cols-4 gap-2 mt-4 pt-3 border-t border-vintage-gold/20">
+            <div className="text-center">
+              <p className="text-sm md:text-lg font-bold text-vintage-gold">{nfts.length || profile.stats.totalCards}</p>
+              <p className="text-[9px] text-vintage-burnt-gold">CARDS</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm md:text-lg font-bold text-vintage-gold">{(profile.stats.totalPower || 0).toLocaleString()}</p>
+              <p className="text-[9px] text-vintage-burnt-gold">POWER</p>
+            </div>
+            <div className="text-center">
+              {/* @ts-expect-error - honor field */}
+              <p className="text-sm md:text-lg font-bold text-purple-400">{(profile.stats.honor ?? 500).toLocaleString()}</p>
+              <p className="text-[9px] text-vintage-burnt-gold">HONOR</p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm md:text-lg font-bold text-vintage-gold">
+                {(() => { const b = Number(vbmsBalance || 0); if (b >= 1_000_000) return `${(b / 1_000_000).toFixed(1)}M`; if (b >= 1_000) return `${(b / 1_000).toFixed(1)}K`; return b.toLocaleString(undefined, { maximumFractionDigits: 0 }); })()}
+              </p>
+              <p className="text-[9px] text-vintage-burnt-gold">$VBMS</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       {/* NFT Cards Collection */}
-      <div className="max-w-6xl mx-auto mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-display font-bold flex items-center gap-2 text-vintage-gold">
-            <span className="text-3xl">♠</span> Card Collection ({filteredNfts.length} / {nfts.length})
-          </h2>
-          <button
-            onClick={() => {
-              localStorage.setItem('forceMetadataRefresh', 'true');
-              window.location.reload();
-            }}
-            disabled={loadingNFTs}
-            className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-modern font-semibold transition-all"
-            title="Refresh cards and force metadata update from blockchain (may take 1-2 minutes)"
-          >
-            🔄 {forceMetadataRefresh ? 'Refreshing Metadata...' : 'Refresh'}
-          </button>
-        </div>
-
-        {/* Filtros */}
-        <div className="bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-xl p-4 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            {/* Filtro de Revelação */}
-            <div>
-              <label className="block text-sm font-modern font-semibold text-vintage-gold mb-2">♦ CARD STATUS</label>
-              <select
-                value={filterRevealed}
-                onChange={(e) => {
-                  setFilterRevealed(e.target.value);
-                  setCurrentNFTPage(1);
-                }}
-                className="w-full bg-vintage-black border border-vintage-gold/50 rounded-lg px-3 py-2 text-vintage-gold focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern"
-              >
-                <option value="all">All Cards</option>
-                <option value="revealed">Revealed Only</option>
-                <option value="unrevealed">Unopened Packs</option>
-              </select>
-            </div>
-
-            {/* Filtro de Raridade */}
-            <div>
-              <label className="block text-sm font-modern font-semibold text-vintage-gold mb-2">♣ RARITY</label>
-              <select
-                value={filterRarity}
-                onChange={(e) => {
-                  setFilterRarity(e.target.value);
-                  setCurrentNFTPage(1);
-                }}
-                className="w-full bg-vintage-black border border-vintage-gold/50 rounded-lg px-3 py-2 text-vintage-gold focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern"
-                disabled={filterRevealed === 'unrevealed'}
-              >
-                <option value="all">All Rarities</option>
-                <option value="common">Common</option>
-                <option value="rare">Rare</option>
-                <option value="epic">Epic</option>
-                <option value="legendary">Legendary</option>
-              </select>
-            </div>
-
-            {/* Filtro de Foil */}
-            <div>
-              <label className="block text-sm font-modern font-semibold text-vintage-gold mb-2">♥ FOIL</label>
-              <select
-                value={filterFoil}
-                onChange={(e) => {
-                  setFilterFoil(e.target.value);
-                  setCurrentNFTPage(1);
-                }}
-                className="w-full bg-vintage-black border border-vintage-gold/50 rounded-lg px-3 py-2 text-vintage-gold focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern"
-                disabled={filterRevealed === 'unrevealed'}
-              >
-                <option value="all">All Foils</option>
-                <option value="none">No Foil</option>
-                <option value="standard">Standard Foil</option>
-                <option value="prize">Prize Foil</option>
-              </select>
-            </div>
-
-            {/* Filtro de Coleção */}
-            <div>
-              <label className="block text-xs sm:text-sm font-modern font-semibold text-vintage-gold mb-2 flex items-center gap-1">
-                <svg className="w-3 h-3 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                  <line x1="8" y1="21" x2="16" y2="21"/>
-                  <line x1="12" y1="17" x2="12" y2="21"/>
-                </svg>
-                COLLECTION
-              </label>
-              <select
-                value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
-                onChange={(e) => {
-                  if (e.target.value === 'all') {
-                    setSelectedCollections([]);
-                  } else {
-                    setSelectedCollections([e.target.value as CollectionId]);
-                  }
-                  setCurrentNFTPage(1);
-                }}
-                className="w-full bg-vintage-black border border-vintage-gold/50 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-vintage-gold focus:outline-none focus:ring-2 focus:ring-vintage-gold font-modern [&>option]:bg-vintage-black [&>option]:text-vintage-gold"
-              >
-                <option value="all" className="bg-vintage-black text-vintage-gold">All</option>
-                <option value="vibe" className="bg-vintage-black text-vintage-gold">VBMS</option>
-                <option value="vibe rot bangers" className="bg-vintage-black text-vintage-gold">BANGER</option>
-                <option value="cumioh" className="bg-vintage-black text-vintage-gold">CUMIO</option>
-                <option value="historyofcomputer" className="bg-vintage-black text-vintage-gold">HSTR</option>
-                <option value="vibefx" className="bg-vintage-black text-vintage-gold">VBFX</option>
-                <option value="baseballcabal" className="bg-vintage-black text-vintage-gold">BBCL</option>
-                <option value="tarot" className="bg-vintage-black text-vintage-gold">TRT</option>
-                <option value="teampothead" className="bg-vintage-black text-vintage-gold">TMPT</option>
-                <option value="poorlydrawnpepes" className="bg-vintage-black text-vintage-gold">PDP</option>
-                <option value="meowverse" className="bg-vintage-black text-vintage-gold">MEOVV</option>
-                <option value="viberuto" className="bg-vintage-black text-vintage-gold">VBRTO</option>
-                <option value="vibefid" className="bg-vintage-black text-vintage-gold">VIBEFID</option>
-                <option value="gmvbrs" className="bg-vintage-black text-vintage-gold">VBRS</option>
-              </select>
-            </div>
+      <div className="max-w-6xl mx-auto mb-4">
+        {/* Header + Filters in one row */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-vintage-gold text-lg">♠</span>
+            <span className="text-vintage-gold font-semibold">{filteredNfts.length} cards</span>
           </div>
 
-          {/* Reset Filters Button */}
-          {(filterRarity !== 'all' || filterFoil !== 'all' || filterRevealed !== 'revealed' || selectedCollections.length > 0) && (
-            <button
-              onClick={() => {
-                setFilterRarity('all');
-                setFilterFoil('all');
-                setFilterRevealed('revealed');
-                setSelectedCollections([]);
-                setCurrentNFTPage(1);
-              }}
-              className="mt-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black px-4 py-2 rounded-lg text-sm font-modern font-semibold transition-all"
+          {/* Compact Filters */}
+          <div className="flex flex-wrap gap-2 sm:ml-auto">
+            <select
+              value={filterRarity}
+              onChange={(e) => { setFilterRarity(e.target.value); setCurrentNFTPage(1); }}
+              className="bg-vintage-charcoal border border-vintage-gold/30 rounded px-2 py-1 text-xs text-vintage-gold"
             >
-              ↻ Reset Filters
-            </button>
-          )}
+              <option value="all">Rarity</option>
+              <option value="common">Common</option>
+              <option value="rare">Rare</option>
+              <option value="epic">Epic</option>
+              <option value="legendary">Legend</option>
+            </select>
+            <select
+              value={filterFoil}
+              onChange={(e) => { setFilterFoil(e.target.value); setCurrentNFTPage(1); }}
+              className="bg-vintage-charcoal border border-vintage-gold/30 rounded px-2 py-1 text-xs text-vintage-gold"
+            >
+              <option value="all">Foil</option>
+              <option value="none">No Foil</option>
+              <option value="standard">Standard</option>
+              <option value="prize">Prize</option>
+            </select>
+            <select
+              value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
+              onChange={(e) => { if (e.target.value === 'all') setSelectedCollections([]); else setSelectedCollections([e.target.value as CollectionId]); setCurrentNFTPage(1); }}
+              className="bg-vintage-charcoal border border-vintage-gold/30 rounded px-2 py-1 text-xs text-vintage-gold"
+            >
+              <option value="all">Collection</option>
+              <option value="vibe">VBMS</option>
+              <option value="vibe rot bangers">BANGER</option>
+              <option value="cumioh">CUMIO</option>
+              <option value="vibefid">VIBEFID</option>
+              <option value="meowverse">MEOVV</option>
+              <option value="viberuto">VBRTO</option>
+              <option value="gmvbrs">VBRS</option>
+            </select>
+            {(filterRarity !== 'all' || filterFoil !== 'all' || selectedCollections.length > 0) && (
+              <button
+                onClick={() => { setFilterRarity('all'); setFilterFoil('all'); setSelectedCollections([]); setCurrentNFTPage(1); }}
+                className="text-vintage-burnt-gold hover:text-vintage-gold text-xs"
+              >
+                ✕ Clear
+              </button>
+            )}
+          </div>
         </div>
-        {loadingNFTs ? (
+        {isNftsLoading ? (
           <CardLoadingSpinner text="Loading cards..." />
         ) : nfts.length === 0 ? (
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
@@ -1096,88 +646,32 @@ export default function ProfilePage() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
+            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
               {filteredNfts
                 .slice((currentNFTPage - 1) * NFT_PER_PAGE, currentNFTPage * NFT_PER_PAGE)
                 .map((nft) => {
                   const tokenId = nft.tokenId;
                   const power = nft.power || 0;
                   const rarity = nft.rarity || 'Common';
-                  const wear = nft.wear || '';
                   const foilValue = nft.foil || '';
                   const imageUrl = nft.imageUrl || '';
-                  const openSeaUrl = `https://opensea.io/assets/base/${CONTRACT_ADDRESS}/${tokenId}`;
-
                   const foilEffect = getFoilEffect(foilValue);
-                  const isLegendary = (rarity || '').toLowerCase().includes('legend');
 
-                  const getRarityColor = (r: string) => {
-                    const rLower = (r || '').toLowerCase();
-                    if (rLower.includes('legend')) return 'from-orange-500 to-yellow-400';
-                    if (rLower.includes('epic')) return 'from-purple-500 to-pink-500';
-                    if (rLower.includes('rare')) return 'from-blue-500 to-cyan-400';
-                    return 'from-gray-600 to-gray-500';
-                  };
+                  // Final power with collection multiplier
+                  const finalPower = getCardDisplayPower(nft);
 
                   return (
-                    <div
-                      key={getCardUniqueId(nft)}
-                      className="relative group transition-all duration-300 hover:scale-105 cursor-pointer"
-                      style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}
-                    >
-                      <div
-                        className={`relative overflow-hidden rounded-xl ring-2 ${getRarityRing(rarity)} hover:ring-vintage-gold/50 ${isLegendary ? 'legendary-card' : ''}`}
-                        style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)'}}
-                      >
+                    <div key={getCardUniqueId(nft)} className="relative group">
+                      <div className={`relative overflow-hidden rounded-lg ring-1 ${getRarityRing(rarity)}`}>
                         <CardMedia
                           src={convertIpfsUrl(imageUrl) || imageUrl}
                           alt={`#${tokenId}`}
-                          className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none"
+                          className="w-full aspect-[2/3] object-cover bg-vintage-deep-black"
                           loading="lazy"
                         />
-
-                        {/* Card Reflection on Hover */}
-                        <div className="card-reflection"></div>
-
-                        {/* Foil Effect */}
-                        {foilEffect && (
-                          <div className={`absolute inset-0 ${foilEffect}`}></div>
-                        )}
-
-                        {/* OpenSea Button (top right) */}
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                          <a
-                            href={openSeaUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-vintage-neon-blue hover:bg-blue-500 text-white text-xs px-2 py-1 rounded-lg shadow-lg font-bold"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            OS
-                          </a>
-                        </div>
-
-                        {/* Power Badge (top) */}
-                        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/95 to-transparent p-3 pointer-events-none z-20">
-                          <div className="flex items-center justify-between">
-                            <span className={`font-bold text-xl drop-shadow-lg bg-gradient-to-r ${getRarityColor(rarity)} bg-clip-text text-transparent`}>
-                              {power} PWR
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Rarity + Wear Info (bottom) */}
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent p-3 pointer-events-none z-20">
-                          {rarity && (
-                            <div className="text-xs font-bold uppercase tracking-wider text-white drop-shadow-lg">
-                              {rarity}
-                            </div>
-                          )}
-                          {wear && (
-                            <div className="text-xs text-yellow-300 font-semibold drop-shadow-lg">
-                              {wear}
-                            </div>
-                          )}
+                        {foilEffect && <div className={`absolute inset-0 ${foilEffect}`}></div>}
+                        <div className="absolute top-0 left-0 bg-black/80 px-1.5 py-0.5 rounded-br text-[10px] font-bold text-vintage-gold">
+                          {finalPower}
                         </div>
                       </div>
                     </div>
@@ -1299,206 +793,6 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Match History */}
-      <div id="match-history" className="max-w-6xl mx-auto scroll-mt-24">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4">
-          <h2 className="text-2xl font-bold flex items-center gap-2">
-            📜 {t('matchHistory')}
-          </h2>
-          {profile.address.toLowerCase() === currentUserAddress?.toLowerCase() && (
-            <p className="text-xs md:text-sm font-modern font-semibold text-vintage-gold">
-              ⚔️ {t('rematchesRemaining')}: <span className="text-vintage-neon-blue">{rematchesRemaining}/{MAX_REMATCHES}</span>
-              <span className="block text-[10px] text-vintage-burnt-gold">
-                {(() => {
-                  const now = new Date();
-                  const tomorrow = new Date(now);
-                  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-                  tomorrow.setUTCHours(0, 0, 0, 0);
-                  const diff = tomorrow.getTime() - now.getTime();
-                  const hours = Math.floor(diff / (1000 * 60 * 60));
-                  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                  return `Resets in ${hours}h ${minutes}m (00:00 UTC)`;
-                })()}
-              </span>
-            </p>
-          )}
-        </div>
-        {!matchHistory || matchHistory.length === 0 ? (
-          <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
-            <p className="text-gray-400">{t('noMatches')}</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {matchHistory.slice(0, 10).map((match: any) => {
-              const isWin = match.result === 'win';
-              const isTie = match.result === 'tie';
-              const borderColor = isWin ? 'border-green-500/50' : isTie ? 'border-yellow-500/50' : 'border-red-500/50';
-              const bgColor = isWin ? 'from-green-900/20' : isTie ? 'from-yellow-900/20' : 'from-red-900/20';
-              const resultColor = isWin ? 'text-green-400' : isTie ? 'text-yellow-400' : 'text-red-400';
-              const resultText = isWin ? `♔ ${t('victory').toUpperCase()}` : isTie ? `♦ ${t('tie').toUpperCase()}` : `♠ ${t('defeat').toUpperCase()}`;
-
-              return (
-                <div
-                  key={match._id}
-                  className={`bg-vintage-charcoal border-2 ${borderColor} rounded-xl p-4 hover:scale-[1.02] transition-transform`}
-                >
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      {/* Match Type & Result */}
-                      <div className="flex items-center gap-4">
-                        <div className="text-3xl text-vintage-gold">
-                          {match.type === 'pvp' ? '♥' : match.type === 'attack' ? '⚔️' : match.type === 'defense' ? '🛡️' : '♣'}
-                        </div>
-                        <div>
-                          <p className={`font-display font-bold text-lg ${resultColor}`}>{resultText}</p>
-                          <p className="text-xs text-vintage-burnt-gold font-modern">
-                            {match.type === 'pvp' ? t('playerVsPlayer') :
-                             match.type === 'attack' ? t('youAttacked') :
-                             match.type === 'defense' ? t('youWereAttacked') :
-                             t('playerVsEnvironment')}
-                          </p>
-                          <p className="text-xs text-vintage-burnt-gold/70">
-                            {new Date(match.timestamp).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Power Stats */}
-                      <div className="flex items-center gap-4">
-                        <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-gold/50">
-                          <p className="text-xs text-vintage-burnt-gold font-modern">{t('yourPower')}</p>
-                          <p className="text-xl font-bold text-vintage-gold">{match.playerPower}</p>
-                        </div>
-                        <div className="text-2xl text-vintage-burnt-gold font-bold">VS</div>
-                        <div className="text-center bg-vintage-black/50 px-4 py-2 rounded-lg border border-vintage-silver/50">
-                          <p className="text-xs text-vintage-burnt-gold font-modern">{t('opponent').toUpperCase()}</p>
-                          <p className="text-xl font-bold text-vintage-silver">{match.opponentPower}</p>
-                        </div>
-                      </div>
-
-                      {/* Coins Earned/Lost */}
-                      {match.coinsEarned !== undefined && match.coinsEarned !== null && (
-                        <div className={`text-center px-4 py-2 rounded-lg border ${match.coinsEarned > 0 ? 'bg-vintage-gold/10 border-vintage-gold' : 'bg-gray-500/10 border-gray-500'}`}>
-                          <p className="text-xs text-vintage-burnt-gold font-modern">
-                            {match.coinsEarned > 0 ? `💰 ${t('earned')}` : `💸 ${t('lost')}`}
-                          </p>
-                          <p className={`text-xl font-bold ${match.coinsEarned > 0 ? 'text-vintage-gold' : 'text-gray-400'}`}>
-                            {match.coinsEarned > 0 ? '+' : ''}{match.coinsEarned}
-                          </p>
-                          <p className="text-[10px] text-vintage-burnt-gold font-modern">$TESTVBMS</p>
-                        </div>
-                      )}
-
-                      {/* Opponent Address (if PvP/Attack/Defense) */}
-                      {match.opponentAddress && (
-                        <div className="text-xs text-vintage-gold font-mono bg-vintage-black/50 px-3 py-2 rounded-lg border border-vintage-gold/30">
-                          vs {match.opponentAddress.slice(0, 6)}...{match.opponentAddress.slice(-4)}
-                          {match.opponentUsername && (
-                            <span className="block text-vintage-burnt-gold mt-1">@{match.opponentUsername}</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex justify-between items-center">
-                      {/* Farcaster Share Button */}
-                      <a
-                        href={(() => {
-                          // Get player PFP (current profile's PFP)
-                          const playerPfp = profile.twitterProfileImageUrl || '';
-
-                          // Try to get opponent PFP from match data (if available)
-                          const opponentPfp = ''; // We don't have this in match history
-
-                          // Build matchId with PFPs: result_playerPower_opponentPower_opponentName_playerPfp_opponentPfp_playerName
-                          const matchId = `${match.result}_${match.playerPower}_${match.opponentPower}_${match.opponentUsername || 'Opponent'}_${encodeURIComponent(playerPfp)}_${encodeURIComponent(opponentPfp)}_${encodeURIComponent(profile.username)}`;
-                          const shareUrl = `https://vibe-most-wanted.vercel.app/share/${matchId}`;
-                          const text = `I ${match.result === 'win' ? 'defeated' : match.result === 'tie' ? 'tied with' : 'battled'} ${match.opponentUsername || 'an opponent'} in $VBMS!\n\n@jvhbo`;
-
-                          return `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}&embeds[]=${encodeURIComponent(shareUrl)}`;
-                        })()}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-2 rounded-lg font-modern font-semibold text-sm transition-all flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white hover:scale-105"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 1000 1000" fill="none">
-                          <path d="M257.778 155.556H742.222V844.444H671.111V528.889H670.414C662.554 441.677 589.258 373.333 500 373.333C410.742 373.333 337.446 441.677 329.586 528.889H328.889V844.444H257.778V155.556Z" fill="white"/>
-                          <path d="M128.889 253.333L157.778 351.111H182.222L211.111 253.333H232.222V373.333H213.333V268.889H212.222L181.111 373.333H158.889L127.778 268.889H126.667V373.333H107.778V253.333H128.889Z" fill="white"/>
-                        </svg>
-                        <span>Share</span>
-                      </a>
-
-                      {/* Rematch Button - Only if LOST and has opponent (EXCLUDING poker matches) */}
-                      {match.result === 'loss' && match.opponentAddress && (match.type === 'pvp' || match.type === 'attack' || match.type === 'defense') &&
-                       match.type !== 'poker-pvp' && match.type !== 'poker-cpu' &&
-                       profile.address.toLowerCase() === currentUserAddress?.toLowerCase() && (
-                        <button
-                          onClick={async () => {
-                            if (rematchesRemaining <= 0) {
-                              alert(t('rematchLimitReached'));
-                              return;
-                            }
-
-                            // Validate opponent address
-                            if (!match.opponentAddress) {
-                              alert(t('opponentAddressNotFound'));
-                              return;
-                            }
-
-                            // Load opponent profile
-                            const opponentProfile = await ConvexProfileService.getProfile(match.opponentAddress);
-                            if (!opponentProfile) {
-                              alert(t('opponentNotFound'));
-                              return;
-                            }
-
-                            // Update rematch count in Firebase
-                            try {
-                              const now = new Date();
-                              const todayUTC = now.toISOString().split('T')[0];
-
-                              await ConvexProfileService.updateProfile(profile.address, {
-                                rematchesToday: (profile.rematchesToday || 0) + 1,
-                                lastRematchDate: todayUTC
-                              });
-
-                              // Update local state
-                              setRematchesRemaining(prev => Math.max(0, prev - 1));
-                            } catch (err) {
-                              devError('Failed to update rematch count:', err);
-                            }
-
-                            // Check if ATTACKER has defense deck (required to attack)
-                            if (!profile?.hasDefenseDeck) {
-                              alert('You need to set up your defense deck before attacking other players! Go to your profile to set it up.');
-                              return;
-                            }
-                            // ✅ Open attack modal directly in profile (no redirect!)
-                            setTargetOpponent(opponentProfile);
-                            setAttackSelectedCards([]);
-                            setShowAttackCardSelection(true);
-                          }}
-                          disabled={rematchesRemaining <= 0}
-                          className={`px-4 py-2 rounded-lg font-modern font-semibold text-sm transition-all flex items-center gap-2 ${
-                            rematchesRemaining > 0
-                              ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white hover:scale-105'
-                              : 'bg-vintage-black/50 text-vintage-burnt-gold cursor-not-allowed border border-vintage-gold/20'
-                          }`}
-                        >
-                          <span>⚔️</span>
-                          <span>{t('rematch')}</span>
-                          <span className="text-xs opacity-75">({rematchesRemaining}/5)</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
 
       {/* Attack Card Selection Modal (Simplified for Profile) */}
       {showAttackCardSelection && targetOpponent && nfts.length > 0 && (

@@ -15,6 +15,7 @@ import { useWaitForTransactionReceipt } from "wagmi";
 import { parseEther } from "viem";
 import { CONTRACTS } from "@/lib/contracts";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useProfile } from "@/contexts/ProfileContext";
 
 type AuctionDoc = Doc<"castAuctions">;
 type BidDoc = Doc<"castAuctionBids">;
@@ -86,9 +87,9 @@ export function FeaturedCastAuctions({
   const recentRefunds = useQuery(api.castAuctions.getRecentRefunds, address ? { address } : "skip");
   const [dismissedRefunds, setDismissedRefunds] = useState(false);
 
-  // 🚀 BANDWIDTH FIX: Use getProfileDashboard instead of getProfile
-  // Only needs hasVibeBadge - saves ~8KB per query
-  const profile = useQuery(api.profiles.getProfileDashboard, address ? { address } : "skip");
+  // 🚀 BANDWIDTH FIX: Use ProfileContext instead of useQuery
+  // Eliminates WebSocket subscription - profile already loaded by context
+  const { userProfile: profile } = useProfile();
 
   // Get real VBMS balance from wallet
   const { balance: vbmsBalance, refetch: refetchBalance } = useFarcasterVBMSBalance(address);

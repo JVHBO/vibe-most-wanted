@@ -22,6 +22,7 @@ import FoilCardEffect from "@/components/FoilCardEffect";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { CardMedia } from "@/components/CardMedia";
 import { GamePopups } from "@/components/GamePopups";
+import { getCardDisplayPower } from "@/lib/power-utils";
 
 const LEADERBOARD_PER_PAGE = 10;
 
@@ -1112,7 +1113,7 @@ export default function LeaderboardPage() {
                         <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
                       </FoilCardEffect>
                       <div className="absolute top-0 left-0 bg-cyan-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br" style={{ animation: battlePhase === 'clash' ? 'battlePowerPulse 1s ease-in-out infinite' : undefined }}>
-                        {c.power}
+                        {getCardDisplayPower(c)}
                       </div>
                     </div>
                   ))}
@@ -1144,7 +1145,7 @@ export default function LeaderboardPage() {
                         <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
                       </FoilCardEffect>
                       <div className="absolute top-0 left-0 bg-red-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br" style={{ animation: battlePhase === 'clash' ? 'battlePowerPulse 1s ease-in-out infinite' : undefined }}>
-                        {c.power}
+                        {getCardDisplayPower(c)}
                       </div>
                       {battlePhase === 'result' && (
                         <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">
@@ -1380,7 +1381,7 @@ export default function LeaderboardPage() {
                     className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-vintage-gold shadow-gold cursor-pointer hover:ring-red-500 transition-all group"
                   >
                     <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
-                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{c.power}</div>
+                    <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{getCardDisplayPower(c)}</div>
                     <div className="absolute inset-0 bg-red-500/0 group-hover:bg-red-500/30 flex items-center justify-center transition-all">
                       <span className="opacity-0 group-hover:opacity-100 text-white text-2xl font-bold">×</span>
                     </div>
@@ -1464,7 +1465,7 @@ export default function LeaderboardPage() {
                         } ${defenseSelectedCards.length >= HAND_SIZE && !isSelected ? 'opacity-40 cursor-not-allowed' : ''}`}
                       >
                         <CardMedia src={nft.imageUrl} alt={`#${nft.tokenId}`} className="w-full h-full object-cover" />
-                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{nft.power}</div>
+                        <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">{getCardDisplayPower(nft)}</div>
                         {isSelected && (
                           <div className="absolute inset-0 bg-vintage-gold/30 flex items-center justify-center">
                             <span className="text-white text-2xl font-bold">✓</span>

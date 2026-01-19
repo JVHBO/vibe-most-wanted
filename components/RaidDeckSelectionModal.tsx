@@ -644,7 +644,7 @@ export function RaidDeckSelectionModal({
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute top-0 left-0 bg-vintage-gold text-vintage-black text-xs px-1 rounded-br font-bold">
-                      {card.power?.toLocaleString()}
+                      {getDisplayPower(card).toLocaleString()}
                     </div>
                     {buff && (
                       <div className={`absolute top-0 right-0 bg-black/80 ${buff.color} text-xs px-1 rounded-bl font-bold`}>
