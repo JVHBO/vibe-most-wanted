@@ -33,6 +33,12 @@ export function FarcasterNotificationRegistration() {
 
         const fid = context.user.fid.toString();
 
+        // 🚀 BANDWIDTH FIX: Skip if already processed this session
+        const sessionKey = `vbms_miniapp_${fid}`;
+        if (sessionStorage.getItem(sessionKey)) {
+          return;
+        }
+
         // Request to add miniapp (includes notification permission)
         // Neynar receives the token via webhook configured in farcaster.json
         const { sdk: sdkActions } = await import('@farcaster/miniapp-sdk');
@@ -73,6 +79,9 @@ export function FarcasterNotificationRegistration() {
             console.log('[FarcasterNotification] Could not grant enable_notifications achievement:', err);
           }
         }
+
+        // 🚀 BANDWIDTH FIX: Mark as processed for this session
+        sessionStorage.setItem(sessionKey, '1');
       } catch (error) {
         console.error('Error in addMiniApp flow:', error);
       }

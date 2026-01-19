@@ -434,9 +434,8 @@ export default function TCGPage() {
         const fid = context?.user?.fid;
         if (fid) {
           devLog('📱 Saving FID to profile:', fid);
-          // 🚀 BANDWIDTH FIX: Use lite profile (only need fid field)
-          const profile = await ConvexProfileService.getProfileLite(wagmiAddress);
-          if (profile && (!profile.fid || profile.fid !== fid.toString())) {
+          // 🚀 BANDWIDTH FIX: Use userProfile from context instead of getProfileLite
+          if (userProfile && (!userProfile.fid || userProfile.fid !== fid.toString())) {
             await ConvexProfileService.updateProfile(wagmiAddress, {
               fid: fid.toString(),
               farcasterFid: fid  // numeric FID for Social Quests
@@ -450,7 +449,7 @@ export default function TCGPage() {
     };
 
     saveFarcasterProfile();
-  }, [isInFarcaster, wagmiAddress]);
+  }, [isInFarcaster, wagmiAddress, userProfile]);
 
   // Notify Farcaster SDK that app is ready
   // CRITICAL: Call ready() IMMEDIATELY - affects ranking and $10k reward pool!
@@ -2399,15 +2398,8 @@ export default function TCGPage() {
 
     try {
       // ✓ Verify profile exists in Convex first
-      devLog('🔍 Verifying profile exists...');
-      // 🚀 BANDWIDTH FIX: Use lite profile (only need existence check)
-      const existingProfile = await ConvexProfileService.getProfileLite(address);
-      if (!existingProfile) {
-        devError('✗ Profile not found in Convex!');
-        alert('Error: Your profile was not found. Please create a profile first.');
-        return;
-      }
-      devLog('✓ Profile verified:', existingProfile.username);
+      // 🚀 BANDWIDTH FIX: userProfile already verified at function start (line 2398)
+      devLog('✓ Profile verified:', userProfile.username);
 
       // ✓ Validate all cards have required data
       const invalidCards = selectedCards.filter(card =>

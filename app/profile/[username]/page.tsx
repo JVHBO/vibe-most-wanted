@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ConvexProfileService, type UserProfile, type MatchHistory } from '@/lib/convex-profile';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useConvex } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import sdk from '@farcaster/miniapp-sdk';
 import { BadgeList } from '@/components/Badge';
@@ -88,11 +88,31 @@ export default function ProfilePage() {
   const [farcasterUsername, setFarcasterUsername] = useState<string>('');
   const [farcasterPfp, setFarcasterPfp] = useState<string>('');
 
-  // 🚀 OPTIMIZED: Use summary query (95% bandwidth reduction)
-  const matchHistory = useQuery(
-    api.matches.getMatchHistorySummary,
-    profile?.address ? { address: profile.address, limit: 20 } : "skip"
-  );
+  // 🚀 BANDWIDTH FIX: Convert useQuery to manual query (no WebSocket subscription)
+  const convex = useConvex();
+  const [matchHistory, setMatchHistory] = useState<any[] | undefined>(undefined);
+  const matchHistoryLoadedRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!profile?.address) return;
+    // Only load once per address per session
+    if (matchHistoryLoadedRef.current === profile.address) return;
+    matchHistoryLoadedRef.current = profile.address;
+
+    const loadMatchHistory = async () => {
+      try {
+        const result = await convex.query(api.matches.getMatchHistorySummary, {
+          address: profile.address,
+          limit: 20
+        });
+        setMatchHistory(result || []);
+      } catch (err) {
+        console.error('[Profile] Error loading match history:', err);
+        setMatchHistory([]);
+      }
+    };
+    loadMatchHistory();
+  }, [profile?.address, convex]);
 
   // 💰 Real on-chain VBMS balance for profile being viewed
   const { balance: vbmsBalance } = useFarcasterVBMSBalance(profile?.address);
