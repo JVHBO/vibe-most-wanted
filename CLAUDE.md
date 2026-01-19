@@ -96,7 +96,7 @@ npx vercel --prod
 // Add to schema to match existing data
 app: v.optional(v.string()),
 ```
-- **CRITICAL**: VBMS and VibeFID share the same Convex deployment. Never revert commits that change schema without fixing the schema first!
+- **Note**: VibeFID now has its own separate Convex deployment. See "VibeFID Miniapp" section below.
 
 ### Bug #9: Balance cache skipping new collections (Jan 2026)
 - **Symptoms**: Player's NFTs not showing, ownedTokenIds missing cards they own on-chain
@@ -251,13 +251,9 @@ choice: v.union(
 - VBMS: `prod:agile-orca-761` (this repo)
 - VibeFID: Has its own separate Convex deployment
 
-**What VBMS still uses from VibeFID data:**
-- `cardVotes.getUnreadMessageCount` - Red dot notification on VibeFID button
-- `farcasterCards.*` - Card minting, querying (shared table for now)
-
-**Dead code removed from VBMS (Jan 2026):**
-- `cardVotes.ts` - Removed ~1160 lines of VibeMail/voting code (now in VibeFID)
-- Only `getUnreadMessageCount` kept for red dot notification
+**VBMS cardVotes.ts:**
+- Only `getUnreadMessageCount` remains (for red dot on VibeFID button)
+- All VibeMail/voting code (~1160 lines) was removed and moved to VibeFID
 
 ### /fid Route Redirect
 The `/fid` route in vibe-most-wanted now **redirects to VibeFID miniapp**:
@@ -438,67 +434,6 @@ npx convex run profiles:updateStats '{"address": "0x...", "stats": {...}, "token
 6. **Mutations de admin úteis**:
    - `admin:addVibeFIDToOwnedTokens` - Adiciona VibeFID faltando
    - `admin:syncDefenseDeckToOwned` - Sincroniza defenseDeck → ownedTokenIds
-
-## Convex NFT Ownership System (Em Progresso - Jan 2026)
-
-### Objetivo
-Eliminar 44M+ chamadas Alchemy/mês usando Convex como fonte única de verdade para NFT ownership.
-
-### Status: PAUSADO (precisa de sync inicial)
-
-### O que foi feito:
-1. ✅ Criado `convex/nftOwnership.ts` - tabela e mutations para NFT tracking
-2. ✅ Criado `lib/nft/convex-fetcher.ts` - funções para buscar do Convex
-3. ✅ Criado `app/api/webhook/alchemy/route.ts` - webhook handler para 13 coleções
-4. ✅ Configurado webhook no Alchemy Dashboard com todos os 13 contratos
-5. ✅ Adicionado `ALCHEMY_WEBHOOK_SIGNING_KEY` no Vercel
-
-### Contratos configurados no webhook:
-| Collection | Contract |
-|------------|----------|
-| VBMS | `0xf14c1dc8ce5fe65413379f76c43fa1460c31e728` |
-| GM VBRS | `0xefe512e73ca7356c20a21aa9433bad5fc9342d46` |
-| VibeFID | `0x60274a138d026e3cb337b40567100fdec3127565` |
-| Viberuto | `0x70b4005a83a0b39325d27cf31bd4a7a30b15069f` |
-| Meowverse | `0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150` |
-| Poorly Drawn Pepes | `0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8` |
-| Team Pothead | `0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea` |
-| Tarot | `0x34d639c63384a00a2d25a58f73bea73856aa0550` |
-| Baseball Cabal | `0x3ff41af61d092657189b1d4f7d74d994514724bb` |
-| Vibe FX | `0xc7f2d8c035b2505f30a5417c0374ac0299d88553` |
-| History of Computer | `0x319b12e8eba0be2eae1112b357ba75c2c178b567` |
-| $CU-MI-OH! | `0xfeabae8bdb41b2ae507972180df02e70148b38e1` |
-| Vibe Rot Bangers | `0x120c612d79a3187a3b8b4f4bb924cebe41eb407a` |
-
-### Problema encontrado:
-- Webhook registra transfers mas NÃO tem metadata (imageUrl, rarity, etc.)
-- Cards apareciam sem imagem porque Convex só tinha placeholders
-- Revertemos para Alchemy-only até resolver sync inicial
-
-### Próximos passos para ativar:
-1. **Criar script de sync inicial**:
-   - Buscar TODOS os NFTs de todos os contratos via Alchemy
-   - Popular Convex com metadata completa (imageUrl, rarity, power, etc.)
-   - Só rodar UMA vez por coleção
-
-2. **Melhorar webhook handler**:
-   - Quando receber transfer sem metadata, buscar metadata do Alchemy
-   - Salvar com dados completos no Convex
-
-3. **Testar fluxo completo**:
-   - Verificar que Convex tem dados completos
-   - Ativar Convex-first no `page.tsx`
-   - Verificar fallback para Alchemy funciona
-
-### Arquivos relevantes:
-- `convex/nftOwnership.ts` - Mutations e queries (PRONTO)
-- `lib/nft/convex-fetcher.ts` - Client-side fetcher (DESATIVADO)
-- `app/api/webhook/alchemy/route.ts` - Webhook handler (ATIVO mas dados incompletos)
-- `app/page.tsx` - Usa Alchemy direto (REVERTIDO)
-
-### Webhook signing key:
-- Variável: `ALCHEMY_WEBHOOK_SIGNING_KEY`
-- Valor: (ver Vercel env vars)
 
 ## VibeFID vs VBMS Notifications
 
@@ -724,51 +659,18 @@ Bandwidth optimizations may NOT show immediate results because:
 
 **True test**: Compare bandwidth per unique user over 24-48 hours after deploy
 
-## Baccarat Casino Mode (Em Desenvolvimento - Jan 2026)
-
-### Status: COMING SOON (botão desabilitado)
-
-O modo Baccarat está parcialmente implementado mas com bugs. Botão está com "SOON" overlay.
-
-### O que foi feito:
-1. ✅ Backend completo em `convex/baccarat.ts`:
-   - Tabelas: `baccaratTables`, `baccaratBets`
-   - Mutations: `createOrGetTable`, `placeBet`, `dealAndResolve`, `cashOut`
-   - Query: `getActiveTable`
-   - Regras oficiais de Baccarat (third card rules, etc.)
-
-2. ✅ Frontend em `components/BaccaratModal.tsx`:
-   - Sistema de depósito VBMS → betting credits (igual Mecha Arena)
-   - 52 cartas customizadas com personagens VBMS em `public/images/baccarat/`
-   - Mapeamento de cartas: `CARD_IMAGES` (A_hearts → "ace hearts, anon.png")
-   - UI de apostas (Player/Banker/Tie)
-   - Visualização de cartas com imagens customizadas
-
-3. ✅ Botão no GameGrid com `comingSoon: true`
-
-### O que precisa ser corrigido:
-1. **Cron não funciona para dealing** - Convex crons são em minutos, betting é 20s
-   - Solução: Frontend deve chamar `dealAndResolve` quando timer = 0
-   - O código está em `useEffect` linha 171-173 mas pode ter race conditions
-
-2. **Race conditions no timer** - Múltiplos clientes podem tentar deal ao mesmo tempo
-
-3. **Testar fluxo completo**:
-   - Depósito VBMS → credits
-   - Apostar → esperar → ver cartas
-   - Cash out → TESTVBMS
+## Baccarat Casino Mode
 
 ### Arquivos:
 | Arquivo | Descrição |
 |---------|-----------|
 | `convex/baccarat.ts` | Backend mutations/queries |
 | `convex/schema.ts` | Tabelas baccaratTables, baccaratBets |
-| `components/BaccaratModal.tsx` | Frontend completo |
-| `components/home/GameGrid.tsx` | Botão com "SOON" |
+| `app/baccarat/page.tsx` | Página do jogo |
 | `public/images/baccarat/` | 52 cartas PNG customizadas |
 
 ### Cartas Customizadas:
 Formato: `"{rank} {suit}, {personagem}.png"`
 - Exemplo: `ace hearts, anon.png`, `king spades, nico.png`
-- Mapeamento em `CARD_IMAGES` no BaccaratModal
 - Backend usa: `rank: 'A'|'2'|...|'K'`, `suit: 'hearts'|'diamonds'|'clubs'|'spades'`
+
