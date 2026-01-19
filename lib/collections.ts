@@ -278,7 +278,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection $CU-MI-OH! NFT',
     contractAddress: '0xfeabae8bdb41b2ae507972180df02e70148b38e1',
     chain: 'base-mainnet',
-    enabled: false, // Disabled to reduce Alchemy costs
+    enabled: true,
     marketplaceUrl: 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
     buttonText: 'BUY CUMIO PACKS',
     powerCalculation: DEFAULT_POWER_CONFIG,
