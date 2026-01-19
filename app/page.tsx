@@ -24,7 +24,6 @@ import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import DifficultyModal from "@/components/DifficultyModal";
 import { ProgressBar } from "@/components/ProgressBar";
-import AchievementsView from "@/components/AchievementsView";
 // Shop moved to /shop page
 import { CreateProfileModal } from "@/components/CreateProfileModal";
 import { TutorialModal } from "@/components/TutorialModal";
