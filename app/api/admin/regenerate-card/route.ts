@@ -8,8 +8,9 @@ export async function POST(request: Request) {
   try {
     const { fid, adminKey } = await request.json();
 
-    // Simple admin key check (you should use a proper secret in production)
-    if (adminKey !== 'regenerate-558987-admin') {
+    // Admin key from environment variable
+    const ADMIN_KEY = process.env.ADMIN_REGENERATE_KEY;
+    if (!ADMIN_KEY || adminKey !== ADMIN_KEY) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
