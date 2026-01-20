@@ -18,7 +18,6 @@
     "@neynar/react": "^1.2.22",
     "@noble/hashes": "^2.0.1",
     "@noble/secp256k1": "^3.0.0",
-    "@pigment-css/react": "^0.0.30",
     "@rainbow-me/rainbowkit": "^2.2.9",
     "@tanstack/react-query": "^5.90.5",
     "@upstash/ratelimit": "^2.0.7",
