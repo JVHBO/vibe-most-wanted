@@ -14,6 +14,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useAccount } from "wagmi";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { openMarketplace } from "@/lib/marketplace-utils";
+import { getAssetUrl } from "@/lib/ipfs-assets";
 
 type BetChoice = "player" | "banker" | "tie";
 type GamePhase = "betting" | "dealing" | "result";
@@ -1350,7 +1351,7 @@ export default function BaccaratPage() {
                 ) : cashoutResult.profit === 0 ? (
                   // Tie - break even
                   <video
-                    src="/tie.mp4"
+                    src={getAssetUrl("/tie.mp4")}
                     autoPlay
                     loop
                     muted={!soundEnabled}

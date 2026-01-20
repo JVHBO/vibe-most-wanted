@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { useLanguage } from './LanguageContext';
 import type { SupportedLanguage } from '@/lib/translations';
+import { getAssetUrl } from '@/lib/ipfs-assets';
 
 type MusicMode = 'default' | 'language' | 'custom' | 'playlist';
 
@@ -44,10 +45,10 @@ interface TrackMetadata {
 
 const MusicContext = createContext<MusicContextType | undefined>(undefined);
 
-// Music file paths for each language - tries MP3 first, then M4A as fallback
+// Music file paths for each language - uses IPFS in production
 const getMusicPath = (basename: string): string => {
-  // Returns MP3 path (will try M4A automatically if MP3 fails to load)
-  return `/music/${basename}.mp3`;
+  // Returns IPFS URL in production, local path in development
+  return getAssetUrl(`/music/${basename}.mp3`);
 };
 
 const LANGUAGE_MUSIC: Record<SupportedLanguage, string> = {

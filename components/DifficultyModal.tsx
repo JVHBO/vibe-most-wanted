@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useEscapeKey } from '@/hooks';
 import { Z_INDEX } from '@/lib/z-index';
+import { getAssetUrl } from '@/lib/ipfs-assets';
 
 type Difficulty = 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad';
 
@@ -177,7 +178,7 @@ export default function DifficultyModal({
                     {/* Card Image Background */}
                     <div className="absolute inset-0 z-0">
                       <img
-                        src={info.image}
+                        src={getAssetUrl(info.image)}
                         alt={info.name}
                         className="w-full h-full object-contain"
                       />

@@ -6,6 +6,7 @@
  */
 
 import { devLog } from '@/lib/utils/logger';
+import { getAssetUrl } from '@/lib/ipfs-assets';
 
 const getGlobalAudioManager = () => {
   if (typeof window === 'undefined') return null;
@@ -187,8 +188,8 @@ export const AudioManager = {
     }
 
     try {
-      // Loop sem interrupções usando AudioContext
-      const response = await fetch('/jazz-background.mp3');
+      // Loop sem interrupções usando AudioContext (uses IPFS in production)
+      const response = await fetch(getAssetUrl('/jazz-background.mp3'));
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
 

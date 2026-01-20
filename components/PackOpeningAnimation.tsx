@@ -5,6 +5,7 @@ import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import sdk from '@farcaster/miniapp-sdk';
 import haptics from '@/lib/haptics';
+import { getAssetUrl } from '@/lib/ipfs-assets';
 
 interface PackOpeningAnimationProps {
   cards: any[];
@@ -195,7 +196,7 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
         <div className="relative">
           <div className="pack-shake">
             <img
-              src="/pack-cover.png"
+              src={getAssetUrl("/pack-cover.png")}
               alt="Opening Pack"
               className="w-48 h-48 md:w-64 md:h-64 object-contain drop-shadow-2xl"
             />
@@ -241,7 +242,7 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
                     {/* Card Back */}
                     <div className="card-face card-back bg-vintage-charcoal border-2 border-vintage-gold/50 rounded-lg overflow-hidden">
                       <img
-                        src="/card-back.png"
+                        src={getAssetUrl("/card-back.png")}
                         alt="Card back"
                         className="w-full h-full object-cover"
                       />

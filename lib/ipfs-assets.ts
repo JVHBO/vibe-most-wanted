@@ -80,6 +80,20 @@ export const IPFS_ASSETS: Record<string, string> = {
   "/pack-cover.png": "https://ipfs.filebase.io/ipfs/QmZrRir8uDx3jKrx6hfDFhRJXmxXaU3rfQJAbTqqk9Bod5",
   "/splash.png": "https://ipfs.filebase.io/ipfs/QmZ1cfYCW9mDzD4V9iMhVoUQGFd1QwNLfMmEEBQKwEfFSb",
   "/og-image.png": "https://ipfs.filebase.io/ipfs/QmU27iyqYXLYD3P7xKZqVNdqLKq8mFvZKq8LNdqLKqYXLY",
+
+  // Music files (64 MB total - HIGH PRIORITY for bandwidth savings)
+  "/jazz-background.mp3": "https://ipfs.filebase.io/ipfs/QmcdrajJ9vUk8kivw35ZVfEvn2nLh3moZQbhsUDHntPYaQ",
+  "/music/default.mp3": "https://ipfs.filebase.io/ipfs/QmcdrajJ9vUk8kivw35ZVfEvn2nLh3moZQbhsUDHntPYaQ",
+  "/music/en.mp3": "https://ipfs.filebase.io/ipfs/QmQm1faGh4SyjbxspRQbHjUUgG3YgkCvtbcZGXYQLXsNwX",
+  "/music/es.mp3": "https://ipfs.filebase.io/ipfs/QmYCFNkUQADqD5QyPEcTjB8TtMSAyyd5EqvHExNP5MczsJ",
+  "/music/fr.mp3": "https://ipfs.filebase.io/ipfs/QmS4F3NcapFjAePsjhRnUs8CHLkn2MvFBHHnUviLJx5upS",
+  "/music/hi.mp3": "https://ipfs.filebase.io/ipfs/Qmejz5EC2FSqeF9B5RekdoqBAjMqh2bFM6uCKgZMYEAUov",
+  "/music/id.mp3": "https://ipfs.filebase.io/ipfs/Qmc22PVtaKrZdgk486Uomi2aFyuhgBEv61etABA4MfmTh3",
+  "/music/it.mp3": "https://ipfs.filebase.io/ipfs/QmQP2gj96hkscCcWxDhB1HquTLhFVGWXswMxx7jsnDsceq",
+  "/music/ja.mp3": "https://ipfs.filebase.io/ipfs/QmVJV3sXr6Rzh6iNQJdWp7yMfbdiiwGRkT83LCTFgA88Mj",
+  "/music/pt-br.mp3": "https://ipfs.filebase.io/ipfs/QmXLiVaVwVXiCKJf59DqdiZKifovrSWS8Y3oq8pYBmYtTu",
+  "/music/ru.mp3": "https://ipfs.filebase.io/ipfs/QmVW6v7rFtG5MWoBH6pV45MMEM6kf9bYMm1xV96Gc4hfp1",
+  "/music/zh-cn.mp3": "https://ipfs.filebase.io/ipfs/QmY4gW3qyCdnjSCnwqwLXw7D9H2t4DSuPwUov3iYzFixma",
 };
 
 /**

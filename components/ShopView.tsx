@@ -12,6 +12,7 @@ import { useAccount } from "wagmi";
 import { parseEther } from "viem";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "next/navigation";
+import { getAssetUrl } from "@/lib/ipfs-assets";
 
 interface ShopViewProps {
   address: string | undefined;
@@ -346,7 +347,7 @@ export function ShopView({ address }: ShopViewProps) {
 
               {/* Pack Header with Image */}
               <div className="flex items-center gap-4 mb-3">
-                <img src="/pack-cover.png" alt="Pack" className={`w-16 h-16 object-contain ${luckBoost ? 'animate-pulse' : ''}`} />
+                <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className={`w-16 h-16 object-contain ${luckBoost ? 'animate-pulse' : ''}`} />
                 <div className="flex-1">
                   <h3 className="text-xl font-display font-bold text-vintage-gold">
                     {luckBoost ? t('shopLuckyPack') : t('shopBasicPack')}
@@ -635,7 +636,7 @@ export function ShopView({ address }: ShopViewProps) {
                   <div key={pack._id} className={`bg-vintage-black/30 border ${borderClass} rounded-lg p-3`}>
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <img src="/pack-cover.png" alt="Pack" className="w-10 h-10 object-contain" />
+                        <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className="w-10 h-10 object-contain" />
                         <div>
                           <p className={`font-bold text-sm ${pack.packType === 'boosted' ? 'text-yellow-400' : 'text-vintage-gold'}`}>
                             {packName}
