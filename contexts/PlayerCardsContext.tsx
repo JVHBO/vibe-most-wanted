@@ -13,7 +13,7 @@ import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { HAND_SIZE, getMaxAttacks } from '@/lib/config';
-import type { Card, CardRarity, CardFoil } from '@/lib/types/card';
+import type { Card, CardRarity, CardFoil, CardWear } from '@/lib/types/card';
 
 /**
  * 🎴 FETCH NFTs - localStorage cache only (no Convex bandwidth)
@@ -421,8 +421,11 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
               collection,
               rarity: findAttr(nft, 'rarity') as CardRarity,
               foil: findAttr(nft, 'foil') as CardFoil || 'None',
+              wear: findAttr(nft, 'wear') as CardWear || undefined,
               power: calcPower(nft, isVibeFID),
               isFreeCard: false,
+              // TCG character name (from VMW "name" trait - e.g., "nicogay", "tukka")
+              character: findAttr(nft, 'name') || undefined,
             };
           })
         );
