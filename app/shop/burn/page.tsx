@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 
 // Pack prices for burn value calculation
 const PACK_PRICES: Record<string, number> = {
@@ -50,6 +51,7 @@ const RARITY_TEXT: Record<string, string> = {
 export default function BurnCardsPage() {
   const router = useRouter();
   const { address, isConnecting } = useAccount();
+  const { refreshUserProfile } = usePlayerCards();
 
   const playerCards = useQuery(api.cardPacks.getPlayerCards, address ? { address } : "skip");
   const lockedCardIds = useQuery(api.cardPacks.getLockedFreeCardIds, address ? { address } : "skip") || [];
@@ -134,11 +136,14 @@ export default function BurnCardsPage() {
     if (selectedCards.size === 0 || !address) return;
     setIsBurning(true);
     try {
-      await burnMultipleCards({
+      const result = await burnMultipleCards({
         address,
         cardIds: Array.from(selectedCards) as Id<"cardInventory">[],
       });
       setSelectedCards(new Set());
+      // 🔄 Refresh profile to update TESTVBMS balance before redirecting
+      await refreshUserProfile();
+      console.log(`🔥 Burned ${result.cardsBurned} cards for ${result.totalVBMS} TESTVBMS`);
       router.push("/shop");
     } catch (error) {
       console.error("Burn error:", error);

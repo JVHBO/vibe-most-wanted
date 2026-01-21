@@ -165,6 +165,7 @@ interface PlayerCardsContextType {
   // User profile (for battle display)
   userProfile: UserProfile | null;
   setUserProfile: Dispatch<SetStateAction<UserProfile | null>>;
+  refreshUserProfile: () => Promise<void>;
 
   // Locked cards
   attackLockedCards: { lockedTokenIds: string[] } | null;
@@ -540,6 +541,17 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     }
   }, [address]);
 
+  // 🔄 Function to manually refresh user profile (after burns, purchases, etc.)
+  const refreshUserProfile = useCallback(async () => {
+    if (!address) return;
+    devLog('[Context] Refreshing user profile...');
+    const profile = await ConvexProfileService.getProfile(address);
+    if (profile) {
+      setUserProfile(profile);
+      devLog('[Context] Profile refreshed, coins:', profile.coins);
+    }
+  }, [address]);
+
   // Calculate attacks remaining based on userProfile (same as page.tsx)
   useEffect(() => {
     if (!userProfile || !address) {
@@ -691,6 +703,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     // User profile
     userProfile,
     setUserProfile,
+    refreshUserProfile,
 
     // Locked cards
     attackLockedCards,
