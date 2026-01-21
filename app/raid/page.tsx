@@ -43,7 +43,7 @@ export default function RaidPage() {
   const router = useRouter();
   const { address, isConnecting } = useAccount();
   const { t } = useLanguage();
-  const { nfts: allNfts } = usePlayerCards();
+  const { nfts: allNfts, refreshUserProfile } = usePlayerCards();
   const [soundEnabled] = useState<boolean>(true);
   const [isMounted, setIsMounted] = useState(false);
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
@@ -418,6 +418,8 @@ export default function RaidPage() {
       haptics.victory(); // Haptic on reward claim
       if (result.success) {
         if (soundEnabled) AudioManager.win();
+        // 🔄 Refresh profile to update TESTVBMS balance
+        await refreshUserProfile();
         alert(`🎁 Claimed ${result.totalClaimed} coins from ${result.claimedCount} raid battles!`);
       }
     } catch (error: any) {
