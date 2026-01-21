@@ -313,6 +313,10 @@ export const getProfileDashboard = query({
       twitterProfileImageUrl: profile.twitterProfileImageUrl, // 🚀 For PokerBattleTable avatars
       hasVibeBadge: profile.hasVibeBadge || false,
 
+      // 🐛 FIX: Attack limits (needed by leaderboard page)
+      attacksToday: profile.attacksToday || 0,
+      lastAttackDate: profile.lastAttackDate || '',
+
       // 🚀 BANDWIDTH FIX: Locked cards for attack/pvp modes
       // Replaces getAvailableCards queries
       lockedTokenIds,
