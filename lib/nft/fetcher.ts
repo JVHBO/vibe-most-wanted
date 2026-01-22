@@ -40,6 +40,33 @@ const BASE_RPCS = [
 // Basescan API key for fallback
 const BASESCAN_API_KEY = process.env.NEXT_PUBLIC_BASESCAN_API_KEY || '1ZFQ27H4QDE5ESCVWPIJUNTFP3776Y1AJ5';
 
+// ============================================
+// WIELD API CONFIGURATION (Jan 2026)
+// More reliable than Alchemy for Vibechain collections
+// ============================================
+const WIELD_API_KEY = 'YUEPI-G3KJ7-5FCXV-ANSPV-BZ3DA';
+const WIELD_BASE_URL = 'https://build.wield.xyz/vibe/boosterbox';
+
+// Mapping of contract addresses to Wield slugs
+const WIELD_SLUGS: Record<string, string> = {
+  '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728': 'vibe-most-wanted',
+  '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a': 'vibe-rot-bangers',
+  '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150': 'meowverse',
+  '0xefe512e73ca7356c20a21aa9433bad5fc9342d46': 'gm-vbrs',
+  '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f': 'viberuto',
+  '0xc7f2d8c035b2505f30a5417c0374ac0299d88553': 'vibefx',
+  '0x319b12e8eba0be2eae1112b357ba75c2c178b567': 'history-of-computer',
+  '0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea': 'team-pothead',
+  '0x34d639c63384a00a2d25a58f73bea73856aa0550': 'tarot',
+  '0x3ff41af61d092657189b1d4f7d74d994514724bb': 'baseball-cabal',
+  '0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8': 'poorly-drawn-pepes',
+  '0xfeabae8bdb41b2ae507972180df02e70148b38e1': 'cu-mi-oh',
+};
+
+// Cache for Wield API responses
+const WIELD_CACHE_KEY = 'vbms_wield_cache_v1';
+const WIELD_CACHE_TIME = 1000 * 60 * 10; // 10 minutes for owner list
+
 // Image URL cache
 const imageUrlCache = new Map<string, { url: string; timestamp: number }>();
 const IMAGE_CACHE_TIME = 1000 * 60 * 60; // 1 hour
@@ -324,7 +351,9 @@ export async function checkCollectionBalances(
   collections: Array<{ id: string; contractAddress: string; displayName: string }>
 ): Promise<{ collectionsWithNfts: typeof collections; balances: Record<string, number> }> {
   // Check cache first (fastest path)
-  const cached = getBalanceCache(owner);
+  // Pass expected collection count to invalidate cache if new collections were added
+  const collectionsWithContract = collections.filter(c => c.contractAddress);
+  const cached = getBalanceCache(owner, collectionsWithContract.length);
   if (cached) {
     trackStatPersistent('balance_check_cached');
     console.log(`📦 Using cached balances for ${owner.slice(0, 10)}...`);
@@ -433,7 +462,7 @@ export async function checkCollectionBalances(
   return balanceCheckInProgress as Promise<{ collectionsWithNfts: typeof collections; balances: Record<string, number> }>;
 }
 
-function getBalanceCache(owner: string): BalanceCacheEntry | null {
+function getBalanceCache(owner: string, expectedCollectionCount?: number): BalanceCacheEntry | null {
   if (typeof window === 'undefined') return null;
   try {
     const cached = localStorage.getItem(`${BALANCE_CACHE_KEY}_${owner.toLowerCase()}`);
@@ -442,6 +471,15 @@ function getBalanceCache(owner: string): BalanceCacheEntry | null {
     if (Date.now() - entry.timestamp > BALANCE_CACHE_TIME) {
       localStorage.removeItem(`${BALANCE_CACHE_KEY}_${owner.toLowerCase()}`);
       return null;
+    }
+    // 🚀 INVALIDATE if collection count changed (new collection added)
+    if (expectedCollectionCount !== undefined) {
+      const cachedCount = Object.keys(entry.balances).length;
+      if (cachedCount < expectedCollectionCount) {
+        console.log(`🔄 Cache invalidated: ${cachedCount} cached vs ${expectedCollectionCount} expected collections`);
+        localStorage.removeItem(`${BALANCE_CACHE_KEY}_${owner.toLowerCase()}`);
+        return null;
+      }
     }
     return entry;
   } catch {
@@ -805,6 +843,155 @@ export async function getImage(nft: any, collection?: string): Promise<string> {
   return placeholder;
 }
 
+// ============================================
+// WIELD API FUNCTIONS (Jan 2026)
+// Primary source for Vibechain collections
+// ============================================
+
+/**
+ * Get Wield slug for a contract address
+ */
+function getWieldSlug(contractAddress: string): string | null {
+  return WIELD_SLUGS[contractAddress.toLowerCase()] || null;
+}
+
+/**
+ * Check if a contract is supported by Wield API
+ */
+export function isWieldSupported(contractAddress: string): boolean {
+  return !!getWieldSlug(contractAddress);
+}
+
+/**
+ * Wield API doesn't support listing tokens by owner
+ * Use Alchemy for ownership, Wield for metadata only
+ */
+
+/**
+ * Fetch single token metadata from Wield API
+ * NO API key required for this endpoint!
+ */
+async function fetchWieldMetadata(
+  tokenId: string,
+  contractAddress: string
+): Promise<any | null> {
+  const slug = getWieldSlug(contractAddress);
+  if (!slug) return null;
+
+  try {
+    const url = `${WIELD_BASE_URL}/metadata/${slug}/${tokenId}`;
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!res.ok) return null;
+
+    const metadata = await res.json();
+    return metadata;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Enrich NFT with Wield metadata
+ * Used to fix missing/incomplete Alchemy metadata
+ *
+ * @param nft NFT object from Alchemy
+ * @param contractAddress Contract address
+ * @returns Enriched NFT with Wield metadata
+ */
+export async function enrichWithWieldMetadata(
+  nft: any,
+  contractAddress: string
+): Promise<any> {
+  const tokenId = nft.tokenId;
+  const wieldMetadata = await fetchWieldMetadata(tokenId, contractAddress);
+
+  if (!wieldMetadata) {
+    return nft; // Return original if Wield fails
+  }
+
+  // Merge Wield metadata with Alchemy data
+  // Wield has more reliable attribute data
+  const enriched = {
+    ...nft,
+    raw: {
+      ...nft.raw,
+      metadata: {
+        ...nft.raw?.metadata,
+        name: wieldMetadata.name || nft.raw?.metadata?.name,
+        image: wieldMetadata.image || wieldMetadata.imageUrl || nft.raw?.metadata?.image,
+        attributes: wieldMetadata.attributes || nft.raw?.metadata?.attributes || [],
+        animation_url: wieldMetadata.animation_url || nft.raw?.metadata?.animation_url,
+      }
+    },
+    image: {
+      ...nft.image,
+      cachedUrl: wieldMetadata.image || wieldMetadata.imageUrl || nft.image?.cachedUrl,
+      originalUrl: wieldMetadata.image || wieldMetadata.imageUrl || nft.image?.originalUrl,
+    },
+    _wieldEnriched: true,
+  };
+
+  return enriched;
+}
+
+/**
+ * Enrich multiple NFTs with Wield metadata in batches
+ * Significantly more reliable than Alchemy metadata alone
+ *
+ * @param nfts Array of NFTs from Alchemy
+ * @param contractAddress Contract address
+ * @param onProgress Optional progress callback
+ * @returns Array of enriched NFTs
+ */
+export async function enrichNFTsWithWield(
+  nfts: any[],
+  contractAddress: string,
+  onProgress?: (completed: number, total: number) => void
+): Promise<any[]> {
+  if (!isWieldSupported(contractAddress)) {
+    return nfts; // Return original if contract not supported
+  }
+
+  console.log(`🔄 Wield: Enriching ${nfts.length} NFTs with metadata...`);
+  trackStatPersistent('wield_enrich_attempt');
+
+  const BATCH_SIZE = 10;
+  const DELAY_MS = 100;
+  const enriched: any[] = [];
+
+  for (let i = 0; i < nfts.length; i += BATCH_SIZE) {
+    const batch = nfts.slice(i, i + BATCH_SIZE);
+
+    if (i > 0) {
+      await new Promise(resolve => setTimeout(resolve, DELAY_MS));
+    }
+
+    const enrichPromises = batch.map(nft =>
+      enrichWithWieldMetadata(nft, contractAddress)
+    );
+
+    const results = await Promise.allSettled(enrichPromises);
+
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        enriched.push(result.value);
+      }
+    }
+
+    if (onProgress) {
+      onProgress(enriched.length, nfts.length);
+    }
+  }
+
+  console.log(`✅ Wield: Enriched ${enriched.length}/${nfts.length} NFTs`);
+  trackStatPersistent('wield_enrich_success');
+
+  return enriched;
+}
+
 /**
  * Fetch all NFTs for an owner from Alchemy API
  * With caching and fallback for when API is blocked/rate-limited
@@ -847,7 +1034,7 @@ export async function fetchNFTs(
   trackStatPersistent('alchemy_calls');
   trackStatPersistent('fetch_nfts_total');
   logStats();
-  console.log(`🔄 Fetching fresh NFTs for ${contract.slice(0, 10)}... (cache miss or balance changed)`)
+  console.log(`🔄 Fetching fresh NFTs from Alchemy for ${contract.slice(0, 10)}... (cache miss or balance changed)`)
 
   let allNfts: any[] = [];
   let pageKey: string | undefined = undefined;
@@ -910,13 +1097,21 @@ export async function fetchNFTs(
     // Pagination is complete when there's no more pageKey
     const paginationComplete = !pageKey;
 
-    // Cache successful results with pagination status AND balance for smart caching
-    if (allNfts.length > 0) {
-      setNftCache(owner, contract, allNfts, paginationComplete, currentBalance);
-      console.log(`✅ Fetched ${allNfts.length} NFTs in ${pageCount} page(s), pagination complete: ${paginationComplete}`);
+    // 🚀 NEW (Jan 2026): Enrich with Wield metadata for supported collections
+    // Wield has more reliable metadata than Alchemy for Vibechain collections
+    let finalNfts = allNfts;
+    if (isWieldSupported(contract) && allNfts.length > 0) {
+      console.log(`🔄 Enriching ${allNfts.length} NFTs with Wield metadata...`);
+      finalNfts = await enrichNFTsWithWield(allNfts, contract);
     }
 
-    return allNfts;
+    // Cache successful results with pagination status AND balance for smart caching
+    if (finalNfts.length > 0) {
+      setNftCache(owner, contract, finalNfts, paginationComplete, currentBalance);
+      console.log(`✅ Fetched ${finalNfts.length} NFTs in ${pageCount} page(s), pagination complete: ${paginationComplete}`);
+    }
+
+    return finalNfts;
 
   } catch (error: any) {
     // If we have cached data, use it as fallback (even if incomplete)
