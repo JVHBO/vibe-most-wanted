@@ -5276,10 +5276,6 @@ export default function TCGPage() {
                       if (soundEnabled) AudioManager.buttonClick();
                       setShowMyCardsModal(true);
                     }}
-                    onRefresh={() => {
-                      clearAllNftCache();
-                      contextForceReloadNFTs();
-                    }}
                   />
                 </div>
               </div>
@@ -5315,10 +5311,6 @@ export default function TCGPage() {
                   onViewAll={() => {
                     if (soundEnabled) AudioManager.buttonClick();
                     setShowMyCardsModal(true);
-                  }}
-                  onRefresh={() => {
-                    clearAllNftCache();
-                    contextForceReloadNFTs();
                   }}
                 />
               </div>
