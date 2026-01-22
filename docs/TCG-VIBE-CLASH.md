@@ -2,7 +2,73 @@
 
 ## Visão Geral
 
-Modo TCG simples e divertido com as 52-54 cartas do jogo.
+Modo TCG estilo **Marvel Snap** - simples, intuitivo e divertido.
+
+---
+
+## 🎯 DECISÕES TOMADAS (22/01/2026)
+
+### Estilo de Jogo: Marvel Snap
+- ✅ **Simultâneo** - Ambos jogadores escolhem cartas ao mesmo tempo
+- ✅ **3 Lanes** - Batalha por zonas
+- ✅ **Tempo limite** - 20 segundos por turno
+- ✅ **Reveal simultâneo** - Cartas aparecem ao mesmo tempo
+- ✅ **Vitória** - Dominar 2/3 lanes no final
+- ✅ **Sem dado** - Power puro decide (simples)
+- ✅ **Sem vantagem de tipo** - Naipes não dão bônus (simples)
+
+### Sistema de Queima 🔥
+- ✅ **Queimar carta = +1 energia** naquele turno
+- ✅ **Nothing cards** são ideais pra queimar (combustível)
+- ✅ **VBMS cards** são os fighters principais
+
+### Composição do Deck
+- ✅ **12 cartas** total
+- ✅ **Mínimo 6 VBMS** (NFT)
+- ✅ **Até 6 Nothing** (opcional, preenche o resto)
+
+### Fluxo do Turno
+1. Compra 1 carta
+2. 20 seg pra colocar cartas nos lanes (ou queimar)
+3. Reveal simultâneo
+4. On Reveal ativa (perdedor primeiro, esquerda→direita)
+5. Próximo turno
+
+---
+
+## ❓ DECISÕES PENDENTES (ver amanhã)
+
+### Energia e Turnos
+**Problema**: Maioria dos players tem só Common/Rare/Epic (custo 1-3).
+Turnos 5-6 sobra energia sem uso.
+
+**Opções a decidir:**
+
+| Opção | Descrição |
+|-------|-----------|
+| **A: 4 turnos** | Energia 1→2→3→4, jogo mais rápido |
+| **B: Nothing = 0** | Nothing custa 0 energia, 50% power, preenche lanes |
+| **C: Custos menores** | Common=1, Rare=1-2, Epic=2-3, Leg=3-4, Mythic=4-5 |
+
+### Custo das Cartas (a definir)
+| Rarity | Custo atual | Opção C |
+|--------|-------------|---------|
+| Common | 1 | 1 |
+| Rare | 2 | 1-2 |
+| Epic | 3-4 | 2-3 |
+| Legendary | 5 | 3-4 |
+| Mythic | 6 | 4-5 |
+
+### Power do Nothing
+- 50% do power normal? 70%? Definir.
+
+### Habilidades
+- Cada personagem tem habilidade única? Ou por raridade?
+- Lista de 40+ habilidades a criar
+
+---
+
+## Referência Original (abaixo)
 
 ---
 
@@ -29,24 +95,38 @@ Modo TCG simples e divertido com as 52-54 cartas do jogo.
 
 ---
 
-## Sistema de Tipos (Naipes)
+## Sistema de Tipos (Naipes) ♠️♥️♦️♣️
 
-4 tipos elementais + 1 neutro:
+**Usamos os naipes das cartas como tipos!**
 
+### Os 4 Naipes
+| Naipe | Símbolo | Estilo de jogo |
+|-------|---------|----------------|
+| ♥️ **Hearts** | Copas | Agressivo, dano direto |
+| ♦️ **Diamonds** | Ouros | Controle, manipulação |
+| ♣️ **Clubs** | Paus | Defesa, resistência |
+| ♠️ **Spades** | Espadas | Versatil, efeitos únicos |
+
+### Vantagem de Tipo (Opcional)
 ```
-🔥 Fogo > 🌿 Natureza > 💧 Água > 🔥 Fogo
-⚡ Neutro (sem vantagem/desvantagem)
+♥️ Hearts > ♣️ Clubs > ♦️ Diamonds > ♠️ Spades > ♥️ Hearts
 ```
+- Vantagem = +25% power
+- Desvantagem = normal (sem penalidade)
 
-### Vantagem de Tipo
-- Tipo forte contra outro = **+50% power**
-- Tipo fraco contra outro = poder normal (sem penalidade)
-- Neutro vs qualquer = poder normal
+### Sinergia de Naipe
+**Cartas do mesmo naipe no mesmo lane:**
+- 2 cartas = +10% power cada
+- 3+ cartas = +20% power cada
 
-### Exemplo
-- Carta Fogo (Power 50) vs Carta Natureza (Power 60)
-- Fogo tem vantagem: 50 × 1.5 = 75
-- Fogo vence (75 > 60)
+### Distribuição (52 cartas, 13 por naipe)
+Cada naipe tem:
+- 1 Ás (???)
+- 5 Commons (2-6)
+- 2 Rares (7-8)
+- 3 Epics (9-J)
+- 1 Legendary (Q)
+- 1 Mythic (K)
 
 ---
 
@@ -97,7 +177,200 @@ Exemplos (a definir):
 
 ---
 
-## Fluxo de Jogo - Exemplo
+## Sistema de Sorte - Dado de RPG 🎲
+
+### Dados Disponíveis
+| Dado | Range | Uso |
+|------|-------|-----|
+| d4 | 1-4 | Bônus pequeno |
+| d6 | 1-6 | Padrão |
+| d8 | 1-8 | Médio |
+| d10 | 1-10 | Alto |
+| d12 | 1-12 | Muito alto |
+| d20 | 1-20 | Crítico/Especial |
+
+### Quando Rolar?
+**OPÇÕES (A DECIDIR):**
+
+**Opção A - Rolar em todo ataque:**
+- Atacante rola dado → adiciona ao power
+- Defensor rola dado → adiciona ao power
+- Empates resolvidos por nova rolagem
+
+**Opção B - Rolar só em empates:**
+- Combate normal primeiro
+- Se empate → ambos rolam d20
+- Maior resultado vence
+
+**Opção C - Dado por raridade:**
+| Raridade | Dado |
+|----------|------|
+| Common | d4 |
+| Rare | d6 |
+| Epic | d8 |
+| Legendary | d12 |
+| Mythic | d20 |
+- Carta mais rara = mais chance de luck bonus
+
+**Opção D - Dado como habilidade:**
+- Algumas cartas têm habilidade "Roll d6: +resultado ao power"
+- Não é automático, é skill específica
+
+### Crítico (Natural 20 / Max Roll)
+- Rolar o máximo do dado = **CRÍTICO**
+- Efeito crítico: ???
+  - Dano dobrado?
+  - Ignora defesa?
+  - Compra carta extra?
+
+### Falha Crítica (Natural 1)
+- Rolar 1 = **FALHA**
+- Efeito falha: ???
+  - Perde o turno?
+  - Descarta carta extra?
+  - Dano reduzido pela metade?
+
+---
+
+## Modelo de Jogo - OPÇÕES
+
+### Opção 1: Estilo War (original)
+- Turno alternado
+- Joga 1 carta, oponente defende
+- HP system (20 HP cada)
+
+### Opção 2: Estilo Marvel Snap ⭐
+**Referência:** Marvel Snap (mobile, muito popular)
+
+**Estrutura:**
+- 3 Lanes (locais de batalha)
+- 6 turnos total
+- Cada turno: compra 1, joga cartas nos lanes
+- Final: quem dominar 2/3 lanes vence
+
+**Energia por turno:**
+| Turno | Energia |
+|-------|---------|
+| 1 | 1 |
+| 2 | 2 |
+| 3 | 3 |
+| 4 | 4 |
+| 5 | 5 |
+| 6 | 6 |
+
+**Custo das cartas (por rarity):**
+| Rarity | Custo | Power médio |
+|--------|-------|-------------|
+| Common | 1-2 | 30-50 |
+| Rare | 2-3 | 50-80 |
+| Epic | 3-4 | 80-120 |
+| Legendary | 5-6 | 120-180 |
+| Mythic | 6 | 180-250 |
+
+**Foils no Snap-style:**
+| Foil | Efeito |
+|------|--------|
+| Prize | Habilidade especial única |
+| Standard | +20% power |
+| None | Normal |
+
+---
+
+## Sistema de Efeitos - TODAS as cartas têm efeito!
+
+### Tipos de Efeitos
+| Tipo | Quando ativa | Exemplo |
+|------|--------------|---------|
+| **On Reveal** | Quando joga a carta | "Ganhe +10 power para cada carta no lane" |
+| **Ongoing** | Sempre ativo enquanto em jogo | "+5 power para cartas aliadas aqui" |
+| **On Destroy** | Quando a carta é destruída | "Dê +20 power a uma carta aleatória" |
+| **Sacrifice** | Descarte esta carta para... | "Descarte: +30 power a outra carta" |
+
+### Efeitos por Rarity
+| Rarity | Complexidade do efeito |
+|--------|------------------------|
+| Common | Efeitos simples, condicionais |
+| Rare | On Reveal úteis |
+| Epic | Ongoing ou combos |
+| Legendary | Game-changing |
+| Mythic | Win conditions |
+
+---
+
+## Cartas NOTHING - Sistema de Sacrifício 🔥
+
+**Filosofia:** Nothing cards = combustível/suporte, VMW cards = fighters principais
+
+### O que são Nothing cards?
+- Cartas grátis de packs (não são NFTs)
+- Mais fracas que VMW
+- MAS: têm mecânica de SACRIFÍCIO
+
+### Mecânica de Sacrifício
+**Nothing cards podem ser sacrificadas para:**
+
+| Sacrifício | Efeito |
+|------------|--------|
+| **Fuel** | Descarte Nothing → +1 energia neste turno |
+| **Boost** | Descarte Nothing → +20 power em carta VMW |
+| **Draw** | Descarte 2 Nothing → Compre 1 carta |
+| **Revive** | Descarte 3 Nothing → Recupere 1 carta VMW do descarte |
+
+### Balanceamento VMW vs Nothing
+| Aspecto | VMW | Nothing |
+|---------|-----|---------|
+| Power base | 100% | 50% |
+| Efeitos | Únicos por personagem | Genéricos por rarity |
+| Sacrificável | Não | Sim |
+| Valor | NFT real | Grátis |
+
+### Sinergia VMW + Nothing
+**Ideia:** Decks mistos funcionam melhor!
+- Nothing dá suporte/fuel
+- VMW são as cartas de impacto
+- Incentiva ter ambas coleções
+
+### Exemplo de combo:
+```
+Turno 3 (3 energia):
+- Sacrifica Nothing Common → ganha +1 energia (agora tem 4)
+- Joga TUKKA (Legendary, custo 4) no turno 3!
+- Vantagem: jogou Legendary 2 turnos antes do normal
+```
+
+### Deck Building sugerido (12 cartas):
+- 4-6 Nothing (fuel/sacrifício)
+- 4-6 VMW Common/Rare (base)
+- 1-2 VMW Epic/Legendary (finishers)
+
+**Vantagens:**
+- Partidas rápidas (2-3 min)
+- Simples de entender
+- Funciona bem mobile
+- Não precisa esperar oponente (joga simultâneo)
+
+**Exemplo de partida:**
+```
+=== TURNO 6 (FINAL) ===
+
+LANE 1          LANE 2          LANE 3
+[Tukka 150⭐]   [Claude 40]     [vazio]
+Prize Foil
+
+vs              vs              vs
+
+[Dan 35]        [Gozaru 30]     [Antonio 144]
+[Vlady 25]      [Ink 30]        (120 + 20% foil)
+────────        ────────        ────────
+150 vs 60       40 vs 60        0 vs 144
+P1 VENCE ✓      P2 VENCE ✓      P2 VENCE ✓
+
+Resultado: Player 2 vence (2/3 lanes)
+```
+
+---
+
+## Fluxo de Jogo - Exemplo (Modelo War)
 
 ```
 === INÍCIO ===
