@@ -842,7 +842,7 @@ export default function TCGPage() {
             break;
           case "buffAllLanes":
             // Buff all CPU cards
-            newLanes.forEach((lane) => {
+            newLanes.forEach((lane: any) => {
               lane.cpuCards.forEach((c: DeckCard, cIdx: number) => {
                 lane.cpuCards[cIdx] = { ...c, power: c.power + (effect.value || 0) };
               });
@@ -853,7 +853,7 @@ export default function TCGPage() {
             let highestPower = -1;
             let highestLaneIdx = -1;
             let highestCardIdx = -1;
-            newLanes.forEach((lane, lIdx) => {
+            newLanes.forEach((lane: any, lIdx: number) => {
               lane.playerCards.forEach((c: DeckCard, cIdx: number) => {
                 if (c.power > highestPower) {
                   highestPower = c.power;
