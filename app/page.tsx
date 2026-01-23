@@ -1460,7 +1460,7 @@ export default function TCGPage() {
   };
 
   // Handler for game mode selection from GameGrid
-  type GameMode = 'poker-cpu' | 'battle-ai' | 'mecha' | 'raid' | 'baccarat';
+  type GameMode = 'poker-cpu' | 'battle-ai' | 'mecha' | 'raid' | 'baccarat' | 'tcg';
   const handleGameModeSelect = (mode: GameMode) => {
     if (!userProfile) {
       setShowCreateProfile(true);
@@ -1486,6 +1486,9 @@ export default function TCGPage() {
         break;
       case 'baccarat':
         setShowBaccarat(true);
+        break;
+      case 'tcg':
+        router.push('/tcg');
         break;
     }
   };
