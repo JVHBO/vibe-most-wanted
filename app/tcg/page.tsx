@@ -2931,7 +2931,7 @@ export default function TCGPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleLandmineKamikaze(laneIndex, idx: number);
+                                  handleLandmineKamikaze(laneIndex, idx);
                                 }}
                                 className="absolute -bottom-2 -left-2 w-6 h-6 bg-gradient-to-br from-red-500 to-orange-600 hover:from-red-400 hover:to-orange-500 rounded-full text-[10px] text-white font-bold flex items-center justify-center z-20 shadow-lg border-2 border-red-300 animate-pulse"
                                 title="💥 Kamikaze: Destroy self + highest enemy"
@@ -2944,7 +2944,7 @@ export default function TCGPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleSantaCharm(laneIndex, idx: number);
+                                  handleSantaCharm(laneIndex, idx);
                                 }}
                                 className="absolute -bottom-2 -left-2 w-6 h-6 bg-gradient-to-br from-pink-500 to-red-500 hover:from-pink-400 hover:to-red-400 rounded-full text-[10px] text-white font-bold flex items-center justify-center z-20 shadow-lg border-2 border-pink-300 animate-pulse"
                                 title="💋 Charm: Seduce an enemy to your side"
