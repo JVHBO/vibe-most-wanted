@@ -133,6 +133,7 @@ export default function ProfilePage() {
     card: any;
     ownedCards: any[];
     ability: any;
+    cardKey?: string;
     baccaratImagePath?: string;
   } | null>(null);
   const [shareRewardMessage, setShareRewardMessage] = useState('');
@@ -725,6 +726,7 @@ export default function ProfilePage() {
                               card,
                               ownedCards: allOwnedCopies,
                               ability,
+                              cardKey,
                               baccaratImagePath: baccaratImagePath || undefined
                             });
                           }}
@@ -930,8 +932,8 @@ export default function ProfilePage() {
               <p className="text-sm text-vintage-burnt-gold">
                 {selectedAlbumCard.card.rarity}
                 {selectedAlbumCard.ownedCards.length > 0
-                  ? ` • ${selectedAlbumCard.ownedCards.length}x owned`
-                  : " • Not owned yet"
+                  ? ` • ${t('tcgOwnedCount', { count: selectedAlbumCard.ownedCards.length })}`
+                  : ` • ${t('tcgNotOwnedYet')}`
                 }
               </p>
             </div>
@@ -1010,9 +1012,13 @@ export default function ProfilePage() {
                     {selectedAlbumCard.ability.type === "onReveal" ? t('tcgOnRevealLabel') :
                      selectedAlbumCard.ability.type === "ongoing" ? t('tcgOngoingLabel') : t('tcgOnDestroyLabel')}
                   </span>
-                  <span className="text-vintage-gold font-bold">{selectedAlbumCard.ability.name}</span>
+                  <span className="text-vintage-gold font-bold">
+                    {t(`ability_${selectedAlbumCard.cardKey?.replace(/\s+/g, '_').replace(/-/g, '_')}_name` as any) || selectedAlbumCard.ability.name}
+                  </span>
                 </div>
-                <p className="text-sm text-gray-300">{selectedAlbumCard.ability.description}</p>
+                <p className="text-sm text-gray-300">
+                  {t(`ability_${selectedAlbumCard.cardKey?.replace(/\s+/g, '_').replace(/-/g, '_')}_desc` as any) || selectedAlbumCard.ability.description}
+                </p>
               </div>
             )}
 
