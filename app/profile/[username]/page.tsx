@@ -788,9 +788,9 @@ export default function ProfilePage() {
 
                   {/* Legend */}
                   <div className="flex justify-center gap-3 text-[10px] text-gray-500 pt-2 mt-2 border-t border-vintage-gold/20">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> Reveal</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Ongoing</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500"></span> Destroy</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> {t('tcgOnReveal')}</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> {t('tcgOngoing')}</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500"></span> {t('tcgDestroy')}</span>
                   </div>
                 </>
               );
@@ -1007,8 +1007,8 @@ export default function ProfilePage() {
                     selectedAlbumCard.ability.type === "ongoing" ? "bg-blue-500 text-white" :
                     "bg-red-500 text-white"
                   }`}>
-                    {selectedAlbumCard.ability.type === "onReveal" ? "ON REVEAL" :
-                     selectedAlbumCard.ability.type === "ongoing" ? "ONGOING" : "ON DESTROY"}
+                    {selectedAlbumCard.ability.type === "onReveal" ? t('tcgOnRevealLabel') :
+                     selectedAlbumCard.ability.type === "ongoing" ? t('tcgOngoingLabel') : t('tcgOnDestroyLabel')}
                   </span>
                   <span className="text-vintage-gold font-bold">{selectedAlbumCard.ability.name}</span>
                 </div>
@@ -1021,7 +1021,7 @@ export default function ProfilePage() {
               onClick={() => setSelectedAlbumCard(null)}
               className="w-full py-3 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold rounded-xl transition-all"
             >
-              Close
+              {t('tcgClose')}
             </button>
           </div>
         </div>
