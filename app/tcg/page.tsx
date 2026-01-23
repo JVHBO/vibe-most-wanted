@@ -959,7 +959,7 @@ export default function TCGPage() {
     const newCpuHand = cpuHand.filter((_: any, idx: number) => !usedCardIndices.has(idx));
 
     // Recalculate lane powers with ongoing effects
-    newLanes = newLanes.map((lane, laneIdx) => {
+    newLanes = newLanes.map((lane: any, laneIdx) => {
       let playerPower = 0;
       let cpuPower = 0;
 
@@ -1113,7 +1113,7 @@ export default function TCGPage() {
 
       case "buffOtherLanes":
         // +X power to all cards in OTHER lanes
-        newLanes.forEach((lane, idx) => {
+        newLanes.forEach((lane: any, idx) => {
           if (idx !== laneIndex) {
             lane[myCards].forEach((c: DeckCard, cIdx: number) => {
               lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) };
@@ -1163,7 +1163,7 @@ export default function TCGPage() {
         let weakestCard: DeckCard | null = null;
         let weakestLane = -1;
         let weakestIdx = -1;
-        newLanes.forEach((lane, lIdx) => {
+        newLanes.forEach((lane: any, lIdx) => {
           lane[myCards].forEach((c: DeckCard, cIdx: number) => {
             if (!weakestCard || c.power < weakestCard.power) {
               weakestCard = c;
@@ -1186,7 +1186,7 @@ export default function TCGPage() {
         let strongestCard: DeckCard | null = null;
         let strongestLane = -1;
         let strongestIdx = -1;
-        newLanes.forEach((lane, lIdx) => {
+        newLanes.forEach((lane: any, lIdx) => {
           lane[enemyCards].forEach((c: DeckCard, cIdx: number) => {
             if (!strongestCard || c.power > strongestCard.power) {
               strongestCard = c;
@@ -1263,7 +1263,7 @@ export default function TCGPage() {
       case "buffPerCardsPlayed":
         // +X power for each card you've played this game
         let cardsPlayedTotal = 0;
-        newLanes.forEach((lane) => {
+        newLanes.forEach((lane: any) => {
           cardsPlayedTotal += lane[myCards].length;
         });
         bonusPower = cardsPlayedTotal * (effect.value || 0);
@@ -1271,7 +1271,7 @@ export default function TCGPage() {
 
       case "buffAllLanes":
         // +X power to all your cards in all lanes (Mythic)
-        newLanes.forEach((lane) => {
+        newLanes.forEach((lane: any) => {
           lane[myCards].forEach((c: DeckCard, cIdx: number) => {
             lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) };
           });
@@ -1284,7 +1284,7 @@ export default function TCGPage() {
         let highestPower = -1;
         let highestLaneIdx = -1;
         let highestCardIdx = -1;
-        newLanes.forEach((lane, lIdx) => {
+        newLanes.forEach((lane: any, lIdx) => {
           lane[enemyCards].forEach((c: DeckCard, cIdx: number) => {
             if (c.power > highestPower) {
               highestPower = c.power;
@@ -1498,7 +1498,7 @@ export default function TCGPage() {
 
   // Recalculate lane powers with ongoing effects and lane effects
   const recalculateLanePowers = (lanes: any[], currentTurn: number): any[] => {
-    return lanes.map((lane, laneIdx) => {
+    return lanes.map((lane: any, laneIdx) => {
       let playerPower = 0;
       let cpuPower = 0;
 
