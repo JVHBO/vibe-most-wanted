@@ -77,37 +77,39 @@ const RARITY_COLORS: Record<string, string> = {
 // SIMPLIFIED: Only effects that are FULLY IMPLEMENTED and FUN
 const LANE_NAMES = [
   // ═══ BUFF LANES ═══
-  { name: "Moon Base", effect: "buffFirst", value: 40, description: "1st card played here: +40" },
-  { name: "Whale Waters", effect: "buffHighest", value: 50, description: "Your strongest card: +50" },
-  { name: "Shrimp Shore", effect: "buffLowest", value: 45, description: "Your weakest card: +45" },
-  { name: "Hopium Farms", effect: "buffPerTurn", value: 15, description: "All cards: +15 per turn" },
+  { name: "Moon Base", effect: "buffFirst", value: 40, description: "1st card played: +40" },
+  { name: "Whale Waters", effect: "buffHighest", value: 50, description: "Strongest card: +50" },
+  { name: "Shrimp Shore", effect: "buffLowest", value: 45, description: "Weakest card: +45" },
+  { name: "Hopium Farms", effect: "buffPerTurn", value: 15, description: "+15 to all each turn" },
 
   // ═══ DEBUFF LANES ═══
-  { name: "Paper Hands", effect: "debuffPerTurn", value: -12, description: "All cards: -12 per turn" },
-  { name: "Vlady's Dungeon", effect: "debuffEnemy", value: -25, description: "All enemy cards: -25" },
+  { name: "Paper Hands", effect: "debuffPerTurn", value: -12, description: "-12 to all each turn" },
+  { name: "Vlady's Dungeon", effect: "debuffEnemy", value: -25, description: "Enemy cards: -25" },
 
   // ═══ RARITY BONUS LANES ═══
-  { name: "Nico's Throne", effect: "doubleLegendary", description: "Legendary cards: 2x power" },
-  { name: "Dan's Backyard", effect: "buffCommon", value: 30, description: "Common cards: +30" },
-  { name: "NFT Gallery", effect: "buffFoil", value: 60, description: "Foil cards: +60" },
-  { name: "Mint Factory", effect: "buffNothing", value: 50, description: "Nothing cards: +50" },
-  { name: "Vibe HQ", effect: "buffVibeFID", value: 40, description: "VibeFID cards: +40" },
-  { name: "Epic Arena", effect: "buffEpic", value: 35, description: "Epic cards: +35" },
+  { name: "Nico's Throne", effect: "doubleLegendary", description: "Legendary: 2x power" },
+  { name: "Dan's Backyard", effect: "buffCommon", value: 30, description: "Common: +30" },
+  { name: "NFT Gallery", effect: "buffFoil", value: 60, description: "Foil: +60" },
+  { name: "Mint Factory", effect: "buffNothing", value: 50, description: "Nothing: +50" },
+  { name: "Vibe HQ", effect: "buffVibeFID", value: 40, description: "VibeFID: +40" },
 
   // ═══ STRATEGY LANES ═══
-  { name: "Mom's Basement", effect: "buffAlone", value: 60, description: "Only 1 card here? +60" },
-  { name: "Discord Server", effect: "buffPerCard", value: 15, description: "+15 for each card here" },
-  { name: "Copium Den", effect: "buffIfLosing", value: 35, description: "Losing this lane? +35" },
-  { name: "Zen Garden", effect: "buffOngoing", value: 30, description: "Ongoing cards: +30" },
+  { name: "Mom's Basement", effect: "buffAlone", value: 60, description: "Solo card: +60" },
+  { name: "Discord Server", effect: "buffPerCard", value: 15, description: "+15 per card here" },
+  { name: "Copium Den", effect: "buffIfLosing", value: 35, description: "If losing: +35" },
+  { name: "Copycat Cafe", effect: "copyEnemy", description: "Match enemy total power" },
+  { name: "Underdog Arena", effect: "doubleIfFewer", description: "Fewer cards? 2x power!" },
 
   // ═══ CHAOS LANES ═══
-  { name: "Degen Valley", effect: "gamble", description: "Each card: 50% 2x or 50% halved" },
-  { name: "Liquidity Pool", effect: "swapSides", description: "At game end: scores swap!" },
-  { name: "Clown College", effect: "reverseOrder", description: "LOWEST total power wins!" },
+  { name: "Degen Valley", effect: "gamble", description: "50% double or 50% halved" },
+  { name: "Liquidity Pool", effect: "swapSides", description: "Scores swap at game end!" },
+  { name: "Clown College", effect: "reverseOrder", description: "LOWEST power wins!" },
+  { name: "Taxman's Office", effect: "taxHigh", value: 20, description: "Cards 50+ power: -20" },
 
   // ═══ SPECIAL VICTORY LANES ═══
-  { name: "ATH Peak", effect: "highestWins", description: "Only 1 strongest card counts!" },
-  { name: "Bridge", effect: "noVictory", description: "This lane doesn't count for win" },
+  { name: "ATH Peak", effect: "highestWins", description: "Only highest card counts!" },
+  { name: "Bridge", effect: "noVictory", description: "Lane doesn't count" },
+  { name: "Double Stakes", effect: "doubleVictory", description: "Win = 2 lane victories!" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1888,13 +1890,15 @@ export default function TCGPage() {
       case "debuffEnemy":
         return isPlayer ? 0 : value;
 
-      case "debuffEnemyHighest":
-        // Only debuff the strongest enemy card
-        if (isPlayer) return 0;
-        const enemyCards = lane.cpuCards;
-        if (enemyCards.length === 0) return 0;
-        const maxEnemyPower = Math.max(...enemyCards.map((c: DeckCard) => c.power || 0));
-        return card.power === maxEnemyPower ? value : 0;
+      case "taxHigh":
+        // Cards with 50+ base power get debuffed
+        return (card.power || 0) >= 50 ? value : 0;
+
+      case "doubleIfFewer":
+        // If you have fewer cards than enemy, double your power
+        const myCards = isPlayer ? lane.playerCards : lane.cpuCards;
+        const theirCards = isPlayer ? lane.cpuCards : lane.playerCards;
+        return myCards.length < theirCards.length ? card.power : 0;
 
       case "gamble":
         return Math.random() > 0.5 ? card.power : -Math.floor(card.power / 2);
@@ -1903,6 +1907,8 @@ export default function TCGPage() {
       case "reverseOrder":
       case "highestWins":
       case "noVictory":
+      case "copyEnemy":
+      case "doubleVictory":
       case "noEffect":
       default:
         return 0;
@@ -1960,8 +1966,18 @@ export default function TCGPage() {
         cpuPower = temp;
       }
 
-      // Clown College: reverse order (lower wins)
-      // This is shown in UI but handled at victory calculation
+      // Copycat Cafe: match enemy's total power
+      if (lane.effect === "copyEnemy") {
+        if (playerPower < cpuPower) {
+          playerPower = cpuPower; // Player copies CPU
+        } else if (cpuPower < playerPower) {
+          cpuPower = playerPower; // CPU copies player
+        }
+      }
+
+      // Clown College: reverse order (lower wins) - handled at victory calculation
+      // ATH Peak: highest wins - handled at victory calculation
+      // Double Stakes: doubleVictory - handled at victory calculation
 
       return { ...lane, playerPower: Math.max(0, playerPower), cpuPower: Math.max(0, cpuPower) };
     });
@@ -2422,8 +2438,43 @@ export default function TCGPage() {
 
     // Check if game over (turn 6)
     if (pveGameState.currentTurn >= TCG_CONFIG.TOTAL_TURNS) {
-      const playerWins = newLanes.filter((l: any) => l.playerPower > l.cpuPower).length;
-      const cpuWins = newLanes.filter((l: any) => l.cpuPower > l.playerPower).length;
+      // Calculate lane victories with special effects
+      let playerWins = 0;
+      let cpuWins = 0;
+
+      newLanes.forEach((lane: any) => {
+        // Skip lanes that don't count (Bridge)
+        if (lane.effect === "noVictory") return;
+
+        let playerScore = lane.playerPower;
+        let cpuScore = lane.cpuPower;
+
+        // ATH Peak: only highest card counts
+        if (lane.effect === "highestWins") {
+          const playerHighest = Math.max(...(lane.playerCards || []).map((c: any) => c.power || 0), 0);
+          const cpuHighest = Math.max(...(lane.cpuCards || []).map((c: any) => c.power || 0), 0);
+          playerScore = playerHighest;
+          cpuScore = cpuHighest;
+        }
+
+        // Clown College: lowest wins (reverse comparison)
+        if (lane.effect === "reverseOrder") {
+          // Swap so lower score wins
+          if (playerScore < cpuScore) {
+            playerWins += lane.effect === "doubleVictory" ? 2 : 1;
+          } else if (cpuScore < playerScore) {
+            cpuWins += lane.effect === "doubleVictory" ? 2 : 1;
+          }
+          return;
+        }
+
+        // Normal comparison
+        if (playerScore > cpuScore) {
+          playerWins += lane.effect === "doubleVictory" ? 2 : 1;
+        } else if (cpuScore > playerScore) {
+          cpuWins += lane.effect === "doubleVictory" ? 2 : 1;
+        }
+      });
 
       // Determine winner - if tied lanes, use HAND POWER as tiebreaker
       let winner: string;
