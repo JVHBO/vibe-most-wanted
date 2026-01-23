@@ -83,7 +83,6 @@ const LANE_NAMES = [
   { name: "Hopium Farms", effect: "buffPerTurn", value: 15, description: "All cards: +15 per turn" },
 
   // ═══ DEBUFF LANES ═══
-  { name: "Scam City", effect: "debuffEnemyHighest", value: -40, description: "Enemy strongest: -40" },
   { name: "Paper Hands", effect: "debuffPerTurn", value: -12, description: "All cards: -12 per turn" },
   { name: "Vlady's Dungeon", effect: "debuffEnemy", value: -25, description: "All enemy cards: -25" },
 
@@ -99,7 +98,6 @@ const LANE_NAMES = [
   { name: "Mom's Basement", effect: "buffAlone", value: 60, description: "Only 1 card here? +60" },
   { name: "Discord Server", effect: "buffPerCard", value: 15, description: "+15 for each card here" },
   { name: "Copium Den", effect: "buffIfLosing", value: 35, description: "Losing this lane? +35" },
-  { name: "Ye's Studio", effect: "buffOnReveal", value: 25, description: "OnReveal cards: +25" },
   { name: "Zen Garden", effect: "buffOngoing", value: 30, description: "Ongoing cards: +30" },
 
   // ═══ CHAOS LANES ═══
@@ -110,9 +108,6 @@ const LANE_NAMES = [
   // ═══ SPECIAL VICTORY LANES ═══
   { name: "ATH Peak", effect: "highestWins", description: "Only 1 strongest card counts!" },
   { name: "Bridge", effect: "noVictory", description: "This lane doesn't count for win" },
-
-  // ═══ NEUTRAL ═══
-  { name: "Touch Grass", effect: "flatBonus", value: 20, description: "All cards here: +20" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
