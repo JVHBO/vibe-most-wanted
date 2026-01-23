@@ -2950,23 +2950,34 @@ export default function TCGPage() {
                     <div className="flex -space-x-6">
                       {lane.cpuCards.map((card: any, idx: number) => {
                         const ability = getCardAbility(card.name);
+                        const foil = (card.foil || "").toLowerCase();
+                        const hasFoil = foil && foil !== "none" && foil !== "";
+                        const foilClass = foil.includes("prize") ? "prize-foil" : foil.includes("standard") ? "standard-foil" : "";
                         return (
                           <div
                             key={idx}
                             onClick={() => setDetailCard(card)}
-                            className={`relative w-14 h-20 rounded-lg border-2 border-red-500/70 bg-cover bg-center shadow-lg cursor-pointer hover:scale-110 hover:z-30 transition-transform ${getFoilClass(card.foil)}`}
+                            className={`relative w-14 h-20 rounded-lg border-2 border-red-500/70 bg-cover bg-center shadow-lg cursor-pointer hover:scale-110 hover:z-30 transition-transform overflow-hidden`}
                             style={{
                               backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : undefined,
                               zIndex: idx
                             }}
                           >
+                            {/* Foil effect overlay */}
+                            {hasFoil && <div className={`absolute inset-0 ${foilClass} rounded-lg pointer-events-none`}></div>}
                             {/* Power badge */}
-                            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-2 border-red-300 flex items-center justify-center">
+                            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-2 border-red-300 flex items-center justify-center z-10">
                               <span className="text-[10px] font-bold text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
                             </div>
+                            {/* Foil badge */}
+                            {hasFoil && (
+                              <div className={`absolute top-0 right-0 px-1 rounded-bl text-[6px] font-bold z-10 ${foil.includes("prize") ? "bg-pink-500 text-white" : "bg-purple-500 text-white"}`}>
+                                {foil.includes("prize") ? "P" : "F"}
+                              </div>
+                            )}
                             {/* Ability indicator */}
                             {ability && (
-                              <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${
+                              <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold z-10 ${
                                 ability.type === "onReveal" ? "bg-orange-500" : ability.type === "ongoing" ? "bg-green-500" : "bg-purple-500"
                               }`}>
                                 {ability.type === "onReveal" ? "R" : ability.type === "ongoing" ? "O" : "D"}
