@@ -1173,9 +1173,10 @@ export default function TCGPage() {
           });
         });
         if (weakestCard && weakestLane >= 0) {
+          const cardToUpdate = weakestCard as DeckCard;
           newLanes[weakestLane][myCards][weakestIdx] = {
-            ...weakestCard,
-            power: weakestCard.power + (effect.value || 0),
+            ...cardToUpdate,
+            power: cardToUpdate.power + (effect.value || 0),
           };
           newLanes[weakestLane][myPower] += effect.value || 0;
         }
@@ -1196,10 +1197,11 @@ export default function TCGPage() {
           });
         });
         if (strongestCard && strongestLane >= 0) {
+          const cardToDebuff = strongestCard as DeckCard;
           const reduction = Math.abs(effect.value || 0);
           newLanes[strongestLane][enemyCards][strongestIdx] = {
-            ...strongestCard,
-            power: Math.max(0, strongestCard.power - reduction),
+            ...cardToDebuff,
+            power: Math.max(0, cardToDebuff.power - reduction),
           };
           newLanes[strongestLane][enemyPower] = Math.max(0, newLanes[strongestLane][enemyPower] - reduction);
         }
