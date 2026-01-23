@@ -23,6 +23,12 @@ import { isUnrevealed as isUnrevealedShared, findAttr, calcPower } from '@/lib/n
 import { isSameCard, findCard, getCardKey } from '@/lib/nft';
 import { usePlayerCards } from '@/contexts/PlayerCardsContext';
 import { getCardDisplayPower } from '@/lib/power-utils';
+import { getCharacterFromImage } from '@/lib/vmw-image-mapping';
+import tcgCardsData from '@/data/vmw-tcg-cards.json';
+import tcgAbilitiesData from '@/data/tcg-abilities.json';
+
+// TCG abilities type
+const tcgAbilities: Record<string, { name: string; type: string; description: string }> = tcgAbilitiesData.abilities as any;
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || process.env.NEXT_PUBLIC_CHAIN || 'base-mainnet';
@@ -121,6 +127,14 @@ export default function ProfilePage() {
   const rewardProfileShare = useMutation(api.cardPacks.rewardProfileShare);
   const claimShareBonus = useMutation(api.economy.claimShareBonus);
   const [showShareReward, setShowShareReward] = useState(false);
+
+  // Album card modal state
+  const [selectedAlbumCard, setSelectedAlbumCard] = useState<{
+    card: any;
+    ownedCards: any[];
+    ability: any;
+    baccaratImagePath?: string;
+  } | null>(null);
   const [shareRewardMessage, setShareRewardMessage] = useState('');
 
   // Attack Modal States
@@ -547,9 +561,8 @@ export default function ProfilePage() {
               <p className="text-[9px] text-vintage-burnt-gold">POWER</p>
             </div>
             <div className="text-center">
-              {/* @ts-expect-error - honor field */}
-              <p className="text-sm md:text-lg font-bold text-purple-400">{(profile.stats.honor ?? 500).toLocaleString()}</p>
-              <p className="text-[9px] text-vintage-burnt-gold">HONOR</p>
+              <p className="text-sm md:text-lg font-bold text-purple-400">{(profile.stats.aura ?? 500).toLocaleString()}</p>
+              <p className="text-[9px] text-vintage-burnt-gold">AURA</p>
             </div>
             <div className="text-center">
               <p className="text-sm md:text-lg font-bold text-vintage-gold">
@@ -561,258 +574,230 @@ export default function ProfilePage() {
         </div>
       </div>
 
-
-      {/* NFT Cards Collection */}
-      <div className="max-w-6xl mx-auto mb-4">
-        {/* Header + Filters in one row */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-vintage-gold text-lg">♠</span>
-            <span className="text-vintage-gold font-semibold">{filteredNfts.length} cards</span>
-          </div>
-
-          {/* Compact Filters */}
-          <div className="flex flex-wrap gap-2 sm:ml-auto">
-            <select
-              value={filterRarity}
-              onChange={(e) => { setFilterRarity(e.target.value); setCurrentNFTPage(1); }}
-              className="bg-vintage-charcoal border border-vintage-gold/30 rounded px-2 py-1 text-xs text-vintage-gold"
-            >
-              <option value="all">Rarity</option>
-              <option value="common">Common</option>
-              <option value="rare">Rare</option>
-              <option value="epic">Epic</option>
-              <option value="legendary">Legend</option>
-            </select>
-            <select
-              value={filterFoil}
-              onChange={(e) => { setFilterFoil(e.target.value); setCurrentNFTPage(1); }}
-              className="bg-vintage-charcoal border border-vintage-gold/30 rounded px-2 py-1 text-xs text-vintage-gold"
-            >
-              <option value="all">Foil</option>
-              <option value="none">No Foil</option>
-              <option value="standard">Standard</option>
-              <option value="prize">Prize</option>
-            </select>
-            <select
-              value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
-              onChange={(e) => { if (e.target.value === 'all') setSelectedCollections([]); else setSelectedCollections([e.target.value as CollectionId]); setCurrentNFTPage(1); }}
-              className="bg-vintage-charcoal border border-vintage-gold/30 rounded px-2 py-1 text-xs text-vintage-gold"
-            >
-              <option value="all">Collection</option>
-              <option value="vibe">VBMS</option>
-              <option value="viberotbangers">BANGER</option>
-              <option value="cumioh">CUMIO</option>
-              <option value="vibefid">VIBEFID</option>
-              <option value="meowverse">MEOVV</option>
-              <option value="viberuto">VBRTO</option>
-              <option value="gmvbrs">VBRS</option>
-            </select>
-            {(filterRarity !== 'all' || filterFoil !== 'all' || selectedCollections.length > 0) && (
-              <button
-                onClick={() => { setFilterRarity('all'); setFilterFoil('all'); setSelectedCollections([]); setCurrentNFTPage(1); }}
-                className="text-vintage-burnt-gold hover:text-vintage-gold text-xs"
-              >
-                ✕ Clear
-              </button>
-            )}
-          </div>
-        </div>
-        {isNftsLoading ? (
-          <CardLoadingSpinner text="Loading cards..." />
-        ) : nfts.length === 0 ? (
-          <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
-            <p className="text-gray-400">{t('noCardsInCollection')}</p>
-          </div>
-        ) : filteredNfts.length === 0 ? (
-          <div className="bg-gray-800/30 border border-gray-700/50 rounded-xl p-8 text-center">
-            <p className="text-gray-400">{t('noCardsMatchFilters')}</p>
-
-            {/* Buy Collection Button - Show when filtered by collection with no NFTs */}
-            {selectedCollections.length > 0 &&
-             nfts.length > 0 &&
-             (() => {
-               const collection = COLLECTIONS[selectedCollections[0]];
-               return collection?.marketplaceUrl;
-             })() && (
-              <div className="mt-6">
-                {COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
-                  <Link
-                    href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
-                    className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
-                    style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-base md:text-lg">◆</span>
-                      <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
-                    </div>
-                  </Link>
-                ) : (
-                  <a
-                    href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
-                    style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-base md:text-lg">◆</span>
-                      <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
-                    </div>
-                  </a>
-                )}
+      {/* VMW Album - Card Collection Tracker */}
+      {isOwnProfile && (
+        <div className="max-w-6xl mx-auto mb-4">
+          <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/50 p-4">
+            {/* Album Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-vintage-gold font-semibold">VMW Album</span>
               </div>
-            )}
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
-              {filteredNfts
-                .slice((currentNFTPage - 1) * NFT_PER_PAGE, currentNFTPage * NFT_PER_PAGE)
-                .map((nft) => {
-                  const tokenId = nft.tokenId;
-                  const power = nft.power || 0;
-                  const rarity = nft.rarity || 'Common';
-                  const foilValue = nft.foil || '';
-                  const imageUrl = nft.imageUrl || '';
-                  const foilEffect = getFoilEffect(foilValue);
-
-                  // Final power with collection multiplier
-                  const finalPower = getCardDisplayPower(nft);
-
-                  return (
-                    <div key={getCardUniqueId(nft)} className="relative group">
-                      <div className={`relative overflow-hidden rounded-lg ring-1 ${getRarityRing(rarity)}`}>
-                        <CardMedia
-                          src={convertIpfsUrl(imageUrl) || imageUrl}
-                          alt={`#${tokenId}`}
-                          className="w-full aspect-[2/3] object-cover bg-vintage-deep-black"
-                          loading="lazy"
-                        />
-                        {foilEffect && <div className={`absolute inset-0 ${foilEffect}`}></div>}
-                        <div className="absolute top-0 left-0 bg-black/80 px-1.5 py-0.5 rounded-br text-[10px] font-bold text-vintage-gold">
-                          {finalPower}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-              {/* Buy Collection Button - Show as grid item when filtering by collection */}
-              {selectedCollections.length > 0 &&
-               filteredNfts.slice((currentNFTPage - 1) * NFT_PER_PAGE, currentNFTPage * NFT_PER_PAGE).length < NFT_PER_PAGE &&
-               (() => {
-                 const collection = COLLECTIONS[selectedCollections[0]];
-                 return collection?.marketplaceUrl;
-               })() && (
-                COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
-                  <Link
-                    href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
-                    className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
-                    style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
-                  >
-                    <div className="flex flex-col items-center justify-center gap-2 text-center">
-                      <span className="text-2xl md:text-3xl">◆</span>
-                      <span className="text-xs md:text-sm leading-tight">
-                        {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
-                      </span>
-                    </div>
-                  </Link>
-                ) : (
-                  <a
-                    href={COLLECTIONS[selectedCollections[0]].marketplaceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
-                    style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
-                  >
-                    <div className="flex flex-col items-center justify-center gap-2 text-center">
-                      <span className="text-2xl md:text-3xl">◆</span>
-                      <span className="text-xs md:text-sm leading-tight">
-                        {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
-                      </span>
-                    </div>
-                  </a>
-                )
-              )}
+              {(() => {
+                const playerVbmsCards = (nfts || []).filter((card: any) => card.collection === "vibe");
+                const ownedCardCounts: Record<string, number> = {};
+                const aliases: Record<string, string> = (tcgCardsData as any).aliases || {};
+                const tokenIdToName: Record<number, string> = {};
+                (tcgCardsData.cards || []).forEach((c: any) => {
+                  if (c.tokenId) tokenIdToName[c.tokenId] = c.baccarat?.toLowerCase();
+                });
+                playerVbmsCards.forEach((card: any) => {
+                  const imageUrl = card.imageUrl || card.image || "";
+                  const characterFromImage = getCharacterFromImage(imageUrl);
+                  const attrName = findAttr(card, "name");
+                  let cardName = (card.character || characterFromImage || attrName || card.name || "").toLowerCase().trim();
+                  if (aliases[cardName]) cardName = aliases[cardName].toLowerCase();
+                  if (!cardName && card.tokenId && tokenIdToName[card.tokenId]) cardName = tokenIdToName[card.tokenId];
+                  if (cardName) {
+                    ownedCardCounts[cardName] = (ownedCardCounts[cardName] || 0) + 1;
+                  }
+                });
+                const allTcgCards = tcgCardsData.cards || [];
+                const totalOwned = Object.keys(ownedCardCounts).length;
+                const totalCards = allTcgCards.length;
+                return (
+                  <span className="text-sm text-vintage-burnt-gold">
+                    {totalOwned}/{totalCards} collected ({Math.round(totalOwned / totalCards * 100)}%)
+                  </span>
+                );
+              })()}
             </div>
 
-            {/* Pagination */}
-            {filteredNfts.length > NFT_PER_PAGE && (
-              <div className="mt-6 flex items-center justify-center gap-1 md:gap-2 flex-wrap">
-                <button
-                  onClick={() => setCurrentNFTPage(Math.max(1, currentNFTPage - 1))}
-                  disabled={currentNFTPage === 1}
-                  className="px-2 md:px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg font-semibold transition text-xs md:text-base"
-                >
-                  <span className="hidden sm:inline">← Previous</span>
-                  <span className="sm:hidden">←</span>
-                </button>
+            {/* Progress Bar */}
+            {(() => {
+              const playerVbmsCards = (nfts || []).filter((card: any) => card.collection === "vibe");
+              const ownedCardCounts: Record<string, number> = {};
 
-                <div className="flex gap-1 md:gap-2">
-                  {(() => {
-                    const totalPages = Math.ceil(filteredNfts.length / NFT_PER_PAGE);
-                    const maxVisible = 5; // Mostrar no máximo 5 páginas no mobile
-                    const pages: (number | string)[] = [];
+              // Aliases from tcg-cards.json (onChainName -> baccarat)
+              const aliases: Record<string, string> = (tcgCardsData as any).aliases || {};
 
-                    if (totalPages <= maxVisible) {
-                      // Se tem poucas páginas, mostra todas
-                      for (let i = 1; i <= totalPages; i++) pages.push(i);
-                    } else {
-                      // Mostrar páginas ao redor da atual
-                      if (currentNFTPage <= 3) {
-                        for (let i = 1; i <= 4; i++) pages.push(i);
-                        pages.push('...');
-                        pages.push(totalPages);
-                      } else if (currentNFTPage >= totalPages - 2) {
-                        pages.push(1);
-                        pages.push('...');
-                        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
-                      } else {
-                        pages.push(1);
-                        pages.push('...');
-                        pages.push(currentNFTPage - 1);
-                        pages.push(currentNFTPage);
-                        pages.push(currentNFTPage + 1);
-                        pages.push('...');
-                        pages.push(totalPages);
-                      }
-                    }
+              // Create tokenId to baccarat name lookup
+              const tokenIdToName: Record<number, string> = {};
+              (tcgCardsData.cards || []).forEach((c: any) => {
+                if (c.tokenId) tokenIdToName[c.tokenId] = c.baccarat?.toLowerCase();
+              });
 
-                    return pages.map((page, idx) =>
-                      typeof page === 'string' ? (
-                        <span key={`ellipsis-${idx}`} className="w-8 md:w-10 h-8 md:h-10 flex items-center justify-center text-gray-500">...</span>
-                      ) : (
-                        <button
-                          key={page}
-                          onClick={() => setCurrentNFTPage(page)}
-                          className={`w-8 md:w-10 h-8 md:h-10 rounded-lg font-semibold transition text-xs md:text-base ${
-                            currentNFTPage === page
-                              ? 'bg-purple-600 text-white'
-                              : 'bg-gray-700 hover:bg-gray-600 text-white'
+              playerVbmsCards.forEach((card: any) => {
+                const imageUrl = card.imageUrl || card.image || "";
+                const characterFromImage = getCharacterFromImage(imageUrl);
+                // Also check attributes for "name" trait (most reliable)
+                const attrName = findAttr(card, "name");
+                let cardName = (card.character || characterFromImage || attrName || card.name || "").toLowerCase().trim();
+
+                // Apply alias if exists (e.g., "filthy" -> "don filthy")
+                if (aliases[cardName]) {
+                  cardName = aliases[cardName].toLowerCase();
+                }
+
+                // Fallback to tokenId lookup
+                if (!cardName && card.tokenId && tokenIdToName[card.tokenId]) {
+                  cardName = tokenIdToName[card.tokenId];
+                }
+
+                if (cardName) {
+                  ownedCardCounts[cardName] = (ownedCardCounts[cardName] || 0) + 1;
+                }
+              });
+              const allTcgCards = tcgCardsData.cards || [];
+              const totalOwned = Object.keys(ownedCardCounts).length;
+              const totalCards = allTcgCards.length;
+
+              // Sort by rarity: Mythic > Legendary > Epic > Rare > Common
+              const rarityOrder: Record<string, number> = { Mythic: 0, Legendary: 1, Epic: 2, Rare: 3, Common: 4 };
+              const sortedCards = [...allTcgCards].sort((a: any, b: any) => {
+                return (rarityOrder[a.rarity] ?? 5) - (rarityOrder[b.rarity] ?? 5);
+              });
+
+              return (
+                <>
+                  <div className="w-full bg-vintage-black rounded-full h-2 overflow-hidden mb-3">
+                    <div
+                      className="h-full bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold transition-all duration-500"
+                      style={{ width: `${(totalOwned / totalCards) * 100}%` }}
+                    />
+                  </div>
+
+                  {/* Card Grid */}
+                  <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-13 gap-1">
+                    {sortedCards.map((card: any, idx: number) => {
+                      const cardKey = card.baccarat?.toLowerCase() || card.onChainName?.toLowerCase();
+                      const owned = ownedCardCounts[cardKey] || 0;
+                      const ability = tcgAbilities[cardKey];
+
+                      const rarityBorder =
+                        card.rarity === "Mythic" ? "ring-red-500 shadow-red-500/30" :
+                        card.rarity === "Legendary" ? "ring-vintage-gold shadow-vintage-gold/30" :
+                        card.rarity === "Epic" ? "ring-purple-500 shadow-purple-500/30" :
+                        card.rarity === "Rare" ? "ring-blue-500 shadow-blue-500/30" :
+                        "ring-gray-600";
+
+                      // Helper to get normalized card name with alias
+                      const getNormalizedName = (c: any) => {
+                        const imgUrl = c.imageUrl || c.image || "";
+                        // Also check attributes for "name" trait (most reliable for VMW cards)
+                        const attrName = findAttr(c, "name");
+                        let charName = (c.character || getCharacterFromImage(imgUrl) || attrName || c.name || "").toLowerCase().trim();
+                        if (aliases[charName]) charName = aliases[charName].toLowerCase();
+                        return charName;
+                      };
+
+                      // Also check by tokenId as fallback
+                      const cardTokenId = card.tokenId;
+                      const ownedCard = playerVbmsCards.find((c: any) =>
+                        getNormalizedName(c) === cardKey ||
+                        (cardTokenId && c.tokenId === cardTokenId)
+                      );
+                      const cardImage = ownedCard?.imageUrl || ownedCard?.image;
+
+                      // Build baccarat image path for unowned cards
+                      const rankMap: Record<string, string> = {
+                        'A': 'ace', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
+                        '7': '7', '8': '8', '9': '9', '10': '10', 'J': 'jack', 'Q': 'queen', 'K': 'king'
+                      };
+                      const baccaratImagePath = card.suit && card.rank && card.suit !== '???' && card.rank !== '???'
+                        ? `/images/baccarat/${rankMap[card.rank] || card.rank} ${card.suit}, ${card.baccarat}.png`
+                        : card.baccarat === 'neymar'
+                          ? '/images/baccarat/joker, neymar.png'
+                          : null;
+
+                      // Get all owned copies of this card (by name or tokenId)
+                      const allOwnedCopies = playerVbmsCards.filter((c: any) =>
+                        getNormalizedName(c) === cardKey ||
+                        (cardTokenId && c.tokenId === cardTokenId)
+                      );
+
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            // Clickable for all cards - pass baccaratImagePath for unowned cards
+                            setSelectedAlbumCard({
+                              card,
+                              ownedCards: allOwnedCopies,
+                              ability,
+                              baccaratImagePath: baccaratImagePath || undefined
+                            });
+                          }}
+                          className={`relative aspect-[2/3] rounded overflow-hidden transition-all cursor-pointer hover:scale-105 ${
+                            owned > 0
+                              ? `ring-1 ${rarityBorder} shadow-sm`
+                              : "ring-1 ring-gray-800 opacity-50 grayscale hover:opacity-80 hover:grayscale-0"
                           }`}
+                          title={`${card.onChainName} (${card.rarity})${owned > 0 ? ` - ${owned}x` : ""}`}
                         >
-                          {page}
-                        </button>
-                      )
-                    );
-                  })()}
-                </div>
+                          {(() => {
+                            // Get foil type from the first owned card
+                            const foil = ownedCard ? (ownedCard.foil || findAttr(ownedCard, "foil") || "").toLowerCase() : "";
+                            const hasFoil = foil && foil !== "none" && foil !== "";
+                            const foilClass = foil.includes("prize") ? "prize-foil" : foil.includes("standard") ? "standard-foil" : "";
 
-                <button
-                  onClick={() => setCurrentNFTPage(Math.min(Math.ceil(filteredNfts.length / NFT_PER_PAGE), currentNFTPage + 1))}
-                  disabled={currentNFTPage === Math.ceil(filteredNfts.length / NFT_PER_PAGE)}
-                  className="px-2 md:px-4 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:text-gray-600 text-white rounded-lg font-semibold transition text-xs md:text-base"
-                >
-                  <span className="hidden sm:inline">Next →</span>
-                  <span className="sm:hidden">→</span>
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+                            return (
+                              <>
+                                {owned > 0 && cardImage ? (
+                                  <img
+                                    src={cardImage}
+                                    alt={card.onChainName}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : baccaratImagePath ? (
+                                  <img
+                                    src={baccaratImagePath}
+                                    alt={card.onChainName}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-vintage-black flex items-center justify-center">
+                                    <span className="text-gray-700 text-lg">?</span>
+                                  </div>
+                                )}
+                                {/* Foil effect overlay */}
+                                {hasFoil && <div className={`absolute inset-0 ${foilClass} pointer-events-none`}></div>}
+                              </>
+                            );
+                          })()}
 
+                          {owned > 1 && (
+                            <div className="absolute top-0 right-0 bg-vintage-gold text-vintage-black text-[8px] font-bold px-1 rounded-bl">
+                              {owned}x
+                            </div>
+                          )}
+
+                          {owned > 0 && ability && (
+                            <div className={`absolute top-0 left-0 w-2.5 h-2.5 rounded-br text-[5px] flex items-center justify-center font-bold ${
+                              ability.type === "onReveal" ? "bg-green-500 text-white" :
+                              ability.type === "ongoing" ? "bg-blue-500 text-white" :
+                              "bg-red-500 text-white"
+                            }`}>
+                              {ability.type === "onReveal" ? "R" : ability.type === "ongoing" ? "O" : "D"}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Legend */}
+                  <div className="flex justify-center gap-3 text-[10px] text-gray-500 pt-2 mt-2 border-t border-vintage-gold/20">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> Reveal</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> Ongoing</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500"></span> Destroy</span>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* Attack Card Selection Modal (Simplified for Profile) */}
       {showAttackCardSelection && targetOpponent && nfts.length > 0 && (
@@ -917,6 +902,127 @@ export default function ProfilePage() {
                 Cancel
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Album Card Modal */}
+      {selectedAlbumCard && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200] p-4"
+          onClick={() => setSelectedAlbumCard(null)}
+        >
+          <div
+            className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-lg w-full p-6 shadow-[0_0_50px_rgba(255,215,0,0.3)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Card Name & Rarity */}
+            <div className="text-center mb-4">
+              <h2 className={`text-2xl font-bold ${
+                selectedAlbumCard.card.rarity === "Mythic" ? "text-red-500" :
+                selectedAlbumCard.card.rarity === "Legendary" ? "text-yellow-400" :
+                selectedAlbumCard.card.rarity === "Epic" ? "text-purple-400" :
+                selectedAlbumCard.card.rarity === "Rare" ? "text-blue-400" :
+                "text-gray-300"
+              }`}>
+                {selectedAlbumCard.card.onChainName}
+              </h2>
+              <p className="text-sm text-vintage-burnt-gold">
+                {selectedAlbumCard.card.rarity}
+                {selectedAlbumCard.ownedCards.length > 0
+                  ? ` • ${selectedAlbumCard.ownedCards.length}x owned`
+                  : " • Not owned yet"
+                }
+              </p>
+            </div>
+
+            {/* Stacked Cards with Foil Effect OR Baccarat Image for unowned */}
+            <div className="relative flex justify-center mb-4" style={{ height: '280px' }}>
+              {selectedAlbumCard.ownedCards.length > 0 ? (
+                selectedAlbumCard.ownedCards.slice(0, 5).map((ownedCard: any, i: number) => {
+                  const foil = (ownedCard.foil || '').toLowerCase();
+                  const hasFoil = foil && foil !== 'none' && foil !== '';
+                  const foilClass = foil.includes('prize') ? 'prize-foil' : foil.includes('standard') ? 'standard-foil' : '';
+
+                  return (
+                    <div
+                      key={i}
+                      className="absolute w-44 aspect-[2/3] rounded-xl overflow-hidden shadow-2xl transition-all duration-300 hover:z-50 hover:scale-110"
+                      style={{
+                        transform: `rotate(${(i - Math.floor(selectedAlbumCard.ownedCards.length / 2)) * 8}deg) translateX(${(i - Math.floor(selectedAlbumCard.ownedCards.length / 2)) * 20}px)`,
+                        zIndex: i,
+                      }}
+                    >
+                      <img
+                        src={ownedCard.imageUrl || ownedCard.image}
+                        alt={selectedAlbumCard.card.onChainName}
+                        className="w-full h-full object-cover"
+                      />
+                      {hasFoil && <div className={`absolute inset-0 ${foilClass}`}></div>}
+                      {/* Power badge */}
+                      <div className="absolute top-2 left-2 bg-black/80 px-2 py-1 rounded text-vintage-gold font-bold text-sm">
+                        {ownedCard.power}
+                      </div>
+                      {/* Foil badge */}
+                      {hasFoil && (
+                        <div className="absolute top-2 right-2 bg-gradient-to-r from-pink-500 to-purple-500 px-2 py-0.5 rounded text-white text-xs font-bold">
+                          {foil.includes('prize') ? '✨ PRIZE' : '⭐ FOIL'}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                /* Unowned card - show baccarat image with grayscale overlay */
+                <div className="w-44 aspect-[2/3] rounded-xl overflow-hidden shadow-2xl relative">
+                  {selectedAlbumCard.baccaratImagePath ? (
+                    <img
+                      src={selectedAlbumCard.baccaratImagePath}
+                      alt={selectedAlbumCard.card.onChainName}
+                      className="w-full h-full object-cover grayscale"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-vintage-black flex items-center justify-center">
+                      <span className="text-gray-700 text-4xl">?</span>
+                    </div>
+                  )}
+                  {/* Locked overlay */}
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <span className="text-4xl">🔒</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Ability Info */}
+            {selectedAlbumCard.ability && (
+              <div className={`p-3 rounded-xl mb-4 ${
+                selectedAlbumCard.ability.type === "onReveal" ? "bg-green-900/30 border border-green-500/50" :
+                selectedAlbumCard.ability.type === "ongoing" ? "bg-blue-900/30 border border-blue-500/50" :
+                "bg-red-900/30 border border-red-500/50"
+              }`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                    selectedAlbumCard.ability.type === "onReveal" ? "bg-green-500 text-white" :
+                    selectedAlbumCard.ability.type === "ongoing" ? "bg-blue-500 text-white" :
+                    "bg-red-500 text-white"
+                  }`}>
+                    {selectedAlbumCard.ability.type === "onReveal" ? "ON REVEAL" :
+                     selectedAlbumCard.ability.type === "ongoing" ? "ONGOING" : "ON DESTROY"}
+                  </span>
+                  <span className="text-vintage-gold font-bold">{selectedAlbumCard.ability.name}</span>
+                </div>
+                <p className="text-sm text-gray-300">{selectedAlbumCard.ability.description}</p>
+              </div>
+            )}
+
+            {/* Close Button */}
+            <button
+              onClick={() => setSelectedAlbumCard(null)}
+              className="w-full py-3 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold rounded-xl transition-all"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}

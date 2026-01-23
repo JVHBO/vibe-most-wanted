@@ -488,3 +488,91 @@ body > * {
   position: relative;
   z-index: 0;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   FOIL CARD EFFECTS - Holographic rainbow effects for foil cards
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Prize Foil - Strong, aggressive rainbow effect (×15 power) */
+.prize-foil {
+  position: absolute;
+  inset: 0;
+  background:
+    conic-gradient(from 315deg at -30% -30%, violet, blue, cyan, green, yellow, orange, red, violet),
+    linear-gradient(135deg, transparent, rgba(255, 0, 0, .7) 10%, rgba(255, 255, 0, .7) 20%, rgba(0, 255, 0, .7) 30%, rgba(0, 255, 255, .7) 40%, rgba(0, 0, 255, .7) 50%, rgba(255, 0, 255, .6) 60%, transparent 70%);
+  background-size: 100% 100%, 200% 200%;
+  background-position: 0 0, -100% -100%;
+  mix-blend-mode: hard-light;
+  opacity: 0.45;
+  animation: prizeFoilShine 3s linear infinite;
+  pointer-events: none;
+}
+
+.prize-foil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 255, 255, .12) 0, rgba(255, 255, 255, .12) 10px);
+  mix-blend-mode: overlay;
+  opacity: 0.45;
+  animation: prismMove 10s linear infinite;
+  pointer-events: none;
+}
+
+/* Standard Foil - Softer pastel effect (×2.5 power) */
+.standard-foil {
+  position: absolute;
+  inset: 0;
+  background:
+    conic-gradient(from 45deg at -30% -30%, violet, blue, cyan, green, yellow, orange, red, violet),
+    linear-gradient(135deg, transparent, rgba(255, 0, 0, .4) 10%, rgba(255, 255, 0, .4) 20%, rgba(0, 255, 0, .4) 30%, rgba(0, 255, 255, .4) 40%, rgba(0, 0, 255, .4) 50%, rgba(255, 0, 255, .3) 60%, transparent 70%);
+  background-size: 100% 100%, 200% 200%;
+  background-position: 0 0, -100% -100%;
+  mix-blend-mode: hard-light;
+  opacity: 0.25;
+  animation: standardFoilShine 4s linear infinite;
+  pointer-events: none;
+}
+
+.standard-foil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255, 255, 255, .08) 0, rgba(255, 255, 255, .08) 10px);
+  mix-blend-mode: overlay;
+  opacity: 0.3;
+  animation: prismMove 15s linear infinite;
+  pointer-events: none;
+}
+
+/* Foil Keyframe Animations */
+@keyframes prizeFoilShine {
+  0% {
+    background-position: 0 0, -100% -100%;
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    background-position: 0 0, 100% 100%;
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes standardFoilShine {
+  0% {
+    background-position: 0 0, -100% -100%;
+    filter: hue-rotate(0deg);
+  }
+  100% {
+    background-position: 0 0, 100% 100%;
+    filter: hue-rotate(360deg);
+  }
+}
+
+@keyframes prismMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100px 100px;
+  }
+}

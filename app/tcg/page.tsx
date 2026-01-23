@@ -650,7 +650,7 @@ export default function TCGPage() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   // Lobby tab state
-  const [lobbyTab, setLobbyTab] = useState<"play" | "album" | "rules">("play");
+  const [lobbyTab, setLobbyTab] = useState<"play" | "rules">("play");
 
   // Visual effects state
   const [visualEffect, setVisualEffect] = useState<{
@@ -1784,8 +1784,14 @@ export default function TCGPage() {
       text: `CHARMED! 💕 +${charmedEnemy.power}`,
     });
 
-    // Play ability sound
-    playSound("ability");
+    // Play Oiroke no Jutsu sound for Santa charm
+    try {
+      const audio = new Audio("/sounds/oiroke-no-jutsu.mp3");
+      audio.volume = 0.5;
+      audio.play().catch(() => {});
+    } catch {
+      playSound("ability");
+    }
 
     // Clear effect after animation
     setTimeout(() => setVisualEffect(null), 2000);
@@ -2191,16 +2197,6 @@ export default function TCGPage() {
               <span>⚔️</span> Play
             </button>
             <button
-              onClick={() => setLobbyTab("album")}
-              className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
-                lobbyTab === "album"
-                  ? "bg-yellow-500/20 border-2 border-yellow-500 text-yellow-400"
-                  : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600"
-              }`}
-            >
-              <span>📚</span> Album ({totalOwned}/{totalCards})
-            </button>
-            <button
               onClick={() => setLobbyTab("rules")}
               className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
                 lobbyTab === "rules"
@@ -2280,119 +2276,6 @@ export default function TCGPage() {
             </div>
           )}
 
-          {lobbyTab === "album" && (
-            <div className="space-y-4">
-              {/* Album Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-lg font-bold text-white">Card Collection</p>
-                  <p className="text-sm text-gray-400">
-                    {totalOwned}/{totalCards} cards collected ({Math.round(totalOwned / totalCards * 100)}%)
-                  </p>
-                </div>
-                <div className="flex gap-2 text-xs">
-                  <span className="px-2 py-1 bg-red-500/20 border border-red-500/50 rounded text-red-400">Mythic</span>
-                  <span className="px-2 py-1 bg-yellow-500/20 border border-yellow-500/50 rounded text-yellow-400">Legendary</span>
-                  <span className="px-2 py-1 bg-purple-500/20 border border-purple-500/50 rounded text-purple-400">Epic</span>
-                  <span className="px-2 py-1 bg-blue-500/20 border border-blue-500/50 rounded text-blue-400">Rare</span>
-                  <span className="px-2 py-1 bg-gray-500/20 border border-gray-500/50 rounded text-gray-400">Common</span>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-500"
-                  style={{ width: `${(totalOwned / totalCards) * 100}%` }}
-                />
-              </div>
-
-              {/* Card Grid */}
-              <div className="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-9 lg:grid-cols-11 gap-2 max-h-[60vh] overflow-y-auto p-2">
-                {allTcgCards.map((card: any, idx: number) => {
-                  const cardKey = card.baccarat?.toLowerCase() || card.onChainName?.toLowerCase();
-                  const owned = ownedCardCounts[cardKey] || 0;
-                  const ability = tcgAbilities[cardKey];
-
-                  // Get rarity color
-                  const rarityBorder =
-                    card.rarity === "Mythic" ? "border-red-500 shadow-red-500/30" :
-                    card.rarity === "Legendary" ? "border-yellow-500 shadow-yellow-500/30" :
-                    card.rarity === "Epic" ? "border-purple-500 shadow-purple-500/30" :
-                    card.rarity === "Rare" ? "border-blue-500 shadow-blue-500/30" :
-                    "border-gray-600";
-
-                  // Get card image from player's cards if owned, otherwise show placeholder
-                  const ownedCard = playerVbmsCards.find((c: any) => {
-                    const imageUrl = c.imageUrl || c.image || "";
-                    const charName = (c.character || getCharacterFromImage(imageUrl) || c.name || "").toLowerCase();
-                    return charName === cardKey;
-                  });
-                  const cardImage = ownedCard?.imageUrl || ownedCard?.image;
-
-                  return (
-                    <div
-                      key={idx}
-                      className={`relative aspect-[2/3] rounded-lg border-2 overflow-hidden transition-all ${
-                        owned > 0
-                          ? `${rarityBorder} shadow-lg hover:scale-105 cursor-pointer`
-                          : "border-gray-800 opacity-40 grayscale"
-                      }`}
-                      title={`${card.onChainName} (${card.rarity})${owned > 0 ? ` - Owned: ${owned}` : " - Not owned"}`}
-                    >
-                      {/* Card Image or Placeholder */}
-                      {owned > 0 && cardImage ? (
-                        <img
-                          src={cardImage}
-                          alt={card.onChainName}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                          <span className="text-gray-700 text-2xl">?</span>
-                        </div>
-                      )}
-
-                      {/* Owned Count Badge */}
-                      {owned > 1 && (
-                        <div className="absolute top-0.5 right-0.5 bg-yellow-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg">
-                          {owned}x
-                        </div>
-                      )}
-
-                      {/* Card Name (only if owned) */}
-                      {owned > 0 && (
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-1">
-                          <p className="text-[8px] text-white truncate text-center font-bold">
-                            {card.onChainName}
-                          </p>
-                        </div>
-                      )}
-
-                      {/* Ability Indicator */}
-                      {owned > 0 && ability && (
-                        <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full text-[6px] flex items-center justify-center font-bold ${
-                          ability.type === "onReveal" ? "bg-green-500 text-white" :
-                          ability.type === "ongoing" ? "bg-blue-500 text-white" :
-                          "bg-red-500 text-white"
-                        }`}>
-                          {ability.type === "onReveal" ? "R" : ability.type === "ongoing" ? "O" : "D"}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Legend */}
-              <div className="flex justify-center gap-4 text-xs text-gray-500 pt-2 border-t border-gray-800">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-green-500"></span> On Reveal</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500"></span> Ongoing</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500"></span> On Destroy</span>
-              </div>
-            </div>
-          )}
-
           {lobbyTab === "rules" && (
             <div className="space-y-4">
               <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
@@ -2425,10 +2308,9 @@ export default function TCGPage() {
               <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
                 <h3 className="text-lg font-bold text-blue-400 mb-3">🎴 Foil Cards</h3>
                 <ul className="text-gray-300 text-sm space-y-2">
-                  <li className="flex items-start gap-2"><span className="text-blue-500">•</span> <strong>Holo:</strong> +10% power bonus</li>
-                  <li className="flex items-start gap-2"><span className="text-blue-500">•</span> <strong>Gold:</strong> +25% power bonus</li>
-                  <li className="flex items-start gap-2"><span className="text-blue-500">•</span> <strong>Chrome:</strong> +50% power bonus</li>
-                  <li className="flex items-start gap-2"><span className="text-blue-500">•</span> <strong>Diamond:</strong> +100% power bonus</li>
+                  <li className="flex items-start gap-2"><span className="text-pink-500">✨</span> <strong>Prize Foil:</strong> ×15 power multiplier</li>
+                  <li className="flex items-start gap-2"><span className="text-purple-500">⭐</span> <strong>Standard Foil:</strong> ×2.5 power multiplier</li>
+                  <li className="flex items-start gap-2"><span className="text-gray-500">•</span> <strong>No Foil:</strong> ×1 power (base)</li>
                 </ul>
               </div>
             </div>
