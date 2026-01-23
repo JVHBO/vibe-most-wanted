@@ -107,7 +107,6 @@ const LANE_NAMES = [
   { name: "Taxman's Office", effect: "taxHigh", value: 20, description: "Cards 50+ power: -20" },
 
   // ═══ SPECIAL VICTORY LANES ═══
-  { name: "ATH Peak", effect: "highestWins", description: "Only highest card counts!" },
   { name: "Bridge", effect: "noVictory", description: "Lane doesn't count" },
   { name: "Double Stakes", effect: "doubleVictory", description: "Win = 2 lane victories!" },
 ];
