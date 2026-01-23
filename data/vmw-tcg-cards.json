@@ -1,0 +1,111 @@
+{
+  "description": "VMW TCG Card Data - Official data from Wield API",
+  "totalCards": 53,
+  "apiEndpoint": "https://build.wield.xyz/vibe/boosterbox/metadata?contractAddress=0xf14c1dc8ce5fe65413379f76c43fa1460c31e728",
+  "apiKey": "YUEPI-G3KJ7-5FCXV-ANSPV-BZ3DA",
+  "lastUpdated": "2026-01-21",
+  "cards": [
+    { "onChainName": "neymar", "baccarat": "neymar", "suit": "???", "rank": "???", "rarity": "Mythic", "minted": false, "tokenId": null, "crime": "Farcaster's new king saved everyone from Goofy Romero's kingdom" },
+
+    { "onChainName": "anon", "baccarat": "anon", "suit": "hearts", "rank": "A", "rarity": "Mythic", "minted": false, "tokenId": null },
+    { "onChainName": "Linda Xied", "baccarat": "linda xied", "suit": "diamonds", "rank": "A", "rarity": "Mythic", "minted": false, "tokenId": null },
+    { "onChainName": "vitalik jumpterin", "baccarat": "vitalik jumpterin", "suit": "clubs", "rank": "A", "rarity": "Mythic", "minted": false, "tokenId": null },
+    { "onChainName": "jesse", "baccarat": "jesse", "suit": "spades", "rank": "A", "rarity": "Mythic", "minted": false, "tokenId": null },
+
+    { "onChainName": "rachel", "baccarat": "rachel", "suit": "hearts", "rank": "2", "rarity": "Common", "minted": true, "tokenId": 8048 },
+    { "onChainName": "claude", "baccarat": "claude", "suit": "diamonds", "rank": "2", "rarity": "Common", "minted": true, "tokenId": 14129 },
+    { "onChainName": "gozaru", "baccarat": "gozaru", "suit": "clubs", "rank": "2", "rarity": "Common", "minted": true, "tokenId": 8270 },
+    { "onChainName": "ink", "baccarat": "ink", "suit": "spades", "rank": "2", "rarity": "Common", "minted": true, "tokenId": 5265 },
+
+    { "onChainName": "casa", "baccarat": "casa", "suit": "hearts", "rank": "3", "rarity": "Common", "minted": true, "tokenId": 8294 },
+    { "onChainName": "groko", "baccarat": "groko", "suit": "diamonds", "rank": "3", "rarity": "Common", "minted": true, "tokenId": 14470 },
+    { "onChainName": "rizkybegitu", "baccarat": "rizkybegitu", "suit": "clubs", "rank": "3", "rarity": "Common", "minted": true, "tokenId": 8312 },
+    { "onChainName": "thosmur", "baccarat": "thosmur", "suit": "spades", "rank": "3", "rarity": "Common", "minted": true, "tokenId": 8282 },
+
+    { "onChainName": "brainpasta", "baccarat": "brainpasta", "suit": "hearts", "rank": "4", "rarity": "Common", "minted": true, "tokenId": 8051 },
+    { "onChainName": "gaypt", "baccarat": "gaypt", "suit": "diamonds", "rank": "4", "rarity": "Common", "minted": true, "tokenId": 13238 },
+    { "onChainName": "dan romero", "baccarat": "dan romero", "suit": "clubs", "rank": "4", "rarity": "Common", "minted": true, "tokenId": 4150 },
+    { "onChainName": "morlacos", "baccarat": "morlacos", "suit": "spades", "rank": "4", "rarity": "Common", "minted": true, "tokenId": 4145 },
+
+    { "onChainName": "landmine", "baccarat": "landmine", "suit": "hearts", "rank": "5", "rarity": "Common", "minted": true, "tokenId": 8291 },
+    { "onChainName": "linux", "baccarat": "linux", "suit": "diamonds", "rank": "5", "rarity": "Common", "minted": true, "tokenId": 14132 },
+    { "onChainName": "joonx", "baccarat": "joonx", "suit": "clubs", "rank": "5", "rarity": "Common", "minted": true, "tokenId": 8258 },
+    { "onChainName": "filthy", "baccarat": "don filthy", "suit": "spades", "rank": "5", "rarity": "Common", "minted": true, "tokenId": 8261 },
+
+    { "onChainName": "pooster", "baccarat": "pooster", "suit": "hearts", "rank": "6", "rarity": "Common", "minted": true, "tokenId": 5260 },
+    { "onChainName": "john porn", "baccarat": "john porn", "suit": "diamonds", "rank": "6", "rarity": "Common", "minted": true, "tokenId": 13418 },
+    { "onChainName": "scum", "baccarat": "scum", "suit": "clubs", "rank": "6", "rarity": "Common", "minted": true, "tokenId": 6865 },
+    { "onChainName": "vlad", "baccarat": "vlady", "suit": "spades", "rank": "6", "rarity": "Common", "minted": true, "tokenId": 8279 },
+
+    { "onChainName": "smolemaru", "baccarat": "smolemaru", "suit": "hearts", "rank": "7", "rarity": "Rare", "minted": true, "tokenId": 8351 },
+    { "onChainName": "ventra", "baccarat": "ventra", "suit": "diamonds", "rank": "7", "rarity": "Rare", "minted": true, "tokenId": 14264 },
+    { "onChainName": "bradymck", "baccarat": "bradymck", "suit": "clubs", "rank": "7", "rarity": "Rare", "minted": true, "tokenId": 8267 },
+    { "onChainName": "shill", "baccarat": "shills", "suit": "spades", "rank": "7", "rarity": "Rare", "minted": true, "tokenId": 8498 },
+
+    { "onChainName": "beto", "baccarat": "betobutter", "suit": "hearts", "rank": "8", "rarity": "Rare", "minted": true, "tokenId": 8522 },
+    { "onChainName": "qrcodo", "baccarat": "qrcodo", "suit": "diamonds", "rank": "8", "rarity": "Rare", "minted": true, "tokenId": 14102 },
+    { "onChainName": "loground", "baccarat": "loground", "suit": "clubs", "rank": "8", "rarity": "Rare", "minted": true, "tokenId": 9080 },
+    { "onChainName": "melted", "baccarat": "melted", "suit": "spades", "rank": "8", "rarity": "Rare", "minted": true, "tokenId": 4140 },
+
+    { "onChainName": "sartocrates", "baccarat": "sartocrates", "suit": "hearts", "rank": "9", "rarity": "Epic", "minted": true, "tokenId": 8318 },
+    { "onChainName": "0xdeployer", "baccarat": "0xdeployer", "suit": "diamonds", "rank": "9", "rarity": "Epic", "minted": false, "tokenId": null },
+    { "onChainName": "lombra", "baccarat": "lombra jr", "suit": "clubs", "rank": "9", "rarity": "Epic", "minted": true, "tokenId": 8519 },
+    { "onChainName": "vibe", "baccarat": "vibe intern", "suit": "spades", "rank": "9", "rarity": "Epic", "minted": true, "tokenId": 8327 },
+
+    { "onChainName": "jack", "baccarat": "jack the sniper", "suit": "hearts", "rank": "10", "rarity": "Epic", "minted": true, "tokenId": 9473 },
+    { "onChainName": "Beeper", "baccarat": "beeper", "suit": "diamonds", "rank": "10", "rarity": "Epic", "minted": true, "tokenId": 13382 },
+    { "onChainName": "horsefacts", "baccarat": "horsefarts", "suit": "clubs", "rank": "10", "rarity": "Epic", "minted": true, "tokenId": 8513 },
+    { "onChainName": "jc", "baccarat": "jc denton", "suit": "spades", "rank": "10", "rarity": "Epic", "minted": true, "tokenId": 8276 },
+
+    { "onChainName": "zurkchad", "baccarat": "zurkchad", "suit": "hearts", "rank": "J", "rarity": "Epic", "minted": true, "tokenId": 8306 },
+    { "onChainName": "proxy", "baccarat": "slaterg", "suit": "diamonds", "rank": "J", "rarity": "Epic", "minted": true, "tokenId": 14336 },
+    { "onChainName": "brian armstrong", "baccarat": "brian armstrong", "suit": "clubs", "rank": "J", "rarity": "Epic", "minted": true, "tokenId": 11648 },
+    { "onChainName": "nftkid", "baccarat": "nftkid", "suit": "spades", "rank": "J", "rarity": "Epic", "minted": true, "tokenId": 9467 },
+
+    { "onChainName": "antonio", "baccarat": "antonio", "suit": "hearts", "rank": "Q", "rarity": "Legendary", "minted": true, "tokenId": 11243 },
+    { "onChainName": "Goofy Romero", "baccarat": "goofy romero", "suit": "diamonds", "rank": "Q", "rarity": "Legendary", "minted": true, "tokenId": 13384 },
+    { "onChainName": "tukka", "baccarat": "tukka", "suit": "clubs", "rank": "Q", "rarity": "Legendary", "minted": true, "tokenId": 12563 },
+    { "onChainName": "chilli", "baccarat": "chilipepper", "suit": "spades", "rank": "Q", "rarity": "Legendary", "minted": true, "tokenId": 9454 },
+
+    { "onChainName": "miguel", "baccarat": "miguel", "suit": "hearts", "rank": "K", "rarity": "Legendary", "minted": true, "tokenId": 10315 },
+    { "onChainName": "naughty santa", "baccarat": "naughty santa", "suit": "diamonds", "rank": "K", "rarity": "Legendary", "minted": false, "tokenId": null },
+    { "onChainName": "ye", "baccarat": "ye", "suit": "clubs", "rank": "K", "rarity": "Legendary", "minted": true, "tokenId": 13542 },
+    { "onChainName": "nicogay", "baccarat": "nico", "suit": "spades", "rank": "K", "rarity": "Legendary", "minted": true, "tokenId": 10869 }
+  ],
+  "aliases": {
+    "Linda Xied": "linda xied",
+    "chilli": "chilipepper",
+    "Goofy Romero": "goofy romero",
+    "Beeper": "beeper",
+    "filthy": "don filthy",
+    "vlad": "vlady",
+    "shill": "shills",
+    "beto": "betobutter",
+    "proxy": "slaterg",
+    "lombra": "lombra jr",
+    "vibe": "vibe intern",
+    "jack": "jack the sniper",
+    "horsefacts": "horsefarts",
+    "jc": "jc denton",
+    "nicogay": "nico"
+  },
+  "rarityDistribution": {
+    "Mythic": { "count": 5, "cards": ["neymar", "anon", "Linda Xied", "vitalik jumpterin", "jesse"] },
+    "Legendary": { "count": 8, "cards": ["antonio", "Goofy Romero", "tukka", "chilli", "miguel", "naughty santa", "ye", "nicogay"] },
+    "Epic": { "count": 12, "cards": ["sartocrates", "0xdeployer", "lombra", "vibe", "jack", "Beeper", "horsefacts", "jc", "zurkchad", "proxy", "brian armstrong", "nftkid"] },
+    "Rare": { "count": 8, "cards": ["smolemaru", "ventra", "bradymck", "shill", "beto", "qrcodo", "loground", "melted"] },
+    "Common": { "count": 20, "cards": ["rachel", "claude", "gozaru", "ink", "casa", "groko", "rizkybegitu", "thosmur", "brainpasta", "gaypt", "dan romero", "morlacos", "landmine", "linux", "joonx", "filthy", "pooster", "john porn", "scum", "vlad"] }
+  },
+  "notes": [
+    "Data source: Official Wield API (all-metadata endpoint)",
+    "neymar is the 53rd card (NEW Mythic) - suit/rank TBD",
+    "Aces (A) = Mythic rarity",
+    "Kings (K) = Legendary rarity",
+    "Queens (Q) = Legendary rarity",
+    "Jacks (J) = Epic rarity",
+    "10s = Epic rarity",
+    "9s = Epic rarity",
+    "7-8 = Rare rarity",
+    "2-6 = Common rarity"
+  ]
+}

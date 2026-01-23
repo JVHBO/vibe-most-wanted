@@ -4,12 +4,18 @@ import Link from "next/link";
 import { AudioManager } from "@/lib/audio-manager";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-type GameMode = 'poker-cpu' | 'battle-ai' | 'mecha' | 'raid' | 'baccarat';
+type GameMode = 'poker-cpu' | 'battle-ai' | 'mecha' | 'raid' | 'baccarat' | 'tcg';
+
+// Wallets allowed to access TCG (testing phase)
+const TCG_ALLOWED_WALLETS = [
+  "0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52", // zoboo
+];
 
 interface GameGridProps {
   soundEnabled: boolean;
   disabled?: boolean;
   onSelect: (mode: GameMode) => void;
+  userAddress?: string; // For conditional TCG access
 }
 
 // SVG Icons
@@ -62,8 +68,15 @@ const CasinoIcon = () => (
   </svg>
 );
 
+// Cards icon for TCG
+const CardsIcon = () => (
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M21.47 4.35l-1.34-.56v9.03l2.43-5.86c.41-1.02-.06-2.19-1.09-2.61m-19.5 3.7L6.93 20a2.02 2.02 0 001.81 1.26c.26 0 .53-.05.79-.16l7.37-3.05c.75-.31 1.21-1.05 1.23-1.79.01-.26-.04-.55-.13-.81L13 3.5a1.954 1.954 0 00-1.81-1.25c-.26 0-.52.06-.77.15L3.06 5.45a1.994 1.994 0 00-1.09 2.6m16.15-3.8a2 2 0 00-2-2h-1.45l3.45 8.34" />
+  </svg>
+);
+
 // Game mode configurations with translation keys
-const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string; fullWidth?: boolean; comingSoon?: boolean }[] = [
+const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string; fullWidth?: boolean; comingSoon?: boolean; restricted?: boolean }[] = [
   {
     id: 'poker-cpu',
     icon: <SpadeIcon />,
@@ -110,13 +123,24 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sub
     cards: null,
     iconColor: 'text-emerald-400',
     accentColor: 'hover:border-emerald-400/50',
-    fullWidth: true,
     isLink: true,
     href: '/baccarat',
   },
+  {
+    id: 'tcg',
+    icon: <CardsIcon />,
+    label: 'Vibe Clash',
+    sublabel: 'TCG Mode',
+    cards: 15,
+    iconColor: 'text-orange-400',
+    accentColor: 'hover:border-orange-400/50',
+    isLink: true,
+    href: '/tcg',
+    restricted: true, // Only for allowed wallets
+  },
 ];
 
-export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
+export function GameGrid({ soundEnabled, disabled, onSelect, userAddress }: GameGridProps) {
   const { t } = useLanguage();
 
   const handleClick = (mode: GameMode) => {
@@ -125,9 +149,14 @@ export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
     onSelect(mode);
   };
 
+  // Check TCG access
+  const isAllowedTCG = userAddress && TCG_ALLOWED_WALLETS.includes(userAddress.toLowerCase());
+
   return (
     <div className="grid grid-cols-2 gap-1.5 px-1">
       {gameModeConfigs.map((mode) => {
+        // Show "SOON" for restricted modes if user doesn't have access
+        const showAsSoon = mode.restricted && !isAllowedTCG;
         const buttonContent = (
           <>
             <div className={`${mode.iconColor} scale-90`}>{mode.icon}</div>
@@ -149,21 +178,23 @@ export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
           </>
         );
 
-        const isDisabled = disabled || mode.comingSoon;
+        const isSoon = mode.comingSoon || showAsSoon;
+        const isDisabled = disabled || isSoon;
         const buttonClasses = `
           flex flex-col items-center justify-center gap-0.5
           py-1.5 px-1 rounded-lg
           bg-vintage-charcoal/80
           border border-vintage-gold/20
-          ${mode.comingSoon ? '' : mode.accentColor}
-          ${mode.comingSoon ? '' : 'hover:bg-vintage-charcoal'}
+          ${isSoon ? '' : mode.accentColor}
+          ${isSoon ? '' : 'hover:bg-vintage-charcoal'}
           transition-all duration-200
           ${isDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.97]'}
           ${mode.fullWidth ? 'col-span-2' : ''}
           relative
         `;
 
-        if (mode.isLink && mode.href) {
+        // For restricted modes that user can access, still use Link
+        if (mode.isLink && mode.href && !showAsSoon) {
           return (
             <Link
               key={mode.id}
@@ -179,12 +210,12 @@ export function GameGrid({ soundEnabled, disabled, onSelect }: GameGridProps) {
         return (
           <button
             key={mode.id}
-            onClick={() => !mode.comingSoon && handleClick(mode.id)}
+            onClick={() => !isSoon && handleClick(mode.id)}
             disabled={isDisabled}
             className={buttonClasses}
           >
             {buttonContent}
-            {mode.comingSoon && (
+            {isSoon && (
               <span className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg">
                 <span className="text-vintage-gold font-display font-bold text-xs tracking-wider">SOON</span>
               </span>

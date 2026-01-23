@@ -6,7 +6,7 @@ Modo TCG estilo **Marvel Snap** - simples, intuitivo e divertido.
 
 ---
 
-## 🎯 DECISÕES TOMADAS (22/01/2026)
+## 🎯 DECISÕES TOMADAS (22/01/2026 - Atualizado)
 
 ### Estilo de Jogo: Marvel Snap
 - ✅ **Simultâneo** - Ambos jogadores escolhem cartas ao mesmo tempo
@@ -14,57 +14,124 @@ Modo TCG estilo **Marvel Snap** - simples, intuitivo e divertido.
 - ✅ **Tempo limite** - 20 segundos por turno
 - ✅ **Reveal simultâneo** - Cartas aparecem ao mesmo tempo
 - ✅ **Vitória** - Dominar 2/3 lanes no final
+- ✅ **6 Turnos** - Energia 1→2→3→4→5→6
 - ✅ **Sem dado** - Power puro decide (simples)
 - ✅ **Sem vantagem de tipo** - Naipes não dão bônus (simples)
 
-### Sistema de Queima 🔥
-- ✅ **Queimar carta = +1 energia** naquele turno
-- ✅ **Nothing cards** são ideais pra queimar (combustível)
-- ✅ **VBMS cards** são os fighters principais
-
 ### Composição do Deck
-- ✅ **12 cartas** total
-- ✅ **Mínimo 6 VBMS** (NFT)
-- ✅ **Até 6 Nothing** (opcional, preenche o resto)
+- ✅ **15 cartas** total
+- ✅ **Mínimo 8 VBMS** (NFT)
+- ✅ **Máximo 7 Nothing** (cartas de pack grátis)
+
+### Sistema de Draw
+- ✅ **Mão inicial**: 3 cartas (aleatório do deck)
+- ✅ **Draw por turno**: 1 carta
+- ✅ **Turno 1**: VBMS garantido no draw
+- ✅ **Turnos 2-6**: Aleatório do deck
+- ✅ **Total visto**: 9 de 15 cartas (60%)
+
+### Sistema de Sacrifício Nothing 🔥
+
+**Da Mão:**
+| Ação | Efeito |
+|------|--------|
+| Sacrificar Nothing da mão | Descarta e compra outra carta (cycle) |
+
+**Do Lane:**
+| Ação | Efeito |
+|------|--------|
+| Sacrificar Nothing do lane | Remove carta e dá buff em outra carta |
+
+### Buff por Sacrifício do Lane
+
+**Base (por rarity da Nothing sacrificada):**
+| Rarity | Buff base |
+|--------|-----------|
+| Common | +power da carta |
+| Rare | +power da carta |
+| Epic | +power da carta |
+| Legendary | +power da carta |
+
+**Multiplicador por Foil:**
+| Foil | Multiplicador | Extra |
+|------|---------------|-------|
+| None | ×1 | - |
+| Standard | ×1.5 | - |
+| Prize | ×2 | + efeito especial |
+
+**Efeitos Especiais Prize Foil (por rarity):**
+| Rarity + Prize | Efeito Especial |
+|----------------|-----------------|
+| Common Prize | Carta buffada fica protegida 1 turno |
+| Rare Prize | Compra 1 carta extra |
+| Epic Prize | Buff espalha pro lane inteiro |
+| Legendary Prize | Copia habilidade de VBMS adjacente |
+
+### Diferença VBMS vs Nothing
+
+| Aspecto | VBMS | Nothing |
+|---------|------|---------|
+| **Power** | 100% | 50% |
+| **Habilidades** | Únicas por personagem | Não tem |
+| **Sacrifício** | Não pode | Pode (mão ou lane) |
+| **Valor** | NFT real | Grátis de packs |
+| **Mínimo no deck** | 8 | 0 |
+| **Máximo no deck** | 15 | 7 |
 
 ### Fluxo do Turno
-1. Compra 1 carta
-2. 20 seg pra colocar cartas nos lanes (ou queimar)
-3. Reveal simultâneo
-4. On Reveal ativa (perdedor primeiro, esquerda→direita)
-5. Próximo turno
+```
+1. Fase Draw: Compra 1 carta (T1 = VBMS garantido)
+2. Fase Action (20 seg):
+   - Jogar cartas nos lanes
+   - Sacrificar Nothing da mão (cycle)
+   - Sacrificar Nothing do lane (buff)
+3. Fase Reveal: Cartas aparecem simultaneamente
+4. Fase Resolution: Calcular power dos lanes
+5. Próximo turno (ou fim se turno 6)
+```
+
+### Fim do Jogo
+- Após turno 6, compara power total em cada lane
+- Quem dominar 2/3 lanes vence
+- Empate em lane = ninguém domina aquele lane
 
 ---
 
-## ❓ DECISÕES PENDENTES (ver amanhã)
+## 📊 Schema Convex (Implementado)
 
-### Energia e Turnos
-**Problema**: Maioria dos players tem só Common/Rare/Epic (custo 1-3).
-Turnos 5-6 sobra energia sem uso.
+### Tabelas
+- `tcgMatches` - Partidas em andamento
+- `tcgDecks` - Decks salvos dos jogadores
+- `tcgHistory` - Histórico de partidas
 
-**Opções a decidir:**
+### Status do Match
+```
+waiting → deck-select → in-progress → finished
+                                   → cancelled
+```
 
-| Opção | Descrição |
-|-------|-----------|
-| **A: 4 turnos** | Energia 1→2→3→4, jogo mais rápido |
-| **B: Nothing = 0** | Nothing custa 0 energia, 50% power, preenche lanes |
-| **C: Custos menores** | Common=1, Rare=1-2, Epic=2-3, Leg=3-4, Mythic=4-5 |
+---
 
-### Custo das Cartas (a definir)
-| Rarity | Custo atual | Opção C |
-|--------|-------------|---------|
-| Common | 1 | 1 |
-| Rare | 2 | 1-2 |
-| Epic | 3-4 | 2-3 |
-| Legendary | 5 | 3-4 |
-| Mythic | 6 | 4-5 |
+## ❓ DECISÕES PENDENTES
 
-### Power do Nothing
-- 50% do power normal? 70%? Definir.
+### Custo de Energia por Rarity
+| Rarity | Custo sugerido |
+|--------|----------------|
+| Common | 1 |
+| Rare | 2 |
+| Epic | 3 |
+| Legendary | 4-5 |
+| Mythic | 6 |
 
-### Habilidades
-- Cada personagem tem habilidade única? Ou por raridade?
-- Lista de 40+ habilidades a criar
+### Habilidades VBMS
+- Cada personagem tem habilidade única?
+- Ou habilidades por raridade?
+- Lista de 53 habilidades a criar
+
+### Economia
+- Entry fee pra jogar?
+- Rewards pro vencedor?
+- Ranking/Leaderboard TCG?
 
 ---
 
