@@ -3509,43 +3509,80 @@ export default function TCGPage() {
             {gs.lanes.map((lane: any, laneIndex: number) => {
               const status = getLaneStatus(lane);
               const activeCombos = getActiveCombosInLane(laneIndex);
-              const laneBg = status === "winning" ? "from-green-900/40 to-green-950/60" :
-                            status === "losing" ? "from-red-900/40 to-red-950/60" :
-                            "from-purple-900/30 to-indigo-950/50";
-              const laneBorder = status === "winning" ? "border-green-500 shadow-green-500/30" :
-                                status === "losing" ? "border-red-500 shadow-red-500/30" :
-                                "border-cyan-500/50 shadow-cyan-500/20";
+
+              // Lane effect type for theming
+              const effectType =
+                lane.effect?.includes("buff") && !lane.effect?.includes("debuff") ? "buff" :
+                lane.effect?.includes("debuff") ? "debuff" :
+                lane.effect === "gamble" || lane.effect === "swapSides" || lane.effect === "reverseOrder" ? "chaos" :
+                lane.effect === "highestWins" || lane.effect === "noVictory" ? "special" :
+                lane.effect === "doubleLegendary" || lane.effect?.includes("Foil") || lane.effect?.includes("VibeFID") ? "rarity" :
+                "neutral";
+
+              // Background based on effect type AND win status
+              const effectBgBase = {
+                buff: "from-green-900/30 to-emerald-950/50",
+                debuff: "from-red-900/30 to-rose-950/50",
+                chaos: "from-purple-900/40 to-fuchsia-950/50",
+                special: "from-yellow-900/30 to-amber-950/50",
+                rarity: "from-cyan-900/30 to-blue-950/50",
+                neutral: "from-gray-800/30 to-slate-950/50",
+              }[effectType];
+
+              const laneBg = status === "winning" ? "from-green-800/50 to-green-950/70" :
+                            status === "losing" ? "from-red-800/50 to-red-950/70" :
+                            effectBgBase;
+
+              const laneBorder = status === "winning" ? "border-green-400 shadow-green-500/40" :
+                                status === "losing" ? "border-red-400 shadow-red-500/40" :
+                                effectType === "buff" ? "border-green-600/50 shadow-green-500/20" :
+                                effectType === "debuff" ? "border-red-600/50 shadow-red-500/20" :
+                                effectType === "chaos" ? "border-purple-500/50 shadow-purple-500/20" :
+                                effectType === "special" ? "border-yellow-500/50 shadow-yellow-500/20" :
+                                effectType === "rarity" ? "border-cyan-500/50 shadow-cyan-500/20" :
+                                "border-gray-600/50";
+
+              // Effect badge color
+              const effectBadgeClass = {
+                buff: "bg-green-600/80 text-green-100 border-green-400",
+                debuff: "bg-red-600/80 text-red-100 border-red-400",
+                chaos: "bg-purple-600/80 text-purple-100 border-purple-400",
+                special: "bg-yellow-600/80 text-yellow-100 border-yellow-400",
+                rarity: "bg-cyan-600/80 text-cyan-100 border-cyan-400",
+                neutral: "bg-gray-600/80 text-gray-200 border-gray-400",
+              }[effectType];
 
               return (
                 <div
                   key={lane.laneId}
-                  className={`flex flex-col w-[32%] h-full rounded-xl border-2 bg-gradient-to-b ${laneBg} ${laneBorder} shadow-lg overflow-hidden`}
+                  className={`flex flex-col w-[32%] h-full rounded-xl border-2 bg-gradient-to-b ${laneBg} ${laneBorder} shadow-lg overflow-hidden transition-all`}
                 >
                   {/* Lane Title Card */}
-                  <div className={`relative mx-auto -mt-1 w-[90%] py-2 px-2 rounded-b-xl bg-gradient-to-b from-indigo-800 to-indigo-950 border-2 border-t-0 ${
-                    status === "winning" ? "border-green-500" : status === "losing" ? "border-red-500" : "border-cyan-500/50"
+                  <div className={`relative mx-auto -mt-1 w-[95%] py-1.5 px-2 rounded-b-xl bg-gradient-to-b from-gray-900/95 to-black/95 border-2 border-t-0 ${
+                    status === "winning" ? "border-green-400" : status === "losing" ? "border-red-400" : "border-gray-600"
                   }`}>
+                    {/* Lane name + emoji */}
                     <div className="flex items-center justify-center gap-1">
-                      <span className="text-base">{lane.emoji || "🎯"}</span>
-                      <span className="text-[10px] font-bold text-white truncate">{lane.name || `Lane ${laneIndex + 1}`}</span>
+                      <span className="text-lg">{lane.emoji || "🎯"}</span>
+                      <span className="text-[9px] font-bold text-white truncate max-w-[60px]">{lane.name || `Lane ${laneIndex + 1}`}</span>
                     </div>
-                    {/* Lane Effect Description */}
+                    {/* Lane Effect Badge - More prominent */}
                     {lane.description && lane.effect !== "noEffect" && (
-                      <div className={`text-center mt-0.5 px-1 py-0.5 rounded text-[7px] font-medium ${
-                        lane.effect?.includes("buff") || lane.effect?.includes("gain") ? "bg-green-900/50 text-green-300" :
-                        lane.effect?.includes("debuff") || lane.effect?.includes("destroy") ? "bg-red-900/50 text-red-300" :
-                        lane.effect?.includes("swap") || lane.effect?.includes("gamble") || lane.effect?.includes("random") ? "bg-purple-900/50 text-purple-300" :
-                        "bg-cyan-900/50 text-cyan-300"
-                      }`}>
+                      <div className={`text-center mt-1 px-2 py-1 rounded-lg text-[8px] font-bold border ${effectBadgeClass}`}>
                         {lane.description}
                       </div>
                     )}
                     {/* Score badges */}
-                    <div className="flex items-center justify-between mt-1">
-                      <div className={`px-2 py-0.5 rounded text-xs font-bold ${status === "losing" ? "bg-red-600 text-white" : "bg-gray-700 text-gray-300"}`}>
+                    <div className="flex items-center justify-between mt-1.5 gap-1">
+                      <div className={`flex-1 text-center px-1 py-0.5 rounded text-xs font-bold ${
+                        status === "losing" ? "bg-red-500 text-white animate-pulse" : "bg-gray-800 text-gray-400"
+                      }`}>
                         {lane.cpuPower}
                       </div>
-                      <div className={`px-2 py-0.5 rounded text-xs font-bold ${status === "winning" ? "bg-green-600 text-white" : "bg-gray-700 text-gray-300"}`}>
+                      <span className="text-[8px] text-gray-500">vs</span>
+                      <div className={`flex-1 text-center px-1 py-0.5 rounded text-xs font-bold ${
+                        status === "winning" ? "bg-green-500 text-white animate-pulse" : "bg-gray-800 text-gray-400"
+                      }`}>
                         {lane.playerPower}
                       </div>
                     </div>
