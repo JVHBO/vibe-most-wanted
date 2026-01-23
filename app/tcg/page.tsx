@@ -1150,25 +1150,24 @@ export default function TCGPage() {
   const startTestMode = () => {
     // Create TEST cards with special abilities
     const testCards: DeckCard[] = [
-      // Player gets Landmine and Santa to test their special buttons
-      { id: "test-landmine", tokenId: 0, name: "landmine", collection: "vibe", power: 50, rarity: "Common" },
-      { id: "test-santa", tokenId: 0, name: "naughty santa", collection: "vibe", power: 80, rarity: "Legendary" },
-      { id: "test-goofy", tokenId: 0, name: "goofy romero", collection: "vibe", power: 100, rarity: "Legendary" },
-      { id: "test-ye", tokenId: 0, name: "ye", collection: "vibe", power: 90, rarity: "Legendary" },
-      { id: "test-neymar", tokenId: 0, name: "neymar", collection: "vibe", power: 150, rarity: "Mythic" },
-      { id: "test-vitalik", tokenId: 0, name: "vitalik jumpterin", collection: "vibe", power: 120, rarity: "Mythic" },
-      { id: "test-john", tokenId: 0, name: "john porn", collection: "vibe", power: 40, rarity: "Common" },
-      { id: "test-thosmur", tokenId: 0, name: "thosmur", collection: "vibe", power: 35, rarity: "Common" },
+      { type: "vbms", cardId: "test-landmine", name: "landmine", collection: "vibe", power: 50, rarity: "Common", imageUrl: "" },
+      { type: "vbms", cardId: "test-santa", name: "naughty santa", collection: "vibe", power: 80, rarity: "Legendary", imageUrl: "" },
+      { type: "vbms", cardId: "test-goofy", name: "goofy romero", collection: "vibe", power: 100, rarity: "Legendary", imageUrl: "" },
+      { type: "vbms", cardId: "test-ye", name: "ye", collection: "vibe", power: 90, rarity: "Legendary", imageUrl: "" },
+      { type: "vbms", cardId: "test-neymar", name: "neymar", collection: "vibe", power: 150, rarity: "Mythic", imageUrl: "" },
+      { type: "vbms", cardId: "test-vitalik", name: "vitalik jumpterin", collection: "vibe", power: 120, rarity: "Mythic", imageUrl: "" },
+      { type: "vbms", cardId: "test-john", name: "john porn", collection: "vibe", power: 40, rarity: "Common", imageUrl: "" },
+      { type: "vbms", cardId: "test-thosmur", name: "thosmur", collection: "vibe", power: 35, rarity: "Common", imageUrl: "" },
     ];
 
     // CPU gets decent cards so there's something to steal/destroy
     const cpuTestCards: DeckCard[] = [
-      { id: "cpu-test-1", tokenId: 0, name: "claude", collection: "vibe", power: 60, rarity: "Common" },
-      { id: "cpu-test-2", tokenId: 0, name: "dan romero", collection: "vibe", power: 50, rarity: "Common" },
-      { id: "cpu-test-3", tokenId: 0, name: "jesse", collection: "vibe", power: 100, rarity: "Mythic" },
-      { id: "cpu-test-4", tokenId: 0, name: "miguel", collection: "vibe", power: 90, rarity: "Legendary" },
-      { id: "cpu-test-5", tokenId: 0, name: "anon", collection: "vibe", power: 120, rarity: "Mythic" },
-      { id: "cpu-test-6", tokenId: 0, name: "beeper", collection: "vibe", power: 70, rarity: "Epic" },
+      { type: "vbms", cardId: "cpu-test-1", name: "claude", collection: "vibe", power: 60, rarity: "Common", imageUrl: "" },
+      { type: "vbms", cardId: "cpu-test-2", name: "dan romero", collection: "vibe", power: 50, rarity: "Common", imageUrl: "" },
+      { type: "vbms", cardId: "cpu-test-3", name: "jesse", collection: "vibe", power: 100, rarity: "Mythic", imageUrl: "" },
+      { type: "vbms", cardId: "cpu-test-4", name: "miguel", collection: "vibe", power: 90, rarity: "Legendary", imageUrl: "" },
+      { type: "vbms", cardId: "cpu-test-5", name: "anon", collection: "vibe", power: 120, rarity: "Mythic", imageUrl: "" },
+      { type: "vbms", cardId: "cpu-test-6", name: "beeper", collection: "vibe", power: 70, rarity: "Epic", imageUrl: "" },
     ];
 
     // Force interesting lanes for testing
@@ -1958,6 +1957,20 @@ export default function TCGPage() {
       cpuPower = Math.max(0, cpuPower - playerSteal * lane.cpuCards.length);
       playerPower = Math.max(0, playerPower - cpuSteal * lane.playerCards.length);
 
+      // Apply reduceEnemyPower ongoing ability (Dan Romero - Too Cute)
+      lane.playerCards.forEach((card: DeckCard) => {
+        const ability = getCardAbility(card.name);
+        if (ability?.type === "ongoing" && ability.effect.action === "reduceEnemyPower") {
+          cpuPower = Math.max(0, cpuPower + (ability.effect.value || 0) * lane.cpuCards.length);
+        }
+      });
+      lane.cpuCards.forEach((card: DeckCard) => {
+        const ability = getCardAbility(card.name);
+        if (ability?.type === "ongoing" && ability.effect.action === "reduceEnemyPower") {
+          playerPower = Math.max(0, playerPower + (ability.effect.value || 0) * lane.playerCards.length);
+        }
+      });
+
       // Special lane effects that swap powers
       if (lane.effect === "swapSides") {
         const temp = playerPower;
@@ -2445,33 +2458,25 @@ export default function TCGPage() {
         // Skip lanes that don't count (Bridge)
         if (lane.effect === "noVictory") return;
 
-        let playerScore = lane.playerPower;
-        let cpuScore = lane.cpuPower;
-
-        // ATH Peak: only highest card counts
-        if (lane.effect === "highestWins") {
-          const playerHighest = Math.max(...(lane.playerCards || []).map((c: any) => c.power || 0), 0);
-          const cpuHighest = Math.max(...(lane.cpuCards || []).map((c: any) => c.power || 0), 0);
-          playerScore = playerHighest;
-          cpuScore = cpuHighest;
-        }
+        const playerScore = lane.playerPower;
+        const cpuScore = lane.cpuPower;
+        const victoryValue = lane.effect === "doubleVictory" ? 2 : 1;
 
         // Clown College: lowest wins (reverse comparison)
         if (lane.effect === "reverseOrder") {
-          // Swap so lower score wins
           if (playerScore < cpuScore) {
-            playerWins += lane.effect === "doubleVictory" ? 2 : 1;
+            playerWins += victoryValue;
           } else if (cpuScore < playerScore) {
-            cpuWins += lane.effect === "doubleVictory" ? 2 : 1;
+            cpuWins += victoryValue;
           }
           return;
         }
 
-        // Normal comparison
+        // Normal comparison - higher wins
         if (playerScore > cpuScore) {
-          playerWins += lane.effect === "doubleVictory" ? 2 : 1;
+          playerWins += victoryValue;
         } else if (cpuScore > playerScore) {
-          cpuWins += lane.effect === "doubleVictory" ? 2 : 1;
+          cpuWins += victoryValue;
         }
       });
 
