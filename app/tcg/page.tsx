@@ -9,6 +9,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { Id } from "@/convex/_generated/dataModel";
 import tcgAbilitiesData from "@/data/tcg-abilities.json";
+import tcgCardsData from "@/data/vmw-tcg-cards.json";
 import { getCharacterFromImage } from "@/lib/vmw-image-mapping";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -647,6 +648,9 @@ export default function TCGPage() {
 
   // Profile dropdown state
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+  // Lobby tab state
+  const [lobbyTab, setLobbyTab] = useState<"play" | "album" | "rules">("play");
 
   // Visual effects state
   const [visualEffect, setVisualEffect] = useState<{
@@ -2131,123 +2135,304 @@ export default function TCGPage() {
   // ═══════════════════════════════════════════════════════════════════════════════
 
   if (view === "lobby") {
-    const vbmsCards = selectedCards.filter((c: DeckCard) => c.type === "vbms").length;
     const hasDeck = activeDeck !== undefined && activeDeck !== null;
 
+    // Get player's VBMS cards for album
+    const playerVbmsCards = (nfts || []).filter((card: any) => card.collection === "vibe");
+
+    // Count owned cards by character name
+    const ownedCardCounts: Record<string, number> = {};
+    playerVbmsCards.forEach((card: any) => {
+      const imageUrl = card.imageUrl || card.image || "";
+      const characterFromImage = getCharacterFromImage(imageUrl);
+      const cardName = (card.character || characterFromImage || card.name || "").toLowerCase();
+      if (cardName) {
+        ownedCardCounts[cardName] = (ownedCardCounts[cardName] || 0) + 1;
+      }
+    });
+
+    // All TCG cards from data file
+    const allTcgCards = tcgCardsData.cards || [];
+    const totalOwned = Object.keys(ownedCardCounts).length;
+    const totalCards = allTcgCards.length;
+
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black p-4">
-        {/* Header */}
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black">
+        {/* Header - Match main game style */}
+        <div className="border-2 border-yellow-500/30 rounded-xl m-2 p-4 bg-gray-900/80">
+          <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => router.push("/")}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-yellow-400 transition-colors flex items-center gap-2"
             >
-              &larr; Back
+              <span>←</span> Back
             </button>
-            <h1 className="text-3xl font-bold text-yellow-400">VIBE CLASH</h1>
-            <div className="w-16" />
+            <h1 className="text-2xl font-bold text-yellow-400 tracking-widest">VIBE CLASH</h1>
+            <div className="text-xs text-gray-500">TCG Mode</div>
           </div>
 
           {/* Error */}
           {error && (
-            <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-2 rounded-lg mb-4">
+            <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-2 rounded-lg mb-4 text-sm">
               {error}
             </div>
           )}
 
-          {/* Main Content */}
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Left: Play Options */}
-            <div className="space-y-4">
-              <div className="bg-gray-800/50 border border-yellow-500/30 rounded-xl p-6">
-                <h2 className="text-xl font-bold text-yellow-400 mb-4">Play</h2>
+          {/* Tabs - Match main game style */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setLobbyTab("play")}
+              className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                lobbyTab === "play"
+                  ? "bg-yellow-500/20 border-2 border-yellow-500 text-yellow-400"
+                  : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600"
+              }`}
+            >
+              <span>⚔️</span> Play
+            </button>
+            <button
+              onClick={() => setLobbyTab("album")}
+              className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                lobbyTab === "album"
+                  ? "bg-yellow-500/20 border-2 border-yellow-500 text-yellow-400"
+                  : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600"
+              }`}
+            >
+              <span>📚</span> Album ({totalOwned}/{totalCards})
+            </button>
+            <button
+              onClick={() => setLobbyTab("rules")}
+              className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                lobbyTab === "rules"
+                  ? "bg-yellow-500/20 border-2 border-yellow-500 text-yellow-400"
+                  : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600"
+              }`}
+            >
+              <span>📖</span> Rules
+            </button>
+          </div>
 
-                {!hasDeck ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-400 mb-4">You need a deck to play!</p>
-                    <button
-                      onClick={() => setView("deck-builder")}
-                      className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 px-6 rounded-lg transition-colors"
-                    >
-                      Build Your Deck
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="bg-gray-700/50 rounded-lg p-4">
-                      <p className="text-sm text-gray-400">Active Deck</p>
+          {/* Tab Content */}
+          {lobbyTab === "play" && (
+            <div className="space-y-4">
+              {/* Active Deck Info */}
+              {hasDeck && (
+                <div className="bg-gray-800/50 border border-yellow-500/30 rounded-xl p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">Active Deck</p>
                       <p className="text-lg font-bold text-white">{activeDeck.deckName}</p>
-                      <p className="text-sm text-gray-500">
-                        {activeDeck.vbmsCount} VBMS | {activeDeck.nothingCount} Nothing | Power: {activeDeck.totalPower}
+                      <p className="text-sm text-gray-400">
+                        {activeDeck.vbmsCount} VBMS • {activeDeck.nothingCount} Nothing • <span className="text-yellow-400">{activeDeck.totalPower} PWR</span>
                       </p>
                     </div>
-
-                    <button
-                      onClick={() => startPvEMatch()}
-                      className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg transition-colors"
-                    >
-                      &#x1F916; Play vs CPU (Test Mode)
-                    </button>
-
-                    {/* PvP disabled for now */}
-                    <div className="w-full bg-gray-700 text-gray-400 font-bold py-3 px-6 rounded-lg text-center cursor-not-allowed">
-                      🔒 PvP Coming Soon
-                    </div>
-
                     <button
                       onClick={() => setView("deck-builder")}
-                      className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors text-sm"
+                      className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg text-sm transition-colors"
                     >
-                      Edit Deck
+                      Edit
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* Play Buttons */}
+              <div className="grid grid-cols-1 gap-3">
+                {!hasDeck ? (
+                  <button
+                    onClick={() => setView("deck-builder")}
+                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold py-4 px-6 rounded-xl transition-all text-lg"
+                  >
+                    🃏 Build Your Deck
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => startPvEMatch()}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-4 px-6 rounded-xl transition-all text-lg shadow-lg shadow-green-500/20"
+                    >
+                      🤖 Battle vs CPU
+                    </button>
+                    <div className="bg-gray-800/50 border border-gray-700 text-gray-500 font-bold py-4 px-6 rounded-xl text-center cursor-not-allowed">
+                      🔒 PvP Coming Soon
+                    </div>
+                  </>
                 )}
               </div>
-            </div>
 
-            {/* Right: Waiting Rooms */}
-            <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4">Open Rooms</h2>
-
-              {waitingRooms && waitingRooms.length > 0 ? (
-                <div className="space-y-2 max-h-80 overflow-y-auto">
-                  {waitingRooms.map((room: any) => (
-                    <div
-                      key={room._id}
-                      className="bg-gray-700/50 rounded-lg p-3 flex items-center justify-between"
-                    >
-                      <div>
-                        <p className="font-mono text-yellow-400">{room.roomId}</p>
-                        <p className="text-sm text-gray-400">{room.player1Username}</p>
-                      </div>
-                      <button
-                        onClick={() => handleJoinMatch(room.roomId)}
-                        disabled={!hasDeck}
-                        className="bg-green-600 hover:bg-green-500 disabled:bg-gray-600 text-white text-sm font-bold py-2 px-4 rounded-lg transition-colors"
-                      >
-                        Join
-                      </button>
-                    </div>
-                  ))}
+              {/* Stats */}
+              {hasDeck && (
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-yellow-400">0</p>
+                    <p className="text-xs text-gray-500">Wins</p>
+                  </div>
+                  <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-gray-400">0</p>
+                    <p className="text-xs text-gray-500">Losses</p>
+                  </div>
+                  <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-green-400">0%</p>
+                    <p className="text-xs text-gray-500">Win Rate</p>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-gray-500 text-center py-8">No open rooms</p>
               )}
             </div>
-          </div>
+          )}
 
-          {/* Rules */}
-          <div className="mt-8 bg-gray-800/30 border border-gray-700 rounded-xl p-6">
-            <h3 className="text-lg font-bold text-white mb-3">How to Play</h3>
-            <ul className="text-gray-400 text-sm space-y-2">
-              <li>&#x2022; Build a deck with 15 cards (min 8 VBMS, max 7 Nothing)</li>
-              <li>&#x2022; Battle across 3 lanes over 6 turns</li>
-              <li>&#x2022; Energy increases each turn (1 &rarr; 6)</li>
-              <li>&#x2022; Win 2/3 lanes to win the match</li>
-              <li>&#x2022; Nothing cards have 50% power but can be sacrificed</li>
-            </ul>
-          </div>
+          {lobbyTab === "album" && (
+            <div className="space-y-4">
+              {/* Album Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-bold text-white">Card Collection</p>
+                  <p className="text-sm text-gray-400">
+                    {totalOwned}/{totalCards} cards collected ({Math.round(totalOwned / totalCards * 100)}%)
+                  </p>
+                </div>
+                <div className="flex gap-2 text-xs">
+                  <span className="px-2 py-1 bg-red-500/20 border border-red-500/50 rounded text-red-400">Mythic</span>
+                  <span className="px-2 py-1 bg-yellow-500/20 border border-yellow-500/50 rounded text-yellow-400">Legendary</span>
+                  <span className="px-2 py-1 bg-purple-500/20 border border-purple-500/50 rounded text-purple-400">Epic</span>
+                  <span className="px-2 py-1 bg-blue-500/20 border border-blue-500/50 rounded text-blue-400">Rare</span>
+                  <span className="px-2 py-1 bg-gray-500/20 border border-gray-500/50 rounded text-gray-400">Common</span>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-yellow-500 to-orange-500 transition-all duration-500"
+                  style={{ width: `${(totalOwned / totalCards) * 100}%` }}
+                />
+              </div>
+
+              {/* Card Grid */}
+              <div className="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-9 lg:grid-cols-11 gap-2 max-h-[60vh] overflow-y-auto p-2">
+                {allTcgCards.map((card: any, idx: number) => {
+                  const cardKey = card.baccarat?.toLowerCase() || card.onChainName?.toLowerCase();
+                  const owned = ownedCardCounts[cardKey] || 0;
+                  const ability = tcgAbilities[cardKey];
+
+                  // Get rarity color
+                  const rarityBorder =
+                    card.rarity === "Mythic" ? "border-red-500 shadow-red-500/30" :
+                    card.rarity === "Legendary" ? "border-yellow-500 shadow-yellow-500/30" :
+                    card.rarity === "Epic" ? "border-purple-500 shadow-purple-500/30" :
+                    card.rarity === "Rare" ? "border-blue-500 shadow-blue-500/30" :
+                    "border-gray-600";
+
+                  // Get card image from player's cards if owned, otherwise show placeholder
+                  const ownedCard = playerVbmsCards.find((c: any) => {
+                    const imageUrl = c.imageUrl || c.image || "";
+                    const charName = (c.character || getCharacterFromImage(imageUrl) || c.name || "").toLowerCase();
+                    return charName === cardKey;
+                  });
+                  const cardImage = ownedCard?.imageUrl || ownedCard?.image;
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`relative aspect-[2/3] rounded-lg border-2 overflow-hidden transition-all ${
+                        owned > 0
+                          ? `${rarityBorder} shadow-lg hover:scale-105 cursor-pointer`
+                          : "border-gray-800 opacity-40 grayscale"
+                      }`}
+                      title={`${card.onChainName} (${card.rarity})${owned > 0 ? ` - Owned: ${owned}` : " - Not owned"}`}
+                    >
+                      {/* Card Image or Placeholder */}
+                      {owned > 0 && cardImage ? (
+                        <img
+                          src={cardImage}
+                          alt={card.onChainName}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                          <span className="text-gray-700 text-2xl">?</span>
+                        </div>
+                      )}
+
+                      {/* Owned Count Badge */}
+                      {owned > 1 && (
+                        <div className="absolute top-0.5 right-0.5 bg-yellow-500 text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-lg">
+                          {owned}x
+                        </div>
+                      )}
+
+                      {/* Card Name (only if owned) */}
+                      {owned > 0 && (
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-1">
+                          <p className="text-[8px] text-white truncate text-center font-bold">
+                            {card.onChainName}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Ability Indicator */}
+                      {owned > 0 && ability && (
+                        <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full text-[6px] flex items-center justify-center font-bold ${
+                          ability.type === "onReveal" ? "bg-green-500 text-white" :
+                          ability.type === "ongoing" ? "bg-blue-500 text-white" :
+                          "bg-red-500 text-white"
+                        }`}>
+                          {ability.type === "onReveal" ? "R" : ability.type === "ongoing" ? "O" : "D"}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Legend */}
+              <div className="flex justify-center gap-4 text-xs text-gray-500 pt-2 border-t border-gray-800">
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-green-500"></span> On Reveal</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-500"></span> Ongoing</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-red-500"></span> On Destroy</span>
+              </div>
+            </div>
+          )}
+
+          {lobbyTab === "rules" && (
+            <div className="space-y-4">
+              <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
+                <h3 className="text-lg font-bold text-yellow-400 mb-3">⚔️ How to Play</h3>
+                <ul className="text-gray-300 text-sm space-y-2">
+                  <li className="flex items-start gap-2"><span className="text-yellow-500">•</span> Build a deck with 15 cards (min 8 VBMS, max 7 Nothing)</li>
+                  <li className="flex items-start gap-2"><span className="text-yellow-500">•</span> Battle across 3 lanes over 6 turns</li>
+                  <li className="flex items-start gap-2"><span className="text-yellow-500">•</span> Energy increases each turn (1 → 6)</li>
+                  <li className="flex items-start gap-2"><span className="text-yellow-500">•</span> Win 2/3 lanes to win the match</li>
+                </ul>
+              </div>
+
+              <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
+                <h3 className="text-lg font-bold text-purple-400 mb-3">🃏 Card Types</h3>
+                <ul className="text-gray-300 text-sm space-y-2">
+                  <li className="flex items-start gap-2"><span className="text-purple-500">•</span> <strong>VBMS Cards:</strong> Full power + special abilities</li>
+                  <li className="flex items-start gap-2"><span className="text-purple-500">•</span> <strong>Nothing Cards:</strong> 50% power but can be sacrificed</li>
+                </ul>
+              </div>
+
+              <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
+                <h3 className="text-lg font-bold text-green-400 mb-3">✨ Abilities</h3>
+                <ul className="text-gray-300 text-sm space-y-2">
+                  <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-green-500 text-white text-[10px] flex items-center justify-center font-bold">R</span> <strong>On Reveal:</strong> Triggers when card is played</li>
+                  <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center font-bold">O</span> <strong>Ongoing:</strong> Passive effect while on board</li>
+                  <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold">D</span> <strong>On Destroy:</strong> Triggers when card is removed</li>
+                </ul>
+              </div>
+
+              <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
+                <h3 className="text-lg font-bold text-blue-400 mb-3">🎴 Foil Cards</h3>
+                <ul className="text-gray-300 text-sm space-y-2">
+                  <li className="flex items-start gap-2"><span className="text-blue-500">•</span> <strong>Holo:</strong> +10% power bonus</li>
+                  <li className="flex items-start gap-2"><span className="text-blue-500">•</span> <strong>Gold:</strong> +25% power bonus</li>
+                  <li className="flex items-start gap-2"><span className="text-blue-500">•</span> <strong>Chrome:</strong> +50% power bonus</li>
+                  <li className="flex items-start gap-2"><span className="text-blue-500">•</span> <strong>Diamond:</strong> +100% power bonus</li>
+                </ul>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
