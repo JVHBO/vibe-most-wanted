@@ -187,10 +187,10 @@
     },
 
     "smolemaru": {
-      "name": "Creative Mind",
+      "name": "Creative Spark",
       "type": "onReveal",
-      "description": "+8 power if this lane has no other cards",
-      "effect": { "action": "buffIfAlone", "value": 8 },
+      "description": "+3 power for each card you've played this game",
+      "effect": { "action": "buffPerCardsPlayed", "value": 3 },
       "rarity": "Rare"
     },
     "ventra": {

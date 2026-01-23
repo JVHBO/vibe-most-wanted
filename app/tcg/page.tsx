@@ -1260,6 +1260,15 @@ export default function TCGPage() {
         }
         break;
 
+      case "buffPerCardsPlayed":
+        // +X power for each card you've played this game
+        let cardsPlayedTotal = 0;
+        newLanes.forEach((lane) => {
+          cardsPlayedTotal += lane[myCards].length;
+        });
+        bonusPower = cardsPlayedTotal * (effect.value || 0);
+        break;
+
       case "buffAllLanes":
         // +X power to all your cards in all lanes (Mythic)
         newLanes.forEach((lane) => {
@@ -1386,28 +1395,129 @@ export default function TCGPage() {
     }
   };
 
-  // Recalculate lane powers with ongoing effects
+  // Calculate lane effect bonus for a card
+  const calculateLaneEffectBonus = (
+    card: DeckCard,
+    lane: any,
+    allCards: DeckCard[],
+    isPlayer: boolean,
+    currentTurn: number
+  ): number => {
+    const effect = lane.effect;
+    const value = lane.value || 0;
+
+    switch (effect) {
+      case "buffAll":
+        return value;
+
+      case "debuffAll":
+        return value; // negative value
+
+      case "buffPerTurn":
+      case "debuffPerTurn":
+        return value * currentTurn;
+
+      case "buffFirst":
+        // Only first card played gets bonus
+        const isFirst = allCards.indexOf(card) === 0;
+        return isFirst ? value : 0;
+
+      case "buffHighest":
+        const maxPower = Math.max(...allCards.map(c => c.power || 0));
+        return card.power === maxPower ? value : 0;
+
+      case "buffLowest":
+        const minPower = Math.min(...allCards.map(c => c.power || 0));
+        return card.power === minPower ? value : 0;
+
+      case "buffPerCard":
+        return value * allCards.length;
+
+      case "buffAlone":
+        return allCards.length === 1 ? value : 0;
+
+      case "buffCommon":
+        // Check card rarity from abilities
+        const ability = getCardAbility(card.name);
+        return ability?.rarity === "Common" ? value : 0;
+
+      case "doubleLegendary":
+        const cardAbility = getCardAbility(card.name);
+        return cardAbility?.rarity === "Legendary" ? card.power : 0; // Double = add same power
+
+      case "buffFoil":
+        return card.foil ? value : 0;
+
+      case "buffNothing":
+        return card.type === "nothing" ? value : 0;
+
+      case "buffVibeFID":
+        return card.collection === "vibefid" ? value : 0;
+
+      case "buffWithAbility":
+        return getCardAbility(card.name) ? value : 0;
+
+      case "buffIfLosing":
+        // Bonus if player is losing this lane
+        const playerTotal = lane.playerCards.reduce((sum: number, c: DeckCard) => sum + (c.power || 0), 0);
+        const cpuTotal = lane.cpuCards.reduce((sum: number, c: DeckCard) => sum + (c.power || 0), 0);
+        if (isPlayer && playerTotal < cpuTotal) return value;
+        if (!isPlayer && cpuTotal < playerTotal) return value;
+        return 0;
+
+      case "debuffEnemy":
+        // Only debuff enemy cards
+        return isPlayer ? 0 : value;
+
+      case "gamble":
+        // 50% chance double, 50% chance halve (calculated once per card on reveal)
+        // For now, apply a random factor
+        return Math.random() > 0.5 ? card.power : -Math.floor(card.power / 2);
+
+      case "swapSides":
+        // This is handled at the lane level, not per card
+        return 0;
+
+      case "reverseOrder":
+        // This is handled at victory calculation
+        return 0;
+
+      case "highestWins":
+        // This is handled at victory calculation
+        return 0;
+
+      case "noVictory":
+        // This is handled at victory calculation
+        return 0;
+
+      case "noEffect":
+      default:
+        return 0;
+    }
+  };
+
+  // Recalculate lane powers with ongoing effects and lane effects
   const recalculateLanePowers = (lanes: any[], currentTurn: number): any[] => {
     return lanes.map((lane, laneIdx) => {
       let playerPower = 0;
       let cpuPower = 0;
 
-      // Calculate player power with ongoing bonuses
+      // Calculate player power with ongoing bonuses + lane effects
       lane.playerCards.forEach((card: DeckCard) => {
         const basePower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
         const ongoingBonus = calculateOngoingBonus(card, laneIdx, lanes, currentTurn, true);
-        // Add combo bonus
         const comboBonus = getComboBonus(card, lane.playerCards, lanes);
-        playerPower += basePower + ongoingBonus + comboBonus;
+        const laneBonus = calculateLaneEffectBonus(card, lane, lane.playerCards, true, currentTurn);
+        playerPower += basePower + ongoingBonus + comboBonus + laneBonus;
       });
 
-      // Calculate CPU power with ongoing bonuses
+      // Calculate CPU power with ongoing bonuses + lane effects
       lane.cpuCards.forEach((card: DeckCard) => {
         const basePower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
         const ongoingBonus = calculateOngoingBonus(card, laneIdx, lanes, currentTurn, false);
-        // Add combo bonus for CPU too
         const comboBonus = getComboBonus(card, lane.cpuCards, lanes);
-        cpuPower += basePower + ongoingBonus + comboBonus;
+        const laneBonus = calculateLaneEffectBonus(card, lane, lane.cpuCards, false, currentTurn);
+        cpuPower += basePower + ongoingBonus + comboBonus + laneBonus;
       });
 
       // Apply lane-wide ongoing effects (like buffLaneOngoing)
@@ -1430,7 +1540,17 @@ export default function TCGPage() {
       cpuPower = Math.max(0, cpuPower - playerSteal * lane.cpuCards.length);
       playerPower = Math.max(0, playerPower - cpuSteal * lane.playerCards.length);
 
-      return { ...lane, playerPower, cpuPower };
+      // Special lane effects that swap powers
+      if (lane.effect === "swapSides") {
+        const temp = playerPower;
+        playerPower = cpuPower;
+        cpuPower = temp;
+      }
+
+      // Clown College: reverse order (lower wins)
+      // This is shown in UI but handled at victory calculation
+
+      return { ...lane, playerPower: Math.max(0, playerPower), cpuPower: Math.max(0, cpuPower) };
     });
   };
 
@@ -2714,13 +2834,24 @@ export default function TCGPage() {
                   className={`flex flex-col w-[32%] h-full rounded-xl border-2 bg-gradient-to-b ${laneBg} ${laneBorder} shadow-lg overflow-hidden`}
                 >
                   {/* Lane Title Card */}
-                  <div className={`relative mx-auto -mt-1 w-[90%] py-2 px-3 rounded-b-xl bg-gradient-to-b from-indigo-800 to-indigo-950 border-2 border-t-0 ${
+                  <div className={`relative mx-auto -mt-1 w-[90%] py-2 px-2 rounded-b-xl bg-gradient-to-b from-indigo-800 to-indigo-950 border-2 border-t-0 ${
                     status === "winning" ? "border-green-500" : status === "losing" ? "border-red-500" : "border-cyan-500/50"
                   }`}>
                     <div className="flex items-center justify-center gap-1">
                       <span className="text-base">{lane.emoji || "🎯"}</span>
                       <span className="text-[10px] font-bold text-white truncate">{lane.name || `Lane ${laneIndex + 1}`}</span>
                     </div>
+                    {/* Lane Effect Description */}
+                    {lane.description && lane.effect !== "noEffect" && (
+                      <div className={`text-center mt-0.5 px-1 py-0.5 rounded text-[7px] font-medium ${
+                        lane.effect?.includes("buff") || lane.effect?.includes("gain") ? "bg-green-900/50 text-green-300" :
+                        lane.effect?.includes("debuff") || lane.effect?.includes("destroy") ? "bg-red-900/50 text-red-300" :
+                        lane.effect?.includes("swap") || lane.effect?.includes("gamble") || lane.effect?.includes("random") ? "bg-purple-900/50 text-purple-300" :
+                        "bg-cyan-900/50 text-cyan-300"
+                      }`}>
+                        {lane.description}
+                      </div>
+                    )}
                     {/* Score badges */}
                     <div className="flex items-center justify-between mt-1">
                       <div className={`px-2 py-0.5 rounded text-xs font-bold ${status === "losing" ? "bg-red-600 text-white" : "bg-gray-700 text-gray-300"}`}>
