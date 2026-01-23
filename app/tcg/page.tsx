@@ -1591,6 +1591,13 @@ export default function TCGPage() {
     let newDeck = [...pveGameState.playerDeckRemaining];
     if (isPrizeFoil && newDeck.length > 0) {
       newHand.push(newDeck.shift()!);
+      // Show visual effect for Prize foil draw
+      setVisualEffect({
+        type: "buff",
+        laneIndex: laneIndex,
+        text: "PRIZE FOIL! FREE + DRAW",
+      });
+      setTimeout(() => setVisualEffect(null), 1500);
     }
 
     // Add card to lane (with base power)
@@ -2306,9 +2313,9 @@ export default function TCGPage() {
               </div>
 
               <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-                <h3 className="text-lg font-bold text-blue-400 mb-3">🎴 Foil Cards</h3>
+                <h3 className="text-lg font-bold text-blue-400 mb-3">Foil Cards</h3>
                 <ul className="text-gray-300 text-sm space-y-2">
-                  <li className="flex items-start gap-2"><span className="text-pink-500">✨</span> <strong>Prize Foil:</strong> ×15 power multiplier</li>
+                  <li className="flex items-start gap-2"><span className="text-pink-500">✨</span> <strong>Prize Foil:</strong> FREE to play (0 energy) + Draw 1 card</li>
                   <li className="flex items-start gap-2"><span className="text-purple-500">⭐</span> <strong>Standard Foil:</strong> ×2.5 power multiplier</li>
                   <li className="flex items-start gap-2"><span className="text-gray-500">•</span> <strong>No Foil:</strong> ×1 power (base)</li>
                 </ul>
