@@ -3076,34 +3076,34 @@ export default function TCGPage() {
 
               {/* Lane Effects */}
               <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-                <h3 className="font-bold text-cyan-400 mb-2">EFEITOS DE LANE</h3>
+                <h3 className="font-bold text-cyan-400 mb-2">{t('tcgLaneEffects')}</h3>
                 <div className="text-gray-300 space-y-1 text-xs">
-                  <p><span className="text-green-400">Buff:</span> Moon Base, Whale Waters, Shrimp Shore, Hopium</p>
-                  <p><span className="text-red-400">Debuff:</span> Paper Hands, Vlady's Dungeon</p>
-                  <p><span className="text-purple-400">Chaos:</span> Degen Valley (50/50), Liquidity Pool (swap), Clown College (menor ganha)</p>
-                  <p><span className="text-yellow-400">Special:</span> Bridge (não conta), Double Stakes (vale 2x)</p>
+                  <p><span className="text-green-400">{t('tcgBuffLabel')}:</span> {t('tcgBuffLanes')}</p>
+                  <p><span className="text-red-400">{t('tcgDebuffLabel')}:</span> {t('tcgDebuffLanes')}</p>
+                  <p><span className="text-purple-400">{t('tcgChaosLabel')}:</span> {t('tcgChaosLanesDesc')}</p>
+                  <p><span className="text-yellow-400">{t('tcgSpecialLabel')}:</span> {t('tcgSpecialLanesDesc')}</p>
                 </div>
               </div>
 
               {/* Combos */}
               <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-                <h3 className="font-bold text-pink-400 mb-2">COMBOS</h3>
+                <h3 className="font-bold text-pink-400 mb-2">{t('tcgCombosTitle')}</h3>
                 <div className="text-gray-300 space-y-1 text-xs">
-                  <p>Jogue cartas específicas juntas para bonus massivos!</p>
-                  <p><span className="text-white">Romero Dynasty:</span> Dan + Goofy = +60 cada</p>
-                  <p><span className="text-white">Crypto Kings:</span> Brian + Vitalik = +80 na lane</p>
-                  <p className="text-yellow-400">Clique na carta para ver seus combos possíveis</p>
+                  <p>{t('tcgCombosDesc')}</p>
+                  <p>{t('tcgRomeroDynasty')}</p>
+                  <p>{t('tcgCryptoKings')}</p>
+                  <p className="text-yellow-400">{t('tcgClickComboInfo')}</p>
                 </div>
               </div>
 
               {/* Tips */}
               <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-3">
-                <h3 className="font-bold text-yellow-400 mb-2">DICAS</h3>
+                <h3 className="font-bold text-yellow-400 mb-2">{t('tcgTipsTitle')}</h3>
                 <div className="text-gray-300 space-y-1 text-xs">
-                  <p>- Não gaste toda energia no turno 1, guarde para cartas fortes</p>
-                  <p>- Preste atenção no efeito da lane antes de jogar</p>
-                  <p>- Combos podem virar o jogo, planeje suas jogadas</p>
-                  <p>- Botão R na carta = devolver pra mão (reembolsa energia)</p>
+                  <p>- {t('tcgTip1')}</p>
+                  <p>- {t('tcgTip2')}</p>
+                  <p>- {t('tcgTip3')}</p>
+                  <p>- {t('tcgTip4')}</p>
                 </div>
               </div>
             </div>
