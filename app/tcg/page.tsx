@@ -2433,7 +2433,34 @@ export default function TCGPage() {
     if (pveGameState.currentTurn >= TCG_CONFIG.TOTAL_TURNS) {
       const playerWins = newLanes.filter((l: any) => l.playerPower > l.cpuPower).length;
       const cpuWins = newLanes.filter((l: any) => l.cpuPower > l.playerPower).length;
-      const winner = playerWins > cpuWins ? "player" : cpuWins > playerWins ? "cpu" : "tie";
+
+      // Determine winner - if tied lanes, use HAND POWER as tiebreaker
+      let winner: string;
+      let tiebreaker: { type: string; playerPower: number; cpuPower: number } | null = null;
+
+      if (playerWins > cpuWins) {
+        winner = "player";
+      } else if (cpuWins > playerWins) {
+        winner = "cpu";
+      } else {
+        // TIE BREAKER: Compare total power in hands
+        const playerHandPower = pveGameState.playerHand.reduce((sum: number, c: any) => sum + (c.power || 0), 0);
+        const cpuHandPower = cpuHand.reduce((sum: number, c: any) => sum + (c.power || 0), 0);
+
+        tiebreaker = { type: "hand", playerPower: playerHandPower, cpuPower: cpuHandPower };
+
+        if (playerHandPower > cpuHandPower) {
+          winner = "player"; // Player wins by hand power
+        } else if (cpuHandPower > playerHandPower) {
+          winner = "cpu"; // CPU wins by hand power
+        } else {
+          // Still tied? Compare total board power
+          const playerBoardPower = newLanes.reduce((sum: number, l: any) => sum + l.playerPower, 0);
+          const cpuBoardPower = newLanes.reduce((sum: number, l: any) => sum + l.cpuPower, 0);
+          tiebreaker = { type: "board", playerPower: playerBoardPower, cpuPower: cpuBoardPower };
+          winner = playerBoardPower >= cpuBoardPower ? "player" : "cpu"; // Player wins ties
+        }
+      }
 
       // First update state to show final board
       setPveGameState({
@@ -2443,12 +2470,13 @@ export default function TCGPage() {
         cpuDeckRemaining,
         gameOver: true,
         winner,
+        tiebreaker,
       });
 
       // Wait 2.5 seconds to show final board, then go to result
       setTimeout(() => {
         if (winner === "player") playSound("victory");
-        else if (winner === "cpu") playSound("defeat");
+        else playSound("defeat");
         setView("result");
       }, 2500);
       return;
@@ -3333,15 +3361,24 @@ export default function TCGPage() {
         {/* Game Over Overlay */}
         {gs.gameOver && (
           <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className={`text-center animate-pulse ${
-              gs.winner === "player" ? "text-green-400" : gs.winner === "cpu" ? "text-red-400" : "text-yellow-400"
+            <div className={`text-center ${
+              gs.winner === "player" ? "text-green-400" : "text-red-400"
             }`}>
-              <div className="text-6xl font-black drop-shadow-2xl mb-2">
-                {gs.winner === "player" ? "🏆 VICTORY!" : gs.winner === "cpu" ? "💀 DEFEAT" : "🤝 TIE"}
+              <div className="text-6xl font-black drop-shadow-2xl mb-2 animate-pulse">
+                {gs.winner === "player" ? "🏆 VICTORY!" : "💀 DEFEAT"}
               </div>
               <div className="text-xl font-bold bg-black/50 px-4 py-2 rounded-lg">
                 {gs.lanes.filter((l: any) => l.playerPower > l.cpuPower).length} - {gs.lanes.filter((l: any) => l.cpuPower > l.playerPower).length}
               </div>
+              {/* Tiebreaker info */}
+              {gs.tiebreaker && (
+                <div className="mt-3 bg-yellow-500/20 border border-yellow-500/50 px-4 py-2 rounded-lg text-yellow-300">
+                  <div className="text-sm font-bold">⚖️ DESEMPATE POR {gs.tiebreaker.type === "hand" ? "MÃO" : "BOARD"}</div>
+                  <div className="text-xs mt-1">
+                    Você: {gs.tiebreaker.playerPower} vs CPU: {gs.tiebreaker.cpuPower}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
