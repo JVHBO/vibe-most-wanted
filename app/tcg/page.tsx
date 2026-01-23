@@ -959,7 +959,7 @@ export default function TCGPage() {
     const newCpuHand = cpuHand.filter((_: any, idx: number) => !usedCardIndices.has(idx));
 
     // Recalculate lane powers with ongoing effects
-    newLanes = newLanes.map((lane: any, laneIdx) => {
+    newLanes = newLanes.map((lane: any, laneIdx: number) => {
       let playerPower = 0;
       let cpuPower = 0;
 
@@ -1113,7 +1113,7 @@ export default function TCGPage() {
 
       case "buffOtherLanes":
         // +X power to all cards in OTHER lanes
-        newLanes.forEach((lane: any, idx) => {
+        newLanes.forEach((lane: any, idx: number) => {
           if (idx !== laneIndex) {
             lane[myCards].forEach((c: DeckCard, cIdx: number) => {
               lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) };
@@ -1163,7 +1163,7 @@ export default function TCGPage() {
         let weakestCard: DeckCard | null = null;
         let weakestLane = -1;
         let weakestIdx = -1;
-        newLanes.forEach((lane: any, lIdx) => {
+        newLanes.forEach((lane: any, lIdx: number) => {
           lane[myCards].forEach((c: DeckCard, cIdx: number) => {
             if (!weakestCard || c.power < weakestCard.power) {
               weakestCard = c;
@@ -1186,7 +1186,7 @@ export default function TCGPage() {
         let strongestCard: DeckCard | null = null;
         let strongestLane = -1;
         let strongestIdx = -1;
-        newLanes.forEach((lane: any, lIdx) => {
+        newLanes.forEach((lane: any, lIdx: number) => {
           lane[enemyCards].forEach((c: DeckCard, cIdx: number) => {
             if (!strongestCard || c.power > strongestCard.power) {
               strongestCard = c;
@@ -1284,7 +1284,7 @@ export default function TCGPage() {
         let highestPower = -1;
         let highestLaneIdx = -1;
         let highestCardIdx = -1;
-        newLanes.forEach((lane: any, lIdx) => {
+        newLanes.forEach((lane: any, lIdx: number) => {
           lane[enemyCards].forEach((c: DeckCard, cIdx: number) => {
             if (c.power > highestPower) {
               highestPower = c.power;
@@ -1319,7 +1319,7 @@ export default function TCGPage() {
           playerPower: 0,
           cpuPower: 0,
         }));
-        allCards.forEach((item, idx) => {
+        allCards.forEach((item, idx: number) => {
           const laneIdx = idx % 3;
           const cardPower = item.card.type === "nothing" ? Math.floor(item.card.power * 0.5) : item.card.power;
           if (item.isPlayer) {
@@ -1498,7 +1498,7 @@ export default function TCGPage() {
 
   // Recalculate lane powers with ongoing effects and lane effects
   const recalculateLanePowers = (lanes: any[], currentTurn: number): any[] => {
-    return lanes.map((lane: any, laneIdx) => {
+    return lanes.map((lane: any, laneIdx: number) => {
       let playerPower = 0;
       let cpuPower = 0;
 
@@ -2188,38 +2188,9 @@ export default function TCGPage() {
                       &#x1F916; Play vs CPU (Test Mode)
                     </button>
 
-                    <button
-                      onClick={handleCreateMatch}
-                      className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 px-6 rounded-lg transition-colors"
-                    >
-                      Create Room (PvP)
-                    </button>
-
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-600" />
-                      </div>
-                      <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-gray-800/50 text-gray-400">or join a room</span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={roomIdInput}
-                        onChange={(e) => setRoomIdInput(e.target.value.toUpperCase())}
-                        placeholder="Room Code"
-                        maxLength={6}
-                        className="flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500"
-                      />
-                      <button
-                        onClick={() => handleJoinMatch(roomIdInput)}
-                        disabled={roomIdInput.length !== 6}
-                        className="bg-green-600 hover:bg-green-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-lg transition-colors"
-                      >
-                        Join
-                      </button>
+                    {/* PvP disabled for now */}
+                    <div className="w-full bg-gray-700 text-gray-400 font-bold py-3 px-6 rounded-lg text-center cursor-not-allowed">
+                      🔒 PvP Coming Soon
                     </div>
 
                     <button
@@ -2960,7 +2931,7 @@ export default function TCGPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleLandmineKamikaze(laneIndex, idx);
+                                  handleLandmineKamikaze(laneIndex, idx: number);
                                 }}
                                 className="absolute -bottom-2 -left-2 w-6 h-6 bg-gradient-to-br from-red-500 to-orange-600 hover:from-red-400 hover:to-orange-500 rounded-full text-[10px] text-white font-bold flex items-center justify-center z-20 shadow-lg border-2 border-red-300 animate-pulse"
                                 title="💥 Kamikaze: Destroy self + highest enemy"
@@ -2973,7 +2944,7 @@ export default function TCGPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleSantaCharm(laneIndex, idx);
+                                  handleSantaCharm(laneIndex, idx: number);
                                 }}
                                 className="absolute -bottom-2 -left-2 w-6 h-6 bg-gradient-to-br from-pink-500 to-red-500 hover:from-pink-400 hover:to-red-400 rounded-full text-[10px] text-white font-bold flex items-center justify-center z-20 shadow-lg border-2 border-pink-300 animate-pulse"
                                 title="💋 Charm: Seduce an enemy to your side"
@@ -3232,7 +3203,7 @@ export default function TCGPage() {
               <div className="mb-4">
                 <p className="text-xs text-yellow-300/70 mb-2 uppercase tracking-wider">Cards Required:</p>
                 <div className="flex flex-wrap gap-1 justify-center">
-                  {detailCombo.cards.map((cardName, idx) => (
+                  {detailCombo.cards.map((cardName, idx: number) => (
                     <span key={idx} className="px-2 py-1 bg-black/40 rounded text-sm text-white capitalize">
                       {cardName}
                     </span>
