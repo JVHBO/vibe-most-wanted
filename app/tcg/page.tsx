@@ -76,42 +76,43 @@ const RARITY_COLORS: Record<string, string> = {
 // Lane effects - each lane has a unique effect that modifies gameplay
 // SIMPLIFIED: Only effects that are FULLY IMPLEMENTED and FUN
 const LANE_NAMES = [
-  // ═══ BUFF LANES (Green themed) ═══
-  { name: "Gayland", emoji: "🌈", effect: "buffAll", value: 10, description: "+10 power to ALL cards!" },
-  { name: "Moon Base", emoji: "🌙", effect: "buffFirst", value: 30, description: "First card gets +30 power!" },
-  { name: "Whale Waters", emoji: "🐋", effect: "buffHighest", value: 40, description: "Strongest card gets +40!" },
-  { name: "Shrimp Shore", emoji: "🦐", effect: "buffLowest", value: 35, description: "Weakest card gets +35!" },
-  { name: "Hopium Farms", emoji: "🌿", effect: "buffPerTurn", value: 10, description: "+10 power EVERY turn!" },
+  // ═══ BUFF LANES ═══
+  { name: "Moon Base", effect: "buffFirst", value: 40, description: "1st card played here: +40" },
+  { name: "Whale Waters", effect: "buffHighest", value: 50, description: "Your strongest card: +50" },
+  { name: "Shrimp Shore", effect: "buffLowest", value: 45, description: "Your weakest card: +45" },
+  { name: "Hopium Farms", effect: "buffPerTurn", value: 15, description: "All cards: +15 per turn" },
 
-  // ═══ DEBUFF LANES (Red themed) ═══
-  { name: "Scam City", emoji: "🚨", effect: "debuffAll", value: -15, description: "-15 power to ALL cards!" },
-  { name: "Paper Hands Plaza", emoji: "📄", effect: "debuffPerTurn", value: -8, description: "-8 power EVERY turn!" },
-  { name: "Vlady's Dungeon", emoji: "⛓️", effect: "debuffEnemy", value: -20, description: "Enemy cards have -20 power!" },
+  // ═══ DEBUFF LANES ═══
+  { name: "Scam City", effect: "debuffEnemyHighest", value: -40, description: "Enemy strongest: -40" },
+  { name: "Paper Hands", effect: "debuffPerTurn", value: -12, description: "All cards: -12 per turn" },
+  { name: "Vlady's Dungeon", effect: "debuffEnemy", value: -25, description: "All enemy cards: -25" },
 
   // ═══ RARITY BONUS LANES ═══
-  { name: "Nico's Throne", emoji: "👑", effect: "doubleLegendary", description: "Legendary = DOUBLE power!" },
-  { name: "Dan's Backyard", emoji: "🏡", effect: "buffCommon", value: 25, description: "Common cards get +25!" },
-  { name: "NFT Gallery", emoji: "🖼️", effect: "buffFoil", value: 50, description: "FOIL cards get +50!" },
-  { name: "Mint Factory", emoji: "🏭", effect: "buffNothing", value: 40, description: "Nothing cards get +40!" },
-  { name: "Vibe HQ", emoji: "✨", effect: "buffVibeFID", value: 30, description: "VibeFID cards get +30!" },
+  { name: "Nico's Throne", effect: "doubleLegendary", description: "Legendary cards: 2x power" },
+  { name: "Dan's Backyard", effect: "buffCommon", value: 30, description: "Common cards: +30" },
+  { name: "NFT Gallery", effect: "buffFoil", value: 60, description: "Foil cards: +60" },
+  { name: "Mint Factory", effect: "buffNothing", value: 50, description: "Nothing cards: +50" },
+  { name: "Vibe HQ", effect: "buffVibeFID", value: 40, description: "VibeFID cards: +40" },
+  { name: "Epic Arena", effect: "buffEpic", value: 35, description: "Epic cards: +35" },
 
   // ═══ STRATEGY LANES ═══
-  { name: "Mom's Basement", emoji: "🛋️", effect: "buffAlone", value: 50, description: "Solo card gets +50 power!" },
-  { name: "Discord Server", emoji: "💬", effect: "buffPerCard", value: 12, description: "+12 per card here!" },
-  { name: "Copium Den", emoji: "💨", effect: "buffIfLosing", value: 25, description: "+25 if you're LOSING!" },
-  { name: "Ye's Studio", emoji: "🎤", effect: "buffWithAbility", value: 15, description: "Cards with abilities +15!" },
+  { name: "Mom's Basement", effect: "buffAlone", value: 60, description: "Only 1 card here? +60" },
+  { name: "Discord Server", effect: "buffPerCard", value: 15, description: "+15 for each card here" },
+  { name: "Copium Den", effect: "buffIfLosing", value: 35, description: "Losing this lane? +35" },
+  { name: "Ye's Studio", effect: "buffOnReveal", value: 25, description: "OnReveal cards: +25" },
+  { name: "Zen Garden", effect: "buffOngoing", value: 30, description: "Ongoing cards: +30" },
 
-  // ═══ CHAOS LANES (Purple themed - high risk/reward) ═══
-  { name: "Degen Valley", emoji: "🎰", effect: "gamble", description: "50% DOUBLE or 50% HALVE power!" },
-  { name: "Liquidity Pool", emoji: "💧", effect: "swapSides", description: "Powers SWAPPED at end!" },
-  { name: "Clown College", emoji: "🎪", effect: "reverseOrder", description: "LOWEST power WINS!" },
+  // ═══ CHAOS LANES ═══
+  { name: "Degen Valley", effect: "gamble", description: "Each card: 50% 2x or 50% halved" },
+  { name: "Liquidity Pool", effect: "swapSides", description: "At game end: scores swap!" },
+  { name: "Clown College", effect: "reverseOrder", description: "LOWEST total power wins!" },
 
   // ═══ SPECIAL VICTORY LANES ═══
-  { name: "ATH Peak", emoji: "⛰️", effect: "highestWins", description: "Only STRONGEST card counts!" },
-  { name: "Bridge to Nowhere", emoji: "🌉", effect: "noVictory", description: "This lane DOESN'T count!" },
+  { name: "ATH Peak", effect: "highestWins", description: "Only 1 strongest card counts!" },
+  { name: "Bridge", effect: "noVictory", description: "This lane doesn't count for win" },
 
   // ═══ NEUTRAL ═══
-  { name: "Touch Grass Field", emoji: "🌾", effect: "noEffect", description: "No special effect" },
+  { name: "Touch Grass", effect: "flatBonus", value: 20, description: "All cards here: +20" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1829,20 +1830,15 @@ export default function TCGPage() {
     const value = lane.value || 0;
 
     switch (effect) {
-      case "buffAll":
+      case "flatBonus":
         return value;
-
-      case "debuffAll":
-        return value; // negative value
 
       case "buffPerTurn":
       case "debuffPerTurn":
         return value * currentTurn;
 
       case "buffFirst":
-        // Only first card played gets bonus
-        const isFirst = allCards.indexOf(card) === 0;
-        return isFirst ? value : 0;
+        return allCards.indexOf(card) === 0 ? value : 0;
 
       case "buffHighest":
         const maxPower = Math.max(...allCards.map(c => c.power || 0));
@@ -1859,13 +1855,16 @@ export default function TCGPage() {
         return allCards.length === 1 ? value : 0;
 
       case "buffCommon":
-        // Check card rarity from abilities
-        const ability = getCardAbility(card.name);
-        return ability?.rarity === "Common" ? value : 0;
+        const abilityCommon = getCardAbility(card.name);
+        return abilityCommon?.rarity === "Common" ? value : 0;
+
+      case "buffEpic":
+        const abilityEpic = getCardAbility(card.name);
+        return abilityEpic?.rarity === "Epic" ? value : 0;
 
       case "doubleLegendary":
         const cardAbility = getCardAbility(card.name);
-        return cardAbility?.rarity === "Legendary" ? card.power : 0; // Double = add same power
+        return cardAbility?.rarity === "Legendary" ? card.power : 0;
 
       case "buffFoil":
         return card.foil ? value : 0;
@@ -1876,11 +1875,15 @@ export default function TCGPage() {
       case "buffVibeFID":
         return card.collection === "vibefid" ? value : 0;
 
-      case "buffWithAbility":
-        return getCardAbility(card.name) ? value : 0;
+      case "buffOnReveal":
+        const abilityOR = getCardAbility(card.name);
+        return abilityOR?.type === "onReveal" ? value : 0;
+
+      case "buffOngoing":
+        const abilityOG = getCardAbility(card.name);
+        return abilityOG?.type === "ongoing" ? value : 0;
 
       case "buffIfLosing":
-        // Bonus if player is losing this lane
         const playerTotal = lane.playerCards.reduce((sum: number, c: DeckCard) => sum + (c.power || 0), 0);
         const cpuTotal = lane.cpuCards.reduce((sum: number, c: DeckCard) => sum + (c.power || 0), 0);
         if (isPlayer && playerTotal < cpuTotal) return value;
@@ -1888,30 +1891,23 @@ export default function TCGPage() {
         return 0;
 
       case "debuffEnemy":
-        // Only debuff enemy cards
         return isPlayer ? 0 : value;
 
+      case "debuffEnemyHighest":
+        // Only debuff the strongest enemy card
+        if (isPlayer) return 0;
+        const enemyCards = lane.cpuCards;
+        if (enemyCards.length === 0) return 0;
+        const maxEnemyPower = Math.max(...enemyCards.map((c: DeckCard) => c.power || 0));
+        return card.power === maxEnemyPower ? value : 0;
+
       case "gamble":
-        // 50% chance double, 50% chance halve (calculated once per card on reveal)
-        // For now, apply a random factor
         return Math.random() > 0.5 ? card.power : -Math.floor(card.power / 2);
 
       case "swapSides":
-        // This is handled at the lane level, not per card
-        return 0;
-
       case "reverseOrder":
-        // This is handled at victory calculation
-        return 0;
-
       case "highestWins":
-        // This is handled at victory calculation
-        return 0;
-
       case "noVictory":
-        // This is handled at victory calculation
-        return 0;
-
       case "noEffect":
       default:
         return 0;
@@ -2728,7 +2724,6 @@ export default function TCGPage() {
                   className="bg-gradient-to-r from-purple-900/50 to-pink-900/30 rounded-lg p-3"
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{combo.emoji}</span>
                     <span className="text-white font-bold text-sm">{combo.name}</span>
                     {combo.minCards && (
                       <span className="text-gray-500 text-[10px]">({combo.minCards}+)</span>
@@ -3504,93 +3499,55 @@ export default function TCGPage() {
             </div>
           </div>
 
-          {/* Battle Arena - 3 Lanes */}
-          <div className="flex-1 flex items-center justify-center px-2 gap-2 min-h-0">
+          {/* Battle Arena - 3 Lanes (Marvel Snap style) */}
+          <div className="flex-1 flex items-stretch justify-center px-1 gap-1.5 min-h-0">
             {gs.lanes.map((lane: any, laneIndex: number) => {
               const status = getLaneStatus(lane);
               const activeCombos = getActiveCombosInLane(laneIndex);
 
-              // Lane effect type for theming
-              const effectType =
-                lane.effect?.includes("buff") && !lane.effect?.includes("debuff") ? "buff" :
-                lane.effect?.includes("debuff") ? "debuff" :
-                lane.effect === "gamble" || lane.effect === "swapSides" || lane.effect === "reverseOrder" ? "chaos" :
-                lane.effect === "highestWins" || lane.effect === "noVictory" ? "special" :
-                lane.effect === "doubleLegendary" || lane.effect?.includes("Foil") || lane.effect?.includes("VibeFID") ? "rarity" :
-                "neutral";
-
-              // Background based on effect type AND win status
-              const effectBgBase = {
-                buff: "from-green-900/30 to-emerald-950/50",
-                debuff: "from-red-900/30 to-rose-950/50",
-                chaos: "from-purple-900/40 to-fuchsia-950/50",
-                special: "from-yellow-900/30 to-amber-950/50",
-                rarity: "from-cyan-900/30 to-blue-950/50",
-                neutral: "from-gray-800/30 to-slate-950/50",
-              }[effectType];
-
-              const laneBg = status === "winning" ? "from-green-800/50 to-green-950/70" :
-                            status === "losing" ? "from-red-800/50 to-red-950/70" :
-                            effectBgBase;
-
-              const laneBorder = status === "winning" ? "border-green-400 shadow-green-500/40" :
-                                status === "losing" ? "border-red-400 shadow-red-500/40" :
-                                effectType === "buff" ? "border-green-600/50 shadow-green-500/20" :
-                                effectType === "debuff" ? "border-red-600/50 shadow-red-500/20" :
-                                effectType === "chaos" ? "border-purple-500/50 shadow-purple-500/20" :
-                                effectType === "special" ? "border-yellow-500/50 shadow-yellow-500/20" :
-                                effectType === "rarity" ? "border-cyan-500/50 shadow-cyan-500/20" :
-                                "border-gray-600/50";
-
-              // Effect badge color
-              const effectBadgeClass = {
-                buff: "bg-green-600/80 text-green-100 border-green-400",
-                debuff: "bg-red-600/80 text-red-100 border-red-400",
-                chaos: "bg-purple-600/80 text-purple-100 border-purple-400",
-                special: "bg-yellow-600/80 text-yellow-100 border-yellow-400",
-                rarity: "bg-cyan-600/80 text-cyan-100 border-cyan-400",
-                neutral: "bg-gray-600/80 text-gray-200 border-gray-400",
-              }[effectType];
+              // Win indicator glow
+              const winGlow = status === "winning" ? "shadow-[0_0_20px_rgba(34,197,94,0.4)]" :
+                             status === "losing" ? "shadow-[0_0_20px_rgba(239,68,68,0.4)]" : "";
 
               return (
                 <div
                   key={lane.laneId}
-                  className={`flex flex-col w-[32%] h-full rounded-xl border-2 bg-gradient-to-b ${laneBg} ${laneBorder} shadow-lg overflow-hidden transition-all`}
+                  className={`flex flex-col w-[33%] h-full bg-black/40 backdrop-blur-sm rounded-lg overflow-hidden ${winGlow} transition-all`}
+                  style={{
+                    boxShadow: "inset 0 0 30px rgba(0,0,0,0.5)"
+                  }}
                 >
-                  {/* Lane Title Card */}
-                  <div className={`relative mx-auto -mt-1 w-[95%] py-1.5 px-2 rounded-b-xl bg-gradient-to-b from-gray-900/95 to-black/95 border-2 border-t-0 ${
-                    status === "winning" ? "border-green-400" : status === "losing" ? "border-red-400" : "border-gray-600"
-                  }`}>
-                    {/* Lane name + emoji */}
-                    <div className="flex items-center justify-center gap-1">
-                      <span className="text-lg">{lane.emoji || "🎯"}</span>
-                      <span className="text-[9px] font-bold text-white truncate max-w-[60px]">{lane.name || `Lane ${laneIndex + 1}`}</span>
+                  {/* Location Header - Clean style */}
+                  <div className="relative bg-gray-900/95 border-b border-gray-800">
+                    {/* Lane name */}
+                    <div className="text-center py-1.5 px-1">
+                      <span className="text-[11px] font-bold text-white tracking-wide uppercase">{lane.name || `Lane ${laneIndex + 1}`}</span>
                     </div>
-                    {/* Lane Effect Badge - More prominent */}
+                    {/* Effect description */}
                     {lane.description && lane.effect !== "noEffect" && (
-                      <div className={`text-center mt-1 px-2 py-1 rounded-lg text-[8px] font-bold border ${effectBadgeClass}`}>
-                        {lane.description}
+                      <div className="text-center px-1 pb-1.5 -mt-1">
+                        <span className="text-[8px] text-yellow-400 font-medium">{lane.description}</span>
                       </div>
                     )}
-                    {/* Score badges */}
-                    <div className="flex items-center justify-between mt-1.5 gap-1">
-                      <div className={`flex-1 text-center px-1 py-0.5 rounded text-xs font-bold ${
-                        status === "losing" ? "bg-red-500 text-white animate-pulse" : "bg-gray-800 text-gray-400"
+                    {/* Score Bar */}
+                    <div className="flex items-center justify-center gap-3 py-1.5 bg-black/50">
+                      <div className={`min-w-[32px] text-center px-2 py-0.5 rounded text-sm font-black ${
+                        status === "losing" ? "bg-red-600 text-white" : "bg-gray-800 text-gray-500"
                       }`}>
                         {lane.cpuPower}
                       </div>
-                      <span className="text-[8px] text-gray-500">vs</span>
-                      <div className={`flex-1 text-center px-1 py-0.5 rounded text-xs font-bold ${
-                        status === "winning" ? "bg-green-500 text-white animate-pulse" : "bg-gray-800 text-gray-400"
+                      <div className="text-[10px] text-gray-600 font-bold">VS</div>
+                      <div className={`min-w-[32px] text-center px-2 py-0.5 rounded text-sm font-black ${
+                        status === "winning" ? "bg-green-600 text-white" : "bg-gray-800 text-gray-500"
                       }`}>
                         {lane.playerPower}
                       </div>
                     </div>
                   </div>
 
-                  {/* CPU Cards (top) */}
-                  <div className="flex-1 flex items-start justify-center pt-2 px-1">
-                    <div className="flex -space-x-6">
+                  {/* CPU Cards (top) - Platform style */}
+                  <div className="flex-1 flex items-start justify-center pt-3 px-1">
+                    <div className="relative flex -space-x-5">
                       {lane.cpuCards.map((card: any, idx: number) => {
                         const ability = getCardAbility(card.name);
                         const foil = (card.foil || "").toLowerCase();
@@ -3616,17 +3573,19 @@ export default function TCGPage() {
                           <div
                             key={idx}
                             onClick={() => setDetailCard(card)}
-                            className={`relative w-14 h-20 rounded-lg border-2 border-red-500/70 bg-cover bg-center shadow-lg cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden bg-gray-800 ${animClass}`}
+                            className={`relative w-12 h-[68px] rounded-md bg-cover bg-center cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${animClass}`}
                             style={{
                               backgroundImage: encodedImageUrl ? `url(${encodedImageUrl})` : undefined,
-                              zIndex: anim ? 50 : idx
+                              zIndex: anim ? 50 : idx,
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.6), 0 0 0 1px rgba(239,68,68,0.5)"
                             }}
                           >
                             {/* Foil effect overlay */}
-                            {hasFoil && <div className={`absolute inset-0 ${foilClass} rounded-lg pointer-events-none z-[5]`}></div>}
-                            {/* Power badge */}
-                            <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-2 border-red-300 flex items-center justify-center z-10 transition-all ${anim?.type === "glow-red" ? "scale-125" : ""}`}>
-                              <span className="text-[10px] font-bold text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
+                            {hasFoil && <div className={`absolute inset-0 ${foilClass} rounded-md pointer-events-none z-[5]`}></div>}
+                            {/* Power badge - Snap style hexagon-ish */}
+                            <div className={`absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-red-600 flex items-center justify-center z-10 transition-all ${anim?.type === "glow-red" ? "scale-125" : ""}`}
+                              style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}>
+                              <span className="text-[9px] font-black text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
                             </div>
                             {/* Power change floating number */}
                             {anim?.powerChange && (
@@ -3636,16 +3595,10 @@ export default function TCGPage() {
                                 </span>
                               </div>
                             )}
-                            {/* Foil badge */}
-                            {hasFoil && (
-                              <div className={`absolute top-0 right-0 px-1 rounded-bl text-[6px] font-bold z-10 ${foil.includes("prize") ? "bg-pink-500 text-white" : "bg-purple-500 text-white"}`}>
-                                {foil.includes("prize") ? "P" : "F"}
-                              </div>
-                            )}
-                            {/* Ability indicator */}
+                            {/* Ability indicator - small dot */}
                             {ability && (
-                              <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold z-10 ${
-                                ability.type === "onReveal" ? "bg-orange-500" : ability.type === "ongoing" ? "bg-green-500" : "bg-purple-500"
+                              <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full flex items-center justify-center text-[6px] font-bold z-10 ${
+                                ability.type === "onReveal" ? "bg-orange-500" : "bg-green-500"
                               }`}>
                                 {ability.type === "onReveal" ? "R" : "O"}
                               </div>
@@ -3654,43 +3607,43 @@ export default function TCGPage() {
                         );
                       })}
                       {lane.cpuCards.length === 0 && (
-                        <div className="w-14 h-20 rounded-lg border-2 border-dashed border-red-500/30 bg-red-900/20" />
+                        <div className="w-12 h-[68px] rounded-md bg-gray-900/50 border border-gray-700/30"
+                          style={{ boxShadow: "inset 0 2px 8px rgba(0,0,0,0.4)" }} />
                       )}
                     </div>
                   </div>
 
-                  {/* Center Divider with Combo Display */}
-                  <div className="py-1 flex items-center justify-center">
+                  {/* Center Divider */}
+                  <div className="py-0.5 flex items-center justify-center">
                     {activeCombos.length > 0 ? (
                       <button
                         onClick={() => setDetailCombo(activeCombos[0].combo)}
-                        className="bg-yellow-500/20 border border-yellow-500/50 rounded-full px-2 py-0.5 animate-pulse hover:bg-yellow-500/40 hover:scale-105 transition-all cursor-pointer"
+                        className="bg-yellow-600/30 border border-yellow-500/60 rounded px-2 py-0.5 hover:bg-yellow-500/50 transition-all cursor-pointer"
                       >
-                        <span className="text-[9px] text-yellow-400 font-bold">
-                          {activeCombos[0].combo.emoji} {activeCombos[0].combo.name}
+                        <span className="text-[8px] text-yellow-300 font-bold uppercase tracking-wide">
+                          {activeCombos[0].combo.name}
                         </span>
                       </button>
                     ) : (
-                      <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-500 to-transparent" />
+                      <div className="w-12 h-px bg-gray-700/50" />
                     )}
                   </div>
 
                   {/* Player Cards (bottom) - clickable area */}
                   <div
-                    className={`relative flex-1 flex items-end justify-center pb-2 px-1 rounded-b-lg transition-all ${
-                      selectedHandCard !== null ? "bg-green-500/20 ring-2 ring-green-400/50 ring-inset cursor-pointer hover:bg-green-500/30" : ""
+                    className={`relative flex-1 flex items-end justify-center pb-3 px-1 transition-all ${
+                      selectedHandCard !== null ? "bg-green-900/30 cursor-pointer" : ""
                     }`}
                     onClick={() => selectedHandCard !== null && handlePvEPlayCard(laneIndex)}
                   >
                     {selectedHandCard !== null && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                        <span className="text-green-400 text-sm font-bold animate-pulse bg-black/50 px-2 py-1 rounded">⬇ PLAY</span>
+                        <span className="text-green-400 text-xs font-bold bg-black/60 px-2 py-1 rounded">PLAY</span>
                       </div>
                     )}
-                    <div className="flex -space-x-6">
+                    <div className="relative flex -space-x-5">
                       {lane.playerCards.map((card: any, idx: number) => {
                         const ability = getCardAbility(card.name);
-                        // Get card animation if any
                         const animKey = `${laneIndex}-player-${idx}`;
                         const anim = cardAnimations[animKey];
                         const animClass = anim ? {
@@ -3711,20 +3664,22 @@ export default function TCGPage() {
                               e.stopPropagation();
                               setDetailCard(card);
                             }}
-                            className={`relative w-14 h-20 rounded-lg border-2 border-blue-500/70 bg-cover bg-center shadow-lg cursor-pointer hover:scale-110 hover:z-30 transition-transform ${getFoilClass(card.foil)} ${animClass}`}
+                            className={`relative w-12 h-[68px] rounded-md bg-cover bg-center cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${getFoilClass(card.foil)} ${animClass}`}
                             style={{
                               backgroundImage: `url(${card.imageUrl})`,
-                              zIndex: anim ? 50 : idx
+                              zIndex: anim ? 50 : idx,
+                              boxShadow: "0 4px 12px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.5)"
                             }}
                           >
-                            {/* Power badge */}
-                            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 border-2 border-blue-300 flex items-center justify-center">
-                              <span className="text-[10px] font-bold text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
+                            {/* Power badge - Snap style */}
+                            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-blue-600 flex items-center justify-center z-10"
+                              style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}>
+                              <span className="text-[9px] font-black text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
                             </div>
-                            {/* Ability indicator */}
+                            {/* Ability indicator - small dot */}
                             {ability && (
-                              <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${
-                                ability.type === "onReveal" ? "bg-orange-500" : ability.type === "ongoing" ? "bg-green-500" : "bg-purple-500"
+                              <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full flex items-center justify-center text-[6px] font-bold ${
+                                ability.type === "onReveal" ? "bg-orange-500" : "bg-green-500"
                               }`}>
                                 {ability.type === "onReveal" ? "R" : "O"}
                               </div>
@@ -3736,10 +3691,10 @@ export default function TCGPage() {
                                   e.stopPropagation();
                                   handleLandmineKamikaze(laneIndex, idx);
                                 }}
-                                className="absolute -bottom-2 -left-2 w-6 h-6 bg-gradient-to-br from-red-500 to-orange-600 hover:from-red-400 hover:to-orange-500 rounded-full text-[10px] text-white font-bold flex items-center justify-center z-20 shadow-lg border-2 border-red-300 animate-pulse"
-                                title="💥 Kamikaze: Destroy self + highest enemy"
+                                className="absolute -bottom-1 -left-1 w-5 h-5 bg-red-600 hover:bg-red-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-20"
+                                title="Kamikaze"
                               >
-                                💥
+                                X
                               </button>
                             )}
                             {/* NAUGHTY SANTA Charm Button */}
@@ -3749,17 +3704,11 @@ export default function TCGPage() {
                                   e.stopPropagation();
                                   handleSantaCharm(laneIndex, idx);
                                 }}
-                                className="absolute -bottom-2 -left-2 w-6 h-6 bg-gradient-to-br from-pink-500 to-red-500 hover:from-pink-400 hover:to-red-400 rounded-full text-[10px] text-white font-bold flex items-center justify-center z-20 shadow-lg border-2 border-pink-300 animate-pulse"
-                                title="💋 Charm: Seduce an enemy to your side"
+                                className="absolute -bottom-1 -left-1 w-5 h-5 bg-pink-600 hover:bg-pink-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-20"
+                                title="Charm"
                               >
-                                💋
+                                C
                               </button>
-                            )}
-                            {/* Charmed indicator */}
-                            {card.charmed && (
-                              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl pointer-events-none animate-pulse">
-                                💕
-                              </div>
                             )}
                             {/* UNDO Button - Return card to hand */}
                             {(gs.cardsPlayedInfo || []).some((info: any) => info.cardId === card.cardId && info.laneIndex === laneIndex) && (
@@ -3768,17 +3717,18 @@ export default function TCGPage() {
                                   e.stopPropagation();
                                   handleReturnCardToHand(laneIndex, idx);
                                 }}
-                                className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-gray-600 to-gray-800 hover:from-red-500 hover:to-red-700 rounded-full text-xs text-white font-bold flex items-center justify-center z-30 shadow-lg border-2 border-gray-400 hover:border-red-300 transition-all"
-                                title="↩️ Return to hand (refund energy)"
+                                className="absolute -top-1 -right-1 w-5 h-5 bg-gray-700 hover:bg-red-600 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-30 transition-colors"
+                                title="Return to hand"
                               >
-                                ↩
+                                R
                               </button>
                             )}
                           </div>
                         );
                       })}
                       {lane.playerCards.length === 0 && !selectedHandCard && (
-                        <div className="w-14 h-20 rounded-lg border-2 border-dashed border-blue-500/30 bg-blue-900/20" />
+                        <div className="w-12 h-[68px] rounded-md bg-gray-900/50 border border-gray-700/30"
+                          style={{ boxShadow: "inset 0 2px 8px rgba(0,0,0,0.4)" }} />
                       )}
                     </div>
                   </div>
@@ -3805,7 +3755,7 @@ export default function TCGPage() {
                     {comboPreviews.map((preview: any, pIdx: number) => (
                       <div key={pIdx} className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg px-3 py-1 animate-pulse">
                         <span className="text-[10px] text-yellow-400">
-                          Lane {preview.laneIdx + 1}: {preview.combos[0].combo.emoji} {preview.combos[0].combo.name}
+                          Lane {preview.laneIdx + 1}: {preview.combos[0].combo.name}
                         </span>
                       </div>
                     ))}
@@ -4223,9 +4173,8 @@ export default function TCGPage() {
                     playerWon ? "border-green-500" : isTie ? "border-gray-500" : "border-red-500"
                   }`}
                 >
-                  <p className="text-sm text-gray-400 flex items-center justify-center gap-1">
-                    <span>{lane.emoji || "🎯"}</span>
-                    <span>{lane.name || `Lane ${idx + 1}`}</span>
+                  <p className="text-sm text-gray-400">
+                    {lane.name || `Lane ${idx + 1}`}
                   </p>
                   <p className="text-lg font-bold">
                     <span className={playerWon ? "text-green-400" : "text-white"}>{lane.playerPower}</span>
