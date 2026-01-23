@@ -1,96 +1,96 @@
 {
   "description": "TCG Abilities for all 53 VMW cards",
-  "version": "1.0.0",
-  "lastUpdated": "2026-01-22",
+  "version": "1.1.0",
+  "lastUpdated": "2026-01-23",
   "abilityTypes": {
     "onReveal": "Triggers when card is played",
     "ongoing": "Passive effect while on board",
-    "onDestroy": "Triggers when card is removed from lane"
+    "onEnemySkip": "Triggers when opponent skips their turn"
   },
   "abilities": {
     "neymar": {
-      "name": "King's Arrival",
+      "name": "👑 King's Arrival",
       "type": "onReveal",
-      "description": "+30 power to all your cards in all lanes",
-      "effect": { "action": "buffAllLanes", "value": 30 },
+      "description": "+30 power to ALL cards + DOUBLE power if winning 2+ lanes!",
+      "effect": { "action": "buffAllLanes", "value": 30, "doubleIfWinning": true },
       "rarity": "Mythic"
     },
     "anon": {
-      "name": "Hidden Identity",
+      "name": "🎭 Hidden Identity",
       "type": "ongoing",
-      "description": "Cannot be targeted by opponent effects",
-      "effect": { "action": "untargetable" },
+      "description": "IMMUNE to all enemy effects + gains +10 power each turn!",
+      "effect": { "action": "untargetable", "buffPerTurn": 10 },
       "rarity": "Mythic"
     },
     "linda xied": {
-      "name": "Diamond Authority",
+      "name": "💎 Diamond Authority",
       "type": "onReveal",
-      "description": "Copy the highest power card in any lane",
-      "effect": { "action": "copyHighest" },
+      "description": "COPY highest power card + STEAL 20 power from all enemies!",
+      "effect": { "action": "copyHighest", "stealFromAll": 20 },
       "rarity": "Mythic"
     },
     "vitalik jumpterin": {
-      "name": "Gas Optimization",
+      "name": "⛽ Gas Optimization",
       "type": "ongoing",
-      "description": "All your cards cost 1 less energy",
-      "effect": { "action": "reduceEnergyCost", "value": 1 },
+      "description": "ALL cards cost -1 energy + gain +2 ENERGY each turn!",
+      "effect": { "action": "reduceEnergyCost", "value": 1, "energyPerTurn": 2 },
       "rarity": "Mythic"
     },
     "jesse": {
-      "name": "Protocol Override",
+      "name": "💀 Protocol Override",
       "type": "onReveal",
-      "description": "Destroy the highest power enemy card",
-      "effect": { "action": "destroyHighestEnemy" },
+      "description": "DESTROY highest enemy card + GAIN its power as bonus!",
+      "effect": { "action": "destroyHighestEnemy", "gainPower": true },
       "rarity": "Mythic"
     },
 
     "antonio": {
       "name": "Logical Mind",
       "type": "onReveal",
-      "description": "+20 power for each card in this lane",
-      "effect": { "action": "buffPerCardInLane", "value": 20 },
+      "description": "+25 power for each card in this lane",
+      "effect": { "action": "buffPerCardInLane", "value": 25 },
       "rarity": "Legendary"
     },
     "goofy romero": {
-      "name": "Chaotic Kingdom",
+      "name": "🌀 Chaotic Kingdom",
       "type": "onReveal",
-      "description": "Shuffle all cards in all lanes randomly",
-      "effect": { "action": "shuffleAllLanes" },
+      "description": "CHAOS: Shuffle ALL cards in lanes + BOTH players' hands!",
+      "effect": { "action": "shuffleAllLanes", "shuffleHands": true },
       "rarity": "Legendary"
     },
     "tukka": {
       "name": "Cock Twist",
       "type": "onReveal",
-      "description": "Swap power of two enemy cards",
-      "effect": { "action": "swapEnemyPowers" },
+      "description": "Swap power of two enemy cards AND steal 15 power",
+      "effect": { "action": "swapEnemyPowers", "bonusSteal": 15 },
       "rarity": "Legendary"
     },
     "chilipepper": {
       "name": "Spicy Burn",
       "type": "onReveal",
-      "description": "-15 power to all enemy cards in this lane",
-      "effect": { "action": "debuffLane", "value": -15 },
+      "description": "-25 power to all enemy cards in this lane",
+      "effect": { "action": "debuffLane", "value": -25 },
       "rarity": "Legendary"
     },
     "miguel": {
       "name": "Royal Command",
       "type": "ongoing",
-      "description": "+10 power to all your cards here",
-      "effect": { "action": "buffLaneOngoing", "value": 10 },
+      "description": "+15 power to all your cards here",
+      "effect": { "action": "buffLaneOngoing", "value": 15 },
       "rarity": "Legendary"
     },
     "naughty santa": {
-      "name": "Naughty Gift",
+      "name": "💋 Seduction",
       "type": "onReveal",
-      "description": "Give enemy a -20 power 'Coal' card",
-      "effect": { "action": "giveCoal", "value": -20 },
+      "description": "CHARM: Click 💋 button to STEAL an enemy card to your side!",
+      "effect": { "action": "charm" },
       "rarity": "Legendary"
     },
     "ye": {
       "name": "Visionary",
       "type": "onReveal",
-      "description": "Draw 2 cards",
-      "effect": { "action": "draw", "value": 2 },
+      "description": "Draw 3 cards AND +10 power to all",
+      "effect": { "action": "draw", "value": 3, "bonusBuff": 10 },
       "rarity": "Legendary"
     },
     "nico": {
@@ -104,283 +104,283 @@
     "sartocrates": {
       "name": "Philosophical Strike",
       "type": "onReveal",
-      "description": "+15 power if you have fewer cards here",
-      "effect": { "action": "buffIfFewerCards", "value": 15 },
+      "description": "+30 power if you have fewer cards here",
+      "effect": { "action": "buffIfFewerCards", "value": 30 },
       "rarity": "Epic"
     },
     "0xdeployer": {
       "name": "Smart Contract",
       "type": "onReveal",
-      "description": "Add a copy of this card to your hand",
-      "effect": { "action": "addCopyToHand" },
+      "description": "Add a copy of this card to your hand +15 power to self",
+      "effect": { "action": "addCopyToHand", "bonusPower": 15 },
       "rarity": "Epic"
     },
     "lombra jr": {
       "name": "Dick Knowledge",
       "type": "ongoing",
-      "description": "+5 power for each card you've played",
-      "effect": { "action": "buffPerCardsPlayed", "value": 5 },
+      "description": "+8 power for each card you've played",
+      "effect": { "action": "buffPerCardsPlayed", "value": 8 },
       "rarity": "Epic"
     },
     "vibe intern": {
       "name": "Coffee Run",
       "type": "onReveal",
-      "description": "Move a friendly card to another lane",
-      "effect": { "action": "moveCard" },
+      "description": "Move a friendly card to another lane +10 power to it",
+      "effect": { "action": "moveCard", "bonusBuff": 10 },
       "rarity": "Epic"
     },
     "jack the sniper": {
       "name": "Snipe Shot",
       "type": "onReveal",
-      "description": "-10 power to a random enemy card",
-      "effect": { "action": "debuffRandomEnemy", "value": -10 },
+      "description": "-25 power to a random enemy card",
+      "effect": { "action": "debuffRandomEnemy", "value": -25 },
       "rarity": "Epic"
     },
     "beeper": {
       "name": "Signal Boost",
       "type": "onReveal",
-      "description": "+8 power to adjacent cards",
-      "effect": { "action": "buffAdjacent", "value": 8 },
+      "description": "+20 power to adjacent cards",
+      "effect": { "action": "buffAdjacent", "value": 20 },
       "rarity": "Epic"
     },
     "horsefarts": {
       "name": "Fact Check",
       "type": "onReveal",
-      "description": "Reveal a random card from opponent's hand",
-      "effect": { "action": "revealEnemyCard" },
+      "description": "Reveal enemy card AND steal 15 power from it",
+      "effect": { "action": "revealEnemyCard", "stealPower": 15 },
       "rarity": "Epic"
     },
     "jc denton": {
       "name": "Nano Augmentation",
       "type": "ongoing",
-      "description": "+3 power at the end of each turn",
-      "effect": { "action": "buffEachTurn", "value": 3 },
+      "description": "+8 power at the end of each turn",
+      "effect": { "action": "buffEachTurn", "value": 8 },
       "rarity": "Epic"
     },
     "zurkchad": {
       "name": "Alpha Energy",
       "type": "onReveal",
-      "description": "+12 power if played on turn 3 or later",
-      "effect": { "action": "buffIfTurn", "minTurn": 3, "value": 12 },
+      "description": "+30 power if played on turn 3 or later",
+      "effect": { "action": "buffIfTurn", "minTurn": 3, "value": 30 },
       "rarity": "Epic"
     },
     "slaterg": {
       "name": "Proxy Power",
       "type": "onReveal",
-      "description": "Copy the ability of another card here",
-      "effect": { "action": "copyAbility" },
+      "description": "Copy the ability of another card here +15 power",
+      "effect": { "action": "copyAbility", "bonusPower": 15 },
       "rarity": "Epic"
     },
     "brian armstrong": {
       "name": "Coinbase Listing",
       "type": "onReveal",
-      "description": "+10 power to all Rare cards in play",
-      "effect": { "action": "buffByRarity", "targetRarity": "Rare", "value": 10 },
+      "description": "+15 power to all Rare cards in play",
+      "effect": { "action": "buffByRarity", "targetRarity": "Rare", "value": 15 },
       "rarity": "Epic"
     },
     "nftkid": {
       "name": "NFT Flip",
       "type": "onReveal",
-      "description": "Gain power equal to cards in your hand",
-      "effect": { "action": "buffPerHandSize", "multiplier": 5 },
+      "description": "Gain +10 power per card in your hand",
+      "effect": { "action": "buffPerHandSize", "multiplier": 10 },
       "rarity": "Epic"
     },
 
     "smolemaru": {
       "name": "Creative Spark",
       "type": "onReveal",
-      "description": "+3 power for each card you've played this game",
-      "effect": { "action": "buffPerCardsPlayed", "value": 3 },
+      "description": "+8 power for each card you've played this game",
+      "effect": { "action": "buffPerCardsPlayed", "value": 8 },
       "rarity": "Rare"
     },
     "ventra": {
       "name": "Diamond Hands",
       "type": "ongoing",
-      "description": "Cannot lose power from enemy effects",
-      "effect": { "action": "immuneToDebuff" },
+      "description": "Cannot lose power from enemy effects AND +10 power",
+      "effect": { "action": "immuneToDebuff", "bonusPower": 10 },
       "rarity": "Rare"
     },
     "bradymck": {
       "name": "Community Builder",
       "type": "onReveal",
-      "description": "+4 power for each other friendly card",
-      "effect": { "action": "buffPerFriendly", "value": 4 },
+      "description": "+12 power for each other friendly card",
+      "effect": { "action": "buffPerFriendly", "value": 12 },
       "rarity": "Rare"
     },
     "shills": {
       "name": "Shill Campaign",
       "type": "onReveal",
-      "description": "+6 power to the weakest friendly card",
-      "effect": { "action": "buffWeakest", "value": 6 },
+      "description": "+20 power to the weakest friendly card",
+      "effect": { "action": "buffWeakest", "value": 20 },
       "rarity": "Rare"
     },
     "betobutter": {
       "name": "Butter Smooth",
       "type": "ongoing",
-      "description": "+2 power for each turn passed",
-      "effect": { "action": "buffPerTurn", "value": 2 },
+      "description": "+6 power for each turn passed",
+      "effect": { "action": "buffPerTurn", "value": 6 },
       "rarity": "Rare"
     },
     "qrcodo": {
       "name": "Quick Response",
       "type": "onReveal",
-      "description": "Draw 1 card",
-      "effect": { "action": "draw", "value": 1 },
+      "description": "Draw 2 cards",
+      "effect": { "action": "draw", "value": 2 },
       "rarity": "Rare"
     },
     "loground": {
       "name": "Underground Network",
       "type": "onReveal",
-      "description": "+5 power to all cards in other lanes",
-      "effect": { "action": "buffOtherLanes", "value": 5 },
+      "description": "+15 power to all cards in other lanes",
+      "effect": { "action": "buffOtherLanes", "value": 15 },
       "rarity": "Rare"
     },
     "melted": {
-      "name": "Meltdown",
-      "type": "onDestroy",
-      "description": "+10 power to a random friendly card",
-      "effect": { "action": "buffOnDestroy", "value": 10 },
+      "name": "🔥 Meltdown",
+      "type": "onReveal",
+      "description": "Lose 10 power BUT give +40 power to another ally!",
+      "effect": { "action": "sacrificeForBuff", "selfCost": -10, "buffValue": 40 },
       "rarity": "Rare"
     },
 
     "rachel": {
       "name": "Heart Power",
       "type": "onReveal",
-      "description": "+3 power",
-      "effect": { "action": "buffSelf", "value": 3 },
+      "description": "+15 power",
+      "effect": { "action": "buffSelf", "value": 15 },
       "rarity": "Common"
     },
     "claude": {
       "name": "Computing",
       "type": "ongoing",
-      "description": "+1 power for each card in play",
-      "effect": { "action": "buffPerCardInPlay", "value": 1 },
+      "description": "+4 power for each card in play",
+      "effect": { "action": "buffPerCardInPlay", "value": 4 },
       "rarity": "Common"
     },
     "gozaru": {
       "name": "Steady Growth",
       "type": "onReveal",
-      "description": "+2 power to another card here",
-      "effect": { "action": "buffOtherInLane", "value": 2 },
+      "description": "+12 power to another card here",
+      "effect": { "action": "buffOtherInLane", "value": 12 },
       "rarity": "Common"
     },
     "ink": {
-      "name": "Ink Blot",
-      "type": "onReveal",
-      "description": "-2 power to an enemy card here",
-      "effect": { "action": "debuffEnemyInLane", "value": -2 },
+      "name": "🎯 Lone Hunter",
+      "type": "ongoing",
+      "description": "PREDICTION: If enemy has only 1 card in this lane for 2 turns, DESTROY it!",
+      "effect": { "action": "destroyLoneCard", "duration": 2 },
       "rarity": "Common"
     },
     "casa": {
       "name": "Home Advantage",
       "type": "ongoing",
-      "description": "+2 power if played first in this lane",
-      "effect": { "action": "buffIfFirst", "value": 2 },
+      "description": "+12 power if played first in this lane",
+      "effect": { "action": "buffIfFirst", "value": 12 },
       "rarity": "Common"
     },
     "groko": {
       "name": "AI Learning",
       "type": "onReveal",
-      "description": "+1 power for each Common card you have",
-      "effect": { "action": "buffPerRarity", "targetRarity": "Common", "value": 1 },
+      "description": "+5 power for each Common card you have",
+      "effect": { "action": "buffPerRarity", "targetRarity": "Common", "value": 5 },
       "rarity": "Common"
     },
     "rizkybegitu": {
       "name": "Risky Play",
       "type": "onReveal",
-      "description": "50% chance: +6 power or -3 power",
-      "effect": { "action": "gamble", "win": 6, "lose": -3 },
+      "description": "50% chance: +25 power or -10 power",
+      "effect": { "action": "gamble", "win": 25, "lose": -10 },
       "rarity": "Common"
     },
     "thosmur": {
-      "name": "Solid Foundation",
-      "type": "ongoing",
-      "description": "+1 power for each turn",
-      "effect": { "action": "buffPerTurn", "value": 1 },
+      "name": "⚡ Energy Burst",
+      "type": "onReveal",
+      "description": "CONSUME all remaining energy for +5 power EACH!",
+      "effect": { "action": "consumeEnergyForPower", "powerPerEnergy": 5 },
       "rarity": "Common"
     },
     "brainpasta": {
       "name": "Brain Boost",
       "type": "onReveal",
-      "description": "+3 power if you have 3+ cards in hand",
-      "effect": { "action": "buffIfHandSize", "minCards": 3, "value": 3 },
+      "description": "+15 power if you have 3+ cards in hand",
+      "effect": { "action": "buffIfHandSize", "minCards": 3, "value": 15 },
       "rarity": "Common"
     },
     "gaypt": {
       "name": "AI Generated",
       "type": "onReveal",
-      "description": "Copy +2 power from the card to your left",
-      "effect": { "action": "copyPowerLeft", "value": 2 },
+      "description": "Copy +10 power from the card to your left",
+      "effect": { "action": "copyPowerLeft", "value": 10 },
       "rarity": "Common"
     },
     "dan romero": {
       "name": "Too Cute",
       "type": "ongoing",
-      "description": "Enemies deal -1 power to this lane",
-      "effect": { "action": "reduceEnemyPower", "value": -1 },
+      "description": "Enemies deal -8 power to this lane",
+      "effect": { "action": "reduceEnemyPower", "value": -8 },
       "rarity": "Common"
     },
     "morlacos": {
-      "name": "Persistence",
-      "type": "onDestroy",
-      "description": "Return to your hand",
-      "effect": { "action": "returnToHand" },
+      "name": "💪 Never Give Up",
+      "type": "ongoing",
+      "description": "+8 power EACH turn! Gets stronger over time!",
+      "effect": { "action": "buffPerTurn", "value": 8 },
       "rarity": "Common"
     },
     "landmine": {
-      "name": "Explosive",
-      "type": "onDestroy",
-      "description": "-3 power to all enemies here",
-      "effect": { "action": "debuffLaneOnDestroy", "value": -3 },
+      "name": "💣 Booby Trap",
+      "type": "onReveal",
+      "description": "-20 power to strongest enemy + has KAMIKAZE button!",
+      "effect": { "action": "debuffStrongest", "value": -20 },
       "rarity": "Common"
     },
     "linux": {
       "name": "Open Source",
       "type": "onReveal",
-      "description": "+2 power to all your Common cards",
-      "effect": { "action": "buffByRarity", "targetRarity": "Common", "value": 2 },
+      "description": "+8 power to all your Common cards",
+      "effect": { "action": "buffByRarity", "targetRarity": "Common", "value": 8 },
       "rarity": "Common"
     },
     "joonx": {
       "name": "Quick Strike",
       "type": "onReveal",
-      "description": "+4 power if played on turn 1",
-      "effect": { "action": "buffIfTurn", "maxTurn": 1, "value": 4 },
+      "description": "+20 power if played on turn 1",
+      "effect": { "action": "buffIfTurn", "maxTurn": 1, "value": 20 },
       "rarity": "Common"
     },
     "don filthy": {
       "name": "Dirty Tactics",
       "type": "onReveal",
-      "description": "-2 power to the strongest enemy",
-      "effect": { "action": "debuffStrongest", "value": -2 },
+      "description": "-12 power to the strongest enemy",
+      "effect": { "action": "debuffStrongest", "value": -12 },
       "rarity": "Common"
     },
     "pooster": {
       "name": "Post Boost",
       "type": "onReveal",
-      "description": "+2 power to last card played",
-      "effect": { "action": "buffLastPlayed", "value": 2 },
+      "description": "+12 power to last card played",
+      "effect": { "action": "buffLastPlayed", "value": 12 },
       "rarity": "Common"
     },
     "john porn": {
-      "name": "Distraction",
-      "type": "onReveal",
-      "description": "Opponent discards 1 random card next turn",
-      "effect": { "action": "forceDiscard", "value": 1 },
+      "name": "😈 Distraction",
+      "type": "onEnemySkip",
+      "description": "STEAL strongest enemy card when opponent SKIPS!",
+      "effect": { "action": "stealOnSkip" },
       "rarity": "Common"
     },
     "scum": {
       "name": "Scummy Move",
       "type": "onReveal",
-      "description": "Steal +2 power from enemy here",
-      "effect": { "action": "stealPower", "value": 2 },
+      "description": "Steal +12 power from enemy here",
+      "effect": { "action": "stealPower", "value": 12 },
       "rarity": "Common"
     },
     "vlady": {
       "name": "Shadow Step",
       "type": "onReveal",
-      "description": "Move to a random lane",
-      "effect": { "action": "moveRandom" },
+      "description": "Move to a random lane AND +15 power",
+      "effect": { "action": "moveRandom", "bonusPower": 15 },
       "rarity": "Common"
     }
   },

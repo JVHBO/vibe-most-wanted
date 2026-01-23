@@ -43,7 +43,7 @@ interface GameAction {
 
 interface TCGAbility {
   name: string;
-  type: "onReveal" | "ongoing" | "onDestroy";
+  type: "onReveal" | "ongoing" | "onEnemySkip";
   description: string;
   effect: Record<string, any>;
   rarity: string;
@@ -74,76 +74,44 @@ const RARITY_COLORS: Record<string, string> = {
 
 // Fun lane names for battles
 // Lane effects - each lane has a unique effect that modifies gameplay
+// SIMPLIFIED: Only effects that are FULLY IMPLEMENTED and FUN
 const LANE_NAMES = [
-  // Buff lanes
-  { name: "Gayland", emoji: "🌈", effect: "buffAll", value: 5, description: "All cards get +5 power" },
-  { name: "Moon Base", emoji: "🌙", effect: "buffFirst", value: 20, description: "First card played gets +20 power" },
-  { name: "Whale Waters", emoji: "🐋", effect: "buffHighest", value: 25, description: "Highest power card gets +25" },
-  { name: "Shrimp Shore", emoji: "🦐", effect: "buffLowest", value: 20, description: "Lowest power card gets +20" },
-  { name: "Pump Station", emoji: "📈", effect: "buffPerTurn", value: 5, description: "Cards gain +5 power each turn" },
-  { name: "Staking Grounds", emoji: "🥩", effect: "buffPerTurn", value: 3, description: "Cards gain +3 power each turn" },
+  // ═══ BUFF LANES (Green themed) ═══
+  { name: "Gayland", emoji: "🌈", effect: "buffAll", value: 10, description: "+10 power to ALL cards!" },
+  { name: "Moon Base", emoji: "🌙", effect: "buffFirst", value: 30, description: "First card gets +30 power!" },
+  { name: "Whale Waters", emoji: "🐋", effect: "buffHighest", value: 40, description: "Strongest card gets +40!" },
+  { name: "Shrimp Shore", emoji: "🦐", effect: "buffLowest", value: 35, description: "Weakest card gets +35!" },
+  { name: "Hopium Farms", emoji: "🌿", effect: "buffPerTurn", value: 10, description: "+10 power EVERY turn!" },
 
-  // Debuff lanes
-  { name: "Scam City", emoji: "🚨", effect: "debuffAll", value: -8, description: "All cards have -8 power" },
-  { name: "Dump District", emoji: "📉", effect: "debuffPerTurn", value: -3, description: "Cards lose -3 power each turn" },
-  { name: "Paper Hands Plaza", emoji: "📄", effect: "debuffPerTurn", value: -5, description: "Cards lose -5 power each turn" },
+  // ═══ DEBUFF LANES (Red themed) ═══
+  { name: "Scam City", emoji: "🚨", effect: "debuffAll", value: -15, description: "-15 power to ALL cards!" },
+  { name: "Paper Hands Plaza", emoji: "📄", effect: "debuffPerTurn", value: -8, description: "-8 power EVERY turn!" },
+  { name: "Vlady's Dungeon", emoji: "⛓️", effect: "debuffEnemy", value: -20, description: "Enemy cards have -20 power!" },
 
-  // Energy lanes
-  { name: "Gas Station", emoji: "⛽", effect: "reduceCost", value: 1, description: "Cards cost -1 energy here" },
-  { name: "Brian's Coinbase", emoji: "🪙", effect: "gainEnergy", value: 1, description: "Gain +1 energy when playing here" },
-  { name: "Goblin Town", emoji: "👺", effect: "increaseCost", value: 1, description: "Cards cost +1 energy here" },
+  // ═══ RARITY BONUS LANES ═══
+  { name: "Nico's Throne", emoji: "👑", effect: "doubleLegendary", description: "Legendary = DOUBLE power!" },
+  { name: "Dan's Backyard", emoji: "🏡", effect: "buffCommon", value: 25, description: "Common cards get +25!" },
+  { name: "NFT Gallery", emoji: "🖼️", effect: "buffFoil", value: 50, description: "FOIL cards get +50!" },
+  { name: "Mint Factory", emoji: "🏭", effect: "buffNothing", value: 40, description: "Nothing cards get +40!" },
+  { name: "Vibe HQ", emoji: "✨", effect: "buffVibeFID", value: 30, description: "VibeFID cards get +30!" },
 
-  // Special mechanics
-  { name: "Diamond Hands Arena", emoji: "💎", effect: "immune", description: "Cards can't lose power here" },
-  { name: "Miguel's Castle", emoji: "🏰", effect: "protected", description: "Cards can't be destroyed here" },
-  { name: "Vlady's Dungeon", emoji: "⛓️", effect: "debuffEnemy", value: -10, description: "Enemy cards have -10 power" },
-  { name: "Nico's Throne", emoji: "👑", effect: "doubleLegendary", description: "Legendary cards have double power" },
-  { name: "Dan's Backyard", emoji: "🏡", effect: "buffCommon", value: 15, description: "Common cards get +15 power" },
-  { name: "NFT Gallery", emoji: "🖼️", effect: "buffFoil", value: 30, description: "Foil cards get +30 power" },
-  { name: "Mint Factory", emoji: "🏭", effect: "buffNothing", value: 25, description: "Nothing cards get +25 power" },
+  // ═══ STRATEGY LANES ═══
+  { name: "Mom's Basement", emoji: "🛋️", effect: "buffAlone", value: 50, description: "Solo card gets +50 power!" },
+  { name: "Discord Server", emoji: "💬", effect: "buffPerCard", value: 12, description: "+12 per card here!" },
+  { name: "Copium Den", emoji: "💨", effect: "buffIfLosing", value: 25, description: "+25 if you're LOSING!" },
+  { name: "Ye's Studio", emoji: "🎤", effect: "buffWithAbility", value: 15, description: "Cards with abilities +15!" },
 
-  // Chaos lanes
-  { name: "Degen Valley", emoji: "🎰", effect: "gamble", description: "Cards have 50% chance to double or halve power" },
-  { name: "Goofy Empire", emoji: "🤡", effect: "randomBuff", value: 15, description: "Random card gets +15 power each turn" },
-  { name: "Groko's Lab", emoji: "🧪", effect: "randomEffect", description: "Random buff or debuff each turn" },
-  { name: "Tukka's Twist", emoji: "🌀", effect: "swapPowers", description: "Swap all cards powers at game end" },
-  { name: "Liquidity Pool", emoji: "💧", effect: "swapSides", description: "Player and enemy power are swapped" },
+  // ═══ CHAOS LANES (Purple themed - high risk/reward) ═══
+  { name: "Degen Valley", emoji: "🎰", effect: "gamble", description: "50% DOUBLE or 50% HALVE power!" },
+  { name: "Liquidity Pool", emoji: "💧", effect: "swapSides", description: "Powers SWAPPED at end!" },
+  { name: "Clown College", emoji: "🎪", effect: "reverseOrder", description: "LOWEST power WINS!" },
 
-  // Destruction lanes
-  { name: "Rug Pull Alley", emoji: "🧹", effect: "destroyOnTurn", turn: 4, description: "Random card destroyed on turn 4" },
-  { name: "Floor is Lava", emoji: "🌋", effect: "destroyLowest", description: "Lowest power card destroyed each turn" },
-  { name: "Landmine Field", emoji: "💣", effect: "destroyOnPlay", description: "50% chance card explodes when played" },
+  // ═══ SPECIAL VICTORY LANES ═══
+  { name: "ATH Peak", emoji: "⛰️", effect: "highestWins", description: "Only STRONGEST card counts!" },
+  { name: "Bridge to Nowhere", emoji: "🌉", effect: "noVictory", description: "This lane DOESN'T count!" },
 
-  // Draw/Card lanes
-  { name: "Beeper's Signal Tower", emoji: "📡", effect: "drawOnPlay", description: "Draw a card when playing here" },
-  { name: "Airdrop Zone", emoji: "🪂", effect: "freeCard", turn: 3, description: "Free random card on turn 3" },
-
-  // Power multiplier lanes
-  { name: "Vibe HQ", emoji: "✨", effect: "buffVibeFID", value: 20, description: "VibeFID cards get +20 power" },
-  { name: "Ye's Studio", emoji: "🎤", effect: "buffWithAbility", value: 10, description: "Cards with abilities get +10 power" },
-  { name: "Claude's Server Room", emoji: "🤖", effect: "doubleOngoing", description: "Ongoing effects are doubled" },
-  { name: "Porn Hub", emoji: "🔞", effect: "buffPerCard", value: 8, description: "Cards get +8 power per card here" },
-
-  // Victory condition lanes
-  { name: "ATH Peak", emoji: "⛰️", effect: "highestWins", description: "Only highest power card counts" },
-  { name: "Bridge to Nowhere", emoji: "🌉", effect: "noVictory", description: "This lane doesn't count for victory" },
-
-  // Absurd but fun
-  { name: "Potato Kingdom", emoji: "🥔", effect: "buffAll", value: 10, description: "All cards get +10 power" },
-  { name: "Banana Republic", emoji: "🍌", effect: "randomBuff", value: 20, description: "Random card gets +20 each turn" },
-  { name: "Clown College", emoji: "🎪", effect: "reverseOrder", description: "Lowest total power wins this lane" },
-  { name: "Copium Den", emoji: "💨", effect: "buffIfLosing", value: 15, description: "Your cards get +15 if you're losing" },
-  { name: "Hopium Farms", emoji: "🌿", effect: "buffPerTurn", value: 8, description: "Cards gain +8 power each turn" },
+  // ═══ NEUTRAL ═══
   { name: "Touch Grass Field", emoji: "🌾", effect: "noEffect", description: "No special effect" },
-  { name: "Mom's Basement", emoji: "🛋️", effect: "buffAlone", value: 30, description: "Single card here gets +30 power" },
-  { name: "Twitter HQ", emoji: "🐦", effect: "chaos", description: "Random effect every turn" },
-  { name: "Discord Server", emoji: "💬", effect: "buffPerCard", value: 5, description: "Cards get +5 power per card here" },
-  { name: "Farcaster Frame", emoji: "🖼️", effect: "buffVibeFID", value: 15, description: "VibeFID cards get +15 power" },
-  { name: "Scum's Hideout", emoji: "🕳️", effect: "hidden", description: "Cards are hidden until game end" },
-  { name: "Casa's Crib", emoji: "🏠", effect: "firstFree", description: "First card each turn is free" },
-  { name: "Proxy's Matrix", emoji: "🔮", effect: "copyEnemy", description: "Copy opponent's highest card power" },
-  { name: "The Blockchain", emoji: "⛓️", effect: "locked", description: "Cards can't be moved or removed" },
-  { name: "Mempool Madness", emoji: "🏊", effect: "delayed", description: "Cards activate next turn" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -165,66 +133,31 @@ interface CardCombo {
 }
 
 const CARD_COMBOS: CardCombo[] = [
-  // ═══ CHARACTER COMBOS ═══
+  // ═══ LEGENDARY COMBOS (Very Strong!) ═══
   {
     id: "romero_family",
-    name: "Romero Family",
+    name: "Romero Dynasty",
     emoji: "👨‍👧",
     cards: ["dan romero", "goofy romero"],
-    bonus: { type: "power", value: 25, target: "self" },
-    description: "+25 power to both Romeros",
-  },
-  {
-    id: "ai_bros",
-    name: "AI Bros",
-    emoji: "🤖",
-    cards: ["claude", "groko", "gaypt"],
-    minCards: 2,
-    bonus: { type: "power", value: 15, target: "self" },
-    description: "+15 power to each AI card",
+    bonus: { type: "power", value: 60, target: "self" },
+    description: "+60 power EACH! Father & Son unite!",
   },
   {
     id: "crypto_kings",
     name: "Crypto Kings",
     emoji: "👑",
     cards: ["brian armstrong", "vitalik jumpterin"],
-    bonus: { type: "power", value: 30, target: "lane" },
-    description: "+30 power to all cards in lane",
+    bonus: { type: "power", value: 80, target: "lane" },
+    description: "+80 power to ALL cards in lane!",
   },
   {
-    id: "scam_squad",
-    name: "Scam Squad",
-    emoji: "🚨",
-    cards: ["scum", "shills", "landmine"],
+    id: "mythic_assembly",
+    name: "MYTHIC ASSEMBLY",
+    emoji: "💎",
+    cards: ["neymar", "anon", "linda xied", "vitalik jumpterin", "jesse"],
     minCards: 2,
-    bonus: { type: "steal", value: 8, target: "enemy_lane" },
-    description: "Steal 8 power from each enemy in lane",
-  },
-  {
-    id: "degen_trio",
-    name: "Degen Trio",
-    emoji: "🎰",
-    cards: ["nftkid", "john porn", "rizkybegitu"],
-    minCards: 2,
-    bonus: { type: "power_percent", value: 50, target: "self" },
-    description: "+50% power to degen cards",
-  },
-  {
-    id: "vibe_team",
-    name: "Vibe Team",
-    emoji: "✨",
-    cards: ["vibe intern", "beeper", "jc denton"],
-    minCards: 2,
-    bonus: { type: "power", value: 20, target: "lane" },
-    description: "+20 power to all cards in lane",
-  },
-  {
-    id: "dirty_duo",
-    name: "Dirty Duo",
-    emoji: "💩",
-    cards: ["don filthy", "vlady"],
-    bonus: { type: "steal", value: 15, target: "enemy_lane" },
-    description: "Steal 15 power from strongest enemy",
+    bonus: { type: "power", value: 100, target: "self" },
+    description: "+100 power to EACH Mythic! BROKEN!",
   },
   {
     id: "legends_unite",
@@ -232,8 +165,54 @@ const CARD_COMBOS: CardCombo[] = [
     emoji: "⭐",
     cards: ["nico", "miguel", "ye"],
     minCards: 2,
-    bonus: { type: "power", value: 25, target: "self" },
-    description: "+25 power to each Legend",
+    bonus: { type: "power", value: 70, target: "self" },
+    description: "+70 power to each Legend!",
+  },
+
+  // ═══ EPIC COMBOS ═══
+  {
+    id: "ai_bros",
+    name: "AI Takeover",
+    emoji: "🤖",
+    cards: ["claude", "groko", "gaypt"],
+    minCards: 2,
+    bonus: { type: "power", value: 50, target: "self" },
+    description: "+50 power to each AI card!",
+  },
+  {
+    id: "scam_squad",
+    name: "Scam Squad",
+    emoji: "🚨",
+    cards: ["scum", "shills", "landmine"],
+    minCards: 2,
+    bonus: { type: "steal", value: 25, target: "enemy_lane" },
+    description: "STEAL 25 power from EACH enemy!",
+  },
+  {
+    id: "degen_trio",
+    name: "Degen Trio",
+    emoji: "🎰",
+    cards: ["nftkid", "john porn", "rizkybegitu"],
+    minCards: 2,
+    bonus: { type: "power_percent", value: 100, target: "self" },
+    description: "DOUBLE power of degen cards!",
+  },
+  {
+    id: "vibe_team",
+    name: "Vibe Team",
+    emoji: "✨",
+    cards: ["vibe intern", "beeper", "jc denton"],
+    minCards: 2,
+    bonus: { type: "power", value: 50, target: "lane" },
+    description: "+50 power to ALL cards in lane!",
+  },
+  {
+    id: "dirty_duo",
+    name: "Dirty Duo",
+    emoji: "💩",
+    cards: ["don filthy", "vlady"],
+    bonus: { type: "steal", value: 40, target: "enemy_lane" },
+    description: "STEAL 40 power from strongest enemy!",
   },
   {
     id: "code_masters",
@@ -241,8 +220,8 @@ const CARD_COMBOS: CardCombo[] = [
     emoji: "💻",
     cards: ["horsefarts", "0xdeployer", "linux"],
     minCards: 2,
-    bonus: { type: "power", value: 18, target: "self" },
-    description: "+18 power to each coder",
+    bonus: { type: "power", value: 45, target: "self" },
+    description: "+45 power to each coder!",
   },
   {
     id: "content_creators",
@@ -250,26 +229,8 @@ const CARD_COMBOS: CardCombo[] = [
     emoji: "📱",
     cards: ["pooster", "bradymck", "qrcodo"],
     minCards: 2,
-    bonus: { type: "draw", value: 1, target: "self" },
-    description: "Draw 1 card + 10 power each",
-  },
-  {
-    id: "mythic_assembly",
-    name: "Mythic Assembly",
-    emoji: "💎",
-    cards: ["neymar", "anon", "linda xied", "vitalik jumpterin", "jesse"],
-    minCards: 2,
-    bonus: { type: "power", value: 40, target: "self" },
-    description: "+40 power to each Mythic",
-  },
-  {
-    id: "underdog_uprising",
-    name: "Underdog Uprising",
-    emoji: "🐕",
-    cards: ["rachel", "ink", "casa", "thosmur", "brainpasta"],
-    minCards: 3,
-    bonus: { type: "power_percent", value: 100, target: "self" },
-    description: "Double power of Common cards",
+    bonus: { type: "draw", value: 2, target: "self" },
+    description: "DRAW 2 cards + 30 power each!",
   },
   {
     id: "chaos_agents",
@@ -277,34 +238,45 @@ const CARD_COMBOS: CardCombo[] = [
     emoji: "🌀",
     cards: ["tukka", "goofy romero", "chilipepper"],
     minCards: 2,
-    bonus: { type: "power", value: 20, target: "all_lanes" },
-    description: "+20 power to random cards in all lanes",
-  },
-  {
-    id: "money_makers",
-    name: "Money Makers",
-    emoji: "💰",
-    cards: ["betobutter", "ventra", "melted"],
-    minCards: 2,
-    bonus: { type: "power", value: 15, target: "lane" },
-    description: "+15 power to entire lane",
-  },
-  {
-    id: "sniper_support",
-    name: "Sniper Support",
-    emoji: "🎯",
-    cards: ["jack the sniper", "beeper", "loground"],
-    minCards: 2,
-    bonus: { type: "steal", value: 12, target: "enemy_lane" },
-    description: "Steal 12 power from enemies",
+    bonus: { type: "power", value: 60, target: "all_lanes" },
+    description: "+60 power across ALL lanes!",
   },
   {
     id: "full_house",
     name: "Full House",
     emoji: "🏠",
     cards: ["casa", "lombra jr", "antonio"],
-    bonus: { type: "power", value: 35, target: "lane" },
-    description: "+35 power to all cards in lane",
+    bonus: { type: "power", value: 80, target: "lane" },
+    description: "+80 power to entire lane!",
+  },
+  {
+    id: "sniper_support",
+    name: "Sniper Elite",
+    emoji: "🎯",
+    cards: ["jack the sniper", "beeper", "loground"],
+    minCards: 2,
+    bonus: { type: "steal", value: 35, target: "enemy_lane" },
+    description: "STEAL 35 power from enemies!",
+  },
+
+  // ═══ RARE COMBOS ═══
+  {
+    id: "money_makers",
+    name: "Money Makers",
+    emoji: "💰",
+    cards: ["betobutter", "ventra", "melted"],
+    minCards: 2,
+    bonus: { type: "power", value: 40, target: "lane" },
+    description: "+40 power to entire lane!",
+  },
+  {
+    id: "underdog_uprising",
+    name: "Underdog Uprising",
+    emoji: "🐕",
+    cards: ["rachel", "ink", "casa", "thosmur", "brainpasta"],
+    minCards: 3,
+    bonus: { type: "power_percent", value: 150, target: "self" },
+    description: "+150% power! Commons RISE UP!",
   },
   {
     id: "proxy_war",
@@ -312,8 +284,8 @@ const CARD_COMBOS: CardCombo[] = [
     emoji: "🔮",
     cards: ["slaterg", "zurkchad", "morlacos"],
     minCards: 2,
-    bonus: { type: "power_percent", value: 30, target: "self" },
-    description: "+30% power to proxy cards",
+    bonus: { type: "power_percent", value: 80, target: "self" },
+    description: "+80% power to proxy cards!",
   },
   {
     id: "santa_helpers",
@@ -321,17 +293,17 @@ const CARD_COMBOS: CardCombo[] = [
     emoji: "🎅",
     cards: ["naughty santa", "smolemaru", "gozaru"],
     minCards: 2,
-    bonus: { type: "power", value: 20, target: "self" },
-    description: "+20 power to each helper",
+    bonus: { type: "power", value: 50, target: "self" },
+    description: "+50 power to each helper!",
   },
   {
     id: "explosive_combo",
-    name: "Explosive Combo",
+    name: "Explosive Force",
     emoji: "💥",
     cards: ["landmine", "chilipepper", "joonx"],
     minCards: 2,
-    bonus: { type: "steal", value: 10, target: "enemy_lane" },
-    description: "-10 power to all enemies in lane",
+    bonus: { type: "steal", value: 30, target: "enemy_lane" },
+    description: "-30 power to ALL enemies!",
   },
   {
     id: "persistence_pays",
@@ -339,8 +311,8 @@ const CARD_COMBOS: CardCombo[] = [
     emoji: "🔄",
     cards: ["morlacos", "thosmur", "sartocrates"],
     minCards: 2,
-    bonus: { type: "power", value: 12, target: "self" },
-    description: "+12 power to persistent cards",
+    bonus: { type: "power", value: 35, target: "self" },
+    description: "+35 power to persistent cards!",
   },
 ];
 
@@ -645,6 +617,7 @@ export default function TCGPage() {
   // PvE state (local, no Convex)
   const [isPvE, setIsPvE] = useState(false);
   const [pveGameState, setPveGameState] = useState<any>(null);
+  const [isTestMode, setIsTestMode] = useState(false);
 
   // Profile dropdown state
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -652,13 +625,52 @@ export default function TCGPage() {
   // Lobby tab state
   const [lobbyTab, setLobbyTab] = useState<"play" | "rules">("play");
 
-  // Visual effects state
+  // Visual effects state - expanded for many abilities
   const [visualEffect, setVisualEffect] = useState<{
-    type: "explosion" | "play" | "buff" | "debuff" | "draw" | null;
+    type: "explosion" | "play" | "buff" | "debuff" | "draw" | "prize" | "destroy" | "steal" | "shuffle" | "copy" | "snipe" | "king" | "charm" | "reveal" | "shield" | "discard" | null;
     laneIndex?: number;
     position?: { x: number; y: number };
     text?: string;
+    emoji?: string;
   } | null>(null);
+
+  // Card-specific animations (shake, glow, power change, etc.)
+  const [cardAnimations, setCardAnimations] = useState<{
+    [key: string]: { // key = "lane-side-idx" e.g. "0-player-2"
+      type: "shake" | "glow-green" | "glow-red" | "slide-out" | "spin" | "pulse" | "float-up" | "explode";
+      powerChange?: number;
+    };
+  }>({});
+
+  // Flying card animation - shows a card moving from one place to another
+  const [flyingCard, setFlyingCard] = useState<{
+    card: DeckCard;
+    fromLane: number;
+    fromSide: "player" | "cpu";
+    toLane: number;
+    toSide: "player" | "cpu";
+    action: "kamikaze" | "charm" | "steal";
+  } | null>(null);
+
+  // Helper to trigger card animation
+  const triggerCardAnimation = (laneIdx: number, side: "player" | "cpu", cardIdx: number, type: string, powerChange?: number, duration = 800) => {
+    const key = `${laneIdx}-${side}-${cardIdx}`;
+    setCardAnimations(prev => ({ ...prev, [key]: { type: type as any, powerChange } }));
+    setTimeout(() => {
+      setCardAnimations(prev => {
+        const newState = { ...prev };
+        delete newState[key];
+        return newState;
+      });
+    }, duration);
+  };
+
+  // Trigger animations for all cards in a lane
+  const triggerLaneAnimation = (laneIdx: number, side: "player" | "cpu", type: string, cards: any[], powerChange?: number) => {
+    cards.forEach((_, idx) => {
+      setTimeout(() => triggerCardAnimation(laneIdx, side, idx, type, powerChange), idx * 100);
+    });
+  };
 
   // Convex queries
   const activeDeck = useQuery(
@@ -724,6 +736,75 @@ export default function TCGPage() {
     return tcgAbilities[resolvedName] || null;
   };
 
+  // Get visual effect for ability - returns effect type and text
+  const getAbilityVisualEffect = (ability: TCGAbility | null, cardName: string): { type: string; text: string; emoji: string } | null => {
+    if (!ability) return null;
+    const action = ability.effect?.action;
+    switch (action) {
+      case "destroyHighestEnemy":
+        return { type: "destroy", text: "PROTOCOL OVERRIDE!", emoji: "💀" };
+      case "buffAllLanes":
+        return { type: "king", text: "KING'S ARRIVAL!", emoji: "👑" };
+      case "copyHighest":
+        return { type: "copy", text: "DIAMOND AUTHORITY!", emoji: "💎" };
+      case "shuffleAllLanes":
+        return { type: "shuffle", text: "CHAOTIC KINGDOM!", emoji: "🌀" };
+      case "swapEnemyPowers":
+        return { type: "shuffle", text: "COCK TWIST!", emoji: "🔄" };
+      case "debuffLane":
+        return { type: "debuff", text: "SPICY BURN!", emoji: "🌶️" };
+      case "giveCoal":
+        return { type: "debuff", text: "NAUGHTY GIFT!", emoji: "🎁" };
+      case "draw":
+        return { type: "draw", text: `DRAW ${ability.effect?.value || 1}!`, emoji: "🃏" };
+      case "debuffRandomEnemy":
+        return { type: "snipe", text: "SNIPE SHOT!", emoji: "🎯" };
+      case "revealEnemyCard":
+        return { type: "reveal", text: "FACT CHECK!", emoji: "👁️" };
+      case "forceDiscard":
+        return { type: "discard", text: "DISTRACTION!", emoji: "😈" };
+      case "stealPower":
+        return { type: "steal", text: "STOLEN POWER!", emoji: "🖐️" };
+      case "buffAdjacent":
+        return { type: "buff", text: "SIGNAL BOOST!", emoji: "📡" };
+      case "buffPerCardInLane":
+        return { type: "buff", text: "LOGICAL MIND!", emoji: "🧠" };
+      case "buffPerFriendly":
+        return { type: "buff", text: "COMMUNITY BUILDER!", emoji: "🤝" };
+      case "buffWeakest":
+        return { type: "buff", text: "SHILL CAMPAIGN!", emoji: "📢" };
+      case "buffOtherLanes":
+        return { type: "buff", text: "UNDERGROUND!", emoji: "🕳️" };
+      case "buffIfFewerCards":
+        return { type: "buff", text: "PHILOSOPHICAL STRIKE!", emoji: "🤔" };
+      case "addCopyToHand":
+        return { type: "copy", text: "SMART CONTRACT!", emoji: "📜" };
+      case "moveCard":
+        return { type: "shuffle", text: "COFFEE RUN!", emoji: "☕" };
+      case "gamble":
+        return { type: "buff", text: "RISKY PLAY!", emoji: "🎲" };
+      case "debuffStrongest":
+        return { type: "snipe", text: "DIRTY TACTICS!", emoji: "🎯" };
+      case "buffByRarity":
+        return { type: "buff", text: ability.name?.toUpperCase() || "BUFF!", emoji: "✨" };
+      case "buffPerHandSize":
+        return { type: "buff", text: "NFT FLIP!", emoji: "💰" };
+      case "buffPerCardsPlayed":
+        return { type: "buff", text: ability.name?.toUpperCase() || "BUFF!", emoji: "📈" };
+      case "destroyLoneCard":
+        return { type: "destroy", text: "LONE HUNTER!", emoji: "🎯" };
+      case "stealOnSkip":
+        return { type: "steal", text: "STOLEN!", emoji: "🖐️" };
+      case "moveRandom":
+        return { type: "shuffle", text: "SHADOW STEP!", emoji: "👤" };
+      default:
+        if (ability.effect?.value && ability.effect.value > 0) {
+          return { type: "buff", text: `+${ability.effect.value} POWER!`, emoji: "⬆️" };
+        }
+        return null;
+    }
+  };
+
   // Get foil effect description
   const getFoilEffect = (foil: string | undefined): { multiplier: number; description: string } | null => {
     if (!foil || foil === "None" || foil === "none") return null;
@@ -741,7 +822,7 @@ export default function TCGPage() {
     switch (type) {
       case "onReveal": return "text-blue-400";
       case "ongoing": return "text-green-400";
-      case "onDestroy": return "text-red-400";
+      case "onEnemySkip": return "text-purple-400";
       default: return "text-gray-400";
     }
   };
@@ -751,7 +832,7 @@ export default function TCGPage() {
     switch (type) {
       case "onReveal": return "On Reveal";
       case "ongoing": return "Ongoing";
-      case "onDestroy": return "On Destroy";
+      case "onEnemySkip": return "On Skip";
       default: return type;
     }
   };
@@ -776,9 +857,9 @@ export default function TCGPage() {
     };
 
     return allCards.map((card: any, i: number) => {
-      // Random foil: 70% None, 20% Standard, 10% Prize
+      // Random foil: 30% Prize, 40% Standard, 30% None (more foils for testing)
       const foilRoll = Math.random();
-      const foil = foilRoll < 0.1 ? "Prize" : foilRoll < 0.3 ? "Standard" : "None";
+      const foil = foilRoll < 0.3 ? "Prize" : foilRoll < 0.7 ? "Standard" : "None";
 
       // Calculate power with foil multiplier
       const basePower = rarityPower[card.rarity] || 5;
@@ -790,9 +871,10 @@ export default function TCGPage() {
       const baccarat = card.baccarat?.toLowerCase() || card.onChainName?.toLowerCase();
       let imageUrl = "/images/card-back.png";
 
-      if (card.baccarat === "neymar") {
+      // Special case for neymar (joker) or any card with ??? suit/rank
+      if (baccarat === "neymar" || card.rank?.includes("?") || card.suit?.includes("?")) {
         imageUrl = "/images/baccarat/joker, neymar.png";
-      } else if (card.suit && card.rank && card.suit !== "???" && card.rank !== "???") {
+      } else if (card.suit && card.rank) {
         const rankName = rankMap[card.rank] || card.rank;
         imageUrl = `/images/baccarat/${rankName} ${card.suit}, ${baccarat}.png`;
       }
@@ -1043,6 +1125,9 @@ export default function TCGPage() {
       currentTurn: 1,
       energy: 1,
       cpuEnergy: 1,
+      bonusEnergy: 0, // Bonus from skipping turns
+      cardsPlayedThisTurn: 0, // Track for skip bonus
+      cardsPlayedInfo: [] as { cardId: string; laneIndex: number; energyCost: number; hadOnReveal: boolean }[], // Track for undo
       phase: "action",
 
       playerHand: shuffledPlayer.slice(0, 3),
@@ -1060,6 +1145,102 @@ export default function TCGPage() {
       gameOver: false,
       winner: null as string | null,
     };
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // TEST MODE - Start a special game to test abilities
+  // ═══════════════════════════════════════════════════════════════════════════════
+  const startTestMode = () => {
+    // Create TEST cards with special abilities
+    const testCards: DeckCard[] = [
+      // Player gets Landmine and Santa to test their special buttons
+      { id: "test-landmine", tokenId: 0, name: "landmine", collection: "vibe", power: 50, rarity: "Common" },
+      { id: "test-santa", tokenId: 0, name: "naughty santa", collection: "vibe", power: 80, rarity: "Legendary" },
+      { id: "test-goofy", tokenId: 0, name: "goofy romero", collection: "vibe", power: 100, rarity: "Legendary" },
+      { id: "test-ye", tokenId: 0, name: "ye", collection: "vibe", power: 90, rarity: "Legendary" },
+      { id: "test-neymar", tokenId: 0, name: "neymar", collection: "vibe", power: 150, rarity: "Mythic" },
+      { id: "test-vitalik", tokenId: 0, name: "vitalik jumpterin", collection: "vibe", power: 120, rarity: "Mythic" },
+      { id: "test-john", tokenId: 0, name: "john porn", collection: "vibe", power: 40, rarity: "Common" },
+      { id: "test-thosmur", tokenId: 0, name: "thosmur", collection: "vibe", power: 35, rarity: "Common" },
+    ];
+
+    // CPU gets decent cards so there's something to steal/destroy
+    const cpuTestCards: DeckCard[] = [
+      { id: "cpu-test-1", tokenId: 0, name: "claude", collection: "vibe", power: 60, rarity: "Common" },
+      { id: "cpu-test-2", tokenId: 0, name: "dan romero", collection: "vibe", power: 50, rarity: "Common" },
+      { id: "cpu-test-3", tokenId: 0, name: "jesse", collection: "vibe", power: 100, rarity: "Mythic" },
+      { id: "cpu-test-4", tokenId: 0, name: "miguel", collection: "vibe", power: 90, rarity: "Legendary" },
+      { id: "cpu-test-5", tokenId: 0, name: "anon", collection: "vibe", power: 120, rarity: "Mythic" },
+      { id: "cpu-test-6", tokenId: 0, name: "beeper", collection: "vibe", power: 70, rarity: "Epic" },
+    ];
+
+    // Force interesting lanes for testing
+    const testLanes = [
+      LANE_NAMES.find(l => l.effect === "gamble") || LANE_NAMES[0], // Degen Valley - 50% chance
+      LANE_NAMES.find(l => l.effect === "doubleLegendary") || LANE_NAMES[1], // Nico's Throne - double legendary
+      LANE_NAMES.find(l => l.effect === "reverseOrder") || LANE_NAMES[2], // Clown College - lowest wins
+    ];
+
+    const gameState = {
+      currentTurn: 1,
+      energy: 10, // Lots of energy for testing!
+      cpuEnergy: 3,
+      bonusEnergy: 0,
+      cardsPlayedThisTurn: 0,
+      cardsPlayedInfo: [] as { cardId: string; laneIndex: number; energyCost: number; hadOnReveal: boolean }[],
+      phase: "action",
+
+      playerHand: testCards.slice(0, 5), // Start with 5 cards
+      playerDeckRemaining: testCards.slice(5),
+      cpuHand: cpuTestCards.slice(0, 3),
+      cpuDeckRemaining: cpuTestCards.slice(3),
+
+      lanes: [
+        { laneId: 0, ...testLanes[0], playerCards: [] as DeckCard[], cpuCards: [cpuTestCards[0]] as DeckCard[], playerPower: 0, cpuPower: 60 },
+        { laneId: 1, ...testLanes[1], playerCards: [] as DeckCard[], cpuCards: [cpuTestCards[1]] as DeckCard[], playerPower: 0, cpuPower: 50 },
+        { laneId: 2, ...testLanes[2], playerCards: [] as DeckCard[], cpuCards: [] as DeckCard[], playerPower: 0, cpuPower: 0 },
+      ],
+
+      playerConfirmed: false,
+      gameOver: false,
+      winner: null as string | null,
+    };
+
+    setIsTestMode(true);
+    setIsPvE(true);
+    setPveGameState(gameState);
+    setView("battle");
+    setPendingActions([]);
+    setSelectedHandCard(null);
+  };
+
+  // Sacrifice Nothing card for +2 energy
+  const sacrificeNothingForEnergy = (handIndex: number) => {
+    if (!pveGameState) return;
+
+    const card = pveGameState.playerHand[handIndex];
+    if (!card || card.type !== "nothing") return;
+
+    // Remove card from hand
+    const newHand = pveGameState.playerHand.filter((_: any, i: number) => i !== handIndex);
+
+    // Add +2 energy
+    const newEnergy = (pveGameState.energy || 1) + 2;
+
+    playSound("ability");
+    setVisualEffect({
+      type: "buff",
+      text: "SACRIFICED! +2 ENERGY",
+      emoji: "⚡"
+    });
+
+    setPveGameState({
+      ...pveGameState,
+      playerHand: newHand,
+      energy: newEnergy,
+    });
+
+    setSelectedHandCard(null);
   };
 
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -1091,16 +1272,17 @@ export default function TCGPage() {
     playerHand: DeckCard[],
     playerDeckRemaining: DeckCard[],
     isPlayer: boolean
-  ): { lanes: any[]; playerHand: DeckCard[]; playerDeckRemaining: DeckCard[]; bonusPower: number } => {
+  ): { lanes: any[]; playerHand: DeckCard[]; playerDeckRemaining: DeckCard[]; bonusPower: number; energyToConsume: number } => {
     const ability = getCardAbility(card.name);
     if (!ability || ability.type !== "onReveal") {
-      return { lanes, playerHand, playerDeckRemaining, bonusPower: 0 };
+      return { lanes, playerHand, playerDeckRemaining, bonusPower: 0, energyToConsume: 0 };
     }
 
     let newLanes = lanes.map(l => ({ ...l, playerCards: [...l.playerCards], cpuCards: [...l.cpuCards] }));
     let newHand = [...playerHand];
     let newDeck = [...playerDeckRemaining];
     let bonusPower = 0;
+    let energyToConsume = 0; // For abilities that consume extra energy
     const effect = ability.effect;
     const myCards = isPlayer ? "playerCards" : "cpuCards";
     const enemyCards = isPlayer ? "cpuCards" : "playerCards";
@@ -1145,17 +1327,16 @@ export default function TCGPage() {
         break;
 
       case "buffAdjacent":
-        // +X power to adjacent cards (cards played before/after in same lane)
-        const cardCount = newLanes[laneIndex][myCards].length;
-        if (cardCount > 0) {
-          // Buff the last card in the lane (the one played right before)
-          const lastIdx = cardCount - 1;
-          newLanes[laneIndex][myCards][lastIdx] = {
-            ...newLanes[laneIndex][myCards][lastIdx],
-            power: newLanes[laneIndex][myCards][lastIdx].power + (effect.value || 0),
+        // +X power to ALL other cards in this lane (Beeper - Signal Boost)
+        const myCardsInLane = newLanes[laneIndex][myCards];
+        myCardsInLane.forEach((c: DeckCard, cIdx: number) => {
+          // Don't buff self (the card being played is added after this)
+          newLanes[laneIndex][myCards][cIdx] = {
+            ...c,
+            power: c.power + (effect.value || 0),
           };
           newLanes[laneIndex][myPower] += effect.value || 0;
-        }
+        });
         break;
 
       case "buffOtherLanes":
@@ -1292,6 +1473,17 @@ export default function TCGPage() {
         }
         break;
 
+      case "consumeEnergyForPower":
+        // CONSUME all remaining energy for +X power each! (Thosmur - Energy Burst)
+        const remainingEnergy = pveGameState?.energy || 0;
+        if (remainingEnergy > 0) {
+          const powerPerEnergy = effect.powerPerEnergy || 5;
+          bonusPower = remainingEnergy * powerPerEnergy;
+          // Store for caller to consume
+          energyToConsume = remainingEnergy;
+        }
+        break;
+
       case "buffIfTurn":
         // +X power if played on specific turn
         const currentTurn = pveGameState?.currentTurn || 1;
@@ -1319,70 +1511,231 @@ export default function TCGPage() {
         break;
 
       case "buffAllLanes":
-        // +X power to all your cards in all lanes (Mythic)
+        // +X power to all your cards + DOUBLE if winning 2+ lanes! (Neymar - King's Arrival - Mythic)
+        let lanesWinning = 0;
+        newLanes.forEach((lane: any) => {
+          if (lane[myPower] > lane[enemyPower]) lanesWinning++;
+        });
+        const buffMultiplier = (effect.doubleIfWinning && lanesWinning >= 2) ? 2 : 1;
+        const buffValue = (effect.value || 30) * buffMultiplier;
         newLanes.forEach((lane: any) => {
           lane[myCards].forEach((c: DeckCard, cIdx: number) => {
-            lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) };
+            lane[myCards][cIdx] = { ...c, power: c.power + buffValue };
           });
-          lane[myPower] += lane[myCards].length * (effect.value || 0);
+          lane[myPower] += lane[myCards].length * buffValue;
         });
+        // Also buff self
+        bonusPower = buffValue;
         break;
 
       case "destroyHighestEnemy":
-        // Destroy the highest power enemy card (Mythic)
-        let highestPower = -1;
-        let highestLaneIdx = -1;
-        let highestCardIdx = -1;
+        // Destroy highest enemy + GAIN its power! (Jesse - Protocol Override - Mythic)
+        let highestDestroyPower = -1;
+        let highestDestroyLane = -1;
+        let highestDestroyIdx = -1;
         newLanes.forEach((lane: any, lIdx: number) => {
           lane[enemyCards].forEach((c: DeckCard, cIdx: number) => {
-            if (c.power > highestPower) {
-              highestPower = c.power;
-              highestLaneIdx = lIdx;
-              highestCardIdx = cIdx;
+            if (c.power > highestDestroyPower) {
+              highestDestroyPower = c.power;
+              highestDestroyLane = lIdx;
+              highestDestroyIdx = cIdx;
             }
           });
         });
-        if (highestLaneIdx >= 0 && highestCardIdx >= 0) {
-          const removedCard = newLanes[highestLaneIdx][enemyCards].splice(highestCardIdx, 1)[0];
-          newLanes[highestLaneIdx][enemyPower] -= removedCard.power;
+        if (highestDestroyLane >= 0 && highestDestroyIdx >= 0) {
+          const removedCard = newLanes[highestDestroyLane][enemyCards].splice(highestDestroyIdx, 1)[0];
+          newLanes[highestDestroyLane][enemyPower] -= removedCard.power;
+          // MYTHIC BONUS: Gain the destroyed card's power!
+          if (effect.gainPower) {
+            bonusPower = removedCard.power;
+          }
         }
         break;
 
       case "shuffleAllLanes":
         // Shuffle all cards in all lanes randomly (Legendary)
-        const allCards: { card: DeckCard; isPlayer: boolean }[] = [];
+        const allCardsToShuffle: { card: DeckCard; isPlayer: boolean }[] = [];
         newLanes.forEach(lane => {
-          lane.playerCards.forEach((c: DeckCard) => allCards.push({ card: c, isPlayer: true }));
-          lane.cpuCards.forEach((c: DeckCard) => allCards.push({ card: c, isPlayer: false }));
+          lane.playerCards.forEach((c: DeckCard) => allCardsToShuffle.push({ card: c, isPlayer: true }));
+          lane.cpuCards.forEach((c: DeckCard) => allCardsToShuffle.push({ card: c, isPlayer: false }));
         });
-        // Shuffle
-        for (let i = allCards.length - 1; i > 0; i--) {
+        for (let i = allCardsToShuffle.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
-          [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
+          [allCardsToShuffle[i], allCardsToShuffle[j]] = [allCardsToShuffle[j], allCardsToShuffle[i]];
         }
-        // Redistribute
-        newLanes = newLanes.map(lane => ({
-          ...lane,
-          playerCards: [],
-          cpuCards: [],
-          playerPower: 0,
-          cpuPower: 0,
-        }));
-        allCards.forEach((item, idx: number) => {
+        newLanes = newLanes.map(lane => ({ ...lane, playerCards: [], cpuCards: [], playerPower: 0, cpuPower: 0 }));
+        allCardsToShuffle.forEach((item, idx: number) => {
           const laneIdx = idx % 3;
-          const cardPower = item.card.type === "nothing" ? Math.floor(item.card.power * 0.5) : item.card.power;
-          if (item.isPlayer) {
-            newLanes[laneIdx].playerCards.push(item.card);
-            newLanes[laneIdx].playerPower += cardPower;
-          } else {
-            newLanes[laneIdx].cpuCards.push(item.card);
-            newLanes[laneIdx].cpuPower += cardPower;
-          }
+          const cPower = item.card.type === "nothing" ? Math.floor(item.card.power * 0.5) : item.card.power;
+          if (item.isPlayer) { newLanes[laneIdx].playerCards.push(item.card); newLanes[laneIdx].playerPower += cPower; }
+          else { newLanes[laneIdx].cpuCards.push(item.card); newLanes[laneIdx].cpuPower += cPower; }
         });
+        break;
+
+      case "copyHighest":
+        // Copy highest power + STEAL from all enemies! (Linda Xied - Diamond Authority - Mythic)
+        let highestCopyCard: DeckCard | null = null;
+        newLanes.forEach((lane: any) => {
+          [...lane.playerCards, ...lane.cpuCards].forEach((c: DeckCard) => {
+            if (!highestCopyCard || c.power > highestCopyCard.power) highestCopyCard = c;
+          });
+        });
+        if (highestCopyCard) bonusPower = (highestCopyCard as DeckCard).power;
+        // MYTHIC BONUS: Steal power from ALL enemy cards!
+        if (effect.stealFromAll) {
+          const stealPerCard = effect.stealFromAll || 20;
+          newLanes.forEach((lane: any) => {
+            lane[enemyCards].forEach((c: DeckCard, cIdx: number) => {
+              const stolen = Math.min(stealPerCard, c.power);
+              lane[enemyCards][cIdx] = { ...c, power: Math.max(0, c.power - stolen) };
+              lane[enemyPower] = Math.max(0, lane[enemyPower] - stolen);
+              bonusPower += stolen;
+            });
+          });
+        }
+        break;
+
+      case "swapEnemyPowers":
+        // Swap power of two enemy cards (Tukka - Legendary)
+        const enemyCardsFlat: { lane: number; idx: number }[] = [];
+        newLanes.forEach((lane: any, lIdx: number) => {
+          lane[enemyCards].forEach((_: DeckCard, cIdx: number) => {
+            enemyCardsFlat.push({ lane: lIdx, idx: cIdx });
+          });
+        });
+        if (enemyCardsFlat.length >= 2) {
+          const i1 = Math.floor(Math.random() * enemyCardsFlat.length);
+          let i2 = Math.floor(Math.random() * enemyCardsFlat.length);
+          while (i2 === i1 && enemyCardsFlat.length > 1) i2 = Math.floor(Math.random() * enemyCardsFlat.length);
+          const c1 = enemyCardsFlat[i1], c2 = enemyCardsFlat[i2];
+          const temp = newLanes[c1.lane][enemyCards][c1.idx].power;
+          newLanes[c1.lane][enemyCards][c1.idx].power = newLanes[c2.lane][enemyCards][c2.idx].power;
+          newLanes[c2.lane][enemyCards][c2.idx].power = temp;
+        }
+        break;
+
+      case "giveCoal":
+        // Give enemy a Coal card with negative power (Naughty Santa)
+        const coalCard: DeckCard = { type: "vbms", cardId: `coal-${Date.now()}`, name: "Coal", rarity: "Common", power: effect.value || -20, imageUrl: "/images/card-back.png" };
+        const coalLane = Math.floor(Math.random() * 3);
+        newLanes[coalLane][enemyCards].push(coalCard);
+        newLanes[coalLane][enemyPower] += coalCard.power;
+        break;
+
+      case "debuffRandomEnemy":
+        // -X power to random enemy (Jack the Sniper)
+        const allEnemies: { lane: number; idx: number }[] = [];
+        newLanes.forEach((lane: any, lIdx: number) => lane[enemyCards].forEach((_: DeckCard, cIdx: number) => allEnemies.push({ lane: lIdx, idx: cIdx })));
+        if (allEnemies.length > 0) {
+          const t = allEnemies[Math.floor(Math.random() * allEnemies.length)];
+          const debuff = Math.abs(effect.value || 10);
+          newLanes[t.lane][enemyCards][t.idx].power = Math.max(0, newLanes[t.lane][enemyCards][t.idx].power - debuff);
+          newLanes[t.lane][enemyPower] = Math.max(0, newLanes[t.lane][enemyPower] - debuff);
+        }
+        break;
+
+      case "revealEnemyCard":
+        // Reveal enemy card AND steal 15 power (Horsefarts - Fact Check)
+        if (newLanes[laneIndex][enemyCards].length > 0) {
+          const targetIdx = Math.floor(Math.random() * newLanes[laneIndex][enemyCards].length);
+          const stealAmt = Math.min(effect.stealPower || 15, newLanes[laneIndex][enemyCards][targetIdx].power);
+          newLanes[laneIndex][enemyCards][targetIdx].power -= stealAmt;
+          newLanes[laneIndex][enemyPower] -= stealAmt;
+          bonusPower = stealAmt;
+        } else {
+          bonusPower = 10; // Fallback if no enemies
+        }
+        break;
+
+      case "forceDiscard":
+        // Enemy loses power (John Porn)
+        if (newLanes[laneIndex][enemyCards].length > 0) {
+          const tIdx = Math.floor(Math.random() * newLanes[laneIndex][enemyCards].length);
+          newLanes[laneIndex][enemyCards][tIdx].power = Math.max(0, newLanes[laneIndex][enemyCards][tIdx].power - 5);
+          newLanes[laneIndex][enemyPower] = Math.max(0, newLanes[laneIndex][enemyPower] - 5);
+        }
+        break;
+
+      case "addCopyToHand":
+        // Add copy to hand (0xdeployer)
+        newHand.push({ ...card, cardId: `${card.cardId}-copy-${Date.now()}` });
+        break;
+
+      case "moveCard":
+        // Move a card to another lane (Vibe Intern)
+        for (let li = 0; li < 3; li++) {
+          if (li !== laneIndex && newLanes[laneIndex][myCards].length > 0) {
+            const moved = newLanes[laneIndex][myCards].shift()!;
+            const mPower = moved.type === "nothing" ? Math.floor(moved.power * 0.5) : moved.power;
+            newLanes[li][myCards].push(moved);
+            newLanes[laneIndex][myPower] -= mPower;
+            newLanes[li][myPower] += mPower;
+            break;
+          }
+        }
+        break;
+
+      case "buffIfFewerCards":
+        // +X if fewer cards than enemy (Sartocrates - Philosophical Strike)
+        // Note: +1 because this card is being added
+        const myCardCount = newLanes[laneIndex][myCards].length + 1;
+        const enemyCardCount = newLanes[laneIndex][enemyCards].length;
+        if (myCardCount <= enemyCardCount) bonusPower = effect.value || 30;
+        break;
+
+      case "buffByRarity":
+        // Buff cards by rarity (Brian Armstrong, Linux)
+        const tgtRarity = effect.targetRarity || "Common";
+        newLanes.forEach((lane: any) => {
+          lane[myCards].forEach((c: DeckCard, cIdx: number) => {
+            if (c.rarity === tgtRarity) { lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) }; lane[myPower] += effect.value || 0; }
+          });
+        });
+        break;
+
+      case "buffPerHandSize":
+        // Power based on hand size (NFTKid)
+        bonusPower = newHand.length * (effect.multiplier || 5);
+        break;
+
+      case "copyPowerLeft":
+        // Copy power from left card + bonus (GayPT - AI Generated)
+        const leftCardCount = newLanes[laneIndex][myCards].length;
+        if (leftCardCount > 0) {
+          const leftCard = newLanes[laneIndex][myCards][leftCardCount - 1];
+          bonusPower = Math.floor(leftCard.power * 0.5) + (effect.value || 10); // Copy 50% + bonus
+        } else {
+          bonusPower = effect.value || 10; // Just bonus if no left card
+        }
+        break;
+
+      case "destroyLoneCard":
+        // DESTROY enemy card if they have only 1 card in this lane! (Ink - Lone Hunter)
+        if (newLanes[laneIndex][enemyCards].length === 1) {
+          const destroyedCard = newLanes[laneIndex][enemyCards][0];
+          const destroyedPower = destroyedCard.power;
+          newLanes[laneIndex][enemyCards] = [];
+          newLanes[laneIndex][enemyPower] = 0;
+          // Bonus: gain half the destroyed card's power
+          bonusPower = Math.floor(destroyedPower / 2);
+        }
+        break;
+
+      case "moveRandom":
+        // Move this card to a random lane + bonus power (Vlady)
+        const availableLanes = [0, 1, 2].filter(li => li !== laneIndex);
+        if (availableLanes.length > 0) {
+          const targetLane = availableLanes[Math.floor(Math.random() * availableLanes.length)];
+          // Card will be added to target lane with bonus power
+          bonusPower = effect.bonusPower || 15;
+          // Note: actual moving happens in handlePvEPlayCard after bonusPower is applied
+        } else {
+          bonusPower = effect.bonusPower || 15; // Just give bonus if no other lanes
+        }
         break;
     }
 
-    return { lanes: newLanes, playerHand: newHand, playerDeckRemaining: newDeck, bonusPower };
+    return { lanes: newLanes, playerHand: newHand, playerDeckRemaining: newDeck, bonusPower, energyToConsume };
   };
 
   // Calculate ongoing power bonuses
@@ -1396,7 +1749,7 @@ export default function TCGPage() {
 
     switch (effect.action) {
       case "buffPerCardInPlay":
-        // +X power for each card in play
+        // +X power for each card in play (Claude - Computing)
         let totalCards = 0;
         lanes.forEach(lane => {
           totalCards += lane.playerCards.length + lane.cpuCards.length;
@@ -1412,14 +1765,14 @@ export default function TCGPage() {
         return 0; // This affects other cards, not self
 
       case "buffIfFirst":
-        // +X power if played first in this lane
+        // +X power if played first in this lane (Casa - Home Advantage)
         if (lanes[laneIndex][myCards].length > 0 && lanes[laneIndex][myCards][0].cardId === card.cardId) {
           return effect.value || 0;
         }
         return 0;
 
       case "doubleIfLosing":
-        // Double power if losing this lane
+        // Double power if losing this lane (Nico - Legendary Status)
         if (isPlayer) {
           if (lanes[laneIndex].playerPower < lanes[laneIndex].cpuPower) {
             return card.power; // Double = add same amount again
@@ -1432,12 +1785,32 @@ export default function TCGPage() {
         return 0;
 
       case "buffEachTurn":
-        // +X power at the end of each turn (accumulates)
+        // +X power at the end of each turn (JC Denton - Nano Augmentation)
         return currentTurn * (effect.value || 0);
 
       case "reduceEnemyPower":
-        // Enemies deal -X power to this lane (reduces enemy power calculation)
+        // Enemies deal -X power to this lane (Dan Romero - Too Cute)
         return 0; // This is applied differently
+
+      case "untargetable":
+        // MYTHIC: Anon - Hidden Identity - IMMUNE + gains power each turn!
+        return (effect.buffPerTurn || 0) * currentTurn;
+
+      case "reduceEnergyCost":
+        // MYTHIC: Vitalik - Gas Optimization - cards cost less (handled in play) + power buff per turn
+        return (effect.energyPerTurn || 0) * currentTurn * 5; // Convert energy to power equivalent
+
+      case "immuneToDebuff":
+        // Ventra - Diamond Hands - cannot lose power + bonus
+        return effect.bonusPower || 0;
+
+      case "buffPerCardsPlayed":
+        // Lombra Jr - Dick Knowledge - +X per card played (ongoing version)
+        let cardsPlayedOngoing = 0;
+        lanes.forEach((lane: any) => {
+          cardsPlayedOngoing += lane[myCards].length;
+        });
+        return cardsPlayedOngoing * (effect.value || 0);
 
       default:
         return 0;
@@ -1624,7 +1997,7 @@ export default function TCGPage() {
     }
 
     // Consume energy
-    const newEnergy = currentEnergy - energyCost;
+    let newEnergy = currentEnergy - energyCost;
 
     // Remove card from hand
     let newHand = [...pveGameState.playerHand];
@@ -1634,13 +2007,13 @@ export default function TCGPage() {
     let newDeck = [...pveGameState.playerDeckRemaining];
     if (isPrizeFoil && newDeck.length > 0) {
       newHand.push(newDeck.shift()!);
-      // Show visual effect for Prize foil draw
+      // Show special Prize foil visual effect
       setVisualEffect({
-        type: "buff",
+        type: "prize",
         laneIndex: laneIndex,
         text: "PRIZE FOIL! FREE + DRAW",
       });
-      setTimeout(() => setVisualEffect(null), 1500);
+      setTimeout(() => setVisualEffect(null), 2000);
     }
 
     // Add card to lane (with base power)
@@ -1667,9 +2040,51 @@ export default function TCGPage() {
     newLanes = abilityResult.lanes;
     newHand = abilityResult.playerHand;
 
-    // If card got bonus power from ability, update it and play ability sound
-    if (abilityResult.bonusPower !== 0) {
+    // Get ability and trigger card animations (no overlay!)
+    const ability = getCardAbility(card.name);
+    if (ability?.type === "onReveal") {
       playSound("ability");
+      const action = ability.effect?.action;
+
+      // Animate based on ability type
+      if (action === "debuffLane" || action === "debuffRandomEnemy" || action === "debuffStrongest") {
+        // Shake enemy cards and show power loss
+        const enemies = newLanes[laneIndex].cpuCards || [];
+        triggerLaneAnimation(laneIndex, "cpu", "shake", enemies);
+        enemies.forEach((_: any, idx: number) => {
+          setTimeout(() => triggerCardAnimation(laneIndex, "cpu", idx, "glow-red", -(ability.effect?.value || 0)), idx * 100);
+        });
+      } else if (action === "buffAllLanes" || action === "buffLane" || action === "buffAdjacent") {
+        // Glow green for all player cards
+        newLanes.forEach((lane: any, lidx: number) => {
+          triggerLaneAnimation(lidx, "player", "glow-green", lane.playerCards, ability.effect?.value || 0);
+        });
+      } else if (action === "shuffleAllLanes") {
+        // Spin all cards in all lanes
+        newLanes.forEach((lane: any, lidx: number) => {
+          triggerLaneAnimation(lidx, "cpu", "spin", lane.cpuCards);
+          triggerLaneAnimation(lidx, "player", "spin", lane.playerCards);
+        });
+      } else if (action === "destroyHighestEnemy") {
+        // Slide out the destroyed card
+        const enemies = newLanes[laneIndex].cpuCards || [];
+        if (enemies.length > 0) {
+          triggerCardAnimation(laneIndex, "cpu", 0, "slide-out");
+        }
+      } else if (action === "stealPower" || action === "copyHighest") {
+        // Shake enemies and glow player card
+        triggerLaneAnimation(laneIndex, "cpu", "shake", newLanes[laneIndex].cpuCards || []);
+        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
+        triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", ability.effect?.value || 0);
+      } else if (action === "buffSelf" || action === "buffPerCardInLane" || action === "buffPerFriendly") {
+        // Glow the played card
+        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
+        triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", ability.effect?.value || 0);
+      }
+    }
+
+    // If card got bonus power from ability, update it
+    if (abilityResult.bonusPower !== 0) {
       const cardIdx = newLanes[laneIndex].playerCards.length - 1;
       newLanes[laneIndex].playerCards[cardIdx] = {
         ...newLanes[laneIndex].playerCards[cardIdx],
@@ -1691,26 +2106,44 @@ export default function TCGPage() {
       setTimeout(() => playSound("combo"), 200); // Slight delay for effect
     }
 
+    // Check if ability consumed extra energy (e.g., Thosmur Energy Burst)
+    const extraEnergyConsumed = abilityResult.energyToConsume || 0;
+    if (extraEnergyConsumed > 0) {
+      newEnergy = 0; // Consume ALL remaining energy
+      // Also animate the card showing the power boost
+      const playerIdx = newLanes[laneIndex].playerCards.length - 1;
+      triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower, 1200);
+    }
+
+    // Track card for undo feature (reuse ability from above)
+    const newCardPlayedInfo = {
+      cardId: card.cardId,
+      laneIndex,
+      energyCost: energyCost + extraEnergyConsumed, // Include extra energy consumed for undo
+      hadOnReveal: ability?.type === "onReveal",
+    };
+
     setPveGameState({
       ...pveGameState,
       energy: newEnergy,
       playerHand: newHand,
       playerDeckRemaining: abilityResult.playerDeckRemaining,
       lanes: newLanes,
+      cardsPlayedThisTurn: (pveGameState.cardsPlayedThisTurn || 0) + 1,
+      cardsPlayedInfo: [...(pveGameState.cardsPlayedInfo || []), newCardPlayedInfo],
     });
     setSelectedHandCard(null);
   };
 
-  // Sacrifice Nothing card from hand (discard to draw + gain energy)
+  // Sacrifice Nothing card from hand (discard to draw + gain +2 energy!)
   const handleSacrificeNothingFromHand = (cardIndex: number) => {
     if (!pveGameState) return;
 
     const card = pveGameState.playerHand[cardIndex];
     if (!card || card.type !== "nothing") return;
 
-    // Calculate energy gain (half of what it would cost, minimum 1)
-    const cardCost = Math.max(1, Math.ceil(card.power / 30));
-    const energyGain = Math.max(1, Math.floor(cardCost / 2));
+    // +2 ENERGY for sacrificing Nothing!
+    const energyGain = 2;
     const newEnergy = (pveGameState.energy || 1) + energyGain;
 
     // Remove card from hand
@@ -1757,41 +2190,40 @@ export default function TCGPage() {
       }
     });
 
-    // Create new lanes with both cards removed
-    const newLanes = pveGameState.lanes.map((l: any, idx: number) => {
-      if (idx !== laneIndex) return l;
-
-      // Remove LANDMINE from player cards
-      const newPlayerCards = l.playerCards.filter((_: any, i: number) => i !== cardIndex);
-
-      // Remove highest enemy (if exists)
-      const newCpuCards = highestEnemyIdx >= 0
-        ? l.cpuCards.filter((_: any, i: number) => i !== highestEnemyIdx)
-        : l.cpuCards;
-
-      return { ...l, playerCards: newPlayerCards, cpuCards: newCpuCards };
-    });
-
-    // Recalculate powers
-    const recalculatedLanes = recalculateLanePowers(newLanes, pveGameState.currentTurn);
-
-    // Show explosion effect
-    setVisualEffect({
-      type: "explosion",
-      laneIndex: laneIndex,
-      text: highestEnemyIdx >= 0 ? `💥 DESTROYED! -${highestEnemyPower}` : "💥 BOOM!",
-    });
+    // 🎬 ANIMATION: Trigger explode on both cards
+    triggerCardAnimation(laneIndex, "player", cardIndex, "explode", undefined, 600);
+    if (highestEnemyIdx >= 0) {
+      triggerCardAnimation(laneIndex, "cpu", highestEnemyIdx, "explode", undefined, 600);
+    }
 
     // Play explosion sound
     playSound("ability");
 
-    // Clear effect after animation
-    setTimeout(() => setVisualEffect(null), 1500);
+    // Delay removal so animation plays first
+    setTimeout(() => {
+      // Create new lanes with both cards removed
+      const newLanes = pveGameState.lanes.map((l: any, idx: number) => {
+        if (idx !== laneIndex) return l;
 
-    setPveGameState({
-      ...pveGameState,
-      lanes: recalculatedLanes,
-    });
+        // Remove LANDMINE from player cards
+        const newPlayerCards = l.playerCards.filter((_: any, i: number) => i !== cardIndex);
+
+        // Remove highest enemy (if exists)
+        const newCpuCards = highestEnemyIdx >= 0
+          ? l.cpuCards.filter((_: any, i: number) => i !== highestEnemyIdx)
+          : l.cpuCards;
+
+        return { ...l, playerCards: newPlayerCards, cpuCards: newCpuCards };
+      });
+
+      // Recalculate powers
+      const recalculatedLanes = recalculateLanePowers(newLanes, pveGameState.currentTurn);
+
+      setPveGameState({
+        ...pveGameState,
+        lanes: recalculatedLanes,
+      });
+    }, 600);
   };
 
   // NAUGHTY SANTA Charm - seduce an enemy card to your side
@@ -1811,28 +2243,9 @@ export default function TCGPage() {
     // Find a random enemy to charm (take the first one)
     const charmedEnemy = enemyCards[0];
 
-    // Create new lanes with enemy moved to player side
-    const newLanes = pveGameState.lanes.map((l: any, idx: number) => {
-      if (idx !== laneIndex) return l;
-
-      // Add charmed enemy to player cards
-      const newPlayerCards = [...l.playerCards, { ...charmedEnemy, charmed: true }];
-
-      // Remove charmed enemy from CPU
-      const newCpuCards = l.cpuCards.slice(1);
-
-      return { ...l, playerCards: newPlayerCards, cpuCards: newCpuCards };
-    });
-
-    // Recalculate powers
-    const recalculatedLanes = recalculateLanePowers(newLanes, pveGameState.currentTurn);
-
-    // Show charm effect with hearts
-    setVisualEffect({
-      type: "buff",
-      laneIndex: laneIndex,
-      text: `CHARMED! 💕 +${charmedEnemy.power}`,
-    });
+    // 🎬 ANIMATION: Santa pulses pink, enemy card glows pink
+    triggerCardAnimation(laneIndex, "player", cardIndex, "pulse", undefined, 800);
+    triggerCardAnimation(laneIndex, "cpu", 0, "glow-green", undefined, 800); // Green = switching sides
 
     // Play Oiroke no Jutsu sound for Santa charm
     try {
@@ -1843,11 +2256,66 @@ export default function TCGPage() {
       playSound("ability");
     }
 
-    // Clear effect after animation
-    setTimeout(() => setVisualEffect(null), 2000);
+    // Delay state change so animation plays first
+    setTimeout(() => {
+      // Create new lanes with enemy moved to player side
+      const newLanes = pveGameState.lanes.map((l: any, idx: number) => {
+        if (idx !== laneIndex) return l;
 
-    // Remove Santa after using charm (one-time use)
-    const finalLanes = recalculatedLanes.map((l: any, idx: number) => {
+        // Add charmed enemy to player cards
+        const newPlayerCards = [...l.playerCards, { ...charmedEnemy, charmed: true }];
+
+        // Remove charmed enemy from CPU
+        const newCpuCards = l.cpuCards.slice(1);
+
+        return { ...l, playerCards: newPlayerCards, cpuCards: newCpuCards };
+      });
+
+      // Recalculate powers
+      const recalculatedLanes = recalculateLanePowers(newLanes, pveGameState.currentTurn);
+
+      // Remove Santa after using charm (one-time use)
+      const finalLanes = recalculatedLanes.map((l: any, idx: number) => {
+        if (idx !== laneIndex) return l;
+        return {
+          ...l,
+          playerCards: l.playerCards.filter((_: any, i: number) => i !== cardIndex),
+        };
+      });
+
+      setPveGameState({
+        ...pveGameState,
+        lanes: recalculateLanePowers(finalLanes, pveGameState.currentTurn),
+      });
+    }, 800);
+  };
+
+  // Return card from lane back to hand (undo play)
+  const handleReturnCardToHand = (laneIndex: number, cardIndex: number) => {
+    if (!pveGameState) return;
+
+    const lane = pveGameState.lanes[laneIndex];
+    const card = lane.playerCards[cardIndex];
+    if (!card) return;
+
+    // Find the card info in cardsPlayedInfo
+    const playedInfo = (pveGameState.cardsPlayedInfo || []).find(
+      (info: any) => info.cardId === card.cardId && info.laneIndex === laneIndex
+    );
+
+    // Only allow returning cards played THIS turn
+    if (!playedInfo) {
+      playSound("error");
+      return;
+    }
+
+    // Warning: if card had onReveal, effects already applied
+    if (playedInfo.hadOnReveal) {
+      // Still allow, but user should know effects were applied
+    }
+
+    // Remove card from lane
+    const newLanes = pveGameState.lanes.map((l: any, idx: number) => {
       if (idx !== laneIndex) return l;
       return {
         ...l,
@@ -1855,9 +2323,37 @@ export default function TCGPage() {
       };
     });
 
+    // Return card to hand
+    const newHand = [...pveGameState.playerHand, card];
+
+    // Refund energy
+    const newEnergy = (pveGameState.energy || 0) + playedInfo.energyCost;
+
+    // Remove from cardsPlayedInfo
+    const newCardsPlayedInfo = (pveGameState.cardsPlayedInfo || []).filter(
+      (info: any) => !(info.cardId === card.cardId && info.laneIndex === laneIndex)
+    );
+
+    // Recalculate powers
+    const recalculatedLanes = recalculateLanePowers(newLanes, pveGameState.currentTurn);
+
+    playSound("card"); // Same sound as playing
+
+    setVisualEffect({
+      type: "buff",
+      laneIndex,
+      text: "⬅ RETURNED",
+      emoji: "↩️"
+    });
+    setTimeout(() => setVisualEffect(null), 1000);
+
     setPveGameState({
       ...pveGameState,
-      lanes: recalculateLanePowers(finalLanes, pveGameState.currentTurn),
+      lanes: recalculatedLanes,
+      playerHand: newHand,
+      energy: newEnergy,
+      cardsPlayedThisTurn: Math.max(0, (pveGameState.cardsPlayedThisTurn || 0) - 1),
+      cardsPlayedInfo: newCardsPlayedInfo,
     });
   };
 
@@ -1867,11 +2363,67 @@ export default function TCGPage() {
     // Play turn end sound
     playSound("turn");
 
+    // Track CPU cards before/after to detect if CPU skipped
+    const cpuCardsBefore = pveGameState.lanes.reduce((sum: number, l: any) => sum + l.cpuCards.length, 0);
+
     // CPU plays cards using smart AI
     const cpuResult = cpuPlayCards(pveGameState);
     let cpuHand = cpuResult.cpuHand;
     let cpuDeckRemaining = cpuResult.cpuDeckRemaining;
     let newLanes = cpuResult.lanes;
+
+    const cpuCardsAfter = newLanes.reduce((sum: number, l: any) => sum + l.cpuCards.length, 0);
+    const cpuSkipped = cpuCardsAfter === cpuCardsBefore;
+
+    // Check for stealOnSkip ability if CPU skipped
+    if (cpuSkipped) {
+      // Find player cards with stealOnSkip ability (john porn)
+      for (let li = 0; li < 3; li++) {
+        const playerCardsInLane = newLanes[li].playerCards || [];
+        const hasStealOnSkip = playerCardsInLane.some((c: DeckCard) => {
+          const ability = getCardAbility(c.name);
+          return ability?.effect?.action === "stealOnSkip";
+        });
+
+        if (hasStealOnSkip) {
+          // Find the strongest enemy card across all lanes
+          let strongestLane = -1;
+          let strongestIdx = -1;
+          let strongestPower = -1;
+          newLanes.forEach((lane: any, lIdx: number) => {
+            lane.cpuCards.forEach((card: DeckCard, cIdx: number) => {
+              if (card.power > strongestPower) {
+                strongestLane = lIdx;
+                strongestIdx = cIdx;
+                strongestPower = card.power;
+              }
+            });
+          });
+
+          if (strongestLane >= 0 && strongestIdx >= 0) {
+            // Steal the card!
+            const stolenCard = { ...newLanes[strongestLane].cpuCards[strongestIdx] };
+            newLanes[strongestLane].cpuCards.splice(strongestIdx, 1);
+            newLanes[strongestLane].cpuPower -= stolenCard.power;
+
+            // Add to player's lane (where the stealOnSkip card is)
+            stolenCard.power = Math.floor(stolenCard.power * 0.5); // Stolen card has 50% power
+            newLanes[li].playerCards.push(stolenCard);
+            newLanes[li].playerPower += stolenCard.power;
+
+            // Show visual effect
+            setVisualEffect({
+              type: "steal",
+              laneIndex: li,
+              text: `STOLEN! ${stolenCard.name}`,
+              emoji: "🖐️"
+            });
+            playSound("ability");
+          }
+          break; // Only trigger once per turn
+        }
+      }
+    }
 
     // Recalculate all lane powers with ongoing effects for current turn
     const nextTurn = pveGameState.currentTurn + 1;
@@ -1916,16 +2468,31 @@ export default function TCGPage() {
     // Recalculate powers for the new turn (ongoing effects may scale with turn)
     newLanes = recalculateLanePowers(newLanes, nextTurn);
 
+    // SKIP TURN BONUS: +2 energy if player didn't play any cards
+    const playerSkipped = (pveGameState.cardsPlayedThisTurn || 0) === 0;
+    let bonusEnergy = 0;
+    if (playerSkipped) {
+      bonusEnergy = 2;
+      setVisualEffect({
+        type: "buff",
+        text: "SKIP BONUS! +2 ENERGY",
+        emoji: "⚡"
+      });
+      setTimeout(() => setVisualEffect(null), 1500);
+    }
+
     setPveGameState({
       ...pveGameState,
       currentTurn: nextTurn,
-      energy: nextTurn,
+      energy: nextTurn + bonusEnergy, // Base energy + skip bonus
       cpuEnergy: nextTurn, // CPU gets same energy as player each turn
       playerHand,
       playerDeckRemaining,
       cpuHand,
       cpuDeckRemaining,
       lanes: newLanes,
+      cardsPlayedThisTurn: 0, // Reset for next turn
+      cardsPlayedInfo: [], // Reset undo tracking for new turn
     });
   };
 
@@ -2058,21 +2625,29 @@ export default function TCGPage() {
     const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
     const effectivePower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
     const foilPower = foilEffect ? Math.floor(effectivePower * foilEffect.multiplier) : effectivePower;
+    // Encode imageUrl to handle spaces and special characters
+    const encodedImageUrl = card.imageUrl ? encodeURI(card.imageUrl) : null;
+
+    // Find combos for this card
+    const cardNameLower = card.name?.toLowerCase() || "";
+    const cardCombos = CARD_COMBOS.filter(combo =>
+      combo.cards.map(c => c.toLowerCase()).includes(cardNameLower)
+    );
 
     return (
       <div
-        className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+        className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-2"
         onClick={onClose}
       >
         <div
-          className="bg-gray-900 border-2 border-yellow-500/50 rounded-2xl p-4 max-w-sm w-full"
+          className="bg-gray-900 border-2 border-yellow-500/50 rounded-2xl p-4 max-w-sm w-full max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Card Image */}
           <div className="flex justify-center mb-4">
             <div
-              className={`w-32 h-48 rounded-xl border-4 bg-cover bg-center ${RARITY_COLORS[card.rarity] || "border-gray-500"}`}
-              style={{ backgroundImage: `url(${card.imageUrl})` }}
+              className={`w-32 h-48 rounded-xl border-4 bg-cover bg-center bg-gray-800 ${RARITY_COLORS[card.rarity] || "border-gray-500"}`}
+              style={{ backgroundImage: encodedImageUrl ? `url(${encodedImageUrl})` : undefined }}
             >
               {card.foil && card.foil !== "None" && (
                 <div className="w-full h-full bg-gradient-to-br from-white/20 via-transparent to-white/10 rounded-lg" />
@@ -2113,6 +2688,46 @@ export default function TCGPage() {
                 <span className="text-white font-bold text-sm">{ability.name}</span>
               </div>
               <p className="text-gray-300 text-sm">{ability.description}</p>
+            </div>
+          )}
+
+          {/* Combo Section - Compact for mobile */}
+          {cardCombos.length > 0 && card.type === "vbms" && (
+            <div className="mb-3 space-y-2">
+              {cardCombos.map((combo) => (
+                <div
+                  key={combo.id}
+                  className="bg-gradient-to-r from-purple-900/50 to-pink-900/30 rounded-lg p-3"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">{combo.emoji}</span>
+                    <span className="text-white font-bold text-sm">{combo.name}</span>
+                    {combo.minCards && (
+                      <span className="text-gray-500 text-[10px]">({combo.minCards}+)</span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-1 mb-1">
+                    {combo.cards.map((comboCard) => {
+                      const isCurrentCard = comboCard.toLowerCase() === cardNameLower;
+                      return (
+                        <span
+                          key={comboCard}
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                            isCurrentCard
+                              ? "bg-yellow-500 text-black"
+                              : "bg-gray-700/50 text-gray-400"
+                          }`}
+                        >
+                          {comboCard}
+                        </span>
+                      );
+                    })}
+                  </div>
+                  <p className="text-green-400 text-xs font-bold">
+                    ⚡ {combo.description}
+                  </p>
+                </div>
+              ))}
             </div>
           )}
 
@@ -2299,9 +2914,12 @@ export default function TCGPage() {
                     >
                       🤖 Battle vs CPU
                     </button>
-                    <div className="bg-gray-800/50 border border-gray-700 text-gray-500 font-bold py-4 px-6 rounded-xl text-center cursor-not-allowed">
-                      🔒 PvP Coming Soon
-                    </div>
+                    <button
+                      onClick={() => startTestMode()}
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-4 px-6 rounded-xl transition-all text-lg shadow-lg shadow-purple-500/20"
+                    >
+                      🧪 TEST MODE
+                    </button>
                   </>
                 )}
               </div>
@@ -2351,7 +2969,6 @@ export default function TCGPage() {
                 <ul className="text-gray-300 text-sm space-y-2">
                   <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-green-500 text-white text-[10px] flex items-center justify-center font-bold">R</span> <strong>On Reveal:</strong> Triggers when card is played</li>
                   <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center font-bold">O</span> <strong>Ongoing:</strong> Passive effect while on board</li>
-                  <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold">D</span> <strong>On Destroy:</strong> Triggers when card is removed</li>
                 </ul>
               </div>
 
@@ -2515,7 +3132,7 @@ export default function TCGPage() {
                       <span className="text-[9px] text-yellow-400 font-bold">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
                       {ability && card.type === "vbms" && (
                         <span className={`text-[5px] ${getAbilityTypeColor(ability.type)}`}>
-                          {ability.type === "onReveal" ? "R" : ability.type === "ongoing" ? "O" : "D"}
+                          {ability.type === "onReveal" ? "R" : "O"}
                         </span>
                       )}
                     </div>
@@ -2567,7 +3184,7 @@ export default function TCGPage() {
                         <span className="text-xs text-yellow-400 font-bold">{card.power}</span>
                         {ability && (
                           <span className={`text-[6px] ${getAbilityTypeColor(ability.type)}`}>
-                            {ability.type === "onReveal" ? "R" : ability.type === "ongoing" ? "O" : "D"}
+                            {ability.type === "onReveal" ? "R" : "O"}
                           </span>
                         )}
                       </div>
@@ -2629,7 +3246,6 @@ export default function TCGPage() {
           <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
             <span><span className="text-blue-400">R</span> = On Reveal</span>
             <span><span className="text-green-400">O</span> = Ongoing</span>
-            <span><span className="text-red-400">D</span> = On Destroy</span>
             <span className="text-gray-600">|</span>
             <span>Click <span className="text-blue-400 bg-blue-600 px-1 rounded">i</span> for details</span>
           </div>
@@ -2730,69 +3346,18 @@ export default function TCGPage() {
           </div>
         )}
 
-        {/* Visual Effects Overlay */}
-        {visualEffect && (
-          <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
-            {/* Explosion Effect */}
-            {visualEffect.type === "explosion" && (
-              <div className="animate-ping">
-                <div className="text-8xl animate-bounce">💥</div>
-                <div className="text-center mt-4 bg-red-600/80 px-6 py-2 rounded-xl">
-                  <span className="text-2xl font-black text-white">{visualEffect.text}</span>
-                </div>
-              </div>
-            )}
-            {/* Charm Effect (Hearts) */}
-            {visualEffect.type === "buff" && visualEffect.text?.includes("CHARM") && (
-              <div className="relative w-full h-full">
-                {[...Array(20)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="absolute text-4xl animate-bounce"
-                    style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
-                      animationDelay: `${Math.random() * 0.5}s`,
-                      animationDuration: `${0.5 + Math.random() * 0.5}s`,
-                    }}
-                  >
-                    💕
-                  </div>
-                ))}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-pink-600/80 px-8 py-4 rounded-xl animate-pulse">
-                    <span className="text-3xl font-black text-white">💋 {visualEffect.text}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-            {/* Draw Effect */}
-            {visualEffect.type === "draw" && (
-              <div className="animate-bounce">
-                <div className="text-6xl">🃏</div>
-                <div className="text-center mt-2 bg-green-600/80 px-4 py-2 rounded-xl">
-                  <span className="text-xl font-black text-white">{visualEffect.text || "+1 CARD"}</span>
-                </div>
-              </div>
-            )}
-            {/* Buff Effect */}
-            {visualEffect.type === "buff" && !visualEffect.text?.includes("CHARM") && (
-              <div className="animate-pulse">
-                <div className="text-6xl">⬆️</div>
-                <div className="text-center mt-2 bg-green-600/80 px-4 py-2 rounded-xl">
-                  <span className="text-xl font-black text-white">{visualEffect.text}</span>
-                </div>
-              </div>
-            )}
-            {/* Debuff Effect */}
-            {visualEffect.type === "debuff" && (
-              <div className="animate-pulse">
-                <div className="text-6xl">⬇️</div>
-                <div className="text-center mt-2 bg-red-600/80 px-4 py-2 rounded-xl">
-                  <span className="text-xl font-black text-white">{visualEffect.text}</span>
-                </div>
-              </div>
-            )}
+        {/* Simple Action Toast - Small notification at top, no emoji spam */}
+        {visualEffect && visualEffect.text && (
+          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+            <div className={`px-4 py-2 rounded-lg text-sm font-bold shadow-lg animate-bounce ${
+              visualEffect.type === "buff" || visualEffect.type === "draw" || visualEffect.type === "prize"
+                ? "bg-green-600 text-white"
+                : visualEffect.type === "debuff" || visualEffect.type === "destroy" || visualEffect.type === "explosion"
+                ? "bg-red-600 text-white"
+                : "bg-purple-600 text-white"
+            }`}>
+              {visualEffect.text}
+            </div>
           </div>
         )}
 
@@ -2859,6 +3424,7 @@ export default function TCGPage() {
                       onClick={() => {
                         setIsPvE(false);
                         setPveGameState(null);
+                        setIsTestMode(false);
                         setView("lobby");
                         setShowProfileMenu(false);
                       }}
@@ -2873,6 +3439,9 @@ export default function TCGPage() {
 
             {/* Turn Indicator (center) */}
             <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full">
+              {isTestMode && (
+                <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full animate-pulse">🧪 TEST</span>
+              )}
               <span className="text-xs text-gray-400">TURN</span>
               <span className="text-lg font-bold text-yellow-400">{gs.currentTurn}</span>
               <span className="text-xs text-gray-500">/ {TCG_CONFIG.TOTAL_TURNS}</span>
@@ -2953,22 +3522,46 @@ export default function TCGPage() {
                         const foil = (card.foil || "").toLowerCase();
                         const hasFoil = foil && foil !== "none" && foil !== "";
                         const foilClass = foil.includes("prize") ? "prize-foil" : foil.includes("standard") ? "standard-foil" : "";
+                        const encodedImageUrl = card.imageUrl ? encodeURI(card.imageUrl) : null;
+
+                        // Get card animation if any
+                        const animKey = `${laneIndex}-cpu-${idx}`;
+                        const anim = cardAnimations[animKey];
+                        const animClass = anim ? {
+                          "shake": "tcg-shake",
+                          "glow-green": "tcg-glow-green",
+                          "glow-red": "tcg-glow-red",
+                          "spin": "tcg-spin",
+                          "pulse": "tcg-pulse",
+                          "slide-out": "tcg-slide-out",
+                          "float-up": "tcg-float-up",
+                          "explode": "tcg-explode",
+                        }[anim.type] || "" : "";
+
                         return (
                           <div
                             key={idx}
                             onClick={() => setDetailCard(card)}
-                            className={`relative w-14 h-20 rounded-lg border-2 border-red-500/70 bg-cover bg-center shadow-lg cursor-pointer hover:scale-110 hover:z-30 transition-transform overflow-hidden`}
+                            className={`relative w-14 h-20 rounded-lg border-2 border-red-500/70 bg-cover bg-center shadow-lg cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden bg-gray-800 ${animClass}`}
                             style={{
-                              backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : undefined,
-                              zIndex: idx
+                              backgroundImage: encodedImageUrl ? `url(${encodedImageUrl})` : undefined,
+                              zIndex: anim ? 50 : idx
                             }}
                           >
                             {/* Foil effect overlay */}
-                            {hasFoil && <div className={`absolute inset-0 ${foilClass} rounded-lg pointer-events-none`}></div>}
+                            {hasFoil && <div className={`absolute inset-0 ${foilClass} rounded-lg pointer-events-none z-[5]`}></div>}
                             {/* Power badge */}
-                            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-2 border-red-300 flex items-center justify-center z-10">
+                            <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-red-500 to-red-700 border-2 border-red-300 flex items-center justify-center z-10 transition-all ${anim?.type === "glow-red" ? "scale-125" : ""}`}>
                               <span className="text-[10px] font-bold text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
                             </div>
+                            {/* Power change floating number */}
+                            {anim?.powerChange && (
+                              <div className={`absolute inset-0 flex items-center justify-center z-30 pointer-events-none`}>
+                                <span className={`text-lg font-black animate-[floatUp_0.8s_ease-out_forwards] ${anim.powerChange > 0 ? "text-green-400" : "text-red-400"}`}>
+                                  {anim.powerChange > 0 ? `+${anim.powerChange}` : anim.powerChange}
+                                </span>
+                              </div>
+                            )}
                             {/* Foil badge */}
                             {hasFoil && (
                               <div className={`absolute top-0 right-0 px-1 rounded-bl text-[6px] font-bold z-10 ${foil.includes("prize") ? "bg-pink-500 text-white" : "bg-purple-500 text-white"}`}>
@@ -2980,7 +3573,7 @@ export default function TCGPage() {
                               <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold z-10 ${
                                 ability.type === "onReveal" ? "bg-orange-500" : ability.type === "ongoing" ? "bg-green-500" : "bg-purple-500"
                               }`}>
-                                {ability.type === "onReveal" ? "R" : ability.type === "ongoing" ? "O" : "D"}
+                                {ability.type === "onReveal" ? "R" : "O"}
                               </div>
                             )}
                           </div>
@@ -3023,6 +3616,20 @@ export default function TCGPage() {
                     <div className="flex -space-x-6">
                       {lane.playerCards.map((card: any, idx: number) => {
                         const ability = getCardAbility(card.name);
+                        // Get card animation if any
+                        const animKey = `${laneIndex}-player-${idx}`;
+                        const anim = cardAnimations[animKey];
+                        const animClass = anim ? {
+                          "shake": "tcg-shake",
+                          "glow-green": "tcg-glow-green",
+                          "glow-red": "tcg-glow-red",
+                          "spin": "tcg-spin",
+                          "pulse": "tcg-pulse",
+                          "slide-out": "tcg-slide-out",
+                          "float-up": "tcg-float-up",
+                          "explode": "tcg-explode",
+                        }[anim.type] || "" : "";
+
                         return (
                           <div
                             key={idx}
@@ -3030,10 +3637,10 @@ export default function TCGPage() {
                               e.stopPropagation();
                               setDetailCard(card);
                             }}
-                            className={`relative w-14 h-20 rounded-lg border-2 border-blue-500/70 bg-cover bg-center shadow-lg cursor-pointer hover:scale-110 hover:z-30 transition-transform ${getFoilClass(card.foil)}`}
+                            className={`relative w-14 h-20 rounded-lg border-2 border-blue-500/70 bg-cover bg-center shadow-lg cursor-pointer hover:scale-110 hover:z-30 transition-transform ${getFoilClass(card.foil)} ${animClass}`}
                             style={{
                               backgroundImage: `url(${card.imageUrl})`,
-                              zIndex: idx
+                              zIndex: anim ? 50 : idx
                             }}
                           >
                             {/* Power badge */}
@@ -3045,7 +3652,7 @@ export default function TCGPage() {
                               <div className={`absolute -top-1 -left-1 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${
                                 ability.type === "onReveal" ? "bg-orange-500" : ability.type === "ongoing" ? "bg-green-500" : "bg-purple-500"
                               }`}>
-                                {ability.type === "onReveal" ? "R" : ability.type === "ongoing" ? "O" : "D"}
+                                {ability.type === "onReveal" ? "R" : "O"}
                               </div>
                             )}
                             {/* LANDMINE Kamikaze Button */}
@@ -3079,6 +3686,19 @@ export default function TCGPage() {
                               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-2xl pointer-events-none animate-pulse">
                                 💕
                               </div>
+                            )}
+                            {/* UNDO Button - Return card to hand */}
+                            {(gs.cardsPlayedInfo || []).some((info: any) => info.cardId === card.cardId && info.laneIndex === laneIndex) && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleReturnCardToHand(laneIndex, idx);
+                                }}
+                                className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-gray-600 to-gray-800 hover:from-red-500 hover:to-red-700 rounded-full text-xs text-white font-bold flex items-center justify-center z-30 shadow-lg border-2 border-gray-400 hover:border-red-300 transition-all"
+                                title="↩️ Return to hand (refund energy)"
+                              >
+                                ↩
+                              </button>
                             )}
                           </div>
                         );
