@@ -2690,21 +2690,13 @@ export default function TCGPage() {
                 className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 border-2 border-blue-400 overflow-hidden shadow-lg shadow-blue-500/40 cursor-pointer hover:scale-105 transition-transform"
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
               >
-                {userProfile?.pfpUrl ? (
-                  <img
-                    src={userProfile.pfpUrl}
-                    alt="You"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-2xl">👤</span>
-                  </div>
-                )}
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-2xl">👤</span>
+                </div>
               </div>
               <div className="text-xs">
                 <p className="text-blue-400 font-bold truncate max-w-[60px]">
-                  {userProfile?.displayName || userProfile?.username || "YOU"}
+                  {userProfile?.username || "YOU"}
                 </p>
                 <p className="text-gray-400">{gs.lanes.filter((l: any) => l.playerPower > l.cpuPower).length} lanes</p>
               </div>
