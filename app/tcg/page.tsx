@@ -757,13 +757,56 @@ export default function TCGPage() {
   };
 
   const generateCpuDeck = (playerDeck: DeckCard[]): DeckCard[] => {
-    // CPU copies the player's deck with slight power variations
-    return playerDeck.map((card, i) => ({
-      ...card,
-      cardId: `cpu-${i}`,
-      // Add some randomness: -10% to +20% power variation
-      power: Math.floor(card.power * (0.9 + Math.random() * 0.3)),
-    }));
+    // CPU gets ALL 53 VMW cards with random foils!
+    const allCards = tcgCardsData.cards || [];
+
+    // Base power by rarity
+    const rarityPower: Record<string, number> = {
+      "Mythic": 800,
+      "Legendary": 240,
+      "Epic": 80,
+      "Rare": 20,
+      "Common": 5,
+    };
+
+    // Build rank to name map for image paths
+    const rankMap: Record<string, string> = {
+      'A': 'ace', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
+      '7': '7', '8': '8', '9': '9', '10': '10', 'J': 'jack', 'Q': 'queen', 'K': 'king'
+    };
+
+    return allCards.map((card: any, i: number) => {
+      // Random foil: 70% None, 20% Standard, 10% Prize
+      const foilRoll = Math.random();
+      const foil = foilRoll < 0.1 ? "Prize" : foilRoll < 0.3 ? "Standard" : "None";
+
+      // Calculate power with foil multiplier
+      const basePower = rarityPower[card.rarity] || 5;
+      const foilMult = foil === "Prize" ? 15 : foil === "Standard" ? 2.5 : 1;
+      // Add some randomness: -10% to +20%
+      const power = Math.floor(basePower * foilMult * (0.9 + Math.random() * 0.3));
+
+      // Build image path from baccarat folder
+      const baccarat = card.baccarat?.toLowerCase() || card.onChainName?.toLowerCase();
+      let imageUrl = "/images/card-back.png";
+
+      if (card.baccarat === "neymar") {
+        imageUrl = "/images/baccarat/joker, neymar.png";
+      } else if (card.suit && card.rank && card.suit !== "???" && card.rank !== "???") {
+        const rankName = rankMap[card.rank] || card.rank;
+        imageUrl = `/images/baccarat/${rankName} ${card.suit}, ${baccarat}.png`;
+      }
+
+      return {
+        type: "vbms" as const,
+        cardId: `cpu-${i}-${baccarat}`,
+        name: baccarat,
+        rarity: card.rarity,
+        power,
+        imageUrl,
+        foil,
+      };
+    });
   };
 
   // Smart CPU AI logic with ability support
