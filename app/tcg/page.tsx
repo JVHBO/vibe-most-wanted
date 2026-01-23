@@ -1903,7 +1903,7 @@ export default function TCGPage() {
       await saveDeck({
         address,
         deckName,
-        cards: selectedCards.map((c) => ({
+        cards: selectedCards.map((c: DeckCard) => ({
           type: c.type,
           cardId: c.cardId,
           name: c.name,
@@ -1923,13 +1923,13 @@ export default function TCGPage() {
   };
 
   const handleCardSelect = (card: DeckCard) => {
-    if (selectedCards.find((c) => c.cardId === card.cardId)) {
+    if (selectedCards.find((c: DeckCard) => c.cardId === card.cardId)) {
       // Remove from deck
-      setSelectedCards(selectedCards.filter((c) => c.cardId !== card.cardId));
+      setSelectedCards(selectedCards.filter((c: DeckCard) => c.cardId !== card.cardId));
     } else if (selectedCards.length < TCG_CONFIG.DECK_SIZE) {
       // Validate limits
-      const vbmsCount = selectedCards.filter((c) => c.type === "vbms").length;
-      const nothingCount = selectedCards.filter((c) => c.type === "nothing").length;
+      const vbmsCount = selectedCards.filter((c: DeckCard) => c.type === "vbms").length;
+      const nothingCount = selectedCards.filter((c: DeckCard) => c.type === "nothing").length;
 
       if (card.type === "nothing" && nothingCount >= TCG_CONFIG.MAX_NOTHING) {
         setError(`Max ${TCG_CONFIG.MAX_NOTHING} Nothing cards allowed`);
@@ -1995,7 +1995,7 @@ export default function TCGPage() {
   const CardDetailModal = ({ card, onClose, onSelect }: { card: DeckCard; onClose: () => void; onSelect?: () => void }) => {
     const ability = getCardAbility(card.name);
     const foilEffect = getFoilEffect(card.foil);
-    const isSelected = selectedCards.some((c) => c.cardId === card.cardId);
+    const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
     const effectivePower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
     const foilPower = foilEffect ? Math.floor(effectivePower * foilEffect.multiplier) : effectivePower;
 
@@ -2131,7 +2131,7 @@ export default function TCGPage() {
   // ═══════════════════════════════════════════════════════════════════════════════
 
   if (view === "lobby") {
-    const vbmsCards = selectedCards.filter((c) => c.type === "vbms").length;
+    const vbmsCards = selectedCards.filter((c: DeckCard) => c.type === "vbms").length;
     const hasDeck = activeDeck !== undefined && activeDeck !== null;
 
     return (
@@ -2212,7 +2212,7 @@ export default function TCGPage() {
 
               {waitingRooms && waitingRooms.length > 0 ? (
                 <div className="space-y-2 max-h-80 overflow-y-auto">
-                  {waitingRooms.map((room) => (
+                  {waitingRooms.map((room: any) => (
                     <div
                       key={room._id}
                       className="bg-gray-700/50 rounded-lg p-3 flex items-center justify-between"
@@ -2283,11 +2283,11 @@ export default function TCGPage() {
       };
     });
 
-    const vbmsCards = availableCards.filter((c) => c.type === "vbms");
-    const nothingCards = availableCards.filter((c) => c.type === "nothing");
+    const vbmsCards = availableCards.filter((c: DeckCard) => c.type === "vbms");
+    const nothingCards = availableCards.filter((c: DeckCard) => c.type === "nothing");
 
-    const selectedVbms = selectedCards.filter((c) => c.type === "vbms").length;
-    const selectedNothing = selectedCards.filter((c) => c.type === "nothing").length;
+    const selectedVbms = selectedCards.filter((c: DeckCard) => c.type === "vbms").length;
+    const selectedNothing = selectedCards.filter((c: DeckCard) => c.type === "nothing").length;
     const totalPower = selectedCards.reduce((sum, c) => {
       const power = c.type === "nothing" ? Math.floor(c.power * 0.5) : c.power;
       return sum + power;
@@ -2370,7 +2370,7 @@ export default function TCGPage() {
           <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4 mb-4">
             <h3 className="text-sm font-bold text-white mb-2">Your Deck ({selectedCards.length})</h3>
             <div className="flex flex-wrap gap-2 min-h-[80px]">
-              {selectedCards.map((card) => {
+              {selectedCards.map((card: DeckCard) => {
                 const ability = getCardAbility(card.name);
                 return (
                   <div
@@ -2417,8 +2417,8 @@ export default function TCGPage() {
             <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
               <h3 className="text-sm font-bold text-yellow-400 mb-2">VBMS Cards ({vbmsCards.length})</h3>
               <div className="flex flex-wrap gap-2 max-h-[400px] overflow-y-auto">
-                {vbmsCards.map((card) => {
-                  const isSelected = selectedCards.some((c) => c.cardId === card.cardId);
+                {vbmsCards.map((card: DeckCard) => {
+                  const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
                   const ability = getCardAbility(card.name);
                   return (
                     <div
@@ -2467,8 +2467,8 @@ export default function TCGPage() {
             <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
               <h3 className="text-sm font-bold text-purple-400 mb-2">Nothing Cards ({nothingCards.length}) <span className="text-gray-500 text-xs">50% power</span></h3>
               <div className="flex flex-wrap gap-2 max-h-[400px] overflow-y-auto">
-                {nothingCards.map((card) => {
-                  const isSelected = selectedCards.some((c) => c.cardId === card.cardId);
+                {nothingCards.map((card: DeckCard) => {
+                  const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
                   return (
                     <div
                       key={card.cardId}
