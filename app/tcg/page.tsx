@@ -7,6 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { useProfile } from "@/contexts/ProfileContext";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Id } from "@/convex/_generated/dataModel";
 import tcgAbilitiesData from "@/data/tcg-abilities.json";
 import tcgCardsData from "@/data/vmw-tcg-cards.json";
@@ -585,6 +586,7 @@ export default function TCGPage() {
   const { address, isConnected } = useAccount();
   const { userProfile } = useProfile();
   const { nfts, isLoading: cardsLoading, loadNFTs, status } = usePlayerCards();
+  const { t } = useLanguage();
 
   // Load NFTs when wallet connects
   useEffect(() => {
@@ -2807,7 +2809,7 @@ export default function TCGPage() {
           {/* Nothing Card Info */}
           {card.type === "nothing" && (
             <div className="bg-purple-900/30 border border-purple-500/50 rounded-lg p-3 mb-3">
-              <p className="text-purple-300 text-xs font-bold mb-1">Nothing Card</p>
+              <p className="text-purple-300 text-xs font-bold mb-1">{t('tcgNothingCardTitle')}</p>
               <p className="text-gray-400 text-xs">&#x2022; 50% base power penalty</p>
               <p className="text-gray-400 text-xs">&#x2022; Can be sacrificed from hand (draw new card)</p>
               <p className="text-gray-400 text-xs">&#x2022; Can be sacrificed from lane (buff another card)</p>
@@ -2866,9 +2868,9 @@ export default function TCGPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-yellow-400 mb-4">VIBE CLASH</h1>
-          <p className="text-gray-400 mb-6">TCG Mode - Marvel Snap Style</p>
-          <p className="text-gray-500">Connect your wallet to play</p>
+          <h1 className="text-4xl font-bold text-yellow-400 mb-4">{t('tcgTitle')}</h1>
+          <p className="text-gray-400 mb-6">{t('tcgSubtitle')}</p>
+          <p className="text-gray-500">{t('tcgConnectWallet')}</p>
         </div>
       </div>
     );
@@ -2909,10 +2911,10 @@ export default function TCGPage() {
               onClick={() => router.push("/")}
               className="text-gray-400 hover:text-yellow-400 transition-colors flex items-center gap-2"
             >
-              <span>←</span> Back
+              <span>←</span> {t('tcgBack')}
             </button>
-            <h1 className="text-2xl font-bold text-yellow-400 tracking-widest">VIBE CLASH</h1>
-            <div className="text-xs text-gray-500">TCG Mode</div>
+            <h1 className="text-2xl font-bold text-yellow-400 tracking-widest">{t('tcgTitle')}</h1>
+            <div className="text-xs text-gray-500">{t('tcgSubtitle')}</div>
           </div>
 
           {/* Error */}
@@ -2932,7 +2934,7 @@ export default function TCGPage() {
                   : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600"
               }`}
             >
-              <span>⚔️</span> Play
+              <span>⚔️</span> {t('tcgPlay')}
             </button>
             <button
               onClick={() => setLobbyTab("rules")}
@@ -2942,7 +2944,7 @@ export default function TCGPage() {
                   : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600"
               }`}
             >
-              <span>📖</span> Rules
+              <span>📖</span> {t('tcgRules')}
             </button>
           </div>
 
@@ -2954,7 +2956,7 @@ export default function TCGPage() {
                 <div className="bg-gray-800/50 border border-yellow-500/30 rounded-xl p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wider">Active Deck</p>
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">{t('tcgActiveDeck')}</p>
                       <p className="text-lg font-bold text-white">{activeDeck.deckName}</p>
                       <p className="text-sm text-gray-400">
                         {activeDeck.vbmsCount} VBMS • {activeDeck.nothingCount} Nothing • <span className="text-yellow-400">{activeDeck.totalPower} PWR</span>
@@ -2964,7 +2966,7 @@ export default function TCGPage() {
                       onClick={() => setView("deck-builder")}
                       className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg text-sm transition-colors"
                     >
-                      Edit
+                      {t('tcgEdit')}
                     </button>
                   </div>
                 </div>
@@ -2977,7 +2979,7 @@ export default function TCGPage() {
                     onClick={() => setView("deck-builder")}
                     className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold py-4 px-6 rounded-xl transition-all text-lg"
                   >
-                    🃏 Build Your Deck
+                    🃏 {t('tcgBuildDeck')}
                   </button>
                 ) : (
                   <>
@@ -2985,13 +2987,13 @@ export default function TCGPage() {
                       onClick={() => startPvEMatch()}
                       className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-4 px-6 rounded-xl transition-all text-lg shadow-lg shadow-green-500/20"
                     >
-                      🤖 Battle vs CPU
+                      🤖 {t('tcgBattleCpu')}
                     </button>
                     <button
                       onClick={() => startTestMode()}
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-4 px-6 rounded-xl transition-all text-lg shadow-lg shadow-purple-500/20"
                     >
-                      🧪 TEST MODE
+                      🧪 {t('tcgTestMode')}
                     </button>
                   </>
                 )}
@@ -3002,15 +3004,15 @@ export default function TCGPage() {
                 <div className="grid grid-cols-3 gap-2 mt-4">
                   <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-center">
                     <p className="text-2xl font-bold text-yellow-400">0</p>
-                    <p className="text-xs text-gray-500">Wins</p>
+                    <p className="text-xs text-gray-500">{t('tcgWins')}</p>
                   </div>
                   <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-center">
                     <p className="text-2xl font-bold text-gray-400">0</p>
-                    <p className="text-xs text-gray-500">Losses</p>
+                    <p className="text-xs text-gray-500">{t('tcgLosses')}</p>
                   </div>
                   <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-center">
                     <p className="text-2xl font-bold text-green-400">0%</p>
-                    <p className="text-xs text-gray-500">Win Rate</p>
+                    <p className="text-xs text-gray-500">{t('tcgWinRate')}</p>
                   </div>
                 </div>
               )}
@@ -3018,40 +3020,91 @@ export default function TCGPage() {
           )}
 
           {lobbyTab === "rules" && (
-            <div className="space-y-4">
-              <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-                <h3 className="text-lg font-bold text-yellow-400 mb-3">⚔️ How to Play</h3>
-                <ul className="text-gray-300 text-sm space-y-2">
-                  <li className="flex items-start gap-2"><span className="text-yellow-500">•</span> Build a deck with 15 cards (min 8 VBMS, max 7 Nothing)</li>
-                  <li className="flex items-start gap-2"><span className="text-yellow-500">•</span> Battle across 3 lanes over 6 turns</li>
-                  <li className="flex items-start gap-2"><span className="text-yellow-500">•</span> Energy increases each turn (1 → 6)</li>
-                  <li className="flex items-start gap-2"><span className="text-yellow-500">•</span> Win 2/3 lanes to win the match</li>
-                </ul>
+            <div className="space-y-3 text-sm">
+              {/* Basic Rules */}
+              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+                <h3 className="font-bold text-yellow-400 mb-2">{t('tcgHowToPlay')}</h3>
+                <div className="text-gray-300 space-y-1">
+                  <p>{t('tcgHowToPlayDesc1')}</p>
+                  <p>{t('tcgHowToPlayDesc2')}</p>
+                  <p>{t('tcgHowToPlayDesc3')}</p>
+                  <p>{t('tcgHowToPlayDesc4')}</p>
+                  <p>{t('tcgHowToPlayDesc5')}</p>
+                </div>
               </div>
 
-              <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-                <h3 className="text-lg font-bold text-purple-400 mb-3">🃏 Card Types</h3>
-                <ul className="text-gray-300 text-sm space-y-2">
-                  <li className="flex items-start gap-2"><span className="text-purple-500">•</span> <strong>VBMS Cards:</strong> Full power + special abilities</li>
-                  <li className="flex items-start gap-2"><span className="text-purple-500">•</span> <strong>Nothing Cards:</strong> 50% power but can be sacrificed</li>
-                </ul>
+              {/* Energy System */}
+              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+                <h3 className="font-bold text-blue-400 mb-2">{t('tcgEnergySystem')}</h3>
+                <div className="text-gray-300 space-y-1">
+                  <p>{t('tcgEnergyTurn1')}</p>
+                  <p>{t('tcgEnergyTurn3')}</p>
+                  <p>{t('tcgEnergyTurn6')}</p>
+                  <p className="text-yellow-400 mt-1">{t('tcgEnergySkipBonus')}</p>
+                </div>
               </div>
 
-              <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-                <h3 className="text-lg font-bold text-green-400 mb-3">✨ Abilities</h3>
-                <ul className="text-gray-300 text-sm space-y-2">
-                  <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-green-500 text-white text-[10px] flex items-center justify-center font-bold">R</span> <strong>On Reveal:</strong> Triggers when card is played</li>
-                  <li className="flex items-start gap-2"><span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center font-bold">O</span> <strong>Ongoing:</strong> Passive effect while on board</li>
-                </ul>
+              {/* Card Types */}
+              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+                <h3 className="font-bold text-purple-400 mb-2">{t('tcgCardTypes')}</h3>
+                <div className="text-gray-300 space-y-1">
+                  <p>{t('tcgCardVbms')}</p>
+                  <p>{t('tcgCardNothing')}</p>
+                  <p><span className="text-pink-400">{t('tcgCardPrizeFoil')}</span></p>
+                  <p><span className="text-purple-400">{t('tcgCardStandardFoil')}</span></p>
+                </div>
               </div>
 
-              <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-                <h3 className="text-lg font-bold text-blue-400 mb-3">Foil Cards</h3>
-                <ul className="text-gray-300 text-sm space-y-2">
-                  <li className="flex items-start gap-2"><span className="text-pink-500">✨</span> <strong>Prize Foil:</strong> FREE to play (0 energy) + Draw 1 card</li>
-                  <li className="flex items-start gap-2"><span className="text-purple-500">⭐</span> <strong>Standard Foil:</strong> ×2.5 power multiplier</li>
-                  <li className="flex items-start gap-2"><span className="text-gray-500">•</span> <strong>No Foil:</strong> ×1 power (base)</li>
-                </ul>
+              {/* Abilities */}
+              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+                <h3 className="font-bold text-green-400 mb-2">{t('tcgAbilities')}</h3>
+                <div className="text-gray-300 space-y-1">
+                  <p><span className="inline-block w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] text-center leading-4 mr-1">R</span> {t('tcgAbilityOnReveal')}</p>
+                  <p><span className="inline-block w-4 h-4 rounded-full bg-green-500 text-white text-[9px] text-center leading-4 mr-1">O</span> {t('tcgAbilityOngoing')}</p>
+                </div>
+              </div>
+
+              {/* Special Cards */}
+              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+                <h3 className="font-bold text-red-400 mb-2">{t('tcgSpecialCards')}</h3>
+                <div className="text-gray-300 space-y-1">
+                  <p>{t('tcgLandmineDesc')}</p>
+                  <p>{t('tcgSantaDesc')}</p>
+                  <p>{t('tcgJohnPornDesc')}</p>
+                </div>
+              </div>
+
+              {/* Lane Effects */}
+              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+                <h3 className="font-bold text-cyan-400 mb-2">EFEITOS DE LANE</h3>
+                <div className="text-gray-300 space-y-1 text-xs">
+                  <p><span className="text-green-400">Buff:</span> Moon Base, Whale Waters, Shrimp Shore, Hopium</p>
+                  <p><span className="text-red-400">Debuff:</span> Paper Hands, Vlady's Dungeon</p>
+                  <p><span className="text-purple-400">Chaos:</span> Degen Valley (50/50), Liquidity Pool (swap), Clown College (menor ganha)</p>
+                  <p><span className="text-yellow-400">Special:</span> Bridge (não conta), Double Stakes (vale 2x)</p>
+                </div>
+              </div>
+
+              {/* Combos */}
+              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
+                <h3 className="font-bold text-pink-400 mb-2">COMBOS</h3>
+                <div className="text-gray-300 space-y-1 text-xs">
+                  <p>Jogue cartas específicas juntas para bonus massivos!</p>
+                  <p><span className="text-white">Romero Dynasty:</span> Dan + Goofy = +60 cada</p>
+                  <p><span className="text-white">Crypto Kings:</span> Brian + Vitalik = +80 na lane</p>
+                  <p className="text-yellow-400">Clique na carta para ver seus combos possíveis</p>
+                </div>
+              </div>
+
+              {/* Tips */}
+              <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-3">
+                <h3 className="font-bold text-yellow-400 mb-2">DICAS</h3>
+                <div className="text-gray-300 space-y-1 text-xs">
+                  <p>- Não gaste toda energia no turno 1, guarde para cartas fortes</p>
+                  <p>- Preste atenção no efeito da lane antes de jogar</p>
+                  <p>- Combos podem virar o jogo, planeje suas jogadas</p>
+                  <p>- Botão R na carta = devolver pra mão (reembolsa energia)</p>
+                </div>
               </div>
             </div>
           )}
@@ -3113,15 +3166,15 @@ export default function TCGPage() {
               onClick={() => setView("lobby")}
               className="text-gray-400 hover:text-white transition-colors"
             >
-              &larr; Back
+              &larr; {t('tcgBack')}
             </button>
-            <h1 className="text-2xl font-bold text-yellow-400">Deck Builder</h1>
+            <h1 className="text-2xl font-bold text-yellow-400">{t('tcgDeckBuilder')}</h1>
             <button
               onClick={handleSaveDeck}
               disabled={!canSave}
               className="bg-yellow-500 hover:bg-yellow-400 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-bold py-2 px-4 rounded-lg transition-colors"
             >
-              Save Deck
+              {t('tcgSaveDeck')}
             </button>
           </div>
 
@@ -3135,14 +3188,14 @@ export default function TCGPage() {
           {/* Loading Status */}
           {cardsLoading && (
             <div className="bg-blue-900/50 border border-blue-500 text-blue-200 px-4 py-2 rounded-lg mb-4">
-              Loading your cards... (Status: {status})
+              {t('tcgLoading')} (Status: {status})
             </div>
           )}
 
           {/* Debug Info */}
           {!cardsLoading && nfts.length === 0 && (
             <div className="bg-yellow-900/50 border border-yellow-500 text-yellow-200 px-4 py-2 rounded-lg mb-4">
-              No cards found. Make sure your wallet is connected and you own VBMS or Nothing cards.
+              {t('tcgNoCardsFound')}
               <br />
               <span className="text-xs text-yellow-400">Status: {status} | Address: {address || 'not connected'}</span>
             </div>
@@ -3156,7 +3209,7 @@ export default function TCGPage() {
                 value={deckName}
                 onChange={(e) => setDeckName(e.target.value)}
                 className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-yellow-500"
-                placeholder="Deck Name"
+                placeholder={t('tcgDeckName')}
               />
               <div className="flex gap-4 text-sm">
                 <span className={`${selectedCards.length === TCG_CONFIG.DECK_SIZE ? "text-green-400" : "text-gray-400"}`}>
@@ -3175,7 +3228,7 @@ export default function TCGPage() {
 
           {/* Selected Cards */}
           <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4 mb-4">
-            <h3 className="text-sm font-bold text-white mb-2">Your Deck ({selectedCards.length})</h3>
+            <h3 className="text-sm font-bold text-white mb-2">{t('tcgCurrentDeck')} ({selectedCards.length})</h3>
             <div className="flex flex-wrap gap-2 min-h-[80px]">
               {selectedCards.map((card: DeckCard) => {
                 const ability = getCardAbility(card.name);
@@ -3213,7 +3266,7 @@ export default function TCGPage() {
                 );
               })}
               {selectedCards.length === 0 && (
-                <p className="text-gray-500 text-sm">Click cards below to add them</p>
+                <p className="text-gray-500 text-sm">{t('tcgClickToAdd')}</p>
               )}
             </div>
           </div>
@@ -3265,14 +3318,14 @@ export default function TCGPage() {
                   );
                 })}
                 {vbmsCards.length === 0 && (
-                  <p className="text-gray-500 text-sm">No VBMS cards found</p>
+                  <p className="text-gray-500 text-sm">{t('tcgNoVbmsCards')}</p>
                 )}
               </div>
             </div>
 
             {/* Nothing Cards */}
             <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-              <h3 className="text-sm font-bold text-purple-400 mb-2">Nothing Cards ({nothingCards.length}) <span className="text-gray-500 text-xs">50% power</span></h3>
+              <h3 className="text-sm font-bold text-purple-400 mb-2">{t('tcgNothingCards')} ({nothingCards.length}) <span className="text-gray-500 text-xs">50% power</span></h3>
               <div className="flex flex-wrap gap-2 max-h-[400px] overflow-y-auto">
                 {nothingCards.map((card: DeckCard) => {
                   const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
@@ -3309,7 +3362,7 @@ export default function TCGPage() {
                   );
                 })}
                 {nothingCards.length === 0 && (
-                  <p className="text-gray-500 text-sm">No Nothing cards found</p>
+                  <p className="text-gray-500 text-sm">{t('tcgNoNothingCards')}</p>
                 )}
               </div>
             </div>
@@ -3344,13 +3397,13 @@ export default function TCGPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-yellow-400 mb-4">Waiting for Opponent</h1>
+          <h1 className="text-3xl font-bold text-yellow-400 mb-4">{t('tcgWaitingOpponent')}</h1>
           <div className="bg-gray-800/50 border border-yellow-500/30 rounded-xl p-8 mb-6">
-            <p className="text-gray-400 mb-2">Room Code</p>
+            <p className="text-gray-400 mb-2">{t('tcgRoomCode')}</p>
             <p className="text-4xl font-mono font-bold text-yellow-400 tracking-wider">
               {currentMatch?.roomId || "..."}
             </p>
-            <p className="text-sm text-gray-500 mt-2">Share this code with your opponent</p>
+            <p className="text-sm text-gray-500 mt-2">{t('tcgShareCode')}</p>
           </div>
 
           <div className="animate-pulse text-gray-400 mb-6">
@@ -3410,7 +3463,7 @@ export default function TCGPage() {
               gs.winner === "player" ? "text-green-400" : "text-red-400"
             }`}>
               <div className="text-6xl font-black drop-shadow-2xl mb-2 animate-pulse">
-                {gs.winner === "player" ? "🏆 VICTORY!" : "💀 DEFEAT"}
+                {gs.winner === "player" ? `🏆 ${t('tcgVictory')}` : `💀 ${t('tcgDefeat')}`}
               </div>
               <div className="text-xl font-bold bg-black/50 px-4 py-2 rounded-lg">
                 {gs.lanes.filter((l: any) => l.playerPower > l.cpuPower).length} - {gs.lanes.filter((l: any) => l.cpuPower > l.playerPower).length}
@@ -3454,9 +3507,19 @@ export default function TCGPage() {
                 className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 border-2 border-blue-400 overflow-hidden shadow-lg shadow-blue-500/40 cursor-pointer hover:scale-105 transition-transform"
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
               >
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-2xl">👤</span>
-                </div>
+                {userProfile?.farcasterPfpUrl || userProfile?.twitterProfileImageUrl ? (
+                  <img
+                    src={userProfile.farcasterPfpUrl || userProfile.twitterProfileImageUrl}
+                    alt="Player"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-blue-700">
+                    <span className="text-xl font-bold text-white">
+                      {userProfile?.username?.[0]?.toUpperCase() || "?"}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="text-xs">
                 <p className="text-blue-400 font-bold truncate max-w-[60px]">
@@ -3963,7 +4026,7 @@ export default function TCGPage() {
                 );
               })}
               {(!gs.playerHand || gs.playerHand.length === 0) && (
-                <span className="text-gray-500 text-sm">No cards in hand</span>
+                <span className="text-gray-500 text-sm">{t('tcgNoCardsInHand')}</span>
               )}
             </div>
 
@@ -3991,7 +4054,7 @@ export default function TCGPage() {
                 onClick={handlePvEEndTurn}
                 className="bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm border border-purple-400 shadow-lg"
               >
-                END TURN <span className="text-yellow-300">{gs.currentTurn}/{TCG_CONFIG.TOTAL_TURNS}</span>
+                {t('tcgEndTurn')} <span className="text-yellow-300">{gs.currentTurn}/{TCG_CONFIG.TOTAL_TURNS}</span>
               </button>
             </div>
           </div>
@@ -4017,7 +4080,7 @@ export default function TCGPage() {
 
               {/* Cards in Combo */}
               <div className="mb-4">
-                <p className="text-xs text-yellow-300/70 mb-2 uppercase tracking-wider">Cards Required:</p>
+                <p className="text-xs text-yellow-300/70 mb-2 uppercase tracking-wider">{t('tcgCardsRequired')}</p>
                 <div className="flex flex-wrap gap-1 justify-center">
                   {detailCombo.cards.map((cardName, idx: number) => (
                     <span key={idx} className="px-2 py-1 bg-black/40 rounded text-sm text-white capitalize">
@@ -4034,7 +4097,7 @@ export default function TCGPage() {
 
               {/* Effect */}
               <div className="bg-black/30 rounded-xl p-4 mb-4">
-                <p className="text-xs text-yellow-300/70 mb-1 uppercase tracking-wider">Bonus Effect:</p>
+                <p className="text-xs text-yellow-300/70 mb-1 uppercase tracking-wider">{t('tcgBonusEffect')}</p>
                 <p className="text-yellow-100 font-bold">{detailCombo.description}</p>
                 <div className="mt-2 flex items-center gap-2">
                   <span className={`px-2 py-0.5 rounded text-xs font-bold ${
@@ -4078,20 +4141,20 @@ export default function TCGPage() {
         {/* Top Bar */}
         <div className="flex items-center justify-between mb-2 px-2">
           <div className="text-sm">
-            <span className="text-gray-400">Turn</span>
+            <span className="text-gray-400">{t('tcgTurn')}</span>
             <span className="text-yellow-400 font-bold ml-2">{gs.currentTurn}/{TCG_CONFIG.TOTAL_TURNS}</span>
           </div>
           <div className="text-sm">
-            <span className="text-gray-400">Energy</span>
+            <span className="text-gray-400">{t('tcgEnergy')}</span>
             <span className="text-blue-400 font-bold ml-2">{gs.energy}</span>
           </div>
           <div className="text-sm">
             <span className={myConfirmed ? "text-green-400" : "text-gray-400"}>
-              {myConfirmed ? "Ready" : "Planning"}
+              {myConfirmed ? t('tcgReady') : t('tcgPlanning')}
             </span>
             <span className="text-gray-600 mx-2">|</span>
             <span className={opponentConfirmed ? "text-green-400" : "text-gray-400"}>
-              {opponentConfirmed ? "Opponent Ready" : "Opponent Planning"}
+              {opponentConfirmed ? t('tcgOpponentReady') : t('tcgOpponentPlanning')}
             </span>
           </div>
         </div>
@@ -4104,12 +4167,12 @@ export default function TCGPage() {
               className="bg-gray-800/50 border border-gray-700 rounded-xl p-2 min-h-[300px]"
             >
               <div className="text-center text-sm text-gray-400 mb-2">
-                Lane {laneIndex + 1}
+                {t('tcgLane')} {laneIndex + 1}
               </div>
 
               {/* Opponent's cards */}
               <div className="min-h-[100px] border-b border-gray-700 pb-2 mb-2">
-                <div className="text-xs text-gray-500 mb-1">Opponent ({lane[isPlayer1 ? "player2Power" : "player1Power"]})</div>
+                <div className="text-xs text-gray-500 mb-1">{t('tcgOpponent')} ({lane[isPlayer1 ? "player2Power" : "player1Power"]})</div>
                 <div className="flex flex-wrap gap-1 justify-center">
                   {(isPlayer1 ? lane.player2Cards : lane.player1Cards).map((card: any, idx: number) => (
                     <div
@@ -4131,7 +4194,7 @@ export default function TCGPage() {
                 }`}
                 onClick={() => selectedHandCard !== null && handlePlayCard(laneIndex)}
               >
-                <div className="text-xs text-gray-500 mb-1">You ({lane[isPlayer1 ? "player1Power" : "player2Power"]})</div>
+                <div className="text-xs text-gray-500 mb-1">{t('tcgYou')} ({lane[isPlayer1 ? "player1Power" : "player2Power"]})</div>
                 <div className="flex flex-wrap gap-1 justify-center">
                   {(isPlayer1 ? lane.player1Cards : lane.player2Cards).map((card: any, idx: number) => (
                     <div
@@ -4144,7 +4207,7 @@ export default function TCGPage() {
                   ))}
                 </div>
                 {selectedHandCard !== null && (
-                  <p className="text-center text-xs text-green-400 mt-2">Click to play here</p>
+                  <p className="text-center text-xs text-green-400 mt-2">{t('tcgClickToPlayHere')}</p>
                 )}
               </div>
             </div>
@@ -4154,13 +4217,13 @@ export default function TCGPage() {
         {/* Hand */}
         <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-3">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">Your Hand ({myHand?.length || 0})</span>
+            <span className="text-sm text-gray-400">{t('tcgHand')} ({myHand?.length || 0})</span>
             <button
               onClick={handleSubmitTurn}
               disabled={myConfirmed}
               className="bg-yellow-500 hover:bg-yellow-400 disabled:bg-gray-600 text-black font-bold py-2 px-4 rounded-lg text-sm transition-colors"
             >
-              {myConfirmed ? "Waiting..." : "End Turn"}
+              {myConfirmed ? t('tcgLoading') : t('tcgEndTurn')}
             </button>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-2">
@@ -4202,14 +4265,14 @@ export default function TCGPage() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
         <div className="text-center">
-          <span className="text-xs text-green-400 bg-green-900/50 px-2 py-0.5 rounded mb-4 inline-block">CPU MODE</span>
+          <span className="text-xs text-green-400 bg-green-900/50 px-2 py-0.5 rounded mb-4 inline-block">{t('tcgCpuMode')}</span>
 
           <h1
             className={`text-4xl font-bold mb-4 ${
               isDraw ? "text-gray-400" : isWinner ? "text-yellow-400" : "text-red-400"
             }`}
           >
-            {isDraw ? "DRAW" : isWinner ? "VICTORY!" : "DEFEAT"}
+            {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
           </h1>
 
           <div className="flex gap-4 justify-center mb-6">
@@ -4224,7 +4287,7 @@ export default function TCGPage() {
                   }`}
                 >
                   <p className="text-sm text-gray-400">
-                    {lane.name || `Lane ${idx + 1}`}
+                    {lane.name || `${t('tcgLane')} ${idx + 1}`}
                   </p>
                   <p className="text-lg font-bold">
                     <span className={playerWon ? "text-green-400" : "text-white"}>{lane.playerPower}</span>
@@ -4232,7 +4295,7 @@ export default function TCGPage() {
                     <span className={!playerWon && !isTie ? "text-red-400" : "text-white"}>{lane.cpuPower}</span>
                   </p>
                   <p className="text-xs text-gray-500">
-                    {playerWon ? "✓ You won" : isTie ? "— Tie" : "✕ CPU won"}
+                    {playerWon ? `✓ ${t('tcgWinning')}` : isTie ? `— ${t('tcgTied')}` : `✕ ${t('tcgLosing')}`}
                   </p>
                 </div>
               );
@@ -4247,7 +4310,7 @@ export default function TCGPage() {
               }}
               className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg transition-colors"
             >
-              Play Again
+              {t('tcgPlayAgain')}
             </button>
             <button
               onClick={() => {
@@ -4257,7 +4320,7 @@ export default function TCGPage() {
               }}
               className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors"
             >
-              Back to Lobby
+              {t('tcgBackToLobby')}
             </button>
           </div>
         </div>
@@ -4278,7 +4341,7 @@ export default function TCGPage() {
               isDraw ? "text-gray-400" : isWinner ? "text-yellow-400" : "text-red-400"
             }`}
           >
-            {isDraw ? "DRAW" : isWinner ? "VICTORY!" : "DEFEAT"}
+            {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
           </h1>
 
           {currentMatch.laneResults && (
@@ -4294,7 +4357,7 @@ export default function TCGPage() {
                       : "border-red-500"
                   }`}
                 >
-                  <p className="text-sm text-gray-400">Lane {idx + 1}</p>
+                  <p className="text-sm text-gray-400">{t('tcgLane')} {idx + 1}</p>
                   <p className="text-lg font-bold">
                     {lane.player1FinalPower} - {lane.player2FinalPower}
                   </p>
@@ -4310,7 +4373,7 @@ export default function TCGPage() {
             }}
             className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 px-6 rounded-lg transition-colors"
           >
-            Back to Lobby
+            {t('tcgBackToLobby')}
           </button>
         </div>
       </div>
@@ -4323,7 +4386,7 @@ export default function TCGPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black flex items-center justify-center">
-      <div className="text-yellow-400 animate-pulse">Loading...</div>
+      <div className="text-yellow-400 animate-pulse">{t('tcgLoading')}</div>
     </div>
   );
 }
