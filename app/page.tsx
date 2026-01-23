@@ -5262,6 +5262,7 @@ export default function TCGPage() {
                     soundEnabled={soundEnabled}
                     disabled={!userProfile || (status !== 'loaded' && status !== 'failed' && contextStatus !== 'loaded')}
                     onSelect={handleGameModeSelect}
+                    userAddress={address}
                   />
                 </div>
               </div>
@@ -5301,6 +5302,7 @@ export default function TCGPage() {
                   soundEnabled={soundEnabled}
                   disabled={!userProfile || (status !== 'loaded' && status !== 'failed')}
                   onSelect={handleGameModeSelect}
+                  userAddress={address}
                 />
               </div>
               <div className="tour-cards-section w-full max-w-xs mt-4">

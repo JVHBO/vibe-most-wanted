@@ -62,6 +62,7 @@ import type * as sessions from "../sessions.js";
 import type * as shopAnnouncement from "../shopAnnouncement.js";
 import type * as socialQuests from "../socialQuests.js";
 import type * as stats from "../stats.js";
+import type * as tcg from "../tcg.js";
 import type * as utils from "../utils.js";
 import type * as vbmsClaim from "../vbmsClaim.js";
 import type * as voiceChat from "../voiceChat.js";
@@ -128,6 +129,7 @@ declare const fullApi: ApiFromModules<{
   shopAnnouncement: typeof shopAnnouncement;
   socialQuests: typeof socialQuests;
   stats: typeof stats;
+  tcg: typeof tcg;
   utils: typeof utils;
   vbmsClaim: typeof vbmsClaim;
   voiceChat: typeof voiceChat;

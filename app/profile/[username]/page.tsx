@@ -601,7 +601,7 @@ export default function ProfilePage() {
             >
               <option value="all">Collection</option>
               <option value="vibe">VBMS</option>
-              <option value="vibe rot bangers">BANGER</option>
+              <option value="viberotbangers">BANGER</option>
               <option value="cumioh">CUMIO</option>
               <option value="vibefid">VIBEFID</option>
               <option value="meowverse">MEOVV</option>

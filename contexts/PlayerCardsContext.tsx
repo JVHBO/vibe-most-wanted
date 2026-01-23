@@ -9,45 +9,109 @@ import { getEnabledCollections, getCollectionContract, type CollectionId } from 
 import { getCardKey } from '@/lib/nft';
 import { findAttr, calcPower, isUnrevealed } from '@/lib/nft/attributes';
 import { getImage, fetchNFTs, checkCollectionBalances } from '@/lib/nft/fetcher';
+import { fetchWieldTokens, isWieldCollection, type WieldToken } from '@/lib/nft/wield-fetcher';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+import { DEFAULT_POWER_CONFIG } from '@/lib/collections';
+
+// Calculate power from Wield token data (same formula as calcPower)
+function calcPowerFromWield(token: WieldToken): number {
+  const config = DEFAULT_POWER_CONFIG;
+
+  // Base power from rarity
+  const rarityLower = (token.rarity || 'common').toLowerCase();
+  let basePower = config.rarityBase.common;
+  if (rarityLower === 'mythic') basePower = config.rarityBase.mythic;
+  else if (rarityLower === 'legendary') basePower = config.rarityBase.legendary;
+  else if (rarityLower === 'epic') basePower = config.rarityBase.epic;
+  else if (rarityLower === 'rare') basePower = config.rarityBase.rare;
+
+  // Wear multiplier
+  const wearLower = (token.wear || '').toLowerCase();
+  let wearMult = config.wearMultiplier.default;
+  if (wearLower === 'pristine') wearMult = config.wearMultiplier.pristine;
+  else if (wearLower === 'mint') wearMult = config.wearMultiplier.mint;
+
+  // Foil multiplier
+  const foilLower = (token.foil || 'none').toLowerCase();
+  let foilMult = config.foilMultiplier.none;
+  if (foilLower === 'prize') foilMult = config.foilMultiplier.prize;
+  else if (foilLower === 'standard') foilMult = config.foilMultiplier.standard;
+
+  return Math.floor(basePower * wearMult * foilMult);
+}
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { HAND_SIZE, getMaxAttacks } from '@/lib/config';
 import type { Card, CardRarity, CardFoil, CardWear } from '@/lib/types/card';
 
 /**
- * 🎴 FETCH NFTs - localStorage cache only (no Convex bandwidth)
+ * 🎴 FETCH NFTs - HYBRID: Wield API + Alchemy fallback
  * OPTIMIZATION (Jan 2026):
- * - Uses localStorage cache (30 min TTL)
- * - RPC balance check to skip empty collections
- * - No Convex usage = minimal bandwidth cost
+ * - Wield API for 6 vibechain collections (cached permanently)
+ * - Alchemy only for VibeFID (not a boosterbox)
+ * - Massive bandwidth savings!
  */
 async function fetchNFTsFromAllCollections(owner: string, forceRefresh: boolean = false): Promise<any[]> {
-  devLog('🎴 [Context] Starting NFT fetch (localStorage cache)...');
+  devLog('🎴 [Context] Starting HYBRID fetch (Wield + Alchemy)...');
 
   const enabledCollections = getEnabledCollections();
   const collectionsWithContract = enabledCollections.filter(c => c.contractAddress);
 
-  // RPC balance check - skips collections where user has 0 NFTs
-  const { collectionsWithNfts, balances } = await checkCollectionBalances(owner, collectionsWithContract);
+  // Split: Wield collections vs Alchemy-only (vibefid)
+  const wieldCollections = collectionsWithContract.filter(c => isWieldCollection(c.id));
+  const alchemyCollections = collectionsWithContract.filter(c => !isWieldCollection(c.id));
 
-  devLog(`📊 [Context] ${collectionsWithNfts.length}/${collectionsWithContract.length} collections have NFTs`);
+  devLog(`📊 [Context] Wield: ${wieldCollections.length}, Alchemy: ${alchemyCollections.length}`);
 
   const allNfts: any[] = [];
 
-  for (const collection of collectionsWithNfts) {
+  // 🚀 WIELD: Fetch from Wield API (6 collections, cached)
+  for (const collection of wieldCollections) {
     try {
-      const balance = balances[collection.contractAddress.toLowerCase()];
-      // fetchNFTs uses localStorage cache internally (30 min TTL)
-      const nfts = await fetchNFTs(owner, collection.contractAddress, undefined, balance);
-      const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
-      allNfts.push(...tagged);
+      const tokens = await fetchWieldTokens(owner, collection.id);
+      if (tokens.length > 0) {
+        devLog(`✓ [Wield] ${collection.id}: ${tokens.length} tokens`);
+        // Convert WieldToken to expected NFT format
+        const nfts = tokens.map(t => ({
+          tokenId: String(t.tokenId),
+          collection: collection.id,
+          contract: { address: collection.contractAddress },
+          // Pre-filled metadata from Wield (no need to re-fetch!)
+          _wieldData: t, // Store for later processing
+        }));
+        allNfts.push(...nfts);
+      }
     } catch (err) {
-      devError(`✗ [Context] Failed: ${collection.displayName}`, err);
+      devWarn(`⚠️ [Wield] ${collection.id} failed, trying Alchemy...`, err);
+      // Fallback to Alchemy
+      try {
+        const nfts = await fetchNFTs(owner, collection.contractAddress);
+        const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
+        allNfts.push(...tagged);
+      } catch (alchemyErr) {
+        devError(`✗ [Alchemy fallback] ${collection.id}:`, alchemyErr);
+      }
     }
   }
 
-  devLog(`✅ [Context] Fetched ${allNfts.length} NFTs total`);
+  // 📡 ALCHEMY: Fetch VibeFID (not a boosterbox)
+  if (alchemyCollections.length > 0) {
+    const { collectionsWithNfts, balances } = await checkCollectionBalances(owner, alchemyCollections);
+
+    for (const collection of collectionsWithNfts) {
+      try {
+        const balance = balances[collection.contractAddress.toLowerCase()];
+        const nfts = await fetchNFTs(owner, collection.contractAddress, undefined, balance);
+        const tagged = nfts.map(nft => ({ ...nft, collection: collection.id }));
+        allNfts.push(...tagged);
+        devLog(`✓ [Alchemy] ${collection.id}: ${nfts.length} NFTs`);
+      } catch (err) {
+        devError(`✗ [Alchemy] ${collection.displayName}:`, err);
+      }
+    }
+  }
+
+  devLog(`✅ [Context] Total fetched: ${allNfts.length} NFTs (Wield + Alchemy)`);
   return allNfts;
 }
 
@@ -325,13 +389,16 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
       }
       devLog('✓ [Context] Received NFTs from all wallets:', raw.length);
 
-      // 🔄 METADATA REFRESH - SAME AS HOME PAGE!
+      // 🔄 METADATA REFRESH - Only for Alchemy NFTs (Wield already has metadata!)
       const METADATA_BATCH_SIZE = 50;
       const enrichedRaw = [];
       for (let i = 0; i < raw.length; i += METADATA_BATCH_SIZE) {
         const batch = raw.slice(i, i + METADATA_BATCH_SIZE);
         const batchResults = await Promise.all(
           batch.map(async (nft) => {
+            // 🚀 WIELD: Skip metadata refresh - already has all data!
+            if (nft._wieldData) return nft;
+
             // Handle tokenUri as string or object with gateway property
             const tokenUri = typeof nft?.tokenUri === 'string'
               ? nft.tokenUri
@@ -356,17 +423,18 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
         enrichedRaw.push(...batchResults);
       }
 
-      // 🔍 FILTER UNOPENED - Use isUnrevealed for better detection (handles stale Alchemy data)
+      // 🔍 FILTER UNOPENED - Wield tokens already pre-filtered, only check Alchemy
       const revealed = enrichedRaw.filter((nft) => {
+        // 🚀 WIELD: Already filtered to rarity_assigned only
+        if (nft._wieldData) return true;
         // isUnrevealed checks for Wear/Foil/Character attributes which prove the card is revealed
-        // even if Alchemy has stale rarity="Unopened" data
         return !isUnrevealed(nft);
       });
 
       const filtered = enrichedRaw.length - revealed.length;
       devLog(`📊 [Context] NFT Stats: Total=${enrichedRaw.length}, Revealed=${revealed.length}, Filtered=${filtered}`);
 
-      // 🖼️ PROCESS IMAGES - SAME AS HOME PAGE!
+      // 🖼️ PROCESS CARDS - Use Wield data when available!
       const IMAGE_BATCH_SIZE = 50;
       const processed: Card[] = [];
 
@@ -374,20 +442,27 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
         const batch = revealed.slice(i, i + IMAGE_BATCH_SIZE);
         const enriched = await Promise.all(
           batch.map(async (nft) => {
-            // 🎯 Detect collection from contract address
-            let collection: CollectionId = 'vibe';
+            // 🚀 WIELD DATA: Use pre-fetched data (no extra API calls!)
+            const wieldData = nft._wieldData as WieldToken | undefined;
+
+            // 🎯 Collection: from wield data or contract address
+            let collection: CollectionId = (nft.collection as CollectionId) || 'vibe';
             const contractAddr = nft?.contract?.address?.toLowerCase();
             const isVibeFID = contractAddr === getCollectionContract('vibefid')?.toLowerCase();
 
             // 🎬 Get image URL
             let imageUrl: string;
-            if (isVibeFID) {
+            if (wieldData?.imageUrl) {
+              // Use Wield image directly!
+              imageUrl = wieldData.imageUrl;
+            } else if (isVibeFID) {
               imageUrl = await getImage(nft, 'vibefid');
             } else {
               imageUrl = await getImage(nft);
             }
 
-            if (contractAddr) {
+            // Detect collection from contract (for Alchemy-fetched NFTs)
+            if (!wieldData && contractAddr) {
               if (isVibeFID) {
                 collection = 'vibefid';
               } else if (contractAddr === getCollectionContract('gmvbrs')?.toLowerCase()) {
@@ -396,18 +471,6 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
                 collection = 'viberotbangers';
               } else if (contractAddr === getCollectionContract('cumioh')?.toLowerCase()) {
                 collection = 'cumioh';
-              } else if (contractAddr === getCollectionContract('historyofcomputer')?.toLowerCase()) {
-                collection = 'historyofcomputer';
-              } else if (contractAddr === getCollectionContract('vibefx')?.toLowerCase()) {
-                collection = 'vibefx';
-              } else if (contractAddr === getCollectionContract('baseballcabal')?.toLowerCase()) {
-                collection = 'baseballcabal';
-              } else if (contractAddr === getCollectionContract('tarot')?.toLowerCase()) {
-                collection = 'tarot';
-              } else if (contractAddr === getCollectionContract('teampothead')?.toLowerCase()) {
-                collection = 'teampothead';
-              } else if (contractAddr === getCollectionContract('poorlydrawnpepes')?.toLowerCase()) {
-                collection = 'poorlydrawnpepes';
               } else if (contractAddr === getCollectionContract('meowverse')?.toLowerCase()) {
                 collection = 'meowverse';
               } else if (contractAddr === getCollectionContract('viberuto')?.toLowerCase()) {
@@ -415,18 +478,24 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
               }
             }
 
+            // 📊 Use Wield data or fallback to Alchemy metadata
+            const rarity = wieldData?.rarity || findAttr(nft, 'rarity');
+            const foil = wieldData?.foil || findAttr(nft, 'foil') || 'None';
+            const wear = wieldData?.wear || findAttr(nft, 'wear');
+            const characterName = wieldData?.name || findAttr(nft, 'name');
+
             return {
               tokenId: nft.tokenId,
-              name: nft.title || nft.name || `Card #${nft.tokenId}`,
+              name: characterName || nft.title || nft.name || `Card #${nft.tokenId}`,
               imageUrl,
               collection,
-              rarity: findAttr(nft, 'rarity') as CardRarity,
-              foil: findAttr(nft, 'foil') as CardFoil || 'None',
-              wear: findAttr(nft, 'wear') as CardWear || undefined,
-              power: calcPower(nft, isVibeFID),
+              rarity: rarity as CardRarity,
+              foil: foil as CardFoil,
+              wear: wear as CardWear || undefined,
+              power: wieldData ? calcPowerFromWield(wieldData) : calcPower(nft, isVibeFID),
               isFreeCard: false,
-              // TCG character name (from VMW "name" trait - e.g., "nicogay", "tukka")
-              character: findAttr(nft, 'name') || undefined,
+              // TCG character name
+              character: characterName || undefined,
             };
           })
         );

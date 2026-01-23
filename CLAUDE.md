@@ -659,6 +659,140 @@ Bandwidth optimizations may NOT show immediate results because:
 
 **True test**: Compare bandwidth per unique user over 24-48 hours after deploy
 
+## Wield API (VMW Cards Metadata)
+
+### API Configuration
+| Key | Value |
+|-----|-------|
+| **Base URL** | `https://build.wield.xyz/vibe/boosterbox` |
+| **API Key** | `YUEPI-G3KJ7-5FCXV-ANSPV-BZ3DA` |
+| **Header** | `API-KEY` (NOT `x-api-key`!) |
+| **Contract** | `0xf14c1dc8ce5fe65413379f76c43fa1460c31e728` |
+
+### Working Endpoints
+
+| Endpoint | Auth | Description |
+|----------|------|-------------|
+| `/metadata/{slug}/{tokenId}` | NO | Get single token metadata |
+| `/metadata?contractAddress=...` | YES | Get ALL cards metadata (official data!) |
+| `/owner/{address}` | YES | Get tokens by owner |
+
+### Example Requests
+
+```bash
+# Single token (NO auth needed)
+curl -s "https://build.wield.xyz/vibe/boosterbox/metadata/vibe-most-wanted/14068"
+
+# ALL cards metadata (REQUIRES API-KEY header)
+curl -s -H "API-KEY: YUEPI-G3KJ7-5FCXV-ANSPV-BZ3DA" \
+  "https://build.wield.xyz/vibe/boosterbox/metadata?contractAddress=0xf14c1dc8ce5fe65413379f76c43fa1460c31e728"
+
+# Create new API key
+curl -X POST -H "Content-Type: application/json" \
+  -d '{"description": "VMW TCG", "email": "your@email.com"}' \
+  https://build.wield.xyz/apikey/create
+```
+
+### Common Mistakes (DON'T DO!)
+- ❌ `x-api-key` header → Use `API-KEY`
+- ❌ `/contractAddress/{addr}/all-metadata` → Use `/metadata?contractAddress=`
+- ❌ Searching unminted tokens by tokenId → They don't exist on-chain!
+- ❌ Rate limited? Create new API key (it's free)
+
+### VMW Card Data
+
+**Data file:** `data/vmw-tcg-cards.json` (source of truth)
+
+| Rarity | Count | Ranks |
+|--------|-------|-------|
+| Mythic | 5 | neymar (NEW!) + 4 Aces |
+| Legendary | 8 | Queens + Kings |
+| Epic | 12 | 9, 10, Jacks |
+| Rare | 8 | 7, 8 |
+| Common | 20 | 2-6 |
+
+**Total: 53 cards** (52 standard deck + neymar)
+
+### Name Aliases (on-chain → baccarat)
+Some cards have different names on-chain vs in baccarat images:
+- `nicogay` → `nico`
+- `chilli` → `chilipepper`
+- `Goofy Romero` → `goofy romero`
+- `Linda Xied` → `linda xied`
+- `Beeper` → `beeper`
+- `filthy` → `don filthy`
+- `vlad` → `vlady`
+- `shill` → `shills`
+- `beto` → `betobutter`
+- `proxy` → `slaterg`
+- `lombra` → `lombra jr`
+- `vibe` → `vibe intern`
+- `jack` → `jack the sniper`
+- `horsefacts` → `horsefarts`
+- `jc` → `jc denton`
+
+### API Docs
+- Full docs: https://docs.wield.xyz/api-reference/vibemarket-intro
+
+### Otimização Futura: Coleções via Wield (NÃO IMPLEMENTADO)
+
+**Problema atual:**
+- Alchemy às vezes retorna quantidade errada de cartas
+- Gasta muito bandwidth/calls do Alchemy
+
+**Coleções que funcionam com Wield API (TODAS vibechain boosterbox):**
+| Coleção | Contract | Wield | Slug |
+|---------|----------|-------|------|
+| VMW (vibe) | `0xf14c1dc8ce5fe65413379f76c43fa1460c31e728` | ✅ | vibe-most-wanted |
+| Viberotbangers | `0x120c612d79a3187a3b8b4f4bb924cebe41eb407a` | ✅ | vibe-rot-bangers |
+| Meowverse | `0xF0BF71bcD1F1aeb1bA6BE0AfBc38A1ABe9aa9150` | ✅ | meowverse |
+| GM VBRS | `0xefe512e73ca7356c20a21aa9433bad5fc9342d46` | ✅ | gm-vbrs |
+| Viberuto | `0x70b4005a83a0b39325d27cf31bd4a7a30b15069f` | ✅ | viberuto |
+| VibeFX | `0xc7f2d8c035b2505f30a5417c0374ac0299d88553` | ✅ | vibefx |
+| History of Computer | `0x319b12e8eba0be2eae1112b357ba75c2c178b567` | ✅ | history-of-computer |
+| Team Pothead | `0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea` | ✅ | team-pothead |
+| Tarot | `0x34d639c63384a00a2d25a58f73bea73856aa0550` | ✅ | tarot |
+| Baseball Cabal | `0x3ff41af61d092657189b1d4f7d74d994514724bb` | ✅ | baseball-cabal |
+| Poorly Drawn Pepes | `0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8` | ✅ | poorly-drawn-pepes |
+| $CU-MI-OH! | `0xfeabae8bdb41b2ae507972180df02e70148b38e1` | ✅ | cu-mi-oh |
+
+**NÃO funcionam com Wield (outros sistemas):**
+| Coleção | Razão |
+|---------|-------|
+| VibeFID | Contrato separado, não é boosterbox |
+| Nothing | Não é NFT, só Convex cardInventory |
+
+**Solução proposta:**
+1. `/owner/{address}?contractAddress=X` → lista de tokenIds (1 call por coleção)
+2. Cache localStorage por token (foil/wear nunca mudam)
+3. Só buscar metadata de tokens NOVOS
+4. Fallback pra Alchemy se Wield falhar
+
+**Endpoints necessários:**
+```bash
+# Lista de tokens do owner (precisa API-KEY)
+GET /owner/{address}?contractAddress=0x...
+Header: API-KEY
+
+# Metadata individual (NÃO precisa de API key!)
+GET /metadata/vibe-most-wanted/{tokenId}
+GET /metadata/vibe-rot-bangers/{tokenId}
+GET /metadata/meowverse/{tokenId}
+```
+
+**Cuidados na implementação:**
+- Rate limit: max 5 calls paralelos, delay 100ms entre batches
+- Cache permanente por tokenId (metadata não muda)
+- Cache de 10min para lista de tokens do owner
+- Sempre ter fallback pra Alchemy
+- Testar bem antes de deploy (sistema crítico!)
+- Nothing cards: continuar usando Convex (cardInventory table)
+
+**Economia estimada:**
+- 90% das vezes: cache local (0 calls)
+- Player novo/comprou cartas: 1 call owner + N calls metadata
+- Metadata cacheia PARA SEMPRE
+
 ## Baccarat Casino Mode
 
 ### Arquivos:

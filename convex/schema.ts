@@ -1898,4 +1898,170 @@ export default defineSchema({
     finishedAt: v.number(),
   })
     .index("by_finished", ["finishedAt"]),
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // TCG - VIBE CLASH (Marvel Snap style card game)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // TCG Matches
+  tcgMatches: defineTable({
+    // Room Info
+    roomId: v.string(),
+    status: v.union(
+      v.literal("waiting"),      // Esperando oponente
+      v.literal("deck-select"),  // Selecionando deck
+      v.literal("in-progress"),  // Jogo em andamento
+      v.literal("finished"),     // Finalizado
+      v.literal("cancelled")     // Cancelado
+    ),
+
+    // Players
+    player1Address: v.string(),
+    player1Username: v.string(),
+    player1Deck: v.optional(v.array(v.any())), // 15 cartas selecionadas
+    player1Ready: v.boolean(),
+
+    player2Address: v.optional(v.string()),
+    player2Username: v.optional(v.string()),
+    player2Deck: v.optional(v.array(v.any())),
+    player2Ready: v.optional(v.boolean()),
+
+    // Game State
+    gameState: v.optional(v.object({
+      currentTurn: v.number(), // 1-6
+      energy: v.number(), // 1-6 (igual ao turno)
+      phase: v.union(
+        v.literal("draw"),        // Comprando carta
+        v.literal("action"),      // Jogando/sacrificando
+        v.literal("reveal"),      // Revelando cartas
+        v.literal("resolution")   // Calculando resultado
+      ),
+      turnEndsAt: v.number(), // Timestamp (20 seg timer)
+
+      // Mãos dos jogadores (cartas na mão - ocultas do oponente)
+      player1Hand: v.array(v.any()),
+      player2Hand: v.array(v.any()),
+
+      // Decks restantes (cartas ainda não compradas)
+      player1DeckRemaining: v.array(v.any()),
+      player2DeckRemaining: v.array(v.any()),
+
+      // Board - 3 Lanes
+      lanes: v.array(v.object({
+        laneId: v.number(), // 0, 1, 2
+        player1Cards: v.array(v.any()), // Cartas jogadas pelo player1
+        player2Cards: v.array(v.any()), // Cartas jogadas pelo player2
+        player1Power: v.number(), // Power total do player1 neste lane
+        player2Power: v.number(), // Power total do player2 neste lane
+      })),
+
+      // Ações pendentes do turno (antes do reveal simultâneo)
+      player1Actions: v.optional(v.array(v.object({
+        type: v.union(
+          v.literal("play"),           // Jogar carta no lane
+          v.literal("sacrifice-hand"), // Sacrificar da mão → compra carta
+          v.literal("sacrifice-lane")  // Sacrificar do lane → buff
+        ),
+        cardIndex: v.number(),           // Index da carta na mão ou lane
+        targetLane: v.optional(v.number()), // Lane alvo (para play ou sacrifice-lane)
+        targetCardIndex: v.optional(v.number()), // Carta alvo do buff
+      }))),
+      player2Actions: v.optional(v.array(v.object({
+        type: v.union(
+          v.literal("play"),
+          v.literal("sacrifice-hand"),
+          v.literal("sacrifice-lane")
+        ),
+        cardIndex: v.number(),
+        targetLane: v.optional(v.number()),
+        targetCardIndex: v.optional(v.number()),
+      }))),
+
+      // Quem já confirmou ações do turno
+      player1Confirmed: v.boolean(),
+      player2Confirmed: v.boolean(),
+    })),
+
+    // Resultado Final
+    winnerId: v.optional(v.string()),
+    winnerUsername: v.optional(v.string()),
+    laneResults: v.optional(v.array(v.object({
+      laneId: v.number(),
+      winner: v.union(v.literal("player1"), v.literal("player2"), v.literal("tie")),
+      player1FinalPower: v.number(),
+      player2FinalPower: v.number(),
+    }))),
+
+    // Timestamps
+    createdAt: v.number(),
+    startedAt: v.optional(v.number()),
+    finishedAt: v.optional(v.number()),
+    expiresAt: v.number(), // Auto-cancel se não começar
+  })
+    .index("by_status", ["status", "createdAt"])
+    .index("by_player1", ["player1Address"])
+    .index("by_player2", ["player2Address"])
+    .index("by_room_id", ["roomId"]),
+
+  // TCG Saved Decks (decks salvos dos jogadores)
+  tcgDecks: defineTable({
+    address: v.string(), // Dono do deck
+    deckName: v.string(), // Nome do deck
+    cards: v.array(v.object({
+      type: v.union(v.literal("vbms"), v.literal("nothing")), // Tipo da carta
+      cardId: v.string(), // VBMS: tokenId, Nothing: cardId do inventory
+      // Cached info (pra não precisar buscar toda hora)
+      name: v.optional(v.string()),
+      rarity: v.string(),
+      power: v.number(),
+      imageUrl: v.string(),
+      foil: v.optional(v.string()),
+      wear: v.optional(v.string()),
+      collection: v.optional(v.string()),
+    })),
+    vbmsCount: v.number(), // Pra validar mínimo 8
+    nothingCount: v.number(), // Máximo 7
+    totalPower: v.number(), // Power total do deck
+    isActive: v.boolean(), // Deck ativo pra matchmaking
+    createdAt: v.number(),
+    lastUsed: v.optional(v.number()),
+  })
+    .index("by_address", ["address"])
+    .index("by_address_active", ["address", "isActive"]),
+
+  // TCG Match History (histórico resumido pra stats)
+  tcgHistory: defineTable({
+    matchId: v.id("tcgMatches"), // Referência ao match
+    roomId: v.string(),
+
+    // Players
+    player1Address: v.string(),
+    player1Username: v.string(),
+    player2Address: v.string(),
+    player2Username: v.string(),
+
+    // Resultado
+    winnerId: v.string(),
+    winnerUsername: v.string(),
+    lanesWonByWinner: v.number(), // 2 ou 3
+
+    // Lane results
+    laneResults: v.array(v.object({
+      laneId: v.number(),
+      winner: v.union(v.literal("player1"), v.literal("player2"), v.literal("tie")),
+      player1FinalPower: v.number(),
+      player2FinalPower: v.number(),
+    })),
+
+    // Stats
+    totalTurns: v.number(),
+    player1TotalPower: v.number(),
+    player2TotalPower: v.number(),
+
+    // Timestamps
+    finishedAt: v.number(),
+  })
+    .index("by_player1", ["player1Address", "finishedAt"])
+    .index("by_player2", ["player2Address", "finishedAt"])
+    .index("by_finished", ["finishedAt"]),
 });
