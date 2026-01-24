@@ -927,6 +927,13 @@ export default function TCGPage() {
     return null;
   };
 
+  // Helper for foil shimmer visual effect class
+  const getFoilClass = (foil: string | undefined) => {
+    if (!foil || foil === "None" || foil === "none") return "";
+    if (foil === "Prize" || foil === "prize") return "animate-pulse ring-2 ring-yellow-400/50";
+    return "ring-1 ring-white/30";
+  };
+
   // Calculate energy cost for a card (centralized function)
   const getEnergyCost = (card: DeckCard): number => {
     const baseCost = Math.max(1, Math.ceil(card.power / 30));
@@ -3697,13 +3704,6 @@ export default function TCGPage() {
       if (lane.playerPower > lane.cpuPower) return "winning";
       if (lane.cpuPower > lane.playerPower) return "losing";
       return "tied";
-    };
-
-    // Helper for foil shimmer effect
-    const getFoilClass = (foil: string | undefined) => {
-      if (!foil || foil === "None" || foil === "none") return "";
-      if (foil === "Prize" || foil === "prize") return "animate-pulse ring-2 ring-yellow-400/50";
-      return "ring-1 ring-white/30";
     };
 
     // Detect active combos for display
