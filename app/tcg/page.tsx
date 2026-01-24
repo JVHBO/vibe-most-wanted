@@ -8,10 +8,12 @@ import { useAccount } from "wagmi";
 import { useProfile } from "@/contexts/ProfileContext";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { translations } from "@/lib/translations";
 import { Id } from "@/convex/_generated/dataModel";
 import tcgAbilitiesData from "@/data/tcg-abilities.json";
 import tcgCardsData from "@/data/vmw-tcg-cards.json";
 import { getCharacterFromImage } from "@/lib/vmw-image-mapping";
+import { CardMedia } from "@/components/CardMedia";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -20,7 +22,7 @@ import { getCharacterFromImage } from "@/lib/vmw-image-mapping";
 type GameView = "lobby" | "deck-builder" | "waiting" | "battle" | "result";
 
 interface TCGCard {
-  type: "vbms" | "nothing";
+  type: "vbms" | "nothing" | "vibefid";
   cardId: string;
   name?: string;
   rarity: string;
@@ -129,6 +131,30 @@ interface CardCombo {
   };
   description: string;
 }
+
+// Mapping from combo.id to translation key base
+const COMBO_TRANSLATION_KEYS: Record<string, string> = {
+  romero_family: "tcgComboRomeroDynasty",
+  crypto_kings: "tcgComboCryptoKings",
+  mythic_assembly: "tcgComboMythicAssembly",
+  legends_unite: "tcgComboLegendsUnite",
+  ai_bros: "tcgComboAITakeover",
+  scam_squad: "tcgComboScamSquad",
+  degen_trio: "tcgComboDegenTrio",
+  vibe_team: "tcgComboVibeTeam",
+  dirty_duo: "tcgComboDirtyDuo",
+  code_masters: "tcgComboCodeMasters",
+  content_creators: "tcgComboContentCreators",
+  chaos_agents: "tcgComboChaosAgents",
+  full_house: "tcgComboFullHouse",
+  sniper_support: "tcgComboSniperElite",
+  money_makers: "tcgComboMoneyMakers",
+  underdog_uprising: "tcgComboUnderdogUprising",
+  proxy_war: "tcgComboProxyWar",
+  santa_helpers: "tcgComboSantaHelpers",
+  explosive_combo: "tcgComboExplosiveForce",
+  persistence_pays: "tcgComboPersistencePays",
+};
 
 const CARD_COMBOS: CardCombo[] = [
   // ═══ LEGENDARY COMBOS (Very Strong!) ═══
@@ -616,7 +642,6 @@ export default function TCGPage() {
   // PvE state (local, no Convex)
   const [isPvE, setIsPvE] = useState(false);
   const [pveGameState, setPveGameState] = useState<any>(null);
-  const [isTestMode, setIsTestMode] = useState(false);
 
   // Profile dropdown state
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -726,13 +751,87 @@ export default function TCGPage() {
     "chilli": "chilipepper",
   };
 
-  // Get card ability by name
-  const getCardAbility = (cardName: string | undefined): TCGAbility | null => {
+  // Get VibeFID ability based on rarity
+  const getVibeFIDAbility = (rarity: string | undefined): TCGAbility | null => {
+    if (!rarity) return null;
+    const rarityLower = rarity.toLowerCase();
+
+    const vibefidAbilities: Record<string, TCGAbility> = {
+      "common": {
+        name: "📱 First Cast",
+        description: "+5 power para cada carta JÁ JOGADA nesta partida",
+        type: "onReveal",
+        effect: { action: "vibefidFirstCast", value: 5 },
+        rarity: "Common"
+      },
+      "rare": {
+        name: "🔗 Reply Guy",
+        description: "Copia 50% do power da carta AMIGA mais forte nesta lane",
+        type: "ongoing",
+        effect: { action: "vibefidReplyGuy", value: 0.5 },
+        rarity: "Rare"
+      },
+      "epic": {
+        name: "✨ Verificado",
+        description: "IMUNE a debuffs + DOBRA power se perdendo esta lane",
+        type: "ongoing",
+        effect: { action: "vibefidVerified" },
+        rarity: "Epic"
+      },
+      "legendary": {
+        name: "👥 Ratio",
+        description: "Power se torna IGUAL à carta MAIS FORTE do campo!",
+        type: "onReveal",
+        effect: { action: "vibefidRatio" },
+        rarity: "Legendary"
+      },
+      "mythic": {
+        name: "🌐 Doxxed",
+        description: "COPIA o power TOTAL de todas as cartas inimigas nesta lane!",
+        type: "onReveal",
+        effect: { action: "vibefidDoxxed" },
+        rarity: "Mythic"
+      }
+    };
+
+    return vibefidAbilities[rarityLower] || null;
+  };
+
+  // Get card ability by name (or by rarity for VibeFID)
+  const getCardAbility = (cardName: string | undefined, card?: DeckCard | null): TCGAbility | null => {
+    // Check VibeFID first (ability based on rarity, not name)
+    if (card?.type === "vibefid") {
+      return getVibeFIDAbility(card.rarity);
+    }
     if (!cardName) return null;
     const normalizedName = cardName.toLowerCase().trim();
     // Check for alias first
     const resolvedName = cardNameAliases[normalizedName] || normalizedName;
     return tcgAbilities[resolvedName] || null;
+  };
+
+  // Get translated ability name and description
+  const getTranslatedAbility = (cardName: string | undefined): { name: string; description: string } | null => {
+    if (!cardName) return null;
+    const normalizedName = cardName.toLowerCase().trim();
+    const resolvedName = cardNameAliases[normalizedName] || normalizedName;
+    const ability = tcgAbilities[resolvedName];
+    if (!ability) return null;
+
+    // Convert card name to camelCase for translation key: "linda xied" -> "LindaXied"
+    const keyName = resolvedName
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join('');
+
+    const nameKey = `ability${keyName}Name` as keyof typeof translations.pt;
+    const descKey = `ability${keyName}Desc` as keyof typeof translations.pt;
+
+    // Get translated values, fallback to original JSON values
+    const translatedName = t(nameKey) !== nameKey ? t(nameKey) : ability.name;
+    const translatedDesc = t(descKey) !== descKey ? t(descKey) : ability.description;
+
+    return { name: translatedName, description: translatedDesc };
   };
 
   // Get visual effect for ability - returns effect type and text
@@ -796,6 +895,17 @@ export default function TCGPage() {
         return { type: "steal", text: "STOLEN!", emoji: "🖐️" };
       case "moveRandom":
         return { type: "shuffle", text: "SHADOW STEP!", emoji: "👤" };
+      // VibeFID abilities
+      case "vibefidFirstCast":
+        return { type: "buff", text: "FIRST CAST!", emoji: "📱" };
+      case "vibefidReplyGuy":
+        return { type: "buff", text: "REPLY GUY!", emoji: "🔗" };
+      case "vibefidVerified":
+        return { type: "buff", text: "VERIFICADO!", emoji: "✨" };
+      case "vibefidRatio":
+        return { type: "copy", text: "RATIO!", emoji: "👥" };
+      case "vibefidDoxxed":
+        return { type: "steal", text: "DOXXED!", emoji: "🌐" };
       default:
         if (ability.effect?.value && ability.effect.value > 0) {
           return { type: "buff", text: `+${ability.effect.value} POWER!`, emoji: "⬆️" };
@@ -804,35 +914,41 @@ export default function TCGPage() {
     }
   };
 
-  // Get foil effect description
-  const getFoilEffect = (foil: string | undefined): { multiplier: number; description: string } | null => {
+  // Get foil effect description (affects energy cost, not power)
+  const getFoilEffect = (foil: string | undefined): { energyDiscount: number; description: string; isFree: boolean } | null => {
     if (!foil || foil === "None" || foil === "none") return null;
-    if (foil === "Standard" || foil === "standard") {
-      return { multiplier: 1.5, description: "Standard Foil: +50% power multiplier" };
+    const foilLower = foil.toLowerCase();
+    if (foilLower === "standard") {
+      return { energyDiscount: 0.5, description: "Standard Foil: 50% energy discount", isFree: false };
     }
-    if (foil === "Prize" || foil === "prize") {
-      return { multiplier: 2.0, description: "Prize Foil: +100% power multiplier + special effect on sacrifice" };
+    if (foilLower === "prize") {
+      return { energyDiscount: 1.0, description: "Prize Foil: FREE to play!", isFree: true };
     }
     return null;
   };
 
-  // Get ability type color
-  const getAbilityTypeColor = (type: string): string => {
-    switch (type) {
-      case "onReveal": return "text-blue-400";
-      case "ongoing": return "text-green-400";
-      case "onEnemySkip": return "text-purple-400";
-      default: return "text-gray-400";
-    }
+  // Calculate energy cost for a card (centralized function)
+  const getEnergyCost = (card: DeckCard): number => {
+    const baseCost = Math.max(1, Math.ceil(card.power / 30));
+    const foilEffect = getFoilEffect(card.foil);
+    if (!foilEffect) return baseCost;
+    return Math.max(0, Math.floor(baseCost * (1 - foilEffect.energyDiscount)));
   };
 
-  // Get ability type label
+  // Get ability type color - only On Reveal (blue) and Ongoing (green)
+  const getAbilityTypeColor = (type: string): string => {
+    if (type === "ongoing") return "text-green-400";
+    return "text-blue-400"; // onReveal, onEnemySkip, and all others
+  };
+
+  // Get ability type label - only On Reveal and Ongoing
   const getAbilityTypeLabel = (type: string): string => {
     switch (type) {
-      case "onReveal": return "On Reveal";
-      case "ongoing": return "Ongoing";
-      case "onEnemySkip": return "On Skip";
-      default: return type;
+      case "ongoing": return t('tcgOngoing');
+      case "onReveal":
+      case "onEnemySkip":
+      default:
+        return t('tcgOnReveal');
     }
   };
 
@@ -907,7 +1023,7 @@ export default function TCGPage() {
     // Sort hand by power (highest first), prioritizing cards with good abilities
     const sortedHand = cpuHand
       .map((card: DeckCard, idx: number) => {
-        const ability = getCardAbility(card.name);
+        const ability = getCardAbility(card.name, card);
         // Bonus priority for cards with powerful abilities
         const abilityBonus = ability ? (
           ability.rarity === "Mythic" ? 100 :
@@ -941,7 +1057,7 @@ export default function TCGPage() {
       newLanes[laneIdx].cpuCards.push(card);
 
       // Apply onReveal ability (simplified version for CPU)
-      const ability = getCardAbility(card.name);
+      const ability = getCardAbility(card.name, card);
       let bonusPower = 0;
 
       if (ability?.type === "onReveal") {
@@ -1017,8 +1133,8 @@ export default function TCGPage() {
       }
     };
 
-    // Calculate card energy cost (same as player: ceil(power/30), min 1)
-    const getCardCost = (card: DeckCard) => Math.max(1, Math.ceil(card.power / 30));
+    // Calculate card energy cost (uses centralized getEnergyCost)
+    const getCardCost = (card: DeckCard) => getEnergyCost(card);
 
     // Play cards while CPU has enough energy
     while (cpuEnergy > 0 && usedCardIndices.size < sortedHand.length) {
@@ -1146,72 +1262,6 @@ export default function TCGPage() {
     };
   };
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // TEST MODE - Start a special game to test abilities
-  // ═══════════════════════════════════════════════════════════════════════════════
-  const startTestMode = () => {
-    // Create TEST cards with special abilities
-    const testCards: DeckCard[] = [
-      { type: "vbms", cardId: "test-landmine", name: "landmine", collection: "vibe", power: 50, rarity: "Common", imageUrl: "" },
-      { type: "vbms", cardId: "test-santa", name: "naughty santa", collection: "vibe", power: 80, rarity: "Legendary", imageUrl: "" },
-      { type: "vbms", cardId: "test-goofy", name: "goofy romero", collection: "vibe", power: 100, rarity: "Legendary", imageUrl: "" },
-      { type: "vbms", cardId: "test-ye", name: "ye", collection: "vibe", power: 90, rarity: "Legendary", imageUrl: "" },
-      { type: "vbms", cardId: "test-neymar", name: "neymar", collection: "vibe", power: 150, rarity: "Mythic", imageUrl: "" },
-      { type: "vbms", cardId: "test-vitalik", name: "vitalik jumpterin", collection: "vibe", power: 120, rarity: "Mythic", imageUrl: "" },
-      { type: "vbms", cardId: "test-john", name: "john porn", collection: "vibe", power: 40, rarity: "Common", imageUrl: "" },
-      { type: "vbms", cardId: "test-thosmur", name: "thosmur", collection: "vibe", power: 35, rarity: "Common", imageUrl: "" },
-    ];
-
-    // CPU gets decent cards so there's something to steal/destroy
-    const cpuTestCards: DeckCard[] = [
-      { type: "vbms", cardId: "cpu-test-1", name: "claude", collection: "vibe", power: 60, rarity: "Common", imageUrl: "" },
-      { type: "vbms", cardId: "cpu-test-2", name: "dan romero", collection: "vibe", power: 50, rarity: "Common", imageUrl: "" },
-      { type: "vbms", cardId: "cpu-test-3", name: "jesse", collection: "vibe", power: 100, rarity: "Mythic", imageUrl: "" },
-      { type: "vbms", cardId: "cpu-test-4", name: "miguel", collection: "vibe", power: 90, rarity: "Legendary", imageUrl: "" },
-      { type: "vbms", cardId: "cpu-test-5", name: "anon", collection: "vibe", power: 120, rarity: "Mythic", imageUrl: "" },
-      { type: "vbms", cardId: "cpu-test-6", name: "beeper", collection: "vibe", power: 70, rarity: "Epic", imageUrl: "" },
-    ];
-
-    // Force interesting lanes for testing
-    const testLanes = [
-      LANE_NAMES.find(l => l.effect === "gamble") || LANE_NAMES[0], // Degen Valley - 50% chance
-      LANE_NAMES.find(l => l.effect === "doubleLegendary") || LANE_NAMES[1], // Nico's Throne - double legendary
-      LANE_NAMES.find(l => l.effect === "reverseOrder") || LANE_NAMES[2], // Clown College - lowest wins
-    ];
-
-    const gameState = {
-      currentTurn: 1,
-      energy: 10, // Lots of energy for testing!
-      cpuEnergy: 3,
-      bonusEnergy: 0,
-      cardsPlayedThisTurn: 0,
-      cardsPlayedInfo: [] as { cardId: string; laneIndex: number; energyCost: number; hadOnReveal: boolean }[],
-      phase: "action",
-
-      playerHand: testCards.slice(0, 5), // Start with 5 cards
-      playerDeckRemaining: testCards.slice(5),
-      cpuHand: cpuTestCards.slice(0, 3),
-      cpuDeckRemaining: cpuTestCards.slice(3),
-
-      lanes: [
-        { laneId: 0, ...testLanes[0], playerCards: [] as DeckCard[], cpuCards: [cpuTestCards[0]] as DeckCard[], playerPower: 0, cpuPower: 60 },
-        { laneId: 1, ...testLanes[1], playerCards: [] as DeckCard[], cpuCards: [cpuTestCards[1]] as DeckCard[], playerPower: 0, cpuPower: 50 },
-        { laneId: 2, ...testLanes[2], playerCards: [] as DeckCard[], cpuCards: [] as DeckCard[], playerPower: 0, cpuPower: 0 },
-      ],
-
-      playerConfirmed: false,
-      gameOver: false,
-      winner: null as string | null,
-    };
-
-    setIsTestMode(true);
-    setIsPvE(true);
-    setPveGameState(gameState);
-    setView("battle");
-    setPendingActions([]);
-    setSelectedHandCard(null);
-  };
-
   // Sacrifice Nothing card for +2 energy
   const sacrificeNothingForEnergy = (handIndex: number) => {
     if (!pveGameState) return;
@@ -1271,7 +1321,7 @@ export default function TCGPage() {
     playerDeckRemaining: DeckCard[],
     isPlayer: boolean
   ): { lanes: any[]; playerHand: DeckCard[]; playerDeckRemaining: DeckCard[]; bonusPower: number; energyToConsume: number } => {
-    const ability = getCardAbility(card.name);
+    const ability = getCardAbility(card.name, card);
     if (!ability || ability.type !== "onReveal") {
       return { lanes, playerHand, playerDeckRemaining, bonusPower: 0, energyToConsume: 0 };
     }
@@ -1731,6 +1781,44 @@ export default function TCGPage() {
           bonusPower = effect.bonusPower || 15; // Just give bonus if no other lanes
         }
         break;
+
+      // ═══════════════════════════════════════════════════════════════════════════════
+      // VIBEFID ABILITIES (based on rarity)
+      // ═══════════════════════════════════════════════════════════════════════════════
+
+      case "vibefidFirstCast":
+        // +5 power for each card already played this game
+        let totalCardsPlayed = 0;
+        newLanes.forEach((lane: any) => {
+          totalCardsPlayed += lane[myCards].length + lane[enemyCards].length;
+        });
+        // Don't count self (will be added after)
+        bonusPower = totalCardsPlayed * (effect.value || 5);
+        break;
+
+      case "vibefidRatio":
+        // Power becomes EQUAL to the strongest card on the field
+        let highestPowerOnField = 0;
+        newLanes.forEach((lane: any) => {
+          lane[myCards].forEach((c: DeckCard) => {
+            if (c.power > highestPowerOnField) highestPowerOnField = c.power;
+          });
+          lane[enemyCards].forEach((c: DeckCard) => {
+            if (c.power > highestPowerOnField) highestPowerOnField = c.power;
+          });
+        });
+        // bonusPower = difference to reach that power (will be added to card.power)
+        bonusPower = Math.max(0, highestPowerOnField - card.power);
+        break;
+
+      case "vibefidDoxxed":
+        // Copy the TOTAL power of all enemy cards in this lane
+        let totalEnemyPowerInLane = 0;
+        newLanes[laneIndex][enemyCards].forEach((c: DeckCard) => {
+          totalEnemyPowerInLane += c.power || 0;
+        });
+        bonusPower = totalEnemyPowerInLane;
+        break;
     }
 
     return { lanes: newLanes, playerHand: newHand, playerDeckRemaining: newDeck, bonusPower, energyToConsume };
@@ -1738,7 +1826,7 @@ export default function TCGPage() {
 
   // Calculate ongoing power bonuses
   const calculateOngoingBonus = (card: DeckCard, laneIndex: number, lanes: any[], currentTurn: number, isPlayer: boolean): number => {
-    const ability = getCardAbility(card.name);
+    const ability = getCardAbility(card.name, card);
     if (!ability || ability.type !== "ongoing") return 0;
 
     const effect = ability.effect;
@@ -1810,6 +1898,26 @@ export default function TCGPage() {
         });
         return cardsPlayedOngoing * (effect.value || 0);
 
+      // ═══ VIBEFID ONGOING ABILITIES ═══
+      case "vibefidReplyGuy":
+        // Copy 50% of the strongest friendly card's power in this lane
+        let strongestFriendlyPower = 0;
+        lanes[laneIndex][myCards].forEach((c: DeckCard) => {
+          if (c.cardId !== card.cardId && c.power > strongestFriendlyPower) {
+            strongestFriendlyPower = c.power;
+          }
+        });
+        return Math.floor(strongestFriendlyPower * (effect.value || 0.5));
+
+      case "vibefidVerified":
+        // IMMUNE to debuffs (handled elsewhere) + DOUBLE power if losing this lane
+        const myLanePower = isPlayer ? lanes[laneIndex].playerPower : lanes[laneIndex].cpuPower;
+        const enemyLanePower = isPlayer ? lanes[laneIndex].cpuPower : lanes[laneIndex].playerPower;
+        if (myLanePower < enemyLanePower) {
+          return card.power; // Double = add same amount again
+        }
+        return 0;
+
       default:
         return 0;
     }
@@ -1852,15 +1960,15 @@ export default function TCGPage() {
         return allCards.length === 1 ? value : 0;
 
       case "buffCommon":
-        const abilityCommon = getCardAbility(card.name);
+        const abilityCommon = getCardAbility(card.name, card);
         return abilityCommon?.rarity === "Common" ? value : 0;
 
       case "buffEpic":
-        const abilityEpic = getCardAbility(card.name);
+        const abilityEpic = getCardAbility(card.name, card);
         return abilityEpic?.rarity === "Epic" ? value : 0;
 
       case "doubleLegendary":
-        const cardAbility = getCardAbility(card.name);
+        const cardAbility = getCardAbility(card.name, card);
         return cardAbility?.rarity === "Legendary" ? card.power : 0;
 
       case "buffFoil":
@@ -1873,11 +1981,11 @@ export default function TCGPage() {
         return card.collection === "vibefid" ? value : 0;
 
       case "buffOnReveal":
-        const abilityOR = getCardAbility(card.name);
+        const abilityOR = getCardAbility(card.name, card);
         return abilityOR?.type === "onReveal" ? value : 0;
 
       case "buffOngoing":
-        const abilityOG = getCardAbility(card.name);
+        const abilityOG = getCardAbility(card.name, card);
         return abilityOG?.type === "ongoing" ? value : 0;
 
       case "buffIfLosing":
@@ -1941,13 +2049,13 @@ export default function TCGPage() {
 
       // Apply lane-wide ongoing effects (like buffLaneOngoing)
       lane.playerCards.forEach((card: DeckCard) => {
-        const ability = getCardAbility(card.name);
+        const ability = getCardAbility(card.name, card);
         if (ability?.type === "ongoing" && ability.effect.action === "buffLaneOngoing") {
           playerPower += (lane.playerCards.length - 1) * (ability.effect.value || 0);
         }
       });
       lane.cpuCards.forEach((card: DeckCard) => {
-        const ability = getCardAbility(card.name);
+        const ability = getCardAbility(card.name, card);
         if (ability?.type === "ongoing" && ability.effect.action === "buffLaneOngoing") {
           cpuPower += (lane.cpuCards.length - 1) * (ability.effect.value || 0);
         }
@@ -1961,13 +2069,13 @@ export default function TCGPage() {
 
       // Apply reduceEnemyPower ongoing ability (Dan Romero - Too Cute)
       lane.playerCards.forEach((card: DeckCard) => {
-        const ability = getCardAbility(card.name);
+        const ability = getCardAbility(card.name, card);
         if (ability?.type === "ongoing" && ability.effect.action === "reduceEnemyPower") {
           cpuPower = Math.max(0, cpuPower + (ability.effect.value || 0) * lane.cpuCards.length);
         }
       });
       lane.cpuCards.forEach((card: DeckCard) => {
-        const ability = getCardAbility(card.name);
+        const ability = getCardAbility(card.name, card);
         if (ability?.type === "ongoing" && ability.effect.action === "reduceEnemyPower") {
           playerPower = Math.max(0, playerPower + (ability.effect.value || 0) * lane.playerCards.length);
         }
@@ -2003,12 +2111,9 @@ export default function TCGPage() {
     const card = pveGameState.playerHand[selectedHandCard];
     if (!card) return;
 
-    // Check if card is Prize foil (FREE to play + draws a card)
-    const isPrizeFoil = card.foil === "Prize" || card.foil === "prize";
-
-    // Calculate energy cost (Prize foil = FREE)
-    const baseCost = Math.max(1, Math.ceil(card.power / 30));
-    const energyCost = isPrizeFoil ? 0 : baseCost;
+    // Calculate energy cost (centralized)
+    const foilEffect = getFoilEffect(card.foil);
+    const energyCost = getEnergyCost(card);
     const currentEnergy = pveGameState.energy || 1;
 
     // Check if player has enough energy
@@ -2026,7 +2131,7 @@ export default function TCGPage() {
 
     // Prize foil bonus: Draw a card!
     let newDeck = [...pveGameState.playerDeckRemaining];
-    if (isPrizeFoil && newDeck.length > 0) {
+    if (foilEffect?.isFree && newDeck.length > 0) {
       newHand.push(newDeck.shift()!);
       // Show special Prize foil visual effect
       setVisualEffect({
@@ -2062,7 +2167,7 @@ export default function TCGPage() {
     newHand = abilityResult.playerHand;
 
     // Get ability and trigger card animations (no overlay!)
-    const ability = getCardAbility(card.name);
+    const ability = getCardAbility(card.name, card);
     if (ability?.type === "onReveal") {
       playSound("ability");
       const action = ability.effect?.action;
@@ -2101,6 +2206,20 @@ export default function TCGPage() {
         // Glow the played card
         const playerIdx = newLanes[laneIndex].playerCards.length - 1;
         triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", ability.effect?.value || 0);
+      } else if (action === "vibefidFirstCast") {
+        // VibeFID Common: Glow green showing accumulated power
+        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
+        triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower);
+      } else if (action === "vibefidRatio") {
+        // VibeFID Legendary: Pulse effect then massive glow
+        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
+        triggerCardAnimation(laneIndex, "player", playerIdx, "pulse");
+        setTimeout(() => triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower), 300);
+      } else if (action === "vibefidDoxxed") {
+        // VibeFID Mythic: Shake all enemies in lane, massive glow on self
+        triggerLaneAnimation(laneIndex, "cpu", "shake", newLanes[laneIndex].cpuCards || []);
+        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
+        setTimeout(() => triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower), 300);
       }
     }
 
@@ -2402,7 +2521,7 @@ export default function TCGPage() {
       for (let li = 0; li < 3; li++) {
         const playerCardsInLane = newLanes[li].playerCards || [];
         const hasStealOnSkip = playerCardsInLane.some((c: DeckCard) => {
-          const ability = getCardAbility(c.name);
+          const ability = getCardAbility(c.name, c);
           return ability?.effect?.action === "stealOnSkip";
         });
 
@@ -2696,11 +2815,11 @@ export default function TCGPage() {
   // ═══════════════════════════════════════════════════════════════════════════════
 
   const CardDetailModal = ({ card, onClose, onSelect }: { card: DeckCard; onClose: () => void; onSelect?: () => void }) => {
-    const ability = getCardAbility(card.name);
+    const ability = getCardAbility(card.name, card);
     const foilEffect = getFoilEffect(card.foil);
     const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
     const effectivePower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
-    const foilPower = foilEffect ? Math.floor(effectivePower * foilEffect.multiplier) : effectivePower;
+    const energyCost = getEnergyCost(card);
     // Encode imageUrl to handle spaces and special characters
     const encodedImageUrl = card.imageUrl ? encodeURI(card.imageUrl) : null;
 
@@ -2712,60 +2831,75 @@ export default function TCGPage() {
 
     return (
       <div
-        className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-2"
+        className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-2"
         onClick={onClose}
       >
         <div
-          className="bg-gray-900 border-2 border-yellow-500/50 rounded-2xl p-4 max-w-sm w-full max-h-[90vh] overflow-y-auto"
+          className="bg-vintage-deep-black border border-vintage-gold/30 rounded-2xl p-4 max-w-sm w-full max-h-[90vh] overflow-y-auto backdrop-blur-sm"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Card Image */}
+          {/* Card Image/Video */}
           <div className="flex justify-center mb-4">
             <div
-              className={`w-32 h-48 rounded-xl border-4 bg-cover bg-center bg-gray-800 ${RARITY_COLORS[card.rarity] || "border-gray-500"}`}
-              style={{ backgroundImage: encodedImageUrl ? `url(${encodedImageUrl})` : undefined }}
+              className={`relative w-32 h-48 rounded-xl border-4 overflow-hidden bg-gray-800 ${RARITY_COLORS[card.rarity] || "border-gray-500"}`}
             >
+              <CardMedia
+                src={card.imageUrl}
+                alt={card.name}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
               {card.foil && card.foil !== "None" && (
-                <div className="w-full h-full bg-gradient-to-br from-white/20 via-transparent to-white/10 rounded-lg" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-white/10 rounded-lg" />
               )}
             </div>
           </div>
 
           {/* Card Info */}
           <div className="text-center mb-4">
-            <h3 className="text-xl font-bold text-white">{card.name}</h3>
-            <div className="flex items-center justify-center gap-2 mt-1">
-              <span className={`text-sm ${RARITY_COLORS[card.rarity]?.split(" ")[1] || "text-gray-400"}`}>
+            <h3 className="text-xl font-bold text-vintage-gold">{card.name}</h3>
+            <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
+              <span className={`text-sm ${RARITY_COLORS[card.rarity]?.split(" ")[1] || "text-vintage-burnt-gold"}`}>
                 {card.rarity}
               </span>
+              {card.wear && (
+                <span className="text-sm text-vintage-burnt-gold/80">| {card.wear}</span>
+              )}
               {card.foil && card.foil !== "None" && (
-                <span className="text-sm text-yellow-400">&#x2728; {card.foil}</span>
+                <span className="text-sm text-vintage-gold">| {card.foil}</span>
               )}
               {card.type === "nothing" && (
                 <span className="text-sm text-purple-400">(Nothing)</span>
               )}
             </div>
-            <div className="mt-2">
-              <span className="text-yellow-400 font-bold text-2xl">{foilPower}</span>
-              <span className="text-gray-400 text-sm ml-1">power</span>
-              {foilEffect && (
-                <span className="text-green-400 text-xs ml-2">(base: {effectivePower})</span>
-              )}
+            <div className="mt-2 flex items-center justify-center gap-4">
+              <div>
+                <span className="text-vintage-gold font-bold text-2xl">{effectivePower}</span>
+                <span className="text-vintage-burnt-gold text-sm ml-1">power</span>
+              </div>
+              <div>
+                <span className={`font-bold text-2xl ${energyCost === 0 ? "text-green-400" : "text-vintage-neon-blue"}`}>
+                  {energyCost === 0 ? "FREE" : energyCost}
+                </span>
+                <span className="text-vintage-burnt-gold text-sm ml-1">{energyCost === 0 ? "" : "⚡"}</span>
+              </div>
             </div>
           </div>
 
-          {/* Ability Section */}
-          {ability && card.type === "vbms" && (
-            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3 mb-3">
-              <div className="flex items-center gap-2 mb-1">
-                <span className={`text-xs font-bold ${getAbilityTypeColor(ability.type)}`}>
-                  [{getAbilityTypeLabel(ability.type)}]
-                </span>
-                <span className="text-white font-bold text-sm">{ability.name}</span>
+          {/* Ability Section - Show for VBMS and VibeFID */}
+          {ability && (card.type === "vbms" || card.type === "vibefid") && (() => {
+            const translatedAbility = getTranslatedAbility(card.name);
+            return (
+              <div className={`${card.type === "vibefid" ? "bg-cyan-900/20 border-cyan-500/20" : "bg-vintage-charcoal/30 border-vintage-gold/10"} border rounded-lg p-3 mb-3`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-xs font-bold ${getAbilityTypeColor(ability.type)}`}>
+                    [{getAbilityTypeLabel(ability.type)}]
+                  </span>
+                  <span className={`${card.type === "vibefid" ? "text-cyan-400" : "text-vintage-gold"} font-bold text-sm`}>{translatedAbility?.name || ability.name}</span>
+                </div>
+                <p className="text-vintage-burnt-gold text-sm">{translatedAbility?.description || ability.description}</p>
               </div>
-              <p className="text-gray-300 text-sm">{ability.description}</p>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Combo Section - Compact for mobile */}
           {cardCombos.length > 0 && card.type === "vbms" && (
@@ -2773,12 +2907,12 @@ export default function TCGPage() {
               {cardCombos.map((combo) => (
                 <div
                   key={combo.id}
-                  className="bg-gradient-to-r from-purple-900/50 to-pink-900/30 rounded-lg p-3"
+                  className="bg-purple-900/20 border border-purple-500/20 rounded-lg p-3"
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-white font-bold text-sm">{combo.name}</span>
+                    <span className="text-vintage-gold font-bold text-sm">{COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id]) : combo.name}</span>
                     {combo.minCards && (
-                      <span className="text-gray-500 text-[10px]">({combo.minCards}+)</span>
+                      <span className="text-vintage-burnt-gold/60 text-[10px]">({combo.minCards}+)</span>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1 mb-1">
@@ -2789,8 +2923,8 @@ export default function TCGPage() {
                           key={comboCard}
                           className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                             isCurrentCard
-                              ? "bg-yellow-500 text-black"
-                              : "bg-gray-700/50 text-gray-400"
+                              ? "bg-vintage-gold text-black"
+                              : "bg-vintage-charcoal/50 text-vintage-burnt-gold"
                           }`}
                         >
                           {comboCard}
@@ -2799,7 +2933,7 @@ export default function TCGPage() {
                     })}
                   </div>
                   <p className="text-green-400 text-xs font-bold">
-                    ⚡ {combo.description}
+                    ⚡ {COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id] + "Desc") : combo.description}
                   </p>
                 </div>
               ))}
@@ -2808,26 +2942,26 @@ export default function TCGPage() {
 
           {/* Nothing Card Info */}
           {card.type === "nothing" && (
-            <div className="bg-purple-900/30 border border-purple-500/50 rounded-lg p-3 mb-3">
+            <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-3 mb-3">
               <p className="text-purple-300 text-xs font-bold mb-1">{t('tcgNothingCardTitle')}</p>
-              <p className="text-gray-400 text-xs">&#x2022; 50% base power penalty</p>
-              <p className="text-gray-400 text-xs">&#x2022; Can be sacrificed from hand (draw new card)</p>
-              <p className="text-gray-400 text-xs">&#x2022; Can be sacrificed from lane (buff another card)</p>
+              <p className="text-vintage-burnt-gold text-xs">• 50% base power penalty</p>
+              <p className="text-vintage-burnt-gold text-xs">• Can be sacrificed from hand (draw new card)</p>
+              <p className="text-vintage-burnt-gold text-xs">• Can be sacrificed from lane (buff another card)</p>
             </div>
           )}
 
           {/* Foil Effect Section */}
           {foilEffect && (
-            <div className="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-3 mb-3">
-              <p className="text-yellow-400 text-xs font-bold mb-1">&#x2728; Foil Bonus</p>
-              <p className="text-gray-300 text-sm">{foilEffect.description}</p>
+            <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 mb-3">
+              <p className="text-vintage-gold text-xs font-bold mb-1">✨ {t('tcgFoilBonus')}</p>
+              <p className="text-vintage-burnt-gold text-sm">{foilEffect.description}</p>
             </div>
           )}
 
           {/* Wear */}
           {card.wear && (
-            <div className="text-center text-xs text-gray-500 mb-3">
-              Condition: {card.wear}
+            <div className="text-center text-xs text-vintage-burnt-gold/60 mb-3">
+              {t('tcgCondition')}: {card.wear}
             </div>
           )}
 
@@ -2835,9 +2969,9 @@ export default function TCGPage() {
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors"
+              className="flex-1 bg-vintage-charcoal/50 hover:bg-vintage-charcoal border border-vintage-gold/20 hover:border-vintage-gold/40 text-vintage-burnt-gold hover:text-vintage-gold py-2 px-4 rounded-lg transition-all"
             >
-              Close
+              {t('tcgClose')}
             </button>
             {onSelect && (
               <button
@@ -2845,13 +2979,13 @@ export default function TCGPage() {
                   onSelect();
                   onClose();
                 }}
-                className={`flex-1 py-2 px-4 rounded-lg transition-colors font-bold ${
+                className={`flex-1 py-2 px-4 rounded-lg transition-all font-bold ${
                   isSelected
-                    ? "bg-red-600 hover:bg-red-500 text-white"
-                    : "bg-green-600 hover:bg-green-500 text-white"
+                    ? "bg-red-600/20 hover:bg-red-500/30 border border-red-500/50 text-red-400"
+                    : "bg-green-600/20 hover:bg-green-500/30 border border-green-500/50 text-green-400"
                 }`}
               >
-                {isSelected ? "Remove" : "Add to Deck"}
+                {isSelected ? t('tcgRemove') : t('tcgAddToDeck')}
               </button>
             )}
           </div>
@@ -2866,11 +3000,14 @@ export default function TCGPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-yellow-400 mb-4">{t('tcgTitle')}</h1>
-          <p className="text-gray-400 mb-6">{t('tcgSubtitle')}</p>
-          <p className="text-gray-500">{t('tcgConnectWallet')}</p>
+      <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
+        <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+          <div className="text-center">
+            <h1 className="text-4xl font-display font-bold text-vintage-gold uppercase tracking-widest mb-4">{t('tcgTitle')}</h1>
+            <p className="text-vintage-burnt-gold mb-6">{t('tcgSubtitle')}</p>
+            <p className="text-vintage-burnt-gold/60">{t('tcgConnectWallet')}</p>
+          </div>
         </div>
       </div>
     );
@@ -2903,68 +3040,91 @@ export default function TCGPage() {
     const totalCards = allTcgCards.length;
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black">
-        {/* Header - Match main game style */}
-        <div className="border-2 border-yellow-500/30 rounded-xl m-2 p-4 bg-gray-900/80">
-          <div className="flex items-center justify-between mb-4">
+      <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
+
+        {/* ===== TOP HUD ===== */}
+        <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black via-black/95 to-transparent">
+          <div className="max-w-4xl mx-auto flex items-center justify-between">
+            {/* Left: Back button */}
             <button
               onClick={() => router.push("/")}
-              className="text-gray-400 hover:text-yellow-400 transition-colors flex items-center gap-2"
+              className="group flex items-center gap-1.5 px-3 py-1.5 text-vintage-burnt-gold/70 hover:text-vintage-gold transition-colors text-[11px] font-medium uppercase tracking-[0.15em]"
             >
-              <span>←</span> {t('tcgBack')}
+              <span className="group-hover:-translate-x-0.5 inline-block transition-transform text-vintage-gold/50 group-hover:text-vintage-gold">←</span>
+              {t('tcgBack')}
             </button>
-            <h1 className="text-2xl font-bold text-yellow-400 tracking-widest">{t('tcgTitle')}</h1>
-            <div className="text-xs text-gray-500">{t('tcgSubtitle')}</div>
+
+            {/* Center: Title */}
+            <div className="flex flex-col items-center">
+              <h1 className="text-lg md:text-xl font-black text-vintage-gold uppercase tracking-[0.25em]">
+                {t('tcgTitle')}
+              </h1>
+              <p className="text-[9px] text-vintage-burnt-gold/40 uppercase tracking-[0.3em]">{t('tcgSubtitle')}</p>
+            </div>
+
+            {/* Right: Placeholder for symmetry */}
+            <div className="w-16" />
           </div>
+        </div>
+
+        {/* ===== MAIN SCROLLABLE CONTENT ===== */}
+        <div className="absolute inset-0 pt-16 pb-2 overflow-y-auto">
+          <div className="max-w-lg mx-auto px-3">
 
           {/* Error */}
           {error && (
-            <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-2 rounded-lg mb-4 text-sm">
+            <div className="bg-red-900/30 border border-red-500/50 text-red-300 px-3 py-1.5 rounded-lg mb-3 text-sm">
               {error}
             </div>
           )}
 
-          {/* Tabs - Match main game style */}
-          <div className="flex gap-2 mb-4">
+          {/* Tabs */}
+          <div className="flex gap-2 mb-3">
             <button
               onClick={() => setLobbyTab("play")}
-              className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2 px-3 font-bold text-xs uppercase tracking-widest transition-all ${
                 lobbyTab === "play"
-                  ? "bg-yellow-500/20 border-2 border-yellow-500 text-yellow-400"
-                  : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600"
+                  ? "bg-gradient-to-b from-vintage-gold/20 to-vintage-gold/5 border-t border-l border-r border-vintage-gold/40 text-vintage-gold rounded-t-lg border-b-0 shadow-[inset_0_1px_0_rgba(255,215,0,0.1)]"
+                  : "bg-black/20 border border-vintage-gold/10 text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold rounded-lg"
               }`}
             >
-              <span>⚔️</span> {t('tcgPlay')}
+              {t('tcgPlay')}
             </button>
             <button
               onClick={() => setLobbyTab("rules")}
-              className={`flex-1 py-3 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2 px-3 font-bold text-xs uppercase tracking-widest transition-all ${
                 lobbyTab === "rules"
-                  ? "bg-yellow-500/20 border-2 border-yellow-500 text-yellow-400"
-                  : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600"
+                  ? "bg-gradient-to-b from-vintage-gold/20 to-vintage-gold/5 border-t border-l border-r border-vintage-gold/40 text-vintage-gold rounded-t-lg border-b-0 shadow-[inset_0_1px_0_rgba(255,215,0,0.1)]"
+                  : "bg-black/20 border border-vintage-gold/10 text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold rounded-lg"
               }`}
             >
-              <span>📖</span> {t('tcgRules')}
+              {t('tcgRules')}
             </button>
           </div>
 
           {/* Tab Content */}
           {lobbyTab === "play" && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Active Deck Info */}
               {hasDeck && (
-                <div className="bg-gray-800/50 border border-yellow-500/30 rounded-xl p-4">
+                <div className="bg-gradient-to-b from-vintage-charcoal/60 to-vintage-charcoal/30 border border-vintage-gold/15 rounded-lg p-3 shadow-lg shadow-black/20">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-gray-500 uppercase tracking-wider">{t('tcgActiveDeck')}</p>
-                      <p className="text-lg font-bold text-white">{activeDeck.deckName}</p>
-                      <p className="text-sm text-gray-400">
-                        {activeDeck.vbmsCount} VBMS • {activeDeck.nothingCount} Nothing • <span className="text-yellow-400">{activeDeck.totalPower} PWR</span>
+                      <p className="text-[8px] text-vintage-burnt-gold/50 uppercase tracking-[0.2em]">{t('tcgActiveDeck')}</p>
+                      <p className="text-sm font-black text-vintage-gold tracking-wide">{activeDeck.deckName}</p>
+                      <p className="text-[10px] text-vintage-burnt-gold/70">
+                        <span className="text-vintage-burnt-gold">{activeDeck.vbmsCount}</span> VBMS
+                        <span className="text-vintage-gold/30 mx-1.5">•</span>
+                        <span className="text-vintage-burnt-gold">{activeDeck.nothingCount}</span> Nothing
+                        <span className="text-vintage-gold/30 mx-1.5">•</span>
+                        <span className="text-vintage-gold font-bold">{activeDeck.totalPower}</span> PWR
                       </p>
                     </div>
                     <button
                       onClick={() => setView("deck-builder")}
-                      className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg text-sm transition-colors"
+                      className="px-3 py-1.5 bg-black/40 hover:bg-black/60 text-vintage-burnt-gold/80 hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/40 rounded text-[10px] font-bold uppercase tracking-[0.15em] transition-all"
                     >
                       {t('tcgEdit')}
                     </button>
@@ -2973,46 +3133,87 @@ export default function TCGPage() {
               )}
 
               {/* Play Buttons */}
-              <div className="grid grid-cols-1 gap-3">
+              <div className="space-y-2">
                 {!hasDeck ? (
                   <button
                     onClick={() => setView("deck-builder")}
-                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black font-bold py-4 px-6 rounded-xl transition-all text-lg"
+                    className="w-full relative overflow-hidden group"
                   >
-                    🃏 {t('tcgBuildDeck')}
+                    <div className="absolute inset-0 bg-gradient-to-r from-vintage-gold via-yellow-500 to-vintage-gold opacity-90 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+                    <span className="relative z-10 block py-3 px-4 text-black font-black text-sm uppercase tracking-[0.2em]">
+                      {t('tcgBuildDeck')}
+                    </span>
                   </button>
                 ) : (
                   <>
+                    {/* PvE Button */}
                     <button
                       onClick={() => startPvEMatch()}
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-4 px-6 rounded-xl transition-all text-lg shadow-lg shadow-green-500/20"
+                      className="w-full relative overflow-hidden group"
                     >
-                      🤖 {t('tcgBattleCpu')}
+                      <div className="absolute inset-0 bg-gradient-to-r from-green-600 via-emerald-500 to-green-600 opacity-80 group-hover:opacity-100 transition-opacity" />
+                      <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
+                      <span className="relative z-10 block py-3 px-4 text-white font-black text-sm uppercase tracking-[0.2em] drop-shadow-lg">
+                        {t('tcgBattleCpu')}
+                      </span>
                     </button>
-                    <button
-                      onClick={() => startTestMode()}
-                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-4 px-6 rounded-xl transition-all text-lg shadow-lg shadow-purple-500/20"
-                    >
-                      🧪 {t('tcgTestMode')}
-                    </button>
+
+                    {/* PvP Section */}
+                    <div className="border-t border-vintage-gold/10 pt-3 mt-2">
+                      <p className="text-[9px] text-vintage-burnt-gold/40 uppercase tracking-[0.3em] mb-2 text-center">PvP Battle</p>
+
+                      {/* Create Match */}
+                      <button
+                        onClick={handleCreateMatch}
+                        className="w-full relative overflow-hidden group mb-2"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-700 opacity-70 group-hover:opacity-90 transition-opacity" />
+                        <span className="relative z-10 block py-2.5 px-4 text-white font-bold text-xs uppercase tracking-[0.2em]">
+                          Create Room
+                        </span>
+                      </button>
+
+                      {/* Join Match */}
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={roomIdInput}
+                          onChange={(e) => setRoomIdInput(e.target.value.toUpperCase())}
+                          placeholder="ROOM CODE"
+                          maxLength={6}
+                          className="flex-1 bg-black/60 border border-vintage-gold/20 rounded px-3 py-2 text-vintage-gold font-mono text-center uppercase tracking-[0.3em] focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-sm"
+                        />
+                        <button
+                          onClick={() => roomIdInput.length >= 4 && handleJoinMatch(roomIdInput)}
+                          disabled={roomIdInput.length < 4}
+                          className="relative overflow-hidden group disabled:opacity-40"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-indigo-700 group-hover:from-purple-600 group-hover:to-indigo-600 transition-colors" />
+                          <span className="relative z-10 block py-2 px-4 text-white font-bold text-xs uppercase tracking-wider">
+                            Join
+                          </span>
+                        </button>
+                      </div>
+                    </div>
                   </>
                 )}
               </div>
 
               {/* Stats */}
               {hasDeck && (
-                <div className="grid grid-cols-3 gap-2 mt-4">
-                  <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-yellow-400">0</p>
-                    <p className="text-xs text-gray-500">{t('tcgWins')}</p>
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  <div className="bg-black/30 border border-vintage-gold/10 rounded p-2 text-center">
+                    <p className="text-lg font-black text-vintage-gold tabular-nums">0</p>
+                    <p className="text-[7px] text-vintage-burnt-gold/40 uppercase tracking-[0.15em]">{t('tcgWins')}</p>
                   </div>
-                  <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-gray-400">0</p>
-                    <p className="text-xs text-gray-500">{t('tcgLosses')}</p>
+                  <div className="bg-black/30 border border-vintage-gold/10 rounded p-2 text-center">
+                    <p className="text-lg font-black text-vintage-burnt-gold/60 tabular-nums">0</p>
+                    <p className="text-[7px] text-vintage-burnt-gold/40 uppercase tracking-[0.15em]">{t('tcgLosses')}</p>
                   </div>
-                  <div className="bg-gray-800/30 border border-gray-700 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-green-400">0%</p>
-                    <p className="text-xs text-gray-500">{t('tcgWinRate')}</p>
+                  <div className="bg-black/30 border border-vintage-gold/10 rounded p-2 text-center">
+                    <p className="text-lg font-black text-emerald-500 tabular-nums">0%</p>
+                    <p className="text-[7px] text-vintage-burnt-gold/40 uppercase tracking-[0.15em]">{t('tcgWinRate')}</p>
                   </div>
                 </div>
               )}
@@ -3022,9 +3223,9 @@ export default function TCGPage() {
           {lobbyTab === "rules" && (
             <div className="space-y-3 text-sm">
               {/* Basic Rules */}
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-                <h3 className="font-bold text-yellow-400 mb-2">{t('tcgHowToPlay')}</h3>
-                <div className="text-gray-300 space-y-1">
+              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
+                <h3 className="font-bold text-vintage-gold mb-2 uppercase tracking-wider text-xs">{t('tcgHowToPlay')}</h3>
+                <div className="text-vintage-burnt-gold space-y-1 text-xs">
                   <p>{t('tcgHowToPlayDesc1')}</p>
                   <p>{t('tcgHowToPlayDesc2')}</p>
                   <p>{t('tcgHowToPlayDesc3')}</p>
@@ -3034,20 +3235,20 @@ export default function TCGPage() {
               </div>
 
               {/* Energy System */}
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-                <h3 className="font-bold text-blue-400 mb-2">{t('tcgEnergySystem')}</h3>
-                <div className="text-gray-300 space-y-1">
+              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
+                <h3 className="font-bold text-vintage-neon-blue mb-2 uppercase tracking-wider text-xs">{t('tcgEnergySystem')}</h3>
+                <div className="text-vintage-burnt-gold space-y-1 text-xs">
                   <p>{t('tcgEnergyTurn1')}</p>
                   <p>{t('tcgEnergyTurn3')}</p>
                   <p>{t('tcgEnergyTurn6')}</p>
-                  <p className="text-yellow-400 mt-1">{t('tcgEnergySkipBonus')}</p>
+                  <p className="text-vintage-gold mt-1">{t('tcgEnergySkipBonus')}</p>
                 </div>
               </div>
 
               {/* Card Types */}
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-                <h3 className="font-bold text-purple-400 mb-2">{t('tcgCardTypes')}</h3>
-                <div className="text-gray-300 space-y-1">
+              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
+                <h3 className="font-bold text-purple-400 mb-2 uppercase tracking-wider text-xs">{t('tcgCardTypes')}</h3>
+                <div className="text-vintage-burnt-gold space-y-1 text-xs">
                   <p>{t('tcgCardVbms')}</p>
                   <p>{t('tcgCardNothing')}</p>
                   <p><span className="text-pink-400">{t('tcgCardPrizeFoil')}</span></p>
@@ -3056,18 +3257,18 @@ export default function TCGPage() {
               </div>
 
               {/* Abilities */}
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-                <h3 className="font-bold text-green-400 mb-2">{t('tcgAbilities')}</h3>
-                <div className="text-gray-300 space-y-1">
+              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
+                <h3 className="font-bold text-green-400 mb-2 uppercase tracking-wider text-xs">{t('tcgAbilities')}</h3>
+                <div className="text-vintage-burnt-gold space-y-1 text-xs">
                   <p><span className="inline-block w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] text-center leading-4 mr-1">R</span> {t('tcgAbilityOnReveal')}</p>
                   <p><span className="inline-block w-4 h-4 rounded-full bg-green-500 text-white text-[9px] text-center leading-4 mr-1">O</span> {t('tcgAbilityOngoing')}</p>
                 </div>
               </div>
 
               {/* Special Cards */}
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-                <h3 className="font-bold text-red-400 mb-2">{t('tcgSpecialCards')}</h3>
-                <div className="text-gray-300 space-y-1">
+              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
+                <h3 className="font-bold text-red-400 mb-2 uppercase tracking-wider text-xs">{t('tcgSpecialCards')}</h3>
+                <div className="text-vintage-burnt-gold space-y-1 text-xs">
                   <p>{t('tcgLandmineDesc')}</p>
                   <p>{t('tcgSantaDesc')}</p>
                   <p>{t('tcgJohnPornDesc')}</p>
@@ -3075,31 +3276,31 @@ export default function TCGPage() {
               </div>
 
               {/* Lane Effects */}
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-                <h3 className="font-bold text-cyan-400 mb-2">{t('tcgLaneEffects')}</h3>
-                <div className="text-gray-300 space-y-1 text-xs">
+              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
+                <h3 className="font-bold text-cyan-400 mb-2 uppercase tracking-wider text-xs">{t('tcgLaneEffects')}</h3>
+                <div className="text-vintage-burnt-gold space-y-1 text-xs">
                   <p><span className="text-green-400">{t('tcgBuffLabel')}:</span> {t('tcgBuffLanes')}</p>
                   <p><span className="text-red-400">{t('tcgDebuffLabel')}:</span> {t('tcgDebuffLanes')}</p>
                   <p><span className="text-purple-400">{t('tcgChaosLabel')}:</span> {t('tcgChaosLanesDesc')}</p>
-                  <p><span className="text-yellow-400">{t('tcgSpecialLabel')}:</span> {t('tcgSpecialLanesDesc')}</p>
+                  <p><span className="text-vintage-gold">{t('tcgSpecialLabel')}:</span> {t('tcgSpecialLanesDesc')}</p>
                 </div>
               </div>
 
               {/* Combos */}
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-                <h3 className="font-bold text-pink-400 mb-2">{t('tcgCombosTitle')}</h3>
-                <div className="text-gray-300 space-y-1 text-xs">
+              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
+                <h3 className="font-bold text-pink-400 mb-2 uppercase tracking-wider text-xs">{t('tcgCombosTitle')}</h3>
+                <div className="text-vintage-burnt-gold space-y-1 text-xs">
                   <p>{t('tcgCombosDesc')}</p>
                   <p>{t('tcgRomeroDynasty')}</p>
                   <p>{t('tcgCryptoKings')}</p>
-                  <p className="text-yellow-400">{t('tcgClickComboInfo')}</p>
+                  <p className="text-vintage-gold">{t('tcgClickComboInfo')}</p>
                 </div>
               </div>
 
               {/* Tips */}
-              <div className="bg-yellow-900/30 border border-yellow-700 rounded-lg p-3">
-                <h3 className="font-bold text-yellow-400 mb-2">{t('tcgTipsTitle')}</h3>
-                <div className="text-gray-300 space-y-1 text-xs">
+              <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-lg p-3">
+                <h3 className="font-bold text-vintage-gold mb-2 uppercase tracking-wider text-xs">{t('tcgTipsTitle')}</h3>
+                <div className="text-vintage-burnt-gold space-y-1 text-xs">
                   <p>- {t('tcgTip1')}</p>
                   <p>- {t('tcgTip2')}</p>
                   <p>- {t('tcgTip3')}</p>
@@ -3108,6 +3309,7 @@ export default function TCGPage() {
               </div>
             </div>
           )}
+          </div>
         </div>
       </div>
     );
@@ -3119,19 +3321,20 @@ export default function TCGPage() {
 
   if (view === "deck-builder") {
     // Get available cards
-    // Only VBMS (vibe collection) and Nothing cards are allowed in TCG
+    // VBMS, VibeFID, and Nothing cards are allowed in TCG
     const tcgEligibleCards = (nfts || []).filter((card: any) =>
-      card.collection === "vibe" || card.collection === "nothing"
+      card.collection === "vibe" || card.collection === "nothing" || card.collection === "vibefid"
     );
 
     const availableCards: DeckCard[] = tcgEligibleCards.map((card: any) => {
-      // Try to get character name from: 1) character field, 2) image mapping, 3) card name
+      // Use imageUrl directly - CardMedia component handles video vs image automatically
       const imageUrl = card.imageUrl || card.image || "/images/card-back.png";
       const characterFromImage = getCharacterFromImage(imageUrl);
-      const cardName = card.character || characterFromImage || card.name;
+      const isVibeFID = card.collection === "vibefid";
+      const cardName = card.character || characterFromImage || card.name || (isVibeFID ? card.displayName || card.username : undefined);
 
       return {
-        type: card.collection === "nothing" ? "nothing" : "vbms",
+        type: card.collection === "nothing" ? "nothing" : card.collection === "vibefid" ? "vibefid" : "vbms",
         cardId: card.tokenId || card.id || `${card.collection}-${card.name}`,
         name: cardName,
         rarity: card.rarity || "Common",
@@ -3144,6 +3347,7 @@ export default function TCGPage() {
     });
 
     const vbmsCards = availableCards.filter((c: DeckCard) => c.type === "vbms");
+    const vibefidCards = availableCards.filter((c: DeckCard) => c.type === "vibefid");
     const nothingCards = availableCards.filter((c: DeckCard) => c.type === "nothing");
 
     const selectedVbms = selectedCards.filter((c: DeckCard) => c.type === "vbms").length;
@@ -3158,87 +3362,110 @@ export default function TCGPage() {
       selectedVbms >= TCG_CONFIG.MIN_VBMS;
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black p-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+      <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
+
+        {/* ===== TOP HUD ===== */}
+        <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black via-black/95 to-transparent">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
             <button
               onClick={() => setView("lobby")}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="group flex items-center gap-1.5 px-3 py-1.5 text-vintage-burnt-gold/70 hover:text-vintage-gold transition-colors text-[11px] font-medium uppercase tracking-[0.15em]"
             >
-              &larr; {t('tcgBack')}
+              <span className="group-hover:-translate-x-0.5 inline-block transition-transform text-vintage-gold/50 group-hover:text-vintage-gold">←</span>
+              {t('tcgBack')}
             </button>
-            <h1 className="text-2xl font-bold text-yellow-400">{t('tcgDeckBuilder')}</h1>
+            <div className="flex flex-col items-center">
+              <h1 className="text-lg md:text-xl font-black text-vintage-gold uppercase tracking-[0.25em]">{t('tcgDeckBuilder')}</h1>
+              <p className="text-[9px] text-vintage-burnt-gold/40 uppercase tracking-[0.3em]">Select 15 cards</p>
+            </div>
             <button
               onClick={handleSaveDeck}
               disabled={!canSave}
-              className="bg-yellow-500 hover:bg-yellow-400 disabled:bg-gray-600 disabled:cursor-not-allowed text-black font-bold py-2 px-4 rounded-lg transition-colors"
+              className="relative overflow-hidden group disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {t('tcgSaveDeck')}
+              <div className={`absolute inset-0 ${canSave ? 'bg-gradient-to-r from-vintage-gold via-yellow-500 to-vintage-gold opacity-90 group-hover:opacity-100' : 'bg-black/50'} transition-opacity`} />
+              <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+              <span className={`relative z-10 block py-2 px-4 ${canSave ? 'text-black' : 'text-vintage-burnt-gold/50'} font-black text-xs uppercase tracking-[0.15em]`}>
+                {t('tcgSaveDeck')}
+              </span>
             </button>
           </div>
+        </div>
+
+        {/* ===== MAIN SCROLLABLE CONTENT ===== */}
+        <div className="absolute inset-0 pt-16 pb-4 overflow-y-auto">
+          <div className="max-w-6xl mx-auto px-4">
 
           {/* Error */}
           {error && (
-            <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-2 rounded-lg mb-4">
+            <div className="bg-red-900/30 border border-red-500/50 text-red-300 px-4 py-2 rounded-lg mb-4 text-sm">
               {error}
             </div>
           )}
 
           {/* Loading Status */}
           {cardsLoading && (
-            <div className="bg-blue-900/50 border border-blue-500 text-blue-200 px-4 py-2 rounded-lg mb-4">
+            <div className="bg-vintage-neon-blue/10 border border-vintage-neon-blue/30 text-vintage-neon-blue px-4 py-2 rounded-lg mb-4 text-sm">
               {t('tcgLoading')} (Status: {status})
             </div>
           )}
 
           {/* Debug Info */}
           {!cardsLoading && nfts.length === 0 && (
-            <div className="bg-yellow-900/50 border border-yellow-500 text-yellow-200 px-4 py-2 rounded-lg mb-4">
+            <div className="bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-gold px-4 py-2 rounded-lg mb-4 text-sm">
               {t('tcgNoCardsFound')}
               <br />
-              <span className="text-xs text-yellow-400">Status: {status} | Address: {address || 'not connected'}</span>
+              <span className="text-xs text-vintage-burnt-gold">Status: {status} | Address: {address || 'not connected'}</span>
             </div>
           )}
 
           {/* Deck Stats */}
-          <div className="bg-gray-800/50 border border-yellow-500/30 rounded-xl p-4 mb-4">
-            <div className="flex items-center gap-4 flex-wrap">
+          <div className="bg-gradient-to-b from-vintage-charcoal/60 to-vintage-charcoal/30 border border-vintage-gold/15 rounded-lg p-3 mb-3 shadow-lg shadow-black/20">
+            <div className="flex items-center gap-3 flex-wrap">
               <input
                 type="text"
                 value={deckName}
                 onChange={(e) => setDeckName(e.target.value)}
-                className="bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-yellow-500"
+                className="bg-black/60 border border-vintage-gold/20 rounded px-3 py-1.5 text-vintage-gold font-bold tracking-wide focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-sm"
                 placeholder={t('tcgDeckName')}
               />
-              <div className="flex gap-4 text-sm">
-                <span className={`${selectedCards.length === TCG_CONFIG.DECK_SIZE ? "text-green-400" : "text-gray-400"}`}>
-                  {selectedCards.length}/{TCG_CONFIG.DECK_SIZE} Cards
-                </span>
-                <span className={`${selectedVbms >= TCG_CONFIG.MIN_VBMS ? "text-green-400" : "text-red-400"}`}>
-                  {selectedVbms} VBMS (min {TCG_CONFIG.MIN_VBMS})
-                </span>
-                <span className={`${selectedNothing <= TCG_CONFIG.MAX_NOTHING ? "text-green-400" : "text-red-400"}`}>
-                  {selectedNothing} Nothing (max {TCG_CONFIG.MAX_NOTHING})
-                </span>
-                <span className="text-yellow-400">Power: {totalPower}</span>
+              <div className="flex gap-2 text-[9px] uppercase tracking-[0.1em] flex-wrap">
+                <div className={`px-2 py-1 rounded ${selectedCards.length === TCG_CONFIG.DECK_SIZE ? "bg-green-900/30 border border-green-500/30 text-green-400" : "bg-black/30 border border-vintage-gold/10 text-vintage-burnt-gold"}`}>
+                  {selectedCards.length}/{TCG_CONFIG.DECK_SIZE}
+                </div>
+                <div className={`px-2 py-1 rounded ${selectedVbms >= TCG_CONFIG.MIN_VBMS ? "bg-green-900/30 border border-green-500/30 text-green-400" : "bg-red-900/30 border border-red-500/30 text-red-400"}`}>
+                  {selectedVbms} VBMS
+                </div>
+                <div className={`px-2 py-1 rounded ${selectedNothing <= TCG_CONFIG.MAX_NOTHING ? "bg-green-900/30 border border-green-500/30 text-green-400" : "bg-red-900/30 border border-red-500/30 text-red-400"}`}>
+                  {selectedNothing} Nothing
+                </div>
+                <div className="px-2 py-1 rounded bg-vintage-gold/10 border border-vintage-gold/20 text-vintage-gold font-bold">
+                  {totalPower} PWR
+                </div>
               </div>
             </div>
           </div>
 
           {/* Selected Cards */}
-          <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4 mb-4">
-            <h3 className="text-sm font-bold text-white mb-2">{t('tcgCurrentDeck')} ({selectedCards.length})</h3>
-            <div className="flex flex-wrap gap-2 min-h-[80px]">
+          <div className="bg-gradient-to-b from-vintage-charcoal/40 to-black/30 border border-vintage-gold/20 rounded-lg p-3 mb-3">
+            <h3 className="text-[9px] font-bold text-vintage-gold mb-2 uppercase tracking-[0.2em]">{t('tcgCurrentDeck')} <span className="text-vintage-burnt-gold/60">({selectedCards.length})</span></h3>
+            <div className="flex flex-wrap gap-1.5 min-h-[70px]">
               {selectedCards.map((card: DeckCard) => {
-                const ability = getCardAbility(card.name);
+                const ability = getCardAbility(card.name, card);
                 return (
                   <div
                     key={card.cardId}
-                    className={`relative w-14 h-20 rounded-lg border-2 cursor-pointer transition-all hover:scale-105 bg-cover bg-center ${RARITY_COLORS[card.rarity] || "border-gray-500"}`}
-                    style={{ backgroundImage: `url(${card.imageUrl})` }}
+                    className={`relative w-12 h-[68px] rounded border-2 cursor-pointer transition-all hover:scale-105 overflow-hidden ${RARITY_COLORS[card.rarity] || "border-gray-500"}`}
                     title={`${card.name} (${card.rarity}) - ${card.power} power`}
                   >
+                    {/* Card image/video */}
+                    <CardMedia
+                      src={card.imageUrl}
+                      alt={card.name}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
                     {/* Info button */}
                     <button
                       onClick={(e) => {
@@ -3252,11 +3479,11 @@ export default function TCGPage() {
                     {/* Remove on click */}
                     <div
                       onClick={() => handleCardSelect(card)}
-                      className="w-full h-full bg-black/40 rounded-lg flex flex-col items-center justify-end p-0.5"
+                      className="absolute inset-0 bg-black/40 rounded-lg flex flex-col items-center justify-end p-0.5"
                     >
                       <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
                       <span className="text-[9px] text-yellow-400 font-bold">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
-                      {ability && card.type === "vbms" && (
+                      {ability && (card.type === "vbms" || card.type === "vibefid") && (
                         <span className={`text-[5px] ${getAbilityTypeColor(ability.type)}`}>
                           {ability.type === "onReveal" ? "R" : "O"}
                         </span>
@@ -3266,114 +3493,110 @@ export default function TCGPage() {
                 );
               })}
               {selectedCards.length === 0 && (
-                <p className="text-gray-500 text-sm">{t('tcgClickToAdd')}</p>
+                <p className="text-vintage-burnt-gold/60 text-sm">{t('tcgClickToAdd')}</p>
               )}
             </div>
           </div>
 
           {/* Available Cards */}
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-3">
             {/* VBMS Cards */}
-            <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-              <h3 className="text-sm font-bold text-yellow-400 mb-2">VBMS Cards ({vbmsCards.length})</h3>
-              <div className="flex flex-wrap gap-2 max-h-[400px] overflow-y-auto">
+            <div className="bg-gradient-to-b from-vintage-charcoal/40 to-black/30 border border-vintage-gold/20 rounded-lg p-3">
+              <h3 className="text-[9px] font-bold text-vintage-gold mb-2 uppercase tracking-[0.2em]">VBMS <span className="text-vintage-burnt-gold/60">({vbmsCards.length})</span></h3>
+              <div className="flex flex-wrap gap-1.5 max-h-[300px] overflow-y-auto">
                 {vbmsCards.map((card: DeckCard) => {
                   const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
-                  const ability = getCardAbility(card.name);
+                  const ability = getCardAbility(card.name, card);
                   return (
                     <div
                       key={card.cardId}
-                      className={`relative w-16 h-24 rounded-lg border-2 cursor-pointer transition-all hover:scale-105 bg-cover bg-center ${
+                      className={`relative w-14 h-20 rounded border-2 cursor-pointer transition-all hover:scale-105 overflow-hidden ${
                         isSelected
                           ? "border-green-500 ring-2 ring-green-500/50"
                           : RARITY_COLORS[card.rarity] || "border-gray-500"
                       }`}
-                      style={{ backgroundImage: `url(${card.imageUrl})` }}
                       title={`${card.name} (${card.rarity}) - ${card.power} power`}
                     >
-                      {/* Info button */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDetailCard(card);
-                        }}
-                        className="absolute top-0.5 right-0.5 w-4 h-4 bg-blue-600 hover:bg-blue-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-10"
-                      >
-                        i
-                      </button>
-                      {/* Add/Remove on click */}
-                      <div
-                        onClick={() => handleCardSelect(card)}
-                        className="w-full h-full bg-black/40 rounded-lg flex flex-col items-center justify-end p-1"
-                      >
-                        <span className="text-[8px] text-white truncate w-full text-center">{card.name}</span>
-                        <span className="text-xs text-yellow-400 font-bold">{card.power}</span>
-                        {ability && (
-                          <span className={`text-[6px] ${getAbilityTypeColor(ability.type)}`}>
-                            {ability.type === "onReveal" ? "R" : "O"}
-                          </span>
-                        )}
+                      <CardMedia src={card.imageUrl} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
+                      <button onClick={(e) => { e.stopPropagation(); setDetailCard(card); }} className="absolute top-0 right-0 w-3.5 h-3.5 bg-blue-600 hover:bg-blue-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center z-10">i</button>
+                      <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-black/40 rounded flex flex-col items-center justify-end p-0.5">
+                        <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
+                        <span className="text-[10px] text-yellow-400 font-bold">{card.power}</span>
+                        {ability && <span className={`text-[5px] ${getAbilityTypeColor(ability.type)}`}>{ability.type === "onReveal" ? "R" : "O"}</span>}
                       </div>
                     </div>
                   );
                 })}
-                {vbmsCards.length === 0 && (
-                  <p className="text-gray-500 text-sm">{t('tcgNoVbmsCards')}</p>
-                )}
+                {vbmsCards.length === 0 && <p className="text-vintage-burnt-gold/60 text-xs">{t('tcgNoVbmsCards')}</p>}
               </div>
             </div>
 
+            {/* VibeFID Cards */}
+            {vibefidCards.length > 0 && (
+              <div className="bg-gradient-to-b from-cyan-950/40 to-black/30 border border-cyan-500/30 rounded-lg p-3">
+                <h3 className="text-[9px] font-bold text-cyan-400 mb-2 uppercase tracking-[0.2em]">VibeFID <span className="text-cyan-400/60">({vibefidCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">5x</span></h3>
+                <div className="flex flex-wrap gap-1.5 max-h-[300px] overflow-y-auto">
+                  {vibefidCards.map((card: DeckCard) => {
+                    const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
+                    const ability = getCardAbility(card.name, card);
+                    return (
+                      <div
+                        key={card.cardId}
+                        className={`relative w-14 h-20 rounded border-2 cursor-pointer transition-all hover:scale-105 overflow-hidden ${
+                          isSelected ? "border-green-500 ring-2 ring-green-500/50" : RARITY_COLORS[card.rarity] || "border-cyan-500"
+                        }`}
+                        title={`${card.name} (${card.rarity}) - ${card.power} power`}
+                      >
+                        <CardMedia src={card.imageUrl} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
+                        <button onClick={(e) => { e.stopPropagation(); setDetailCard(card); }} className="absolute top-0 right-0 w-3.5 h-3.5 bg-cyan-600 hover:bg-cyan-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center z-10">i</button>
+                        <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-black/40 rounded flex flex-col items-center justify-end p-0.5">
+                          <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
+                          <span className="text-[10px] text-cyan-400 font-bold">{card.power}</span>
+                          {ability && <span className={`text-[5px] ${getAbilityTypeColor(ability.type)}`}>{ability.type === "onReveal" ? "R" : "O"}</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* Nothing Cards */}
-            <div className="bg-gray-800/30 border border-gray-700 rounded-xl p-4">
-              <h3 className="text-sm font-bold text-purple-400 mb-2">{t('tcgNothingCards')} ({nothingCards.length}) <span className="text-gray-500 text-xs">50% power</span></h3>
-              <div className="flex flex-wrap gap-2 max-h-[400px] overflow-y-auto">
+            <div className="bg-gradient-to-b from-purple-950/40 to-black/30 border border-purple-500/30 rounded-lg p-3">
+              <h3 className="text-[9px] font-bold text-purple-400 mb-2 uppercase tracking-[0.2em]">Nothing <span className="text-purple-400/60">({nothingCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">50%</span></h3>
+              <div className="flex flex-wrap gap-1.5 max-h-[300px] overflow-y-auto">
                 {nothingCards.map((card: DeckCard) => {
                   const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
                   return (
                     <div
                       key={card.cardId}
-                      className={`relative w-16 h-24 rounded-lg border-2 cursor-pointer transition-all hover:scale-105 bg-cover bg-center ${
-                        isSelected
-                          ? "border-green-500 ring-2 ring-green-500/50"
-                          : "border-purple-500/50"
+                      className={`relative w-14 h-20 rounded border-2 cursor-pointer transition-all hover:scale-105 overflow-hidden ${
+                        isSelected ? "border-green-500 ring-2 ring-green-500/50" : "border-purple-500/50"
                       }`}
-                      style={{ backgroundImage: `url(${card.imageUrl})` }}
                       title={`${card.name} (${card.rarity}) - ${Math.floor(card.power * 0.5)} effective power`}
                     >
-                      {/* Info button */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDetailCard(card);
-                        }}
-                        className="absolute top-0.5 right-0.5 w-4 h-4 bg-purple-600 hover:bg-purple-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-10"
-                      >
-                        i
-                      </button>
-                      {/* Add/Remove on click */}
-                      <div
-                        onClick={() => handleCardSelect(card)}
-                        className="w-full h-full bg-black/40 rounded-lg flex flex-col items-center justify-end p-1"
-                      >
-                        <span className="text-[8px] text-white truncate w-full text-center">{card.name}</span>
-                        <span className="text-xs text-purple-400 font-bold">{Math.floor(card.power * 0.5)}</span>
+                      <CardMedia src={card.imageUrl} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
+                      <button onClick={(e) => { e.stopPropagation(); setDetailCard(card); }} className="absolute top-0 right-0 w-3.5 h-3.5 bg-purple-600 hover:bg-purple-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center z-10">i</button>
+                      <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-black/40 rounded flex flex-col items-center justify-end p-0.5">
+                        <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
+                        <span className="text-[10px] text-purple-400 font-bold">{Math.floor(card.power * 0.5)}</span>
                       </div>
                     </div>
                   );
                 })}
-                {nothingCards.length === 0 && (
-                  <p className="text-gray-500 text-sm">{t('tcgNoNothingCards')}</p>
-                )}
+                {nothingCards.length === 0 && <p className="text-vintage-burnt-gold/60 text-xs">{t('tcgNoNothingCards')}</p>}
               </div>
             </div>
           </div>
 
           {/* Legend */}
-          <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500">
-            <span><span className="text-blue-400">R</span> = On Reveal</span>
-            <span><span className="text-green-400">O</span> = Ongoing</span>
-            <span className="text-gray-600">|</span>
-            <span>Click <span className="text-blue-400 bg-blue-600 px-1 rounded">i</span> for details</span>
+          <div className="mt-3 flex items-center justify-center gap-2 text-[8px] text-vintage-burnt-gold/50 uppercase tracking-[0.1em]">
+            <span className="flex items-center gap-0.5"><span className="inline-block w-2.5 h-2.5 rounded-full bg-orange-500 text-white text-[6px] text-center leading-[10px]">R</span> Reveal</span>
+            <span className="text-vintage-gold/20">•</span>
+            <span className="flex items-center gap-0.5"><span className="inline-block w-2.5 h-2.5 rounded-full bg-green-500 text-white text-[6px] text-center leading-[10px]">O</span> Ongoing</span>
+            <span className="text-vintage-gold/20">•</span>
+            <span className="flex items-center gap-0.5"><span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600 text-white text-[6px] text-center leading-[10px]">i</span> Info</span>
+          </div>
           </div>
         </div>
 
@@ -3395,29 +3618,67 @@ export default function TCGPage() {
 
   if (view === "waiting") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-yellow-400 mb-4">{t('tcgWaitingOpponent')}</h1>
-          <div className="bg-gray-800/50 border border-yellow-500/30 rounded-xl p-8 mb-6">
-            <p className="text-gray-400 mb-2">{t('tcgRoomCode')}</p>
-            <p className="text-4xl font-mono font-bold text-yellow-400 tracking-wider">
-              {currentMatch?.roomId || "..."}
-            </p>
-            <p className="text-sm text-gray-500 mt-2">{t('tcgShareCode')}</p>
-          </div>
+      <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
 
-          <div className="animate-pulse text-gray-400 mb-6">
-            <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1"></span>
-            <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-1 animation-delay-200"></span>
-            <span className="inline-block w-2 h-2 bg-yellow-400 rounded-full animation-delay-400"></span>
-          </div>
+        {/* Subtle animated glow */}
+        <div className="absolute inset-0 opacity-30 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
+        </div>
 
-          <button
-            onClick={handleCancelMatch}
-            className="text-red-400 hover:text-red-300 transition-colors"
-          >
-            Cancel
-          </button>
+        <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+          <div className="text-center max-w-md w-full">
+            {/* Header Badge */}
+            <div className="mb-8">
+              <span className="text-[10px] text-purple-300 bg-purple-900/40 border border-purple-500/30 px-4 py-1.5 rounded-full uppercase tracking-[0.25em] font-medium">PvP Battle</span>
+            </div>
+
+            <h1 className="text-2xl md:text-3xl font-black text-vintage-gold uppercase tracking-[0.2em] mb-2">{t('tcgWaitingOpponent')}</h1>
+            <p className="text-vintage-burnt-gold/70 mb-8 text-sm tracking-wide">Share this code with your opponent</p>
+
+            {/* Room Code Card */}
+            <div className="bg-gradient-to-b from-vintage-charcoal/60 to-black/40 border border-vintage-gold/20 rounded-xl p-8 mb-8 relative overflow-hidden shadow-2xl shadow-black/50">
+              {/* Animated border glow */}
+              <div className="absolute inset-0 bg-gradient-to-r from-vintage-gold/0 via-vintage-gold/10 to-vintage-gold/0 animate-pulse" />
+
+              <p className="text-[9px] text-vintage-burnt-gold/50 mb-4 uppercase tracking-[0.3em]">{t('tcgRoomCode')}</p>
+              <p className="text-5xl md:text-6xl font-mono font-black text-vintage-gold tracking-[0.4em] mb-6 relative drop-shadow-lg">
+                {currentMatch?.roomId || "..."}
+              </p>
+
+              {/* Copy button */}
+              <button
+                onClick={() => {
+                  if (currentMatch?.roomId) {
+                    navigator.clipboard.writeText(currentMatch.roomId);
+                  }
+                }}
+                className="relative overflow-hidden group"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-vintage-gold/80 via-yellow-500/80 to-vintage-gold/80 opacity-90 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+                <span className="relative z-10 block py-2.5 px-6 text-black font-black text-xs uppercase tracking-[0.2em]">
+                  Copy Code
+                </span>
+              </button>
+            </div>
+
+            {/* Waiting animation */}
+            <div className="flex justify-center gap-3 mb-10">
+              <span className="w-2.5 h-2.5 bg-vintage-gold/80 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+              <span className="w-2.5 h-2.5 bg-vintage-gold/80 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+              <span className="w-2.5 h-2.5 bg-vintage-gold/80 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+            </div>
+
+            {/* Cancel button */}
+            <button
+              onClick={handleCancelMatch}
+              className="group flex items-center gap-2 mx-auto text-red-400/70 hover:text-red-400 transition-colors text-[11px] uppercase tracking-[0.15em]"
+            >
+              <span className="text-red-500/50 group-hover:text-red-400 transition-colors">×</span>
+              Cancel Match
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -3569,13 +3830,12 @@ export default function TCGPage() {
                       onClick={() => {
                         setIsPvE(false);
                         setPveGameState(null);
-                        setIsTestMode(false);
                         setView("lobby");
                         setShowProfileMenu(false);
                       }}
                       className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-900 flex items-center gap-2"
                     >
-                      🏳️ Surrender
+                      🏳️ {t('tcgSurrender')}
                     </button>
                   </div>
                 </div>
@@ -3584,10 +3844,7 @@ export default function TCGPage() {
 
             {/* Turn Indicator (center) */}
             <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full">
-              {isTestMode && (
-                <span className="text-xs bg-purple-600 text-white px-2 py-0.5 rounded-full animate-pulse">🧪 TEST</span>
-              )}
-              <span className="text-xs text-gray-400">TURN</span>
+              <span className="text-xs text-gray-400">{t('tcgTurn')}</span>
               <span className="text-lg font-bold text-yellow-400">{gs.currentTurn}</span>
               <span className="text-xs text-gray-500">/ {TCG_CONFIG.TOTAL_TURNS}</span>
             </div>
@@ -3595,8 +3852,8 @@ export default function TCGPage() {
             {/* CPU Avatar (right) */}
             <div className="flex items-center gap-2">
               <div className="text-xs text-right">
-                <p className="text-red-400 font-bold">SKYNET</p>
-                <p className="text-gray-400">{gs.lanes.filter((l: any) => l.cpuPower > l.playerPower).length} lanes</p>
+                <p className="text-red-400 font-bold">{t('tcgSkynet')}</p>
+                <p className="text-gray-400">{gs.lanes.filter((l: any) => l.cpuPower > l.playerPower).length} {t('tcgLanes')}</p>
               </div>
               <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-red-600 to-red-800 border-2 border-red-400 overflow-hidden shadow-lg shadow-red-500/40">
                 <img
@@ -3649,7 +3906,7 @@ export default function TCGPage() {
                       }`}>
                         {lane.cpuPower}
                       </div>
-                      <div className="text-[10px] text-gray-600 font-bold">VS</div>
+                      <div className="text-[10px] text-gray-600 font-bold">{t('tcgVs')}</div>
                       <div className={`min-w-[32px] text-center px-2 py-0.5 rounded text-sm font-black ${
                         status === "winning" ? "bg-green-600 text-white" : "bg-gray-800 text-gray-500"
                       }`}>
@@ -3662,7 +3919,7 @@ export default function TCGPage() {
                   <div className="flex-1 flex items-start justify-center pt-3 px-1">
                     <div className="relative flex -space-x-5">
                       {lane.cpuCards.map((card: any, idx: number) => {
-                        const ability = getCardAbility(card.name);
+                        const ability = getCardAbility(card.name, card);
                         const foil = (card.foil || "").toLowerCase();
                         const hasFoil = foil && foil !== "none" && foil !== "";
                         const foilClass = foil.includes("prize") ? "prize-foil" : foil.includes("standard") ? "standard-foil" : "";
@@ -3734,7 +3991,7 @@ export default function TCGPage() {
                         className="bg-yellow-600/30 border border-yellow-500/60 rounded px-2 py-0.5 hover:bg-yellow-500/50 transition-all cursor-pointer"
                       >
                         <span className="text-[8px] text-yellow-300 font-bold uppercase tracking-wide">
-                          {activeCombos[0].combo.name}
+                          {COMBO_TRANSLATION_KEYS[activeCombos[0].combo.id] ? t(COMBO_TRANSLATION_KEYS[activeCombos[0].combo.id]) : activeCombos[0].combo.name}
                         </span>
                       </button>
                     ) : (
@@ -3751,12 +4008,12 @@ export default function TCGPage() {
                   >
                     {selectedHandCard !== null && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                        <span className="text-green-400 text-xs font-bold bg-black/60 px-2 py-1 rounded">PLAY</span>
+                        <span className="text-green-400 text-xs font-bold bg-black/60 px-2 py-1 rounded">{t('tcgPlay2')}</span>
                       </div>
                     )}
                     <div className="relative flex -space-x-5">
                       {lane.playerCards.map((card: any, idx: number) => {
-                        const ability = getCardAbility(card.name);
+                        const ability = getCardAbility(card.name, card);
                         const animKey = `${laneIndex}-player-${idx}`;
                         const anim = cardAnimations[animKey];
                         const animClass = anim ? {
@@ -3868,7 +4125,7 @@ export default function TCGPage() {
                     {comboPreviews.map((preview: any, pIdx: number) => (
                       <div key={pIdx} className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg px-3 py-1 animate-pulse">
                         <span className="text-[10px] text-yellow-400">
-                          Lane {preview.laneIdx + 1}: {preview.combos[0].combo.name}
+                          Lane {preview.laneIdx + 1}: {COMBO_TRANSLATION_KEYS[preview.combos[0].combo.id] ? t(COMBO_TRANSLATION_KEYS[preview.combos[0].combo.id]) : preview.combos[0].combo.name}
                         </span>
                       </div>
                     ))}
@@ -3881,17 +4138,11 @@ export default function TCGPage() {
             {/* Cards */}
             <div className="flex justify-center gap-1 mb-3">
               {gs.playerHand?.map((card: any, idx: number) => {
-                const ability = getCardAbility(card.name);
+                const ability = getCardAbility(card.name, card);
                 const foilEffect = getFoilEffect(card.foil);
                 const displayPower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
-                const foilPower = foilEffect ? Math.floor(displayPower * foilEffect.multiplier) : displayPower;
-                // Check if Prize foil (FREE + Draw)
-                const isPrizeFoil = card.foil === "Prize" || card.foil === "prize";
-                // Calculate "cost" as energy needed (Prize foil = FREE)
-                const baseCost = Math.max(1, Math.ceil(card.power / 30));
-                const energyCost = isPrizeFoil ? 0 : baseCost;
-                // Check if player can afford this card (Prize foil always affordable)
-                const canAfford = isPrizeFoil || energyCost <= (gs.energy || 1);
+                const energyCost = getEnergyCost(card);
+                const canAfford = energyCost <= (gs.energy || 1);
 
                 // Check if this card is part of any potential combo
                 const cardNameLower = (card.name || "").toLowerCase();
@@ -3945,10 +4196,14 @@ export default function TCGPage() {
                         <span className="text-red-400 text-xl">⚡</span>
                       </div>
                     )}
-                    {/* Energy Cost Badge (top-left) - Special for Prize foil */}
-                    {isPrizeFoil ? (
+                    {/* Energy Cost Badge (top-left) - Special for Foils */}
+                    {foilEffect?.isFree ? (
                       <div className="absolute -top-2 -left-2 w-8 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 bg-gradient-to-br from-yellow-400 via-amber-300 to-yellow-500 border-yellow-200 animate-pulse">
-                        <span className="text-[8px] font-black text-black">FREE</span>
+                        <span className="text-[8px] font-black text-black">{t('tcgFree')}</span>
+                      </div>
+                    ) : foilEffect ? (
+                      <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 bg-gradient-to-br from-cyan-400 to-teal-500 border-cyan-200">
+                        <span className="text-xs font-bold text-white">{energyCost}</span>
                       </div>
                     ) : (
                       <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 ${
@@ -3960,14 +4215,14 @@ export default function TCGPage() {
                       </div>
                     )}
                     {/* Prize Foil Draw Indicator */}
-                    {isPrizeFoil && (
+                    {foilEffect?.isFree && (
                       <div className="absolute top-6 -left-1 w-5 h-5 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 border border-green-200 flex items-center justify-center shadow-lg z-10">
                         <span className="text-[8px]">🃏</span>
                       </div>
                     )}
                     {/* Power Badge (bottom-right) */}
                     <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-2 border-yellow-200 flex items-center justify-center shadow-lg">
-                      <span className="text-[10px] font-bold text-black">{foilPower}</span>
+                      <span className="text-[10px] font-bold text-black">{displayPower}</span>
                     </div>
                     {/* Combo Indicator (top-right) - only if has combo - CLICKABLE */}
                     {hasComboPartner && potentialCombo && (
@@ -4133,119 +4388,267 @@ export default function TCGPage() {
     const gs = currentMatch.gameState;
     const isPlayer1 = currentMatch.player1Address === address?.toLowerCase();
     const myHand = isPlayer1 ? gs.player1Hand : gs.player2Hand;
+    const myCards = isPlayer1 ? "player1Cards" : "player2Cards";
+    const enemyCards = isPlayer1 ? "player2Cards" : "player1Cards";
+    const myPower = isPlayer1 ? "player1Power" : "player2Power";
+    const enemyPower = isPlayer1 ? "player2Power" : "player1Power";
     const myConfirmed = isPlayer1 ? gs.player1Confirmed : gs.player2Confirmed;
     const opponentConfirmed = isPlayer1 ? gs.player2Confirmed : gs.player1Confirmed;
+    const energy = gs.energy || gs.currentTurn || 1;
+
+    // Calculate pending actions energy cost
+    const pendingEnergyCost = pendingActions.reduce((total, action) => {
+      if (action.type === "play" && myHand && myHand[action.cardIndex]) {
+        return total + getEnergyCost(myHand[action.cardIndex]);
+      }
+      return total;
+    }, 0);
+    const remainingEnergy = energy - pendingEnergyCost;
+
+    // Get lane status
+    const getLaneStatus = (lane: any) => {
+      const myP = lane[myPower] || 0;
+      const enemyP = lane[enemyPower] || 0;
+      if (myP > enemyP) return "winning";
+      if (myP < enemyP) return "losing";
+      return "tie";
+    };
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black p-2">
+      <div className="h-screen bg-gradient-to-b from-indigo-950 via-purple-950 to-black flex flex-col overflow-hidden relative">
+        {/* Starfield effect */}
+        <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(131, 58, 180, 0.3) 0%, transparent 50%)' }} />
+
         {/* Top Bar */}
-        <div className="flex items-center justify-between mb-2 px-2">
-          <div className="text-sm">
-            <span className="text-gray-400">{t('tcgTurn')}</span>
-            <span className="text-yellow-400 font-bold ml-2">{gs.currentTurn}/{TCG_CONFIG.TOTAL_TURNS}</span>
+        <div className="flex items-center justify-between p-2 bg-black/40 border-b border-gray-800 z-10">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-purple-400 bg-purple-900/50 px-2 py-0.5 rounded">PvP</span>
+            <div className="text-sm">
+              <span className="text-gray-400">{t('tcgTurn')}</span>
+              <span className="text-yellow-400 font-bold ml-1">{gs.currentTurn}/{TCG_CONFIG.TOTAL_TURNS}</span>
+            </div>
           </div>
-          <div className="text-sm">
-            <span className="text-gray-400">{t('tcgEnergy')}</span>
-            <span className="text-blue-400 font-bold ml-2">{gs.energy}</span>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 bg-blue-900/50 px-2 py-1 rounded">
+              <span className="text-blue-400">⚡</span>
+              <span className="text-white font-bold">{remainingEnergy}</span>
+              <span className="text-gray-500 text-xs">/{energy}</span>
+            </div>
           </div>
-          <div className="text-sm">
-            <span className={myConfirmed ? "text-green-400" : "text-gray-400"}>
-              {myConfirmed ? t('tcgReady') : t('tcgPlanning')}
+          <div className="flex items-center gap-2 text-xs">
+            <span className={`px-2 py-1 rounded ${myConfirmed ? "bg-green-900/50 text-green-400" : "bg-gray-800 text-gray-400"}`}>
+              {myConfirmed ? "✓ " + t('tcgReady') : t('tcgPlanning')}
             </span>
-            <span className="text-gray-600 mx-2">|</span>
-            <span className={opponentConfirmed ? "text-green-400" : "text-gray-400"}>
-              {opponentConfirmed ? t('tcgOpponentReady') : t('tcgOpponentPlanning')}
+            <span className={`px-2 py-1 rounded ${opponentConfirmed ? "bg-green-900/50 text-green-400" : "bg-gray-800 text-gray-400"}`}>
+              {opponentConfirmed ? "✓ " + t('tcgOpponentReady') : "⏳ " + t('tcgOpponentPlanning')}
             </span>
           </div>
         </div>
 
         {/* Lanes */}
-        <div className="grid grid-cols-3 gap-2 mb-4">
-          {gs.lanes.map((lane: any, laneIndex: number) => (
-            <div
-              key={lane.laneId}
-              className="bg-gray-800/50 border border-gray-700 rounded-xl p-2 min-h-[300px]"
-            >
-              <div className="text-center text-sm text-gray-400 mb-2">
-                {t('tcgLane')} {laneIndex + 1}
-              </div>
+        <div className="flex-1 flex gap-1 p-1 overflow-hidden">
+          {gs.lanes.map((lane: any, laneIndex: number) => {
+            const status = getLaneStatus(lane);
+            const winGlow = status === "winning" ? "shadow-[0_0_20px_rgba(34,197,94,0.4)]" :
+                           status === "losing" ? "shadow-[0_0_20px_rgba(239,68,68,0.4)]" : "";
+            const laneEffect = lane.effect ? LANE_NAMES.find(l => l.effect === lane.effect) : null;
 
-              {/* Opponent's cards */}
-              <div className="min-h-[100px] border-b border-gray-700 pb-2 mb-2">
-                <div className="text-xs text-gray-500 mb-1">{t('tcgOpponent')} ({lane[isPlayer1 ? "player2Power" : "player1Power"]})</div>
-                <div className="flex flex-wrap gap-1 justify-center">
-                  {(isPlayer1 ? lane.player2Cards : lane.player1Cards).map((card: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="w-10 h-14 bg-red-900/50 border border-red-500/50 rounded text-center text-[8px] text-white flex flex-col justify-end p-0.5"
-                    >
-                      <span className="text-yellow-400 font-bold">{card.power}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* My cards */}
+            return (
               <div
-                className={`min-h-[100px] rounded-lg transition-colors ${
-                  selectedHandCard !== null
-                    ? "bg-green-500/20 border-2 border-dashed border-green-500 cursor-pointer"
-                    : ""
-                }`}
-                onClick={() => selectedHandCard !== null && handlePlayCard(laneIndex)}
+                key={lane.laneId}
+                className={`flex flex-col w-[33%] h-full bg-black/40 backdrop-blur-sm rounded-lg overflow-hidden ${winGlow} transition-all`}
               >
-                <div className="text-xs text-gray-500 mb-1">{t('tcgYou')} ({lane[isPlayer1 ? "player1Power" : "player2Power"]})</div>
-                <div className="flex flex-wrap gap-1 justify-center">
-                  {(isPlayer1 ? lane.player1Cards : lane.player2Cards).map((card: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="w-10 h-14 bg-blue-900/50 border border-blue-500/50 rounded text-center text-[8px] text-white flex flex-col justify-end p-0.5"
-                    >
-                      <span className="truncate">{card.name}</span>
-                      <span className="text-yellow-400 font-bold">{card.power}</span>
+                {/* Lane Header */}
+                <div className="relative bg-gray-900/95 border-b border-gray-800 py-1 px-2">
+                  <div className="text-center">
+                    <span className="text-[10px] font-bold text-white uppercase">{lane.name || `Lane ${laneIndex + 1}`}</span>
+                  </div>
+                  {laneEffect && (
+                    <div className="text-center">
+                      <span className="text-[8px] text-purple-400">{laneEffect.description}</span>
                     </div>
-                  ))}
+                  )}
                 </div>
-                {selectedHandCard !== null && (
-                  <p className="text-center text-xs text-green-400 mt-2">{t('tcgClickToPlayHere')}</p>
-                )}
+
+                {/* Enemy Side (top) */}
+                <div className="flex-1 flex flex-col p-1 border-b border-gray-700/50">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] text-red-400">{t('tcgOpponent')}</span>
+                    <span className={`text-sm font-bold ${status === "losing" ? "text-red-400" : "text-gray-400"}`}>
+                      {lane[enemyPower] || 0}
+                    </span>
+                  </div>
+                  <div className="flex-1 flex flex-wrap gap-1 justify-center items-start content-start">
+                    {(lane[enemyCards] || []).map((card: any, idx: number) => {
+                      const displayPower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+                      return (
+                        <div
+                          key={idx}
+                          className={`relative w-[45px] h-[65px] rounded border-2 bg-cover bg-center ${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"}`}
+                          style={{ backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : undefined }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent rounded" />
+                          <div className="absolute bottom-0 left-0 right-0 p-0.5 text-center">
+                            <span className="text-yellow-400 font-bold text-[10px]">{displayPower}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* My Side (bottom) - Click to play */}
+                <div
+                  className={`flex-1 flex flex-col p-1 transition-all ${
+                    selectedHandCard !== null
+                      ? "bg-green-500/20 cursor-pointer"
+                      : ""
+                  }`}
+                  onClick={() => {
+                    if (selectedHandCard !== null && myHand && myHand[selectedHandCard]) {
+                      const cardCost = getEnergyCost(myHand[selectedHandCard]);
+                      if (cardCost <= remainingEnergy) {
+                        handlePlayCard(laneIndex);
+                        playSound("card");
+                      } else {
+                        playSound("error");
+                      }
+                    }
+                  }}
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] text-blue-400">{t('tcgYou')}</span>
+                    <span className={`text-sm font-bold ${status === "winning" ? "text-green-400" : "text-gray-400"}`}>
+                      {lane[myPower] || 0}
+                    </span>
+                  </div>
+                  <div className="flex-1 flex flex-wrap gap-1 justify-center items-end content-end">
+                    {(lane[myCards] || []).map((card: any, idx: number) => {
+                      const displayPower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+                      const foilEffect = getFoilEffect(card.foil);
+                      return (
+                        <div
+                          key={idx}
+                          className={`relative w-[45px] h-[65px] rounded border-2 bg-cover bg-center ${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"} ${getFoilClass(card.foil)}`}
+                          style={{ backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : undefined }}
+                        >
+                          {foilEffect && (
+                            <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-yellow-400/20 rounded pointer-events-none" />
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent rounded" />
+                          <div className="absolute bottom-0 left-0 right-0 p-0.5 text-center">
+                            <span className="text-yellow-400 font-bold text-[10px]">{displayPower}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {selectedHandCard !== null && (
+                    <p className="text-center text-[10px] text-green-400 mt-1 animate-pulse">{t('tcgClickToPlayHere')}</p>
+                  )}
+                </div>
+
+                {/* Lane Score Bar */}
+                <div className="h-1 bg-gray-800 flex">
+                  <div
+                    className={`h-full transition-all ${status === "winning" ? "bg-green-500" : status === "losing" ? "bg-red-500" : "bg-gray-500"}`}
+                    style={{ width: `${Math.min(100, ((lane[myPower] || 0) / Math.max(1, (lane[myPower] || 0) + (lane[enemyPower] || 0))) * 100)}%` }}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
+        {/* Pending Actions Display */}
+        {pendingActions.length > 0 && (
+          <div className="bg-yellow-900/30 border-t border-yellow-500/50 px-2 py-1">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-yellow-400">
+                {pendingActions.length} {pendingActions.length === 1 ? "card" : "cards"} queued
+              </span>
+              <button
+                onClick={() => setPendingActions([])}
+                className="text-xs text-red-400 hover:text-red-300"
+              >
+                ✕ Clear
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Hand */}
-        <div className="bg-gray-800/50 border border-gray-700 rounded-xl p-3">
+        <div className="bg-gradient-to-t from-gray-900 to-transparent p-2 border-t border-gray-800">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-gray-400">{t('tcgHand')} ({myHand?.length || 0})</span>
+            <span className="text-xs text-gray-400">{t('tcgHand')} ({myHand?.length || 0})</span>
             <button
               onClick={handleSubmitTurn}
-              disabled={myConfirmed}
-              className="bg-yellow-500 hover:bg-yellow-400 disabled:bg-gray-600 text-black font-bold py-2 px-4 rounded-lg text-sm transition-colors"
+              disabled={myConfirmed || pendingActions.length === 0}
+              className={`font-bold py-2 px-6 rounded-lg text-sm transition-all ${
+                myConfirmed
+                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  : pendingActions.length === 0
+                    ? "bg-gray-700 text-gray-500"
+                    : "bg-gradient-to-r from-yellow-500 to-orange-500 text-black hover:scale-105 shadow-lg shadow-yellow-500/30"
+              }`}
             >
-              {myConfirmed ? t('tcgLoading') : t('tcgEndTurn')}
+              {myConfirmed ? "⏳ " + t('tcgLoading') : pendingActions.length > 0 ? `▶ ${t('tcgEndTurn')} (${pendingActions.length})` : t('tcgEndTurn')}
             </button>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {myHand?.map((card: any, idx: number) => (
-              <div
-                key={idx}
-                onClick={() => setSelectedHandCard(selectedHandCard === idx ? null : idx)}
-                className={`flex-shrink-0 w-16 h-24 rounded-lg border-2 cursor-pointer transition-all hover:scale-105 bg-cover bg-center ${
-                  selectedHandCard === idx
-                    ? "border-green-500 ring-2 ring-green-500/50 -translate-y-2"
-                    : RARITY_COLORS[card.rarity] || "border-gray-500"
-                }`}
-                style={{ backgroundImage: `url(${card.imageUrl})` }}
-              >
-                <div className="w-full h-full bg-black/40 rounded-lg flex flex-col items-center justify-end p-1">
-                  <span className="text-[8px] text-white truncate w-full text-center">{card.name}</span>
-                  <span className="text-xs text-yellow-400 font-bold">
-                    {card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}
-                  </span>
+          <div className="flex justify-center gap-1">
+            {myHand?.map((card: any, idx: number) => {
+              const foilEffect = getFoilEffect(card.foil);
+              const displayPower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+              const energyCost = getEnergyCost(card);
+              const canAfford = energyCost <= remainingEnergy;
+              const isPending = pendingActions.some(a => a.cardIndex === idx);
+
+              if (isPending) return null; // Hide cards that are queued
+
+              return (
+                <div
+                  key={idx}
+                  onClick={() => {
+                    if (!canAfford) {
+                      playSound("error");
+                      return;
+                    }
+                    playSound("select");
+                    setSelectedHandCard(selectedHandCard === idx ? null : idx);
+                  }}
+                  className={`relative flex-shrink-0 w-[60px] h-[85px] rounded-lg border-2 transition-all duration-200 bg-cover bg-center ${
+                    !canAfford
+                      ? "border-red-500/50 opacity-50 cursor-not-allowed grayscale"
+                      : selectedHandCard === idx
+                        ? "border-green-400 -translate-y-6 scale-110 z-20 shadow-xl shadow-green-500/50 cursor-pointer"
+                        : `${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"} hover:-translate-y-2 hover:scale-105 cursor-pointer`
+                  } ${getFoilClass(card.foil)}`}
+                  style={{ backgroundImage: `url(${card.imageUrl})`, zIndex: selectedHandCard === idx ? 20 : idx }}
+                >
+                  {foilEffect && (
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-yellow-400/20 rounded-lg pointer-events-none" />
+                  )}
+                  {/* Energy Cost Badge */}
+                  {foilEffect?.isFree ? (
+                    <div className="absolute -top-2 -left-2 w-8 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 bg-gradient-to-br from-yellow-400 via-amber-300 to-yellow-500 border-yellow-200 animate-pulse">
+                      <span className="text-[8px] font-black text-black">{t('tcgFree')}</span>
+                    </div>
+                  ) : (
+                    <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 ${
+                      canAfford
+                        ? foilEffect ? "bg-gradient-to-br from-cyan-400 to-teal-500 border-cyan-200" : "bg-gradient-to-br from-blue-400 to-blue-600 border-white"
+                        : "bg-gradient-to-br from-red-500 to-red-700 border-red-300"
+                    }`}>
+                      <span className="text-xs font-bold text-white">{energyCost}</span>
+                    </div>
+                  )}
+                  {/* Power Badge */}
+                  <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-2 border-yellow-200 flex items-center justify-center shadow-lg">
+                    <span className="text-[10px] font-bold text-black">{displayPower}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -4262,53 +4665,108 @@ export default function TCGPage() {
     const isWinner = winner === "player";
     const isDraw = winner === "tie";
 
+    // Calculate lanes won
+    const lanesWon = pveGameState.lanes.filter((lane: any) => lane.playerPower > lane.cpuPower).length;
+    const lanesLost = pveGameState.lanes.filter((lane: any) => lane.cpuPower > lane.playerPower).length;
+    const lanesTied = pveGameState.lanes.filter((lane: any) => lane.playerPower === lane.cpuPower).length;
+
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
-        <div className="text-center">
-          <span className="text-xs text-green-400 bg-green-900/50 px-2 py-0.5 rounded mb-4 inline-block">{t('tcgCpuMode')}</span>
+      <div className={`min-h-screen flex items-center justify-center p-4 ${
+        isDraw
+          ? "bg-gradient-to-b from-gray-900 via-gray-800 to-black"
+          : isWinner
+            ? "bg-gradient-to-b from-yellow-900/30 via-gray-900 to-black"
+            : "bg-gradient-to-b from-red-900/30 via-gray-900 to-black"
+      }`}>
+        <div className="text-center max-w-md w-full">
+          {/* PvE Badge */}
+          <span className="text-xs text-green-400 bg-green-900/50 px-3 py-1 rounded-full mb-4 inline-flex items-center gap-1">
+            <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+            {t('tcgCpuMode')}
+          </span>
 
-          <h1
-            className={`text-4xl font-bold mb-4 ${
-              isDraw ? "text-gray-400" : isWinner ? "text-yellow-400" : "text-red-400"
-            }`}
-          >
-            {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
-          </h1>
-
-          <div className="flex gap-4 justify-center mb-6">
-            {pveGameState.lanes.map((lane: any, idx: number) => {
-              const playerWon = lane.playerPower > lane.cpuPower;
-              const isTie = lane.playerPower === lane.cpuPower;
-              return (
-                <div
-                  key={idx}
-                  className={`bg-gray-800/50 border-2 rounded-lg p-4 ${
-                    playerWon ? "border-green-500" : isTie ? "border-gray-500" : "border-red-500"
-                  }`}
-                >
-                  <p className="text-sm text-gray-400">
-                    {lane.name || `${t('tcgLane')} ${idx + 1}`}
-                  </p>
-                  <p className="text-lg font-bold">
-                    <span className={playerWon ? "text-green-400" : "text-white"}>{lane.playerPower}</span>
-                    <span className="text-gray-500 mx-2">vs</span>
-                    <span className={!playerWon && !isTie ? "text-red-400" : "text-white"}>{lane.cpuPower}</span>
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {playerWon ? `✓ ${t('tcgWinning')}` : isTie ? `— ${t('tcgTied')}` : `✕ ${t('tcgLosing')}`}
-                  </p>
-                </div>
-              );
-            })}
+          {/* Result Icon & Title */}
+          <div className="my-6">
+            <div className={`text-6xl mb-4 ${isDraw ? "" : isWinner ? "animate-bounce" : ""}`}>
+              {isDraw ? "🤝" : isWinner ? "🏆" : "💔"}
+            </div>
+            <h1
+              className={`text-5xl font-black mb-2 ${
+                isDraw ? "text-gray-400" : isWinner ? "text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]" : "text-red-400"
+              }`}
+            >
+              {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
+            </h1>
+            <p className="text-gray-500 text-sm">
+              {isDraw ? "Both sides are equal!" : isWinner ? "You outsmarted the CPU!" : "The CPU was too strong..."}
+            </p>
           </div>
 
-          <div className="flex gap-4 justify-center">
+          {/* Lane Results */}
+          <div className="bg-gray-800/30 rounded-xl p-4 mb-6 border border-gray-700/50">
+            <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Lane Breakdown</p>
+            <div className="flex gap-3 justify-center">
+              {pveGameState.lanes.map((lane: any, idx: number) => {
+                const playerWon = lane.playerPower > lane.cpuPower;
+                const isTie = lane.playerPower === lane.cpuPower;
+
+                return (
+                  <div
+                    key={idx}
+                    className={`flex-1 bg-gray-900/50 border-2 rounded-xl p-3 transition-all ${
+                      playerWon
+                        ? "border-green-500/70 shadow-[0_0_15px_rgba(34,197,94,0.2)]"
+                        : isTie
+                          ? "border-gray-600"
+                          : "border-red-500/70 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+                    }`}
+                  >
+                    <div className={`text-lg mb-1 ${
+                      playerWon ? "text-green-400" : isTie ? "text-gray-400" : "text-red-400"
+                    }`}>
+                      {playerWon ? "✓" : isTie ? "=" : "✗"}
+                    </div>
+                    <p className="text-xs text-gray-500 mb-1">{lane.name || `${t('tcgLane')} ${idx + 1}`}</p>
+                    <div className="flex items-center justify-center gap-1">
+                      <span className={`text-lg font-bold ${playerWon ? "text-green-400" : "text-white"}`}>
+                        {lane.playerPower}
+                      </span>
+                      <span className="text-gray-600 text-xs">vs</span>
+                      <span className={`text-lg font-bold ${!playerWon && !isTie ? "text-red-400" : "text-white"}`}>
+                        {lane.cpuPower}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Summary Stats */}
+            <div className="flex justify-center gap-6 mt-4 pt-3 border-t border-gray-700/50">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-400">{lanesWon}</p>
+                <p className="text-xs text-gray-500">{t('tcgWinning')}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-gray-400">{lanesTied}</p>
+                <p className="text-xs text-gray-500">{t('tcgTied')}</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-red-400">{lanesLost}</p>
+                <p className="text-xs text-gray-500">{t('tcgLosing')}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3 justify-center">
             <button
-              onClick={() => {
-                // Play again
-                startPvEMatch();
-              }}
-              className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+              onClick={() => startPvEMatch()}
+              className={`font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 ${
+                isWinner
+                  ? "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white shadow-lg shadow-green-500/30"
+                  : "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black shadow-lg shadow-yellow-500/30"
+              }`}
             >
               {t('tcgPlayAgain')}
             </button>
@@ -4318,7 +4776,7 @@ export default function TCGPage() {
                 setPveGameState(null);
                 setView("lobby");
               }}
-              className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition-colors"
+              className="bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105"
             >
               {t('tcgBackToLobby')}
             </button>
@@ -4332,49 +4790,127 @@ export default function TCGPage() {
   if (view === "result" && currentMatch) {
     const isWinner = currentMatch.winnerId === address?.toLowerCase();
     const isDraw = !currentMatch.winnerId;
+    const isPlayer1 = currentMatch.player1Address === address?.toLowerCase();
+
+    // Calculate lanes won
+    const lanesWon = currentMatch.laneResults?.filter((lane: any) =>
+      lane.winner === (isPlayer1 ? "player1" : "player2")
+    ).length || 0;
+    const lanesLost = currentMatch.laneResults?.filter((lane: any) =>
+      lane.winner === (isPlayer1 ? "player2" : "player1")
+    ).length || 0;
+    const lanesTied = currentMatch.laneResults?.filter((lane: any) =>
+      lane.winner === "tie"
+    ).length || 0;
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black flex items-center justify-center p-4">
-        <div className="text-center">
-          <h1
-            className={`text-4xl font-bold mb-4 ${
-              isDraw ? "text-gray-400" : isWinner ? "text-yellow-400" : "text-red-400"
-            }`}
-          >
-            {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
-          </h1>
+      <div className={`min-h-screen flex items-center justify-center p-4 ${
+        isDraw
+          ? "bg-gradient-to-b from-gray-900 via-gray-800 to-black"
+          : isWinner
+            ? "bg-gradient-to-b from-yellow-900/30 via-gray-900 to-black"
+            : "bg-gradient-to-b from-red-900/30 via-gray-900 to-black"
+      }`}>
+        <div className="text-center max-w-md w-full">
+          {/* PvP Badge */}
+          <span className="text-xs text-purple-400 bg-purple-900/50 px-3 py-1 rounded-full mb-4 inline-flex items-center gap-1">
+            <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
+            PvP Battle
+          </span>
 
+          {/* Result Icon & Title */}
+          <div className="my-6">
+            <div className={`text-6xl mb-4 ${isDraw ? "" : isWinner ? "animate-bounce" : ""}`}>
+              {isDraw ? "🤝" : isWinner ? "🏆" : "💔"}
+            </div>
+            <h1
+              className={`text-5xl font-black mb-2 ${
+                isDraw ? "text-gray-400" : isWinner ? "text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]" : "text-red-400"
+              }`}
+            >
+              {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
+            </h1>
+            <p className="text-gray-500 text-sm">
+              {isDraw ? "Both players tied!" : isWinner ? "You dominated the battlefield!" : "Better luck next time..."}
+            </p>
+          </div>
+
+          {/* Lane Results */}
           {currentMatch.laneResults && (
-            <div className="flex gap-4 justify-center mb-6">
-              {currentMatch.laneResults.map((lane: any, idx: number) => (
-                <div
-                  key={idx}
-                  className={`bg-gray-800/50 border-2 rounded-lg p-4 ${
-                    lane.winner === (currentMatch.player1Address === address?.toLowerCase() ? "player1" : "player2")
-                      ? "border-green-500"
-                      : lane.winner === "tie"
-                      ? "border-gray-500"
-                      : "border-red-500"
-                  }`}
-                >
-                  <p className="text-sm text-gray-400">{t('tcgLane')} {idx + 1}</p>
-                  <p className="text-lg font-bold">
-                    {lane.player1FinalPower} - {lane.player2FinalPower}
-                  </p>
+            <div className="bg-gray-800/30 rounded-xl p-4 mb-6 border border-gray-700/50">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Lane Breakdown</p>
+              <div className="flex gap-3 justify-center">
+                {currentMatch.laneResults.map((lane: any, idx: number) => {
+                  const playerWon = lane.winner === (isPlayer1 ? "player1" : "player2");
+                  const isTie = lane.winner === "tie";
+                  const yourPower = isPlayer1 ? lane.player1FinalPower : lane.player2FinalPower;
+                  const enemyPower = isPlayer1 ? lane.player2FinalPower : lane.player1FinalPower;
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex-1 bg-gray-900/50 border-2 rounded-xl p-3 transition-all ${
+                        playerWon
+                          ? "border-green-500/70 shadow-[0_0_15px_rgba(34,197,94,0.2)]"
+                          : isTie
+                            ? "border-gray-600"
+                            : "border-red-500/70 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
+                      }`}
+                    >
+                      <div className={`text-lg mb-1 ${
+                        playerWon ? "text-green-400" : isTie ? "text-gray-400" : "text-red-400"
+                      }`}>
+                        {playerWon ? "✓" : isTie ? "=" : "✗"}
+                      </div>
+                      <p className="text-xs text-gray-500 mb-1">{t('tcgLane')} {idx + 1}</p>
+                      <div className="flex items-center justify-center gap-1">
+                        <span className={`text-lg font-bold ${playerWon ? "text-green-400" : "text-white"}`}>
+                          {yourPower}
+                        </span>
+                        <span className="text-gray-600 text-xs">vs</span>
+                        <span className={`text-lg font-bold ${!playerWon && !isTie ? "text-red-400" : "text-white"}`}>
+                          {enemyPower}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Summary Stats */}
+              <div className="flex justify-center gap-6 mt-4 pt-3 border-t border-gray-700/50">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-400">{lanesWon}</p>
+                  <p className="text-xs text-gray-500">{t('tcgWinning')}</p>
                 </div>
-              ))}
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-400">{lanesTied}</p>
+                  <p className="text-xs text-gray-500">{t('tcgTied')}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-red-400">{lanesLost}</p>
+                  <p className="text-xs text-gray-500">{t('tcgLosing')}</p>
+                </div>
+              </div>
             </div>
           )}
 
-          <button
-            onClick={() => {
-              setCurrentMatchId(null);
-              setView("lobby");
-            }}
-            className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 px-6 rounded-lg transition-colors"
-          >
-            {t('tcgBackToLobby')}
-          </button>
+          {/* Buttons */}
+          <div className="flex gap-3 justify-center">
+            <button
+              onClick={() => {
+                setCurrentMatchId(null);
+                setView("lobby");
+              }}
+              className={`font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 ${
+                isWinner
+                  ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black shadow-lg shadow-yellow-500/30"
+                  : "bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white"
+              }`}
+            >
+              {t('tcgBackToLobby')}
+            </button>
+          </div>
         </div>
       </div>
     );

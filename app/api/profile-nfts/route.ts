@@ -271,13 +271,15 @@ function findAttr(nft: any, name: string): string {
 
 // Calculate power
 function calcPower(nft: any, isVibeFID: boolean = false): number {
+  // First try to get power from NFT attributes (VibeFID stores power as trait)
+  const powerAttr = findAttr(nft, "power") || findAttr(nft, "Power");
+  if (powerAttr) return parseInt(powerAttr) || 0;
+
+  // Fallback for VibeFID: use neynarScore * 1000 if no power attribute
   if (isVibeFID) {
     const score = nft?.raw?.metadata?.neynarScore || nft?.metadata?.neynarScore;
     if (score) return Math.floor(score * 1000);
   }
-
-  const powerAttr = findAttr(nft, "power") || findAttr(nft, "Power");
-  if (powerAttr) return parseInt(powerAttr) || 0;
 
   return 0;
 }

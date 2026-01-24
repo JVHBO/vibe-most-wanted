@@ -28,6 +28,7 @@ const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || "base-mainnet";
 
 // Cache TTL
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const VIBEFID_ALCHEMY_REFRESH_MS = 24 * 60 * 60 * 1000; // 24 hours - refresh Alchemy metadata once per day
 
 // Collections config
 const COLLECTIONS: Record<string, { contract: string; name: string }> = {
@@ -63,12 +64,16 @@ function findAttr(nft: any, name: string): string {
 
 // Calculate power
 function calcPower(nft: any, isVibeFID: boolean = false): number {
+  // First try to get power from NFT attributes (VibeFID stores power as trait)
+  const powerAttr = findAttr(nft, "power") || findAttr(nft, "Power");
+  if (powerAttr) return parseInt(powerAttr) || 0;
+
+  // Fallback for VibeFID: use neynarScore * 1000 if no power attribute
   if (isVibeFID) {
     const score = nft?.raw?.metadata?.neynarScore || nft?.metadata?.neynarScore;
     if (score) return Math.floor(score * 1000);
   }
-  const powerAttr = findAttr(nft, "power") || findAttr(nft, "Power");
-  if (powerAttr) return parseInt(powerAttr) || 0;
+
   return 0;
 }
 
@@ -80,8 +85,13 @@ function isUnopened(nft: any): boolean {
 }
 
 // Fetch from Alchemy
-async function fetchFromAlchemy(owner: string, contract: string): Promise<any[]> {
-  const url = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100`;
+async function fetchFromAlchemy(owner: string, contract: string, refreshCache: boolean = false): Promise<any[]> {
+  const refreshParam = refreshCache ? '&refreshCache=true' : '';
+  const url = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${refreshParam}`;
+
+  if (refreshCache) {
+    console.log(`🔄 [nfts] Forcing Alchemy metadata refresh for ${contract.slice(0, 10)}...`);
+  }
 
   const res = await fetch(url);
   if (!res.ok) {
@@ -124,6 +134,7 @@ export async function GET(
       if (!collection) continue;
 
       // 1. Check Convex cache first (unless force refresh)
+      const isVibeFIDCollection = collectionId === "vibefid";
       if (!forceRefresh) {
         try {
           const cached = await convex.query(api.nftCache.getNftsByCollection, {
@@ -150,11 +161,12 @@ export async function GET(
       trackStat("alchemy_calls");
 
       try {
-        console.log(`🔄 [nfts] Fetching ${collectionId} from Alchemy...`);
-        const rawNfts = await fetchFromAlchemy(owner, collection.contract);
-
-        // Process NFTs
-        const isVibeFID = collectionId === "vibefid";
+        // ALWAYS force Alchemy metadata refresh for VibeFID
+        // VibeFID metadata can change (Neynar score updates), and it's a small collection
+        // so refreshing always is acceptable and ensures correct power/rarity values
+        const shouldRefreshAlchemy = isVibeFIDCollection;
+        console.log(`🔄 [nfts] Fetching ${collectionId} from Alchemy...${shouldRefreshAlchemy ? ' (with metadata refresh)' : ''}`);
+        const rawNfts = await fetchFromAlchemy(owner, collection.contract, shouldRefreshAlchemy);
         const processedNfts: any[] = [];
 
         for (const nft of rawNfts) {
@@ -167,7 +179,7 @@ export async function GET(
             rarity: findAttr(nft, "rarity"),
             wear: findAttr(nft, "wear"),
             foil: findAttr(nft, "foil"),
-            power: calcPower(nft, isVibeFID),
+            power: calcPower(nft, isVibeFIDCollection),
             collection: collectionId,
             character: findAttr(nft, "character"),
           };

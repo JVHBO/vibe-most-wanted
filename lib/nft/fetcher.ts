@@ -79,6 +79,29 @@ const NFT_CACHE_TIME = 1000 * 60 * 30; // 🚀 INCREASED: 30 minutes cache (was 
 const BALANCE_CACHE_KEY = 'vbms_balance_cache_v1';
 const BALANCE_CACHE_TIME = 1000 * 60 * 15; // 🚀 INCREASED: 15 minutes (was 5)
 
+// VibeFID Alchemy metadata refresh (once per day to get updated Neynar scores)
+const VIBEFID_REFRESH_KEY = 'vbms_vibefid_alchemy_refresh';
+const VIBEFID_REFRESH_TIME = 1000 * 60 * 60 * 24; // 24 hours
+const VIBEFID_CONTRACT = '0x60274a138d026e3cb337b40567100fdec3127565';
+
+function shouldRefreshVibeFIDMetadata(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const lastRefresh = localStorage.getItem(VIBEFID_REFRESH_KEY);
+    if (!lastRefresh) return true;
+    return Date.now() - parseInt(lastRefresh) > VIBEFID_REFRESH_TIME;
+  } catch {
+    return true;
+  }
+}
+
+function markVibeFIDRefreshed(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(VIBEFID_REFRESH_KEY, Date.now().toString());
+  } catch { /* ignore */ }
+}
+
 // Lock to prevent duplicate balance checks (Page and Context calling simultaneously)
 let balanceCheckInProgress: Promise<{ collectionsWithNfts: any[]; balances: Record<string, number> }> | null = null;
 let balanceCheckOwner: string | null = null;
@@ -123,6 +146,7 @@ interface NftCacheEntry {
   timestamp: number;
   paginationComplete: boolean;
   balance?: number; // 🚀 OPTIMIZATION: Store balance to detect changes
+  alchemyRefreshed?: boolean; // 🔄 VibeFID: marks if cache was created with refreshCache=true
 }
 
 interface BalanceCacheEntry {
@@ -533,6 +557,10 @@ export function clearBalanceCache(owner?: string): void {
  * If currentBalance differs → return null to force Alchemy fetch
  *
  * This reduces Alchemy calls by ~90% for users who don't buy/sell NFTs frequently
+ *
+ * 🔄 VibeFID EXCEPTION: VibeFID uses TIME-BASED caching ONLY (24h)
+ * VibeFID metadata can change (Neynar score updates) without balance changing
+ * So we SKIP balance-based caching for VibeFID entirely
  */
 function getNftCache(owner: string, contract: string, currentBalance?: number): { nfts: any[]; complete: boolean } | null {
   if (typeof window === 'undefined') return null;
@@ -544,6 +572,46 @@ function getNftCache(owner: string, contract: string, currentBalance?: number): 
     }
     if (!cached) return null;
     const entry: NftCacheEntry = JSON.parse(cached);
+
+    // 🔄 VibeFID special handling: NEVER use balance-based caching!
+    // VibeFID metadata can change (Neynar score updates) without balance changing
+    // Use ONLY time-based expiration (24h refresh cycle)
+    const isVibeFID = contract.toLowerCase() === VIBEFID_CONTRACT.toLowerCase();
+    if (isVibeFID) {
+      if (!entry.timestamp) {
+        console.log(`🔄 VibeFID cache has no timestamp - forcing refresh`);
+        localStorage.removeItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
+        return null;
+      }
+
+      const cacheAge = Date.now() - entry.timestamp;
+
+      // VibeFID cache expires after 24 hours
+      if (cacheAge > VIBEFID_REFRESH_TIME) {
+        console.log(`🔄 VibeFID cache expired (${Math.floor(cacheAge / 3600000)}h old) - forcing metadata refresh`);
+        localStorage.removeItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
+        return null;
+      }
+
+      // Check if this cache was created with refreshCache=true (has fresh metadata)
+      // Old caches from before the fix won't have this marker
+      if (!(entry as any).alchemyRefreshed) {
+        console.log(`🔄 VibeFID cache was created before refreshCache fix - forcing refresh`);
+        localStorage.removeItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
+        return null;
+      }
+
+      // Pagination incomplete - force refresh
+      if (!entry.paginationComplete) {
+        console.log(`⚠️ VibeFID cache exists but pagination was incomplete - forcing refresh`);
+        localStorage.removeItem(`${NFT_CACHE_KEY}_${owner}_${contract}`);
+        return null;
+      }
+
+      // VibeFID cache is valid - use it (skip balance comparison)
+      console.log(`📦 VibeFID cache valid (${Math.floor(cacheAge / 3600000)}h old, alchemyRefreshed=true) - using cached NFTs`);
+      return { nfts: entry.nfts, complete: entry.paginationComplete };
+    }
 
     // 🚀 OPTIMIZATION: If we have current balance, compare with cached balance
     // If balance is the same, NFTs haven't changed - use cache regardless of age!
@@ -579,7 +647,7 @@ function getNftCache(owner: string, contract: string, currentBalance?: number): 
   }
 }
 
-function setNftCache(owner: string, contract: string, nfts: any[], paginationComplete: boolean, balance?: number): void {
+function setNftCache(owner: string, contract: string, nfts: any[], paginationComplete: boolean, balance?: number, alchemyRefreshed?: boolean): void {
   if (typeof window === 'undefined') return;
   try {
     const entry: NftCacheEntry = {
@@ -589,9 +657,11 @@ function setNftCache(owner: string, contract: string, nfts: any[], paginationCom
       timestamp: Date.now(),
       paginationComplete,
       balance, // 🚀 Store balance for future comparison
+      alchemyRefreshed, // 🔄 VibeFID: marks if cache was created with refreshCache=true
     };
     localStorage.setItem(`${NFT_CACHE_KEY}_${owner}_${contract}`, JSON.stringify(entry));
-    console.log(`💾 Cached ${nfts.length} NFTs (balance: ${balance}, pagination complete: ${paginationComplete})`);
+    const refreshMarker = alchemyRefreshed ? ', alchemyRefreshed=true' : '';
+    console.log(`💾 Cached ${nfts.length} NFTs (balance: ${balance}, pagination complete: ${paginationComplete}${refreshMarker})`);
   } catch (e) {
     console.warn('⚠️ Failed to cache NFTs:', e);
   }
@@ -617,6 +687,8 @@ export function clearAllNftCache(): void {
       }
     }
     keysToRemove.forEach(key => localStorage.removeItem(key));
+    // Also clear VibeFID refresh timestamp to force metadata refresh
+    localStorage.removeItem(VIBEFID_REFRESH_KEY);
     // Also clear legacy sessionStorage
     for (let i = 0; i < sessionStorage.length; i++) {
       const key = sessionStorage.key(i);
@@ -624,7 +696,7 @@ export function clearAllNftCache(): void {
         sessionStorage.removeItem(key);
       }
     }
-    console.log(`🗑️ Cleared ${keysToRemove.length} cache entries`);
+    console.log(`🗑️ Cleared ${keysToRemove.length} cache entries + VibeFID refresh timestamp`);
   } catch (e) {
     console.warn('Failed to clear NFT cache:', e);
   }
@@ -691,59 +763,25 @@ export async function getImage(nft: any, collection?: string): Promise<string> {
   const isVibeFID = collection === 'vibefid' || contractAddr === '0x60274a138d026e3cb337b40567100fdec3127565';
 
   if (isVibeFID) {
-    // 🎬 VibeFID MUST use VIDEO URL, never PNG!
-    // Priority 1: animation_url (video)
-    const animationUrl = nft?.raw?.metadata?.animation_url || nft?.metadata?.animation_url;
-    if (animationUrl) {
-      console.log(`🎬 VibeFID #${tid} using animation_url:`, animationUrl);
-      setCache(tid, animationUrl);
-      return animationUrl;
-    }
+    // 🎬 VibeFID MUST use VIDEO URL from IPFS/filebase, never Alchemy's converted PNG!
+    // Alchemy with refreshCache=true converts videos to PNG on Cloudinary - we MUST avoid this
+    // PRIORITY 1: Always try tokenUri FIRST to get the original video URL from metadata
 
-    // Priority 2: raw.metadata.image with filebase.io (video URL)
-    const metadataImage = nft?.raw?.metadata?.image || nft?.metadata?.image;
-    if (metadataImage && metadataImage.includes('filebase.io')) {
-      console.log(`🎬 VibeFID #${tid} using filebase video:`, metadataImage);
-      setCache(tid, metadataImage);
-      return metadataImage;
-    }
-
-    // Priority 3: metadata.image with ipfs (likely video)
-    if (metadataImage && (metadataImage.includes('ipfs') || metadataImage.includes('Qm'))) {
-      console.log(`🎬 VibeFID #${tid} using IPFS metadata.image:`, metadataImage);
-      const normalized = normalizeUrl(metadataImage);
-      setCache(tid, normalized);
-      return normalized;
-    }
-
-    // Priority 4: originalUrl if it's IPFS (likely video)
-    const originalUrl = nft?.image?.originalUrl;
-    if (originalUrl && (originalUrl.includes('ipfs') || originalUrl.includes('Qm'))) {
-      console.log(`🎬 VibeFID #${tid} using originalUrl:`, originalUrl);
-      setCache(tid, originalUrl);
-      return originalUrl;
-    }
-
-    // Priority 5: Try fetching directly from tokenUri to get fresh video URL
     const tokenUri = nft?.tokenUri?.gateway || nft?.raw?.tokenUri;
-    if (tokenUri) {
+    if (tokenUri && tokenUri.includes('vibefid.xyz')) {
       try {
+        console.log(`🎬 VibeFID #${tid} fetching metadata from tokenUri:`, tokenUri);
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000);
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
         const res = await fetch(tokenUri, { signal: controller.signal });
         clearTimeout(timeoutId);
         if (res.ok) {
           const json = await res.json();
-          // Check animation_url first
-          if (json.animation_url) {
-            console.log(`🎬 VibeFID #${tid} using tokenUri animation_url:`, json.animation_url);
-            setCache(tid, json.animation_url);
-            return json.animation_url;
-          }
-          // Then check image
-          if (json.image && (json.image.includes('filebase.io') || json.image.includes('ipfs') || json.image.includes('Qm'))) {
-            console.log(`🎬 VibeFID #${tid} using tokenUri image:`, json.image);
-            const normalized = normalizeUrl(json.image);
+          // VibeFID stores video in "image" field (confusing but true)
+          const videoUrl = json.animation_url || json.image;
+          if (videoUrl && (videoUrl.includes('filebase.io') || videoUrl.includes('.webm') || videoUrl.includes('.mp4') || videoUrl.includes('ipfs'))) {
+            console.log(`🎬 VibeFID #${tid} got video from tokenUri:`, videoUrl);
+            const normalized = normalizeUrl(videoUrl);
             setCache(tid, normalized);
             return normalized;
           }
@@ -753,17 +791,73 @@ export async function getImage(nft: any, collection?: string): Promise<string> {
       }
     }
 
-    // Priority 6: cachedUrl but ONLY if it's NOT a PNG (PNG = thumbnail, not video!)
+    // PRIORITY 2: Use our server-side API to fetch from vibefid.xyz (avoids CORS)
+    try {
+      const metadataUrl = `/api/vibefid-metadata/${tid}`;
+      console.log(`🎬 VibeFID #${tid} fetching via server API:`, metadataUrl);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(metadataUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const json = await res.json();
+        const videoUrl = json.videoUrl;
+        if (videoUrl && (videoUrl.includes('filebase.io') || videoUrl.includes('.webm') || videoUrl.includes('.mp4') || videoUrl.includes('ipfs'))) {
+          console.log(`🎬 VibeFID #${tid} got video from server API:`, videoUrl);
+          const normalized = normalizeUrl(videoUrl);
+          setCache(tid, normalized);
+          return normalized;
+        }
+      }
+    } catch (e) {
+      console.warn(`⚠️ VibeFID #${tid} server API fetch failed:`, e);
+    }
+
+    // PRIORITY 3: Check Alchemy metadata for non-cloudinary video URLs
+    const animationUrl = nft?.raw?.metadata?.animation_url || nft?.metadata?.animation_url;
+    if (animationUrl && !animationUrl.includes('cloudinary') && !animationUrl.includes('alchemyapi')) {
+      console.log(`🎬 VibeFID #${tid} using animation_url:`, animationUrl);
+      setCache(tid, animationUrl);
+      return animationUrl;
+    }
+
+    const metadataImage = nft?.raw?.metadata?.image || nft?.metadata?.image;
+    if (metadataImage && !metadataImage.includes('cloudinary') && !metadataImage.includes('alchemyapi')) {
+      if (metadataImage.includes('filebase.io') || metadataImage.includes('.webm') || metadataImage.includes('.mp4') || metadataImage.includes('ipfs')) {
+        console.log(`🎬 VibeFID #${tid} using metadata.image:`, metadataImage);
+        const normalized = normalizeUrl(metadataImage);
+        setCache(tid, normalized);
+        return normalized;
+      }
+    }
+
+    // PRIORITY 4: originalUrl if it's from IPFS/filebase (not cloudinary)
+    const originalUrl = nft?.image?.originalUrl;
+    if (originalUrl && !originalUrl.includes('cloudinary') && !originalUrl.includes('alchemyapi')) {
+      if (originalUrl.includes('ipfs') || originalUrl.includes('Qm') || originalUrl.includes('filebase.io') || originalUrl.includes('.webm')) {
+        console.log(`🎬 VibeFID #${tid} using originalUrl:`, originalUrl);
+        setCache(tid, originalUrl);
+        return originalUrl;
+      }
+    }
+
+    // LAST RESORT: Use Alchemy's cloudinary PNG (better than placeholder)
     const cachedUrl = nft?.image?.cachedUrl;
-    if (cachedUrl && !cachedUrl.includes('.png') && !cachedUrl.includes('nft-cdn.alchemy')) {
-      console.warn(`⚠️ VibeFID #${tid} using cachedUrl fallback:`, cachedUrl);
+    if (cachedUrl) {
+      console.warn(`⚠️ VibeFID #${tid} falling back to Alchemy cachedUrl (PNG):`, cachedUrl);
       setCache(tid, cachedUrl);
       return cachedUrl;
     }
 
-    // ❌ NEVER use PNG for VibeFID! Log error and continue to standard flow
-    console.error(`❌ VibeFID #${tid} could not find video URL! All sources returned PNG or undefined. Will use placeholder.`);
-    // Return placeholder instead of PNG
+    const pngUrl = nft?.image?.pngUrl;
+    if (pngUrl) {
+      console.warn(`⚠️ VibeFID #${tid} using pngUrl as last resort:`, pngUrl);
+      setCache(tid, pngUrl);
+      return pngUrl;
+    }
+
+    // ❌ Could not find any image
+    console.error(`❌ VibeFID #${tid} could not find any image URL!`);
     const placeholder = `https://via.placeholder.com/300x420/8b5cf6/ffffff?text=VibeFID+%23${tid}`;
     setCache(tid, placeholder);
     return placeholder;
@@ -1041,10 +1135,20 @@ export async function fetchNFTs(
   let pageCount = 0;
   const maxPages = 20;
 
+  // ALWAYS refresh VibeFID metadata from Alchemy
+  // VibeFID is a small collection and metadata can change (Neynar score updates)
+  const isVibeFID = contract.toLowerCase() === VIBEFID_CONTRACT.toLowerCase();
+  const needsVibeFIDRefresh = isVibeFID; // Always refresh for VibeFID
+  if (needsVibeFIDRefresh) {
+    console.log('🔄 VibeFID: Forcing Alchemy metadata refresh');
+  }
+
   try {
     do {
       pageCount++;
-      const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}`;
+      // Add refreshCache=true for VibeFID once per day to get updated metadata (Neynar score changes)
+      const refreshParam = needsVibeFIDRefresh ? '&refreshCache=true' : '';
+      const url: string = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${pageKey ? `&pageKey=${pageKey}` : ''}${refreshParam}`;
 
       // Retry logic for rate limiting (429) and temporary blocks
       let res: Response;
@@ -1106,9 +1210,16 @@ export async function fetchNFTs(
     }
 
     // Cache successful results with pagination status AND balance for smart caching
+    // For VibeFID: mark cache as alchemyRefreshed=true so we know it has fresh metadata
     if (finalNfts.length > 0) {
-      setNftCache(owner, contract, finalNfts, paginationComplete, currentBalance);
+      setNftCache(owner, contract, finalNfts, paginationComplete, currentBalance, needsVibeFIDRefresh);
       console.log(`✅ Fetched ${finalNfts.length} NFTs in ${pageCount} page(s), pagination complete: ${paginationComplete}`);
+
+      // Mark VibeFID refresh timestamp so we don't refresh again for 24h
+      if (needsVibeFIDRefresh) {
+        markVibeFIDRefreshed();
+        console.log('✅ VibeFID metadata refresh completed, next refresh in 24h');
+      }
     }
 
     return finalNfts;
@@ -1128,7 +1239,8 @@ export async function fetchNFTs(
       const convexCards = await fetchVibeFIDFromConvex(owner);
       if (convexCards.length > 0) {
         // Cache the result (VibeFID from Convex is always complete)
-        setNftCache(owner, contract, convexCards, true, currentBalance);
+        // Mark as alchemyRefreshed=true since Convex data is the source of truth
+        setNftCache(owner, contract, convexCards, true, currentBalance, true);
         if (onProgress) onProgress(1, convexCards.length);
         return convexCards;
       }

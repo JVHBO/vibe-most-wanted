@@ -118,10 +118,21 @@ export function isUnrevealed(nft: any): boolean {
 }
 
 /**
- * Calculate VibeFID card power using the special VibeFID config
- * VibeFID has different base powers and multipliers than regular cards
+ * Calculate VibeFID card power
+ * FIRST tries to read the Power attribute directly from NFT metadata (most reliable)
+ * Falls back to calculating from rarity/wear/foil if Power attribute not found
  */
 export function calcVibeFIDPower(nft: any): number {
+  // FIRST: Try to read Power attribute directly from NFT (this is the source of truth)
+  const powerAttr = findAttr(nft, 'power') || findAttr(nft, 'Power');
+  if (powerAttr) {
+    const directPower = parseInt(powerAttr);
+    if (!isNaN(directPower) && directPower > 0) {
+      return directPower;
+    }
+  }
+
+  // FALLBACK: Calculate from rarity/wear/foil if no Power attribute
   const foil = findAttr(nft, 'foil') || 'None';
   const rarity = findAttr(nft, 'rarity') || 'Common';
   const wear = findAttr(nft, 'wear') || 'Lightly Played';

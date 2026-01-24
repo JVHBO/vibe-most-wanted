@@ -440,7 +440,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-vintage-black flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-cyan-500 border-t-transparent mb-4"></div>
-          <p className="text-white text-xl">Loading profile...</p>
+          <p className="text-white text-xl">{t('profileLoading')}</p>
         </div>
       </div>
     );
@@ -450,12 +450,12 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen bg-vintage-black flex items-center justify-center p-4">
         <div className="text-center bg-red-900/20 border border-red-500/50 rounded-xl p-8 max-w-md">
-          <p className="text-red-400 text-2xl mb-4">❌ {error || 'Profile not found'}</p>
+          <p className="text-red-400 text-2xl mb-4">❌ {error || t('profileNotFound')}</p>
           <button
             onClick={() => router.push('/')}
             className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-bold transition-all"
           >
-            ← Back to Game
+            {t('profileBackToGame')}
           </button>
         </div>
       </div>
@@ -506,7 +506,7 @@ export default function ProfilePage() {
             onClick={() => router.push('/')}
             className="text-vintage-gold hover:text-vintage-gold-dark text-sm font-modern mb-3"
           >
-            ← Back
+            {t('profileBack')}
           </button>
 
           {/* Main profile row */}
@@ -544,7 +544,7 @@ export default function ProfilePage() {
                   <a href={`https://twitter.com/${profile.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-vintage-neon-blue hover:text-blue-400">𝕏</a>
                 )}
                 {profile.fid && (
-                  <button onClick={() => openMarketplace(`https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid/fid/${profile.fid}`, sdk, true)} className="text-vintage-gold hover:text-vintage-burnt-gold">♦ VibeFID</button>
+                  <button onClick={() => openMarketplace(`https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid/fid/${profile.fid}`, sdk, true)} className="text-vintage-gold hover:text-vintage-burnt-gold">{t('profileVibeFID')}</button>
                 )}
               </div>
             </div>
@@ -555,21 +555,21 @@ export default function ProfilePage() {
           <div className="grid grid-cols-4 gap-2 mt-4 pt-3 border-t border-vintage-gold/20">
             <div className="text-center">
               <p className="text-sm md:text-lg font-bold text-vintage-gold">{nfts.length || profile.stats.totalCards}</p>
-              <p className="text-[9px] text-vintage-burnt-gold">CARDS</p>
+              <p className="text-[9px] text-vintage-burnt-gold">{t('profileCards')}</p>
             </div>
             <div className="text-center">
               <p className="text-sm md:text-lg font-bold text-vintage-gold">{(profile.stats.totalPower || 0).toLocaleString()}</p>
-              <p className="text-[9px] text-vintage-burnt-gold">POWER</p>
+              <p className="text-[9px] text-vintage-burnt-gold">{t('profilePower')}</p>
             </div>
             <div className="text-center">
               <p className="text-sm md:text-lg font-bold text-purple-400">{(profile.stats.aura ?? 500).toLocaleString()}</p>
-              <p className="text-[9px] text-vintage-burnt-gold">AURA</p>
+              <p className="text-[9px] text-vintage-burnt-gold">{t('profileAura')}</p>
             </div>
             <div className="text-center">
               <p className="text-sm md:text-lg font-bold text-vintage-gold">
                 {(() => { const b = Number(vbmsBalance || 0); if (b >= 1_000_000) return `${(b / 1_000_000).toFixed(1)}M`; if (b >= 1_000) return `${(b / 1_000).toFixed(1)}K`; return b.toLocaleString(undefined, { maximumFractionDigits: 0 }); })()}
               </p>
-              <p className="text-[9px] text-vintage-burnt-gold">$VBMS</p>
+              <p className="text-[9px] text-vintage-burnt-gold">{t('profileVbms')}</p>
             </div>
           </div>
         </div>
@@ -582,7 +582,7 @@ export default function ProfilePage() {
             {/* Album Header */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <span className="text-vintage-gold font-semibold">VMW Album</span>
+                <span className="text-vintage-gold font-semibold">{t('profileVmwAlbum')}</span>
               </div>
               {(() => {
                 const playerVbmsCards = (nfts || []).filter((card: any) => card.collection === "vibe");
@@ -608,7 +608,7 @@ export default function ProfilePage() {
                 const totalCards = allTcgCards.length;
                 return (
                   <span className="text-sm text-vintage-burnt-gold">
-                    {totalOwned}/{totalCards} collected ({Math.round(totalOwned / totalCards * 100)}%)
+                    {t('albumCollected').replace('{owned}', totalOwned.toString()).replace('{total}', totalCards.toString()).replace('{percent}', Math.round(totalOwned / totalCards * 100).toString())}
                   </span>
                 );
               })()}
@@ -776,11 +776,10 @@ export default function ProfilePage() {
 
                           {owned > 0 && ability && (
                             <div className={`absolute top-0 left-0 w-2.5 h-2.5 rounded-br text-[5px] flex items-center justify-center font-bold ${
-                              ability.type === "onReveal" ? "bg-green-500 text-white" :
-                              ability.type === "ongoing" ? "bg-blue-500 text-white" :
-                              "bg-red-500 text-white"
+                              ability.type === "ongoing" ? "bg-green-500 text-white" :
+                              "bg-blue-500 text-white"
                             }`}>
-                              {ability.type === "onReveal" ? "R" : ability.type === "ongoing" ? "O" : "D"}
+                              {ability.type === "ongoing" ? "O" : "R"}
                             </div>
                           )}
                         </div>
@@ -788,11 +787,10 @@ export default function ProfilePage() {
                     })}
                   </div>
 
-                  {/* Legend */}
+                  {/* Legend - Only On Reveal and Ongoing */}
                   <div className="flex justify-center gap-3 text-[10px] text-gray-500 pt-2 mt-2 border-t border-vintage-gold/20">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> {t('tcgOnReveal')}</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> {t('tcgOngoing')}</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-500"></span> {t('tcgDestroy')}</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> {t('tcgOnReveal')}</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> {t('tcgOngoing')}</span>
                   </div>
                 </>
               );
@@ -806,10 +804,10 @@ export default function ProfilePage() {
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto">
           <div className="bg-vintage-charcoal rounded-2xl border-2 border-red-600 max-w-4xl w-full p-4 shadow-lg shadow-red-600/50 my-4 max-h-[95vh] overflow-y-auto">
             <h2 className="text-3xl font-display font-bold text-center mb-2 text-red-500">
-              ⚔️ ATTACK {targetOpponent.username.toUpperCase()}
+              {t('profileAttackTitle').replace('{username}', targetOpponent.username.toUpperCase())}
             </h2>
             <p className="text-center text-vintage-burnt-gold mb-6 text-sm font-modern">
-              Choose 5 cards to attack with ({attackSelectedCards.length}/5 selected)
+              {t('profileAttackChoose').replace('{count}', String(attackSelectedCards.length))}
             </p>
 
             {/* Selected Cards Display */}
@@ -828,7 +826,7 @@ export default function ProfilePage() {
                 ))}
               </div>
               <div className="mt-2 text-center">
-                <p className="text-xs text-vintage-burnt-gold">Your Attack Power</p>
+                <p className="text-xs text-vintage-burnt-gold">{t('profileAttackPower')}</p>
                 <p className="text-xl font-bold text-red-500">
                   {attackSelectedCards.reduce((sum, c) => sum + (c.power || 0), 0)}
                 </p>
@@ -999,25 +997,32 @@ export default function ProfilePage() {
             {/* Ability Info */}
             {selectedAlbumCard.ability && (
               <div className={`p-3 rounded-xl mb-4 ${
-                selectedAlbumCard.ability.type === "onReveal" ? "bg-green-900/30 border border-green-500/50" :
-                selectedAlbumCard.ability.type === "ongoing" ? "bg-blue-900/30 border border-blue-500/50" :
-                "bg-red-900/30 border border-red-500/50"
+                selectedAlbumCard.ability.type === "ongoing" ? "bg-green-900/30 border border-green-500/50" :
+                "bg-blue-900/30 border border-blue-500/50"
               }`}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                    selectedAlbumCard.ability.type === "onReveal" ? "bg-green-500 text-white" :
-                    selectedAlbumCard.ability.type === "ongoing" ? "bg-blue-500 text-white" :
-                    "bg-red-500 text-white"
+                    selectedAlbumCard.ability.type === "ongoing" ? "bg-green-500 text-white" :
+                    "bg-blue-500 text-white"
                   }`}>
-                    {selectedAlbumCard.ability.type === "onReveal" ? t('tcgOnRevealLabel') :
-                     selectedAlbumCard.ability.type === "ongoing" ? t('tcgOngoingLabel') : t('tcgOnDestroyLabel')}
+                    {selectedAlbumCard.ability.type === "ongoing" ? t('tcgOngoing') : t('tcgOnReveal')}
                   </span>
                   <span className="text-vintage-gold font-bold">
-                    {t(`ability_${selectedAlbumCard.cardKey?.replace(/\s+/g, '_').replace(/-/g, '_')}_name` as any) || selectedAlbumCard.ability.name}
+                    {(() => {
+                      const cardKey = selectedAlbumCard.cardKey?.replace(/\s+/g, '_').replace(/-/g, '_') || '';
+                      const underscoreKey = `ability_${cardKey}_name`;
+                      const camelKey = `ability${cardKey.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}Name`;
+                      return t(underscoreKey as any) || t(camelKey as any) || selectedAlbumCard.ability.name;
+                    })()}
                   </span>
                 </div>
                 <p className="text-sm text-gray-300">
-                  {t(`ability_${selectedAlbumCard.cardKey?.replace(/\s+/g, '_').replace(/-/g, '_')}_desc` as any) || selectedAlbumCard.ability.description}
+                  {(() => {
+                    const cardKey = selectedAlbumCard.cardKey?.replace(/\s+/g, '_').replace(/-/g, '_') || '';
+                    const underscoreKey = `ability_${cardKey}_desc`;
+                    const camelKey = `ability${cardKey.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}Desc`;
+                    return t(underscoreKey as any) || t(camelKey as any) || selectedAlbumCard.ability.description;
+                  })()}
                 </p>
               </div>
             )}
@@ -1040,7 +1045,7 @@ export default function ProfilePage() {
             <div className="text-center">
               <div className="text-6xl mb-4 animate-bounce">🎁</div>
               <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">
-                Share Reward!
+                {t('profileShareReward')}
               </h2>
               <p className="text-vintage-ice font-modern text-lg mb-6">
                 {shareRewardMessage}
@@ -1049,7 +1054,7 @@ export default function ProfilePage() {
                 onClick={() => setShowShareReward(false)}
                 className="px-8 py-3 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-modern font-bold rounded-xl transition-all transform hover:scale-105"
               >
-                Awesome!
+                {t('profileAwesome')}
               </button>
             </div>
           </div>
