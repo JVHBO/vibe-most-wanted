@@ -824,8 +824,8 @@ export default function TCGPage() {
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join('');
 
-    const nameKey = `ability${keyName}Name` as keyof typeof translations.pt;
-    const descKey = `ability${keyName}Desc` as keyof typeof translations.pt;
+    const nameKey = `ability${keyName}Name` as keyof typeof translations["pt-BR"];
+    const descKey = `ability${keyName}Desc` as keyof typeof translations["pt-BR"];
 
     // Get translated values, fallback to original JSON values
     const translatedName = t(nameKey) !== nameKey ? t(nameKey) : ability.name;
