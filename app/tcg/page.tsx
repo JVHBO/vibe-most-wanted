@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -63,7 +63,7 @@ const TCG_CONFIG = {
   DECK_SIZE: 15,
   MIN_VBMS: 8,
   MAX_NOTHING: 7,
-  TURN_TIME_SECONDS: 20,
+  TURN_TIME_SECONDS: 15,
   TOTAL_TURNS: 6,
 };
 
@@ -642,6 +642,10 @@ export default function TCGPage() {
   // PvE state (local, no Convex)
   const [isPvE, setIsPvE] = useState(false);
   const [pveGameState, setPveGameState] = useState<any>(null);
+
+  // Turn timer state
+  const [turnTimeRemaining, setTurnTimeRemaining] = useState(TCG_CONFIG.TURN_TIME_SECONDS);
+  const turnTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Profile dropdown state
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -2507,6 +2511,9 @@ export default function TCGPage() {
   const handlePvEEndTurn = () => {
     if (!pveGameState) return;
 
+    // Reset timer
+    setTurnTimeRemaining(TCG_CONFIG.TURN_TIME_SECONDS);
+
     // Play turn end sound
     playSound("turn");
 
@@ -2816,6 +2823,41 @@ export default function TCGPage() {
       setView("result");
     }
   }, [currentMatch?.status, view]);
+
+  // Turn timer countdown - PvE
+  useEffect(() => {
+    // Only run during active PvE game
+    if (view !== "battle" || !isPvE || !pveGameState || pveGameState.currentTurn > TCG_CONFIG.TOTAL_TURNS) {
+      return;
+    }
+
+    // Reset timer when turn changes
+    setTurnTimeRemaining(TCG_CONFIG.TURN_TIME_SECONDS);
+
+    // Clear previous timer
+    if (turnTimerRef.current) {
+      clearInterval(turnTimerRef.current);
+    }
+
+    // Start countdown
+    turnTimerRef.current = setInterval(() => {
+      setTurnTimeRemaining(prev => {
+        if (prev <= 1) {
+          // Time's up! Auto end turn
+          handlePvEEndTurn();
+          return TCG_CONFIG.TURN_TIME_SECONDS;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (turnTimerRef.current) {
+        clearInterval(turnTimerRef.current);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pveGameState?.currentTurn, view, isPvE]);
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // COMPONENT: Card Detail Modal
@@ -4307,9 +4349,21 @@ export default function TCGPage() {
               {/* End Turn Button (right) */}
               <button
                 onClick={handlePvEEndTurn}
-                className="bg-gradient-to-r from-purple-600 to-indigo-700 hover:from-purple-500 hover:to-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm border border-purple-400 shadow-lg"
+                className={`text-white font-bold py-2 px-4 rounded-lg text-sm border shadow-lg transition-all min-w-[100px] ${
+                  turnTimeRemaining <= 5
+                    ? 'bg-gradient-to-r from-red-600 to-red-700 border-red-400 animate-pulse'
+                    : turnTimeRemaining <= 10
+                      ? 'bg-gradient-to-r from-orange-600 to-amber-700 border-orange-400'
+                      : 'bg-gradient-to-r from-purple-600 to-indigo-700 border-purple-400 hover:from-purple-500 hover:to-indigo-600'
+                }`}
               >
-                {t('tcgEndTurn')} <span className="text-yellow-300">{gs.currentTurn}/{TCG_CONFIG.TOTAL_TURNS}</span>
+                {turnTimeRemaining <= 10 ? (
+                  <span className="text-2xl font-black">{turnTimeRemaining}</span>
+                ) : (
+                  <>
+                    {t('tcgEndTurn')} <span className="text-yellow-300">{gs.currentTurn}/{TCG_CONFIG.TOTAL_TURNS}</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
