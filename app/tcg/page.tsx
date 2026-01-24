@@ -2910,7 +2910,7 @@ export default function TCGPage() {
                   className="bg-purple-900/20 border border-purple-500/20 rounded-lg p-3"
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-vintage-gold font-bold text-sm">{COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id]) : combo.name}</span>
+                    <span className="text-vintage-gold font-bold text-sm">{COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id] as keyof typeof translations["pt-BR"]) : combo.name}</span>
                     {combo.minCards && (
                       <span className="text-vintage-burnt-gold/60 text-[10px]">({combo.minCards}+)</span>
                     )}
@@ -2933,7 +2933,7 @@ export default function TCGPage() {
                     })}
                   </div>
                   <p className="text-green-400 text-xs font-bold">
-                    ⚡ {COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id] + "Desc") : combo.description}
+                    ⚡ {COMBO_TRANSLATION_KEYS[combo.id] ? t((COMBO_TRANSLATION_KEYS[combo.id] + "Desc") as keyof typeof translations["pt-BR"]) : combo.description}
                   </p>
                 </div>
               ))}
@@ -3991,7 +3991,7 @@ export default function TCGPage() {
                         className="bg-yellow-600/30 border border-yellow-500/60 rounded px-2 py-0.5 hover:bg-yellow-500/50 transition-all cursor-pointer"
                       >
                         <span className="text-[8px] text-yellow-300 font-bold uppercase tracking-wide">
-                          {COMBO_TRANSLATION_KEYS[activeCombos[0].combo.id] ? t(COMBO_TRANSLATION_KEYS[activeCombos[0].combo.id]) : activeCombos[0].combo.name}
+                          {COMBO_TRANSLATION_KEYS[activeCombos[0].combo.id] ? t(COMBO_TRANSLATION_KEYS[activeCombos[0].combo.id] as keyof typeof translations["pt-BR"]) : activeCombos[0].combo.name}
                         </span>
                       </button>
                     ) : (
@@ -4125,7 +4125,7 @@ export default function TCGPage() {
                     {comboPreviews.map((preview: any, pIdx: number) => (
                       <div key={pIdx} className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg px-3 py-1 animate-pulse">
                         <span className="text-[10px] text-yellow-400">
-                          Lane {preview.laneIdx + 1}: {COMBO_TRANSLATION_KEYS[preview.combos[0].combo.id] ? t(COMBO_TRANSLATION_KEYS[preview.combos[0].combo.id]) : preview.combos[0].combo.name}
+                          Lane {preview.laneIdx + 1}: {COMBO_TRANSLATION_KEYS[preview.combos[0].combo.id] ? t(COMBO_TRANSLATION_KEYS[preview.combos[0].combo.id] as keyof typeof translations["pt-BR"]) : preview.combos[0].combo.name}
                         </span>
                       </div>
                     ))}
