@@ -30,6 +30,91 @@ const TCG_CONFIG = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TCG ABILITIES - All 53 card abilities
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TCG_ABILITIES: Record<string, { type: string; effect: any }> = {
+  // MYTHIC
+  "neymar": { type: "onReveal", effect: { action: "buffAllLanes", value: 30 } },
+  "anon": { type: "ongoing", effect: { action: "untargetable", buffPerTurn: 10 } },
+  "linda xied": { type: "onReveal", effect: { action: "copyHighest", stealFromAll: 20 } },
+  "vitalik jumpterin": { type: "ongoing", effect: { action: "reduceEnergyCost", value: 1 } },
+  "jesse": { type: "onReveal", effect: { action: "destroyHighestEnemy", gainPower: true } },
+
+  // LEGENDARY
+  "antonio": { type: "onReveal", effect: { action: "buffPerCardInLane", value: 25 } },
+  "goofy romero": { type: "onReveal", effect: { action: "shuffleEnemyLanes" } },
+  "tukka": { type: "onReveal", effect: { action: "debuffLane", value: -20 } }, // Simplified from timeBomb
+  "chilipepper": { type: "onReveal", effect: { action: "debuffLane", value: -30 } },
+  "miguel": { type: "ongoing", effect: { action: "buffLaneOngoing", value: 15 } },
+  "naughty santa": { type: "onReveal", effect: { action: "stealWeakest" } },
+  "ye": { type: "onReveal", effect: { action: "draw", value: 3, bonusBuff: 10 } },
+  "nico": { type: "ongoing", effect: { action: "adaptivePower" } },
+
+  // EPIC
+  "sartocrates": { type: "onReveal", effect: { action: "forceDiscardAndDraw", enemyDiscard: 1, selfDraw: 1 } },
+  "0xdeployer": { type: "onReveal", effect: { action: "addCopyToHand", bonusPower: 10 } },
+  "lombra jr": { type: "ongoing", effect: { action: "buffPerCardsPlayed", value: 5 } },
+  "vibe intern": { type: "ongoing", effect: { action: "convertEnergyEndGame", powerPerEnergy: 8 } },
+  "jack the sniper": { type: "onReveal", effect: { action: "debuffStrongest", value: -20, killBonus: 15 } },
+  "beeper": { type: "onReveal", effect: { action: "buffAdjacent", value: 15, draw: 1 } },
+  "horsefarts": { type: "onReveal", effect: { action: "debuffLane", value: -15 } }, // Simplified
+  "jc denton": { type: "ongoing", effect: { action: "buffEachTurn", value: 8 } },
+  "zurkchad": { type: "onReveal", effect: { action: "buffIfTurn", minTurn: 3, value: 30 } },
+  "slaterg": { type: "onReveal", effect: { action: "buffPerEnemyInLane", basePower: 8, perEnemy: 5 } },
+  "brian armstrong": { type: "onReveal", effect: { action: "buffByRarity", targetRarity: "Rare", value: 15 } },
+  "nftkid": { type: "onReveal", effect: { action: "buffPerHandSize", multiplier: 10 } },
+
+  // RARE
+  "smolemaru": { type: "onReveal", effect: { action: "buffPerCardsPlayed", value: 8 } },
+  "ventra": { type: "ongoing", effect: { action: "immuneToDebuff", bonusPower: 10 } },
+  "bradymck": { type: "onReveal", effect: { action: "buffPerFriendly", value: 12 } },
+  "shills": { type: "onReveal", effect: { action: "buffWeakest", value: 20 } },
+  "betobutter": { type: "ongoing", effect: { action: "buffPerTurn", value: 6 } },
+  "qrcodo": { type: "onReveal", effect: { action: "draw", value: 2 } },
+  "loground": { type: "onReveal", effect: { action: "buffOtherLanes", value: 15 } },
+  "melted": { type: "onReveal", effect: { action: "sacrificeBuffAll", value: 20 } },
+
+  // COMMON
+  "rachel": { type: "ongoing", effect: { action: "energyPerTurn", value: 1 } },
+  "claude": { type: "ongoing", effect: { action: "buffPerCardInPlay", value: 4 } },
+  "gozaru": { type: "ongoing", effect: { action: "buffLaneEndTurn", value: 3 } },
+  "ink": { type: "ongoing", effect: { action: "destroyLoneCard", duration: 2 } },
+  "casa": { type: "ongoing", effect: { action: "buffIfFirst", value: 12 } },
+  "groko": { type: "onReveal", effect: { action: "buffPerRarity", targetRarity: "Common", value: 5 } },
+  "rizkybegitu": { type: "onReveal", effect: { action: "gamble", win: 25, lose: -10 } },
+  "thosmur": { type: "onReveal", effect: { action: "consumeEnergyForPower", powerPerEnergy: 5 } },
+  "brainpasta": { type: "onReveal", effect: { action: "buffIfHandSize", minCards: 3, value: 15 } },
+  "gaypt": { type: "onReveal", effect: { action: "copyPowerLeft", value: 10 } },
+  "dan romero": { type: "ongoing", effect: { action: "reduceEnemyPower", value: 8 } },
+  "morlacos": { type: "ongoing", effect: { action: "buffPerTurn", value: 8 } },
+  "landmine": { type: "onReveal", effect: { action: "debuffStrongest", value: -20 } },
+  "linux": { type: "onReveal", effect: { action: "buffByRarity", targetRarity: "Common", value: 8 } },
+  "joonx": { type: "onReveal", effect: { action: "buffIfTurn", maxTurn: 1, value: 20 } },
+  "don filthy": { type: "onReveal", effect: { action: "debuffStrongest", value: -12 } },
+  "pooster": { type: "onReveal", effect: { action: "buffLastPlayed", value: 12 } },
+  "john porn": { type: "onReveal", effect: { action: "debuffLane", value: -15 } },
+  "scum": { type: "onReveal", effect: { action: "stealPower", value: 12 } },
+  "vlady": { type: "onReveal", effect: { action: "moveRandom", bonusPower: 15 } },
+};
+
+// Card name aliases (on-chain name → ability lookup name)
+const CARD_NAME_ALIASES: Record<string, string> = {
+  "nicogay": "nico",
+  "chilli": "chilipepper",
+  "filthy": "don filthy",
+  "vlad": "vlady",
+  "shill": "shills",
+  "beto": "betobutter",
+  "proxy": "slaterg",
+  "lombra": "lombra jr",
+  "vibe": "vibe intern",
+  "jack": "jack the sniper",
+  "horsefacts": "horsefarts",
+  "jc": "jc denton",
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -120,6 +205,601 @@ function calculateLanePower(cards: any[]): number {
 }
 
 /**
+ * Get card ability by name
+ */
+function getCardAbility(cardName: string): { type: string; effect: any } | null {
+  if (!cardName) return null;
+  const normalized = cardName.toLowerCase().trim();
+  const aliased = CARD_NAME_ALIASES[normalized] || normalized;
+  return TCG_ABILITIES[aliased] || null;
+}
+
+/**
+ * Apply onReveal ability when card is played
+ * Returns: { bonusPower, newHand, newDeck, lanes, energyConsumed }
+ */
+function applyOnRevealAbility(
+  card: any,
+  laneIndex: number,
+  lanes: any[],
+  myCards: string,
+  enemyCards: string,
+  myPower: string,
+  enemyPower: string,
+  hand: any[],
+  deck: any[],
+  currentTurn: number,
+  totalCardsPlayed: number
+): { bonusPower: number; hand: any[]; deck: any[]; lanes: any[]; energyConsumed: number } {
+  const ability = getCardAbility(card.name);
+  if (!ability || ability.type !== "onReveal") {
+    return { bonusPower: 0, hand, deck, lanes, energyConsumed: 0 };
+  }
+
+  const effect = ability.effect;
+  let bonusPower = 0;
+  let newHand = [...hand];
+  let newDeck = [...deck];
+  let newLanes = lanes.map((l: any) => ({
+    ...l,
+    player1Cards: [...l.player1Cards],
+    player2Cards: [...l.player2Cards],
+  }));
+  let energyConsumed = 0;
+
+  switch (effect.action) {
+    case "buffAdjacent":
+      // +X power to ALL other cards in this lane
+      newLanes[laneIndex][myCards].forEach((c: any, idx: number) => {
+        newLanes[laneIndex][myCards][idx] = { ...c, power: c.power + (effect.value || 0) };
+      });
+      newLanes[laneIndex][myPower] += newLanes[laneIndex][myCards].length * (effect.value || 0);
+      // Handle draw
+      if (effect.draw && effect.draw > 0) {
+        for (let i = 0; i < effect.draw && newDeck.length > 0; i++) {
+          newHand.push(newDeck.shift());
+        }
+      }
+      break;
+
+    case "buffOtherLanes":
+      // +X power to all cards in OTHER lanes
+      newLanes.forEach((lane: any, idx: number) => {
+        if (idx !== laneIndex) {
+          lane[myCards].forEach((c: any, cIdx: number) => {
+            lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) };
+          });
+          lane[myPower] += lane[myCards].length * (effect.value || 0);
+        }
+      });
+      break;
+
+    case "buffAllLanes":
+      // +X power to ALL my cards in ALL lanes
+      newLanes.forEach((lane: any) => {
+        lane[myCards].forEach((c: any, cIdx: number) => {
+          lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) };
+        });
+        lane[myPower] += lane[myCards].length * (effect.value || 0);
+      });
+      bonusPower = effect.value || 0; // Also buff self
+      break;
+
+    case "debuffLane":
+      // -X power to all enemy cards in this lane
+      newLanes[laneIndex][enemyCards].forEach((c: any, cIdx: number) => {
+        const reduction = Math.abs(effect.value || 0);
+        newLanes[laneIndex][enemyCards][cIdx] = { ...c, power: Math.max(0, c.power - reduction) };
+      });
+      newLanes[laneIndex][enemyPower] = Math.max(0,
+        newLanes[laneIndex][enemyPower] - (newLanes[laneIndex][enemyCards].length * Math.abs(effect.value || 0))
+      );
+      break;
+
+    case "debuffStrongest": {
+      // -X power to the strongest enemy card
+      let strongestCard: any = null;
+      let strongestLane = -1;
+      let strongestIdx = -1;
+      newLanes.forEach((lane: any, lIdx: number) => {
+        lane[enemyCards].forEach((c: any, cIdx: number) => {
+          if (!strongestCard || c.power > strongestCard.power) {
+            strongestCard = c;
+            strongestLane = lIdx;
+            strongestIdx = cIdx;
+          }
+        });
+      });
+      if (strongestCard && strongestLane >= 0) {
+        const reduction = Math.abs(effect.value || 0);
+        const newPowerValue = Math.max(0, strongestCard.power - reduction);
+        newLanes[strongestLane][enemyCards][strongestIdx] = { ...strongestCard, power: newPowerValue };
+        newLanes[strongestLane][enemyPower] = Math.max(0, newLanes[strongestLane][enemyPower] - reduction);
+        // Kill bonus
+        if (newPowerValue === 0 && effect.killBonus) {
+          bonusPower = effect.killBonus;
+        }
+      }
+      break;
+    }
+
+    case "destroyHighestEnemy": {
+      // DESTROY highest power enemy card
+      let highestCard: any = null;
+      let highestLane = -1;
+      let highestIdx = -1;
+      newLanes.forEach((lane: any, lIdx: number) => {
+        lane[enemyCards].forEach((c: any, cIdx: number) => {
+          if (!highestCard || c.power > highestCard.power) {
+            highestCard = c;
+            highestLane = lIdx;
+            highestIdx = cIdx;
+          }
+        });
+      });
+      if (highestCard && highestLane >= 0) {
+        const destroyedPower = highestCard.power;
+        newLanes[highestLane][enemyCards].splice(highestIdx, 1);
+        newLanes[highestLane][enemyPower] = Math.max(0, newLanes[highestLane][enemyPower] - destroyedPower);
+        if (effect.gainPower) {
+          bonusPower = destroyedPower;
+        }
+      }
+      break;
+    }
+
+    case "draw":
+      // Draw X cards
+      for (let i = 0; i < (effect.value || 1) && newDeck.length > 0; i++) {
+        newHand.push(newDeck.shift());
+      }
+      // Bonus buff to all cards
+      if (effect.bonusBuff) {
+        newLanes.forEach((lane: any) => {
+          lane[myCards].forEach((c: any, cIdx: number) => {
+            lane[myCards][cIdx] = { ...c, power: c.power + effect.bonusBuff };
+          });
+          lane[myPower] += lane[myCards].length * effect.bonusBuff;
+        });
+        bonusPower = effect.bonusBuff;
+      }
+      break;
+
+    case "stealPower": {
+      // Steal power from enemy in lane
+      if (newLanes[laneIndex][enemyCards].length > 0) {
+        const targetIdx = Math.floor(Math.random() * newLanes[laneIndex][enemyCards].length);
+        const target = newLanes[laneIndex][enemyCards][targetIdx];
+        const stealAmount = Math.min(effect.value || 0, target.power);
+        newLanes[laneIndex][enemyCards][targetIdx] = { ...target, power: target.power - stealAmount };
+        newLanes[laneIndex][enemyPower] -= stealAmount;
+        bonusPower = stealAmount;
+      }
+      break;
+    }
+
+    case "stealWeakest": {
+      // Steal weakest enemy card to your side
+      let weakestCard: any = null;
+      let weakestLane = -1;
+      let weakestIdx = -1;
+      newLanes.forEach((lane: any, lIdx: number) => {
+        lane[enemyCards].forEach((c: any, cIdx: number) => {
+          if (!weakestCard || c.power < weakestCard.power) {
+            weakestCard = c;
+            weakestLane = lIdx;
+            weakestIdx = cIdx;
+          }
+        });
+      });
+      if (weakestCard && weakestLane >= 0) {
+        const stolenCard = newLanes[weakestLane][enemyCards].splice(weakestIdx, 1)[0];
+        newLanes[weakestLane][enemyPower] -= stolenCard.power;
+        newLanes[laneIndex][myCards].push(stolenCard);
+        newLanes[laneIndex][myPower] += stolenCard.power;
+      }
+      break;
+    }
+
+    case "buffPerCardInLane":
+      // +X power for each card in this lane
+      const cardsInLane = newLanes[laneIndex][myCards].length + 1; // +1 for self
+      bonusPower = cardsInLane * (effect.value || 0);
+      break;
+
+    case "buffPerFriendly": {
+      // +X power for each friendly card on field
+      let friendlyCount = 0;
+      newLanes.forEach((lane: any) => {
+        friendlyCount += lane[myCards].length;
+      });
+      bonusPower = friendlyCount * (effect.value || 0);
+      break;
+    }
+
+    case "buffPerEnemyInLane":
+      // +basePower + perEnemy for each enemy in lane
+      const enemiesInLane = newLanes[laneIndex][enemyCards].length;
+      bonusPower = (effect.basePower || 0) + (enemiesInLane * (effect.perEnemy || 0));
+      break;
+
+    case "buffWeakest": {
+      // +X power to weakest friendly card
+      let weakest: any = null;
+      let weakestLane = -1;
+      let weakestIdx = -1;
+      newLanes.forEach((lane: any, lIdx: number) => {
+        lane[myCards].forEach((c: any, cIdx: number) => {
+          if (!weakest || c.power < weakest.power) {
+            weakest = c;
+            weakestLane = lIdx;
+            weakestIdx = cIdx;
+          }
+        });
+      });
+      if (weakest && weakestLane >= 0) {
+        newLanes[weakestLane][myCards][weakestIdx] = { ...weakest, power: weakest.power + (effect.value || 0) };
+        newLanes[weakestLane][myPower] += effect.value || 0;
+      }
+      break;
+    }
+
+    case "buffLastPlayed": {
+      // +X power to last card played
+      for (let i = newLanes.length - 1; i >= 0; i--) {
+        if (newLanes[i][myCards].length > 0) {
+          const lastIdx = newLanes[i][myCards].length - 1;
+          const lastCard = newLanes[i][myCards][lastIdx];
+          const buffValue = (lastCard.rarity === "Rare" || lastCard.rarity === "Epic" || lastCard.rarity === "Legendary" || lastCard.rarity === "Mythic")
+            ? (effect.rareBonus || effect.value || 0)
+            : (effect.value || 0);
+          newLanes[i][myCards][lastIdx] = { ...lastCard, power: lastCard.power + buffValue };
+          newLanes[i][myPower] += buffValue;
+          break;
+        }
+      }
+      break;
+    }
+
+    case "addCopyToHand":
+      // Add copy of this card to hand
+      newHand.push({ ...card, cardId: `${card.cardId}-copy-${Date.now()}` });
+      bonusPower = effect.bonusPower || 0;
+      break;
+
+    case "gamble":
+      // 50% chance win or lose
+      if (Math.random() > 0.5) {
+        bonusPower = effect.win || 0;
+      } else {
+        bonusPower = effect.lose || 0;
+      }
+      break;
+
+    case "buffIfTurn":
+      // +X power if specific turn condition
+      if (effect.minTurn && currentTurn >= effect.minTurn) {
+        bonusPower = effect.value || 0;
+      } else if (effect.maxTurn && currentTurn <= effect.maxTurn) {
+        bonusPower = effect.value || 0;
+      }
+      break;
+
+    case "buffIfHandSize":
+      // +X power if hand size >= X
+      if (newHand.length >= (effect.minCards || 0)) {
+        bonusPower = effect.value || 0;
+      }
+      break;
+
+    case "buffPerCardsPlayed":
+      // +X power per card played this game
+      bonusPower = totalCardsPlayed * (effect.value || 0);
+      break;
+
+    case "buffByRarity": {
+      // +X power to all cards of specific rarity
+      const targetRarity = effect.targetRarity;
+      newLanes.forEach((lane: any) => {
+        lane[myCards].forEach((c: any, cIdx: number) => {
+          if (c.rarity === targetRarity) {
+            lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) };
+            lane[myPower] += effect.value || 0;
+          }
+        });
+      });
+      break;
+    }
+
+    case "buffPerRarity": {
+      // +X power per card of specific rarity on field
+      const targetRarity = effect.targetRarity;
+      let count = 0;
+      newLanes.forEach((lane: any) => {
+        lane[myCards].forEach((c: any) => {
+          if (c.rarity === targetRarity) count++;
+        });
+      });
+      bonusPower = count * (effect.value || 0);
+      break;
+    }
+
+    case "buffPerHandSize":
+      // +X power per card in hand
+      bonusPower = newHand.length * (effect.multiplier || 0);
+      break;
+
+    case "consumeEnergyForPower":
+      // Consume all remaining energy for power
+      // Note: energy handling would need to be passed in, simplified here
+      energyConsumed = currentTurn; // Consume up to current turn energy
+      bonusPower = energyConsumed * (effect.powerPerEnergy || 5);
+      break;
+
+    case "copyPowerLeft": {
+      // Copy power from card to the left
+      const myCardsInThisLane = newLanes[laneIndex][myCards];
+      if (myCardsInThisLane.length > 0) {
+        const leftCard = myCardsInThisLane[myCardsInThisLane.length - 1];
+        bonusPower = Math.floor(leftCard.power * 0.5) + (effect.value || 0);
+      } else {
+        bonusPower = effect.value || 0;
+      }
+      break;
+    }
+
+    case "copyHighest": {
+      // Copy power of highest card on field + steal from all
+      let highestPower = 0;
+      newLanes.forEach((lane: any) => {
+        lane[myCards].forEach((c: any) => { if (c.power > highestPower) highestPower = c.power; });
+        lane[enemyCards].forEach((c: any) => { if (c.power > highestPower) highestPower = c.power; });
+      });
+      bonusPower = Math.max(0, highestPower - card.power);
+      // Steal from all enemies
+      if (effect.stealFromAll) {
+        newLanes.forEach((lane: any) => {
+          lane[enemyCards].forEach((c: any, cIdx: number) => {
+            const stealAmount = Math.min(effect.stealFromAll, c.power);
+            lane[enemyCards][cIdx] = { ...c, power: c.power - stealAmount };
+            lane[enemyPower] -= stealAmount;
+          });
+        });
+      }
+      break;
+    }
+
+    case "shuffleEnemyLanes": {
+      // Shuffle all enemy cards between lanes
+      const allEnemyCards: any[] = [];
+      newLanes.forEach((lane: any) => {
+        allEnemyCards.push(...lane[enemyCards]);
+        lane[enemyCards] = [];
+        lane[enemyPower] = 0;
+      });
+      // Redistribute randomly
+      for (const c of shuffleDeck(allEnemyCards)) {
+        const randomLane = Math.floor(Math.random() * 3);
+        newLanes[randomLane][enemyCards].push(c);
+        newLanes[randomLane][enemyPower] += calculateCardPower(c);
+      }
+      break;
+    }
+
+    case "forceDiscardAndDraw":
+      // Force enemy to discard, you draw
+      // Note: Can't affect enemy hand in simultaneous play, simplified to just draw
+      for (let i = 0; i < (effect.selfDraw || 1) && newDeck.length > 0; i++) {
+        newHand.push(newDeck.shift());
+      }
+      break;
+
+    case "sacrificeBuffAll":
+      // Destroy self and buff all allies
+      newLanes.forEach((lane: any) => {
+        lane[myCards].forEach((c: any, cIdx: number) => {
+          lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) };
+        });
+        lane[myPower] += lane[myCards].length * (effect.value || 0);
+      });
+      // Mark card for destruction (power = 0)
+      bonusPower = -card.power; // Will make power 0
+      break;
+
+    case "moveRandom":
+      // Move to random lane with bonus power
+      bonusPower = effect.bonusPower || 0;
+      // Note: Actual lane change handled separately
+      break;
+
+    default:
+      // Unknown action, no effect
+      break;
+  }
+
+  return { bonusPower, hand: newHand, deck: newDeck, lanes: newLanes, energyConsumed };
+}
+
+/**
+ * Apply ongoing abilities at end of turn
+ */
+function applyOngoingAbilities(
+  lanes: any[],
+  player1Cards: string,
+  player2Cards: string,
+  player1Power: string,
+  player2Power: string,
+  currentTurn: number
+): any[] {
+  let newLanes = lanes.map((l: any) => ({
+    ...l,
+    player1Cards: [...l.player1Cards],
+    player2Cards: [...l.player2Cards],
+  }));
+
+  // Process each card's ongoing ability
+  for (let laneIdx = 0; laneIdx < 3; laneIdx++) {
+    // Player 1 cards
+    for (let cardIdx = 0; cardIdx < newLanes[laneIdx][player1Cards].length; cardIdx++) {
+      const card = newLanes[laneIdx][player1Cards][cardIdx];
+      const ability = getCardAbility(card.name);
+      if (!ability || ability.type !== "ongoing") continue;
+
+      const effect = ability.effect;
+      switch (effect.action) {
+        case "buffEachTurn":
+        case "buffPerTurn":
+          newLanes[laneIdx][player1Cards][cardIdx] = { ...card, power: card.power + (effect.value || 0) };
+          newLanes[laneIdx][player1Power] += effect.value || 0;
+          break;
+
+        case "buffLaneOngoing":
+          // Buff all other cards in lane
+          newLanes[laneIdx][player1Cards].forEach((c: any, idx: number) => {
+            if (idx !== cardIdx) {
+              newLanes[laneIdx][player1Cards][idx] = { ...c, power: c.power + (effect.value || 0) };
+              newLanes[laneIdx][player1Power] += effect.value || 0;
+            }
+          });
+          break;
+
+        case "buffLaneEndTurn":
+          // Buff all cards in lane (including self)
+          newLanes[laneIdx][player1Cards].forEach((c: any, idx: number) => {
+            newLanes[laneIdx][player1Cards][idx] = { ...c, power: c.power + (effect.value || 0) };
+          });
+          newLanes[laneIdx][player1Power] += newLanes[laneIdx][player1Cards].length * (effect.value || 0);
+          break;
+
+        case "buffPerCardInPlay": {
+          // +X for each card in play
+          let totalCards = 0;
+          newLanes.forEach((lane: any) => {
+            totalCards += lane[player1Cards].length + lane[player2Cards].length;
+          });
+          const buff = totalCards * (effect.value || 0);
+          newLanes[laneIdx][player1Cards][cardIdx] = { ...card, power: card.power + buff };
+          newLanes[laneIdx][player1Power] += buff;
+          break;
+        }
+
+        case "untargetable":
+          // Immune + buff per turn
+          if (effect.buffPerTurn) {
+            newLanes[laneIdx][player1Cards][cardIdx] = { ...card, power: card.power + effect.buffPerTurn };
+            newLanes[laneIdx][player1Power] += effect.buffPerTurn;
+          }
+          break;
+
+        case "reduceEnemyPower":
+          // Reduce all enemy cards in this lane
+          newLanes[laneIdx][player2Cards].forEach((c: any, idx: number) => {
+            const reduction = Math.min(effect.value || 0, c.power);
+            newLanes[laneIdx][player2Cards][idx] = { ...c, power: c.power - reduction };
+            newLanes[laneIdx][player2Power] -= reduction;
+          });
+          break;
+      }
+    }
+
+    // Player 2 cards (same logic, swapped)
+    for (let cardIdx = 0; cardIdx < newLanes[laneIdx][player2Cards].length; cardIdx++) {
+      const card = newLanes[laneIdx][player2Cards][cardIdx];
+      const ability = getCardAbility(card.name);
+      if (!ability || ability.type !== "ongoing") continue;
+
+      const effect = ability.effect;
+      switch (effect.action) {
+        case "buffEachTurn":
+        case "buffPerTurn":
+          newLanes[laneIdx][player2Cards][cardIdx] = { ...card, power: card.power + (effect.value || 0) };
+          newLanes[laneIdx][player2Power] += effect.value || 0;
+          break;
+
+        case "buffLaneOngoing":
+          newLanes[laneIdx][player2Cards].forEach((c: any, idx: number) => {
+            if (idx !== cardIdx) {
+              newLanes[laneIdx][player2Cards][idx] = { ...c, power: c.power + (effect.value || 0) };
+              newLanes[laneIdx][player2Power] += effect.value || 0;
+            }
+          });
+          break;
+
+        case "buffLaneEndTurn":
+          newLanes[laneIdx][player2Cards].forEach((c: any, idx: number) => {
+            newLanes[laneIdx][player2Cards][idx] = { ...c, power: c.power + (effect.value || 0) };
+          });
+          newLanes[laneIdx][player2Power] += newLanes[laneIdx][player2Cards].length * (effect.value || 0);
+          break;
+
+        case "buffPerCardInPlay": {
+          let totalCards = 0;
+          newLanes.forEach((lane: any) => {
+            totalCards += lane[player1Cards].length + lane[player2Cards].length;
+          });
+          const buff = totalCards * (effect.value || 0);
+          newLanes[laneIdx][player2Cards][cardIdx] = { ...card, power: card.power + buff };
+          newLanes[laneIdx][player2Power] += buff;
+          break;
+        }
+
+        case "untargetable":
+          if (effect.buffPerTurn) {
+            newLanes[laneIdx][player2Cards][cardIdx] = { ...card, power: card.power + effect.buffPerTurn };
+            newLanes[laneIdx][player2Power] += effect.buffPerTurn;
+          }
+          break;
+
+        case "reduceEnemyPower":
+          newLanes[laneIdx][player1Cards].forEach((c: any, idx: number) => {
+            const reduction = Math.min(effect.value || 0, c.power);
+            newLanes[laneIdx][player1Cards][idx] = { ...c, power: c.power - reduction };
+            newLanes[laneIdx][player1Power] -= reduction;
+          });
+          break;
+      }
+    }
+  }
+
+  return newLanes;
+}
+
+/**
+ * Count total cards played by a player
+ */
+function countCardsPlayed(lanes: any[], playerCards: string): number {
+  let count = 0;
+  lanes.forEach((lane: any) => {
+    count += lane[playerCards].length;
+  });
+  return count;
+}
+
+/**
+ * Get card energy cost based on rarity
+ */
+function getCardEnergyCost(card: any): number {
+  if (!card || !card.rarity) return 1;
+  switch (card.rarity.toLowerCase()) {
+    case "mythic": return 6;
+    case "legendary": return 5;
+    case "epic": return 4;
+    case "rare": return 3;
+    case "common": return 2;
+    default: return 1;
+  }
+}
+
+/**
+ * Crypto-secure random boolean (dice roll)
+ */
+function randomCoinFlip(): boolean {
+  const randomBytes = new Uint32Array(1);
+  crypto.getRandomValues(randomBytes);
+  return randomBytes[0] % 2 === 0;
+}
+
+/**
  * Initialize empty game state
  */
 function initializeGameState(player1Deck: any[], player2Deck: any[]) {
@@ -165,7 +845,7 @@ export const getMatch = query({
   handler: async (ctx, args) => {
     const match = await ctx.db
       .query("tcgMatches")
-      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
+      .withIndex("by_room_id", (q: any) => q.eq("roomId", args.roomId))
       .first();
 
     return match;
@@ -190,7 +870,7 @@ export const getPlayerDecks = query({
   handler: async (ctx, args) => {
     const decks = await ctx.db
       .query("tcgDecks")
-      .withIndex("by_address", (q) => q.eq("address", args.address.toLowerCase()))
+      .withIndex("by_address", (q: any) => q.eq("address", args.address.toLowerCase()))
       .take(20);
 
     return decks;
@@ -205,7 +885,7 @@ export const getActiveDeck = query({
   handler: async (ctx, args) => {
     const deck = await ctx.db
       .query("tcgDecks")
-      .withIndex("by_address_active", (q) =>
+      .withIndex("by_address_active", (q: any) =>
         q.eq("address", args.address.toLowerCase()).eq("isActive", true)
       )
       .first();
@@ -229,13 +909,13 @@ export const getPlayerHistory = query({
     // Get matches where player was player1 or player2
     const asPlayer1 = await ctx.db
       .query("tcgHistory")
-      .withIndex("by_player1", (q) => q.eq("player1Address", addr))
+      .withIndex("by_player1", (q: any) => q.eq("player1Address", addr))
       .order("desc")
       .take(limit);
 
     const asPlayer2 = await ctx.db
       .query("tcgHistory")
-      .withIndex("by_player2", (q) => q.eq("player2Address", addr))
+      .withIndex("by_player2", (q: any) => q.eq("player2Address", addr))
       .order("desc")
       .take(limit);
 
@@ -256,7 +936,7 @@ export const getWaitingRooms = query({
   handler: async (ctx) => {
     const rooms = await ctx.db
       .query("tcgMatches")
-      .withIndex("by_status", (q) => q.eq("status", "waiting"))
+      .withIndex("by_status", (q: any) => q.eq("status", "waiting"))
       .order("desc")
       .take(20);
 
@@ -319,7 +999,7 @@ export const saveDeck = mutation({
     if (args.setActive) {
       const existingDecks = await ctx.db
         .query("tcgDecks")
-        .withIndex("by_address", (q) => q.eq("address", addr))
+        .withIndex("by_address", (q: any) => q.eq("address", addr))
         .take(50);
 
       for (const deck of existingDecks) {
@@ -365,7 +1045,7 @@ export const setActiveDeck = mutation({
     // Deactivate other decks
     const existingDecks = await ctx.db
       .query("tcgDecks")
-      .withIndex("by_address", (q) => q.eq("address", addr))
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
       .take(50);
 
     for (const d of existingDecks) {
@@ -421,7 +1101,7 @@ export const createMatch = mutation({
     // Check if player has active deck
     const activeDeck = await ctx.db
       .query("tcgDecks")
-      .withIndex("by_address_active", (q) =>
+      .withIndex("by_address_active", (q: any) =>
         q.eq("address", addr).eq("isActive", true)
       )
       .first();
@@ -464,7 +1144,7 @@ export const joinMatch = mutation({
     // Find match
     const match = await ctx.db
       .query("tcgMatches")
-      .withIndex("by_room_id", (q) => q.eq("roomId", args.roomId))
+      .withIndex("by_room_id", (q: any) => q.eq("roomId", args.roomId))
       .first();
 
     if (!match) {
@@ -482,7 +1162,7 @@ export const joinMatch = mutation({
     // Check if player has active deck
     const activeDeck = await ctx.db
       .query("tcgDecks")
-      .withIndex("by_address_active", (q) =>
+      .withIndex("by_address_active", (q: any) =>
         q.eq("address", addr).eq("isActive", true)
       )
       .first();
@@ -582,29 +1262,31 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
 
   const gs = match.gameState;
 
-  // Process player 1 actions
+  // Process player 1 actions - place cards first
   let p1Hand = [...gs.player1Hand];
   let p1DeckRemaining = [...gs.player1DeckRemaining];
-  const lanes = gs.lanes.map((l: any) => ({ ...l, player1Cards: [...l.player1Cards], player2Cards: [...l.player2Cards] }));
+  let lanes = gs.lanes.map((l: any) => ({ ...l, player1Cards: [...l.player1Cards], player2Cards: [...l.player2Cards] }));
+
+  // Track cards played this turn for ability processing
+  const p1CardsPlayedThisTurn: { card: any; lane: number }[] = [];
+  const p2CardsPlayedThisTurn: { card: any; lane: number }[] = [];
 
   for (const action of (gs.player1Actions || [])) {
     if (action.type === "play" && action.targetLane !== undefined) {
       const card = p1Hand.splice(action.cardIndex, 1)[0];
       if (card) {
         lanes[action.targetLane].player1Cards.push(card);
+        p1CardsPlayedThisTurn.push({ card, lane: action.targetLane });
       }
     } else if (action.type === "sacrifice-hand") {
-      // Remove card, draw new one
       p1Hand.splice(action.cardIndex, 1);
       if (p1DeckRemaining.length > 0) {
         p1Hand.push(p1DeckRemaining.shift());
       }
     } else if (action.type === "sacrifice-lane" && action.targetLane !== undefined) {
-      // Remove from lane, buff target
       const sacrificedCard = lanes[action.targetLane].player1Cards.splice(action.cardIndex, 1)[0];
       if (sacrificedCard && action.targetCardIndex !== undefined) {
-        // Find target card and buff it
-        const targetLane = action.targetLane; // Could be different lane
+        const targetLane = action.targetLane;
         if (lanes[targetLane].player1Cards[action.targetCardIndex]) {
           const buffAmount = calculateSacrificeBuff(sacrificedCard);
           lanes[targetLane].player1Cards[action.targetCardIndex].power += buffAmount;
@@ -613,7 +1295,7 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
     }
   }
 
-  // Process player 2 actions (same logic)
+  // Process player 2 actions - place cards
   let p2Hand = [...gs.player2Hand];
   let p2DeckRemaining = [...gs.player2DeckRemaining];
 
@@ -622,6 +1304,7 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
       const card = p2Hand.splice(action.cardIndex, 1)[0];
       if (card) {
         lanes[action.targetLane].player2Cards.push(card);
+        p2CardsPlayedThisTurn.push({ card, lane: action.targetLane });
       }
     } else if (action.type === "sacrifice-hand") {
       p2Hand.splice(action.cardIndex, 1);
@@ -640,7 +1323,90 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
     }
   }
 
-  // Recalculate lane powers
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // APPLY ONREVEAL ABILITIES (after both players placed cards)
+  // Order: Lower energy cost first, then alternating P1/P2 at same cost
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Count total cards played before this turn (for buffPerCardsPlayed abilities)
+  const p1TotalCardsPlayed = countCardsPlayed(lanes, "player1Cards");
+  const p2TotalCardsPlayed = countCardsPlayed(lanes, "player2Cards");
+
+  // Combine all cards played this turn with player info
+  const allCardsPlayed: { card: any; lane: number; player: 1 | 2 }[] = [
+    ...p1CardsPlayedThisTurn.map(c => ({ ...c, player: 1 as const })),
+    ...p2CardsPlayedThisTurn.map(c => ({ ...c, player: 2 as const })),
+  ];
+
+  // Sort by: Lane first (1, 2, 3), then DICE ROLL within each lane
+  // Each lane gets its own dice roll to decide P1 or P2 first
+  const laneDiceResults = [randomCoinFlip(), randomCoinFlip(), randomCoinFlip()]; // One dice per lane
+
+  allCardsPlayed.sort((a, b) => {
+    // First: sort by lane (Lane 1 → 2 → 3)
+    if (a.lane !== b.lane) return a.lane - b.lane;
+    // Same lane: use that lane's dice result
+    const p1First = laneDiceResults[a.lane];
+    if (a.player === b.player) return 0; // Same player, keep order
+    // Different players: dice decides
+    if (p1First) {
+      return a.player === 1 ? -1 : 1; // P1 first
+    } else {
+      return a.player === 2 ? -1 : 1; // P2 first
+    }
+  });
+
+  // Apply abilities in fair order (Lane 1 → 2 → 3, dice per lane)
+  for (const { card, lane, player } of allCardsPlayed) {
+    const isP1 = player === 1;
+    const myCards = isP1 ? "player1Cards" : "player2Cards";
+    const enemyCards = isP1 ? "player2Cards" : "player1Cards";
+    const myPower = isP1 ? "player1Power" : "player2Power";
+    const enemyPower = isP1 ? "player2Power" : "player1Power";
+    const hand = isP1 ? p1Hand : p2Hand;
+    const deck = isP1 ? p1DeckRemaining : p2DeckRemaining;
+    const totalPlayed = isP1 ? p1TotalCardsPlayed : p2TotalCardsPlayed;
+
+    const result = applyOnRevealAbility(
+      card, lane, lanes,
+      myCards, enemyCards,
+      myPower, enemyPower,
+      hand, deck,
+      gs.currentTurn, totalPlayed
+    );
+
+    // Apply bonus power to the card
+    const cardIdx = lanes[lane][myCards].findIndex((c: any) => c.cardId === card.cardId);
+    if (cardIdx >= 0 && result.bonusPower !== 0) {
+      lanes[lane][myCards][cardIdx] = {
+        ...lanes[lane][myCards][cardIdx],
+        power: Math.max(0, lanes[lane][myCards][cardIdx].power + result.bonusPower)
+      };
+    }
+
+    // Update hand/deck/lanes from ability
+    if (isP1) {
+      p1Hand = result.hand;
+      p1DeckRemaining = result.deck;
+    } else {
+      p2Hand = result.hand;
+      p2DeckRemaining = result.deck;
+    }
+    lanes = result.lanes;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // APPLY ONGOING ABILITIES (at end of each turn)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  lanes = applyOngoingAbilities(
+    lanes,
+    "player1Cards", "player2Cards",
+    "player1Power", "player2Power",
+    gs.currentTurn
+  );
+
+  // Recalculate lane powers (final)
   for (const lane of lanes) {
     lane.player1Power = calculateLanePower(lane.player1Cards);
     lane.player2Power = calculateLanePower(lane.player2Cards);
@@ -714,7 +1480,7 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
       // Update winner's aura (+50)
       const winnerProfile = await ctx.db
         .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", winnerId))
+        .withIndex("by_address", (q: any) => q.eq("address", winnerId))
         .first();
 
       if (winnerProfile) {
@@ -732,7 +1498,7 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
       if (loserId) {
         const loserProfile = await ctx.db
           .query("profiles")
-          .withIndex("by_address", (q) => q.eq("address", loserId))
+          .withIndex("by_address", (q: any) => q.eq("address", loserId))
           .first();
 
         if (loserProfile) {
@@ -872,7 +1638,7 @@ export const forfeitMatch = mutation({
     if (winnerId) {
       const winnerProfile = await ctx.db
         .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", winnerId))
+        .withIndex("by_address", (q: any) => q.eq("address", winnerId))
         .first();
 
       if (winnerProfile) {
@@ -890,7 +1656,7 @@ export const forfeitMatch = mutation({
     // Update forfeiter's aura (-40)
     const loserProfile = await ctx.db
       .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", loserId))
+      .withIndex("by_address", (q: any) => q.eq("address", loserId))
       .first();
 
     if (loserProfile) {
