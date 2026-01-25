@@ -101,6 +101,7 @@ const TCG_CONFIG = {
   DECK_SIZE: 15,
   MIN_VBMS: 8,
   MAX_NOTHING: 7,
+  MAX_VIBEFID: 1, // Only 1 VibeFID card allowed per deck
   TURN_TIME_SECONDS: 15,
   TOTAL_TURNS: 6,
   ABILITY_DELAY_MS: 600, // Delay between each ability animation
@@ -3166,6 +3167,13 @@ export default function TCGPage() {
 
       if (card.type === "nothing" && nothingCount >= TCG_CONFIG.MAX_NOTHING) {
         setError(`Max ${TCG_CONFIG.MAX_NOTHING} Nothing cards allowed`);
+        return;
+      }
+
+      // VibeFID limit: only 1 allowed per deck
+      const vibefidCount = selectedCards.filter((c: DeckCard) => c.type === "vibefid").length;
+      if (card.type === "vibefid" && vibefidCount >= TCG_CONFIG.MAX_VIBEFID) {
+        setError(`Max ${TCG_CONFIG.MAX_VIBEFID} VibeFID card allowed`);
         return;
       }
 
