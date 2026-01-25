@@ -309,7 +309,7 @@ export const adminRemoveBlacklistedDefenseDecks = internalMutation({
 
 // ========== SHAME BUTTON SYSTEM ==========
 
-const SHAME_REWARD = 100; // VBMS per shame click
+const SHAME_REWARD = 50; // was 100 (halved - Vibe Clash is main mode)
 const MAX_SHAMES_PER_PLAYER = 10; // Max shames a player can give total
 
 /**

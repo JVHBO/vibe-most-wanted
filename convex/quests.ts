@@ -24,69 +24,69 @@ function cryptoRandomInt(max: number): number {
   return randomBytes[0] % max;
 }
 
-// Quest pool with 10 different quest types
+// Quest pool with 10 different quest types (halved - Vibe Clash is main mode)
 const QUEST_POOL = [
   {
     type: "win_pve_3",
     description: "Win 3 PvE battles",
     requirement: { count: 3 },
-    reward: 150,
+    reward: 75,   // was 150
     difficulty: "easy",
   },
   {
     type: "win_pve_5",
     description: "Win 5 PvE battles",
     requirement: { count: 5 },
-    reward: 300,
+    reward: 150,  // was 300
     difficulty: "medium",
   },
   {
     type: "defeat_gangster",
     description: "Defeat Gangster difficulty AI",
     requirement: { count: 1, difficulty: "gangster" },
-    reward: 250,
+    reward: 125,  // was 250
     difficulty: "medium",
   },
   {
     type: "defeat_gigachad",
     description: "Defeat Gigachad difficulty AI",
     requirement: { count: 1, difficulty: "gigachad" },
-    reward: 500,
+    reward: 250,  // was 500
     difficulty: "hard",
   },
   {
     type: "play_pvp_3",
     description: "Play 3 PvP matches (win or lose)",
     requirement: { count: 3 },
-    reward: 200,
+    reward: 100,  // was 200
     difficulty: "medium",
   },
   {
     type: "win_pvp_3",
     description: "Win 3 PvP matches",
     requirement: { count: 3 },
-    reward: 400,
+    reward: 200,  // was 400
     difficulty: "hard",
   },
   {
     type: "win_streak_3",
     description: "Win 3 battles in a row",
     requirement: { count: 3 },
-    reward: 350,
+    reward: 175,  // was 350
     difficulty: "hard",
   },
   {
     type: "complete_5_battles",
     description: "Complete 5 battles (any mode)",
     requirement: { count: 5 },
-    reward: 250,
+    reward: 125,  // was 250
     difficulty: "easy",
   },
   {
     type: "perfect_day",
     description: "Win 2 PvE and 2 PvP battles",
     requirement: { count: 2 }, // 2 of each
-    reward: 600,
+    reward: 300,  // was 600
     difficulty: "hard",
   },
 ];
@@ -507,14 +507,14 @@ export const claimQuestReward = mutation({
 // 📅 WEEKLY QUESTS & REWARDS
 // ============================================================================
 
-// Weekly quest definitions (personal, reset every Sunday)
+// Weekly quest definitions (halved - Vibe Clash is main mode)
 const WEEKLY_QUESTS = {
   attackWins: {
     id: "weekly_attack_wins",
     name: "Attack Master",
     description: "Win 20 attacks",
     target: 20,
-    reward: 300, // Weekly attack wins reward
+    reward: 150, // was 300
     icon: "🏆",
   },
   totalMatches: {
@@ -522,7 +522,7 @@ const WEEKLY_QUESTS = {
     name: "Active Player",
     description: "Play 30 matches (any mode)",
     target: 30,
-    reward: 200,
+    reward: 100, // was 200
     icon: "🎲",
   },
   defenseWins: {
@@ -530,7 +530,7 @@ const WEEKLY_QUESTS = {
     name: "Fortress",
     description: "Defend successfully 10 times",
     target: 10,
-    reward: 400,
+    reward: 200, // was 400
     icon: "🛡️",
   },
   pveStreak: {
@@ -538,18 +538,17 @@ const WEEKLY_QUESTS = {
     name: "Unbeatable",
     description: "Win 10 PvE battles in a row",
     target: 10,
-    reward: 500,
+    reward: 250, // was 500
     icon: "🔥",
   },
 } as const;
 
-// 🏅 Weekly Leaderboard Rewards (APENAS TOP 10!)
+// 🏅 Weekly Leaderboard Rewards (halved - Vibe Clash is main mode)
 export const WEEKLY_LEADERBOARD_REWARDS = {
-  rank1: 1000,    // 1st place
-  rank2: 750,     // 2nd place
-  rank3: 500,     // 3rd place
-  rank4to10: 300, // 4th-10th place
-  // SEM top20 ou top50 - APENAS TOP 10!
+  rank1: 500,     // was 1000
+  rank2: 375,     // was 750
+  rank3: 250,     // was 500
+  rank4to10: 150, // was 300
 } as const;
 
 /**

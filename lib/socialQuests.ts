@@ -25,18 +25,17 @@ export const CHANNEL_IDS = {
   'fidmfers': 'fidmfers',
 } as const;
 
-// Social Quests Pool - REDUCED Jan 14 2026 (Sybil attack mitigation)
+// Social Quests Pool - HALVED Jan 25 2026 (Vibe Clash is main mode)
 // VibeFID holders get 2x rewards (checked in backend)
-// Removed: cumioh, history-of-computer, tarot, baseball-cabal
 export const SOCIAL_QUESTS: SocialQuest[] = [
-  // 🔔 SDK Actions (Notifications & Miniapp) - 500 VBMS each
+  // 🔔 SDK Actions (Notifications & Miniapp) - 250 VBMS each (halved)
   {
     id: 'enable_notifications',
     type: 'notification',
     target: '',
     displayName: '🔔 Enable Notifications',
     description: 'Get game updates & rewards',
-    reward: 500,
+    reward: 250, // was 500
     icon: '🔔',
     url: '',
   },
@@ -46,7 +45,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     target: '',
     displayName: '⭐ Add to Favorites',
     description: 'Add VBMS to your favorites',
-    reward: 500,
+    reward: 250, // was 500
     icon: '⭐',
     url: '',
   },
@@ -59,7 +58,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 214746,
     displayName: 'Follow @jvhbo',
     description: 'Follow $VBMS creator',
-    reward: 100,
+    reward: 50, // was 100
     icon: '',
     url: 'https://warpcast.com/jvhbo',
     collection: 'vibe-most-wanted',
@@ -70,7 +69,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     target: 'vibe-most-wanted',
     displayName: 'Join /vibemostwanted',
     description: 'Join the $VBMS channel',
-    reward: 200,
+    reward: 50, // was 100 // was 200
     icon: '',
     url: 'https://warpcast.com/~/channel/vibe-most-wanted',
     collection: 'vibe-most-wanted',
@@ -84,7 +83,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 1009776,
     displayName: 'Follow @betobutter',
     description: 'Follow Team Pothead creator',
-    reward: 100,
+    reward: 50, // was 100
     icon: '',
     url: 'https://warpcast.com/betobutter',
     collection: 'team-pothead',
@@ -98,7 +97,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 274150,
     displayName: 'Follow @jayabs',
     description: 'Follow GM VBRS creator',
-    reward: 100,
+    reward: 50, // was 100
     icon: '',
     url: 'https://warpcast.com/jayabs',
     collection: 'gm-vbrs',
@@ -112,7 +111,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 1076846,
     displayName: 'Follow @smolemaru',
     description: 'Follow Viberuto creator',
-    reward: 100,
+    reward: 50, // was 100
     icon: '',
     url: 'https://warpcast.com/smolemaru',
     collection: 'viberuto',
@@ -123,7 +122,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     target: 'fidmfers',
     displayName: 'Join /fidmfers',
     description: 'Join the FID Mfers channel',
-    reward: 200,
+    reward: 50, // was 100 // was 200
     icon: '',
     url: 'https://warpcast.com/~/channel/fidmfers',
   },
@@ -136,7 +135,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 439094,
     displayName: 'Follow @denkurhq',
     description: 'Follow Meowverse creator',
-    reward: 100,
+    reward: 50, // was 100
     icon: '',
     url: 'https://warpcast.com/denkurhq',
     collection: 'meowverse',
@@ -150,7 +149,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 16851,
     displayName: 'Follow @zazza',
     description: 'Follow Poorly Drawn Pepes creator',
-    reward: 100,
+    reward: 50, // was 100
     icon: '',
     url: 'https://warpcast.com/zazza',
     collection: 'poorly-drawn-pepes',
@@ -164,7 +163,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 1012281,
     displayName: 'Follow @bradenwolf',
     description: 'Follow Vibe FX creator',
-    reward: 100,
+    reward: 50, // was 100
     icon: '',
     url: 'https://warpcast.com/bradenwolf',
     collection: 'vibe-fx',
@@ -178,7 +177,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     targetFid: 1101604,
     displayName: 'Follow @zk420',
     description: 'Follow Vibe Rot Bangers creator',
-    reward: 100,
+    reward: 50, // was 100
     icon: '',
     url: 'https://warpcast.com/zk420',
     collection: 'viberotbangers',

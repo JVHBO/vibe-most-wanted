@@ -11,25 +11,24 @@ import { internal } from "./_generated/api";
 import { normalizeAddress } from "./utils";
 import { createAuditLog } from "./coinAudit";
 
-// Social Quest Rewards (must match lib/socialQuests.ts)
-// REDUCED Jan 14 2026 - Sybil attack mitigation
-// Removed collections no longer on site: cumioh, history-of-computer, tarot
+// Social Quest Rewards (halved - Vibe Clash is main mode)
+// Must match lib/socialQuests.ts
 const QUEST_REWARDS: Record<string, number> = {
-  // SDK Actions (notifications & miniapp - 500 VBMS each)
-  enable_notifications: 500,
-  add_miniapp: 500,
-  // Channels - 200 each
-  join_vibe_most_wanted: 200,
-  join_fidmfers: 200,
-  // Follows - 100 each (only active collections)
-  follow_jvhbo: 100,
-  follow_betobutter: 100,
-  follow_jayabs: 100,
-  follow_smolemaru: 100,
-  follow_denkurhq: 100,
-  follow_zazza: 100,
-  follow_bradenwolf: 100,
-  follow_viberotbangers_creator: 100,
+  // SDK Actions (notifications & miniapp)
+  enable_notifications: 250,  // was 500
+  add_miniapp: 250,           // was 500
+  // Channels
+  join_vibe_most_wanted: 100, // was 200
+  join_fidmfers: 100,         // was 200
+  // Follows
+  follow_jvhbo: 50,           // was 100
+  follow_betobutter: 50,      // was 100
+  follow_jayabs: 50,          // was 100
+  follow_smolemaru: 50,       // was 100
+  follow_denkurhq: 50,        // was 100
+  follow_zazza: 50,           // was 100
+  follow_bradenwolf: 50,      // was 100
+  follow_viberotbangers_creator: 50, // was 100
 };
 
 // VibeFID contract for 2x bonus check

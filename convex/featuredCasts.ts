@@ -70,9 +70,9 @@ export const removeFeaturedCast = internalMutation({
   },
 });
 
-// Cast interaction reward amount
-const CAST_INTERACTION_REWARD = 300; // 300 TESTVBMS per interaction
-const VIBE_BADGE_MULTIPLIER = 2; // 2x bonus for VIBE badge holders (300 -> 600)
+// Cast interaction reward amount (halved - Vibe Clash is main mode)
+const CAST_INTERACTION_REWARD = 150; // was 300
+const VIBE_BADGE_MULTIPLIER = 2; // 2x bonus for VIBE badge holders (150 -> 300)
 
 // Get cast interaction progress for a player
 export const getCastInteractionProgress = query({
