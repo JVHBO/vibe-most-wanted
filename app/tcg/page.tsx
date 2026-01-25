@@ -2785,11 +2785,15 @@ export default function TCGPage() {
     setError(null);
 
     try {
-      const result = await joinMatch({ roomId, address, username });
+      const result = await joinMatch({ roomId: roomId.toUpperCase(), address, username });
       setCurrentMatchId(result.matchId);
       setView("battle");
     } catch (err: any) {
-      setError(err.message || "Failed to join match");
+      // Extract Convex error message
+      const msg = err?.data?.message || err?.message || "Failed to join match";
+      // Clean up Convex error format
+      const cleanMsg = msg.replace(/^\[.*?\]\s*/, '').replace(/Uncaught Error:\s*/i, '');
+      setError(cleanMsg || "Room not found or match unavailable");
     }
   };
 
