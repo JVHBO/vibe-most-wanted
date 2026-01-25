@@ -105,14 +105,6 @@ const TCG_CONFIG = {
   TOTAL_TURNS: 6,
 };
 
-// Difficulty settings for PvE
-type Difficulty = "easy" | "normal" | "hard";
-const DIFFICULTY_CONFIG: Record<Difficulty, { cpuPowerMult: number; cpuFoilChance: number; label: string; emoji: string }> = {
-  easy: { cpuPowerMult: 0.6, cpuFoilChance: 0.1, label: "Easy", emoji: "🌱" },
-  normal: { cpuPowerMult: 1.0, cpuFoilChance: 0.35, label: "Normal", emoji: "⚔️" },
-  hard: { cpuPowerMult: 1.4, cpuFoilChance: 0.6, label: "Hard", emoji: "💀" },
-};
-
 const RARITY_COLORS: Record<string, string> = {
   Common: "border-gray-500 text-gray-400",
   Rare: "border-blue-500 text-blue-400",
@@ -712,7 +704,6 @@ export default function TCGPage() {
   // PvE state (local, no Convex)
   const [isPvE, setIsPvE] = useState(false);
   const [pveGameState, setPveGameState] = useState<PvEGameState | null>(null);
-  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
 
   // Turn timer state
   const [turnTimeRemaining, setTurnTimeRemaining] = useState(TCG_CONFIG.TURN_TIME_SECONDS);
@@ -1034,10 +1025,9 @@ export default function TCGPage() {
     }
   };
 
-  const generateCpuDeck = (playerDeck: DeckCard[], diff: Difficulty = "normal"): DeckCard[] => {
+  const generateCpuDeck = (playerDeck: DeckCard[]): DeckCard[] => {
     // CPU gets ALL 53 VMW cards with random foils!
     const allCards = tcgCardsData.cards || [];
-    const diffConfig = DIFFICULTY_CONFIG[diff];
 
     // Base power by rarity
     const rarityPower: Record<string, number> = {
@@ -1055,16 +1045,15 @@ export default function TCGPage() {
     };
 
     return allCards.map((card: any, i: number) => {
-      // Random foil based on difficulty
+      // Random foil: 10% Prize, 25% Standard, 65% None (balanced)
       const foilRoll = Math.random();
-      const foilThreshold = diffConfig.cpuFoilChance;
-      const foil = foilRoll < foilThreshold * 0.3 ? "Prize" : foilRoll < foilThreshold ? "Standard" : "None";
+      const foil = foilRoll < 0.1 ? "Prize" : foilRoll < 0.35 ? "Standard" : "None";
 
-      // Calculate power with foil multiplier and difficulty scaling
+      // Calculate power with foil multiplier (reduced for balance)
       const basePower = rarityPower[card.rarity] || 5;
       const foilMult = foil === "Prize" ? 3 : foil === "Standard" ? 1.5 : 1;
-      // Add some randomness: -5% to +10%, then apply difficulty multiplier
-      const power = Math.floor(basePower * foilMult * (0.95 + Math.random() * 0.15) * diffConfig.cpuPowerMult);
+      // Add some randomness: -5% to +10%
+      const power = Math.floor(basePower * foilMult * (0.95 + Math.random() * 0.15));
 
       // Build image path from baccarat folder
       const baccarat = card.baccarat?.toLowerCase() || card.onChainName?.toLowerCase();
@@ -1386,7 +1375,7 @@ export default function TCGPage() {
     }
 
     // CPU copies player's deck with power variations based on difficulty
-    const cpuDeck = generateCpuDeck(activeDeck.cards as DeckCard[], difficulty);
+    const cpuDeck = generateCpuDeck(activeDeck.cards as DeckCard[]);
     const gameState = initializePvEGame(activeDeck.cards as DeckCard[], cpuDeck);
 
     setIsPvE(true);
@@ -3278,25 +3267,6 @@ export default function TCGPage() {
                   </button>
                 ) : (
                   <>
-                    {/* Difficulty Selector */}
-                    <div className="flex gap-1 mb-2">
-                      {(Object.keys(DIFFICULTY_CONFIG) as Difficulty[]).map((diff) => (
-                        <button
-                          key={diff}
-                          onClick={() => setDifficulty(diff)}
-                          className={`flex-1 py-1.5 px-2 rounded text-xs font-bold transition-all ${
-                            difficulty === diff
-                              ? diff === "easy" ? "bg-green-600 text-white"
-                                : diff === "normal" ? "bg-yellow-600 text-white"
-                                : "bg-red-600 text-white"
-                              : "bg-black/30 text-gray-400 hover:bg-black/50"
-                          }`}
-                        >
-                          {DIFFICULTY_CONFIG[diff].emoji} {DIFFICULTY_CONFIG[diff].label}
-                        </button>
-                      ))}
-                    </div>
-
                     {/* PvE Button */}
                     <button
                       onClick={() => startPvEMatch()}
@@ -3305,7 +3275,7 @@ export default function TCGPage() {
                       <div className="absolute inset-0 bg-gradient-to-r from-green-600 via-emerald-500 to-green-600 opacity-80 group-hover:opacity-100 transition-opacity" />
                       <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
                       <span className="relative z-10 block py-3 px-4 text-white font-black text-sm uppercase tracking-[0.2em] drop-shadow-lg">
-                        {t('tcgBattleCpu')} {DIFFICULTY_CONFIG[difficulty].emoji}
+                        {t('tcgBattleCpu')}
                       </span>
                     </button>
 
@@ -4014,17 +3984,10 @@ export default function TCGPage() {
             </div>
 
             {/* Turn Indicator (center) */}
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full">
-                <span className="text-xs text-gray-400">{t('tcgTurn')}</span>
-                <span className="text-lg font-bold text-yellow-400">{gs.currentTurn}</span>
-                <span className="text-xs text-gray-500">/ {TCG_CONFIG.TOTAL_TURNS}</span>
-              </div>
-              <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                difficulty === "easy" ? "text-green-400" : difficulty === "hard" ? "text-red-400" : "text-yellow-400"
-              }`}>
-                {DIFFICULTY_CONFIG[difficulty].emoji} {DIFFICULTY_CONFIG[difficulty].label}
-              </span>
+            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full">
+              <span className="text-xs text-gray-400">{t('tcgTurn')}</span>
+              <span className="text-lg font-bold text-yellow-400">{gs.currentTurn}</span>
+              <span className="text-xs text-gray-500">/ {TCG_CONFIG.TOTAL_TURNS}</span>
             </div>
 
             {/* CPU Avatar (right) */}
