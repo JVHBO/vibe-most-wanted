@@ -46,7 +46,7 @@ interface GameAction {
 
 interface TCGAbility {
   name: string;
-  type: "onReveal" | "ongoing" | "onEnemySkip";
+  type: "onReveal" | "ongoing" | "active";
   description: string;
   effect: Record<string, any>;
   rarity: string;
@@ -459,7 +459,7 @@ const getComboSteal = (playerCards: DeckCard[]): number => {
 // SOUND EFFECTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "select" | "combo" | "error" | "tick") => {
+const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "select" | "combo" | "error" | "tick" | "buff" | "debuff" | "destroy" | "steal" | "draw" | "energy" | "shuffle" | "heal" | "shield" | "bomb") => {
   if (typeof window === "undefined") return;
 
   const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
@@ -507,7 +507,7 @@ const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "s
       break;
 
     case "ability":
-      // Ability trigger: magical sparkle
+      // Generic ability: magical sparkle (fallback)
       oscillator.type = "sine";
       oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
       oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
@@ -517,6 +517,172 @@ const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "s
       oscillator.start(audioCtx.currentTime);
       oscillator.stop(audioCtx.currentTime + 0.2);
       break;
+
+    case "buff":
+      // Buff: ascending sparkle (positive power up)
+      const playBuffNote = (freq: number, delay: number) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.1);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + 0.1);
+      };
+      playBuffNote(523, 0);     // C5
+      playBuffNote(659, 0.06);  // E5
+      playBuffNote(784, 0.12);  // G5
+      return;
+
+    case "debuff":
+      // Debuff: descending dark tone (damage/weaken)
+      oscillator.type = "sawtooth";
+      oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.25);
+      break;
+
+    case "destroy":
+      // Destroy: explosive boom
+      const playBoom = (freq: number, delay: number, dur: number) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + delay + dur);
+        gain.gain.setValueAtTime(0.4, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + dur);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + dur);
+      };
+      playBoom(150, 0, 0.3);
+      playBoom(100, 0.05, 0.25);
+      return;
+
+    case "steal":
+      // Steal: quick swoosh grab
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
+      oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.15);
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.2);
+      break;
+
+    case "draw":
+      // Draw: card shuffle/flip
+      const playFlip = (delay: number) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(1200, audioCtx.currentTime + delay);
+        osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + delay + 0.05);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.08);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + 0.08);
+      };
+      playFlip(0);
+      playFlip(0.08);
+      return;
+
+    case "energy":
+      // Energy: power charging hum
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.2);
+      oscillator.frequency.setValueAtTime(400, audioCtx.currentTime + 0.25);
+      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime + 0.15);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.3);
+      break;
+
+    case "shuffle":
+      // Shuffle: chaos/randomize
+      const playShuffle = (freq: number, delay: number) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = "square";
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        osc.frequency.setValueAtTime(freq * 0.7, audioCtx.currentTime + delay + 0.03);
+        osc.frequency.setValueAtTime(freq * 1.2, audioCtx.currentTime + delay + 0.06);
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.1);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + 0.1);
+      };
+      playShuffle(400, 0);
+      playShuffle(600, 0.08);
+      playShuffle(300, 0.16);
+      return;
+
+    case "shield":
+      // Shield: protective hum
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+      oscillator.frequency.setValueAtTime(350, audioCtx.currentTime + 0.1);
+      oscillator.frequency.setValueAtTime(300, audioCtx.currentTime + 0.2);
+      gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.3);
+      break;
+
+    case "bomb":
+      // Bomb: ticking then boom
+      const playTick2 = (delay: number) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(1000, audioCtx.currentTime + delay);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.05);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + 0.05);
+      };
+      playTick2(0);
+      playTick2(0.1);
+      playTick2(0.2);
+      // Final boom
+      setTimeout(() => playSound("destroy"), 250);
+      return;
+
+    case "heal":
+      // Heal: gentle ascending chime
+      const playHeal = (freq: number, delay: number) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime + delay);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.15);
+        osc.start(audioCtx.currentTime + delay);
+        osc.stop(audioCtx.currentTime + delay + 0.15);
+      };
+      playHeal(880, 0);
+      playHeal(1047, 0.1);
+      playHeal(1319, 0.2);
+      return;
 
     case "victory":
       // Victory: triumphant ascending notes
@@ -1008,18 +1174,19 @@ export default function TCGPage() {
     return Math.max(0, Math.floor(baseCost * (1 - foilEffect.energyDiscount)));
   };
 
-  // Get ability type color - only On Reveal (blue) and Ongoing (green)
+  // Get ability type color
   const getAbilityTypeColor = (type: string): string => {
     if (type === "ongoing") return "text-green-400";
-    return "text-blue-400"; // onReveal, onEnemySkip, and all others
+    if (type === "active") return "text-pink-400";
+    return "text-blue-400"; // onReveal
   };
 
-  // Get ability type label - only On Reveal and Ongoing
+  // Get ability type label
   const getAbilityTypeLabel = (type: string): string => {
     switch (type) {
       case "ongoing": return t('tcgOngoing');
+      case "active": return "Active";
       case "onReveal":
-      case "onEnemySkip":
       default:
         return t('tcgOnReveal');
     }
@@ -1348,12 +1515,7 @@ export default function TCGPage() {
     // Add +2 energy
     const newEnergy = (pveGameState.energy || 1) + 2;
 
-    playSound("ability");
-    setVisualEffect({
-      type: "buff",
-      text: "SACRIFICED! +2 ENERGY",
-      emoji: "⚡"
-    });
+    playSound("energy");
 
     setPveGameState({
       ...pveGameState,
@@ -2206,13 +2368,7 @@ export default function TCGPage() {
     let newDeck = [...pveGameState.playerDeckRemaining];
     if (foilEffect?.isFree && newDeck.length > 0) {
       newHand.push(newDeck.shift()!);
-      // Show special Prize foil visual effect
-      setVisualEffect({
-        type: "prize",
-        laneIndex: laneIndex,
-        text: "PRIZE FOIL! FREE + DRAW",
-      });
-      setTimeout(() => setVisualEffect(null), 2000);
+      playSound("draw"); // Prize foil sound feedback
     }
 
     // Add card to lane (with base power)
@@ -2239,60 +2395,77 @@ export default function TCGPage() {
     newLanes = abilityResult.lanes;
     newHand = abilityResult.playerHand;
 
-    // Get ability and trigger card animations (no overlay!)
+    // Get ability and trigger card animations with specific sounds
     const ability = getCardAbility(card.name, card);
     if (ability?.type === "onReveal") {
-      playSound("ability");
       const action = ability.effect?.action;
 
-      // Animate based on ability type
+      // Play ability-specific sound and animate based on action type
       if (action === "debuffLane" || action === "debuffRandomEnemy" || action === "debuffStrongest") {
-        // Shake enemy cards and show power loss
+        playSound("debuff");
         const enemies = newLanes[laneIndex].cpuCards || [];
         triggerLaneAnimation(laneIndex, "cpu", "shake", enemies);
         enemies.forEach((_: any, idx: number) => {
           setTimeout(() => triggerCardAnimation(laneIndex, "cpu", idx, "glow-red", -(ability.effect?.value || 0)), idx * 100);
         });
-      } else if (action === "buffAllLanes" || action === "buffLane" || action === "buffAdjacent") {
-        // Glow green for all player cards
+      } else if (action === "buffAllLanes" || action === "buffLane" || action === "buffAdjacent" || action === "buffByRarity" || action === "buffOtherLanes" || action === "buffWeakest" || action === "buffLastPlayed") {
+        playSound("buff");
         newLanes.forEach((lane: any, lidx: number) => {
           triggerLaneAnimation(lidx, "player", "glow-green", lane.playerCards, ability.effect?.value || 0);
         });
-      } else if (action === "shuffleAllLanes") {
-        // Spin all cards in all lanes
+      } else if (action === "shuffleEnemyLanes" || action === "shuffleAllLanes") {
+        playSound("shuffle");
         newLanes.forEach((lane: any, lidx: number) => {
           triggerLaneAnimation(lidx, "cpu", "spin", lane.cpuCards);
-          triggerLaneAnimation(lidx, "player", "spin", lane.playerCards);
         });
-      } else if (action === "destroyHighestEnemy") {
-        // Slide out the destroyed card
+      } else if (action === "destroyHighestEnemy" || action === "sacrificeBuffAll" || action === "timeBomb") {
+        playSound("destroy");
         const enemies = newLanes[laneIndex].cpuCards || [];
         if (enemies.length > 0) {
           triggerCardAnimation(laneIndex, "cpu", 0, "slide-out");
         }
-      } else if (action === "stealPower" || action === "copyHighest") {
-        // Shake enemies and glow player card
+      } else if (action === "stealPower" || action === "stealWeakest" || action === "stealStrongest" || action === "copyHighest" || action === "copyAbility") {
+        playSound("steal");
         triggerLaneAnimation(laneIndex, "cpu", "shake", newLanes[laneIndex].cpuCards || []);
         const playerIdx = newLanes[laneIndex].playerCards.length - 1;
         triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", ability.effect?.value || 0);
-      } else if (action === "buffSelf" || action === "buffPerCardInLane" || action === "buffPerFriendly") {
-        // Glow the played card
+      } else if (action === "draw" || action === "addCopyToHand" || action === "forceDiscardAndDraw") {
+        playSound("draw");
+        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
+        triggerCardAnimation(laneIndex, "player", playerIdx, "pulse");
+      } else if (action === "consumeEnergyForPower" || action === "energyPerTurn" || action === "reduceEnergyCost") {
+        playSound("energy");
+        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
+        triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower);
+      } else if (action === "gamble") {
+        playSound(abilityResult.bonusPower > 0 ? "buff" : "debuff");
+        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
+        triggerCardAnimation(laneIndex, "player", playerIdx, abilityResult.bonusPower > 0 ? "glow-green" : "glow-red", abilityResult.bonusPower);
+      } else if (action === "untargetable" || action === "immuneToDebuff") {
+        playSound("shield");
+        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
+        triggerCardAnimation(laneIndex, "player", playerIdx, "pulse");
+      } else if (action === "buffSelf" || action === "buffPerCardInLane" || action === "buffPerFriendly" || action === "buffPerCardsPlayed" || action === "buffPerHandSize" || action === "buffIfTurn" || action === "buffIfFirst" || action === "buffIfHandSize" || action === "buffPerRarity" || action === "buffIfFewerCards") {
+        playSound("buff");
         const playerIdx = newLanes[laneIndex].playerCards.length - 1;
         triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", ability.effect?.value || 0);
       } else if (action === "vibefidFirstCast") {
-        // VibeFID Common: Glow green showing accumulated power
+        playSound("buff");
         const playerIdx = newLanes[laneIndex].playerCards.length - 1;
         triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower);
       } else if (action === "vibefidRatio") {
-        // VibeFID Legendary: Pulse effect then massive glow
+        playSound("buff");
         const playerIdx = newLanes[laneIndex].playerCards.length - 1;
         triggerCardAnimation(laneIndex, "player", playerIdx, "pulse");
         setTimeout(() => triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower), 300);
       } else if (action === "vibefidDoxxed") {
-        // VibeFID Mythic: Shake all enemies in lane, massive glow on self
+        playSound("destroy");
         triggerLaneAnimation(laneIndex, "cpu", "shake", newLanes[laneIndex].cpuCards || []);
         const playerIdx = newLanes[laneIndex].playerCards.length - 1;
         setTimeout(() => triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower), 300);
+      } else {
+        // Fallback for any unhandled ability
+        playSound("ability");
       }
     }
 
@@ -2552,14 +2725,6 @@ export default function TCGPage() {
 
     playSound("card"); // Same sound as playing
 
-    setVisualEffect({
-      type: "buff",
-      laneIndex,
-      text: "⬅ RETURNED",
-      emoji: "↩️"
-    });
-    setTimeout(() => setVisualEffect(null), 1000);
-
     setPveGameState({
       ...pveGameState,
       lanes: recalculatedLanes,
@@ -2627,14 +2792,8 @@ export default function TCGPage() {
             newLanes[li].playerCards.push(stolenCard);
             newLanes[li].playerPower += stolenCard.power;
 
-            // Show visual effect
-            setVisualEffect({
-              type: "steal",
-              laneIndex: li,
-              text: `STOLEN! ${stolenCard.name}`,
-              emoji: "🖐️"
-            });
-            playSound("ability");
+            // Play steal sound
+            playSound("steal");
           }
           break; // Only trigger once per turn
         }
@@ -2744,12 +2903,7 @@ export default function TCGPage() {
     let bonusEnergy = 0;
     if (playerSkipped) {
       bonusEnergy = 2;
-      setVisualEffect({
-        type: "buff",
-        text: "SKIP BONUS! +2 ENERGY",
-        emoji: "⚡"
-      });
-      setTimeout(() => setVisualEffect(null), 1500);
+      playSound("energy"); // Sound feedback for skip bonus
     }
 
     setPveGameState({
@@ -3889,21 +4043,6 @@ export default function TCGPage() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-        )}
-
-        {/* Simple Action Toast - Small notification at top, no emoji spam */}
-        {visualEffect && visualEffect.text && (
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
-            <div className={`px-4 py-2 rounded-lg text-sm font-bold shadow-lg animate-bounce ${
-              visualEffect.type === "buff" || visualEffect.type === "draw" || visualEffect.type === "prize"
-                ? "bg-green-600 text-white"
-                : visualEffect.type === "debuff" || visualEffect.type === "destroy" || visualEffect.type === "explosion"
-                ? "bg-red-600 text-white"
-                : "bg-purple-600 text-white"
-            }`}>
-              {visualEffect.text}
             </div>
           </div>
         )}
