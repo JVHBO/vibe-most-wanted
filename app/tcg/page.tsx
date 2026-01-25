@@ -3892,12 +3892,52 @@ export default function TCGPage() {
       card.collection === "vibe" || card.collection === "nothing" || card.collection === "vibefid"
     );
 
+    // Helper: Build baccarat image URL for VBMS cards
+    const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
+      if (!cardName) return null;
+      const nameLower = cardName.toLowerCase();
+      const allCards = tcgCardsData.cards || [];
+      const aliases = (tcgCardsData as any).aliases || {};
+
+      // Find card by onChainName or baccarat name
+      const cardData = allCards.find((c: any) =>
+        c.onChainName?.toLowerCase() === nameLower ||
+        c.baccarat?.toLowerCase() === nameLower
+      );
+
+      if (!cardData || !cardData.suit || !cardData.rank) return null;
+
+      // Get baccarat name (use alias if exists, or baccarat field, or onChainName)
+      const baccaratName = aliases[cardData.onChainName] || cardData.baccarat?.toLowerCase() || cardData.onChainName?.toLowerCase();
+
+      // Special case for neymar (joker)
+      if (baccaratName === "neymar" || cardData.rank?.includes("?")) {
+        return "/images/baccarat/joker, neymar.png";
+      }
+
+      // Build rank name
+      const rankMap: Record<string, string> = {
+        'A': 'ace', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
+        '7': '7', '8': '8', '9': '9', '10': '10', 'J': 'jack', 'Q': 'queen', 'K': 'king'
+      };
+      const rankName = rankMap[cardData.rank] || cardData.rank;
+
+      return `/images/baccarat/${rankName} ${cardData.suit}, ${baccaratName}.png`;
+    };
+
     const availableCards: DeckCard[] = tcgEligibleCards.map((card: any) => {
-      // Use imageUrl directly - CardMedia component handles video vs image automatically
-      const imageUrl = card.imageUrl || card.image || "/images/card-back.png";
-      const characterFromImage = getCharacterFromImage(imageUrl);
+      const characterFromImage = getCharacterFromImage(card.imageUrl || card.image || "");
       const isVibeFID = card.collection === "vibefid";
+      const isVbms = card.collection === "vibe";
       const cardName = card.character || characterFromImage || card.name || (isVibeFID ? card.displayName || card.username : undefined);
+
+      // For VBMS cards, use baccarat PNG images for consistency with CPU cards
+      let imageUrl: string;
+      if (isVbms && cardName) {
+        imageUrl = getVbmsBaccaratImageUrl(cardName) || card.imageUrl || card.image || "/images/card-back.png";
+      } else {
+        imageUrl = card.imageUrl || card.image || "/images/card-back.png";
+      }
 
       return {
         type: card.collection === "nothing" ? "nothing" : card.collection === "vibefid" ? "vibefid" : "vbms",
