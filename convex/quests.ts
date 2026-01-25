@@ -543,12 +543,12 @@ const WEEKLY_QUESTS = {
   },
 } as const;
 
-// 🏅 Weekly Leaderboard Rewards (halved - Vibe Clash is main mode)
+// 🏅 Weekly Leaderboard Rewards (4x - Vibe Clash is main competitive mode)
 export const WEEKLY_LEADERBOARD_REWARDS = {
-  rank1: 500,     // was 1000
-  rank2: 375,     // was 750
-  rank3: 250,     // was 500
-  rank4to10: 150, // was 300
+  rank1: 2000,    // Top 1 aura
+  rank2: 1500,    // Top 2 aura
+  rank3: 1000,    // Top 3 aura
+  rank4to10: 600, // Top 4-10 aura
 } as const;
 
 /**
