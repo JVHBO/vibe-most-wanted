@@ -74,6 +74,24 @@ export const IPFS_ASSETS: Record<string, string> = {
   "/images/raid-bosses/cumioh/legendary.png": "https://ipfs.filebase.io/ipfs/QmPvrvwVY4rMD3QKxPQKpXJvKN3LqmJdCQwN5NzYPNKqFZ",
   "/images/raid-bosses/cumioh/mythic.png": "https://ipfs.filebase.io/ipfs/QmS6JQqFWT33ZPdXqJzVqEPzPQJPqNQqJRzPqLKQLbqPMQ",
 
+  "/images/raid-bosses/viberuto/common.png": "https://ipfs.filebase.io/ipfs/QmWkg6AsYRb6cGmgJbGes32qv9fVGntwvPRzBhGbnqVdFj",
+  "/images/raid-bosses/viberuto/rare.png": "https://ipfs.filebase.io/ipfs/QmXgZevDqJe5p2o1oTqtydwrtXC4REsKagLoeaeVmLwEkv",
+  "/images/raid-bosses/viberuto/epic.png": "https://ipfs.filebase.io/ipfs/QmbQDEv7mhwrRLkeTkuFn6FjYE9nKtSDFWegJfXahz7GDe",
+  "/images/raid-bosses/viberuto/legendary.png": "https://ipfs.filebase.io/ipfs/QmaoNneFeB9a7MNaQnoyQmWszXsqXEPcWwu4MTXmNz4fUs",
+  "/images/raid-bosses/viberuto/mythic.png": "https://ipfs.filebase.io/ipfs/QmfKUuDopEE3b5vMqUwxwczEAh2zvz1GZqwAa5qrZPrgvE",
+
+  "/images/raid-bosses/meowverse/common.png": "https://ipfs.filebase.io/ipfs/QmW3gDwThrSWPKmgAHCY9jMUjY14rLvPKH3fvy5bqwtqzb",
+  "/images/raid-bosses/meowverse/rare.png": "https://ipfs.filebase.io/ipfs/QmNerCWmQGTemKpqkDvvHavDmLZTtsS394xci8Bjy2biTX",
+  "/images/raid-bosses/meowverse/epic.png": "https://ipfs.filebase.io/ipfs/QmV4AyUvr9ZwdJt9cc6w3wzaB8mds2hYP2d2PEGxrM8Ddr",
+  "/images/raid-bosses/meowverse/legendary.png": "https://ipfs.filebase.io/ipfs/QmRPSutRpGwMvkM9tmEZTbeFAZCRa5GQU92eA3UTio411c",
+  "/images/raid-bosses/meowverse/mythic.png": "https://ipfs.filebase.io/ipfs/QmX14J8Sw6Yj1ZRL9RFBZRTWCxBrFRKf3uSvY7spo9muXm",
+
+  "/images/raid-bosses/viberotbangers/common.png": "https://ipfs.filebase.io/ipfs/QmfYEPUPjnpdjqctxknbi7PxEFoKaf32kT1mgjGjVxs6vV",
+  "/images/raid-bosses/viberotbangers/rare.png": "https://ipfs.filebase.io/ipfs/QmV4GqNy67siggs42itjokybfj8J4ymzZMf25XAtkBkoq8",
+  "/images/raid-bosses/viberotbangers/epic.png": "https://ipfs.filebase.io/ipfs/QmTQ3wBFeUkE3KQH16SNnzyBopBabiBikt6xrmduUkn1R7",
+  "/images/raid-bosses/viberotbangers/legendary.png": "https://ipfs.filebase.io/ipfs/QmbQoe1HezLWBEQx9rfpeZtbVTpiVk1KdfqLpVNRKXCUkZ",
+  "/images/raid-bosses/viberotbangers/mythic.png": "https://ipfs.filebase.io/ipfs/QmS8MHDG2DEoR1cSTwAKDKT9ojDrZkXZTtZr9UEDw9iaYb",
+
   // Card backs and misc
   "/card-back.png": "https://ipfs.filebase.io/ipfs/QmZrRir8uDx3jKrx6hfDFhRJXmxXaU3rfQJAbTqqk9Bod5",
   "/pack-closed.png": "https://ipfs.filebase.io/ipfs/QmP7Q6Sz8p8eEuF8nYS2MX1CdTCe6jQpBy81iQtvQDCJRn",
