@@ -1361,7 +1361,7 @@ export default function BaccaratPage() {
                 ) : lossMedia.isVideo ? (
                   // Loss video
                   <video
-                    src={lossMedia.media}
+                    src={lossMedia.media.startsWith("http") ? lossMedia.media : getAssetUrl(lossMedia.media)}
                     autoPlay
                     loop
                     muted={!soundEnabled}
@@ -1371,7 +1371,7 @@ export default function BaccaratPage() {
                 ) : (
                   // Loss image
                   <img
-                    src={lossMedia.media}
+                    src={lossMedia.media.startsWith("http") ? lossMedia.media : getAssetUrl(lossMedia.media)}
                     alt="Loss"
                     className="max-w-[85vw] max-h-[40vh] object-contain rounded-xl shadow-2xl shadow-red-500/50 border-2 border-red-500"
                   />
