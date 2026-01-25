@@ -186,10 +186,10 @@
     },
 
     "smolemaru": {
-      "name": "Creative Spark",
+      "name": "🎨 Creative Spark",
       "type": "onReveal",
-      "description": "+8 power for each card you've played this game",
-      "effect": { "action": "buffPerCardsPlayed", "value": 8 },
+      "description": "+8 power per card played. COMBO: If BRADYMCK in play, BOTH gain +5 per friendly!",
+      "effect": { "action": "buffPerCardsPlayed", "value": 8, "combo": { "partner": "bradymck", "bonusAction": "bothBuffPerFriendly", "bonusValue": 5 } },
       "rarity": "Rare"
     },
     "ventra": {
@@ -200,24 +200,24 @@
       "rarity": "Rare"
     },
     "bradymck": {
-      "name": "Community Builder",
+      "name": "🤝 Community Builder",
       "type": "onReveal",
-      "description": "+12 power for each other friendly card",
-      "effect": { "action": "buffPerFriendly", "value": 12 },
+      "description": "+12 power per friendly. COMBO: If SMOLEMARU in play, BOTH gain +5 per friendly!",
+      "effect": { "action": "buffPerFriendly", "value": 12, "combo": { "partner": "smolemaru", "bonusAction": "bothBuffPerFriendly", "bonusValue": 5 } },
       "rarity": "Rare"
     },
     "shills": {
-      "name": "Shill Campaign",
+      "name": "📢 Shill Campaign",
       "type": "onReveal",
-      "description": "+20 power to the weakest friendly card",
+      "description": "HYPE: +20 power to the weakest friendly card!",
       "effect": { "action": "buffWeakest", "value": 20 },
       "rarity": "Rare"
     },
     "betobutter": {
-      "name": "Butter Smooth",
+      "name": "🧈 Butter Smooth",
       "type": "ongoing",
-      "description": "+6 power for each turn passed",
-      "effect": { "action": "buffPerTurn", "value": 6 },
+      "description": "+6 power/turn. COMBO: If MORLACOS in play, BOTH get DOUBLE scaling!",
+      "effect": { "action": "buffPerTurn", "value": 6, "combo": { "partner": "morlacos", "bonusAction": "doubleScaling" } },
       "rarity": "Rare"
     },
     "qrcodo": {
@@ -245,7 +245,7 @@
     "rachel": {
       "name": "💕 Energy Heart",
       "type": "ongoing",
-      "description": "Generate +1 ENERGY each turn while in lane!",
+      "description": "+1 ENERGY each turn! More cards, more plays!",
       "effect": { "action": "energyPerTurn", "value": 1 },
       "rarity": "Common"
     },
@@ -257,10 +257,10 @@
       "rarity": "Common"
     },
     "gozaru": {
-      "name": "Steady Growth",
-      "type": "onReveal",
-      "description": "+12 power to another card here",
-      "effect": { "action": "buffOtherInLane", "value": 12 },
+      "name": "🌱 Steady Growth",
+      "type": "ongoing",
+      "description": "GROWTH: +3 power to ALL allies in this lane at END of each turn!",
+      "effect": { "action": "buffLaneEndTurn", "value": 3 },
       "rarity": "Common"
     },
     "ink": {
@@ -271,17 +271,17 @@
       "rarity": "Common"
     },
     "casa": {
-      "name": "Home Advantage",
+      "name": "🏠 Home Advantage",
       "type": "ongoing",
-      "description": "+12 power if played first in this lane",
+      "description": "FIRST: +12 power if you played first in this lane!",
       "effect": { "action": "buffIfFirst", "value": 12 },
       "rarity": "Common"
     },
     "groko": {
-      "name": "AI Learning",
+      "name": "🤖 AI Learning",
       "type": "onReveal",
-      "description": "+5 power for each Common card you have",
-      "effect": { "action": "buffPerRarity", "targetRarity": "Common", "value": 5 },
+      "description": "+5 power per Common card. COMBO: If LINUX in play, ALL Commons gain +5 power/turn!",
+      "effect": { "action": "buffPerRarity", "targetRarity": "Common", "value": 5, "combo": { "partner": "linux", "bonusAction": "commonsScalePerTurn", "scaleValue": 5 } },
       "rarity": "Common"
     },
     "rizkybegitu": {
@@ -294,36 +294,36 @@
     "thosmur": {
       "name": "⚡ Energy Burst",
       "type": "onReveal",
-      "description": "CONSUME all remaining energy for +5 power EACH!",
+      "description": "ALL IN: Consume ALL remaining energy for +5 power EACH! Save energy, then burst!",
       "effect": { "action": "consumeEnergyForPower", "powerPerEnergy": 5 },
       "rarity": "Common"
     },
     "brainpasta": {
-      "name": "Brain Boost",
+      "name": "🧠 Brain Boost",
       "type": "onReveal",
-      "description": "+15 power if you have 3+ cards in hand",
+      "description": "SMART: +15 power if you have 3+ cards in hand!",
       "effect": { "action": "buffIfHandSize", "minCards": 3, "value": 15 },
       "rarity": "Common"
     },
     "gaypt": {
-      "name": "AI Generated",
+      "name": "🎭 AI Generated",
       "type": "onReveal",
-      "description": "Copy +10 power from the card to your left",
+      "description": "MIMIC: Copy +10 power from the card to your left!",
       "effect": { "action": "copyPowerLeft", "value": 10 },
       "rarity": "Common"
     },
     "dan romero": {
-      "name": "Too Cute",
+      "name": "🥺 Too Cute",
       "type": "ongoing",
-      "description": "Enemies deal -8 power to this lane",
+      "description": "ADORABLE: Enemies deal -8 power in this lane!",
       "effect": { "action": "reduceEnemyPower", "value": -8 },
       "rarity": "Common"
     },
     "morlacos": {
       "name": "💪 Never Give Up",
       "type": "ongoing",
-      "description": "+8 power EACH turn! Gets stronger over time!",
-      "effect": { "action": "buffPerTurn", "value": 8 },
+      "description": "+8 power/turn. COMBO: If BETOBUTTER in play, BOTH get DOUBLE scaling!",
+      "effect": { "action": "buffPerTurn", "value": 8, "combo": { "partner": "betobutter", "bonusAction": "doubleScaling" } },
       "rarity": "Common"
     },
     "landmine": {
@@ -336,8 +336,8 @@
     "linux": {
       "name": "🐧 Open Source",
       "type": "onReveal",
-      "description": "COMMUNITY: +8 power to ALL your Common cards!",
-      "effect": { "action": "buffByRarity", "targetRarity": "Common", "value": 8 },
+      "description": "+8 power to ALL Commons. COMBO: If GROKO in play, ALL Commons gain +5 power/turn!",
+      "effect": { "action": "buffByRarity", "targetRarity": "Common", "value": 8, "combo": { "partner": "groko", "bonusAction": "commonsScalePerTurn", "scaleValue": 5 } },
       "rarity": "Common"
     },
     "joonx": {
@@ -348,30 +348,30 @@
       "rarity": "Common"
     },
     "don filthy": {
-      "name": "Dirty Tactics",
+      "name": "🗑️ Dirty Tactics",
       "type": "onReveal",
-      "description": "-12 power to the strongest enemy",
-      "effect": { "action": "debuffStrongest", "value": -12 },
+      "description": "SABOTAGE: -12 power to strongest enemy + they can't gain power next turn!",
+      "effect": { "action": "debuffStrongest", "value": -12, "lockPowerGain": true },
       "rarity": "Common"
     },
     "pooster": {
-      "name": "Post Boost",
+      "name": "📮 Post Boost",
       "type": "onReveal",
-      "description": "+12 power to last card played",
-      "effect": { "action": "buffLastPlayed", "value": 12 },
+      "description": "VIRAL: +12 power to last card played. If it's Rare+, +20 instead!",
+      "effect": { "action": "buffLastPlayed", "value": 12, "rareBonus": 20 },
       "rarity": "Common"
     },
     "john porn": {
       "name": "😈 Distraction",
       "type": "onReveal",
-      "description": "STEAL the strongest enemy card to your side!",
-      "effect": { "action": "stealStrongest" },
+      "description": "DISTRACT: -15 power to ALL enemy cards in this lane! They can't focus!",
+      "effect": { "action": "debuffLane", "value": -15 },
       "rarity": "Common"
     },
     "scum": {
-      "name": "Scummy Move",
+      "name": "🦹 Scummy Move",
       "type": "onReveal",
-      "description": "Steal +12 power from enemy here",
+      "description": "DRAIN: Steal +12 power from an enemy here!",
       "effect": { "action": "stealPower", "value": 12 },
       "rarity": "Common"
     },
