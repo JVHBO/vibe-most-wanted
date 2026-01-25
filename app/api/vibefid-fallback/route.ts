@@ -82,6 +82,10 @@ export async function GET(request: NextRequest) {
       ownedNfts: nfts,
       totalCount: nfts.length,
       source: 'convex-fallback',
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+      },
     });
 
   } catch (error: any) {
