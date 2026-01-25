@@ -99,8 +99,8 @@ const tcgAbilities: Record<string, TCGAbility> = tcgAbilitiesData.abilities as R
 
 const TCG_CONFIG = {
   DECK_SIZE: 15,
-  MIN_VBMS: 8,
-  MAX_NOTHING: 7,
+  MIN_VBMS_OR_VIBEFID: 6, // Minimum 6 VBMS cards, or 5 VBMS + 1 VibeFID
+  MAX_NOTHING: 9, // 15 - 6 = max 9 Nothing cards
   MAX_VIBEFID: 1, // Only 1 VibeFID card allowed per deck
   TURN_TIME_SECONDS: 15,
   TOTAL_TURNS: 6,
@@ -3843,6 +3843,8 @@ export default function TCGPage() {
     const nothingCards = availableCards.filter((c: DeckCard) => c.type === "nothing");
 
     const selectedVbms = selectedCards.filter((c: DeckCard) => c.type === "vbms").length;
+    const selectedVibefid = selectedCards.filter((c: DeckCard) => c.type === "vibefid").length;
+    const selectedVbmsOrVibefid = selectedVbms + selectedVibefid;
     const selectedNothing = selectedCards.filter((c: DeckCard) => c.type === "nothing").length;
     const totalPower = selectedCards.reduce((sum, c) => {
       const power = c.type === "nothing" ? Math.floor(c.power * 0.5) : c.power;
@@ -3851,7 +3853,7 @@ export default function TCGPage() {
 
     const canSave =
       selectedCards.length === TCG_CONFIG.DECK_SIZE &&
-      selectedVbms >= TCG_CONFIG.MIN_VBMS;
+      selectedVbmsOrVibefid >= TCG_CONFIG.MIN_VBMS_OR_VIBEFID;
 
     return (
       <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
@@ -3927,9 +3929,14 @@ export default function TCGPage() {
                 <div className={`px-2 py-1 rounded ${selectedCards.length === TCG_CONFIG.DECK_SIZE ? "bg-green-900/30 border border-green-500/30 text-green-400" : "bg-black/30 border border-vintage-gold/10 text-vintage-burnt-gold"}`}>
                   {selectedCards.length}/{TCG_CONFIG.DECK_SIZE}
                 </div>
-                <div className={`px-2 py-1 rounded ${selectedVbms >= TCG_CONFIG.MIN_VBMS ? "bg-green-900/30 border border-green-500/30 text-green-400" : "bg-red-900/30 border border-red-500/30 text-red-400"}`}>
-                  {selectedVbms} VBMS
+                <div className={`px-2 py-1 rounded ${selectedVbmsOrVibefid >= TCG_CONFIG.MIN_VBMS_OR_VIBEFID ? "bg-green-900/30 border border-green-500/30 text-green-400" : "bg-red-900/30 border border-red-500/30 text-red-400"}`}>
+                  {selectedVbmsOrVibefid}/{TCG_CONFIG.MIN_VBMS_OR_VIBEFID} VBMS{selectedVibefid > 0 ? `+FID` : ""}
                 </div>
+                {selectedVibefid > 0 && (
+                  <div className="px-2 py-1 rounded bg-cyan-900/30 border border-cyan-500/30 text-cyan-400">
+                    {selectedVibefid}/{TCG_CONFIG.MAX_VIBEFID} VibeFID
+                  </div>
+                )}
                 <div className={`px-2 py-1 rounded ${selectedNothing <= TCG_CONFIG.MAX_NOTHING ? "bg-green-900/30 border border-green-500/30 text-green-400" : "bg-red-900/30 border border-red-500/30 text-red-400"}`}>
                   {selectedNothing} Nothing
                 </div>
