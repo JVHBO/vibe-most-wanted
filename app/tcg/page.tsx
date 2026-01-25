@@ -3287,10 +3287,15 @@ export default function TCGPage() {
                     <div className="border-t border-vintage-gold/10 pt-3 mt-2">
                       <p className="text-[9px] text-vintage-burnt-gold/40 uppercase tracking-[0.3em] mb-2 text-center">PvP Battle</p>
 
+                      {!hasDeck && (
+                        <p className="text-[10px] text-red-400 text-center mb-2">⚠️ Crie um deck primeiro para jogar PvP</p>
+                      )}
+
                       {/* Create Match */}
                       <button
                         onClick={handleCreateMatch}
-                        className="w-full relative overflow-hidden group mb-2"
+                        disabled={!hasDeck}
+                        className="w-full relative overflow-hidden group mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
                       >
                         <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-700 opacity-70 group-hover:opacity-90 transition-opacity" />
                         <span className="relative z-10 block py-2.5 px-4 text-white font-bold text-xs uppercase tracking-[0.2em]">
@@ -3306,12 +3311,13 @@ export default function TCGPage() {
                           onChange={(e) => setRoomIdInput(e.target.value.toUpperCase())}
                           placeholder="ROOM CODE"
                           maxLength={6}
-                          className="flex-1 bg-black/60 border border-vintage-gold/20 rounded px-3 py-2 text-vintage-gold font-mono text-center uppercase tracking-[0.3em] focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-sm"
+                          disabled={!hasDeck}
+                          className="flex-1 bg-black/60 border border-vintage-gold/20 rounded px-3 py-2 text-vintage-gold font-mono text-center uppercase tracking-[0.3em] focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-sm disabled:opacity-40"
                         />
                         <button
                           onClick={() => roomIdInput.length >= 4 && handleJoinMatch(roomIdInput)}
-                          disabled={roomIdInput.length < 4}
-                          className="relative overflow-hidden group disabled:opacity-40"
+                          disabled={!hasDeck || roomIdInput.length < 4}
+                          className="relative overflow-hidden group disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-indigo-700 group-hover:from-purple-600 group-hover:to-indigo-600 transition-colors" />
                           <span className="relative z-10 block py-2 px-4 text-white font-bold text-xs uppercase tracking-wider">
