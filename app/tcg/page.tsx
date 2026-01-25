@@ -1116,43 +1116,43 @@ export default function TCGPage() {
     "chilli": "chilipepper",
   };
 
-  // Get VibeFID ability based on rarity
+  // Get VibeFID ability based on rarity (with translations)
   const getVibeFIDAbility = (rarity: string | undefined): TCGAbility | null => {
     if (!rarity) return null;
     const rarityLower = rarity.toLowerCase();
 
     const vibefidAbilities: Record<string, TCGAbility> = {
       "common": {
-        name: "📱 First Cast",
-        description: "+5 power para cada carta JÁ JOGADA nesta partida",
+        name: t('ability_vibefid_common_name') || "📱 First Cast",
+        description: t('ability_vibefid_common_desc') || "+5 power for each card already played",
         type: "onReveal",
         effect: { action: "vibefidFirstCast", value: 5 },
         rarity: "Common"
       },
       "rare": {
-        name: "🔗 Reply Guy",
-        description: "Copia 50% do power da carta AMIGA mais forte nesta lane",
+        name: t('ability_vibefid_rare_name') || "🔗 Reply Guy",
+        description: t('ability_vibefid_rare_desc') || "Copy 50% power from strongest friendly in lane",
         type: "ongoing",
         effect: { action: "vibefidReplyGuy", value: 0.5 },
         rarity: "Rare"
       },
       "epic": {
-        name: "✨ Verificado",
-        description: "IMUNE a debuffs + DOBRA power se perdendo esta lane",
+        name: t('ability_vibefid_epic_name') || "✨ Verified",
+        description: t('ability_vibefid_epic_desc') || "IMMUNE to debuffs + DOUBLE power if losing lane",
         type: "ongoing",
         effect: { action: "vibefidVerified" },
         rarity: "Epic"
       },
       "legendary": {
-        name: "👥 Ratio",
-        description: "Power se torna IGUAL à carta MAIS FORTE do campo!",
+        name: t('ability_vibefid_legendary_name') || "👥 Ratio",
+        description: t('ability_vibefid_legendary_desc') || "Power becomes EQUAL to strongest card on field!",
         type: "onReveal",
         effect: { action: "vibefidRatio" },
         rarity: "Legendary"
       },
       "mythic": {
-        name: "🌐 Doxxed",
-        description: "COPIA o power TOTAL de todas as cartas inimigas nesta lane!",
+        name: t('ability_vibefid_mythic_name') || "🌐 Doxxed",
+        description: t('ability_vibefid_mythic_desc') || "ADD total power of all enemy cards in this lane!",
         type: "onReveal",
         effect: { action: "vibefidDoxxed" },
         rarity: "Mythic"
