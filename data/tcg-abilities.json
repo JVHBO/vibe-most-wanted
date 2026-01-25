@@ -3,9 +3,8 @@
   "version": "1.1.0",
   "lastUpdated": "2026-01-23",
   "abilityTypes": {
-    "onReveal": "Triggers when card is played",
-    "ongoing": "Passive effect while on board",
-    "onEnemySkip": "Triggers when opponent skips their turn"
+    "onReveal": "Triggers automatically when card is played",
+    "ongoing": "Passive effect while on board"
   },
   "abilities": {
     "neymar": {
@@ -45,24 +44,24 @@
     },
 
     "antonio": {
-      "name": "Logical Mind",
+      "name": "👑 Logical Mind",
       "type": "onReveal",
-      "description": "+25 power for each card in this lane",
-      "effect": { "action": "buffPerCardInLane", "value": 25 },
+      "description": "+25 power per card here. COMBO: If MIGUEL in play, DOUBLE all your power!",
+      "effect": { "action": "buffPerCardInLane", "value": 25, "combo": { "partner": "miguel", "bonusAction": "doubleAllPower" } },
       "rarity": "Legendary"
     },
     "goofy romero": {
       "name": "🌀 Chaotic Kingdom",
       "type": "onReveal",
-      "description": "CHAOS: Shuffle ALL cards in lanes + BOTH players' hands!",
-      "effect": { "action": "shuffleAllLanes", "shuffleHands": true },
+      "description": "CHAOS: Shuffle ALL ENEMY cards between lanes + shuffle ENEMY hand!",
+      "effect": { "action": "shuffleEnemyLanes", "shuffleEnemyHand": true },
       "rarity": "Legendary"
     },
     "tukka": {
-      "name": "Cock Twist",
+      "name": "💣 Time Bomb",
       "type": "onReveal",
-      "description": "Swap power of two enemy cards AND steal 15 power",
-      "effect": { "action": "swapEnemyPowers", "bonusSteal": 15 },
+      "description": "Plant a BOMB! After 2 turns, DESTROY ALL cards in this lane (including Tukka)!",
+      "effect": { "action": "timeBomb", "delay": 2, "destroyAll": true },
       "rarity": "Legendary"
     },
     "chilipepper": {
@@ -73,17 +72,17 @@
       "rarity": "Legendary"
     },
     "miguel": {
-      "name": "Royal Command",
+      "name": "👑 Royal Command",
       "type": "ongoing",
-      "description": "+15 power to all your cards here",
-      "effect": { "action": "buffLaneOngoing", "value": 15 },
+      "description": "+15 power to allies here + +1 ENERGY/turn. COMBO: If ANTONIO in play, ALL allies IMMUNE!",
+      "effect": { "action": "buffLaneOngoing", "value": 15, "energyPerTurn": 1, "combo": { "partner": "antonio", "bonusAction": "allImmune" } },
       "rarity": "Legendary"
     },
     "naughty santa": {
       "name": "💋 Seduction",
       "type": "onReveal",
-      "description": "CHARM: Click 💋 button to STEAL an enemy card to your side!",
-      "effect": { "action": "charm" },
+      "description": "CHARM: Automatically STEAL the weakest enemy card to your side!",
+      "effect": { "action": "stealWeakest" },
       "rarity": "Legendary"
     },
     "ye": {
@@ -94,18 +93,18 @@
       "rarity": "Legendary"
     },
     "nico": {
-      "name": "Legendary Status",
+      "name": "🎭 Legendary Status",
       "type": "ongoing",
-      "description": "Double power if you're losing this lane",
-      "effect": { "action": "doubleIfLosing" },
+      "description": "LOSING: Double power. TIE: +20 power. WINNING: Adjacent allies +15!",
+      "effect": { "action": "adaptivePower", "ifLosing": "doublePower", "ifTie": 20, "ifWinning": { "buffAdjacent": 15 } },
       "rarity": "Legendary"
     },
 
     "sartocrates": {
-      "name": "Philosophical Strike",
+      "name": "🧠 Socratic Method",
       "type": "onReveal",
-      "description": "+30 power if you have fewer cards here",
-      "effect": { "action": "buffIfFewerCards", "value": 30 },
+      "description": "QUESTION: Enemy discards 1 card, you draw 1! COMBO: If ZURKCHAD in play, BOTH become IMMUNE + +10 power/turn!",
+      "effect": { "action": "forceDiscardAndDraw", "enemyDiscard": 1, "selfDraw": 1, "combo": { "partner": "zurkchad", "bonusAction": "bothImmuneAndScale", "scaleValue": 10 } },
       "rarity": "Epic"
     },
     "0xdeployer": {
@@ -123,10 +122,10 @@
       "rarity": "Epic"
     },
     "vibe intern": {
-      "name": "Coffee Run",
-      "type": "onReveal",
-      "description": "Move a friendly card to another lane +10 power to it",
-      "effect": { "action": "moveCard", "bonusBuff": 10 },
+      "name": "⚡ Overtime",
+      "type": "ongoing",
+      "description": "At END OF GAME: Convert ALL unspent energy to +8 power EACH! Works hard to the end!",
+      "effect": { "action": "convertEnergyEndGame", "powerPerEnergy": 8 },
       "rarity": "Epic"
     },
     "jack the sniper": {
@@ -144,10 +143,10 @@
       "rarity": "Epic"
     },
     "horsefarts": {
-      "name": "Fact Check",
+      "name": "🧠 Mind Parasite",
       "type": "onReveal",
-      "description": "Reveal enemy card AND steal 15 power from it",
-      "effect": { "action": "revealEnemyCard", "stealPower": 15 },
+      "description": "Play in ENEMY lane! Locks lane 2 turns. Drains unspent energy. On destroy, YOUR team gains drained energy!",
+      "effect": { "action": "parasiteLane", "duration": 2, "drainEnergy": true, "playInEnemyLane": true },
       "rarity": "Epic"
     },
     "jc denton": {
@@ -158,10 +157,10 @@
       "rarity": "Epic"
     },
     "zurkchad": {
-      "name": "Alpha Energy",
+      "name": "💪 Alpha Energy",
       "type": "onReveal",
-      "description": "+30 power if played on turn 3 or later",
-      "effect": { "action": "buffIfTurn", "minTurn": 3, "value": 30 },
+      "description": "+30 power if turn 3+. COMBO: If SARTOCRATES in play, BOTH become IMMUNE + +10 power/turn!",
+      "effect": { "action": "buffIfTurn", "minTurn": 3, "value": 30, "combo": { "partner": "sartocrates", "bonusAction": "bothImmuneAndScale", "scaleValue": 10 } },
       "rarity": "Epic"
     },
     "slaterg": {
@@ -172,17 +171,17 @@
       "rarity": "Epic"
     },
     "brian armstrong": {
-      "name": "Coinbase Listing",
+      "name": "📈 Coinbase Listing",
       "type": "onReveal",
-      "description": "+15 power to all Rare cards in play",
-      "effect": { "action": "buffByRarity", "targetRarity": "Rare", "value": 15 },
+      "description": "+15 power to all Rare cards. COMBO: If NFTKID in play, ALL cards gain +10 power/TURN!",
+      "effect": { "action": "buffByRarity", "targetRarity": "Rare", "value": 15, "combo": { "partner": "nftkid", "bonusAction": "allScalePerTurn", "scaleValue": 10 } },
       "rarity": "Epic"
     },
     "nftkid": {
-      "name": "NFT Flip",
+      "name": "💎 NFT Flip",
       "type": "onReveal",
-      "description": "Gain +10 power per card in your hand",
-      "effect": { "action": "buffPerHandSize", "multiplier": 10 },
+      "description": "+10 power per card in hand. COMBO: If BRIAN ARMSTRONG in play, ALL cards gain +10 power/TURN!",
+      "effect": { "action": "buffPerHandSize", "multiplier": 10, "combo": { "partner": "brian armstrong", "bonusAction": "allScalePerTurn", "scaleValue": 10 } },
       "rarity": "Epic"
     },
 
@@ -194,9 +193,9 @@
       "rarity": "Rare"
     },
     "ventra": {
-      "name": "Diamond Hands",
+      "name": "💎 Diamond Hands",
       "type": "ongoing",
-      "description": "Cannot lose power from enemy effects AND +10 power",
+      "description": "IMMUNE to debuffs! Cannot lose power from enemy effects + always +10 power!",
       "effect": { "action": "immuneToDebuff", "bonusPower": 10 },
       "rarity": "Rare"
     },
@@ -222,38 +221,38 @@
       "rarity": "Rare"
     },
     "qrcodo": {
-      "name": "Quick Response",
+      "name": "📱 Quick Response",
       "type": "onReveal",
-      "description": "Draw 2 cards",
+      "description": "SCAN: Draw 2 cards instantly!",
       "effect": { "action": "draw", "value": 2 },
       "rarity": "Rare"
     },
     "loground": {
-      "name": "Underground Network",
+      "name": "🌐 Underground Network",
       "type": "onReveal",
-      "description": "+15 power to all cards in other lanes",
+      "description": "SPREAD: +15 power to all cards in OTHER lanes!",
       "effect": { "action": "buffOtherLanes", "value": 15 },
       "rarity": "Rare"
     },
     "melted": {
       "name": "🔥 Meltdown",
       "type": "onReveal",
-      "description": "Lose 10 power BUT give +40 power to another ally!",
-      "effect": { "action": "sacrificeForBuff", "selfCost": -10, "buffValue": 40 },
+      "description": "SACRIFICE: Destroy self instantly and give +20 power to ALL allies!",
+      "effect": { "action": "sacrificeBuffAll", "value": 20, "destroySelf": true },
       "rarity": "Rare"
     },
 
     "rachel": {
-      "name": "Heart Power",
-      "type": "onReveal",
-      "description": "+15 power",
-      "effect": { "action": "buffSelf", "value": 15 },
+      "name": "💕 Energy Heart",
+      "type": "ongoing",
+      "description": "Generate +1 ENERGY each turn while in lane!",
+      "effect": { "action": "energyPerTurn", "value": 1 },
       "rarity": "Common"
     },
     "claude": {
-      "name": "Computing",
+      "name": "🤖 Computing",
       "type": "ongoing",
-      "description": "+4 power for each card in play",
+      "description": "AI ANALYSIS: +4 power for EACH card in play (yours and enemy)!",
       "effect": { "action": "buffPerCardInPlay", "value": 4 },
       "rarity": "Common"
     },
@@ -286,9 +285,9 @@
       "rarity": "Common"
     },
     "rizkybegitu": {
-      "name": "Risky Play",
+      "name": "🎰 Risky Play",
       "type": "onReveal",
-      "description": "50% chance: +25 power or -10 power",
+      "description": "GAMBLE: 50% chance for +25 power... or -10 power! High risk, high reward!",
       "effect": { "action": "gamble", "win": 25, "lose": -10 },
       "rarity": "Common"
     },
@@ -330,21 +329,21 @@
     "landmine": {
       "name": "💣 Booby Trap",
       "type": "onReveal",
-      "description": "-20 power to strongest enemy + has KAMIKAZE button!",
-      "effect": { "action": "debuffStrongest", "value": -20 },
+      "description": "-20 power strongest enemy. END OF GAME: If still here, DESTROY strongest enemy!",
+      "effect": { "action": "debuffStrongest", "value": -20, "endGameDestroy": true },
       "rarity": "Common"
     },
     "linux": {
-      "name": "Open Source",
+      "name": "🐧 Open Source",
       "type": "onReveal",
-      "description": "+8 power to all your Common cards",
+      "description": "COMMUNITY: +8 power to ALL your Common cards!",
       "effect": { "action": "buffByRarity", "targetRarity": "Common", "value": 8 },
       "rarity": "Common"
     },
     "joonx": {
-      "name": "Quick Strike",
+      "name": "⚡ Quick Strike",
       "type": "onReveal",
-      "description": "+20 power if played on turn 1",
+      "description": "EARLY BIRD: +20 power if played on turn 1!",
       "effect": { "action": "buffIfTurn", "maxTurn": 1, "value": 20 },
       "rarity": "Common"
     },
@@ -364,9 +363,9 @@
     },
     "john porn": {
       "name": "😈 Distraction",
-      "type": "onEnemySkip",
-      "description": "STEAL strongest enemy card when opponent SKIPS!",
-      "effect": { "action": "stealOnSkip" },
+      "type": "onReveal",
+      "description": "STEAL the strongest enemy card to your side!",
+      "effect": { "action": "stealStrongest" },
       "rarity": "Common"
     },
     "scum": {
@@ -377,9 +376,9 @@
       "rarity": "Common"
     },
     "vlady": {
-      "name": "Shadow Step",
+      "name": "👻 Shadow Step",
       "type": "onReveal",
-      "description": "Move to a random lane AND +15 power",
+      "description": "TELEPORT: Move to a random lane + gain +15 power! Unpredictable!",
       "effect": { "action": "moveRandom", "bonusPower": 15 },
       "rarity": "Common"
     }
