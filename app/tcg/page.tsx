@@ -222,6 +222,13 @@ const COMBO_TRANSLATION_KEYS: Record<string, string> = {
   santa_helpers: "tcgComboSantaHelpers",
   explosive_combo: "tcgComboExplosiveForce",
   persistence_pays: "tcgComboPersistencePays",
+  // Synergy combos (from card descriptions)
+  royal_brothers: "tcgComboRoyalBrothers",
+  philosopher_chad: "tcgComboPhilosopherChad",
+  coinbase_nft: "tcgComboCoinbaseNFT",
+  community_creators: "tcgComboCommunityCreators",
+  scaling_masters: "tcgComboScalingMasters",
+  open_source_ai: "tcgComboOpenSourceAI",
 };
 
 const CARD_COMBOS: CardCombo[] = [
@@ -405,6 +412,56 @@ const CARD_COMBOS: CardCombo[] = [
     minCards: 2,
     bonus: { type: "power", value: 35, target: "self" },
     description: "+35 power to persistent cards!",
+  },
+
+  // ═══ SYNERGY COMBOS (From card descriptions) ═══
+  {
+    id: "royal_brothers",
+    name: "Royal Brothers",
+    emoji: "👑",
+    cards: ["antonio", "miguel"],
+    bonus: { type: "power_percent", value: 100, target: "self" },
+    description: "ANTONIO + MIGUEL = DOUBLE power! Royal synergy!",
+  },
+  {
+    id: "philosopher_chad",
+    name: "Philosopher Chad",
+    emoji: "🧠",
+    cards: ["sartocrates", "zurkchad"],
+    bonus: { type: "power", value: 60, target: "self" },
+    description: "SARTOCRATES + ZURKCHAD = +60 power + IMMUNITY aura!",
+  },
+  {
+    id: "coinbase_nft",
+    name: "Coinbase NFT",
+    emoji: "📈",
+    cards: ["brian armstrong", "nftkid"],
+    bonus: { type: "power", value: 50, target: "lane" },
+    description: "BRIAN + NFTKID = +50 power to entire lane!",
+  },
+  {
+    id: "community_creators",
+    name: "Community Creators",
+    emoji: "🤝",
+    cards: ["smolemaru", "bradymck"],
+    bonus: { type: "power", value: 40, target: "self" },
+    description: "SMOLEMARU + BRADYMCK = +40 power each! Community power!",
+  },
+  {
+    id: "scaling_masters",
+    name: "Scaling Masters",
+    emoji: "📊",
+    cards: ["betobutter", "morlacos"],
+    bonus: { type: "power_percent", value: 100, target: "self" },
+    description: "BETOBUTTER + MORLACOS = DOUBLE scaling! Unstoppable!",
+  },
+  {
+    id: "open_source_ai",
+    name: "Open Source AI",
+    emoji: "🐧",
+    cards: ["groko", "linux"],
+    bonus: { type: "power", value: 50, target: "self" },
+    description: "GROKO + LINUX = +50 power! Commons unite!",
   },
 ];
 
@@ -3748,12 +3805,27 @@ export default function TCGPage() {
 
               {/* Combos */}
               <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
-                <h3 className="font-bold text-pink-400 mb-2 uppercase tracking-wider text-xs">{t('tcgCombosTitle')}</h3>
-                <div className="text-vintage-burnt-gold space-y-1 text-xs">
-                  <p>{t('tcgCombosDesc')}</p>
-                  <p>{t('tcgRomeroDynasty')}</p>
-                  <p>{t('tcgCryptoKings')}</p>
-                  <p className="text-vintage-gold">{t('tcgClickComboInfo')}</p>
+                <h3 className="font-bold text-pink-400 mb-2 uppercase tracking-wider text-xs">{t('tcgCombosTotal' as any)}</h3>
+                <div className="text-vintage-burnt-gold space-y-2 text-xs">
+                  <p className="text-vintage-gold font-semibold">{t('tcgSynergyCombos' as any)}</p>
+                  <div className="grid grid-cols-1 gap-0.5 text-[10px]">
+                    <p>👑 <span className="text-yellow-400">ANTONIO + MIGUEL</span> = 2x Power</p>
+                    <p>🧠 <span className="text-cyan-400">SARTOCRATES + ZURKCHAD</span> = +60</p>
+                    <p>📈 <span className="text-green-400">BRIAN + NFTKID</span> = +50 lane</p>
+                    <p>🤝 <span className="text-pink-400">SMOLEMARU + BRADYMCK</span> = +40</p>
+                    <p>📊 <span className="text-orange-400">BETOBUTTER + MORLACOS</span> = 2x</p>
+                    <p>🐧 <span className="text-blue-400">GROKO + LINUX</span> = +50</p>
+                  </div>
+                  <p className="text-vintage-gold font-semibold pt-1">{t('tcgTeamCombos' as any)}</p>
+                  <div className="grid grid-cols-2 gap-0.5 text-[10px]">
+                    <p>👨‍👧 Romero Dynasty</p>
+                    <p>👑 Crypto Kings</p>
+                    <p>🤖 AI Takeover</p>
+                    <p>💩 Dirty Duo</p>
+                    <p>🎰 Degen Trio</p>
+                    <p>💻 Code Masters</p>
+                  </div>
+                  <p className="text-vintage-gold text-[10px] pt-1">{t('tcgClickComboInfo')}</p>
                 </div>
               </div>
 

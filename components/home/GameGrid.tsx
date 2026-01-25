@@ -76,7 +76,7 @@ const CardsIcon = () => (
 );
 
 // Game mode configurations with translation keys
-const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string; fullWidth?: boolean; comingSoon?: boolean; restricted?: boolean }[] = [
+const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string; fullWidth?: boolean; comingSoon?: boolean; restricted?: boolean; isNew?: boolean }[] = [
   {
     id: 'poker-cpu',
     icon: <SpadeIcon />,
@@ -136,7 +136,7 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sub
     accentColor: 'hover:border-orange-400/50',
     isLink: true,
     href: '/tcg',
-    restricted: true, // Only for allowed wallets
+    isNew: true, // Show NEW badge
   },
 ];
 
@@ -193,6 +193,13 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress }: Game
           relative
         `;
 
+        // NEW badge component
+        const newBadge = mode.isNew && (
+          <span className="absolute -top-1 -right-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-lg animate-pulse z-10">
+            NEW
+          </span>
+        );
+
         // For restricted modes that user can access, still use Link
         if (mode.isLink && mode.href && !showAsSoon) {
           return (
@@ -202,6 +209,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress }: Game
               onClick={() => soundEnabled && AudioManager.buttonClick()}
               className={buttonClasses}
             >
+              {newBadge}
               {buttonContent}
             </Link>
           );
@@ -214,6 +222,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress }: Game
             disabled={isDisabled}
             className={buttonClasses}
           >
+            {newBadge}
             {buttonContent}
             {isSoon && (
               <span className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-lg">
