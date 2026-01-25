@@ -67,8 +67,8 @@
     "chilipepper": {
       "name": "Spicy Burn",
       "type": "onReveal",
-      "description": "-25 power to all enemy cards in this lane",
-      "effect": { "action": "debuffLane", "value": -25 },
+      "description": "-30 power to ALL enemies in this lane!",
+      "effect": { "action": "debuffLane", "value": -30 },
       "rarity": "Legendary"
     },
     "miguel": {
@@ -110,15 +110,15 @@
     "0xdeployer": {
       "name": "Smart Contract",
       "type": "onReveal",
-      "description": "Add a copy of this card to your hand +15 power to self",
-      "effect": { "action": "addCopyToHand", "bonusPower": 15 },
+      "description": "Add a COPY of this card to hand + gain +10 power!",
+      "effect": { "action": "addCopyToHand", "bonusPower": 10 },
       "rarity": "Epic"
     },
     "lombra jr": {
-      "name": "Dick Knowledge",
+      "name": "Street Smarts",
       "type": "ongoing",
-      "description": "+8 power for each card you've played",
-      "effect": { "action": "buffPerCardsPlayed", "value": 8 },
+      "description": "+5 power for each card you've played this game",
+      "effect": { "action": "buffPerCardsPlayed", "value": 5 },
       "rarity": "Epic"
     },
     "vibe intern": {
@@ -131,15 +131,15 @@
     "jack the sniper": {
       "name": "Snipe Shot",
       "type": "onReveal",
-      "description": "-25 power to a random enemy card",
-      "effect": { "action": "debuffRandomEnemy", "value": -25 },
+      "description": "-20 to STRONGEST enemy. If it dies (0 power), gain +15!",
+      "effect": { "action": "debuffStrongest", "value": -20, "killBonus": 15 },
       "rarity": "Epic"
     },
     "beeper": {
       "name": "Signal Boost",
       "type": "onReveal",
-      "description": "+20 power to adjacent cards",
-      "effect": { "action": "buffAdjacent", "value": 20 },
+      "description": "+15 power to ALL allies in this lane + DRAW 1 card!",
+      "effect": { "action": "buffAdjacent", "value": 15, "draw": 1 },
       "rarity": "Epic"
     },
     "horsefarts": {
@@ -152,7 +152,7 @@
     "jc denton": {
       "name": "Nano Augmentation",
       "type": "ongoing",
-      "description": "+8 power at the end of each turn",
+      "description": "+8 power EACH turn! Augmentations online.",
       "effect": { "action": "buffEachTurn", "value": 8 },
       "rarity": "Epic"
     },
@@ -166,8 +166,8 @@
     "slaterg": {
       "name": "Proxy Power",
       "type": "onReveal",
-      "description": "Copy the ability of another card here +15 power",
-      "effect": { "action": "copyAbility", "bonusPower": 15 },
+      "description": "+8 power. Gains +5 extra for each ENEMY card in this lane!",
+      "effect": { "action": "buffPerEnemyInLane", "basePower": 8, "perEnemy": 5 },
       "rarity": "Epic"
     },
     "brian armstrong": {

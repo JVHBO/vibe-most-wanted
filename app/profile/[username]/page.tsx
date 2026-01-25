@@ -787,11 +787,6 @@ export default function ProfilePage() {
                     })}
                   </div>
 
-                  {/* Legend - Only On Reveal and Ongoing */}
-                  <div className="flex justify-center gap-3 text-[10px] text-gray-500 pt-2 mt-2 border-t border-vintage-gold/20">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500"></span> {t('tcgOnReveal')}</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500"></span> {t('tcgOngoing')}</span>
-                  </div>
                 </>
               );
             })()}
@@ -1007,17 +1002,9 @@ export default function ProfilePage() {
 
             {/* Ability Info */}
             {selectedAlbumCard.ability && (
-              <div className={`p-3 rounded-xl mb-4 ${
-                selectedAlbumCard.ability.type === "ongoing" ? "bg-green-900/30 border border-green-500/50" :
-                "bg-blue-900/30 border border-blue-500/50"
-              }`}>
+              <div className="p-3 rounded-xl mb-4 bg-purple-900/30 border border-purple-500/50">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                    selectedAlbumCard.ability.type === "ongoing" ? "bg-green-500 text-white" :
-                    "bg-blue-500 text-white"
-                  }`}>
-                    {selectedAlbumCard.ability.type === "ongoing" ? t('tcgOngoing') : t('tcgOnReveal')}
-                  </span>
+                  <span className="text-purple-400">⚡</span>
                   <span className="text-vintage-gold font-bold">
                     {(() => {
                       const cardKey = selectedAlbumCard.cardKey?.replace(/\s+/g, '_').replace(/-/g, '_') || '';
