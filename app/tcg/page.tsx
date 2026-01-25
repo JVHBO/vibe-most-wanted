@@ -3831,26 +3831,26 @@ export default function TCGPage() {
 
               {/* Turn Phases & Ability Order */}
               <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
-                <h3 className="font-bold text-yellow-400 mb-2 uppercase tracking-wider text-xs">⚡ ORDEM DAS SKILLS</h3>
+                <h3 className="font-bold text-yellow-400 mb-2 uppercase tracking-wider text-xs">{t('tcgSkillOrderTitle' as any)}</h3>
                 <div className="text-vintage-burnt-gold space-y-2 text-xs">
                   {/* Phases */}
                   <div className="space-y-1">
-                    <p className="text-vintage-gold font-semibold">Fases do Turno:</p>
-                    <p><span className="text-blue-400">1. PLAY</span> - Jogue suas cartas</p>
-                    <p><span className="text-orange-400">2. REVEAL</span> - Cartas são reveladas</p>
-                    <p><span className="text-purple-400">3. ABILITIES</span> - Skills ativam</p>
-                    <p><span className="text-green-400">4. RESOLVE</span> - Pontos calculados</p>
+                    <p className="text-vintage-gold font-semibold">{t('tcgTurnPhases' as any)}</p>
+                    <p><span className="text-blue-400">1. PLAY</span> - {t('tcgPhasePlay' as any)}</p>
+                    <p><span className="text-orange-400">2. REVEAL</span> - {t('tcgPhaseReveal' as any)}</p>
+                    <p><span className="text-purple-400">3. ABILITIES</span> - {t('tcgPhaseAbilities' as any)}</p>
+                    <p><span className="text-green-400">4. RESOLVE</span> - {t('tcgPhaseResolve' as any)}</p>
                   </div>
                   {/* Order Rules */}
                   <div className="border-t border-vintage-gold/20 pt-2 space-y-1">
-                    <p className="text-vintage-gold font-semibold">Ordem de Ativação:</p>
-                    <p>• <span className="text-cyan-400">Custo menor primeiro</span> (Common → Mythic)</p>
-                    <p>• Empate: <span className="text-green-400">Player</span> antes do <span className="text-red-400">CPU</span></p>
-                    <p>• Mesma lane: ordem que foi jogada</p>
+                    <p className="text-vintage-gold font-semibold">{t('tcgActivationOrder' as any)}</p>
+                    <p>• <span className="text-cyan-400">{t('tcgLowerCostFirst' as any)}</span> (Common → Mythic)</p>
+                    <p>• {t('tcgTieBreaker' as any)}</p>
+                    <p>• {t('tcgSameLane' as any)}</p>
                   </div>
                   {/* Energy Cost Table */}
                   <div className="border-t border-vintage-gold/20 pt-2">
-                    <p className="text-vintage-gold font-semibold mb-1">Custo por Raridade:</p>
+                    <p className="text-vintage-gold font-semibold mb-1">{t('tcgCostByRarity' as any)}</p>
                     <div className="grid grid-cols-2 gap-1 text-[10px]">
                       <span><span className="text-gray-400">Common</span> = 2⚡</span>
                       <span><span className="text-blue-400">Rare</span> = 3⚡</span>
