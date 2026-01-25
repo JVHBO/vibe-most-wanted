@@ -994,6 +994,17 @@ export default function ProfilePage() {
               )}
             </div>
 
+            {/* Token IDs below cards */}
+            {selectedAlbumCard.ownedCards.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2 mb-4">
+                {selectedAlbumCard.ownedCards.slice(0, 5).map((ownedCard: any, i: number) => (
+                  <span key={i} className="text-vintage-burnt-gold/60 text-xs">
+                    #{ownedCard.tokenId}
+                  </span>
+                ))}
+              </div>
+            )}
+
             {/* Ability Info */}
             {selectedAlbumCard.ability && (
               <div className={`p-3 rounded-xl mb-4 ${

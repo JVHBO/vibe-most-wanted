@@ -20,6 +20,7 @@ export const imageIdToCharacter: Record<string, string> = {
   "fee62b95-7f9a-4544-97e4-35dfc75dc600": "joonx",
   "811a5f12-e163-40ba-4c7d-08ed8b8bda00": "filthy",
   "24969f85-7659-473d-deac-45f9b6dd5200": "pooster",
+  "dd96e2da-e216-4cf5-ebce-e0e3714ed900": "pooster", // Token #6680
   "553fd429-baaa-409e-67c6-b860035bae00": "john porn",
   "ae181450-5b90-4c33-c7c0-b49275b06c00": "scum",
   "a7a49109-1d1a-464f-9b72-0bc2e4ce3f00": "vlad",

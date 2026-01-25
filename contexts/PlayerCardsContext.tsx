@@ -12,6 +12,7 @@ import { getImage, fetchNFTs, checkCollectionBalances } from '@/lib/nft/fetcher'
 import { fetchWieldTokens, isWieldCollection, type WieldToken } from '@/lib/nft/wield-fetcher';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { DEFAULT_POWER_CONFIG } from '@/lib/collections';
+import { getCharacterFromImage } from '@/lib/vmw-image-mapping';
 
 // Calculate power from Wield token data (same formula as calcPower)
 function calcPowerFromWield(token: WieldToken): number {
@@ -482,7 +483,8 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
             const rarity = wieldData?.rarity || findAttr(nft, 'rarity');
             const foil = wieldData?.foil || findAttr(nft, 'foil') || 'None';
             const wear = wieldData?.wear || findAttr(nft, 'wear');
-            const characterName = wieldData?.name || findAttr(nft, 'name');
+            // Character name: Wield data → NFT trait → image URL mapping (for old cards without name trait)
+            const characterName = wieldData?.name || findAttr(nft, 'name') || getCharacterFromImage(imageUrl);
 
             return {
               tokenId: nft.tokenId,
@@ -494,7 +496,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
               wear: wear as CardWear || undefined,
               power: wieldData ? calcPowerFromWield(wieldData) : calcPower(nft, isVibeFID),
               isFreeCard: false,
-              // TCG character name
+              // TCG character name (used for ownership detection)
               character: characterName || undefined,
             };
           })
