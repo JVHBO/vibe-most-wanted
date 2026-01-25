@@ -888,6 +888,8 @@ export default function TCGPage() {
   // Deck builder state
   const [selectedCards, setSelectedCards] = useState<DeckCard[]>([]);
   const [deckName, setDeckName] = useState("My Deck");
+  const [deckSortBy, setDeckSortBy] = useState<"power" | "rarity">("power");
+  const [deckSortDesc, setDeckSortDesc] = useState(true); // true = highest first
 
   // Battle state
   const [pendingActions, setPendingActions] = useState<GameAction[]>([]);
@@ -3838,9 +3840,37 @@ export default function TCGPage() {
       };
     });
 
-    const vbmsCards = availableCards.filter((c: DeckCard) => c.type === "vbms");
-    const vibefidCards = availableCards.filter((c: DeckCard) => c.type === "vibefid");
-    const nothingCards = availableCards.filter((c: DeckCard) => c.type === "nothing");
+    // Rarity order for sorting
+    const rarityOrder: Record<string, number> = {
+      mythic: 5,
+      legendary: 4,
+      epic: 3,
+      rare: 2,
+      common: 1,
+    };
+
+    // Sort function
+    const sortCards = (cards: DeckCard[]) => {
+      return [...cards].sort((a, b) => {
+        if (deckSortBy === "power") {
+          const powerA = a.type === "nothing" ? Math.floor(a.power * 0.5) : a.power;
+          const powerB = b.type === "nothing" ? Math.floor(b.power * 0.5) : b.power;
+          return deckSortDesc ? powerB - powerA : powerA - powerB;
+        } else {
+          const rarityA = rarityOrder[a.rarity?.toLowerCase() || "common"] || 1;
+          const rarityB = rarityOrder[b.rarity?.toLowerCase() || "common"] || 1;
+          if (rarityA !== rarityB) {
+            return deckSortDesc ? rarityB - rarityA : rarityA - rarityB;
+          }
+          // Same rarity: sort by power
+          return deckSortDesc ? b.power - a.power : a.power - b.power;
+        }
+      });
+    };
+
+    const vbmsCards = sortCards(availableCards.filter((c: DeckCard) => c.type === "vbms"));
+    const vibefidCards = sortCards(availableCards.filter((c: DeckCard) => c.type === "vibefid"));
+    const nothingCards = sortCards(availableCards.filter((c: DeckCard) => c.type === "nothing"));
 
     const selectedVbms = selectedCards.filter((c: DeckCard) => c.type === "vbms").length;
     const selectedVibefid = selectedCards.filter((c: DeckCard) => c.type === "vibefid").length;
@@ -3942,6 +3972,43 @@ export default function TCGPage() {
                 </div>
                 <div className="px-2 py-1 rounded bg-vintage-gold/10 border border-vintage-gold/20 text-vintage-gold font-bold">
                   {totalPower} PWR
+                </div>
+                {/* Sort buttons */}
+                <div className="flex gap-1 ml-2 border-l border-vintage-gold/20 pl-2">
+                  <button
+                    onClick={() => {
+                      if (deckSortBy === "power") {
+                        setDeckSortDesc(!deckSortDesc);
+                      } else {
+                        setDeckSortBy("power");
+                        setDeckSortDesc(true);
+                      }
+                    }}
+                    className={`px-2 py-1 rounded transition-all ${
+                      deckSortBy === "power"
+                        ? "bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold"
+                        : "bg-black/30 border border-vintage-gold/10 text-vintage-burnt-gold hover:border-vintage-gold/30"
+                    }`}
+                  >
+                    ⚡ PWR {deckSortBy === "power" && (deckSortDesc ? "↓" : "↑")}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (deckSortBy === "rarity") {
+                        setDeckSortDesc(!deckSortDesc);
+                      } else {
+                        setDeckSortBy("rarity");
+                        setDeckSortDesc(true);
+                      }
+                    }}
+                    className={`px-2 py-1 rounded transition-all ${
+                      deckSortBy === "rarity"
+                        ? "bg-purple-900/30 border border-purple-500/50 text-purple-400"
+                        : "bg-black/30 border border-vintage-gold/10 text-vintage-burnt-gold hover:border-vintage-gold/30"
+                    }`}
+                  >
+                    💎 RAR {deckSortBy === "rarity" && (deckSortDesc ? "↓" : "↑")}
+                  </button>
                 </div>
               </div>
             </div>
