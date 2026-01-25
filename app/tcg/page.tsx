@@ -52,6 +52,44 @@ interface TCGAbility {
   rarity: string;
 }
 
+interface GameLane {
+  laneId: number;
+  name: string;
+  effect: string;
+  value?: number;
+  description: string;
+  playerCards: DeckCard[];
+  cpuCards: DeckCard[];
+  playerPower: number;
+  cpuPower: number;
+}
+
+interface CardPlayedInfo {
+  cardId: string;
+  laneIndex: number;
+  energyCost: number;
+  hadOnReveal: boolean;
+}
+
+interface PvEGameState {
+  currentTurn: number;
+  energy: number;
+  cpuEnergy: number;
+  bonusEnergy: number;
+  cardsPlayedThisTurn: number;
+  cardsPlayedInfo: CardPlayedInfo[];
+  phase: string;
+  playerHand: DeckCard[];
+  playerDeckRemaining: DeckCard[];
+  cpuHand: DeckCard[];
+  cpuDeckRemaining: DeckCard[];
+  lanes: GameLane[];
+  playerConfirmed: boolean;
+  gameOver: boolean;
+  winner: string | null;
+  tiebreaker?: { type: string; playerPower: number; cpuPower: number } | null;
+}
+
 // Abilities map from JSON
 const tcgAbilities: Record<string, TCGAbility> = tcgAbilitiesData.abilities as Record<string, TCGAbility>;
 
@@ -348,8 +386,18 @@ const CARD_COMBOS: CardCombo[] = [
   },
 ];
 
-// Detect combos in a set of cards
+// Combo detection cache for performance
+const comboCache = new Map<string, { combo: CardCombo; matchedCards: string[] }[]>();
+
+// Detect combos in a set of cards (memoized)
 const detectCombos = (cards: DeckCard[]): { combo: CardCombo; matchedCards: string[] }[] => {
+  // Create cache key from sorted card names
+  const cacheKey = cards.map(c => (c.name || "").toLowerCase()).sort().join("|");
+
+  // Return cached result if available
+  const cached = comboCache.get(cacheKey);
+  if (cached) return cached;
+
   const activeCombos: { combo: CardCombo; matchedCards: string[] }[] = [];
   const cardNames = cards.map(c => (c.name || "").toLowerCase());
 
@@ -363,6 +411,10 @@ const detectCombos = (cards: DeckCard[]): { combo: CardCombo; matchedCards: stri
       activeCombos.push({ combo, matchedCards });
     }
   }
+
+  // Cache result (limit cache size to prevent memory issues)
+  if (comboCache.size > 100) comboCache.clear();
+  comboCache.set(cacheKey, activeCombos);
 
   return activeCombos;
 };
@@ -659,7 +711,7 @@ export default function TCGPage() {
 
   // PvE state (local, no Convex)
   const [isPvE, setIsPvE] = useState(false);
-  const [pveGameState, setPveGameState] = useState<any>(null);
+  const [pveGameState, setPveGameState] = useState<PvEGameState | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>("normal");
 
   // Turn timer state
