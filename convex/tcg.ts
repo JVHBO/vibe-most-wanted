@@ -491,8 +491,13 @@ export const joinMatch = mutation({
       throw new Error("No active deck. Please create and select a deck first.");
     }
 
+    // Validate player1 has deck
+    if (!match.player1Deck || match.player1Deck.length === 0) {
+      throw new Error("Match creator doesn't have a valid deck");
+    }
+
     // Initialize game state
-    const gameState = initializeGameState(match.player1Deck!, activeDeck.cards);
+    const gameState = initializeGameState(match.player1Deck, activeDeck.cards);
 
     // Update match
     await ctx.db.patch(match._id, {
