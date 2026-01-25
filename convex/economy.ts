@@ -22,18 +22,18 @@ const DAILY_CAP = 1500; // Max $TESTVBMS per day per player (reduced from 3500)
 const PVE_WIN_LIMIT = 30; // Max PvE wins per day
 const PVP_MATCH_LIMIT = 10; // Max PvP matches per day
 
-// PvE Rewards by Difficulty (reduced ~70% to extend pool longevity)
+// PvE Rewards by Difficulty (halved - Vibe Clash is main mode now)
 const PVE_REWARDS = {
-  gey: 2,      // was 5
-  goofy: 5,    // was 15
-  gooner: 10,  // was 30
-  gangster: 20, // was 60
-  gigachad: 40, // was 120
+  gey: 1,      // was 2
+  goofy: 2,    // was 5
+  gooner: 5,   // was 10
+  gangster: 10, // was 20
+  gigachad: 20, // was 40
 };
 
-// PvP Rewards
-const PVP_WIN_REWARD = 100;
-const PVP_LOSS_PENALTY = -20; // Lose 20 coins on loss
+// PvP Rewards (halved - Vibe Clash is main mode now)
+const PVP_WIN_REWARD = 50;  // was 100
+const PVP_LOSS_PENALTY = -10; // was -20
 const REVENGE_BONUS = 1.2; // +20% bonus for revenge wins
 const MAX_REMATCHES_PER_DAY = 5; // Max revenge matches per day
 
@@ -681,7 +681,7 @@ export const awardPvECoins = mutation({
     if (!skipCoins) {
       const currentBalance = profile.coins || 0;
       const currentAura = profile.stats?.aura ?? 500;
-      const auraReward = won ? 5 : 0; // +5 aura for winning PvE
+      const auraReward = won ? 2 : 0; // +2 aura for winning PvE (nerfed, Vibe Clash is main mode)
 
       await ctx.db.patch(profile!._id, {
         coins: currentBalance + totalReward,
@@ -917,7 +917,7 @@ export const awardPvPCoins = mutation({
       // Award coins to balance (direct)
       const currentBalance = profile.coins || 0;
       const currentAura = profile.stats?.aura ?? 500;
-      const auraReward = 10; // +10 aura for winning PvP
+      const auraReward = 5; // +5 aura for winning PvP (nerfed from +10, Vibe Clash is main mode)
 
       await ctx.db.patch(profile!._id, {
         coins: currentBalance + totalReward,
@@ -991,7 +991,7 @@ export const awardPvPCoins = mutation({
       const newCoins = Math.max(0, currentCoins + penalty); // Can't go below 0
 
       const currentAura = profile.stats?.aura ?? 500;
-      const auraPenalty = -5; // -5 aura for losing PvP
+      const auraPenalty = -3; // -3 aura for losing PvP (nerfed from -5, Vibe Clash is main mode)
       const newAura = Math.max(0, currentAura + auraPenalty); // Can't go below 0
 
       // ✅ Add penalty reduction message
@@ -1220,8 +1220,8 @@ export const claimShareBonus = mutation({
       return { success: false, message: "You already claimed your daily share bonus! Come back tomorrow." };
     }
 
-    // Award 50 tokens for daily share
-    const shareReward = 50;
+    // Award 25 tokens for daily share (halved - Vibe Clash is main mode)
+    const shareReward = 25;
     const currentCoins = profile.coins || 0;
     const newCoins = currentCoins + shareReward;
 
@@ -1817,11 +1817,11 @@ export const recordAttackResult = mutation({
       newStats.attackWins = (newStats.attackWins || 0) + 1;
       newStats.pvpWins = (newStats.pvpWins || 0) + 1;
 
-      // ATTACKER WINS: Gains +20 aura
-      auraChange = 20;
+      // ATTACKER WINS: Gains +10 aura (nerfed from +20, Vibe Clash is main mode)
+      auraChange = 10;
       newStats.aura = currentAura + auraChange;
 
-      // DEFENDER LOSES: Loses -20 aura
+      // DEFENDER LOSES: Loses -10 aura (nerfed from -20, Vibe Clash is main mode)
       const defenderProfile = await ctx.db
         .query("profiles")
         .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
@@ -1829,7 +1829,7 @@ export const recordAttackResult = mutation({
 
       if (defenderProfile) {
         const defenderAura = defenderProfile.stats?.aura ?? 500;
-        const auraLoss = 20;
+        const auraLoss = 10;
         const newDefenderAura = Math.max(0, defenderAura - auraLoss); // Can't go below 0
 
         await ctx.db.patch(defenderProfile._id, {
@@ -2040,8 +2040,8 @@ export const awardShareBonus = mutation({
         };
       }
 
-      // Award profile share bonus: +250 to inbox
-      const bonus = 250;
+      // Award profile share bonus: +125 to inbox (halved)
+      const bonus = 125;
       const currentInbox = profile.coinsInbox || 0;
       const newInbox = currentInbox + bonus;
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + bonus;
@@ -2066,7 +2066,7 @@ export const awardShareBonus = mutation({
     }
 
     if (type === "dailyShare") {
-      // Daily share bonus: +50 coins per day
+      // Daily share bonus: +25 coins per day (halved)
       if (profile.lastShareDate === today) {
         return {
           success: false,
@@ -2075,8 +2075,8 @@ export const awardShareBonus = mutation({
         };
       }
 
-      // Award daily share bonus: +50 to inbox
-      const bonus = 50;
+      // Award daily share bonus: +25 to inbox (halved)
+      const bonus = 25;
       const currentInbox = profile.coinsInbox || 0;
       const newInbox = currentInbox + bonus;
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + bonus;
@@ -2095,7 +2095,7 @@ export const awardShareBonus = mutation({
 
       return {
         success: true,
-        message: "Daily share bonus claimed! +50 coins",
+        message: "Daily share bonus claimed! +25 coins",
         coinsAwarded: bonus,
         newBalance: newInbox,
       };
@@ -2114,8 +2114,8 @@ export const awardShareBonus = mutation({
         };
       }
 
-      // Award victory share bonus: +10 to inbox
-      const bonus = 10;
+      // Award victory share bonus: +5 to inbox (halved)
+      const bonus = 5;
       const currentInbox = profile.coinsInbox || 0;
       const newInbox = currentInbox + bonus;
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + bonus;

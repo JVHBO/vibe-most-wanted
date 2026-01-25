@@ -276,7 +276,7 @@ export const saveDeck = mutation({
     address: v.string(),
     deckName: v.string(),
     cards: v.array(v.object({
-      type: v.union(v.literal("vbms"), v.literal("nothing")),
+      type: v.union(v.literal("vbms"), v.literal("nothing"), v.literal("vibefid")),
       cardId: v.string(),
       name: v.optional(v.string()),
       rarity: v.string(),
@@ -704,6 +704,49 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
         player2TotalPower: lanes.reduce((sum: number, l: any) => sum + l.player2Power, 0),
         finishedAt: Date.now(),
       });
+
+      // 🎯 Vibe Clash PvP Aura Rewards (+50 win, -40 loss)
+      // Main competitive mode - aggressive aura changes
+      const loserId = winnerId === match.player1Address
+        ? match.player2Address
+        : match.player1Address;
+
+      // Update winner's aura (+50)
+      const winnerProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", winnerId))
+        .first();
+
+      if (winnerProfile) {
+        const winnerCurrentAura = winnerProfile.stats?.aura ?? 500;
+        await ctx.db.patch(winnerProfile._id, {
+          stats: {
+            ...winnerProfile.stats,
+            aura: winnerCurrentAura + 50,
+          },
+        });
+        console.log(`🎯 Vibe Clash: ${winnerId} WIN +50 aura (${winnerCurrentAura} → ${winnerCurrentAura + 50})`);
+      }
+
+      // Update loser's aura (-40)
+      if (loserId) {
+        const loserProfile = await ctx.db
+          .query("profiles")
+          .withIndex("by_address", (q) => q.eq("address", loserId))
+          .first();
+
+        if (loserProfile) {
+          const loserCurrentAura = loserProfile.stats?.aura ?? 500;
+          const newLoserAura = Math.max(0, loserCurrentAura - 40); // Can't go below 0
+          await ctx.db.patch(loserProfile._id, {
+            stats: {
+              ...loserProfile.stats,
+              aura: newLoserAura,
+            },
+          });
+          console.log(`🎯 Vibe Clash: ${loserId} LOSS -40 aura (${loserCurrentAura} → ${newLoserAura})`);
+        }
+      }
     }
 
     return;
@@ -816,6 +859,7 @@ export const forfeitMatch = mutation({
     // Winner is the other player
     const winnerId = isPlayer1 ? match.player2Address : match.player1Address;
     const winnerUsername = isPlayer1 ? match.player2Username : match.player1Username;
+    const loserId = addr; // The player who forfeited
 
     await ctx.db.patch(args.matchId, {
       status: "finished",
@@ -823,6 +867,43 @@ export const forfeitMatch = mutation({
       winnerUsername,
       finishedAt: Date.now(),
     });
+
+    // 🎯 Vibe Clash PvP Aura Rewards on Forfeit (+50 win, -40 loss)
+    if (winnerId) {
+      const winnerProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", winnerId))
+        .first();
+
+      if (winnerProfile) {
+        const winnerCurrentAura = winnerProfile.stats?.aura ?? 500;
+        await ctx.db.patch(winnerProfile._id, {
+          stats: {
+            ...winnerProfile.stats,
+            aura: winnerCurrentAura + 50,
+          },
+        });
+        console.log(`🎯 Vibe Clash Forfeit: ${winnerId} WIN +50 aura (${winnerCurrentAura} → ${winnerCurrentAura + 50})`);
+      }
+    }
+
+    // Update forfeiter's aura (-40)
+    const loserProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", loserId))
+      .first();
+
+    if (loserProfile) {
+      const loserCurrentAura = loserProfile.stats?.aura ?? 500;
+      const newLoserAura = Math.max(0, loserCurrentAura - 40);
+      await ctx.db.patch(loserProfile._id, {
+        stats: {
+          ...loserProfile.stats,
+          aura: newLoserAura,
+        },
+      });
+      console.log(`🎯 Vibe Clash Forfeit: ${loserId} LOSS -40 aura (${loserCurrentAura} → ${newLoserAura})`);
+    }
 
     return { success: true, winnerId };
   },

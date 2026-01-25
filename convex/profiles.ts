@@ -2975,3 +2975,59 @@ export const migrateLegacyFidProfiles = internalMutation({
     };
   },
 });
+
+/**
+ * 🔄 WEEKLY AURA RESET
+ * Resets all players' aura to 500 every Sunday at 00:00 UTC
+ * Called by cron job in crons.ts
+ */
+export const resetWeeklyAura = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const BATCH_SIZE = 100;
+    const DEFAULT_AURA = 500;
+
+    let totalReset = 0;
+    let hasMore = true;
+    let cursor: string | null = null;
+
+    console.log(`🔄 Starting weekly aura reset...`);
+
+    while (hasMore) {
+      // Fetch profiles in batches
+      const profiles = await ctx.db
+        .query("profiles")
+        .take(BATCH_SIZE);
+
+      if (profiles.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      // Reset aura for each profile
+      for (const profile of profiles) {
+        const currentAura = profile.stats?.aura ?? DEFAULT_AURA;
+
+        // Only update if aura is different from default
+        if (currentAura !== DEFAULT_AURA) {
+          await ctx.db.patch(profile._id, {
+            stats: {
+              ...profile.stats,
+              aura: DEFAULT_AURA,
+            },
+          });
+          totalReset++;
+        }
+      }
+
+      // If we got less than BATCH_SIZE, we're done
+      if (profiles.length < BATCH_SIZE) {
+        hasMore = false;
+      }
+    }
+
+    console.log(`✅ Weekly aura reset complete: ${totalReset} profiles reset to ${DEFAULT_AURA} aura`);
+
+    return { totalReset };
+  },
+});

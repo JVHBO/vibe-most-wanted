@@ -2,11 +2,12 @@
  * PERSONAL MISSIONS SYSTEM
  *
  * Manages claimable daily bonuses and one-time rewards:
- * - Daily login (25 coins)
- * - First PvE win (50 coins)
- * - First PvP match (100 coins)
- * - Welcome gift (500 coins, one-time)
- * - Win streaks (150/300/750 coins)
+ * - Daily login (50 coins)
+ * - First PvE win (25 coins)
+ * - First PvP match (50 coins)
+ * - Welcome gift (250 coins, one-time)
+ * - Win streaks (75/150/375 coins)
+ * - VibeFID minted (5000 coins - not nerfed)
  */
 
 import { v } from "convex/values";
@@ -19,19 +20,20 @@ import { logTransaction } from "./coinsInbox";
 // VibeFID contract address (Base mainnet)
 const VIBEFID_CONTRACT = "0x60274A138d026E3cB337B40567100FdEC3127565";
 
-// Mission rewards (all coins for simplicity)
+// Mission rewards (halved - Vibe Clash is main mode now)
+// Exception: vibefid_minted stays at 5000 to incentivize minting
 const MISSION_REWARDS = {
-  daily_login: { type: "coins", amount: 100 },
-  first_pve_win: { type: "coins", amount: 50 },
-  first_pvp_match: { type: "coins", amount: 100 },
-  play_3_games: { type: "coins", amount: 100 },
-  win_5_games: { type: "coins", amount: 200 },
-  streak_3: { type: "coins", amount: 150 },
-  streak_5: { type: "coins", amount: 300 },
-  streak_10: { type: "coins", amount: 750 },
-  vibefid_minted: { type: "coins", amount: 5000 },
-  welcome_gift: { type: "coins", amount: 500 },
-  claim_vibe_badge: { type: "badge", amount: 0 }, // VIBE badge - +20% bonus coins in Wanted Cast
+  daily_login: { type: "coins", amount: 50 },      // was 100
+  first_pve_win: { type: "coins", amount: 25 },    // was 50
+  first_pvp_match: { type: "coins", amount: 50 },  // was 100
+  play_3_games: { type: "coins", amount: 50 },     // was 100
+  win_5_games: { type: "coins", amount: 100 },     // was 200
+  streak_3: { type: "coins", amount: 75 },         // was 150
+  streak_5: { type: "coins", amount: 150 },        // was 300
+  streak_10: { type: "coins", amount: 375 },       // was 750
+  vibefid_minted: { type: "coins", amount: 5000 }, // KEPT - incentivo pra mintar
+  welcome_gift: { type: "coins", amount: 250 },    // was 500
+  claim_vibe_badge: { type: "badge", amount: 0 },  // VIBE badge - +20% bonus coins in Wanted Cast
 };
 
 /**
@@ -331,7 +333,7 @@ export const claimMission = mutation({
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
       const currentAura = profile.stats?.aura ?? 500;
-      const auraReward = 3; // +3 aura for completing missions
+      const auraReward = 1; // +1 aura for completing missions (nerfed from +3, Vibe Clash is main mode)
 
       await ctx.db.patch(profile._id, {
         coins: newBalance,

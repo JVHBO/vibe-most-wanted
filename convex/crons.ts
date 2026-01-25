@@ -63,4 +63,12 @@ crons.interval(
   internal.castAuctions.processAuctionLifecycle
 );
 
+// 🔄 Weekly aura reset (Sunday 00:00 UTC)
+// Resets all players' aura to 500 for fresh weekly competition
+crons.weekly(
+  "reset weekly aura",
+  { dayOfWeek: "sunday", hourUTC: 0, minuteUTC: 0 },
+  internal.profiles.resetWeeklyAura
+);
+
 export default crons;
