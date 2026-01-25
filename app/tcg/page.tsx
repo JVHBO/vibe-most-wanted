@@ -103,6 +103,35 @@ const TCG_CONFIG = {
   MAX_NOTHING: 7,
   TURN_TIME_SECONDS: 15,
   TOTAL_TURNS: 6,
+  ABILITY_DELAY_MS: 600, // Delay between each ability animation
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GAME PHASES & ORDER SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+//
+// TURN STRUCTURE:
+// 1. PLAY PHASE    - Player places cards (15 seconds)
+// 2. REVEAL PHASE  - In PvP: both players' cards revealed simultaneously
+// 3. ABILITY PHASE - OnReveal abilities resolve in ORDER (by energy cost, lower first)
+// 4. ONGOING PHASE - Ongoing effects are always active
+// 5. RESOLVE PHASE - Final power calculation, turn ends
+//
+// ABILITY ORDER RULES:
+// - OnReveal: Triggers WHEN card is played, in order by energy cost
+// - Ongoing: Passive effect, always active while card is in lane
+// - Lower energy cost cards resolve FIRST
+// - If same cost: Player's card resolves before CPU's card
+// - Combos check after all individual abilities resolve
+//
+type GamePhase = "play" | "reveal" | "ability" | "ongoing" | "resolve";
+
+const PHASE_NAMES: Record<GamePhase, string> = {
+  play: "🎴 PLAY PHASE",
+  reveal: "👁️ REVEAL",
+  ability: "⚡ ABILITIES",
+  ongoing: "🔄 ONGOING",
+  resolve: "📊 RESOLVE",
 };
 
 const RARITY_COLORS: Record<string, string> = {
@@ -875,6 +904,17 @@ export default function TCGPage() {
   const [turnTimeRemaining, setTurnTimeRemaining] = useState(TCG_CONFIG.TURN_TIME_SECONDS);
   const turnTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Game phase state - tracks current phase of turn resolution
+  const [currentPhase, setCurrentPhase] = useState<GamePhase>("play");
+  const [abilityQueue, setAbilityQueue] = useState<{
+    card: DeckCard;
+    laneIndex: number;
+    side: "player" | "cpu";
+    ability: any;
+  }[]>([]);
+  const [currentAbilityIndex, setCurrentAbilityIndex] = useState(-1);
+  const [isResolvingAbilities, setIsResolvingAbilities] = useState(false);
+
   // Profile dropdown state
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
@@ -965,6 +1005,96 @@ export default function TCGPage() {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // ABILITY ORDER SYSTEM - Sort abilities by rarity cost (lower first)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  // Get rarity-based priority cost for ability resolution order
+  const getRarityCost = (card: DeckCard): number => {
+    const rarity = (card.rarity || "common").toLowerCase();
+    switch (rarity) {
+      case "mythic": return 6;
+      case "legendary": return 5;
+      case "epic": return 4;
+      case "rare": return 3;
+      case "common": return 2;
+      default: return 1; // Nothing cards
+    }
+  };
+
+  // Sort cards by resolution order: Lane 1 → 2 → 3, dice roll per lane
+  // Matches PvP backend ordering for consistency
+  const sortByResolutionOrder = (
+    cards: { card: DeckCard; laneIndex: number; side: "player" | "cpu"; ability: any }[]
+  ) => {
+    // Roll dice for each lane (true = player first, false = cpu first)
+    const laneDiceResults = [
+      Math.random() < 0.5,
+      Math.random() < 0.5,
+      Math.random() < 0.5,
+    ];
+
+    return [...cards].sort((a, b) => {
+      // Lane order first (0, 1, 2)
+      if (a.laneIndex !== b.laneIndex) return a.laneIndex - b.laneIndex;
+
+      // Same lane: use dice result to decide player vs CPU
+      const playerFirst = laneDiceResults[a.laneIndex];
+
+      if (a.side === b.side) return 0;
+
+      if (playerFirst) {
+        return a.side === "player" ? -1 : 1;
+      } else {
+        return a.side === "cpu" ? -1 : 1;
+      }
+    });
+  };
+
+  // Process ability queue sequentially with visual feedback
+  const processAbilityQueue = async (
+    queue: { card: DeckCard; laneIndex: number; side: "player" | "cpu"; ability: any }[],
+    lanes: any[],
+    currentTurn: number
+  ): Promise<any[]> => {
+    if (queue.length === 0) return lanes;
+
+    let updatedLanes = [...lanes];
+    const sortedQueue = sortByResolutionOrder(queue);
+
+    setCurrentPhase("ability");
+    setAbilityQueue(sortedQueue);
+
+    for (let i = 0; i < sortedQueue.length; i++) {
+      const item = sortedQueue[i];
+      setCurrentAbilityIndex(i);
+
+      // Visual highlight for current card
+      const cardKey = `${item.laneIndex}-${item.side}-${
+        updatedLanes[item.laneIndex][item.side === "player" ? "playerCards" : "cpuCards"].length - 1
+      }`;
+      triggerCardAnimation(item.laneIndex, item.side, 0, "pulse");
+
+      // Play ability-specific sound
+      const action = item.ability?.effect?.action;
+      if (action?.includes("buff")) playSound("buff");
+      else if (action?.includes("debuff") || action?.includes("destroy")) playSound("debuff");
+      else if (action?.includes("steal")) playSound("steal");
+      else if (action?.includes("draw")) playSound("draw");
+      else if (action?.includes("energy")) playSound("energy");
+      else playSound("ability");
+
+      // Wait for animation
+      await new Promise(resolve => setTimeout(resolve, TCG_CONFIG.ABILITY_DELAY_MS));
+    }
+
+    setCurrentAbilityIndex(-1);
+    setAbilityQueue([]);
+    setCurrentPhase("resolve");
+
+    return updatedLanes;
   };
 
   // Aliases: onChainName -> baccarat name (used in abilities)
@@ -1101,6 +1231,8 @@ export default function TCGPage() {
         return { type: "buff", text: "LOGICAL MIND!", emoji: "🧠" };
       case "buffPerFriendly":
         return { type: "buff", text: "COMMUNITY BUILDER!", emoji: "🤝" };
+      case "buffPerEnemyInLane":
+        return { type: "buff", text: "PROXY POWER!", emoji: "🔌" };
       case "buffWeakest":
         return { type: "buff", text: "SHILL CAMPAIGN!", emoji: "📢" };
       case "buffOtherLanes":
@@ -1291,86 +1423,17 @@ export default function TCGPage() {
     let cardsPlayed = 0;
     const usedCardIndices = new Set<number>();
 
-    // Helper to apply CPU ability when playing a card
+    // Helper to add CPU card to lane (abilities processed later in handlePvEEndTurn)
     const playCpuCard = (card: DeckCard, laneIdx: number) => {
-      // Add card to lane first
-      newLanes[laneIdx].cpuCards.push(card);
+      // Mark card as played this turn for ability processing
+      const cardWithMeta = {
+        ...card,
+        _playedThisTurn: true,
+        _playedLaneIndex: laneIdx,
+      };
 
-      // Apply onReveal ability (simplified version for CPU)
-      const ability = getCardAbility(card.name, card);
-      let bonusPower = 0;
-
-      if (ability?.type === "onReveal") {
-        const effect = ability.effect;
-        switch (effect.action) {
-          case "buffSelf":
-            bonusPower = effect.value || 0;
-            break;
-          case "draw":
-            const drawCount = effect.value || 1;
-            for (let i = 0; i < drawCount && cpuDeckRemaining.length > 0; i++) {
-              cpuHand.push(cpuDeckRemaining.shift()!);
-            }
-            break;
-          case "debuffLane":
-            // Debuff all player cards in this lane
-            newLanes[laneIdx].playerCards.forEach((c: DeckCard, cIdx: number) => {
-              newLanes[laneIdx].playerCards[cIdx] = {
-                ...c,
-                power: Math.max(0, c.power - Math.abs(effect.value || 0)),
-              };
-            });
-            break;
-          case "buffPerCardInLane":
-            bonusPower = (newLanes[laneIdx].cpuCards.length) * (effect.value || 0);
-            break;
-          case "buffAllLanes":
-            // Buff all CPU cards
-            newLanes.forEach((lane: any) => {
-              lane.cpuCards.forEach((c: DeckCard, cIdx: number) => {
-                lane.cpuCards[cIdx] = { ...c, power: c.power + (effect.value || 0) };
-              });
-            });
-            break;
-          case "destroyHighestEnemy":
-            // Destroy highest player card
-            let highestPower = -1;
-            let highestLaneIdx = -1;
-            let highestCardIdx = -1;
-            newLanes.forEach((lane: any, lIdx: number) => {
-              lane.playerCards.forEach((c: DeckCard, cIdx: number) => {
-                if (c.power > highestPower) {
-                  highestPower = c.power;
-                  highestLaneIdx = lIdx;
-                  highestCardIdx = cIdx;
-                }
-              });
-            });
-            if (highestLaneIdx >= 0 && highestCardIdx >= 0) {
-              newLanes[highestLaneIdx].playerCards.splice(highestCardIdx, 1);
-            }
-            break;
-          case "gamble":
-            bonusPower = Math.random() > 0.5 ? (effect.win || 0) : (effect.lose || 0);
-            break;
-          case "buffIfTurn":
-            if (effect.minTurn && currentTurn >= effect.minTurn) {
-              bonusPower = effect.value || 0;
-            } else if (effect.maxTurn && currentTurn <= effect.maxTurn) {
-              bonusPower = effect.value || 0;
-            }
-            break;
-        }
-      }
-
-      // Apply bonus power to the card
-      if (bonusPower !== 0) {
-        const cardIdx = newLanes[laneIdx].cpuCards.length - 1;
-        newLanes[laneIdx].cpuCards[cardIdx] = {
-          ...newLanes[laneIdx].cpuCards[cardIdx],
-          power: newLanes[laneIdx].cpuCards[cardIdx].power + bonusPower,
-        };
-      }
+      // Add card to lane (no abilities applied here - processed after reveal)
+      newLanes[laneIdx].cpuCards.push(cardWithMeta);
     };
 
     // Calculate card energy cost (uses centralized getEnergyCost)
@@ -1545,6 +1608,11 @@ export default function TCGPage() {
     setView("battle");
     setPendingActions([]);
     setSelectedHandCard(null);
+
+    // Reset phase system for new game
+    setCurrentPhase("play");
+    setAbilityQueue([]);
+    setCurrentAbilityIndex(-1);
   };
 
   // Apply onReveal ability when card is played
@@ -1620,6 +1688,12 @@ export default function TCGPage() {
           };
           newLanes[laneIndex][myPower] += effect.value || 0;
         });
+        // Handle draw if specified (Beeper - Signal Boost)
+        if (effect.draw && effect.draw > 0) {
+          for (let i = 0; i < effect.draw && newDeck.length > 0; i++) {
+            newHand.push(newDeck.shift()!);
+          }
+        }
         break;
 
       case "buffOtherLanes":
@@ -1662,6 +1736,12 @@ export default function TCGPage() {
         bonusPower = Math.max(0, friendlyCount) * (effect.value || 0);
         break;
 
+      case "buffPerEnemyInLane":
+        // +basePower + perEnemy for each enemy in lane (Slaterg - Proxy Power)
+        const enemiesInLane = newLanes[laneIndex][enemyCards].length;
+        bonusPower = (effect.basePower || 0) + (enemiesInLane * (effect.perEnemy || 0));
+        break;
+
       case "buffIfAlone":
         // +X power if this lane has no other cards
         if (newLanes[laneIndex][myCards].length === 0) {
@@ -1694,7 +1774,7 @@ export default function TCGPage() {
         break;
 
       case "debuffStrongest":
-        // -X power to the strongest enemy card
+        // -X power to the strongest enemy card (Jack the Sniper - Snipe Shot)
         let strongestCard: DeckCard | null = null;
         let strongestLane = -1;
         let strongestIdx = -1;
@@ -1710,11 +1790,16 @@ export default function TCGPage() {
         if (strongestCard && strongestLane >= 0) {
           const cardToDebuff = strongestCard as DeckCard;
           const reduction = Math.abs(effect.value || 0);
+          const newPowerValue = Math.max(0, cardToDebuff.power - reduction);
           newLanes[strongestLane][enemyCards][strongestIdx] = {
             ...cardToDebuff,
-            power: Math.max(0, cardToDebuff.power - reduction),
+            power: newPowerValue,
           };
           newLanes[strongestLane][enemyPower] = Math.max(0, newLanes[strongestLane][enemyPower] - reduction);
+          // Kill bonus: if target reaches 0 power, gain bonus power (Jack the Sniper)
+          if (newPowerValue === 0 && effect.killBonus) {
+            bonusPower = effect.killBonus;
+          }
         }
         break;
 
@@ -1940,8 +2025,9 @@ export default function TCGPage() {
         break;
 
       case "addCopyToHand":
-        // Add copy to hand (0xdeployer)
+        // Add copy to hand (0xdeployer) + bonus power to self
         newHand.push({ ...card, cardId: `${card.cardId}-copy-${Date.now()}` });
+        bonusPower = effect.bonusPower || 0;
         break;
 
       case "moveCard":
@@ -2383,137 +2469,47 @@ export default function TCGPage() {
     // Play card sound
     playSound("card");
 
-    // Apply onReveal ability
-    const abilityResult = applyOnRevealAbility(
-      card,
-      laneIndex,
-      newLanes,
-      newHand,
-      newDeck,
-      true
-    );
-    newLanes = abilityResult.lanes;
-    newHand = abilityResult.playerHand;
+    // NOTE: onReveal abilities are NOT applied here!
+    // They will be applied in handlePvEEndTurn after all cards are revealed
+    // This prevents players from playing, seeing the effect, then undoing
 
-    // Get ability and trigger card animations with specific sounds
-    const ability = getCardAbility(card.name, card);
-    if (ability?.type === "onReveal") {
-      const action = ability.effect?.action;
+    // Mark card as "just played this turn" so onReveal triggers on End Turn
+    const cardWithMeta = {
+      ...card,
+      _playedThisTurn: true,
+      _playedLaneIndex: laneIndex,
+    };
 
-      // Play ability-specific sound and animate based on action type
-      if (action === "debuffLane" || action === "debuffRandomEnemy" || action === "debuffStrongest") {
-        playSound("debuff");
-        const enemies = newLanes[laneIndex].cpuCards || [];
-        triggerLaneAnimation(laneIndex, "cpu", "shake", enemies);
-        enemies.forEach((_: any, idx: number) => {
-          setTimeout(() => triggerCardAnimation(laneIndex, "cpu", idx, "glow-red", -(ability.effect?.value || 0)), idx * 100);
-        });
-      } else if (action === "buffAllLanes" || action === "buffLane" || action === "buffAdjacent" || action === "buffByRarity" || action === "buffOtherLanes" || action === "buffWeakest" || action === "buffLastPlayed") {
-        playSound("buff");
-        newLanes.forEach((lane: any, lidx: number) => {
-          triggerLaneAnimation(lidx, "player", "glow-green", lane.playerCards, ability.effect?.value || 0);
-        });
-      } else if (action === "shuffleEnemyLanes" || action === "shuffleAllLanes") {
-        playSound("shuffle");
-        newLanes.forEach((lane: any, lidx: number) => {
-          triggerLaneAnimation(lidx, "cpu", "spin", lane.cpuCards);
-        });
-      } else if (action === "destroyHighestEnemy" || action === "sacrificeBuffAll" || action === "timeBomb") {
-        playSound("destroy");
-        const enemies = newLanes[laneIndex].cpuCards || [];
-        if (enemies.length > 0) {
-          triggerCardAnimation(laneIndex, "cpu", 0, "slide-out");
-        }
-      } else if (action === "stealPower" || action === "stealWeakest" || action === "stealStrongest" || action === "copyHighest" || action === "copyAbility") {
-        playSound("steal");
-        triggerLaneAnimation(laneIndex, "cpu", "shake", newLanes[laneIndex].cpuCards || []);
-        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
-        triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", ability.effect?.value || 0);
-      } else if (action === "draw" || action === "addCopyToHand" || action === "forceDiscardAndDraw") {
-        playSound("draw");
-        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
-        triggerCardAnimation(laneIndex, "player", playerIdx, "pulse");
-      } else if (action === "consumeEnergyForPower" || action === "energyPerTurn" || action === "reduceEnergyCost") {
-        playSound("energy");
-        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
-        triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower);
-      } else if (action === "gamble") {
-        playSound(abilityResult.bonusPower > 0 ? "buff" : "debuff");
-        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
-        triggerCardAnimation(laneIndex, "player", playerIdx, abilityResult.bonusPower > 0 ? "glow-green" : "glow-red", abilityResult.bonusPower);
-      } else if (action === "untargetable" || action === "immuneToDebuff") {
-        playSound("shield");
-        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
-        triggerCardAnimation(laneIndex, "player", playerIdx, "pulse");
-      } else if (action === "buffSelf" || action === "buffPerCardInLane" || action === "buffPerFriendly" || action === "buffPerCardsPlayed" || action === "buffPerHandSize" || action === "buffIfTurn" || action === "buffIfFirst" || action === "buffIfHandSize" || action === "buffPerRarity" || action === "buffIfFewerCards") {
-        playSound("buff");
-        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
-        triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", ability.effect?.value || 0);
-      } else if (action === "vibefidFirstCast") {
-        playSound("buff");
-        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
-        triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower);
-      } else if (action === "vibefidRatio") {
-        playSound("buff");
-        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
-        triggerCardAnimation(laneIndex, "player", playerIdx, "pulse");
-        setTimeout(() => triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower), 300);
-      } else if (action === "vibefidDoxxed") {
-        playSound("destroy");
-        triggerLaneAnimation(laneIndex, "cpu", "shake", newLanes[laneIndex].cpuCards || []);
-        const playerIdx = newLanes[laneIndex].playerCards.length - 1;
-        setTimeout(() => triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower), 300);
-      } else {
-        // Fallback for any unhandled ability
-        playSound("ability");
+    // Update lanes with the card (marked as newly played)
+    newLanes = newLanes.map((lane: any, idx: number) => {
+      if (idx === laneIndex) {
+        const updatedCards = [...lane.playerCards];
+        updatedCards[updatedCards.length - 1] = cardWithMeta;
+        return { ...lane, playerCards: updatedCards };
       }
-    }
+      return lane;
+    });
 
-    // If card got bonus power from ability, update it
-    if (abilityResult.bonusPower !== 0) {
-      const cardIdx = newLanes[laneIndex].playerCards.length - 1;
-      newLanes[laneIndex].playerCards[cardIdx] = {
-        ...newLanes[laneIndex].playerCards[cardIdx],
-        power: newLanes[laneIndex].playerCards[cardIdx].power + abilityResult.bonusPower,
-      };
-    }
+    // Get ability to check type (for tracking, not applying)
+    const ability = getCardAbility(card.name, card);
 
-    // Check for combos BEFORE recalculating (to detect new combos)
-    const combosBeforePlay = detectCombos(pveGameState.lanes[laneIndex]?.playerCards || []);
-
-    // Recalculate all lane powers (including ongoing effects)
-    newLanes = recalculateLanePowers(newLanes, pveGameState.currentTurn);
-
-    // Check for combos AFTER playing
-    const combosAfterPlay = detectCombos(newLanes[laneIndex]?.playerCards || []);
-
-    // If a new combo was activated, play combo sound
-    if (combosAfterPlay.length > combosBeforePlay.length) {
-      setTimeout(() => playSound("combo"), 200); // Slight delay for effect
-    }
-
-    // Check if ability consumed extra energy (e.g., Thosmur Energy Burst)
-    const extraEnergyConsumed = abilityResult.energyToConsume || 0;
-    if (extraEnergyConsumed > 0) {
-      newEnergy = 0; // Consume ALL remaining energy
-      // Also animate the card showing the power boost
-      const playerIdx = newLanes[laneIndex].playerCards.length - 1;
-      triggerCardAnimation(laneIndex, "player", playerIdx, "glow-green", abilityResult.bonusPower, 1200);
-    }
-
-    // Track card for undo feature (reuse ability from above)
+    // Track card for undo feature
     const newCardPlayedInfo = {
       cardId: card.cardId,
       laneIndex,
-      energyCost: energyCost + extraEnergyConsumed, // Include extra energy consumed for undo
+      energyCost,
       hadOnReveal: ability?.type === "onReveal",
     };
+
+    // Recalculate base lane powers (without onReveal effects)
+    // Only ongoing effects are applied during placement
+    newLanes = recalculateLanePowers(newLanes, pveGameState.currentTurn);
 
     setPveGameState({
       ...pveGameState,
       energy: newEnergy,
       playerHand: newHand,
-      playerDeckRemaining: abilityResult.playerDeckRemaining,
+      playerDeckRemaining: newDeck,
       lanes: newLanes,
       cardsPlayedThisTurn: (pveGameState.cardsPlayedThisTurn || 0) + 1,
       cardsPlayedInfo: [...(pveGameState.cardsPlayedInfo || []), newCardPlayedInfo],
@@ -2741,7 +2737,8 @@ export default function TCGPage() {
     // Reset timer
     setTurnTimeRemaining(TCG_CONFIG.TURN_TIME_SECONDS);
 
-    // Play turn end sound
+    // PHASE 1: REVEAL - Cards are being revealed
+    setCurrentPhase("reveal");
     playSound("turn");
 
     // Track CPU cards before/after to detect if CPU skipped
@@ -2800,9 +2797,187 @@ export default function TCGPage() {
       }
     }
 
+    // PHASE 2: ABILITY - Process onReveal abilities in order
+    setCurrentPhase("ability");
+
+    // Collect all cards that need onReveal processing
+    // Cards marked with _playedThisTurn = true were just played this turn
+    const cardsToProcess: { card: DeckCard; laneIndex: number; side: "player" | "cpu"; ability: any }[] = [];
+
+    // Find player cards played this turn
+    newLanes.forEach((lane: any, laneIdx: number) => {
+      lane.playerCards.forEach((card: DeckCard) => {
+        if ((card as any)._playedThisTurn) {
+          const ability = getCardAbility(card.name, card);
+          if (ability?.type === "onReveal") {
+            cardsToProcess.push({ card, laneIndex: laneIdx, side: "player", ability });
+          }
+        }
+      });
+      // CPU cards from this turn also need processing
+      lane.cpuCards.forEach((card: DeckCard) => {
+        if ((card as any)._playedThisTurn) {
+          const ability = getCardAbility(card.name, card);
+          if (ability?.type === "onReveal") {
+            cardsToProcess.push({ card, laneIndex: laneIdx, side: "cpu", ability });
+          }
+        }
+      });
+    });
+
+    // Sort by resolution order: lower rarity cost first, player before CPU
+    const sortedCards = sortByResolutionOrder(cardsToProcess);
+
+    // Apply onReveal abilities in order
+    let playerHand = [...pveGameState.playerHand];
+    let playerDeck = [...pveGameState.playerDeckRemaining];
+
+    sortedCards.forEach((item, idx) => {
+      const { card, laneIndex, side, ability } = item;
+      const isPlayer = side === "player";
+
+      // Apply the onReveal ability
+      const result = applyOnRevealAbility(
+        card,
+        laneIndex,
+        newLanes,
+        playerHand,
+        playerDeck,
+        isPlayer
+      );
+
+      newLanes = result.lanes;
+      playerHand = result.playerHand;
+      playerDeck = result.playerDeckRemaining;
+
+      // Update card power if ability gave bonus
+      if (result.bonusPower !== 0) {
+        const cardArray = isPlayer ? newLanes[laneIndex].playerCards : newLanes[laneIndex].cpuCards;
+        const cardIdx = cardArray.findIndex((c: DeckCard) => c.cardId === card.cardId);
+        if (cardIdx >= 0) {
+          cardArray[cardIdx] = {
+            ...cardArray[cardIdx],
+            power: cardArray[cardIdx].power + result.bonusPower,
+          };
+        }
+      }
+
+      // Categorize ability and play appropriate sound + animation
+      const action = ability?.effect?.action || "";
+
+      // BUFF actions: enhance power
+      const BUFF_ACTIONS = [
+        "buffSelf", "buffAllLanes", "buffLane", "buffAdjacent", "buffByRarity",
+        "buffOtherLanes", "buffWeakest", "buffLastPlayed", "buffPerCardInLane",
+        "buffPerFriendly", "buffPerCardsPlayed", "buffPerHandSize", "buffIfTurn",
+        "buffIfFirst", "buffIfHandSize", "buffPerRarity", "buffPerTurn", "buffEachTurn",
+        "buffLaneEndTurn", "buffPerCardInPlay", "buffLaneOngoing", "buffIfFewerCards",
+        "vibefidFirstCast", "vibefidRatio", "vibefidDoxxed", "adaptivePower",
+      ];
+
+      // DEBUFF actions: reduce enemy power
+      const DEBUFF_ACTIONS = [
+        "debuffLane", "debuffRandomEnemy", "debuffStrongest", "reduceEnemyPower",
+        "lockPowerGain",
+      ];
+
+      // DESTROY actions: remove cards
+      const DESTROY_ACTIONS = [
+        "destroyHighestEnemy", "timeBomb", "sacrificeBuffAll", "destroyLoneCard",
+      ];
+
+      // STEAL/COPY actions: take from enemy
+      const STEAL_ACTIONS = [
+        "stealWeakest", "stealPower", "stealStrongest", "copyHighest", "copyAbility",
+        "copyPowerLeft", "stealFromAll",
+      ];
+
+      // DRAW actions: get more cards
+      const DRAW_ACTIONS = [
+        "draw", "addCopyToHand", "forceDiscardAndDraw",
+      ];
+
+      // ENERGY actions: manipulate energy
+      const ENERGY_ACTIONS = [
+        "energyPerTurn", "reduceEnergyCost", "consumeEnergyForPower", "convertEnergyEndGame",
+      ];
+
+      // CONTROL actions: move/shuffle
+      const CONTROL_ACTIONS = [
+        "shuffleEnemyLanes", "shuffleAllLanes", "moveRandom", "parasiteLane",
+      ];
+
+      // DEFENSIVE actions: protection
+      const DEFENSIVE_ACTIONS = [
+        "untargetable", "immuneToDebuff", "vibefidVerified",
+      ];
+
+      // Determine sound and animation type
+      let soundType: "buff" | "debuff" | "destroy" | "steal" | "draw" | "energy" | "shuffle" | "shield" | "ability" = "ability";
+      let animationType: "glow-green" | "glow-red" | "shake" | "pulse" | "spin" = "pulse";
+
+      if (BUFF_ACTIONS.some(a => action.includes(a))) {
+        soundType = "buff";
+        animationType = "glow-green";
+      } else if (DESTROY_ACTIONS.some(a => action.includes(a))) {
+        soundType = "destroy";
+        animationType = "shake";
+      } else if (DEBUFF_ACTIONS.some(a => action.includes(a))) {
+        soundType = "debuff";
+        animationType = "glow-red";
+      } else if (STEAL_ACTIONS.some(a => action.includes(a))) {
+        soundType = "steal";
+        animationType = "pulse";
+      } else if (DRAW_ACTIONS.some(a => action.includes(a))) {
+        soundType = "draw";
+        animationType = "pulse";
+      } else if (ENERGY_ACTIONS.some(a => action.includes(a))) {
+        soundType = "energy";
+        animationType = "glow-green";
+      } else if (CONTROL_ACTIONS.some(a => action.includes(a))) {
+        soundType = "shuffle";
+        animationType = "spin";
+      } else if (DEFENSIVE_ACTIONS.some(a => action.includes(a))) {
+        soundType = "shield";
+        animationType = "pulse";
+      } else if (action === "gamble") {
+        soundType = result.bonusPower > 0 ? "buff" : "debuff";
+        animationType = result.bonusPower > 0 ? "glow-green" : "glow-red";
+      }
+
+      playSound(soundType);
+
+      // Trigger card animation
+      const cardArrayForAnim = isPlayer ? newLanes[laneIndex].playerCards : newLanes[laneIndex].cpuCards;
+      const cardIdxForAnim = cardArrayForAnim.findIndex((c: DeckCard) => c.cardId === card.cardId);
+      if (cardIdxForAnim >= 0) {
+        triggerCardAnimation(laneIndex, side, cardIdxForAnim, animationType, result.bonusPower);
+      }
+    });
+
+    // Clear _playedThisTurn flags from all cards
+    newLanes = newLanes.map((lane: any) => ({
+      ...lane,
+      playerCards: lane.playerCards.map((c: DeckCard) => {
+        const { _playedThisTurn, _playedLaneIndex, ...cleanCard } = c as any;
+        return cleanCard;
+      }),
+      cpuCards: lane.cpuCards.map((c: DeckCard) => {
+        const { _playedThisTurn, _playedLaneIndex, ...cleanCard } = c as any;
+        return cleanCard;
+      }),
+    }));
+
+    // Update hand/deck from ability processing
+    pveGameState.playerHand = playerHand;
+    pveGameState.playerDeckRemaining = playerDeck;
+
     // Recalculate all lane powers with ongoing effects for current turn
     const nextTurn = pveGameState.currentTurn + 1;
     newLanes = recalculateLanePowers(newLanes, pveGameState.currentTurn);
+
+    // PHASE 3: RESOLVE - Points being calculated
+    setCurrentPhase("resolve");
 
     // Check if game over (turn 6)
     if (pveGameState.currentTurn >= TCG_CONFIG.TOTAL_TURNS) {
@@ -2884,12 +3059,9 @@ export default function TCGPage() {
       return;
     }
 
-    // Next turn - draw cards
-    let playerHand = [...pveGameState.playerHand];
-    let playerDeckRemaining = [...pveGameState.playerDeckRemaining];
-
-    if (playerDeckRemaining.length > 0) {
-      playerHand.push(playerDeckRemaining.shift()!);
+    // Next turn - draw cards (playerHand and playerDeck already updated from ability processing)
+    if (playerDeck.length > 0) {
+      playerHand.push(playerDeck.shift()!);
     }
     if (cpuDeckRemaining.length > 0) {
       cpuHand.push(cpuDeckRemaining.shift()!);
@@ -2912,13 +3084,18 @@ export default function TCGPage() {
       energy: nextTurn + bonusEnergy, // Base energy + skip bonus
       cpuEnergy: nextTurn, // CPU gets same energy as player each turn
       playerHand,
-      playerDeckRemaining,
+      playerDeckRemaining: playerDeck,
       cpuHand,
       cpuDeckRemaining,
       lanes: newLanes,
       cardsPlayedThisTurn: 0, // Reset for next turn
       cardsPlayedInfo: [], // Reset undo tracking for new turn
     });
+
+    // PHASE 4: Back to PLAY for next turn (delayed so user sees resolve)
+    setTimeout(() => {
+      setCurrentPhase("play");
+    }, 500);
   };
 
   const handleCreateMatch = async () => {
@@ -3169,9 +3346,7 @@ export default function TCGPage() {
             return (
               <div className={`${card.type === "vibefid" ? "bg-cyan-900/20 border-cyan-500/20" : "bg-vintage-charcoal/30 border-vintage-gold/10"} border rounded-lg p-3 mb-3`}>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-xs font-bold ${getAbilityTypeColor(ability.type)}`}>
-                    [{getAbilityTypeLabel(ability.type)}]
-                  </span>
+                  <span className="text-purple-400">⚡</span>
                   <span className={`${card.type === "vibefid" ? "text-cyan-400" : "text-vintage-gold"} font-bold text-sm`}>{translatedAbility?.name || ability.name}</span>
                 </div>
                 <p className="text-vintage-burnt-gold text-sm">{translatedAbility?.description || ability.description}</p>
@@ -3540,15 +3715,6 @@ export default function TCGPage() {
                 </div>
               </div>
 
-              {/* Abilities */}
-              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
-                <h3 className="font-bold text-green-400 mb-2 uppercase tracking-wider text-xs">{t('tcgAbilities')}</h3>
-                <div className="text-vintage-burnt-gold space-y-1 text-xs">
-                  <p><span className="inline-block w-4 h-4 rounded-full bg-orange-500 text-white text-[9px] text-center leading-4 mr-1">R</span> {t('tcgAbilityOnReveal')}</p>
-                  <p><span className="inline-block w-4 h-4 rounded-full bg-green-500 text-white text-[9px] text-center leading-4 mr-1">O</span> {t('tcgAbilityOngoing')}</p>
-                </div>
-              </div>
-
               {/* Special Cards */}
               <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
                 <h3 className="font-bold text-red-400 mb-2 uppercase tracking-wider text-xs">{t('tcgSpecialCards')}</h3>
@@ -3578,6 +3744,40 @@ export default function TCGPage() {
                   <p>{t('tcgRomeroDynasty')}</p>
                   <p>{t('tcgCryptoKings')}</p>
                   <p className="text-vintage-gold">{t('tcgClickComboInfo')}</p>
+                </div>
+              </div>
+
+              {/* Turn Phases & Ability Order */}
+              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
+                <h3 className="font-bold text-yellow-400 mb-2 uppercase tracking-wider text-xs">⚡ ORDEM DAS SKILLS</h3>
+                <div className="text-vintage-burnt-gold space-y-2 text-xs">
+                  {/* Phases */}
+                  <div className="space-y-1">
+                    <p className="text-vintage-gold font-semibold">Fases do Turno:</p>
+                    <p><span className="text-blue-400">1. PLAY</span> - Jogue suas cartas</p>
+                    <p><span className="text-orange-400">2. REVEAL</span> - Cartas são reveladas</p>
+                    <p><span className="text-purple-400">3. ABILITIES</span> - Skills ativam</p>
+                    <p><span className="text-green-400">4. RESOLVE</span> - Pontos calculados</p>
+                  </div>
+                  {/* Order Rules */}
+                  <div className="border-t border-vintage-gold/20 pt-2 space-y-1">
+                    <p className="text-vintage-gold font-semibold">Ordem de Ativação:</p>
+                    <p>• <span className="text-cyan-400">Custo menor primeiro</span> (Common → Mythic)</p>
+                    <p>• Empate: <span className="text-green-400">Player</span> antes do <span className="text-red-400">CPU</span></p>
+                    <p>• Mesma lane: ordem que foi jogada</p>
+                  </div>
+                  {/* Energy Cost Table */}
+                  <div className="border-t border-vintage-gold/20 pt-2">
+                    <p className="text-vintage-gold font-semibold mb-1">Custo por Raridade:</p>
+                    <div className="grid grid-cols-2 gap-1 text-[10px]">
+                      <span><span className="text-gray-400">Common</span> = 2⚡</span>
+                      <span><span className="text-blue-400">Rare</span> = 3⚡</span>
+                      <span><span className="text-purple-400">Epic</span> = 4⚡</span>
+                      <span><span className="text-orange-400">Legendary</span> = 5⚡</span>
+                      <span><span className="text-pink-400">Mythic</span> = 6⚡</span>
+                      <span><span className="text-gray-500">Nothing</span> = 1⚡</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -3796,9 +3996,7 @@ export default function TCGPage() {
                       <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
                       <span className="text-[9px] text-yellow-400 font-bold">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
                       {ability && (card.type === "vbms" || card.type === "vibefid") && (
-                        <span className={`text-[5px] ${getAbilityTypeColor(ability.type)}`}>
-                          {ability.type === "onReveal" ? "R" : "O"}
-                        </span>
+                        <span className="text-[5px] text-purple-400">⚡</span>
                       )}
                     </div>
                   </div>
@@ -3834,7 +4032,7 @@ export default function TCGPage() {
                       <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-black/40 rounded flex flex-col items-center justify-end p-0.5">
                         <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
                         <span className="text-[10px] text-yellow-400 font-bold">{card.power}</span>
-                        {ability && <span className={`text-[5px] ${getAbilityTypeColor(ability.type)}`}>{ability.type === "onReveal" ? "R" : "O"}</span>}
+                        {ability && <span className="text-[5px] text-purple-400">⚡</span>}
                       </div>
                     </div>
                   );
@@ -3864,7 +4062,7 @@ export default function TCGPage() {
                         <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-black/40 rounded flex flex-col items-center justify-end p-0.5">
                           <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
                           <span className="text-[10px] text-cyan-400 font-bold">{card.power}</span>
-                          {ability && <span className={`text-[5px] ${getAbilityTypeColor(ability.type)}`}>{ability.type === "onReveal" ? "R" : "O"}</span>}
+                          {ability && <span className="text-[5px] text-purple-400">⚡</span>}
                         </div>
                       </div>
                     );
@@ -3901,14 +4099,6 @@ export default function TCGPage() {
             </div>
           </div>
 
-          {/* Legend */}
-          <div className="mt-3 flex items-center justify-center gap-2 text-[8px] text-vintage-burnt-gold/50 uppercase tracking-[0.1em]">
-            <span className="flex items-center gap-0.5"><span className="inline-block w-2.5 h-2.5 rounded-full bg-orange-500 text-white text-[6px] text-center leading-[10px]">R</span> Reveal</span>
-            <span className="text-vintage-gold/20">•</span>
-            <span className="flex items-center gap-0.5"><span className="inline-block w-2.5 h-2.5 rounded-full bg-green-500 text-white text-[6px] text-center leading-[10px]">O</span> Ongoing</span>
-            <span className="text-vintage-gold/20">•</span>
-            <span className="flex items-center gap-0.5"><span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-600 text-white text-[6px] text-center leading-[10px]">i</span> Info</span>
-          </div>
           </div>
         </div>
 
@@ -4132,11 +4322,35 @@ export default function TCGPage() {
               )}
             </div>
 
-            {/* Turn Indicator (center) */}
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full">
-              <span className="text-xs text-gray-400">{t('tcgTurn')}</span>
-              <span className="text-lg font-bold text-yellow-400">{gs.currentTurn}</span>
-              <span className="text-xs text-gray-500">/ {TCG_CONFIG.TOTAL_TURNS}</span>
+            {/* Turn Indicator + Phase (center) */}
+            <div className="flex flex-col items-center gap-1">
+              {/* Turn number */}
+              <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full">
+                <span className="text-xs text-gray-400">{t('tcgTurn')}</span>
+                <span className="text-lg font-bold text-yellow-400">{gs.currentTurn}</span>
+                <span className="text-xs text-gray-500">/ {TCG_CONFIG.TOTAL_TURNS}</span>
+              </div>
+              {/* Phase indicator - shows current game phase */}
+              <div className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                currentPhase === "play" ? "bg-blue-600/80 text-blue-100" :
+                currentPhase === "ability" ? "bg-purple-600/80 text-purple-100 animate-pulse" :
+                currentPhase === "resolve" ? "bg-green-600/80 text-green-100" :
+                "bg-gray-600/80 text-gray-100"
+              }`}>
+                {PHASE_NAMES[currentPhase]}
+              </div>
+              {/* Ability queue indicator - shows resolving abilities */}
+              {abilityQueue.length > 0 && currentAbilityIndex >= 0 && (
+                <div className="flex items-center gap-1 bg-black/60 px-2 py-0.5 rounded text-[9px]">
+                  <span className="text-purple-400">⚡</span>
+                  <span className="text-white font-bold">
+                    {abilityQueue[currentAbilityIndex]?.card.name}
+                  </span>
+                  <span className="text-gray-400">
+                    ({currentAbilityIndex + 1}/{abilityQueue.length})
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* CPU Avatar (right) */}
