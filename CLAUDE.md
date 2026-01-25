@@ -808,3 +808,109 @@ Formato: `"{rank} {suit}, {personagem}.png"`
 - Exemplo: `ace hearts, anon.png`, `king spades, nico.png`
 - Backend usa: `rank: 'A'|'2'|...|'K'`, `suit: 'hearts'|'diamonds'|'clubs'|'spades'`
 
+## TCG Mode (Vibe Clash)
+
+### Arquivos Principais
+| Arquivo | Descrição |
+|---------|-----------|
+| `app/tcg/page.tsx` | Página principal do TCG (~5500 linhas) |
+| `data/vmw-tcg-cards.json` | Dados das 53 cartas VMW (suit, rank, rarity, aliases) |
+| `data/tcg-abilities.json` | Habilidades das cartas (53 abilities únicas) |
+| `public/images/baccarat/` | Imagens PNG das cartas (compartilhado com Baccarat) |
+| `components/home/GameGrid.tsx` | Grid de modos na home (inclui botão TCG) |
+
+### Configuração do Jogo
+```typescript
+const TCG_CONFIG = {
+  LANES: 3,                    // 3 lanes de batalha
+  CARDS_PER_LANE: 3,          // Máx 3 cartas por lane
+  HAND_SIZE: 5,               // 5 cartas na mão
+  DECK_SIZE: 15,              // Deck de 15 cartas
+  TOTAL_TURNS: 6,             // 6 turnos por jogo
+  TURN_TIME_SECONDS: 15,      // 15 segundos por turno (timer implementado)
+  STARTING_ENERGY: 3,         // Energia inicial
+  ENERGY_PER_TURN: 1,         // Ganha 1 energia por turno
+  MAX_ENERGY: 10,             // Máximo 10 energia
+};
+```
+
+### Sistema de Combos (26 total)
+| Tipo | Quantidade | Exemplo |
+|------|------------|---------|
+| Team Combos | 20 | viral_trio (dan romero + thosmur + zurkchad) |
+| Synergy Combos | 6 | royal_brothers (antonio + miguel) |
+
+**Combos de Synergy (do JSON de abilities):**
+- `royal_brothers`: ANTONIO + MIGUEL = 100% power
+- `philosopher_chad`: SARTOCRATES + ZURKCHAD = +3 power/turno
+- `coinbase_nft`: BRIAN ARMSTRONG + NFTKID = steal 2 power
+- `community_creators`: SMOLEMARU + BRADYMCK = draw extra
+- `scaling_masters`: BETOBUTTER + MORLACOS = +3 power se vencer
+- `open_source_ai`: GROKO + LINUX = copy ability
+
+### Bug #11: Cartas VBMS sem imagem no TCG (Jan 2026)
+- **Sintomas**: Cartas do player aparecem sem imagem (placeholder cinza com "?")
+- **Causa**: Cartas do Alchemy vêm com `imageUrl` apontando para vídeo/IPFS, não PNG
+- **Cartas afetadas**: Todas VBMS do player (proxy, ventra, etc.)
+- **Solução**: Função `getVbmsBaccaratImageUrl()` mapeia nome da carta → PNG do baccarat
+- **Localização**: `app/tcg/page.tsx` linha ~3895
+
+```typescript
+// Helper que converte nome da carta para URL da imagem baccarat
+const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
+  // 1. Busca carta em tcgCardsData.cards por onChainName ou baccarat
+  // 2. Aplica aliases (proxy → slaterg, etc.)
+  // 3. Retorna: /images/baccarat/{rank} {suit}, {baccarat}.png
+};
+
+// Uso no mapeamento de cartas
+if (isVbms && cardName) {
+  imageUrl = getVbmsBaccaratImageUrl(cardName) || card.imageUrl || "/images/card-back.png";
+}
+```
+
+### Aliases Importantes (onChainName → baccarat)
+Definidos em `data/vmw-tcg-cards.json`:
+```json
+{
+  "proxy": "slaterg",      // Jack de Diamonds
+  "nicogay": "nico",       // King de Spades
+  "chilli": "chilipepper", // Queen de Diamonds
+  "horsefacts": "horsefarts",
+  "vibe": "vibe intern",
+  "jack": "jack the sniper"
+}
+```
+
+### Cartas Permitidas no TCG
+| Coleção | Multiplicador | Tipo |
+|---------|---------------|------|
+| VBMS (vibe) | 1x | vbms |
+| VibeFID | 5x | vibefid |
+| Nothing | 0.5x | nothing |
+
+### Sistema de Habilidades
+- Cada carta VMW tem 1 habilidade única
+- Tipos: `onReveal`, `ongoing`, `active`
+- Custo por raridade: Common=1, Rare=2, Epic=3, Legendary=4, Mythic=5
+- Ordem de ativação: menor custo primeiro, empate = player antes de CPU
+
+### Traduções TCG
+Chaves de tradução em `lib/translations.ts`:
+- `tcgTitle`, `tcgSubtitle` - Título
+- `tcgCombosTotal`, `tcgSynergyCombos`, `tcgTeamCombos` - Guia de combos
+- `tcgSkillOrderTitle`, `tcgTurnPhases`, `tcgPhasePlay/Reveal/Abilities/Resolve` - Ordem das skills
+- `tcgCombo*` - Nomes e descrições dos 6 combos de synergy
+- Traduzido em 10 idiomas: pt-BR, en, es, hi, ru, zh, id, fr, ja, it
+
+### Timer de Turno (Implementado Jan 2026)
+- 15 segundos por turno
+- Botão "END TURN" mostra countdown nos últimos 10s
+- Cores: roxo (normal) → laranja (10-6s) → vermelho pulsante (5-1s)
+- Auto end turn quando timer chega a 0
+
+### Acesso ao TCG
+- **Antes**: Restrito por whitelist (`TCG_ALLOWED_WALLETS`)
+- **Agora**: Aberto para todos (removido `restricted: true`)
+- Badge "NEW" no botão do GameGrid
+
