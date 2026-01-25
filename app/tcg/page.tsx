@@ -67,6 +67,14 @@ const TCG_CONFIG = {
   TOTAL_TURNS: 6,
 };
 
+// Difficulty settings for PvE
+type Difficulty = "easy" | "normal" | "hard";
+const DIFFICULTY_CONFIG: Record<Difficulty, { cpuPowerMult: number; cpuFoilChance: number; label: string; emoji: string }> = {
+  easy: { cpuPowerMult: 0.6, cpuFoilChance: 0.1, label: "Easy", emoji: "🌱" },
+  normal: { cpuPowerMult: 1.0, cpuFoilChance: 0.35, label: "Normal", emoji: "⚔️" },
+  hard: { cpuPowerMult: 1.4, cpuFoilChance: 0.6, label: "Hard", emoji: "💀" },
+};
+
 const RARITY_COLORS: Record<string, string> = {
   Common: "border-gray-500 text-gray-400",
   Rare: "border-blue-500 text-blue-400",
@@ -407,7 +415,7 @@ const getComboSteal = (playerCards: DeckCard[]): number => {
 // SOUND EFFECTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "select" | "combo" | "error") => {
+const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "select" | "combo" | "error" | "tick") => {
   if (typeof window === "undefined") return;
 
   const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
@@ -528,6 +536,16 @@ const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "s
       oscillator.start(audioCtx.currentTime);
       oscillator.stop(audioCtx.currentTime + 0.2);
       break;
+
+    case "tick":
+      // Tick: urgent countdown beep
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+      oscillator.start(audioCtx.currentTime);
+      oscillator.stop(audioCtx.currentTime + 0.08);
+      break;
   }
 };
 
@@ -642,6 +660,7 @@ export default function TCGPage() {
   // PvE state (local, no Convex)
   const [isPvE, setIsPvE] = useState(false);
   const [pveGameState, setPveGameState] = useState<any>(null);
+  const [difficulty, setDifficulty] = useState<Difficulty>("normal");
 
   // Turn timer state
   const [turnTimeRemaining, setTurnTimeRemaining] = useState(TCG_CONFIG.TURN_TIME_SECONDS);
@@ -963,9 +982,10 @@ export default function TCGPage() {
     }
   };
 
-  const generateCpuDeck = (playerDeck: DeckCard[]): DeckCard[] => {
+  const generateCpuDeck = (playerDeck: DeckCard[], diff: Difficulty = "normal"): DeckCard[] => {
     // CPU gets ALL 53 VMW cards with random foils!
     const allCards = tcgCardsData.cards || [];
+    const diffConfig = DIFFICULTY_CONFIG[diff];
 
     // Base power by rarity
     const rarityPower: Record<string, number> = {
@@ -983,15 +1003,16 @@ export default function TCGPage() {
     };
 
     return allCards.map((card: any, i: number) => {
-      // Random foil: 30% Prize, 40% Standard, 30% None (more foils for testing)
+      // Random foil based on difficulty
       const foilRoll = Math.random();
-      const foil = foilRoll < 0.3 ? "Prize" : foilRoll < 0.7 ? "Standard" : "None";
+      const foilThreshold = diffConfig.cpuFoilChance;
+      const foil = foilRoll < foilThreshold * 0.3 ? "Prize" : foilRoll < foilThreshold ? "Standard" : "None";
 
-      // Calculate power with foil multiplier
+      // Calculate power with foil multiplier and difficulty scaling
       const basePower = rarityPower[card.rarity] || 5;
-      const foilMult = foil === "Prize" ? 15 : foil === "Standard" ? 2.5 : 1;
-      // Add some randomness: -10% to +20%
-      const power = Math.floor(basePower * foilMult * (0.9 + Math.random() * 0.3));
+      const foilMult = foil === "Prize" ? 3 : foil === "Standard" ? 1.5 : 1;
+      // Add some randomness: -5% to +10%, then apply difficulty multiplier
+      const power = Math.floor(basePower * foilMult * (0.95 + Math.random() * 0.15) * diffConfig.cpuPowerMult);
 
       // Build image path from baccarat folder
       const baccarat = card.baccarat?.toLowerCase() || card.onChainName?.toLowerCase();
@@ -1312,8 +1333,8 @@ export default function TCGPage() {
       return;
     }
 
-    // CPU copies player's deck with power variations
-    const cpuDeck = generateCpuDeck(activeDeck.cards as DeckCard[]);
+    // CPU copies player's deck with power variations based on difficulty
+    const cpuDeck = generateCpuDeck(activeDeck.cards as DeckCard[], difficulty);
     const gameState = initializePvEGame(activeDeck.cards as DeckCard[], cpuDeck);
 
     setIsPvE(true);
@@ -2859,6 +2880,15 @@ export default function TCGPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pveGameState?.currentTurn, view, isPvE]);
 
+  // Timer warning sounds - play tick at 5, 3, 1 seconds
+  useEffect(() => {
+    if (view === "battle" && isPvE && pveGameState) {
+      if (turnTimeRemaining === 5 || turnTimeRemaining === 3 || turnTimeRemaining === 1) {
+        playSound("tick");
+      }
+    }
+  }, [turnTimeRemaining, view, isPvE, pveGameState]);
+
   // ═══════════════════════════════════════════════════════════════════════════════
   // COMPONENT: Card Detail Modal
   // ═══════════════════════════════════════════════════════════════════════════════
@@ -3196,6 +3226,25 @@ export default function TCGPage() {
                   </button>
                 ) : (
                   <>
+                    {/* Difficulty Selector */}
+                    <div className="flex gap-1 mb-2">
+                      {(Object.keys(DIFFICULTY_CONFIG) as Difficulty[]).map((diff) => (
+                        <button
+                          key={diff}
+                          onClick={() => setDifficulty(diff)}
+                          className={`flex-1 py-1.5 px-2 rounded text-xs font-bold transition-all ${
+                            difficulty === diff
+                              ? diff === "easy" ? "bg-green-600 text-white"
+                                : diff === "normal" ? "bg-yellow-600 text-white"
+                                : "bg-red-600 text-white"
+                              : "bg-black/30 text-gray-400 hover:bg-black/50"
+                          }`}
+                        >
+                          {DIFFICULTY_CONFIG[diff].emoji} {DIFFICULTY_CONFIG[diff].label}
+                        </button>
+                      ))}
+                    </div>
+
                     {/* PvE Button */}
                     <button
                       onClick={() => startPvEMatch()}
@@ -3204,7 +3253,7 @@ export default function TCGPage() {
                       <div className="absolute inset-0 bg-gradient-to-r from-green-600 via-emerald-500 to-green-600 opacity-80 group-hover:opacity-100 transition-opacity" />
                       <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
                       <span className="relative z-10 block py-3 px-4 text-white font-black text-sm uppercase tracking-[0.2em] drop-shadow-lg">
-                        {t('tcgBattleCpu')}
+                        {t('tcgBattleCpu')} {DIFFICULTY_CONFIG[difficulty].emoji}
                       </span>
                     </button>
 
