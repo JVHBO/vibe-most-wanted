@@ -46,6 +46,10 @@ export async function GET(
       name: metadata.name,
       // Also include power/rarity for validation
       attributes: metadata.attributes,
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+      },
     });
 
   } catch (error: any) {
