@@ -7,21 +7,21 @@
   "miniapp": {
     "version": "1",
     "name": "$VBMS - Game and Wanted Cast",
-    "iconUrl": "https://vibemostwanted.xyz/icon.gif",
+    "iconUrl": "https://ipfs.filebase.io/ipfs/QmQXqHYvtCKgXq6Xn3YJJJwvPLqXDQFnVk4cF4g4PJQX9K",
     "homeUrl": "https://vibemostwanted.xyz",
-    "imageUrl": "https://vibemostwanted.xyz/screenshot-1.png",
+    "imageUrl": "https://ipfs.filebase.io/ipfs/QmPAV3PEZBg7RJQ3x8Gkrb4K8hQs5xKvZy9x4Bxo6mQvPp",
     "aspectRatio": "3:2",
     "buttonTitle": "Play Now",
-    "splashImageUrl": "https://vibemostwanted.xyz/splash.gif",
+    "splashImageUrl": "https://ipfs.filebase.io/ipfs/QmZ1cfYCW9mDzD4V9iMhVoUQGFd1QwNLfMmEEBQKwEfFSb",
     "splashBackgroundColor": "#0C0C0C",
     "webhookUrl": "https://api.neynar.com/f/app/e4b053fc-a6bd-4975-a6bc-a3174e617d19/event",
     "castShareUrl": "https://vibemostwanted.xyz",
     "subtitle": "Meme Card Game",
     "description": "Battle with meme cards in PvE and PvP modes. The most wanted meme card game on Base!",
     "screenshotUrls": [
-      "https://vibemostwanted.xyz/screenshot-1.png",
-      "https://vibemostwanted.xyz/screenshot-2.png",
-      "https://vibemostwanted.xyz/screenshot-3.png"
+      "https://ipfs.filebase.io/ipfs/QmPAV3PEZBg7RJQ3x8Gkrb4K8hQs5xKvZy9x4Bxo6mQvPp",
+      "https://ipfs.filebase.io/ipfs/QmWi7EYMMYAaSWNCgT2WL4ZN6K8ry3v6pxVnZ5zcvyTHk7",
+      "https://ipfs.filebase.io/ipfs/QmNMNBURvudv4kDQjJSU6Z4Lx9kHg8mLR7eFpUFshWjEZP"
     ],
     "primaryCategory": "games",
     "tags": [
@@ -31,11 +31,11 @@
       "pvp",
       "base"
     ],
-    "heroImageUrl": "https://vibemostwanted.xyz/hero.png",
+    "heroImageUrl": "https://ipfs.filebase.io/ipfs/QmXpeouxdQdZ3nTn4WKi8uyXdS3Z8TccQz5ChKQ9MxdQH9",
     "tagline": "Battle with meme cards",
     "ogTitle": "VBMS - Meme Card Game",
     "ogDescription": "Battle with meme cards in PvE and PvP modes on Base!",
-    "ogImageUrl": "https://vibemostwanted.xyz/og-image.png",
+    "ogImageUrl": "https://ipfs.filebase.io/ipfs/QmU27iyqYXLYD3P7xKZqVNdqLKq8mFvZKq8LNdqLKqYXLY",
     "requiredChains": ["eip155:8453"],
     "requiredCapabilities": [
       "wallet.getEthereumProvider",

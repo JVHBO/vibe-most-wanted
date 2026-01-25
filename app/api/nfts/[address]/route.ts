@@ -253,7 +253,11 @@ export async function GET(
 
     console.log(`✅ [nfts] ${owner.slice(0, 10)}...: ${allNfts.length} NFTs (${stats.cacheHits} cache, ${stats.alchemyCalls} alchemy)`);
 
-    return NextResponse.json(response);
+    return NextResponse.json(response, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+      },
+    });
 
   } catch (error: any) {
     console.error("[nfts] Error:", error);

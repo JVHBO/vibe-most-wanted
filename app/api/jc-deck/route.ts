@@ -7,6 +7,10 @@ export async function GET() {
       cards: jcDeck,
       source: 'static-file',
       total: jcDeck.length
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=604800',
+      },
     });
   } catch (error) {
     console.error('Error loading JC deck:', error);

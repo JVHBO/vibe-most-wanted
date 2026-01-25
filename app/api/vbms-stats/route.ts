@@ -18,7 +18,11 @@ export async function GET() {
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+      },
+    });
   } catch (error) {
     console.error('Error fetching VBMS stats:', error);
     return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
