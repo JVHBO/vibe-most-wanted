@@ -3598,6 +3598,34 @@ export default function TCGPage() {
             </div>
           </div>
 
+          {/* Combo Preview */}
+          {selectedCards.length >= 2 && (
+            <div className="bg-gradient-to-r from-yellow-900/20 to-amber-900/20 border border-yellow-500/20 rounded-lg p-2 mb-3">
+              <h3 className="text-[9px] font-bold text-yellow-400 mb-1.5 uppercase tracking-[0.2em]">🎯 Combos</h3>
+              {(() => {
+                const deckCombos = detectCombos(selectedCards);
+                if (deckCombos.length === 0) {
+                  return <p className="text-[10px] text-gray-500 italic">No combos yet - add more cards!</p>;
+                }
+                return (
+                  <div className="flex flex-wrap gap-1.5">
+                    {deckCombos.map(({ combo, matchedCards }) => (
+                      <div
+                        key={combo.name}
+                        className="px-2 py-1 bg-black/40 rounded border border-yellow-500/30 text-[10px]"
+                        title={combo.description}
+                      >
+                        <span className="text-yellow-400">{combo.emoji}</span>
+                        <span className="text-white ml-1">{combo.name}</span>
+                        <span className="text-green-400 ml-1">+{combo.bonus.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
           {/* Selected Cards */}
           <div className="bg-gradient-to-b from-vintage-charcoal/40 to-black/30 border border-vintage-gold/20 rounded-lg p-3 mb-3">
             <h3 className="text-[9px] font-bold text-vintage-gold mb-2 uppercase tracking-[0.2em]">{t('tcgCurrentDeck')} <span className="text-vintage-burnt-gold/60">({selectedCards.length})</span></h3>
@@ -3986,10 +4014,17 @@ export default function TCGPage() {
             </div>
 
             {/* Turn Indicator (center) */}
-            <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full">
-              <span className="text-xs text-gray-400">{t('tcgTurn')}</span>
-              <span className="text-lg font-bold text-yellow-400">{gs.currentTurn}</span>
-              <span className="text-xs text-gray-500">/ {TCG_CONFIG.TOTAL_TURNS}</span>
+            <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2 bg-black/40 px-3 py-1.5 rounded-full">
+                <span className="text-xs text-gray-400">{t('tcgTurn')}</span>
+                <span className="text-lg font-bold text-yellow-400">{gs.currentTurn}</span>
+                <span className="text-xs text-gray-500">/ {TCG_CONFIG.TOTAL_TURNS}</span>
+              </div>
+              <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                difficulty === "easy" ? "text-green-400" : difficulty === "hard" ? "text-red-400" : "text-yellow-400"
+              }`}>
+                {DIFFICULTY_CONFIG[difficulty].emoji} {DIFFICULTY_CONFIG[difficulty].label}
+              </span>
             </div>
 
             {/* CPU Avatar (right) */}
