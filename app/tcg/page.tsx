@@ -3335,13 +3335,12 @@ export default function TCGPage() {
           playSound("hit");
         }, baseDelay);
 
-        // Shake enemy cards
+        // Shake enemy cards (no extra sound - hit sound already played above)
         const action = item.ability?.effect?.action || "";
         const isLaneWide = action.includes("debuffLane") || action.includes("AllLanes");
         const enemyCards = oppositeSide === "cpu" ? newLanes[laneIndex].cpuCards : newLanes[laneIndex].playerCards;
         if (enemyCards.length > 0) {
           setTimeout(() => {
-            playSound("damage");
             if (isLaneWide) {
               enemyCards.forEach((_: any, cardIdx: number) => {
                 triggerCardAnimation(laneIndex, oppositeSide, cardIdx, "shake", undefined, 400);
@@ -3356,7 +3355,7 @@ export default function TCGPage() {
       } else if (actionType === "steal") {
         setTimeout(() => {
           triggerAbilityEffect("steal", laneIndex, oppositeSide, laneIndex, side, "🔮", result.bonusPower);
-          playSound("damage");
+          playSound("steal");
         }, baseDelay);
 
         const action = item.ability?.effect?.action || "";
