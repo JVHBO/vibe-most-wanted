@@ -194,7 +194,7 @@ export const getAddressesBySource = query({
       date: targetDate,
       source,
       addresses: record?.addresses || [],
-      count: record?.addresses.length || 0,
+      count: record?.addresses?.length || 0,
     };
   },
 });
