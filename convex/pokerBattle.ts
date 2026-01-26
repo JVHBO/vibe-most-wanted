@@ -1256,6 +1256,17 @@ export const resolveBets = mutation({
       return { resolved: 0, totalPaidOut: 0 };
     }
 
+    // 🚀 BANDWIDTH FIX: Batch load all profiles upfront (N+1 → 1 query)
+    const uniqueBettors = [...new Set(bets.map(b => b.bettor))];
+    const profilesResult = await Promise.all(
+      uniqueBettors.map(addr =>
+        ctx.db.query("profiles").withIndex("by_address", q => q.eq("address", addr)).first()
+      )
+    );
+    const profileMap = new Map(
+      uniqueBettors.map((addr, i) => [addr, profilesResult[i]])
+    );
+
     let totalPaidOut = 0;
     const winnerAddr = args.winnerId.toLowerCase();
 
@@ -1267,11 +1278,8 @@ export const resolveBets = mutation({
         const odds = bet.odds || 3; // Default to 3x for old bets
         const payout = bet.amount * odds;
 
-        // Get bettor's profile
-        const profile = await ctx.db
-          .query("profiles")
-          .withIndex("by_address", (q) => q.eq("address", bet.bettor))
-          .first();
+        // 🚀 BANDWIDTH FIX: Use pre-loaded profile from map
+        const profile = profileMap.get(bet.bettor);
 
         if (profile) {
           // Pay out winnings to balance
@@ -2097,6 +2105,17 @@ export const cpuResolveRound = internalMutation({
     const winnerAddress = roundWinner === "tie" ? "tie" : (roundWinner === "host" ? room.hostAddress : room.guestAddress);
 
     if (bets.length > 0) {
+      // 🚀 BANDWIDTH FIX: Batch load all credits upfront (N+1 → 1 query)
+      const uniqueBettors = [...new Set(bets.map(b => b.bettor))];
+      const creditsResult = await Promise.all(
+        uniqueBettors.map(addr =>
+          ctx.db.query("bettingCredits").withIndex("by_address", q => q.eq("address", addr)).first()
+        )
+      );
+      const creditsMap = new Map(
+        uniqueBettors.map((addr, i) => [addr, creditsResult[i]])
+      );
+
       // Process all bets (WIN/LOSS/TIE)
       for (const bet of bets) {
         const isTieBet = bet.betOn.toLowerCase() === "tie";
@@ -2106,11 +2125,8 @@ export const cpuResolveRound = internalMutation({
           // WINNER: Pay out with odds multiplier
           const payout = Math.floor(bet.amount * bet.odds);
 
-          // Get bettor's credits
-          const credits = await ctx.db
-            .query("bettingCredits")
-            .withIndex("by_address", (q) => q.eq("address", bet.bettor))
-            .first();
+          // 🚀 BANDWIDTH FIX: Use pre-loaded credits from map
+          const credits = creditsMap.get(bet.bettor);
 
           if (credits) {
             await ctx.db.patch(credits._id, {

@@ -523,6 +523,17 @@ export const dealAndResolve = mutation({
       .withIndex("by_table", (q) => q.eq("tableId", tableId))
       .collect();
 
+    // 🚀 BANDWIDTH FIX: Batch load all credits upfront (N+1 → 1 query)
+    const uniquePlayers = [...new Set(bets.map(b => b.playerAddress))];
+    const creditsResult = await Promise.all(
+      uniquePlayers.map(addr =>
+        ctx.db.query("bettingCredits").withIndex("by_address", q => q.eq("address", addr)).first()
+      )
+    );
+    const creditsMap = new Map(
+      uniquePlayers.map((addr, i) => [addr, creditsResult[i]])
+    );
+
     let totalPayout = 0;
     let winnersCount = 0;
 
@@ -563,10 +574,8 @@ export const dealAndResolve = mutation({
 
       // Pay out to betting credits
       if (payout > 0) {
-        const credits = await ctx.db
-          .query("bettingCredits")
-          .withIndex("by_address", (q) => q.eq("address", bet.playerAddress))
-          .first();
+        // 🚀 BANDWIDTH FIX: Use pre-loaded credits from map
+        const credits = creditsMap.get(bet.playerAddress);
 
         if (credits) {
           await ctx.db.patch(credits._id, {
@@ -829,6 +838,17 @@ export const checkAndResolveExpiredTables = mutation({
           .withIndex("by_table", (q) => q.eq("tableId", table.tableId))
           .collect();
 
+        // 🚀 BANDWIDTH FIX: Batch load all credits upfront (N+1 → 1 query)
+        const uniquePlayers = [...new Set(bets.map(b => b.playerAddress))];
+        const creditsResult = await Promise.all(
+          uniquePlayers.map(addr =>
+            ctx.db.query("bettingCredits").withIndex("by_address", q => q.eq("address", addr)).first()
+          )
+        );
+        const creditsMap = new Map(
+          uniquePlayers.map((addr, i) => [addr, creditsResult[i]])
+        );
+
         let totalPayout = 0;
         let winnersCount = 0;
 
@@ -860,10 +880,8 @@ export const checkAndResolveExpiredTables = mutation({
           });
 
           if (payout > 0) {
-            const credits = await ctx.db
-              .query("bettingCredits")
-              .withIndex("by_address", (q) => q.eq("address", bet.playerAddress))
-              .first();
+            // 🚀 BANDWIDTH FIX: Use pre-loaded credits from map
+            const credits = creditsMap.get(bet.playerAddress);
 
             if (credits) {
               await ctx.db.patch(credits._id, {

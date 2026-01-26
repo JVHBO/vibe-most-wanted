@@ -261,23 +261,38 @@ export const resolveRoundBets = mutation({
       };
     }
 
+    // 🚀 BANDWIDTH FIX: Batch load all profiles and credits upfront (N+1 → 2 queries)
+    const uniqueBettors = [...new Set(bets.map(b => b.bettor))];
+
+    const [profilesResult, creditsResult] = await Promise.all([
+      Promise.all(uniqueBettors.map(addr =>
+        ctx.db.query("profiles").withIndex("by_address", q => q.eq("address", addr)).first()
+      )),
+      Promise.all(uniqueBettors.map(addr =>
+        ctx.db.query("bettingCredits").withIndex("by_address", q => q.eq("address", addr)).first()
+      ))
+    ]);
+
+    const profileMap = new Map(
+      uniqueBettors.map((addr, i) => [addr, profilesResult[i]])
+    );
+    const creditsMap = new Map(
+      uniqueBettors.map((addr, i) => [addr, creditsResult[i]])
+    );
+
     let winnersCount = 0;
     let losersCount = 0;
 
     // Check if the round was a tie (no winner)
     const isTieRound = !normalizedWinner || normalizedWinner === "tie";
 
-    // Process each bet
+    // Process each bet (now using pre-loaded maps)
     for (const bet of bets) {
       const isTieBet = bet.betOn.toLowerCase() === "tie";
       const isWinner = isTieRound ? isTieBet : (bet.betOn.toLowerCase() === normalizedWinner);
 
-      // Get bettor's profile for username
-      const bettorProfile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", bet.bettor))
-        .first();
-
+      // 🚀 BANDWIDTH FIX: Use pre-loaded profile from map
+      const bettorProfile = profileMap.get(bet.bettor);
       const bettorUsername = bettorProfile?.username || "Spectator";
 
       if (isWinner) {
@@ -285,11 +300,8 @@ export const resolveRoundBets = mutation({
         const payout = Math.floor(bet.amount * bet.odds);
         winnersCount++;
 
-        // Get bettor's credits
-        const credits = await ctx.db
-          .query("bettingCredits")
-          .withIndex("by_address", (q) => q.eq("address", bet.bettor))
-          .first();
+        // 🚀 BANDWIDTH FIX: Use pre-loaded credits from map
+        const credits = creditsMap.get(bet.bettor);
 
         if (credits) {
           // Add payout to balance
