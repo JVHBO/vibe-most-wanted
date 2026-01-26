@@ -344,10 +344,10 @@ const CARD_COMBOS: CardCombo[] = [
   {
     id: "parallel",
     name: "Parallel",
-    emoji: "⚡",
+    emoji: "🔀",
     cards: ["rizkybegitu", "bradymck"],
-    bonus: { type: "power", value: 50, target: "self" },
-    description: "RIZKY + BRADY = +50 power each! Parallel universes collide!",
+    bonus: { type: "power_percent", value: 100, target: "self" },
+    description: "MIRROR: Each gains power equal to the OTHER! Different lanes = STEAL 20 from enemies too!",
   },
   {
     id: "royal_brothers",
