@@ -4631,7 +4631,7 @@ export default function TCGPage() {
 
             {/* Nothing Cards */}
             <div className="bg-gradient-to-b from-purple-950/40 to-black/30 border border-purple-500/30 rounded-lg p-3">
-              <h3 className="text-[9px] font-bold text-purple-400 mb-2 uppercase tracking-[0.2em]">Nothing <span className="text-purple-400/60">({nothingCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">50%</span></h3>
+              <h3 className="text-[9px] font-bold text-purple-400 mb-2 uppercase tracking-[0.2em]">Others <span className="text-purple-400/60">({nothingCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">50% power</span></h3>
               <div className="flex flex-wrap gap-1.5 max-h-[300px] overflow-y-auto">
                 {nothingCards.map((card: DeckCard) => {
                   const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
