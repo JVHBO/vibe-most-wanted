@@ -2356,6 +2356,14 @@ export default function TCGPage() {
         });
         bonusPower = totalEnemyPowerInLane;
         break;
+
+      case "buffIfLosing":
+        // +base power, or +bonus if LOSING this lane (Rizkybegitu - Lucky Roll)
+        const myLanePower = newLanes[laneIndex][myPower];
+        const enemyLanePower = newLanes[laneIndex][enemyPower];
+        const isLosing = isPlayer ? myLanePower < enemyLanePower : enemyLanePower < myLanePower;
+        bonusPower = isLosing ? (effect.bonus || 25) : (effect.base || 10);
+        break;
     }
 
     return { lanes: newLanes, playerHand: newHand, playerDeckRemaining: newDeck, bonusPower, energyToConsume };
