@@ -24,6 +24,32 @@ type GameView = "lobby" | "deck-builder" | "waiting" | "battle" | "result";
 // Collections that can be played in TCG (with 50% power like nothing)
 const OTHER_TCG_COLLECTIONS = ["gmvbrs", "cumioh", "viberotbangers", "meowverse", "teampothead", "tarot", "baseballcabal", "poorlydrawnpepes", "viberuto", "vibefx", "historyofcomputer"];
 
+// Card name aliases: onChainName -> baccarat/combo name
+// IMPORTANT: Used by detectCombos for matching cards to combos
+const CARD_NAME_ALIASES: Record<string, string> = {
+  "proxy": "slaterg",
+  "filthy": "don filthy",
+  "vlad": "vlady",
+  "shill": "shills",
+  "beto": "betobutter",
+  "lombra": "lombra jr",
+  "vibe": "vibe intern",
+  "jack": "jack the sniper",
+  "horsefacts": "horsefarts",
+  "jc": "jc denton",
+  "nicogay": "nico",
+  "chilli": "chilipepper",
+  "goofy romero": "goofy romero",
+  "linda xied": "linda xied",
+  "beeper": "beeper",
+};
+
+// Helper to resolve card name using aliases
+const resolveCardName = (name: string): string => {
+  const lower = name.toLowerCase().trim();
+  return CARD_NAME_ALIASES[lower] || lower;
+};
+
 // Collection cover images - maps collection to its representative image folder
 const COLLECTION_COVERS: Record<string, string> = {
   vibe: "vibe",
@@ -266,8 +292,7 @@ const CARD_COMBOS: CardCombo[] = [
     id: "legends_unite",
     name: "Legends Unite",
     emoji: "⭐",
-    cards: ["nico", "miguel", "ye"],
-    minCards: 2,
+    cards: ["nico", "ye"],
     bonus: { type: "power", value: 70, target: "self" },
     description: "+70 power to each Legend!",
   },
@@ -328,8 +353,7 @@ const CARD_COMBOS: CardCombo[] = [
     id: "content_creators",
     name: "Content Creators",
     emoji: "📱",
-    cards: ["pooster", "bradymck", "qrcodo"],
-    minCards: 2,
+    cards: ["pooster", "qrcodo"],
     bonus: { type: "power", value: 40, target: "self" },
     description: "+40 power each! Content is KING!",
   },
@@ -337,7 +361,7 @@ const CARD_COMBOS: CardCombo[] = [
     id: "chaos_agents",
     name: "Chaos Agents",
     emoji: "🌀",
-    cards: ["tukka", "goofy romero", "chilipepper"],
+    cards: ["tukka", "brainpasta", "chilipepper"],
     minCards: 2,
     bonus: { type: "power", value: 60, target: "all_lanes" },
     description: "+60 power across ALL lanes!",
@@ -346,8 +370,7 @@ const CARD_COMBOS: CardCombo[] = [
     id: "sniper_support",
     name: "Sniper Elite",
     emoji: "🎯",
-    cards: ["jack the sniper", "beeper", "loground"],
-    minCards: 2,
+    cards: ["jack the sniper", "loground"],
     bonus: { type: "steal", value: 35, target: "enemy_lane" },
     description: "STEAL 35 power from enemies!",
   },
@@ -357,8 +380,7 @@ const CARD_COMBOS: CardCombo[] = [
     id: "money_makers",
     name: "Money Makers",
     emoji: "💰",
-    cards: ["betobutter", "ventra", "melted"],
-    minCards: 2,
+    cards: ["melted", "rachel"],
     bonus: { type: "power", value: 40, target: "lane" },
     description: "+40 power to entire lane!",
   },
@@ -366,7 +388,7 @@ const CARD_COMBOS: CardCombo[] = [
     id: "underdog_uprising",
     name: "Underdog Uprising",
     emoji: "🐕",
-    cards: ["rachel", "ink", "casa", "thosmur"],
+    cards: ["ink", "casa", "thosmur"],
     minCards: 2,
     bonus: { type: "power_percent", value: 80, target: "self" },
     description: "+80% power! Commons RISE UP!",
@@ -401,9 +423,9 @@ const CARD_COMBOS: CardCombo[] = [
     id: "scaling_masters",
     name: "Scaling Masters",
     emoji: "📊",
-    cards: ["betobutter", "morlacos"],
+    cards: ["ventra", "morlacos"],
     bonus: { type: "power_percent", value: 100, target: "self" },
-    description: "BETOBUTTER + MORLACOS = DOUBLE scaling! Unstoppable!",
+    description: "VENTRA + MORLACOS = DOUBLE scaling! Unstoppable!",
   },
   {
     id: "christmas_spirit",
@@ -440,19 +462,23 @@ const CARD_COMBOS: CardCombo[] = [
 ];
 
 // Combo detection cache for performance
-const comboCache = new Map<string, { combo: CardCombo; matchedCards: string[] }[]>();
+const comboCache = new Map<string, { combo: CardCombo; matchedCards: string[]; wildcardsUsed: number }[]>();
 
 // Detect combos in a set of cards (memoized)
-const detectCombos = (cards: DeckCard[]): { combo: CardCombo; matchedCards: string[] }[] => {
-  // Create cache key from sorted card names
-  const cacheKey = cards.map(c => (c.name || "").toLowerCase()).sort().join("|");
+const detectCombos = (cards: DeckCard[]): { combo: CardCombo; matchedCards: string[]; wildcardsUsed: number }[] => {
+  // Create cache key from sorted card names + types (for vibefid wildcard)
+  const cacheKey = cards.map(c => `${resolveCardName(c.name || "")}:${c.type}`).sort().join("|");
 
   // Return cached result if available
   const cached = comboCache.get(cacheKey);
   if (cached) return cached;
 
-  const activeCombos: { combo: CardCombo; matchedCards: string[] }[] = [];
-  const cardNames = cards.map(c => (c.name || "").toLowerCase());
+  const activeCombos: { combo: CardCombo; matchedCards: string[]; wildcardsUsed: number }[] = [];
+  // Apply aliases to card names for proper matching!
+  const cardNames = cards.map(c => resolveCardName(c.name || ""));
+
+  // VibeFID cards act as wildcards - can substitute any card in a combo
+  const vibefidCount = cards.filter(c => c.type === "vibefid").length;
 
   for (const combo of CARD_COMBOS) {
     const comboCardsLower = combo.cards.map(c => c.toLowerCase());
@@ -460,8 +486,13 @@ const detectCombos = (cards: DeckCard[]): { combo: CardCombo; matchedCards: stri
 
     const requiredCount = combo.minCards || combo.cards.length;
 
-    if (matchedCards.length >= requiredCount) {
-      activeCombos.push({ combo, matchedCards });
+    // Use VibeFID as wildcards to complete combos
+    const wildcardsNeeded = Math.max(0, requiredCount - matchedCards.length);
+    const wildcardsAvailable = Math.min(vibefidCount, wildcardsNeeded);
+    const effectiveMatches = matchedCards.length + wildcardsAvailable;
+
+    if (effectiveMatches >= requiredCount) {
+      activeCombos.push({ combo, matchedCards, wildcardsUsed: wildcardsAvailable });
     }
   }
 
@@ -473,14 +504,32 @@ const detectCombos = (cards: DeckCard[]): { combo: CardCombo; matchedCards: stri
 };
 
 // Calculate combo bonus for a specific card
-const getComboBonus = (card: DeckCard, allCardsInLane: DeckCard[], allLanes?: any[]): number => {
-  const combos = detectCombos(allCardsInLane);
+// vibefidChoices: Record<string, string> - maps "laneIndex-cardId" to chosen comboId
+// laneIndex: optional, used to filter combos by vibefid choices
+const getComboBonus = (card: DeckCard, allCardsInLane: DeckCard[], allLanes?: any[], vibefidChoices?: Record<string, string>, laneIndex?: number): number => {
+  let combos = detectCombos(allCardsInLane);
   let totalBonus = 0;
-  const cardNameLower = (card.name || "").toLowerCase();
+  // Use resolved name to match against combo cards
+  const cardNameResolved = resolveCardName(card.name || "");
+
+  // Filter combos based on VibeFID choices if provided
+  if (vibefidChoices && laneIndex !== undefined) {
+    const vibefidCards = allCardsInLane.filter(c => c.type === "vibefid");
+    const chosenComboIds = vibefidCards
+      .map(c => vibefidChoices[`${laneIndex}-${c.cardId}`])
+      .filter(Boolean);
+
+    if (chosenComboIds.length > 0) {
+      combos = combos.filter(({ combo, wildcardsUsed }) => {
+        if (wildcardsUsed === 0) return true; // Natural combo
+        return chosenComboIds.includes(combo.id); // Chosen by VibeFID
+      });
+    }
+  }
 
   for (const { combo, matchedCards } of combos) {
     // Check if this card is part of the combo
-    if (matchedCards.includes(cardNameLower)) {
+    if (matchedCards.includes(cardNameResolved)) {
       if (combo.bonus.target === "self" || combo.bonus.target === "lane") {
         if (combo.bonus.type === "power") {
           totalBonus += combo.bonus.value;
@@ -493,7 +542,7 @@ const getComboBonus = (card: DeckCard, allCardsInLane: DeckCard[], allLanes?: an
     // Lane-wide bonus (apply to all cards in lane, not just combo cards)
     if (combo.bonus.target === "lane" && combo.bonus.type === "power") {
       // Only apply once per card
-      if (!matchedCards.includes(cardNameLower)) {
+      if (!matchedCards.includes(cardNameResolved)) {
         totalBonus += Math.floor(combo.bonus.value / allCardsInLane.length);
       }
     }
@@ -503,8 +552,24 @@ const getComboBonus = (card: DeckCard, allCardsInLane: DeckCard[], allLanes?: an
 };
 
 // Get steal amount from combos (negative power to enemies)
-const getComboSteal = (playerCards: DeckCard[]): number => {
-  const combos = detectCombos(playerCards);
+const getComboSteal = (playerCards: DeckCard[], vibefidChoices?: Record<string, string>, laneIndex?: number): number => {
+  let combos = detectCombos(playerCards);
+
+  // Filter combos based on VibeFID choices if provided
+  if (vibefidChoices && laneIndex !== undefined) {
+    const vibefidCards = playerCards.filter(c => c.type === "vibefid");
+    const chosenComboIds = vibefidCards
+      .map(c => vibefidChoices[`${laneIndex}-${c.cardId}`])
+      .filter(Boolean);
+
+    if (chosenComboIds.length > 0) {
+      combos = combos.filter(({ combo, wildcardsUsed }) => {
+        if (wildcardsUsed === 0) return true;
+        return chosenComboIds.includes(combo.id);
+      });
+    }
+  }
+
   let totalSteal = 0;
 
   for (const { combo } of combos) {
@@ -1256,6 +1321,16 @@ export default function TCGPage() {
     action: "kamikaze" | "charm" | "steal";
   } | null>(null);
 
+  // VibeFID combo selection modal state
+  const [vibefidComboModal, setVibefidComboModal] = useState<{
+    laneIndex: number;
+    card: DeckCard;
+    possibleCombos: { combo: CardCombo; partnerCard: string }[];
+  } | null>(null);
+
+  // Track which combo VibeFID should activate per lane (key = laneIndex-cardId)
+  const [vibefidComboChoices, setVibefidComboChoices] = useState<Record<string, string>>({});
+
   // Track combos already triggered this reveal phase to avoid duplicate sounds
   const shownCombosRef = useRef<Set<string>>(new Set());
 
@@ -1428,21 +1503,8 @@ export default function TCGPage() {
     return updatedLanes;
   };
 
-  // Aliases: onChainName -> baccarat name (used in abilities)
-  const cardNameAliases: Record<string, string> = {
-    "proxy": "slaterg",
-    "filthy": "don filthy",
-    "vlad": "vlady",
-    "shill": "shills",
-    "beto": "betobutter",
-    "lombra": "lombra jr",
-    "vibe": "vibe intern",
-    "jack": "jack the sniper",
-    "horsefacts": "horsefarts",
-    "jc": "jc denton",
-    "nicogay": "nico",
-    "chilli": "chilipepper",
-  };
+  // Use global CARD_NAME_ALIASES (defined at top of file)
+  const cardNameAliases = CARD_NAME_ALIASES;
 
   // Get VibeFID ability based on rarity (with translations)
   const getVibeFIDAbility = (rarity: string | undefined): TCGAbility | null => {
@@ -1945,6 +2007,8 @@ export default function TCGPage() {
     setPendingActions([]);
     setSelectedHandCard(null);
     setShowTiebreakerAnimation(false);
+    setVibefidComboChoices({}); // Reset combo choices for new game
+    setVibefidComboModal(null); // Close any open combo modal
     setShowDefeatBait(false);
     setShowBattleIntro(true);
 
@@ -2855,12 +2919,12 @@ export default function TCGPage() {
       lane.playerCards.forEach((card: DeckCard) => {
         const basePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
         const ongoingBonus = calculateOngoingBonus(card, laneIdx, lanes, currentTurn, true);
-        const comboBonus = getComboBonus(card, lane.playerCards, lanes);
+        const comboBonus = getComboBonus(card, lane.playerCards, lanes, vibefidComboChoices, laneIdx);
         const laneBonus = calculateLaneEffectBonus(card, lane, lane.playerCards, true, currentTurn);
         playerPower += basePower + ongoingBonus + comboBonus + laneBonus;
       });
 
-      // Calculate CPU power with ongoing bonuses + lane effects
+      // Calculate CPU power with ongoing bonuses + lane effects (CPU doesn't have vibefid choices)
       lane.cpuCards.forEach((card: DeckCard) => {
         const basePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
         const ongoingBonus = calculateOngoingBonus(card, laneIdx, lanes, currentTurn, false);
@@ -2884,8 +2948,8 @@ export default function TCGPage() {
       });
 
       // Apply steal effect from combos (reduce enemy power)
-      const playerSteal = getComboSteal(lane.playerCards);
-      const cpuSteal = getComboSteal(lane.cpuCards);
+      const playerSteal = getComboSteal(lane.playerCards, vibefidComboChoices, laneIdx);
+      const cpuSteal = getComboSteal(lane.cpuCards); // CPU doesn't have vibefid choices
       cpuPower = Math.max(0, cpuPower - playerSteal * lane.cpuCards.length);
       playerPower = Math.max(0, playerPower - cpuSteal * lane.playerCards.length);
 
@@ -2946,9 +3010,16 @@ export default function TCGPage() {
     return null;
   };
 
-  const handlePvEPlayCard = (laneIndex: number, cardIndex?: number) => {
+  const handlePvEPlayCard = (laneIndex: number, cardIndex?: number, chosenComboId?: string) => {
     const actualCardIndex = cardIndex ?? selectedHandCard;
     if (actualCardIndex === null || !pveGameState) return;
+
+    // BLOCK: Cannot play cards during reveal animation or ability resolution
+    // Note: Don't check currentPhase because it may have timing issues during transitions
+    if (isRevealing || isResolvingAbilities) {
+      playSound("error");
+      return;
+    }
 
     const card = pveGameState.playerHand[actualCardIndex];
     if (!card) return;
@@ -2969,6 +3040,47 @@ export default function TCGPage() {
     if (energyCost > currentEnergy) {
       playSound("error"); // Play error sound
       return; // Can't play this card
+    }
+
+    // VibeFID combo selection: If VibeFID is being played to a lane with other cards
+    // and no combo has been chosen yet, show the combo selection modal
+    if (card.type === "vibefid" && lane.playerCards.length > 0 && !chosenComboId) {
+      // Find all possible combos with cards already in the lane (only revealed cards count for combos)
+      const existingCards = lane.playerCards.filter((c: any) => c._revealed !== false);
+      const possibleCombos: { combo: CardCombo; partnerCard: string }[] = [];
+
+      for (const existingCard of existingCards) {
+        const existingName = resolveCardName(existingCard.name || "");
+        // Find combos that include this card
+        for (const combo of CARD_COMBOS) {
+          const comboCardsLower = combo.cards.map(c => c.toLowerCase());
+          if (comboCardsLower.includes(existingName)) {
+            // This combo includes the existing card, VibeFID can complete it as wildcard
+            possibleCombos.push({ combo, partnerCard: existingCard.name || "" });
+          }
+        }
+      }
+
+      // If there are multiple possible combos, show selection modal
+      if (possibleCombos.length > 1) {
+        setVibefidComboModal({
+          laneIndex,
+          card: { ...card, _tempCardIndex: actualCardIndex } as any,
+          possibleCombos,
+        });
+        return; // Wait for player to choose
+      } else if (possibleCombos.length === 1) {
+        // Only one combo possible, auto-select it
+        chosenComboId = possibleCombos[0].combo.id;
+      }
+    }
+
+    // Store VibeFID combo choice if one was made
+    if (card.type === "vibefid" && chosenComboId) {
+      setVibefidComboChoices(prev => ({
+        ...prev,
+        [`${laneIndex}-${card.cardId}`]: chosenComboId,
+      }));
     }
 
     // Consume energy
@@ -3373,7 +3485,22 @@ export default function TCGPage() {
           ? newLanes[currentReveal.laneIdx].playerCards.filter((c: any) => c._revealed !== false)
           : newLanes[currentReveal.laneIdx].cpuCards.filter((c: any) => c._revealed !== false);
 
-        const newCombos = detectCombos(laneCards);
+        let newCombos = detectCombos(laneCards);
+
+        // Filter combos based on VibeFID choices (only for player side)
+        if (currentReveal.side === "player") {
+          const vibefidCards = laneCards.filter((c: any) => c.type === "vibefid");
+          const chosenComboIds = vibefidCards
+            .map((c: any) => vibefidComboChoices[`${currentReveal.laneIdx}-${c.cardId}`])
+            .filter(Boolean);
+
+          if (chosenComboIds.length > 0) {
+            newCombos = newCombos.filter(({ combo, wildcardsUsed }) => {
+              if (wildcardsUsed === 0) return true; // Natural combo (no wildcard needed)
+              return chosenComboIds.includes(combo.id); // Only chosen VibeFID combos
+            });
+          }
+        }
 
         // Show popup for new combos
         newCombos.forEach(({ combo }, comboIdx) => {
@@ -4074,10 +4201,12 @@ export default function TCGPage() {
     // Encode imageUrl to handle spaces and special characters
     const encodedImageUrl = card.imageUrl ? encodeURI(card.imageUrl) : null;
 
-    // Find combos for this card
+    // Find combos for this card (apply alias for name matching)
     const cardNameLower = card.name?.toLowerCase() || "";
+    const resolvedName = cardNameAliases[cardNameLower] || cardNameLower;
     const cardCombos = CARD_COMBOS.filter(combo =>
-      combo.cards.map(c => c.toLowerCase()).includes(cardNameLower)
+      combo.cards.map(c => c.toLowerCase()).includes(cardNameLower) ||
+      combo.cards.map(c => c.toLowerCase()).includes(resolvedName)
     );
 
     return (
@@ -4161,7 +4290,7 @@ export default function TCGPage() {
                   </div>
                   <div className="flex flex-wrap gap-1 mb-1">
                     {combo.cards.map((comboCard) => {
-                      const isCurrentCard = comboCard.toLowerCase() === cardNameLower;
+                      const isCurrentCard = comboCard.toLowerCase() === cardNameLower || comboCard.toLowerCase() === resolvedName;
                       return (
                         <span
                           key={comboCard}
@@ -4181,6 +4310,13 @@ export default function TCGPage() {
                   </p>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* VibeFID Wildcard Info */}
+          {card.type === "vibefid" && (
+            <div className="bg-cyan-900/30 border border-cyan-500/30 rounded-lg p-3 mb-3">
+              <p className="text-cyan-400 text-sm font-bold">🃏 Completes ANY combo!</p>
             </div>
           )}
 
@@ -4712,20 +4848,13 @@ export default function TCGPage() {
               <span className="group-hover:-translate-x-0.5 inline-block transition-transform text-vintage-gold/50 group-hover:text-vintage-gold">←</span>
               {t('tcgBack')}
             </button>
-            <div className="flex flex-col items-center">
-              <h1 className="text-lg md:text-xl font-black text-vintage-gold uppercase tracking-[0.25em]">{t('tcgDeckBuilder')}</h1>
-              <p className="text-[9px] text-vintage-burnt-gold/40 uppercase tracking-[0.3em]">Select 12 cards</p>
-            </div>
+            <p className="text-[10px] text-vintage-burnt-gold/50 uppercase tracking-[0.2em]">Select 12 cards</p>
             <button
               onClick={handleSaveDeck}
               disabled={!canSave}
-              className="relative overflow-hidden group disabled:opacity-40 disabled:cursor-not-allowed"
+              className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${canSave ? 'bg-vintage-gold text-black hover:bg-yellow-400' : 'bg-black/30 text-vintage-burnt-gold/40 cursor-not-allowed'} transition-colors`}
             >
-              <div className={`absolute inset-0 ${canSave ? 'bg-gradient-to-r from-vintage-gold via-yellow-500 to-vintage-gold opacity-90 group-hover:opacity-100' : 'bg-black/50'} transition-opacity`} />
-              <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
-              <span className={`relative z-10 block py-2 px-4 ${canSave ? 'text-black' : 'text-vintage-burnt-gold/50'} font-black text-xs uppercase tracking-[0.15em]`}>
-                {t('tcgSaveDeck')}
-              </span>
+              {t('tcgSaveDeck')}
             </button>
           </div>
         </div>
@@ -4757,279 +4886,257 @@ export default function TCGPage() {
             </div>
           )}
 
-          {/* Deck Stats */}
-          <div className="bg-gradient-to-b from-vintage-charcoal/60 to-vintage-charcoal/30 border border-vintage-gold/15 rounded-lg p-3 mb-3 shadow-lg shadow-black/20">
-            <div className="flex items-center gap-3 flex-wrap">
-              <input
-                type="text"
-                value={deckName}
-                onChange={(e) => setDeckName(e.target.value)}
-                className="bg-black/60 border border-vintage-gold/20 rounded px-3 py-1.5 text-vintage-gold font-bold tracking-wide focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-sm"
-                placeholder={t('tcgDeckName')}
-              />
-              <div className="flex gap-2 text-[9px] uppercase tracking-[0.1em] flex-wrap">
-                <div className={`px-2 py-1 rounded ${selectedCards.length === TCG_CONFIG.DECK_SIZE ? "bg-green-900/30 border border-green-500/30 text-green-400" : "bg-black/30 border border-vintage-gold/10 text-vintage-burnt-gold"}`}>
-                  {selectedCards.length}/{TCG_CONFIG.DECK_SIZE}
-                </div>
-                <div className={`px-2 py-1 rounded ${selectedVbmsOrVibefid >= TCG_CONFIG.MIN_VBMS_OR_VIBEFID ? "bg-green-900/30 border border-green-500/30 text-green-400" : "bg-red-900/30 border border-red-500/30 text-red-400"}`}>
-                  {selectedVbmsOrVibefid}/{TCG_CONFIG.MIN_VBMS_OR_VIBEFID} VBMS{selectedVibefid > 0 ? `+FID` : ""}
-                </div>
-                {selectedVibefid > 0 && (
-                  <div className="px-2 py-1 rounded bg-cyan-900/30 border border-cyan-500/30 text-cyan-400">
-                    {selectedVibefid}/{TCG_CONFIG.MAX_VIBEFID} VibeFID
-                  </div>
-                )}
-                <div className={`px-2 py-1 rounded ${selectedNothing <= TCG_CONFIG.MAX_NOTHING ? "bg-green-900/30 border border-green-500/30 text-green-400" : "bg-red-900/30 border border-red-500/30 text-red-400"}`}>
-                  {selectedNothing} Nothing
-                </div>
-                <div className="px-2 py-1 rounded bg-vintage-gold/10 border border-vintage-gold/20 text-vintage-gold font-bold">
-                  {totalPower} PWR
-                </div>
-                {/* Sort buttons */}
-                <div className="flex gap-1 ml-2 border-l border-vintage-gold/20 pl-2">
-                  <button
-                    onClick={() => {
-                      if (deckSortBy === "power") {
-                        setDeckSortDesc(!deckSortDesc);
-                      } else {
-                        setDeckSortBy("power");
-                        setDeckSortDesc(true);
-                      }
-                    }}
-                    className={`px-2 py-1 rounded transition-all ${
-                      deckSortBy === "power"
-                        ? "bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold"
-                        : "bg-black/30 border border-vintage-gold/10 text-vintage-burnt-gold hover:border-vintage-gold/30"
-                    }`}
-                  >
-                    ⚡ PWR {deckSortBy === "power" && (deckSortDesc ? "↓" : "↑")}
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (deckSortBy === "rarity") {
-                        setDeckSortDesc(!deckSortDesc);
-                      } else {
-                        setDeckSortBy("rarity");
-                        setDeckSortDesc(true);
-                      }
-                    }}
-                    className={`px-2 py-1 rounded transition-all ${
-                      deckSortBy === "rarity"
-                        ? "bg-purple-900/30 border border-purple-500/50 text-purple-400"
-                        : "bg-black/30 border border-vintage-gold/10 text-vintage-burnt-gold hover:border-vintage-gold/30"
-                    }`}
-                  >
-                    💎 RAR {deckSortBy === "rarity" && (deckSortDesc ? "↓" : "↑")}
-                  </button>
-                </div>
-                {/* Auto Deck buttons */}
-                <div className="flex gap-1 ml-2 border-l border-vintage-gold/20 pl-2">
-                  <button
-                    onClick={() => {
-                      // Auto deck focusing on MAXIMUM COMBOS
-                      const allCards = [...vbmsCards, ...vibefidCards, ...nothingCards];
+          {/* Deck Name */}
+          <input
+            type="text"
+            value={deckName}
+            onChange={(e) => setDeckName(e.target.value)}
+            className="w-full bg-black/40 border border-vintage-gold/20 rounded px-3 py-2 text-vintage-gold font-bold tracking-wide focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-sm mb-3"
+            placeholder={t('tcgDeckName')}
+          />
 
-                      // Map card names to cards for quick lookup
-                      const cardsByName = new Map<string, DeckCard[]>();
-                      for (const card of allCards) {
-                        const name = (card.name || "").toLowerCase();
-                        if (!cardsByName.has(name)) cardsByName.set(name, []);
-                        cardsByName.get(name)!.push(card);
-                      }
-
-                      // Find all achievable combos (have enough cards to activate)
-                      const achievableCombos: { combo: typeof CARD_COMBOS[0]; cards: DeckCard[] }[] = [];
-                      for (const combo of CARD_COMBOS) {
-                        const minRequired = combo.minCards || combo.cards.length;
-                        const availableComboCards: DeckCard[] = [];
-
-                        for (const comboCardName of combo.cards) {
-                          const matches = cardsByName.get(comboCardName.toLowerCase()) || [];
-                          if (matches.length > 0) {
-                            // Pick the highest power version we have
-                            const best = matches.sort((a, b) => b.power - a.power)[0];
-                            availableComboCards.push(best);
-                          }
-                        }
-
-                        if (availableComboCards.length >= minRequired) {
-                          achievableCombos.push({ combo, cards: availableComboCards });
-                        }
-                      }
-
-                      // Sort combos: prioritize more cards in combo, then by bonus value
-                      achievableCombos.sort((a, b) => {
-                        // More cards = better (more synergy)
-                        if (b.cards.length !== a.cards.length) return b.cards.length - a.cards.length;
-                        return b.combo.bonus.value - a.combo.bonus.value;
-                      });
-
-                      // Greedily add combos to maximize total combos
-                      const newDeck: DeckCard[] = [];
-                      const usedCardIds = new Set<string>();
-                      let vbmsOrFidCount = 0;
-                      let nothingOrOtherCount = 0;
-                      let vibefidUsed = false;
-
-                      const canAddCard = (card: DeckCard): boolean => {
-                        if (usedCardIds.has(card.cardId)) return true; // Already in deck
-                        if (newDeck.length >= TCG_CONFIG.DECK_SIZE) return false;
-                        if (card.type === "vibefid" && vibefidUsed) return false;
-                        if ((card.type === "nothing" || card.type === "other") && nothingOrOtherCount >= TCG_CONFIG.MAX_NOTHING) return false;
-                        return true;
-                      };
-
-                      const addCard = (card: DeckCard): boolean => {
-                        if (usedCardIds.has(card.cardId)) return true;
-                        if (!canAddCard(card)) return false;
-
-                        newDeck.push(card);
-                        usedCardIds.add(card.cardId);
-                        if (card.type === "vibefid") { vibefidUsed = true; vbmsOrFidCount++; }
-                        else if (card.type === "vbms") { vbmsOrFidCount++; }
-                        else if (card.type === "nothing" || card.type === "other") { nothingOrOtherCount++; }
-                        return true;
-                      };
-
-                      // Add combos greedily
-                      for (const { cards } of achievableCombos) {
-                        // Check if all cards of this combo can be added
-                        const canAddAll = cards.every(c => canAddCard(c));
-                        if (canAddAll) {
-                          for (const card of cards) {
-                            addCard(card);
-                          }
-                        }
-                      }
-
-                      // Fill remaining slots with highest power cards
-                      const remainingCards = allCards
-                        .filter(c => !usedCardIds.has(c.cardId))
-                        .sort((a, b) => {
-                          const powerA = (a.type === "nothing" || a.type === "other") ? Math.floor(a.power * 0.5) : a.power;
-                          const powerB = (b.type === "nothing" || b.type === "other") ? Math.floor(b.power * 0.5) : b.power;
-                          return powerB - powerA;
-                        });
-
-                      for (const card of remainingCards) {
-                        if (newDeck.length >= TCG_CONFIG.DECK_SIZE) break;
-                        addCard(card);
-                      }
-
-                      // Ensure minimum VBMS requirement
-                      if (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID) {
-                        const vbmsNotInDeck = vbmsCards
-                          .filter(c => !usedCardIds.has(c.cardId))
-                          .sort((a, b) => b.power - a.power);
-                        const nothingInDeck = newDeck
-                          .filter(c => c.type === "nothing" || c.type === "other")
-                          .sort((a, b) => Math.floor(a.power * 0.5) - Math.floor(b.power * 0.5));
-
-                        while (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID && vbmsNotInDeck.length > 0 && nothingInDeck.length > 0) {
-                          const toRemove = nothingInDeck.shift();
-                          const toAdd = vbmsNotInDeck.shift();
-                          if (toRemove && toAdd) {
-                            const idx = newDeck.findIndex(c => c.cardId === toRemove.cardId);
-                            if (idx !== -1) {
-                              newDeck[idx] = toAdd;
-                              usedCardIds.delete(toRemove.cardId);
-                              usedCardIds.add(toAdd.cardId);
-                              vbmsOrFidCount++;
-                              nothingOrOtherCount--;
-                            }
-                          }
-                        }
-                      }
-
-                      setSelectedCards(newDeck);
-                      setError(null);
-                    }}
-                    className="px-2 py-1 rounded transition-all bg-yellow-900/30 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-900/50 hover:border-yellow-500/50"
-                    title="Auto-build deck with maximum combos"
-                  >
-                    🎯 AUTO COMBO
-                  </button>
-                  <button
-                    onClick={() => {
-                      // Auto deck focusing on POWER
-                      const allCards = [...vbmsCards, ...vibefidCards, ...nothingCards];
-
-                      // Sort by effective power (accounting for 0.5x penalty)
-                      const sortedByPower = [...allCards].sort((a, b) => {
-                        const powerA = (a.type === "nothing" || a.type === "other") ? Math.floor(a.power * 0.5) : a.power;
-                        const powerB = (b.type === "nothing" || b.type === "other") ? Math.floor(b.power * 0.5) : b.power;
-                        return powerB - powerA;
-                      });
-
-                      // Build deck respecting constraints
-                      const newDeck: DeckCard[] = [];
-                      let vbmsOrFidCount = 0;
-                      let nothingOrOtherCount = 0;
-                      let vibefidUsed = false;
-
-                      for (const card of sortedByPower) {
-                        if (newDeck.length >= TCG_CONFIG.DECK_SIZE) break;
-
-                        // Check constraints
-                        if (card.type === "vibefid") {
-                          if (vibefidUsed) continue;
-                          vibefidUsed = true;
-                          vbmsOrFidCount++;
-                        } else if (card.type === "vbms") {
-                          vbmsOrFidCount++;
-                        } else if (card.type === "nothing" || card.type === "other") {
-                          if (nothingOrOtherCount >= TCG_CONFIG.MAX_NOTHING) continue;
-                          nothingOrOtherCount++;
-                        }
-
-                        newDeck.push(card);
-                      }
-
-                      // Ensure minimum VBMS requirement
-                      if (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID) {
-                        // Need more VBMS cards - swap out nothing cards for VBMS
-                        const vbmsNotInDeck = vbmsCards
-                          .filter(c => !newDeck.find(d => d.cardId === c.cardId))
-                          .sort((a, b) => b.power - a.power);
-                        const nothingInDeck = newDeck
-                          .filter(c => c.type === "nothing" || c.type === "other")
-                          .sort((a, b) => {
-                            const powerA = Math.floor(a.power * 0.5);
-                            const powerB = Math.floor(b.power * 0.5);
-                            return powerA - powerB; // Remove lowest power nothing first
-                          });
-
-                        while (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID && vbmsNotInDeck.length > 0 && nothingInDeck.length > 0) {
-                          const toRemove = nothingInDeck.shift();
-                          const toAdd = vbmsNotInDeck.shift();
-                          if (toRemove && toAdd) {
-                            const idx = newDeck.findIndex(c => c.cardId === toRemove.cardId);
-                            if (idx !== -1) {
-                              newDeck[idx] = toAdd;
-                              vbmsOrFidCount++;
-                              nothingOrOtherCount--;
-                            }
-                          }
-                        }
-                      }
-
-                      setSelectedCards(newDeck);
-                      setError(null);
-                    }}
-                    className="px-2 py-1 rounded transition-all bg-orange-900/30 border border-orange-500/30 text-orange-400 hover:bg-orange-900/50 hover:border-orange-500/50"
-                    title="Auto-build deck with highest power cards"
-                  >
-                    ⚡ AUTO POWER
-                  </button>
-                </div>
-              </div>
+          {/* Stats Row */}
+          <div className="flex items-center justify-between gap-2 mb-3 text-[10px]">
+            <div className="flex items-center gap-2">
+              <span className={`px-2 py-1 rounded ${selectedCards.length === TCG_CONFIG.DECK_SIZE ? "bg-green-900/40 text-green-400" : "bg-black/40 text-vintage-burnt-gold"}`}>
+                {selectedCards.length}/{TCG_CONFIG.DECK_SIZE}
+              </span>
+              <span className={`px-2 py-1 rounded ${selectedVbmsOrVibefid >= TCG_CONFIG.MIN_VBMS_OR_VIBEFID ? "bg-green-900/40 text-green-400" : "bg-red-900/40 text-red-400"}`}>
+                {selectedVbmsOrVibefid}/{TCG_CONFIG.MIN_VBMS_OR_VIBEFID} VBMS
+              </span>
+              <span className="px-2 py-1 rounded bg-vintage-gold/20 text-vintage-gold font-bold">
+                {totalPower} PWR
+              </span>
             </div>
+          </div>
+
+          {/* Buttons Row */}
+          <div className="flex items-center gap-2 mb-3 text-[10px]">
+            <button
+              onClick={() => { setDeckSortBy("power"); setDeckSortDesc(!deckSortDesc); }}
+              className={`px-3 py-1.5 rounded ${deckSortBy === "power" ? "bg-vintage-gold/20 text-vintage-gold" : "bg-black/40 text-vintage-burnt-gold"}`}
+            >
+              ⚡ Power {deckSortBy === "power" && (deckSortDesc ? "↓" : "↑")}
+            </button>
+            <button
+              onClick={() => { setDeckSortBy("rarity"); setDeckSortDesc(!deckSortDesc); }}
+              className={`px-3 py-1.5 rounded ${deckSortBy === "rarity" ? "bg-purple-900/40 text-purple-400" : "bg-black/40 text-vintage-burnt-gold"}`}
+            >
+              💎 Rarity {deckSortBy === "rarity" && (deckSortDesc ? "↓" : "↑")}
+            </button>
+            <div className="flex-1"></div>
+              <button
+                onClick={() => {
+                  // AUTO COMBO v6: VibeFID funciona como wildcard para TODOS os combos!
+                  const allCards = [...vbmsCards, ...vibefidCards, ...nothingCards];
+                  const hasVibeFID = vibefidCards.length > 0;
+
+                  // Resolve card name (apply aliases)
+                  const resolveName = (name: string): string => {
+                    const lower = name.toLowerCase();
+                    return cardNameAliases[lower] || lower;
+                  };
+
+                  // Build card lookup by resolved name (best power)
+                  const cardsByName = new Map<string, DeckCard>();
+                  for (const card of allCards) {
+                    const resolved = resolveName(card.name || "");
+                    if (!resolved) continue;
+                    const existing = cardsByName.get(resolved);
+                    if (!existing || card.power > existing.power) {
+                      cardsByName.set(resolved, card);
+                    }
+                  }
+
+                  // Find ALL combos we can complete (with or without VibeFID)
+                  type ComboOption = {
+                    combo: typeof CARD_COMBOS[0];
+                    cards: DeckCard[];
+                    needsWildcard: boolean;
+                  };
+                  const availableCombos: ComboOption[] = [];
+
+                  for (const combo of CARD_COMBOS) {
+                    const minRequired = combo.minCards || combo.cards.length;
+                    const foundCards: DeckCard[] = [];
+
+                    for (const comboCardName of combo.cards) {
+                      const card = cardsByName.get(comboCardName.toLowerCase());
+                      if (card) foundCards.push(card);
+                    }
+
+                    const missing = minRequired - foundCards.length;
+                    if (foundCards.length >= minRequired) {
+                      // Complete without wildcard - add ALL found cards (not just minRequired)
+                      availableCombos.push({
+                        combo,
+                        cards: foundCards,
+                        needsWildcard: false
+                      });
+                    } else if (missing === 1 && hasVibeFID) {
+                      // Can complete with VibeFID wildcard (VibeFID works for ALL combos!)
+                      availableCombos.push({
+                        combo,
+                        cards: foundCards,
+                        needsWildcard: true
+                      });
+                    }
+                  }
+
+                  // Sort by: fewer cards first (to fit more combos!), then higher bonus
+                  availableCombos.sort((a, b) => {
+                    // Fewer cards = more room for other combos
+                    if (a.cards.length !== b.cards.length) return a.cards.length - b.cards.length;
+                    // Then by bonus value
+                    return b.combo.bonus.value - a.combo.bonus.value;
+                  });
+
+                  // Select combos - VibeFID can complete UNLIMITED combos!
+                  const selectedCombos: ComboOption[] = [];
+                  const usedCardNames = new Set<string>();
+                  const cardsToAdd: DeckCard[] = [];
+
+                  for (const option of availableCombos) {
+                    // For wildcard combos, we only need 1 card (VibeFID is the other)
+                    // For regular combos, we need all cards
+                    const minRequired = option.combo.minCards || option.combo.cards.length;
+                    const cardsNeeded = option.needsWildcard ? minRequired - 1 : minRequired;
+
+                    // Get available cards from this combo
+                    const availableCards = option.cards.filter(c => {
+                      const resolved = resolveName(c.name || "");
+                      return !usedCardNames.has(resolved);
+                    });
+
+                    // Can we complete this combo?
+                    if (availableCards.length < cardsNeeded) continue;
+
+                    // Select best cards (by power) up to cardsNeeded
+                    const sortedCards = [...availableCards].sort((a, b) => b.power - a.power);
+                    const selectedCards = sortedCards.slice(0, cardsNeeded);
+
+                    // Select this combo!
+                    selectedCombos.push(option);
+                    for (const card of selectedCards) {
+                      usedCardNames.add(resolveName(card.name || ""));
+                      cardsToAdd.push(card);
+                    }
+                  }
+
+                  // Build deck from selected combos
+                  const newDeck: DeckCard[] = [];
+                  const usedCardIds = new Set<string>();
+                  let vbmsOrFidCount = 0;
+
+                  const addCard = (card: DeckCard): boolean => {
+                    if (usedCardIds.has(card.cardId)) return true;
+                    if (newDeck.length >= TCG_CONFIG.DECK_SIZE) return false;
+                    newDeck.push(card);
+                    usedCardIds.add(card.cardId);
+                    if (card.type === "vbms" || card.type === "vibefid") vbmsOrFidCount++;
+                    return true;
+                  };
+
+                  // Add VibeFID first (it completes ALL wildcard combos!)
+                  for (const vibefid of vibefidCards) {
+                    addCard(vibefid);
+                  }
+
+                  // Add cards from selected combos
+                  for (const card of cardsToAdd) {
+                    addCard(card);
+                  }
+
+                  // Fill remaining slots with high-power VBMS cards
+                  if (newDeck.length < TCG_CONFIG.DECK_SIZE) {
+                    const remainingCards = vbmsCards
+                      .filter(c => !usedCardIds.has(c.cardId))
+                      .sort((a, b) => b.power - a.power);
+                    for (const card of remainingCards) {
+                      if (!addCard(card)) break;
+                    }
+                  }
+
+                  setSelectedCards(newDeck);
+                  setError(null);
+                }}
+                className="px-2 py-1 rounded transition-all bg-yellow-900/30 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-900/50 hover:border-yellow-500/50"
+                title="Auto-build deck - every card in a combo!"
+              >
+                🎯 COMBO
+              </button>
+              <button
+                onClick={() => {
+                  // Auto deck focusing on POWER
+                  const allCards = [...vbmsCards, ...vibefidCards, ...nothingCards];
+
+                  // Sort by effective power (accounting for 0.5x penalty)
+                  const sortedByPower = [...allCards].sort((a, b) => {
+                    const powerA = (a.type === "nothing" || a.type === "other") ? Math.floor(a.power * 0.5) : a.power;
+                    const powerB = (b.type === "nothing" || b.type === "other") ? Math.floor(b.power * 0.5) : b.power;
+                    return powerB - powerA;
+                  });
+
+                  // Build deck respecting constraints
+                  const newDeck: DeckCard[] = [];
+                  let vbmsOrFidCount = 0;
+                  let nothingOrOtherCount = 0;
+                  let vibefidUsed = false;
+
+                  for (const card of sortedByPower) {
+                    if (newDeck.length >= TCG_CONFIG.DECK_SIZE) break;
+
+                    if (card.type === "vibefid") {
+                      if (vibefidUsed) continue;
+                      vibefidUsed = true;
+                      vbmsOrFidCount++;
+                    } else if (card.type === "vbms") {
+                      vbmsOrFidCount++;
+                    } else if (card.type === "nothing" || card.type === "other") {
+                      if (nothingOrOtherCount >= TCG_CONFIG.MAX_NOTHING) continue;
+                      nothingOrOtherCount++;
+                    }
+
+                    newDeck.push(card);
+                  }
+
+                  // Ensure minimum VBMS requirement
+                  if (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID) {
+                    const vbmsNotInDeck = vbmsCards
+                      .filter(c => !newDeck.find(d => d.cardId === c.cardId))
+                      .sort((a, b) => b.power - a.power);
+                    const nothingInDeck = newDeck
+                      .filter(c => c.type === "nothing" || c.type === "other")
+                      .sort((a, b) => Math.floor(a.power * 0.5) - Math.floor(b.power * 0.5));
+
+                    while (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID && vbmsNotInDeck.length > 0 && nothingInDeck.length > 0) {
+                      const toRemove = nothingInDeck.shift();
+                      const toAdd = vbmsNotInDeck.shift();
+                      if (toRemove && toAdd) {
+                        const idx = newDeck.findIndex(c => c.cardId === toRemove.cardId);
+                        if (idx !== -1) {
+                          newDeck[idx] = toAdd;
+                          vbmsOrFidCount++;
+                          nothingOrOtherCount--;
+                        }
+                      }
+                    }
+                  }
+
+                  setSelectedCards(newDeck);
+                  setError(null);
+                }}
+                className="px-2 py-1 rounded transition-all bg-orange-900/30 border border-orange-500/30 text-orange-400 hover:bg-orange-900/50 hover:border-orange-500/50"
+                title="Auto-build deck with highest power cards"
+              >
+                ⚡ POWER
+              </button>
           </div>
 
           {/* Combo Preview */}
           {selectedCards.length >= 2 && (
             <div className="bg-gradient-to-r from-yellow-900/20 to-amber-900/20 border border-yellow-500/20 rounded-lg p-2 mb-3">
-              <h3 className="text-[9px] font-bold text-yellow-400 mb-1.5 uppercase tracking-[0.2em]">🎯 Combos</h3>
+              <h3 className="text-[9px] font-bold text-yellow-400 mb-1.5 uppercase tracking-[0.2em]">🎯 Combos {selectedVibefid > 0 && <span className="text-cyan-400">(VibeFID = Wildcard!)</span>}</h3>
               {(() => {
                 const deckCombos = detectCombos(selectedCards);
                 if (deckCombos.length === 0) {
@@ -5037,15 +5144,16 @@ export default function TCGPage() {
                 }
                 return (
                   <div className="flex flex-wrap gap-1.5">
-                    {deckCombos.map(({ combo, matchedCards }) => (
+                    {deckCombos.map(({ combo, matchedCards, wildcardsUsed }) => (
                       <div
                         key={combo.name}
-                        className="px-2 py-1 bg-black/40 rounded border border-yellow-500/30 text-[10px]"
-                        title={combo.description}
+                        className={`px-2 py-1 bg-black/40 rounded border text-[10px] ${wildcardsUsed > 0 ? 'border-cyan-500/50' : 'border-yellow-500/30'}`}
+                        title={`${combo.description}${wildcardsUsed > 0 ? ` (${wildcardsUsed} VibeFID wildcard)` : ''}`}
                       >
                         <span className="text-yellow-400">{combo.emoji}</span>
                         <span className="text-white ml-1">{combo.name}</span>
                         <span className="text-green-400 ml-1">+{combo.bonus.value}</span>
+                        {wildcardsUsed > 0 && <span className="text-cyan-400 ml-1">🃏</span>}
                       </div>
                     ))}
                   </div>
@@ -5366,10 +5474,29 @@ export default function TCGPage() {
       return "tied";
     };
 
-    // Detect active combos for display
+    // Detect active combos for display, respecting VibeFID combo choices
     const getActiveCombosInLane = (laneIndex: number) => {
       const playerCards = gs.lanes[laneIndex].playerCards || [];
-      return detectCombos(playerCards);
+      const allCombos = detectCombos(playerCards);
+
+      // Check if there are VibeFID cards with specific combo choices in this lane
+      const vibefidCards = playerCards.filter((c: DeckCard) => c.type === "vibefid");
+      const chosenComboIds = vibefidCards
+        .map((c: DeckCard) => vibefidComboChoices[`${laneIndex}-${c.cardId}`])
+        .filter(Boolean);
+
+      // If no VibeFID choices, return all combos (default behavior)
+      if (chosenComboIds.length === 0) {
+        return allCombos;
+      }
+
+      // Filter combos: only show combos that are either:
+      // 1. Natural combos (no wildcards needed)
+      // 2. The chosen combo(s) for VibeFID
+      return allCombos.filter(({ combo, wildcardsUsed }) => {
+        if (wildcardsUsed === 0) return true; // Natural combo
+        return chosenComboIds.includes(combo.id); // Chosen by VibeFID
+      });
     };
 
     return (
@@ -5722,6 +5849,27 @@ export default function TCGPage() {
                     </div>
                   </div>
 
+                  {/* CPU Combos (enemy side - top) */}
+                  {(() => {
+                    const cpuCombos = detectCombos(lane.cpuCards);
+                    if (cpuCombos.length === 0) return null;
+                    return (
+                      <div className="py-0.5 flex items-center justify-center gap-1 flex-wrap">
+                        {cpuCombos.map(({ combo, wildcardsUsed }) => (
+                          <button
+                            key={combo.id}
+                            onClick={() => setDetailCombo(combo)}
+                            className="border rounded px-1.5 py-0.5 hover:scale-105 transition-all cursor-pointer bg-red-600/30 border-red-500/60"
+                          >
+                            <span className="text-[7px] text-red-300 font-bold uppercase tracking-wide">
+                              {combo.emoji} {COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id] as keyof typeof translations["pt-BR"]) : combo.name}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    );
+                  })()}
+
                   {/* CPU Cards (top) - Grid 2x2 style */}
                   <div className="flex-1 flex items-start justify-center pt-1 px-1 overflow-hidden">
                     <div className="grid grid-cols-2 gap-1 min-h-[124px]">
@@ -5730,9 +5878,9 @@ export default function TCGPage() {
                         const foil = (card.foil || "").toLowerCase();
                         const hasFoil = foil && foil !== "none" && foil !== "";
                         const foilClass = foil.includes("prize") ? "prize-foil" : foil.includes("standard") ? "standard-foil" : "";
-                        // Use collection cover instead of individual card image
-                        const cardCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
-                        const collectionCoverUrl = getCollectionCoverUrl(cardCollection, card.rarity);
+                        // Use actual card image (same as deck builder)
+                        // Encode URL to handle spaces in baccarat image filenames
+                        const cardImageUrl = encodeURI(getCardDisplayImageUrl(card));
 
                         // Get card animation if any
                         const animKey = `${laneIndex}-cpu-${idx}`;
@@ -5750,18 +5898,30 @@ export default function TCGPage() {
 
                         // Check if card is revealed (old cards are always revealed)
                         const isRevealed = (card as any)._revealed !== false;
-                        const displayImageUrl = isRevealed ? collectionCoverUrl : "/images/card-back.png";
+                        const displayImageUrl = isRevealed ? cardImageUrl : "/images/card-back.png";
 
                         return (
                           <div
                             key={idx}
                             onClick={() => isRevealed && setDetailCard(card)}
-                            className={`relative w-10 h-[58px] rounded-md bg-cover bg-center cursor-pointer hover:scale-105 transition-all overflow-hidden ${animClass} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"}`}
+                            className={`relative w-10 h-[58px] rounded-md cursor-pointer hover:scale-105 transition-all overflow-hidden ${animClass} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"}`}
                             style={{
-                              backgroundImage: displayImageUrl ? `url(${displayImageUrl})` : undefined,
                               boxShadow: isRevealed ? "0 2px 6px rgba(0,0,0,0.6), 0 0 0 1px rgba(239,68,68,0.5)" : "0 2px 6px rgba(0,0,0,0.8), 0 0 0 1px rgba(100,100,100,0.5)"
                             }}
                           >
+                            {/* Card image/video */}
+                            {isRevealed ? (
+                              <CardMedia
+                                src={card.type === "vbms" ? cardImageUrl : card.imageUrl}
+                                alt={card.name}
+                                className="absolute inset-0 w-full h-full object-cover rounded-md"
+                              />
+                            ) : (
+                              <div
+                                className="absolute inset-0 bg-cover bg-center rounded-md"
+                                style={{ backgroundImage: `url(/images/card-back.png)` }}
+                              />
+                            )}
                             {/* Only show details when revealed */}
                             {isRevealed && (
                               <>
@@ -5810,17 +5970,25 @@ export default function TCGPage() {
                     </div>
                   </div>
 
-                  {/* Center Divider */}
-                  <div className="py-0.5 flex items-center justify-center">
+                  {/* Center Divider - Show ALL combos */}
+                  <div className="py-0.5 flex items-center justify-center gap-1 flex-wrap">
                     {activeCombos.length > 0 ? (
-                      <button
-                        onClick={() => setDetailCombo(activeCombos[0].combo)}
-                        className="bg-yellow-600/30 border border-yellow-500/60 rounded px-2 py-0.5 hover:bg-yellow-500/50 transition-all cursor-pointer"
-                      >
-                        <span className="text-[8px] text-yellow-300 font-bold uppercase tracking-wide">
-                          {COMBO_TRANSLATION_KEYS[activeCombos[0].combo.id] ? t(COMBO_TRANSLATION_KEYS[activeCombos[0].combo.id] as keyof typeof translations["pt-BR"]) : activeCombos[0].combo.name}
-                        </span>
-                      </button>
+                      activeCombos.map(({ combo, wildcardsUsed }) => (
+                        <button
+                          key={combo.id}
+                          onClick={() => setDetailCombo(combo)}
+                          className={`border rounded px-1.5 py-0.5 hover:scale-105 transition-all cursor-pointer ${
+                            wildcardsUsed > 0
+                              ? "bg-cyan-600/30 border-cyan-500/60"
+                              : "bg-yellow-600/30 border-yellow-500/60"
+                          }`}
+                        >
+                          <span className="text-[7px] text-yellow-300 font-bold uppercase tracking-wide">
+                            {combo.emoji} {COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id] as keyof typeof translations["pt-BR"]) : combo.name}
+                            {wildcardsUsed > 0 && <span className="text-cyan-300 ml-0.5">🃏</span>}
+                          </span>
+                        </button>
+                      ))
                     ) : (
                       <div className="w-12 h-px bg-gray-700/50" />
                     )}
@@ -5856,10 +6024,10 @@ export default function TCGPage() {
 
                         // Check if card is revealed (old cards are always revealed)
                         const isRevealed = (card as any)._revealed !== false;
-                        // Use collection cover instead of individual card image
-                        const cardCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
-                        const collectionCoverUrl = getCollectionCoverUrl(cardCollection, card.rarity);
-                        const displayImageUrl = isRevealed ? collectionCoverUrl : "/images/card-back.png";
+                        // Use actual card image (same as deck builder)
+                        // Encode URL to handle spaces in baccarat image filenames
+                        const cardImageUrl = encodeURI(getCardDisplayImageUrl(card));
+                        const displayImageUrl = isRevealed ? cardImageUrl : "/images/card-back.png";
 
                         // Can drag back to hand if not revealed and was played this turn
                         const canDragBack = !isRevealed && (gs.cardsPlayedInfo || []).some((info: any) => info.cardId === card.cardId && info.laneIndex === laneIndex);
@@ -5882,14 +6050,26 @@ export default function TCGPage() {
                               e.stopPropagation();
                               if (isRevealed) setDetailCard(card);
                             }}
-                            className={`relative w-10 h-[58px] rounded-md bg-cover bg-center cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${isRevealed ? getFoilClass(card.foil) : ""} ${animClass} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"} ${draggedLaneCard?.laneIndex === laneIndex && draggedLaneCard?.cardIndex === idx ? "opacity-50 scale-95" : ""}`}
+                            className={`relative w-10 h-[58px] rounded-md cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${isRevealed ? getFoilClass(card.foil) : ""} ${animClass} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"} ${draggedLaneCard?.laneIndex === laneIndex && draggedLaneCard?.cardIndex === idx ? "opacity-50 scale-95" : ""}`}
                             style={{
-                              backgroundImage: `url(${displayImageUrl})`,
                               zIndex: anim ? 50 : idx,
                               boxShadow: isRevealed ? "0 2px 8px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.5)" : "0 2px 8px rgba(0,0,0,0.8), 0 0 0 1px rgba(100,100,100,0.5)",
                               cursor: canDragBack ? "grab" : "pointer"
                             }}
                           >
+                            {/* Card image/video */}
+                            {isRevealed ? (
+                              <CardMedia
+                                src={card.type === "vbms" ? cardImageUrl : card.imageUrl}
+                                alt={card.name}
+                                className="absolute inset-0 w-full h-full object-cover rounded-md"
+                              />
+                            ) : (
+                              <div
+                                className="absolute inset-0 bg-cover bg-center rounded-md"
+                                style={{ backgroundImage: `url(/images/card-back.png)` }}
+                              />
+                            )}
                             {/* Only show details when revealed */}
                             {isRevealed && (
                               <>
@@ -6110,21 +6290,22 @@ export default function TCGPage() {
                 const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
                 const energyCost = getEnergyCost(card);
                 const canAfford = energyCost <= (gs.energy || 1);
-                // Use collection cover instead of individual card image
-                const battleHandCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
-                const battleHandCoverUrl = getCollectionCoverUrl(battleHandCollection, card.rarity);
+                // Use actual card image (same as deck builder)
+                // Encode URL to handle spaces in baccarat image filenames
+                const battleHandImageUrl = encodeURI(getCardDisplayImageUrl(card));
 
                 // Check if this card is part of any potential combo
-                const cardNameLower = (card.name || "").toLowerCase();
+                // Use resolveCardName to handle aliases (e.g., "filthy" -> "don filthy")
+                const cardNameResolved = resolveCardName(card.name || "");
                 const hasComboPartner = CARD_COMBOS.some(combo => {
                   const comboCardsLower = combo.cards.map(c => c.toLowerCase());
-                  if (!comboCardsLower.includes(cardNameLower)) return false;
+                  if (!comboCardsLower.includes(cardNameResolved)) return false;
                   // Check if any other card in hand or in lanes matches this combo
                   const otherHandCards = gs.playerHand.filter((_: any, i: number) => i !== idx);
                   const allLaneCards = gs.lanes.flatMap((l: any) => l.playerCards || []);
                   const allCards = [...otherHandCards, ...allLaneCards];
                   const matchCount = comboCardsLower.filter(cc =>
-                    allCards.some((c: any) => (c.name || "").toLowerCase() === cc)
+                    allCards.some((c: any) => resolveCardName(c.name || "") === cc)
                   ).length;
                   return matchCount >= 1; // Has at least one combo partner available
                 });
@@ -6132,7 +6313,7 @@ export default function TCGPage() {
                 // Find which combo this card could form
                 const potentialCombo = hasComboPartner ? CARD_COMBOS.find(combo => {
                   const comboCardsLower = combo.cards.map(c => c.toLowerCase());
-                  return comboCardsLower.includes(cardNameLower);
+                  return comboCardsLower.includes(cardNameResolved);
                 }) : null;
 
                 return (
@@ -6231,11 +6412,11 @@ export default function TCGPage() {
                       userSelect: "none"
                     }}
                   >
-                    {/* Card background image - non-draggable */}
-                    <div
-                      className="absolute inset-0 bg-cover bg-center rounded-lg pointer-events-none"
-                      style={{ backgroundImage: `url(${battleHandCoverUrl})` }}
-                      draggable={false}
+                    {/* Card background image/video - non-draggable */}
+                    <CardMedia
+                      src={card.type === "vbms" ? battleHandImageUrl : card.imageUrl}
+                      alt={card.name}
+                      className="absolute inset-0 w-full h-full object-cover rounded-lg pointer-events-none"
                     />
                     {card.foil && card.foil !== "None" && (
                       <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-yellow-400/20 rounded-lg pointer-events-none" />
@@ -6450,6 +6631,66 @@ export default function TCGPage() {
                 className="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-2 rounded-lg transition-colors"
               >
                 Got it!
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* VibeFID Combo Selection Modal */}
+        {vibefidComboModal && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+            <div className="bg-gradient-to-br from-cyan-900 via-blue-900 to-indigo-950 rounded-2xl p-6 max-w-sm w-full border-2 border-cyan-500 shadow-2xl shadow-cyan-500/30" onClick={e => e.stopPropagation()}>
+              {/* Header */}
+              <div className="text-center mb-4">
+                <div className="text-5xl mb-2">🃏</div>
+                <h2 className="text-2xl font-black text-cyan-400">{t('tcgChooseCombo') || "Choose Combo"}</h2>
+                <p className="text-sm text-cyan-300/70 mt-1">VibeFID = Wildcard 🌟</p>
+              </div>
+
+              {/* Combo Options */}
+              <div className="space-y-3 mb-4">
+                {vibefidComboModal.possibleCombos.map(({ combo, partnerCard }) => (
+                  <button
+                    key={combo.id}
+                    onClick={() => {
+                      const cardIndex = (vibefidComboModal.card as any)._tempCardIndex;
+                      setVibefidComboModal(null);
+                      handlePvEPlayCard(vibefidComboModal.laneIndex, cardIndex, combo.id);
+                    }}
+                    className="w-full bg-black/40 hover:bg-cyan-800/40 border border-cyan-500/40 hover:border-cyan-400 rounded-xl p-4 transition-all text-left"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">{combo.emoji}</span>
+                      <div>
+                        <div className="text-cyan-300 font-bold">
+                          {COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id] as keyof typeof translations["pt-BR"]) : combo.name}
+                        </div>
+                        <div className="text-xs text-cyan-400/60">
+                          VibeFID + {partnerCard}
+                        </div>
+                        <div className="text-xs text-green-400 mt-1">
+                          {combo.bonus.type === "power" ? `+${combo.bonus.value} Power` :
+                           combo.bonus.type === "steal" ? `Steal ${combo.bonus.value}` :
+                           combo.description}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Cancel / Auto Button */}
+              <button
+                onClick={() => {
+                  // Auto-select first combo (default behavior)
+                  const firstCombo = vibefidComboModal.possibleCombos[0];
+                  const cardIndex = (vibefidComboModal.card as any)._tempCardIndex;
+                  setVibefidComboModal(null);
+                  handlePvEPlayCard(vibefidComboModal.laneIndex, cardIndex, firstCombo?.combo.id);
+                }}
+                className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 rounded-lg transition-colors text-sm"
+              >
+                {t('tcgAutoSelect') || "Auto (First Card)"} - {vibefidComboModal.possibleCombos[0]?.combo.emoji} {vibefidComboModal.possibleCombos[0]?.combo.name}
               </button>
             </div>
           </div>
@@ -6774,7 +7015,19 @@ export default function TCGPage() {
               <video
                 autoPlay
                 loop
+                playsInline
                 className="w-48 h-48 mx-auto mb-4 rounded-xl object-cover"
+                ref={(el) => {
+                  // Try to play with sound after user interaction
+                  if (el) {
+                    el.volume = 0.7;
+                    el.play().catch(() => {
+                      // If autoplay with sound fails, try muted
+                      el.muted = true;
+                      el.play().catch(() => {});
+                    });
+                  }
+                }}
               >
                 <source src="/sounds/defeat-bait.mp4" type="video/mp4" />
               </video>
