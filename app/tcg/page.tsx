@@ -112,12 +112,12 @@ const TCG_CONFIG = {
   MIN_VBMS_OR_VIBEFID: 5, // Minimum 5 VBMS cards, or 4 VBMS + 1 VibeFID
   MAX_NOTHING: 7, // 12 - 5 = max 7 Nothing cards
   MAX_VIBEFID: 1, // Only 1 VibeFID card allowed per deck
-  TURN_TIME_SECONDS: 25,
+  TURN_TIME_SECONDS: 35,
   TOTAL_TURNS: 6,
   STARTING_ENERGY: 3,
   ENERGY_PER_TURN: 1,
   MAX_ENERGY: 10,
-  ABILITY_DELAY_MS: 600, // Delay between each ability animation
+  ABILITY_DELAY_MS: 900, // Delay between each ability animation (increased for better pacing)
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -548,13 +548,29 @@ const getCardDisplayImageUrl = (card: DeckCard): string => {
 
 // Store current BGM audio to stop on game restart
 let currentBgmAudio: HTMLAudioElement | null = null;
+let allBgmAudios: HTMLAudioElement[] = []; // Track all BGM audios created
 
 const stopBgm = () => {
-  if (currentBgmAudio) {
-    currentBgmAudio.pause();
-    currentBgmAudio.currentTime = 0;
-    currentBgmAudio = null;
-  }
+  // Helper to aggressively stop an audio element
+  const killAudio = (audio: HTMLAudioElement | null) => {
+    if (!audio) return;
+    try {
+      audio.pause();
+      audio.muted = true;
+      audio.volume = 0;
+      audio.currentTime = 0;
+      audio.src = ""; // Force release
+      audio.load(); // Reset the audio element
+    } catch (e) {}
+  };
+
+  // Stop the tracked BGM
+  killAudio(currentBgmAudio);
+  currentBgmAudio = null;
+
+  // Also stop all tracked BGM audios (backup)
+  allBgmAudios.forEach(audio => killAudio(audio));
+  allBgmAudios = [];
 };
 
 // Track last played sounds to prevent overlap
@@ -794,13 +810,13 @@ const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "s
       return;
 
     case "victory":
-      // Victory: use actual victory music file (loops)
+      // Victory: use actual victory music file (plays once)
       try {
         stopBgm(); // Stop any previous BGM
         const victoryAudio = new Audio("/sounds/victory.mp3");
         victoryAudio.volume = 0.6;
-        victoryAudio.loop = true;
         currentBgmAudio = victoryAudio; // Save reference to stop later
+        allBgmAudios.push(victoryAudio); // Also track in array for backup cleanup
         victoryAudio.play().catch(() => {});
       } catch {
         // Fallback to synthesized sound
@@ -830,6 +846,7 @@ const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "s
         const defeatAudio = new Audio("/sounds/defeat.mp3");
         defeatAudio.volume = 0.6;
         currentBgmAudio = defeatAudio; // Save reference to stop later
+        allBgmAudios.push(defeatAudio); // Also track in array for backup cleanup
         defeatAudio.play().catch(() => {});
       } catch {
         // Fallback to synthesized sound
@@ -907,7 +924,7 @@ const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "s
       // Hit: use actual attack sound file
       try {
         const attackAudio = new Audio("/sounds/attack.mp3");
-        attackAudio.volume = 0.5;
+        attackAudio.volume = 0.3;
         attackAudio.play().catch(() => {});
       } catch {
         // Fallback to synthesized sound
@@ -955,6 +972,53 @@ const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "s
         playImpact(200, 0.01, "square");
       }
       return;
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMBO VOICE AUDIO
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Mapping from combo ID to audio file name
+const COMBO_VOICE_FILES: Record<string, string> = {
+  romero_family: "romero.mp3",
+  crypto_kings: "cryptokings.mp3",
+  mythic_assembly: "mythic.mp3",
+  legends_unite: "legends_unite.mp3",
+  ai_bros: "ai_takeover.mp3",
+  scam_squad: "scam_squad.mp3",
+  degen_trio: "degen_trio.mp3",
+  vibe_team: "vibe_team.mp3",
+  dirty_duo: "dirty_duo.mp3",
+  code_masters: "code_masters.mp3",
+  content_creators: "content_creators.mp3",
+  chaos_agents: "chaos_agents.mp3",
+  sniper_support: "sniper_elite.mp3",
+  money_makers: "money_makers.mp3",
+  underdog_uprising: "underdog_uprising.mp3",
+  parallel: "PARALLEL.mp3",
+  royal_brothers: "royal_brothers.mp3",
+  philosopher_chad: "philosopher_chad.mp3",
+  scaling_masters: "scaling_masters.mp3",
+  christmas_spirit: "christmas_spirit.mp3",
+  shadow_network: "shadow_network.mp3",
+  pixel_artists: "pixel_artists.mp3",
+  dirty_money: "dirty_money.mp3",
+};
+
+// Play combo voice announcement
+const playComboVoice = (comboId: string) => {
+  if (typeof window === "undefined") return;
+
+  const audioFile = COMBO_VOICE_FILES[comboId];
+  if (!audioFile) return; // No voice for this combo
+
+  try {
+    const audio = new Audio(`/sounds/combos/${audioFile}`);
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+  } catch {
+    // Silently fail if audio can't play
   }
 };
 
@@ -1057,6 +1121,13 @@ export default function TCGPage() {
 
   // Game state
   const [view, setView] = useState<GameView>("lobby");
+
+  // Stop BGM when leaving result view
+  useEffect(() => {
+    if (view !== "result") {
+      stopBgm();
+    }
+  }, [view]);
   const currentBgmRef = useRef<HTMLAudioElement | null>(null); // Track BGM to stop on restart
   const [currentMatchId, setCurrentMatchId] = useState<Id<"tcgMatches"> | null>(null);
   const [roomIdInput, setRoomIdInput] = useState("");
@@ -3279,14 +3350,15 @@ export default function TCGPage() {
         const newCombos = detectCombos(laneCards);
 
         // Show popup for new combos
-        newCombos.forEach(({ combo }) => {
+        newCombos.forEach(({ combo }, comboIdx) => {
           const comboKey = `${currentReveal.laneIdx}-${currentReveal.side}-${combo.id}`;
           if (!shownCombosRef.current.has(comboKey)) {
             shownCombosRef.current.add(comboKey);
-            // Play epic combo sound
+            // Play combo voice announcement (staggered timing for multiple combos)
+            const comboDelay = comboIdx * 2500; // 2.5s between each combo voice
             setTimeout(() => {
-              playSound("combo");
-            }, 300);
+              playComboVoice(combo.id);
+            }, 100 + comboDelay);
           }
         });
 
@@ -3310,13 +3382,16 @@ export default function TCGPage() {
 
       // If queue is empty, continue to ability processing
       if (remainingQueue.length === 0) {
+        // Check if any combos were shown this turn - need extra delay for voice to finish
+        const hadCombos = shownCombosRef.current.size > 0;
+        const delayAfterReveal = hadCombos ? 2500 : 500; // Extra delay for combo voices
         setTimeout(() => {
           setIsRevealing(false);
           shownCombosRef.current.clear(); // Reset for next turn
           continueAfterReveal();
-        }, 300); // Short delay after last reveal
+        }, delayAfterReveal);
       }
-    }, 500); // Delay between each reveal
+    }, 700); // Delay between each reveal (increased for better pacing)
 
     return () => clearTimeout(timeoutId);
   }, [revealQueue, isRevealing, pveGameState]);
@@ -3398,7 +3473,7 @@ export default function TCGPage() {
 
     // Smart timing: base delay scales with number of abilities (faster if fewer)
     const numAbilities = sortedCards.length;
-    const BASE_DELAY_MS = numAbilities <= 2 ? 300 : numAbilities <= 4 ? 250 : 200;
+    const BASE_DELAY_MS = numAbilities <= 2 ? 450 : numAbilities <= 4 ? 350 : 300;
 
     // Process all abilities immediately (state changes)
     const abilityResults: {
@@ -3493,17 +3568,18 @@ export default function TCGPage() {
 
       // Schedule ability-specific effects
       if (actionType === "debuff" || actionType === "destroy") {
-        const emoji = actionType === "destroy" ? "💥" : "⚔️";
-        setTimeout(() => {
-          triggerAbilityEffect("attack", laneIndex, side, laneIndex, oppositeSide, emoji, result.bonusPower);
-          playSound("hit");
-        }, baseDelay);
-
-        // Shake enemy cards (no extra sound - hit sound already played above)
-        const action = item.ability?.effect?.action || "";
-        const isLaneWide = action.includes("debuffLane") || action.includes("AllLanes");
+        // Only trigger attack effects if there are enemy cards to attack
         const enemyCards = oppositeSide === "cpu" ? newLanes[laneIndex].cpuCards : newLanes[laneIndex].playerCards;
         if (enemyCards.length > 0) {
+          const emoji = actionType === "destroy" ? "💥" : "⚔️";
+          setTimeout(() => {
+            triggerAbilityEffect("attack", laneIndex, side, laneIndex, oppositeSide, emoji, result.bonusPower);
+            playSound("hit");
+          }, baseDelay);
+
+          // Shake enemy cards (no extra sound - hit sound already played above)
+          const action = item.ability?.effect?.action || "";
+          const isLaneWide = action.includes("debuffLane") || action.includes("AllLanes");
           setTimeout(() => {
             if (isLaneWide) {
               enemyCards.forEach((_: any, cardIdx: number) => {
@@ -3517,14 +3593,15 @@ export default function TCGPage() {
           }, baseDelay + 150);
         }
       } else if (actionType === "steal") {
-        setTimeout(() => {
-          triggerAbilityEffect("steal", laneIndex, oppositeSide, laneIndex, side, "🔮", result.bonusPower);
-          playSound("steal");
-        }, baseDelay);
-
-        const action = item.ability?.effect?.action || "";
+        // Only trigger steal effects if there are enemy cards to steal from
         const enemyCardsSteal = oppositeSide === "cpu" ? newLanes[laneIndex].cpuCards : newLanes[laneIndex].playerCards;
         if (enemyCardsSteal.length > 0) {
+          setTimeout(() => {
+            triggerAbilityEffect("steal", laneIndex, oppositeSide, laneIndex, side, "🔮", result.bonusPower);
+            playSound("steal");
+          }, baseDelay);
+
+          const action = item.ability?.effect?.action || "";
           setTimeout(() => {
             if (action.includes("stealFromAll")) {
               enemyCardsSteal.forEach((_: any, cardIdx: number) => {
@@ -3604,7 +3681,7 @@ export default function TCGPage() {
     newLanes = recalculateLanePowers(newLanes, pveGameState.currentTurn);
 
     // Smart timing: wait for all ability animations before transitioning to resolve
-    const totalAnimationTime = numAbilities > 0 ? (numAbilities * BASE_DELAY_MS) + 200 : 0;
+    const totalAnimationTime = numAbilities > 0 ? (numAbilities * BASE_DELAY_MS) + 800 : 0;
 
     setTimeout(() => {
       setCurrentPhase("resolve");
@@ -3939,10 +4016,19 @@ export default function TCGPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pveGameState?.currentTurn, view, isPvE]);
 
-  // Timer warning sounds - play tick at 5, 3, 1 seconds
+  // Timer warning sounds - play "5 SEGUNDOS" voice at 5 seconds, tick at 3 and 1
   useEffect(() => {
     if (view === "battle" && isPvE && pveGameState) {
-      if (turnTimeRemaining === 5 || turnTimeRemaining === 3 || turnTimeRemaining === 1) {
+      if (turnTimeRemaining === 5) {
+        // Play "5 segundos" voice countdown
+        try {
+          const countdownAudio = new Audio("/sounds/5 SEGUNDOS.mp3");
+          countdownAudio.volume = 0.5;
+          countdownAudio.play().catch(() => {});
+        } catch {
+          playSound("tick");
+        }
+      } else if (turnTimeRemaining === 3 || turnTimeRemaining === 1) {
         playSound("tick");
       }
     }
@@ -4416,11 +4502,13 @@ export default function TCGPage() {
                   <p className="text-vintage-gold font-semibold">{t('tcgSynergyCombos' as any)}</p>
                   <div className="grid grid-cols-1 gap-0.5 text-[10px]">
                     <p>👑 <span className="text-yellow-400">ANTONIO + MIGUEL</span> = 2x Power</p>
-                    <p>🧠 <span className="text-cyan-400">SARTOCRATES + ZURKCHAD</span> = +60</p>
-                    <p>📈 <span className="text-green-400">BRIAN + NFTKID</span> = +50 lane</p>
-                    <p>🤝 <span className="text-pink-400">SMOLEMARU + BRADYMCK</span> = +40</p>
-                    <p>📊 <span className="text-orange-400">BETOBUTTER + MORLACOS</span> = 2x</p>
-                    <p>🐧 <span className="text-blue-400">GROKO + LINUX</span> = +50</p>
+                    <p>🧠 <span className="text-cyan-400">SARTOCRATES + ZURKCHAD</span> = +60 + Immune</p>
+                    <p>📊 <span className="text-orange-400">BETOBUTTER + MORLACOS</span> = 2x Scaling</p>
+                    <p>🔀 <span className="text-green-400">RIZKYBEGITU + BRADYMCK</span> = 2x Power</p>
+                    <p>🎨 <span className="text-pink-400">SMOLEMARU + JOONX</span> = +35</p>
+                    <p>🎄 <span className="text-red-400">NAUGHTY SANTA + GOZARU</span> = +40 lane</p>
+                    <p>🕶️ <span className="text-purple-400">LOMBRA JR + SLATERG</span> = Steal 30</p>
+                    <p>💸 <span className="text-lime-400">SCUM + BETOBUTTER</span> = Steal 40</p>
                   </div>
                   <p className="text-vintage-gold font-semibold pt-1">{t('tcgTeamCombos' as any)}</p>
                   <div className="grid grid-cols-2 gap-0.5 text-[10px]">
