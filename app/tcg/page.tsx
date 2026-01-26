@@ -4822,6 +4822,163 @@ export default function TCGPage() {
                     💎 RAR {deckSortBy === "rarity" && (deckSortDesc ? "↓" : "↑")}
                   </button>
                 </div>
+                {/* Auto Deck buttons */}
+                <div className="flex gap-1 ml-2 border-l border-vintage-gold/20 pl-2">
+                  <button
+                    onClick={() => {
+                      // Auto deck focusing on COMBOS
+                      const allCards = [...vbmsCards, ...vibefidCards, ...nothingCards];
+
+                      // Score cards by how many combos they participate in
+                      const cardComboScores = new Map<string, number>();
+                      for (const card of allCards) {
+                        const cardNameLower = (card.name || "").toLowerCase();
+                        let score = 0;
+                        for (const combo of CARD_COMBOS) {
+                          if (combo.cards.map(c => c.toLowerCase()).includes(cardNameLower)) {
+                            // Higher score for stronger combos
+                            score += combo.bonus.value;
+                          }
+                        }
+                        cardComboScores.set(card.cardId, score);
+                      }
+
+                      // Sort by combo score, then by effective power
+                      const sortedByCombo = [...allCards].sort((a, b) => {
+                        const scoreA = cardComboScores.get(a.cardId) || 0;
+                        const scoreB = cardComboScores.get(b.cardId) || 0;
+                        if (scoreB !== scoreA) return scoreB - scoreA;
+                        // Same combo score: sort by effective power
+                        const powerA = (a.type === "nothing" || a.type === "other") ? Math.floor(a.power * 0.5) : a.power;
+                        const powerB = (b.type === "nothing" || b.type === "other") ? Math.floor(b.power * 0.5) : b.power;
+                        return powerB - powerA;
+                      });
+
+                      // Build deck respecting constraints
+                      const newDeck: DeckCard[] = [];
+                      let vbmsOrFidCount = 0;
+                      let nothingOrOtherCount = 0;
+                      let vibefidUsed = false;
+
+                      for (const card of sortedByCombo) {
+                        if (newDeck.length >= TCG_CONFIG.DECK_SIZE) break;
+
+                        // Check constraints
+                        if (card.type === "vibefid") {
+                          if (vibefidUsed) continue;
+                          vibefidUsed = true;
+                          vbmsOrFidCount++;
+                        } else if (card.type === "vbms") {
+                          vbmsOrFidCount++;
+                        } else if (card.type === "nothing" || card.type === "other") {
+                          if (nothingOrOtherCount >= TCG_CONFIG.MAX_NOTHING) continue;
+                          nothingOrOtherCount++;
+                        }
+
+                        newDeck.push(card);
+                      }
+
+                      // Ensure minimum VBMS requirement
+                      if (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID) {
+                        // Need more VBMS cards - swap out nothing cards for VBMS
+                        const vbmsNotInDeck = vbmsCards.filter(c => !newDeck.find(d => d.cardId === c.cardId));
+                        const nothingInDeck = newDeck.filter(c => c.type === "nothing" || c.type === "other");
+
+                        while (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID && vbmsNotInDeck.length > 0 && nothingInDeck.length > 0) {
+                          const toRemove = nothingInDeck.pop();
+                          const toAdd = vbmsNotInDeck.shift();
+                          if (toRemove && toAdd) {
+                            const idx = newDeck.findIndex(c => c.cardId === toRemove.cardId);
+                            if (idx !== -1) {
+                              newDeck[idx] = toAdd;
+                              vbmsOrFidCount++;
+                              nothingOrOtherCount--;
+                            }
+                          }
+                        }
+                      }
+
+                      setSelectedCards(newDeck);
+                      setError(null);
+                    }}
+                    className="px-2 py-1 rounded transition-all bg-yellow-900/30 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-900/50 hover:border-yellow-500/50"
+                    title="Auto-build deck focusing on card combos"
+                  >
+                    🎯 AUTO COMBO
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Auto deck focusing on POWER
+                      const allCards = [...vbmsCards, ...vibefidCards, ...nothingCards];
+
+                      // Sort by effective power (accounting for 0.5x penalty)
+                      const sortedByPower = [...allCards].sort((a, b) => {
+                        const powerA = (a.type === "nothing" || a.type === "other") ? Math.floor(a.power * 0.5) : a.power;
+                        const powerB = (b.type === "nothing" || b.type === "other") ? Math.floor(b.power * 0.5) : b.power;
+                        return powerB - powerA;
+                      });
+
+                      // Build deck respecting constraints
+                      const newDeck: DeckCard[] = [];
+                      let vbmsOrFidCount = 0;
+                      let nothingOrOtherCount = 0;
+                      let vibefidUsed = false;
+
+                      for (const card of sortedByPower) {
+                        if (newDeck.length >= TCG_CONFIG.DECK_SIZE) break;
+
+                        // Check constraints
+                        if (card.type === "vibefid") {
+                          if (vibefidUsed) continue;
+                          vibefidUsed = true;
+                          vbmsOrFidCount++;
+                        } else if (card.type === "vbms") {
+                          vbmsOrFidCount++;
+                        } else if (card.type === "nothing" || card.type === "other") {
+                          if (nothingOrOtherCount >= TCG_CONFIG.MAX_NOTHING) continue;
+                          nothingOrOtherCount++;
+                        }
+
+                        newDeck.push(card);
+                      }
+
+                      // Ensure minimum VBMS requirement
+                      if (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID) {
+                        // Need more VBMS cards - swap out nothing cards for VBMS
+                        const vbmsNotInDeck = vbmsCards
+                          .filter(c => !newDeck.find(d => d.cardId === c.cardId))
+                          .sort((a, b) => b.power - a.power);
+                        const nothingInDeck = newDeck
+                          .filter(c => c.type === "nothing" || c.type === "other")
+                          .sort((a, b) => {
+                            const powerA = Math.floor(a.power * 0.5);
+                            const powerB = Math.floor(b.power * 0.5);
+                            return powerA - powerB; // Remove lowest power nothing first
+                          });
+
+                        while (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID && vbmsNotInDeck.length > 0 && nothingInDeck.length > 0) {
+                          const toRemove = nothingInDeck.shift();
+                          const toAdd = vbmsNotInDeck.shift();
+                          if (toRemove && toAdd) {
+                            const idx = newDeck.findIndex(c => c.cardId === toRemove.cardId);
+                            if (idx !== -1) {
+                              newDeck[idx] = toAdd;
+                              vbmsOrFidCount++;
+                              nothingOrOtherCount--;
+                            }
+                          }
+                        }
+                      }
+
+                      setSelectedCards(newDeck);
+                      setError(null);
+                    }}
+                    className="px-2 py-1 rounded transition-all bg-orange-900/30 border border-orange-500/30 text-orange-400 hover:bg-orange-900/50 hover:border-orange-500/50"
+                    title="Auto-build deck with highest power cards"
+                  >
+                    ⚡ AUTO POWER
+                  </button>
+                </div>
               </div>
             </div>
           </div>
