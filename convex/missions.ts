@@ -80,15 +80,13 @@ export const markDailyLogin = mutation({
     const today = new Date().toISOString().split('T')[0];
     const normalizedAddress = playerAddress.toLowerCase();
 
-    // Check if mission already exists for today
+    // 🚀 BANDWIDTH FIX: Use compound index instead of filter post-query
     const existing = await ctx.db
       .query("personalMissions")
-      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("date"), today),
-          q.eq(q.field("missionType"), "daily_login")
-        )
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", today)
+          .eq("missionType", "daily_login")
       )
       .first();
 
@@ -120,14 +118,13 @@ export const markFirstPveWin = mutation({
     const today = new Date().toISOString().split('T')[0];
     const normalizedAddress = playerAddress.toLowerCase();
 
+    // 🚀 BANDWIDTH FIX: Use compound index
     const existing = await ctx.db
       .query("personalMissions")
-      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("date"), today),
-          q.eq(q.field("missionType"), "first_pve_win")
-        )
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", today)
+          .eq("missionType", "first_pve_win")
       )
       .first();
 
@@ -156,14 +153,13 @@ export const markFirstPvpMatch = mutation({
     const today = new Date().toISOString().split('T')[0];
     const normalizedAddress = playerAddress.toLowerCase();
 
+    // 🚀 BANDWIDTH FIX: Use compound index
     const existing = await ctx.db
       .query("personalMissions")
-      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("date"), today),
-          q.eq(q.field("missionType"), "first_pvp_match")
-        )
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", today)
+          .eq("missionType", "first_pvp_match")
       )
       .first();
 
@@ -196,14 +192,13 @@ export const markWinStreak = mutation({
     const normalizedAddress = playerAddress.toLowerCase();
     const missionType = `streak_${streak}` as "streak_3" | "streak_5" | "streak_10";
 
+    // 🚀 BANDWIDTH FIX: Use compound index
     const existing = await ctx.db
       .query("personalMissions")
-      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("date"), today),
-          q.eq(q.field("missionType"), missionType)
-        )
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", today)
+          .eq("missionType", missionType)
       )
       .first();
 
@@ -217,8 +212,6 @@ export const markWinStreak = mutation({
         reward: MISSION_REWARDS[missionType].amount,
         completedAt: Date.now(),
       });
-
-      // devLog (server-side)(`🔥 ${streak}-win streak mission created for`, normalizedAddress);
     }
   },
 });
@@ -231,15 +224,13 @@ export const markVibeFIDMinted = mutation({
   handler: async (ctx, { playerAddress }) => {
     const normalizedAddress = playerAddress.toLowerCase();
 
-    // Check if mission already exists (one-time mission)
+    // 🚀 BANDWIDTH FIX: Use compound index instead of filter post-query
     const existing = await ctx.db
       .query("personalMissions")
-      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("date"), "once"),
-          q.eq(q.field("missionType"), "vibefid_minted")
-        )
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", "once")
+          .eq("missionType", "vibefid_minted")
       )
       .first();
 
@@ -542,14 +533,13 @@ export const ensureWelcomeGift = mutation({
     });
 
     // STEP 3: Check if welcome_gift mission already exists (for old users)
+    // 🚀 BANDWIDTH FIX: Use compound index
     const existing = await ctx.db
       .query("personalMissions")
-      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("date"), "once"),
-          q.eq(q.field("missionType"), "welcome_gift")
-        )
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", "once")
+          .eq("missionType", "welcome_gift")
       )
       .first();
 
@@ -662,15 +652,13 @@ export const grantVibeBadgeInternal = internalMutation({
       hasVibeBadge: true,
     });
 
-    // Record the mission as claimed
+    // 🚀 BANDWIDTH FIX: Use compound index
     const existing = await ctx.db
       .query("personalMissions")
-      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("date"), "once"),
-          q.eq(q.field("missionType"), "claim_vibe_badge")
-        )
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", "once")
+          .eq("missionType", "claim_vibe_badge")
       )
       .first();
 
