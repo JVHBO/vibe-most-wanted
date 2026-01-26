@@ -21,8 +21,11 @@ import { CardMedia } from "@/components/CardMedia";
 
 type GameView = "lobby" | "deck-builder" | "waiting" | "battle" | "result";
 
+// Collections that can be played in TCG (with 50% power like nothing)
+const OTHER_TCG_COLLECTIONS = ["gmvbrs", "cumioh", "viberotbangers", "meowverse", "teampothead", "tarot", "baseballcabal", "poorlydrawnpepes", "viberuto", "vibefx", "historyofcomputer"];
+
 interface TCGCard {
-  type: "vbms" | "nothing" | "vibefid";
+  type: "vbms" | "nothing" | "vibefid" | "other";
   cardId: string;
   name?: string;
   rarity: string;
@@ -1056,6 +1059,13 @@ export default function TCGPage() {
     }
   }, [address, status, loadNFTs]);
 
+  // Cleanup BGM on unmount (when leaving TCG page)
+  useEffect(() => {
+    return () => {
+      stopBgm();
+    };
+  }, []);
+
   // Game state
   const [view, setView] = useState<GameView>("lobby");
   const currentBgmRef = useRef<HTMLAudioElement | null>(null); // Track BGM to stop on restart
@@ -1742,13 +1752,13 @@ export default function TCGPage() {
       let cpuPower = 0;
 
       lane.playerCards.forEach((card: DeckCard) => {
-        const basePower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+        const basePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
         const ongoingBonus = calculateOngoingBonus(card, laneIdx, newLanes, currentTurn, true);
         playerPower += basePower + ongoingBonus;
       });
 
       lane.cpuCards.forEach((card: DeckCard) => {
-        const basePower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+        const basePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
         const ongoingBonus = calculateOngoingBonus(card, laneIdx, newLanes, currentTurn, false);
         cpuPower += basePower + ongoingBonus;
       });
@@ -2174,7 +2184,7 @@ export default function TCGPage() {
         newLanes = newLanes.map(lane => ({ ...lane, playerCards: [], cpuCards: [], playerPower: 0, cpuPower: 0 }));
         allCardsToShuffle.forEach((item, idx: number) => {
           const laneIdx = idx % 3;
-          const cPower = item.card.type === "nothing" ? Math.floor(item.card.power * 0.5) : item.card.power;
+          const cPower = item.card.type === "nothing" || item.card.type === "other" ? Math.floor(item.card.power * 0.5) : item.card.power;
           if (item.isPlayer) { newLanes[laneIdx].playerCards.push(item.card); newLanes[laneIdx].playerPower += cPower; }
           else { newLanes[laneIdx].cpuCards.push(item.card); newLanes[laneIdx].cpuPower += cPower; }
         });
@@ -2275,7 +2285,7 @@ export default function TCGPage() {
         for (let li = 0; li < 3; li++) {
           if (li !== laneIndex && newLanes[laneIndex][myCards].length > 0) {
             const moved = newLanes[laneIndex][myCards].shift()!;
-            const mPower = moved.type === "nothing" ? Math.floor(moved.power * 0.5) : moved.power;
+            const mPower = moved.type === "nothing" || moved.type === "other" ? Math.floor(moved.power * 0.5) : moved.power;
             newLanes[li][myCards].push(moved);
             newLanes[laneIndex][myPower] -= mPower;
             newLanes[li][myPower] += mPower;
@@ -2536,7 +2546,7 @@ export default function TCGPage() {
         return card.foil ? value : 0;
 
       case "buffNothing":
-        return card.type === "nothing" ? value : 0;
+        return card.type === "nothing" || card.type === "other" ? value : 0;
 
       case "buffVibeFID":
         return card.collection === "vibefid" ? value : 0;
@@ -2592,7 +2602,7 @@ export default function TCGPage() {
 
       // Calculate player power with ongoing bonuses + lane effects
       lane.playerCards.forEach((card: DeckCard) => {
-        const basePower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+        const basePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
         const ongoingBonus = calculateOngoingBonus(card, laneIdx, lanes, currentTurn, true);
         const comboBonus = getComboBonus(card, lane.playerCards, lanes);
         const laneBonus = calculateLaneEffectBonus(card, lane, lane.playerCards, true, currentTurn);
@@ -2601,7 +2611,7 @@ export default function TCGPage() {
 
       // Calculate CPU power with ongoing bonuses + lane effects
       lane.cpuCards.forEach((card: DeckCard) => {
-        const basePower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+        const basePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
         const ongoingBonus = calculateOngoingBonus(card, laneIdx, lanes, currentTurn, false);
         const comboBonus = getComboBonus(card, lane.cpuCards, lanes);
         const laneBonus = calculateLaneEffectBonus(card, lane, lane.cpuCards, false, currentTurn);
@@ -2834,7 +2844,7 @@ export default function TCGPage() {
     let highestEnemyPower = -1;
 
     enemyCards.forEach((enemy: any, idx: number) => {
-      const enemyPower = enemy.type === "nothing" ? Math.floor(enemy.power * 0.5) : enemy.power;
+      const enemyPower = enemy.type === "nothing" || enemy.type === "other" ? Math.floor(enemy.power * 0.5) : enemy.power;
       if (enemyPower > highestEnemyPower) {
         highestEnemyPower = enemyPower;
         highestEnemyIdx = idx;
@@ -3592,9 +3602,9 @@ export default function TCGPage() {
     } else if (selectedCards.length < TCG_CONFIG.DECK_SIZE) {
       // Validate limits
       const vbmsCount = selectedCards.filter((c: DeckCard) => c.type === "vbms").length;
-      const nothingCount = selectedCards.filter((c: DeckCard) => c.type === "nothing").length;
+      const nothingCount = selectedCards.filter((c: DeckCard) => c.type === "nothing" || c.type === "other").length;
 
-      if (card.type === "nothing" && nothingCount >= TCG_CONFIG.MAX_NOTHING) {
+      if ((card.type === "nothing" || card.type === "other") && nothingCount >= TCG_CONFIG.MAX_NOTHING) {
         setError(`Max ${TCG_CONFIG.MAX_NOTHING} Nothing cards allowed`);
         return;
       }
@@ -3711,7 +3721,7 @@ export default function TCGPage() {
     const ability = getCardAbility(card.name, card);
     const foilEffect = getFoilEffect(card.foil);
     const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
-    const effectivePower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+    const effectivePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
     const energyCost = getEnergyCost(card);
     // Encode imageUrl to handle spaces and special characters
     const encodedImageUrl = card.imageUrl ? encodeURI(card.imageUrl) : null;
@@ -3761,7 +3771,7 @@ export default function TCGPage() {
               {card.foil && card.foil !== "None" && (
                 <span className="text-sm text-vintage-gold">| {card.foil}</span>
               )}
-              {card.type === "nothing" && (
+              {(card.type === "nothing" || card.type === "other") && (
                 <span className="text-sm text-purple-400">(Nothing)</span>
               )}
             </div>
@@ -3833,7 +3843,7 @@ export default function TCGPage() {
           )}
 
           {/* Nothing Card Info */}
-          {card.type === "nothing" && (
+          {(card.type === "nothing" || card.type === "other") && (
             <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-3 mb-3">
               <p className="text-purple-300 text-xs font-bold mb-1">{t('tcgNothingCardTitle')}</p>
               <p className="text-vintage-burnt-gold text-xs">• 50% base power penalty</p>
@@ -4261,9 +4271,12 @@ export default function TCGPage() {
 
   if (view === "deck-builder") {
     // Get available cards
-    // VBMS, VibeFID, and Nothing cards are allowed in TCG
+    // VBMS, VibeFID, Nothing, and other vibechain collections are allowed in TCG
     const tcgEligibleCards = (nfts || []).filter((card: any) =>
-      card.collection === "vibe" || card.collection === "nothing" || card.collection === "vibefid"
+      card.collection === "vibe" ||
+      card.collection === "nothing" ||
+      card.collection === "vibefid" ||
+      OTHER_TCG_COLLECTIONS.includes(card.collection)
     );
 
     // Note: getVbmsBaccaratImageUrl is now a global helper function
@@ -4272,6 +4285,7 @@ export default function TCGPage() {
       const characterFromImage = getCharacterFromImage(card.imageUrl || card.image || "");
       const isVibeFID = card.collection === "vibefid";
       const isVbms = card.collection === "vibe";
+      const isOtherCollection = OTHER_TCG_COLLECTIONS.includes(card.collection);
       const cardName = card.character || characterFromImage || card.name || (isVibeFID ? card.displayName || card.username : undefined);
 
       // For VBMS cards, use baccarat PNG images for consistency with CPU cards
@@ -4282,8 +4296,15 @@ export default function TCGPage() {
         imageUrl = card.imageUrl || card.image || "/images/card-back.png";
       }
 
+      // Determine card type
+      let cardType: "vbms" | "nothing" | "vibefid" | "other";
+      if (card.collection === "nothing") cardType = "nothing";
+      else if (card.collection === "vibefid") cardType = "vibefid";
+      else if (isOtherCollection) cardType = "other";
+      else cardType = "vbms";
+
       return {
-        type: card.collection === "nothing" ? "nothing" : card.collection === "vibefid" ? "vibefid" : "vbms",
+        type: cardType,
         cardId: card.tokenId || card.id || `${card.collection}-${card.name}`,
         name: cardName,
         rarity: card.rarity || "Common",
@@ -4308,8 +4329,8 @@ export default function TCGPage() {
     const sortCards = (cards: DeckCard[]) => {
       return [...cards].sort((a, b) => {
         if (deckSortBy === "power") {
-          const powerA = a.type === "nothing" ? Math.floor(a.power * 0.5) : a.power;
-          const powerB = b.type === "nothing" ? Math.floor(b.power * 0.5) : b.power;
+          const powerA = a.type === "nothing" || a.type === "other" ? Math.floor(a.power * 0.5) : a.power;
+          const powerB = b.type === "nothing" || b.type === "other" ? Math.floor(b.power * 0.5) : b.power;
           return deckSortDesc ? powerB - powerA : powerA - powerB;
         } else {
           const rarityA = rarityOrder[a.rarity?.toLowerCase() || "common"] || 1;
@@ -4325,14 +4346,14 @@ export default function TCGPage() {
 
     const vbmsCards = sortCards(availableCards.filter((c: DeckCard) => c.type === "vbms"));
     const vibefidCards = sortCards(availableCards.filter((c: DeckCard) => c.type === "vibefid"));
-    const nothingCards = sortCards(availableCards.filter((c: DeckCard) => c.type === "nothing"));
+    const nothingCards = sortCards(availableCards.filter((c: DeckCard) => c.type === "nothing" || c.type === "other"));
 
     const selectedVbms = selectedCards.filter((c: DeckCard) => c.type === "vbms").length;
     const selectedVibefid = selectedCards.filter((c: DeckCard) => c.type === "vibefid").length;
     const selectedVbmsOrVibefid = selectedVbms + selectedVibefid;
-    const selectedNothing = selectedCards.filter((c: DeckCard) => c.type === "nothing").length;
+    const selectedNothing = selectedCards.filter((c: DeckCard) => c.type === "nothing" || c.type === "other").length;
     const totalPower = selectedCards.reduce((sum, c) => {
-      const power = c.type === "nothing" ? Math.floor(c.power * 0.5) : c.power;
+      const power = c.type === "nothing" || c.type === "other" ? Math.floor(c.power * 0.5) : c.power;
       return sum + power;
     }, 0);
 
@@ -4531,7 +4552,7 @@ export default function TCGPage() {
                       className="absolute inset-0 bg-black/40 rounded-lg flex flex-col items-center justify-end p-0.5"
                     >
                       <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
-                      <span className="text-[9px] text-yellow-400 font-bold">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
+                      <span className="text-[9px] text-yellow-400 font-bold">{card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power}</span>
                       {ability && (card.type === "vbms" || card.type === "vibefid") && (
                         <span className="text-[5px] text-purple-400">⚡</span>
                       )}
@@ -5142,7 +5163,7 @@ export default function TCGPage() {
                                 {/* Power badge - Snap style hexagon-ish */}
                                 <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-red-600 flex items-center justify-center z-10 transition-all ${anim?.type === "glow-red" ? "scale-125" : ""}`}
                                   style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}>
-                                  <span className="text-[8px] font-black text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
+                                  <span className="text-[8px] font-black text-white">{card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power}</span>
                                 </div>
                                 {/* Power change floating number */}
                                 {anim?.powerChange && (
@@ -5265,7 +5286,7 @@ export default function TCGPage() {
                                 {/* Power badge - Snap style */}
                                 <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-600 flex items-center justify-center z-10"
                                   style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}>
-                                  <span className="text-[8px] font-black text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
+                                  <span className="text-[8px] font-black text-white">{card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power}</span>
                                 </div>
                                 {/* Ability indicator - small dot */}
                                 {ability && (
@@ -5471,7 +5492,7 @@ export default function TCGPage() {
               {gs.playerHand?.map((card: any, idx: number) => {
                 const ability = getCardAbility(card.name, card);
                 const foilEffect = getFoilEffect(card.foil);
-                const displayPower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+                const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
                 const energyCost = getEnergyCost(card);
                 const canAfford = energyCost <= (gs.energy || 1);
 
@@ -5671,7 +5692,7 @@ export default function TCGPage() {
                       <span className="text-[7px] text-white font-bold drop-shadow-lg bg-black/50 px-1 rounded">{card.name}</span>
                     </div>
                     {/* Sacrifice Button for Nothing cards (bottom-left) */}
-                    {card.type === "nothing" && (() => {
+                    {(card.type === "nothing" || card.type === "other") && (() => {
                       const sacrificeEnergy = Math.max(1, Math.floor(energyCost / 2));
                       return (
                         <button
@@ -5920,7 +5941,7 @@ export default function TCGPage() {
                   </div>
                   <div className="flex-1 flex flex-wrap gap-1 justify-center items-start content-start">
                     {(lane[enemyCards] || []).map((card: any, idx: number) => {
-                      const displayPower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+                      const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
                       return (
                         <div
                           key={idx}
@@ -5964,7 +5985,7 @@ export default function TCGPage() {
                   </div>
                   <div className="flex-1 flex flex-wrap gap-1 justify-center items-end content-end">
                     {(lane[myCards] || []).map((card: any, idx: number) => {
-                      const displayPower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+                      const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
                       const foilEffect = getFoilEffect(card.foil);
                       return (
                         <div
@@ -6038,7 +6059,7 @@ export default function TCGPage() {
           <div className="flex justify-center gap-1">
             {myHand?.map((card: any, idx: number) => {
               const foilEffect = getFoilEffect(card.foil);
-              const displayPower = card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power;
+              const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
               const energyCost = getEnergyCost(card);
               const canAfford = energyCost <= remainingEnergy;
               const isPending = pendingActions.some(a => a.cardIndex === idx);
