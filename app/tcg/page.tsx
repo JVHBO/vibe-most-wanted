@@ -301,8 +301,8 @@ const CARD_COMBOS: CardCombo[] = [
     emoji: "📱",
     cards: ["pooster", "bradymck", "qrcodo"],
     minCards: 2,
-    bonus: { type: "draw", value: 2, target: "self" },
-    description: "DRAW 2 cards + 30 power each!",
+    bonus: { type: "power", value: 40, target: "self" },
+    description: "+40 power each! Content is KING!",
   },
   {
     id: "chaos_agents",
