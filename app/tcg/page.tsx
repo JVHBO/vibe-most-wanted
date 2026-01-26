@@ -199,6 +199,9 @@ const COMBO_TRANSLATION_KEYS: Record<string, string> = {
   royal_brothers: "tcgComboRoyalBrothers",
   philosopher_chad: "tcgComboPhilosopherChad",
   scaling_masters: "tcgComboScalingMasters",
+  christmas_spirit: "tcgComboChristmasSpirit",
+  shadow_network: "tcgComboShadowNetwork",
+  pixel_artists: "tcgComboPixelArtists",
 };
 
 const CARD_COMBOS: CardCombo[] = [
@@ -372,6 +375,30 @@ const CARD_COMBOS: CardCombo[] = [
     cards: ["betobutter", "morlacos"],
     bonus: { type: "power_percent", value: 100, target: "self" },
     description: "BETOBUTTER + MORLACOS = DOUBLE scaling! Unstoppable!",
+  },
+  {
+    id: "christmas_spirit",
+    name: "Christmas Spirit",
+    emoji: "🎄",
+    cards: ["naughty santa", "gozaru"],
+    bonus: { type: "power", value: 40, target: "lane" },
+    description: "SANTA + GOZARU = +40 power to entire lane! Holiday cheer!",
+  },
+  {
+    id: "shadow_network",
+    name: "Shadow Network",
+    emoji: "🕶️",
+    cards: ["lombra jr", "slaterg"],
+    bonus: { type: "steal", value: 30, target: "enemy_lane" },
+    description: "LOMBRA + SLATERG = STEAL 30 power! Underground connections!",
+  },
+  {
+    id: "pixel_artists",
+    name: "Pixel Artists",
+    emoji: "🎨",
+    cards: ["smolemaru", "joonx"],
+    bonus: { type: "power", value: 35, target: "self" },
+    description: "SMOLEMARU + JOONX = +35 power each! Creative minds!",
   },
 ];
 
