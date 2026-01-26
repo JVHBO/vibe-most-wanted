@@ -350,7 +350,7 @@ const CARD_COMBOS: CardCombo[] = [
     emoji: "🔀",
     cards: ["rizkybegitu", "bradymck"],
     bonus: { type: "power_percent", value: 100, target: "self" },
-    description: "MIRROR: Each gains power equal to the OTHER! Different lanes = STEAL 20 from enemies too!",
+    description: "MIRROR: DOUBLE power! Rizky + Brady = unstoppable duo!",
   },
   {
     id: "royal_brothers",
