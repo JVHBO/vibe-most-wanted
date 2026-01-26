@@ -1079,6 +1079,12 @@ export default function TCGPage() {
   const [deckSortBy, setDeckSortBy] = useState<"power" | "rarity">("power");
   const [deckSortDesc, setDeckSortDesc] = useState(true); // true = highest first
 
+  // Deck builder pagination
+  const CARDS_PER_PAGE = 12;
+  const [vbmsPage, setVbmsPage] = useState(0);
+  const [vibefidPage, setVibefidPage] = useState(0);
+  const [othersPage, setOthersPage] = useState(0);
+
   // Battle state
   const [pendingActions, setPendingActions] = useState<GameAction[]>([]);
   const [selectedHandCard, setSelectedHandCard] = useState<number | null>(null);
@@ -4569,9 +4575,32 @@ export default function TCGPage() {
           <div className="grid md:grid-cols-2 gap-3">
             {/* VBMS Cards */}
             <div className="bg-gradient-to-b from-vintage-charcoal/40 to-black/30 border border-vintage-gold/20 rounded-lg p-3">
-              <h3 className="text-[9px] font-bold text-vintage-gold mb-2 uppercase tracking-[0.2em]">VBMS <span className="text-vintage-burnt-gold/60">({vbmsCards.length})</span></h3>
-              <div className="flex flex-wrap gap-1.5 max-h-[300px] overflow-y-auto">
-                {vbmsCards.map((card: DeckCard) => {
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[9px] font-bold text-vintage-gold uppercase tracking-[0.2em]">VBMS <span className="text-vintage-burnt-gold/60">({vbmsCards.length})</span></h3>
+                {vbmsCards.length > CARDS_PER_PAGE && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setVbmsPage(p => Math.max(0, p - 1))}
+                      disabled={vbmsPage === 0}
+                      className="w-5 h-5 flex items-center justify-center text-[10px] bg-vintage-gold/20 hover:bg-vintage-gold/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                    >
+                      ←
+                    </button>
+                    <span className="text-[8px] text-vintage-burnt-gold/60 min-w-[40px] text-center">
+                      {vbmsPage + 1}/{Math.ceil(vbmsCards.length / CARDS_PER_PAGE)}
+                    </span>
+                    <button
+                      onClick={() => setVbmsPage(p => Math.min(Math.ceil(vbmsCards.length / CARDS_PER_PAGE) - 1, p + 1))}
+                      disabled={vbmsPage >= Math.ceil(vbmsCards.length / CARDS_PER_PAGE) - 1}
+                      className="w-5 h-5 flex items-center justify-center text-[10px] bg-vintage-gold/20 hover:bg-vintage-gold/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                    >
+                      →
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {vbmsCards.slice(vbmsPage * CARDS_PER_PAGE, (vbmsPage + 1) * CARDS_PER_PAGE).map((card: DeckCard) => {
                   const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
                   const ability = getCardAbility(card.name, card);
                   return (
@@ -4601,9 +4630,32 @@ export default function TCGPage() {
             {/* VibeFID Cards */}
             {vibefidCards.length > 0 && (
               <div className="bg-gradient-to-b from-cyan-950/40 to-black/30 border border-cyan-500/30 rounded-lg p-3">
-                <h3 className="text-[9px] font-bold text-cyan-400 mb-2 uppercase tracking-[0.2em]">VibeFID <span className="text-cyan-400/60">({vibefidCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">5x</span></h3>
-                <div className="flex flex-wrap gap-1.5 max-h-[300px] overflow-y-auto">
-                  {vibefidCards.map((card: DeckCard) => {
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-[9px] font-bold text-cyan-400 uppercase tracking-[0.2em]">VibeFID <span className="text-cyan-400/60">({vibefidCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">5x</span></h3>
+                  {vibefidCards.length > CARDS_PER_PAGE && (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setVibefidPage(p => Math.max(0, p - 1))}
+                        disabled={vibefidPage === 0}
+                        className="w-5 h-5 flex items-center justify-center text-[10px] bg-cyan-500/20 hover:bg-cyan-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                      >
+                        ←
+                      </button>
+                      <span className="text-[8px] text-cyan-400/60 min-w-[40px] text-center">
+                        {vibefidPage + 1}/{Math.ceil(vibefidCards.length / CARDS_PER_PAGE)}
+                      </span>
+                      <button
+                        onClick={() => setVibefidPage(p => Math.min(Math.ceil(vibefidCards.length / CARDS_PER_PAGE) - 1, p + 1))}
+                        disabled={vibefidPage >= Math.ceil(vibefidCards.length / CARDS_PER_PAGE) - 1}
+                        className="w-5 h-5 flex items-center justify-center text-[10px] bg-cyan-500/20 hover:bg-cyan-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                      >
+                        →
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {vibefidCards.slice(vibefidPage * CARDS_PER_PAGE, (vibefidPage + 1) * CARDS_PER_PAGE).map((card: DeckCard) => {
                     const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
                     const ability = getCardAbility(card.name, card);
                     return (
@@ -4630,9 +4682,32 @@ export default function TCGPage() {
 
             {/* Nothing Cards */}
             <div className="bg-gradient-to-b from-purple-950/40 to-black/30 border border-purple-500/30 rounded-lg p-3">
-              <h3 className="text-[9px] font-bold text-purple-400 mb-2 uppercase tracking-[0.2em]">Others <span className="text-purple-400/60">({nothingCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">50% power</span></h3>
-              <div className="flex flex-wrap gap-1.5 max-h-[300px] overflow-y-auto">
-                {nothingCards.map((card: DeckCard) => {
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-[9px] font-bold text-purple-400 uppercase tracking-[0.2em]">Others <span className="text-purple-400/60">({nothingCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">50% power</span></h3>
+                {nothingCards.length > CARDS_PER_PAGE && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setOthersPage(p => Math.max(0, p - 1))}
+                      disabled={othersPage === 0}
+                      className="w-5 h-5 flex items-center justify-center text-[10px] bg-purple-500/20 hover:bg-purple-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                    >
+                      ←
+                    </button>
+                    <span className="text-[8px] text-purple-400/60 min-w-[40px] text-center">
+                      {othersPage + 1}/{Math.ceil(nothingCards.length / CARDS_PER_PAGE)}
+                    </span>
+                    <button
+                      onClick={() => setOthersPage(p => Math.min(Math.ceil(nothingCards.length / CARDS_PER_PAGE) - 1, p + 1))}
+                      disabled={othersPage >= Math.ceil(nothingCards.length / CARDS_PER_PAGE) - 1}
+                      className="w-5 h-5 flex items-center justify-center text-[10px] bg-purple-500/20 hover:bg-purple-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                    >
+                      →
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {nothingCards.slice(othersPage * CARDS_PER_PAGE, (othersPage + 1) * CARDS_PER_PAGE).map((card: DeckCard) => {
                   const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
                   return (
                     <div
