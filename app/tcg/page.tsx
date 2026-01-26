@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -98,12 +98,18 @@ const tcgAbilities: Record<string, TCGAbility> = tcgAbilitiesData.abilities as R
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const TCG_CONFIG = {
+  LANES: 3,
+  CARDS_PER_LANE: 4,
+  HAND_SIZE: 5,
   DECK_SIZE: 15,
   MIN_VBMS_OR_VIBEFID: 6, // Minimum 6 VBMS cards, or 5 VBMS + 1 VibeFID
   MAX_NOTHING: 9, // 15 - 6 = max 9 Nothing cards
   MAX_VIBEFID: 1, // Only 1 VibeFID card allowed per deck
-  TURN_TIME_SECONDS: 15,
+  TURN_TIME_SECONDS: 25,
   TOTAL_TURNS: 6,
+  STARTING_ENERGY: 3,
+  ENERGY_PER_TURN: 1,
+  MAX_ENERGY: 10,
   ABILITY_DELAY_MS: 600, // Delay between each ability animation
 };
 
@@ -143,43 +149,11 @@ const RARITY_COLORS: Record<string, string> = {
   Mythic: "border-red-500 text-red-400",
 };
 
-// Fun lane names for battles
-// Lane effects - each lane has a unique effect that modifies gameplay
-// SIMPLIFIED: Only effects that are FULLY IMPLEMENTED and FUN
+// Fun lane names for battles - NO EFFECTS, pure card power battles
 const LANE_NAMES = [
-  // ═══ BUFF LANES ═══
-  { name: "Moon Base", effect: "buffFirst", value: 40, description: "1st card played: +40" },
-  { name: "Whale Waters", effect: "buffHighest", value: 50, description: "Strongest card: +50" },
-  { name: "Shrimp Shore", effect: "buffLowest", value: 45, description: "Weakest card: +45" },
-  { name: "Hopium Farms", effect: "buffPerTurn", value: 15, description: "+15 to all each turn" },
-
-  // ═══ DEBUFF LANES ═══
-  { name: "Paper Hands", effect: "debuffPerTurn", value: -12, description: "-12 to all each turn" },
-  { name: "Vlady's Dungeon", effect: "debuffEnemy", value: -25, description: "Enemy cards: -25" },
-
-  // ═══ RARITY BONUS LANES ═══
-  { name: "Nico's Throne", effect: "doubleLegendary", description: "Legendary: 2x power" },
-  { name: "Dan's Backyard", effect: "buffCommon", value: 30, description: "Common: +30" },
-  { name: "NFT Gallery", effect: "buffFoil", value: 60, description: "Foil: +60" },
-  { name: "Mint Factory", effect: "buffNothing", value: 50, description: "Nothing: +50" },
-  { name: "Vibe HQ", effect: "buffVibeFID", value: 40, description: "VibeFID: +40" },
-
-  // ═══ STRATEGY LANES ═══
-  { name: "Mom's Basement", effect: "buffAlone", value: 60, description: "Solo card: +60" },
-  { name: "Discord Server", effect: "buffPerCard", value: 15, description: "+15 per card here" },
-  { name: "Copium Den", effect: "buffIfLosing", value: 35, description: "If losing: +35" },
-  { name: "Copycat Cafe", effect: "copyEnemy", description: "Match enemy total power" },
-  { name: "Underdog Arena", effect: "doubleIfFewer", description: "Fewer cards? 2x power!" },
-
-  // ═══ CHAOS LANES ═══
-  { name: "Degen Valley", effect: "gamble", description: "50% double or 50% halved" },
-  { name: "Liquidity Pool", effect: "swapSides", description: "Scores swap at game end!" },
-  { name: "Clown College", effect: "reverseOrder", description: "LOWEST power wins!" },
-  { name: "Taxman's Office", effect: "taxHigh", value: 20, description: "Cards 50+ power: -20" },
-
-  // ═══ SPECIAL VICTORY LANES ═══
-  { name: "Bridge", effect: "noVictory", description: "Lane doesn't count" },
-  { name: "Double Stakes", effect: "doubleVictory", description: "Win = 2 lane victories!" },
+  { name: "Lane 1", effect: "", description: "" },
+  { name: "Lane 2", effect: "", description: "" },
+  { name: "Lane 3", effect: "", description: "" },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -543,11 +517,85 @@ const getComboSteal = (playerCards: DeckCard[]): number => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// HELPER: VBMS Card Image URL
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Build baccarat image URL for VBMS cards (global helper)
+const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
+  if (!cardName) return null;
+  const nameLower = cardName.toLowerCase();
+  const allCards = tcgCardsData.cards || [];
+  const aliases = (tcgCardsData as any).aliases || {};
+
+  // Check if name is an alias first (e.g., "deployer" -> "0xdeployer")
+  const resolvedName = Object.entries(aliases).find(
+    ([alias]) => alias.toLowerCase() === nameLower
+  )?.[1] as string || nameLower;
+
+  // Find card by onChainName or baccarat name (using resolved name)
+  const cardData = allCards.find((c: any) =>
+    c.onChainName?.toLowerCase() === resolvedName.toLowerCase() ||
+    c.baccarat?.toLowerCase() === resolvedName.toLowerCase() ||
+    c.onChainName?.toLowerCase() === nameLower ||
+    c.baccarat?.toLowerCase() === nameLower
+  );
+
+  if (!cardData || !cardData.suit || !cardData.rank) return null;
+
+  // Get baccarat name (use alias if exists, or baccarat field, or onChainName)
+  const baccaratName = aliases[cardData.onChainName] || cardData.baccarat?.toLowerCase() || cardData.onChainName?.toLowerCase();
+
+  // Special case for neymar (joker)
+  if (baccaratName === "neymar" || cardData.rank?.includes("?")) {
+    return "/images/baccarat/joker, neymar.png";
+  }
+
+  // Build rank name
+  const rankMap: Record<string, string> = {
+    'A': 'ace', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
+    '7': '7', '8': '8', '9': '9', '10': '10', 'J': 'jack', 'Q': 'queen', 'K': 'king'
+  };
+  const rankName = rankMap[cardData.rank] || cardData.rank;
+
+  return `/images/baccarat/${rankName} ${cardData.suit}, ${baccaratName}.png`;
+};
+
+// Get the correct display image URL for any card (fixes VBMS cards with wrong URLs)
+const getCardDisplayImageUrl = (card: DeckCard): string => {
+  if (card.type === "vbms" && card.name) {
+    return getVbmsBaccaratImageUrl(card.name) || card.imageUrl || "/images/card-back.png";
+  }
+  return card.imageUrl || "/images/card-back.png";
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // SOUND EFFECTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "select" | "combo" | "error" | "tick" | "buff" | "debuff" | "destroy" | "steal" | "draw" | "energy" | "shuffle" | "heal" | "shield" | "bomb") => {
+// Store current BGM audio to stop on game restart
+let currentBgmAudio: HTMLAudioElement | null = null;
+
+const stopBgm = () => {
+  if (currentBgmAudio) {
+    currentBgmAudio.pause();
+    currentBgmAudio.currentTime = 0;
+    currentBgmAudio = null;
+  }
+};
+
+// Track last played sounds to prevent overlap
+let lastSoundTime: Record<string, number> = {};
+const SOUND_COOLDOWN_MS = 150; // Minimum time between same sound type
+
+const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "select" | "combo" | "error" | "tick" | "buff" | "debuff" | "destroy" | "steal" | "draw" | "energy" | "shuffle" | "heal" | "shield" | "bomb" | "hit" | "damage") => {
   if (typeof window === "undefined") return;
+
+  // Prevent same sound from playing too quickly (overlap prevention)
+  const now = Date.now();
+  if (lastSoundTime[type] && now - lastSoundTime[type] < SOUND_COOLDOWN_MS) {
+    return; // Skip - sound played too recently
+  }
+  lastSoundTime[type] = now;
 
   const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
   if (!AudioContext) return;
@@ -772,35 +820,54 @@ const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "s
       return;
 
     case "victory":
-      // Victory: triumphant ascending notes
-      const playVictoryNote = (freq: number, delay: number) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime + delay);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.2);
-        osc.start(audioCtx.currentTime + delay);
-        osc.stop(audioCtx.currentTime + delay + 0.2);
-      };
-      playVictoryNote(523, 0);      // C5
-      playVictoryNote(659, 0.15);   // E5
-      playVictoryNote(784, 0.3);    // G5
-      playVictoryNote(1047, 0.45);  // C6
+      // Victory: use actual victory music file (loops)
+      try {
+        stopBgm(); // Stop any previous BGM
+        const victoryAudio = new Audio("/sounds/victory.mp3");
+        victoryAudio.volume = 0.6;
+        victoryAudio.loop = true;
+        currentBgmAudio = victoryAudio; // Save reference to stop later
+        victoryAudio.play().catch(() => {});
+      } catch {
+        // Fallback to synthesized sound
+        const playVictoryNote = (freq: number, delay: number) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+          gain.gain.setValueAtTime(0.3, audioCtx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.2);
+          osc.start(audioCtx.currentTime + delay);
+          osc.stop(audioCtx.currentTime + delay + 0.2);
+        };
+        playVictoryNote(523, 0);
+        playVictoryNote(659, 0.15);
+        playVictoryNote(784, 0.3);
+        playVictoryNote(1047, 0.45);
+      }
       return;
 
     case "defeat":
-      // Defeat: descending sad notes
-      oscillator.type = "sawtooth";
-      oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.5);
-      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.5);
-      break;
+      // Defeat: use actual defeat music file
+      try {
+        stopBgm(); // Stop any previous BGM
+        const defeatAudio = new Audio("/sounds/defeat.mp3");
+        defeatAudio.volume = 0.6;
+        currentBgmAudio = defeatAudio; // Save reference to stop later
+        defeatAudio.play().catch(() => {});
+      } catch {
+        // Fallback to synthesized sound
+        oscillator.type = "sawtooth";
+        oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.5);
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + 0.5);
+      }
+      return;
 
     case "combo":
       // Combo: epic power-up sound with multiple notes
@@ -843,6 +910,59 @@ const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "s
       oscillator.start(audioCtx.currentTime);
       oscillator.stop(audioCtx.currentTime + 0.08);
       break;
+
+    case "hit":
+      // Hit: use actual attack sound file
+      try {
+        const attackAudio = new Audio("/sounds/attack.mp3");
+        attackAudio.volume = 0.5;
+        attackAudio.play().catch(() => {});
+      } catch {
+        // Fallback to synthesized sound
+        const playHit = (freq: number, delay: number, dur: number) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.3, audioCtx.currentTime + delay + dur);
+          gain.gain.setValueAtTime(0.35, audioCtx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + dur);
+          osc.start(audioCtx.currentTime + delay);
+          osc.stop(audioCtx.currentTime + delay + dur);
+        };
+        playHit(200, 0, 0.1);
+        playHit(100, 0.02, 0.15);
+      }
+      return;
+
+    case "damage":
+      // Damage: SE_158 hit sound
+      try {
+        const damageAudio = new Audio("/sounds/hit.mp3");
+        damageAudio.volume = 0.3;
+        damageAudio.play().catch(() => {});
+      } catch {
+        // Fallback synthesized thud
+        const playImpact = (freq: number, delay: number, type: OscillatorType = "sawtooth") => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.3, audioCtx.currentTime + delay + 0.12);
+          gain.gain.setValueAtTime(0.5, audioCtx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.15);
+          osc.start(audioCtx.currentTime + delay);
+          osc.stop(audioCtx.currentTime + delay + 0.15);
+        };
+        playImpact(120, 0, "sawtooth");
+        playImpact(80, 0.02, "triangle");
+        playImpact(200, 0.01, "square");
+      }
+      return;
   }
 };
 
@@ -927,7 +1047,7 @@ export default function TCGPage() {
   const { address, isConnected } = useAccount();
   const { userProfile } = useProfile();
   const { nfts, isLoading: cardsLoading, loadNFTs, status } = usePlayerCards();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   // Load NFTs when wallet connects
   useEffect(() => {
@@ -938,6 +1058,7 @@ export default function TCGPage() {
 
   // Game state
   const [view, setView] = useState<GameView>("lobby");
+  const currentBgmRef = useRef<HTMLAudioElement | null>(null); // Track BGM to stop on restart
   const [currentMatchId, setCurrentMatchId] = useState<Id<"tcgMatches"> | null>(null);
   const [roomIdInput, setRoomIdInput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -959,10 +1080,21 @@ export default function TCGPage() {
   // PvE state (local, no Convex)
   const [isPvE, setIsPvE] = useState(false);
   const [pveGameState, setPveGameState] = useState<PvEGameState | null>(null);
+  const [showTiebreakerAnimation, setShowTiebreakerAnimation] = useState(false);
+  const [draggedCardIndex, setDraggedCardIndex] = useState<number | null>(null);
+  const [dragOverLane, setDragOverLane] = useState<number | null>(null);
+  const [touchDragPos, setTouchDragPos] = useState<{ x: number; y: number } | null>(null);
+  const [draggedLaneCard, setDraggedLaneCard] = useState<{ laneIndex: number; cardIndex: number } | null>(null);
+  const [dragOverHand, setDragOverHand] = useState(false);
+  const laneRefs = useRef<(HTMLDivElement | null)[]>([null, null, null]);
+  const wasDraggingRef = useRef(false);
+  const [showBattleIntro, setShowBattleIntro] = useState(false);
+  const [showDefeatBait, setShowDefeatBait] = useState(false);
 
   // Turn timer state
   const [turnTimeRemaining, setTurnTimeRemaining] = useState(TCG_CONFIG.TURN_TIME_SECONDS);
   const turnTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const handlePvEEndTurnRef = useRef<() => void>(() => {}); // Ref to avoid stale closure in timer
 
   // Game phase state - tracks current phase of turn resolution
   const [currentPhase, setCurrentPhase] = useState<GamePhase>("play");
@@ -974,6 +1106,20 @@ export default function TCGPage() {
   }[]>([]);
   const [currentAbilityIndex, setCurrentAbilityIndex] = useState(-1);
   const [isResolvingAbilities, setIsResolvingAbilities] = useState(false);
+
+  // Sequential reveal state - for animated card reveals
+  const [revealQueue, setRevealQueue] = useState<{
+    laneIdx: number;
+    side: "player" | "cpu";
+    cardIdx: number;
+    card: DeckCard;
+  }[]>([]);
+  const [isRevealing, setIsRevealing] = useState(false);
+  const pendingRevealDataRef = useRef<{
+    cpuHand: DeckCard[];
+    cpuDeckRemaining: DeckCard[];
+    cpuSkipped: boolean;
+  } | null>(null);
 
   // Profile dropdown state
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -1008,6 +1154,20 @@ export default function TCGPage() {
     action: "kamikaze" | "charm" | "steal";
   } | null>(null);
 
+  // Track combos already triggered this reveal phase to avoid duplicate sounds
+  const shownCombosRef = useRef<Set<string>>(new Set());
+
+  // Ability effect animation - shows attack/buff effect going from source to target
+  const [abilityEffectAnim, setAbilityEffectAnim] = useState<{
+    type: "attack" | "buff" | "steal" | "destroy";
+    sourceLane: number;
+    sourceSide: "player" | "cpu";
+    targetLane: number;
+    targetSide: "player" | "cpu";
+    emoji: string;
+    powerChange?: number;
+  } | null>(null);
+
   // Helper to trigger card animation
   const triggerCardAnimation = (laneIdx: number, side: "player" | "cpu", cardIdx: number, type: string, powerChange?: number, duration = 800) => {
     const key = `${laneIdx}-${side}-${cardIdx}`;
@@ -1026,6 +1186,21 @@ export default function TCGPage() {
     cards.forEach((_, idx) => {
       setTimeout(() => triggerCardAnimation(laneIdx, side, idx, type, powerChange), idx * 100);
     });
+  };
+
+  // Trigger ability effect animation (attack/buff going from source to target)
+  const triggerAbilityEffect = (
+    type: "attack" | "buff" | "steal" | "destroy",
+    sourceLane: number,
+    sourceSide: "player" | "cpu",
+    targetLane: number,
+    targetSide: "player" | "cpu",
+    emoji: string,
+    powerChange?: number,
+    duration = 800
+  ) => {
+    setAbilityEffectAnim({ type, sourceLane, sourceSide, targetLane, targetSide, emoji, powerChange });
+    setTimeout(() => setAbilityEffectAnim(null), duration);
   };
 
   // Convex queries
@@ -1137,14 +1312,8 @@ export default function TCGPage() {
       }`;
       triggerCardAnimation(item.laneIndex, item.side, 0, "pulse");
 
-      // Play ability-specific sound
-      const action = item.ability?.effect?.action;
-      if (action?.includes("buff")) playSound("buff");
-      else if (action?.includes("debuff") || action?.includes("destroy")) playSound("debuff");
-      else if (action?.includes("steal")) playSound("steal");
-      else if (action?.includes("draw")) playSound("draw");
-      else if (action?.includes("energy")) playSound("energy");
-      else playSound("ability");
+      // NOTE: Sounds are played in processAbilities when effects actually trigger
+      // (hit sound for attacks, damage sound when enemy shakes, etc.)
 
       // Wait for animation
       await new Promise(resolve => setTimeout(resolve, TCG_CONFIG.ABILITY_DELAY_MS));
@@ -1486,10 +1655,12 @@ export default function TCGPage() {
     // Helper to add CPU card to lane (abilities processed later in handlePvEEndTurn)
     const playCpuCard = (card: DeckCard, laneIdx: number) => {
       // Mark card as played this turn for ability processing
+      // _revealed: false means card shows face-down until reveal phase
       const cardWithMeta = {
         ...card,
         _playedThisTurn: true,
         _playedLaneIndex: laneIdx,
+        _revealed: false,
       };
 
       // Add card to lane (no abilities applied here - processed after reveal)
@@ -1654,6 +1825,9 @@ export default function TCGPage() {
   // ═══════════════════════════════════════════════════════════════════════════════
 
   const startPvEMatch = () => {
+    // Stop any playing BGM (victory/defeat sounds)
+    stopBgm();
+
     if (!activeDeck) {
       setError("No active deck. Please create a deck first.");
       return;
@@ -1668,6 +1842,12 @@ export default function TCGPage() {
     setView("battle");
     setPendingActions([]);
     setSelectedHandCard(null);
+    setShowTiebreakerAnimation(false);
+    setShowDefeatBait(false);
+    setShowBattleIntro(true);
+
+    // Disable intro animation after it plays
+    setTimeout(() => setShowBattleIntro(false), 2000);
 
     // Reset phase system for new game
     setCurrentPhase("play");
@@ -2486,11 +2666,38 @@ export default function TCGPage() {
     });
   };
 
-  const handlePvEPlayCard = (laneIndex: number) => {
-    if (selectedHandCard === null || !pveGameState) return;
+  // Helper to detect which lane is under a touch point
+  const getLaneUnderTouch = (x: number, y: number): number | null => {
+    // Use lane refs to check bounding boxes (works correctly with 3D transforms)
+    for (let i = 0; i < 3; i++) {
+      const lane = laneRefs.current[i];
+      if (lane) {
+        const rect = lane.getBoundingClientRect();
+        // Check if point is within lane bounds
+        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+          console.log(`Match lane ${i}:`, { left: Math.round(rect.left), right: Math.round(rect.right), x: Math.round(x) });
+          return i;
+        }
+      } else {
+        console.log(`Lane ${i} ref is null!`);
+      }
+    }
+    return null;
+  };
 
-    const card = pveGameState.playerHand[selectedHandCard];
+  const handlePvEPlayCard = (laneIndex: number, cardIndex?: number) => {
+    const actualCardIndex = cardIndex ?? selectedHandCard;
+    if (actualCardIndex === null || !pveGameState) return;
+
+    const card = pveGameState.playerHand[actualCardIndex];
     if (!card) return;
+
+    // Check lane capacity
+    const lane = pveGameState.lanes[laneIndex];
+    if ((lane?.playerCards?.length || 0) >= TCG_CONFIG.CARDS_PER_LANE) {
+      playSound("error");
+      return; // Lane is full
+    }
 
     // Calculate energy cost (centralized)
     const foilEffect = getFoilEffect(card.foil);
@@ -2508,7 +2715,7 @@ export default function TCGPage() {
 
     // Remove card from hand
     let newHand = [...pveGameState.playerHand];
-    newHand.splice(selectedHandCard, 1);
+    newHand.splice(actualCardIndex, 1);
 
     // Prize foil bonus: Draw a card!
     let newDeck = [...pveGameState.playerDeckRemaining];
@@ -2534,10 +2741,12 @@ export default function TCGPage() {
     // This prevents players from playing, seeing the effect, then undoing
 
     // Mark card as "just played this turn" so onReveal triggers on End Turn
+    // _revealed: false means card shows face-down until reveal phase
     const cardWithMeta = {
       ...card,
       _playedThisTurn: true,
       _playedLaneIndex: laneIndex,
+      _revealed: false,
     };
 
     // Update lanes with the card (marked as newly played)
@@ -2792,7 +3001,7 @@ export default function TCGPage() {
   };
 
   const handlePvEEndTurn = () => {
-    if (!pveGameState) return;
+    if (!pveGameState || isRevealing) return;
 
     // Reset timer
     setTurnTimeRemaining(TCG_CONFIG.TURN_TIME_SECONDS);
@@ -2806,16 +3015,159 @@ export default function TCGPage() {
 
     // CPU plays cards using smart AI
     const cpuResult = cpuPlayCards(pveGameState);
-    let cpuHand = cpuResult.cpuHand;
-    let cpuDeckRemaining = cpuResult.cpuDeckRemaining;
-    let newLanes = cpuResult.lanes;
+    const cpuHand = cpuResult.cpuHand;
+    const cpuDeckRemaining = cpuResult.cpuDeckRemaining;
+    const newLanes = cpuResult.lanes;
 
     const cpuCardsAfter = newLanes.reduce((sum: number, l: any) => sum + l.cpuCards.length, 0);
     const cpuSkipped = cpuCardsAfter === cpuCardsBefore;
 
+    // Collect all unrevealed cards for the reveal queue
+    const cardsToReveal: { laneIdx: number; side: "player" | "cpu"; cardIdx: number; card: DeckCard }[] = [];
+
+    newLanes.forEach((lane: any, laneIdx: number) => {
+      lane.playerCards.forEach((card: DeckCard, cardIdx: number) => {
+        if ((card as any)._revealed === false) {
+          cardsToReveal.push({ laneIdx, side: "player", cardIdx, card });
+        }
+      });
+      lane.cpuCards.forEach((card: DeckCard, cardIdx: number) => {
+        if ((card as any)._revealed === false) {
+          cardsToReveal.push({ laneIdx, side: "cpu", cardIdx, card });
+        }
+      });
+    });
+
+    // Sort cards: alternate player/cpu for dramatic reveal
+    const playerReveals = cardsToReveal.filter(c => c.side === "player");
+    const cpuReveals = cardsToReveal.filter(c => c.side === "cpu");
+    const sortedReveals: typeof cardsToReveal = [];
+    const maxLen = Math.max(playerReveals.length, cpuReveals.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (playerReveals[i]) sortedReveals.push(playerReveals[i]);
+      if (cpuReveals[i]) sortedReveals.push(cpuReveals[i]);
+    }
+
+    // Update game state with CPU cards (still face-down)
+    setPveGameState({
+      ...pveGameState,
+      lanes: newLanes,
+      cpuHand,
+      cpuDeckRemaining,
+    });
+
+    // Store data for continuation after reveals
+    pendingRevealDataRef.current = { cpuHand, cpuDeckRemaining, cpuSkipped };
+
+    // If no cards to reveal, skip directly to ability processing
+    if (sortedReveals.length === 0) {
+      continueAfterReveal();
+      return;
+    }
+
+    // Start the reveal sequence
+    setRevealQueue(sortedReveals);
+    setIsRevealing(true);
+  };
+
+  // Keep ref updated so timer callback always has latest version
+  useEffect(() => {
+    handlePvEEndTurnRef.current = handlePvEEndTurn;
+  });
+
+  // Process reveal queue - reveals cards one at a time with animations
+  useEffect(() => {
+    if (!isRevealing || revealQueue.length === 0 || !pveGameState) return;
+
+    const timeoutId = setTimeout(() => {
+      const [currentReveal, ...remainingQueue] = revealQueue;
+
+      // Reveal this card in the game state and check for new combos
+      setPveGameState(prev => {
+        if (!prev) return prev;
+        const newLanes = prev.lanes.map((lane: any, laneIdx: number) => {
+          if (laneIdx !== currentReveal.laneIdx) return lane;
+
+          if (currentReveal.side === "player") {
+            return {
+              ...lane,
+              playerCards: lane.playerCards.map((c: DeckCard, cIdx: number) => {
+                if (cIdx !== currentReveal.cardIdx) return c;
+                return { ...c, _revealed: true };
+              }),
+            };
+          } else {
+            return {
+              ...lane,
+              cpuCards: lane.cpuCards.map((c: DeckCard, cIdx: number) => {
+                if (cIdx !== currentReveal.cardIdx) return c;
+                return { ...c, _revealed: true };
+              }),
+            };
+          }
+        });
+
+        // Check for NEW combos after this reveal
+        const laneCards = currentReveal.side === "player"
+          ? newLanes[currentReveal.laneIdx].playerCards.filter((c: any) => c._revealed !== false)
+          : newLanes[currentReveal.laneIdx].cpuCards.filter((c: any) => c._revealed !== false);
+
+        const newCombos = detectCombos(laneCards);
+
+        // Show popup for new combos
+        newCombos.forEach(({ combo }) => {
+          const comboKey = `${currentReveal.laneIdx}-${currentReveal.side}-${combo.id}`;
+          if (!shownCombosRef.current.has(comboKey)) {
+            shownCombosRef.current.add(comboKey);
+            // Play combo sound - no popup needed since combo name is shown in lane
+            setTimeout(() => {
+              playSound("buff"); // Combo activation sound
+            }, 300);
+          }
+        });
+
+        return { ...prev, lanes: newLanes };
+      });
+
+      // Play flip sound
+      playSound("card");
+
+      // Trigger flip animation for this card
+      triggerCardAnimation(
+        currentReveal.laneIdx,
+        currentReveal.side,
+        currentReveal.cardIdx,
+        "pulse",
+        0
+      );
+
+      // Update queue (remove processed card)
+      setRevealQueue(remainingQueue);
+
+      // If queue is empty, continue to ability processing
+      if (remainingQueue.length === 0) {
+        setTimeout(() => {
+          setIsRevealing(false);
+          shownCombosRef.current.clear(); // Reset for next turn
+          continueAfterReveal();
+        }, 300); // Short delay after last reveal
+      }
+    }, 500); // Delay between each reveal
+
+    return () => clearTimeout(timeoutId);
+  }, [revealQueue, isRevealing, pveGameState]);
+
+  // Continuation after all cards are revealed - process abilities and resolve
+  const continueAfterReveal = () => {
+    if (!pveGameState || !pendingRevealDataRef.current) return;
+
+    const { cpuHand, cpuDeckRemaining, cpuSkipped } = pendingRevealDataRef.current;
+    pendingRevealDataRef.current = null;
+
+    let newLanes = [...pveGameState.lanes];
+
     // Check for stealOnSkip ability if CPU skipped
     if (cpuSkipped) {
-      // Find player cards with stealOnSkip ability (john porn)
       for (let li = 0; li < 3; li++) {
         const playerCardsInLane = newLanes[li].playerCards || [];
         const hasStealOnSkip = playerCardsInLane.some((c: DeckCard) => {
@@ -2824,7 +3176,6 @@ export default function TCGPage() {
         });
 
         if (hasStealOnSkip) {
-          // Find the strongest enemy card across all lanes
           let strongestLane = -1;
           let strongestIdx = -1;
           let strongestPower = -1;
@@ -2839,20 +3190,15 @@ export default function TCGPage() {
           });
 
           if (strongestLane >= 0 && strongestIdx >= 0) {
-            // Steal the card!
             const stolenCard = { ...newLanes[strongestLane].cpuCards[strongestIdx] };
             newLanes[strongestLane].cpuCards.splice(strongestIdx, 1);
             newLanes[strongestLane].cpuPower -= stolenCard.power;
-
-            // Add to player's lane (where the stealOnSkip card is)
-            stolenCard.power = Math.floor(stolenCard.power * 0.5); // Stolen card has 50% power
+            stolenCard.power = Math.floor(stolenCard.power * 0.5);
             newLanes[li].playerCards.push(stolenCard);
             newLanes[li].playerPower += stolenCard.power;
-
-            // Play steal sound
             playSound("steal");
           }
-          break; // Only trigger once per turn
+          break;
         }
       }
     }
@@ -2860,11 +3206,8 @@ export default function TCGPage() {
     // PHASE 2: ABILITY - Process onReveal abilities in order
     setCurrentPhase("ability");
 
-    // Collect all cards that need onReveal processing
-    // Cards marked with _playedThisTurn = true were just played this turn
     const cardsToProcess: { card: DeckCard; laneIndex: number; side: "player" | "cpu"; ability: any }[] = [];
 
-    // Find player cards played this turn
     newLanes.forEach((lane: any, laneIdx: number) => {
       lane.playerCards.forEach((card: DeckCard) => {
         if ((card as any)._playedThisTurn) {
@@ -2874,7 +3217,6 @@ export default function TCGPage() {
           }
         }
       });
-      // CPU cards from this turn also need processing
       lane.cpuCards.forEach((card: DeckCard) => {
         if ((card as any)._playedThisTurn) {
           const ability = getCardAbility(card.name, card);
@@ -2885,18 +3227,43 @@ export default function TCGPage() {
       });
     });
 
-    // Sort by resolution order: lower rarity cost first, player before CPU
     const sortedCards = sortByResolutionOrder(cardsToProcess);
 
-    // Apply onReveal abilities in order
     let playerHand = [...pveGameState.playerHand];
     let playerDeck = [...pveGameState.playerDeckRemaining];
 
-    sortedCards.forEach((item, idx) => {
+    // Smart timing: base delay scales with number of abilities (faster if fewer)
+    const numAbilities = sortedCards.length;
+    const BASE_DELAY_MS = numAbilities <= 2 ? 300 : numAbilities <= 4 ? 250 : 200;
+
+    // Process all abilities immediately (state changes)
+    const abilityResults: {
+      card: DeckCard;
+      laneIndex: number;
+      side: "player" | "cpu";
+      ability: any;
+      result: any;
+      animationType: "glow-green" | "glow-red" | "shake" | "pulse";
+      actionType: "buff" | "debuff" | "destroy" | "steal" | "none";
+    }[] = [];
+
+    const BUFF_ACTIONS = [
+      "buffSelf", "buffAllLanes", "buffLane", "buffAdjacent", "buffByRarity",
+      "buffOtherLanes", "buffWeakest", "buffLastPlayed", "buffPerCardInLane",
+      "buffPerFriendly", "buffPerCardsPlayed", "buffPerHandSize", "buffIfTurn",
+      "buffIfFirst", "buffIfHandSize", "buffPerRarity", "buffPerTurn", "buffEachTurn",
+      "buffLaneEndTurn", "buffPerCardInPlay", "buffLaneOngoing", "buffIfFewerCards",
+      "vibefidFirstCast", "vibefidRatio", "vibefidDoxxed", "adaptivePower",
+    ];
+    const DEBUFF_ACTIONS = ["debuffLane", "debuffRandomEnemy", "debuffStrongest", "reduceEnemyPower", "lockPowerGain"];
+    const DESTROY_ACTIONS = ["destroyHighestEnemy", "timeBomb", "sacrificeBuffAll", "destroyLoneCard"];
+    const STEAL_ACTIONS = ["stealWeakest", "stealPower", "stealStrongest", "copyHighest", "copyAbility", "copyPowerLeft", "stealFromAll"];
+
+    // First pass: apply all abilities and collect results
+    sortedCards.forEach((item) => {
       const { card, laneIndex, side, ability } = item;
       const isPlayer = side === "player";
 
-      // Apply the onReveal ability
       const result = applyOnRevealAbility(
         card,
         laneIndex,
@@ -2910,7 +3277,6 @@ export default function TCGPage() {
       playerHand = result.playerHand;
       playerDeck = result.playerDeckRemaining;
 
-      // Update card power if ability gave bonus
       if (result.bonusPower !== 0) {
         const cardArray = isPlayer ? newLanes[laneIndex].playerCards : newLanes[laneIndex].cpuCards;
         const cardIdx = cardArray.findIndex((c: DeckCard) => c.cardId === card.cardId);
@@ -2922,156 +3288,146 @@ export default function TCGPage() {
         }
       }
 
-      // Categorize ability and play appropriate sound + animation
+      // Determine animation type
       const action = ability?.effect?.action || "";
-
-      // BUFF actions: enhance power
-      const BUFF_ACTIONS = [
-        "buffSelf", "buffAllLanes", "buffLane", "buffAdjacent", "buffByRarity",
-        "buffOtherLanes", "buffWeakest", "buffLastPlayed", "buffPerCardInLane",
-        "buffPerFriendly", "buffPerCardsPlayed", "buffPerHandSize", "buffIfTurn",
-        "buffIfFirst", "buffIfHandSize", "buffPerRarity", "buffPerTurn", "buffEachTurn",
-        "buffLaneEndTurn", "buffPerCardInPlay", "buffLaneOngoing", "buffIfFewerCards",
-        "vibefidFirstCast", "vibefidRatio", "vibefidDoxxed", "adaptivePower",
-      ];
-
-      // DEBUFF actions: reduce enemy power
-      const DEBUFF_ACTIONS = [
-        "debuffLane", "debuffRandomEnemy", "debuffStrongest", "reduceEnemyPower",
-        "lockPowerGain",
-      ];
-
-      // DESTROY actions: remove cards
-      const DESTROY_ACTIONS = [
-        "destroyHighestEnemy", "timeBomb", "sacrificeBuffAll", "destroyLoneCard",
-      ];
-
-      // STEAL/COPY actions: take from enemy
-      const STEAL_ACTIONS = [
-        "stealWeakest", "stealPower", "stealStrongest", "copyHighest", "copyAbility",
-        "copyPowerLeft", "stealFromAll",
-      ];
-
-      // DRAW actions: get more cards
-      const DRAW_ACTIONS = [
-        "draw", "addCopyToHand", "forceDiscardAndDraw",
-      ];
-
-      // ENERGY actions: manipulate energy
-      const ENERGY_ACTIONS = [
-        "energyPerTurn", "reduceEnergyCost", "consumeEnergyForPower", "convertEnergyEndGame",
-      ];
-
-      // CONTROL actions: move/shuffle
-      const CONTROL_ACTIONS = [
-        "shuffleEnemyLanes", "shuffleAllLanes", "moveRandom", "parasiteLane",
-      ];
-
-      // DEFENSIVE actions: protection
-      const DEFENSIVE_ACTIONS = [
-        "untargetable", "immuneToDebuff", "vibefidVerified",
-      ];
-
-      // Determine sound and animation type
-      let soundType: "buff" | "debuff" | "destroy" | "steal" | "draw" | "energy" | "shuffle" | "shield" | "ability" = "ability";
-      let animationType: "glow-green" | "glow-red" | "shake" | "pulse" | "spin" = "pulse";
+      let animationType: "glow-green" | "glow-red" | "shake" | "pulse" = "pulse";
+      let actionType: "buff" | "debuff" | "destroy" | "steal" | "none" = "none";
 
       if (BUFF_ACTIONS.some(a => action.includes(a))) {
-        soundType = "buff";
         animationType = "glow-green";
+        actionType = "buff";
       } else if (DESTROY_ACTIONS.some(a => action.includes(a))) {
-        soundType = "destroy";
         animationType = "shake";
+        actionType = "destroy";
       } else if (DEBUFF_ACTIONS.some(a => action.includes(a))) {
-        soundType = "debuff";
         animationType = "glow-red";
+        actionType = "debuff";
       } else if (STEAL_ACTIONS.some(a => action.includes(a))) {
-        soundType = "steal";
         animationType = "pulse";
-      } else if (DRAW_ACTIONS.some(a => action.includes(a))) {
-        soundType = "draw";
-        animationType = "pulse";
-      } else if (ENERGY_ACTIONS.some(a => action.includes(a))) {
-        soundType = "energy";
-        animationType = "glow-green";
-      } else if (CONTROL_ACTIONS.some(a => action.includes(a))) {
-        soundType = "shuffle";
-        animationType = "spin";
-      } else if (DEFENSIVE_ACTIONS.some(a => action.includes(a))) {
-        soundType = "shield";
-        animationType = "pulse";
-      } else if (action === "gamble") {
-        soundType = result.bonusPower > 0 ? "buff" : "debuff";
-        animationType = result.bonusPower > 0 ? "glow-green" : "glow-red";
+        actionType = "steal";
       }
 
-      playSound(soundType);
+      abilityResults.push({ card, laneIndex, side, ability, result, animationType, actionType });
+    });
 
-      // Trigger card animation
+    // Second pass: schedule animations/sounds with smart timing
+    abilityResults.forEach((item, idx) => {
+      const { card, laneIndex, side, result, animationType, actionType } = item;
+      const isPlayer = side === "player";
+      const baseDelay = idx * BASE_DELAY_MS;
+
       const cardArrayForAnim = isPlayer ? newLanes[laneIndex].playerCards : newLanes[laneIndex].cpuCards;
       const cardIdxForAnim = cardArrayForAnim.findIndex((c: DeckCard) => c.cardId === card.cardId);
+      const oppositeSide = side === "player" ? "cpu" : "player";
+
+      // Schedule card glow animation
       if (cardIdxForAnim >= 0) {
-        triggerCardAnimation(laneIndex, side, cardIdxForAnim, animationType, result.bonusPower);
+        setTimeout(() => {
+          triggerCardAnimation(laneIndex, side, cardIdxForAnim, animationType, result.bonusPower);
+        }, baseDelay);
+      }
+
+      // Schedule ability-specific effects
+      if (actionType === "debuff" || actionType === "destroy") {
+        const emoji = actionType === "destroy" ? "💥" : "⚔️";
+        setTimeout(() => {
+          triggerAbilityEffect("attack", laneIndex, side, laneIndex, oppositeSide, emoji, result.bonusPower);
+          playSound("hit");
+        }, baseDelay);
+
+        // Shake enemy cards
+        const action = item.ability?.effect?.action || "";
+        const isLaneWide = action.includes("debuffLane") || action.includes("AllLanes");
+        const enemyCards = oppositeSide === "cpu" ? newLanes[laneIndex].cpuCards : newLanes[laneIndex].playerCards;
+        if (enemyCards.length > 0) {
+          setTimeout(() => {
+            playSound("damage");
+            if (isLaneWide) {
+              enemyCards.forEach((_: any, cardIdx: number) => {
+                triggerCardAnimation(laneIndex, oppositeSide, cardIdx, "shake", undefined, 400);
+              });
+            } else {
+              const strongestIdx = enemyCards.reduce((maxIdx: number, c: any, i: number, arr: any[]) =>
+                (c.power || 0) > (arr[maxIdx]?.power || 0) ? i : maxIdx, 0);
+              triggerCardAnimation(laneIndex, oppositeSide, strongestIdx, "shake", undefined, 400);
+            }
+          }, baseDelay + 150);
+        }
+      } else if (actionType === "steal") {
+        setTimeout(() => {
+          triggerAbilityEffect("steal", laneIndex, oppositeSide, laneIndex, side, "🔮", result.bonusPower);
+          playSound("damage");
+        }, baseDelay);
+
+        const action = item.ability?.effect?.action || "";
+        const enemyCardsSteal = oppositeSide === "cpu" ? newLanes[laneIndex].cpuCards : newLanes[laneIndex].playerCards;
+        if (enemyCardsSteal.length > 0) {
+          setTimeout(() => {
+            if (action.includes("stealFromAll")) {
+              enemyCardsSteal.forEach((_: any, cardIdx: number) => {
+                triggerCardAnimation(laneIndex, oppositeSide, cardIdx, "shake", undefined, 400);
+              });
+            } else {
+              const weakestIdx = enemyCardsSteal.reduce((minIdx: number, c: any, i: number, arr: any[]) =>
+                (c.power || 999) < (arr[minIdx]?.power || 999) ? i : minIdx, 0);
+              triggerCardAnimation(laneIndex, oppositeSide, weakestIdx, "shake", undefined, 400);
+            }
+          }, baseDelay + 150);
+        }
+      } else if (actionType === "buff" && result.bonusPower !== 0) {
+        setTimeout(() => {
+          triggerAbilityEffect("buff", laneIndex, side, laneIndex, side, "✨", result.bonusPower);
+        }, baseDelay);
       }
     });
 
-    // Clear _playedThisTurn flags from all cards
+    // Clear _playedThisTurn and _revealed flags from all cards
     newLanes = newLanes.map((lane: any) => ({
       ...lane,
       playerCards: lane.playerCards.map((c: DeckCard) => {
-        const { _playedThisTurn, _playedLaneIndex, ...cleanCard } = c as any;
+        const { _playedThisTurn, _playedLaneIndex, _revealed, ...cleanCard } = c as any;
         return cleanCard;
       }),
       cpuCards: lane.cpuCards.map((c: DeckCard) => {
-        const { _playedThisTurn, _playedLaneIndex, ...cleanCard } = c as any;
+        const { _playedThisTurn, _playedLaneIndex, _revealed, ...cleanCard } = c as any;
         return cleanCard;
       }),
     }));
 
-    // Update hand/deck from ability processing
     pveGameState.playerHand = playerHand;
     pveGameState.playerDeckRemaining = playerDeck;
 
-    // Recalculate all lane powers with ongoing effects for current turn
     const nextTurn = pveGameState.currentTurn + 1;
     newLanes = recalculateLanePowers(newLanes, pveGameState.currentTurn);
 
-    // PHASE 3: RESOLVE - Points being calculated
-    setCurrentPhase("resolve");
+    // Smart timing: wait for all ability animations before transitioning to resolve
+    const totalAnimationTime = numAbilities > 0 ? (numAbilities * BASE_DELAY_MS) + 200 : 0;
 
-    // Check if game over (turn 6)
+    setTimeout(() => {
+      setCurrentPhase("resolve");
+    }, totalAnimationTime);
+
+    // Check if game over
     if (pveGameState.currentTurn >= TCG_CONFIG.TOTAL_TURNS) {
-      // Calculate lane victories with special effects
       let playerWins = 0;
       let cpuWins = 0;
 
       newLanes.forEach((lane: any) => {
-        // Skip lanes that don't count (Bridge)
         if (lane.effect === "noVictory") return;
-
         const playerScore = lane.playerPower;
         const cpuScore = lane.cpuPower;
         const victoryValue = lane.effect === "doubleVictory" ? 2 : 1;
 
-        // Clown College: lowest wins (reverse comparison)
         if (lane.effect === "reverseOrder") {
-          if (playerScore < cpuScore) {
-            playerWins += victoryValue;
-          } else if (cpuScore < playerScore) {
-            cpuWins += victoryValue;
-          }
+          if (playerScore < cpuScore) playerWins += victoryValue;
+          else if (cpuScore < playerScore) cpuWins += victoryValue;
           return;
         }
 
-        // Normal comparison - higher wins
-        if (playerScore > cpuScore) {
-          playerWins += victoryValue;
-        } else if (cpuScore > playerScore) {
-          cpuWins += victoryValue;
-        }
+        if (playerScore > cpuScore) playerWins += victoryValue;
+        else if (cpuScore > playerScore) cpuWins += victoryValue;
       });
 
-      // Determine winner - if tied lanes, use HAND POWER as tiebreaker
       let winner: string;
       let tiebreaker: { type: string; playerPower: number; cpuPower: number } | null = null;
 
@@ -3080,26 +3436,22 @@ export default function TCGPage() {
       } else if (cpuWins > playerWins) {
         winner = "cpu";
       } else {
-        // TIE BREAKER: Compare total power in hands
         const playerHandPower = pveGameState.playerHand.reduce((sum: number, c: any) => sum + (c.power || 0), 0);
         const cpuHandPower = cpuHand.reduce((sum: number, c: any) => sum + (c.power || 0), 0);
-
         tiebreaker = { type: "hand", playerPower: playerHandPower, cpuPower: cpuHandPower };
 
         if (playerHandPower > cpuHandPower) {
-          winner = "player"; // Player wins by hand power
+          winner = "player";
         } else if (cpuHandPower > playerHandPower) {
-          winner = "cpu"; // CPU wins by hand power
+          winner = "cpu";
         } else {
-          // Still tied? Compare total board power
           const playerBoardPower = newLanes.reduce((sum: number, l: any) => sum + l.playerPower, 0);
           const cpuBoardPower = newLanes.reduce((sum: number, l: any) => sum + l.cpuPower, 0);
           tiebreaker = { type: "board", playerPower: playerBoardPower, cpuPower: cpuBoardPower };
-          winner = playerBoardPower >= cpuBoardPower ? "player" : "cpu"; // Player wins ties
+          winner = playerBoardPower >= cpuBoardPower ? "player" : "cpu";
         }
       }
 
-      // First update state to show final board
       setPveGameState({
         ...pveGameState,
         lanes: newLanes,
@@ -3110,49 +3462,68 @@ export default function TCGPage() {
         tiebreaker,
       });
 
-      // Wait 2.5 seconds to show final board, then go to result
-      setTimeout(() => {
-        if (winner === "player") playSound("victory");
-        else playSound("defeat");
-        setView("result");
-      }, 2500);
+      if (tiebreaker) {
+        setShowTiebreakerAnimation(true);
+        setTimeout(() => {
+          setShowTiebreakerAnimation(false);
+          if (winner === "player") playSound("victory");
+          else playSound("defeat");
+          setView("result");
+          // Trigger defeat bait after 5 seconds
+          if (winner !== "player") {
+            setTimeout(() => {
+              stopBgm();
+              setShowDefeatBait(true);
+            }, 5000);
+          }
+        }, 3500);
+      } else {
+        setTimeout(() => {
+          if (winner === "player") playSound("victory");
+          else playSound("defeat");
+          setView("result");
+          // Trigger defeat bait after 5 seconds
+          if (winner !== "player") {
+            setTimeout(() => {
+              stopBgm();
+              setShowDefeatBait(true);
+            }, 5000);
+          }
+        }, 2500);
+      }
       return;
     }
 
-    // Next turn - draw cards (playerHand and playerDeck already updated from ability processing)
+    // Next turn
     if (playerDeck.length > 0) {
       playerHand.push(playerDeck.shift()!);
     }
-    if (cpuDeckRemaining.length > 0) {
-      cpuHand.push(cpuDeckRemaining.shift()!);
+    let cpuHandNext = [...cpuHand];
+    let cpuDeckNext = [...cpuDeckRemaining];
+    if (cpuDeckNext.length > 0) {
+      cpuHandNext.push(cpuDeckNext.shift()!);
     }
 
-    // Recalculate powers for the new turn (ongoing effects may scale with turn)
     newLanes = recalculateLanePowers(newLanes, nextTurn);
 
-    // SKIP TURN BONUS: +2 energy if player didn't play any cards
     const playerSkipped = (pveGameState.cardsPlayedThisTurn || 0) === 0;
-    let bonusEnergy = 0;
-    if (playerSkipped) {
-      bonusEnergy = 2;
-      playSound("energy"); // Sound feedback for skip bonus
-    }
+    let bonusEnergy = playerSkipped ? 2 : 0;
+    if (playerSkipped) playSound("energy");
 
     setPveGameState({
       ...pveGameState,
       currentTurn: nextTurn,
-      energy: nextTurn + bonusEnergy, // Base energy + skip bonus
-      cpuEnergy: nextTurn, // CPU gets same energy as player each turn
+      energy: nextTurn + bonusEnergy,
+      cpuEnergy: nextTurn,
       playerHand,
       playerDeckRemaining: playerDeck,
-      cpuHand,
-      cpuDeckRemaining,
+      cpuHand: cpuHandNext,
+      cpuDeckRemaining: cpuDeckNext,
       lanes: newLanes,
-      cardsPlayedThisTurn: 0, // Reset for next turn
-      cardsPlayedInfo: [], // Reset undo tracking for new turn
+      cardsPlayedThisTurn: 0,
+      cardsPlayedInfo: [],
     });
 
-    // PHASE 4: Back to PLAY for next turn (delayed so user sees resolve)
     setTimeout(() => {
       setCurrentPhase("play");
     }, 500);
@@ -3307,8 +3678,8 @@ export default function TCGPage() {
     turnTimerRef.current = setInterval(() => {
       setTurnTimeRemaining(prev => {
         if (prev <= 1) {
-          // Time's up! Auto end turn
-          handlePvEEndTurn();
+          // Time's up! Auto end turn - use ref to avoid stale closure
+          handlePvEEndTurnRef.current();
           return TCG_CONFIG.TURN_TIME_SECONDS;
         }
         return prev - 1;
@@ -3333,10 +3704,11 @@ export default function TCGPage() {
   }, [turnTimeRemaining, view, isPvE, pveGameState]);
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // COMPONENT: Card Detail Modal
+  // COMPONENT: Card Detail Modal (memoized to prevent scroll reset on timer updates)
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  const CardDetailModal = ({ card, onClose, onSelect }: { card: DeckCard; onClose: () => void; onSelect?: () => void }) => {
+  const CardDetailModal = useMemo(() => {
+    return ({ card, onClose, onSelect }: { card: DeckCard; onClose: () => void; onSelect?: () => void }) => {
     const ability = getCardAbility(card.name, card);
     const foilEffect = getFoilEffect(card.foil);
     const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
@@ -3357,8 +3729,9 @@ export default function TCGPage() {
         onClick={onClose}
       >
         <div
-          className="bg-vintage-deep-black border border-vintage-gold/30 rounded-2xl p-4 max-w-sm w-full max-h-[90vh] overflow-y-auto backdrop-blur-sm"
+          className="bg-vintage-deep-black border border-vintage-gold/30 rounded-2xl p-4 max-w-sm w-full max-h-[90vh] overflow-y-auto backdrop-blur-sm overscroll-contain"
           onClick={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
         >
           {/* Card Image/Video */}
           <div className="flex justify-center mb-4">
@@ -3513,6 +3886,8 @@ export default function TCGPage() {
       </div>
     );
   };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCards, lang]);
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // RENDER: NOT CONNECTED
@@ -3892,38 +4267,7 @@ export default function TCGPage() {
       card.collection === "vibe" || card.collection === "nothing" || card.collection === "vibefid"
     );
 
-    // Helper: Build baccarat image URL for VBMS cards
-    const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
-      if (!cardName) return null;
-      const nameLower = cardName.toLowerCase();
-      const allCards = tcgCardsData.cards || [];
-      const aliases = (tcgCardsData as any).aliases || {};
-
-      // Find card by onChainName or baccarat name
-      const cardData = allCards.find((c: any) =>
-        c.onChainName?.toLowerCase() === nameLower ||
-        c.baccarat?.toLowerCase() === nameLower
-      );
-
-      if (!cardData || !cardData.suit || !cardData.rank) return null;
-
-      // Get baccarat name (use alias if exists, or baccarat field, or onChainName)
-      const baccaratName = aliases[cardData.onChainName] || cardData.baccarat?.toLowerCase() || cardData.onChainName?.toLowerCase();
-
-      // Special case for neymar (joker)
-      if (baccaratName === "neymar" || cardData.rank?.includes("?")) {
-        return "/images/baccarat/joker, neymar.png";
-      }
-
-      // Build rank name
-      const rankMap: Record<string, string> = {
-        'A': 'ace', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
-        '7': '7', '8': '8', '9': '9', '10': '10', 'J': 'jack', 'Q': 'queen', 'K': 'king'
-      };
-      const rankName = rankMap[cardData.rank] || cardData.rank;
-
-      return `/images/baccarat/${rankName} ${cardData.suit}, ${baccaratName}.png`;
-    };
+    // Note: getVbmsBaccaratImageUrl is now a global helper function
 
     const availableCards: DeckCard[] = tcgEligibleCards.map((card: any) => {
       const characterFromImage = getCharacterFromImage(card.imageUrl || card.image || "");
@@ -4296,13 +4640,15 @@ export default function TCGPage() {
           </div>
         </div>
 
-        {/* Card Detail Modal */}
+        {/* Card Detail Modal - using key to prevent remount on timer updates */}
         {detailCard && (
-          <CardDetailModal
-            card={detailCard}
-            onClose={() => setDetailCard(null)}
-            onSelect={() => handleCardSelect(detailCard)}
-          />
+          <div key={`detail-modal-${detailCard.cardId}`}>
+            <CardDetailModal
+              card={detailCard}
+              onClose={() => setDetailCard(null)}
+              onSelect={() => handleCardSelect(detailCard)}
+            />
+          </div>
         )}
       </div>
     );
@@ -4402,12 +4748,54 @@ export default function TCGPage() {
     };
 
     return (
-      <div className="h-screen bg-gradient-to-b from-indigo-950 via-purple-950 to-black flex flex-col overflow-hidden relative">
-        {/* Starfield effect */}
-        <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(131, 58, 180, 0.3) 0%, transparent 50%), radial-gradient(circle at 40% 40%, rgba(29, 78, 216, 0.2) 0%, transparent 30%)' }} />
+      <div className="h-screen bg-gradient-to-b from-[#0a0a0a] via-[#1a1a1a] to-[#0a0a0a] flex flex-col overflow-hidden relative">
+        {/* Suit decorations background */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-[10%] left-[5%] tcg-suit-deco text-4xl">♠</div>
+          <div className="absolute top-[15%] right-[8%] tcg-suit-deco text-3xl">♥</div>
+          <div className="absolute bottom-[25%] left-[10%] tcg-suit-deco text-3xl">♦</div>
+          <div className="absolute bottom-[30%] right-[5%] tcg-suit-deco text-4xl">♣</div>
+          <div className="absolute top-[40%] left-[2%] tcg-suit-deco text-2xl">♠</div>
+          <div className="absolute top-[50%] right-[3%] tcg-suit-deco text-2xl">♥</div>
+        </div>
 
-        {/* Game Over Overlay */}
-        {gs.gameOver && (
+        {/* Tiebreaker Animation Overlay */}
+        {showTiebreakerAnimation && gs.tiebreaker && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/70 pointer-events-none">
+            <div className="text-center animate-fade-in">
+              {/* Tiebreaker Title */}
+              <div className="text-3xl font-black text-yellow-400 mb-6 animate-pulse">
+                ⚖️ {t('tcgTiebreaker')} {gs.tiebreaker.type === "hand" ? t('tcgTiebreakerHand') : t('tcgTiebreakerBoard')}!
+              </div>
+
+              {/* Power Comparison */}
+              <div className="flex items-center justify-center gap-6 mb-4">
+                {/* Player Power */}
+                <div className="bg-blue-600/30 border-2 border-blue-400 rounded-xl px-6 py-4">
+                  <div className="text-blue-300 text-sm font-bold mb-1">{t('tcgYou')}</div>
+                  <div className="text-4xl font-black text-blue-400">{gs.tiebreaker.playerPower}</div>
+                </div>
+
+                {/* VS */}
+                <div className="text-2xl font-black text-yellow-400">VS</div>
+
+                {/* CPU Power */}
+                <div className="bg-red-600/30 border-2 border-red-400 rounded-xl px-6 py-4">
+                  <div className="text-red-300 text-sm font-bold mb-1">CPU</div>
+                  <div className="text-4xl font-black text-red-400">{gs.tiebreaker.cpuPower}</div>
+                </div>
+              </div>
+
+              {/* Winner Preview */}
+              <div className={`text-2xl font-bold mt-4 ${gs.winner === "player" ? "text-green-400" : "text-red-400"}`}>
+                {gs.winner === "player" ? "✓" : "✗"} {gs.tiebreaker.playerPower > gs.tiebreaker.cpuPower ? t('tcgYou') : "CPU"} {gs.winner === "player" ? t('tcgVictory') : t('tcgDefeat')}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Game Over Overlay - only show if not in tiebreaker animation */}
+        {gs.gameOver && !showTiebreakerAnimation && (
           <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
             <div className={`text-center ${
               gs.winner === "player" ? "text-green-400" : "text-red-400"
@@ -4421,9 +4809,9 @@ export default function TCGPage() {
               {/* Tiebreaker info */}
               {gs.tiebreaker && (
                 <div className="mt-3 bg-yellow-500/20 border border-yellow-500/50 px-4 py-2 rounded-lg text-yellow-300">
-                  <div className="text-sm font-bold">⚖️ DESEMPATE POR {gs.tiebreaker.type === "hand" ? "MÃO" : "BOARD"}</div>
+                  <div className="text-sm font-bold">⚖️ {t('tcgTiebreaker')} {gs.tiebreaker.type === "hand" ? t('tcgTiebreakerHand') : t('tcgTiebreakerBoard')}</div>
                   <div className="text-xs mt-1">
-                    Você: {gs.tiebreaker.playerPower} vs CPU: {gs.tiebreaker.cpuPower}
+                    {t('tcgYou')}: {gs.tiebreaker.playerPower} vs CPU: {gs.tiebreaker.cpuPower}
                   </div>
                 </div>
               )}
@@ -4436,11 +4824,16 @@ export default function TCGPage() {
 
           {/* Top Bar - Player Avatars & Turn Indicator */}
           <div className="flex items-center justify-between px-4 py-2">
-            {/* Player Avatar (left) - with dropdown */}
+            {/* Player Avatar (left) - Royal style with dropdown */}
             <div className="relative flex items-center gap-2">
               <div
-                className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 border-2 border-blue-400 overflow-hidden shadow-lg shadow-blue-500/40 cursor-pointer hover:scale-105 transition-transform"
+                className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1a3a1a] to-[#0d280d] overflow-hidden cursor-pointer hover:scale-105 transition-transform"
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
+                style={{
+                  border: "3px solid",
+                  borderImage: "linear-gradient(135deg, #FFD700, #B8860B, #FFD700) 1",
+                  boxShadow: "0 4px 15px rgba(0,0,0,0.5), 0 0 15px rgba(255,215,0,0.2)"
+                }}
               >
                 {userProfile?.farcasterPfpUrl || userProfile?.twitterProfileImageUrl ? (
                   <img
@@ -4457,16 +4850,23 @@ export default function TCGPage() {
                 )}
               </div>
               <div className="text-xs">
-                <p className="text-blue-400 font-bold truncate max-w-[60px]">
+                <p className="text-[#FFD700] font-bold truncate max-w-[60px]" style={{ textShadow: "0 0 5px rgba(255,215,0,0.3)" }}>
                   {userProfile?.username || "YOU"}
                 </p>
-                <p className="text-gray-400">{gs.lanes.filter((l: any) => l.playerPower > l.cpuPower).length} lanes</p>
+                <p className="text-[#B8860B]">{gs.lanes.filter((l: any) => l.playerPower > l.cpuPower).length} lanes</p>
               </div>
 
-              {/* Profile Dropdown Menu */}
+              {/* Profile Dropdown Menu - Royal style */}
               {showProfileMenu && (
-                <div className="absolute top-16 left-0 z-50 bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden min-w-[160px]">
-                  <div className="p-2 border-b border-gray-700 text-xs text-gray-400">
+                <div className="absolute top-16 left-0 z-50 rounded-xl shadow-xl overflow-hidden min-w-[160px]"
+                  style={{
+                    background: "linear-gradient(180deg, rgba(20,20,20,0.98) 0%, rgba(10,10,10,0.98) 100%)",
+                    border: "2px solid",
+                    borderImage: "linear-gradient(135deg, #B8860B, #8B6914, #B8860B) 1",
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.7)"
+                  }}
+                >
+                  <div className="p-2 text-xs text-[#B8860B]" style={{ borderBottom: "1px solid rgba(184,134,11,0.3)" }}>
                     🔊 Meme Sounds
                   </div>
                   <button
@@ -4499,7 +4899,7 @@ export default function TCGPage() {
                   >
                     🤯 MLG Wow
                   </button>
-                  <div className="border-t border-gray-700">
+                  <div style={{ borderTop: "1px solid rgba(184,134,11,0.3)" }}>
                     <button
                       onClick={() => {
                         setIsPvE(false);
@@ -4507,7 +4907,7 @@ export default function TCGPage() {
                         setView("lobby");
                         setShowProfileMenu(false);
                       }}
-                      className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-900 flex items-center gap-2"
+                      className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-900/50 flex items-center gap-2"
                     >
                       🏳️ {t('tcgSurrender')}
                     </button>
@@ -4516,22 +4916,20 @@ export default function TCGPage() {
               )}
             </div>
 
-            {/* Turn Indicator + Phase (center) */}
+            {/* Turn Indicator + Phase (center) - Royal style */}
             <div className="flex flex-col items-center gap-1">
-              {/* Turn number */}
-              <div className="flex items-center gap-2 bg-black/40 px-3 py-1 rounded-full">
-                <span className="text-xs text-gray-400">{t('tcgTurn')}</span>
-                <span className="text-lg font-bold text-yellow-400">{gs.currentTurn}</span>
-                <span className="text-xs text-gray-500">/ {TCG_CONFIG.TOTAL_TURNS}</span>
-              </div>
-              {/* Phase indicator - shows current game phase */}
-              <div className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                currentPhase === "play" ? "bg-blue-600/80 text-blue-100" :
-                currentPhase === "ability" ? "bg-purple-600/80 text-purple-100 animate-pulse" :
-                currentPhase === "resolve" ? "bg-green-600/80 text-green-100" :
-                "bg-gray-600/80 text-gray-100"
-              }`}>
-                {PHASE_NAMES[currentPhase]}
+              {/* Turn number - Royal gold badge */}
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full"
+                style={{
+                  background: "linear-gradient(180deg, rgba(20,20,20,0.95) 0%, rgba(10,10,10,0.98) 100%)",
+                  border: "2px solid",
+                  borderImage: "linear-gradient(135deg, #8B6914, #FFD700, #8B6914) 1",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.5)"
+                }}
+              >
+                <span className="text-xs text-[#B8860B] uppercase tracking-wider">{t('tcgTurn')}</span>
+                <span className="text-xl font-black text-[#FFD700]" style={{ textShadow: "0 0 10px rgba(255,215,0,0.5)" }}>{gs.currentTurn}</span>
+                <span className="text-xs text-[#8B6914]">/ {TCG_CONFIG.TOTAL_TURNS}</span>
               </div>
               {/* Ability queue indicator - shows resolving abilities */}
               {abilityQueue.length > 0 && currentAbilityIndex >= 0 && (
@@ -4547,13 +4945,19 @@ export default function TCGPage() {
               )}
             </div>
 
-            {/* CPU Avatar (right) */}
+            {/* CPU Avatar (right) - Royal style */}
             <div className="flex items-center gap-2">
               <div className="text-xs text-right">
-                <p className="text-red-400 font-bold">{t('tcgSkynet')}</p>
-                <p className="text-gray-400">{gs.lanes.filter((l: any) => l.cpuPower > l.playerPower).length} {t('tcgLanes')}</p>
+                <p className="text-red-400 font-bold" style={{ textShadow: "0 0 5px rgba(239,68,68,0.3)" }}>{t('tcgSkynet')}</p>
+                <p className="text-[#8B6914]">{gs.lanes.filter((l: any) => l.cpuPower > l.playerPower).length} {t('tcgLanes')}</p>
               </div>
-              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-red-600 to-red-800 border-2 border-red-400 overflow-hidden shadow-lg shadow-red-500/40">
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#3a1a1a] to-[#280d0d] overflow-hidden"
+                style={{
+                  border: "3px solid",
+                  borderImage: "linear-gradient(135deg, #B8860B, #8B6914, #B8860B) 1",
+                  boxShadow: "0 4px 15px rgba(0,0,0,0.5), 0 0 10px rgba(255,0,0,0.2)"
+                }}
+              >
                 <img
                   src="https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/c3adc2e6-d45c-46f0-0cc6-f5ed4fce4200/original"
                   alt="CPU"
@@ -4567,55 +4971,145 @@ export default function TCGPage() {
             </div>
           </div>
 
-          {/* Battle Arena - 3 Lanes (Marvel Snap style) */}
-          <div className="flex-1 flex items-stretch justify-center px-1 gap-1.5 min-h-0">
+          {/* Battle Arena - 3 Lanes (Royal Card Table style with 3D depth) */}
+          <div
+            className="flex-1 flex items-stretch justify-center px-2 gap-2 min-h-0"
+            style={{
+              perspective: "1000px",
+              perspectiveOrigin: "50% 80%"
+            }}
+            onDragOver={(e) => e.preventDefault()}
+          >
+            <div
+              className="flex-1 flex items-stretch justify-center gap-2"
+              style={{
+                transformStyle: "preserve-3d",
+                transform: "rotateX(15deg)",
+                transformOrigin: "50% 100%"
+              }}
+              onDragOver={(e) => e.preventDefault()}
+            >
             {gs.lanes.map((lane: any, laneIndex: number) => {
               const status = getLaneStatus(lane);
               const activeCombos = getActiveCombosInLane(laneIndex);
 
-              // Win indicator glow
-              const winGlow = status === "winning" ? "shadow-[0_0_20px_rgba(34,197,94,0.4)]" :
+              // Win indicator glow - golden for winning
+              const winGlow = status === "winning" ? "shadow-[0_0_25px_rgba(255,215,0,0.5)]" :
                              status === "losing" ? "shadow-[0_0_20px_rgba(239,68,68,0.4)]" : "";
+
+              // Check if lane can receive cards
+              const canDropInLane = (lane.playerCards?.length || 0) < TCG_CONFIG.CARDS_PER_LANE;
+              const isDragOver = dragOverLane === laneIndex && draggedCardIndex !== null;
+
+              // Check for COMBO POTENTIAL when card is selected or being dragged
+              const activeCardIndex = draggedCardIndex ?? selectedHandCard;
+              const activeCard = activeCardIndex !== null ? gs.playerHand?.[activeCardIndex] : null;
+              const hasComboPotenial = activeCard && canDropInLane ? (() => {
+                const potentialCards = [...lane.playerCards, activeCard];
+                const combos = detectCombos(potentialCards);
+                // Only show if it's a NEW combo (not already active)
+                const currentCombos = detectCombos(lane.playerCards);
+                return combos.length > currentCombos.length ? combos[combos.length - 1] : null;
+              })() : null;
 
               return (
                 <div
                   key={lane.laneId}
-                  className={`flex flex-col w-[33%] h-full bg-black/40 backdrop-blur-sm rounded-lg overflow-hidden ${winGlow} transition-all`}
+                  data-lane-index={laneIndex}
+                  ref={(el) => { laneRefs.current[laneIndex] = el; }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (draggedCardIndex === null || !canDropInLane) return;
+                    e.dataTransfer.dropEffect = "move";
+                    setDragOverLane(laneIndex);
+                  }}
+                  onDragEnter={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (draggedCardIndex !== null && canDropInLane) {
+                      setDragOverLane(laneIndex);
+                    }
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.clientX;
+                    const y = e.clientY;
+                    // Only clear if actually leaving the element bounds
+                    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+                      setDragOverLane(null);
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (draggedCardIndex !== null && canDropInLane) {
+                      handlePvEPlayCard(laneIndex, draggedCardIndex);
+                    }
+                    setDraggedCardIndex(null);
+                    setDragOverLane(null);
+                  }}
+                  className={`flex flex-col w-[33%] h-full rounded-xl overflow-hidden ${winGlow} transition-all tcg-royal-zone ${
+                    isDragOver && canDropInLane ? "ring-4 ring-cyan-400 ring-opacity-80" : ""
+                  } ${hasComboPotenial ? "tcg-combo-glow" : ""}`}
                   style={{
-                    boxShadow: "inset 0 0 30px rgba(0,0,0,0.5)"
+                    background: hasComboPotenial
+                      ? "linear-gradient(180deg, rgba(91,26,91,0.95) 0%, rgba(60,13,60,0.98) 50%, rgba(36,7,36,1) 100%)"
+                      : isDragOver && canDropInLane
+                        ? "linear-gradient(180deg, rgba(26,91,62,0.95) 0%, rgba(13,60,34,0.98) 50%, rgba(7,36,20,1) 100%)"
+                        : "linear-gradient(180deg, rgba(26,71,42,0.95) 0%, rgba(13,40,24,0.98) 50%, rgba(7,26,15,1) 100%)",
+                    border: "3px solid",
+                    borderImage: hasComboPotenial
+                      ? "linear-gradient(135deg, #FFD700, #FF6B00, #FFD700) 1"
+                      : isDragOver && canDropInLane
+                        ? "linear-gradient(135deg, #00FFFF, #00CED1, #00FFFF) 1"
+                        : status === "winning"
+                          ? "linear-gradient(135deg, #FFD700, #FFA500, #FFD700) 1"
+                          : "linear-gradient(135deg, #B8860B, #8B6914, #B8860B) 1",
+                    boxShadow: hasComboPotenial
+                      ? "inset 0 0 60px rgba(255,165,0,0.4), 0 0 30px rgba(255,215,0,0.6), 0 4px 15px rgba(0,0,0,0.5)"
+                      : isDragOver && canDropInLane
+                        ? "inset 0 0 60px rgba(0,255,255,0.3), 0 4px 15px rgba(0,0,0,0.5)"
+                        : "inset 0 0 40px rgba(0,0,0,0.6), 0 4px 15px rgba(0,0,0,0.5)"
                   }}
                 >
-                  {/* Location Header - Clean style */}
-                  <div className="relative bg-gray-900/95 border-b border-gray-800">
+                  {/* Location Header - Royal style */}
+                  <div className="relative" style={{
+                    background: "linear-gradient(180deg, rgba(20,20,20,0.98) 0%, rgba(10,10,10,0.95) 100%)",
+                    borderBottom: "2px solid",
+                    borderImage: "linear-gradient(90deg, transparent, #B8860B, #FFD700, #B8860B, transparent) 1"
+                  }}>
                     {/* Lane name */}
                     <div className="text-center py-1.5 px-1">
-                      <span className="text-[11px] font-bold text-white tracking-wide uppercase">{lane.name || `Lane ${laneIndex + 1}`}</span>
+                      <span className="text-[11px] font-bold text-[#FFD700] tracking-wide uppercase" style={{ textShadow: "0 0 10px rgba(255,215,0,0.3)" }}>{lane.name || `Lane ${laneIndex + 1}`}</span>
                     </div>
                     {/* Effect description */}
                     {lane.description && lane.effect !== "noEffect" && (
                       <div className="text-center px-1 pb-1.5 -mt-1">
-                        <span className="text-[8px] text-yellow-400 font-medium">{lane.description}</span>
+                        <span className="text-[8px] text-[#DAA520] font-medium">{lane.description}</span>
                       </div>
                     )}
-                    {/* Score Bar */}
-                    <div className="flex items-center justify-center gap-3 py-1.5 bg-black/50">
+                    {/* Score Bar - Royal style */}
+                    <div className="flex items-center justify-center gap-3 py-1.5" style={{ background: "rgba(0,0,0,0.5)" }}>
                       <div className={`min-w-[32px] text-center px-2 py-0.5 rounded text-sm font-black ${
-                        status === "losing" ? "bg-red-600 text-white" : "bg-gray-800 text-gray-500"
+                        status === "losing" ? "bg-red-700 text-white" : "bg-[#1a1a1a] text-gray-500 border border-[#333]"
                       }`}>
                         {lane.cpuPower}
                       </div>
-                      <div className="text-[10px] text-gray-600 font-bold">{t('tcgVs')}</div>
+                      <div className="text-[10px] text-[#B8860B] font-bold">⚔</div>
                       <div className={`min-w-[32px] text-center px-2 py-0.5 rounded text-sm font-black ${
-                        status === "winning" ? "bg-green-600 text-white" : "bg-gray-800 text-gray-500"
+                        status === "winning" ? "bg-gradient-to-r from-[#B8860B] to-[#FFD700] text-black" : "bg-[#1a1a1a] text-gray-500 border border-[#333]"
                       }`}>
                         {lane.playerPower}
                       </div>
                     </div>
                   </div>
 
-                  {/* CPU Cards (top) - Platform style */}
-                  <div className="flex-1 flex items-start justify-center pt-3 px-1">
-                    <div className="relative flex -space-x-5">
+                  {/* CPU Cards (top) - Grid 2x2 style */}
+                  <div className="flex-1 flex items-start justify-center pt-1 px-1 overflow-hidden">
+                    <div className="grid grid-cols-2 gap-1 min-h-[104px]">
                       {lane.cpuCards.map((card: any, idx: number) => {
                         const ability = getCardAbility(card.name, card);
                         const foil = (card.foil || "").toLowerCase();
@@ -4637,46 +5131,64 @@ export default function TCGPage() {
                           "explode": "tcg-explode",
                         }[anim.type] || "" : "";
 
+                        // Check if card is revealed (old cards are always revealed)
+                        const isRevealed = (card as any)._revealed !== false;
+                        const displayImageUrl = isRevealed ? encodedImageUrl : "/images/card-back.png";
+
                         return (
                           <div
                             key={idx}
-                            onClick={() => setDetailCard(card)}
-                            className={`relative w-12 h-[68px] rounded-md bg-cover bg-center cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${animClass}`}
+                            onClick={() => isRevealed && setDetailCard(card)}
+                            className={`relative w-9 h-[50px] rounded-md bg-cover bg-center cursor-pointer hover:scale-105 transition-all overflow-hidden ${animClass} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"}`}
                             style={{
-                              backgroundImage: encodedImageUrl ? `url(${encodedImageUrl})` : undefined,
-                              zIndex: anim ? 50 : idx,
-                              boxShadow: "0 4px 12px rgba(0,0,0,0.6), 0 0 0 1px rgba(239,68,68,0.5)"
+                              backgroundImage: displayImageUrl ? `url(${displayImageUrl})` : undefined,
+                              boxShadow: isRevealed ? "0 2px 6px rgba(0,0,0,0.6), 0 0 0 1px rgba(239,68,68,0.5)" : "0 2px 6px rgba(0,0,0,0.8), 0 0 0 1px rgba(100,100,100,0.5)"
                             }}
                           >
-                            {/* Foil effect overlay */}
-                            {hasFoil && <div className={`absolute inset-0 ${foilClass} rounded-md pointer-events-none z-[5]`}></div>}
-                            {/* Power badge - Snap style hexagon-ish */}
-                            <div className={`absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-red-600 flex items-center justify-center z-10 transition-all ${anim?.type === "glow-red" ? "scale-125" : ""}`}
-                              style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}>
-                              <span className="text-[9px] font-black text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
-                            </div>
-                            {/* Power change floating number */}
-                            {anim?.powerChange && (
-                              <div className={`absolute inset-0 flex items-center justify-center z-30 pointer-events-none`}>
-                                <span className={`text-lg font-black animate-[floatUp_0.8s_ease-out_forwards] ${anim.powerChange > 0 ? "text-green-400" : "text-red-400"}`}>
-                                  {anim.powerChange > 0 ? `+${anim.powerChange}` : anim.powerChange}
-                                </span>
-                              </div>
+                            {/* Only show details when revealed */}
+                            {isRevealed && (
+                              <>
+                                {/* Foil effect overlay */}
+                                {hasFoil && <div className={`absolute inset-0 ${foilClass} rounded-md pointer-events-none z-[5]`}></div>}
+                                {/* Power badge - Snap style hexagon-ish */}
+                                <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-red-600 flex items-center justify-center z-10 transition-all ${anim?.type === "glow-red" ? "scale-125" : ""}`}
+                                  style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}>
+                                  <span className="text-[8px] font-black text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
+                                </div>
+                                {/* Power change floating number */}
+                                {anim?.powerChange && (
+                                  <div className={`absolute inset-0 flex items-center justify-center z-30 pointer-events-none`}>
+                                    <span className={`text-lg font-black animate-[floatUp_0.8s_ease-out_forwards] ${anim.powerChange > 0 ? "text-green-400" : "text-red-400"}`}>
+                                      {anim.powerChange > 0 ? `+${anim.powerChange}` : anim.powerChange}
+                                    </span>
+                                  </div>
+                                )}
+                                {/* Ability indicator - small dot */}
+                                {ability && (
+                                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full flex items-center justify-center text-[6px] font-bold z-10 ${
+                                    ability.type === "onReveal" ? "bg-orange-500" : "bg-green-500"
+                                  }`}>
+                                    {ability.type === "onReveal" ? "R" : "O"}
+                                  </div>
+                                )}
+                              </>
                             )}
-                            {/* Ability indicator - small dot */}
-                            {ability && (
-                              <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full flex items-center justify-center text-[6px] font-bold z-10 ${
-                                ability.type === "onReveal" ? "bg-orange-500" : "bg-green-500"
-                              }`}>
-                                {ability.type === "onReveal" ? "R" : "O"}
+                            {/* Face-down indicator */}
+                            {!isRevealed && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-lg opacity-50">?</span>
                               </div>
                             )}
                           </div>
                         );
                       })}
                       {lane.cpuCards.length === 0 && (
-                        <div className="w-12 h-[68px] rounded-md bg-gray-900/50 border border-gray-700/30"
-                          style={{ boxShadow: "inset 0 2px 8px rgba(0,0,0,0.4)" }} />
+                        <div className="w-9 h-[50px] rounded-md"
+                          style={{
+                            background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)",
+                            border: "2px dashed rgba(184,134,11,0.3)",
+                            boxShadow: "inset 0 2px 10px rgba(0,0,0,0.5)"
+                          }} />
                       )}
                     </div>
                   </div>
@@ -4697,9 +5209,9 @@ export default function TCGPage() {
                     )}
                   </div>
 
-                  {/* Player Cards (bottom) - clickable area */}
+                  {/* Player Cards (bottom) - Grid 2x2 style */}
                   <div
-                    className={`relative flex-1 flex items-end justify-center pb-3 px-1 transition-all ${
+                    className={`relative flex-1 flex items-end justify-center pb-1 px-1 transition-all overflow-hidden ${
                       selectedHandCard !== null ? "bg-green-900/30 cursor-pointer" : ""
                     }`}
                     onClick={() => selectedHandCard !== null && handlePvEPlayCard(laneIndex)}
@@ -4709,7 +5221,7 @@ export default function TCGPage() {
                         <span className="text-green-400 text-xs font-bold bg-black/60 px-2 py-1 rounded">{t('tcgPlay2')}</span>
                       </div>
                     )}
-                    <div className="relative flex -space-x-5">
+                    <div className="grid grid-cols-2 gap-1 min-h-[104px]">
                       {lane.playerCards.map((card: any, idx: number) => {
                         const ability = getCardAbility(card.name, card);
                         const animKey = `${laneIndex}-player-${idx}`;
@@ -4725,61 +5237,91 @@ export default function TCGPage() {
                           "explode": "tcg-explode",
                         }[anim.type] || "" : "";
 
+                        // Check if card is revealed (old cards are always revealed)
+                        const isRevealed = (card as any)._revealed !== false;
+                        const displayImageUrl = isRevealed ? encodeURI(card.imageUrl || "/images/card-back.png") : "/images/card-back.png";
+
+                        // Can drag back to hand if not revealed and was played this turn
+                        const canDragBack = !isRevealed && (gs.cardsPlayedInfo || []).some((info: any) => info.cardId === card.cardId && info.laneIndex === laneIndex);
+
                         return (
                           <div
                             key={idx}
+                            draggable={canDragBack}
+                            onDragStart={(e) => {
+                              if (!canDragBack) return;
+                              e.stopPropagation();
+                              setDraggedLaneCard({ laneIndex, cardIndex: idx });
+                              e.dataTransfer.effectAllowed = "move";
+                            }}
+                            onDragEnd={() => {
+                              setDraggedLaneCard(null);
+                              setDragOverHand(false);
+                            }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              setDetailCard(card);
+                              if (isRevealed) setDetailCard(card);
                             }}
-                            className={`relative w-12 h-[68px] rounded-md bg-cover bg-center cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${getFoilClass(card.foil)} ${animClass}`}
+                            className={`relative w-9 h-[50px] rounded-md bg-cover bg-center cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${isRevealed ? getFoilClass(card.foil) : ""} ${animClass} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"} ${draggedLaneCard?.laneIndex === laneIndex && draggedLaneCard?.cardIndex === idx ? "opacity-50 scale-95" : ""}`}
                             style={{
-                              backgroundImage: `url(${card.imageUrl})`,
+                              backgroundImage: `url(${displayImageUrl})`,
                               zIndex: anim ? 50 : idx,
-                              boxShadow: "0 4px 12px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.5)"
+                              boxShadow: isRevealed ? "0 2px 8px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.5)" : "0 2px 8px rgba(0,0,0,0.8), 0 0 0 1px rgba(100,100,100,0.5)",
+                              cursor: canDragBack ? "grab" : "pointer"
                             }}
                           >
-                            {/* Power badge - Snap style */}
-                            <div className="absolute -bottom-0.5 -right-0.5 w-5 h-5 bg-blue-600 flex items-center justify-center z-10"
-                              style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}>
-                              <span className="text-[9px] font-black text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
-                            </div>
-                            {/* Ability indicator - small dot */}
-                            {ability && (
-                              <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full flex items-center justify-center text-[6px] font-bold ${
-                                ability.type === "onReveal" ? "bg-orange-500" : "bg-green-500"
-                              }`}>
-                                {ability.type === "onReveal" ? "R" : "O"}
+                            {/* Only show details when revealed */}
+                            {isRevealed && (
+                              <>
+                                {/* Power badge - Snap style */}
+                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-600 flex items-center justify-center z-10"
+                                  style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}>
+                                  <span className="text-[8px] font-black text-white">{card.type === "nothing" ? Math.floor(card.power * 0.5) : card.power}</span>
+                                </div>
+                                {/* Ability indicator - small dot */}
+                                {ability && (
+                                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full flex items-center justify-center text-[6px] font-bold ${
+                                    ability.type === "onReveal" ? "bg-orange-500" : "bg-green-500"
+                                  }`}>
+                                    {ability.type === "onReveal" ? "R" : "O"}
+                                  </div>
+                                )}
+                                {/* LANDMINE Kamikaze Button */}
+                                {(card.name || "").toLowerCase() === "landmine" && lane.cpuCards.length > 0 && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleLandmineKamikaze(laneIndex, idx);
+                                    }}
+                                    className="absolute -bottom-1 -left-1 w-5 h-5 bg-red-600 hover:bg-red-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-20"
+                                    title="Kamikaze"
+                                  >
+                                    X
+                                  </button>
+                                )}
+                                {/* NAUGHTY SANTA Charm Button */}
+                                {(card.name || "").toLowerCase() === "naughty santa" && lane.cpuCards.length > 0 && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSantaCharm(laneIndex, idx);
+                                    }}
+                                    className="absolute -bottom-1 -left-1 w-5 h-5 bg-pink-600 hover:bg-pink-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-20"
+                                    title="Charm"
+                                  >
+                                    C
+                                  </button>
+                                )}
+                              </>
+                            )}
+                            {/* Face-down indicator (player cards) */}
+                            {!isRevealed && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-lg text-blue-400 opacity-70">?</span>
                               </div>
                             )}
-                            {/* LANDMINE Kamikaze Button */}
-                            {(card.name || "").toLowerCase() === "landmine" && lane.cpuCards.length > 0 && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleLandmineKamikaze(laneIndex, idx);
-                                }}
-                                className="absolute -bottom-1 -left-1 w-5 h-5 bg-red-600 hover:bg-red-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-20"
-                                title="Kamikaze"
-                              >
-                                X
-                              </button>
-                            )}
-                            {/* NAUGHTY SANTA Charm Button */}
-                            {(card.name || "").toLowerCase() === "naughty santa" && lane.cpuCards.length > 0 && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSantaCharm(laneIndex, idx);
-                                }}
-                                className="absolute -bottom-1 -left-1 w-5 h-5 bg-pink-600 hover:bg-pink-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-20"
-                                title="Charm"
-                              >
-                                C
-                              </button>
-                            )}
-                            {/* UNDO Button - Return card to hand */}
-                            {(gs.cardsPlayedInfo || []).some((info: any) => info.cardId === card.cardId && info.laneIndex === laneIndex) && (
+                            {/* UNDO Button - Return card to hand (only for unrevealed cards this turn) */}
+                            {!isRevealed && (gs.cardsPlayedInfo || []).some((info: any) => info.cardId === card.cardId && info.laneIndex === laneIndex) && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -4795,44 +5337,146 @@ export default function TCGPage() {
                         );
                       })}
                       {lane.playerCards.length === 0 && !selectedHandCard && (
-                        <div className="w-12 h-[68px] rounded-md bg-gray-900/50 border border-gray-700/30"
-                          style={{ boxShadow: "inset 0 2px 8px rgba(0,0,0,0.4)" }} />
+                        <div className="w-9 h-[50px] rounded-md"
+                          style={{
+                            background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)",
+                            border: "2px dashed rgba(184,134,11,0.3)",
+                            boxShadow: "inset 0 2px 10px rgba(0,0,0,0.5)"
+                          }} />
                       )}
                     </div>
                   </div>
                 </div>
               );
             })}
+            </div>
           </div>
 
-          {/* Hand - Bottom Bar */}
-          <div className="bg-gradient-to-t from-black via-gray-900/95 to-transparent pt-4 pb-2 px-3">
-            {/* Combo Preview when card is selected */}
-            {selectedHandCard !== null && gs.playerHand?.[selectedHandCard] && (() => {
-              const selectedCard = gs.playerHand[selectedHandCard];
-              // Check potential combos for each lane
-              const comboPreviews = gs.lanes.map((lane: any, laneIdx: number) => {
-                const potentialCards = [...lane.playerCards, selectedCard];
-                const combos = detectCombos(potentialCards);
-                return { laneIdx, combos };
-              }).filter((p: any) => p.combos.length > 0);
+          {/* Floating Card Indicator while dragging */}
+          {draggedCardIndex !== null && touchDragPos && gs.playerHand?.[draggedCardIndex] && (
+            <div
+              data-drag-ghost="true"
+              className="fixed pointer-events-none z-[100]"
+              style={{
+                left: touchDragPos.x - 30,
+                top: touchDragPos.y - 42,
+              }}
+            >
+              <div
+                className="w-[60px] h-[85px] rounded-lg border-2 border-cyan-400 shadow-xl shadow-cyan-500/50 bg-cover bg-center opacity-90"
+                style={{ backgroundImage: `url(${gs.playerHand[draggedCardIndex].imageUrl})` }}
+              />
+            </div>
+          )}
 
-              if (comboPreviews.length > 0) {
-                return (
-                  <div className="flex justify-center gap-2 mb-2">
-                    {comboPreviews.map((preview: any, pIdx: number) => (
-                      <div key={pIdx} className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg px-3 py-1 animate-pulse">
-                        <span className="text-[10px] text-yellow-400">
-                          Lane {preview.laneIdx + 1}: {COMBO_TRANSLATION_KEYS[preview.combos[0].combo.id] ? t(COMBO_TRANSLATION_KEYS[preview.combos[0].combo.id] as keyof typeof translations["pt-BR"]) : preview.combos[0].combo.name}
-                        </span>
-                      </div>
-                    ))}
+
+          {/* Ability Effect Animation - Attack/Buff effect going across lanes */}
+          {abilityEffectAnim && (
+            <div className="fixed inset-0 pointer-events-none z-[150]">
+              <div
+                className={`absolute tcg-ability-effect ${abilityEffectAnim.type === "attack" || abilityEffectAnim.type === "destroy"
+                  ? "tcg-attack-effect"
+                  : abilityEffectAnim.type === "steal"
+                    ? "tcg-steal-effect"
+                    : "tcg-buff-effect"
+                  }`}
+                style={{
+                  left: "50%",
+                  top: abilityEffectAnim.sourceSide === "player" ? "65%" : "35%",
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                <div className="text-5xl animate-bounce">
+                  {abilityEffectAnim.emoji}
+                </div>
+                {abilityEffectAnim.powerChange !== undefined && abilityEffectAnim.powerChange !== 0 && (
+                  <div className={`text-2xl font-black mt-1 ${
+                    abilityEffectAnim.type === "attack" || abilityEffectAnim.type === "destroy"
+                      ? "text-red-400"
+                      : abilityEffectAnim.type === "steal"
+                        ? "text-purple-400"
+                        : "text-green-400"
+                  }`}>
+                    {abilityEffectAnim.powerChange > 0 ? "+" : ""}{abilityEffectAnim.powerChange}
                   </div>
-                );
-              }
-              return null;
-            })()}
+                )}
+              </div>
+              {/* Attack projectile line */}
+              {(abilityEffectAnim.type === "attack" || abilityEffectAnim.type === "destroy") && (
+                <div
+                  className="absolute left-1/2 tcg-attack-projectile"
+                  style={{
+                    top: abilityEffectAnim.sourceSide === "player" ? "60%" : "40%",
+                    height: "20%",
+                    width: "4px",
+                    background: abilityEffectAnim.type === "destroy"
+                      ? "linear-gradient(to top, transparent, #ef4444, #fbbf24)"
+                      : "linear-gradient(to top, transparent, #ef4444, #f97316)",
+                    transform: abilityEffectAnim.sourceSide === "player"
+                      ? "translateX(-50%) scaleY(-1)"
+                      : "translateX(-50%)",
+                    boxShadow: "0 0 10px #ef4444, 0 0 20px #ef4444",
+                    borderRadius: "4px",
+                  }}
+                />
+              )}
+              {/* Steal swirl */}
+              {abilityEffectAnim.type === "steal" && (
+                <div
+                  className="absolute left-1/2 tcg-steal-swirl"
+                  style={{
+                    top: "50%",
+                    transform: "translate(-50%, -50%)",
+                  }}
+                >
+                  <div className="text-4xl animate-spin">🌀</div>
+                </div>
+              )}
+            </div>
+          )}
 
+          {/* Hand - Bottom Bar (Royal style) */}
+          <div
+            className="relative pt-4 pb-2 px-3 tcg-royal-hand"
+            style={{
+              background: "linear-gradient(180deg, rgba(20,20,20,0.95) 0%, rgba(10,10,10,1) 100%)",
+              borderTop: dragOverHand ? "3px solid #22c55e" : "3px solid",
+              borderImage: dragOverHand ? "none" : "linear-gradient(90deg, transparent 5%, #B8860B 20%, #FFD700 50%, #B8860B 80%, transparent 95%) 1"
+            }}
+            onDragOver={(e) => {
+              if (draggedLaneCard) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = "move";
+                setDragOverHand(true);
+              }
+            }}
+            onDragEnter={(e) => {
+              if (draggedLaneCard) {
+                e.preventDefault();
+                setDragOverHand(true);
+              }
+            }}
+            onDragLeave={(e) => {
+              // Only set false if leaving the container entirely
+              if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                setDragOverHand(false);
+              }
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (draggedLaneCard) {
+                handleReturnCardToHand(draggedLaneCard.laneIndex, draggedLaneCard.cardIndex);
+                setDraggedLaneCard(null);
+              }
+              setDragOverHand(false);
+            }}
+          >
+            {/* Drop zone indicator */}
+            {dragOverHand && draggedLaneCard && (
+              <div className="absolute inset-0 flex items-center justify-center bg-green-900/30 pointer-events-none z-20 rounded">
+                <span className="text-green-400 text-xs font-bold bg-black/60 px-2 py-1 rounded">↩ Return to Hand</span>
+              </div>
+            )}
             {/* Cards */}
             <div className="flex justify-center gap-1 mb-3">
               {gs.playerHand?.map((card: any, idx: number) => {
@@ -4866,7 +5510,80 @@ export default function TCGPage() {
                 return (
                   <div
                     key={idx}
-                    onClick={() => {
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!canAfford || e.button !== 0) return;
+                      const startX = e.clientX;
+                      const startY = e.clientY;
+                      wasDraggingRef.current = false;
+                      setDraggedCardIndex(idx);
+                      setSelectedHandCard(null);
+                      setTouchDragPos({ x: startX, y: startY });
+
+                      const handleMouseMove = (moveE: MouseEvent) => {
+                        const dx = Math.abs(moveE.clientX - startX);
+                        const dy = Math.abs(moveE.clientY - startY);
+                        if (dx > 5 || dy > 5) {
+                          wasDraggingRef.current = true;
+                        }
+                        setTouchDragPos({ x: moveE.clientX, y: moveE.clientY });
+                        const laneIdx = getLaneUnderTouch(moveE.clientX, moveE.clientY);
+                        setDragOverLane(laneIdx);
+                      };
+
+                      const handleMouseUp = (upE: MouseEvent) => {
+                        const laneIdx = getLaneUnderTouch(upE.clientX, upE.clientY);
+                        if (laneIdx !== null && wasDraggingRef.current) {
+                          const lane = pveGameState?.lanes[laneIdx];
+                          if (lane && (lane.playerCards?.length || 0) < TCG_CONFIG.CARDS_PER_LANE) {
+                            handlePvEPlayCard(laneIdx, idx);
+                          }
+                        }
+                        setDraggedCardIndex(null);
+                        setDragOverLane(null);
+                        setTouchDragPos(null);
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                      };
+
+                      document.addEventListener('mousemove', handleMouseMove);
+                      document.addEventListener('mouseup', handleMouseUp);
+                    }}
+                    onTouchStart={(e) => {
+                      if (!canAfford) return;
+                      const touch = e.touches[0];
+                      setDraggedCardIndex(idx);
+                      setSelectedHandCard(null);
+                      setTouchDragPos({ x: touch.clientX, y: touch.clientY });
+                    }}
+                    onTouchMove={(e) => {
+                      if (draggedCardIndex !== idx) return;
+                      const touch = e.touches[0];
+                      setTouchDragPos({ x: touch.clientX, y: touch.clientY });
+                      const laneIdx = getLaneUnderTouch(touch.clientX, touch.clientY);
+                      setDragOverLane(laneIdx);
+                    }}
+                    onTouchEnd={(e) => {
+                      if (draggedCardIndex !== idx) return;
+                      const touch = e.changedTouches[0];
+                      const laneIdx = getLaneUnderTouch(touch.clientX, touch.clientY);
+                      if (laneIdx !== null) {
+                        const lane = pveGameState?.lanes[laneIdx];
+                        if (lane && (lane.playerCards?.length || 0) < TCG_CONFIG.CARDS_PER_LANE) {
+                          handlePvEPlayCard(laneIdx, idx);
+                        }
+                      }
+                      setDraggedCardIndex(null);
+                      setDragOverLane(null);
+                      setTouchDragPos(null);
+                    }}
+                    onClick={(e) => {
+                      // Skip click if we were dragging
+                      if (wasDraggingRef.current) {
+                        wasDraggingRef.current = false;
+                        return;
+                      }
                       if (!canAfford) {
                         playSound("error");
                         return;
@@ -4874,17 +5591,28 @@ export default function TCGPage() {
                       playSound("select");
                       setSelectedHandCard(selectedHandCard === idx ? null : idx);
                     }}
-                    className={`relative flex-shrink-0 w-[60px] h-[85px] rounded-lg border-2 transition-all duration-200 bg-cover bg-center ${
+                    className={`relative flex-shrink-0 w-[60px] h-[85px] rounded-lg border-2 transition-all duration-200 select-none ${
                       !canAfford
                         ? "border-red-500/50 opacity-50 cursor-not-allowed grayscale"
-                        : selectedHandCard === idx
-                          ? "border-green-400 -translate-y-6 scale-110 z-20 shadow-xl shadow-green-500/50 cursor-pointer"
-                          : hasComboPartner
-                            ? "border-yellow-400 hover:-translate-y-2 hover:scale-105 ring-2 ring-yellow-400/50 cursor-pointer"
-                            : `${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"} hover:-translate-y-2 hover:scale-105 cursor-pointer`
+                        : draggedCardIndex === idx
+                          ? "border-cyan-400 opacity-50 scale-95 cursor-grabbing"
+                          : selectedHandCard === idx
+                            ? "border-green-400 -translate-y-6 scale-110 z-20 shadow-xl shadow-green-500/50 cursor-pointer"
+                            : hasComboPartner
+                              ? "border-yellow-400 hover:-translate-y-2 hover:scale-105 ring-2 ring-yellow-400/50 cursor-grab"
+                              : `${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"} hover:-translate-y-2 hover:scale-105 cursor-grab`
                     } ${getFoilClass(card.foil)}`}
-                    style={{ backgroundImage: `url(${card.imageUrl})`, zIndex: selectedHandCard === idx ? 20 : idx }}
+                    style={{
+                      zIndex: selectedHandCard === idx ? 20 : draggedCardIndex === idx ? 30 : idx,
+                      userSelect: "none"
+                    }}
                   >
+                    {/* Card background image - non-draggable */}
+                    <div
+                      className="absolute inset-0 bg-cover bg-center rounded-lg pointer-events-none"
+                      style={{ backgroundImage: `url(${encodeURI(card.imageUrl || "/images/card-back.png")})` }}
+                      draggable={false}
+                    />
                     {card.foil && card.foil !== "None" && (
                       <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-yellow-400/20 rounded-lg pointer-events-none" />
                     )}
@@ -4985,39 +5713,52 @@ export default function TCGPage() {
 
             {/* Bottom Action Bar - Marvel Snap Style */}
             <div className="flex items-center justify-between">
-              {/* Back Button (left) */}
+              {/* Back Button (left) - Royal style */}
               <button
                 onClick={() => {
                   setIsPvE(false);
                   setPveGameState(null);
                   setView("lobby");
                 }}
-                className="bg-gradient-to-r from-red-700 to-red-900 hover:from-red-600 hover:to-red-800 text-white font-bold py-2 px-4 rounded-lg text-sm border border-red-500 shadow-lg"
+                className="bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] hover:from-[#2a2a2a] hover:to-[#3a3a3a] text-[#B8860B] hover:text-[#FFD700] font-bold py-2 px-4 rounded-lg text-sm shadow-lg transition-all"
+                style={{
+                  border: "2px solid",
+                  borderImage: "linear-gradient(135deg, #8B6914, #B8860B, #8B6914) 1"
+                }}
               >
                 ← BACK
               </button>
 
-              {/* Energy Orb (center) */}
-              <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 via-cyan-300 to-blue-500 border-4 border-cyan-200 flex items-center justify-center shadow-lg shadow-cyan-400/50">
-                <span className="text-xl font-bold text-white drop-shadow-lg">{gs.energy}</span>
+              {/* Energy Orb (center) - Royal gold style */}
+              <div className="relative w-14 h-14 rounded-full flex items-center justify-center"
+                style={{
+                  background: "radial-gradient(circle at 30% 30%, #FFD700, #B8860B, #8B6914)",
+                  boxShadow: "0 0 20px rgba(255,215,0,0.5), inset 0 2px 10px rgba(255,255,255,0.3), inset 0 -5px 15px rgba(0,0,0,0.4)",
+                  border: "3px solid #FFD700"
+                }}
+              >
+                <span className="text-2xl font-black text-black drop-shadow-[0_1px_1px_rgba(255,215,0,0.5)]">{gs.energy}</span>
               </div>
 
-              {/* End Turn Button (right) */}
+              {/* End Turn Button (right) - Royal style */}
               <button
                 onClick={handlePvEEndTurn}
-                className={`text-white font-bold py-2 px-4 rounded-lg text-sm border shadow-lg transition-all min-w-[100px] ${
+                className={`font-bold py-2 px-4 rounded-lg text-sm shadow-lg transition-all min-w-[100px] ${
                   turnTimeRemaining <= 5
-                    ? 'bg-gradient-to-r from-red-600 to-red-700 border-red-400 animate-pulse'
+                    ? 'bg-gradient-to-r from-red-700 to-red-900 border-2 border-red-500 text-white animate-pulse'
                     : turnTimeRemaining <= 10
-                      ? 'bg-gradient-to-r from-orange-600 to-amber-700 border-orange-400'
-                      : 'bg-gradient-to-r from-purple-600 to-indigo-700 border-purple-400 hover:from-purple-500 hover:to-indigo-600'
+                      ? 'bg-gradient-to-r from-orange-600 to-amber-700 border-2 border-orange-400 text-white'
+                      : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#FFD700] hover:to-[#B8860B] text-black border-2 border-[#FFD700]'
                 }`}
+                style={turnTimeRemaining > 10 ? {
+                  boxShadow: "0 0 15px rgba(255,215,0,0.3), inset 0 1px 2px rgba(255,255,255,0.3)"
+                } : undefined}
               >
                 {turnTimeRemaining <= 10 ? (
                   <span className="text-2xl font-black">{turnTimeRemaining}</span>
                 ) : (
                   <>
-                    {t('tcgEndTurn')} <span className="text-yellow-300">{gs.currentTurn}/{TCG_CONFIG.TOTAL_TURNS}</span>
+                    {t('tcgEndTurn')} <span className="text-black/70">{gs.currentTurn}/{TCG_CONFIG.TOTAL_TURNS}</span>
                   </>
                 )}
               </button>
@@ -5395,21 +6136,42 @@ export default function TCGPage() {
             {t('tcgCpuMode')}
           </span>
 
-          {/* Result Icon & Title */}
+          {/* Result Icon & Title - OR Bait Video on defeat */}
           <div className="my-6">
-            <div className={`text-6xl mb-4 ${isDraw ? "" : isWinner ? "animate-bounce" : ""}`}>
-              {isDraw ? "🤝" : isWinner ? "🏆" : "💔"}
-            </div>
-            <h1
-              className={`text-5xl font-black mb-2 ${
-                isDraw ? "text-gray-400" : isWinner ? "text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]" : "text-red-400"
-              }`}
-            >
-              {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
-            </h1>
-            <p className="text-gray-500 text-sm">
-              {isDraw ? "Both sides are equal!" : isWinner ? "You outsmarted the CPU!" : "The CPU was too strong..."}
-            </p>
+            {showDefeatBait && !isWinner && !isDraw ? (
+              /* Bait video replaces the defeat text - loops */
+              <video
+                autoPlay
+                loop
+                className="w-48 h-48 mx-auto mb-4 rounded-xl object-cover"
+              >
+                <source src="/sounds/defeat-bait.mp4" type="video/mp4" />
+              </video>
+            ) : isWinner ? (
+              <img
+                src="/images/angry-angry-kid.png"
+                alt="Victory"
+                className="w-32 h-32 mx-auto mb-4 animate-bounce object-contain"
+              />
+            ) : (
+              <div className={`text-6xl mb-4`}>
+                {isDraw ? "🤝" : "💔"}
+              </div>
+            )}
+            {!showDefeatBait && (
+              <>
+                <h1
+                  className={`text-5xl font-black mb-2 ${
+                    isDraw ? "text-gray-400" : isWinner ? "text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]" : "text-red-400"
+                  }`}
+                >
+                  {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
+                </h1>
+                <p className="text-gray-500 text-sm">
+                  {isDraw ? "Both sides are equal!" : isWinner ? "You outsmarted the CPU!" : "The CPU was too strong..."}
+                </p>
+              </>
+            )}
           </div>
 
           {/* Lane Results */}
@@ -5482,6 +6244,7 @@ export default function TCGPage() {
             </button>
             <button
               onClick={() => {
+                stopBgm(); // Stop victory/defeat music
                 setIsPvE(false);
                 setPveGameState(null);
                 setView("lobby");
@@ -5530,9 +6293,17 @@ export default function TCGPage() {
 
           {/* Result Icon & Title */}
           <div className="my-6">
-            <div className={`text-6xl mb-4 ${isDraw ? "" : isWinner ? "animate-bounce" : ""}`}>
-              {isDraw ? "🤝" : isWinner ? "🏆" : "💔"}
-            </div>
+            {isWinner ? (
+              <img
+                src="/images/angry-angry-kid.png"
+                alt="Victory"
+                className="w-32 h-32 mx-auto mb-4 animate-bounce object-contain"
+              />
+            ) : (
+              <div className={`text-6xl mb-4`}>
+                {isDraw ? "🤝" : "💔"}
+              </div>
+            )}
             <h1
               className={`text-5xl font-black mb-2 ${
                 isDraw ? "text-gray-400" : isWinner ? "text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]" : "text-red-400"
@@ -5609,6 +6380,7 @@ export default function TCGPage() {
           <div className="flex gap-3 justify-center">
             <button
               onClick={() => {
+                stopBgm(); // Stop victory/defeat music
                 setCurrentMatchId(null);
                 setView("lobby");
               }}

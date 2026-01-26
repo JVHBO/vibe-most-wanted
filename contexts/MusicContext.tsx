@@ -150,7 +150,6 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const fadeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentTrackRef = useRef<string | null>(null);
-  const hasUserInteractedRef = useRef(false); // Track if user has clicked anything
   const youtubePlayerRef = useRef<any>(null);
   const youtubeContainerRef = useRef<HTMLDivElement | null>(null);
   const isPlaylistModeRef = useRef(false); // Track if we're in playlist mode
@@ -932,31 +931,42 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /**
-   * Resume music on first user interaction (fixes browser autoplay block)
+   * Resume music on user interaction (fixes browser autoplay block)
+   * FIX: Keep trying on each click if audio is paused, not just first interaction
    */
   useEffect(() => {
-    const handleFirstClick = () => {
-      if (!hasUserInteractedRef.current && isMusicEnabled) {
-        hasUserInteractedRef.current = true;
-        if (audioRef.current) {
-          audioRef.current.play().catch(() => {
-            // Still blocked, will try again on next click
-          });
-        }
-        if (youtubePlayerRef.current && typeof youtubePlayerRef.current.playVideo === 'function') {
-          youtubePlayerRef.current.playVideo();
+    const handleClick = () => {
+      if (!isMusicEnabled || isPaused) return;
+
+      // Try to play HTML audio if it exists and is paused
+      if (audioRef.current && audioRef.current.paused) {
+        audioRef.current.play().catch(() => {
+          // Still blocked, will try again on next click
+        });
+      }
+
+      // Try to play YouTube if it exists and is not playing
+      if (youtubePlayerRef.current && typeof youtubePlayerRef.current.playVideo === 'function') {
+        try {
+          const state = youtubePlayerRef.current.getPlayerState();
+          // State: -1 = unstarted, 0 = ended, 2 = paused, 5 = video cued
+          if (state === -1 || state === 0 || state === 2 || state === 5) {
+            youtubePlayerRef.current.playVideo();
+          }
+        } catch(e) {
+          // Ignore errors
         }
       }
     };
 
-    document.addEventListener('click', handleFirstClick, { once: false });
-    document.addEventListener('touchstart', handleFirstClick, { once: false });
+    document.addEventListener('click', handleClick);
+    document.addEventListener('touchstart', handleClick);
 
     return () => {
-      document.removeEventListener('click', handleFirstClick);
-      document.removeEventListener('touchstart', handleFirstClick);
+      document.removeEventListener('click', handleClick);
+      document.removeEventListener('touchstart', handleClick);
     };
-  }, [isMusicEnabled]);
+  }, [isMusicEnabled, isPaused]);
 
   /**
    * Resume YouTube playback when tab becomes visible again
