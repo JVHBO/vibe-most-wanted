@@ -506,13 +506,16 @@ const detectCombos = (cards: DeckCard[]): { combo: CardCombo; matchedCards: stri
 // Calculate combo bonus for a specific card
 // vibefidChoices: Record<string, string> - maps "laneIndex-cardId" to chosen comboId
 // laneIndex: optional, used to filter combos by vibefid choices
+// RULE: Only ONE combo per lane is active
 const getComboBonus = (card: DeckCard, allCardsInLane: DeckCard[], allLanes?: any[], vibefidChoices?: Record<string, string>, laneIndex?: number): number => {
   let combos = detectCombos(allCardsInLane);
+  if (combos.length === 0) return 0;
+
   let totalBonus = 0;
   // Use resolved name to match against combo cards
   const cardNameResolved = resolveCardName(card.name || "");
 
-  // Filter combos based on VibeFID choices if provided
+  // ONLY ONE COMBO PER LANE - filter to single combo
   if (vibefidChoices && laneIndex !== undefined) {
     const vibefidCards = allCardsInLane.filter(c => c.type === "vibefid");
     const chosenComboIds = vibefidCards
@@ -520,11 +523,16 @@ const getComboBonus = (card: DeckCard, allCardsInLane: DeckCard[], allLanes?: an
       .filter(Boolean);
 
     if (chosenComboIds.length > 0) {
-      combos = combos.filter(({ combo, wildcardsUsed }) => {
-        if (wildcardsUsed === 0) return true; // Natural combo
-        return chosenComboIds.includes(combo.id); // Chosen by VibeFID
-      });
+      // VibeFID choice exists - ONLY that combo is active
+      const chosenCombo = combos.find(({ combo }) => chosenComboIds.includes(combo.id));
+      combos = chosenCombo ? [chosenCombo] : [];
+    } else {
+      // No VibeFID choice - only first combo
+      combos = [combos[0]];
     }
+  } else {
+    // No choices tracking - only first combo
+    combos = [combos[0]];
   }
 
   for (const { combo, matchedCards } of combos) {
@@ -552,10 +560,12 @@ const getComboBonus = (card: DeckCard, allCardsInLane: DeckCard[], allLanes?: an
 };
 
 // Get steal amount from combos (negative power to enemies)
+// RULE: Only ONE combo per lane is active
 const getComboSteal = (playerCards: DeckCard[], vibefidChoices?: Record<string, string>, laneIndex?: number): number => {
   let combos = detectCombos(playerCards);
+  if (combos.length === 0) return 0;
 
-  // Filter combos based on VibeFID choices if provided
+  // ONLY ONE COMBO PER LANE - filter to single combo
   if (vibefidChoices && laneIndex !== undefined) {
     const vibefidCards = playerCards.filter(c => c.type === "vibefid");
     const chosenComboIds = vibefidCards
@@ -563,11 +573,16 @@ const getComboSteal = (playerCards: DeckCard[], vibefidChoices?: Record<string, 
       .filter(Boolean);
 
     if (chosenComboIds.length > 0) {
-      combos = combos.filter(({ combo, wildcardsUsed }) => {
-        if (wildcardsUsed === 0) return true;
-        return chosenComboIds.includes(combo.id);
-      });
+      // VibeFID choice exists - ONLY that combo is active
+      const chosenCombo = combos.find(({ combo }) => chosenComboIds.includes(combo.id));
+      combos = chosenCombo ? [chosenCombo] : [];
+    } else {
+      // No VibeFID choice - only first combo
+      combos = [combos[0]];
     }
+  } else {
+    // No choices tracking - only first combo
+    combos = [combos[0]];
   }
 
   let totalSteal = 0;
@@ -3487,19 +3502,24 @@ export default function TCGPage() {
 
         let newCombos = detectCombos(laneCards);
 
-        // Filter combos based on VibeFID choices (only for player side)
-        if (currentReveal.side === "player") {
+        // ONLY ONE COMBO PER LANE - for player side, respect VibeFID choice
+        if (currentReveal.side === "player" && newCombos.length > 0) {
           const vibefidCards = laneCards.filter((c: any) => c.type === "vibefid");
           const chosenComboIds = vibefidCards
             .map((c: any) => vibefidComboChoices[`${currentReveal.laneIdx}-${c.cardId}`])
             .filter(Boolean);
 
           if (chosenComboIds.length > 0) {
-            newCombos = newCombos.filter(({ combo, wildcardsUsed }) => {
-              if (wildcardsUsed === 0) return true; // Natural combo (no wildcard needed)
-              return chosenComboIds.includes(combo.id); // Only chosen VibeFID combos
-            });
+            // VibeFID choice exists - ONLY that combo
+            const chosenCombo = newCombos.find(({ combo }) => chosenComboIds.includes(combo.id));
+            newCombos = chosenCombo ? [chosenCombo] : [];
+          } else {
+            // No VibeFID choice - only first combo
+            newCombos = [newCombos[0]];
           }
+        } else if (currentReveal.side === "cpu" && newCombos.length > 0) {
+          // CPU also gets only one combo per lane
+          newCombos = [newCombos[0]];
         }
 
         // Show popup for new combos
@@ -5474,10 +5494,12 @@ export default function TCGPage() {
       return "tied";
     };
 
-    // Detect active combos for display, respecting VibeFID combo choices
+    // Detect active combos for display - ONLY ONE COMBO PER LANE
     const getActiveCombosInLane = (laneIndex: number) => {
       const playerCards = gs.lanes[laneIndex].playerCards || [];
       const allCombos = detectCombos(playerCards);
+
+      if (allCombos.length === 0) return [];
 
       // Check if there are VibeFID cards with specific combo choices in this lane
       const vibefidCards = playerCards.filter((c: DeckCard) => c.type === "vibefid");
@@ -5485,18 +5507,14 @@ export default function TCGPage() {
         .map((c: DeckCard) => vibefidComboChoices[`${laneIndex}-${c.cardId}`])
         .filter(Boolean);
 
-      // If no VibeFID choices, return all combos (default behavior)
-      if (chosenComboIds.length === 0) {
-        return allCombos;
+      // If VibeFID choice exists, ONLY that combo is active
+      if (chosenComboIds.length > 0) {
+        const chosenCombo = allCombos.find(({ combo }) => chosenComboIds.includes(combo.id));
+        return chosenCombo ? [chosenCombo] : [];
       }
 
-      // Filter combos: only show combos that are either:
-      // 1. Natural combos (no wildcards needed)
-      // 2. The chosen combo(s) for VibeFID
-      return allCombos.filter(({ combo, wildcardsUsed }) => {
-        if (wildcardsUsed === 0) return true; // Natural combo
-        return chosenComboIds.includes(combo.id); // Chosen by VibeFID
-      });
+      // No VibeFID choice - return only the FIRST combo (only one combo per lane)
+      return [allCombos[0]];
     };
 
     return (
