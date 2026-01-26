@@ -2024,7 +2024,7 @@ export default defineSchema({
     address: v.string(), // Dono do deck
     deckName: v.string(), // Nome do deck
     cards: v.array(v.object({
-      type: v.union(v.literal("vbms"), v.literal("nothing"), v.literal("vibefid")), // Tipo da carta
+      type: v.union(v.literal("vbms"), v.literal("nothing"), v.literal("vibefid"), v.literal("other")), // Tipo da carta
       cardId: v.string(), // VBMS: tokenId, Nothing: cardId do inventory
       // Cached info (pra não precisar buscar toda hora)
       name: v.optional(v.string()),
