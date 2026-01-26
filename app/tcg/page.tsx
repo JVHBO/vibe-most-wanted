@@ -191,18 +191,13 @@ const COMBO_TRANSLATION_KEYS: Record<string, string> = {
   code_masters: "tcgComboCodeMasters",
   content_creators: "tcgComboContentCreators",
   chaos_agents: "tcgComboChaosAgents",
-  full_house: "tcgComboFullHouse",
   sniper_support: "tcgComboSniperElite",
   money_makers: "tcgComboMoneyMakers",
   underdog_uprising: "tcgComboUnderdogUprising",
-  proxy_war: "tcgComboProxyWar",
-  santa_helpers: "tcgComboSantaHelpers",
   // Synergy combos (from card descriptions)
   royal_brothers: "tcgComboRoyalBrothers",
   philosopher_chad: "tcgComboPhilosopherChad",
-  coinbase_nft: "tcgComboCoinbaseNFT",
   scaling_masters: "tcgComboScalingMasters",
-  open_source_ai: "tcgComboOpenSourceAI",
 };
 
 const CARD_COMBOS: CardCombo[] = [
@@ -315,14 +310,6 @@ const CARD_COMBOS: CardCombo[] = [
     description: "+60 power across ALL lanes!",
   },
   {
-    id: "full_house",
-    name: "Full House",
-    emoji: "🏠",
-    cards: ["casa", "lombra jr", "antonio"],
-    bonus: { type: "power", value: 80, target: "lane" },
-    description: "+80 power to entire lane!",
-  },
-  {
     id: "sniper_support",
     name: "Sniper Elite",
     emoji: "🎯",
@@ -348,26 +335,8 @@ const CARD_COMBOS: CardCombo[] = [
     emoji: "🐕",
     cards: ["rachel", "ink", "casa", "thosmur", "brainpasta"],
     minCards: 3,
-    bonus: { type: "power_percent", value: 150, target: "self" },
-    description: "+150% power! Commons RISE UP!",
-  },
-  {
-    id: "proxy_war",
-    name: "Proxy War",
-    emoji: "🔮",
-    cards: ["slaterg", "zurkchad", "morlacos"],
-    minCards: 2,
     bonus: { type: "power_percent", value: 80, target: "self" },
-    description: "+80% power to proxy cards!",
-  },
-  {
-    id: "santa_helpers",
-    name: "Santa's Helpers",
-    emoji: "🎅",
-    cards: ["naughty santa", "smolemaru", "gozaru"],
-    minCards: 2,
-    bonus: { type: "power", value: 50, target: "self" },
-    description: "+50 power to each helper!",
+    description: "+80% power! Commons RISE UP!",
   },
 
   // ═══ SYNERGY COMBOS (From card descriptions) ═══
@@ -388,28 +357,12 @@ const CARD_COMBOS: CardCombo[] = [
     description: "SARTOCRATES + ZURKCHAD = +60 power + IMMUNITY aura!",
   },
   {
-    id: "coinbase_nft",
-    name: "Coinbase NFT",
-    emoji: "📈",
-    cards: ["brian armstrong", "nftkid"],
-    bonus: { type: "power", value: 50, target: "lane" },
-    description: "BRIAN + NFTKID = +50 power to entire lane!",
-  },
-  {
     id: "scaling_masters",
     name: "Scaling Masters",
     emoji: "📊",
     cards: ["betobutter", "morlacos"],
     bonus: { type: "power_percent", value: 100, target: "self" },
     description: "BETOBUTTER + MORLACOS = DOUBLE scaling! Unstoppable!",
-  },
-  {
-    id: "open_source_ai",
-    name: "Open Source AI",
-    emoji: "🐧",
-    cards: ["groko", "linux"],
-    bonus: { type: "power", value: 50, target: "self" },
-    description: "GROKO + LINUX = +50 power! Commons unite!",
   },
 ];
 
