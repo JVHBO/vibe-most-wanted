@@ -956,7 +956,7 @@ export const saveDeck = mutation({
     address: v.string(),
     deckName: v.string(),
     cards: v.array(v.object({
-      type: v.union(v.literal("vbms"), v.literal("nothing"), v.literal("vibefid")),
+      type: v.union(v.literal("vbms"), v.literal("nothing"), v.literal("vibefid"), v.literal("other")),
       cardId: v.string(),
       name: v.optional(v.string()),
       rarity: v.string(),
@@ -973,23 +973,27 @@ export const saveDeck = mutation({
 
     // Validate deck
     const vbmsCount = args.cards.filter(c => c.type === "vbms").length;
+    const vibefidCount = args.cards.filter(c => c.type === "vibefid").length;
     const nothingCount = args.cards.filter(c => c.type === "nothing").length;
+    const otherCount = args.cards.filter(c => c.type === "other").length;
+    const halfPowerCount = nothingCount + otherCount; // Both have 50% power penalty
 
     if (args.cards.length !== TCG_CONFIG.DECK_SIZE) {
       throw new Error(`Deck must have exactly ${TCG_CONFIG.DECK_SIZE} cards`);
     }
 
-    if (vbmsCount < TCG_CONFIG.MIN_VBMS) {
-      throw new Error(`Deck must have at least ${TCG_CONFIG.MIN_VBMS} VBMS cards`);
+    // Require minimum VBMS or VibeFID cards
+    if (vbmsCount + vibefidCount < TCG_CONFIG.MIN_VBMS) {
+      throw new Error(`Deck must have at least ${TCG_CONFIG.MIN_VBMS} VBMS/VibeFID cards`);
     }
 
-    if (nothingCount > TCG_CONFIG.MAX_NOTHING) {
-      throw new Error(`Deck can have at most ${TCG_CONFIG.MAX_NOTHING} Nothing cards`);
+    if (halfPowerCount > TCG_CONFIG.MAX_NOTHING) {
+      throw new Error(`Deck can have at most ${TCG_CONFIG.MAX_NOTHING} Nothing/Other cards`);
     }
 
-    // Calculate total power
+    // Calculate total power (nothing and other have 50% penalty)
     const totalPower = args.cards.reduce((sum, card) => {
-      const power = card.type === "nothing"
+      const power = (card.type === "nothing" || card.type === "other")
         ? Math.floor(card.power * TCG_CONFIG.NOTHING_POWER_MULTIPLIER)
         : card.power;
       return sum + power;
