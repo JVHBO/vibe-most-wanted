@@ -3768,14 +3768,8 @@ export default function TCGPage() {
           <div className="text-center mb-4">
             <h3 className="text-xl font-bold text-vintage-gold">{card.name}</h3>
             <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
-              <span className={`text-sm ${RARITY_COLORS[card.rarity]?.split(" ")[1] || "text-vintage-burnt-gold"}`}>
-                {card.rarity}
-              </span>
-              {card.wear && (
-                <span className="text-sm text-vintage-burnt-gold/80">| {card.wear}</span>
-              )}
               {card.foil && card.foil !== "None" && (
-                <span className="text-sm text-vintage-gold">| {card.foil}</span>
+                <span className="text-sm text-vintage-gold">{card.foil}</span>
               )}
               {(card.type === "nothing" || card.type === "other") && (
                 <span className="text-sm text-purple-400">(Nothing)</span>
@@ -3862,13 +3856,6 @@ export default function TCGPage() {
             <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 mb-3">
               <p className="text-vintage-gold text-xs font-bold mb-1">✨ {t('tcgFoilBonus')}</p>
               <p className="text-vintage-burnt-gold text-sm">{foilEffect.description}</p>
-            </div>
-          )}
-
-          {/* Wear */}
-          {card.wear && (
-            <div className="text-center text-xs text-vintage-burnt-gold/60 mb-3">
-              {t('tcgCondition')}: {card.wear}
             </div>
           )}
 
