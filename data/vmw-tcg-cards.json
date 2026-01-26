@@ -87,7 +87,9 @@
     "jack": "jack the sniper",
     "horsefacts": "horsefarts",
     "jc": "jc denton",
-    "nicogay": "nico"
+    "nicogay": "nico",
+    "deploya": "0xdeployer",
+    "deployer": "0xdeployer"
   },
   "rarityDistribution": {
     "Mythic": { "count": 5, "cards": ["neymar", "anon", "Linda Xied", "vitalik jumpterin", "jesse"] },

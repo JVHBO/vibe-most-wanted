@@ -283,7 +283,7 @@ export default function QuestsPage() {
     setClaiming(quest.id);
     try {
       const result = await claimSocialReward({ address: address.toLowerCase(), questId: quest.id });
-      if (result.success) AudioManager.win();
+      // Sound removed - was repetitive
     } catch (error) {
       console.error("Error claiming:", error);
     } finally {
@@ -445,7 +445,6 @@ export default function QuestsPage() {
                         setIsClaimingAll(true);
                         try {
                           await claimAllMissions({ playerAddress: address.toLowerCase() });
-                          AudioManager.win();
                           await refreshMissions(); // 🚀 BANDWIDTH FIX: Refresh after claim
                         } catch (e) {
                           console.error(e);
@@ -517,7 +516,6 @@ export default function QuestsPage() {
                                           missionId: mission._id,
                                         });
                                       }
-                                      AudioManager.win();
                                       await refreshMissions(); // 🚀 BANDWIDTH FIX: Refresh after claim
                                     } catch (e) {
                                       console.error(e);
