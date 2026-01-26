@@ -24,6 +24,32 @@ type GameView = "lobby" | "deck-builder" | "waiting" | "battle" | "result";
 // Collections that can be played in TCG (with 50% power like nothing)
 const OTHER_TCG_COLLECTIONS = ["gmvbrs", "cumioh", "viberotbangers", "meowverse", "teampothead", "tarot", "baseballcabal", "poorlydrawnpepes", "viberuto", "vibefx", "historyofcomputer"];
 
+// Collection cover images - maps collection to its representative image folder
+const COLLECTION_COVERS: Record<string, string> = {
+  vibe: "vibe",
+  vibefid: "vibefid",
+  nothing: "vibe", // Nothing uses VBMS covers
+  cumioh: "cumioh",
+  viberotbangers: "viberotbangers",
+  viberuto: "viberuto",
+  meowverse: "meowverse",
+  gmvbrs: "gmvbrs",
+  teampothead: "teampothead",
+  tarot: "tarot",
+  baseballcabal: "baseballcabal",
+  poorlydrawnpepes: "poorlydrawnpepes",
+  vibefx: "vibefx",
+  historyofcomputer: "historyofcomputer",
+};
+
+// Get collection cover image URL based on collection and rarity
+const getCollectionCoverUrl = (collection: string | undefined, rarity: string): string => {
+  const collectionKey = collection?.toLowerCase() || "vibe";
+  const coverFolder = COLLECTION_COVERS[collectionKey] || "vibe";
+  const rarityLower = rarity?.toLowerCase() || "common";
+  return `/images/raid-bosses/${coverFolder}/${rarityLower}.png`;
+};
+
 interface TCGCard {
   type: "vbms" | "nothing" | "vibefid" | "other";
   cardId: string;
@@ -5504,7 +5530,9 @@ export default function TCGPage() {
                         const foil = (card.foil || "").toLowerCase();
                         const hasFoil = foil && foil !== "none" && foil !== "";
                         const foilClass = foil.includes("prize") ? "prize-foil" : foil.includes("standard") ? "standard-foil" : "";
-                        const encodedImageUrl = card.imageUrl ? encodeURI(card.imageUrl) : null;
+                        // Use collection cover instead of individual card image
+                        const cardCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
+                        const collectionCoverUrl = getCollectionCoverUrl(cardCollection, card.rarity);
 
                         // Get card animation if any
                         const animKey = `${laneIndex}-cpu-${idx}`;
@@ -5522,7 +5550,7 @@ export default function TCGPage() {
 
                         // Check if card is revealed (old cards are always revealed)
                         const isRevealed = (card as any)._revealed !== false;
-                        const displayImageUrl = isRevealed ? encodedImageUrl : "/images/card-back.png";
+                        const displayImageUrl = isRevealed ? collectionCoverUrl : "/images/card-back.png";
 
                         return (
                           <div
@@ -5628,7 +5656,10 @@ export default function TCGPage() {
 
                         // Check if card is revealed (old cards are always revealed)
                         const isRevealed = (card as any)._revealed !== false;
-                        const displayImageUrl = isRevealed ? encodeURI(card.imageUrl || "/images/card-back.png") : "/images/card-back.png";
+                        // Use collection cover instead of individual card image
+                        const cardCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
+                        const collectionCoverUrl = getCollectionCoverUrl(cardCollection, card.rarity);
+                        const displayImageUrl = isRevealed ? collectionCoverUrl : "/images/card-back.png";
 
                         // Can drag back to hand if not revealed and was played this turn
                         const canDragBack = !isRevealed && (gs.cardsPlayedInfo || []).some((info: any) => info.cardId === card.cardId && info.laneIndex === laneIndex);
@@ -5742,21 +5773,26 @@ export default function TCGPage() {
           </div>
 
           {/* Floating Card Indicator while dragging */}
-          {draggedCardIndex !== null && touchDragPos && gs.playerHand?.[draggedCardIndex] && (
-            <div
-              data-drag-ghost="true"
-              className="fixed pointer-events-none z-[100]"
-              style={{
-                left: touchDragPos.x - 30,
-                top: touchDragPos.y - 42,
-              }}
-            >
+          {draggedCardIndex !== null && touchDragPos && gs.playerHand?.[draggedCardIndex] && (() => {
+            const dragCard = gs.playerHand[draggedCardIndex];
+            const dragCardCollection = dragCard.collection || (dragCard.type === "vbms" ? "vibe" : dragCard.type === "vibefid" ? "vibefid" : dragCard.type === "nothing" ? "nothing" : "vibe");
+            const dragCardCoverUrl = getCollectionCoverUrl(dragCardCollection, dragCard.rarity);
+            return (
               <div
-                className="w-[60px] h-[85px] rounded-lg border-2 border-cyan-400 shadow-xl shadow-cyan-500/50 bg-cover bg-center opacity-90"
-                style={{ backgroundImage: `url(${gs.playerHand[draggedCardIndex].imageUrl})` }}
-              />
-            </div>
-          )}
+                data-drag-ghost="true"
+                className="fixed pointer-events-none z-[100]"
+                style={{
+                  left: touchDragPos.x - 30,
+                  top: touchDragPos.y - 42,
+                }}
+              >
+                <div
+                  className="w-[60px] h-[85px] rounded-lg border-2 border-cyan-400 shadow-xl shadow-cyan-500/50 bg-cover bg-center opacity-90"
+                  style={{ backgroundImage: `url(${dragCardCoverUrl})` }}
+                />
+              </div>
+            );
+          })()}
 
 
           {/* Ability Effect Animation - Attack/Buff effect going across lanes */}
@@ -5874,6 +5910,9 @@ export default function TCGPage() {
                 const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
                 const energyCost = getEnergyCost(card);
                 const canAfford = energyCost <= (gs.energy || 1);
+                // Use collection cover instead of individual card image
+                const battleHandCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
+                const battleHandCoverUrl = getCollectionCoverUrl(battleHandCollection, card.rarity);
 
                 // Check if this card is part of any potential combo
                 const cardNameLower = (card.name || "").toLowerCase();
@@ -5995,7 +6034,7 @@ export default function TCGPage() {
                     {/* Card background image - non-draggable */}
                     <div
                       className="absolute inset-0 bg-cover bg-center rounded-lg pointer-events-none"
-                      style={{ backgroundImage: `url(${encodeURI(card.imageUrl || "/images/card-back.png")})` }}
+                      style={{ backgroundImage: `url(${battleHandCoverUrl})` }}
                       draggable={false}
                     />
                     {card.foil && card.foil !== "None" && (
@@ -6317,11 +6356,13 @@ export default function TCGPage() {
                   <div className="flex-1 flex flex-wrap gap-1 justify-center items-start content-start">
                     {(lane[enemyCards] || []).map((card: any, idx: number) => {
                       const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
+                      const enemyCardCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
+                      const enemyCardCoverUrl = getCollectionCoverUrl(enemyCardCollection, card.rarity);
                       return (
                         <div
                           key={idx}
                           className={`relative w-[45px] h-[65px] rounded border-2 bg-cover bg-center ${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"}`}
-                          style={{ backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : undefined }}
+                          style={{ backgroundImage: `url(${enemyCardCoverUrl})` }}
                         >
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent rounded" />
                           <div className="absolute bottom-0 left-0 right-0 p-0.5 text-center">
@@ -6362,11 +6403,13 @@ export default function TCGPage() {
                     {(lane[myCards] || []).map((card: any, idx: number) => {
                       const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
                       const foilEffect = getFoilEffect(card.foil);
+                      const myCardCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
+                      const myCardCoverUrl = getCollectionCoverUrl(myCardCollection, card.rarity);
                       return (
                         <div
                           key={idx}
                           className={`relative w-[45px] h-[65px] rounded border-2 bg-cover bg-center ${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"} ${getFoilClass(card.foil)}`}
-                          style={{ backgroundImage: card.imageUrl ? `url(${card.imageUrl})` : undefined }}
+                          style={{ backgroundImage: `url(${myCardCoverUrl})` }}
                         >
                           {foilEffect && (
                             <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-yellow-400/20 rounded pointer-events-none" />
@@ -6438,6 +6481,9 @@ export default function TCGPage() {
               const energyCost = getEnergyCost(card);
               const canAfford = energyCost <= remainingEnergy;
               const isPending = pendingActions.some(a => a.cardIndex === idx);
+              // Use collection cover instead of individual card image
+              const handCardCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
+              const handCardCoverUrl = getCollectionCoverUrl(handCardCollection, card.rarity);
 
               if (isPending) return null; // Hide cards that are queued
 
@@ -6459,7 +6505,7 @@ export default function TCGPage() {
                         ? "border-green-400 -translate-y-6 scale-110 z-20 shadow-xl shadow-green-500/50 cursor-pointer"
                         : `${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"} hover:-translate-y-2 hover:scale-105 cursor-pointer`
                   } ${getFoilClass(card.foil)}`}
-                  style={{ backgroundImage: `url(${card.imageUrl})`, zIndex: selectedHandCard === idx ? 20 : idx }}
+                  style={{ backgroundImage: `url(${handCardCoverUrl})`, zIndex: selectedHandCard === idx ? 20 : idx }}
                 >
                   {foilEffect && (
                     <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-yellow-400/20 rounded-lg pointer-events-none" />
