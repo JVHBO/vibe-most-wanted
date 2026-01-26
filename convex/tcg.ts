@@ -17,8 +17,8 @@ import { Id } from "./_generated/dataModel";
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const TCG_CONFIG = {
-  DECK_SIZE: 15,
-  MIN_VBMS: 8,
+  DECK_SIZE: 12,
+  MIN_VBMS: 5,
   MAX_NOTHING: 7,
   INITIAL_HAND_SIZE: 3,
   CARDS_PER_TURN: 1,

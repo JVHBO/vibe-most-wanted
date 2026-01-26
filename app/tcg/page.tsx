@@ -135,15 +135,15 @@ const TCG_CONFIG = {
   CARDS_PER_LANE: 4,
   HAND_SIZE: 5,
   DECK_SIZE: 12,
-  MIN_VBMS_OR_VIBEFID: 5, // Minimum 5 VBMS cards, or 4 VBMS + 1 VibeFID
-  MAX_NOTHING: 7, // 12 - 5 = max 7 Nothing cards
+  MIN_VBMS_OR_VIBEFID: 5, // Minimum 5 VBMS/VibeFID cards
+  MAX_NOTHING: 7, // Max 7 Nothing/Other cards
   MAX_VIBEFID: 1, // Only 1 VibeFID card allowed per deck
   TURN_TIME_SECONDS: 35,
   TOTAL_TURNS: 6,
   STARTING_ENERGY: 3,
   ENERGY_PER_TURN: 1,
   MAX_ENERGY: 10,
-  ABILITY_DELAY_MS: 900, // Delay between each ability animation (increased for better pacing)
+  ABILITY_DELAY_MS: 900,
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -4714,7 +4714,7 @@ export default function TCGPage() {
             </button>
             <div className="flex flex-col items-center">
               <h1 className="text-lg md:text-xl font-black text-vintage-gold uppercase tracking-[0.25em]">{t('tcgDeckBuilder')}</h1>
-              <p className="text-[9px] text-vintage-burnt-gold/40 uppercase tracking-[0.3em]">Select 15 cards</p>
+              <p className="text-[9px] text-vintage-burnt-gold/40 uppercase tracking-[0.3em]">Select 12 cards</p>
             </div>
             <button
               onClick={handleSaveDeck}
