@@ -1463,15 +1463,23 @@ export const forceDeleteRoomByAddress = mutation({
     const addr = address.toLowerCase();
     console.log(`[forceDeleteRoomByAddress] Finding rooms for address ${addr}...`);
 
-    const rooms = await ctx.db
+    // 🚀 BANDWIDTH FIX: Use indexes instead of full table filter
+    const roomsAsHost = await ctx.db
       .query("pokerRooms")
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("hostAddress"), addr),
-          q.eq(q.field("guestAddress"), addr)
-        )
-      )
+      .withIndex("by_host", (q) => q.eq("hostAddress", addr))
       .collect();
+
+    const roomsAsGuest = await ctx.db
+      .query("pokerRooms")
+      .withIndex("by_guest", (q) => q.eq("guestAddress", addr))
+      .collect();
+
+    // Dedupe rooms (in case same room appears in both)
+    const roomMap = new Map<string, typeof roomsAsHost[0]>();
+    for (const room of [...roomsAsHost, ...roomsAsGuest]) {
+      roomMap.set(room.roomId, room);
+    }
+    const rooms = Array.from(roomMap.values());
 
     if (rooms.length === 0) {
       return { deletedCount: 0, message: "No rooms found for this address" };
