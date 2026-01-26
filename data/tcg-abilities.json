@@ -285,10 +285,10 @@
       "rarity": "Common"
     },
     "rizkybegitu": {
-      "name": "🎰 All In",
+      "name": "🎲 Chaos Roll",
       "type": "onReveal",
-      "description": "GAMBLE: 50% chance for +40 power, 50% for +10! Always wins something. DRAW 1 card!",
-      "effect": { "action": "gamble", "win": 40, "lose": 10, "draw": 1 },
+      "description": "ROLL THE DICE! 1-2: +15 power. 3-4: Swap power with random enemy. 5-6: Copy strongest ally's power!",
+      "effect": { "action": "chaosRoll", "outcomes": ["buff15", "swapRandom", "copyStrongest"] },
       "rarity": "Common"
     },
     "thosmur": {
