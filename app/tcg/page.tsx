@@ -4826,71 +4826,114 @@ export default function TCGPage() {
                 <div className="flex gap-1 ml-2 border-l border-vintage-gold/20 pl-2">
                   <button
                     onClick={() => {
-                      // Auto deck focusing on COMBOS
+                      // Auto deck focusing on MAXIMUM COMBOS
                       const allCards = [...vbmsCards, ...vibefidCards, ...nothingCards];
 
-                      // Score cards by how many combos they participate in
-                      const cardComboScores = new Map<string, number>();
+                      // Map card names to cards for quick lookup
+                      const cardsByName = new Map<string, DeckCard[]>();
                       for (const card of allCards) {
-                        const cardNameLower = (card.name || "").toLowerCase();
-                        let score = 0;
-                        for (const combo of CARD_COMBOS) {
-                          if (combo.cards.map(c => c.toLowerCase()).includes(cardNameLower)) {
-                            // Higher score for stronger combos
-                            score += combo.bonus.value;
-                          }
-                        }
-                        cardComboScores.set(card.cardId, score);
+                        const name = (card.name || "").toLowerCase();
+                        if (!cardsByName.has(name)) cardsByName.set(name, []);
+                        cardsByName.get(name)!.push(card);
                       }
 
-                      // Sort by combo score, then by effective power
-                      const sortedByCombo = [...allCards].sort((a, b) => {
-                        const scoreA = cardComboScores.get(a.cardId) || 0;
-                        const scoreB = cardComboScores.get(b.cardId) || 0;
-                        if (scoreB !== scoreA) return scoreB - scoreA;
-                        // Same combo score: sort by effective power
-                        const powerA = (a.type === "nothing" || a.type === "other") ? Math.floor(a.power * 0.5) : a.power;
-                        const powerB = (b.type === "nothing" || b.type === "other") ? Math.floor(b.power * 0.5) : b.power;
-                        return powerB - powerA;
+                      // Find all achievable combos (have enough cards to activate)
+                      const achievableCombos: { combo: typeof CARD_COMBOS[0]; cards: DeckCard[] }[] = [];
+                      for (const combo of CARD_COMBOS) {
+                        const minRequired = combo.minCards || combo.cards.length;
+                        const availableComboCards: DeckCard[] = [];
+
+                        for (const comboCardName of combo.cards) {
+                          const matches = cardsByName.get(comboCardName.toLowerCase()) || [];
+                          if (matches.length > 0) {
+                            // Pick the highest power version we have
+                            const best = matches.sort((a, b) => b.power - a.power)[0];
+                            availableComboCards.push(best);
+                          }
+                        }
+
+                        if (availableComboCards.length >= minRequired) {
+                          achievableCombos.push({ combo, cards: availableComboCards });
+                        }
+                      }
+
+                      // Sort combos: prioritize more cards in combo, then by bonus value
+                      achievableCombos.sort((a, b) => {
+                        // More cards = better (more synergy)
+                        if (b.cards.length !== a.cards.length) return b.cards.length - a.cards.length;
+                        return b.combo.bonus.value - a.combo.bonus.value;
                       });
 
-                      // Build deck respecting constraints
+                      // Greedily add combos to maximize total combos
                       const newDeck: DeckCard[] = [];
+                      const usedCardIds = new Set<string>();
                       let vbmsOrFidCount = 0;
                       let nothingOrOtherCount = 0;
                       let vibefidUsed = false;
 
-                      for (const card of sortedByCombo) {
-                        if (newDeck.length >= TCG_CONFIG.DECK_SIZE) break;
+                      const canAddCard = (card: DeckCard): boolean => {
+                        if (usedCardIds.has(card.cardId)) return true; // Already in deck
+                        if (newDeck.length >= TCG_CONFIG.DECK_SIZE) return false;
+                        if (card.type === "vibefid" && vibefidUsed) return false;
+                        if ((card.type === "nothing" || card.type === "other") && nothingOrOtherCount >= TCG_CONFIG.MAX_NOTHING) return false;
+                        return true;
+                      };
 
-                        // Check constraints
-                        if (card.type === "vibefid") {
-                          if (vibefidUsed) continue;
-                          vibefidUsed = true;
-                          vbmsOrFidCount++;
-                        } else if (card.type === "vbms") {
-                          vbmsOrFidCount++;
-                        } else if (card.type === "nothing" || card.type === "other") {
-                          if (nothingOrOtherCount >= TCG_CONFIG.MAX_NOTHING) continue;
-                          nothingOrOtherCount++;
-                        }
+                      const addCard = (card: DeckCard): boolean => {
+                        if (usedCardIds.has(card.cardId)) return true;
+                        if (!canAddCard(card)) return false;
 
                         newDeck.push(card);
+                        usedCardIds.add(card.cardId);
+                        if (card.type === "vibefid") { vibefidUsed = true; vbmsOrFidCount++; }
+                        else if (card.type === "vbms") { vbmsOrFidCount++; }
+                        else if (card.type === "nothing" || card.type === "other") { nothingOrOtherCount++; }
+                        return true;
+                      };
+
+                      // Add combos greedily
+                      for (const { cards } of achievableCombos) {
+                        // Check if all cards of this combo can be added
+                        const canAddAll = cards.every(c => canAddCard(c));
+                        if (canAddAll) {
+                          for (const card of cards) {
+                            addCard(card);
+                          }
+                        }
+                      }
+
+                      // Fill remaining slots with highest power cards
+                      const remainingCards = allCards
+                        .filter(c => !usedCardIds.has(c.cardId))
+                        .sort((a, b) => {
+                          const powerA = (a.type === "nothing" || a.type === "other") ? Math.floor(a.power * 0.5) : a.power;
+                          const powerB = (b.type === "nothing" || b.type === "other") ? Math.floor(b.power * 0.5) : b.power;
+                          return powerB - powerA;
+                        });
+
+                      for (const card of remainingCards) {
+                        if (newDeck.length >= TCG_CONFIG.DECK_SIZE) break;
+                        addCard(card);
                       }
 
                       // Ensure minimum VBMS requirement
                       if (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID) {
-                        // Need more VBMS cards - swap out nothing cards for VBMS
-                        const vbmsNotInDeck = vbmsCards.filter(c => !newDeck.find(d => d.cardId === c.cardId));
-                        const nothingInDeck = newDeck.filter(c => c.type === "nothing" || c.type === "other");
+                        const vbmsNotInDeck = vbmsCards
+                          .filter(c => !usedCardIds.has(c.cardId))
+                          .sort((a, b) => b.power - a.power);
+                        const nothingInDeck = newDeck
+                          .filter(c => c.type === "nothing" || c.type === "other")
+                          .sort((a, b) => Math.floor(a.power * 0.5) - Math.floor(b.power * 0.5));
 
                         while (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID && vbmsNotInDeck.length > 0 && nothingInDeck.length > 0) {
-                          const toRemove = nothingInDeck.pop();
+                          const toRemove = nothingInDeck.shift();
                           const toAdd = vbmsNotInDeck.shift();
                           if (toRemove && toAdd) {
                             const idx = newDeck.findIndex(c => c.cardId === toRemove.cardId);
                             if (idx !== -1) {
                               newDeck[idx] = toAdd;
+                              usedCardIds.delete(toRemove.cardId);
+                              usedCardIds.add(toAdd.cardId);
                               vbmsOrFidCount++;
                               nothingOrOtherCount--;
                             }
@@ -4902,7 +4945,7 @@ export default function TCGPage() {
                       setError(null);
                     }}
                     className="px-2 py-1 rounded transition-all bg-yellow-900/30 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-900/50 hover:border-yellow-500/50"
-                    title="Auto-build deck focusing on card combos"
+                    title="Auto-build deck with maximum combos"
                   >
                     🎯 AUTO COMBO
                   </button>
