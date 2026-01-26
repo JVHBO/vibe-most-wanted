@@ -202,6 +202,7 @@ const COMBO_TRANSLATION_KEYS: Record<string, string> = {
   christmas_spirit: "tcgComboChristmasSpirit",
   shadow_network: "tcgComboShadowNetwork",
   pixel_artists: "tcgComboPixelArtists",
+  dirty_money: "tcgComboDirtyMoney",
 };
 
 const CARD_COMBOS: CardCombo[] = [
@@ -399,6 +400,14 @@ const CARD_COMBOS: CardCombo[] = [
     cards: ["smolemaru", "joonx"],
     bonus: { type: "power", value: 35, target: "self" },
     description: "SMOLEMARU + JOONX = +35 power each! Creative minds!",
+  },
+  {
+    id: "dirty_money",
+    name: "Dirty Money",
+    emoji: "💸",
+    cards: ["scum", "betobutter"],
+    bonus: { type: "steal", value: 40, target: "enemy_lane" },
+    description: "SCUM + BETO = STEAL 40 power! Crime pays!",
   },
 ];
 

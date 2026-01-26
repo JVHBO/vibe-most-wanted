@@ -1347,6 +1347,8 @@ export const translations = {
     tcgComboShadowNetworkDesc: 'LOMBRA + SLATERG = ROUBA 30 power! Conexões subterrâneas!',
     tcgComboPixelArtists: 'Pixel Artists',
     tcgComboPixelArtistsDesc: 'SMOLEMARU + JOONX = +35 power cada! Mentes criativas!',
+    tcgComboDirtyMoney: 'Dinheiro Sujo',
+    tcgComboDirtyMoneyDesc: 'SCUM + BETO = ROUBA 40 power! O crime compensa!',
     tcgCpuMode: 'MODO CPU',
     tcgYouWon: 'Voce venceu',
     tcgTieResult: 'Empate',
@@ -2914,6 +2916,8 @@ export const translations = {
     tcgComboShadowNetworkDesc: 'LOMBRA + SLATERG = STEAL 30 power! Underground connections!',
     tcgComboPixelArtists: 'Pixel Artists',
     tcgComboPixelArtistsDesc: 'SMOLEMARU + JOONX = +35 power each! Creative minds!',
+    tcgComboDirtyMoney: 'Dirty Money',
+    tcgComboDirtyMoneyDesc: 'SCUM + BETO = STEAL 40 power! Crime pays!',
 
     // TCG Abilities - Mythic
     abilityNeymarName: '👑 King\'s Arrival',
@@ -4362,6 +4366,8 @@ export const translations = {
     tcgComboShadowNetworkDesc: 'LOMBRA + SLATERG = ROBA 30 power! Conexiones subterraneas!',
     tcgComboPixelArtists: 'Pixel Artists',
     tcgComboPixelArtistsDesc: 'SMOLEMARU + JOONX = +35 power cada uno! Mentes creativas!',
+    tcgComboDirtyMoney: 'Dinero Sucio',
+    tcgComboDirtyMoneyDesc: 'SCUM + BETO = ROBA 40 power! El crimen paga!',
     tcgCpuMode: 'MODO CPU',
     tcgYouWon: 'Ganaste',
     tcgTieResult: 'Empate',
@@ -5932,6 +5938,8 @@ export const translations = {
     tcgComboShadowNetworkDesc: 'LOMBRA + SLATERG = 30 पावर चुराओ! अंडरग्राउंड कनेक्शन!',
     tcgComboPixelArtists: 'Pixel Artists',
     tcgComboPixelArtistsDesc: 'SMOLEMARU + JOONX = हर एक को +35 पावर! क्रिएटिव माइंड्स!',
+    tcgComboDirtyMoney: 'गंदा पैसा',
+    tcgComboDirtyMoneyDesc: 'SCUM + BETO = 40 पावर चुराओ! अपराध फायदेमंद!',
 
     // TCG Abilities - Mythic
     abilityNeymarName: '👑 राजा का आगमन',
@@ -7437,6 +7445,8 @@ export const translations = {
     tcgComboShadowNetworkDesc: 'LOMBRA + SLATERG = УКРАДИ 30 силы! Подпольные связи!',
     tcgComboPixelArtists: 'Пиксельные Художники',
     tcgComboPixelArtistsDesc: 'SMOLEMARU + JOONX = +35 силы каждому! Творческие умы!',
+    tcgComboDirtyMoney: 'Грязные Деньги',
+    tcgComboDirtyMoneyDesc: 'SCUM + BETO = УКРАДИ 40 силы! Преступление окупается!',
 
     // TCG Abilities - Mythic
     abilityNeymarName: '👑 Прибытие Короля',
@@ -8964,6 +8974,8 @@ export const translations = {
     tcgComboShadowNetworkDesc: 'LOMBRA + SLATERG = 偷取30力量！地下连接！',
     tcgComboPixelArtists: '像素艺术家',
     tcgComboPixelArtistsDesc: 'SMOLEMARU + JOONX = 每张+35力量！创意头脑！',
+    tcgComboDirtyMoney: '黑钱',
+    tcgComboDirtyMoneyDesc: 'SCUM + BETO = 偷取40力量！犯罪有回报！',
 
     // TCG Abilities - Mythic
     abilityNeymarName: '👑 王者降临',
@@ -10465,6 +10477,8 @@ export const translations = {
     tcgComboShadowNetworkDesc: 'LOMBRA + SLATERG = CURI 30 power! Koneksi bawah tanah!',
     tcgComboPixelArtists: 'Seniman Pixel',
     tcgComboPixelArtistsDesc: 'SMOLEMARU + JOONX = +35 power masing-masing! Pikiran kreatif!',
+    tcgComboDirtyMoney: 'Uang Kotor',
+    tcgComboDirtyMoneyDesc: 'SCUM + BETO = CURI 40 power! Kejahatan membayar!',
 
     // TCG Abilities - Mythic
     abilityNeymarName: '👑 Kedatangan Raja',
@@ -11849,6 +11863,8 @@ export const translations = {
     tcgComboShadowNetworkDesc: 'LOMBRA + SLATERG = VOLER 30 puissance! Connexions souterraines!',
     tcgComboPixelArtists: 'Artistes Pixel',
     tcgComboPixelArtistsDesc: 'SMOLEMARU + JOONX = +35 puissance chacun! Esprits creatifs!',
+    tcgComboDirtyMoney: 'Argent Sale',
+    tcgComboDirtyMoneyDesc: 'SCUM + BETO = VOLER 40 puissance! Le crime paie!',
 
     // TCG Abilities - Mythic
     abilityNeymarName: '👑 Arrivee du Roi',
@@ -13467,6 +13483,8 @@ export const translations = {
     tcgComboShadowNetworkDesc: 'LOMBRA + SLATERG = 30パワースティール！地下のつながり！',
     tcgComboPixelArtists: 'ピクセルアーティスト',
     tcgComboPixelArtistsDesc: 'SMOLEMARU + JOONX = 各+35パワー！クリエイティブマインド！',
+    tcgComboDirtyMoney: 'ダーティマネー',
+    tcgComboDirtyMoneyDesc: 'SCUM + BETO = 40パワースティール！犯罪は割に合う！',
 
     // TCG Abilities - Mythic
     abilityNeymarName: '👑 王の到来',
@@ -15432,6 +15450,8 @@ export const translations = {
     tcgComboShadowNetworkDesc: 'LOMBRA + SLATERG = RUBA 30 potenza! Connessioni sotterranee!',
     tcgComboPixelArtists: 'Artisti Pixel',
     tcgComboPixelArtistsDesc: 'SMOLEMARU + JOONX = +35 potenza ciascuno! Menti creative!',
+    tcgComboDirtyMoney: 'Soldi Sporchi',
+    tcgComboDirtyMoneyDesc: 'SCUM + BETO = RUBA 40 potenza! Il crimine paga!',
 
     // TCG Abilities - Mythic
     abilityNeymarName: '👑 Arrivo del Re',
