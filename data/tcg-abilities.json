@@ -285,10 +285,10 @@
       "rarity": "Common"
     },
     "rizkybegitu": {
-      "name": "🎲 Chaos Roll",
+      "name": "🎲 Lucky Roll",
       "type": "onReveal",
-      "description": "ROLL THE DICE! 1-2: +15 power. 3-4: Swap power with random enemy. 5-6: Copy strongest ally's power!",
-      "effect": { "action": "chaosRoll", "outcomes": ["buff15", "swapRandom", "copyStrongest"] },
+      "description": "+10 power. If you're LOSING this lane, +25 instead!",
+      "effect": { "action": "buffIfLosing", "base": 10, "bonus": 25 },
       "rarity": "Common"
     },
     "thosmur": {
