@@ -103,14 +103,28 @@ export const batchUpdateScores = mutation({
     })),
   },
   handler: async (ctx, { updates }) => {
+    if (updates.length === 0) {
+      return { success: true, updatedCount: 0, skippedCount: 0 };
+    }
+
+    // 🚀 BANDWIDTH FIX: Batch load all cards upfront (N+1 → 1 parallel query)
+    const uniqueFids = [...new Set(updates.map(u => u.fid))];
+    const cardsResult = await Promise.all(
+      uniqueFids.map(fid =>
+        ctx.db.query("farcasterCards").withIndex("by_fid", q => q.eq("fid", fid)).first()
+      )
+    );
+    const cardMap = new Map(
+      uniqueFids.map((fid, i) => [fid, cardsResult[i]])
+    );
+
     let updatedCount = 0;
     let skippedCount = 0;
+    const now = Date.now();
 
     for (const { fid, score } of updates) {
-      const card = await ctx.db
-        .query("farcasterCards")
-        .withIndex("by_fid", (q) => q.eq("fid", fid))
-        .first();
+      // 🚀 BANDWIDTH FIX: Use pre-loaded card from map
+      const card = cardMap.get(fid);
 
       if (!card) continue;
 
@@ -123,7 +137,7 @@ export const batchUpdateScores = mutation({
 
       await ctx.db.patch(card._id, {
         latestNeynarScore: score,
-        latestScoreCheckedAt: Date.now(),
+        latestScoreCheckedAt: now,
       });
 
       updatedCount++;
