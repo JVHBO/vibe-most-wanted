@@ -561,6 +561,33 @@ const stopBgm = () => {
 let lastSoundTime: Record<string, number> = {};
 const SOUND_COOLDOWN_MS = 150; // Minimum time between same sound type
 
+// Speak combo name using Web Speech API (announcer voice)
+const speakComboName = (comboName: string) => {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+
+  // Cancel any ongoing speech
+  window.speechSynthesis.cancel();
+
+  const utterance = new SpeechSynthesisUtterance(comboName);
+  utterance.rate = 0.9; // Slightly slower for dramatic effect
+  utterance.pitch = 0.8; // Lower pitch for announcer voice
+  utterance.volume = 1.0;
+
+  // Try to find a good voice (prefer English male voices for announcer feel)
+  const voices = window.speechSynthesis.getVoices();
+  const preferredVoice = voices.find(v =>
+    v.lang.startsWith('en') && v.name.toLowerCase().includes('male')
+  ) || voices.find(v =>
+    v.lang.startsWith('en')
+  ) || voices[0];
+
+  if (preferredVoice) {
+    utterance.voice = preferredVoice;
+  }
+
+  window.speechSynthesis.speak(utterance);
+};
+
 const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "select" | "combo" | "error" | "tick" | "buff" | "debuff" | "destroy" | "steal" | "draw" | "energy" | "shuffle" | "heal" | "shield" | "bomb" | "hit" | "damage") => {
   if (typeof window === "undefined") return;
 
@@ -844,24 +871,42 @@ const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "s
       return;
 
     case "combo":
-      // Combo: epic power-up sound with multiple notes
-      const playComboNote = (freq: number, delay: number) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-        osc.frequency.exponentialRampToValueAtTime(freq * 1.5, audioCtx.currentTime + delay + 0.1);
-        gain.gain.setValueAtTime(0.35, audioCtx.currentTime + delay);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.15);
-        osc.start(audioCtx.currentTime + delay);
-        osc.stop(audioCtx.currentTime + delay + 0.15);
+      // Combo: EPIC announcer-style power chord with dramatic buildup
+      const playComboChord = (freqs: number[], delay: number, duration: number, vol: number) => {
+        freqs.forEach(freq => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+          gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + duration);
+          osc.start(audioCtx.currentTime + delay);
+          osc.stop(audioCtx.currentTime + delay + duration);
+        });
       };
-      playComboNote(400, 0);
-      playComboNote(600, 0.08);
-      playComboNote(800, 0.16);
-      playComboNote(1000, 0.24);
+      // Dramatic intro hit
+      playComboChord([150, 300], 0, 0.15, 0.4);
+      // Rising power chord
+      playComboChord([200, 400, 600], 0.1, 0.2, 0.35);
+      // Epic climax chord
+      playComboChord([300, 450, 600, 900], 0.25, 0.4, 0.45);
+      // Sparkle finish
+      const sparkle = (freq: number, d: number) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(audioCtx.destination);
+        o.type = "sine";
+        o.frequency.setValueAtTime(freq, audioCtx.currentTime + d);
+        g.gain.setValueAtTime(0.2, audioCtx.currentTime + d);
+        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d + 0.1);
+        o.start(audioCtx.currentTime + d);
+        o.stop(audioCtx.currentTime + d + 0.1);
+      };
+      sparkle(1200, 0.5);
+      sparkle(1500, 0.55);
+      sparkle(1800, 0.6);
       return;
 
     case "error":
@@ -3265,9 +3310,13 @@ export default function TCGPage() {
           const comboKey = `${currentReveal.laneIdx}-${currentReveal.side}-${combo.id}`;
           if (!shownCombosRef.current.has(comboKey)) {
             shownCombosRef.current.add(comboKey);
-            // Play combo sound - no popup needed since combo name is shown in lane
+            // Play epic combo sound + announcer voice
             setTimeout(() => {
-              playSound("buff"); // Combo activation sound
+              playSound("combo"); // Epic combo activation sound
+              // Speak combo name with announcer voice (slight delay for dramatic effect)
+              setTimeout(() => {
+                speakComboName(combo.name);
+              }, 400);
             }, 300);
           }
         });
