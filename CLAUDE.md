@@ -827,26 +827,106 @@ const TCG_CONFIG = {
   HAND_SIZE: 5,               // 5 cartas na mão
   DECK_SIZE: 15,              // Deck de 15 cartas
   TOTAL_TURNS: 6,             // 6 turnos por jogo
-  TURN_TIME_SECONDS: 15,      // 15 segundos por turno (timer implementado)
+  TURN_TIME_SECONDS: 35,      // 35 segundos por turno
   STARTING_ENERGY: 3,         // Energia inicial
   ENERGY_PER_TURN: 1,         // Ganha 1 energia por turno
   MAX_ENERGY: 10,             // Máximo 10 energia
+  ABILITY_DELAY_MS: 900,      // Delay entre animações de habilidade
 };
 ```
 
-### Sistema de Combos (26 total)
-| Tipo | Quantidade | Exemplo |
-|------|------------|---------|
-| Team Combos | 20 | viral_trio (dan romero + thosmur + zurkchad) |
-| Synergy Combos | 6 | royal_brothers (antonio + miguel) |
+### Sistema de Combos
+**Regras:**
+- Todos os combos funcionam com **2-4 cartas** (minCards: 2, max: 4)
+- Combo mais forte quanto mais cartas do combo estiverem em jogo
+- Nenhum combo tem mais de 4 cartas
 
-**Combos de Synergy (do JSON de abilities):**
-- `royal_brothers`: ANTONIO + MIGUEL = 100% power
-- `philosopher_chad`: SARTOCRATES + ZURKCHAD = +3 power/turno
-- `coinbase_nft`: BRIAN ARMSTRONG + NFTKID = steal 2 power
-- `community_creators`: SMOLEMARU + BRADYMCK = draw extra
-- `scaling_masters`: BETOBUTTER + MORLACOS = +3 power se vencer
-- `open_source_ai`: GROKO + LINUX = copy ability
+**Synergy Combos (8 combos de 2 cartas):**
+| Combo | Cartas | Efeito |
+|-------|--------|--------|
+| royal_brothers | ANTONIO + MIGUEL | 2x Power |
+| philosopher_chad | SARTOCRATES + ZURKCHAD | +60 + Immune |
+| scaling_masters | BETOBUTTER + MORLACOS | 2x Scaling |
+| parallel | RIZKYBEGITU + BRADYMCK | 2x Power |
+| pixel_artists | SMOLEMARU + JOONX | +35 |
+| christmas_spirit | NAUGHTY SANTA + GOZARU | +40 lane |
+| shadow_network | LOMBRA JR + SLATERG | Steal 30 |
+| dirty_money | SCUM + BETOBUTTER | Steal 40 |
+
+**Team Combos (15 combos de 2-4 cartas):**
+- romero_family, crypto_kings, mythic_assembly, legends_unite
+- ai_bros, scam_squad, degen_trio, vibe_team, dirty_duo
+- code_masters, content_creators, chaos_agents, sniper_support
+- money_makers, underdog_uprising
+
+### Sistema de Áudio TCG
+
+**Arquivos de som:**
+| Pasta | Conteúdo |
+|-------|----------|
+| `/sounds/combos/` | 23 vozes AI anunciando combos |
+| `/sounds/victory.mp3` | Música de vitória |
+| `/sounds/defeat.mp3` | Música de derrota |
+| `/sounds/attack.mp3` | Som de ataque/hit |
+| `/sounds/5 SEGUNDOS.mp3` | Countdown nos últimos 5s |
+
+**Volumes padrão:**
+- Combo voices: 0.5
+- Victory/Defeat: 0.6
+- Hit/Attack: 0.3
+- 5 segundos: 0.5
+
+**stopBgm() - Parar música:**
+```typescript
+// Função agressiva para garantir que áudio para
+const stopBgm = () => {
+  const killAudio = (audio: HTMLAudioElement | null) => {
+    if (!audio) return;
+    audio.pause();
+    audio.muted = true;
+    audio.volume = 0;
+    audio.currentTime = 0;
+    audio.src = ""; // Force release
+    audio.load(); // Reset element
+  };
+  killAudio(currentBgmAudio);
+  allBgmAudios.forEach(killAudio);
+  allBgmAudios = [];
+};
+```
+
+**IMPORTANTE:** Sempre adicionar áudio ao array `allBgmAudios` para garantir cleanup:
+```typescript
+const victoryAudio = new Audio("/sounds/victory.mp3");
+allBgmAudios.push(victoryAudio); // NECESSÁRIO para stopBgm funcionar!
+```
+
+### Timing e Pacing
+
+**Delays importantes:**
+| Ação | Delay |
+|------|-------|
+| Entre reveals de cartas | 700ms |
+| Delay após reveals (sem combo) | 500ms |
+| Delay após reveals (com combo) | 2500ms |
+| Entre habilidades | 300-450ms (depende da qtd) |
+| Após todas habilidades | +800ms antes do resolve |
+
+**BASE_DELAY_MS (entre habilidades):**
+- 2 ou menos habilidades: 450ms
+- 3-4 habilidades: 350ms
+- 5+ habilidades: 300ms
+
+### Interação com Cartas
+
+**Durante batalha:**
+- **Clique na carta** = Abre modal de descrição (detailCard)
+- **Arrastar carta** = Jogar na lane
+- Não existe mais "selecionar carta e clicar na lane"
+
+**No deck builder:**
+- Botão "i" pequeno = Abre descrição
+- Clique na carta = Adiciona/remove do deck
 
 ### Bug #11: Cartas VBMS sem imagem no TCG (Jan 2026)
 - **Sintomas**: Cartas do player aparecem sem imagem (placeholder cinza com "?")
