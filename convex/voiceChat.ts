@@ -157,9 +157,10 @@ export const joinVoiceChannel = mutation({
 
     // FIRST: Clean up any stale entries for this user in ANY room
     // This prevents ghost entries if user didn't leave properly before
+    // 🚀 BANDWIDTH FIX: Use index instead of full table filter
     const staleEntries = await ctx.db
       .query("voiceParticipants")
-      .filter((q) => q.eq(q.field("address"), normalizedAddress))
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .collect();
 
     for (const entry of staleEntries) {
@@ -194,9 +195,10 @@ export const leaveVoiceChannel = mutation({
 
     // Clean up ALL entries for this user (not just the current room)
     // This ensures no ghost entries remain
+    // 🚀 BANDWIDTH FIX: Use index instead of full table filter
     const allEntries = await ctx.db
       .query("voiceParticipants")
-      .filter((q) => q.eq(q.field("address"), normalizedAddress))
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .collect();
 
     let deleted = 0;

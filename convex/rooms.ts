@@ -67,10 +67,11 @@ export const getRoomByPlayer = query({
   handler: async (ctx, { playerAddress }) => {
     const normalizedAddress = playerAddress.toLowerCase();
 
+    // 🚀 BANDWIDTH FIX: Use indexes instead of full table filter
     // Try finding as host
     const asHost = await ctx.db
       .query("rooms")
-      .filter((q) => q.eq(q.field("hostAddress"), normalizedAddress))
+      .withIndex("by_host", (q) => q.eq("hostAddress", normalizedAddress))
       .filter((q) => q.neq(q.field("status"), "finished"))
       .first();
 
@@ -79,7 +80,7 @@ export const getRoomByPlayer = query({
     // Try finding as guest
     const asGuest = await ctx.db
       .query("rooms")
-      .filter((q) => q.eq(q.field("guestAddress"), normalizedAddress))
+      .withIndex("by_guest", (q) => q.eq("guestAddress", normalizedAddress))
       .filter((q) => q.neq(q.field("status"), "finished"))
       .first();
 

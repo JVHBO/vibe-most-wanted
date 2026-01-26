@@ -956,16 +956,17 @@ export const defeatBossAndSpawnNext = internalMutation({
     const now = Date.now();
 
     // Get transitioning or defeated boss
+    // 🚀 BANDWIDTH FIX: Use index instead of full table filter
     let defeatedBoss = await ctx.db
       .query("raidBoss")
-      .filter((q) => q.eq(q.field("status"), "transitioning"))
+      .withIndex("by_status", (q) => q.eq("status", "transitioning"))
       .first();
 
     // Fallback to "defeated" status for backward compatibility
     if (!defeatedBoss) {
       defeatedBoss = await ctx.db
         .query("raidBoss")
-        .filter((q) => q.eq(q.field("status"), "defeated"))
+        .withIndex("by_status", (q) => q.eq("status", "defeated"))
         .first();
     }
 
@@ -1257,9 +1258,10 @@ export const manualDistributeRewards = internalMutation({
     const totalDamage = contributions.reduce((sum, c) => sum + c.damageDealt, 0);
 
     // Get boss rarity (default to common if not found)
+    // 🚀 BANDWIDTH FIX: Use index instead of filter
     const boss = await ctx.db
       .query("raidBoss")
-      .filter((q) => q.eq(q.field("bossIndex"), bossIndex))
+      .withIndex("by_boss_index", (q) => q.eq("bossIndex", bossIndex))
       .first();
 
     const bossRarity = (boss?.rarity?.toLowerCase() || "common") as Lowercase<CardRarity>;
@@ -1394,9 +1396,10 @@ export const adminForceKillBoss = mutation({
     const now = Date.now();
 
     // Get current active boss
+    // 🚀 BANDWIDTH FIX: Use index instead of filter
     const activeBoss = await ctx.db
       .query("raidBoss")
-      .filter((q) => q.eq(q.field("status"), "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .first();
 
     if (!activeBoss) {

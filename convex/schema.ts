@@ -930,7 +930,8 @@ export default defineSchema({
     username: v.string(), // Participant's username
     joinedAt: v.number(), // Timestamp when joined voice
   })
-    .index("by_room", ["roomId"]),
+    .index("by_room", ["roomId"])
+    .index("by_address", ["address"]), // 🚀 BANDWIDTH FIX: For player lookup
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // RAID BOSS MODE (Global Cooperative Boss Battles)
