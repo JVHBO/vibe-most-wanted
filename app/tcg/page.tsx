@@ -5973,12 +5973,8 @@ export default function TCGPage() {
                         wasDraggingRef.current = false;
                         return;
                       }
-                      if (!canAfford) {
-                        playSound("error");
-                        return;
-                      }
-                      playSound("select");
-                      setSelectedHandCard(selectedHandCard === idx ? null : idx);
+                      // Open card detail instead of selecting
+                      setDetailCard(card);
                     }}
                     className={`relative flex-shrink-0 w-[60px] h-[85px] rounded-lg border-2 transition-all duration-200 select-none ${
                       !canAfford
