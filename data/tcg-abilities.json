@@ -285,10 +285,10 @@
       "rarity": "Common"
     },
     "rizkybegitu": {
-      "name": "🎰 Risky Play",
+      "name": "🎰 All In",
       "type": "onReveal",
-      "description": "GAMBLE: 50% chance for +25 power... or -10 power! High risk, high reward!",
-      "effect": { "action": "gamble", "win": 25, "lose": -10 },
+      "description": "GAMBLE: 50% chance for +40 power, 50% for +10! Always wins something. DRAW 1 card!",
+      "effect": { "action": "gamble", "win": 40, "lose": 10, "draw": 1 },
       "rarity": "Common"
     },
     "thosmur": {
