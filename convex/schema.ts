@@ -1671,7 +1671,8 @@ export default defineSchema({
     claimPendingAt: v.optional(v.number()), // When signature was generated
   })
     .index("by_address_date", ["address", "date"])
-    .index("by_date", ["date"]),
+    .index("by_date", ["date"])
+    .index("by_paid_tx_hash", ["paidTxHash"]), // 🚀 BANDWIDTH FIX: Fast txHash lookup
 
   // Access analytics - track miniapp vs web visits
   accessAnalytics: defineTable({
@@ -1684,10 +1685,24 @@ export default defineSchema({
     ),
     uniqueUsers: v.number(),  // Count of unique addresses
     sessions: v.number(),     // Total sessions
-    addresses: v.array(v.string()), // List of addresses (for dedup)
+    addresses: v.optional(v.array(v.string())), // DEPRECATED: Use accessVisits table instead
   })
     .index("by_date", ["date"])
     .index("by_date_source", ["date", "source"]),
+
+  // 🚀 BANDWIDTH FIX: Separate table for deduplication (replaces addresses array)
+  // Index lookup is O(1) vs O(n) array scan
+  accessVisits: defineTable({
+    date: v.string(), // YYYY-MM-DD
+    source: v.union(
+      v.literal("miniapp"),
+      v.literal("farcaster_web"),
+      v.literal("web"),
+      v.literal("frame")
+    ),
+    address: v.string(),
+  })
+    .index("by_date_source_address", ["date", "source", "address"]),
 
   // Access debug logs - detailed info for debugging access detection
   accessDebugLogs: defineTable({

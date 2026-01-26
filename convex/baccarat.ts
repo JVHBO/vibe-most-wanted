@@ -228,7 +228,8 @@ export const getDailyPlays = query({
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
-    // Count PvE games played today by this player
+    // 🚀 BANDWIDTH FIX: Limit query to reasonable daily max
+    // Most users won't bet more than 50 times per day in PvE
     const todayBets = await ctx.db
       .query("bettingTransactions")
       .withIndex("by_address", (q) => q.eq("address", playerAddress))
@@ -238,9 +239,11 @@ export const getDailyPlays = query({
           q.eq(q.field("type"), "bet")
         )
       )
-      .collect();
+      .order("desc")
+      .take(100); // Limit to prevent excessive reads
 
     // Filter for PvE games only (roomId starts with "pve_")
+    // Note: Convex doesn't support startsWith in filters
     const pveGames = todayBets.filter(tx => tx.roomId?.startsWith("pve_"));
 
     return {

@@ -33,7 +33,16 @@ export const logAccess = mutation({
     const today = getTodayKey();
     const normalizedAddress = address.toLowerCase();
 
-    // Find or create today's record for this source
+    // 🚀 BANDWIDTH FIX: Use separate table for dedup (O(1) index lookup vs O(n) array scan)
+    // Check if user already visited today using index
+    const existingVisit = await ctx.db
+      .query("accessVisits")
+      .withIndex("by_date_source_address", (q) =>
+        q.eq("date", today).eq("source", source).eq("address", normalizedAddress)
+      )
+      .first();
+
+    // Find or create today's aggregate record
     const existing = await ctx.db
       .query("accessAnalytics")
       .withIndex("by_date_source", (q) =>
@@ -42,32 +51,37 @@ export const logAccess = mutation({
       .first();
 
     if (existing) {
-      // Check if user already counted today
-      if (existing.addresses.includes(normalizedAddress)) {
-        // Just increment sessions, don't add duplicate user
+      if (existingVisit) {
+        // User already visited today - just increment sessions
         await ctx.db.patch(existing._id, {
           sessions: existing.sessions + 1,
         });
       } else {
         // New unique user for today
+        await ctx.db.insert("accessVisits", {
+          date: today,
+          source,
+          address: normalizedAddress,
+        });
         await ctx.db.patch(existing._id, {
           uniqueUsers: existing.uniqueUsers + 1,
           sessions: existing.sessions + 1,
-          addresses: [...existing.addresses, normalizedAddress],
         });
       }
     } else {
-      // Create new record for today
+      // Create new aggregate record for today
+      await ctx.db.insert("accessVisits", {
+        date: today,
+        source,
+        address: normalizedAddress,
+      });
       await ctx.db.insert("accessAnalytics", {
         date: today,
         source,
         uniqueUsers: 1,
         sessions: 1,
-        addresses: [normalizedAddress],
       });
     }
-
-    console.log(`📊 Access logged: ${source} - ${normalizedAddress}`);
   },
 });
 

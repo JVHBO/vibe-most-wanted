@@ -105,20 +105,22 @@ export const canSpin = query({
     const isVibeFidHolder = !!vibeFidCard;
     const maxSpins = isVibeFidHolder ? 3 : 1;
 
-    // Count today's spins
+    // 🚀 BANDWIDTH FIX: Use .take(maxSpins) instead of .collect()
+    // Since max is 3, we never need to fetch more than 3 spins
     const spins = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
         q.eq("address", normalizedAddress).eq("date", today)
       )
-      .collect();
+      .order("desc") // Get most recent first for lastSpinDate
+      .take(maxSpins);
 
     const spinsUsed = spins.length;
     const spinsRemaining = Math.max(0, maxSpins - spinsUsed);
 
     return {
       canSpin: spinsRemaining > 0,
-      lastSpinDate: spins[spins.length - 1]?.date || null,
+      lastSpinDate: spins[0]?.date || null, // First is most recent due to desc order
       prizes: PRIZES.map((p, i) => ({ ...p, index: i })),
       testMode: false,
       spinsRemaining,
@@ -150,12 +152,13 @@ export const spin = mutation({
       const isVibeFidHolder = !!vibeFidCard;
       const maxSpins = isVibeFidHolder ? 3 : 1;
 
+      // 🚀 BANDWIDTH FIX: Use .take(maxSpins) instead of .collect()
       const existingSpins = await ctx.db
         .query("rouletteSpins")
         .withIndex("by_address_date", (q) =>
           q.eq("address", normalizedAddress).eq("date", today)
         )
-        .collect();
+        .take(maxSpins);
 
       if (existingSpins.length >= maxSpins) {
         return {
@@ -642,15 +645,16 @@ export const canBuyPaidSpin = query({
     const normalizedAddress = address.toLowerCase();
     const today = getTodayKey();
 
-    // Count paid spins today
+    // 🚀 BANDWIDTH FIX: Use filter in query instead of collect + manual filter
     const paidSpins = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
         q.eq("address", normalizedAddress).eq("date", today)
       )
+      .filter((q) => q.eq(q.field("isPaidSpin"), true))
       .collect();
 
-    const paidSpinsToday = paidSpins.filter(s => s.isPaidSpin === true).length;
+    const paidSpinsToday = paidSpins.length;
     const canBuy = paidSpinsToday < MAX_PAID_SPINS_PER_DAY;
 
     return {
@@ -676,26 +680,27 @@ export const recordPaidSpin = mutation({
     const normalizedAddress = address.toLowerCase();
     const today = getTodayKey();
 
-    // Check daily limit
+    // 🚀 BANDWIDTH FIX: Use filter in query instead of collect + manual filter
+    // Check daily limit for paid spins
     const paidSpins = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
         q.eq("address", normalizedAddress).eq("date", today)
       )
+      .filter((q) => q.eq(q.field("isPaidSpin"), true))
       .collect();
 
-    const paidSpinsToday = paidSpins.filter(s => s.isPaidSpin === true).length;
-    if (paidSpinsToday >= MAX_PAID_SPINS_PER_DAY) {
+    if (paidSpins.length >= MAX_PAID_SPINS_PER_DAY) {
       return {
         success: false,
         error: `Daily limit reached (${MAX_PAID_SPINS_PER_DAY} paid spins)`,
       };
     }
 
-    // Check if txHash already used
+    // 🚀 BANDWIDTH FIX: Use index for txHash lookup instead of full table scan
     const existingTx = await ctx.db
       .query("rouletteSpins")
-      .filter((q) => q.eq(q.field("paidTxHash"), txHash))
+      .withIndex("by_paid_tx_hash", (q) => q.eq("paidTxHash", txHash))
       .first();
 
     if (existingTx) {
