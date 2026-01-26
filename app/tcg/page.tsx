@@ -197,13 +197,10 @@ const COMBO_TRANSLATION_KEYS: Record<string, string> = {
   underdog_uprising: "tcgComboUnderdogUprising",
   proxy_war: "tcgComboProxyWar",
   santa_helpers: "tcgComboSantaHelpers",
-  explosive_combo: "tcgComboExplosiveForce",
-  persistence_pays: "tcgComboPersistencePays",
   // Synergy combos (from card descriptions)
   royal_brothers: "tcgComboRoyalBrothers",
   philosopher_chad: "tcgComboPhilosopherChad",
   coinbase_nft: "tcgComboCoinbaseNFT",
-  community_creators: "tcgComboCommunityCreators",
   scaling_masters: "tcgComboScalingMasters",
   open_source_ai: "tcgComboOpenSourceAI",
 };
@@ -372,24 +369,6 @@ const CARD_COMBOS: CardCombo[] = [
     bonus: { type: "power", value: 50, target: "self" },
     description: "+50 power to each helper!",
   },
-  {
-    id: "explosive_combo",
-    name: "Explosive Force",
-    emoji: "💥",
-    cards: ["landmine", "chilipepper", "joonx"],
-    minCards: 2,
-    bonus: { type: "steal", value: 30, target: "enemy_lane" },
-    description: "-30 power to ALL enemies!",
-  },
-  {
-    id: "persistence_pays",
-    name: "Persistence Pays",
-    emoji: "🔄",
-    cards: ["morlacos", "thosmur", "sartocrates"],
-    minCards: 2,
-    bonus: { type: "power", value: 35, target: "self" },
-    description: "+35 power to persistent cards!",
-  },
 
   // ═══ SYNERGY COMBOS (From card descriptions) ═══
   {
@@ -415,14 +394,6 @@ const CARD_COMBOS: CardCombo[] = [
     cards: ["brian armstrong", "nftkid"],
     bonus: { type: "power", value: 50, target: "lane" },
     description: "BRIAN + NFTKID = +50 power to entire lane!",
-  },
-  {
-    id: "community_creators",
-    name: "Community Creators",
-    emoji: "🤝",
-    cards: ["smolemaru", "bradymck"],
-    bonus: { type: "power", value: 40, target: "self" },
-    description: "SMOLEMARU + BRADYMCK = +40 power each! Community power!",
   },
   {
     id: "scaling_masters",
