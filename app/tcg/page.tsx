@@ -195,6 +195,7 @@ const COMBO_TRANSLATION_KEYS: Record<string, string> = {
   money_makers: "tcgComboMoneyMakers",
   underdog_uprising: "tcgComboUnderdogUprising",
   // Synergy combos (from card descriptions)
+  parallel: "tcgComboParallel",
   royal_brothers: "tcgComboRoyalBrothers",
   philosopher_chad: "tcgComboPhilosopherChad",
   scaling_masters: "tcgComboScalingMasters",
@@ -340,6 +341,14 @@ const CARD_COMBOS: CardCombo[] = [
   },
 
   // ═══ SYNERGY COMBOS (From card descriptions) ═══
+  {
+    id: "parallel",
+    name: "Parallel",
+    emoji: "⚡",
+    cards: ["rizkybegitu", "bradymck"],
+    bonus: { type: "power", value: 50, target: "self" },
+    description: "RIZKY + BRADY = +50 power each! Parallel universes collide!",
+  },
   {
     id: "royal_brothers",
     name: "Royal Brothers",
