@@ -5080,16 +5080,6 @@ export default function TCGPage() {
                     borderBottom: "2px solid",
                     borderImage: "linear-gradient(90deg, transparent, #B8860B, #FFD700, #B8860B, transparent) 1"
                   }}>
-                    {/* Lane name */}
-                    <div className="text-center py-1.5 px-1">
-                      <span className="text-[11px] font-bold text-[#FFD700] tracking-wide uppercase" style={{ textShadow: "0 0 10px rgba(255,215,0,0.3)" }}>{lane.name || `Lane ${laneIndex + 1}`}</span>
-                    </div>
-                    {/* Effect description */}
-                    {lane.description && lane.effect !== "noEffect" && (
-                      <div className="text-center px-1 pb-1.5 -mt-1">
-                        <span className="text-[8px] text-[#DAA520] font-medium">{lane.description}</span>
-                      </div>
-                    )}
                     {/* Score Bar - Royal style */}
                     <div className="flex items-center justify-center gap-3 py-1.5" style={{ background: "rgba(0,0,0,0.5)" }}>
                       <div className={`min-w-[32px] text-center px-2 py-0.5 rounded text-sm font-black ${
@@ -5108,7 +5098,7 @@ export default function TCGPage() {
 
                   {/* CPU Cards (top) - Grid 2x2 style */}
                   <div className="flex-1 flex items-start justify-center pt-1 px-1 overflow-hidden">
-                    <div className="grid grid-cols-2 gap-1 min-h-[104px]">
+                    <div className="grid grid-cols-2 gap-1 min-h-[124px]">
                       {lane.cpuCards.map((card: any, idx: number) => {
                         const ability = getCardAbility(card.name, card);
                         const foil = (card.foil || "").toLowerCase();
@@ -5138,7 +5128,7 @@ export default function TCGPage() {
                           <div
                             key={idx}
                             onClick={() => isRevealed && setDetailCard(card)}
-                            className={`relative w-9 h-[50px] rounded-md bg-cover bg-center cursor-pointer hover:scale-105 transition-all overflow-hidden ${animClass} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"}`}
+                            className={`relative w-10 h-[58px] rounded-md bg-cover bg-center cursor-pointer hover:scale-105 transition-all overflow-hidden ${animClass} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"}`}
                             style={{
                               backgroundImage: displayImageUrl ? `url(${displayImageUrl})` : undefined,
                               boxShadow: isRevealed ? "0 2px 6px rgba(0,0,0,0.6), 0 0 0 1px rgba(239,68,68,0.5)" : "0 2px 6px rgba(0,0,0,0.8), 0 0 0 1px rgba(100,100,100,0.5)"
@@ -5182,7 +5172,7 @@ export default function TCGPage() {
                         );
                       })}
                       {lane.cpuCards.length === 0 && (
-                        <div className="w-9 h-[50px] rounded-md"
+                        <div className="w-10 h-[58px] rounded-md"
                           style={{
                             background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)",
                             border: "2px dashed rgba(184,134,11,0.3)",
@@ -5208,7 +5198,7 @@ export default function TCGPage() {
                     )}
                   </div>
 
-                  {/* Player Cards (bottom) - Grid 2x2 style */}
+                  {/* Player Cards (bottom) - Grid 2x2 style - increased height */}
                   <div
                     className={`relative flex-1 flex items-end justify-center pb-1 px-1 transition-all overflow-hidden ${
                       selectedHandCard !== null ? "bg-green-900/30 cursor-pointer" : ""
@@ -5220,7 +5210,7 @@ export default function TCGPage() {
                         <span className="text-green-400 text-xs font-bold bg-black/60 px-2 py-1 rounded">{t('tcgPlay2')}</span>
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-1 min-h-[104px]">
+                    <div className="grid grid-cols-2 gap-1 min-h-[124px]">
                       {lane.playerCards.map((card: any, idx: number) => {
                         const ability = getCardAbility(card.name, card);
                         const animKey = `${laneIndex}-player-${idx}`;
@@ -5261,7 +5251,7 @@ export default function TCGPage() {
                               e.stopPropagation();
                               if (isRevealed) setDetailCard(card);
                             }}
-                            className={`relative w-9 h-[50px] rounded-md bg-cover bg-center cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${isRevealed ? getFoilClass(card.foil) : ""} ${animClass} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"} ${draggedLaneCard?.laneIndex === laneIndex && draggedLaneCard?.cardIndex === idx ? "opacity-50 scale-95" : ""}`}
+                            className={`relative w-10 h-[58px] rounded-md bg-cover bg-center cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${isRevealed ? getFoilClass(card.foil) : ""} ${animClass} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"} ${draggedLaneCard?.laneIndex === laneIndex && draggedLaneCard?.cardIndex === idx ? "opacity-50 scale-95" : ""}`}
                             style={{
                               backgroundImage: `url(${displayImageUrl})`,
                               zIndex: anim ? 50 : idx,
@@ -5336,7 +5326,7 @@ export default function TCGPage() {
                         );
                       })}
                       {lane.playerCards.length === 0 && !selectedHandCard && (
-                        <div className="w-9 h-[50px] rounded-md"
+                        <div className="w-10 h-[58px] rounded-md"
                           style={{
                             background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)",
                             border: "2px dashed rgba(184,134,11,0.3)",
