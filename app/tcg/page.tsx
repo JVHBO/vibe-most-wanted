@@ -561,33 +561,6 @@ const stopBgm = () => {
 let lastSoundTime: Record<string, number> = {};
 const SOUND_COOLDOWN_MS = 150; // Minimum time between same sound type
 
-// Speak combo name using Web Speech API (announcer voice)
-const speakComboName = (comboName: string) => {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-
-  // Cancel any ongoing speech
-  window.speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(comboName);
-  utterance.rate = 0.9; // Slightly slower for dramatic effect
-  utterance.pitch = 0.8; // Lower pitch for announcer voice
-  utterance.volume = 1.0;
-
-  // Try to find a good voice (prefer English male voices for announcer feel)
-  const voices = window.speechSynthesis.getVoices();
-  const preferredVoice = voices.find(v =>
-    v.lang.startsWith('en') && v.name.toLowerCase().includes('male')
-  ) || voices.find(v =>
-    v.lang.startsWith('en')
-  ) || voices[0];
-
-  if (preferredVoice) {
-    utterance.voice = preferredVoice;
-  }
-
-  window.speechSynthesis.speak(utterance);
-};
-
 const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "select" | "combo" | "error" | "tick" | "buff" | "debuff" | "destroy" | "steal" | "draw" | "energy" | "shuffle" | "heal" | "shield" | "bomb" | "hit" | "damage") => {
   if (typeof window === "undefined") return;
 
@@ -3310,13 +3283,9 @@ export default function TCGPage() {
           const comboKey = `${currentReveal.laneIdx}-${currentReveal.side}-${combo.id}`;
           if (!shownCombosRef.current.has(comboKey)) {
             shownCombosRef.current.add(comboKey);
-            // Play epic combo sound + announcer voice
+            // Play epic combo sound
             setTimeout(() => {
-              playSound("combo"); // Epic combo activation sound
-              // Speak combo name with announcer voice (slight delay for dramatic effect)
-              setTimeout(() => {
-                speakComboName(combo.name);
-              }, 400);
+              playSound("combo");
             }, 300);
           }
         });
