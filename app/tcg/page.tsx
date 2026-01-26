@@ -101,9 +101,9 @@ const TCG_CONFIG = {
   LANES: 3,
   CARDS_PER_LANE: 4,
   HAND_SIZE: 5,
-  DECK_SIZE: 15,
+  DECK_SIZE: 12,
   MIN_VBMS_OR_VIBEFID: 6, // Minimum 6 VBMS cards, or 5 VBMS + 1 VibeFID
-  MAX_NOTHING: 9, // 15 - 6 = max 9 Nothing cards
+  MAX_NOTHING: 6, // 12 - 6 = max 6 Nothing cards
   MAX_VIBEFID: 1, // Only 1 VibeFID card allowed per deck
   TURN_TIME_SECONDS: 25,
   TOTAL_TURNS: 6,
