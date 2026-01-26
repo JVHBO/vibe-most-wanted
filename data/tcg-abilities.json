@@ -188,8 +188,8 @@
     "smolemaru": {
       "name": "🎨 Creative Spark",
       "type": "onReveal",
-      "description": "+8 power per card played. COMBO: If BRADYMCK in play, BOTH gain +5 per friendly!",
-      "effect": { "action": "buffPerCardsPlayed", "value": 8, "combo": { "partner": "bradymck", "bonusAction": "bothBuffPerFriendly", "bonusValue": 5 } },
+      "description": "+8 power per card you've played this game!",
+      "effect": { "action": "buffPerCardsPlayed", "value": 8 },
       "rarity": "Rare"
     },
     "ventra": {
@@ -202,8 +202,8 @@
     "bradymck": {
       "name": "🤝 Community Builder",
       "type": "onReveal",
-      "description": "+12 power per friendly. COMBO: If SMOLEMARU in play, BOTH gain +5 per friendly!",
-      "effect": { "action": "buffPerFriendly", "value": 12, "combo": { "partner": "smolemaru", "bonusAction": "bothBuffPerFriendly", "bonusValue": 5 } },
+      "description": "+12 power per friendly card in play!",
+      "effect": { "action": "buffPerFriendly", "value": 12 },
       "rarity": "Rare"
     },
     "shills": {
