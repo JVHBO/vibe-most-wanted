@@ -38,6 +38,10 @@ interface TCGCard {
 
 interface DeckCard extends TCGCard {
   selected?: boolean;
+  // Ability markers (used internally during turn processing)
+  _bombTurn?: number;    // Time Bomb: turn when bomb explodes
+  _bombLane?: number;    // Time Bomb: lane where bomb is
+  _sacrificed?: boolean; // Sacrifice: card should be removed
 }
 
 interface GameAction {
@@ -2371,6 +2375,120 @@ export default function TCGPage() {
         const isLosing = isPlayer ? myLanePower < enemyLanePower : enemyLanePower < myLanePower;
         bonusPower = isLosing ? (effect.bonus || 25) : (effect.base || 10);
         break;
+
+      // ═══════════════════════════════════════════════════════════════════════════════
+      // NEW ABILITIES - Implemented Jan 2026
+      // ═══════════════════════════════════════════════════════════════════════════════
+
+      case "stealWeakest":
+        // CHARM: Steal the weakest enemy card to your side! (Naughty Santa - Legendary)
+        let weakestEnemyCard: DeckCard | null = null;
+        let weakestEnemyLane = -1;
+        let weakestEnemyIdx = -1;
+        let weakestEnemyPower = Infinity;
+        newLanes.forEach((lane: any, lIdx: number) => {
+          lane[enemyCards].forEach((c: DeckCard, cIdx: number) => {
+            if (c.power < weakestEnemyPower) {
+              weakestEnemyCard = c;
+              weakestEnemyLane = lIdx;
+              weakestEnemyIdx = cIdx;
+              weakestEnemyPower = c.power;
+            }
+          });
+        });
+        if (weakestEnemyCard && weakestEnemyLane >= 0) {
+          // Remove from enemy
+          const stolenCard = newLanes[weakestEnemyLane][enemyCards].splice(weakestEnemyIdx, 1)[0];
+          newLanes[weakestEnemyLane][enemyPower] -= stolenCard.power;
+          // Add to your side (same lane as this card) with 50% power
+          const newPower = Math.floor(stolenCard.power * 0.5);
+          stolenCard.power = newPower;
+          newLanes[laneIndex][myCards].push(stolenCard);
+          newLanes[laneIndex][myPower] += newPower;
+        }
+        break;
+
+      case "timeBomb":
+        // Plant a BOMB! After 2 turns, DESTROY ALL cards in this lane (Tukka - Legendary)
+        // Mark this card with bomb info - will be processed in continueAfterReveal
+        const currentTurnBomb = pveGameState?.currentTurn || 1;
+        card._bombTurn = currentTurnBomb + (effect.delay || 2);
+        card._bombLane = laneIndex;
+        bonusPower = 0; // No immediate power bonus
+        break;
+
+      case "forceDiscardAndDraw":
+        // Enemy discards (loses power), you draw! (Sartocrates - Epic)
+        // Debuff a random enemy card
+        if (newLanes[laneIndex][enemyCards].length > 0) {
+          const targetIdx = Math.floor(Math.random() * newLanes[laneIndex][enemyCards].length);
+          const debuffAmount = 15;
+          newLanes[laneIndex][enemyCards][targetIdx] = {
+            ...newLanes[laneIndex][enemyCards][targetIdx],
+            power: Math.max(0, newLanes[laneIndex][enemyCards][targetIdx].power - debuffAmount),
+          };
+          newLanes[laneIndex][enemyPower] = Math.max(0, newLanes[laneIndex][enemyPower] - debuffAmount);
+        }
+        // Draw 1 card
+        if (isPlayer && newDeck.length > 0) {
+          newHand.push(newDeck.shift()!);
+        }
+        bonusPower = effect.selfDraw ? 5 : 0; // Small bonus
+        break;
+
+      case "parasiteLane":
+        // Mind Parasite: Lock lane, drain power from enemies! (Horsefarts - Epic)
+        // Simplified: debuff all enemies in lane + steal some power
+        let totalDrained = 0;
+        const drainAmount = 10;
+        newLanes[laneIndex][enemyCards].forEach((c: DeckCard, cIdx: number) => {
+          const drained = Math.min(drainAmount, c.power);
+          newLanes[laneIndex][enemyCards][cIdx] = { ...c, power: Math.max(0, c.power - drained) };
+          totalDrained += drained;
+        });
+        newLanes[laneIndex][enemyPower] = Math.max(0, newLanes[laneIndex][enemyPower] - totalDrained);
+        bonusPower = totalDrained; // Gain drained power
+        break;
+
+      case "sacrificeBuffAll":
+        // SACRIFICE: Destroy self and buff ALL allies! (Melted - Rare)
+        const buffAllValue = effect.value || 20;
+        // Buff all friendly cards in all lanes
+        newLanes.forEach((lane: any) => {
+          lane[myCards].forEach((c: DeckCard, cIdx: number) => {
+            if (c.cardId !== card.cardId) { // Don't buff self (will be destroyed)
+              lane[myCards][cIdx] = { ...c, power: c.power + buffAllValue };
+              lane[myPower] += buffAllValue;
+            }
+          });
+        });
+        // Mark card for destruction (will be removed after ability processing)
+        card._sacrificed = true;
+        bonusPower = -card.power; // Negate own power since card will be destroyed
+        break;
+
+      case "shuffleEnemyLanes":
+        // CHAOS: Shuffle ALL ENEMY cards between lanes! (Goofy Romero - Legendary)
+        const allEnemyCardsToShuffle: DeckCard[] = [];
+        // Collect all enemy cards
+        newLanes.forEach((lane: any) => {
+          allEnemyCardsToShuffle.push(...lane[enemyCards]);
+          lane[enemyCards] = [];
+          lane[enemyPower] = 0;
+        });
+        // Shuffle
+        for (let i = allEnemyCardsToShuffle.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [allEnemyCardsToShuffle[i], allEnemyCardsToShuffle[j]] = [allEnemyCardsToShuffle[j], allEnemyCardsToShuffle[i]];
+        }
+        // Redistribute to lanes
+        allEnemyCardsToShuffle.forEach((enemyCard, idx) => {
+          const targetLane = idx % 3;
+          newLanes[targetLane][enemyCards].push(enemyCard);
+          newLanes[targetLane][enemyPower] += enemyCard.power;
+        });
+        bonusPower = 10; // Chaos bonus
+        break;
     }
 
     return { lanes: newLanes, playerHand: newHand, playerDeckRemaining: newDeck, bonusPower, energyToConsume };
@@ -2469,6 +2587,43 @@ export default function TCGPage() {
           return card.power; // Double = add same amount again
         }
         return 0;
+
+      // ═══════════════════════════════════════════════════════════════════════════════
+      // NEW ONGOING ABILITIES - Implemented Jan 2026
+      // ═══════════════════════════════════════════════════════════════════════════════
+
+      case "adaptivePower":
+        // LOSING: Double power. TIE: +20. WINNING: buff adjacent +15 (Nico - Legendary)
+        const nicoMyPower = isPlayer ? lanes[laneIndex].playerPower : lanes[laneIndex].cpuPower;
+        const nicoEnemyPower = isPlayer ? lanes[laneIndex].cpuPower : lanes[laneIndex].playerPower;
+        if (nicoMyPower < nicoEnemyPower) {
+          // LOSING - double power
+          return card.power; // Double = add same power again
+        } else if (nicoMyPower === nicoEnemyPower) {
+          // TIE - +20 power
+          return effect.ifTie || 20;
+        } else {
+          // WINNING - buff adjacent (this is handled as bonus to self for simplicity)
+          return effect.ifWinning?.buffAdjacent || 15;
+        }
+
+      case "convertEnergyEndGame":
+        // At END OF GAME: Convert energy to power (Vibe Intern - Epic)
+        // This is handled at game end, but we can show potential power
+        // For now, return 0 - the actual conversion happens in game end logic
+        return 0;
+
+      case "energyPerTurn":
+        // +1 ENERGY each turn (Rachel - Common)
+        // Energy bonus is handled separately in turn logic
+        // But we give a small power bonus to make it visible
+        return currentTurn * 2; // +2 power per turn as visual indicator
+
+      case "buffLaneEndTurn":
+        // +3 power to ALL allies in this lane (Gozaru - Common)
+        // Similar to buffLaneOngoing but applies at end of each turn
+        // For ongoing calculation, we apply it based on turns passed
+        return (effect.value || 3) * currentTurn;
 
       default:
         return 0;
@@ -3371,15 +3526,55 @@ export default function TCGPage() {
       }
     });
 
+    // Process TIME BOMBS - destroy all cards in lane if bomb turn reached
+    const currentTurnNum = pveGameState.currentTurn;
+    newLanes.forEach((lane: any, laneIdx: number) => {
+      // Check player cards for bombs
+      lane.playerCards.forEach((c: any) => {
+        if (c._bombTurn && c._bombTurn <= currentTurnNum) {
+          // BOOM! Destroy ALL cards in this lane
+          playSound("bomb");
+          lane.playerCards = [];
+          lane.cpuCards = [];
+          lane.playerPower = 0;
+          lane.cpuPower = 0;
+        }
+      });
+      // Check CPU cards for bombs
+      lane.cpuCards.forEach((c: any) => {
+        if (c._bombTurn && c._bombTurn <= currentTurnNum) {
+          playSound("bomb");
+          lane.playerCards = [];
+          lane.cpuCards = [];
+          lane.playerPower = 0;
+          lane.cpuPower = 0;
+        }
+      });
+    });
+
+    // Remove SACRIFICED cards (from sacrificeBuffAll ability)
+    newLanes = newLanes.map((lane: any) => ({
+      ...lane,
+      playerCards: lane.playerCards.filter((c: any) => !c._sacrificed),
+      cpuCards: lane.cpuCards.filter((c: any) => !c._sacrificed),
+    }));
+
+    // Recalculate lane powers after removing sacrificed cards
+    newLanes = newLanes.map((lane: any) => ({
+      ...lane,
+      playerPower: lane.playerCards.reduce((sum: number, c: DeckCard) => sum + (c.power || 0), 0),
+      cpuPower: lane.cpuCards.reduce((sum: number, c: DeckCard) => sum + (c.power || 0), 0),
+    }));
+
     // Clear _playedThisTurn and _revealed flags from all cards
     newLanes = newLanes.map((lane: any) => ({
       ...lane,
       playerCards: lane.playerCards.map((c: DeckCard) => {
-        const { _playedThisTurn, _playedLaneIndex, _revealed, ...cleanCard } = c as any;
+        const { _playedThisTurn, _playedLaneIndex, _revealed, _bombTurn, _bombLane, _sacrificed, ...cleanCard } = c as any;
         return cleanCard;
       }),
       cpuCards: lane.cpuCards.map((c: DeckCard) => {
-        const { _playedThisTurn, _playedLaneIndex, _revealed, ...cleanCard } = c as any;
+        const { _playedThisTurn, _playedLaneIndex, _revealed, _bombTurn, _bombLane, _sacrificed, ...cleanCard } = c as any;
         return cleanCard;
       }),
     }));
@@ -3399,6 +3594,32 @@ export default function TCGPage() {
 
     // Check if game over
     if (pveGameState.currentTurn >= TCG_CONFIG.TOTAL_TURNS) {
+      // Process CONVERT ENERGY END GAME ability (Vibe Intern - Epic)
+      // Check if player has any card with this ability
+      const remainingEnergy = pveGameState.energy || 0;
+      newLanes.forEach((lane: any) => {
+        lane.playerCards.forEach((c: DeckCard) => {
+          const ability = getCardAbility(c.name, c);
+          if (ability?.effect?.action === "convertEnergyEndGame" && remainingEnergy > 0) {
+            const powerPerEnergy = ability.effect.powerPerEnergy || 8;
+            const bonusPower = remainingEnergy * powerPerEnergy;
+            c.power += bonusPower;
+            lane.playerPower += bonusPower;
+          }
+        });
+        // CPU version
+        const cpuRemainingEnergy = pveGameState.cpuEnergy || 0;
+        lane.cpuCards.forEach((c: DeckCard) => {
+          const ability = getCardAbility(c.name, c);
+          if (ability?.effect?.action === "convertEnergyEndGame" && cpuRemainingEnergy > 0) {
+            const powerPerEnergy = ability.effect.powerPerEnergy || 8;
+            const bonusPower = cpuRemainingEnergy * powerPerEnergy;
+            c.power += bonusPower;
+            lane.cpuPower += bonusPower;
+          }
+        });
+      });
+
       let playerWins = 0;
       let cpuWins = 0;
 
@@ -3499,6 +3720,22 @@ export default function TCGPage() {
     const playerSkipped = (pveGameState.cardsPlayedThisTurn || 0) === 0;
     let bonusEnergy = playerSkipped ? 2 : 0;
     if (playerSkipped) playSound("energy");
+
+    // Check for ENERGY PER TURN ability (Rachel - Common)
+    // Add +1 energy for each card with this ability on the board
+    let energyPerTurnBonus = 0;
+    newLanes.forEach((lane: any) => {
+      lane.playerCards.forEach((c: DeckCard) => {
+        const ability = getCardAbility(c.name, c);
+        if (ability?.effect?.action === "energyPerTurn") {
+          energyPerTurnBonus += ability.effect.value || 1;
+        }
+      });
+    });
+    if (energyPerTurnBonus > 0) {
+      bonusEnergy += energyPerTurnBonus;
+      playSound("energy");
+    }
 
     setPveGameState({
       ...pveGameState,
