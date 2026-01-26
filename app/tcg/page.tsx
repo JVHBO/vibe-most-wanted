@@ -3842,13 +3842,12 @@ export default function TCGPage() {
             </div>
           )}
 
-          {/* Nothing Card Info */}
+          {/* Nothing/Other Card Info */}
           {(card.type === "nothing" || card.type === "other") && (
             <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-3 mb-3">
               <p className="text-purple-300 text-xs font-bold mb-1">{t('tcgNothingCardTitle')}</p>
               <p className="text-vintage-burnt-gold text-xs">• 50% base power penalty</p>
               <p className="text-vintage-burnt-gold text-xs">• Can be sacrificed from hand (draw new card)</p>
-              <p className="text-vintage-burnt-gold text-xs">• Can be sacrificed from lane (buff another card)</p>
             </div>
           )}
 
