@@ -19,6 +19,7 @@ import { useBodyScrollLock, useEscapeKey } from "@/hooks";
 import { Z_INDEX } from "@/lib/z-index";
 import CoinsHistoryModal from "./CoinsHistoryModal";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { translateClaimError, isClaimErrorCode, getSupportText, SupportLink } from "@/lib/claimErrorTranslator";
 import { SupportedLanguage } from "@/lib/translations";
 
@@ -40,8 +41,9 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   // Use userAddress prop if provided (Farcaster mobile), otherwise wagmi
   const address = userAddress || wagmiAddress;
 
-  // 🔄 Get refresh function from context (for updating balance after claims)
+  // 🔄 Get refresh functions from both contexts
   const { refreshUserProfile } = usePlayerCards();
+  const { refreshProfile } = useProfile();
   const { t, lang } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
@@ -263,7 +265,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       const result = await claimInboxAsTESTVBMS({ address });
       toast.success(result.message);
       // 🔄 Refresh profile to update balance display
-      await refreshUserProfile();
+      await Promise.all([refreshUserProfile(), refreshProfile()]);
       setTimeout(() => {
         onClose();
       }, 1500);
@@ -387,7 +389,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       // 🔄 Refetch daily limit after successful conversion
       refetchDailyLimit();
       // 🔄 Refresh profile to update TESTVBMS balance
-      await refreshUserProfile();
+      await Promise.all([refreshUserProfile(), refreshProfile()]);
 
       setTimeout(() => {
         onClose();
