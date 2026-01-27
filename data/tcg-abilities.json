@@ -327,10 +327,10 @@
       "rarity": "Common"
     },
     "landmine": {
-      "name": "💣 Booby Trap",
+      "name": "💣 Kamikaze",
       "type": "onReveal",
-      "description": "-20 power strongest enemy. END OF GAME: If still here, DESTROY strongest enemy!",
-      "effect": { "action": "debuffStrongest", "value": -20, "endGameDestroy": true },
+      "description": "BOOM! Destroys itself AND the strongest enemy!",
+      "effect": { "action": "kamikaze" },
       "rarity": "Common"
     },
     "linux": {

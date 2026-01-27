@@ -498,7 +498,8 @@ export default function TCGPage() {
   const [jcLoadingProgress, setJcLoadingProgress] = useState<{page: number, cards: number} | null>(null);
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [status, setStatus] = useState<string>("idle");
-  
+  const [skippedCardLoading, setSkippedCardLoading] = useState(false);
+
   // 🔗 Get cards from shared context (persists across routes!)
   // 🚀 BANDWIDTH FIX: Use context's loadNFTs instead of local duplicate
   const { nfts: contextNfts, status: contextStatus, syncNftsFromHome, loadNFTs: contextLoadNFTs, forceReloadNFTs: contextForceReloadNFTs } = usePlayerCards();

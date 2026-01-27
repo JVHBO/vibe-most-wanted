@@ -50,30 +50,27 @@ const resolveCardName = (name: string): string => {
   return CARD_NAME_ALIASES[lower] || lower;
 };
 
-// Collection cover images - maps collection to its representative image folder
+// Collection cover images - same as Mecha Arena (PokerBattleTable)
 const COLLECTION_COVERS: Record<string, string> = {
-  vibe: "vibe",
-  vibefid: "vibefid",
-  nothing: "vibe", // Nothing uses VBMS covers
-  cumioh: "cumioh",
-  viberotbangers: "viberotbangers",
-  viberuto: "viberuto",
-  meowverse: "meowverse",
-  gmvbrs: "gmvbrs",
-  teampothead: "teampothead",
-  tarot: "tarot",
-  baseballcabal: "baseballcabal",
-  poorlydrawnpepes: "poorlydrawnpepes",
-  vibefx: "vibefx",
-  historyofcomputer: "historyofcomputer",
+  vibefid: '/covers/vibefid-cover.png',
+  gmvbrs: 'https://nft-cdn.alchemy.com/base-mainnet/d0de7e9fa12eadb1ea2204e67d43e166',
+  vibe: 'https://nft-cdn.alchemy.com/base-mainnet/511915cc9b6f20839e2bf2999760530f',
+  viberuto: 'https://nft-cdn.alchemy.com/base-mainnet/ec58759f6df558aa4193d58ae9b0e74f',
+  meowverse: 'https://nft-cdn.alchemy.com/base-mainnet/16a8f93f75def1a771cca7e417b5d05e',
+  poorlydrawnpepes: 'https://nft-cdn.alchemy.com/base-mainnet/96282462557a81c42fad965a48c34f4c',
+  teampothead: 'https://nft-cdn.alchemy.com/base-mainnet/ae56485394d1e5f37322d498f0ea11a0',
+  tarot: 'https://nft-cdn.alchemy.com/base-mainnet/72ea458dbad1ce6a722306d811a42252',
+  baseballcabal: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F45e455d7-cd23-459b-7ea9-db14c6d36000%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
+  vibefx: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F5e6058d2-4c64-4cd9-ab57-66a939fec900%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
+  historyofcomputer: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fa1a0d189-44e1-43e3-60dc-e8b053ec0c00%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
+  cumioh: '/covers/cumioh-cover.png',
+  viberotbangers: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F1269ebe2e27ff8a041cb7253fb5687b6',
 };
 
-// Get collection cover image URL based on collection and rarity
+// Get collection cover image URL (same as Mecha Arena)
 const getCollectionCoverUrl = (collection: string | undefined, rarity: string): string => {
   const collectionKey = collection?.toLowerCase() || "vibe";
-  const coverFolder = COLLECTION_COVERS[collectionKey] || "vibe";
-  const rarityLower = rarity?.toLowerCase() || "common";
-  return `/images/raid-bosses/${coverFolder}/${rarityLower}.png`;
+  return COLLECTION_COVERS[collectionKey] || '/images/card-back.png';
 };
 
 interface TCGCard {
@@ -640,12 +637,20 @@ const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
   return `/images/baccarat/${rankName} ${cardData.suit}, ${baccaratName}.png`;
 };
 
-// Get the correct display image URL for any card (fixes VBMS cards with wrong URLs)
+// Get the correct display image URL for any card
+// - VBMS (vibe most wanted): Use baccarat image
+// - Nothing: Use actual card image
+// - Other collections (vibefid, etc): Use collection cover
 const getCardDisplayImageUrl = (card: DeckCard): string => {
   if (card.type === "vbms" && card.name) {
     return getVbmsBaccaratImageUrl(card.name) || card.imageUrl || "/images/card-back.png";
   }
-  return card.imageUrl || "/images/card-back.png";
+  if (card.type === "nothing") {
+    return card.imageUrl || "/images/card-back.png";
+  }
+  // For other collections (vibefid, etc), use collection cover
+  const collection = card.collection || card.type || "vibe";
+  return getCollectionCoverUrl(collection, card.rarity);
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2341,6 +2346,31 @@ export default function TCGPage() {
         }
         break;
 
+      case "kamikaze":
+        // KAMIKAZE: Destroy highest enemy AND destroy self! (Landmine)
+        let kamikazeHighestPower = -1;
+        let kamikazeHighestLane = -1;
+        let kamikazeHighestIdx = -1;
+        newLanes.forEach((lane: any, lIdx: number) => {
+          lane[enemyCards].forEach((c: DeckCard, cIdx: number) => {
+            const effectivePower = c.type === "nothing" || c.type === "other" ? Math.floor(c.power * 0.5) : c.power;
+            if (effectivePower > kamikazeHighestPower) {
+              kamikazeHighestPower = effectivePower;
+              kamikazeHighestLane = lIdx;
+              kamikazeHighestIdx = cIdx;
+            }
+          });
+        });
+        // Destroy highest enemy
+        if (kamikazeHighestLane >= 0 && kamikazeHighestIdx >= 0) {
+          const removedEnemy = newLanes[kamikazeHighestLane][enemyCards].splice(kamikazeHighestIdx, 1)[0];
+          newLanes[kamikazeHighestLane][enemyPower] -= removedEnemy.power;
+        }
+        // Mark self for destruction (will be removed after ability processing)
+        card._sacrificed = true;
+        bonusPower = -card.power; // Negate own power since card will be destroyed
+        break;
+
       case "shuffleAllLanes":
         // Shuffle all cards in all lanes randomly (Legendary)
         const allCardsToShuffle: { card: DeckCard; isPlayer: boolean }[] = [];
@@ -3674,7 +3704,7 @@ export default function TCGPage() {
       "vibefidFirstCast", "vibefidRatio", "vibefidDoxxed", "adaptivePower",
     ];
     const DEBUFF_ACTIONS = ["debuffLane", "debuffRandomEnemy", "debuffStrongest", "reduceEnemyPower", "lockPowerGain"];
-    const DESTROY_ACTIONS = ["destroyHighestEnemy", "timeBomb", "sacrificeBuffAll", "destroyLoneCard"];
+    const DESTROY_ACTIONS = ["destroyHighestEnemy", "timeBomb", "sacrificeBuffAll", "destroyLoneCard", "kamikaze"];
     const STEAL_ACTIONS = ["stealWeakest", "stealPower", "stealStrongest", "copyHighest", "copyAbility", "copyPowerLeft", "stealFromAll"];
 
     // First pass: apply all abilities and collect results
@@ -5967,7 +5997,7 @@ export default function TCGPage() {
                             {/* Card image/video */}
                             {isRevealed ? (
                               <CardMedia
-                                src={card.type === "vbms" ? cardImageUrl : card.imageUrl}
+                                src={cardImageUrl}
                                 alt={card.name}
                                 className="absolute inset-0 w-full h-full object-cover rounded-md"
                               />
@@ -6116,7 +6146,7 @@ export default function TCGPage() {
                             {/* Card image/video */}
                             {isRevealed ? (
                               <CardMedia
-                                src={card.type === "vbms" ? cardImageUrl : card.imageUrl}
+                                src={cardImageUrl}
                                 alt={card.name}
                                 className="absolute inset-0 w-full h-full object-cover rounded-md"
                               />
@@ -6142,32 +6172,7 @@ export default function TCGPage() {
                                     {ability.type === "onReveal" ? "R" : "O"}
                                   </div>
                                 )}
-                                {/* LANDMINE Kamikaze Button */}
-                                {(card.name || "").toLowerCase() === "landmine" && lane.cpuCards.length > 0 && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleLandmineKamikaze(laneIndex, idx);
-                                    }}
-                                    className="absolute -bottom-1 -left-1 w-5 h-5 bg-red-600 hover:bg-red-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-20"
-                                    title="Kamikaze"
-                                  >
-                                    X
-                                  </button>
-                                )}
-                                {/* NAUGHTY SANTA Charm Button */}
-                                {(card.name || "").toLowerCase() === "naughty santa" && lane.cpuCards.length > 0 && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSantaCharm(laneIndex, idx);
-                                    }}
-                                    className="absolute -bottom-1 -left-1 w-5 h-5 bg-pink-600 hover:bg-pink-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-20"
-                                    title="Charm"
-                                  >
-                                    C
-                                  </button>
-                                )}
+                                {/* Landmine kamikaze now triggers automatically on reveal */}
                               </>
                             )}
                             {/* Face-down indicator (player cards) */}
