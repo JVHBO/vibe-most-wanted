@@ -13,6 +13,7 @@ import { CONTRACTS, POOL_ABI } from '@/lib/contracts';
 import { encodeFunctionData, parseEther, erc20Abi } from 'viem';
 import { encodeBuilderCodeSuffix, BUILDER_CODE } from '@/lib/builder-code';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
 
 // Roulette translations
 const rouletteTranslations = {
@@ -299,6 +300,7 @@ export function Roulette({ onClose }: RouletteProps) {
   const prepareClaimAction = useAction(api.roulette.prepareRouletteClaim);
   const recordClaimMutation = useMutation(api.roulette.recordRouletteClaim);
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
+  const { validateOnArb } = useArbValidator();
 
   const canSpin = canSpinData?.canSpin ?? false;
   const spinsRemaining = canSpinData?.spinsRemaining ?? 0;
@@ -512,6 +514,9 @@ export function Roulette({ onClose }: RouletteProps) {
             setIsSpinning(false);
             AudioManager.win();
             haptics.spinResult(); // Heavy haptic on result
+
+            // Validate free spin on Arbitrum (non-blocking)
+            validateOnArb(response.prize!, ARB_CLAIM_TYPE.ROULETTE_SPIN);
           }
         };
 

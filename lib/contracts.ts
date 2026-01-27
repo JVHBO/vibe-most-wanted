@@ -13,7 +13,34 @@ export const CONTRACTS = {
   // Chain configuration
   CHAIN_ID: 8453,
   CHAIN_NAME: 'Base',
+
+  // Arbitrum Validator
+  VBMSValidator: '0xE6932C419dDB94E168943DAb0D31ba19bA1168E8',
+  ARBITRUM_CHAIN_ID: 42161,
 } as const;
+
+// VBMSValidator ABI (Arbitrum - claim validation only)
+export const VALIDATOR_ABI = [
+  {
+    inputs: [
+      { name: 'amount', type: 'uint256' },
+      { name: 'claimType', type: 'uint8' },
+      { name: 'nonce', type: 'bytes32' },
+      { name: 'signature', type: 'bytes' },
+    ],
+    name: 'validateClaim',
+    outputs: [],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: '', type: 'bytes32' }],
+    name: 'usedNonces',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
 
 // VBMSPoolTroll ABI (key functions)
 export const POOL_ABI = [

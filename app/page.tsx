@@ -80,6 +80,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
 import { useBondingProgress } from "@/lib/hooks/useBondingProgress";
+import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
 import { CONTRACTS } from "@/lib/contracts";
 
 import { filterCardsByCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, type CollectionId } from "@/lib/collections/index"; // getEnabledCollections removed - now only used by Context
@@ -630,6 +631,7 @@ export default function TCGPage() {
   // 💎 VBMS Blockchain Contract Hooks (using Farcaster-compatible hook)
   const { balance: vbmsBlockchainBalance, refetch: refetchVBMSBalance } = useFarcasterVBMSBalance(address);
   const bondingProgress = useBondingProgress();
+  const { validateOnArb } = useArbValidator();
   const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const { createBattle, isPending: isCreatingBattle } = useCreateBattle();
   const { joinBattle, isPending: isJoiningBattle } = useJoinBattle();
@@ -967,6 +969,7 @@ export default function TCGPage() {
       if (result.success) {
         setSuccessMessage(result.message);
         setSharesRemaining(result.remaining);
+        if (result.coinsAwarded > 0) validateOnArb(result.coinsAwarded, ARB_CLAIM_TYPE.SHARE);
         // Refresh profile to update coins
         await refreshProfile();
       } else {
@@ -1323,6 +1326,8 @@ export default function TCGPage() {
         devLog(`✓ Login bonus claimed: +${result.awarded} $TESTVBMS`);
         setLoginBonusClaimed(true);
         if (soundEnabled) AudioManager.buttonClick();
+        // Validate on Arbitrum (non-blocking)
+        validateOnArb(result.awarded, ARB_CLAIM_TYPE.DAILY_LOGIN);
       } else {
         devLog(`! ${result.reason}`);
         if (soundEnabled) AudioManager.buttonError();
@@ -1357,6 +1362,9 @@ export default function TCGPage() {
         if (claimResult && claimResult.claimed > 0) {
           devLog(`✅ Claimed ${claimResult.claimed} missions (+${claimResult.totalReward} TESTVBMS)`);
           if (soundEnabled) AudioManager.buttonSuccess();
+
+          // Validate on Arbitrum (non-blocking)
+          validateOnArb(claimResult.totalReward, ARB_CLAIM_TYPE.DAILY_LOGIN);
 
           // Refresh profile to show new balance
           await refreshProfile();
@@ -1412,6 +1420,7 @@ export default function TCGPage() {
 
       devLog(`✓ Quest reward claimed: +${result.reward} $TESTVBMS`);
       if (soundEnabled) AudioManager.buttonClick();
+      if (result.reward > 0) validateOnArb(result.reward, ARB_CLAIM_TYPE.QUEST);
     } catch (error: any) {
       devError('✗ Error claiming quest reward:', error);
       alert(error.message || 'Failed to claim quest reward');
@@ -1433,6 +1442,7 @@ export default function TCGPage() {
 
       devLog(`✓ Weekly reward claimed: Rank #${result.rank} → +${result.reward} $TESTVBMS`);
       if (soundEnabled) AudioManager.buttonClick();
+      if (result.reward > 0) validateOnArb(result.reward, ARB_CLAIM_TYPE.LEADERBOARD);
     } catch (error: any) {
       devError('✗ Error claiming weekly reward:', error);
       alert(error.message || 'Failed to claim weekly reward');
@@ -1453,6 +1463,7 @@ export default function TCGPage() {
 
       if (soundEnabled) AudioManager.buttonSuccess();
       devLog(`✓ Weekly quest reward claimed: ${questId} → +${result.reward} $TESTVBMS`);
+      if (result.reward > 0) validateOnArb(result.reward, ARB_CLAIM_TYPE.QUEST);
     } catch (error: any) {
       devError('Error claiming reward:', error);
       if (soundEnabled) AudioManager.buttonError();

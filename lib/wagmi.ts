@@ -1,7 +1,7 @@
 'use client';
 
 import { http, createConfig } from 'wagmi';
-import { base } from 'wagmi/chains';
+import { base, arbitrum } from 'wagmi/chains';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import {
   coinbaseWallet,
@@ -34,9 +34,10 @@ const connectors = connectorsForWallets(
 const allConnectors = [...connectors, farcasterMiniApp()];
 
 export const config = createConfig({
-  chains: [base],
+  chains: [base, arbitrum],
   transports: {
     [base.id]: http(BASE_RPC_URL),
+    [arbitrum.id]: http(),
   },
   connectors: allConnectors,
   ssr: true,

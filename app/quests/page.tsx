@@ -11,6 +11,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
 
 export default function QuestsPage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function QuestsPage() {
   const { primaryAddress: address } = usePrimaryAddress(); // 🔗 MULTI-WALLET: Use primary address
   const { t } = useLanguage();
   const { refreshProfile } = useProfile();
+  const { validateOnArb } = useArbValidator();
 
   // Social Quests
   const socialQuestProgress = useQuery(
@@ -444,7 +446,10 @@ export default function QuestsPage() {
                         if (!address) return;
                         setIsClaimingAll(true);
                         try {
-                          await claimAllMissions({ playerAddress: address.toLowerCase() });
+                          const result = await claimAllMissions({ playerAddress: address.toLowerCase() });
+                          if (result?.totalReward > 0) {
+                            validateOnArb(result.totalReward, ARB_CLAIM_TYPE.MISSION);
+                          }
                           await refreshMissions(); // 🚀 BANDWIDTH FIX: Refresh after claim
                         } catch (e) {
                           console.error(e);
@@ -508,15 +513,17 @@ export default function QuestsPage() {
                                     try {
                                       if (isVibeBadge) {
                                         await claimVibeBadge({ playerAddress: address.toLowerCase() });
-                                        // 🔄 Refresh profile to update hasVibeBadge in cache
                                         await refreshProfile();
                                       } else {
                                         await claimMission({
                                           playerAddress: address.toLowerCase(),
                                           missionId: mission._id,
                                         });
+                                        if (mission.reward > 0) {
+                                          validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
+                                        }
                                       }
-                                      await refreshMissions(); // 🚀 BANDWIDTH FIX: Refresh after claim
+                                      await refreshMissions();
                                     } catch (e) {
                                       console.error(e);
                                     } finally {

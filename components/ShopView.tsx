@@ -10,6 +10,7 @@ import { useFarcasterVBMSBalance, useFarcasterTransferVBMS } from "@/lib/hooks/u
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
 import { parseEther } from "viem";
+import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "next/navigation";
 import { getAssetUrl } from "@/lib/ipfs-assets";
@@ -43,6 +44,7 @@ export function ShopView({ address }: ShopViewProps) {
 
   const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(effectiveAddress);
   const { transfer, isPending: isTransferring, error: transferError } = useFarcasterTransferVBMS();
+  const { validateOnArb } = useArbValidator();
 
   // State
   const [quantity, setQuantity] = useState(1);
@@ -208,17 +210,11 @@ export function ShopView({ address }: ShopViewProps) {
 
     setClaimingDaily(true);
     try {
-      // Step 1: Send 0 VBMS TX to contract (for verification/tracking)
-      setNotification({
-        type: 'success',
-        message: t('shopTransferring')
-      });
-
-      const txHash = await transfer(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther("0"));
-      console.log('✅ Free pack TX:', txHash);
-
-      // Step 2: Claim the pack in backend
+      // Step 1: Claim the pack in backend
       await claimDailyFree({ address });
+
+      // Step 2: Validate on Arbitrum (non-blocking)
+      validateOnArb(0, ARB_CLAIM_TYPE.FREE_CARD);
       setNotification({
         type: 'success',
         message: `🎁 Free pack claimed! Open it below.`
