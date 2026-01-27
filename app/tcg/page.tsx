@@ -3553,17 +3553,20 @@ export default function TCGPage() {
           newCombos = [newCombos[0]];
         }
 
-        // Show popup for new combos
-        newCombos.forEach(({ combo }, comboIdx) => {
+        // Show popup for NEW combos only (filter out already shown combos first)
+        const trulyNewCombos = newCombos.filter(({ combo }) => {
           const comboKey = `${currentReveal.laneIdx}-${currentReveal.side}-${combo.id}`;
-          if (!shownCombosRef.current.has(comboKey)) {
-            shownCombosRef.current.add(comboKey);
-            // Play combo voice announcement (staggered timing for multiple combos)
-            const comboDelay = comboIdx * 2500; // 2.5s between each combo voice
-            setTimeout(() => {
-              playComboVoice(combo.id);
-            }, 100 + comboDelay);
-          }
+          return !shownCombosRef.current.has(comboKey);
+        });
+
+        trulyNewCombos.forEach(({ combo }, comboIdx) => {
+          const comboKey = `${currentReveal.laneIdx}-${currentReveal.side}-${combo.id}`;
+          shownCombosRef.current.add(comboKey);
+          // Play combo voice announcement (staggered timing for multiple combos)
+          const comboDelay = comboIdx * 2500; // 2.5s between each combo voice
+          setTimeout(() => {
+            playComboVoice(combo.id);
+          }, 100 + comboDelay);
         });
 
         return { ...prev, lanes: newLanes };
