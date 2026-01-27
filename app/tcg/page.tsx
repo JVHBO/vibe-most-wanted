@@ -639,18 +639,13 @@ const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
 
 // Get the correct display image URL for any card
 // - VBMS (vibe most wanted): Use baccarat image
-// - Nothing: Use actual card image
-// - Other collections (vibefid, etc): Use collection cover
+// - All other collections: Use actual card image
 const getCardDisplayImageUrl = (card: DeckCard): string => {
   if (card.type === "vbms" && card.name) {
     return getVbmsBaccaratImageUrl(card.name) || card.imageUrl || "/images/card-back.png";
   }
-  if (card.type === "nothing") {
-    return card.imageUrl || "/images/card-back.png";
-  }
-  // For other collections (vibefid, etc), use collection cover
-  const collection = card.collection || card.type || "vibe";
-  return getCollectionCoverUrl(collection, card.rarity);
+  // For all other collections (nothing, vibefid, etc), use actual card image
+  return card.imageUrl || "/images/card-back.png";
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -3204,12 +3199,12 @@ export default function TCGPage() {
     setSelectedHandCard(null);
   };
 
-  // Sacrifice Nothing card from hand (discard to draw + gain +2 energy!)
+  // Sacrifice Nothing/Other card from hand (discard to draw + gain +2 energy!)
   const handleSacrificeNothingFromHand = (cardIndex: number) => {
     if (!pveGameState) return;
 
     const card = pveGameState.playerHand[cardIndex];
-    if (!card || card.type !== "nothing") return;
+    if (!card || (card.type !== "nothing" && card.type !== "other")) return;
 
     // +2 ENERGY for sacrificing Nothing!
     const energyGain = 2;
@@ -5983,7 +5978,8 @@ export default function TCGPage() {
 
                         // Check if card is revealed (old cards are always revealed)
                         const isRevealed = (card as any)._revealed !== false;
-                        const displayImageUrl = isRevealed ? cardImageUrl : "/images/card-back.png";
+                        const coverUrl = getCollectionCoverUrl(card.collection, card.rarity);
+                        const displayImageUrl = isRevealed ? cardImageUrl : coverUrl;
 
                         return (
                           <div
@@ -6004,7 +6000,7 @@ export default function TCGPage() {
                             ) : (
                               <div
                                 className="absolute inset-0 bg-cover bg-center rounded-md"
-                                style={{ backgroundImage: `url(/images/card-back.png)` }}
+                                style={{ backgroundImage: `url(${coverUrl})` }}
                               />
                             )}
                             {/* Only show details when revealed */}
@@ -6113,7 +6109,8 @@ export default function TCGPage() {
                         // Use actual card image (same as deck builder)
                         // Encode URL to handle spaces in baccarat image filenames
                         const cardImageUrl = encodeURI(getCardDisplayImageUrl(card));
-                        const displayImageUrl = isRevealed ? cardImageUrl : "/images/card-back.png";
+                        const coverUrl = getCollectionCoverUrl(card.collection, card.rarity);
+                        const displayImageUrl = isRevealed ? cardImageUrl : coverUrl;
 
                         // Can drag back to hand if not revealed and was played this turn
                         const canDragBack = !isRevealed && (gs.cardsPlayedInfo || []).some((info: any) => info.cardId === card.cardId && info.laneIndex === laneIndex);
@@ -6153,7 +6150,7 @@ export default function TCGPage() {
                             ) : (
                               <div
                                 className="absolute inset-0 bg-cover bg-center rounded-md"
-                                style={{ backgroundImage: `url(/images/card-back.png)` }}
+                                style={{ backgroundImage: `url(${coverUrl})` }}
                               />
                             )}
                             {/* Only show details when revealed */}
