@@ -3229,14 +3229,20 @@ export default function TCGPage() {
       }
     });
 
-    // 🎬 ANIMATION: Trigger explode on both cards
-    triggerCardAnimation(laneIndex, "player", cardIndex, "explode", undefined, 600);
-    if (highestEnemyIdx >= 0) {
-      triggerCardAnimation(laneIndex, "cpu", highestEnemyIdx, "explode", undefined, 600);
-    }
+    // 🎬 ANIMATION: Landmine flies up and crashes into enemy!
+    triggerCardAnimation(laneIndex, "player", cardIndex, "kamikaze", undefined, 600);
 
-    // Play explosion sound
-    playSound("ability");
+    // After Landmine reaches enemy, enemy explodes
+    if (highestEnemyIdx >= 0) {
+      setTimeout(() => {
+        triggerCardAnimation(laneIndex, "cpu", highestEnemyIdx, "explode", undefined, 500);
+        triggerAbilityEffect("destroy", laneIndex, "player", laneIndex, "cpu", "💥", -highestEnemyPower);
+        playSound("bomb");
+      }, 400);
+    } else {
+      // No enemy to hit, just explosion sound
+      setTimeout(() => playSound("bomb"), 400);
+    }
 
     // Delay removal so animation plays first
     setTimeout(() => {
@@ -3740,7 +3746,28 @@ export default function TCGPage() {
       }
 
       // Schedule ability-specific effects
-      if (actionType === "debuff" || actionType === "destroy") {
+      const action = item.ability?.effect?.action || "";
+
+      // Special case: sacrificeBuffAll (Melted) - self-sacrifice + buff allies
+      if (action === "sacrificeBuffAll") {
+        setTimeout(() => {
+          // Self explodes
+          triggerCardAnimation(laneIndex, side, cardIdxForAnim, "explode", undefined, 600);
+          triggerAbilityEffect("destroy", laneIndex, side, laneIndex, side, "💀", 0);
+          playSound("bomb");
+        }, baseDelay);
+
+        // All allies glow green (buffed)
+        setTimeout(() => {
+          newLanes.forEach((lane: any, lIdx: number) => {
+            const allyCards = side === "player" ? lane.playerCards : lane.cpuCards;
+            allyCards.forEach((_: any, cIdx: number) => {
+              triggerCardAnimation(lIdx, side, cIdx, "glow-green", 20, 500);
+            });
+          });
+          triggerAbilityEffect("buff", laneIndex, side, laneIndex, side, "✨", result.bonusPower);
+        }, baseDelay + 300);
+      } else if (actionType === "debuff" || actionType === "destroy") {
         // Only trigger attack effects if there are enemy cards to attack
         const enemyCards = oppositeSide === "cpu" ? newLanes[laneIndex].cpuCards : newLanes[laneIndex].playerCards;
         if (enemyCards.length > 0) {
@@ -3751,7 +3778,6 @@ export default function TCGPage() {
           }, baseDelay);
 
           // Shake enemy cards (no extra sound - hit sound already played above)
-          const action = item.ability?.effect?.action || "";
           const isLaneWide = action.includes("debuffLane") || action.includes("AllLanes");
           setTimeout(() => {
             if (isLaneWide) {
@@ -3769,12 +3795,23 @@ export default function TCGPage() {
         // Only trigger steal effects if there are enemy cards to steal from
         const enemyCardsSteal = oppositeSide === "cpu" ? newLanes[laneIndex].cpuCards : newLanes[laneIndex].playerCards;
         if (enemyCardsSteal.length > 0) {
+          const isCharm = action === "stealWeakest"; // Naughty Santa charm
           setTimeout(() => {
-            triggerAbilityEffect("steal", laneIndex, oppositeSide, laneIndex, side, "🔮", result.bonusPower);
-            playSound("steal");
+            triggerAbilityEffect("steal", laneIndex, oppositeSide, laneIndex, side, isCharm ? "💕" : "🔮", result.bonusPower);
+            // Play charm sound for stealWeakest (Naughty Santa)
+            if (isCharm) {
+              try {
+                const audio = new Audio("/sounds/oiroke-no-jutsu.mp3");
+                audio.volume = 0.5;
+                audio.play().catch(() => playSound("steal"));
+              } catch {
+                playSound("steal");
+              }
+            } else {
+              playSound("steal");
+            }
           }, baseDelay);
 
-          const action = item.ability?.effect?.action || "";
           setTimeout(() => {
             if (action.includes("stealFromAll")) {
               enemyCardsSteal.forEach((_: any, cardIdx: number) => {
@@ -3783,7 +3820,7 @@ export default function TCGPage() {
             } else {
               const weakestIdx = enemyCardsSteal.reduce((minIdx: number, c: any, i: number, arr: any[]) =>
                 (c.power || 999) < (arr[minIdx]?.power || 999) ? i : minIdx, 0);
-              triggerCardAnimation(laneIndex, oppositeSide, weakestIdx, "shake", undefined, 400);
+              triggerCardAnimation(laneIndex, oppositeSide, weakestIdx, isCharm ? "glow-green" : "shake", undefined, 400);
             }
           }, baseDelay + 150);
         }
@@ -5911,6 +5948,7 @@ export default function TCGPage() {
                           "slide-out": "tcg-slide-out",
                           "float-up": "tcg-float-up",
                           "explode": "tcg-explode",
+                          "kamikaze": "tcg-kamikaze-fly",
                         }[anim.type] || "" : "";
 
                         // Check if card is revealed (old cards are always revealed)
@@ -6037,6 +6075,7 @@ export default function TCGPage() {
                           "slide-out": "tcg-slide-out",
                           "float-up": "tcg-float-up",
                           "explode": "tcg-explode",
+                          "kamikaze": "tcg-kamikaze-fly",
                         }[anim.type] || "" : "";
 
                         // Check if card is revealed (old cards are always revealed)
@@ -6172,8 +6211,7 @@ export default function TCGPage() {
           {/* Floating Card Indicator while dragging */}
           {draggedCardIndex !== null && touchDragPos && gs.playerHand?.[draggedCardIndex] && (() => {
             const dragCard = gs.playerHand[draggedCardIndex];
-            const dragCardCollection = dragCard.collection || (dragCard.type === "vbms" ? "vibe" : dragCard.type === "vibefid" ? "vibefid" : dragCard.type === "nothing" ? "nothing" : "vibe");
-            const dragCardCoverUrl = getCollectionCoverUrl(dragCardCollection, dragCard.rarity);
+            const dragCardImageUrl = getCardDisplayImageUrl(dragCard);
             return (
               <div
                 data-drag-ghost="true"
@@ -6185,7 +6223,7 @@ export default function TCGPage() {
               >
                 <div
                   className="w-[60px] h-[85px] rounded-lg border-2 border-cyan-400 shadow-xl shadow-cyan-500/50 bg-cover bg-center opacity-90"
-                  style={{ backgroundImage: `url(${dragCardCoverUrl})` }}
+                  style={{ backgroundImage: `url(${dragCardImageUrl})` }}
                 />
               </div>
             );
@@ -6630,9 +6668,11 @@ export default function TCGPage() {
                 <div className="mt-2 flex items-center gap-2">
                   <span className={`px-2 py-0.5 rounded text-xs font-bold ${
                     detailCombo.bonus.type === "power" ? "bg-green-600" :
+                    detailCombo.bonus.type === "power_percent" ? "bg-purple-600" :
                     detailCombo.bonus.type === "steal" ? "bg-red-600" : "bg-blue-600"
                   }`}>
                     {detailCombo.bonus.type === "power" ? `+${detailCombo.bonus.value} Power` :
+                     detailCombo.bonus.type === "power_percent" ? `+${detailCombo.bonus.value}% Power` :
                      detailCombo.bonus.type === "steal" ? `-${detailCombo.bonus.value} Enemy` :
                      detailCombo.bonus.type}
                   </span>
