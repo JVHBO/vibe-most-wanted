@@ -53,7 +53,7 @@
     "goofy romero": {
       "name": "🌀 Chaotic Kingdom",
       "type": "onReveal",
-      "description": "CHAOS: Shuffle ALL ENEMY cards between lanes + shuffle ENEMY hand!",
+      "description": "CHAOS: Shuffle ALL ENEMY cards between lanes! (Does NOT affect your cards)",
       "effect": { "action": "shuffleEnemyLanes", "shuffleEnemyHand": true },
       "rarity": "Legendary"
     },
