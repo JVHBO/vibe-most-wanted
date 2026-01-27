@@ -2688,6 +2688,12 @@ export default function TCGPage() {
 
       case "shuffleEnemyLanes":
         // CHAOS: Shuffle ALL ENEMY cards between lanes! (Goofy Romero - Legendary)
+        console.log(`[Goofy Romero] === BEFORE SHUFFLE ===`);
+        console.log(`[Goofy Romero] isPlayer=${isPlayer}, myCards="${myCards}", enemyCards="${enemyCards}"`);
+        console.log(`[Goofy Romero] Lane 0: ${newLanes[0][myCards].length} ${myCards}, ${newLanes[0][enemyCards].length} ${enemyCards}`);
+        console.log(`[Goofy Romero] Lane 1: ${newLanes[1][myCards].length} ${myCards}, ${newLanes[1][enemyCards].length} ${enemyCards}`);
+        console.log(`[Goofy Romero] Lane 2: ${newLanes[2][myCards].length} ${myCards}, ${newLanes[2][enemyCards].length} ${enemyCards}`);
+
         const allEnemyCardsToShuffle: DeckCard[] = [];
         // Collect all enemy cards
         newLanes.forEach((lane: any) => {
@@ -2695,6 +2701,8 @@ export default function TCGPage() {
           lane[enemyCards] = [];
           lane[enemyPower] = 0;
         });
+        console.log(`[Goofy Romero] Collected ${allEnemyCardsToShuffle.length} ${enemyCards} to shuffle`);
+
         // Shuffle
         for (let i = allEnemyCardsToShuffle.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -2706,6 +2714,12 @@ export default function TCGPage() {
           newLanes[targetLane][enemyCards].push(enemyCard);
           newLanes[targetLane][enemyPower] += enemyCard.power;
         });
+
+        console.log(`[Goofy Romero] === AFTER SHUFFLE ===`);
+        console.log(`[Goofy Romero] Lane 0: ${newLanes[0][myCards].length} ${myCards}, ${newLanes[0][enemyCards].length} ${enemyCards}`);
+        console.log(`[Goofy Romero] Lane 1: ${newLanes[1][myCards].length} ${myCards}, ${newLanes[1][enemyCards].length} ${enemyCards}`);
+        console.log(`[Goofy Romero] Lane 2: ${newLanes[2][myCards].length} ${myCards}, ${newLanes[2][enemyCards].length} ${enemyCards}`);
+
         bonusPower = 10; // Chaos bonus
         break;
     }
@@ -3709,6 +3723,8 @@ export default function TCGPage() {
     sortedCards.forEach((item) => {
       const { card, laneIndex, side, ability } = item;
       const isPlayer = side === "player";
+
+      console.log(`[Ability Processing] Card: ${card.name}, Side: ${side}, isPlayer: ${isPlayer}, Ability: ${ability.effect?.action}`);
 
       const result = applyOnRevealAbility(
         card,
