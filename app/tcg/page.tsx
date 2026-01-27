@@ -1615,7 +1615,7 @@ export default function TCGPage() {
         return { type: "king", text: "KING'S ARRIVAL!", emoji: "👑" };
       case "copyHighest":
         return { type: "copy", text: "DIAMOND AUTHORITY!", emoji: "💎" };
-      case "shuffleAllLanes":
+      case "shuffleEnemyLanes":
         return { type: "shuffle", text: "CHAOTIC KINGDOM!", emoji: "🌀" };
       case "swapEnemyPowers":
         return { type: "shuffle", text: "COCK TWIST!", emoji: "🔄" };
@@ -2366,25 +2366,6 @@ export default function TCGPage() {
         bonusPower = -card.power; // Negate own power since card will be destroyed
         break;
 
-      case "shuffleAllLanes":
-        // Shuffle all cards in all lanes randomly (Legendary)
-        const allCardsToShuffle: { card: DeckCard; isPlayer: boolean }[] = [];
-        newLanes.forEach(lane => {
-          lane.playerCards.forEach((c: DeckCard) => allCardsToShuffle.push({ card: c, isPlayer: true }));
-          lane.cpuCards.forEach((c: DeckCard) => allCardsToShuffle.push({ card: c, isPlayer: false }));
-        });
-        for (let i = allCardsToShuffle.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [allCardsToShuffle[i], allCardsToShuffle[j]] = [allCardsToShuffle[j], allCardsToShuffle[i]];
-        }
-        newLanes = newLanes.map(lane => ({ ...lane, playerCards: [], cpuCards: [], playerPower: 0, cpuPower: 0 }));
-        allCardsToShuffle.forEach((item, idx: number) => {
-          const laneIdx = idx % 3;
-          const cPower = item.card.type === "nothing" || item.card.type === "other" ? Math.floor(item.card.power * 0.5) : item.card.power;
-          if (item.isPlayer) { newLanes[laneIdx].playerCards.push(item.card); newLanes[laneIdx].playerPower += cPower; }
-          else { newLanes[laneIdx].cpuCards.push(item.card); newLanes[laneIdx].cpuPower += cPower; }
-        });
-        break;
 
       case "copyHighest":
         // Copy highest power + STEAL from all enemies! (Linda Xied - Diamond Authority - Mythic)
@@ -2688,12 +2669,6 @@ export default function TCGPage() {
 
       case "shuffleEnemyLanes":
         // CHAOS: Shuffle ALL ENEMY cards between lanes! (Goofy Romero - Legendary)
-        console.log(`[Goofy Romero] === BEFORE SHUFFLE ===`);
-        console.log(`[Goofy Romero] isPlayer=${isPlayer}, myCards="${myCards}", enemyCards="${enemyCards}"`);
-        console.log(`[Goofy Romero] Lane 0: ${newLanes[0][myCards].length} ${myCards}, ${newLanes[0][enemyCards].length} ${enemyCards}`);
-        console.log(`[Goofy Romero] Lane 1: ${newLanes[1][myCards].length} ${myCards}, ${newLanes[1][enemyCards].length} ${enemyCards}`);
-        console.log(`[Goofy Romero] Lane 2: ${newLanes[2][myCards].length} ${myCards}, ${newLanes[2][enemyCards].length} ${enemyCards}`);
-
         const allEnemyCardsToShuffle: DeckCard[] = [];
         // Collect all enemy cards
         newLanes.forEach((lane: any) => {
@@ -2701,8 +2676,6 @@ export default function TCGPage() {
           lane[enemyCards] = [];
           lane[enemyPower] = 0;
         });
-        console.log(`[Goofy Romero] Collected ${allEnemyCardsToShuffle.length} ${enemyCards} to shuffle`);
-
         // Shuffle
         for (let i = allEnemyCardsToShuffle.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
@@ -2714,12 +2687,6 @@ export default function TCGPage() {
           newLanes[targetLane][enemyCards].push(enemyCard);
           newLanes[targetLane][enemyPower] += enemyCard.power;
         });
-
-        console.log(`[Goofy Romero] === AFTER SHUFFLE ===`);
-        console.log(`[Goofy Romero] Lane 0: ${newLanes[0][myCards].length} ${myCards}, ${newLanes[0][enemyCards].length} ${enemyCards}`);
-        console.log(`[Goofy Romero] Lane 1: ${newLanes[1][myCards].length} ${myCards}, ${newLanes[1][enemyCards].length} ${enemyCards}`);
-        console.log(`[Goofy Romero] Lane 2: ${newLanes[2][myCards].length} ${myCards}, ${newLanes[2][enemyCards].length} ${enemyCards}`);
-
         bonusPower = 10; // Chaos bonus
         break;
     }
@@ -3724,8 +3691,6 @@ export default function TCGPage() {
       const { card, laneIndex, side, ability } = item;
       const isPlayer = side === "player";
 
-      console.log(`[Ability Processing] Card: ${card.name}, Side: ${side}, isPlayer: ${isPlayer}, Ability: ${ability.effect?.action}`);
-
       const result = applyOnRevealAbility(
         card,
         laneIndex,
@@ -3792,8 +3757,35 @@ export default function TCGPage() {
       // Schedule ability-specific effects
       const action = item.ability?.effect?.action || "";
 
+      // Special case: kamikaze (Landmine) - fly to enemy and explode both
+      if (action === "kamikaze") {
+        setTimeout(() => {
+          // Card flies to enemy (kamikaze animation)
+          triggerCardAnimation(laneIndex, side, cardIdxForAnim, "kamikaze", undefined, 800);
+          playSound("hit");
+        }, baseDelay);
+
+        // Attack effect + explosion
+        setTimeout(() => {
+          // Show attack emoji traveling to enemy
+          const oppositeSide = side === "player" ? "cpu" : "player";
+          triggerAbilityEffect("attack", laneIndex, side, laneIndex, oppositeSide, "👊", 0);
+          playSound("bomb");
+        }, baseDelay + 400);
+
+        // Enemy card explodes
+        setTimeout(() => {
+          const enemyCardArray = side === "player" ? newLanes[laneIndex].cpuCards : newLanes[laneIndex].playerCards;
+          if (enemyCardArray.length > 0) {
+            // Find highest power enemy (the one that gets destroyed)
+            const highestIdx = enemyCardArray.reduce((maxIdx: number, c: any, i: number, arr: any[]) =>
+              (c.power || 0) > (arr[maxIdx]?.power || 0) ? i : maxIdx, 0);
+            triggerCardAnimation(laneIndex, oppositeSide, highestIdx, "explode", undefined, 600);
+          }
+        }, baseDelay + 600);
+      }
       // Special case: sacrificeBuffAll (Melted) - self-sacrifice + buff allies
-      if (action === "sacrificeBuffAll") {
+      else if (action === "sacrificeBuffAll") {
         setTimeout(() => {
           // Self explodes
           triggerCardAnimation(laneIndex, side, cardIdxForAnim, "explode", undefined, 600);
