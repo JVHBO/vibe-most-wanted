@@ -681,7 +681,7 @@ export const awardPvECoins = mutation({
     if (!skipCoins) {
       const currentBalance = profile.coins || 0;
       const currentAura = profile.stats?.aura ?? 500;
-      const auraReward = won ? 2 : 0; // +2 aura for winning PvE (nerfed, Vibe Clash is main mode)
+      const auraReward = won ? 85 : 0; // +85 aura for winning PvE (Vibe Clash rewarded battles)
 
       await ctx.db.patch(profile!._id, {
         coins: currentBalance + totalReward,

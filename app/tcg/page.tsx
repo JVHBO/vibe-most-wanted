@@ -144,6 +144,7 @@ interface PvEGameState {
   gameOver: boolean;
   winner: string | null;
   tiebreaker?: { type: string; playerPower: number; cpuPower: number } | null;
+  auraRewarded?: boolean;
 }
 
 // Abilities map from JSON
@@ -1272,6 +1273,10 @@ export default function TCGPage() {
   const wasDraggingRef = useRef(false);
   const [showBattleIntro, setShowBattleIntro] = useState(false);
   const [showDefeatBait, setShowDefeatBait] = useState(false);
+  const [autoMatch, setAutoMatch] = useState(false); // Auto match mode - automatically start next match
+  const [dailyBattles, setDailyBattles] = useState(0); // Track daily battles
+  const REWARDED_BATTLES_PER_DAY = 5; // First 5 battles give AURA reward
+  const BATTLE_AURA_REWARD = 85; // AURA reward per win (first 5 daily)
 
   // Turn timer state
   const [turnTimeRemaining, setTurnTimeRemaining] = useState(TCG_CONFIG.TURN_TIME_SECONDS);
@@ -1417,6 +1422,7 @@ export default function TCGPage() {
   const submitActions = useMutation(api.tcg.submitActions);
   const cancelMatch = useMutation(api.tcg.cancelMatch);
   const forfeitMatch = useMutation(api.tcg.forfeitMatch);
+  const awardPvECoins = useMutation(api.economy.awardPvECoins);
 
   // Username
   const username = userProfile?.username || address?.slice(0, 8) || "Anon";
@@ -2010,6 +2016,14 @@ export default function TCGPage() {
     if (!activeDeck) {
       setError("No active deck. Please create a deck first.");
       return;
+    }
+
+    // Increment daily battle counter
+    const newCount = dailyBattles + 1;
+    setDailyBattles(newCount);
+    if (typeof window !== 'undefined') {
+      const today = new Date().toDateString();
+      localStorage.setItem('tcg_daily_battles', JSON.stringify({ date: today, count: newCount }));
     }
 
     // CPU copies player's deck with power variations based on difficulty
@@ -4004,6 +4018,14 @@ export default function TCGPage() {
         }
       }
 
+      // Award AURA for wins within daily rewarded battles
+      const earnedAura = winner === "player" && dailyBattles <= REWARDED_BATTLES_PER_DAY;
+      if (earnedAura && address) {
+        awardPvECoins({ address, difficulty: "gey", won: true }).catch((e: any) => {
+          console.error("[TCG] Failed to award AURA:", e);
+        });
+      }
+
       setPveGameState({
         ...pveGameState,
         lanes: newLanes,
@@ -4012,6 +4034,7 @@ export default function TCGPage() {
         gameOver: true,
         winner,
         tiebreaker,
+        auraRewarded: earnedAura, // Track if this match gave AURA
       });
 
       if (tiebreaker) {
@@ -4279,6 +4302,37 @@ export default function TCGPage() {
       }
     }
   }, [turnTimeRemaining, view, isPvE, pveGameState]);
+
+  // Auto match - automatically start next match when result screen appears
+  useEffect(() => {
+    if (autoMatch && view === "result" && isPvE && pveGameState?.gameOver) {
+      // Wait 3 seconds before starting next match
+      const autoMatchTimer = setTimeout(() => {
+        startPvEMatch();
+      }, 3000);
+      return () => clearTimeout(autoMatchTimer);
+    }
+  }, [autoMatch, view, isPvE, pveGameState?.gameOver]);
+
+  // Load daily battles count from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const today = new Date().toDateString();
+      const stored = localStorage.getItem('tcg_daily_battles');
+      if (stored) {
+        const { date, count } = JSON.parse(stored);
+        if (date === today) {
+          setDailyBattles(count);
+        } else {
+          // New day - reset counter
+          setDailyBattles(0);
+          localStorage.setItem('tcg_daily_battles', JSON.stringify({ date: today, count: 0 }));
+        }
+      } else {
+        localStorage.setItem('tcg_daily_battles', JSON.stringify({ date: today, count: 0 }));
+      }
+    }
+  }, []);
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // COMPONENT: Card Detail Modal (memoized to prevent scroll reset on timer updates)
@@ -4614,6 +4668,28 @@ export default function TCGPage() {
                   </button>
                 ) : (
                   <>
+                    {/* Daily Battles Counter */}
+                    <div className="bg-black/30 border border-vintage-gold/20 rounded-lg p-2 text-center">
+                      <p className="text-[10px] text-vintage-burnt-gold/60 uppercase tracking-wider mb-1">
+                        Today's Battles
+                      </p>
+                      <p className="text-vintage-gold font-bold">
+                        {dailyBattles < REWARDED_BATTLES_PER_DAY ? (
+                          <>
+                            <span className="text-green-400">{dailyBattles}</span>
+                            <span className="text-vintage-gold/50">/</span>
+                            <span className="text-vintage-gold">{REWARDED_BATTLES_PER_DAY}</span>
+                            <span className="text-[9px] text-green-400 ml-2">+{BATTLE_AURA_REWARD} AURA</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-gray-400">{dailyBattles}</span>
+                            <span className="text-[9px] text-gray-400 ml-2">FREE (no reward)</span>
+                          </>
+                        )}
+                      </p>
+                    </div>
+
                     {/* PvE Button */}
                     <button
                       onClick={() => startPvEMatch()}
@@ -4622,7 +4698,7 @@ export default function TCGPage() {
                       <div className="absolute inset-0 bg-gradient-to-r from-green-600 via-emerald-500 to-green-600 opacity-80 group-hover:opacity-100 transition-opacity" />
                       <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
                       <span className="relative z-10 block py-3 px-4 text-white font-black text-sm uppercase tracking-[0.2em] drop-shadow-lg">
-                        {t('tcgBattleCpu')}
+                        {t('tcgBattleCpu')} {dailyBattles < REWARDED_BATTLES_PER_DAY ? `(+${BATTLE_AURA_REWARD} AURA)` : "(Free)"}
                       </span>
                     </button>
 
@@ -7184,6 +7260,34 @@ export default function TCGPage() {
             </div>
           </div>
 
+          {/* AURA Reward Display */}
+          {isWinner && (
+            <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-yellow-900/30 to-amber-900/30 border border-yellow-500/30">
+              <p className="text-yellow-400 font-bold text-lg">
+                {pveGameState.auraRewarded ? (
+                  <>+{BATTLE_AURA_REWARD} AURA</>
+                ) : (
+                  <span className="text-gray-400 text-sm">No AURA reward (daily limit reached)</span>
+                )}
+              </p>
+            </div>
+          )}
+
+          {/* Auto Match Toggle */}
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoMatch}
+                onChange={(e) => setAutoMatch(e.target.checked)}
+                className="w-5 h-5 rounded border-2 border-vintage-gold bg-black/50 checked:bg-vintage-gold checked:border-vintage-gold cursor-pointer"
+              />
+              <span className="text-vintage-gold font-bold text-sm uppercase tracking-wider">
+                🔄 Auto Match {autoMatch && "(Next in 3s)"}
+              </span>
+            </label>
+          </div>
+
           {/* Buttons */}
           <div className="flex gap-3 justify-center">
             <button
@@ -7202,6 +7306,7 @@ export default function TCGPage() {
                 setIsPvE(false);
                 setPveGameState(null);
                 setView("lobby");
+                setAutoMatch(false); // Reset auto match when leaving
               }}
               className="bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105"
             >
