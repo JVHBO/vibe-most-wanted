@@ -75,7 +75,7 @@ import { SessionLockedModal } from "@/components/SessionLockedModal";
 import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { CardLoadingScreen } from "@/components/CardLoadingScreen";
+// CardLoadingScreen removed - wasn't working properly
 // 💎 VBMS Blockchain Contracts
 import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
@@ -498,7 +498,6 @@ export default function TCGPage() {
   const [jcLoadingProgress, setJcLoadingProgress] = useState<{page: number, cards: number} | null>(null);
   const [filteredCount, setFilteredCount] = useState<number>(0);
   const [status, setStatus] = useState<string>("idle");
-  const [skippedCardLoading, setSkippedCardLoading] = useState<boolean>(false);
   
   // 🔗 Get cards from shared context (persists across routes!)
   // 🚀 BANDWIDTH FIX: Use context's loadNFTs instead of local duplicate
@@ -3542,13 +3541,7 @@ export default function TCGPage() {
         />
       )}
 
-      {/* Card Loading Screen - shows while fetching NFTs */}
-      {/* Don't show if context already has cards (they'll sync immediately) */}
-      <CardLoadingScreen
-        isLoading={!skippedCardLoading && nfts.length === 0 && status !== 'loaded' && !(contextStatus === 'loaded' && contextNfts.length > 0)}
-        onSkip={() => setSkippedCardLoading(true)}
-        cardsLoaded={nfts.length}
-      />
+      {/* Card Loading Screen removed - wasn't working properly */}
 
 
       {/* Content wrapper with z-index */}

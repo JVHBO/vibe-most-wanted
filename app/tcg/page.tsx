@@ -5867,23 +5867,22 @@ export default function TCGPage() {
                     </div>
                   </div>
 
-                  {/* CPU Combos (enemy side - top) */}
+                  {/* CPU Combos (enemy side - top) - ONLY ONE COMBO */}
                   {(() => {
-                    const cpuCombos = detectCombos(lane.cpuCards);
-                    if (cpuCombos.length === 0) return null;
+                    const allCpuCombos = detectCombos(lane.cpuCards);
+                    if (allCpuCombos.length === 0) return null;
+                    // Only show first combo (one combo per lane rule)
+                    const cpuCombo = allCpuCombos[0];
                     return (
                       <div className="py-0.5 flex items-center justify-center gap-1 flex-wrap">
-                        {cpuCombos.map(({ combo, wildcardsUsed }) => (
-                          <button
-                            key={combo.id}
-                            onClick={() => setDetailCombo(combo)}
-                            className="border rounded px-1.5 py-0.5 hover:scale-105 transition-all cursor-pointer bg-red-600/30 border-red-500/60"
-                          >
-                            <span className="text-[7px] text-red-300 font-bold uppercase tracking-wide">
-                              {combo.emoji} {COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id] as keyof typeof translations["pt-BR"]) : combo.name}
-                            </span>
-                          </button>
-                        ))}
+                        <button
+                          onClick={() => setDetailCombo(cpuCombo.combo)}
+                          className="border rounded px-1.5 py-0.5 hover:scale-105 transition-all cursor-pointer bg-red-600/30 border-red-500/60"
+                        >
+                          <span className="text-[7px] text-red-300 font-bold uppercase tracking-wide">
+                            {cpuCombo.combo.emoji} {COMBO_TRANSLATION_KEYS[cpuCombo.combo.id] ? t(COMBO_TRANSLATION_KEYS[cpuCombo.combo.id] as keyof typeof translations["pt-BR"]) : cpuCombo.combo.name}
+                          </span>
+                        </button>
                       </div>
                     );
                   })()}

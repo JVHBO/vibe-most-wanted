@@ -173,15 +173,15 @@
     "brian armstrong": {
       "name": "📈 Coinbase Listing",
       "type": "onReveal",
-      "description": "+15 power to all Rare cards. COMBO: If NFTKID in play, ALL cards gain +10 power/TURN!",
-      "effect": { "action": "buffByRarity", "targetRarity": "Rare", "value": 15, "combo": { "partner": "nftkid", "bonusAction": "allScalePerTurn", "scaleValue": 10 } },
+      "description": "+15 power to all Rare cards. COMBO: If VITALIK in play, +80 power to entire lane!",
+      "effect": { "action": "buffByRarity", "targetRarity": "Rare", "value": 15, "combo": { "partner": "vitalik jumpterin", "bonusAction": "buffLane", "laneValue": 80 } },
       "rarity": "Epic"
     },
     "nftkid": {
       "name": "💎 NFT Flip",
       "type": "onReveal",
-      "description": "+10 power per card in hand. COMBO: If BRIAN ARMSTRONG in play, ALL cards gain +10 power/TURN!",
-      "effect": { "action": "buffPerHandSize", "multiplier": 10, "combo": { "partner": "brian armstrong", "bonusAction": "allScalePerTurn", "scaleValue": 10 } },
+      "description": "+10 power per card in hand. COMBO: If JOHN PORN in play, DOUBLE power of both!",
+      "effect": { "action": "buffPerHandSize", "multiplier": 10, "combo": { "partner": "john porn", "bonusAction": "doublePower" } },
       "rarity": "Epic"
     },
 
@@ -195,8 +195,8 @@
     "ventra": {
       "name": "💎 Diamond Hands",
       "type": "ongoing",
-      "description": "IMMUNE to debuffs! Cannot lose power from enemy effects + always +10 power!",
-      "effect": { "action": "immuneToDebuff", "bonusPower": 10 },
+      "description": "IMMUNE to debuffs + always +10 power! COMBO: If MORLACOS in play, BOTH get DOUBLE scaling!",
+      "effect": { "action": "immuneToDebuff", "bonusPower": 10, "combo": { "partner": "morlacos", "bonusAction": "doubleScaling" } },
       "rarity": "Rare"
     },
     "bradymck": {
@@ -216,8 +216,8 @@
     "betobutter": {
       "name": "🧈 Butter Smooth",
       "type": "ongoing",
-      "description": "+6 power/turn. COMBO: If MORLACOS in play, BOTH get DOUBLE scaling!",
-      "effect": { "action": "buffPerTurn", "value": 6, "combo": { "partner": "morlacos", "bonusAction": "doubleScaling" } },
+      "description": "+6 power/turn. COMBO: If SCUM in play, STEAL 40 power from enemies!",
+      "effect": { "action": "buffPerTurn", "value": 6, "combo": { "partner": "scum", "bonusAction": "stealPower", "stealValue": 40 } },
       "rarity": "Rare"
     },
     "qrcodo": {
@@ -280,8 +280,8 @@
     "groko": {
       "name": "🤖 AI Learning",
       "type": "onReveal",
-      "description": "+5 power per Common card. COMBO: If LINUX in play, ALL Commons gain +5 power/turn!",
-      "effect": { "action": "buffPerRarity", "targetRarity": "Common", "value": 5, "combo": { "partner": "linux", "bonusAction": "commonsScalePerTurn", "scaleValue": 5 } },
+      "description": "+5 power per Common card. COMBO: If CLAUDE in play, +50 power to each AI card!",
+      "effect": { "action": "buffPerRarity", "targetRarity": "Common", "value": 5, "combo": { "partner": "claude", "bonusAction": "buffAI", "aiValue": 50 } },
       "rarity": "Common"
     },
     "rizkybegitu": {
@@ -322,8 +322,8 @@
     "morlacos": {
       "name": "💪 Never Give Up",
       "type": "ongoing",
-      "description": "+8 power/turn. COMBO: If BETOBUTTER in play, BOTH get DOUBLE scaling!",
-      "effect": { "action": "buffPerTurn", "value": 8, "combo": { "partner": "betobutter", "bonusAction": "doubleScaling" } },
+      "description": "+8 power/turn. COMBO: If VENTRA in play, BOTH get DOUBLE scaling!",
+      "effect": { "action": "buffPerTurn", "value": 8, "combo": { "partner": "ventra", "bonusAction": "doubleScaling" } },
       "rarity": "Common"
     },
     "landmine": {
@@ -336,8 +336,8 @@
     "linux": {
       "name": "🐧 Open Source",
       "type": "onReveal",
-      "description": "+8 power to ALL Commons. COMBO: If GROKO in play, ALL Commons gain +5 power/turn!",
-      "effect": { "action": "buffByRarity", "targetRarity": "Common", "value": 8, "combo": { "partner": "groko", "bonusAction": "commonsScalePerTurn", "scaleValue": 5 } },
+      "description": "+8 power to ALL Commons. COMBO: If HORSEFARTS in play, +45 power to each coder!",
+      "effect": { "action": "buffByRarity", "targetRarity": "Common", "value": 8, "combo": { "partner": "horsefarts", "bonusAction": "buffCoders", "coderValue": 45 } },
       "rarity": "Common"
     },
     "joonx": {
