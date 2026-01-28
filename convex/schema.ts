@@ -2012,6 +2012,11 @@ export default defineSchema({
       player2FinalPower: v.number(),
     }))),
 
+    // Staking Info
+    isStakedMatch: v.optional(v.boolean()), // Match com aposta
+    stakeAmount: v.optional(v.number()), // Valor apostado (ex: 10000)
+    isCpuOpponent: v.optional(v.boolean()), // Oponente é CPU jogando pelo defense deck
+
     // Timestamps
     createdAt: v.number(),
     startedAt: v.optional(v.number()),
@@ -2044,6 +2049,8 @@ export default defineSchema({
     totalPower: v.number(), // Power total do deck
     isActive: v.boolean(), // Deck ativo pra matchmaking
     isDefenseDeck: v.optional(v.boolean()), // Deck de defesa pra auto-match PvP
+    defensePool: v.optional(v.number()), // VBMS staked neste deck de defesa
+    defensePoolActive: v.optional(v.boolean()), // Pool está ativa para receber ataques
     createdAt: v.number(),
     lastUsed: v.optional(v.number()),
   })
@@ -2086,4 +2093,34 @@ export default defineSchema({
     .index("by_player1", ["player1Address", "finishedAt"])
     .index("by_player2", ["player2Address", "finishedAt"])
     .index("by_finished", ["finishedAt"]),
+
+  // TCG Defense Leaderboard (ranking de pools de defesa)
+  tcgDefenseLeaderboard: defineTable({
+    address: v.string(),
+    username: v.string(),
+    deckId: v.id("tcgDecks"),
+    deckName: v.string(),
+    poolAmount: v.number(), // Quanto tem stakado
+    totalWins: v.number(), // Vitórias defendendo
+    totalLosses: v.number(), // Derrotas
+    totalEarned: v.number(), // Total ganho (90% de cada vitória)
+    totalLost: v.number(), // Total perdido
+    lastUpdated: v.number(),
+  })
+    .index("by_pool", ["poolAmount"])
+    .index("by_address", ["address"])
+    .index("by_deck", ["deckId"]),
+
+  // TCG Matchmaking (busca de partida real-time)
+  tcgMatchmaking: defineTable({
+    address: v.string(),
+    username: v.string(),
+    deckId: v.id("tcgDecks"),
+    poolTier: v.optional(v.number()), // Tier de pool que está buscando (1000, 5000, etc)
+    searchingAt: v.number(), // Timestamp quando começou a buscar
+    expiresAt: v.number(), // Expira após 30s
+  })
+    .index("by_address", ["address"])
+    .index("by_searching", ["expiresAt"])
+    .index("by_pool_tier", ["poolTier", "expiresAt"]),
 });

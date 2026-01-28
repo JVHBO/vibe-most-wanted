@@ -1321,7 +1321,16 @@ export default function TCGPage() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   // Lobby tab state
-  const [lobbyTab, setLobbyTab] = useState<"play" | "rules">("play");
+  const [lobbyTab, setLobbyTab] = useState<"play" | "rules" | "leaderboard">("play");
+
+  // Defense Pool state
+  const [showPoolModal, setShowPoolModal] = useState(false);
+  const [selectedPoolTier, setSelectedPoolTier] = useState(10000);
+
+  // Matchmaking state
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchElapsed, setSearchElapsed] = useState(0);
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Visual effects state - expanded for many abilities
   const [visualEffect, setVisualEffect] = useState<{
@@ -1435,6 +1444,16 @@ export default function TCGPage() {
   const autoMatchMutation = useMutation(api.tcg.autoMatch);
   const setDefenseDeckMutation = useMutation(api.tcg.setDefenseDeck);
   const markTcgMission = useMutation(api.tcg.markTcgMission);
+  const setDefensePoolMutation = useMutation(api.tcg.setDefensePool);
+  const withdrawDefensePoolMutation = useMutation(api.tcg.withdrawDefensePool);
+  const autoMatchWithStakeMutation = useMutation(api.tcg.autoMatchWithStake);
+  const finishStakedMatchMutation = useMutation(api.tcg.finishStakedMatch);
+  const searchMatchMutation = useMutation(api.tcg.searchMatch);
+  const cancelSearchMutation = useMutation(api.tcg.cancelSearch);
+
+  // Defense pool queries
+  const defenseLeaderboard = useQuery(api.tcg.getDefenseLeaderboard, { limit: 50 });
+  const myDefensePool = useQuery(api.tcg.getMyDefensePool, address ? { address } : "skip");
 
   // Username
   const username = userProfile?.username || address?.slice(0, 8) || "Anon";
@@ -4308,6 +4327,14 @@ export default function TCGPage() {
     }
     if (currentMatch?.status === "finished") {
       setView("result");
+
+      // Process staked match rewards
+      if ((currentMatch as any)?.isStakedMatch && currentMatch.winnerId && currentMatchId) {
+        finishStakedMatchMutation({
+          matchId: currentMatchId,
+          winnerAddress: currentMatch.winnerId,
+        }).catch((e: any) => console.error("finishStakedMatch error:", e));
+      }
     }
   }, [currentMatch?.status, view]);
 
@@ -4675,6 +4702,16 @@ export default function TCGPage() {
               {t('tcgPlay')}
             </button>
             <button
+              onClick={() => setLobbyTab("leaderboard")}
+              className={`flex-1 py-2 px-3 font-bold text-xs uppercase tracking-widest transition-all ${
+                lobbyTab === "leaderboard"
+                  ? "bg-gradient-to-b from-vintage-gold/20 to-vintage-gold/5 border-t border-l border-r border-vintage-gold/40 text-vintage-gold rounded-t-lg border-b-0 shadow-[inset_0_1px_0_rgba(255,215,0,0.1)]"
+                  : "bg-black/20 border border-vintage-gold/10 text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold rounded-lg"
+              }`}
+            >
+              Leaderboard
+            </button>
+            <button
               onClick={() => setLobbyTab("rules")}
               className={`flex-1 py-2 px-3 font-bold text-xs uppercase tracking-widest transition-all ${
                 lobbyTab === "rules"
@@ -4712,22 +4749,14 @@ export default function TCGPage() {
                         {t('tcgEdit')}
                       </button>
                       <button
-                        onClick={async () => {
-                          if (!address || !activeDeck?._id) return;
-                          try {
-                            await setDefenseDeckMutation({ address, deckId: activeDeck._id });
-                            setError(null);
-                          } catch (e: any) {
-                            setError(e.message);
-                          }
-                        }}
+                        onClick={() => setShowPoolModal(true)}
                         className={`px-3 py-1 rounded text-[9px] font-bold uppercase tracking-[0.1em] transition-all ${
-                          (activeDeck as any)?.isDefenseDeck
+                          myDefensePool?.isActive
                             ? "bg-green-900/40 text-green-400 border border-green-500/40"
                             : "bg-black/40 hover:bg-black/60 text-vintage-burnt-gold/60 hover:text-vintage-gold border border-vintage-gold/10 hover:border-vintage-gold/30"
                         }`}
                       >
-                        {(activeDeck as any)?.isDefenseDeck ? "Defense Deck ✓" : "Set Defense"}
+                        {myDefensePool?.isActive ? `Pool: ${(myDefensePool.poolAmount || 0).toLocaleString()}` : "Defense Pool"}
                       </button>
                     </div>
                   </div>
@@ -4791,31 +4820,79 @@ export default function TCGPage() {
                         <p className="text-[10px] text-red-400 text-center mb-2">⚠️ Crie um deck primeiro para jogar PvP</p>
                       )}
 
-                      {/* Find Match (Auto Match PvP) */}
-                      <button
-                        onClick={async () => {
-                          if (!address) return;
-                          try {
-                            setError(null);
-                            const result = await autoMatchMutation({ address, username });
-                            if (result?.matchId) {
-                              setCurrentMatchId(result.matchId);
-                              setIsPvE(false);
-                              setView("battle");
-                              setBattleLog([]);
+                      {/* Find Match (Matchmaking → CPU fallback) */}
+                      {isSearching ? (
+                        <div className="w-full bg-black/40 border border-amber-500/40 rounded p-3 mb-2 text-center">
+                          <div className="flex items-center justify-center gap-2 mb-1">
+                            <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                            <span className="text-amber-400 text-xs font-bold uppercase tracking-wider">
+                              {searchElapsed < 3 ? "Searching for players..." : "Matching vs CPU..."}
+                            </span>
+                          </div>
+                          <p className="text-[9px] text-vintage-burnt-gold/50">{Math.ceil(3 - searchElapsed)}s</p>
+                          <button
+                            onClick={async () => {
+                              setIsSearching(false);
+                              if (searchTimerRef.current) clearInterval(searchTimerRef.current);
+                              if (address) await cancelSearchMutation({ address });
+                            }}
+                            className="mt-2 px-4 py-1 text-[9px] text-red-400 border border-red-500/30 rounded hover:bg-red-900/20"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            if (!address || !activeDeck?._id) return;
+                            try {
+                              setError(null);
+                              setIsSearching(true);
+                              setSearchElapsed(0);
+
+                              // Start search on server
+                              await searchMatchMutation({ address, username, deckId: activeDeck._id });
+
+                              // Poll for 3 seconds looking for live player
+                              let elapsed = 0;
+                              const interval = setInterval(() => {
+                                elapsed += 0.5;
+                                setSearchElapsed(elapsed);
+                              }, 500);
+                              searchTimerRef.current = interval;
+
+                              // Wait 3 seconds
+                              await new Promise(resolve => setTimeout(resolve, 3000));
+                              clearInterval(interval);
+                              searchTimerRef.current = null;
+
+                              // No live player found after 3s - fall back to CPU auto match
+                              await cancelSearchMutation({ address });
+                              setSearchElapsed(3.5);
+
+                              const result = await autoMatchMutation({ address, username });
+                              if (result?.matchId) {
+                                setCurrentMatchId(result.matchId);
+                                setIsPvE(false);
+                                setView("battle");
+                                setBattleLog([]);
+                              }
+                              setIsSearching(false);
+                            } catch (e: any) {
+                              setIsSearching(false);
+                              if (searchTimerRef.current) clearInterval(searchTimerRef.current);
+                              setError(e.message || "No opponents found");
                             }
-                          } catch (e: any) {
-                            setError(e.message || "No opponents found");
-                          }
-                        }}
-                        disabled={!hasDeck}
-                        className="w-full relative overflow-hidden group mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 opacity-70 group-hover:opacity-90 transition-opacity" />
-                        <span className="relative z-10 block py-2.5 px-4 text-white font-bold text-xs uppercase tracking-[0.2em]">
-                          Find Match
-                        </span>
-                      </button>
+                          }}
+                          disabled={!hasDeck}
+                          className="w-full relative overflow-hidden group mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 opacity-70 group-hover:opacity-90 transition-opacity" />
+                          <span className="relative z-10 block py-2.5 px-4 text-white font-bold text-xs uppercase tracking-[0.2em]">
+                            Find Match
+                          </span>
+                        </button>
+                      )}
 
                       {/* Create Match */}
                       <button
@@ -5007,6 +5084,214 @@ export default function TCGPage() {
               </div>
             </div>
           )}
+
+          {/* Leaderboard Tab */}
+          {lobbyTab === "leaderboard" && (
+            <div className="space-y-3">
+              <div className="bg-gradient-to-b from-vintage-charcoal/60 to-vintage-charcoal/30 border border-vintage-gold/15 rounded-lg p-3">
+                <h3 className="text-xs font-bold text-vintage-gold uppercase tracking-[0.2em] mb-3 text-center">Defense Leaderboard</h3>
+
+                {/* My Pool Status */}
+                {myDefensePool?.isActive && (
+                  <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-2 mb-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[9px] text-green-400/70 uppercase tracking-wider">Your Pool</p>
+                        <p className="text-sm font-bold text-green-400">{(myDefensePool.poolAmount || 0).toLocaleString()} VBMS</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] text-vintage-burnt-gold/50">W: <span className="text-green-400">{myDefensePool.wins}</span> L: <span className="text-red-400">{myDefensePool.losses}</span></p>
+                        <p className="text-[9px] text-vintage-burnt-gold/50">Earned: <span className="text-green-400">+{(myDefensePool.totalEarned || 0).toLocaleString()}</span></p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Leaderboard List */}
+                {defenseLeaderboard && defenseLeaderboard.length > 0 ? (
+                  <div className="space-y-1">
+                    {defenseLeaderboard.map((entry: any) => {
+                      const isMe = address && entry.address.toLowerCase() === address.toLowerCase();
+                      return (
+                        <div
+                          key={entry.address}
+                          className={`flex items-center justify-between p-2 rounded ${
+                            isMe ? "bg-vintage-gold/10 border border-vintage-gold/30" : "bg-black/20 border border-vintage-gold/5"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-bold w-6 text-center ${entry.rank <= 3 ? "text-vintage-gold" : "text-vintage-burnt-gold/50"}`}>
+                              #{entry.rank}
+                            </span>
+                            <div>
+                              <p className={`text-xs font-bold truncate max-w-[120px] ${isMe ? "text-vintage-gold" : "text-vintage-burnt-gold"}`}>
+                                {entry.username}{isMe ? " *" : ""}
+                              </p>
+                              <p className="text-[8px] text-vintage-burnt-gold/40">{entry.deckName}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-right">
+                              <p className="text-xs font-bold text-vintage-gold">{(entry.poolAmount || 0).toLocaleString()}</p>
+                              <p className="text-[8px] text-vintage-burnt-gold/40">
+                                W:<span className="text-green-400">{entry.wins}</span> L:<span className="text-red-400">{entry.losses}</span>
+                              </p>
+                            </div>
+                            {!isMe && activeDeck && (
+                              <button
+                                onClick={async () => {
+                                  if (!address) return;
+                                  try {
+                                    setError(null);
+                                    const result = await autoMatchWithStakeMutation({
+                                      address,
+                                      username,
+                                      poolTier: entry.poolAmount,
+                                    });
+                                    if (result?.matchId) {
+                                      setCurrentMatchId(result.matchId);
+                                      setIsPvE(false);
+                                      setView("battle");
+                                      setBattleLog([]);
+                                    }
+                                  } catch (e: any) {
+                                    setError(e.message || "Failed to challenge");
+                                  }
+                                }}
+                                className="px-2 py-1.5 bg-orange-600/30 hover:bg-orange-600/50 text-orange-400 border border-orange-500/40 rounded text-[8px] font-bold uppercase tracking-wider transition-all whitespace-nowrap"
+                              >
+                                Fight
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-center text-vintage-burnt-gold/40 text-xs py-4">No defenders yet. Be the first to stake!</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Defense Pool Modal */}
+          {showPoolModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setShowPoolModal(false)}>
+              <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black border border-vintage-gold/30 rounded-xl p-4 max-w-sm mx-4 w-full" onClick={e => e.stopPropagation()}>
+                <h3 className="text-sm font-bold text-vintage-gold uppercase tracking-[0.2em] mb-3 text-center">Defense Pool</h3>
+
+                {/* Current Pool Status */}
+                {myDefensePool?.isActive ? (
+                  <div className="space-y-3">
+                    <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3 text-center">
+                      <p className="text-[9px] text-green-400/70 uppercase tracking-wider mb-1">Active Pool</p>
+                      <p className="text-xl font-bold text-green-400">{(myDefensePool.poolAmount || 0).toLocaleString()} VBMS</p>
+                      <p className="text-[9px] text-vintage-burnt-gold/50 mt-1">
+                        W: {myDefensePool.wins} | L: {myDefensePool.losses} | Earned: +{(myDefensePool.totalEarned || 0).toLocaleString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!address || !myDefensePool?.deckId) return;
+                        try {
+                          await withdrawDefensePoolMutation({ address, deckId: myDefensePool.deckId });
+                          setShowPoolModal(false);
+                          setError(null);
+                        } catch (e: any) {
+                          setError(e.message);
+                        }
+                      }}
+                      className="w-full py-2 bg-red-900/40 hover:bg-red-900/60 text-red-400 border border-red-500/40 rounded font-bold text-xs uppercase tracking-wider transition-all"
+                    >
+                      Withdraw Pool
+                    </button>
+                    <p className="text-[8px] text-vintage-burnt-gold/30 text-center">Withdrawn VBMS go to your inbox (claim on home page)</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Tier Selection */}
+                    <div>
+                      <p className="text-[9px] text-vintage-burnt-gold/50 uppercase tracking-wider mb-2">Select Stake Amount</p>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {[1000, 5000, 10000, 25000, 50000].map(tier => (
+                          <button
+                            key={tier}
+                            onClick={() => setSelectedPoolTier(tier)}
+                            className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                              selectedPoolTier === tier
+                                ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50"
+                                : "bg-black/40 text-vintage-burnt-gold/60 border border-vintage-gold/10 hover:border-vintage-gold/30"
+                            }`}
+                          >
+                            {(tier / 1000).toFixed(0)}k
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Info */}
+                    <div className="bg-black/30 border border-vintage-gold/10 rounded-lg p-2 space-y-1">
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-vintage-burnt-gold/50">Entry:</span>
+                        <span className="text-vintage-gold font-bold">{selectedPoolTier.toLocaleString()} VBMS</span>
+                      </div>
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-vintage-burnt-gold/50">Win:</span>
+                        <span className="text-green-400 font-bold">+{Math.floor(selectedPoolTier * 0.9).toLocaleString()} VBMS (90%)</span>
+                      </div>
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-vintage-burnt-gold/50">Lose:</span>
+                        <span className="text-red-400 font-bold">-{Math.floor(selectedPoolTier * 0.9).toLocaleString()} VBMS</span>
+                      </div>
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-vintage-burnt-gold/50">Fee:</span>
+                        <span className="text-vintage-burnt-gold/70">{Math.floor(selectedPoolTier * 0.1).toLocaleString()} VBMS (10%)</span>
+                      </div>
+                    </div>
+
+                    {/* Balance */}
+                    <p className="text-[9px] text-vintage-burnt-gold/40 text-center">
+                      Your Balance: {((userProfile as any)?.coins || 0).toLocaleString()} VBMS
+                    </p>
+
+                    {/* Activate Button */}
+                    <button
+                      onClick={async () => {
+                        if (!address || !activeDeck?._id) return;
+                        try {
+                          await setDefensePoolMutation({
+                            address,
+                            deckId: activeDeck._id,
+                            amount: selectedPoolTier,
+                            username,
+                          });
+                          setShowPoolModal(false);
+                          setError(null);
+                        } catch (e: any) {
+                          setError(e.message);
+                        }
+                      }}
+                      disabled={!activeDeck?._id}
+                      className="w-full py-2.5 bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-600 hover:to-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded transition-all disabled:opacity-40"
+                    >
+                      Activate Defense Pool
+                    </button>
+                    <p className="text-[8px] text-vintage-burnt-gold/30 text-center">VBMS will be deducted from your balance</p>
+                  </div>
+                )}
+
+                {/* Close */}
+                <button
+                  onClick={() => setShowPoolModal(false)}
+                  className="w-full mt-3 py-1.5 text-vintage-burnt-gold/50 hover:text-vintage-gold text-[10px] uppercase tracking-wider transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+
           </div>
         </div>
       </div>
@@ -6988,6 +7273,13 @@ export default function TCGPage() {
     const opponentConfirmed = isPlayer1 ? gs.player2Confirmed : gs.player1Confirmed;
     const energy = gs.energy || gs.currentTurn || 1;
 
+    // Opponent name formatting
+    const rawOpponentName = isPlayer1 ? currentMatch.player2Username : currentMatch.player1Username;
+    const isCpuMatch = (currentMatch as any).isCpuOpponent;
+    const opponentDisplayName = rawOpponentName
+      ? (isCpuMatch ? `${rawOpponentName} (CPU)` : rawOpponentName)
+      : t('tcgOpponent');
+
     // Calculate pending actions energy cost
     const pendingEnergyCost = pendingActions.reduce((total, action) => {
       if (action.type === "play" && myHand && myHand[action.cardIndex]) {
@@ -7065,7 +7357,7 @@ export default function TCGPage() {
                 {/* Enemy Side (top) */}
                 <div className="flex-1 flex flex-col p-1 border-b border-gray-700/50">
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] text-red-400">{t('tcgOpponent')}</span>
+                    <span className="text-[10px] text-red-400 max-w-[100px] truncate inline-block">{opponentDisplayName}</span>
                     <span className={`text-sm font-bold ${status === "losing" ? "text-red-400" : "text-gray-400"}`}>
                       {lane[enemyPower] || 0}
                     </span>
@@ -7447,6 +7739,9 @@ export default function TCGPage() {
     const isWinner = currentMatch.winnerId === address?.toLowerCase();
     const isDraw = !currentMatch.winnerId;
     const isPlayer1 = currentMatch.player1Address === address?.toLowerCase();
+    const pvpOpponentName = isPlayer1 ? currentMatch.player2Username : currentMatch.player1Username;
+    const pvpIsCpu = (currentMatch as any).isCpuOpponent;
+    const pvpOpponentDisplay = pvpOpponentName ? (pvpIsCpu ? `${pvpOpponentName} (CPU)` : pvpOpponentName) : "Opponent";
 
     // Calculate lanes won
     const lanesWon = currentMatch.laneResults?.filter((lane: any) =>
@@ -7495,7 +7790,7 @@ export default function TCGPage() {
               {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
             </h1>
             <p className="text-gray-500 text-sm">
-              {isDraw ? "Both players tied!" : isWinner ? "You dominated the battlefield!" : "Better luck next time..."}
+              vs <span className="text-vintage-burnt-gold max-w-[150px] truncate inline-block align-bottom">{pvpOpponentDisplay}</span>
             </p>
           </div>
 

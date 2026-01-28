@@ -1877,3 +1877,813 @@ export const markTcgMission = mutation({
     }
   },
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEFENSE POOL STAKING SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const POOL_TIERS = [1000, 5000, 10000, 25000, 50000]; // Available pool amounts
+const POOL_FEE_PERCENT = 10; // 10% fee on wins/losses
+
+/**
+ * Set defense pool - stake VBMS into your defense deck
+ */
+export const setDefensePool = mutation({
+  args: {
+    address: v.string(),
+    deckId: v.id("tcgDecks"),
+    amount: v.number(), // Must be one of POOL_TIERS
+    username: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+
+    // Validate pool tier
+    if (!POOL_TIERS.includes(args.amount)) {
+      throw new Error(`Invalid pool amount. Must be one of: ${POOL_TIERS.join(", ")}`);
+    }
+
+    // Verify deck ownership
+    const deck = await ctx.db.get(args.deckId);
+    if (!deck) {
+      throw new Error("Deck not found");
+    }
+    if (deck.address.toLowerCase() !== addr) {
+      throw new Error("This deck doesn't belong to you");
+    }
+
+    // Check if deck already has a pool
+    if (deck.defensePool && deck.defensePool > 0 && deck.defensePoolActive) {
+      throw new Error("This deck already has an active pool. Withdraw first.");
+    }
+
+    // Get profile and check balance
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const currentCoins = profile.coins || 0;
+    if (currentCoins < args.amount) {
+      throw new Error(`Insufficient balance. You have ${currentCoins} VBMS, need ${args.amount}`);
+    }
+
+    // Deduct coins from balance
+    const newBalance = currentCoins - args.amount;
+    await ctx.db.patch(profile._id, { coins: newBalance });
+
+    // Clear existing defense deck for this user
+    const existingDefense = await ctx.db
+      .query("tcgDecks")
+      .withIndex("by_address", (q: any) => q.eq("address", deck.address))
+      .collect();
+
+    for (const d of existingDefense) {
+      if (d._id !== args.deckId && (d.isDefenseDeck || d.defensePoolActive)) {
+        await ctx.db.patch(d._id, {
+          isDefenseDeck: false,
+          defensePoolActive: false
+        });
+      }
+    }
+
+    // Set defense pool on deck
+    await ctx.db.patch(args.deckId, {
+      isDefenseDeck: true,
+      defensePool: args.amount,
+      defensePoolActive: true,
+    });
+
+    // Update or create leaderboard entry
+    const existingEntry = await ctx.db
+      .query("tcgDefenseLeaderboard")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .first();
+
+    if (existingEntry) {
+      await ctx.db.patch(existingEntry._id, {
+        deckId: args.deckId,
+        deckName: deck.deckName,
+        poolAmount: args.amount,
+        username: args.username,
+        lastUpdated: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("tcgDefenseLeaderboard", {
+        address: addr,
+        username: args.username,
+        deckId: args.deckId,
+        deckName: deck.deckName,
+        poolAmount: args.amount,
+        totalWins: 0,
+        totalLosses: 0,
+        totalEarned: 0,
+        totalLost: 0,
+        lastUpdated: Date.now(),
+      });
+    }
+
+    // Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: addr,
+      amount: -args.amount,
+      type: "spend",
+      source: "tcg_defense_pool",
+      description: `Staked ${args.amount} VBMS in defense pool`,
+      timestamp: Date.now(),
+      balanceBefore: currentCoins,
+      balanceAfter: newBalance,
+    });
+
+    console.log(`🛡️💰 Defense pool set: ${deck.deckName} with ${args.amount} VBMS for ${addr}`);
+    return {
+      success: true,
+      poolAmount: args.amount,
+      newBalance
+    };
+  },
+});
+
+/**
+ * Withdraw defense pool - return staked VBMS to coinsInbox
+ */
+export const withdrawDefensePool = mutation({
+  args: {
+    address: v.string(),
+    deckId: v.id("tcgDecks"),
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+
+    // Verify deck ownership
+    const deck = await ctx.db.get(args.deckId);
+    if (!deck) {
+      throw new Error("Deck not found");
+    }
+    if (deck.address.toLowerCase() !== addr) {
+      throw new Error("This deck doesn't belong to you");
+    }
+
+    // Check if deck has a pool
+    const poolAmount = deck.defensePool || 0;
+    if (poolAmount <= 0 || !deck.defensePoolActive) {
+      throw new Error("No active pool to withdraw");
+    }
+
+    // Get profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    // Return pool to coinsInbox (requires claim on home page)
+    const currentInbox = profile.coinsInbox || 0;
+    const newInbox = currentInbox + poolAmount;
+    await ctx.db.patch(profile._id, { coinsInbox: newInbox });
+
+    // Clear defense pool on deck
+    await ctx.db.patch(args.deckId, {
+      isDefenseDeck: false,
+      defensePool: 0,
+      defensePoolActive: false,
+    });
+
+    // Remove from leaderboard
+    const leaderboardEntry = await ctx.db
+      .query("tcgDefenseLeaderboard")
+      .withIndex("by_deck", (q: any) => q.eq("deckId", args.deckId))
+      .first();
+
+    if (leaderboardEntry) {
+      await ctx.db.delete(leaderboardEntry._id);
+    }
+
+    // Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address: addr,
+      amount: poolAmount,
+      type: "earn",
+      source: "tcg_defense_pool_withdraw",
+      description: `Withdrew ${poolAmount} VBMS from defense pool`,
+      timestamp: Date.now(),
+      balanceBefore: currentInbox,
+      balanceAfter: newInbox,
+    });
+
+    console.log(`🛡️💸 Defense pool withdrawn: ${poolAmount} VBMS for ${addr}`);
+    return {
+      success: true,
+      withdrawn: poolAmount,
+      newInbox
+    };
+  },
+});
+
+/**
+ * Get defense leaderboard - sorted by pool amount
+ */
+export const getDefenseLeaderboard = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 50;
+
+    // Get all leaderboard entries and sort by pool
+    const entries = await ctx.db
+      .query("tcgDefenseLeaderboard")
+      .collect();
+
+    // Sort by poolAmount descending
+    const sorted = entries.sort((a, b) => b.poolAmount - a.poolAmount);
+
+    return sorted.slice(0, limit).map((entry, index) => ({
+      rank: index + 1,
+      address: entry.address,
+      username: entry.username,
+      deckId: entry.deckId,
+      deckName: entry.deckName,
+      poolAmount: entry.poolAmount,
+      wins: entry.totalWins,
+      losses: entry.totalLosses,
+      totalEarned: entry.totalEarned,
+      totalLost: entry.totalLost,
+    }));
+  },
+});
+
+/**
+ * Get user's defense pool status
+ */
+export const getMyDefensePool = query({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+
+    const leaderboardEntry = await ctx.db
+      .query("tcgDefenseLeaderboard")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .first();
+
+    if (!leaderboardEntry) {
+      return null;
+    }
+
+    // Get deck details
+    const deck = await ctx.db.get(leaderboardEntry.deckId);
+
+    return {
+      deckId: leaderboardEntry.deckId,
+      deckName: leaderboardEntry.deckName,
+      poolAmount: leaderboardEntry.poolAmount,
+      wins: leaderboardEntry.totalWins,
+      losses: leaderboardEntry.totalLosses,
+      totalEarned: leaderboardEntry.totalEarned,
+      totalLost: leaderboardEntry.totalLost,
+      deckPower: deck?.totalPower || 0,
+      isActive: deck?.defensePoolActive || false,
+    };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REAL-TIME MATCHMAKING (3 second window)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const MATCHMAKING_TIMEOUT_MS = 30000; // 30 seconds max search
+const MATCHMAKING_LIVE_WINDOW_MS = 3000; // 3 seconds to find live player
+
+/**
+ * Start searching for a match
+ */
+export const searchMatch = mutation({
+  args: {
+    address: v.string(),
+    username: v.string(),
+    deckId: v.id("tcgDecks"),
+    poolTier: v.optional(v.number()), // If staked match, which tier
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+
+    // Verify deck ownership
+    const deck = await ctx.db.get(args.deckId);
+    if (!deck) {
+      throw new Error("Deck not found");
+    }
+    if (deck.address.toLowerCase() !== addr) {
+      throw new Error("This deck doesn't belong to you");
+    }
+
+    // Remove any existing matchmaking entry for this user
+    const existing = await ctx.db
+      .query("tcgMatchmaking")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .first();
+
+    if (existing) {
+      await ctx.db.delete(existing._id);
+    }
+
+    // Create new matchmaking entry
+    const now = Date.now();
+    const matchmakingId = await ctx.db.insert("tcgMatchmaking", {
+      address: addr,
+      username: args.username,
+      deckId: args.deckId,
+      poolTier: args.poolTier,
+      searchingAt: now,
+      expiresAt: now + MATCHMAKING_TIMEOUT_MS,
+    });
+
+    console.log(`🔍 ${args.username} started searching for match (tier: ${args.poolTier || 'free'})`);
+    return {
+      matchmakingId,
+      searchingAt: now,
+    };
+  },
+});
+
+/**
+ * Cancel matchmaking search
+ */
+export const cancelSearch = mutation({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+
+    const existing = await ctx.db
+      .query("tcgMatchmaking")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .first();
+
+    if (existing) {
+      await ctx.db.delete(existing._id);
+      console.log(`❌ Search cancelled for ${addr}`);
+      return { success: true, cancelled: true };
+    }
+
+    return { success: true, cancelled: false };
+  },
+});
+
+/**
+ * Check matchmaking - find another player or timeout to CPU
+ */
+export const checkMatchmaking = query({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+    const now = Date.now();
+
+    // Get my matchmaking entry
+    const myEntry = await ctx.db
+      .query("tcgMatchmaking")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .first();
+
+    if (!myEntry) {
+      return { status: "not_searching" };
+    }
+
+    // Check if expired
+    if (now > myEntry.expiresAt) {
+      return { status: "expired" };
+    }
+
+    // Check if still in live player window (first 3 seconds)
+    const searchDuration = now - myEntry.searchingAt;
+    const inLiveWindow = searchDuration < MATCHMAKING_LIVE_WINDOW_MS;
+
+    // Look for other players searching (with same pool tier if specified)
+    const allSearching = await ctx.db
+      .query("tcgMatchmaking")
+      .withIndex("by_searching", (q: any) => q.gt("expiresAt", now))
+      .collect();
+
+    // Filter for same pool tier and exclude self
+    const potentialMatches = allSearching.filter(entry =>
+      entry.address.toLowerCase() !== addr &&
+      entry.poolTier === myEntry.poolTier
+    );
+
+    if (potentialMatches.length > 0) {
+      // Found a live player!
+      const opponent = potentialMatches[0];
+      return {
+        status: "found_player",
+        opponent: {
+          address: opponent.address,
+          username: opponent.username,
+          deckId: opponent.deckId,
+        },
+      };
+    }
+
+    // No live player found
+    if (inLiveWindow) {
+      return {
+        status: "searching",
+        elapsed: searchDuration,
+        timeLeft: MATCHMAKING_LIVE_WINDOW_MS - searchDuration,
+      };
+    }
+
+    // Past live window - fall back to CPU
+    return {
+      status: "timeout_cpu",
+      elapsed: searchDuration,
+    };
+  },
+});
+
+/**
+ * Create PvP match from matchmaking (when two players find each other)
+ */
+export const createMatchFromMatchmaking = mutation({
+  args: {
+    player1Address: v.string(),
+    player2Address: v.string(),
+    player1Username: v.string(),
+    player2Username: v.string(),
+    player1DeckId: v.id("tcgDecks"),
+    player2DeckId: v.id("tcgDecks"),
+    poolTier: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const addr1 = args.player1Address.toLowerCase();
+    const addr2 = args.player2Address.toLowerCase();
+
+    // Get decks
+    const deck1 = await ctx.db.get(args.player1DeckId);
+    const deck2 = await ctx.db.get(args.player2DeckId);
+
+    if (!deck1 || !deck2) {
+      throw new Error("One or both decks not found");
+    }
+
+    // Remove both from matchmaking
+    const mm1 = await ctx.db
+      .query("tcgMatchmaking")
+      .withIndex("by_address", (q: any) => q.eq("address", addr1))
+      .first();
+    const mm2 = await ctx.db
+      .query("tcgMatchmaking")
+      .withIndex("by_address", (q: any) => q.eq("address", addr2))
+      .first();
+
+    if (mm1) await ctx.db.delete(mm1._id);
+    if (mm2) await ctx.db.delete(mm2._id);
+
+    // If staked match, deduct from both players
+    if (args.poolTier && args.poolTier > 0) {
+      const profile1 = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q: any) => q.eq("address", addr1))
+        .first();
+      const profile2 = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q: any) => q.eq("address", addr2))
+        .first();
+
+      if (!profile1 || !profile2) {
+        throw new Error("One or both profiles not found");
+      }
+
+      const coins1 = profile1.coins || 0;
+      const coins2 = profile2.coins || 0;
+
+      if (coins1 < args.poolTier || coins2 < args.poolTier) {
+        throw new Error("One or both players have insufficient balance");
+      }
+
+      // Deduct stake from both
+      await ctx.db.patch(profile1._id, { coins: coins1 - args.poolTier });
+      await ctx.db.patch(profile2._id, { coins: coins2 - args.poolTier });
+    }
+
+    // Create match
+    const roomId = generateRoomId();
+    const gameState = initializeGameState(deck1.cards, deck2.cards);
+
+    const matchId = await ctx.db.insert("tcgMatches", {
+      roomId,
+      status: "in-progress",
+      player1Address: addr1,
+      player1Username: args.player1Username,
+      player1Deck: deck1.cards,
+      player1Ready: true,
+      player2Address: addr2,
+      player2Username: args.player2Username,
+      player2Deck: deck2.cards,
+      player2Ready: true,
+      gameState,
+      createdAt: Date.now(),
+      startedAt: Date.now(),
+      expiresAt: Date.now() + (TCG_CONFIG.ROOM_EXPIRY_MINUTES * 60 * 1000),
+      isStakedMatch: args.poolTier ? true : false,
+      stakeAmount: args.poolTier || 0,
+      isCpuOpponent: false,
+    });
+
+    console.log(`⚔️ PvP match created: ${args.player1Username} vs ${args.player2Username} (stake: ${args.poolTier || 0})`);
+    return {
+      matchId,
+      roomId,
+    };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STAKED AUTO-MATCH (vs CPU defense pool decks)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Auto-match with stake - find a defense pool deck and fight vs CPU
+ * Attacker pays the pool tier amount. CPU plays for the defender.
+ */
+export const autoMatchWithStake = mutation({
+  args: {
+    address: v.string(),
+    username: v.string(),
+    poolTier: v.number(), // Must match a defender's pool amount
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+
+    if (!POOL_TIERS.includes(args.poolTier)) {
+      throw new Error(`Invalid pool tier. Must be one of: ${POOL_TIERS.join(", ")}`);
+    }
+
+    // Get player's active deck
+    const activeDeck = await ctx.db
+      .query("tcgDecks")
+      .withIndex("by_address_active", (q: any) =>
+        q.eq("address", addr).eq("isActive", true)
+      )
+      .first();
+
+    if (!activeDeck) {
+      throw new Error("No active deck. Please create and select a deck first.");
+    }
+
+    // Check player balance
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const currentCoins = profile.coins || 0;
+    if (currentCoins < args.poolTier) {
+      throw new Error(`Insufficient balance. You have ${currentCoins} VBMS, need ${args.poolTier}`);
+    }
+
+    // Find defense pool decks with matching tier
+    const allDecks = await ctx.db.query("tcgDecks").collect();
+    const poolDecks = allDecks.filter((d: any) =>
+      d.defensePoolActive === true &&
+      d.defensePool === args.poolTier &&
+      d.address.toLowerCase() !== addr
+    );
+
+    if (poolDecks.length === 0) {
+      throw new Error(`No defenders with ${args.poolTier} VBMS pool available. Try a different tier!`);
+    }
+
+    // Pick random opponent
+    const opponent = poolDecks[Math.floor(Math.random() * poolDecks.length)];
+
+    // Get opponent profile for username
+    const opponentProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", opponent.address))
+      .first();
+
+    const opponentUsername = opponentProfile?.username || "Unknown";
+
+    // Deduct stake from attacker
+    await ctx.db.patch(profile._id, { coins: currentCoins - args.poolTier });
+
+    // Log attacker's stake deduction
+    await ctx.db.insert("coinTransactions", {
+      address: addr,
+      amount: -args.poolTier,
+      type: "spend",
+      source: "tcg_staked_match",
+      description: `Staked ${args.poolTier} VBMS for VibeClash match vs ${opponentUsername}`,
+      timestamp: Date.now(),
+      balanceBefore: currentCoins,
+      balanceAfter: currentCoins - args.poolTier,
+    });
+
+    // Remove attacker from matchmaking if present
+    const mm = await ctx.db
+      .query("tcgMatchmaking")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .first();
+    if (mm) await ctx.db.delete(mm._id);
+
+    // Create match
+    const roomId = generateRoomId();
+    const gameState = initializeGameState(activeDeck.cards, opponent.cards);
+
+    const matchId = await ctx.db.insert("tcgMatches", {
+      roomId,
+      status: "in-progress",
+      player1Address: addr,
+      player1Username: args.username,
+      player1Deck: activeDeck.cards,
+      player1Ready: true,
+      player2Address: opponent.address,
+      player2Username: opponentUsername,
+      player2Deck: opponent.cards,
+      player2Ready: true,
+      gameState,
+      createdAt: Date.now(),
+      startedAt: Date.now(),
+      expiresAt: Date.now() + (TCG_CONFIG.ROOM_EXPIRY_MINUTES * 60 * 1000),
+      isStakedMatch: true,
+      stakeAmount: args.poolTier,
+      isCpuOpponent: true,
+    });
+
+    console.log(`⚔️💰 Staked match: ${args.username} vs ${opponentUsername} (CPU) for ${args.poolTier} VBMS`);
+    return {
+      matchId,
+      roomId,
+      opponentUsername,
+      opponentPower: opponent.totalPower,
+      isAutoMatch: true,
+      isCpuOpponent: true,
+      stakeAmount: args.poolTier,
+    };
+  },
+});
+
+/**
+ * Finish a staked match - distribute rewards
+ * Called when a staked match ends (win/lose)
+ *
+ * Winner gets 90% of the total pot (both stakes)
+ * 10% is burned (fee/sink)
+ */
+export const finishStakedMatch = mutation({
+  args: {
+    matchId: v.id("tcgMatches"),
+    winnerAddress: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const match = await ctx.db.get(args.matchId);
+    if (!match) {
+      throw new Error("Match not found");
+    }
+
+    if (!match.isStakedMatch || !match.stakeAmount) {
+      return { success: false, reason: "Not a staked match" };
+    }
+
+    // Prevent double-processing
+    if ((match as any).stakePaid) {
+      return { success: false, reason: "Already processed" };
+    }
+
+    const stake = match.stakeAmount || 0;
+    const totalPot = stake * 2; // Both sides stake
+    const fee = Math.floor(totalPot * POOL_FEE_PERCENT / 100); // 10% fee
+    const winnerReward = totalPot - fee; // 90% to winner
+
+    const winnerAddr = args.winnerAddress.toLowerCase();
+    const p1Addr = (match.player1Address || "").toLowerCase();
+    const p2Addr = (match.player2Address || "").toLowerCase();
+    const isPlayer1Winner = winnerAddr === p1Addr;
+    const loserAddr = isPlayer1Winner ? p2Addr : p1Addr;
+
+    // Award winner - to coinsInbox (requires claim)
+    const winnerProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", winnerAddr))
+      .first();
+
+    if (winnerProfile) {
+      const currentInbox = winnerProfile.coinsInbox || 0;
+      await ctx.db.patch(winnerProfile._id, {
+        coinsInbox: currentInbox + winnerReward,
+        lifetimeEarned: (winnerProfile.lifetimeEarned || 0) + winnerReward,
+      });
+
+      await ctx.db.insert("coinTransactions", {
+        address: winnerAddr,
+        amount: winnerReward,
+        type: "earn",
+        source: "tcg_staked_win",
+        description: `Won VibeClash staked match: +${winnerReward} VBMS (${POOL_FEE_PERCENT}% fee)`,
+        timestamp: Date.now(),
+        balanceBefore: currentInbox,
+        balanceAfter: currentInbox + winnerReward,
+      });
+    }
+
+    // If CPU match - update defender's pool and leaderboard
+    if (match.isCpuOpponent) {
+      // Defender is player2 (CPU side)
+      const defenderAddr = p2Addr;
+      const attackerWon = isPlayer1Winner;
+
+      // Find defender's deck and leaderboard entry
+      const defenderDecks = await ctx.db
+        .query("tcgDecks")
+        .withIndex("by_address", (q: any) => q.eq("address", match.player2Address || ""))
+        .collect();
+
+      const defenderDeck = defenderDecks.find((d: any) =>
+        d.defensePoolActive === true && d.defensePool === stake
+      );
+
+      if (defenderDeck) {
+        if (attackerWon) {
+          // Attacker won: defender loses from pool
+          const newPool = Math.max(0, (defenderDeck.defensePool || 0) - winnerReward + stake);
+          if (newPool <= 0) {
+            // Pool depleted
+            await ctx.db.patch(defenderDeck._id, {
+              defensePool: 0,
+              defensePoolActive: false,
+              isDefenseDeck: false,
+            });
+          } else {
+            await ctx.db.patch(defenderDeck._id, {
+              defensePool: newPool,
+            });
+          }
+        } else {
+          // Defender won (CPU won): defender gains in pool
+          const gained = winnerReward - stake; // Net gain (90% of opponent's stake minus own stake returned)
+          await ctx.db.patch(defenderDeck._id, {
+            defensePool: (defenderDeck.defensePool || 0) + gained,
+          });
+        }
+      }
+
+      // Update leaderboard
+      const leaderboardEntry = await ctx.db
+        .query("tcgDefenseLeaderboard")
+        .withIndex("by_address", (q: any) => q.eq("address", defenderAddr))
+        .first();
+
+      if (leaderboardEntry) {
+        if (attackerWon) {
+          // Defender lost
+          const lostAmount = winnerReward - stake; // Net loss
+          await ctx.db.patch(leaderboardEntry._id, {
+            totalLosses: leaderboardEntry.totalLosses + 1,
+            totalLost: leaderboardEntry.totalLost + lostAmount,
+            poolAmount: Math.max(0, leaderboardEntry.poolAmount - lostAmount),
+            lastUpdated: Date.now(),
+          });
+          // If pool depleted, remove from leaderboard
+          if (leaderboardEntry.poolAmount - lostAmount <= 0) {
+            await ctx.db.delete(leaderboardEntry._id);
+          }
+        } else {
+          // Defender won
+          const earned = winnerReward - stake;
+          await ctx.db.patch(leaderboardEntry._id, {
+            totalWins: leaderboardEntry.totalWins + 1,
+            totalEarned: leaderboardEntry.totalEarned + earned,
+            poolAmount: leaderboardEntry.poolAmount + earned,
+            lastUpdated: Date.now(),
+          });
+        }
+      }
+    }
+
+    // Mark match as stake-paid to prevent double processing
+    await ctx.db.patch(args.matchId, { stakePaid: true } as any);
+
+    console.log(`💰 Staked match finished: winner=${winnerAddr}, reward=${winnerReward}, fee=${fee}`);
+    return {
+      success: true,
+      winnerReward,
+      fee,
+      totalPot,
+    };
+  },
+});
