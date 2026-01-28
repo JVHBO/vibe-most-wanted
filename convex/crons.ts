@@ -63,6 +63,14 @@ crons.interval(
   internal.castAuctions.processAuctionLifecycle
 );
 
+// 🧹 Cleanup stale TCG matches (every 2 minutes)
+// Auto-forfeit disconnected players, cancel abandoned matches
+crons.interval(
+  "cleanup stale tcg matches",
+  { minutes: 2 },
+  internal.tcg.cleanupStaleMatches
+);
+
 // 🔄 Weekly aura reset (Sunday 00:00 UTC)
 // Resets all players' aura to 500 for fresh weekly competition
 crons.weekly(

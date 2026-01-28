@@ -9,7 +9,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1676,6 +1676,165 @@ export const forfeitMatch = mutation({
     }
 
     return { success: true, winnerId };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HEARTBEAT & DISCONNECT DETECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const heartbeat = mutation({
+  args: {
+    matchId: v.id("tcgMatches"),
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+    const match = await ctx.db.get(args.matchId);
+    if (!match || match.status !== "in-progress") return;
+
+    const isPlayer1 = match.player1Address === addr;
+    const isPlayer2 = match.player2Address === addr;
+    if (!isPlayer1 && !isPlayer2) return;
+
+    const now = Date.now();
+    await ctx.db.patch(args.matchId, isPlayer1
+      ? { player1LastSeen: now }
+      : { player2LastSeen: now }
+    );
+  },
+});
+
+export const claimVictoryByTimeout = mutation({
+  args: {
+    matchId: v.id("tcgMatches"),
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+    const match = await ctx.db.get(args.matchId);
+    if (!match || match.status !== "in-progress") {
+      throw new Error("Match not found or not in progress");
+    }
+
+    const isPlayer1 = match.player1Address === addr;
+    const isPlayer2 = match.player2Address === addr;
+    if (!isPlayer1 && !isPlayer2) {
+      throw new Error("You are not in this match");
+    }
+
+    const now = Date.now();
+    const TIMEOUT_MS = 60_000; // 60 seconds
+
+    const opponentLastSeen = isPlayer1 ? match.player2LastSeen : match.player1LastSeen;
+
+    // If opponent never sent heartbeat and match started > 60s ago, allow claim
+    if (opponentLastSeen === undefined) {
+      const matchAge = now - (match.startedAt || match.createdAt);
+      if (matchAge < TIMEOUT_MS) {
+        throw new Error("Opponent may still be connecting");
+      }
+    } else if (now - opponentLastSeen < TIMEOUT_MS) {
+      throw new Error("Opponent is still connected");
+    }
+
+    // Forfeit the opponent
+    const winnerId = addr;
+    const winnerUsername = isPlayer1 ? match.player1Username : match.player2Username;
+    const loserId = isPlayer1 ? match.player2Address : match.player1Address;
+
+    await ctx.db.patch(args.matchId, {
+      status: "finished",
+      winnerId,
+      winnerUsername,
+      finishedAt: now,
+    });
+
+    // Aura rewards: +50 winner, -40 loser (same as forfeit)
+    const winnerProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", winnerId))
+      .first();
+
+    if (winnerProfile) {
+      const currentAura = winnerProfile.stats?.aura ?? 500;
+      await ctx.db.patch(winnerProfile._id, {
+        stats: { ...winnerProfile.stats, aura: currentAura + 50 },
+      });
+      console.log(`🎯 Vibe Clash Timeout Win: ${winnerId} +50 aura`);
+    }
+
+    if (loserId) {
+      const loserProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q: any) => q.eq("address", loserId))
+        .first();
+
+      if (loserProfile) {
+        const currentAura = loserProfile.stats?.aura ?? 500;
+        const newAura = Math.max(0, currentAura - 40);
+        await ctx.db.patch(loserProfile._id, {
+          stats: { ...loserProfile.stats, aura: newAura },
+        });
+        console.log(`🎯 Vibe Clash Timeout Loss: ${loserId} -40 aura`);
+      }
+    }
+
+    return { success: true, winnerId };
+  },
+});
+
+// Cleanup stale matches (called by cron)
+export const cleanupStaleMatches = internalMutation({
+  handler: async (ctx) => {
+    const now = Date.now();
+    const BOTH_GONE_MS = 120_000; // 2 minutes
+    const ONE_GONE_MS = 90_000; // 90 seconds
+
+    const matches = await ctx.db
+      .query("tcgMatches")
+      .withIndex("by_status", (q: any) => q.eq("status", "in-progress"))
+      .collect();
+
+    let cleaned = 0;
+    for (const match of matches) {
+      const p1Last = match.player1LastSeen;
+      const p2Last = match.player2LastSeen;
+
+      // Both players gone > 2 min → cancel
+      if (p1Last && p2Last && (now - p1Last > BOTH_GONE_MS) && (now - p2Last > BOTH_GONE_MS)) {
+        await ctx.db.patch(match._id, { status: "cancelled", finishedAt: now });
+        cleaned++;
+        continue;
+      }
+
+      // One player gone > 90s, other active → forfeit
+      if (p1Last && p2Last) {
+        if ((now - p1Last > ONE_GONE_MS) && (now - p2Last < 30_000)) {
+          // Player 1 gone, player 2 wins
+          await ctx.db.patch(match._id, {
+            status: "finished",
+            winnerId: match.player2Address,
+            winnerUsername: match.player2Username,
+            finishedAt: now,
+          });
+          cleaned++;
+        } else if ((now - p2Last > ONE_GONE_MS) && (now - p1Last < 30_000)) {
+          // Player 2 gone, player 1 wins
+          await ctx.db.patch(match._id, {
+            status: "finished",
+            winnerId: match.player1Address,
+            winnerUsername: match.player1Username,
+            finishedAt: now,
+          });
+          cleaned++;
+        }
+      }
+    }
+
+    if (cleaned > 0) {
+      console.log(`🧹 Cleaned up ${cleaned} stale TCG matches`);
+    }
   },
 });
 

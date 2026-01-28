@@ -1451,6 +1451,17 @@ export default function TCGPage() {
     currentMatchId ? { matchId: currentMatchId } : "skip"
   );
 
+  // Opponent profile (for PFP in PvP battle)
+  const opponentAddress = currentMatch
+    ? (currentMatch.player1Address === address?.toLowerCase()
+      ? currentMatch.player2Address
+      : currentMatch.player1Address)
+    : undefined;
+  const opponentProfile = useQuery(
+    api.profiles.getProfile,
+    opponentAddress ? { address: opponentAddress } : "skip"
+  );
+
   // Convex mutations
   const createMatch = useMutation(api.tcg.createMatch);
   const joinMatch = useMutation(api.tcg.joinMatch);
@@ -1458,6 +1469,8 @@ export default function TCGPage() {
   const submitActions = useMutation(api.tcg.submitActions);
   const cancelMatch = useMutation(api.tcg.cancelMatch);
   const forfeitMatch = useMutation(api.tcg.forfeitMatch);
+  const heartbeatMutation = useMutation(api.tcg.heartbeat);
+  const claimVictoryByTimeout = useMutation(api.tcg.claimVictoryByTimeout);
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
   const autoMatchMutation = useMutation(api.tcg.autoMatch);
   const setDefenseDeckMutation = useMutation(api.tcg.setDefenseDeck);
@@ -4355,6 +4368,20 @@ export default function TCGPage() {
       }
     }
   }, [currentMatch?.status, view]);
+
+  // PvP Heartbeat - send every 10s while in battle
+  useEffect(() => {
+    if (view !== "battle" || isPvE || !currentMatchId || !address) return;
+
+    // Send immediately
+    heartbeatMutation({ matchId: currentMatchId, address }).catch(() => {});
+
+    const interval = setInterval(() => {
+      heartbeatMutation({ matchId: currentMatchId, address }).catch(() => {});
+    }, 10_000);
+
+    return () => clearInterval(interval);
+  }, [view, isPvE, currentMatchId, address]);
 
   // Turn timer countdown - PvE
   useEffect(() => {
@@ -7441,12 +7468,72 @@ export default function TCGPage() {
                   boxShadow: "0 4px 15px rgba(0,0,0,0.5), 0 0 10px rgba(255,0,0,0.2)"
                 }}
               >
-                <span className="text-2xl font-bold text-red-400">
-                  {opponentDisplayName?.[0]?.toUpperCase() || "?"}
-                </span>
+                {opponentProfile?.farcasterPfpUrl || opponentProfile?.twitterProfileImageUrl ? (
+                  <img
+                    src={opponentProfile.farcasterPfpUrl || opponentProfile.twitterProfileImageUrl}
+                    alt="Opponent"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-2xl font-bold text-red-400">
+                    {opponentDisplayName?.[0]?.toUpperCase() || "?"}
+                  </span>
+                )}
               </div>
             </div>
           </div>
+
+          {/* Opponent Disconnect Warning */}
+          {(() => {
+            const opponentLastSeen = isPlayer1 ? (currentMatch as any)?.player2LastSeen : (currentMatch as any)?.player1LastSeen;
+            const now = Date.now();
+            const timeSince = opponentLastSeen ? (now - opponentLastSeen) / 1000 : null;
+            const matchAge = ((currentMatch as any)?.startedAt || (currentMatch as any)?.createdAt)
+              ? (now - ((currentMatch as any)?.startedAt || (currentMatch as any)?.createdAt)) / 1000
+              : 0;
+
+            // Show warning if opponent hasn't sent heartbeat in 30s+
+            const showWarning = timeSince !== null ? timeSince > 30 : matchAge > 60;
+            const canClaim = timeSince !== null ? timeSince > 60 : matchAge > 120;
+
+            if (!showWarning) return null;
+
+            return (
+              <div className={`mx-4 px-3 py-1.5 rounded-lg flex items-center justify-between text-xs ${
+                canClaim ? "bg-red-900/50 border border-red-500/50" : "bg-yellow-900/50 border border-yellow-500/50"
+              }`}>
+                <span className={canClaim ? "text-red-300" : "text-yellow-300"}>
+                  {canClaim ? "⚠ Opponent disconnected!" : "⏳ Opponent may have disconnected..."}
+                </span>
+                <div className="flex gap-2">
+                  {canClaim && currentMatchId && address && (
+                    <button
+                      onClick={() => {
+                        claimVictoryByTimeout({ matchId: currentMatchId, address }).catch((e: any) => {
+                          console.error("Claim victory error:", e);
+                        });
+                      }}
+                      className="bg-green-600 hover:bg-green-500 text-white font-bold px-3 py-1 rounded text-xs transition-colors"
+                    >
+                      🏆 Claim Victory
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (currentMatchId && address) {
+                        forfeitMatch({ matchId: currentMatchId, address }).catch((e: any) => {
+                          console.error("Forfeit error:", e);
+                        });
+                      }
+                    }}
+                    className="bg-red-700 hover:bg-red-600 text-white font-bold px-3 py-1 rounded text-xs transition-colors"
+                  >
+                    🏳 Surrender
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Battle Arena - 3 Lanes (Royal Card Table style with 3D depth) */}
           <div

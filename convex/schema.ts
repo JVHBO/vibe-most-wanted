@@ -2020,6 +2020,10 @@ export default defineSchema({
     isCpuOpponent: v.optional(v.boolean()), // Oponente é CPU jogando pelo defense deck
     stakePaid: v.optional(v.boolean()), // Rewards já processados (anti-duplicate)
 
+    // Heartbeat - disconnect detection
+    player1LastSeen: v.optional(v.number()),
+    player2LastSeen: v.optional(v.number()),
+
     // Timestamps
     createdAt: v.number(),
     startedAt: v.optional(v.number()),
