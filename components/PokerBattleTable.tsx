@@ -2770,7 +2770,7 @@ export function PokerBattleTable({
                   <div className="space-y-1">
                     {Array.from({ length: 7 }).map((_, i) => {
                       const roundNum = i + 1;
-                      const roundData = roundHistory.find(r => r.round === roundNum);
+                      const roundData = roundHistory.find((r: { round: number; winner: string }) => r.round === roundNum);
                       const isCurrentRound = currentRound === roundNum;
                       const isFutureRound = currentRound < roundNum;
 
