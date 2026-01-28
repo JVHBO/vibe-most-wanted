@@ -4424,36 +4424,27 @@ export default function TCGPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pveGameState?.currentTurn, view, isPvE]);
 
-  // Turn timer countdown - PvP (same as PvE: auto-submit when time runs out)
+  // Turn timer countdown - PvP (EXACT SAME LOGIC AS PvE)
   const pvpTurnTimerRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
-    console.log('[TCG PvP Timer] Effect triggered', {
-      view,
-      isPvE,
-      hasGameState: !!currentMatch?.gameState,
-      status: currentMatch?.status,
-      currentTurn: currentMatch?.gameState?.currentTurn
-    });
-
-    if (view !== "battle" || isPvE || !currentMatch?.gameState || currentMatch.status !== "in-progress") {
-      console.log('[TCG PvP Timer] Skipping - conditions not met');
+    // Only run during active PvP game (same conditions as PvE)
+    if (view !== "battle" || isPvE || !currentMatch?.gameState || (currentMatch.gameState.currentTurn > TCG_CONFIG.TOTAL_TURNS)) {
       return;
     }
-
-    console.log('[TCG PvP Timer] Starting timer for turn', currentMatch.gameState.currentTurn);
 
     // Reset timer when turn changes
     setTurnTimeRemaining(TCG_CONFIG.TURN_TIME_SECONDS);
 
+    // Clear previous timer
     if (pvpTurnTimerRef.current) {
       clearInterval(pvpTurnTimerRef.current);
     }
 
+    // Start countdown
     pvpTurnTimerRef.current = setInterval(() => {
       setTurnTimeRemaining(prev => {
         if (prev <= 1) {
-          // Time's up! Auto submit turn
-          console.log('[TCG PvP Timer] Time up! Auto-submitting turn');
+          // Time's up! Auto submit turn - use ref to avoid stale closure
           handleSubmitTurnRef.current();
           return TCG_CONFIG.TURN_TIME_SECONDS;
         }
@@ -4467,7 +4458,7 @@ export default function TCGPage() {
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentMatch?.gameState?.currentTurn, view, isPvE, currentMatch?.status]);
+  }, [currentMatch?.gameState?.currentTurn, view, isPvE]);
 
   // Timer warning sounds - play "5 SEGUNDOS" voice at 5 seconds, tick at 3 and 1
   useEffect(() => {
