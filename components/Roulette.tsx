@@ -885,14 +885,14 @@ export function Roulette({ onClose }: RouletteProps) {
           {/* Claim Button */}
           <button
             onClick={handleClaim}
-            disabled={isClaiming || isClaimPending}
+            disabled={isClaiming}
             className={`w-full py-3 font-bold text-lg rounded-xl transition-all shadow-lg ${
-              isClaiming || isClaimPending
+              isClaiming
                 ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
                 : 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white'
             }`}
           >
-            {isClaiming || isClaimPending ? t.claiming : `${t.claim} ${result.prize.toLocaleString()} VBMS`}
+            {isClaiming ? t.claiming : `${t.claim} ${result.prize.toLocaleString()} VBMS`}
           </button>
         </div>
       )}
