@@ -112,6 +112,10 @@ export default function QuestsPage() {
     { type: 'welcome_gift', reward: 500, date: 'once', titleKey: 'mission_welcome_gift', descKey: 'mission_welcome_gift_desc' },
     { type: 'vibefid_minted', reward: 5000, date: 'once', titleKey: 'mission_vibefid_minted', descKey: 'mission_vibefid_minted_desc' },
     { type: 'claim_vibe_badge', reward: 0, date: 'once', titleKey: 'mission_vibe_badge', descKey: 'mission_vibe_badge_desc' },
+    { type: 'tcg_pve_win', reward: 25, date: 'today', titleKey: 'mission_tcg_pve_win', descKey: 'mission_tcg_pve_win_desc' },
+    { type: 'tcg_pvp_match', reward: 50, date: 'today', titleKey: 'mission_tcg_pvp_match', descKey: 'mission_tcg_pvp_match_desc' },
+    { type: 'tcg_play_3', reward: 75, date: 'today', titleKey: 'mission_tcg_play_3', descKey: 'mission_tcg_play_3_desc' },
+    { type: 'tcg_win_streak_3', reward: 150, date: 'today', titleKey: 'mission_tcg_win_streak_3', descKey: 'mission_tcg_win_streak_3_desc' },
   ];
 
   // Initialize missions on mount

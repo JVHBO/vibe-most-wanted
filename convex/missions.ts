@@ -34,6 +34,10 @@ const MISSION_REWARDS = {
   vibefid_minted: { type: "coins", amount: 5000 }, // KEPT - incentivo pra mintar
   welcome_gift: { type: "coins", amount: 250 },    // was 500
   claim_vibe_badge: { type: "badge", amount: 0 },  // VIBE badge - +20% bonus coins in Wanted Cast
+  tcg_pve_win: { type: "coins", amount: 25 },      // First VibeClash PvE win
+  tcg_pvp_match: { type: "coins", amount: 50 },    // First VibeClash PvP match
+  tcg_play_3: { type: "coins", amount: 75 },        // Play 3 VibeClash matches
+  tcg_win_streak_3: { type: "coins", amount: 150 }, // Win 3 in a row in VibeClash
 };
 
 /**

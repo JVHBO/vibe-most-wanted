@@ -449,7 +449,11 @@ export default defineSchema({
       v.literal("streak_5"),
       v.literal("streak_10"),
       v.literal("vibefid_minted"),
-      v.literal("claim_vibe_badge") // VIBE badge for VibeFID holders (+20% Wanted Cast bonus)
+      v.literal("claim_vibe_badge"), // VIBE badge for VibeFID holders (+20% Wanted Cast bonus)
+      v.literal("tcg_pve_win"), // First VibeClash PvE win (daily)
+      v.literal("tcg_pvp_match"), // First VibeClash PvP match (daily)
+      v.literal("tcg_play_3"), // Play 3 VibeClash matches (daily)
+      v.literal("tcg_win_streak_3") // Win 3 VibeClash matches in a row (daily)
     ),
     completed: v.boolean(), // Mission requirement completed
     claimed: v.boolean(), // Reward claimed by player
@@ -2039,11 +2043,13 @@ export default defineSchema({
     nothingCount: v.number(), // Máximo 7
     totalPower: v.number(), // Power total do deck
     isActive: v.boolean(), // Deck ativo pra matchmaking
+    isDefenseDeck: v.optional(v.boolean()), // Deck de defesa pra auto-match PvP
     createdAt: v.number(),
     lastUsed: v.optional(v.number()),
   })
     .index("by_address", ["address"])
-    .index("by_address_active", ["address", "isActive"]),
+    .index("by_address_active", ["address", "isActive"])
+    .index("by_defense", ["isDefenseDeck"]),
 
   // TCG Match History (histórico resumido pra stats)
   tcgHistory: defineTable({

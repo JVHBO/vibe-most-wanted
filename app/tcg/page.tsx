@@ -1273,10 +1273,19 @@ export default function TCGPage() {
   const wasDraggingRef = useRef(false);
   const [showBattleIntro, setShowBattleIntro] = useState(false);
   const [showDefeatBait, setShowDefeatBait] = useState(false);
-  const [autoMatch, setAutoMatch] = useState(false); // Auto match mode - automatically start next match
+  const [autoMatch, setAutoMatch] = useState(false); // Auto replay mode for PvE
   const [dailyBattles, setDailyBattles] = useState(0); // Track daily battles
   const REWARDED_BATTLES_PER_DAY = 5; // First 5 battles give AURA reward
   const BATTLE_AURA_REWARD = 85; // AURA reward per win (first 5 daily)
+
+  // Battle Log
+  type BattleLogEntry = { turn: number; player: "you" | "cpu" | "opponent"; action: string; lane: number; cardName: string };
+  const [battleLog, setBattleLog] = useState<BattleLogEntry[]>([]);
+  const [showBattleLog, setShowBattleLog] = useState(false);
+
+  // TCG match count for missions
+  const [tcgMatchCount, setTcgMatchCount] = useState(0);
+  const [tcgWinStreak, setTcgWinStreak] = useState(0);
 
   // Turn timer state
   const [turnTimeRemaining, setTurnTimeRemaining] = useState(TCG_CONFIG.TURN_TIME_SECONDS);
@@ -1423,6 +1432,9 @@ export default function TCGPage() {
   const cancelMatch = useMutation(api.tcg.cancelMatch);
   const forfeitMatch = useMutation(api.tcg.forfeitMatch);
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
+  const autoMatchMutation = useMutation(api.tcg.autoMatch);
+  const setDefenseDeckMutation = useMutation(api.tcg.setDefenseDeck);
+  const markTcgMission = useMutation(api.tcg.markTcgMission);
 
   // Username
   const username = userProfile?.username || address?.slice(0, 8) || "Anon";
@@ -1700,7 +1712,7 @@ export default function TCGPage() {
       return { energyDiscount: 0.5, description: "Standard Foil: 50% energy discount", isFree: false };
     }
     if (foilLower === "prize") {
-      return { energyDiscount: 1.0, description: "Prize Foil: FREE to play!", isFree: true };
+      return { energyDiscount: 1.0, description: "Prize Foil: 100% energy discount", isFree: false };
     }
     return null;
   };
@@ -1836,9 +1848,11 @@ export default function TCGPage() {
 
     let cardsPlayed = 0;
     const usedCardIndices = new Set<number>();
+    const cpuPlays: { cardName: string; lane: number }[] = [];
 
     // Helper to add CPU card to lane (abilities processed later in handlePvEEndTurn)
     const playCpuCard = (card: DeckCard, laneIdx: number) => {
+      cpuPlays.push({ cardName: card.name || "Unknown", lane: laneIdx + 1 });
       // Mark card as played this turn for ability processing
       // _revealed: false means card shows face-down until reveal phase
       const cardWithMeta = {
@@ -1941,7 +1955,7 @@ export default function TCGPage() {
       return { ...lane, playerPower, cpuPower };
     });
 
-    return { cpuHand: newCpuHand, cpuDeckRemaining, lanes: newLanes, cpuEnergy };
+    return { cpuHand: newCpuHand, cpuDeckRemaining, lanes: newLanes, cpuEnergy, cpuPlays };
   };
 
   // Pick 3 random unique lane names
@@ -2037,6 +2051,8 @@ export default function TCGPage() {
     setSelectedHandCard(null);
     setShowTiebreakerAnimation(false);
     setVibefidComboChoices({}); // Reset combo choices for new game
+    setBattleLog([]); // Reset battle log for new game
+    setShowBattleLog(false);
     setVibefidComboModal(null); // Close any open combo modal
     setShowDefeatBait(false);
     setShowBattleIntro(true);
@@ -3127,7 +3143,7 @@ export default function TCGPage() {
 
     // Prize foil bonus: Draw a card!
     let newDeck = [...pveGameState.playerDeckRemaining];
-    if (foilEffect?.isFree && newDeck.length > 0) {
+    if (foilEffect && foilEffect.energyDiscount >= 1.0 && newDeck.length > 0) {
       newHand.push(newDeck.shift()!);
       playSound("draw"); // Prize foil sound feedback
     }
@@ -3143,6 +3159,15 @@ export default function TCGPage() {
 
     // Play card sound
     playSound("card");
+
+    // Add battle log entry
+    setBattleLog(prev => [...prev, {
+      turn: pveGameState.currentTurn,
+      player: "you",
+      action: "played",
+      lane: laneIndex + 1,
+      cardName: card.name || "Unknown",
+    }]);
 
     // NOTE: onReveal abilities are NOT applied here!
     // They will be applied in handlePvEEndTurn after all cards are revealed
@@ -3432,6 +3457,17 @@ export default function TCGPage() {
     const cpuHand = cpuResult.cpuHand;
     const cpuDeckRemaining = cpuResult.cpuDeckRemaining;
     const newLanes = cpuResult.lanes;
+
+    // Add CPU plays to battle log
+    if (cpuResult.cpuPlays) {
+      setBattleLog(prev => [...prev, ...cpuResult.cpuPlays.map((play: any) => ({
+        turn: pveGameState.currentTurn,
+        player: "cpu" as const,
+        action: "played",
+        lane: play.lane,
+        cardName: play.cardName,
+      }))]);
+    }
 
     const cpuCardsAfter = newLanes.reduce((sum: number, l: any) => sum + l.cpuCards.length, 0);
     const cpuSkipped = cpuCardsAfter === cpuCardsBefore;
@@ -4024,6 +4060,31 @@ export default function TCGPage() {
         awardPvECoins({ address, difficulty: "gey", won: true }).catch((e: any) => {
           console.error("[TCG] Failed to award AURA:", e);
         });
+      }
+
+      // TCG Missions
+      if (address) {
+        const newMatchCount = tcgMatchCount + 1;
+        setTcgMatchCount(newMatchCount);
+
+        // First PvE win
+        if (winner === "player") {
+          markTcgMission({ playerAddress: address, missionType: "tcg_pve_win" }).catch(() => {});
+          setTcgWinStreak(prev => {
+            const newStreak = prev + 1;
+            if (newStreak >= 3) {
+              markTcgMission({ playerAddress: address, missionType: "tcg_win_streak_3" }).catch(() => {});
+            }
+            return newStreak;
+          });
+        } else {
+          setTcgWinStreak(0);
+        }
+
+        // Play 3 matches
+        if (newMatchCount >= 3) {
+          markTcgMission({ playerAddress: address, missionType: "tcg_play_3" }).catch(() => {});
+        }
       }
 
       setPveGameState({
@@ -4643,12 +4704,32 @@ export default function TCGPage() {
                         <span className="text-vintage-gold font-bold">{activeDeck.totalPower}</span> PWR
                       </p>
                     </div>
-                    <button
-                      onClick={() => setView("deck-builder")}
-                      className="px-3 py-1.5 bg-black/40 hover:bg-black/60 text-vintage-burnt-gold/80 hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/40 rounded text-[10px] font-bold uppercase tracking-[0.15em] transition-all"
-                    >
-                      {t('tcgEdit')}
-                    </button>
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={() => setView("deck-builder")}
+                        className="px-3 py-1.5 bg-black/40 hover:bg-black/60 text-vintage-burnt-gold/80 hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/40 rounded text-[10px] font-bold uppercase tracking-[0.15em] transition-all"
+                      >
+                        {t('tcgEdit')}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!address || !activeDeck?._id) return;
+                          try {
+                            await setDefenseDeckMutation({ address, deckId: activeDeck._id });
+                            setError(null);
+                          } catch (e: any) {
+                            setError(e.message);
+                          }
+                        }}
+                        className={`px-3 py-1 rounded text-[9px] font-bold uppercase tracking-[0.1em] transition-all ${
+                          (activeDeck as any)?.isDefenseDeck
+                            ? "bg-green-900/40 text-green-400 border border-green-500/40"
+                            : "bg-black/40 hover:bg-black/60 text-vintage-burnt-gold/60 hover:text-vintage-gold border border-vintage-gold/10 hover:border-vintage-gold/30"
+                        }`}
+                      >
+                        {(activeDeck as any)?.isDefenseDeck ? "Defense Deck ✓" : "Set Defense"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -4709,6 +4790,32 @@ export default function TCGPage() {
                       {!hasDeck && (
                         <p className="text-[10px] text-red-400 text-center mb-2">⚠️ Crie um deck primeiro para jogar PvP</p>
                       )}
+
+                      {/* Find Match (Auto Match PvP) */}
+                      <button
+                        onClick={async () => {
+                          if (!address) return;
+                          try {
+                            setError(null);
+                            const result = await autoMatchMutation({ address, username });
+                            if (result?.matchId) {
+                              setCurrentMatchId(result.matchId);
+                              setIsPvE(false);
+                              setView("battle");
+                              setBattleLog([]);
+                            }
+                          } catch (e: any) {
+                            setError(e.message || "No opponents found");
+                          }
+                        }}
+                        disabled={!hasDeck}
+                        className="w-full relative overflow-hidden group mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 opacity-70 group-hover:opacity-90 transition-opacity" />
+                        <span className="relative z-10 block py-2.5 px-4 text-white font-bold text-xs uppercase tracking-[0.2em]">
+                          Find Match
+                        </span>
+                      </button>
 
                       {/* Create Match */}
                       <button
@@ -6572,11 +6679,7 @@ export default function TCGPage() {
                       </div>
                     )}
                     {/* Energy Cost Badge (top-left) - Special for Foils */}
-                    {foilEffect?.isFree ? (
-                      <div className="absolute -top-2 -left-2 w-8 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 bg-gradient-to-br from-yellow-400 via-amber-300 to-yellow-500 border-yellow-200 animate-pulse">
-                        <span className="text-[8px] font-black text-black">{t('tcgFree')}</span>
-                      </div>
-                    ) : foilEffect ? (
+                    {foilEffect ? (
                       <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 bg-gradient-to-br from-cyan-400 to-teal-500 border-cyan-200">
                         <span className="text-xs font-bold text-white">{energyCost}</span>
                       </div>
@@ -6587,12 +6690,6 @@ export default function TCGPage() {
                           : "bg-gradient-to-br from-red-500 to-red-700 border-red-300"
                       }`}>
                         <span className="text-xs font-bold text-white">{energyCost}</span>
-                      </div>
-                    )}
-                    {/* Prize Foil Draw Indicator */}
-                    {foilEffect?.isFree && (
-                      <div className="absolute top-6 -left-1 w-5 h-5 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 border border-green-200 flex items-center justify-center shadow-lg z-10">
-                        <span className="text-[8px]">🃏</span>
                       </div>
                     )}
                     {/* Power Badge (bottom-right) */}
@@ -6839,6 +6936,39 @@ export default function TCGPage() {
                 {t('tcgAutoSelect') || "Auto (First Card)"} - {vibefidComboModal.possibleCombos[0]?.combo.emoji} {vibefidComboModal.possibleCombos[0]?.combo.name}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Battle Log Floating Button */}
+        <button
+          onClick={() => setShowBattleLog(!showBattleLog)}
+          className="fixed bottom-20 right-3 w-10 h-10 rounded-full bg-black/80 border border-vintage-gold/40 flex items-center justify-center z-30 hover:bg-black/90 transition-all"
+        >
+          <span className="text-lg">📜</span>
+        </button>
+
+        {/* Battle Log Panel */}
+        {showBattleLog && (
+          <div className="fixed right-0 top-0 bottom-0 w-64 bg-black/95 border-l border-vintage-gold/30 z-40 overflow-y-auto p-3">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-vintage-gold font-bold text-sm uppercase tracking-wider">Battle Log</h3>
+              <button onClick={() => setShowBattleLog(false)} className="text-gray-400 hover:text-white text-lg">✕</button>
+            </div>
+            {battleLog.length === 0 ? (
+              <p className="text-gray-500 text-xs">No actions yet...</p>
+            ) : (
+              <div className="space-y-1">
+                {battleLog.map((entry, i) => (
+                  <div key={i} className={`text-[10px] px-2 py-1 rounded ${
+                    entry.player === "you" ? "bg-blue-900/30 text-blue-300" : "bg-red-900/30 text-red-300"
+                  }`}>
+                    <span className="text-vintage-gold/60">T{entry.turn}:</span>{" "}
+                    <span className="font-bold">{entry.player === "you" ? "You" : "CPU"}</span>{" "}
+                    {entry.action} <span className="text-white font-medium">{entry.cardName}</span> → Lane {entry.lane}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -7098,19 +7228,13 @@ export default function TCGPage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-yellow-400/20 rounded-lg pointer-events-none" />
                   )}
                   {/* Energy Cost Badge */}
-                  {foilEffect?.isFree ? (
-                    <div className="absolute -top-2 -left-2 w-8 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 bg-gradient-to-br from-yellow-400 via-amber-300 to-yellow-500 border-yellow-200 animate-pulse">
-                      <span className="text-[8px] font-black text-black">{t('tcgFree')}</span>
-                    </div>
-                  ) : (
-                    <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 ${
-                      canAfford
-                        ? foilEffect ? "bg-gradient-to-br from-cyan-400 to-teal-500 border-cyan-200" : "bg-gradient-to-br from-blue-400 to-blue-600 border-white"
-                        : "bg-gradient-to-br from-red-500 to-red-700 border-red-300"
-                    }`}>
-                      <span className="text-xs font-bold text-white">{energyCost}</span>
-                    </div>
-                  )}
+                  <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 ${
+                    canAfford
+                      ? foilEffect ? "bg-gradient-to-br from-cyan-400 to-teal-500 border-cyan-200" : "bg-gradient-to-br from-blue-400 to-blue-600 border-white"
+                      : "bg-gradient-to-br from-red-500 to-red-700 border-red-300"
+                  }`}>
+                    <span className="text-xs font-bold text-white">{energyCost}</span>
+                  </div>
                   {/* Power Badge */}
                   <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-2 border-yellow-200 flex items-center justify-center shadow-lg">
                     <span className="text-[10px] font-bold text-black">{displayPower}</span>
@@ -7283,7 +7407,7 @@ export default function TCGPage() {
                 className="w-5 h-5 rounded border-2 border-vintage-gold bg-black/50 checked:bg-vintage-gold checked:border-vintage-gold cursor-pointer"
               />
               <span className="text-vintage-gold font-bold text-sm uppercase tracking-wider">
-                🔄 Auto Match {autoMatch && "(Next in 3s)"}
+                🔄 Auto Replay {autoMatch && "(Next in 3s)"}
               </span>
             </label>
           </div>
@@ -7437,6 +7561,27 @@ export default function TCGPage() {
 
           {/* Buttons */}
           <div className="flex gap-3 justify-center">
+            <button
+              onClick={async () => {
+                if (!address) return;
+                stopBgm();
+                setCurrentMatchId(null);
+                try {
+                  const result = await autoMatchMutation({ address, username });
+                  if (result?.matchId) {
+                    setCurrentMatchId(result.matchId);
+                    setView("battle");
+                    setBattleLog([]);
+                  }
+                } catch (e: any) {
+                  setError(e.message || "No opponents found");
+                  setView("lobby");
+                }
+              }}
+              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-black font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-orange-500/30"
+            >
+              Find Match
+            </button>
             <button
               onClick={() => {
                 stopBgm(); // Stop victory/defeat music

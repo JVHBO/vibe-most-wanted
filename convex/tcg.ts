@@ -1678,3 +1678,196 @@ export const forfeitMatch = mutation({
     return { success: true, winnerId };
   },
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEFENSE DECK & AUTO MATCH
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Set a deck as defense deck for auto-match PvP
+ */
+export const setDefenseDeck = mutation({
+  args: {
+    address: v.string(),
+    deckId: v.id("tcgDecks"),
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+
+    // Verify deck ownership
+    const deck = await ctx.db.get(args.deckId);
+    if (!deck || deck.address !== addr) {
+      throw new Error("Deck not found or not yours");
+    }
+
+    // Clear existing defense deck
+    const existingDefense = await ctx.db
+      .query("tcgDecks")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .collect();
+
+    for (const d of existingDefense) {
+      if (d.isDefenseDeck) {
+        await ctx.db.patch(d._id, { isDefenseDeck: false });
+      }
+    }
+
+    // Set new defense deck
+    await ctx.db.patch(args.deckId, { isDefenseDeck: true });
+
+    return { success: true };
+  },
+});
+
+/**
+ * Get players with defense decks (for auto-match)
+ */
+export const getPlayersWithDefenseDeck = query({
+  args: { excludeAddress: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const defenseDecks = await ctx.db
+      .query("tcgDecks")
+      .withIndex("by_defense", (q: any) => q.eq("isDefenseDeck", true))
+      .collect();
+
+    const exclude = args.excludeAddress?.toLowerCase();
+    const players = defenseDecks
+      .filter((d: any) => d.address !== exclude)
+      .map((d: any) => ({
+        address: d.address,
+        deckName: d.deckName,
+        totalPower: d.totalPower,
+        cards: d.cards,
+      }));
+
+    return players;
+  },
+});
+
+/**
+ * Auto Match - Find random opponent with defense deck and create match
+ */
+export const autoMatch = mutation({
+  args: {
+    address: v.string(),
+    username: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+
+    // Get player's active deck
+    const activeDeck = await ctx.db
+      .query("tcgDecks")
+      .withIndex("by_address_active", (q: any) =>
+        q.eq("address", addr).eq("isActive", true)
+      )
+      .first();
+
+    if (!activeDeck) {
+      throw new Error("No active deck. Please create and select a deck first.");
+    }
+
+    // Find opponents with defense decks
+    const defenseDecks = await ctx.db
+      .query("tcgDecks")
+      .withIndex("by_defense", (q: any) => q.eq("isDefenseDeck", true))
+      .collect();
+
+    const opponents = defenseDecks.filter((d: any) => d.address !== addr);
+
+    if (opponents.length === 0) {
+      throw new Error("No opponents found with defense decks. Try again later!");
+    }
+
+    // Pick random opponent
+    const opponent = opponents[Math.floor(Math.random() * opponents.length)];
+
+    // Get opponent profile for username
+    const opponentProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", opponent.address))
+      .first();
+
+    const opponentUsername = opponentProfile?.username || "Unknown";
+
+    // Create match directly in-progress
+    const roomId = generateRoomId();
+    const gameState = initializeGameState(activeDeck.cards, opponent.cards);
+
+    const matchId = await ctx.db.insert("tcgMatches", {
+      roomId,
+      status: "in-progress",
+      player1Address: addr,
+      player1Username: args.username,
+      player1Deck: activeDeck.cards,
+      player1Ready: true,
+      player2Address: opponent.address,
+      player2Username: opponentUsername,
+      player2Deck: opponent.cards,
+      player2Ready: true,
+      gameState,
+      createdAt: Date.now(),
+      startedAt: Date.now(),
+      expiresAt: Date.now() + (TCG_CONFIG.ROOM_EXPIRY_MINUTES * 60 * 1000),
+    });
+
+    return {
+      matchId,
+      roomId,
+      opponentUsername,
+      opponentPower: opponent.totalPower,
+      isAutoMatch: true,
+    };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TCG MISSIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TCG_MISSION_REWARDS: Record<string, number> = {
+  tcg_pve_win: 25,
+  tcg_pvp_match: 50,
+  tcg_play_3: 75,
+  tcg_win_streak_3: 150,
+};
+
+/**
+ * Mark a VibeClash mission as completed (called from frontend after PvE/PvP)
+ */
+export const markTcgMission = mutation({
+  args: {
+    playerAddress: v.string(),
+    missionType: v.union(
+      v.literal("tcg_pve_win"),
+      v.literal("tcg_pvp_match"),
+      v.literal("tcg_play_3"),
+      v.literal("tcg_win_streak_3")
+    ),
+  },
+  handler: async (ctx, { playerAddress, missionType }) => {
+    const today = new Date().toISOString().split('T')[0];
+    const normalizedAddress = playerAddress.toLowerCase();
+
+    const existing = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_player_date_type", (q: any) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", today)
+          .eq("missionType", missionType)
+      )
+      .first();
+
+    if (!existing) {
+      await ctx.db.insert("personalMissions", {
+        playerAddress: normalizedAddress,
+        date: today,
+        missionType,
+        completed: true,
+        claimed: false,
+        reward: TCG_MISSION_REWARDS[missionType] || 0,
+        completedAt: Date.now(),
+      });
+    }
+  },
+});
