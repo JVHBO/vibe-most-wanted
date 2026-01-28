@@ -696,7 +696,9 @@ export function clearAllNftCache(): void {
         sessionStorage.removeItem(key);
       }
     }
-    console.log(`🗑️ Cleared ${keysToRemove.length} cache entries + VibeFID refresh timestamp`);
+    // Also clear Wield owner cache (so new mints appear)
+    localStorage.removeItem('wield_owner_cache');
+    console.log(`🗑️ Cleared ${keysToRemove.length} cache entries + VibeFID refresh + Wield owner cache`);
   } catch (e) {
     console.warn('Failed to clear NFT cache:', e);
   }

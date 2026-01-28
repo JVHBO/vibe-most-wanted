@@ -25,7 +25,7 @@ export const WIELD_COLLECTIONS: Record<string, { contract: string; slug: string 
 // Cache keys
 const OWNER_CACHE_KEY = 'wield_owner_cache';
 const TOKEN_CACHE_KEY = 'wield_token_cache';
-const OWNER_CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const OWNER_CACHE_TTL = 3 * 60 * 1000; // 3 minutes (faster detection of new mints)
 
 export interface WieldToken {
   tokenId: number;
@@ -304,6 +304,21 @@ export async function fetchAllWieldCollections(
  */
 export function isWieldCollection(collection: string): boolean {
   return collection in WIELD_COLLECTIONS;
+}
+
+/**
+ * Clear Wield owner cache for a specific address (forces re-fetch of tokenIds)
+ * Use after mint/purchase so new NFTs appear immediately
+ */
+export function clearWieldOwnerCache(address?: string) {
+  if (typeof window === 'undefined') return;
+  if (address) {
+    const cache = getOwnerCache();
+    delete cache[address.toLowerCase()];
+    saveOwnerCache(cache);
+  } else {
+    localStorage.removeItem(OWNER_CACHE_KEY);
+  }
 }
 
 /**

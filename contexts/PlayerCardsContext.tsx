@@ -9,7 +9,7 @@ import { getEnabledCollections, getCollectionContract, type CollectionId } from 
 import { getCardKey } from '@/lib/nft';
 import { findAttr, calcPower, isUnrevealed } from '@/lib/nft/attributes';
 import { getImage, fetchNFTs, checkCollectionBalances } from '@/lib/nft/fetcher';
-import { fetchWieldTokens, isWieldCollection, type WieldToken } from '@/lib/nft/wield-fetcher';
+import { fetchWieldTokens, isWieldCollection, clearWieldOwnerCache, type WieldToken } from '@/lib/nft/wield-fetcher';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { DEFAULT_POWER_CONFIG } from '@/lib/collections';
 import { getCharacterFromImage } from '@/lib/vmw-image-mapping';
@@ -557,9 +557,10 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
     }
   }, [address, status, nfts.length, convex]);
 
-  // Force reload (ignores cache)
+  // Force reload (clears caches so new mints appear)
   const forceReloadNFTs = useCallback(async () => {
     if (!address) return;
+    clearWieldOwnerCache(address);
     setStatus('idle');
     setNfts([]);
     // Wait a tick then load
