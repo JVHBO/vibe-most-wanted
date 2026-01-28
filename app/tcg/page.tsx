@@ -7353,243 +7353,744 @@ export default function TCGPage() {
     };
 
     return (
-      <div className="h-screen bg-gradient-to-b from-indigo-950 via-purple-950 to-black flex flex-col overflow-hidden relative">
-        {/* Starfield effect */}
-        <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(131, 58, 180, 0.3) 0%, transparent 50%)' }} />
-
-        {/* Top Bar */}
-        <div className="flex items-center justify-between p-2 bg-black/40 border-b border-gray-800 z-10">
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-purple-400 bg-purple-900/50 px-2 py-0.5 rounded">PvP</span>
-            <div className="text-sm">
-              <span className="text-gray-400">{t('tcgTurn')}</span>
-              <span className="text-yellow-400 font-bold ml-1">{gs.currentTurn}/{TCG_CONFIG.TOTAL_TURNS}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 bg-blue-900/50 px-2 py-1 rounded">
-              <span className="text-blue-400">⚡</span>
-              <span className="text-white font-bold">{remainingEnergy}</span>
-              <span className="text-gray-500 text-xs">/{energy}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className={`px-2 py-1 rounded ${myConfirmed ? "bg-green-900/50 text-green-400" : "bg-gray-800 text-gray-400"}`}>
-              {myConfirmed ? "✓ " + t('tcgReady') : t('tcgPlanning')}
-            </span>
-            <span className={`px-2 py-1 rounded ${opponentConfirmed ? "bg-green-900/50 text-green-400" : "bg-gray-800 text-gray-400"}`}>
-              {opponentConfirmed ? "✓ " + t('tcgOpponentReady') : "⏳ " + t('tcgOpponentPlanning')}
-            </span>
-          </div>
+      <div className="h-screen bg-gradient-to-b from-[#0a0a0a] via-[#1a1a1a] to-[#0a0a0a] flex flex-col overflow-hidden relative">
+        {/* Suit decorations background */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-[10%] left-[5%] tcg-suit-deco text-4xl">♠</div>
+          <div className="absolute top-[15%] right-[8%] tcg-suit-deco text-3xl">♥</div>
+          <div className="absolute bottom-[25%] left-[10%] tcg-suit-deco text-3xl">♦</div>
+          <div className="absolute bottom-[30%] right-[5%] tcg-suit-deco text-4xl">♣</div>
+          <div className="absolute top-[40%] left-[2%] tcg-suit-deco text-2xl">♠</div>
+          <div className="absolute top-[50%] right-[3%] tcg-suit-deco text-2xl">♥</div>
         </div>
 
-        {/* Lanes */}
-        <div className="flex-1 flex gap-1 p-1 overflow-hidden">
-          {gs.lanes.map((lane: any, laneIndex: number) => {
-            const status = getLaneStatus(lane);
-            const winGlow = status === "winning" ? "shadow-[0_0_20px_rgba(34,197,94,0.4)]" :
-                           status === "losing" ? "shadow-[0_0_20px_rgba(239,68,68,0.4)]" : "";
-            const laneEffect = lane.effect ? LANE_NAMES.find(l => l.effect === lane.effect) : null;
+        {/* Content */}
+        <div className="relative flex flex-col h-full z-10">
 
-            return (
+          {/* Top Bar - Player Avatars & Turn Indicator */}
+          <div className="flex items-center justify-between px-4 py-2">
+            {/* Player Avatar (left) - Royal style */}
+            <div className="relative flex items-center gap-2">
               <div
-                key={lane.laneId}
-                className={`flex flex-col w-[33%] h-full bg-black/40 backdrop-blur-sm rounded-lg overflow-hidden ${winGlow} transition-all`}
+                className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1a3a1a] to-[#0d280d] overflow-hidden"
+                style={{
+                  border: "3px solid",
+                  borderImage: "linear-gradient(135deg, #FFD700, #B8860B, #FFD700) 1",
+                  boxShadow: "0 4px 15px rgba(0,0,0,0.5), 0 0 15px rgba(255,215,0,0.2)"
+                }}
               >
-                {/* Lane Header */}
-                <div className="relative bg-gray-900/95 border-b border-gray-800 py-1 px-2">
-                  <div className="text-center">
-                    <span className="text-[10px] font-bold text-white uppercase">{lane.name || `Lane ${laneIndex + 1}`}</span>
-                  </div>
-                  {laneEffect && (
-                    <div className="text-center">
-                      <span className="text-[8px] text-purple-400">{laneEffect.description}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Enemy Side (top) */}
-                <div className="flex-1 flex flex-col p-1 border-b border-gray-700/50">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] text-red-400 max-w-[100px] truncate inline-block">{opponentDisplayName}</span>
-                    <span className={`text-sm font-bold ${status === "losing" ? "text-red-400" : "text-gray-400"}`}>
-                      {lane[enemyPower] || 0}
-                    </span>
-                  </div>
-                  <div className="flex-1 flex flex-wrap gap-1 justify-center items-start content-start">
-                    {(lane[enemyCards] || []).map((card: any, idx: number) => {
-                      const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
-                      const enemyCardCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
-                      const enemyCardCoverUrl = getCollectionCoverUrl(enemyCardCollection, card.rarity);
-                      return (
-                        <div
-                          key={idx}
-                          className={`relative w-[45px] h-[65px] rounded border-2 bg-cover bg-center ${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"}`}
-                          style={{ backgroundImage: `url(${enemyCardCoverUrl})` }}
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent rounded" />
-                          <div className="absolute bottom-0 left-0 right-0 p-0.5 text-center">
-                            <span className="text-yellow-400 font-bold text-[10px]">{displayPower}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* My Side (bottom) - Click to play */}
-                <div
-                  className={`flex-1 flex flex-col p-1 transition-all ${
-                    selectedHandCard !== null
-                      ? "bg-green-500/20 cursor-pointer"
-                      : ""
-                  }`}
-                  onClick={() => {
-                    if (selectedHandCard !== null && myHand && myHand[selectedHandCard]) {
-                      const cardCost = getEnergyCost(myHand[selectedHandCard]);
-                      if (cardCost <= remainingEnergy) {
-                        handlePlayCard(laneIndex);
-                        playSound("card");
-                      } else {
-                        playSound("error");
-                      }
-                    }
-                  }}
-                >
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] text-blue-400">{t('tcgYou')}</span>
-                    <span className={`text-sm font-bold ${status === "winning" ? "text-green-400" : "text-gray-400"}`}>
-                      {lane[myPower] || 0}
-                    </span>
-                  </div>
-                  <div className="flex-1 flex flex-wrap gap-1 justify-center items-end content-end">
-                    {(lane[myCards] || []).map((card: any, idx: number) => {
-                      const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
-                      const foilEffect = getFoilEffect(card.foil);
-                      const myCardCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
-                      const myCardCoverUrl = getCollectionCoverUrl(myCardCollection, card.rarity);
-                      return (
-                        <div
-                          key={idx}
-                          className={`relative w-[45px] h-[65px] rounded border-2 bg-cover bg-center ${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"} ${getFoilClass(card.foil)}`}
-                          style={{ backgroundImage: `url(${myCardCoverUrl})` }}
-                        >
-                          {foilEffect && (
-                            <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-yellow-400/20 rounded pointer-events-none" />
-                          )}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent rounded" />
-                          <div className="absolute bottom-0 left-0 right-0 p-0.5 text-center">
-                            <span className="text-yellow-400 font-bold text-[10px]">{displayPower}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  {selectedHandCard !== null && (
-                    <p className="text-center text-[10px] text-green-400 mt-1 animate-pulse">{t('tcgClickToPlayHere')}</p>
-                  )}
-                </div>
-
-                {/* Lane Score Bar */}
-                <div className="h-1 bg-gray-800 flex">
-                  <div
-                    className={`h-full transition-all ${status === "winning" ? "bg-green-500" : status === "losing" ? "bg-red-500" : "bg-gray-500"}`}
-                    style={{ width: `${Math.min(100, ((lane[myPower] || 0) / Math.max(1, (lane[myPower] || 0) + (lane[enemyPower] || 0))) * 100)}%` }}
+                {userProfile?.farcasterPfpUrl || userProfile?.twitterProfileImageUrl ? (
+                  <img
+                    src={userProfile.farcasterPfpUrl || userProfile.twitterProfileImageUrl}
+                    alt="Player"
+                    className="w-full h-full object-cover"
                   />
-                </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-blue-700">
+                    <span className="text-xl font-bold text-white">
+                      {userProfile?.username?.[0]?.toUpperCase() || "?"}
+                    </span>
+                  </div>
+                )}
               </div>
-            );
-          })}
-        </div>
+              <div className="text-xs">
+                <p className="text-[#FFD700] font-bold truncate max-w-[60px]" style={{ textShadow: "0 0 5px rgba(255,215,0,0.3)" }}>
+                  {userProfile?.username || "YOU"}
+                </p>
+                <p className="text-[#B8860B]">{gs.lanes.filter((l: any) => (l[myPower] || 0) > (l[enemyPower] || 0)).length} lanes</p>
+              </div>
+            </div>
 
-        {/* Pending Actions Display */}
-        {pendingActions.length > 0 && (
-          <div className="bg-yellow-900/30 border-t border-yellow-500/50 px-2 py-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-yellow-400">
-                {pendingActions.length} {pendingActions.length === 1 ? "card" : "cards"} queued
-              </span>
-              <button
-                onClick={() => setPendingActions([])}
-                className="text-xs text-red-400 hover:text-red-300"
+            {/* Turn Indicator + PvP Status (center) */}
+            <div className="flex flex-col items-center gap-1">
+              {/* Turn number - Royal gold badge */}
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full"
+                style={{
+                  background: "linear-gradient(180deg, rgba(20,20,20,0.95) 0%, rgba(10,10,10,0.98) 100%)",
+                  border: "2px solid",
+                  borderImage: "linear-gradient(135deg, #8B6914, #FFD700, #8B6914) 1",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.5)"
+                }}
               >
-                ✕ Clear
-              </button>
+                <span className="text-xs text-purple-400 font-bold">PvP</span>
+                <span className="text-xs text-[#B8860B] uppercase tracking-wider">{t('tcgTurn')}</span>
+                <span className="text-xl font-black text-[#FFD700]" style={{ textShadow: "0 0 10px rgba(255,215,0,0.5)" }}>{gs.currentTurn}</span>
+                <span className="text-xs text-[#8B6914]">/ {TCG_CONFIG.TOTAL_TURNS}</span>
+              </div>
+              {/* Confirmed status indicators */}
+              <div className="flex items-center gap-2 text-[9px]">
+                <span className={`px-1.5 py-0.5 rounded ${myConfirmed ? "bg-green-900/50 text-green-400" : "bg-gray-800 text-gray-400"}`}>
+                  {myConfirmed ? "✓ " + t('tcgReady') : t('tcgPlanning')}
+                </span>
+                <span className={`px-1.5 py-0.5 rounded ${opponentConfirmed ? "bg-green-900/50 text-green-400" : "bg-gray-800 text-gray-400"}`}>
+                  {opponentConfirmed ? "✓" : "⏳"}
+                </span>
+              </div>
+            </div>
+
+            {/* Opponent Avatar (right) - Royal style */}
+            <div className="flex items-center gap-2">
+              <div className="text-xs text-right">
+                <p className="text-red-400 font-bold truncate max-w-[60px]" style={{ textShadow: "0 0 5px rgba(239,68,68,0.3)" }}>{opponentDisplayName}</p>
+                <p className="text-[#8B6914]">{gs.lanes.filter((l: any) => (l[enemyPower] || 0) > (l[myPower] || 0)).length} {t('tcgLanes')}</p>
+              </div>
+              <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#3a1a1a] to-[#280d0d] overflow-hidden flex items-center justify-center"
+                style={{
+                  border: "3px solid",
+                  borderImage: "linear-gradient(135deg, #B8860B, #8B6914, #B8860B) 1",
+                  boxShadow: "0 4px 15px rgba(0,0,0,0.5), 0 0 10px rgba(255,0,0,0.2)"
+                }}
+              >
+                <span className="text-2xl font-bold text-red-400">
+                  {opponentDisplayName?.[0]?.toUpperCase() || "?"}
+                </span>
+              </div>
             </div>
           </div>
-        )}
 
-        {/* Hand */}
-        <div className="bg-gradient-to-t from-gray-900 to-transparent p-2 border-t border-gray-800">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-gray-400">{t('tcgHand')} ({myHand?.length || 0})</span>
-            <button
-              onClick={handleSubmitTurn}
-              disabled={myConfirmed || pendingActions.length === 0}
-              className={`font-bold py-2 px-6 rounded-lg text-sm transition-all ${
-                myConfirmed
-                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  : pendingActions.length === 0
-                    ? "bg-gray-700 text-gray-500"
-                    : "bg-gradient-to-r from-yellow-500 to-orange-500 text-black hover:scale-105 shadow-lg shadow-yellow-500/30"
-              }`}
+          {/* Battle Arena - 3 Lanes (Royal Card Table style with 3D depth) */}
+          <div
+            className="flex-1 flex items-stretch justify-center px-2 gap-2 min-h-0"
+            style={{ perspective: "1000px", perspectiveOrigin: "50% 80%" }}
+          >
+            <div
+              className="flex-1 flex items-stretch justify-center gap-2"
+              style={{ transformStyle: "preserve-3d", transform: "rotateX(15deg)", transformOrigin: "50% 100%" }}
             >
-              {myConfirmed ? "⏳ " + t('tcgLoading') : pendingActions.length > 0 ? `▶ ${t('tcgEndTurn')} (${pendingActions.length})` : t('tcgEndTurn')}
-            </button>
-          </div>
-          <div className="flex justify-center gap-1">
-            {myHand?.map((card: any, idx: number) => {
-              const foilEffect = getFoilEffect(card.foil);
-              const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
-              const energyCost = getEnergyCost(card);
-              const canAfford = energyCost <= remainingEnergy;
-              const isPending = pendingActions.some(a => a.cardIndex === idx);
-              // Use collection cover instead of individual card image
-              const handCardCollection = card.collection || (card.type === "vbms" ? "vibe" : card.type === "vibefid" ? "vibefid" : card.type === "nothing" ? "nothing" : "vibe");
-              const handCardCoverUrl = getCollectionCoverUrl(handCardCollection, card.rarity);
+            {gs.lanes.map((lane: any, laneIndex: number) => {
+              const status = getLaneStatus(lane);
+              const pendingInLane = pendingActions.filter(a => a.targetLane === laneIndex).length;
+              const myLaneCards = lane[myCards] || [];
+              const enemyLaneCards = lane[enemyCards] || [];
 
-              if (isPending) return null; // Hide cards that are queued
+              // Win indicator glow - golden for winning
+              const winGlow = status === "winning" ? "shadow-[0_0_25px_rgba(255,215,0,0.5)]" :
+                             status === "losing" ? "shadow-[0_0_20px_rgba(239,68,68,0.4)]" : "";
+
+              // Check if lane can receive cards (account for pending plays)
+              const canDropInLane = (myLaneCards.length + pendingInLane) < TCG_CONFIG.CARDS_PER_LANE;
+
+              // Combo detection for player cards in this lane
+              const playerCombos = detectCombos(myLaneCards);
+              const enemyCombos = detectCombos(enemyLaneCards);
+
+              // Check for COMBO POTENTIAL when card is selected
+              const activeCard = selectedHandCard !== null ? myHand?.[selectedHandCard] : null;
+              const hasComboPotenial = activeCard && canDropInLane ? (() => {
+                const potentialCards = [...myLaneCards, activeCard];
+                const combos = detectCombos(potentialCards);
+                const currentCombos = detectCombos(myLaneCards);
+                return combos.length > currentCombos.length ? combos[combos.length - 1] : null;
+              })() : null;
 
               return (
                 <div
-                  key={idx}
-                  onClick={() => {
-                    if (!canAfford) {
-                      playSound("error");
-                      return;
-                    }
-                    playSound("select");
-                    setSelectedHandCard(selectedHandCard === idx ? null : idx);
+                  key={lane.laneId}
+                  data-lane-index={laneIndex}
+                  ref={(el) => { laneRefs.current[laneIndex] = el; }}
+                  className={`flex flex-col w-[33%] h-full rounded-xl overflow-hidden ${winGlow} transition-all tcg-royal-zone ${hasComboPotenial ? "tcg-combo-glow" : ""}`}
+                  style={{
+                    background: hasComboPotenial
+                      ? "linear-gradient(180deg, rgba(91,26,91,0.95) 0%, rgba(60,13,60,0.98) 50%, rgba(36,7,36,1) 100%)"
+                      : "linear-gradient(180deg, rgba(26,71,42,0.95) 0%, rgba(13,40,24,0.98) 50%, rgba(7,26,15,1) 100%)",
+                    border: "3px solid",
+                    borderImage: hasComboPotenial
+                      ? "linear-gradient(135deg, #FFD700, #FF6B00, #FFD700) 1"
+                      : status === "winning"
+                        ? "linear-gradient(135deg, #FFD700, #FFA500, #FFD700) 1"
+                        : "linear-gradient(135deg, #B8860B, #8B6914, #B8860B) 1",
+                    boxShadow: hasComboPotenial
+                      ? "inset 0 0 60px rgba(255,165,0,0.4), 0 0 30px rgba(255,215,0,0.6), 0 4px 15px rgba(0,0,0,0.5)"
+                      : "inset 0 0 40px rgba(0,0,0,0.6), 0 4px 15px rgba(0,0,0,0.5)"
                   }}
-                  className={`relative flex-shrink-0 w-[60px] h-[85px] rounded-lg border-2 transition-all duration-200 bg-cover bg-center ${
-                    !canAfford
-                      ? "border-red-500/50 opacity-50 cursor-not-allowed grayscale"
-                      : selectedHandCard === idx
-                        ? "border-green-400 -translate-y-6 scale-110 z-20 shadow-xl shadow-green-500/50 cursor-pointer"
-                        : `${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"} hover:-translate-y-2 hover:scale-105 cursor-pointer`
-                  } ${getFoilClass(card.foil)}`}
-                  style={{ backgroundImage: `url(${handCardCoverUrl})`, zIndex: selectedHandCard === idx ? 20 : idx }}
                 >
-                  {foilEffect && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-yellow-400/20 rounded-lg pointer-events-none" />
-                  )}
-                  {/* Energy Cost Badge */}
-                  <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 ${
-                    canAfford
-                      ? foilEffect ? "bg-gradient-to-br from-cyan-400 to-teal-500 border-cyan-200" : "bg-gradient-to-br from-blue-400 to-blue-600 border-white"
-                      : "bg-gradient-to-br from-red-500 to-red-700 border-red-300"
-                  }`}>
-                    <span className="text-xs font-bold text-white">{energyCost}</span>
+                  {/* Location Header - Royal style */}
+                  <div className="relative" style={{
+                    background: "linear-gradient(180deg, rgba(20,20,20,0.98) 0%, rgba(10,10,10,0.95) 100%)",
+                    borderBottom: "2px solid",
+                    borderImage: "linear-gradient(90deg, transparent, #B8860B, #FFD700, #B8860B, transparent) 1"
+                  }}>
+                    {/* Score Bar - Royal style */}
+                    <div className="flex items-center justify-center gap-3 py-1.5" style={{ background: "rgba(0,0,0,0.5)" }}>
+                      <div className={`min-w-[32px] text-center px-2 py-0.5 rounded text-sm font-black ${
+                        status === "losing" ? "bg-red-700 text-white" : "bg-[#1a1a1a] text-gray-500 border border-[#333]"
+                      }`}>
+                        {lane[enemyPower] || 0}
+                      </div>
+                      <div className="text-[10px] text-[#B8860B] font-bold">⚔</div>
+                      <div className={`min-w-[32px] text-center px-2 py-0.5 rounded text-sm font-black ${
+                        status === "winning" ? "bg-gradient-to-r from-[#B8860B] to-[#FFD700] text-black" : "bg-[#1a1a1a] text-gray-500 border border-[#333]"
+                      }`}>
+                        {lane[myPower] || 0}
+                      </div>
+                    </div>
                   </div>
-                  {/* Power Badge */}
-                  <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-2 border-yellow-200 flex items-center justify-center shadow-lg">
-                    <span className="text-[10px] font-bold text-black">{displayPower}</span>
+
+                  {/* Enemy Combos (top) */}
+                  {enemyCombos.length > 0 && (
+                    <div className="py-0.5 flex items-center justify-center gap-1 flex-wrap">
+                      <button
+                        onClick={() => setDetailCombo(enemyCombos[0].combo)}
+                        className="border rounded px-1.5 py-0.5 hover:scale-105 transition-all cursor-pointer bg-red-600/30 border-red-500/60"
+                      >
+                        <span className="text-[7px] text-red-300 font-bold uppercase tracking-wide">
+                          {enemyCombos[0].combo.emoji} {COMBO_TRANSLATION_KEYS[enemyCombos[0].combo.id] ? t(COMBO_TRANSLATION_KEYS[enemyCombos[0].combo.id] as keyof typeof translations["pt-BR"]) : enemyCombos[0].combo.name}
+                        </span>
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Enemy Cards (top) - Grid 2x2 style */}
+                  <div className="flex-1 flex items-start justify-center pt-1 px-1 overflow-hidden">
+                    <div className="grid grid-cols-2 gap-1 min-h-[124px]">
+                      {enemyLaneCards.map((card: any, idx: number) => {
+                        const ability = getCardAbility(card.name, card);
+                        const foil = (card.foil || "").toLowerCase();
+                        const hasFoil = foil && foil !== "none" && foil !== "";
+                        const foilClass = foil.includes("prize") ? "prize-foil" : foil.includes("standard") ? "standard-foil" : "";
+                        const cardImageUrl = encodeURI(getCardDisplayImageUrl(card));
+                        const isRevealed = (card as any)._revealed !== false;
+                        const coverUrl = getCollectionCoverUrl(card.collection, card.rarity);
+
+                        return (
+                          <div
+                            key={idx}
+                            onClick={() => isRevealed && setDetailCard(card)}
+                            className={`relative w-10 h-[58px] rounded-md cursor-pointer hover:scale-105 transition-all overflow-hidden ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"}`}
+                            style={{
+                              boxShadow: isRevealed ? "0 2px 6px rgba(0,0,0,0.6), 0 0 0 1px rgba(239,68,68,0.5)" : "0 2px 6px rgba(0,0,0,0.8), 0 0 0 1px rgba(100,100,100,0.5)"
+                            }}
+                          >
+                            {isRevealed ? (
+                              <CardMedia
+                                src={cardImageUrl}
+                                alt={card.name}
+                                className="absolute inset-0 w-full h-full object-cover rounded-md"
+                              />
+                            ) : (
+                              <div
+                                className="absolute inset-0 bg-cover bg-center rounded-md"
+                                style={{ backgroundImage: `url(${coverUrl})` }}
+                              />
+                            )}
+                            {isRevealed && (
+                              <>
+                                {hasFoil && <div className={`absolute inset-0 ${foilClass} rounded-md pointer-events-none z-[5]`}></div>}
+                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-red-600 flex items-center justify-center z-10"
+                                  style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}>
+                                  <span className="text-[8px] font-black text-white">{card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power}</span>
+                                </div>
+                                {ability && (
+                                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full flex items-center justify-center text-[6px] font-bold z-10 ${
+                                    ability.type === "onReveal" ? "bg-orange-500" : "bg-green-500"
+                                  }`}>
+                                    {ability.type === "onReveal" ? "R" : "O"}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            {!isRevealed && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-lg opacity-50">?</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {enemyLaneCards.length === 0 && (
+                        <div className="w-10 h-[58px] rounded-md"
+                          style={{
+                            background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)",
+                            border: "2px dashed rgba(184,134,11,0.3)",
+                            boxShadow: "inset 0 2px 10px rgba(0,0,0,0.5)"
+                          }} />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Center Divider - Show player combos */}
+                  <div className="py-0.5 flex items-center justify-center gap-1 flex-wrap">
+                    {playerCombos.length > 0 ? (
+                      playerCombos.map(({ combo, wildcardsUsed }) => (
+                        <button
+                          key={combo.id}
+                          onClick={() => setDetailCombo(combo)}
+                          className={`border rounded px-1.5 py-0.5 hover:scale-105 transition-all cursor-pointer ${
+                            wildcardsUsed > 0
+                              ? "bg-cyan-600/30 border-cyan-500/60"
+                              : "bg-yellow-600/30 border-yellow-500/60"
+                          }`}
+                        >
+                          <span className="text-[7px] text-yellow-300 font-bold uppercase tracking-wide">
+                            {combo.emoji} {COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id] as keyof typeof translations["pt-BR"]) : combo.name}
+                            {wildcardsUsed > 0 && <span className="text-cyan-300 ml-0.5">🃏</span>}
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="w-12 h-px bg-gray-700/50" />
+                    )}
+                  </div>
+
+                  {/* Player Cards (bottom) - Grid 2x2 style */}
+                  <div
+                    className={`relative flex-1 flex items-end justify-center pb-1 px-1 transition-all overflow-hidden ${
+                      selectedHandCard !== null && canDropInLane ? "bg-green-900/30 cursor-pointer" : ""
+                    }`}
+                    onClick={() => {
+                      if (selectedHandCard !== null && canDropInLane && myHand?.[selectedHandCard]) {
+                        const cardCost = getEnergyCost(myHand[selectedHandCard]);
+                        if (cardCost <= remainingEnergy) {
+                          handlePlayCard(laneIndex);
+                          playSound("card");
+                        } else {
+                          playSound("error");
+                        }
+                      }
+                    }}
+                  >
+                    {selectedHandCard !== null && canDropInLane && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                        <span className="text-green-400 text-xs font-bold bg-black/60 px-2 py-1 rounded">{t('tcgPlay2')}</span>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-1 min-h-[124px]">
+                      {myLaneCards.map((card: any, idx: number) => {
+                        const ability = getCardAbility(card.name, card);
+                        const isRevealed = (card as any)._revealed !== false;
+                        const cardImageUrl = encodeURI(getCardDisplayImageUrl(card));
+                        const coverUrl = getCollectionCoverUrl(card.collection, card.rarity);
+
+                        return (
+                          <div
+                            key={idx}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (isRevealed) setDetailCard(card);
+                            }}
+                            className={`relative w-10 h-[58px] rounded-md cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${isRevealed ? getFoilClass(card.foil) : ""} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"}`}
+                            style={{
+                              zIndex: idx,
+                              boxShadow: isRevealed ? "0 2px 8px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.5)" : "0 2px 8px rgba(0,0,0,0.8), 0 0 0 1px rgba(100,100,100,0.5)"
+                            }}
+                          >
+                            {isRevealed ? (
+                              <CardMedia
+                                src={cardImageUrl}
+                                alt={card.name}
+                                className="absolute inset-0 w-full h-full object-cover rounded-md"
+                              />
+                            ) : (
+                              <div
+                                className="absolute inset-0 bg-cover bg-center rounded-md"
+                                style={{ backgroundImage: `url(${coverUrl})` }}
+                              />
+                            )}
+                            {isRevealed && (
+                              <>
+                                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-600 flex items-center justify-center z-10"
+                                  style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}>
+                                  <span className="text-[8px] font-black text-white">{card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power}</span>
+                                </div>
+                                {ability && (
+                                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full flex items-center justify-center text-[6px] font-bold ${
+                                    ability.type === "onReveal" ? "bg-orange-500" : "bg-green-500"
+                                  }`}>
+                                    {ability.type === "onReveal" ? "R" : "O"}
+                                  </div>
+                                )}
+                              </>
+                            )}
+                            {!isRevealed && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="text-lg text-blue-400 opacity-70">?</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {myLaneCards.length === 0 && selectedHandCard === null && (
+                        <div className="w-10 h-[58px] rounded-md"
+                          style={{
+                            background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)",
+                            border: "2px dashed rgba(184,134,11,0.3)",
+                            boxShadow: "inset 0 2px 10px rgba(0,0,0,0.5)"
+                          }} />
+                      )}
+                    </div>
                   </div>
                 </div>
               );
             })}
+            </div>
+          </div>
+
+          {/* Floating Card Indicator while dragging */}
+          {draggedCardIndex !== null && touchDragPos && myHand?.[draggedCardIndex] && (() => {
+            const dragCard = myHand[draggedCardIndex];
+            const dragCardImageUrl = getCardDisplayImageUrl(dragCard);
+            return (
+              <div
+                data-drag-ghost="true"
+                className="fixed pointer-events-none z-[100]"
+                style={{
+                  left: touchDragPos.x - 30,
+                  top: touchDragPos.y - 42,
+                }}
+              >
+                <div
+                  className="w-[60px] h-[85px] rounded-lg border-2 border-cyan-400 shadow-xl shadow-cyan-500/50 bg-cover bg-center opacity-90"
+                  style={{ backgroundImage: `url(${dragCardImageUrl})` }}
+                />
+              </div>
+            );
+          })()}
+
+          {/* Pending Actions Display */}
+          {pendingActions.length > 0 && (
+            <div className="bg-yellow-900/30 px-3 py-1" style={{ borderTop: "1px solid rgba(255,215,0,0.3)" }}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-yellow-400 font-bold">
+                  {pendingActions.length} {pendingActions.length === 1 ? "card" : "cards"} queued
+                </span>
+                <button
+                  onClick={() => setPendingActions([])}
+                  className="text-xs text-red-400 hover:text-red-300 font-bold"
+                >
+                  ✕ Clear
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Hand - Bottom Bar (Royal style) */}
+          <div
+            className="relative pt-4 pb-2 px-3 tcg-royal-hand"
+            style={{
+              background: "linear-gradient(180deg, rgba(20,20,20,0.95) 0%, rgba(10,10,10,1) 100%)",
+              borderTop: "3px solid",
+              borderImage: "linear-gradient(90deg, transparent 5%, #B8860B 20%, #FFD700 50%, #B8860B 80%, transparent 95%) 1"
+            }}
+          >
+            {/* Cards */}
+            <div className="flex justify-center gap-1 mb-3">
+              {myHand?.map((card: any, idx: number) => {
+                const ability = getCardAbility(card.name, card);
+                const foilEffect = getFoilEffect(card.foil);
+                const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
+                const energyCost = getEnergyCost(card);
+                const canAfford = energyCost <= remainingEnergy;
+                const battleHandImageUrl = encodeURI(getCardDisplayImageUrl(card));
+                const isPending = pendingActions.some(a => a.cardIndex === idx);
+
+                // Check combo partners
+                const cardNameResolved = resolveCardName(card.name || "");
+                const hasComboPartner = CARD_COMBOS.some(combo => {
+                  const comboCardsLower = combo.cards.map(c => c.toLowerCase());
+                  if (!comboCardsLower.includes(cardNameResolved)) return false;
+                  const otherHandCards = (myHand || []).filter((_: any, i: number) => i !== idx);
+                  const allLaneCards = gs.lanes.flatMap((l: any) => l[myCards] || []);
+                  const allCards = [...otherHandCards, ...allLaneCards];
+                  const matchCount = comboCardsLower.filter(cc =>
+                    allCards.some((c: any) => resolveCardName(c.name || "") === cc)
+                  ).length;
+                  return matchCount >= 1;
+                });
+
+                const potentialCombo = hasComboPartner ? CARD_COMBOS.find(combo => {
+                  const comboCardsLower = combo.cards.map(c => c.toLowerCase());
+                  return comboCardsLower.includes(cardNameResolved);
+                }) : null;
+
+                if (isPending) return null; // Hide cards that are queued
+
+                return (
+                  <div
+                    key={idx}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (!canAfford || e.button !== 0) return;
+                      const startX = e.clientX;
+                      const startY = e.clientY;
+                      wasDraggingRef.current = false;
+                      setDraggedCardIndex(idx);
+                      setSelectedHandCard(null);
+                      setTouchDragPos({ x: startX, y: startY });
+
+                      const handleMouseMove = (moveE: MouseEvent) => {
+                        const dx = Math.abs(moveE.clientX - startX);
+                        const dy = Math.abs(moveE.clientY - startY);
+                        if (dx > 5 || dy > 5) {
+                          wasDraggingRef.current = true;
+                        }
+                        setTouchDragPos({ x: moveE.clientX, y: moveE.clientY });
+                        const laneIdx = getLaneUnderTouch(moveE.clientX, moveE.clientY);
+                        setDragOverLane(laneIdx);
+                      };
+
+                      const handleMouseUp = (upE: MouseEvent) => {
+                        const laneIdx = getLaneUnderTouch(upE.clientX, upE.clientY);
+                        if (laneIdx !== null && wasDraggingRef.current) {
+                          const lane = gs.lanes[laneIdx];
+                          const laneMyCards = lane?.[myCards] || [];
+                          const pendingInLane = pendingActions.filter(a => a.targetLane === laneIdx).length;
+                          if (lane && (laneMyCards.length + pendingInLane) < TCG_CONFIG.CARDS_PER_LANE) {
+                            setPendingActions(prev => [...prev, { type: "play", cardIndex: idx, targetLane: laneIdx }]);
+                            playSound("card");
+                          }
+                        }
+                        setDraggedCardIndex(null);
+                        setDragOverLane(null);
+                        setTouchDragPos(null);
+                        document.removeEventListener('mousemove', handleMouseMove);
+                        document.removeEventListener('mouseup', handleMouseUp);
+                      };
+
+                      document.addEventListener('mousemove', handleMouseMove);
+                      document.addEventListener('mouseup', handleMouseUp);
+                    }}
+                    onTouchStart={(e) => {
+                      if (!canAfford) return;
+                      const touch = e.touches[0];
+                      setDraggedCardIndex(idx);
+                      setSelectedHandCard(null);
+                      setTouchDragPos({ x: touch.clientX, y: touch.clientY });
+                    }}
+                    onTouchMove={(e) => {
+                      if (draggedCardIndex !== idx) return;
+                      const touch = e.touches[0];
+                      setTouchDragPos({ x: touch.clientX, y: touch.clientY });
+                      const laneIdx = getLaneUnderTouch(touch.clientX, touch.clientY);
+                      setDragOverLane(laneIdx);
+                    }}
+                    onTouchEnd={(e) => {
+                      if (draggedCardIndex !== idx) return;
+                      const touch = e.changedTouches[0];
+                      const laneIdx = getLaneUnderTouch(touch.clientX, touch.clientY);
+                      if (laneIdx !== null) {
+                        const lane = gs.lanes[laneIdx];
+                        const laneMyCards = lane?.[myCards] || [];
+                        const pendingInLane = pendingActions.filter(a => a.targetLane === laneIdx).length;
+                        if (lane && (laneMyCards.length + pendingInLane) < TCG_CONFIG.CARDS_PER_LANE) {
+                          setPendingActions(prev => [...prev, { type: "play", cardIndex: idx, targetLane: laneIdx }]);
+                          playSound("card");
+                        }
+                      }
+                      setDraggedCardIndex(null);
+                      setDragOverLane(null);
+                      setTouchDragPos(null);
+                    }}
+                    onClick={(e) => {
+                      if (wasDraggingRef.current) {
+                        wasDraggingRef.current = false;
+                        return;
+                      }
+                      if (!canAfford) {
+                        playSound("error");
+                        return;
+                      }
+                      playSound("select");
+                      setSelectedHandCard(selectedHandCard === idx ? null : idx);
+                    }}
+                    className={`relative flex-shrink-0 w-[60px] h-[85px] rounded-lg border-2 transition-all duration-200 select-none ${
+                      !canAfford
+                        ? "border-red-500/50 opacity-50 cursor-not-allowed grayscale"
+                        : draggedCardIndex === idx
+                          ? "border-cyan-400 opacity-50 scale-95 cursor-grabbing"
+                          : selectedHandCard === idx
+                            ? "border-green-400 -translate-y-6 scale-110 z-20 shadow-xl shadow-green-500/50 cursor-pointer"
+                            : hasComboPartner
+                              ? "border-yellow-400 hover:-translate-y-2 hover:scale-105 ring-2 ring-yellow-400/50 cursor-grab"
+                              : `${RARITY_COLORS[card.rarity]?.split(" ")[0] || "border-gray-500"} hover:-translate-y-2 hover:scale-105 cursor-grab`
+                    } ${getFoilClass(card.foil)}`}
+                    style={{
+                      zIndex: selectedHandCard === idx ? 20 : draggedCardIndex === idx ? 30 : idx,
+                      userSelect: "none"
+                    }}
+                  >
+                    {/* Card background image/video */}
+                    <CardMedia
+                      src={card.type === "vbms" ? battleHandImageUrl : card.imageUrl}
+                      alt={card.name}
+                      className="absolute inset-0 w-full h-full object-cover rounded-lg pointer-events-none"
+                    />
+                    {card.foil && card.foil !== "None" && (
+                      <div className="absolute inset-0 bg-gradient-to-br from-white/30 via-transparent to-yellow-400/20 rounded-lg pointer-events-none" />
+                    )}
+                    {/* Can't Afford Overlay */}
+                    {!canAfford && (
+                      <div className="absolute inset-0 bg-red-900/40 rounded-lg flex items-center justify-center pointer-events-none">
+                        <span className="text-red-400 text-xl">⚡</span>
+                      </div>
+                    )}
+                    {/* Energy Cost Badge */}
+                    {foilEffect ? (
+                      <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 bg-gradient-to-br from-cyan-400 to-teal-500 border-cyan-200">
+                        <span className="text-xs font-bold text-white">{energyCost}</span>
+                      </div>
+                    ) : (
+                      <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 ${
+                        canAfford
+                          ? "bg-gradient-to-br from-blue-400 to-blue-600 border-white"
+                          : "bg-gradient-to-br from-red-500 to-red-700 border-red-300"
+                      }`}>
+                        <span className="text-xs font-bold text-white">{energyCost}</span>
+                      </div>
+                    )}
+                    {/* Power Badge (bottom-right) */}
+                    <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-2 border-yellow-200 flex items-center justify-center shadow-lg">
+                      <span className="text-[10px] font-bold text-black">{displayPower}</span>
+                    </div>
+                    {/* Combo Indicator */}
+                    {hasComboPartner && potentialCombo && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDetailCombo(potentialCombo); }}
+                        className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-2 border-yellow-200 flex items-center justify-center shadow-lg z-10 animate-bounce hover:scale-125 transition-transform cursor-pointer"
+                      >
+                        <span className="text-xs">{potentialCombo.emoji}</span>
+                      </button>
+                    )}
+                    {/* Info Button */}
+                    {(!hasComboPartner || !potentialCombo) && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDetailCard(card); }}
+                        className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 hover:bg-blue-500 rounded-full text-[9px] text-white font-bold flex items-center justify-center z-10 shadow-lg"
+                      >
+                        ?
+                      </button>
+                    )}
+                    {hasComboPartner && potentialCombo && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDetailCard(card); }}
+                        className="absolute top-5 -right-1 w-4 h-4 bg-blue-600 hover:bg-blue-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-10 shadow-lg"
+                      >
+                        ?
+                      </button>
+                    )}
+                    {/* Card Name */}
+                    <div className="absolute bottom-5 left-0 right-0 text-center">
+                      <span className="text-[7px] text-white font-bold drop-shadow-lg bg-black/50 px-1 rounded">{card.name}</span>
+                    </div>
+                    {/* Combo hint */}
+                    {hasComboPartner && potentialCombo && selectedHandCard !== idx && (
+                      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">
+                        <span className="text-[8px] text-yellow-400 bg-black/80 px-1 rounded">{potentialCombo.name}</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {(!myHand || myHand.length === 0) && (
+                <span className="text-gray-500 text-sm">{t('tcgNoCardsInHand')}</span>
+              )}
+            </div>
+
+            {/* Bottom Action Bar */}
+            <div className="flex items-center justify-between">
+              {/* Back Button */}
+              <button
+                onClick={() => setView("lobby")}
+                className="bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] hover:from-[#2a2a2a] hover:to-[#3a3a3a] text-[#B8860B] hover:text-[#FFD700] font-bold py-2 px-4 rounded-lg text-sm shadow-lg transition-all"
+                style={{
+                  border: "2px solid",
+                  borderImage: "linear-gradient(135deg, #8B6914, #B8860B, #8B6914) 1"
+                }}
+              >
+                ← BACK
+              </button>
+
+              {/* Energy Orb (center) - Royal gold style */}
+              <div className="relative w-14 h-14 rounded-full flex items-center justify-center"
+                style={{
+                  background: "radial-gradient(circle at 30% 30%, #FFD700, #B8860B, #8B6914)",
+                  boxShadow: "0 0 20px rgba(255,215,0,0.5), inset 0 2px 10px rgba(255,255,255,0.3), inset 0 -5px 15px rgba(0,0,0,0.4)",
+                  border: "3px solid #FFD700"
+                }}
+              >
+                <span className="text-2xl font-black text-black drop-shadow-[0_1px_1px_rgba(255,215,0,0.5)]">{remainingEnergy}</span>
+              </div>
+
+              {/* End Turn / Submit Button */}
+              <button
+                onClick={handleSubmitTurn}
+                disabled={myConfirmed}
+                className={`font-bold py-2 px-4 rounded-lg text-sm shadow-lg transition-all min-w-[100px] ${
+                  myConfirmed
+                    ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                    : pendingActions.length > 0
+                      ? "bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#FFD700] hover:to-[#B8860B] text-black border-2 border-[#FFD700] animate-pulse"
+                      : "bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#FFD700] hover:to-[#B8860B] text-black border-2 border-[#FFD700]"
+                }`}
+                style={!myConfirmed ? {
+                  boxShadow: "0 0 15px rgba(255,215,0,0.3), inset 0 1px 2px rgba(255,255,255,0.3)"
+                } : undefined}
+              >
+                {myConfirmed ? "⏳ " + t('tcgLoading') : pendingActions.length > 0 ? `▶ ${t('tcgEndTurn')} (${pendingActions.length})` : t('tcgEndTurn')}
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Card Detail Modal */}
+        {detailCard && (
+          <CardDetailModal
+            card={detailCard}
+            onClose={() => setDetailCard(null)}
+          />
+        )}
+
+        {/* Combo Detail Modal */}
+        {detailCombo && (
+          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setDetailCombo(null)}>
+            <div className="bg-gradient-to-br from-yellow-900 via-amber-900 to-orange-950 rounded-2xl p-6 max-w-sm w-full border-2 border-yellow-500 shadow-2xl shadow-yellow-500/30" onClick={e => e.stopPropagation()}>
+              <div className="text-center mb-4">
+                <div className="text-5xl mb-2">{detailCombo.emoji}</div>
+                <h2 className="text-2xl font-black text-yellow-400">{detailCombo.name}</h2>
+              </div>
+              <div className="mb-4">
+                <p className="text-xs text-yellow-300/70 mb-2 uppercase tracking-wider">{t('tcgCardsRequired')}</p>
+                <div className="flex flex-wrap gap-1 justify-center">
+                  {detailCombo.cards.map((cardName: string, idx: number) => (
+                    <span key={idx} className="px-2 py-1 bg-black/40 rounded text-sm text-white capitalize">
+                      {cardName}
+                    </span>
+                  ))}
+                </div>
+                {detailCombo.minCards && (
+                  <p className="text-xs text-yellow-400/60 mt-1 text-center">
+                    (Need at least {detailCombo.minCards} of these)
+                  </p>
+                )}
+              </div>
+              <div className="bg-black/30 rounded-xl p-4 mb-4">
+                <p className="text-xs text-yellow-300/70 mb-1 uppercase tracking-wider">{t('tcgBonusEffect')}</p>
+                <p className="text-yellow-100 font-bold">{detailCombo.description}</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                    detailCombo.bonus.type === "power" ? "bg-green-600" :
+                    detailCombo.bonus.type === "power_percent" ? "bg-purple-600" :
+                    detailCombo.bonus.type === "steal" ? "bg-red-600" : "bg-blue-600"
+                  }`}>
+                    {detailCombo.bonus.type === "power" ? `+${detailCombo.bonus.value} Power` :
+                     detailCombo.bonus.type === "power_percent" ? `+${detailCombo.bonus.value}% Power` :
+                     detailCombo.bonus.type === "steal" ? `-${detailCombo.bonus.value} Enemy` :
+                     detailCombo.bonus.type}
+                  </span>
+                  <span className="text-xs text-yellow-400/60">
+                    to {detailCombo.bonus.target === "self" ? "combo cards" : detailCombo.bonus.target}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => setDetailCombo(null)}
+                className="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-2 rounded-lg transition-colors"
+              >
+                Got it!
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
