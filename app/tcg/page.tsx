@@ -1301,6 +1301,8 @@ export default function TCGPage() {
   const [turnTimeRemaining, setTurnTimeRemaining] = useState(TCG_CONFIG.TURN_TIME_SECONDS);
   const turnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const handlePvEEndTurnRef = useRef<() => void>(() => {}); // Ref to avoid stale closure in timer
+  const handleSubmitTurnRef = useRef<() => void>(() => {}); // Ref for PvP timer
+  const handlePvPSubmitTurnRef = useRef<() => void>(() => {}); // Ref for PvP auto-submit
 
   // Game phase state - tracks current phase of turn resolution
   const [currentPhase, setCurrentPhase] = useState<GamePhase>("play");
@@ -3570,9 +3572,10 @@ export default function TCGPage() {
     setIsRevealing(true);
   };
 
-  // Keep ref updated so timer callback always has latest version
+  // Keep refs updated so timer callback always has latest version
   useEffect(() => {
     handlePvEEndTurnRef.current = handlePvEEndTurn;
+    handleSubmitTurnRef.current = handleSubmitTurn;
   });
 
   // Process reveal queue - reveals cards one at a time with animations
@@ -4339,6 +4342,9 @@ export default function TCGPage() {
     }
   };
 
+  // Keep ref updated for PvP timer auto-submit
+  handlePvPSubmitTurnRef.current = handleSubmitTurn;
+
   const handleCancelMatch = async () => {
     if (!currentMatchId || !address) return;
 
@@ -4418,11 +4424,44 @@ export default function TCGPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pveGameState?.currentTurn, view, isPvE]);
 
+  // Turn timer countdown - PvP (same as PvE: auto-submit when time runs out)
+  const pvpTurnTimerRef = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => {
+    if (view !== "battle" || isPvE || !currentMatch?.gameState || currentMatch.status !== "in-progress") {
+      return;
+    }
+
+    // Reset timer when turn changes
+    setTurnTimeRemaining(TCG_CONFIG.TURN_TIME_SECONDS);
+
+    if (pvpTurnTimerRef.current) {
+      clearInterval(pvpTurnTimerRef.current);
+    }
+
+    pvpTurnTimerRef.current = setInterval(() => {
+      setTurnTimeRemaining(prev => {
+        if (prev <= 1) {
+          // Time's up! Auto submit turn
+          handleSubmitTurnRef.current();
+          return TCG_CONFIG.TURN_TIME_SECONDS;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (pvpTurnTimerRef.current) {
+        clearInterval(pvpTurnTimerRef.current);
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMatch?.gameState?.currentTurn, view, isPvE, currentMatch?.status]);
+
   // Timer warning sounds - play "5 SEGUNDOS" voice at 5 seconds, tick at 3 and 1
   useEffect(() => {
-    if (view === "battle" && isPvE && pveGameState) {
+    const inBattle = view === "battle" && ((isPvE && pveGameState) || (!isPvE && currentMatch?.gameState));
+    if (inBattle) {
       if (turnTimeRemaining === 5) {
-        // Play "5 segundos" voice countdown
         try {
           const countdownAudio = new Audio("/sounds/5 SEGUNDOS.mp3");
           countdownAudio.volume = 0.5;
@@ -4434,7 +4473,7 @@ export default function TCGPage() {
         playSound("tick");
       }
     }
-  }, [turnTimeRemaining, view, isPvE, pveGameState]);
+  }, [turnTimeRemaining, view, isPvE, pveGameState, currentMatch?.gameState]);
 
   // Auto match - automatically start next match when result screen appears
   useEffect(() => {
@@ -7396,10 +7435,11 @@ export default function TCGPage() {
 
           {/* Top Bar - Player Avatars & Turn Indicator */}
           <div className="flex items-center justify-between px-4 py-2">
-            {/* Player Avatar (left) - Royal style */}
+            {/* Player Avatar (left) - Royal style with dropdown */}
             <div className="relative flex items-center gap-2">
               <div
-                className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1a3a1a] to-[#0d280d] overflow-hidden"
+                className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#1a3a1a] to-[#0d280d] overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
                 style={{
                   border: "3px solid",
                   borderImage: "linear-gradient(135deg, #FFD700, #B8860B, #FFD700) 1",
@@ -7426,6 +7466,65 @@ export default function TCGPage() {
                 </p>
                 <p className="text-[#B8860B]">{gs.lanes.filter((l: any) => (l[myPower] || 0) > (l[enemyPower] || 0)).length} lanes</p>
               </div>
+
+              {/* Profile Dropdown Menu - Royal style */}
+              {showProfileMenu && (
+                <div className="absolute top-16 left-0 z-50 rounded-xl shadow-xl overflow-hidden min-w-[160px]"
+                  style={{
+                    background: "linear-gradient(180deg, rgba(20,20,20,0.98) 0%, rgba(10,10,10,0.98) 100%)",
+                    border: "2px solid",
+                    borderImage: "linear-gradient(135deg, #B8860B, #8B6914, #B8860B) 1",
+                    boxShadow: "0 10px 30px rgba(0,0,0,0.7)"
+                  }}
+                >
+                  <div className="p-2 text-xs text-[#B8860B]" style={{ borderBottom: "1px solid rgba(184,134,11,0.3)" }}>
+                    🔊 Meme Sounds
+                  </div>
+                  <button
+                    onClick={() => { playMemeSound("mechaArena"); setShowProfileMenu(false); }}
+                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-purple-600 flex items-center gap-2"
+                  >
+                    🤖 Mecha Arena
+                  </button>
+                  <button
+                    onClick={() => { playMemeSound("ggez"); setShowProfileMenu(false); }}
+                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-green-600 flex items-center gap-2"
+                  >
+                    😎 GG EZ
+                  </button>
+                  <button
+                    onClick={() => { playMemeSound("bruh"); setShowProfileMenu(false); }}
+                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-orange-600 flex items-center gap-2"
+                  >
+                    😐 Bruh
+                  </button>
+                  <button
+                    onClick={() => { playMemeSound("emotional"); setShowProfileMenu(false); }}
+                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-red-600 flex items-center gap-2"
+                  >
+                    💔 Emotional Damage
+                  </button>
+                  <button
+                    onClick={() => { playMemeSound("wow"); setShowProfileMenu(false); }}
+                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-yellow-600 flex items-center gap-2"
+                  >
+                    🤯 MLG Wow
+                  </button>
+                  <div style={{ borderTop: "1px solid rgba(184,134,11,0.3)" }}>
+                    <button
+                      onClick={() => {
+                        if (currentMatchId && address) {
+                          forfeitMatch({ matchId: currentMatchId, address }).catch((e: any) => console.error("Forfeit error:", e));
+                        }
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-900/50 flex items-center gap-2"
+                    >
+                      🏳️ {t('tcgSurrender')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Turn Indicator + PvP Status (center) */}
@@ -8098,22 +8197,34 @@ export default function TCGPage() {
                 <span className="text-2xl font-black text-black drop-shadow-[0_1px_1px_rgba(255,215,0,0.5)]">{remainingEnergy}</span>
               </div>
 
-              {/* End Turn / Submit Button */}
+              {/* End Turn / Submit Button - with timer like PvE */}
               <button
                 onClick={handleSubmitTurn}
                 disabled={myConfirmed}
                 className={`font-bold py-2 px-4 rounded-lg text-sm shadow-lg transition-all min-w-[100px] ${
                   myConfirmed
                     ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                    : turnTimeRemaining <= 5
+                    ? 'bg-gradient-to-r from-red-700 to-red-900 border-2 border-red-500 text-white animate-pulse'
+                    : turnTimeRemaining <= 10
+                      ? 'bg-gradient-to-r from-orange-600 to-amber-700 border-2 border-orange-400 text-white'
                     : pendingActions.length > 0
                       ? "bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#FFD700] hover:to-[#B8860B] text-black border-2 border-[#FFD700] animate-pulse"
                       : "bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#FFD700] hover:to-[#B8860B] text-black border-2 border-[#FFD700]"
                 }`}
-                style={!myConfirmed ? {
+                style={!myConfirmed && turnTimeRemaining > 10 ? {
                   boxShadow: "0 0 15px rgba(255,215,0,0.3), inset 0 1px 2px rgba(255,255,255,0.3)"
                 } : undefined}
               >
-                {myConfirmed ? "⏳ " + t('tcgLoading') : pendingActions.length > 0 ? `▶ ${t('tcgEndTurn')} (${pendingActions.length})` : t('tcgEndTurn')}
+                {myConfirmed ? (
+                  "⏳ " + t('tcgLoading')
+                ) : turnTimeRemaining <= 10 ? (
+                  <span className="text-2xl font-black">{turnTimeRemaining}</span>
+                ) : pendingActions.length > 0 ? (
+                  `▶ ${t('tcgEndTurn')} (${pendingActions.length})`
+                ) : (
+                  <>{t('tcgEndTurn')} <span className="text-black/70">{currentMatch?.gameState?.currentTurn || 1}/{TCG_CONFIG.TOTAL_TURNS}</span></>
+                )}
               </button>
             </div>
           </div>
