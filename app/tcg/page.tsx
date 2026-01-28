@@ -4444,7 +4444,8 @@ export default function TCGPage() {
     pvpTurnTimerRef.current = setInterval(() => {
       setTurnTimeRemaining(prev => {
         if (prev <= 1) {
-          // Time's up! Just reset timer, no auto-submit
+          // Time's up! Auto submit turn
+          handleSubmitTurnRef.current();
           return TCG_CONFIG.TURN_TIME_SECONDS;
         }
         return prev - 1;
