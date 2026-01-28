@@ -5163,19 +5163,22 @@ export default function TCGPage() {
                                     setError(null);
                                     setPoolTxStep("approving");
 
-                                    // Step 1: Approve VBMS
+                                    // Attack fee = 10% of pool
+                                    const attackFee = Math.floor(entry.poolAmount * 0.1);
+
+                                    // Step 1: Approve VBMS (attack fee only)
                                     await approveVBMS(
                                       CONTRACTS.VBMSPoolTroll as `0x${string}`,
-                                      entry.poolAmount.toString()
+                                      attackFee.toString()
                                     );
 
-                                    // Step 2: Transfer VBMS to pool
+                                    // Step 2: Transfer attack fee to pool
                                     setPoolTxStep("transferring");
                                     await writeTransfer({
                                       address: CONTRACTS.VBMSToken as `0x${string}`,
                                       abi: ERC20_ABI,
                                       functionName: "transfer",
-                                      args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(entry.poolAmount.toString())],
+                                      args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(attackFee.toString())],
                                     });
 
                                     // Step 3: Create staked match in Convex
@@ -5273,20 +5276,24 @@ export default function TCGPage() {
                     {/* Info */}
                     <div className="bg-black/30 border border-vintage-gold/10 rounded-lg p-2 space-y-1">
                       <div className="flex justify-between text-[10px]">
-                        <span className="text-vintage-burnt-gold/50">Entry:</span>
+                        <span className="text-vintage-burnt-gold/50">You Stake:</span>
                         <span className="text-vintage-gold font-bold">{selectedPoolTier.toLocaleString()} VBMS</span>
                       </div>
                       <div className="flex justify-between text-[10px]">
-                        <span className="text-vintage-burnt-gold/50">Win:</span>
-                        <span className="text-green-400 font-bold">+{Math.floor(selectedPoolTier * 0.9).toLocaleString()} VBMS (90%)</span>
+                        <span className="text-vintage-burnt-gold/50">Attack Fee (10%):</span>
+                        <span className="text-vintage-burnt-gold/70">{Math.floor(selectedPoolTier * 0.1).toLocaleString()} VBMS</span>
                       </div>
                       <div className="flex justify-between text-[10px]">
-                        <span className="text-vintage-burnt-gold/50">Lose:</span>
-                        <span className="text-red-400 font-bold">-{Math.floor(selectedPoolTier * 0.9).toLocaleString()} VBMS</span>
+                        <span className="text-vintage-burnt-gold/50">Defense Win:</span>
+                        <span className="text-green-400 font-bold">+{Math.floor(selectedPoolTier * 0.1 * 0.9).toLocaleString()} VBMS</span>
                       </div>
                       <div className="flex justify-between text-[10px]">
-                        <span className="text-vintage-burnt-gold/50">Fee:</span>
-                        <span className="text-vintage-burnt-gold/70">{Math.floor(selectedPoolTier * 0.1).toLocaleString()} VBMS (10%)</span>
+                        <span className="text-vintage-burnt-gold/50">Defense Lose:</span>
+                        <span className="text-red-400 font-bold">-{Math.floor(selectedPoolTier * 0.1 * 0.9).toLocaleString()} VBMS</span>
+                      </div>
+                      <div className="flex justify-between text-[10px]">
+                        <span className="text-vintage-burnt-gold/50">Contract Tax:</span>
+                        <span className="text-vintage-burnt-gold/40">{Math.floor(selectedPoolTier * 0.1 * 0.1).toLocaleString()} VBMS (10% of fee)</span>
                       </div>
                     </div>
 

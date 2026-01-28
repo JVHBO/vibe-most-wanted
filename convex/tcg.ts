@@ -2466,13 +2466,16 @@ export const autoMatchWithStake = mutation({
 
     const opponentUsername = opponentProfile?.username || "Unknown";
 
+    // Attack fee = 10% of pool tier (sent onchain by frontend)
+    const attackFee = Math.floor(args.poolTier * 0.1);
+
     // VBMS already sent onchain - log in Convex
     await ctx.db.insert("coinTransactions", {
       address: addr,
-      amount: -args.poolTier,
+      amount: -attackFee,
       type: "spend",
       source: "tcg_staked_match_onchain",
-      description: `Staked ${args.poolTier} VBMS onchain for VibeClash vs ${opponentUsername}`,
+      description: `Attack fee ${attackFee} VBMS (10% of ${args.poolTier} pool) for VibeClash vs ${opponentUsername}`,
       timestamp: Date.now(),
       balanceBefore: 0,
       balanceAfter: 0,
@@ -2505,11 +2508,11 @@ export const autoMatchWithStake = mutation({
       startedAt: Date.now(),
       expiresAt: Date.now() + (TCG_CONFIG.ROOM_EXPIRY_MINUTES * 60 * 1000),
       isStakedMatch: true,
-      stakeAmount: args.poolTier,
+      stakeAmount: attackFee,
       isCpuOpponent: true,
     });
 
-    console.log(`⚔️💰 Staked match: ${args.username} vs ${opponentUsername} (CPU) for ${args.poolTier} VBMS`);
+    console.log(`⚔️💰 Staked match: ${args.username} vs ${opponentUsername} (CPU) fee=${attackFee} VBMS (pool=${args.poolTier})`);
     return {
       matchId,
       roomId,
@@ -2517,7 +2520,8 @@ export const autoMatchWithStake = mutation({
       opponentPower: opponent.totalPower,
       isAutoMatch: true,
       isCpuOpponent: true,
-      stakeAmount: args.poolTier,
+      stakeAmount: attackFee,
+      poolTier: args.poolTier,
     };
   },
 });
@@ -2549,10 +2553,12 @@ export const finishStakedMatch = mutation({
       return { success: false, reason: "Already processed" };
     }
 
-    const stake = match.stakeAmount || 0;
-    const totalPot = stake * 2; // Both sides stake
-    const fee = Math.floor(totalPot * POOL_FEE_PERCENT / 100); // 10% fee
-    const winnerReward = totalPot - fee; // 90% to winner
+    // stakeAmount = attack fee (10% of pool, already paid onchain by attacker)
+    const attackFee = match.stakeAmount || 0;
+    // Contract tax = 10% of attack fee (stays in contract as sink)
+    const contractTax = Math.floor(attackFee * POOL_FEE_PERCENT / 100);
+    // Winner gets 90% of attack fee
+    const winnerReward = attackFee - contractTax;
 
     const winnerAddr = args.winnerAddress.toLowerCase();
     const p1Addr = (match.player1Address || "").toLowerCase();
@@ -2578,7 +2584,7 @@ export const finishStakedMatch = mutation({
         amount: winnerReward,
         type: "earn",
         source: "tcg_staked_win",
-        description: `Won VibeClash staked match: +${winnerReward} VBMS (${POOL_FEE_PERCENT}% fee)`,
+        description: `Won VibeClash staked match: +${winnerReward} VBMS (fee=${attackFee}, tax=${contractTax})`,
         timestamp: Date.now(),
         balanceBefore: currentInbox,
         balanceAfter: currentInbox + winnerReward,
@@ -2598,13 +2604,13 @@ export const finishStakedMatch = mutation({
         .collect();
 
       const defenderDeck = defenderDecks.find((d: any) =>
-        d.defensePoolActive === true && d.defensePool === stake
+        d.defensePoolActive === true
       );
 
       if (defenderDeck) {
         if (attackerWon) {
-          // Attacker won: defender loses from pool
-          const newPool = Math.max(0, (defenderDeck.defensePool || 0) - winnerReward + stake);
+          // Attacker won: defender loses winnerReward from pool
+          const newPool = Math.max(0, (defenderDeck.defensePool || 0) - winnerReward);
           if (newPool <= 0) {
             // Pool depleted
             await ctx.db.patch(defenderDeck._id, {
@@ -2618,10 +2624,9 @@ export const finishStakedMatch = mutation({
             });
           }
         } else {
-          // Defender won (CPU won): defender gains in pool
-          const gained = winnerReward - stake; // Net gain (90% of opponent's stake minus own stake returned)
+          // Defender won (CPU won): defender gains winnerReward in pool
           await ctx.db.patch(defenderDeck._id, {
-            defensePool: (defenderDeck.defensePool || 0) + gained,
+            defensePool: (defenderDeck.defensePool || 0) + winnerReward,
           });
         }
       }
@@ -2634,25 +2639,23 @@ export const finishStakedMatch = mutation({
 
       if (leaderboardEntry) {
         if (attackerWon) {
-          // Defender lost
-          const lostAmount = winnerReward - stake; // Net loss
+          // Defender lost - loses winnerReward from pool
+          const newPool = Math.max(0, leaderboardEntry.poolAmount - winnerReward);
           await ctx.db.patch(leaderboardEntry._id, {
             totalLosses: leaderboardEntry.totalLosses + 1,
-            totalLost: leaderboardEntry.totalLost + lostAmount,
-            poolAmount: Math.max(0, leaderboardEntry.poolAmount - lostAmount),
+            totalLost: leaderboardEntry.totalLost + winnerReward,
+            poolAmount: newPool,
             lastUpdated: Date.now(),
           });
-          // If pool depleted, remove from leaderboard
-          if (leaderboardEntry.poolAmount - lostAmount <= 0) {
+          if (newPool <= 0) {
             await ctx.db.delete(leaderboardEntry._id);
           }
         } else {
-          // Defender won
-          const earned = winnerReward - stake;
+          // Defender won - gains winnerReward
           await ctx.db.patch(leaderboardEntry._id, {
             totalWins: leaderboardEntry.totalWins + 1,
-            totalEarned: leaderboardEntry.totalEarned + earned,
-            poolAmount: leaderboardEntry.poolAmount + earned,
+            totalEarned: leaderboardEntry.totalEarned + winnerReward,
+            poolAmount: leaderboardEntry.poolAmount + winnerReward,
             lastUpdated: Date.now(),
           });
         }
@@ -2662,12 +2665,12 @@ export const finishStakedMatch = mutation({
     // Mark match as stake-paid to prevent double processing
     await ctx.db.patch(args.matchId, { stakePaid: true } as any);
 
-    console.log(`💰 Staked match finished: winner=${winnerAddr}, reward=${winnerReward}, fee=${fee}`);
+    console.log(`💰 Staked match finished: winner=${winnerAddr}, reward=${winnerReward}, attackFee=${attackFee}, tax=${contractTax}`);
     return {
       success: true,
       winnerReward,
-      fee,
-      totalPot,
+      attackFee,
+      contractTax,
     };
   },
 });
