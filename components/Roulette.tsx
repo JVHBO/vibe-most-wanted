@@ -454,6 +454,10 @@ export function Roulette({ onClose }: RouletteProps) {
 
     try {
       const chain = (profileDashboard as any)?.preferredChain || "base";
+      // Arb validation tx BEFORE spin
+      if (chain === "arbitrum") {
+        await validateOnArb(0, ARB_CLAIM_TYPE.ROULETTE_SPIN);
+      }
       const response = await spinMutation({ address, chain });
 
       if (response.success && response.prizeIndex !== null) {
@@ -517,10 +521,6 @@ export function Roulette({ onClose }: RouletteProps) {
             setShowResult(true);
             setIsSpinning(false);
             AudioManager.win();
-            // Arb validation tx after spin
-            if (chain === "arbitrum" && response.prize) {
-              validateOnArb(response.prize, ARB_CLAIM_TYPE.ROULETTE_SPIN).catch(console.error);
-            }
             haptics.spinResult(); // Heavy haptic on result
           }
         };
