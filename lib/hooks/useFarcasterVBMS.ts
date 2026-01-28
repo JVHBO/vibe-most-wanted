@@ -22,8 +22,10 @@ export function useFarcasterVBMSBalance(address?: string) {
     args: address ? [address as `0x${string}`] : undefined,
     query: {
       enabled: !!address,
-      staleTime: 30_000, // Cache for 30 seconds to prevent excessive refetches
-      refetchInterval: 30_000, // Only refetch every 30 seconds
+      staleTime: 5_000,
+      refetchInterval: 15_000,
+      refetchOnMount: 'always' as const,
+      refetchOnWindowFocus: true,
     },
   });
 
@@ -49,7 +51,8 @@ export function useFarcasterVBMSAllowance(owner?: string, spender?: string) {
     args: owner && spender ? [owner as `0x${string}`, spender as `0x${string}`] : undefined,
     query: {
       enabled: !!owner && !!spender,
-      staleTime: 30_000,
+      staleTime: 5_000,
+      refetchOnMount: 'always' as const,
     },
   });
 
