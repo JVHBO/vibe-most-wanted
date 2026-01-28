@@ -436,6 +436,12 @@ export default function QuestsPage() {
               </div>
               )}
 
+              {/* Arbitrum gas warning */}
+              <div className="bg-orange-900/30 border border-orange-500/40 rounded-xl p-2 mb-2 flex items-center gap-2">
+                <span className="text-orange-400 text-lg">⛽</span>
+                <p className="text-orange-300/90 text-[10px]">Mission rewards require a small Arbitrum TX. Make sure you have ETH on Arbitrum for gas.</p>
+              </div>
+
               {/* Personal Missions (Welcome, VibeFID, etc) */}
               <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
                 <div className="flex items-center justify-between mb-2">

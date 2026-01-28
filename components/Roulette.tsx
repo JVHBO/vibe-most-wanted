@@ -5,14 +5,14 @@ import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { useAccount } from 'wagmi';
 import { AudioManager } from '@/lib/audio-manager';
+import { useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
 import { toast } from 'sonner';
 import { sdk } from '@farcaster/miniapp-sdk';
 import haptics from '@/lib/haptics';
-import { CONTRACTS } from '@/lib/contracts';
+import { CONTRACTS, POOL_ABI } from '@/lib/contracts';
 import { encodeFunctionData, parseEther, erc20Abi } from 'viem';
 import { encodeBuilderCodeSuffix, BUILDER_CODE } from '@/lib/builder-code';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
 
 // Roulette translations
 const rouletteTranslations = {
@@ -296,8 +296,9 @@ export function Roulette({ onClose }: RouletteProps) {
     address ? { address } : "skip"
   );
   const paidSpinCostData = useQuery(api.roulette.getPaidSpinCost);
-  const claimSmallPrizeMutation = useMutation(api.roulette.claimSmallPrize);
-  const { validateOnArb } = useArbValidator();
+  const prepareClaimAction = useAction(api.roulette.prepareRouletteClaim);
+  const recordClaimMutation = useMutation(api.roulette.recordRouletteClaim);
+  const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
 
   const canSpin = canSpinData?.canSpin ?? false;
   const spinsRemaining = canSpinData?.spinsRemaining ?? 0;
@@ -320,19 +321,71 @@ export function Roulette({ onClose }: RouletteProps) {
   }, []);
 
   // Helper function to claim via Farcaster SDK
-  // CLAIM handler - prizes go to inbox + Arb validation tx
+  const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
+    const provider = await sdk.wallet.getEthereumProvider();
+    if (!provider) throw new Error("Farcaster wallet not available");
+
+    const data = encodeFunctionData({
+      abi: POOL_ABI,
+      functionName: 'claimVBMS',
+      args: [parseEther(amount), nonce as `0x${string}`, signature as `0x${string}`],
+    });
+
+    const dataSuffix = encodeBuilderCodeSuffix(BUILDER_CODE);
+    const dataWithBuilderCode = (data + dataSuffix.slice(2)) as `0x${string}`;
+
+    const txHash = await provider.request({
+      method: 'eth_sendTransaction',
+      params: [{
+        from: address as `0x${string}`,
+        to: CONTRACTS.VBMSPoolTroll,
+        data: dataWithBuilderCode,
+      }],
+    });
+
+    return txHash;
+  };
+
+  // CLAIM handler - ALL prizes use blockchain TX
   const handleClaim = async () => {
     if (!address || !result || isClaiming) return;
 
     setIsClaiming(true);
     try {
-      // 1. Claim to inbox via Convex
-      const claimResult = await claimSmallPrizeMutation({ address });
+      toast.info("🔐 Preparing blockchain claim...");
 
-      toast.success(`✅ ${claimResult.amount.toLocaleString()} coins adicionados ao inbox!`);
+      // 1. Get signature from backend
+      const claimData = await prepareClaimAction({ address });
 
-      // 2. Arb validation tx
-      await validateOnArb(claimResult.amount, ARB_CLAIM_TYPE.ROULETTE_CLAIM);
+      toast.info("🔐 Sign the transaction...");
+
+      // 2. Send blockchain TX
+      const txHash = useFarcasterSDK
+        ? await claimViaFarcasterSDK(
+            claimData.amount.toString(),
+            claimData.nonce,
+            claimData.signature
+          )
+        : await claimVBMS(
+            claimData.amount.toString(),
+            claimData.nonce as `0x${string}`,
+            claimData.signature as `0x${string}`
+          );
+
+      toast.loading("⏳ Confirming on blockchain...", { id: "claim-wait" });
+
+      // 3. Wait for confirmation
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // 4. Record claim in backend
+      await recordClaimMutation({
+        address,
+        amount: claimData.amount,
+        txHash: txHash as string,
+      });
+
+      toast.dismiss("claim-wait");
+      toast.success(`✅ ${claimData.amount.toLocaleString()} VBMS claimed!`);
 
       // Close modal
       setTimeout(() => {
@@ -341,6 +394,7 @@ export function Roulette({ onClose }: RouletteProps) {
 
     } catch (error: any) {
       console.error('Claim error:', error);
+      toast.dismiss("claim-wait");
       toast.error(error.message || "Claim failed");
       setIsClaiming(false);
     }
@@ -457,9 +511,6 @@ export function Roulette({ onClose }: RouletteProps) {
             setIsSpinning(false);
             AudioManager.win();
             haptics.spinResult(); // Heavy haptic on result
-
-            // Validate free spin on Arbitrum
-            validateOnArb(response.prize!, ARB_CLAIM_TYPE.ROULETTE_SPIN);
           }
         };
 

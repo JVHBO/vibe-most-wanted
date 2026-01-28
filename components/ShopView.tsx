@@ -10,7 +10,7 @@ import { useFarcasterVBMSBalance, useFarcasterTransferVBMS } from "@/lib/hooks/u
 import { CONTRACTS } from "@/lib/contracts";
 import { useAccount } from "wagmi";
 import { parseEther } from "viem";
-import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
+
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "next/navigation";
 import { getAssetUrl } from "@/lib/ipfs-assets";
@@ -44,7 +44,6 @@ export function ShopView({ address }: ShopViewProps) {
 
   const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(effectiveAddress);
   const { transfer, isPending: isTransferring, error: transferError } = useFarcasterTransferVBMS();
-  const { validateOnArb } = useArbValidator();
 
   // State
   const [quantity, setQuantity] = useState(1);
@@ -213,8 +212,6 @@ export function ShopView({ address }: ShopViewProps) {
       // Step 1: Claim the pack in backend
       await claimDailyFree({ address });
 
-      // Step 2: Validate on Arbitrum
-      await validateOnArb(0, ARB_CLAIM_TYPE.FREE_CARD);
       setNotification({
         type: 'success',
         message: `🎁 Free pack claimed! Open it below.`

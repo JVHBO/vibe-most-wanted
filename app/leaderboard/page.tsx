@@ -10,7 +10,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useMusic } from "@/contexts/MusicContext";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { AudioManager } from "@/lib/audio-manager";
-import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
+
 import { BadgeList } from "@/components/Badge";
 import { getUserBadges } from "@/lib/badges";
 import { ConvexProfileService, type UserProfile } from "@/lib/convex-profile";
@@ -29,8 +29,7 @@ const LEADERBOARD_PER_PAGE = 10;
 
 export default function LeaderboardPage() {
   const { address } = useAccount();
-  const { validateOnArb } = useArbValidator();
-  const convex = useConvex();
+const convex = useConvex();
   const router = useRouter();
   const { lang, t } = useLanguage();
   const { isMusicEnabled } = useMusic();
@@ -305,7 +304,7 @@ export default function LeaderboardPage() {
       if (result.success) {
         AudioManager.win();
         alert(`Claimed ${result.reward} coins!`);
-        if (result.reward > 0) await validateOnArb(result.reward, ARB_CLAIM_TYPE.LEADERBOARD);
+
       }
     } catch (error: any) {
       alert(error.message || "Failed to claim reward");
