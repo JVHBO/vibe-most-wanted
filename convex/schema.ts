@@ -142,6 +142,8 @@ export default defineSchema({
     // Collection Preferences
     preferredCollection: v.optional(v.string()), // NEW: User's preferred collection ('vibe', 'custom', etc.)
     enabledCollections: v.optional(v.array(v.string())), // NEW: Collections user wants to see/use
+    preferredChain: v.optional(v.string()), // "base" | "arbitrum" - default "base"
+    chainModalSeen: v.optional(v.boolean()), // true after seeing chain select modal
 
     // Social
     twitter: v.optional(v.string()),

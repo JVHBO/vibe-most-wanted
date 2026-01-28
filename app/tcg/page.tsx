@@ -5161,18 +5161,9 @@ export default function TCGPage() {
                                   if (!address) return;
                                   try {
                                     setError(null);
-                                    setPoolTxStep("approving");
-
                                     // Attack fee = 10% of pool
                                     const attackFee = Math.floor(entry.poolAmount * 0.1);
 
-                                    // Step 1: Approve VBMS (attack fee only)
-                                    await approveVBMS(
-                                      CONTRACTS.VBMSPoolTroll as `0x${string}`,
-                                      attackFee.toString()
-                                    );
-
-                                    // Step 2: Transfer attack fee to pool
                                     setPoolTxStep("transferring");
                                     await writeTransfer({
                                       address: CONTRACTS.VBMSToken as `0x${string}`,
@@ -5200,10 +5191,10 @@ export default function TCGPage() {
                                     setError(e.message || "Failed to challenge");
                                   }
                                 }}
-                                disabled={poolTxStep === "approving" || poolTxStep === "transferring"}
+                                disabled={poolTxStep === "transferring"}
                                 className="px-2 py-1.5 bg-orange-600/30 hover:bg-orange-600/50 text-orange-400 border border-orange-500/40 rounded text-[8px] font-bold uppercase tracking-wider transition-all whitespace-nowrap disabled:opacity-40"
                               >
-                                {poolTxStep === "approving" ? "..." : poolTxStep === "transferring" ? "..." : "Fight"}
+                                {poolTxStep === "transferring" ? "..." : "Fight"}
                               </button>
                             )}
                           </div>
@@ -5308,16 +5299,9 @@ export default function TCGPage() {
                         if (!address || !activeDeck?._id) return;
                         try {
                           setError(null);
-                          setPoolTxStep("approving");
-
-                          // Step 1: Approve VBMS spending
-                          await approveVBMS(
-                            CONTRACTS.VBMSPoolTroll as `0x${string}`,
-                            selectedPoolTier.toString()
-                          );
-
-                          // Step 2: Transfer VBMS to pool contract
                           setPoolTxStep("transferring");
+
+                          // Transfer VBMS directly to pool contract
                           await writeTransfer({
                             address: CONTRACTS.VBMSToken as `0x${string}`,
                             abi: ERC20_ABI,
@@ -5342,10 +5326,10 @@ export default function TCGPage() {
                           setError(e.message || "Transaction failed");
                         }
                       }}
-                      disabled={!activeDeck?._id || poolTxStep === "approving" || poolTxStep === "transferring" || Number(vbmsBalance || 0) < selectedPoolTier}
+                      disabled={!activeDeck?._id || poolTxStep === "transferring" || Number(vbmsBalance || 0) < selectedPoolTier}
                       className="w-full py-2.5 bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-600 hover:to-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded transition-all disabled:opacity-40"
                     >
-                      {poolTxStep === "approving" ? "Approving..." : poolTxStep === "transferring" ? "Sending VBMS..." : "Activate Defense Pool"}
+                      {poolTxStep === "transferring" ? "Sending VBMS..." : "Activate Defense Pool"}
                     </button>
                     <p className="text-[8px] text-vintage-burnt-gold/30 text-center">VBMS tokens will be sent to the game pool onchain</p>
                   </div>
