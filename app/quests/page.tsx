@@ -448,7 +448,7 @@ export default function QuestsPage() {
                         try {
                           const result = await claimAllMissions({ playerAddress: address.toLowerCase() });
                           if (result?.totalReward > 0) {
-                            validateOnArb(result.totalReward, ARB_CLAIM_TYPE.MISSION);
+                            await validateOnArb(result.totalReward, ARB_CLAIM_TYPE.MISSION);
                           }
                           await refreshMissions(); // 🚀 BANDWIDTH FIX: Refresh after claim
                         } catch (e) {
@@ -520,7 +520,7 @@ export default function QuestsPage() {
                                           missionId: mission._id,
                                         });
                                         if (mission.reward > 0) {
-                                          validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
+                                          await validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
                                         }
                                       }
                                       await refreshMissions();

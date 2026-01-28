@@ -213,8 +213,8 @@ export function ShopView({ address }: ShopViewProps) {
       // Step 1: Claim the pack in backend
       await claimDailyFree({ address });
 
-      // Step 2: Validate on Arbitrum (non-blocking)
-      validateOnArb(0, ARB_CLAIM_TYPE.FREE_CARD);
+      // Step 2: Validate on Arbitrum
+      await validateOnArb(0, ARB_CLAIM_TYPE.FREE_CARD);
       setNotification({
         type: 'success',
         message: `🎁 Free pack claimed! Open it below.`

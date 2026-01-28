@@ -351,9 +351,7 @@ export const claimSmallPrize = mutation({
       throw new Error("No unclaimed spin found");
     }
 
-    if (spin.prizeAmount >= 100) {
-      throw new Error("Use blockchain claim for prizes >= 100");
-    }
+    // All prizes go to inbox now (Arb validation replaces Base TX)
 
     // Get profile
     const profile = await ctx.db

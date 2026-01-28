@@ -969,7 +969,7 @@ export default function TCGPage() {
       if (result.success) {
         setSuccessMessage(result.message);
         setSharesRemaining(result.remaining);
-        if (result.coinsAwarded > 0) validateOnArb(result.coinsAwarded, ARB_CLAIM_TYPE.SHARE);
+        if (result.coinsAwarded > 0) await validateOnArb(result.coinsAwarded, ARB_CLAIM_TYPE.SHARE);
         // Refresh profile to update coins
         await refreshProfile();
       } else {
@@ -1326,8 +1326,7 @@ export default function TCGPage() {
         devLog(`✓ Login bonus claimed: +${result.awarded} $TESTVBMS`);
         setLoginBonusClaimed(true);
         if (soundEnabled) AudioManager.buttonClick();
-        // Validate on Arbitrum (non-blocking)
-        validateOnArb(result.awarded, ARB_CLAIM_TYPE.DAILY_LOGIN);
+        await validateOnArb(result.awarded, ARB_CLAIM_TYPE.DAILY_LOGIN);
       } else {
         devLog(`! ${result.reason}`);
         if (soundEnabled) AudioManager.buttonError();
@@ -1363,8 +1362,7 @@ export default function TCGPage() {
           devLog(`✅ Claimed ${claimResult.claimed} missions (+${claimResult.totalReward} TESTVBMS)`);
           if (soundEnabled) AudioManager.buttonSuccess();
 
-          // Validate on Arbitrum (non-blocking)
-          validateOnArb(claimResult.totalReward, ARB_CLAIM_TYPE.DAILY_LOGIN);
+          await validateOnArb(claimResult.totalReward, ARB_CLAIM_TYPE.DAILY_LOGIN);
 
           // Refresh profile to show new balance
           await refreshProfile();
@@ -1420,7 +1418,7 @@ export default function TCGPage() {
 
       devLog(`✓ Quest reward claimed: +${result.reward} $TESTVBMS`);
       if (soundEnabled) AudioManager.buttonClick();
-      if (result.reward > 0) validateOnArb(result.reward, ARB_CLAIM_TYPE.QUEST);
+      if (result.reward > 0) await validateOnArb(result.reward, ARB_CLAIM_TYPE.QUEST);
     } catch (error: any) {
       devError('✗ Error claiming quest reward:', error);
       alert(error.message || 'Failed to claim quest reward');
@@ -1442,7 +1440,7 @@ export default function TCGPage() {
 
       devLog(`✓ Weekly reward claimed: Rank #${result.rank} → +${result.reward} $TESTVBMS`);
       if (soundEnabled) AudioManager.buttonClick();
-      if (result.reward > 0) validateOnArb(result.reward, ARB_CLAIM_TYPE.LEADERBOARD);
+      if (result.reward > 0) await validateOnArb(result.reward, ARB_CLAIM_TYPE.LEADERBOARD);
     } catch (error: any) {
       devError('✗ Error claiming weekly reward:', error);
       alert(error.message || 'Failed to claim weekly reward');
@@ -1463,7 +1461,7 @@ export default function TCGPage() {
 
       if (soundEnabled) AudioManager.buttonSuccess();
       devLog(`✓ Weekly quest reward claimed: ${questId} → +${result.reward} $TESTVBMS`);
-      if (result.reward > 0) validateOnArb(result.reward, ARB_CLAIM_TYPE.QUEST);
+      if (result.reward > 0) await validateOnArb(result.reward, ARB_CLAIM_TYPE.QUEST);
     } catch (error: any) {
       devError('Error claiming reward:', error);
       if (soundEnabled) AudioManager.buttonError();

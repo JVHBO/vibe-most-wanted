@@ -305,7 +305,7 @@ export default function LeaderboardPage() {
       if (result.success) {
         AudioManager.win();
         alert(`Claimed ${result.reward} coins!`);
-        if (result.reward > 0) validateOnArb(result.reward, ARB_CLAIM_TYPE.LEADERBOARD);
+        if (result.reward > 0) await validateOnArb(result.reward, ARB_CLAIM_TYPE.LEADERBOARD);
       }
     } catch (error: any) {
       alert(error.message || "Failed to claim reward");
