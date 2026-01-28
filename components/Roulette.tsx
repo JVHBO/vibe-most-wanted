@@ -459,7 +459,7 @@ export function Roulette({ onClose }: RouletteProps) {
             haptics.spinResult(); // Heavy haptic on result
 
             // Validate free spin on Arbitrum
-            await validateOnArb(response.prize!, ARB_CLAIM_TYPE.ROULETTE_SPIN);
+            validateOnArb(response.prize!, ARB_CLAIM_TYPE.ROULETTE_SPIN);
           }
         };
 
