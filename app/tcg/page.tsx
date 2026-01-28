@@ -4427,9 +4427,20 @@ export default function TCGPage() {
   // Turn timer countdown - PvP (same as PvE: auto-submit when time runs out)
   const pvpTurnTimerRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
+    console.log('[TCG PvP Timer] Effect triggered', {
+      view,
+      isPvE,
+      hasGameState: !!currentMatch?.gameState,
+      status: currentMatch?.status,
+      currentTurn: currentMatch?.gameState?.currentTurn
+    });
+
     if (view !== "battle" || isPvE || !currentMatch?.gameState || currentMatch.status !== "in-progress") {
+      console.log('[TCG PvP Timer] Skipping - conditions not met');
       return;
     }
+
+    console.log('[TCG PvP Timer] Starting timer for turn', currentMatch.gameState.currentTurn);
 
     // Reset timer when turn changes
     setTurnTimeRemaining(TCG_CONFIG.TURN_TIME_SECONDS);
@@ -4442,6 +4453,7 @@ export default function TCGPage() {
       setTurnTimeRemaining(prev => {
         if (prev <= 1) {
           // Time's up! Auto submit turn
+          console.log('[TCG PvP Timer] Time up! Auto-submitting turn');
           handleSubmitTurnRef.current();
           return TCG_CONFIG.TURN_TIME_SECONDS;
         }
