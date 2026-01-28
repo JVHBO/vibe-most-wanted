@@ -607,9 +607,10 @@ export function PokerBattleTable({
   }, [room, isCPUMode]);
 
   // Reset timer when phase changes (separate effect to ensure it runs)
-  // Skip in CPU mode and Mecha Arena - betting window timer handles it there
+  // 🔧 FIX: Timer now resets for BOTH PvE and PvP modes!
+  // Only skip for Mecha Arena (CPU vs CPU) spectators
   useEffect(() => {
-    if (isCPUMode || room?.isCpuVsCpu) return; // CPU modes use bettingWindowEndsAt timer
+    if (room?.isCpuVsCpu) return; // Only skip for Mecha Arena spectators
 
     console.log('[PokerBattle] 🕐 Timer reset effect triggered', {
       phase,
@@ -623,9 +624,9 @@ export function PokerBattleTable({
       setTimeRemaining(30);
     } else if (phase === 'reveal') {
       console.log('[PokerBattle] 🕐 Timer reset to 90s for reveal phase');
-      setTimeRemaining(90); // More time for choosing boost action (increased to 90s for testing)
+      setTimeRemaining(90); // More time for choosing boost action
     }
-  }, [phase, isCPUMode, room?.isCpuVsCpu]); // Only depend on phase and CPU modes
+  }, [phase, room?.isCpuVsCpu]); // Reset when phase changes
 
   // 🔧 FIX: Sync phase from room.gameState.phase for PvP
   // Ensures frontend phase matches backend phase to prevent desyncs
@@ -713,10 +714,11 @@ export function PokerBattleTable({
   }, [isMechaArena, bettingWindowEndsAt, roomPhase]);
 
   // Timer countdown for actions
+  // 🔧 FIX: Timer now works for BOTH PvE and PvP modes!
+  // Only skip for Mecha Arena (CPU vs CPU) spectators who use betting window timer
   useEffect(() => {
-    // Skip timer if in CPU vs CPU mode (betting window timer handles it)
-    // FIX: Also skip for Mecha Arena spectators (room?.isCpuVsCpu)
-    if (isCPUMode || room?.isCpuVsCpu) return;
+    // Only skip for Mecha Arena spectators (they use bettingWindowEndsAt timer)
+    if (room?.isCpuVsCpu) return;
 
     // Clear any existing timer when effect runs
     if (timerRef.current) {
