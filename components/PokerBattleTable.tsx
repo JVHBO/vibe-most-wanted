@@ -607,74 +607,18 @@ export function PokerBattleTable({
   }, [room, isCPUMode]);
 
   // Reset timer when phase changes (separate effect to ensure it runs)
-  // 🔧 FIX: Timer now resets for BOTH PvE and PvP modes!
-  // Only skip for Mecha Arena (CPU vs CPU) spectators
+  // Skip in CPU mode and Mecha Arena - betting window timer handles it there
   useEffect(() => {
-    if (room?.isCpuVsCpu) return; // Only skip for Mecha Arena spectators
-
-    console.log('[PokerBattle] 🕐 Timer reset effect triggered', {
-      phase,
-      isCPUMode,
-      isCpuVsCpu: room?.isCpuVsCpu,
-      willReset: phase === 'card-selection' || phase === 'reveal'
-    });
+    if (isCPUMode || room?.isCpuVsCpu) return; // CPU modes use bettingWindowEndsAt timer
 
     if (phase === 'card-selection') {
-      console.log('[PokerBattle] 🕐 Timer reset to 30s for card-selection phase');
+      console.log('[PokerBattle] Timer reset to 30s for card-selection phase');
       setTimeRemaining(30);
     } else if (phase === 'reveal') {
-      console.log('[PokerBattle] 🕐 Timer reset to 90s for reveal phase');
-      setTimeRemaining(90); // More time for choosing boost action
+      console.log('[PokerBattle] Timer reset to 90s for reveal phase');
+      setTimeRemaining(90); // More time for choosing boost action (increased to 90s for testing)
     }
-  }, [phase, room?.isCpuVsCpu]); // Reset when phase changes
-
-  // 🔧 FIX: Sync phase from room.gameState.phase for PvP
-  // Ensures frontend phase matches backend phase to prevent desyncs
-  useEffect(() => {
-    if (isCPUMode || !room?.gameState) return;
-
-    const serverPhase = room.gameState.phase;
-    if (serverPhase && serverPhase !== phase && phase !== 'card-reveal-animation') {
-      console.log(`[PokerBattle] 🔄 Syncing phase from server: ${phase} → ${serverPhase}`);
-      setPhase(serverPhase as GamePhase);
-    }
-  }, [room?.gameState?.phase, isCPUMode]);
-
-  // 🔧 FIX: Sync currentRound from server to prevent infinite rounds bug
-  // When server advances round, frontend must follow
-  useEffect(() => {
-    if (isCPUMode || !room?.gameState) return;
-
-    const serverRound = room.gameState.currentRound;
-    if (serverRound && serverRound !== currentRound) {
-      console.log(`[PokerBattle] 🔄 Syncing round from server: ${currentRound} → ${serverRound}`);
-      setCurrentRound(serverRound);
-
-      // Clear selected cards/actions when round changes
-      setPlayerSelectedCard(null);
-      setOpponentSelectedCard(null);
-      setPlayerAction(null);
-      setOpponentAction(null);
-    }
-  }, [room?.gameState?.currentRound, isCPUMode]);
-
-  // 🔧 FIX: Sync scores from server
-  useEffect(() => {
-    if (isCPUMode || !room?.gameState) return;
-
-    const serverPlayerScore = isHost ? room.gameState.hostScore : room.gameState.guestScore;
-    const serverOpponentScore = isHost ? room.gameState.guestScore : room.gameState.hostScore;
-
-    if (serverPlayerScore !== undefined && serverPlayerScore !== playerScore) {
-      console.log(`[PokerBattle] 🔄 Syncing player score from server: ${playerScore} → ${serverPlayerScore}`);
-      setPlayerScore(serverPlayerScore);
-    }
-
-    if (serverOpponentScore !== undefined && serverOpponentScore !== opponentScore) {
-      console.log(`[PokerBattle] 🔄 Syncing opponent score from server: ${opponentScore} → ${serverOpponentScore}`);
-      setOpponentScore(serverOpponentScore);
-    }
-  }, [room?.gameState?.hostScore, room?.gameState?.guestScore, isHost, isCPUMode]);
+  }, [phase, isCPUMode, room?.isCpuVsCpu]); // Only depend on phase and CPU modes
 
   // CPU vs CPU betting window timer (for Mecha Arena spectators)
   // Uses bettingWindowEndsAt from backend to show countdown
@@ -714,11 +658,10 @@ export function PokerBattleTable({
   }, [isMechaArena, bettingWindowEndsAt, roomPhase]);
 
   // Timer countdown for actions
-  // 🔧 FIX: Timer now works for BOTH PvE and PvP modes!
-  // Only skip for Mecha Arena (CPU vs CPU) spectators who use betting window timer
   useEffect(() => {
-    // Only skip for Mecha Arena spectators (they use bettingWindowEndsAt timer)
-    if (room?.isCpuVsCpu) return;
+    // Skip timer if in CPU vs CPU mode (betting window timer handles it)
+    // FIX: Also skip for Mecha Arena spectators (room?.isCpuVsCpu)
+    if (isCPUMode || room?.isCpuVsCpu) return;
 
     // Clear any existing timer when effect runs
     if (timerRef.current) {
@@ -2760,64 +2703,7 @@ export function PokerBattleTable({
         {phase !== 'deck-building' && phase !== 'game-over' && (selectedAnte !== 0 || isSpectatorMode) && (
           <div className="h-full flex flex-col relative">
 
-            {/* 🎯 ROUND HISTORY PANEL - RIGHT SIDE */}
-            {!isInFarcaster && (
-              <div className={`absolute right-2 z-20 ${isCPUMode ? 'top-2' : 'top-12 sm:top-14'}`}>
-                <div className="bg-vintage-charcoal/95 border border-vintage-gold/30 rounded-lg p-2 shadow-lg min-w-[80px]">
-                  <div className="text-vintage-gold font-bold text-[10px] mb-2 text-center border-b border-vintage-gold/30 pb-1">
-                    ROUNDS
-                  </div>
-                  <div className="space-y-1">
-                    {Array.from({ length: 7 }).map((_, i) => {
-                      const roundNum = i + 1;
-                      const roundData = roundHistory.find((r: { round: number; winner: string }) => r.round === roundNum);
-                      const isCurrentRound = currentRound === roundNum;
-                      const isFutureRound = currentRound < roundNum;
-
-                      return (
-                        <div
-                          key={roundNum}
-                          className={`flex items-center justify-between gap-2 px-2 py-1 rounded text-[9px] font-bold ${
-                            isCurrentRound
-                              ? 'bg-vintage-gold/20 border border-vintage-gold animate-pulse'
-                              : isFutureRound
-                              ? 'bg-vintage-charcoal/50 text-vintage-gold/30'
-                              : roundData?.winner === 'player'
-                              ? 'bg-green-900/30 border border-green-500/50'
-                              : roundData?.winner === 'opponent'
-                              ? 'bg-red-900/30 border border-red-500/50'
-                              : 'bg-yellow-900/30 border border-yellow-500/50'
-                          }`}
-                        >
-                          <span className={isCurrentRound ? 'text-vintage-gold' : isFutureRound ? 'text-vintage-gold/30' : 'text-vintage-ice'}>
-                            R{roundNum}
-                          </span>
-                          {isCurrentRound ? (
-                            <span className="text-vintage-gold animate-pulse">▶</span>
-                          ) : isFutureRound ? (
-                            <span className="text-vintage-gold/30">-</span>
-                          ) : roundData?.winner === 'player' ? (
-                            <span className="text-green-400">✓</span>
-                          ) : roundData?.winner === 'opponent' ? (
-                            <span className="text-red-400">✗</span>
-                          ) : (
-                            <span className="text-yellow-400">=</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Score display */}
-                  <div className="mt-2 pt-2 border-t border-vintage-gold/30 text-center">
-                    <div className="text-[8px] text-vintage-burnt-gold mb-0.5">SCORE</div>
-                    <div className="text-vintage-neon-blue font-bold text-sm">
-                      {playerScore} - {opponentScore}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* REMOVED - Round History Panel showing "ROUNDS" title with R1-R7 */}
 
             {/* Sound Panel - Always open on LEFT side */}
             <div className={`absolute left-2 z-20 ${isCPUMode ? 'top-2' : 'top-12 sm:top-14'}`}>
