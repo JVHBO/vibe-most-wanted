@@ -1917,7 +1917,7 @@ export const setDefensePool = mutation({
       throw new Error("This deck already has an active pool. Withdraw first.");
     }
 
-    // Get profile and check balance
+    // Get profile (no balance check - VBMS sent onchain to pool contract)
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q: any) => q.eq("address", addr))
@@ -1926,15 +1926,6 @@ export const setDefensePool = mutation({
     if (!profile) {
       throw new Error("Profile not found");
     }
-
-    const currentCoins = profile.coins || 0;
-    if (currentCoins < args.amount) {
-      throw new Error(`Insufficient balance. You have ${currentCoins} VBMS, need ${args.amount}`);
-    }
-
-    // Deduct coins from balance
-    const newBalance = currentCoins - args.amount;
-    await ctx.db.patch(profile._id, { coins: newBalance });
 
     // Clear existing defense deck for this user
     const existingDefense = await ctx.db
@@ -1987,23 +1978,22 @@ export const setDefensePool = mutation({
       });
     }
 
-    // Log transaction
+    // Log transaction (VBMS sent onchain, not deducted from coins)
     await ctx.db.insert("coinTransactions", {
       address: addr,
       amount: -args.amount,
       type: "spend",
-      source: "tcg_defense_pool",
-      description: `Staked ${args.amount} VBMS in defense pool`,
+      source: "tcg_defense_pool_onchain",
+      description: `Staked ${args.amount} VBMS onchain in defense pool`,
       timestamp: Date.now(),
-      balanceBefore: currentCoins,
-      balanceAfter: newBalance,
+      balanceBefore: 0,
+      balanceAfter: 0,
     });
 
     console.log(`🛡️💰 Defense pool set: ${deck.deckName} with ${args.amount} VBMS for ${addr}`);
     return {
       success: true,
       poolAmount: args.amount,
-      newBalance
     };
   },
 });
@@ -2451,10 +2441,7 @@ export const autoMatchWithStake = mutation({
       throw new Error("Profile not found");
     }
 
-    const currentCoins = profile.coins || 0;
-    if (currentCoins < args.poolTier) {
-      throw new Error(`Insufficient balance. You have ${currentCoins} VBMS, need ${args.poolTier}`);
-    }
+    // VBMS sent onchain by frontend - no offchain balance check needed
 
     // Find defense pool decks with matching tier
     const allDecks = await ctx.db.query("tcgDecks").collect();
@@ -2479,19 +2466,16 @@ export const autoMatchWithStake = mutation({
 
     const opponentUsername = opponentProfile?.username || "Unknown";
 
-    // Deduct stake from attacker
-    await ctx.db.patch(profile._id, { coins: currentCoins - args.poolTier });
-
-    // Log attacker's stake deduction
+    // VBMS already sent onchain - log in Convex
     await ctx.db.insert("coinTransactions", {
       address: addr,
       amount: -args.poolTier,
       type: "spend",
-      source: "tcg_staked_match",
-      description: `Staked ${args.poolTier} VBMS for VibeClash match vs ${opponentUsername}`,
+      source: "tcg_staked_match_onchain",
+      description: `Staked ${args.poolTier} VBMS onchain for VibeClash vs ${opponentUsername}`,
       timestamp: Date.now(),
-      balanceBefore: currentCoins,
-      balanceAfter: currentCoins - args.poolTier,
+      balanceBefore: 0,
+      balanceAfter: 0,
     });
 
     // Remove attacker from matchmaking if present

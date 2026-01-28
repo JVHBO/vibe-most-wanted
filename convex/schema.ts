@@ -2016,6 +2016,7 @@ export default defineSchema({
     isStakedMatch: v.optional(v.boolean()), // Match com aposta
     stakeAmount: v.optional(v.number()), // Valor apostado (ex: 10000)
     isCpuOpponent: v.optional(v.boolean()), // Oponente é CPU jogando pelo defense deck
+    stakePaid: v.optional(v.boolean()), // Rewards já processados (anti-duplicate)
 
     // Timestamps
     createdAt: v.number(),

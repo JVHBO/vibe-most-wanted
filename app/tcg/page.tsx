@@ -4,8 +4,12 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useAccount } from "wagmi";
+import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS";
+import { useApproveVBMS } from "@/lib/hooks/useVBMSContracts";
+import { CONTRACTS, ERC20_ABI } from "@/lib/contracts";
+import { parseEther, formatEther } from "viem";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/lib/translations";
@@ -1212,6 +1216,12 @@ export default function TCGPage() {
   const { nfts, isLoading: cardsLoading, loadNFTs, status } = usePlayerCards();
   const { t, lang } = useLanguage();
 
+  // VBMS onchain balance & transfer hooks
+  const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(address);
+  const { approve: approveVBMS, isPending: isApproving } = useApproveVBMS();
+  const { writeContractAsync: writeTransfer, isPending: isTransferring } = useWriteContract();
+  const [poolTxStep, setPoolTxStep] = useState<"idle" | "approving" | "transferring" | "done" | "error">("idle");
+
   // Load NFTs when wallet connects
   useEffect(() => {
     if (address && status === 'idle') {
@@ -1331,6 +1341,14 @@ export default function TCGPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchElapsed, setSearchElapsed] = useState(0);
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Staked match state (PvE local with stake tracking)
+  const [stakedMatchInfo, setStakedMatchInfo] = useState<{
+    matchId: Id<"tcgMatches"> | null;
+    stakeAmount: number;
+    opponentUsername: string;
+    isCpu: boolean;
+  } | null>(null);
 
   // Visual effects state - expanded for many abilities
   const [visualEffect, setVisualEffect] = useState<{
@@ -5143,6 +5161,25 @@ export default function TCGPage() {
                                   if (!address) return;
                                   try {
                                     setError(null);
+                                    setPoolTxStep("approving");
+
+                                    // Step 1: Approve VBMS
+                                    await approveVBMS(
+                                      CONTRACTS.VBMSPoolTroll as `0x${string}`,
+                                      entry.poolAmount.toString()
+                                    );
+
+                                    // Step 2: Transfer VBMS to pool
+                                    setPoolTxStep("transferring");
+                                    await writeTransfer({
+                                      address: CONTRACTS.VBMSToken as `0x${string}`,
+                                      abi: ERC20_ABI,
+                                      functionName: "transfer",
+                                      args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(entry.poolAmount.toString())],
+                                    });
+
+                                    // Step 3: Create staked match in Convex
+                                    setPoolTxStep("done");
                                     const result = await autoMatchWithStakeMutation({
                                       address,
                                       username,
@@ -5154,13 +5191,16 @@ export default function TCGPage() {
                                       setView("battle");
                                       setBattleLog([]);
                                     }
+                                    refetchVBMS();
                                   } catch (e: any) {
+                                    setPoolTxStep("idle");
                                     setError(e.message || "Failed to challenge");
                                   }
                                 }}
-                                className="px-2 py-1.5 bg-orange-600/30 hover:bg-orange-600/50 text-orange-400 border border-orange-500/40 rounded text-[8px] font-bold uppercase tracking-wider transition-all whitespace-nowrap"
+                                disabled={poolTxStep === "approving" || poolTxStep === "transferring"}
+                                className="px-2 py-1.5 bg-orange-600/30 hover:bg-orange-600/50 text-orange-400 border border-orange-500/40 rounded text-[8px] font-bold uppercase tracking-wider transition-all whitespace-nowrap disabled:opacity-40"
                               >
-                                Fight
+                                {poolTxStep === "approving" ? "..." : poolTxStep === "transferring" ? "..." : "Fight"}
                               </button>
                             )}
                           </div>
@@ -5252,32 +5292,55 @@ export default function TCGPage() {
 
                     {/* Balance */}
                     <p className="text-[9px] text-vintage-burnt-gold/40 text-center">
-                      Your Balance: {((userProfile as any)?.coins || 0).toLocaleString()} VBMS
+                      Your VBMS Balance: {Number(vbmsBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} VBMS
                     </p>
 
-                    {/* Activate Button */}
+                    {/* Activate Button - Onchain VBMS transfer */}
                     <button
                       onClick={async () => {
                         if (!address || !activeDeck?._id) return;
                         try {
+                          setError(null);
+                          setPoolTxStep("approving");
+
+                          // Step 1: Approve VBMS spending
+                          await approveVBMS(
+                            CONTRACTS.VBMSPoolTroll as `0x${string}`,
+                            selectedPoolTier.toString()
+                          );
+
+                          // Step 2: Transfer VBMS to pool contract
+                          setPoolTxStep("transferring");
+                          await writeTransfer({
+                            address: CONTRACTS.VBMSToken as `0x${string}`,
+                            abi: ERC20_ABI,
+                            functionName: "transfer",
+                            args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(selectedPoolTier.toString())],
+                          });
+
+                          // Step 3: Register in Convex
                           await setDefensePoolMutation({
                             address,
                             deckId: activeDeck._id,
                             amount: selectedPoolTier,
                             username,
                           });
+
+                          setPoolTxStep("done");
+                          refetchVBMS();
                           setShowPoolModal(false);
                           setError(null);
                         } catch (e: any) {
-                          setError(e.message);
+                          setPoolTxStep("error");
+                          setError(e.message || "Transaction failed");
                         }
                       }}
-                      disabled={!activeDeck?._id}
+                      disabled={!activeDeck?._id || poolTxStep === "approving" || poolTxStep === "transferring" || Number(vbmsBalance || 0) < selectedPoolTier}
                       className="w-full py-2.5 bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-600 hover:to-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded transition-all disabled:opacity-40"
                     >
-                      Activate Defense Pool
+                      {poolTxStep === "approving" ? "Approving..." : poolTxStep === "transferring" ? "Sending VBMS..." : "Activate Defense Pool"}
                     </button>
-                    <p className="text-[8px] text-vintage-burnt-gold/30 text-center">VBMS will be deducted from your balance</p>
+                    <p className="text-[8px] text-vintage-burnt-gold/30 text-center">VBMS tokens will be sent to the game pool onchain</p>
                   </div>
                 )}
 
@@ -7766,8 +7829,23 @@ export default function TCGPage() {
           {/* PvP Badge */}
           <span className="text-xs text-purple-400 bg-purple-900/50 px-3 py-1 rounded-full mb-4 inline-flex items-center gap-1">
             <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
-            PvP Battle
+            {(currentMatch as any)?.isStakedMatch ? "Staked Battle" : "PvP Battle"}
           </span>
+
+          {/* Staked Match Reward Info */}
+          {(currentMatch as any)?.isStakedMatch && (currentMatch as any)?.stakeAmount > 0 && (
+            <div className={`mb-2 px-4 py-2 rounded-lg border ${isWinner ? "bg-green-900/30 border-green-500/40" : "bg-red-900/30 border-red-500/40"}`}>
+              <p className={`text-sm font-bold ${isWinner ? "text-green-400" : "text-red-400"}`}>
+                {isWinner
+                  ? `+${Math.floor((currentMatch as any).stakeAmount * 2 * 0.9).toLocaleString()} VBMS`
+                  : `-${(currentMatch as any).stakeAmount.toLocaleString()} VBMS`
+                }
+              </p>
+              {isWinner && (
+                <p className="text-[9px] text-green-400/60">Reward sent to your inbox. Claim on home page.</p>
+              )}
+            </div>
+          )}
 
           {/* Result Icon & Title */}
           <div className="my-6">
