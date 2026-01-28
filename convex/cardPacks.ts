@@ -1460,7 +1460,7 @@ export const canClaimDailyFree = query({
  * Claim daily free pack - gives a pack to open like normal packs
  */
 export const claimDailyFreePack = mutation({
-  args: { address: v.string() },
+  args: { address: v.string(), chain: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
 
@@ -1477,6 +1477,9 @@ export const claimDailyFreePack = mutation({
       throw new Error("Already claimed today! Come back tomorrow.");
     }
 
+    // 🔗 Arbitrum bonus: +1 extra pack
+    const packsToGive = args.chain === "arbitrum" ? 2 : 1;
+
     // Give pack to player (uses basic pack type for opening)
     // 🚀 PERF: Use compound index
     const existingPack = await ctx.db
@@ -1486,13 +1489,13 @@ export const claimDailyFreePack = mutation({
 
     if (existingPack) {
       await ctx.db.patch(existingPack._id, {
-        unopened: existingPack.unopened + 1,
+        unopened: existingPack.unopened + packsToGive,
       });
     } else {
       await ctx.db.insert("cardPacks", {
         address,
         packType: "basic",
-        unopened: 1,
+        unopened: packsToGive,
         sourceId: "daily_free",
         earnedAt: now,
       });
@@ -1512,11 +1515,11 @@ export const claimDailyFreePack = mutation({
       });
     }
 
-    console.log(`🎁 Daily Free: ${address} claimed a free pack!`);
+    console.log(`🎁 Daily Free: ${address} claimed ${packsToGive} pack(s)!${args.chain === "arbitrum" ? " (Arbitrum bonus)" : ""}`);
 
     return {
       success: true,
-      packsAwarded: 1,
+      packsAwarded: packsToGive,
     };
   },
 });

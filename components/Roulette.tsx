@@ -289,6 +289,10 @@ export function Roulette({ onClose }: RouletteProps) {
     api.roulette.canSpin,
     address ? { address } : "skip"
   );
+  const profileDashboard = useQuery(
+    api.profiles.getProfileDashboard,
+    address ? { address: address.toLowerCase() } : "skip"
+  );
   const spinMutation = useMutation(api.roulette.spin);
   const recordPaidSpinMutation = useMutation(api.roulette.recordPaidSpin);
   const canBuyPaidSpinData = useQuery(
@@ -447,7 +451,8 @@ export function Roulette({ onClose }: RouletteProps) {
     lastTickSegment.current = -1;
 
     try {
-      const response = await spinMutation({ address });
+      const chain = (profileDashboard as any)?.preferredChain || "base";
+      const response = await spinMutation({ address, chain });
 
       if (response.success && response.prizeIndex !== null) {
         // Calculate final rotation

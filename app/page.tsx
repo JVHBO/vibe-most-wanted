@@ -612,6 +612,8 @@ export default function TCGPage() {
   const claimLoginBonus = useMutation(api.economy.claimLoginBonus);
   const payEntryFee = useMutation(api.economy.payEntryFee);
   const claimQuestReward = useMutation(api.quests.claimQuestReward);
+  const setPreferredChainMutation = useMutation(api.missions.setPreferredChain);
+  const markChainModalSeenMutation = useMutation(api.missions.markChainModalSeen);
 
   // VBMS Economy mutations (PvP with real VBMS)
   const chargeVBMSEntryFee = useMutation(api.economyVBMS.chargeVBMSEntryFee);
@@ -824,6 +826,8 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     autoCreateProfile();
   }, [address, isInFarcaster, farcasterFidState, isCheckingFarcaster, userProfile, isLoadingProfile, upsertProfileFromFarcaster, refreshProfile]);
   const [showSettings, setShowSettings] = useState<boolean>(false);
+  const [showChainModal, setShowChainModal] = useState(false);
+  const [pendingClaimAction, setPendingClaimAction] = useState<(() => void) | null>(null);
   const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
   const [showBaccarat, setShowBaccarat] = useState<boolean>(false);
   // REMOVED: showReferrals - Referral system disabled
@@ -1407,11 +1411,19 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const handleClaimQuestReward = async () => {
     if (!address || isClaimingQuest) return;
 
+    // Show chain modal on first claim
+    if (!(userProfile as any)?.chainModalSeen) {
+      setPendingClaimAction(() => () => handleClaimQuestReward());
+      setShowChainModal(true);
+      return;
+    }
+
     try {
       setIsClaimingQuest(true);
       devLog('🎯 Claiming quest reward...');
 
-      const result = await claimQuestReward({ address });
+      const chain = (userProfile as any)?.preferredChain || "base";
+      const result = await claimQuestReward({ address, chain });
 
       devLog(`✓ Quest reward claimed: +${result.reward} $TESTVBMS`);
       if (soundEnabled) AudioManager.buttonClick();
@@ -4040,7 +4052,77 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         pause={pause}
         play={play}
         disconnectWallet={disconnectWallet}
+        preferredChain={(userProfile as any)?.preferredChain || "base"}
+        onChainChange={async (chain: string) => {
+          if (!address) return;
+          try {
+            await setPreferredChainMutation({ address, chain });
+            // Refresh profile
+            const updated = await ConvexProfileService.getProfile(address);
+            setUserProfile(updated);
+          } catch (e) {
+            console.error("Failed to set chain:", e);
+          }
+        }}
       />
+
+      {/* Chain Select Modal (first-time) */}
+      {showChainModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4" onClick={() => setShowChainModal(false)}>
+          <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-5 max-w-sm w-full shadow-gold" onClick={e => e.stopPropagation()}>
+            <h2 className="text-lg font-bold text-vintage-gold text-center mb-3">Choose Network</h2>
+            <p className="text-xs text-vintage-burnt-gold text-center mb-4">Select which blockchain to use for claim transactions</p>
+
+            <div className="space-y-3">
+              {/* Base option */}
+              <button
+                onClick={async () => {
+                  if (!address) return;
+                  await setPreferredChainMutation({ address, chain: "base" });
+                  await markChainModalSeenMutation({ address });
+                  const updated = await ConvexProfileService.getProfile(address);
+                  setUserProfile(updated);
+                  setShowChainModal(false);
+                  if (pendingClaimAction) { pendingClaimAction(); setPendingClaimAction(null); }
+                }}
+                className="w-full p-3 bg-blue-900/30 hover:bg-blue-900/50 border border-blue-500/40 rounded-xl transition-all text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">◇</span>
+                  <div>
+                    <p className="font-bold text-blue-400 text-sm">Base (Default)</p>
+                    <p className="text-[10px] text-vintage-burnt-gold">Standard rewards</p>
+                  </div>
+                </div>
+              </button>
+
+              {/* Arbitrum option */}
+              <button
+                onClick={async () => {
+                  if (!address) return;
+                  await setPreferredChainMutation({ address, chain: "arbitrum" });
+                  await markChainModalSeenMutation({ address });
+                  const updated = await ConvexProfileService.getProfile(address);
+                  setUserProfile(updated);
+                  setShowChainModal(false);
+                  if (pendingClaimAction) { pendingClaimAction(); setPendingClaimAction(null); }
+                }}
+                className="w-full p-3 bg-purple-900/30 hover:bg-purple-900/50 border border-purple-500/40 rounded-xl transition-all text-left"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">◆</span>
+                  <div>
+                    <p className="font-bold text-purple-400 text-sm">Arbitrum</p>
+                    <p className="text-[10px] text-green-400">2x quest rewards, +1 free spin, +1 free pack</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <p className="text-[9px] text-vintage-burnt-gold/50 text-center mt-3">You can change anytime in Settings</p>
+          </div>
+        </div>
+      )}
 
       {/* Mecha Arena Modal */}
       <CpuArenaModal

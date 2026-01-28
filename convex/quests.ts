@@ -328,8 +328,8 @@ export const getQuestProgress = query({
  * Claim quest reward
  */
 export const claimQuestReward = mutation({
-  args: { address: v.string() },
-  handler: async (ctx, { address }) => {
+  args: { address: v.string(), chain: v.optional(v.string()) },
+  handler: async (ctx, { address, chain }) => {
     const today = new Date().toISOString().split('T')[0];
     const normalizedAddress = normalizeAddress(address);
 
@@ -454,9 +454,11 @@ export const claimQuestReward = mutation({
     }
 
     // Add coins directly to balance (same pattern as PvE)
+    // 🔗 Arbitrum 2x bonus
+    const reward = chain === "arbitrum" ? quest.reward * 2 : quest.reward;
     const currentBalance = profile.coins || 0;
-    const newBalance = currentBalance + quest.reward;
-    const lifetimeEarned = (profile.lifetimeEarned || 0) + quest.reward;
+    const newBalance = currentBalance + reward;
+    const lifetimeEarned = (profile.lifetimeEarned || 0) + reward;
 
     await ctx.db.patch(profile._id, {
       coins: newBalance,
@@ -468,14 +470,14 @@ export const claimQuestReward = mutation({
     await logTransaction(ctx, {
       address: normalizedAddress,
       type: 'earn',
-      amount: quest.reward,
+      amount: reward,
       source: 'daily_quest',
-      description: `Completed daily quest: ${quest.type}`,
+      description: `Completed daily quest: ${quest.type}${chain === "arbitrum" ? " (2x Arbitrum)" : ""}`,
       balanceBefore: currentBalance,
       balanceAfter: newBalance,
     });
 
-    console.log(`💰 Daily quest reward added to balance: ${quest.reward} TESTVBMS for ${normalizedAddress}. Balance: ${currentBalance} → ${newBalance}`);
+    console.log(`💰 Daily quest reward: ${reward} TESTVBMS for ${normalizedAddress}${chain === "arbitrum" ? " (2x ARB)" : ""}. Balance: ${currentBalance} → ${newBalance}`);
 
     // Mark as claimed
     if (existingProgress) {

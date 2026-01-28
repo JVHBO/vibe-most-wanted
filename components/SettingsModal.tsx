@@ -59,6 +59,9 @@ interface SettingsModalProps {
   play: () => void;
   // Disconnect wallet
   disconnectWallet?: () => void;
+  // Chain preference
+  preferredChain?: string; // "base" | "arbitrum"
+  onChainChange?: (chain: string) => void;
 }
 
 export function SettingsModal({
@@ -101,6 +104,8 @@ export function SettingsModal({
   pause,
   play,
   disconnectWallet,
+  preferredChain,
+  onChainChange,
 }: SettingsModalProps) {
   const { address: walletAddress, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -545,11 +550,11 @@ export function SettingsModal({
       onClick={onClose}
     >
       <div
-        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-4 sm:p-8 max-w-md w-full shadow-gold max-h-[95vh] overflow-y-auto"
+        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-3 sm:p-5 max-w-md w-full shadow-gold max-h-[95vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-4 sm:mb-6">
-          <h2 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold flex items-center gap-2">
+        <div className="flex justify-between items-center mb-2 sm:mb-3">
+          <h2 className="text-xl sm:text-2xl font-display font-bold text-vintage-gold flex items-center gap-2">
             <span>§</span> {t('settings')}
           </h2>
           <button
@@ -560,9 +565,9 @@ export function SettingsModal({
           </button>
         </div>
 
-        <div className="space-y-3 sm:space-y-6">
+        <div className="space-y-2 sm:space-y-3">
           {/* Music Toggle */}
-          <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
+          <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
@@ -621,7 +626,7 @@ export function SettingsModal({
           </div>
 
           {/* Language Selector */}
-          <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
+          <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
             <div className="flex items-center gap-3 mb-3">
               <span className="text-2xl sm:text-3xl text-vintage-gold">◊</span>
               <p className="font-modern font-bold text-vintage-gold">
@@ -676,7 +681,7 @@ export function SettingsModal({
           </div>
 
           {/* Music Mode Selector */}
-          <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
+          <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
             <div className="flex items-center gap-3 mb-3">
               <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
               <p className="font-modern font-bold text-vintage-gold">{t('settingsBackgroundMusic')}</p>
@@ -1001,41 +1006,49 @@ export function SettingsModal({
             )}
           </div>
 
-          
-          {/* Twitter/X Connection */}
-          {userProfile && (
-            <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
+          {/* 🔗 Network Toggle - Base / Arbitrum */}
+          {walletAddress && onChainChange && (
+            <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl sm:text-3xl text-vintage-gold">𝕏</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg text-vintage-gold">{preferredChain === "arbitrum" ? "◆" : "◇"}</span>
                   <div>
-                    <p className="font-modern font-bold text-vintage-gold">{t('settingsTwitter')}</p>
-                    <p className="text-xs text-vintage-burnt-gold">
-                      {userProfile.twitter ? `@${userProfile.twitter}` : t('settingsNotConnected')}
+                    <p className="font-modern font-bold text-vintage-gold text-sm">Network</p>
+                    <p className="text-[10px] text-vintage-burnt-gold">
+                      {preferredChain === "arbitrum" ? "Arbitrum (2x quest, +1 spin, +1 pack)" : "Base (default)"}
                     </p>
                   </div>
                 </div>
-
                 <button
-                  onClick={handleTwitterConnect}
-                  className="px-4 py-2 bg-vintage-neon-blue hover:bg-vintage-neon-blue/80 text-vintage-black rounded-lg text-sm font-modern font-semibold transition flex items-center gap-2"
+                  onClick={() => {
+                    const next = preferredChain === "arbitrum" ? "base" : "arbitrum";
+                    onChainChange(next);
+                    if (soundEnabled) AudioManager.buttonClick();
+                  }}
+                  className={`relative w-16 h-8 rounded-full transition-all border-2 ${
+                    preferredChain === "arbitrum"
+                      ? 'bg-blue-600 border-blue-400'
+                      : 'bg-vintage-black border-vintage-gold/50'
+                  }`}
                 >
-                  <span>𝕏</span> {userProfile.twitter ? t('settingsReconnect') : t('settingsConnectTwitter')}
+                  <div
+                    className={`absolute top-1 left-1 w-6 h-6 ${
+                      preferredChain === "arbitrum" ? 'bg-white' : 'bg-vintage-gold'
+                    } rounded-full transition-transform ${
+                      preferredChain === "arbitrum" ? 'translate-x-7' : 'translate-x-0'
+                    }`}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white pointer-events-none">
+                    {preferredChain === "arbitrum" ? "ARB" : "BASE"}
+                  </span>
                 </button>
-              </div>
-
-              {/* Easter egg message to Vibe Market */}
-              <div className="mt-3 pt-3 border-t border-vintage-gold/30">
-                <p className="text-xs text-vintage-burnt-gold italic text-center">
-                  {t('vibeMarketEasterEgg')}
-                </p>
               </div>
             </div>
           )}
 
           {/* 🔗 Linked Wallets Section - Always show if wallet connected */}
           {walletAddress && (
-            <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
+            <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
               <div className="flex items-center gap-3 mb-3">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-vintage-gold">
                   <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1188,7 +1201,7 @@ export function SettingsModal({
 
           {/* 🔀 MERGE ACCOUNT - For OLD accounts (no FID) to generate merge code */}
           {userProfile && !hasFarcaster && walletAddress && (
-            <div className="bg-orange-900/30 border border-orange-500/50 p-3 sm:p-5 rounded-xl">
+            <div className="bg-orange-900/30 border border-orange-500/50 p-2 sm:p-3 rounded-xl">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">🔀</span>
                 <p className="font-modern font-bold text-orange-400">{t('mergeAccountTitle')}</p>
@@ -1324,7 +1337,7 @@ export function SettingsModal({
 
           {/* Disconnect Wallet */}
           {walletAddress && disconnectWallet && (
-            <div className="bg-vintage-black/50 p-3 sm:p-5 rounded-xl border border-vintage-gold/50">
+            <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-vintage-gold">

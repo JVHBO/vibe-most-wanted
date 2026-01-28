@@ -134,8 +134,8 @@ export const canSpin = query({
  * Spin the roulette
  */
 export const spin = mutation({
-  args: { address: v.string() },
-  handler: async (ctx, { address }) => {
+  args: { address: v.string(), chain: v.optional(v.string()) },
+  handler: async (ctx, { address, chain }) => {
     const today = getTodayKey();
     const normalizedAddress = address.toLowerCase();
 
@@ -150,7 +150,9 @@ export const spin = mutation({
       const vibeFidCard = await findVibeFidByAddress(ctx, normalizedAddress);
 
       const isVibeFidHolder = !!vibeFidCard;
-      const maxSpins = isVibeFidHolder ? 3 : 1;
+      // 🔗 Arbitrum bonus: +1 spin
+      const arbBonus = chain === "arbitrum" ? 1 : 0;
+      const maxSpins = (isVibeFidHolder ? 3 : 1) + arbBonus;
 
       // 🚀 BANDWIDTH FIX: Use .take(maxSpins) instead of .collect()
       const existingSpins = await ctx.db

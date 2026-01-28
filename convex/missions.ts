@@ -274,8 +274,9 @@ export const claimMission = mutation({
       v.literal("it")
     )),
     skipCoins: v.optional(v.boolean()), // If true, only calculate reward without adding coins
+    chain: v.optional(v.string()), // "base" | "arbitrum" - arbitrum gives 2x
   },
-  handler: async (ctx, { playerAddress, missionId, language, skipCoins }) => {
+  handler: async (ctx, { playerAddress, missionId, language, skipCoins, chain }) => {
     const normalizedAddress = playerAddress.toLowerCase();
 
     // Get mission
@@ -317,7 +318,9 @@ export const claimMission = mutation({
     }
 
     // 🇨🇳 Apply language boost to mission reward
-    const boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
+    let boostedReward = language ? applyLanguageBoost(rewardInfo.amount, language) : rewardInfo.amount;
+    // 🔗 Arbitrum 2x bonus
+    if (chain === "arbitrum") boostedReward = boostedReward * 2;
 
     let newBalance = profile.coins || 0;
 
@@ -400,8 +403,9 @@ export const claimAllMissions = mutation({
       v.literal("ja"),
       v.literal("it")
     )),
+    chain: v.optional(v.string()), // "base" | "arbitrum" - arbitrum gives 2x
   },
-  handler: async (ctx, { playerAddress, language }) => {
+  handler: async (ctx, { playerAddress, language, chain }) => {
     const normalizedAddress = playerAddress.toLowerCase();
     const today = new Date().toISOString().split('T')[0];
 
@@ -440,9 +444,10 @@ export const claimAllMissions = mutation({
     }
 
     // 🇨🇳 Calculate total reward with language boost applied to each mission
+    const arbMultiplier = chain === "arbitrum" ? 2 : 1;
     const totalReward = missions.reduce((sum, m) => {
       const boostedReward = language ? applyLanguageBoost(m.reward, language) : m.reward;
-      return sum + boostedReward;
+      return sum + (boostedReward * arbMultiplier);
     }, 0);
 
     // Award coins directly to balance
@@ -726,5 +731,45 @@ export const claimVibeBadge = action({
       success: true,
       message: "VIBE badge claimed! You now receive +20% bonus coins in Wanted Cast.",
     };
+  },
+});
+
+/**
+ * Set preferred chain for claims (base or arbitrum)
+ */
+export const setPreferredChain = mutation({
+  args: {
+    address: v.string(),
+    chain: v.string(), // "base" | "arbitrum"
+  },
+  handler: async (ctx, { address, chain }) => {
+    if (chain !== "base" && chain !== "arbitrum") {
+      throw new Error("Invalid chain. Must be 'base' or 'arbitrum'.");
+    }
+    const normalizedAddress = address.toLowerCase();
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+    if (!profile) throw new Error("Profile not found");
+    await ctx.db.patch(profile._id, { preferredChain: chain });
+    return { success: true, chain };
+  },
+});
+
+/**
+ * Mark chain modal as seen (first-time only)
+ */
+export const markChainModalSeen = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+    if (!profile) throw new Error("Profile not found");
+    await ctx.db.patch(profile._id, { chainModalSeen: true });
+    return { success: true };
   },
 });

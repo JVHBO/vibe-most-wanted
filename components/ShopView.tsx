@@ -36,6 +36,10 @@ export function ShopView({ address }: ShopViewProps) {
   const openAllPacks = useMutation(api.cardPacks.openAllPacks);
   const buyPackWithLuckBoost = useMutation(api.cardPacks.buyPackWithLuckBoost);
   const claimDailyFree = useMutation(api.cardPacks.claimDailyFreePack);
+  const profileDashboard = useQuery(
+    api.profiles.getProfileDashboard,
+    address ? { address: address.toLowerCase() } : "skip"
+  );
   const claimWelcomePack = useMutation(api.welcomePack.claimWelcomePack);
 
   // VBMS Blockchain hooks
@@ -210,7 +214,8 @@ export function ShopView({ address }: ShopViewProps) {
     setClaimingDaily(true);
     try {
       // Step 1: Claim the pack in backend
-      await claimDailyFree({ address });
+      const chain = (profileDashboard as any)?.preferredChain || "base";
+      await claimDailyFree({ address, chain });
 
       setNotification({
         type: 'success',

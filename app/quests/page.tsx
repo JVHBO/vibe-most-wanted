@@ -456,7 +456,8 @@ export default function QuestsPage() {
                         if (!address) return;
                         setIsClaimingAll(true);
                         try {
-                          const result = await claimAllMissions({ playerAddress: address.toLowerCase() });
+                          const chain = (profileDashboard as any)?.preferredChain || "base";
+                          const result = await claimAllMissions({ playerAddress: address.toLowerCase(), chain });
                           if (result?.totalReward > 0) {
                             await validateOnArb(result.totalReward, ARB_CLAIM_TYPE.MISSION);
                           }
@@ -525,9 +526,11 @@ export default function QuestsPage() {
                                         await claimVibeBadge({ playerAddress: address.toLowerCase() });
                                         await refreshProfile();
                                       } else {
+                                        const chain = (profileDashboard as any)?.preferredChain || "base";
                                         await claimMission({
                                           playerAddress: address.toLowerCase(),
                                           missionId: mission._id,
+                                          chain,
                                         });
                                         if (mission.reward > 0) {
                                           await validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);

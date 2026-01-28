@@ -326,6 +326,10 @@ export const getProfileDashboard = query({
       primaryAddress: profile.address,
       linkedAddresses: profile.linkedAddresses || [],
       isLinkedWallet,
+
+      // 🔗 Chain preference
+      preferredChain: profile.preferredChain || "base",
+      chainModalSeen: profile.chainModalSeen || false,
     };
   },
 });
