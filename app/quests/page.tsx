@@ -85,6 +85,10 @@ export default function QuestsPage() {
 
   const claimMission = useMutation(api.missions.claimMission);
   const claimAllMissions = useMutation(api.missions.claimAllMissions);
+  const setPreferredChainMutation = useMutation(api.missions.setPreferredChain);
+  const markChainModalSeenMutation = useMutation(api.missions.markChainModalSeen);
+  const [showChainModal, setShowChainModal] = useState(false);
+  const [pendingClaimAction, setPendingClaimAction] = useState<(() => void) | null>(null);
   const ensureWelcomeGift = useMutation(api.missions.ensureWelcomeGift);
   const markDailyLogin = useMutation(api.missions.markDailyLogin);
   // 🚀 ON-CHAIN: VibeFID verification now uses action with Alchemy
@@ -411,7 +415,10 @@ export default function QuestsPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-vintage-gold font-bold text-xs">+{quest.reward}</span>
+                            <span className="text-vintage-gold font-bold text-xs">
+                              +{(profileDashboard as any)?.preferredChain === "arbitrum" ? quest.reward * 2 : quest.reward}
+                              {(profileDashboard as any)?.preferredChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
+                            </span>
                             {status === "claimed" ? (
                               <span className="text-green-400 text-[10px]">{t('questsDone')}</span>
                             ) : status === "completed" ? (
@@ -512,7 +519,10 @@ export default function QuestsPage() {
                             </div>
                             <div className="flex items-center gap-2">
                               {mission.reward > 0 && (
-                                <span className="text-vintage-gold font-bold text-xs">+{mission.reward}</span>
+                                <span className="text-vintage-gold font-bold text-xs">
+                                  +{(profileDashboard as any)?.preferredChain === "arbitrum" ? mission.reward * 2 : mission.reward}
+                                  {(profileDashboard as any)?.preferredChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
+                                </span>
                               )}
                               {mission.claimed ? (
                                 <span className="text-green-400 text-[10px]">{t('mission_done')}</span>
@@ -569,33 +579,45 @@ export default function QuestsPage() {
               <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
                 <p className="text-vintage-gold text-xs font-bold mb-2">{t('questsSocialQuests')}</p>
 
-                {/* 2x Bonus Banner */}
+                {/* 2x Bonus Banners */}
                 {(() => {
                   // 🚀 BANDWIDTH FIX: Use fid from profileDashboard instead of checking ownedTokenIds
                   const hasVibeFID = !!profileDashboard?.fid;
                   const hasVibeBadge = profileDashboard?.hasVibeBadge;
                   const has2xBonus = hasVibeFID || hasVibeBadge;
                   const bonusSource = hasVibeBadge ? "VIBE Badge" : hasVibeFID ? "VibeFID" : "";
+                  const isArb = (profileDashboard as any)?.preferredChain === "arbitrum";
 
-                  return has2xBonus ? (
-                    <div className="p-2 mb-2 bg-vintage-gold/15 border border-vintage-gold/50 rounded-lg flex items-center gap-2">
-                      <span className="text-vintage-gold">🎖️</span>
-                      <span className="text-vintage-gold font-bold text-xs">{bonusSource} Active</span>
-                      <span className="text-vintage-ice text-[10px]">2x coins!</span>
-                    </div>
-                  ) : (
-                    <div className="p-2 mb-2 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span>✨</span>
-                        <span className="text-vintage-ice text-xs">Get 2x rewards!</span>
-                      </div>
-                      <button
-                        onClick={() => window.open('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', '_blank')}
-                        className="px-2 py-1 rounded bg-vintage-gold text-black font-bold text-[10px] animate-pulse"
-                      >
-                        Mint VibeFID
-                      </button>
-                    </div>
+                  return (
+                    <>
+                      {has2xBonus ? (
+                        <div className="p-2 mb-1 bg-vintage-gold/15 border border-vintage-gold/50 rounded-lg flex items-center gap-2">
+                          <span className="text-vintage-gold">🎖️</span>
+                          <span className="text-vintage-gold font-bold text-xs">{bonusSource} Active</span>
+                          <span className="text-vintage-ice text-[10px]">2x coins!</span>
+                        </div>
+                      ) : (
+                        <div className="p-2 mb-1 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span>✨</span>
+                            <span className="text-vintage-ice text-xs">Get 2x rewards!</span>
+                          </div>
+                          <button
+                            onClick={() => window.open('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', '_blank')}
+                            className="px-2 py-1 rounded bg-vintage-gold text-black font-bold text-[10px] animate-pulse"
+                          >
+                            Mint VibeFID
+                          </button>
+                        </div>
+                      )}
+                      {isArb && (
+                        <div className="p-2 mb-2 bg-blue-900/20 border border-blue-500/40 rounded-lg flex items-center gap-2">
+                          <span className="text-blue-400">◆</span>
+                          <span className="text-blue-400 font-bold text-xs">Arbitrum 2x</span>
+                          <span className="text-vintage-ice text-[10px]">Quest rewards doubled!</span>
+                        </div>
+                      )}
+                    </>
                   );
                 })()}
                 <div className="space-y-2">
@@ -638,7 +660,10 @@ export default function QuestsPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-vintage-gold font-bold text-xs">+{quest.reward}</span>
+                            <span className="text-vintage-gold font-bold text-xs">
+                              +{(profileDashboard as any)?.preferredChain === "arbitrum" ? quest.reward * 2 : quest.reward}
+                              {(profileDashboard as any)?.preferredChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
+                            </span>
                             {status === "claimed" ? (
                               <span className="text-green-400 text-[10px]">{t('questsDone')}</span>
                             ) : status === "completed" ? (
