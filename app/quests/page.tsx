@@ -292,6 +292,10 @@ export default function QuestsPage() {
     if (!address) return;
     setClaiming(quest.id);
     try {
+      const chain = (profileDashboard as any)?.preferredChain || "base";
+      if (chain === "arbitrum") {
+        await validateOnArb(quest.reward, ARB_CLAIM_TYPE.MISSION);
+      }
       const result = await claimSocialReward({ address: address.toLowerCase(), questId: quest.id });
       // Sound removed - was repetitive
     } catch (error) {
