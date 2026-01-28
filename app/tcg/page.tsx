@@ -2125,12 +2125,27 @@ export default function TCGPage() {
     lanes: any[],
     playerHand: DeckCard[],
     playerDeckRemaining: DeckCard[],
-    isPlayer: boolean
+    isPlayer: boolean,
+    currentTurn?: number,
+    addToBattleLog?: (entry: BattleLogEntry) => void
   ): { lanes: any[]; playerHand: DeckCard[]; playerDeckRemaining: DeckCard[]; bonusPower: number; energyToConsume: number } => {
     const ability = getCardAbility(card.name, card);
     if (!ability || ability.type !== "onReveal") {
       return { lanes, playerHand, playerDeckRemaining, bonusPower: 0, energyToConsume: 0 };
     }
+
+    // Helper to add ability log
+    const logAbility = (action: string) => {
+      if (addToBattleLog && currentTurn !== undefined) {
+        addToBattleLog({
+          turn: currentTurn,
+          player: isPlayer ? "you" : "cpu",
+          action,
+          lane: laneIndex + 1,
+          cardName: card.name || "Unknown",
+        });
+      }
+    };
 
     let newLanes = lanes.map(l => ({ ...l, playerCards: [...l.playerCards], cpuCards: [...l.cpuCards] }));
     let newHand = [...playerHand];
@@ -2146,17 +2161,20 @@ export default function TCGPage() {
     switch (effect.action) {
       case "buffSelf":
         bonusPower = effect.value || 0;
+        logAbility(`⚡ +${bonusPower} power (self buff)`);
         break;
 
       case "buffOtherInLane":
         // +X power to another card in this lane
         if (newLanes[laneIndex][myCards].length > 0) {
           const targetIdx = Math.floor(Math.random() * newLanes[laneIndex][myCards].length);
+          const targetCard = newLanes[laneIndex][myCards][targetIdx];
           newLanes[laneIndex][myCards][targetIdx] = {
-            ...newLanes[laneIndex][myCards][targetIdx],
-            power: newLanes[laneIndex][myCards][targetIdx].power + (effect.value || 0),
+            ...targetCard,
+            power: targetCard.power + (effect.value || 0),
           };
           newLanes[laneIndex][myPower] += effect.value || 0;
+          logAbility(`⬆️ buffed ${targetCard.name} +${effect.value}`);
         }
         break;
 
@@ -2164,11 +2182,13 @@ export default function TCGPage() {
         // -X power to an enemy card in this lane
         if (newLanes[laneIndex][enemyCards].length > 0) {
           const targetIdx = Math.floor(Math.random() * newLanes[laneIndex][enemyCards].length);
+          const targetCard = newLanes[laneIndex][enemyCards][targetIdx];
           newLanes[laneIndex][enemyCards][targetIdx] = {
-            ...newLanes[laneIndex][enemyCards][targetIdx],
-            power: Math.max(0, newLanes[laneIndex][enemyCards][targetIdx].power - Math.abs(effect.value || 0)),
+            ...targetCard,
+            power: Math.max(0, targetCard.power - Math.abs(effect.value || 0)),
           };
           newLanes[laneIndex][enemyPower] = Math.max(0, newLanes[laneIndex][enemyPower] - Math.abs(effect.value || 0));
+          logAbility(`⬇️ debuffed enemy ${targetCard.name} -${Math.abs(effect.value || 0)}`);
         }
         break;
 
@@ -2178,6 +2198,7 @@ export default function TCGPage() {
         for (let i = 0; i < drawCount && newDeck.length > 0; i++) {
           newHand.push(newDeck.shift()!);
         }
+        logAbility(`🃏 drew ${drawCount} card(s)`);
         break;
 
       case "buffAdjacent":
@@ -2213,6 +2234,7 @@ export default function TCGPage() {
 
       case "debuffLane":
         // -X power to all enemy cards in this lane
+        const enemyCount = newLanes[laneIndex][enemyCards].length;
         newLanes[laneIndex][enemyCards].forEach((c: DeckCard, cIdx: number) => {
           newLanes[laneIndex][enemyCards][cIdx] = {
             ...c,
@@ -2220,8 +2242,9 @@ export default function TCGPage() {
           };
         });
         newLanes[laneIndex][enemyPower] = Math.max(0,
-          newLanes[laneIndex][enemyPower] - (newLanes[laneIndex][enemyCards].length * Math.abs(effect.value || 0))
+          newLanes[laneIndex][enemyPower] - (enemyCount * Math.abs(effect.value || 0))
         );
+        logAbility(`💥 debuffed ${enemyCount} enemies -${Math.abs(effect.value || 0)} each`);
         break;
 
       case "buffPerCardInLane":
@@ -2302,6 +2325,9 @@ export default function TCGPage() {
           // Kill bonus: if target reaches 0 power, gain bonus power (Jack the Sniper)
           if (newPowerValue === 0 && effect.killBonus) {
             bonusPower = effect.killBonus;
+            logAbility(`💀 KILLED ${cardToDebuff.name}! +${effect.killBonus} bonus`);
+          } else {
+            logAbility(`🎯 sniped ${cardToDebuff.name} -${reduction}`);
           }
         }
         break;
@@ -3800,7 +3826,9 @@ export default function TCGPage() {
         newLanes,
         playerHand,
         playerDeck,
-        isPlayer
+        isPlayer,
+        pveGameState.currentTurn,
+        (entry) => setBattleLog(prev => [...prev, entry])
       );
 
       newLanes = result.lanes;
