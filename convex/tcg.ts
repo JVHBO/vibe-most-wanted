@@ -1696,18 +1696,21 @@ export const setDefenseDeck = mutation({
 
     // Verify deck ownership
     const deck = await ctx.db.get(args.deckId);
-    if (!deck || deck.address !== addr) {
-      throw new Error("Deck not found or not yours");
+    if (!deck) {
+      throw new Error("Deck not found");
+    }
+    if (deck.address.toLowerCase() !== addr) {
+      throw new Error("This deck doesn't belong to you");
     }
 
-    // Clear existing defense deck
+    // Clear existing defense deck for this user
     const existingDefense = await ctx.db
       .query("tcgDecks")
-      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .withIndex("by_address", (q: any) => q.eq("address", deck.address))
       .collect();
 
     for (const d of existingDefense) {
-      if (d.isDefenseDeck) {
+      if (d.isDefenseDeck && d._id !== args.deckId) {
         await ctx.db.patch(d._id, { isDefenseDeck: false });
       }
     }
@@ -1715,6 +1718,7 @@ export const setDefenseDeck = mutation({
     // Set new defense deck
     await ctx.db.patch(args.deckId, { isDefenseDeck: true });
 
+    console.log(`🛡️ Defense deck set: ${deck.deckName} for ${addr}`);
     return { success: true };
   },
 });
@@ -1725,14 +1729,16 @@ export const setDefenseDeck = mutation({
 export const getPlayersWithDefenseDeck = query({
   args: { excludeAddress: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    const defenseDecks = await ctx.db
+    // Query all decks and filter for defense decks
+    const allDecks = await ctx.db
       .query("tcgDecks")
-      .withIndex("by_defense", (q: any) => q.eq("isDefenseDeck", true))
       .collect();
 
+    const defenseDecks = allDecks.filter((d: any) => d.isDefenseDeck === true);
     const exclude = args.excludeAddress?.toLowerCase();
+
     const players = defenseDecks
-      .filter((d: any) => d.address !== exclude)
+      .filter((d: any) => d.address.toLowerCase() !== exclude)
       .map((d: any) => ({
         address: d.address,
         deckName: d.deckName,
@@ -1767,16 +1773,16 @@ export const autoMatch = mutation({
       throw new Error("No active deck. Please create and select a deck first.");
     }
 
-    // Find opponents with defense decks
-    const defenseDecks = await ctx.db
+    // Find opponents with defense decks (query all decks and filter for isDefenseDeck=true)
+    const allDecks = await ctx.db
       .query("tcgDecks")
-      .withIndex("by_defense", (q: any) => q.eq("isDefenseDeck", true))
       .collect();
 
-    const opponents = defenseDecks.filter((d: any) => d.address !== addr);
+    const defenseDecks = allDecks.filter((d: any) => d.isDefenseDeck === true);
+    const opponents = defenseDecks.filter((d: any) => d.address.toLowerCase() !== addr);
 
     if (opponents.length === 0) {
-      throw new Error("No opponents found with defense decks. Try again later!");
+      throw new Error("No opponents available. Set your deck as Defense first, or try again later!");
     }
 
     // Pick random opponent
