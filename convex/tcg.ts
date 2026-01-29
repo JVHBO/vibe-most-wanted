@@ -995,6 +995,14 @@ function randomCoinFlip(): boolean {
  * Initialize empty game state
  */
 function initializeGameState(player1Deck: any[], player2Deck: any[]) {
+  // Validate decks
+  if (!player1Deck || player1Deck.length === 0) {
+    throw new Error("Player 1 deck is empty or invalid");
+  }
+  if (!player2Deck || player2Deck.length === 0) {
+    throw new Error("Player 2 deck is empty or invalid");
+  }
+
   const p1Shuffled = shuffleDeck(player1Deck);
   const p2Shuffled = shuffleDeck(player2Deck);
 
@@ -2050,6 +2058,11 @@ export const claimVictoryByTimeout = mutation({
       throw new Error("Match not found or not in progress");
     }
 
+    // CPU matches cannot be claimed by timeout - CPU is always "connected"
+    if (match.isCpuOpponent) {
+      throw new Error("Cannot claim timeout against CPU opponent");
+    }
+
     const isPlayer1 = match.player1Address === addr;
     const isPlayer2 = match.player2Address === addr;
     if (!isPlayer1 && !isPlayer2) {
@@ -2270,7 +2283,11 @@ export const autoMatch = mutation({
       .query("tcgDecks")
       .collect();
 
-    const defenseDecks = allDecks.filter((d: any) => d.isDefenseDeck === true);
+    const defenseDecks = allDecks.filter((d: any) =>
+      d.isDefenseDeck === true &&
+      d.cards &&
+      d.cards.length === TCG_CONFIG.DECK_SIZE
+    );
     const opponents = defenseDecks.filter((d: any) => d.address.toLowerCase() !== addr);
 
     if (opponents.length === 0) {
@@ -2942,7 +2959,9 @@ export const autoMatchWithStake = mutation({
     const poolDecks = allDecks.filter((d: any) =>
       d.defensePoolActive === true &&
       d.defensePool === args.poolTier &&
-      d.address.toLowerCase() !== addr
+      d.address.toLowerCase() !== addr &&
+      d.cards &&
+      d.cards.length === TCG_CONFIG.DECK_SIZE
     );
 
     if (poolDecks.length === 0) {
