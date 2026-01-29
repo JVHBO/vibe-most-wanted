@@ -2324,6 +2324,11 @@ export const autoMatch = mutation({
     // Pick random opponent (crypto-secure)
     const opponent = opponents[secureRandomInt(opponents.length)];
 
+    // Double-check opponent deck is valid
+    if (!opponent || !opponent.cards || opponent.cards.length !== TCG_CONFIG.DECK_SIZE) {
+      throw new Error("Selected opponent has invalid deck. Try again!");
+    }
+
     // Get opponent profile for username
     const opponentProfile = await ctx.db
       .query("profiles")
@@ -3003,9 +3008,13 @@ export const autoMatchWithStake = mutation({
       throw new Error(`No defenders with ${args.poolTier} VBMS pool available. Try a different tier!`);
     }
 
-    // Pick random opponent
     // Pick random opponent (crypto-secure)
     const opponent = poolDecks[secureRandomInt(poolDecks.length)];
+
+    // Double-check opponent deck is valid
+    if (!opponent || !opponent.cards || opponent.cards.length !== TCG_CONFIG.DECK_SIZE) {
+      throw new Error("Selected opponent has invalid deck. Try again!");
+    }
 
     // Get opponent profile for username
     const opponentProfile = await ctx.db
