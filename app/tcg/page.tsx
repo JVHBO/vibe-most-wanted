@@ -4361,6 +4361,25 @@ export default function TCGPage() {
     if (!currentMatchId || !address) return;
 
     try {
+      // Log actions to battle log before submitting
+      const currentTurn = currentMatch?.gameState?.currentTurn || 1;
+      const myHand = currentMatch?.player1Address === address?.toLowerCase()
+        ? currentMatch?.gameState?.player1Hand
+        : currentMatch?.gameState?.player2Hand;
+
+      pendingActions.forEach(action => {
+        if (action.type === "play" && action.targetLane !== undefined && myHand?.[action.cardIndex]) {
+          const card = myHand[action.cardIndex];
+          setBattleLog(prev => [...prev, {
+            turn: currentTurn,
+            player: "you",
+            action: "played",
+            lane: action.targetLane!,
+            cardName: card.name || "Card"
+          }]);
+        }
+      });
+
       await submitActions({
         matchId: currentMatchId,
         address,
@@ -4394,6 +4413,19 @@ export default function TCGPage() {
     }
     if (currentMatch?.status === "finished") {
       setView("result");
+
+      // Play victory/defeat sound for PvP
+      const isWinner = currentMatch.winnerId === address?.toLowerCase();
+      const isDraw = !currentMatch.winnerId || currentMatch.winnerId === "tie";
+      if (!isDraw) {
+        if (isWinner) {
+          playSound("victory");
+        } else {
+          playSound("defeat");
+          // Show defeat bait video after 5 seconds
+          setTimeout(() => setShowDefeatBait(true), 5000);
+        }
+      }
 
       // Process staked match rewards
       if ((currentMatch as any)?.isStakedMatch && currentMatch.winnerId && currentMatchId) {
@@ -8005,7 +8037,35 @@ export default function TCGPage() {
                           </div>
                         );
                       })}
-                      {myLaneCards.length === 0 && selectedHandCard === null && (
+                      {/* Pending cards preview (ghost) */}
+                      {pendingActions
+                        .filter(a => a.type === "play" && a.targetLane === laneIndex)
+                        .map((action, pIdx) => {
+                          const pendingCard = myHand?.[action.cardIndex];
+                          if (!pendingCard) return null;
+                          const cardImageUrl = encodeURI(getCardDisplayImageUrl(pendingCard));
+                          return (
+                            <div
+                              key={`pending-${pIdx}`}
+                              className="relative w-10 h-[58px] rounded-md overflow-hidden opacity-50 border-2 border-dashed border-green-400 animate-pulse"
+                              title={`Queued: ${pendingCard.name}`}
+                            >
+                              <CardMedia
+                                src={cardImageUrl}
+                                alt={pendingCard.name}
+                                className="absolute inset-0 w-full h-full object-cover rounded-md"
+                              />
+                              <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
+                                <span className="text-green-400 text-xs font-bold">⏳</span>
+                              </div>
+                              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-600 flex items-center justify-center z-10"
+                                style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}>
+                                <span className="text-[8px] font-black text-white">{pendingCard.type === "nothing" || pendingCard.type === "other" ? Math.floor(pendingCard.power * 0.5) : pendingCard.power}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      {myLaneCards.length === 0 && pendingInLane === 0 && selectedHandCard === null && (
                         <div className="w-10 h-[58px] rounded-md"
                           style={{
                             background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%)",
@@ -8421,6 +8481,39 @@ export default function TCGPage() {
             </div>
           </div>
         )}
+
+        {/* Battle Log Floating Button (PvP) */}
+        <button
+          onClick={() => setShowBattleLog(!showBattleLog)}
+          className="fixed bottom-20 right-3 w-10 h-10 rounded-full bg-black/80 border border-vintage-gold/40 flex items-center justify-center z-30 hover:bg-black/90 transition-all"
+        >
+          <span className="text-lg">📜</span>
+        </button>
+
+        {/* Battle Log Panel (PvP) */}
+        {showBattleLog && (
+          <div className="fixed right-0 top-0 bottom-0 w-64 bg-black/95 border-l border-vintage-gold/30 z-40 overflow-y-auto p-3">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-vintage-gold font-bold text-sm uppercase tracking-wider">Battle Log</h3>
+              <button onClick={() => setShowBattleLog(false)} className="text-gray-400 hover:text-white text-lg">✕</button>
+            </div>
+            {battleLog.length === 0 ? (
+              <p className="text-gray-500 text-xs">No actions yet...</p>
+            ) : (
+              <div className="space-y-1">
+                {battleLog.map((entry, i) => (
+                  <div key={i} className={`text-[10px] px-2 py-1 rounded ${
+                    entry.player === "you" ? "bg-blue-900/30 text-blue-300" : "bg-red-900/30 text-red-300"
+                  }`}>
+                    <span className="text-vintage-gold/60">T{entry.turn}:</span>{" "}
+                    <span className="font-bold">{entry.player === "you" ? "You" : entry.player === "cpu" ? "CPU" : "Opponent"}</span>{" "}
+                    {entry.action} <span className="text-white font-medium">{entry.cardName}</span> → Lane {entry.lane + 1}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -8669,9 +8762,30 @@ export default function TCGPage() {
             </div>
           )}
 
-          {/* Result Icon & Title */}
+          {/* Result Icon & Title - OR Bait Video on defeat */}
           <div className="my-6">
-            {isWinner ? (
+            {showDefeatBait && !isWinner && !isDraw ? (
+              /* Bait video replaces the defeat text - loops */
+              <video
+                autoPlay
+                loop
+                playsInline
+                className="w-48 h-48 mx-auto mb-4 rounded-xl object-cover"
+                ref={(el) => {
+                  // Try to play with sound after user interaction
+                  if (el) {
+                    el.volume = 0.7;
+                    el.play().catch(() => {
+                      // If autoplay with sound fails, try muted
+                      el.muted = true;
+                      el.play().catch(() => {});
+                    });
+                  }
+                }}
+              >
+                <source src="/sounds/defeat-bait.mp4" type="video/mp4" />
+              </video>
+            ) : isWinner ? (
               <img
                 src="/images/angry-angry-kid.png"
                 alt="Victory"
@@ -8682,16 +8796,20 @@ export default function TCGPage() {
                 {isDraw ? "🤝" : "💔"}
               </div>
             )}
-            <h1
-              className={`text-5xl font-black mb-2 ${
-                isDraw ? "text-gray-400" : isWinner ? "text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]" : "text-red-400"
-              }`}
-            >
-              {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
-            </h1>
-            <p className="text-gray-500 text-sm">
-              vs <span className="text-vintage-burnt-gold max-w-[150px] truncate inline-block align-bottom">{pvpOpponentDisplay}</span>
-            </p>
+            {!showDefeatBait && (
+              <>
+                <h1
+                  className={`text-5xl font-black mb-2 ${
+                    isDraw ? "text-gray-400" : isWinner ? "text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]" : "text-red-400"
+                  }`}
+                >
+                  {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
+                </h1>
+                <p className="text-gray-500 text-sm">
+                  vs <span className="text-vintage-burnt-gold max-w-[150px] truncate inline-block align-bottom">{pvpOpponentDisplay}</span>
+                </p>
+              </>
+            )}
           </div>
 
           {/* Lane Results */}
@@ -8756,27 +8874,6 @@ export default function TCGPage() {
 
           {/* Buttons */}
           <div className="flex gap-3 justify-center">
-            <button
-              onClick={async () => {
-                if (!address) return;
-                stopBgm();
-                setCurrentMatchId(null);
-                try {
-                  const result = await autoMatchMutation({ address, username });
-                  if (result?.matchId) {
-                    setCurrentMatchId(result.matchId);
-                    setView("battle");
-                    setBattleLog([]);
-                  }
-                } catch (e: any) {
-                  setError(e.message || "No opponents found");
-                  setView("lobby");
-                }
-              }}
-              className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-black font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105 shadow-lg shadow-orange-500/30"
-            >
-              Find Match
-            </button>
             <button
               onClick={() => {
                 stopBgm(); // Stop victory/defeat music
