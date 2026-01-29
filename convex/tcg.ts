@@ -1293,6 +1293,20 @@ export const deleteDeck = mutation({
       throw new Error("Deck not found");
     }
 
+    // Prevent deleting deck with active defense pool
+    if (deck.defensePoolActive && (deck.defensePool || 0) > 0) {
+      throw new Error("Cannot delete deck with active defense pool. Withdraw first.");
+    }
+
+    // Remove from leaderboard if present
+    const leaderboardEntry = await ctx.db
+      .query("tcgDefenseLeaderboard")
+      .withIndex("by_deck", (q: any) => q.eq("deckId", args.deckId))
+      .first();
+    if (leaderboardEntry) {
+      await ctx.db.delete(leaderboardEntry._id);
+    }
+
     await ctx.db.delete(args.deckId);
 
     return { success: true };
