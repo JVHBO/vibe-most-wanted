@@ -7504,10 +7504,13 @@ export default function TCGPage() {
       ? (isCpuMatch ? `${rawOpponentName} (CPU)` : rawOpponentName)
       : t('tcgOpponent');
 
-    // Calculate pending actions energy cost
+    // Calculate pending actions energy cost (play costs energy, sacrifice gives +2)
     const pendingEnergyCost = pendingActions.reduce((total, action) => {
       if (action.type === "play" && myHand && myHand[action.cardIndex]) {
         return total + getEnergyCost(myHand[action.cardIndex]);
+      }
+      if (action.type === "sacrifice-hand") {
+        return total - 2; // Sacrifice gives +2 energy (negative cost)
       }
       return total;
     }, 0);
@@ -8041,7 +8044,14 @@ export default function TCGPage() {
             <div className="bg-yellow-900/30 px-3 py-1" style={{ borderTop: "1px solid rgba(255,215,0,0.3)" }}>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-yellow-400 font-bold">
-                  {pendingActions.length} {pendingActions.length === 1 ? "card" : "cards"} queued
+                  {(() => {
+                    const plays = pendingActions.filter(a => a.type === "play").length;
+                    const sacrifices = pendingActions.filter(a => a.type === "sacrifice-hand").length;
+                    const parts = [];
+                    if (plays > 0) parts.push(`${plays} play`);
+                    if (sacrifices > 0) parts.push(`${sacrifices} sacrifice (+${sacrifices * 2}⚡)`);
+                    return parts.join(", ") + " queued";
+                  })()}
                 </span>
                 <button
                   onClick={() => setPendingActions([])}
@@ -8262,6 +8272,21 @@ export default function TCGPage() {
                     <div className="absolute bottom-5 left-0 right-0 text-center">
                       <span className="text-[7px] text-white font-bold drop-shadow-lg bg-black/50 px-1 rounded">{card.name}</span>
                     </div>
+                    {/* Sacrifice Button for Nothing/Other cards (PvP) */}
+                    {(card.type === "nothing" || card.type === "other") && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Add sacrifice-hand action to pending actions
+                          setPendingActions(prev => [...prev, { type: "sacrifice-hand", cardIndex: idx }]);
+                          playSound("card");
+                        }}
+                        className="absolute -bottom-2 -left-2 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600 rounded-full text-[9px] text-white font-bold flex items-center justify-center z-10 shadow-lg border-2 border-purple-300 animate-pulse"
+                        title="Sacrifice: +2⚡ + Draw"
+                      >
+                        +2⚡
+                      </button>
+                    )}
                     {/* Combo hint */}
                     {hasComboPartner && potentialCombo && selectedHandCard !== idx && (
                       <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">
