@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -1211,6 +1211,7 @@ const playMemeSound = (type: "mechaArena" | "ggez" | "bruh" | "emotional" | "wow
 
 export default function TCGPage() {
   const router = useRouter();
+  const convex = useConvex();
   const { address, isConnected } = useAccount();
   const { userProfile } = useProfile();
   const { nfts, isLoading: cardsLoading, loadNFTs, status } = usePlayerCards();
@@ -1483,6 +1484,8 @@ export default function TCGPage() {
   const finishStakedMatchMutation = useMutation(api.tcg.finishStakedMatch);
   const searchMatchMutation = useMutation(api.tcg.searchMatch);
   const cancelSearchMutation = useMutation(api.tcg.cancelSearch);
+  const createMatchFromMatchmakingMutation = useMutation(api.tcg.createMatchFromMatchmaking);
+  const deleteDeckMutation = useMutation(api.tcg.deleteDeck);
 
   // Defense pool queries
   const defenseLeaderboard = useQuery(api.tcg.getDefenseLeaderboard, { limit: 50 });
@@ -3129,7 +3132,6 @@ export default function TCGPage() {
         const rect = lane.getBoundingClientRect();
         // Check if point is within lane bounds
         if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-          console.log(`Match lane ${i}:`, { left: Math.round(rect.left), right: Math.round(rect.right), x: Math.round(x) });
           return i;
         }
       } else {
@@ -4878,6 +4880,51 @@ export default function TCGPage() {
                 </div>
               )}
 
+              {/* Saved Decks List */}
+              {playerDecks && playerDecks.length > 1 && (
+                <div className="bg-black/30 border border-vintage-gold/10 rounded-lg p-3">
+                  <p className="text-[9px] text-vintage-burnt-gold/50 uppercase tracking-[0.2em] mb-2">Saved Decks ({playerDecks.length})</p>
+                  <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                    {playerDecks.map((deck: any) => (
+                      <div
+                        key={deck._id}
+                        className={`flex items-center justify-between p-2 rounded ${
+                          deck._id === activeDeck?._id
+                            ? "bg-vintage-gold/10 border border-vintage-gold/30"
+                            : "bg-black/20 border border-vintage-gold/5"
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-bold truncate ${deck._id === activeDeck?._id ? "text-vintage-gold" : "text-vintage-burnt-gold"}`}>
+                            {deck.deckName}
+                            {deck._id === activeDeck?._id && <span className="text-green-400 ml-1">(Active)</span>}
+                          </p>
+                          <p className="text-[9px] text-vintage-burnt-gold/50">
+                            {deck.vbmsCount || 0} VBMS • {deck.totalPower || 0} PWR
+                          </p>
+                        </div>
+                        {deck._id !== activeDeck?._id && (
+                          <button
+                            onClick={async () => {
+                              if (confirm(`Delete deck "${deck.deckName}"?`)) {
+                                try {
+                                  await deleteDeckMutation({ deckId: deck._id });
+                                } catch (e: any) {
+                                  setError(e.message || "Failed to delete deck");
+                                }
+                              }
+                            }}
+                            className="ml-2 px-2 py-1 text-[9px] text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 rounded hover:bg-red-900/20 transition-all"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Play Buttons */}
               <div className="space-y-2">
                 {!hasDeck ? (
@@ -4941,14 +4988,13 @@ export default function TCGPage() {
                           <div className="flex items-center justify-center gap-2 mb-1">
                             <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
                             <span className="text-amber-400 text-xs font-bold uppercase tracking-wider">
-                              {searchElapsed < 3 ? "Searching for players..." : "Matching vs CPU..."}
+                              {searchElapsed < 5 ? "Searching for players..." : "Matching vs CPU..."}
                             </span>
                           </div>
-                          <p className="text-[9px] text-vintage-burnt-gold/50">{Math.ceil(3 - searchElapsed)}s</p>
+                          <p className="text-[9px] text-vintage-burnt-gold/50">{Math.max(0, Math.ceil(5 - searchElapsed))}s</p>
                           <button
                             onClick={async () => {
                               setIsSearching(false);
-                              if (searchTimerRef.current) clearInterval(searchTimerRef.current);
                               if (address) await cancelSearchMutation({ address });
                             }}
                             className="mt-2 px-4 py-1 text-[9px] text-red-400 border border-red-500/30 rounded hover:bg-red-900/20"
@@ -4968,22 +5014,49 @@ export default function TCGPage() {
                               // Start search on server
                               await searchMatchMutation({ address, username, deckId: activeDeck._id });
 
-                              // Poll for 3 seconds looking for live player
+                              // Poll checkMatchmaking every 500ms for up to 5 seconds
                               let elapsed = 0;
-                              const interval = setInterval(() => {
+                              let foundPlayer = false;
+                              const maxSearchTime = 5; // 5 seconds max
+
+                              while (elapsed < maxSearchTime && !foundPlayer) {
+                                await new Promise(resolve => setTimeout(resolve, 500));
                                 elapsed += 0.5;
                                 setSearchElapsed(elapsed);
-                              }, 500);
-                              searchTimerRef.current = interval;
 
-                              // Wait 3 seconds
-                              await new Promise(resolve => setTimeout(resolve, 3000));
-                              clearInterval(interval);
-                              searchTimerRef.current = null;
+                                // Poll the server to check for other players
+                                const matchStatus = await convex.query(api.tcg.checkMatchmaking, { address });
 
-                              // No live player found after 3s - fall back to CPU auto match
+                                if (matchStatus.status === "found_player" && matchStatus.opponent) {
+                                  // Found a real player! Create the match
+                                  foundPlayer = true;
+                                  const opponent = matchStatus.opponent;
+
+                                  const matchResult = await createMatchFromMatchmakingMutation({
+                                    player1Address: address,
+                                    player2Address: opponent.address,
+                                    player1Username: username,
+                                    player2Username: opponent.username,
+                                    player1DeckId: activeDeck._id,
+                                    player2DeckId: opponent.deckId,
+                                  });
+
+                                  if (matchResult?.matchId) {
+                                    setCurrentMatchId(matchResult.matchId);
+                                    setIsPvE(false);
+                                    setView("battle");
+                                    setBattleLog([]);
+                                  }
+                                  setIsSearching(false);
+                                  return;
+                                } else if (matchStatus.status === "expired" || matchStatus.status === "not_searching") {
+                                  break; // Exit polling loop
+                                }
+                              }
+
+                              // No live player found - fall back to CPU auto match
                               await cancelSearchMutation({ address });
-                              setSearchElapsed(3.5);
+                              setSearchElapsed(elapsed + 0.5);
 
                               const result = await autoMatchMutation({ address, username });
                               if (result?.matchId) {
