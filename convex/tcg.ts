@@ -748,6 +748,45 @@ function applyOngoingAbilities(
             newLanes[laneIdx][player2Power] -= reduction;
           });
           break;
+
+        case "adaptivePower":
+          // Nico: Power scales based on turn number (+5 per turn)
+          const adaptiveBuff = currentTurn * 5;
+          newLanes[laneIdx][player1Cards][cardIdx] = { ...card, power: card.power + adaptiveBuff };
+          newLanes[laneIdx][player1Power] += adaptiveBuff;
+          break;
+
+        case "immuneToDebuff":
+          // Ventra: Immune to debuffs + bonus power per turn
+          if (effect.bonusPower) {
+            newLanes[laneIdx][player1Cards][cardIdx] = {
+              ...card,
+              power: card.power + effect.bonusPower,
+              immune: true // Mark as immune
+            };
+            newLanes[laneIdx][player1Power] += effect.bonusPower;
+          }
+          break;
+
+        case "buffIfFirst":
+          // Casa: +12 if this was the first card played in this lane
+          if (newLanes[laneIdx][player1Cards].length === 1 ||
+              newLanes[laneIdx][player1Cards][0]?.name === card.name) {
+            newLanes[laneIdx][player1Cards][cardIdx] = { ...card, power: card.power + (effect.value || 12) };
+            newLanes[laneIdx][player1Power] += effect.value || 12;
+          }
+          break;
+
+        case "destroyLoneCard":
+          // Ink: If enemy has only 1 card in lane, destroy it
+          if (newLanes[laneIdx][player2Cards].length === 1) {
+            const loneCard = newLanes[laneIdx][player2Cards][0];
+            const lonePower = calculateCardPower(loneCard);
+            newLanes[laneIdx][player2Cards] = [];
+            newLanes[laneIdx][player2Power] = 0;
+            console.log(`🖊️ Ink destroyed lone enemy ${loneCard?.name} (${lonePower} power)`);
+          }
+          break;
       }
     }
 
@@ -805,6 +844,45 @@ function applyOngoingAbilities(
             newLanes[laneIdx][player1Cards][idx] = { ...c, power: c.power - reduction };
             newLanes[laneIdx][player1Power] -= reduction;
           });
+          break;
+
+        case "adaptivePower":
+          // Nico: Power scales based on turn number (+5 per turn)
+          const adaptiveBuff2 = currentTurn * 5;
+          newLanes[laneIdx][player2Cards][cardIdx] = { ...card, power: card.power + adaptiveBuff2 };
+          newLanes[laneIdx][player2Power] += adaptiveBuff2;
+          break;
+
+        case "immuneToDebuff":
+          // Ventra: Immune to debuffs + bonus power per turn
+          if (effect.bonusPower) {
+            newLanes[laneIdx][player2Cards][cardIdx] = {
+              ...card,
+              power: card.power + effect.bonusPower,
+              immune: true
+            };
+            newLanes[laneIdx][player2Power] += effect.bonusPower;
+          }
+          break;
+
+        case "buffIfFirst":
+          // Casa: +12 if this was the first card played in this lane
+          if (newLanes[laneIdx][player2Cards].length === 1 ||
+              newLanes[laneIdx][player2Cards][0]?.name === card.name) {
+            newLanes[laneIdx][player2Cards][cardIdx] = { ...card, power: card.power + (effect.value || 12) };
+            newLanes[laneIdx][player2Power] += effect.value || 12;
+          }
+          break;
+
+        case "destroyLoneCard":
+          // Ink: If enemy has only 1 card in lane, destroy it
+          if (newLanes[laneIdx][player1Cards].length === 1) {
+            const loneCard2 = newLanes[laneIdx][player1Cards][0];
+            const lonePower2 = calculateCardPower(loneCard2);
+            newLanes[laneIdx][player1Cards] = [];
+            newLanes[laneIdx][player1Power] = 0;
+            console.log(`🖊️ Ink destroyed lone enemy ${loneCard2?.name} (${lonePower2} power)`);
+          }
           break;
       }
     }
@@ -1326,6 +1404,24 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   const p1CardsPlayedThisTurn: { card: any; lane: number }[] = [];
   const p2CardsPlayedThisTurn: { card: any; lane: number }[] = [];
 
+  // Check for Vitalik's reduceEnergyCost ability (reduces all card costs by 1)
+  let p1EnergyCostReduction = 0;
+  let p2EnergyCostReduction = 0;
+  lanes.forEach((lane: any) => {
+    lane.player1Cards.forEach((c: any) => {
+      const ability = getCardAbility(c.name);
+      if (ability?.effect?.action === "reduceEnergyCost") {
+        p1EnergyCostReduction += ability.effect.value || 1;
+      }
+    });
+    lane.player2Cards.forEach((c: any) => {
+      const ability = getCardAbility(c.name);
+      if (ability?.effect?.action === "reduceEnergyCost") {
+        p2EnergyCostReduction += ability.effect.value || 1;
+      }
+    });
+  });
+
   // Track energy spent this turn
   let p1EnergyRemaining = gs.player1Energy || gs.currentTurn;
 
@@ -1341,9 +1437,10 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
         console.warn(`P1 invalid cardIndex: ${action.cardIndex}, hand size: ${p1Hand.length}, skipping`);
         continue;
       }
-      // Check energy cost before playing
+      // Check energy cost before playing (with Vitalik's reduction)
       const cardToPlay = p1Hand[action.cardIndex];
-      const energyCost = getCardEnergyCost(cardToPlay);
+      const baseEnergyCost = getCardEnergyCost(cardToPlay);
+      const energyCost = Math.max(1, baseEnergyCost - p1EnergyCostReduction); // Min cost is 1
       if (energyCost > p1EnergyRemaining) {
         console.warn(`P1 insufficient energy: need ${energyCost}, have ${p1EnergyRemaining}, skipping ${cardToPlay?.name}`);
         continue;
@@ -1400,9 +1497,10 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
         console.warn(`P2 invalid cardIndex: ${action.cardIndex}, hand size: ${p2Hand.length}, skipping`);
         continue;
       }
-      // Check energy cost before playing
+      // Check energy cost before playing (with Vitalik's reduction)
       const cardToPlay = p2Hand[action.cardIndex];
-      const energyCost = getCardEnergyCost(cardToPlay);
+      const baseEnergyCost = getCardEnergyCost(cardToPlay);
+      const energyCost = Math.max(1, baseEnergyCost - p2EnergyCostReduction); // Min cost is 1
       if (energyCost > p2EnergyRemaining) {
         console.warn(`P2 insufficient energy: need ${energyCost}, have ${p2EnergyRemaining}, skipping ${cardToPlay?.name}`);
         continue;
@@ -1531,6 +1629,33 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
 
   // Check if game is over (turn 6)
   if (gs.currentTurn >= TCG_CONFIG.TOTAL_TURNS) {
+    // Apply Vibe Intern's convertEnergyEndGame ability (convert unspent energy to power)
+    const p1UnspentEnergy = p1EnergyRemaining || 0;
+    const p2UnspentEnergy = p2EnergyRemaining || 0;
+
+    lanes.forEach((lane: any, laneIdx: number) => {
+      // Check P1 cards for Vibe Intern
+      lane.player1Cards.forEach((card: any, cardIdx: number) => {
+        const ability = getCardAbility(card.name);
+        if (ability?.effect?.action === "convertEnergyEndGame") {
+          const powerGain = p1UnspentEnergy * (ability.effect.powerPerEnergy || 8);
+          lanes[laneIdx].player1Cards[cardIdx] = { ...card, power: card.power + powerGain };
+          lanes[laneIdx].player1Power += powerGain;
+          console.log(`⚡ Vibe Intern converted ${p1UnspentEnergy} energy to +${powerGain} power`);
+        }
+      });
+      // Check P2 cards for Vibe Intern
+      lane.player2Cards.forEach((card: any, cardIdx: number) => {
+        const ability = getCardAbility(card.name);
+        if (ability?.effect?.action === "convertEnergyEndGame") {
+          const powerGain = p2UnspentEnergy * (ability.effect.powerPerEnergy || 8);
+          lanes[laneIdx].player2Cards[cardIdx] = { ...card, power: card.power + powerGain };
+          lanes[laneIdx].player2Power += powerGain;
+          console.log(`⚡ Vibe Intern converted ${p2UnspentEnergy} energy to +${powerGain} power`);
+        }
+      });
+    });
+
     // Determine winner
     const laneResults = lanes.map((lane: any) => ({
       laneId: lane.laneId,
@@ -1640,6 +1765,24 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   // Next turn
   const nextTurn = gs.currentTurn + 1;
 
+  // Calculate energy bonuses from Rachel (energyPerTurn ability)
+  let p1EnergyBonus = 0;
+  let p2EnergyBonus = 0;
+  lanes.forEach((lane: any) => {
+    lane.player1Cards.forEach((c: any) => {
+      const ability = getCardAbility(c.name);
+      if (ability?.effect?.action === "energyPerTurn") {
+        p1EnergyBonus += ability.effect.value || 1;
+      }
+    });
+    lane.player2Cards.forEach((c: any) => {
+      const ability = getCardAbility(c.name);
+      if (ability?.effect?.action === "energyPerTurn") {
+        p2EnergyBonus += ability.effect.value || 1;
+      }
+    });
+  });
+
   // Draw cards for next turn
   const p1Draw = drawCard(p1DeckRemaining, nextTurn);
   const p2Draw = drawCard(p2DeckRemaining, nextTurn);
@@ -1651,8 +1794,8 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
     gameState: {
       currentTurn: nextTurn,
       energy: nextTurn,
-      player1Energy: nextTurn, // Reset P1 energy to turn number
-      player2Energy: nextTurn, // Reset P2 energy to turn number
+      player1Energy: nextTurn + p1EnergyBonus, // Base + Rachel bonus
+      player2Energy: nextTurn + p2EnergyBonus, // Base + Rachel bonus
       phase: "action",
       turnEndsAt: Date.now() + (TCG_CONFIG.TURN_TIME_SECONDS * 1000),
       player1Hand: p1Hand,
