@@ -1312,7 +1312,7 @@ export const createMatch = mutation({
       )
       .first();
 
-    if (!activeDeck) {
+    if (!activeDeck || !activeDeck.cards || activeDeck.cards.length === 0) {
       throw new Error("No active deck. Please create and select a deck first.");
     }
 
@@ -1373,7 +1373,7 @@ export const joinMatch = mutation({
       )
       .first();
 
-    if (!activeDeck) {
+    if (!activeDeck || !activeDeck.cards || activeDeck.cards.length === 0) {
       throw new Error("No active deck. Please create and select a deck first.");
     }
 
@@ -2274,7 +2274,7 @@ export const autoMatch = mutation({
       )
       .first();
 
-    if (!activeDeck) {
+    if (!activeDeck || !activeDeck.cards || activeDeck.cards.length === 0) {
       throw new Error("No active deck. Please create and select a deck first.");
     }
 
@@ -2837,6 +2837,11 @@ export const createMatchFromMatchmaking = mutation({
       throw new Error("One or both decks not found");
     }
 
+    // Validate both decks have cards
+    if (!deck1.cards || deck1.cards.length === 0 || !deck2.cards || deck2.cards.length === 0) {
+      throw new Error("One or both decks are empty");
+    }
+
     // Remove both from matchmaking
     const mm1 = await ctx.db
       .query("tcgMatchmaking")
@@ -2938,7 +2943,7 @@ export const autoMatchWithStake = mutation({
       )
       .first();
 
-    if (!activeDeck) {
+    if (!activeDeck || !activeDeck.cards || activeDeck.cards.length === 0) {
       throw new Error("No active deck. Please create and select a deck first.");
     }
 
