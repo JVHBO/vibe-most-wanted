@@ -3074,6 +3074,18 @@ export const finishStakedMatch = mutation({
       return { success: false, reason: "Already processed" };
     }
 
+    // SECURITY: Validate that winnerAddress matches the actual winner from the match
+    if (match.winnerId) {
+      const actualWinner = match.winnerId.toLowerCase();
+      const claimedWinner = args.winnerAddress.toLowerCase();
+      if (actualWinner !== claimedWinner) {
+        throw new Error("Invalid winner address - does not match match result");
+      }
+    } else {
+      // Match has no winnerId set (tie or in progress)
+      return { success: false, reason: "Match has no winner" };
+    }
+
     // stakeAmount = attack fee (10% of pool, already paid onchain by attacker)
     const attackFee = match.stakeAmount || 0;
     // Contract tax = 10% of attack fee (stays in contract as sink)
