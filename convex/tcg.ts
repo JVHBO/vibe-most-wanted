@@ -147,7 +147,7 @@ function generateRoomId(): string {
 }
 
 /**
- * Draw initial hand - ensures at least 1 VBMS in hand
+ * Draw initial hand - ensures at least 1 VBMS/VibeFID in hand
  */
 function drawInitialHand(deck: any[]): { hand: any[]; remaining: any[] } {
   const shuffled = shuffleDeck(deck);
@@ -157,6 +157,21 @@ function drawInitialHand(deck: any[]): { hand: any[]; remaining: any[] } {
   // Draw INITIAL_HAND_SIZE cards
   for (let i = 0; i < TCG_CONFIG.INITIAL_HAND_SIZE && remaining.length > 0; i++) {
     hand.push(remaining.shift());
+  }
+
+  // Guarantee at least 1 VBMS/VibeFID card in opening hand
+  const hasVBMS = hand.some(c => c.type === "vbms" || c.type === "vibefid");
+  if (!hasVBMS && remaining.length > 0) {
+    // Find first VBMS/VibeFID in remaining deck
+    const vbmsIdx = remaining.findIndex(c => c.type === "vbms" || c.type === "vibefid");
+    if (vbmsIdx !== -1) {
+      // Swap the found VBMS with a random card from hand
+      const swapHandIdx = Math.floor(Math.random() * hand.length);
+      const swappedOut = hand[swapHandIdx];
+      hand[swapHandIdx] = remaining[vbmsIdx];
+      remaining[vbmsIdx] = swappedOut;
+      console.log(`🎴 Guaranteed VBMS in opening hand: ${hand[swapHandIdx].name}`);
+    }
   }
 
   return { hand, remaining };
@@ -587,8 +602,26 @@ function applyOnRevealAbility(
     }
 
     case "forceDiscardAndDraw":
-      // Force enemy to discard, you draw
-      // Note: Can't affect enemy hand in simultaneous play, simplified to just draw
+      // Destroy enemy's weakest card in this lane + draw for self
+      // (Adapted for simultaneous play - can't force hand discard)
+      const enemyCardsInLane = newLanes[laneIndex][enemyCards];
+      if (enemyCardsInLane.length > 0) {
+        // Find weakest enemy card
+        let weakestIdx = 0;
+        let weakestPower = calculateCardPower(enemyCardsInLane[0]);
+        for (let i = 1; i < enemyCardsInLane.length; i++) {
+          const power = calculateCardPower(enemyCardsInLane[i]);
+          if (power < weakestPower) {
+            weakestPower = power;
+            weakestIdx = i;
+          }
+        }
+        // Destroy it
+        const destroyed = enemyCardsInLane.splice(weakestIdx, 1)[0];
+        newLanes[laneIndex][enemyPower] = calculateLanePower(enemyCardsInLane);
+        console.log(`📜 Sartocrates destroyed ${destroyed?.name} (${weakestPower} power) in lane ${laneIndex}`);
+      }
+      // Draw cards for self
       for (let i = 0; i < (effect.selfDraw || 1) && newDeck.length > 0; i++) {
         newHand.push(newDeck.shift());
       }
@@ -607,9 +640,25 @@ function applyOnRevealAbility(
       break;
 
     case "moveRandom":
-      // Move to random lane with bonus power
+      // Move to random OTHER lane with bonus power
       bonusPower = effect.bonusPower || 0;
-      // Note: Actual lane change handled separately
+      // Pick a random lane that is NOT the current lane
+      const otherLanes = [0, 1, 2].filter(l => l !== laneIndex);
+      const targetLane = otherLanes[Math.floor(Math.random() * otherLanes.length)];
+      // Find and remove card from current lane, add to target lane
+      const cardIdx = newLanes[laneIndex][myCards].findIndex((c: any) => c.cardId === card.cardId || c.name === card.name);
+      if (cardIdx !== -1) {
+        const movedCard = newLanes[laneIndex][myCards].splice(cardIdx, 1)[0];
+        if (movedCard) {
+          movedCard.power += bonusPower; // Apply bonus before moving
+          newLanes[targetLane][myCards].push(movedCard);
+          // Update lane powers
+          newLanes[laneIndex][myPower] = calculateLanePower(newLanes[laneIndex][myCards]);
+          newLanes[targetLane][myPower] = calculateLanePower(newLanes[targetLane][myCards]);
+          console.log(`🎲 ${card.name} moved from lane ${laneIndex} to lane ${targetLane} (+${bonusPower} power)`);
+        }
+      }
+      bonusPower = 0; // Already applied during move
       break;
 
     default:
@@ -811,7 +860,9 @@ function initializeGameState(player1Deck: any[], player2Deck: any[]) {
 
   return {
     currentTurn: 1,
-    energy: 1,
+    energy: 1, // Base energy for turn (legacy field)
+    player1Energy: 1, // P1 available energy this turn
+    player2Energy: 1, // P2 available energy this turn
     phase: "draw" as const,
     turnEndsAt: Date.now() + (TCG_CONFIG.TURN_TIME_SECONDS * 1000),
 
@@ -1275,6 +1326,9 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   const p1CardsPlayedThisTurn: { card: any; lane: number }[] = [];
   const p2CardsPlayedThisTurn: { card: any; lane: number }[] = [];
 
+  // Track energy spent this turn
+  let p1EnergyRemaining = gs.player1Energy || gs.currentTurn;
+
   for (const action of (gs.player1Actions || [])) {
     // Validate action before processing
     if (action.targetLane !== undefined && (action.targetLane < 0 || action.targetLane > 2)) {
@@ -1287,6 +1341,14 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
         console.warn(`P1 invalid cardIndex: ${action.cardIndex}, hand size: ${p1Hand.length}, skipping`);
         continue;
       }
+      // Check energy cost before playing
+      const cardToPlay = p1Hand[action.cardIndex];
+      const energyCost = getCardEnergyCost(cardToPlay);
+      if (energyCost > p1EnergyRemaining) {
+        console.warn(`P1 insufficient energy: need ${energyCost}, have ${p1EnergyRemaining}, skipping ${cardToPlay?.name}`);
+        continue;
+      }
+      p1EnergyRemaining -= energyCost;
       const card = p1Hand.splice(action.cardIndex, 1)[0];
       if (card) {
         lanes[action.targetLane].player1Cards.push(card);
@@ -1298,6 +1360,8 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
         continue;
       }
       p1Hand.splice(action.cardIndex, 1);
+      // Sacrifice gives +2 energy bonus
+      p1EnergyRemaining += 2;
       if (p1DeckRemaining.length > 0) {
         p1Hand.push(p1DeckRemaining.shift());
       }
@@ -1321,6 +1385,9 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   let p2Hand = [...gs.player2Hand];
   let p2DeckRemaining = [...gs.player2DeckRemaining];
 
+  // Track energy spent this turn
+  let p2EnergyRemaining = gs.player2Energy || gs.currentTurn;
+
   for (const action of (gs.player2Actions || [])) {
     // Validate action before processing
     if (action.targetLane !== undefined && (action.targetLane < 0 || action.targetLane > 2)) {
@@ -1333,6 +1400,14 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
         console.warn(`P2 invalid cardIndex: ${action.cardIndex}, hand size: ${p2Hand.length}, skipping`);
         continue;
       }
+      // Check energy cost before playing
+      const cardToPlay = p2Hand[action.cardIndex];
+      const energyCost = getCardEnergyCost(cardToPlay);
+      if (energyCost > p2EnergyRemaining) {
+        console.warn(`P2 insufficient energy: need ${energyCost}, have ${p2EnergyRemaining}, skipping ${cardToPlay?.name}`);
+        continue;
+      }
+      p2EnergyRemaining -= energyCost;
       const card = p2Hand.splice(action.cardIndex, 1)[0];
       if (card) {
         lanes[action.targetLane].player2Cards.push(card);
@@ -1344,6 +1419,8 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
         continue;
       }
       p2Hand.splice(action.cardIndex, 1);
+      // Sacrifice gives +2 energy bonus
+      p2EnergyRemaining += 2;
       if (p2DeckRemaining.length > 0) {
         p2Hand.push(p2DeckRemaining.shift());
       }
@@ -1574,6 +1651,8 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
     gameState: {
       currentTurn: nextTurn,
       energy: nextTurn,
+      player1Energy: nextTurn, // Reset P1 energy to turn number
+      player2Energy: nextTurn, // Reset P2 energy to turn number
       phase: "action",
       turnEndsAt: Date.now() + (TCG_CONFIG.TURN_TIME_SECONDS * 1000),
       player1Hand: p1Hand,
