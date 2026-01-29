@@ -204,15 +204,15 @@ function generateRandomCard(rarity: string, packType?: string) {
   const cardId = `${rarity}_${imageIndex}_${foil}_${wear}_${Date.now()}`;
   const imageUrl = `/cards/${rarity.toLowerCase()}/`; // Lowercase folder names
 
-  // Map image files (ONLY images from Desktop/images/Unknown folder)
+  // Map image files - using hyphen naming (no spaces to avoid URL encoding issues)
   const imageFiles: Record<string, string[]> = {
-    common: ["proxy (5).png", "proxy (6).png", "proxy (7).png"],
-    rare: ["proxy.png", "proxy (1).png", "proxy (8).png"],
-    epic: ["proxy (1).png", "proxy (2).png", "proxy (3).png"],
-    legendary: ["proxy.png", "proxy (4).png"],
+    common: ["proxy-5.png", "proxy-6.png", "proxy-7.png"],
+    rare: ["proxy.png", "proxy-1.png", "proxy-8.png"],
+    epic: ["proxy-1.png", "proxy-2.png", "proxy-3.png"],
+    legendary: ["proxy.png", "proxy-4.png"],
   };
 
-  const fileName = imageFiles[rarityLower as keyof typeof imageFiles]?.[imageIndex] || imageFiles[rarityLower as keyof typeof imageFiles]?.[0] || "proxy (5).png";
+  const fileName = imageFiles[rarityLower as keyof typeof imageFiles]?.[imageIndex] || imageFiles[rarityLower as keyof typeof imageFiles]?.[0] || "proxy-5.png";
 
   // Calculate power (EXACTLY same as NFT cards)
   const power = calculateCardPower(rarity, wear, foil !== "None" ? foil : undefined);
@@ -223,7 +223,7 @@ function generateRandomCard(rarity: string, packType?: string) {
     rank: fileName.replace('.png', ''), // Image name as rank
     variant: "default",
     rarity,
-    imageUrl: `${imageUrl}${encodeURIComponent(fileName)}`,
+    imageUrl: `${imageUrl}${fileName}`,
     badgeType: "FREE_CARD" as const,
     foil: foil !== "None" ? foil : undefined, // Only include if special
     wear,

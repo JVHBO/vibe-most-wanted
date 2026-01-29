@@ -1951,7 +1951,9 @@ export default defineSchema({
     // Game State
     gameState: v.optional(v.object({
       currentTurn: v.number(), // 1-6
-      energy: v.number(), // 1-6 (igual ao turno)
+      energy: v.number(), // 1-6 (igual ao turno) - legacy field
+      player1Energy: v.optional(v.number()), // P1 available energy this turn
+      player2Energy: v.optional(v.number()), // P2 available energy this turn
       phase: v.union(
         v.literal("draw"),        // Comprando carta
         v.literal("action"),      // Jogando/sacrificando

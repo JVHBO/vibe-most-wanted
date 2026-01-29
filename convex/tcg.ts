@@ -2689,6 +2689,40 @@ export const getMyDefensePool = query({
   },
 });
 
+/**
+ * DEBUG: Get all defense decks for debugging
+ */
+export const debugGetDefenseDecks = query({
+  args: {},
+  handler: async (ctx) => {
+    const allDecks = await ctx.db.query("tcgDecks").collect();
+
+    // Filter defense decks
+    const defenseDecks = allDecks.filter((d: any) => d.isDefenseDeck === true);
+    const poolDecks = allDecks.filter((d: any) => d.defensePoolActive === true);
+
+    return {
+      totalDecks: allDecks.length,
+      defenseDecks: defenseDecks.map((d: any) => ({
+        id: d._id,
+        address: d.address,
+        deckName: d.deckName,
+        cardsCount: d.cards?.length || 0,
+        isDefenseDeck: d.isDefenseDeck,
+        defensePoolActive: d.defensePoolActive,
+        defensePool: d.defensePool,
+      })),
+      poolDecks: poolDecks.map((d: any) => ({
+        id: d._id,
+        address: d.address,
+        deckName: d.deckName,
+        cardsCount: d.cards?.length || 0,
+        defensePool: d.defensePool,
+      })),
+    };
+  },
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // REAL-TIME MATCHMAKING (3 second window)
 // ═══════════════════════════════════════════════════════════════════════════════

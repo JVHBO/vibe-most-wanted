@@ -7689,8 +7689,11 @@ export default function TCGPage() {
             </div>
           </div>
 
-          {/* Opponent Disconnect Warning */}
+          {/* Opponent Disconnect Warning - SKIP for CPU matches */}
           {(() => {
+            // CPU opponents never disconnect - skip warning entirely
+            if ((currentMatch as any)?.isCpuOpponent) return null;
+
             const opponentLastSeen = isPlayer1 ? (currentMatch as any)?.player2LastSeen : (currentMatch as any)?.player1LastSeen;
             const now = Date.now();
             const timeSince = opponentLastSeen ? (now - opponentLastSeen) / 1000 : null;
