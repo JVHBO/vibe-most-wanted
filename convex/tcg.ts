@@ -1276,18 +1276,36 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   const p2CardsPlayedThisTurn: { card: any; lane: number }[] = [];
 
   for (const action of (gs.player1Actions || [])) {
+    // Validate action before processing
+    if (action.targetLane !== undefined && (action.targetLane < 0 || action.targetLane > 2)) {
+      console.warn(`P1 invalid targetLane: ${action.targetLane}, skipping action`);
+      continue;
+    }
     if (action.type === "play" && action.targetLane !== undefined) {
+      // Validate cardIndex bounds
+      if (action.cardIndex < 0 || action.cardIndex >= p1Hand.length) {
+        console.warn(`P1 invalid cardIndex: ${action.cardIndex}, hand size: ${p1Hand.length}, skipping`);
+        continue;
+      }
       const card = p1Hand.splice(action.cardIndex, 1)[0];
       if (card) {
         lanes[action.targetLane].player1Cards.push(card);
         p1CardsPlayedThisTurn.push({ card, lane: action.targetLane });
       }
     } else if (action.type === "sacrifice-hand") {
+      if (action.cardIndex < 0 || action.cardIndex >= p1Hand.length) {
+        console.warn(`P1 sacrifice-hand invalid cardIndex: ${action.cardIndex}, skipping`);
+        continue;
+      }
       p1Hand.splice(action.cardIndex, 1);
       if (p1DeckRemaining.length > 0) {
         p1Hand.push(p1DeckRemaining.shift());
       }
     } else if (action.type === "sacrifice-lane" && action.targetLane !== undefined) {
+      if (action.cardIndex < 0 || action.cardIndex >= lanes[action.targetLane].player1Cards.length) {
+        console.warn(`P1 sacrifice-lane invalid cardIndex: ${action.cardIndex}, skipping`);
+        continue;
+      }
       const sacrificedCard = lanes[action.targetLane].player1Cards.splice(action.cardIndex, 1)[0];
       if (sacrificedCard && action.targetCardIndex !== undefined) {
         const targetLane = action.targetLane;
@@ -1304,18 +1322,36 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   let p2DeckRemaining = [...gs.player2DeckRemaining];
 
   for (const action of (gs.player2Actions || [])) {
+    // Validate action before processing
+    if (action.targetLane !== undefined && (action.targetLane < 0 || action.targetLane > 2)) {
+      console.warn(`P2 invalid targetLane: ${action.targetLane}, skipping action`);
+      continue;
+    }
     if (action.type === "play" && action.targetLane !== undefined) {
+      // Validate cardIndex bounds
+      if (action.cardIndex < 0 || action.cardIndex >= p2Hand.length) {
+        console.warn(`P2 invalid cardIndex: ${action.cardIndex}, hand size: ${p2Hand.length}, skipping`);
+        continue;
+      }
       const card = p2Hand.splice(action.cardIndex, 1)[0];
       if (card) {
         lanes[action.targetLane].player2Cards.push(card);
         p2CardsPlayedThisTurn.push({ card, lane: action.targetLane });
       }
     } else if (action.type === "sacrifice-hand") {
+      if (action.cardIndex < 0 || action.cardIndex >= p2Hand.length) {
+        console.warn(`P2 sacrifice-hand invalid cardIndex: ${action.cardIndex}, skipping`);
+        continue;
+      }
       p2Hand.splice(action.cardIndex, 1);
       if (p2DeckRemaining.length > 0) {
         p2Hand.push(p2DeckRemaining.shift());
       }
     } else if (action.type === "sacrifice-lane" && action.targetLane !== undefined) {
+      if (action.cardIndex < 0 || action.cardIndex >= lanes[action.targetLane].player2Cards.length) {
+        console.warn(`P2 sacrifice-lane invalid cardIndex: ${action.cardIndex}, skipping`);
+        continue;
+      }
       const sacrificedCard = lanes[action.targetLane].player2Cards.splice(action.cardIndex, 1)[0];
       if (sacrificedCard && action.targetCardIndex !== undefined) {
         const targetLane = action.targetLane;
@@ -1456,27 +1492,27 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
       },
     });
 
-    // Save to history
-    if (winnerId) {
-      await ctx.db.insert("tcgHistory", {
-        matchId,
-        roomId: match.roomId,
-        player1Address: match.player1Address,
-        player1Username: match.player1Username,
-        player2Address: match.player2Address!,
-        player2Username: match.player2Username!,
-        winnerId,
-        winnerUsername: winnerUsername!,
-        lanesWonByWinner: Math.max(p1Wins, p2Wins),
-        laneResults,
-        totalTurns: gs.currentTurn,
-        player1TotalPower: lanes.reduce((sum: number, l: any) => sum + l.player1Power, 0),
-        player2TotalPower: lanes.reduce((sum: number, l: any) => sum + l.player2Power, 0),
-        finishedAt: Date.now(),
-      });
+    // Save to history (always, including ties)
+    await ctx.db.insert("tcgHistory", {
+      matchId,
+      roomId: match.roomId,
+      player1Address: match.player1Address,
+      player1Username: match.player1Username,
+      player2Address: match.player2Address!,
+      player2Username: match.player2Username!,
+      winnerId: winnerId || "tie", // "tie" for draws
+      winnerUsername: winnerUsername || "TIE",
+      lanesWonByWinner: Math.max(p1Wins, p2Wins),
+      laneResults,
+      totalTurns: gs.currentTurn,
+      player1TotalPower: lanes.reduce((sum: number, l: any) => sum + l.player1Power, 0),
+      player2TotalPower: lanes.reduce((sum: number, l: any) => sum + l.player2Power, 0),
+      finishedAt: Date.now(),
+    });
 
-      // 🎯 Vibe Clash PvP Aura Rewards (+50 win, -40 loss)
-      // Main competitive mode - aggressive aura changes
+    // 🎯 Vibe Clash PvP Aura Rewards (+50 win, -40 loss)
+    // Only update aura when there's a clear winner (not on ties)
+    if (winnerId) {
       const loserId = winnerId === match.player1Address
         ? match.player2Address
         : match.player1Address;
@@ -1517,6 +1553,8 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
           console.log(`🎯 Vibe Clash: ${loserId} LOSS -40 aura (${loserCurrentAura} → ${newLoserAura})`);
         }
       }
+    } else {
+      console.log(`🎯 Vibe Clash: TIE - ${match.player1Username} vs ${match.player2Username} (no aura changes)`);
     }
 
     return;
