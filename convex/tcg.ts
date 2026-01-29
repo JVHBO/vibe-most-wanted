@@ -165,8 +165,8 @@ function drawInitialHand(deck: any[]): { hand: any[]; remaining: any[] } {
     // Find first VBMS/VibeFID in remaining deck
     const vbmsIdx = remaining.findIndex(c => c.type === "vbms" || c.type === "vibefid");
     if (vbmsIdx !== -1) {
-      // Swap the found VBMS with a random card from hand
-      const swapHandIdx = Math.floor(Math.random() * hand.length);
+      // Swap the found VBMS with a random card from hand (crypto-secure)
+      const swapHandIdx = secureRandomInt(hand.length);
       const swappedOut = hand[swapHandIdx];
       hand[swapHandIdx] = remaining[vbmsIdx];
       remaining[vbmsIdx] = swappedOut;
@@ -381,9 +381,9 @@ function applyOnRevealAbility(
       break;
 
     case "stealPower": {
-      // Steal power from enemy in lane
+      // Steal power from enemy in lane (crypto-secure random target)
       if (newLanes[laneIndex][enemyCards].length > 0) {
-        const targetIdx = Math.floor(Math.random() * newLanes[laneIndex][enemyCards].length);
+        const targetIdx = secureRandomInt(newLanes[laneIndex][enemyCards].length);
         const target = newLanes[laneIndex][enemyCards][targetIdx];
         const stealAmount = Math.min(effect.value || 0, target.power);
         newLanes[laneIndex][enemyCards][targetIdx] = { ...target, power: target.power - stealAmount };
@@ -483,8 +483,8 @@ function applyOnRevealAbility(
       break;
 
     case "gamble":
-      // 50% chance win or lose
-      if (Math.random() > 0.5) {
+      // 50% chance win or lose (using crypto-secure random)
+      if (randomCoinFlip()) {
         bonusPower = effect.win || 0;
       } else {
         bonusPower = effect.lose || 0;
@@ -592,9 +592,9 @@ function applyOnRevealAbility(
         lane[enemyCards] = [];
         lane[enemyPower] = 0;
       });
-      // Redistribute randomly
+      // Redistribute randomly (crypto-secure)
       for (const c of shuffleDeck(allEnemyCards)) {
-        const randomLane = Math.floor(Math.random() * 3);
+        const randomLane = secureRandomInt(3);
         newLanes[randomLane][enemyCards].push(c);
         newLanes[randomLane][enemyPower] += calculateCardPower(c);
       }
@@ -640,11 +640,11 @@ function applyOnRevealAbility(
       break;
 
     case "moveRandom":
-      // Move to random OTHER lane with bonus power
+      // Move to random OTHER lane with bonus power (crypto-secure)
       bonusPower = effect.bonusPower || 0;
       // Pick a random lane that is NOT the current lane
       const otherLanes = [0, 1, 2].filter(l => l !== laneIndex);
-      const targetLane = otherLanes[Math.floor(Math.random() * otherLanes.length)];
+      const targetLane = otherLanes[secureRandomInt(otherLanes.length)];
       // Find and remove card from current lane, add to target lane
       const cardIdx = newLanes[laneIndex][myCards].findIndex((c: any) => c.cardId === card.cardId || c.name === card.name);
       if (cardIdx !== -1) {
@@ -989,6 +989,16 @@ function randomCoinFlip(): boolean {
   const randomBytes = new Uint32Array(1);
   crypto.getRandomValues(randomBytes);
   return randomBytes[0] % 2 === 0;
+}
+
+/**
+ * Crypto-secure random integer [0, max)
+ */
+function secureRandomInt(max: number): number {
+  if (max <= 0) return 0;
+  const randomBytes = new Uint32Array(1);
+  crypto.getRandomValues(randomBytes);
+  return randomBytes[0] % max;
 }
 
 /**
@@ -2294,8 +2304,8 @@ export const autoMatch = mutation({
       throw new Error("No opponents available. Set your deck as Defense first, or try again later!");
     }
 
-    // Pick random opponent
-    const opponent = opponents[Math.floor(Math.random() * opponents.length)];
+    // Pick random opponent (crypto-secure)
+    const opponent = opponents[secureRandomInt(opponents.length)];
 
     // Get opponent profile for username
     const opponentProfile = await ctx.db
@@ -2977,7 +2987,8 @@ export const autoMatchWithStake = mutation({
     }
 
     // Pick random opponent
-    const opponent = poolDecks[Math.floor(Math.random() * poolDecks.length)];
+    // Pick random opponent (crypto-secure)
+    const opponent = poolDecks[secureRandomInt(poolDecks.length)];
 
     // Get opponent profile for username
     const opponentProfile = await ctx.db
