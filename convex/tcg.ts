@@ -918,6 +918,71 @@ function getCardEnergyCost(card: any): number {
 }
 
 /**
+ * Generate CPU actions for autoMatch PvP mode
+ * Uses smart AI to play cards strategically
+ */
+function generateCpuActions(gameState: any): any[] {
+  const actions: any[] = [];
+  const cpuHand = [...(gameState.player2Hand || [])];
+  const lanes = gameState.lanes || [];
+  let cpuEnergy = gameState.player2Energy || gameState.currentTurn || 1;
+
+  if (cpuHand.length === 0) return actions;
+
+  // Sort hand by power (play highest power first for better strategy)
+  const sortedHand = cpuHand.map((card: any, idx: number) => ({ card, originalIdx: idx }))
+    .sort((a: any, b: any) => (b.card.power || 0) - (a.card.power || 0));
+
+  // Analyze lanes
+  const laneInfo = lanes.map((lane: any, idx: number) => ({
+    laneIdx: idx,
+    player1Power: lane.player1Power || 0,
+    player2Power: lane.player2Power || 0,
+    player2Cards: lane.player2Cards?.length || 0,
+    isWinning: (lane.player2Power || 0) > (lane.player1Power || 0),
+    deficit: (lane.player1Power || 0) - (lane.player2Power || 0),
+  }));
+
+  const usedCardIndices = new Set<number>();
+
+  // Priority 1: Shore up losing lanes with big deficit
+  const losingLanes = laneInfo
+    .filter((l: any) => l.deficit > 0)
+    .sort((a: any, b: any) => b.deficit - a.deficit);
+
+  for (const laneData of losingLanes) {
+    for (const { card, originalIdx } of sortedHand) {
+      if (usedCardIndices.has(originalIdx)) continue;
+      const cost = getCardEnergyCost(card);
+      if (cost > cpuEnergy) continue;
+
+      // Don't overcommit to lanes we're already winning heavily
+      if (laneData.player2Power > laneData.player1Power + 100 && laneData.player2Cards >= 2) continue;
+
+      actions.push({ type: "play", cardIndex: originalIdx, targetLane: laneData.laneIdx });
+      usedCardIndices.add(originalIdx);
+      cpuEnergy -= cost;
+      break;
+    }
+  }
+
+  // Priority 2: Play remaining cards to weakest lane
+  const weakestLane = laneInfo.sort((a: any, b: any) => a.player2Power - b.player2Power)[0];
+
+  for (const { card, originalIdx } of sortedHand) {
+    if (usedCardIndices.has(originalIdx)) continue;
+    const cost = getCardEnergyCost(card);
+    if (cost > cpuEnergy) continue;
+
+    actions.push({ type: "play", cardIndex: originalIdx, targetLane: weakestLane.laneIdx });
+    usedCardIndices.add(originalIdx);
+    cpuEnergy -= cost;
+  }
+
+  return actions;
+}
+
+/**
  * Crypto-secure random boolean (dice roll)
  */
 function randomCoinFlip(): boolean {
@@ -1364,20 +1429,28 @@ export const submitActions = mutation({
     const updateField = isPlayer1 ? "player1Actions" : "player2Actions";
     const confirmField = isPlayer1 ? "player1Confirmed" : "player2Confirmed";
 
-    const updatedGameState = {
+    let updatedGameState = {
       ...match.gameState,
       [updateField]: args.actions,
       [confirmField]: true,
     };
 
+    // If CPU opponent and player1 just submitted, auto-generate CPU actions
+    if (match.isCpuOpponent && isPlayer1) {
+      const cpuActions = generateCpuActions(updatedGameState);
+      updatedGameState = {
+        ...updatedGameState,
+        player2Actions: cpuActions,
+        player2Confirmed: true,
+      };
+    }
+
     await ctx.db.patch(match._id, { gameState: updatedGameState });
 
     // Check if both players confirmed
-    const bothConfirmed = isPlayer1
-      ? (updatedGameState.player2Confirmed === true)
-      : (updatedGameState.player1Confirmed === true);
+    const bothConfirmed = updatedGameState.player1Confirmed && updatedGameState.player2Confirmed;
 
-    if (bothConfirmed && updatedGameState.player1Confirmed && updatedGameState.player2Confirmed) {
+    if (bothConfirmed) {
       // Process turn
       await processTurn(ctx, match._id);
     }
@@ -2215,7 +2288,7 @@ export const autoMatch = mutation({
 
     const opponentUsername = opponentProfile?.username || "Unknown";
 
-    // Create match directly in-progress
+    // Create match directly in-progress (CPU plays opponent's defense deck)
     const roomId = generateRoomId();
     const gameState = initializeGameState(activeDeck.cards, opponent.cards);
 
@@ -2234,6 +2307,7 @@ export const autoMatch = mutation({
       createdAt: Date.now(),
       startedAt: Date.now(),
       expiresAt: Date.now() + (TCG_CONFIG.ROOM_EXPIRY_MINUTES * 60 * 1000),
+      isCpuOpponent: true, // CPU controls opponent's deck
     });
 
     return {
@@ -2242,6 +2316,7 @@ export const autoMatch = mutation({
       opponentUsername,
       opponentPower: opponent.totalPower,
       isAutoMatch: true,
+      isCpuOpponent: true,
     };
   },
 });
