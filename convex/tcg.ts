@@ -2677,13 +2677,16 @@ export const searchMatch = mutation({
   handler: async (ctx, args) => {
     const addr = args.address.toLowerCase();
 
-    // Verify deck ownership
+    // Verify deck ownership and validity
     const deck = await ctx.db.get(args.deckId);
     if (!deck) {
       throw new Error("Deck not found");
     }
     if (deck.address.toLowerCase() !== addr) {
       throw new Error("This deck doesn't belong to you");
+    }
+    if (!deck.cards || deck.cards.length !== TCG_CONFIG.DECK_SIZE) {
+      throw new Error("Deck is invalid or incomplete");
     }
 
     // Remove any existing matchmaking entry for this user
