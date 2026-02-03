@@ -1,5 +1,18 @@
 import { useMemo } from 'react';
-import { getCardDisplayPower } from '@/lib/power-utils';
+import {
+  calcTotalPower,
+  sortByPower,
+  filterByPower as filterByPowerPure,
+  filterByExactPower as filterByExactPowerPure,
+  filterLegendaries as filterLegendariesPure,
+  strongestCards as strongestCardsPure,
+  calcCardStats,
+  shuffleCards,
+  filterByPowerValues as filterByPowerValuesPure,
+  groupByRarity as groupByRarityPure,
+  powerDistribution as powerDistributionPure,
+  powerByCollection as powerByCollectionPure,
+} from '@/lib/utils/card-calculations';
 
 /**
  * 🚀 PERFORMANCE OPTIMIZED HOOKS
@@ -25,17 +38,7 @@ export interface NFT {
  * const power = useTotalPower(selectedCards);
  */
 export function useTotalPower(cards: NFT[]): number {
-  return useMemo(() => {
-    // 🚀 Apply collection buffs (VibeFID 5x, VBMS 2x, Nothing 0.5x)
-    return cards.reduce((sum, card) => {
-      const basePower = card.power || 0;
-      const collection = (card as any).collection;
-      if (collection === 'vibefid') return sum + basePower * 5;
-      if (collection === 'vibe') return sum + basePower * 2;
-      if (collection === 'nothing') return sum + Math.floor(basePower * 0.5);
-      return sum + basePower;
-    }, 0);
-  }, [cards]);
+  return useMemo(() => calcTotalPower(cards), [cards]);
 }
 
 /**
@@ -46,9 +49,7 @@ export function useTotalPower(cards: NFT[]): number {
  * const sortedNFTs = useSortedByPower(nfts);
  */
 export function useSortedByPower(nfts: NFT[]): NFT[] {
-  return useMemo(() => {
-    return [...nfts].sort((a, b) => getCardDisplayPower(b) - getCardDisplayPower(a));
-  }, [nfts]);
+  return useMemo(() => sortByPower(nfts), [nfts]);
 }
 
 /**
@@ -62,15 +63,7 @@ export function useFilterByPower(
   minPower: number,
   maxPower?: number
 ): NFT[] {
-  return useMemo(() => {
-    return nfts.filter((nft) => {
-      const power = nft.power || 0;
-      if (maxPower !== undefined) {
-        return power >= minPower && power <= maxPower;
-      }
-      return power === minPower;
-    });
-  }, [nfts, minPower, maxPower]);
+  return useMemo(() => filterByPowerPure(nfts, minPower, maxPower), [nfts, minPower, maxPower]);
 }
 
 /**
@@ -80,9 +73,7 @@ export function useFilterByPower(
  * const power15Cards = useFilterByExactPower(nfts, 15);
  */
 export function useFilterByExactPower(nfts: NFT[], power: number): NFT[] {
-  return useMemo(() => {
-    return nfts.filter((nft) => (nft.power || 0) === power);
-  }, [nfts, power]);
+  return useMemo(() => filterByExactPowerPure(nfts, power), [nfts, power]);
 }
 
 /**
@@ -92,12 +83,7 @@ export function useFilterByExactPower(nfts: NFT[], power: number): NFT[] {
  * const legendaries = useFilterLegendaries(nfts);
  */
 export function useFilterLegendaries(nfts: NFT[]): NFT[] {
-  return useMemo(() => {
-    return nfts.filter((nft) => {
-      const rarity = (nft.rarity || '').toLowerCase();
-      return rarity.includes('legend');
-    });
-  }, [nfts]);
+  return useMemo(() => filterLegendariesPure(nfts), [nfts]);
 }
 
 /**
@@ -108,10 +94,7 @@ export function useFilterLegendaries(nfts: NFT[]): NFT[] {
  * const top5 = useStrongestCards(nfts, 5);
  */
 export function useStrongestCards(nfts: NFT[], count: number): NFT[] {
-  return useMemo(() => {
-    const sorted = [...nfts].sort((a, b) => getCardDisplayPower(b) - getCardDisplayPower(a));
-    return sorted.slice(0, count);
-  }, [nfts, count]);
+  return useMemo(() => strongestCardsPure(nfts, count), [nfts, count]);
 }
 
 /**
@@ -128,31 +111,7 @@ export function useCardStats(cards: NFT[]): {
   minPower: number;
   count: number;
 } {
-  return useMemo(() => {
-    if (cards.length === 0) {
-      return {
-        totalPower: 0,
-        avgPower: 0,
-        maxPower: 0,
-        minPower: 0,
-        count: 0,
-      };
-    }
-
-    const powers = cards.map((c) => c.power || 0);
-    const totalPower = powers.reduce((sum, p) => sum + p, 0);
-    const avgPower = totalPower / cards.length;
-    const maxPower = Math.max(...powers);
-    const minPower = Math.min(...powers);
-
-    return {
-      totalPower,
-      avgPower: Math.round(avgPower),
-      maxPower,
-      minPower,
-      count: cards.length,
-    };
-  }, [cards]);
+  return useMemo(() => calcCardStats(cards), [cards]);
 }
 
 /**
@@ -163,9 +122,7 @@ export function useCardStats(cards: NFT[]): {
  * const shuffled = useShuffledCards(nfts, Date.now());
  */
 export function useShuffledCards(nfts: NFT[], shuffleKey?: number): NFT[] {
-  return useMemo(() => {
-    return [...nfts].sort(() => Math.random() - 0.5);
-  }, [nfts, shuffleKey]);
+  return useMemo(() => shuffleCards(nfts), [nfts, shuffleKey]);
 }
 
 /**
@@ -175,12 +132,7 @@ export function useShuffledCards(nfts: NFT[], shuffleKey?: number): NFT[] {
  * const goofyCards = useFilterByPowerValues(nfts, [18, 21]);
  */
 export function useFilterByPowerValues(nfts: NFT[], powers: number[]): NFT[] {
-  return useMemo(() => {
-    return nfts.filter((nft) => {
-      const power = nft.power || 0;
-      return powers.includes(power);
-    });
-  }, [nfts, powers]);
+  return useMemo(() => filterByPowerValuesPure(nfts, powers), [nfts, powers]);
 }
 
 /**
@@ -191,19 +143,7 @@ export function useFilterByPowerValues(nfts: NFT[], powers: number[]): NFT[] {
  * // { common: [...], rare: [...], legendary: [...] }
  */
 export function useGroupedByRarity(nfts: NFT[]): Record<string, NFT[]> {
-  return useMemo(() => {
-    const groups: Record<string, NFT[]> = {};
-
-    nfts.forEach((nft) => {
-      const rarity = (nft.rarity || 'unknown').toLowerCase();
-      if (!groups[rarity]) {
-        groups[rarity] = [];
-      }
-      groups[rarity].push(nft);
-    });
-
-    return groups;
-  }, [nfts]);
+  return useMemo(() => groupByRarityPure(nfts), [nfts]);
 }
 
 /**
@@ -215,16 +155,7 @@ export function useGroupedByRarity(nfts: NFT[]): Record<string, NFT[]> {
  * // { 15: 5, 18: 10, 21: 8, ... }
  */
 export function usePowerDistribution(nfts: NFT[]): Record<number, number> {
-  return useMemo(() => {
-    const distribution: Record<number, number> = {};
-
-    nfts.forEach((nft) => {
-      const power = nft.power || 0;
-      distribution[power] = (distribution[power] || 0) + 1;
-    });
-
-    return distribution;
-  }, [nfts]);
+  return useMemo(() => powerDistributionPure(nfts), [nfts]);
 }
 
 /**
@@ -240,30 +171,5 @@ export function usePowerByCollection(nfts: NFT[]): {
   vbrsPower: number;
   vibefidPower: number;
 } {
-  return useMemo(() => {
-    const powers = {
-      vibePower: 0,
-      vbrsPower: 0,
-      vibefidPower: 0,
-    };
-
-    nfts.forEach((nft) => {
-      const power = nft.power || 0;
-      const collectionId = nft.collectionId?.toLowerCase() || 'vibe';
-
-      // Map collection ID to power field
-      if (collectionId === 'vibe' || collectionId === 'custom') {
-        powers.vibePower += power;
-      } else if (collectionId === 'gmvbrs') {
-        powers.vbrsPower += power;
-      } else if (collectionId === 'vibefid') {
-        powers.vibefidPower += power;
-      } else {
-        // Default to vibe for unknown collections
-        powers.vibePower += power;
-      }
-    });
-
-    return powers;
-  }, [nfts]);
+  return useMemo(() => powerByCollectionPure(nfts), [nfts]);
 }
