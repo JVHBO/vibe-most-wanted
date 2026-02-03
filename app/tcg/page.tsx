@@ -4406,7 +4406,6 @@ export default function TCGPage() {
         }
       });
 
-      playSound("turn");
       await submitActions({
         matchId: currentMatchId,
         address,
@@ -5573,11 +5572,11 @@ export default function TCGPage() {
                       </div>
                       <div className="flex justify-between text-[10px]">
                         <span className="text-vintage-burnt-gold/50">Defense Win:</span>
-                        <span className="text-green-400 font-bold">+{Math.floor(selectedPoolTier * 0.1 * 0.9).toLocaleString()} VBMS</span>
+                        <span className="text-green-400 font-bold">+{Math.floor(selectedPoolTier * 0.1 * 0.9).toLocaleString()} coins</span>
                       </div>
                       <div className="flex justify-between text-[10px]">
                         <span className="text-vintage-burnt-gold/50">Defense Lose:</span>
-                        <span className="text-red-400 font-bold">-{Math.floor(selectedPoolTier * 0.1 * 0.9).toLocaleString()} VBMS</span>
+                        <span className="text-red-400 font-bold">-{selectedPoolTier.toLocaleString()} VBMS (entire pool)</span>
                       </div>
                       <div className="flex justify-between text-[10px]">
                         <span className="text-vintage-burnt-gold/50">Contract Tax:</span>
@@ -5670,7 +5669,7 @@ export default function TCGPage() {
                   <p className="text-[9px] text-orange-400/70 uppercase tracking-wider mb-1">Attack Fee (10%)</p>
                   <p className="text-xl font-bold text-orange-400">{attackConfirmTarget.attackFee.toLocaleString()} VBMS</p>
                   <p className="text-[9px] text-vintage-burnt-gold/50 mt-1">
-                    Win: +{Math.floor(attackConfirmTarget.attackFee * 0.9).toLocaleString()} | Lose: -{attackConfirmTarget.attackFee.toLocaleString()}
+                    Win: +{attackConfirmTarget.poolAmount.toLocaleString()} (entire pool) | Lose: -{attackConfirmTarget.attackFee.toLocaleString()}
                   </p>
                 </div>
 

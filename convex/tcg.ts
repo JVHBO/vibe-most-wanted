@@ -1649,7 +1649,15 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   // Track energy spent this turn
   let p1EnergyRemaining = gs.player1Energy || gs.currentTurn;
 
-  for (const action of (gs.player1Actions || [])) {
+  // Sort hand-modifying actions by descending cardIndex so splice doesn't shift subsequent indices
+  const p1Actions = [...(gs.player1Actions || [])];
+  const p1HandActions = p1Actions
+    .filter((a: any) => a.type === "play" || a.type === "sacrifice-hand")
+    .sort((a: any, b: any) => b.cardIndex - a.cardIndex);
+  const p1LaneActions = p1Actions.filter((a: any) => a.type === "sacrifice-lane");
+  const p1SortedActions = [...p1HandActions, ...p1LaneActions];
+
+  for (const action of p1SortedActions) {
     // Validate action before processing
     if (action.targetLane !== undefined && (action.targetLane < 0 || action.targetLane > 2)) {
       console.warn(`P1 invalid targetLane: ${action.targetLane}, skipping action`);
@@ -1712,7 +1720,15 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   // Track energy spent this turn
   let p2EnergyRemaining = gs.player2Energy || gs.currentTurn;
 
-  for (const action of (gs.player2Actions || [])) {
+  // Sort hand-modifying actions by descending cardIndex so splice doesn't shift subsequent indices
+  const p2Actions = [...(gs.player2Actions || [])];
+  const p2HandActions = p2Actions
+    .filter((a: any) => a.type === "play" || a.type === "sacrifice-hand")
+    .sort((a: any, b: any) => b.cardIndex - a.cardIndex);
+  const p2LaneActions = p2Actions.filter((a: any) => a.type === "sacrifice-lane");
+  const p2SortedActions = [...p2HandActions, ...p2LaneActions];
+
+  for (const action of p2SortedActions) {
     // Validate action before processing
     if (action.targetLane !== undefined && (action.targetLane < 0 || action.targetLane > 2)) {
       console.warn(`P2 invalid targetLane: ${action.targetLane}, skipping action`);
@@ -3302,8 +3318,6 @@ export const finishStakedMatch = mutation({
     const attackFee = match.stakeAmount || 0;
     // Contract tax = 10% of attack fee (stays in contract as sink)
     const contractTax = Math.floor(attackFee * POOL_FEE_PERCENT / 100);
-    // Winner gets 90% of attack fee
-    const winnerReward = attackFee - contractTax;
 
     const winnerAddr = args.winnerAddress.toLowerCase();
     const p1Addr = (match.player1Address || "").toLowerCase();
@@ -3311,7 +3325,140 @@ export const finishStakedMatch = mutation({
     const isPlayer1Winner = winnerAddr === p1Addr;
     const loserAddr = isPlayer1Winner ? p2Addr : p1Addr;
 
-    // Award winner - directly to coins balance
+    // If CPU match - determine rewards based on new pool mechanics
+    if (match.isCpuOpponent) {
+      // Defender is player2 (CPU side), Attacker is player1
+      const defenderAddr = p2Addr;
+      const attackerAddr = p1Addr;
+      const attackerWon = isPlayer1Winner;
+
+      // Find defender's deck
+      const defenderDecks = await ctx.db
+        .query("tcgDecks")
+        .withIndex("by_address", (q: any) => q.eq("address", match.player2Address || ""))
+        .collect();
+
+      const defenderDeck = defenderDecks.find((d: any) =>
+        d.defensePoolActive === true
+      );
+
+      const defenderPool = defenderDeck?.defensePool || 0;
+
+      if (attackerWon) {
+        // ATTACKER WINS: gets the entire defender pool
+        const winnerReward = defenderPool;
+
+        // Award attacker coins
+        const attackerProfile = await ctx.db
+          .query("profiles")
+          .withIndex("by_address", (q: any) => q.eq("address", attackerAddr))
+          .first();
+
+        if (attackerProfile) {
+          const currentCoins = attackerProfile.coins || 0;
+          await ctx.db.patch(attackerProfile._id, {
+            coins: currentCoins + winnerReward,
+            lifetimeEarned: (attackerProfile.lifetimeEarned || 0) + winnerReward,
+            lastUpdated: Date.now(),
+          });
+
+          await ctx.db.insert("coinTransactions", {
+            address: attackerAddr,
+            amount: winnerReward,
+            type: "earn",
+            source: "tcg_staked_win",
+            description: `Won pool attack: +${winnerReward} VBMS (entire pool)`,
+            timestamp: Date.now(),
+            balanceBefore: currentCoins,
+            balanceAfter: currentCoins + winnerReward,
+          });
+        }
+
+        // Zero out defender's pool
+        if (defenderDeck) {
+          await ctx.db.patch(defenderDeck._id, {
+            defensePool: 0,
+            defensePoolActive: false,
+            isDefenseDeck: false,
+          });
+        }
+
+        // Remove from leaderboard
+        const leaderboardEntry = await ctx.db
+          .query("tcgDefenseLeaderboard")
+          .withIndex("by_address", (q: any) => q.eq("address", defenderAddr))
+          .first();
+
+        if (leaderboardEntry) {
+          await ctx.db.patch(leaderboardEntry._id, {
+            totalLosses: leaderboardEntry.totalLosses + 1,
+            totalLost: leaderboardEntry.totalLost + winnerReward,
+            poolAmount: 0,
+            lastUpdated: Date.now(),
+          });
+          await ctx.db.delete(leaderboardEntry._id);
+        }
+
+        await ctx.db.patch(args.matchId, { stakePaid: true } as any);
+        console.log(`💰 Pool attack WON: attacker=${attackerAddr}, reward=${winnerReward} (entire pool), fee=${attackFee}`);
+        return { success: true, winnerReward, attackFee, contractTax };
+
+      } else {
+        // DEFENDER WINS: gets 90% of attack fee in coins. Pool stays the same.
+        const defenderReward = attackFee - contractTax; // 90% of fee
+
+        // Award defender coins
+        const defenderProfile = await ctx.db
+          .query("profiles")
+          .withIndex("by_address", (q: any) => q.eq("address", defenderAddr))
+          .first();
+
+        if (defenderProfile) {
+          const currentCoins = defenderProfile.coins || 0;
+          await ctx.db.patch(defenderProfile._id, {
+            coins: currentCoins + defenderReward,
+            lifetimeEarned: (defenderProfile.lifetimeEarned || 0) + defenderReward,
+            lastUpdated: Date.now(),
+          });
+
+          await ctx.db.insert("coinTransactions", {
+            address: defenderAddr,
+            amount: defenderReward,
+            type: "earn",
+            source: "tcg_staked_defense_win",
+            description: `Defended pool: +${defenderReward} VBMS coins (90% of ${attackFee} fee)`,
+            timestamp: Date.now(),
+            balanceBefore: currentCoins,
+            balanceAfter: currentCoins + defenderReward,
+          });
+        }
+
+        // Pool stays unchanged - no patch needed for defenderDeck pool
+
+        // Update leaderboard (wins count, but pool stays same)
+        const leaderboardEntry = await ctx.db
+          .query("tcgDefenseLeaderboard")
+          .withIndex("by_address", (q: any) => q.eq("address", defenderAddr))
+          .first();
+
+        if (leaderboardEntry) {
+          await ctx.db.patch(leaderboardEntry._id, {
+            totalWins: leaderboardEntry.totalWins + 1,
+            totalEarned: leaderboardEntry.totalEarned + defenderReward,
+            // poolAmount stays the same
+            lastUpdated: Date.now(),
+          });
+        }
+
+        await ctx.db.patch(args.matchId, { stakePaid: true } as any);
+        console.log(`💰 Pool defense WON: defender=${defenderAddr}, reward=${defenderReward} coins, pool unchanged at ${defenderPool}, fee=${attackFee}`);
+        return { success: true, winnerReward: defenderReward, attackFee, contractTax };
+      }
+    }
+
+    // Non-CPU staked match (PvP staked) - original logic with 90% of fee
+    const winnerReward = attackFee - contractTax;
+
     const winnerProfile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q: any) => q.eq("address", winnerAddr))
@@ -3335,77 +3482,6 @@ export const finishStakedMatch = mutation({
         balanceBefore: currentCoins,
         balanceAfter: currentCoins + winnerReward,
       });
-    }
-
-    // If CPU match - update defender's pool and leaderboard
-    if (match.isCpuOpponent) {
-      // Defender is player2 (CPU side)
-      const defenderAddr = p2Addr;
-      const attackerWon = isPlayer1Winner;
-
-      // Find defender's deck and leaderboard entry
-      const defenderDecks = await ctx.db
-        .query("tcgDecks")
-        .withIndex("by_address", (q: any) => q.eq("address", match.player2Address || ""))
-        .collect();
-
-      const defenderDeck = defenderDecks.find((d: any) =>
-        d.defensePoolActive === true
-      );
-
-      if (defenderDeck) {
-        if (attackerWon) {
-          // Attacker won: defender loses winnerReward from pool
-          const newPool = Math.max(0, (defenderDeck.defensePool || 0) - winnerReward);
-          if (newPool <= 0) {
-            // Pool depleted
-            await ctx.db.patch(defenderDeck._id, {
-              defensePool: 0,
-              defensePoolActive: false,
-              isDefenseDeck: false,
-            });
-          } else {
-            await ctx.db.patch(defenderDeck._id, {
-              defensePool: newPool,
-            });
-          }
-        } else {
-          // Defender won (CPU won): defender gains winnerReward in pool
-          await ctx.db.patch(defenderDeck._id, {
-            defensePool: (defenderDeck.defensePool || 0) + winnerReward,
-          });
-        }
-      }
-
-      // Update leaderboard
-      const leaderboardEntry = await ctx.db
-        .query("tcgDefenseLeaderboard")
-        .withIndex("by_address", (q: any) => q.eq("address", defenderAddr))
-        .first();
-
-      if (leaderboardEntry) {
-        if (attackerWon) {
-          // Defender lost - loses winnerReward from pool
-          const newPool = Math.max(0, leaderboardEntry.poolAmount - winnerReward);
-          await ctx.db.patch(leaderboardEntry._id, {
-            totalLosses: leaderboardEntry.totalLosses + 1,
-            totalLost: leaderboardEntry.totalLost + winnerReward,
-            poolAmount: newPool,
-            lastUpdated: Date.now(),
-          });
-          if (newPool <= 0) {
-            await ctx.db.delete(leaderboardEntry._id);
-          }
-        } else {
-          // Defender won - gains winnerReward
-          await ctx.db.patch(leaderboardEntry._id, {
-            totalWins: leaderboardEntry.totalWins + 1,
-            totalEarned: leaderboardEntry.totalEarned + winnerReward,
-            poolAmount: leaderboardEntry.poolAmount + winnerReward,
-            lastUpdated: Date.now(),
-          });
-        }
-      }
     }
 
     // Mark match as stake-paid to prevent double processing
