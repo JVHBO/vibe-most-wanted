@@ -34,6 +34,13 @@ const TCG_CONFIG = {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const TCG_ABILITIES: Record<string, { type: string; effect: any }> = {
+  // VIBEFID ABILITIES (by rarity)
+  "vibefid_common": { type: "onReveal", effect: { action: "vibefidFirstCast", value: 5 } },
+  "vibefid_rare": { type: "ongoing", effect: { action: "vibefidReplyGuy", value: 0.5 } },
+  "vibefid_epic": { type: "ongoing", effect: { action: "vibefidVerified" } },
+  "vibefid_legendary": { type: "onReveal", effect: { action: "vibefidRatio" } },
+  "vibefid_mythic": { type: "onReveal", effect: { action: "vibefidDoxxed" } },
+
   // MYTHIC
   "neymar": { type: "onReveal", effect: { action: "buffAllLanes", value: 30 } },
   "anon": { type: "ongoing", effect: { action: "untargetable", buffPerTurn: 10 } },
@@ -220,9 +227,15 @@ function calculateLanePower(cards: any[]): number {
 }
 
 /**
- * Get card ability by name
+ * Get card ability by name (or by rarity for VibeFID cards)
  */
-function getCardAbility(cardName: string): { type: string; effect: any } | null {
+function getCardAbility(cardName: string, card?: any): { type: string; effect: any } | null {
+  // VibeFID cards: ability based on rarity, not name
+  if (card?.type === "vibefid" && card?.rarity) {
+    const rarityKey = `vibefid_${card.rarity.toLowerCase()}`;
+    return TCG_ABILITIES[rarityKey] || null;
+  }
+
   if (!cardName) return null;
   const normalized = cardName.toLowerCase().trim();
   const aliased = CARD_NAME_ALIASES[normalized] || normalized;
@@ -246,7 +259,7 @@ function applyOnRevealAbility(
   currentTurn: number,
   totalCardsPlayed: number
 ): { bonusPower: number; hand: any[]; deck: any[]; lanes: any[]; energyConsumed: number } {
-  const ability = getCardAbility(card.name);
+  const ability = getCardAbility(card.name, card);
   if (!ability || ability.type !== "onReveal") {
     return { bonusPower: 0, hand, deck, lanes, energyConsumed: 0 };
   }
@@ -661,6 +674,45 @@ function applyOnRevealAbility(
       bonusPower = 0; // Already applied during move
       break;
 
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // VIBEFID ABILITIES (onReveal)
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    case "vibefidFirstCast":
+      // +5 power for each card already played on field
+      bonusPower = totalCardsPlayed * (effect.value || 5);
+      console.log(`📱 VibeFID First Cast: +${bonusPower} power (${totalCardsPlayed} cards played)`);
+      break;
+
+    case "vibefidRatio": {
+      // Power becomes EQUAL to strongest card on field
+      let strongestPower = 0;
+      newLanes.forEach((lane: any) => {
+        lane[myCards].forEach((c: any) => {
+          const power = calculateCardPower(c);
+          if (power > strongestPower) strongestPower = power;
+        });
+        lane[enemyCards].forEach((c: any) => {
+          const power = calculateCardPower(c);
+          if (power > strongestPower) strongestPower = power;
+        });
+      });
+      bonusPower = strongestPower - card.power; // Adjust to match strongest
+      console.log(`👥 VibeFID Ratio: Power set to ${strongestPower} (strongest on field)`);
+      break;
+    }
+
+    case "vibefidDoxxed": {
+      // ADD total power of all enemy cards in this lane
+      let enemyTotalPower = 0;
+      newLanes[laneIndex][enemyCards].forEach((c: any) => {
+        enemyTotalPower += calculateCardPower(c);
+      });
+      bonusPower = enemyTotalPower;
+      console.log(`🌐 VibeFID Doxxed: +${enemyTotalPower} power from enemy lane`);
+      break;
+    }
+
     default:
       // Unknown action, no effect
       break;
@@ -691,7 +743,7 @@ function applyOngoingAbilities(
     // Player 1 cards
     for (let cardIdx = 0; cardIdx < newLanes[laneIdx][player1Cards].length; cardIdx++) {
       const card = newLanes[laneIdx][player1Cards][cardIdx];
-      const ability = getCardAbility(card.name);
+      const ability = getCardAbility(card.name, card);
       if (!ability || ability.type !== "ongoing") continue;
 
       const effect = ability.effect;
@@ -787,13 +839,51 @@ function applyOngoingAbilities(
             console.log(`🖊️ Ink destroyed lone enemy ${loneCard?.name} (${lonePower} power)`);
           }
           break;
+
+        // VIBEFID ONGOING ABILITIES (Player 1)
+        case "vibefidReplyGuy": {
+          // Copy 50% power from strongest friendly in lane
+          let strongestFriendly = 0;
+          newLanes[laneIdx][player1Cards].forEach((c: any, idx: number) => {
+            if (idx !== cardIdx) {
+              const power = calculateCardPower(c);
+              if (power > strongestFriendly) strongestFriendly = power;
+            }
+          });
+          const copyAmount = Math.floor(strongestFriendly * (effect.value || 0.5));
+          if (copyAmount > 0) {
+            newLanes[laneIdx][player1Cards][cardIdx] = { ...card, power: card.power + copyAmount };
+            newLanes[laneIdx][player1Power] += copyAmount;
+            console.log(`🔗 VibeFID Reply Guy: +${copyAmount} power (50% of ${strongestFriendly})`);
+          }
+          break;
+        }
+
+        case "vibefidVerified": {
+          // IMMUNE to debuffs + DOUBLE power if losing lane
+          const isLosingLane = newLanes[laneIdx][player1Power] < newLanes[laneIdx][player2Power];
+          if (isLosingLane) {
+            const doublePower = card.power; // Add equal power to double
+            newLanes[laneIdx][player1Cards][cardIdx] = {
+              ...card,
+              power: card.power + doublePower,
+              immune: true
+            };
+            newLanes[laneIdx][player1Power] += doublePower;
+            console.log(`✨ VibeFID Verified: DOUBLED power to ${card.power + doublePower} (losing lane)`);
+          } else {
+            // Just mark as immune
+            newLanes[laneIdx][player1Cards][cardIdx] = { ...card, immune: true };
+          }
+          break;
+        }
       }
     }
 
     // Player 2 cards (same logic, swapped)
     for (let cardIdx = 0; cardIdx < newLanes[laneIdx][player2Cards].length; cardIdx++) {
       const card = newLanes[laneIdx][player2Cards][cardIdx];
-      const ability = getCardAbility(card.name);
+      const ability = getCardAbility(card.name, card);
       if (!ability || ability.type !== "ongoing") continue;
 
       const effect = ability.effect;
@@ -884,6 +974,43 @@ function applyOngoingAbilities(
             console.log(`🖊️ Ink destroyed lone enemy ${loneCard2?.name} (${lonePower2} power)`);
           }
           break;
+
+        // VIBEFID ONGOING ABILITIES (Player 2)
+        case "vibefidReplyGuy": {
+          // Copy 50% power from strongest friendly in lane
+          let strongestFriendly2 = 0;
+          newLanes[laneIdx][player2Cards].forEach((c: any, idx: number) => {
+            if (idx !== cardIdx) {
+              const power = calculateCardPower(c);
+              if (power > strongestFriendly2) strongestFriendly2 = power;
+            }
+          });
+          const copyAmount2 = Math.floor(strongestFriendly2 * (effect.value || 0.5));
+          if (copyAmount2 > 0) {
+            newLanes[laneIdx][player2Cards][cardIdx] = { ...card, power: card.power + copyAmount2 };
+            newLanes[laneIdx][player2Power] += copyAmount2;
+            console.log(`🔗 VibeFID Reply Guy (P2): +${copyAmount2} power (50% of ${strongestFriendly2})`);
+          }
+          break;
+        }
+
+        case "vibefidVerified": {
+          // IMMUNE to debuffs + DOUBLE power if losing lane
+          const isLosingLane2 = newLanes[laneIdx][player2Power] < newLanes[laneIdx][player1Power];
+          if (isLosingLane2) {
+            const doublePower2 = card.power;
+            newLanes[laneIdx][player2Cards][cardIdx] = {
+              ...card,
+              power: card.power + doublePower2,
+              immune: true
+            };
+            newLanes[laneIdx][player2Power] += doublePower2;
+            console.log(`✨ VibeFID Verified (P2): DOUBLED power to ${card.power + doublePower2} (losing lane)`);
+          } else {
+            newLanes[laneIdx][player2Cards][cardIdx] = { ...card, immune: true };
+          }
+          break;
+        }
       }
     }
   }
@@ -1514,13 +1641,13 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   let p2EnergyCostReduction = 0;
   lanes.forEach((lane: any) => {
     lane.player1Cards.forEach((c: any) => {
-      const ability = getCardAbility(c.name);
+      const ability = getCardAbility(c.name, c);
       if (ability?.effect?.action === "reduceEnergyCost") {
         p1EnergyCostReduction += ability.effect.value || 1;
       }
     });
     lane.player2Cards.forEach((c: any) => {
-      const ability = getCardAbility(c.name);
+      const ability = getCardAbility(c.name, c);
       if (ability?.effect?.action === "reduceEnergyCost") {
         p2EnergyCostReduction += ability.effect.value || 1;
       }
@@ -1580,6 +1707,9 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
           lanes[targetLane].player1Cards[action.targetCardIndex].power += buffAmount;
         }
       }
+      // Recalculate lane power after sacrifice
+      lanes[action.targetLane].player1Power = calculateLanePower(lanes[action.targetLane].player1Cards);
+      console.log(`⚔️ P1 sacrifice-lane: recalculated power for lane ${action.targetLane}`);
     }
   }
 
@@ -1741,7 +1871,7 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
     lanes.forEach((lane: any, laneIdx: number) => {
       // Check P1 cards for Vibe Intern
       lane.player1Cards.forEach((card: any, cardIdx: number) => {
-        const ability = getCardAbility(card.name);
+        const ability = getCardAbility(card.name, card);
         if (ability?.effect?.action === "convertEnergyEndGame") {
           const powerGain = p1UnspentEnergy * (ability.effect.powerPerEnergy || 8);
           lanes[laneIdx].player1Cards[cardIdx] = { ...card, power: card.power + powerGain };
@@ -1751,7 +1881,7 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
       });
       // Check P2 cards for Vibe Intern
       lane.player2Cards.forEach((card: any, cardIdx: number) => {
-        const ability = getCardAbility(card.name);
+        const ability = getCardAbility(card.name, card);
         if (ability?.effect?.action === "convertEnergyEndGame") {
           const powerGain = p2UnspentEnergy * (ability.effect.powerPerEnergy || 8);
           lanes[laneIdx].player2Cards[cardIdx] = { ...card, power: card.power + powerGain };
@@ -1875,13 +2005,13 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   let p2EnergyBonus = 0;
   lanes.forEach((lane: any) => {
     lane.player1Cards.forEach((c: any) => {
-      const ability = getCardAbility(c.name);
+      const ability = getCardAbility(c.name, c);
       if (ability?.effect?.action === "energyPerTurn") {
         p1EnergyBonus += ability.effect.value || 1;
       }
     });
     lane.player2Cards.forEach((c: any) => {
-      const ability = getCardAbility(c.name);
+      const ability = getCardAbility(c.name, c);
       if (ability?.effect?.action === "energyPerTurn") {
         p2EnergyBonus += ability.effect.value || 1;
       }
