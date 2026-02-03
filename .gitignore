@@ -220,3 +220,4 @@ public/images/raid-bosses/*
 !public/images/raid-bosses/cumioh/
 !public/images/raid-bosses/viberotbangers/
 .env*.local
+.aider*

@@ -38,6 +38,11 @@ export function useMintPrice(quantity: number = 1) {
     functionName: 'getMintPrice',
     args: [BigInt(quantity)],
     chainId: VBMS_CONTRACTS.chainId,
+    query: {
+      staleTime: 60_000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+    },
   });
 
   return {
@@ -59,7 +64,12 @@ export function useVBMSBalance(address?: `0x${string}`) {
     functionName: 'balanceOf',
     args: address ? [address] : undefined,
     chainId: VBMS_CONTRACTS.chainId,
-    query: { enabled: !!address },
+    query: {
+      enabled: !!address,
+      staleTime: 60_000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+    },
   });
 
   return {
@@ -80,7 +90,12 @@ export function useVBMSAllowance(owner?: `0x${string}`) {
     functionName: 'allowance',
     args: owner ? [owner, VBMS_CONTRACTS.boosterDrop] : undefined,
     chainId: VBMS_CONTRACTS.chainId,
-    query: { enabled: !!owner },
+    query: {
+      enabled: !!owner,
+      staleTime: 30_000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+    },
   });
 
   return {

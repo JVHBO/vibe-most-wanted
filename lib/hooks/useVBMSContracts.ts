@@ -26,6 +26,9 @@ export function useVBMSBalance(address?: `0x${string}`) {
     chainId: CONTRACTS.CHAIN_ID,
     query: {
       enabled: !!address,
+      staleTime: 60_000, // Cache for 60s to reduce RPC calls
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
     },
   });
 
@@ -50,6 +53,9 @@ export function useVBMSAllowance(owner?: `0x${string}`, spender?: `0x${string}`)
     chainId: CONTRACTS.CHAIN_ID,
     query: {
       enabled: !!(owner && spender),
+      staleTime: 30_000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
     },
   });
 
@@ -111,6 +117,11 @@ export function usePoolBalance() {
     functionName: 'balanceOf',
     args: [CONTRACTS.VBMSPoolTroll as `0x${string}`],
     chainId: CONTRACTS.CHAIN_ID,
+    query: {
+      staleTime: 60_000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+    },
   });
 
   return {
@@ -134,6 +145,9 @@ export function useDailyClaimInfo(address?: `0x${string}`) {
     chainId: CONTRACTS.CHAIN_ID,
     query: {
       enabled: !!address,
+      staleTime: 30_000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
     },
   });
 
