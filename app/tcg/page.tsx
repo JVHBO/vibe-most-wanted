@@ -1289,6 +1289,11 @@ export default function TCGPage() {
   const REWARDED_BATTLES_PER_DAY = 5; // First 5 battles give AURA reward
   const BATTLE_AURA_REWARD = 85; // AURA reward per win (first 5 daily)
 
+  // PvP animation state - track previous game state to detect changes
+  const prevPvPGameStateRef = useRef<any>(null);
+  const [pvpPowerChanges, setPvpPowerChanges] = useState<Record<string, number>>({});
+  const [pvpCardAnimClass, setPvpCardAnimClass] = useState<Record<string, string>>({});
+
   // Battle Log
   type BattleLogEntry = { turn: number; player: "you" | "cpu" | "opponent"; action: string; lane: number; cardName: string };
   const [battleLog, setBattleLog] = useState<BattleLogEntry[]>([]);
@@ -4432,6 +4437,9 @@ export default function TCGPage() {
   // Watch for match state changes
   useEffect(() => {
     if (currentMatch?.status === "in-progress" && view === "waiting") {
+      prevPvPGameStateRef.current = null; // Reset PvP animation tracking for new match
+      setPvpPowerChanges({});
+      setPvpCardAnimClass({});
       setView("battle");
     }
     if (currentMatch?.status === "finished" && view !== "result") {
@@ -4577,6 +4585,115 @@ export default function TCGPage() {
       return () => clearTimeout(autoMatchTimer);
     }
   }, [autoMatch, view, isPvE, pveGameState?.gameOver]);
+
+  // PvP state change detection - detect new cards, power changes, trigger sounds/animations
+  useEffect(() => {
+    if (!currentMatch?.gameState || isPvE || view !== "battle") return;
+    const gs = currentMatch.gameState;
+    const prev = prevPvPGameStateRef.current;
+    const isPlayer1 = currentMatch.player1Address === address?.toLowerCase();
+    const myCards = isPlayer1 ? "player1Cards" : "player2Cards";
+    const enemyCards = isPlayer1 ? "player2Cards" : "player1Cards";
+    const myPowerKey = isPlayer1 ? "player1Power" : "player2Power";
+    const enemyPowerKey = isPlayer1 ? "player2Power" : "player1Power";
+
+    if (prev) {
+      const turnChanged = prev.currentTurn !== gs.currentTurn;
+
+      if (turnChanged) {
+        playSound("turn");
+
+        // Detect changes per lane
+        const newPowerChanges: Record<string, number> = {};
+        const newAnimClasses: Record<string, string> = {};
+
+        gs.lanes.forEach((lane: any, laneIndex: number) => {
+          const prevLane = prev.lanes?.[laneIndex];
+          if (!prevLane) return;
+
+          const prevEnemyCards = prevLane[enemyCards] || [];
+          const currEnemyCards = lane[enemyCards] || [];
+          const prevMyCards = prevLane[myCards] || [];
+          const currMyCards = lane[myCards] || [];
+
+          // Detect new enemy cards (card flip animation)
+          if (currEnemyCards.length > prevEnemyCards.length) {
+            for (let i = prevEnemyCards.length; i < currEnemyCards.length; i++) {
+              newAnimClasses[`${laneIndex}-enemy-${i}`] = "tcg-card-flip";
+            }
+            playSound("card");
+
+            // Check if new cards have abilities
+            const newCards = currEnemyCards.slice(prevEnemyCards.length);
+            if (newCards.some((c: any) => getCardAbility(c.name, c))) {
+              setTimeout(() => playSound("ability"), 300);
+            }
+          }
+
+          // Detect new player cards revealed (cards submitted last turn)
+          if (currMyCards.length > prevMyCards.length) {
+            for (let i = prevMyCards.length; i < currMyCards.length; i++) {
+              newAnimClasses[`${laneIndex}-player-${i}`] = "tcg-card-flip";
+            }
+          }
+
+          // Detect cards that became revealed (face-down → face-up)
+          currEnemyCards.forEach((card: any, idx: number) => {
+            const prevCard = prevEnemyCards[idx];
+            if (prevCard && prevCard._revealed === false && card._revealed !== false) {
+              newAnimClasses[`${laneIndex}-enemy-${idx}`] = "tcg-card-flip";
+            }
+          });
+          currMyCards.forEach((card: any, idx: number) => {
+            const prevCard = prevMyCards[idx];
+            if (prevCard && prevCard._revealed === false && card._revealed !== false) {
+              newAnimClasses[`${laneIndex}-player-${idx}`] = "tcg-card-flip";
+            }
+          });
+
+          // Detect power changes (floating numbers)
+          const prevMyPower = prevLane[myPowerKey] || 0;
+          const currMyPower = lane[myPowerKey] || 0;
+          const prevEnemyPower = prevLane[enemyPowerKey] || 0;
+          const currEnemyPower = lane[enemyPowerKey] || 0;
+
+          if (currMyPower !== prevMyPower) {
+            newPowerChanges[`${laneIndex}-player`] = currMyPower - prevMyPower;
+          }
+          if (currEnemyPower !== prevEnemyPower) {
+            newPowerChanges[`${laneIndex}-enemy`] = currEnemyPower - prevEnemyPower;
+          }
+
+          // Detect stolen/destroyed cards
+          if (currEnemyCards.length < prevEnemyCards.length) {
+            playSound("bomb");
+          }
+          if (currMyCards.length < prevMyCards.length) {
+            playSound("bomb");
+          }
+        });
+
+        // Apply animations
+        if (Object.keys(newAnimClasses).length > 0) {
+          setPvpCardAnimClass(newAnimClasses);
+          setTimeout(() => setPvpCardAnimClass({}), 800);
+        }
+
+        // Apply power change floats
+        if (Object.keys(newPowerChanges).length > 0) {
+          setPvpPowerChanges(newPowerChanges);
+          setTimeout(() => setPvpPowerChanges({}), 1200);
+        }
+
+        // Sound for draw (new card in hand)
+        setTimeout(() => playSound("draw"), 500);
+      }
+    }
+
+    // Save current state as deep copy
+    prevPvPGameStateRef.current = JSON.parse(JSON.stringify(gs));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMatch?.gameState?.currentTurn, view, isPvE]);
 
   // Load daily battles count from localStorage
   useEffect(() => {
@@ -7999,6 +8116,14 @@ export default function TCGPage() {
 
                   {/* Enemy Cards (top) - Grid 2x2 style */}
                   <div className="flex-1 flex items-start justify-center pt-1 px-1 overflow-hidden">
+                    {/* Floating power change for enemy side */}
+                    {pvpPowerChanges[`${laneIndex}-enemy`] && (
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+                        <span className={`text-lg font-black animate-[floatUp_0.8s_ease-out_forwards] ${pvpPowerChanges[`${laneIndex}-enemy`] > 0 ? "text-red-400" : "text-green-400"}`}>
+                          {pvpPowerChanges[`${laneIndex}-enemy`] > 0 ? `+${pvpPowerChanges[`${laneIndex}-enemy`]}` : pvpPowerChanges[`${laneIndex}-enemy`]}
+                        </span>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-1 min-h-[124px]">
                       {enemyLaneCards.map((card: any, idx: number) => {
                         const ability = getCardAbility(card.name, card);
@@ -8008,12 +8133,13 @@ export default function TCGPage() {
                         const cardImageUrl = getCardDisplayImageUrl(card);
                         const isRevealed = (card as any)._revealed !== false;
                         const coverUrl = getCollectionCoverUrl(card.collection, card.rarity);
+                        const pvpAnim = pvpCardAnimClass[`${laneIndex}-enemy-${idx}`] || "";
 
                         return (
                           <div
                             key={idx}
                             onClick={() => isRevealed && setDetailCard(card)}
-                            className={`relative w-10 h-[58px] rounded-md cursor-pointer hover:scale-105 transition-all overflow-hidden ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"}`}
+                            className={`relative w-10 h-[58px] rounded-md cursor-pointer hover:scale-105 transition-all overflow-hidden ${pvpAnim || (!isRevealed ? "tcg-card-back" : "tcg-card-flip")}`}
                             style={{
                               boxShadow: isRevealed ? "0 2px 6px rgba(0,0,0,0.6), 0 0 0 1px rgba(239,68,68,0.5)" : "0 2px 6px rgba(0,0,0,0.8), 0 0 0 1px rgba(100,100,100,0.5)"
                             }}
@@ -8111,12 +8237,21 @@ export default function TCGPage() {
                         <span className="text-green-400 text-xs font-bold bg-black/60 px-2 py-1 rounded">{t('tcgPlay2')}</span>
                       </div>
                     )}
+                    {/* Floating power change for player side */}
+                    {pvpPowerChanges[`${laneIndex}-player`] && (
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+                        <span className={`text-lg font-black animate-[floatUp_0.8s_ease-out_forwards] ${pvpPowerChanges[`${laneIndex}-player`] > 0 ? "text-green-400" : "text-red-400"}`}>
+                          {pvpPowerChanges[`${laneIndex}-player`] > 0 ? `+${pvpPowerChanges[`${laneIndex}-player`]}` : pvpPowerChanges[`${laneIndex}-player`]}
+                        </span>
+                      </div>
+                    )}
                     <div className="grid grid-cols-2 gap-1 min-h-[124px]">
                       {myLaneCards.map((card: any, idx: number) => {
                         const ability = getCardAbility(card.name, card);
                         const isRevealed = (card as any)._revealed !== false;
                         const cardImageUrl = getCardDisplayImageUrl(card);
                         const coverUrl = getCollectionCoverUrl(card.collection, card.rarity);
+                        const pvpAnim = pvpCardAnimClass[`${laneIndex}-player-${idx}`] || "";
 
                         return (
                           <div
@@ -8125,7 +8260,7 @@ export default function TCGPage() {
                               e.stopPropagation();
                               if (isRevealed) setDetailCard(card);
                             }}
-                            className={`relative w-10 h-[58px] rounded-md cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${isRevealed ? getFoilClass(card.foil) : ""} ${!isRevealed ? "tcg-card-back" : "tcg-card-flip"}`}
+                            className={`relative w-10 h-[58px] rounded-md cursor-pointer hover:scale-110 hover:z-30 transition-all overflow-hidden ${isRevealed ? getFoilClass(card.foil) : ""} ${pvpAnim || (!isRevealed ? "tcg-card-back" : "tcg-card-flip")}`}
                             style={{
                               zIndex: idx,
                               boxShadow: isRevealed ? "0 2px 8px rgba(0,0,0,0.6), 0 0 0 1px rgba(59,130,246,0.5)" : "0 2px 8px rgba(0,0,0,0.8), 0 0 0 1px rgba(100,100,100,0.5)"
@@ -8150,7 +8285,7 @@ export default function TCGPage() {
                                   <span className="text-[8px] font-black text-white">{card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power}</span>
                                 </div>
                                 {ability && (
-                                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full flex items-center justify-center text-[6px] font-bold ${
+                                  <div className={`absolute top-0.5 left-0.5 w-3 h-3 rounded-full flex items-center justify-center text-[6px] font-bold z-10 ${
                                     ability.type === "onReveal" ? "bg-orange-500" : "bg-green-500"
                                   }`}>
                                     {ability.type === "onReveal" ? "R" : "O"}
