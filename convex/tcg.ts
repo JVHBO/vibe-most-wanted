@@ -131,9 +131,7 @@ const CARD_NAME_ALIASES: Record<string, string> = {
 function shuffleDeck<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
-    const randomBytes = new Uint32Array(1);
-    crypto.getRandomValues(randomBytes);
-    const j = randomBytes[0] % (i + 1);
+    const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
@@ -145,10 +143,8 @@ function shuffleDeck<T>(array: T[]): T[] {
 function generateRoomId(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let result = "";
-  const randomBytes = new Uint32Array(6);
-  crypto.getRandomValues(randomBytes);
   for (let i = 0; i < 6; i++) {
-    result += chars[randomBytes[i] % chars.length];
+    result += chars[Math.floor(Math.random() * chars.length)];
   }
   return result;
 }
@@ -1110,22 +1106,18 @@ function generateCpuActions(gameState: any): any[] {
 }
 
 /**
- * Crypto-secure random boolean (dice roll)
+ * Random boolean (dice roll)
  */
 function randomCoinFlip(): boolean {
-  const randomBytes = new Uint32Array(1);
-  crypto.getRandomValues(randomBytes);
-  return randomBytes[0] % 2 === 0;
+  return Math.random() < 0.5;
 }
 
 /**
- * Crypto-secure random integer [0, max)
+ * Random integer [0, max)
  */
 function secureRandomInt(max: number): number {
   if (max <= 0) return 0;
-  const randomBytes = new Uint32Array(1);
-  crypto.getRandomValues(randomBytes);
-  return randomBytes[0] % max;
+  return Math.floor(Math.random() * max);
 }
 
 /**
@@ -3128,124 +3120,138 @@ export const autoMatchWithStake = mutation({
     poolTier: v.number(), // Must match a defender's pool amount
   },
   handler: async (ctx, args) => {
-    const addr = args.address.toLowerCase();
+    try {
+      const addr = args.address.toLowerCase();
+      console.log(`[autoMatchWithStake] Start: addr=${addr} poolTier=${args.poolTier}`);
 
-    if (!POOL_TIERS.includes(args.poolTier)) {
-      throw new Error(`Invalid pool tier. Must be one of: ${POOL_TIERS.join(", ")}`);
+      if (!POOL_TIERS.includes(args.poolTier)) {
+        throw new Error(`Invalid pool tier. Must be one of: ${POOL_TIERS.join(", ")}`);
+      }
+
+      // Get player's active deck
+      const activeDeck = await ctx.db
+        .query("tcgDecks")
+        .withIndex("by_address_active", (q: any) =>
+          q.eq("address", addr).eq("isActive", true)
+        )
+        .first();
+
+      if (!activeDeck || !activeDeck.cards || activeDeck.cards.length === 0) {
+        throw new Error("No active deck. Please create and select a deck first.");
+      }
+      console.log(`[autoMatchWithStake] Active deck found: ${activeDeck.cards.length} cards`);
+
+      // Check player profile exists
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q: any) => q.eq("address", addr))
+        .first();
+
+      if (!profile) {
+        throw new Error("Profile not found");
+      }
+
+      // VBMS sent onchain by frontend - no offchain balance check needed
+
+      // Find defense pool decks with matching tier
+      const allDecks = await ctx.db.query("tcgDecks").collect();
+      console.log(`[autoMatchWithStake] Total decks: ${allDecks.length}`);
+      const poolDecks = allDecks.filter((d: any) =>
+        d.defensePoolActive === true &&
+        d.defensePool === args.poolTier &&
+        d.address.toLowerCase() !== addr &&
+        d.cards &&
+        d.cards.length === TCG_CONFIG.DECK_SIZE
+      );
+
+      console.log(`[autoMatchWithStake] Pool decks found: ${poolDecks.length} for tier ${args.poolTier}`);
+
+      if (poolDecks.length === 0) {
+        throw new Error(`No defenders with ${args.poolTier.toLocaleString()} VBMS pool available. Try a different tier!`);
+      }
+
+      // Pick random opponent
+      const randomIndex = Math.floor(Math.random() * poolDecks.length);
+      const opponent = poolDecks[randomIndex];
+
+      // Double-check opponent deck is valid
+      if (!opponent || !opponent.cards || opponent.cards.length !== TCG_CONFIG.DECK_SIZE) {
+        throw new Error("Selected opponent has invalid deck. Try again!");
+      }
+
+      // Get opponent profile for username
+      const opponentProfile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q: any) => q.eq("address", opponent.address))
+        .first();
+
+      const opponentUsername = opponentProfile?.username || "Unknown";
+      console.log(`[autoMatchWithStake] Opponent: ${opponentUsername} (${opponent.address})`);
+
+      // Attack fee = 10% of pool tier (sent onchain by frontend)
+      const attackFee = Math.floor(args.poolTier * 0.1);
+
+      // VBMS already sent onchain - log in Convex
+      await ctx.db.insert("coinTransactions", {
+        address: addr,
+        amount: -attackFee,
+        type: "spend",
+        source: "tcg_staked_match_onchain",
+        description: `Attack fee ${attackFee} VBMS (10% of ${args.poolTier} pool) for VibeClash vs ${opponentUsername}`,
+        timestamp: Date.now(),
+        balanceBefore: 0,
+        balanceAfter: 0,
+      });
+      console.log(`[autoMatchWithStake] Coin transaction inserted`);
+
+      // Remove attacker from matchmaking if present
+      const mm = await ctx.db
+        .query("tcgMatchmaking")
+        .withIndex("by_address", (q: any) => q.eq("address", addr))
+        .first();
+      if (mm) await ctx.db.delete(mm._id);
+
+      // Create match
+      const roomId = generateRoomId();
+      console.log(`[autoMatchWithStake] Room: ${roomId}, initializing game state...`);
+      const gameState = initializeGameState(activeDeck.cards, opponent.cards);
+      console.log(`[autoMatchWithStake] Game state initialized, inserting match...`);
+
+      const matchId = await ctx.db.insert("tcgMatches", {
+        roomId,
+        status: "in-progress",
+        player1Address: addr,
+        player1Username: args.username,
+        player1Deck: activeDeck.cards,
+        player1Ready: true,
+        player2Address: opponent.address,
+        player2Username: opponentUsername,
+        player2Deck: opponent.cards,
+        player2Ready: true,
+        gameState,
+        createdAt: Date.now(),
+        startedAt: Date.now(),
+        expiresAt: Date.now() + (TCG_CONFIG.ROOM_EXPIRY_MINUTES * 60 * 1000),
+        isStakedMatch: true,
+        stakeAmount: attackFee,
+        isCpuOpponent: true,
+      });
+
+      console.log(`[autoMatchWithStake] Match created: ${matchId} | ${args.username} vs ${opponentUsername} fee=${attackFee}`);
+      return {
+        matchId,
+        roomId,
+        opponentUsername,
+        opponentPower: opponent.totalPower,
+        isAutoMatch: true,
+        isCpuOpponent: true,
+        stakeAmount: attackFee,
+        poolTier: args.poolTier,
+      };
+    } catch (err: any) {
+      console.error(`[autoMatchWithStake] ERROR: ${err.message}`, err.stack || '');
+      throw err;
     }
-
-    // Get player's active deck
-    const activeDeck = await ctx.db
-      .query("tcgDecks")
-      .withIndex("by_address_active", (q: any) =>
-        q.eq("address", addr).eq("isActive", true)
-      )
-      .first();
-
-    if (!activeDeck || !activeDeck.cards || activeDeck.cards.length === 0) {
-      throw new Error("No active deck. Please create and select a deck first.");
-    }
-
-    // Check player balance
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q: any) => q.eq("address", addr))
-      .first();
-
-    if (!profile) {
-      throw new Error("Profile not found");
-    }
-
-    // VBMS sent onchain by frontend - no offchain balance check needed
-
-    // Find defense pool decks with matching tier
-    const allDecks = await ctx.db.query("tcgDecks").collect();
-    const poolDecks = allDecks.filter((d: any) =>
-      d.defensePoolActive === true &&
-      d.defensePool === args.poolTier &&
-      d.address.toLowerCase() !== addr &&
-      d.cards &&
-      d.cards.length === TCG_CONFIG.DECK_SIZE
-    );
-
-    if (poolDecks.length === 0) {
-      throw new Error(`No defenders with ${args.poolTier.toLocaleString()} VBMS pool available. Try a different tier!`);
-    }
-
-    // Pick random opponent
-    const randomIndex = Math.floor(Math.random() * poolDecks.length);
-    const opponent = poolDecks[randomIndex];
-
-    // Double-check opponent deck is valid
-    if (!opponent || !opponent.cards || opponent.cards.length !== TCG_CONFIG.DECK_SIZE) {
-      throw new Error("Selected opponent has invalid deck. Try again!");
-    }
-
-    // Get opponent profile for username
-    const opponentProfile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q: any) => q.eq("address", opponent.address))
-      .first();
-
-    const opponentUsername = opponentProfile?.username || "Unknown";
-
-    // Attack fee = 10% of pool tier (sent onchain by frontend)
-    const attackFee = Math.floor(args.poolTier * 0.1);
-
-    // VBMS already sent onchain - log in Convex
-    await ctx.db.insert("coinTransactions", {
-      address: addr,
-      amount: -attackFee,
-      type: "spend",
-      source: "tcg_staked_match_onchain",
-      description: `Attack fee ${attackFee} VBMS (10% of ${args.poolTier} pool) for VibeClash vs ${opponentUsername}`,
-      timestamp: Date.now(),
-      balanceBefore: 0,
-      balanceAfter: 0,
-    });
-
-    // Remove attacker from matchmaking if present
-    const mm = await ctx.db
-      .query("tcgMatchmaking")
-      .withIndex("by_address", (q: any) => q.eq("address", addr))
-      .first();
-    if (mm) await ctx.db.delete(mm._id);
-
-    // Create match
-    const roomId = generateRoomId();
-    const gameState = initializeGameState(activeDeck.cards, opponent.cards);
-
-    const matchId = await ctx.db.insert("tcgMatches", {
-      roomId,
-      status: "in-progress",
-      player1Address: addr,
-      player1Username: args.username,
-      player1Deck: activeDeck.cards,
-      player1Ready: true,
-      player2Address: opponent.address,
-      player2Username: opponentUsername,
-      player2Deck: opponent.cards,
-      player2Ready: true,
-      gameState,
-      createdAt: Date.now(),
-      startedAt: Date.now(),
-      expiresAt: Date.now() + (TCG_CONFIG.ROOM_EXPIRY_MINUTES * 60 * 1000),
-      isStakedMatch: true,
-      stakeAmount: attackFee,
-      isCpuOpponent: true,
-    });
-
-    console.log(`⚔️💰 Staked match: ${args.username} vs ${opponentUsername} (CPU) fee=${attackFee} VBMS (pool=${args.poolTier})`);
-    return {
-      matchId,
-      roomId,
-      opponentUsername,
-      opponentPower: opponent.totalPower,
-      isAutoMatch: true,
-      isCpuOpponent: true,
-      stakeAmount: attackFee,
-      poolTier: args.poolTier,
-    };
   },
 });
 
