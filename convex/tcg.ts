@@ -2699,10 +2699,14 @@ export const withdrawDefensePool = mutation({
       throw new Error("Profile not found");
     }
 
-    // Return pool to coinsInbox (requires claim on home page)
-    const currentInbox = profile.coinsInbox || 0;
-    const newInbox = currentInbox + poolAmount;
-    await ctx.db.patch(profile._id, { coinsInbox: newInbox });
+    // Return pool directly to coins balance
+    const currentCoins = profile.coins || 0;
+    const newCoins = currentCoins + poolAmount;
+    await ctx.db.patch(profile._id, {
+      coins: newCoins,
+      lifetimeEarned: (profile.lifetimeEarned || 0) + poolAmount,
+      lastUpdated: Date.now(),
+    });
 
     // Clear defense pool on deck
     await ctx.db.patch(args.deckId, {
@@ -2729,15 +2733,15 @@ export const withdrawDefensePool = mutation({
       source: "tcg_defense_pool_withdraw",
       description: `Withdrew ${poolAmount} VBMS from defense pool`,
       timestamp: Date.now(),
-      balanceBefore: currentInbox,
-      balanceAfter: newInbox,
+      balanceBefore: currentCoins,
+      balanceAfter: newCoins,
     });
 
     console.log(`🛡️💸 Defense pool withdrawn: ${poolAmount} VBMS for ${addr}`);
     return {
       success: true,
       withdrawn: poolAmount,
-      newInbox
+      newBalance: newCoins
     };
   },
 });
@@ -3124,8 +3128,8 @@ export const autoMatchWithStake = mutation({
       const addr = args.address.toLowerCase();
       console.log(`[autoMatchWithStake] Start: addr=${addr} poolTier=${args.poolTier}`);
 
-      if (!POOL_TIERS.includes(args.poolTier)) {
-        throw new Error(`Invalid pool tier. Must be one of: ${POOL_TIERS.join(", ")}`);
+      if (args.poolTier <= 0) {
+        throw new Error("Invalid pool amount");
       }
 
       // Get player's active deck
@@ -3307,17 +3311,18 @@ export const finishStakedMatch = mutation({
     const isPlayer1Winner = winnerAddr === p1Addr;
     const loserAddr = isPlayer1Winner ? p2Addr : p1Addr;
 
-    // Award winner - to coinsInbox (requires claim)
+    // Award winner - directly to coins balance
     const winnerProfile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q: any) => q.eq("address", winnerAddr))
       .first();
 
     if (winnerProfile) {
-      const currentInbox = winnerProfile.coinsInbox || 0;
+      const currentCoins = winnerProfile.coins || 0;
       await ctx.db.patch(winnerProfile._id, {
-        coinsInbox: currentInbox + winnerReward,
+        coins: currentCoins + winnerReward,
         lifetimeEarned: (winnerProfile.lifetimeEarned || 0) + winnerReward,
+        lastUpdated: Date.now(),
       });
 
       await ctx.db.insert("coinTransactions", {
@@ -3327,8 +3332,8 @@ export const finishStakedMatch = mutation({
         source: "tcg_staked_win",
         description: `Won VibeClash staked match: +${winnerReward} VBMS (fee=${attackFee}, tax=${contractTax})`,
         timestamp: Date.now(),
-        balanceBefore: currentInbox,
-        balanceAfter: currentInbox + winnerReward,
+        balanceBefore: currentCoins,
+        balanceAfter: currentCoins + winnerReward,
       });
     }
 

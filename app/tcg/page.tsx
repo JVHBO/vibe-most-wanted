@@ -4401,6 +4401,7 @@ export default function TCGPage() {
         }
       });
 
+      playSound("turn");
       await submitActions({
         matchId: currentMatchId,
         address,
@@ -4408,6 +4409,7 @@ export default function TCGPage() {
       });
       setPendingActions([]);
     } catch (err: any) {
+      playSound("error");
       setError(err.message || "Failed to submit actions");
     }
   };
@@ -4432,23 +4434,27 @@ export default function TCGPage() {
     if (currentMatch?.status === "in-progress" && view === "waiting") {
       setView("battle");
     }
-    if (currentMatch?.status === "finished") {
-      setView("result");
-
-      // Play victory/defeat sound for PvP
+    if (currentMatch?.status === "finished" && view !== "result") {
+      // Delay to show final round resolution before switching to result
       const isWinner = currentMatch.winnerId === address?.toLowerCase();
       const isDraw = !currentMatch.winnerId || currentMatch.winnerId === "tie";
-      if (!isDraw) {
-        if (isWinner) {
-          playSound("victory");
-        } else {
-          playSound("defeat");
-          // Show defeat bait video after 5 seconds
-          setTimeout(() => setShowDefeatBait(true), 5000);
-        }
-      }
 
-      // Process staked match rewards
+      // Show final lanes for 3 seconds before going to result
+      setTimeout(() => {
+        setView("result");
+
+        // Play victory/defeat sound for PvP
+        if (!isDraw) {
+          if (isWinner) {
+            playSound("victory");
+          } else {
+            playSound("defeat");
+            setTimeout(() => setShowDefeatBait(true), 5000);
+          }
+        }
+      }, 3000);
+
+      // Process staked match rewards immediately
       if ((currentMatch as any)?.isStakedMatch && currentMatch.winnerId && currentMatchId) {
         finishStakedMatchMutation({
           matchId: currentMatchId,
@@ -7627,7 +7633,10 @@ export default function TCGPage() {
     const enemyPower = isPlayer1 ? "player2Power" : "player1Power";
     const myConfirmed = isPlayer1 ? gs.player1Confirmed : gs.player2Confirmed;
     const opponentConfirmed = isPlayer1 ? gs.player2Confirmed : gs.player1Confirmed;
-    const energy = gs.energy || gs.currentTurn || 1;
+    const energy = isPlayer1
+      ? (gs.player1Energy || gs.energy || gs.currentTurn || 1)
+      : (gs.player2Energy || gs.energy || gs.currentTurn || 1);
+    const isFinished = currentMatch.status === "finished";
 
     // Opponent name formatting
     const rawOpponentName = isPlayer1 ? currentMatch.player2Username : currentMatch.player1Username;
@@ -7668,6 +7677,26 @@ export default function TCGPage() {
           <div className="absolute top-[40%] left-[2%] tcg-suit-deco text-2xl">♠</div>
           <div className="absolute top-[50%] right-[3%] tcg-suit-deco text-2xl">♥</div>
         </div>
+
+        {/* Game Over Overlay for PvP - shows final result before switching to result view */}
+        {isFinished && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none animate-fade-in">
+            <div className={`text-center ${
+              currentMatch.winnerId === address?.toLowerCase() ? "text-green-400" : (!currentMatch.winnerId || currentMatch.winnerId === "tie") ? "text-yellow-400" : "text-red-400"
+            }`}>
+              <div className="text-6xl font-black drop-shadow-2xl mb-2 animate-pulse">
+                {currentMatch.winnerId === address?.toLowerCase()
+                  ? `🏆 ${t('tcgVictory')}`
+                  : (!currentMatch.winnerId || currentMatch.winnerId === "tie")
+                    ? `⚖️ TIE`
+                    : `💀 ${t('tcgDefeat')}`}
+              </div>
+              <div className="text-xl font-bold bg-black/50 px-4 py-2 rounded-lg">
+                {gs.lanes.filter((l: any) => (l[myPower] || 0) > (l[enemyPower] || 0)).length} - {gs.lanes.filter((l: any) => (l[enemyPower] || 0) > (l[myPower] || 0)).length}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Content */}
         <div className="relative flex flex-col h-full z-10">
