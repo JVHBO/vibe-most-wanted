@@ -22,10 +22,10 @@ export function useFarcasterVBMSBalance(address?: string) {
     args: address ? [address as `0x${string}`] : undefined,
     query: {
       enabled: !!address,
-      staleTime: 5_000,
-      refetchInterval: 15_000,
-      refetchOnMount: 'always' as const,
-      refetchOnWindowFocus: true,
+      staleTime: 30_000, // 30s stale time to reduce API calls
+      refetchInterval: 60_000, // Poll every 60s instead of 15s
+      refetchOnMount: false, // Don't refetch on every mount
+      refetchOnWindowFocus: false, // Don't refetch on window focus
     },
   });
 

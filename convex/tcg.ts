@@ -3169,11 +3169,12 @@ export const autoMatchWithStake = mutation({
     );
 
     if (poolDecks.length === 0) {
-      throw new Error(`No defenders with ${args.poolTier} VBMS pool available. Try a different tier!`);
+      throw new Error(`No defenders with ${args.poolTier.toLocaleString()} VBMS pool available. Try a different tier!`);
     }
 
-    // Pick random opponent (crypto-secure)
-    const opponent = poolDecks[secureRandomInt(poolDecks.length)];
+    // Pick random opponent
+    const randomIndex = Math.floor(Math.random() * poolDecks.length);
+    const opponent = poolDecks[randomIndex];
 
     // Double-check opponent deck is valid
     if (!opponent || !opponent.cards || opponent.cards.length !== TCG_CONFIG.DECK_SIZE) {

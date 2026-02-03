@@ -1789,11 +1789,23 @@ export default function TCGPage() {
   };
 
   // Calculate energy cost for a card (centralized function)
+  // MUST match backend getCardEnergyCost in convex/tcg.ts
   const getEnergyCost = (card: DeckCard): number => {
-    const baseCost = Math.max(1, Math.ceil(card.power / 30));
+    // Base cost by rarity (same as backend)
+    let baseCost = 1;
+    const rarity = (card.rarity || "").toLowerCase();
+    switch (rarity) {
+      case "mythic": baseCost = 6; break;
+      case "legendary": baseCost = 5; break;
+      case "epic": baseCost = 4; break;
+      case "rare": baseCost = 3; break;
+      case "common": baseCost = 2; break;
+      default: baseCost = 1; break; // Nothing/Other cards cost 1
+    }
+    // Apply foil discount
     const foilEffect = getFoilEffect(card.foil);
     if (!foilEffect) return baseCost;
-    return Math.max(0, Math.floor(baseCost * (1 - foilEffect.energyDiscount)));
+    return Math.max(1, Math.floor(baseCost * (1 - foilEffect.energyDiscount)));
   };
 
   // Get ability type color
@@ -4811,69 +4823,79 @@ export default function TCGPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
 
         {/* ===== TOP HUD ===== */}
-        <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black via-black/95 to-transparent">
+        <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black via-black/90 to-transparent backdrop-blur-sm">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             {/* Left: Back button */}
             <button
               onClick={() => router.push("/")}
-              className="group flex items-center gap-1.5 px-3 py-1.5 text-vintage-burnt-gold/70 hover:text-vintage-gold transition-colors text-[11px] font-medium uppercase tracking-[0.15em]"
+              className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
             >
-              <span className="group-hover:-translate-x-0.5 inline-block transition-transform text-vintage-gold/50 group-hover:text-vintage-gold">←</span>
-              {t('tcgBack')}
+              <span className="group-hover:-translate-x-0.5 inline-block transition-transform">&larr;</span> {t('tcgBack')}
             </button>
 
             {/* Center: Title */}
-            <div className="flex flex-col items-center">
-              <h1 className="text-lg md:text-xl font-black text-vintage-gold uppercase tracking-[0.25em]">
+            <div className="flex items-center gap-2">
+              <h1 className="text-base md:text-xl font-display font-bold text-vintage-gold uppercase tracking-widest">
                 {t('tcgTitle')}
               </h1>
-              <p className="text-[9px] text-vintage-burnt-gold/40 uppercase tracking-[0.3em]">{t('tcgSubtitle')}</p>
+              <button
+                onClick={() => setLobbyTab("rules")}
+                className="w-5 h-5 rounded-full bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50 text-xs font-bold flex items-center justify-center transition-all"
+              >
+                ?
+              </button>
             </div>
 
-            {/* Right: Placeholder for symmetry */}
-            <div className="w-16" />
+            {/* Right: Deck Builder Button */}
+            <button
+              onClick={() => setView("deck-builder")}
+              className="px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+            >
+              {hasDeck ? t('tcgEdit') : t('tcgBuildDeck')}
+            </button>
           </div>
         </div>
 
         {/* ===== MAIN SCROLLABLE CONTENT ===== */}
-        <div className="absolute inset-0 pt-16 pb-2 overflow-y-auto">
-          <div className="max-w-lg mx-auto px-3">
+        <div className="absolute inset-0 pt-16 pb-24 overflow-y-auto">
+          <div className="max-w-4xl mx-auto px-4">
 
           {/* Error */}
           {error && (
-            <div className="bg-red-900/30 border border-red-500/50 text-red-300 px-3 py-1.5 rounded-lg mb-3 text-sm">
-              {error}
+            <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg flex items-center justify-between gap-3">
+              <p className="text-red-300 text-xs flex-1">{error}</p>
+              <button onClick={() => setError(null)} className="text-red-500/50 hover:text-red-400 text-lg leading-none">&times;</button>
             </div>
           )}
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-3">
+          <div className="flex gap-1 mb-4 bg-black/30 p-1 rounded-lg border border-vintage-gold/10">
             <button
               onClick={() => setLobbyTab("play")}
-              className={`flex-1 py-2 px-3 font-bold text-xs uppercase tracking-widest transition-all ${
+              className={`flex-1 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded transition-all ${
                 lobbyTab === "play"
-                  ? "bg-gradient-to-b from-vintage-gold/20 to-vintage-gold/5 border-t border-l border-r border-vintage-gold/40 text-vintage-gold rounded-t-lg border-b-0 shadow-[inset_0_1px_0_rgba(255,215,0,0.1)]"
-                  : "bg-black/20 border border-vintage-gold/10 text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold rounded-lg"
+                  ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30"
+                  : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold hover:bg-black/20"
               }`}
             >
               {t('tcgPlay')}
             </button>
             <button
               onClick={() => setLobbyTab("leaderboard")}
-              className={`flex-1 py-2 px-3 font-bold text-xs uppercase tracking-widest transition-all ${
+              className={`flex-1 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded transition-all ${
                 lobbyTab === "leaderboard"
-                  ? "bg-gradient-to-b from-vintage-gold/20 to-vintage-gold/5 border-t border-l border-r border-vintage-gold/40 text-vintage-gold rounded-t-lg border-b-0 shadow-[inset_0_1px_0_rgba(255,215,0,0.1)]"
-                  : "bg-black/20 border border-vintage-gold/10 text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold rounded-lg"
+                  ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30"
+                  : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold hover:bg-black/20"
               }`}
             >
               Leaderboard
             </button>
             <button
               onClick={() => setLobbyTab("rules")}
-              className={`flex-1 py-2 px-3 font-bold text-xs uppercase tracking-widest transition-all ${
+              className={`flex-1 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded transition-all ${
                 lobbyTab === "rules"
-                  ? "bg-gradient-to-b from-vintage-gold/20 to-vintage-gold/5 border-t border-l border-r border-vintage-gold/40 text-vintage-gold rounded-t-lg border-b-0 shadow-[inset_0_1px_0_rgba(255,215,0,0.1)]"
-                  : "bg-black/20 border border-vintage-gold/10 text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold rounded-lg"
+                  ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30"
+                  : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold hover:bg-black/20"
               }`}
             >
               {t('tcgRules')}
@@ -4882,38 +4904,36 @@ export default function TCGPage() {
 
           {/* Tab Content */}
           {lobbyTab === "play" && (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {/* Active Deck Info */}
               {hasDeck && (
-                <div className="bg-gradient-to-b from-vintage-charcoal/60 to-vintage-charcoal/30 border border-vintage-gold/15 rounded-lg p-3 shadow-lg shadow-black/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[8px] text-vintage-burnt-gold/50 uppercase tracking-[0.2em]">{t('tcgActiveDeck')}</p>
-                      <p className="text-sm font-black text-vintage-gold tracking-wide">{activeDeck.deckName}</p>
-                      <p className="text-[10px] text-vintage-burnt-gold/70">
-                        <span className="text-vintage-burnt-gold">{activeDeck.vbmsCount}</span> VBMS
-                        <span className="text-vintage-gold/30 mx-1.5">•</span>
-                        <span className="text-vintage-burnt-gold">{activeDeck.nothingCount}</span> Nothing
-                        <span className="text-vintage-gold/30 mx-1.5">•</span>
-                        <span className="text-vintage-gold font-bold">{activeDeck.totalPower}</span> PWR
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <button
-                        onClick={() => setView("deck-builder")}
-                        className="px-3 py-1.5 bg-black/40 hover:bg-black/60 text-vintage-burnt-gold/80 hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/40 rounded text-[10px] font-bold uppercase tracking-[0.15em] transition-all"
-                      >
-                        {t('tcgEdit')}
-                      </button>
+                <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 overflow-hidden">
+                  <div className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-[10px] text-vintage-burnt-gold uppercase tracking-wide mb-1">{t('tcgActiveDeck')}</p>
+                        <p className="text-lg font-bold text-vintage-gold">{activeDeck.deckName}</p>
+                        <div className="flex items-center gap-3 mt-1 text-xs">
+                          <span className="text-vintage-burnt-gold"><span className="text-vintage-gold font-bold">{activeDeck.vbmsCount}</span> VBMS</span>
+                          <span className="text-vintage-gold/30">•</span>
+                          <span className="text-vintage-burnt-gold"><span className="text-vintage-gold font-bold">{activeDeck.nothingCount}</span> Nothing</span>
+                          <span className="text-vintage-gold/30">•</span>
+                          <span className="text-purple-400 font-bold">{activeDeck.totalPower} PWR</span>
+                        </div>
+                      </div>
                       <button
                         onClick={() => setShowPoolModal(true)}
-                        className={`px-3 py-1 rounded text-[9px] font-bold uppercase tracking-[0.1em] transition-all ${
+                        className={`px-3 py-2 rounded text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-1.5 ${
                           myDefensePool?.isActive
-                            ? "bg-green-900/40 text-green-400 border border-green-500/40"
-                            : "bg-black/40 hover:bg-black/60 text-vintage-burnt-gold/60 hover:text-vintage-gold border border-vintage-gold/10 hover:border-vintage-gold/30"
+                            ? "bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30"
+                            : "bg-black/50 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50"
                         }`}
                       >
-                        {myDefensePool?.isActive ? `Pool: ${(myDefensePool.poolAmount || 0).toLocaleString()}` : "Defense Pool"}
+                        {myDefensePool?.isActive ? (
+                          <>Pool: {(myDefensePool.poolAmount || 0).toLocaleString()} <span className="text-green-400">✓</span></>
+                        ) : (
+                          "Defense Pool"
+                        )}
                       </button>
                     </div>
                   </div>
@@ -4922,262 +4942,229 @@ export default function TCGPage() {
 
               {/* Saved Decks List */}
               {playerDecks && playerDecks.length > 1 && (
-                <div className="bg-black/30 border border-vintage-gold/10 rounded-lg p-3">
-                  <p className="text-[9px] text-vintage-burnt-gold/50 uppercase tracking-[0.2em] mb-2">Saved Decks ({playerDecks.length})</p>
-                  <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                    {playerDecks.map((deck: any) => (
-                      <div
-                        key={deck._id}
-                        className={`flex items-center justify-between p-2 rounded ${
-                          deck._id === activeDeck?._id
-                            ? "bg-vintage-gold/10 border border-vintage-gold/30"
-                            : "bg-black/20 border border-vintage-gold/5"
-                        }`}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-xs font-bold truncate ${deck._id === activeDeck?._id ? "text-vintage-gold" : "text-vintage-burnt-gold"}`}>
-                            {deck.deckName}
-                            {deck._id === activeDeck?._id && <span className="text-green-400 ml-1">(Active)</span>}
-                          </p>
-                          <p className="text-[9px] text-vintage-burnt-gold/50">
-                            {deck.vbmsCount || 0} VBMS • {deck.totalPower || 0} PWR
-                          </p>
-                        </div>
-                        {deck._id !== activeDeck?._id && (
-                          <button
-                            onClick={async () => {
-                              if (confirm(`Delete deck "${deck.deckName}"?`)) {
-                                try {
-                                  await deleteDeckMutation({ deckId: deck._id });
-                                } catch (e: any) {
-                                  setError(e.message || "Failed to delete deck");
+                <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 overflow-hidden">
+                  <div className="p-3 border-b border-vintage-gold/20">
+                    <h3 className="text-sm font-bold text-vintage-gold uppercase tracking-wide">Saved Decks ({playerDecks.length})</h3>
+                  </div>
+                  <div className="divide-y divide-vintage-gold/10 max-h-40 overflow-y-auto">
+                    {playerDecks.map((deck: any) => {
+                      const isActive = deck._id === activeDeck?._id;
+                      return (
+                        <div
+                          key={deck._id}
+                          className={`flex items-center gap-3 p-3 hover:bg-vintage-gold/5 transition ${isActive ? 'bg-vintage-gold/10' : ''}`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-bold truncate ${isActive ? "text-vintage-gold" : "text-vintage-burnt-gold"}`}>
+                              {deck.deckName}
+                              {isActive && <span className="text-green-400 ml-2 text-xs">(Active)</span>}
+                            </p>
+                            <p className="text-[10px] text-vintage-burnt-gold/50">
+                              {deck.vbmsCount || 0} VBMS • {deck.totalPower || 0} PWR
+                            </p>
+                          </div>
+                          {!isActive && (
+                            <button
+                              onClick={async () => {
+                                if (confirm(`Delete deck "${deck.deckName}"?`)) {
+                                  try {
+                                    await deleteDeckMutation({ deckId: deck._id });
+                                  } catch (e: any) {
+                                    setError(e.message || "Failed to delete deck");
+                                  }
                                 }
-                              }
-                            }}
-                            className="ml-2 px-2 py-1 text-[9px] text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 rounded hover:bg-red-900/20 transition-all"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                              }}
+                              className="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
               {/* Play Buttons */}
-              <div className="space-y-2">
+              <div className="space-y-4">
                 {!hasDeck ? (
-                  <button
-                    onClick={() => setView("deck-builder")}
-                    className="w-full relative overflow-hidden group"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-vintage-gold via-yellow-500 to-vintage-gold opacity-90 group-hover:opacity-100 transition-opacity" />
-                    <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
-                    <span className="relative z-10 block py-3 px-4 text-black font-black text-sm uppercase tracking-[0.2em]">
+                  <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 p-6 text-center">
+                    <div className="w-16 h-16 rounded-full bg-vintage-gold/10 border border-vintage-gold/30 flex items-center justify-center mx-auto mb-4">
+                      <span className="text-vintage-gold text-2xl">🃏</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-vintage-gold mb-2">No Deck Built</h3>
+                    <p className="text-vintage-burnt-gold text-sm mb-4">Create your first deck to start battling!</p>
+                    <button
+                      onClick={() => setView("deck-builder")}
+                      className="px-6 py-3 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold/50 hover:border-vintage-gold text-vintage-gold font-bold rounded-lg text-sm uppercase tracking-wide transition-all"
+                    >
                       {t('tcgBuildDeck')}
-                    </span>
-                  </button>
+                    </button>
+                  </div>
                 ) : (
                   <>
-                    {/* Daily Battles Counter */}
-                    <div className="bg-black/30 border border-vintage-gold/20 rounded-lg p-2 text-center">
-                      <p className="text-[10px] text-vintage-burnt-gold/60 uppercase tracking-wider mb-1">
-                        Today's Battles
-                      </p>
-                      <p className="text-vintage-gold font-bold">
-                        {dailyBattles < REWARDED_BATTLES_PER_DAY ? (
-                          <>
-                            <span className="text-green-400">{dailyBattles}</span>
-                            <span className="text-vintage-gold/50">/</span>
-                            <span className="text-vintage-gold">{REWARDED_BATTLES_PER_DAY}</span>
-                            <span className="text-[9px] text-green-400 ml-2">+{BATTLE_AURA_REWARD} AURA</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-gray-400">{dailyBattles}</span>
-                            <span className="text-[9px] text-gray-400 ml-2">FREE (no reward)</span>
-                          </>
-                        )}
-                      </p>
-                    </div>
-
-                    {/* PvE Button */}
-                    <button
-                      onClick={() => startPvEMatch()}
-                      className="w-full relative overflow-hidden group"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-green-600 via-emerald-500 to-green-600 opacity-80 group-hover:opacity-100 transition-opacity" />
-                      <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent" />
-                      <span className="relative z-10 block py-3 px-4 text-white font-black text-sm uppercase tracking-[0.2em] drop-shadow-lg">
-                        {t('tcgBattleCpu')} {dailyBattles < REWARDED_BATTLES_PER_DAY ? `(+${BATTLE_AURA_REWARD} AURA)` : "(Free)"}
-                      </span>
-                    </button>
-
-                    {/* PvP Section */}
-                    <div className="border-t border-vintage-gold/10 pt-3 mt-2">
-                      <p className="text-[9px] text-vintage-burnt-gold/40 uppercase tracking-[0.3em] mb-2 text-center">PvP Battle</p>
-
-                      {!hasDeck && (
-                        <p className="text-[10px] text-red-400 text-center mb-2">⚠️ Crie um deck primeiro para jogar PvP</p>
-                      )}
-
-                      {/* Find Match (Matchmaking → CPU fallback) */}
-                      {isSearching ? (
-                        <div className="w-full bg-black/40 border border-amber-500/40 rounded p-3 mb-2 text-center">
-                          <div className="flex items-center justify-center gap-2 mb-1">
-                            <div className="w-3 h-3 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-                            <span className="text-amber-400 text-xs font-bold uppercase tracking-wider">
-                              {searchElapsed < 5 ? "Searching for players..." : "Matching vs CPU..."}
-                            </span>
-                          </div>
-                          <p className="text-[9px] text-vintage-burnt-gold/50">{Math.max(0, Math.ceil(5 - searchElapsed))}s</p>
-                          <button
-                            onClick={async () => {
-                              setIsSearching(false);
-                              if (address) await cancelSearchMutation({ address });
-                            }}
-                            className="mt-2 px-4 py-1 text-[9px] text-red-400 border border-red-500/30 rounded hover:bg-red-900/20"
-                          >
-                            Cancel
-                          </button>
+                    {/* Battle Mode Selection */}
+                    <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 overflow-hidden">
+                      <div className="p-3 border-b border-vintage-gold/20 flex items-center justify-between">
+                        <h3 className="text-sm font-bold text-vintage-gold uppercase tracking-wide">Battle Mode</h3>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-vintage-burnt-gold">Today:</span>
+                          {dailyBattles < REWARDED_BATTLES_PER_DAY ? (
+                            <span className="text-green-400 font-bold">{dailyBattles}/{REWARDED_BATTLES_PER_DAY} <span className="text-[10px]">(+{BATTLE_AURA_REWARD} AURA)</span></span>
+                          ) : (
+                            <span className="text-gray-400">{dailyBattles} (free)</span>
+                          )}
                         </div>
-                      ) : (
+                      </div>
+
+                      <div className="p-4 space-y-3">
+                        {/* PvE Button */}
                         <button
-                          onClick={async () => {
-                            if (!address || !activeDeck?._id) return;
-                            try {
-                              setError(null);
-                              setIsSearching(true);
-                              setSearchElapsed(0);
+                          onClick={() => startPvEMatch()}
+                          className="w-full px-4 py-3 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 hover:border-green-400 rounded-lg text-green-400 font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
+                        >
+                          <span>🤖</span>
+                          {t('tcgBattleCpu')} {dailyBattles < REWARDED_BATTLES_PER_DAY ? `(+${BATTLE_AURA_REWARD} AURA)` : ""}
+                        </button>
 
-                              // Start search on server
-                              await searchMatchMutation({ address, username, deckId: activeDeck._id });
+                        {/* PvP Section */}
+                        <div className="border-t border-vintage-gold/10 pt-3">
+                          <p className="text-[10px] text-vintage-burnt-gold uppercase tracking-wide mb-3 text-center">PvP Battle</p>
 
-                              // Poll checkMatchmaking every 500ms for up to 5 seconds
-                              let elapsed = 0;
-                              let foundPlayer = false;
-                              const maxSearchTime = 5; // 5 seconds max
+                          {/* Find Match (Matchmaking → CPU fallback) */}
+                          {isSearching ? (
+                            <div className="w-full bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-3 text-center">
+                              <div className="flex items-center justify-center gap-2 mb-2">
+                                <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+                                <span className="text-amber-400 text-sm font-bold">
+                                  {searchElapsed < 5 ? "Searching for players..." : "Matching vs CPU..."}
+                                </span>
+                              </div>
+                              <p className="text-xs text-vintage-burnt-gold/50 mb-2">{Math.max(0, Math.ceil(5 - searchElapsed))}s</p>
+                              <button
+                                onClick={async () => {
+                                  setIsSearching(false);
+                                  if (address) await cancelSearchMutation({ address });
+                                }}
+                                className="px-4 py-1.5 text-xs text-red-400 border border-red-500/30 rounded hover:bg-red-900/20 transition"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={async () => {
+                                if (!address || !activeDeck?._id) return;
+                                try {
+                                  setError(null);
+                                  setIsSearching(true);
+                                  setSearchElapsed(0);
 
-                              while (elapsed < maxSearchTime && !foundPlayer) {
-                                await new Promise(resolve => setTimeout(resolve, 500));
-                                elapsed += 0.5;
-                                setSearchElapsed(elapsed);
+                                  // Start search on server
+                                  await searchMatchMutation({ address, username, deckId: activeDeck._id });
 
-                                // Poll the server to check for other players
-                                const matchStatus = await convex.query(api.tcg.checkMatchmaking, { address });
+                                  // Poll checkMatchmaking every 500ms for up to 5 seconds
+                                  let elapsed = 0;
+                                  let foundPlayer = false;
+                                  const maxSearchTime = 5; // 5 seconds max
 
-                                if (matchStatus.status === "found_player" && matchStatus.opponent) {
-                                  // Found a real player! Create the match
-                                  foundPlayer = true;
-                                  const opponent = matchStatus.opponent;
+                                  while (elapsed < maxSearchTime && !foundPlayer) {
+                                    await new Promise(resolve => setTimeout(resolve, 500));
+                                    elapsed += 0.5;
+                                    setSearchElapsed(elapsed);
 
-                                  const matchResult = await createMatchFromMatchmakingMutation({
-                                    player1Address: address,
-                                    player2Address: opponent.address,
-                                    player1Username: username,
-                                    player2Username: opponent.username,
-                                    player1DeckId: activeDeck._id,
-                                    player2DeckId: opponent.deckId,
-                                  });
+                                    // Poll the server to check for other players
+                                    const matchStatus = await convex.query(api.tcg.checkMatchmaking, { address });
 
-                                  if (matchResult?.matchId) {
-                                    setCurrentMatchId(matchResult.matchId);
+                                    if (matchStatus.status === "found_player" && matchStatus.opponent) {
+                                      // Found a real player! Create the match
+                                      foundPlayer = true;
+                                      const opponent = matchStatus.opponent;
+
+                                      const matchResult = await createMatchFromMatchmakingMutation({
+                                        player1Address: address,
+                                        player2Address: opponent.address,
+                                        player1Username: username,
+                                        player2Username: opponent.username,
+                                        player1DeckId: activeDeck._id,
+                                        player2DeckId: opponent.deckId,
+                                      });
+
+                                      if (matchResult?.matchId) {
+                                        setCurrentMatchId(matchResult.matchId);
+                                        setIsPvE(false);
+                                        setView("battle");
+                                        setBattleLog([]);
+                                      }
+                                      setIsSearching(false);
+                                      return;
+                                    } else if (matchStatus.status === "expired" || matchStatus.status === "not_searching") {
+                                      break; // Exit polling loop
+                                    }
+                                  }
+
+                                  // No live player found - fall back to CPU auto match
+                                  await cancelSearchMutation({ address });
+                                  setSearchElapsed(elapsed + 0.5);
+
+                                  const result = await autoMatchMutation({ address, username });
+                                  if (result?.matchId) {
+                                    setCurrentMatchId(result.matchId);
                                     setIsPvE(false);
                                     setView("battle");
                                     setBattleLog([]);
                                   }
                                   setIsSearching(false);
-                                  return;
-                                } else if (matchStatus.status === "expired" || matchStatus.status === "not_searching") {
-                                  break; // Exit polling loop
+                                } catch (e: any) {
+                                  setIsSearching(false);
+                                  if (searchTimerRef.current) clearInterval(searchTimerRef.current);
+                                  setError(e.message || "No opponents found");
                                 }
-                              }
+                              }}
+                              disabled={!hasDeck}
+                              className="w-full px-4 py-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 hover:border-amber-400 rounded-lg text-amber-400 font-bold text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-2"
+                            >
+                              <span>⚔️</span>
+                              Find Match
+                            </button>
+                          )}
 
-                              // No live player found - fall back to CPU auto match
-                              await cancelSearchMutation({ address });
-                              setSearchElapsed(elapsed + 0.5);
-
-                              const result = await autoMatchMutation({ address, username });
-                              if (result?.matchId) {
-                                setCurrentMatchId(result.matchId);
-                                setIsPvE(false);
-                                setView("battle");
-                                setBattleLog([]);
-                              }
-                              setIsSearching(false);
-                            } catch (e: any) {
-                              setIsSearching(false);
-                              if (searchTimerRef.current) clearInterval(searchTimerRef.current);
-                              setError(e.message || "No opponents found");
-                            }
-                          }}
-                          disabled={!hasDeck}
-                          className="w-full relative overflow-hidden group mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-r from-orange-600 via-amber-500 to-orange-600 opacity-70 group-hover:opacity-90 transition-opacity" />
-                          <span className="relative z-10 block py-2.5 px-4 text-white font-bold text-xs uppercase tracking-[0.2em]">
-                            Find Match
-                          </span>
-                        </button>
-                      )}
-
-                      {/* Create Match */}
-                      <button
-                        onClick={handleCreateMatch}
-                        disabled={!hasDeck}
-                        className="w-full relative overflow-hidden group mb-2 disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-700 opacity-70 group-hover:opacity-90 transition-opacity" />
-                        <span className="relative z-10 block py-2.5 px-4 text-white font-bold text-xs uppercase tracking-[0.2em]">
-                          Create Room
-                        </span>
-                      </button>
-
-                      {/* Join Match */}
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={roomIdInput}
-                          onChange={(e) => setRoomIdInput(e.target.value.toUpperCase())}
-                          placeholder="ROOM CODE"
-                          maxLength={6}
-                          disabled={!hasDeck}
-                          className="flex-1 bg-black/60 border border-vintage-gold/20 rounded px-3 py-2 text-vintage-gold font-mono text-center uppercase tracking-[0.3em] focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-sm disabled:opacity-40"
-                        />
-                        <button
-                          onClick={() => roomIdInput.length >= 4 && handleJoinMatch(roomIdInput)}
-                          disabled={!hasDeck || roomIdInput.length < 4}
-                          className="relative overflow-hidden group disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-r from-purple-700 to-indigo-700 group-hover:from-purple-600 group-hover:to-indigo-600 transition-colors" />
-                          <span className="relative z-10 block py-2 px-4 text-white font-bold text-xs uppercase tracking-wider">
-                            Join
-                          </span>
-                        </button>
+                          {/* Create / Join Room */}
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={handleCreateMatch}
+                              disabled={!hasDeck}
+                              className="px-3 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 hover:border-purple-400 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                              Create Room
+                            </button>
+                            <div className="flex gap-1">
+                              <input
+                                type="text"
+                                value={roomIdInput}
+                                onChange={(e) => setRoomIdInput(e.target.value.toUpperCase())}
+                                placeholder="CODE"
+                                maxLength={6}
+                                disabled={!hasDeck}
+                                className="flex-1 bg-black/50 border border-vintage-gold/20 rounded-lg px-2 py-2 text-vintage-gold font-mono text-center uppercase tracking-wider focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-xs disabled:opacity-40"
+                              />
+                              <button
+                                onClick={() => roomIdInput.length >= 4 && handleJoinMatch(roomIdInput)}
+                                disabled={!hasDeck || roomIdInput.length < 4}
+                                className="px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 hover:border-purple-400 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                Join
+                              </button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </>
                 )}
               </div>
 
-              {/* Stats */}
-              {hasDeck && (
-                <div className="grid grid-cols-3 gap-2 mt-3">
-                  <div className="bg-black/30 border border-vintage-gold/10 rounded p-2 text-center">
-                    <p className="text-lg font-black text-vintage-gold tabular-nums">0</p>
-                    <p className="text-[7px] text-vintage-burnt-gold/40 uppercase tracking-[0.15em]">{t('tcgWins')}</p>
-                  </div>
-                  <div className="bg-black/30 border border-vintage-gold/10 rounded p-2 text-center">
-                    <p className="text-lg font-black text-vintage-burnt-gold/60 tabular-nums">0</p>
-                    <p className="text-[7px] text-vintage-burnt-gold/40 uppercase tracking-[0.15em]">{t('tcgLosses')}</p>
-                  </div>
-                  <div className="bg-black/30 border border-vintage-gold/10 rounded p-2 text-center">
-                    <p className="text-lg font-black text-emerald-500 tabular-nums">0%</p>
-                    <p className="text-[7px] text-vintage-burnt-gold/40 uppercase tracking-[0.15em]">{t('tcgWinRate')}</p>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -5616,6 +5603,54 @@ export default function TCGPage() {
             </div>
           )}
 
+          </div>
+        </div>
+
+        {/* ===== BOTTOM STATS BAR ===== */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black via-black/90 to-transparent pt-6 pb-3 px-3">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-black/60 backdrop-blur-sm rounded-lg border border-vintage-gold/20 px-4 py-2.5 flex items-center justify-between gap-4 text-xs">
+              {/* Deck Status */}
+              <div className="flex items-center gap-2">
+                <span className="text-vintage-burnt-gold uppercase tracking-wide">Deck</span>
+                {hasDeck ? (
+                  <span className="text-green-400 font-bold">Ready ✓</span>
+                ) : (
+                  <span className="text-red-400 font-bold">None</span>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div className="w-px h-4 bg-vintage-gold/20" />
+
+              {/* Power */}
+              {hasDeck && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-vintage-burnt-gold uppercase tracking-wide">Power</span>
+                    <span className="font-bold text-purple-400">{activeDeck?.totalPower || 0}</span>
+                  </div>
+                  <div className="w-px h-4 bg-vintage-gold/20" />
+                </>
+              )}
+
+              {/* Daily Battles */}
+              <div className="flex items-center gap-2">
+                <span className="text-vintage-burnt-gold uppercase tracking-wide">Battles</span>
+                <span className={`font-bold ${dailyBattles < REWARDED_BATTLES_PER_DAY ? 'text-green-400' : 'text-gray-400'}`}>
+                  {dailyBattles}/{REWARDED_BATTLES_PER_DAY}
+                </span>
+              </div>
+
+              {/* Divider */}
+              <div className="hidden sm:block w-px h-4 bg-vintage-gold/20" />
+
+              {/* VBMS Balance */}
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="text-vintage-burnt-gold uppercase tracking-wide">VBMS</span>
+                <span className="text-vintage-gold font-bold">{Number(vbmsBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -8731,21 +8766,6 @@ export default function TCGPage() {
               </p>
             </div>
           )}
-
-          {/* Auto Match Toggle */}
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={autoMatch}
-                onChange={(e) => setAutoMatch(e.target.checked)}
-                className="w-5 h-5 rounded border-2 border-vintage-gold bg-black/50 checked:bg-vintage-gold checked:border-vintage-gold cursor-pointer"
-              />
-              <span className="text-vintage-gold font-bold text-sm uppercase tracking-wider">
-                🔄 Auto Replay {autoMatch && "(Next in 3s)"}
-              </span>
-            </label>
-          </div>
 
           {/* Buttons */}
           <div className="flex gap-3 justify-center">
