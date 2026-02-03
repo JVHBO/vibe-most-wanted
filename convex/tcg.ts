@@ -1649,46 +1649,59 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   // Track energy spent this turn
   let p1EnergyRemaining = gs.player1Energy || gs.currentTurn;
 
-  // Sort hand-modifying actions by descending cardIndex so splice doesn't shift subsequent indices
-  const p1Actions = [...(gs.player1Actions || [])];
-  const p1HandActions = p1Actions
-    .filter((a: any) => a.type === "play" || a.type === "sacrifice-hand")
-    .sort((a: any, b: any) => b.cardIndex - a.cardIndex);
-  const p1LaneActions = p1Actions.filter((a: any) => a.type === "sacrifice-lane");
-  const p1SortedActions = [...p1HandActions, ...p1LaneActions];
+  // Resolve card references from the ORIGINAL hand before any splicing
+  // cardIndex refers to the card's position when the player clicked it
+  const p1OriginalHand = [...p1Hand];
+  const p1UsedCardIds = new Set<string>();
 
-  for (const action of p1SortedActions) {
+  for (const action of (gs.player1Actions || [])) {
     // Validate action before processing
     if (action.targetLane !== undefined && (action.targetLane < 0 || action.targetLane > 2)) {
       console.warn(`P1 invalid targetLane: ${action.targetLane}, skipping action`);
       continue;
     }
     if (action.type === "play" && action.targetLane !== undefined) {
-      // Validate cardIndex bounds
-      if (action.cardIndex < 0 || action.cardIndex >= p1Hand.length) {
-        console.warn(`P1 invalid cardIndex: ${action.cardIndex}, hand size: ${p1Hand.length}, skipping`);
+      // Resolve card from ORIGINAL hand (not current spliced hand)
+      if (action.cardIndex < 0 || action.cardIndex >= p1OriginalHand.length) {
+        console.warn(`P1 invalid cardIndex: ${action.cardIndex}, original hand size: ${p1OriginalHand.length}, skipping`);
+        continue;
+      }
+      const resolvedCard = p1OriginalHand[action.cardIndex];
+      if (!resolvedCard || p1UsedCardIds.has(resolvedCard.cardId)) {
+        console.warn(`P1 card already used or missing: index ${action.cardIndex}, skipping`);
         continue;
       }
       // Check energy cost before playing (with Vitalik's reduction)
-      const cardToPlay = p1Hand[action.cardIndex];
-      const baseEnergyCost = getCardEnergyCost(cardToPlay);
+      const baseEnergyCost = getCardEnergyCost(resolvedCard);
       const energyCost = Math.max(1, baseEnergyCost - p1EnergyCostReduction); // Min cost is 1
       if (energyCost > p1EnergyRemaining) {
-        console.warn(`P1 insufficient energy: need ${energyCost}, have ${p1EnergyRemaining}, skipping ${cardToPlay?.name}`);
+        console.warn(`P1 insufficient energy: need ${energyCost}, have ${p1EnergyRemaining}, skipping ${resolvedCard?.name}`);
         continue;
       }
       p1EnergyRemaining -= energyCost;
-      const card = p1Hand.splice(action.cardIndex, 1)[0];
-      if (card) {
-        lanes[action.targetLane].player1Cards.push(card);
-        p1CardsPlayedThisTurn.push({ card, lane: action.targetLane });
+      // Remove from current hand by cardId (not index)
+      const handIdx = p1Hand.findIndex((c: any) => c.cardId === resolvedCard.cardId);
+      if (handIdx >= 0) {
+        p1Hand.splice(handIdx, 1);
       }
+      lanes[action.targetLane].player1Cards.push(resolvedCard);
+      p1CardsPlayedThisTurn.push({ card: resolvedCard, lane: action.targetLane });
+      p1UsedCardIds.add(resolvedCard.cardId);
     } else if (action.type === "sacrifice-hand") {
-      if (action.cardIndex < 0 || action.cardIndex >= p1Hand.length) {
+      if (action.cardIndex < 0 || action.cardIndex >= p1OriginalHand.length) {
         console.warn(`P1 sacrifice-hand invalid cardIndex: ${action.cardIndex}, skipping`);
         continue;
       }
-      p1Hand.splice(action.cardIndex, 1);
+      const resolvedCard = p1OriginalHand[action.cardIndex];
+      if (!resolvedCard || p1UsedCardIds.has(resolvedCard.cardId)) {
+        console.warn(`P1 sacrifice card already used: index ${action.cardIndex}, skipping`);
+        continue;
+      }
+      const handIdx = p1Hand.findIndex((c: any) => c.cardId === resolvedCard.cardId);
+      if (handIdx >= 0) {
+        p1Hand.splice(handIdx, 1);
+      }
+      p1UsedCardIds.add(resolvedCard.cardId);
       // Sacrifice gives +2 energy bonus
       p1EnergyRemaining += 2;
       if (p1DeckRemaining.length > 0) {
@@ -1720,46 +1733,58 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
   // Track energy spent this turn
   let p2EnergyRemaining = gs.player2Energy || gs.currentTurn;
 
-  // Sort hand-modifying actions by descending cardIndex so splice doesn't shift subsequent indices
-  const p2Actions = [...(gs.player2Actions || [])];
-  const p2HandActions = p2Actions
-    .filter((a: any) => a.type === "play" || a.type === "sacrifice-hand")
-    .sort((a: any, b: any) => b.cardIndex - a.cardIndex);
-  const p2LaneActions = p2Actions.filter((a: any) => a.type === "sacrifice-lane");
-  const p2SortedActions = [...p2HandActions, ...p2LaneActions];
+  // Resolve card references from the ORIGINAL hand before any splicing
+  const p2OriginalHand = [...p2Hand];
+  const p2UsedCardIds = new Set<string>();
 
-  for (const action of p2SortedActions) {
+  for (const action of (gs.player2Actions || [])) {
     // Validate action before processing
     if (action.targetLane !== undefined && (action.targetLane < 0 || action.targetLane > 2)) {
       console.warn(`P2 invalid targetLane: ${action.targetLane}, skipping action`);
       continue;
     }
     if (action.type === "play" && action.targetLane !== undefined) {
-      // Validate cardIndex bounds
-      if (action.cardIndex < 0 || action.cardIndex >= p2Hand.length) {
-        console.warn(`P2 invalid cardIndex: ${action.cardIndex}, hand size: ${p2Hand.length}, skipping`);
+      // Resolve card from ORIGINAL hand (not current spliced hand)
+      if (action.cardIndex < 0 || action.cardIndex >= p2OriginalHand.length) {
+        console.warn(`P2 invalid cardIndex: ${action.cardIndex}, original hand size: ${p2OriginalHand.length}, skipping`);
+        continue;
+      }
+      const resolvedCard = p2OriginalHand[action.cardIndex];
+      if (!resolvedCard || p2UsedCardIds.has(resolvedCard.cardId)) {
+        console.warn(`P2 card already used or missing: index ${action.cardIndex}, skipping`);
         continue;
       }
       // Check energy cost before playing (with Vitalik's reduction)
-      const cardToPlay = p2Hand[action.cardIndex];
-      const baseEnergyCost = getCardEnergyCost(cardToPlay);
+      const baseEnergyCost = getCardEnergyCost(resolvedCard);
       const energyCost = Math.max(1, baseEnergyCost - p2EnergyCostReduction); // Min cost is 1
       if (energyCost > p2EnergyRemaining) {
-        console.warn(`P2 insufficient energy: need ${energyCost}, have ${p2EnergyRemaining}, skipping ${cardToPlay?.name}`);
+        console.warn(`P2 insufficient energy: need ${energyCost}, have ${p2EnergyRemaining}, skipping ${resolvedCard?.name}`);
         continue;
       }
       p2EnergyRemaining -= energyCost;
-      const card = p2Hand.splice(action.cardIndex, 1)[0];
-      if (card) {
-        lanes[action.targetLane].player2Cards.push(card);
-        p2CardsPlayedThisTurn.push({ card, lane: action.targetLane });
+      // Remove from current hand by cardId (not index)
+      const handIdx = p2Hand.findIndex((c: any) => c.cardId === resolvedCard.cardId);
+      if (handIdx >= 0) {
+        p2Hand.splice(handIdx, 1);
       }
+      lanes[action.targetLane].player2Cards.push(resolvedCard);
+      p2CardsPlayedThisTurn.push({ card: resolvedCard, lane: action.targetLane });
+      p2UsedCardIds.add(resolvedCard.cardId);
     } else if (action.type === "sacrifice-hand") {
-      if (action.cardIndex < 0 || action.cardIndex >= p2Hand.length) {
+      if (action.cardIndex < 0 || action.cardIndex >= p2OriginalHand.length) {
         console.warn(`P2 sacrifice-hand invalid cardIndex: ${action.cardIndex}, skipping`);
         continue;
       }
-      p2Hand.splice(action.cardIndex, 1);
+      const resolvedCard = p2OriginalHand[action.cardIndex];
+      if (!resolvedCard || p2UsedCardIds.has(resolvedCard.cardId)) {
+        console.warn(`P2 sacrifice card already used: index ${action.cardIndex}, skipping`);
+        continue;
+      }
+      const handIdx = p2Hand.findIndex((c: any) => c.cardId === resolvedCard.cardId);
+      if (handIdx >= 0) {
+        p2Hand.splice(handIdx, 1);
+      }
+      p2UsedCardIds.add(resolvedCard.cardId);
       // Sacrifice gives +2 energy bonus
       p2EnergyRemaining += 2;
       if (p2DeckRemaining.length > 0) {
