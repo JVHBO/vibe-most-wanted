@@ -1340,6 +1340,15 @@ export default function TCGPage() {
   const [showPoolModal, setShowPoolModal] = useState(false);
   const [selectedPoolTier, setSelectedPoolTier] = useState(10000);
 
+  // Attack confirmation modal state
+  const [attackConfirmTarget, setAttackConfirmTarget] = useState<{
+    address: string;
+    username: string;
+    deckName: string;
+    poolAmount: number;
+    attackFee: number;
+  } | null>(null);
+
   // Matchmaking state
   const [isSearching, setIsSearching] = useState(false);
   const [searchElapsed, setSearchElapsed] = useState(0);
@@ -4582,8 +4591,7 @@ export default function TCGPage() {
     const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
     const effectivePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
     const energyCost = getEnergyCost(card);
-    // Encode imageUrl to handle spaces and special characters
-    const encodedImageUrl = card.imageUrl ? encodeURI(card.imageUrl) : null;
+    const encodedImageUrl = card.imageUrl || null;
 
     // Find combos for this card (apply alias for name matching)
     const cardNameLower = card.name?.toLowerCase() || "";
@@ -5359,39 +5367,16 @@ export default function TCGPage() {
                             </div>
                             {!isMe && activeDeck && (
                               <button
-                                onClick={async () => {
+                                onClick={() => {
                                   if (!address) return;
-                                  try {
-                                    setError(null);
-                                    // Attack fee = 10% of pool
-                                    const attackFee = Math.floor(entry.poolAmount * 0.1);
-
-                                    setPoolTxStep("transferring");
-                                    await writeTransfer({
-                                      address: CONTRACTS.VBMSToken as `0x${string}`,
-                                      abi: ERC20_ABI,
-                                      functionName: "transfer",
-                                      args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(attackFee.toString())],
-                                    });
-
-                                    // Step 3: Create staked match in Convex
-                                    setPoolTxStep("done");
-                                    const result = await autoMatchWithStakeMutation({
-                                      address,
-                                      username,
-                                      poolTier: entry.poolAmount,
-                                    });
-                                    if (result?.matchId) {
-                                      setCurrentMatchId(result.matchId);
-                                      setIsPvE(false);
-                                      setView("battle");
-                                      setBattleLog([]);
-                                    }
-                                    refetchVBMS();
-                                  } catch (e: any) {
-                                    setPoolTxStep("idle");
-                                    setError(e.message || "Failed to challenge");
-                                  }
+                                  // Show confirmation modal
+                                  setAttackConfirmTarget({
+                                    address: entry.address,
+                                    username: entry.username,
+                                    deckName: entry.deckName,
+                                    poolAmount: entry.poolAmount,
+                                    attackFee: Math.floor(entry.poolAmount * 0.1),
+                                  });
                                 }}
                                 disabled={poolTxStep === "transferring"}
                                 className="px-2 py-1.5 bg-orange-600/30 hover:bg-orange-600/50 text-orange-400 border border-orange-500/40 rounded text-[8px] font-bold uppercase tracking-wider transition-all whitespace-nowrap disabled:opacity-40"
@@ -5544,6 +5529,89 @@ export default function TCGPage() {
                 >
                   Close
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* Attack Confirmation Modal */}
+          {attackConfirmTarget && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setAttackConfirmTarget(null)}>
+              <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black border border-orange-500/30 rounded-xl p-4 max-w-sm mx-4 w-full" onClick={e => e.stopPropagation()}>
+                <h3 className="text-sm font-bold text-orange-400 uppercase tracking-[0.2em] mb-3 text-center">Confirm Attack</h3>
+
+                {/* Target Info */}
+                <div className="bg-black/30 border border-orange-500/20 rounded-lg p-3 mb-3 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] text-vintage-burnt-gold/60 uppercase">Target</span>
+                    <span className="text-sm font-bold text-vintage-gold">{attackConfirmTarget.username}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] text-vintage-burnt-gold/60 uppercase">Deck</span>
+                    <span className="text-xs text-vintage-burnt-gold">{attackConfirmTarget.deckName}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] text-vintage-burnt-gold/60 uppercase">Pool</span>
+                    <span className="text-sm font-bold text-green-400">{attackConfirmTarget.poolAmount.toLocaleString()} VBMS</span>
+                  </div>
+                </div>
+
+                {/* Attack Fee */}
+                <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-3 mb-3 text-center">
+                  <p className="text-[9px] text-orange-400/70 uppercase tracking-wider mb-1">Attack Fee (10%)</p>
+                  <p className="text-xl font-bold text-orange-400">{attackConfirmTarget.attackFee.toLocaleString()} VBMS</p>
+                  <p className="text-[9px] text-vintage-burnt-gold/50 mt-1">
+                    Win: +{Math.floor(attackConfirmTarget.attackFee * 0.9).toLocaleString()} | Lose: -{attackConfirmTarget.attackFee.toLocaleString()}
+                  </p>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setAttackConfirmTarget(null)}
+                    className="flex-1 py-2 bg-gray-800/50 hover:bg-gray-700/50 text-gray-400 border border-gray-600/40 rounded font-bold text-xs uppercase tracking-wider transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!address || !attackConfirmTarget) return;
+                      try {
+                        setError(null);
+                        const target = attackConfirmTarget;
+                        setAttackConfirmTarget(null); // Close modal
+
+                        setPoolTxStep("transferring");
+                        await writeTransfer({
+                          address: CONTRACTS.VBMSToken as `0x${string}`,
+                          abi: ERC20_ABI,
+                          functionName: "transfer",
+                          args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(target.attackFee.toString())],
+                        });
+
+                        setPoolTxStep("done");
+                        const result = await autoMatchWithStakeMutation({
+                          address,
+                          username,
+                          poolTier: target.poolAmount,
+                        });
+                        if (result?.matchId) {
+                          setCurrentMatchId(result.matchId);
+                          setIsPvE(false);
+                          setView("battle");
+                          setBattleLog([]);
+                        }
+                        refetchVBMS();
+                      } catch (e: any) {
+                        setPoolTxStep("idle");
+                        setError(e.message || "Failed to challenge");
+                      }
+                    }}
+                    disabled={poolTxStep === "transferring"}
+                    className="flex-1 py-2 bg-gradient-to-r from-orange-700 to-red-600 hover:from-orange-600 hover:to-red-500 text-white font-bold text-xs uppercase tracking-wider rounded transition-all disabled:opacity-40"
+                  >
+                    {poolTxStep === "transferring" ? "..." : "Attack!"}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -6693,8 +6761,7 @@ export default function TCGPage() {
                         const hasFoil = foil && foil !== "none" && foil !== "";
                         const foilClass = foil.includes("prize") ? "prize-foil" : foil.includes("standard") ? "standard-foil" : "";
                         // Use actual card image (same as deck builder)
-                        // Encode URL to handle spaces in baccarat image filenames
-                        const cardImageUrl = encodeURI(getCardDisplayImageUrl(card));
+                        const cardImageUrl = getCardDisplayImageUrl(card);
 
                         // Get card animation if any
                         const animKey = `${laneIndex}-cpu-${idx}`;
@@ -6842,8 +6909,7 @@ export default function TCGPage() {
                         // Check if card is revealed (old cards are always revealed)
                         const isRevealed = (card as any)._revealed !== false;
                         // Use actual card image (same as deck builder)
-                        // Encode URL to handle spaces in baccarat image filenames
-                        const cardImageUrl = encodeURI(getCardDisplayImageUrl(card));
+                        const cardImageUrl = getCardDisplayImageUrl(card);
                         const coverUrl = getCollectionCoverUrl(card.collection, card.rarity);
                         const displayImageUrl = isRevealed ? cardImageUrl : coverUrl;
 
@@ -7083,8 +7149,7 @@ export default function TCGPage() {
                 const energyCost = getEnergyCost(card);
                 const canAfford = energyCost <= (gs.energy || 1);
                 // Use actual card image (same as deck builder)
-                // Encode URL to handle spaces in baccarat image filenames
-                const battleHandImageUrl = encodeURI(getCardDisplayImageUrl(card));
+                const battleHandImageUrl = getCardDisplayImageUrl(card);
 
                 // Check if this card is part of any potential combo
                 // Use resolveCardName to handle aliases (e.g., "filthy" -> "don filthy")
@@ -7876,7 +7941,7 @@ export default function TCGPage() {
                         const foil = (card.foil || "").toLowerCase();
                         const hasFoil = foil && foil !== "none" && foil !== "";
                         const foilClass = foil.includes("prize") ? "prize-foil" : foil.includes("standard") ? "standard-foil" : "";
-                        const cardImageUrl = encodeURI(getCardDisplayImageUrl(card));
+                        const cardImageUrl = getCardDisplayImageUrl(card);
                         const isRevealed = (card as any)._revealed !== false;
                         const coverUrl = getCollectionCoverUrl(card.collection, card.rarity);
 
@@ -7986,7 +8051,7 @@ export default function TCGPage() {
                       {myLaneCards.map((card: any, idx: number) => {
                         const ability = getCardAbility(card.name, card);
                         const isRevealed = (card as any)._revealed !== false;
-                        const cardImageUrl = encodeURI(getCardDisplayImageUrl(card));
+                        const cardImageUrl = getCardDisplayImageUrl(card);
                         const coverUrl = getCollectionCoverUrl(card.collection, card.rarity);
 
                         return (
@@ -8043,7 +8108,7 @@ export default function TCGPage() {
                         .map((action, pIdx) => {
                           const pendingCard = myHand?.[action.cardIndex];
                           if (!pendingCard) return null;
-                          const cardImageUrl = encodeURI(getCardDisplayImageUrl(pendingCard));
+                          const cardImageUrl = getCardDisplayImageUrl(pendingCard);
                           return (
                             <div
                               key={`pending-${pIdx}`}
@@ -8143,7 +8208,7 @@ export default function TCGPage() {
                 const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
                 const energyCost = getEnergyCost(card);
                 const canAfford = energyCost <= remainingEnergy;
-                const battleHandImageUrl = encodeURI(getCardDisplayImageUrl(card));
+                const battleHandImageUrl = getCardDisplayImageUrl(card);
                 const isPending = pendingActions.some(a => a.cardIndex === idx);
 
                 // Check combo partners
