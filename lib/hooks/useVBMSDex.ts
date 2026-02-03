@@ -39,9 +39,7 @@ export function useMintPrice(quantity: number = 1) {
     args: [BigInt(quantity)],
     chainId: VBMS_CONTRACTS.chainId,
     query: {
-      staleTime: 60_000,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
+      staleTime: 30_000,
     },
   });
 
@@ -66,9 +64,7 @@ export function useVBMSBalance(address?: `0x${string}`) {
     chainId: VBMS_CONTRACTS.chainId,
     query: {
       enabled: !!address,
-      staleTime: 60_000,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
+      staleTime: 30_000,
     },
   });
 
@@ -93,8 +89,6 @@ export function useVBMSAllowance(owner?: `0x${string}`) {
     query: {
       enabled: !!owner,
       staleTime: 30_000,
-      refetchOnMount: false,
-      refetchOnWindowFocus: false,
     },
   });
 
