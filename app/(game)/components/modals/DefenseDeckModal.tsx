@@ -25,7 +25,7 @@ interface DefenseDeckModalProps {
   selectStrongest: () => void;
   clearSelection: () => void;
   saveDefenseDeck: () => Promise<void>;
-  t: (key: string) => string;
+  t: (key: any, params?: any) => string;
 }
 
 export function DefenseDeckModal({

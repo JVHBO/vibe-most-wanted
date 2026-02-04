@@ -1290,6 +1290,20 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     setShowWinPopup(true);
   };
 
+  // Show battle result popup (win/loss/tie) after battle closes
+  const showBattleResultPopup = (result: 'win' | 'loss' | 'tie') => {
+    setTimeout(() => {
+      if (result === 'win') {
+        showVictory();
+      } else if (result === 'loss') {
+        setShowLossPopup(true);
+      } else {
+        setShowTiePopup(true);
+        if (soundEnabled) AudioManager.tie();
+      }
+    }, 100);
+  };
+
   // 🎵 Handler to close victory screen and stop audio
   const handleCloseVictoryScreen = () => {
     // Stop victory audio if playing
@@ -2222,17 +2236,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                 setEliminationPhase(null);
 
                 // Show result popup after closing battle
-                setTimeout(() => {
-                  if (finalResult === 'win') {
-                    showVictory();
-                  } else if (finalResult === 'loss') {
-                    setShowLossPopup(true);
-                    // Audio handled by GamePopups
-                  } else {
-                    setShowTiePopup(true);
-                    if (soundEnabled) AudioManager.tie();
-                  }
-                }, 100);
+                showBattleResultPopup(finalResult);
               }, 2000);
             })();
           } else {
@@ -2367,17 +2371,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
           setBattlePhase('cards');
 
           // Mostra popup DEPOIS de fechar batalha
-          setTimeout(() => {
-            if (matchResult === 'win') {
-              showVictory();
-            } else if (matchResult === 'loss') {
-              setShowLossPopup(true);
-              // Audio handled by GamePopups
-            } else {
-              setShowTiePopup(true);
-              if (soundEnabled) AudioManager.tie();
-            }
-          }, 100);
+          showBattleResultPopup(matchResult);
         }, 2000);
       })();
     }, 4500);
@@ -2798,17 +2792,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                   // TESTVBMS sent to inbox - player can claim later
 
                   // Mostra popup DEPOIS de fechar batalha
-                  setTimeout(() => {
-                    if (matchResult === 'win') {
-                      showVictory();
-                    } else if (matchResult === 'loss') {
-                      setShowLossPopup(true);
-                      // Audio handled by GamePopups
-                    } else {
-                      setShowTiePopup(true);
-                      if (soundEnabled) AudioManager.tie();
-                    }
-                  }, 100);
+                  showBattleResultPopup(matchResult);
 
                   // Reset battle flag immediately so player can start new match without waiting
                   pvpBattleStarted.current = false;
@@ -3991,9 +3975,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                         matchResult = 'loss';
                       } else {
                         matchResult = 'tie';
-                        setShowTiePopup(true);
-                        if (soundEnabled) AudioManager.tie();
-                        setTimeout(() => setShowTiePopup(false), 3000);
                       }
 
                       let coinsEarned = 0;
@@ -4074,16 +4055,8 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                       setTargetPlayer(null);
                       setAttackSelectedCards([]);
 
-                      // 🎯 Show victory/loss popup after closing
-                      setTimeout(() => {
-                        if (matchResult === 'win') {
-                          showVictory();
-                        } else if (matchResult === 'loss') {
-                          setShowLossPopup(true);
-                          // Audio handled by GamePopups
-                        }
-                        // Note: Tie popup is already shown above
-                      }, 100);
+                      // Show result popup after closing battle
+                      showBattleResultPopup(matchResult);
                     }, 4500);
 
                   } catch (error: any) {

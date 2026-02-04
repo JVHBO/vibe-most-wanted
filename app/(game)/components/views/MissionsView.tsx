@@ -34,7 +34,7 @@ interface MissionsViewProps {
   claimMission: (missionId: string, missionType?: string) => void;
   claimAllMissions: () => void;
   setSuccessMessage: (msg: string) => void;
-  t: (key: string) => string;
+  t: (key: any, params?: any) => string;
 }
 
 export function MissionsView({

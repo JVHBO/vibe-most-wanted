@@ -7,7 +7,7 @@ import Link from 'next/link';
 
 interface CardNft {
   imageUrl?: string;
-  tokenId?: string;
+  tokenId: string;
   name?: string;
   rarity?: string;
   [key: string]: any;
