@@ -3968,7 +3968,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                     if (soundEnabled) AudioManager.playHand();
 
                     // Calculate power totals (one-time calculation per attack, no need for memoization)
-                    const playerTotal = calculateLeaderboardAttackPower(attackSelectedCards);
+                    const playerTotal = calculateTotalPower(attackSelectedCards, true);
                     const dealerTotal = calculateTotalPower(defenderCards);
 
                     setTimeout(() => {
