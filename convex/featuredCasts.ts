@@ -72,7 +72,24 @@ export const removeFeaturedCast = internalMutation({
 
 // Cast interaction reward amount (halved - Vibe Clash is main mode)
 const CAST_INTERACTION_REWARD = 150; // was 300
-const VIBE_BADGE_MULTIPLIER = 2; // 2x bonus for VIBE badge holders (150 -> 300)
+const BONUS_MULTIPLIER = 2; // 2x bonus for VibeFID or VIBE Badge holders (150 -> 300)
+
+/**
+ * Check if player has 2x bonus (VibeFID or VIBE Badge)
+ */
+async function has2xBonus(ctx: any, profile: any): Promise<{ has2x: boolean; reason: string }> {
+  // Check VIBE Badge first (stored in profile)
+  if (profile.hasVibeBadge) {
+    return { has2x: true, reason: "VIBE Badge" };
+  }
+
+  // Check VibeFID ownership
+  if (profile.ownedTokenIds?.some((id: string) => id.toLowerCase().startsWith("vibefid:"))) {
+    return { has2x: true, reason: "VibeFID" };
+  }
+
+  return { has2x: false, reason: "" };
+}
 
 // Get cast interaction progress for a player
 export const getCastInteractionProgress = query({
@@ -128,12 +145,9 @@ export const claimCastInteractionReward = mutation({
       throw new Error("Profile not found");
     }
 
-    // Calculate reward with VIBE badge bonus (2x)
-    let reward = CAST_INTERACTION_REWARD;
-    const hasVibeBadge = profile.hasVibeBadge === true;
-    if (hasVibeBadge) {
-      reward = reward * VIBE_BADGE_MULTIPLIER;
-    }
+    // Calculate reward with 2x bonus (VibeFID or VIBE Badge)
+    const bonusCheck = await has2xBonus(ctx, profile);
+    const reward = CAST_INTERACTION_REWARD * (bonusCheck.has2x ? BONUS_MULTIPLIER : 1);
 
     // Add reward to balance
     const currentBalance = profile.coins || 0;
@@ -167,15 +181,16 @@ export const claimCastInteractionReward = mutation({
       claimedAt: Date.now(),
     });
 
-    console.log(`🎬 Cast ${interactionType} reward: ${reward} TESTVBMS for ${normalizedAddress}${hasVibeBadge ? ' (2x VIBE bonus)' : ''}`);
+    console.log(`🎬 Cast ${interactionType} reward: ${reward} TESTVBMS for ${normalizedAddress}${bonusCheck.has2x ? ` (2x ${bonusCheck.reason})` : ''}`);
 
     return {
       success: true,
       reward,
       newBalance,
       interactionType,
-      hasVibeBadge,
-      bonusApplied: hasVibeBadge ? VIBE_BADGE_MULTIPLIER : 1,
+      has2xBonus: bonusCheck.has2x,
+      bonusReason: bonusCheck.reason,
+      bonusApplied: bonusCheck.has2x ? BONUS_MULTIPLIER : 1,
     };
   },
 });

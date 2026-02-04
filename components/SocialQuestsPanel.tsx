@@ -31,8 +31,8 @@ export function SocialQuestsPanel({
   // 2x bonus if player has VibeFID or VIBE Badge
   const has2xBonus = hasVibeFID || hasVibeBadge;
   const bonusSource = hasVibeBadge ? "VIBE Badge" : hasVibeFID ? "VibeFID" : "";
-  // Cast interaction reward: 300 base, 600 with 2x bonus
-  const castInteractionReward = has2xBonus ? 600 : 300;
+  // Cast interaction reward: 150 base, 300 with 2x bonus (matches backend featuredCasts.ts)
+  const castInteractionReward = has2xBonus ? 300 : 150;
   const [verifying, setVerifying] = useState<string | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(new Set());
