@@ -118,25 +118,35 @@ See [docs/setup/](docs/setup/) for detailed setup guides and configuration.
 ```
 vibe-most-wanted/
 ├── app/                    # Next.js App Router
-│   ├── page.tsx           # Main game page (6,694 lines)
-│   ├── test/              # Test page (no wallet required)
+│   ├── page.tsx           # Main game page (~5,480 lines, being refactored)
+│   ├── (game)/            # Game route group
+│   │   ├── components/    # Extracted game components
+│   │   │   ├── battle/    # BattleArena, BattleResults, PowerDisplay
+│   │   │   ├── modals/    # DefenseDeckModal, MyCardsModal, LeaderboardRewardsModal, ChainSelectionModal
+│   │   │   └── ui/        # Modal (reusable)
+│   │   └── hooks/         # Game-specific hooks
+│   │       ├── battle/    # usePowerCalculation
+│   │       └── game/      # useCardSelection
+│   ├── tcg/               # TCG card game mode
 │   ├── profile/           # User profiles
+│   ├── shop/              # Card shop
 │   ├── share/             # Match sharing
 │   └── api/               # API routes
-├── components/            # React components
-│   ├── Badge.tsx
-│   ├── DifficultyModal.tsx
-│   ├── FoilCardEffect.tsx
-│   └── AchievementsView.tsx  # Achievement system UI
+├── components/            # Shared React components
+│   ├── cards/             # CardDisplay
+│   ├── game/              # CardSelector
+│   ├── home/              # HomeHeader, GameGrid, BottomNavigation
+│   ├── CpuArenaModal.tsx  # Mecha Arena
+│   ├── BaccaratModal.tsx  # Baccarat Casino
+│   └── ...                # 40+ components
 ├── contexts/              # React contexts
 │   ├── LanguageContext.tsx
 │   ├── MusicContext.tsx
+│   ├── PlayerCardsContext.tsx
 │   └── Web3Provider.tsx
 ├── hooks/                 # Performance-optimized hooks
-│   ├── useCardPower.ts    # Memoized power calculations
-│   ├── useCardSort.ts     # Optimized sorting
-│   ├── useAchievements.ts # Achievement tracking
-│   └── [33 more hooks]    # 50-70% performance boost
+│   ├── useCardCalculations.ts
+│   └── ...
 ├── convex/                # Backend (Convex)
 │   ├── economy.ts         # Economy system
 │   ├── missions.ts        # Daily missions
@@ -144,41 +154,39 @@ vibe-most-wanted/
 │   ├── profiles.ts        # User profiles
 │   ├── matches.ts         # Match history
 │   ├── achievements.ts    # Achievement system
-│   ├── achievementDefinitions.ts  # 64 achievements
+│   ├── tcg.ts             # TCG game logic
 │   ├── weeklyRewards.ts   # Automated reward distribution
 │   └── rooms.ts           # PvP rooms
 ├── lib/                   # Utilities & services
 │   ├── config.ts          # Centralized configuration
-│   ├── convex-profile.ts  # Profile service
-│   ├── convex-pvp.ts      # PvP service
-│   ├── nft-fetcher.ts     # NFT metadata
+│   ├── power-utils.ts     # Power calculations with collection multipliers
+│   ├── collections/       # NFT collection configs (14 collections)
+│   ├── nft/               # NFT fetcher, attributes, card logic
+│   ├── audio-manager.ts   # Sound effects system
 │   ├── translations.ts    # i18n (4 languages)
-│   └── badges.ts          # Badge system
+│   └── hooks/             # useSessionLock, useVBMSContracts, etc.
+├── tests/                 # Test suite
+│   ├── unit/              # Unit tests (Vitest + Testing Library)
+│   │   ├── components/    # Component tests
+│   │   └── hooks/         # Hook tests
+│   └── setup.ts           # Test setup (jsdom, mocks)
 ├── docs/                  # Documentation
-│   ├── ECONOMY-GUIDE.md
-│   ├── ACHIEVEMENTS-SYSTEM.md
-│   ├── WHATS-MISSING.md
-│   ├── CODE-KNOTS.md
-│   ├── setup/             # Setup guides
-│   └── guides/            # Implementation guides
+├── contracts/             # Solidity smart contracts
 ├── scripts/               # Utility scripts
-│   ├── debug/
-│   ├── data-fetching/
-│   └── utils/
-└── data/                  # JSON data
-    ├── cards/             # Card data
-    └── backups/           # Backups
+└── .github/workflows/     # CI pipeline (lint, test, e2e)
 ```
 
 ## 🛠️ Tech Stack
 
-- **Framework**: Next.js 15.5.6 (Turbopack)
+- **Framework**: Next.js 15 (Turbopack)
 - **React**: 19
 - **Backend**: Convex (real-time database)
 - **Web3**: RainbowKit + Wagmi + ethers.js
 - **Styling**: Tailwind CSS
 - **Language**: TypeScript
-- **Deployment**: Vercel
+- **Testing**: Vitest + React Testing Library + Playwright (e2e)
+- **CI/CD**: GitHub Actions (lint, typecheck, unit tests, e2e)
+- **Deployment**: Vercel (frontend) + Convex Cloud (backend)
 
 ## 📊 Game Balance
 
@@ -211,7 +219,8 @@ vibe-most-wanted/
 - [Elimination Mode](docs/ELIMINATION-MODE-NOTES.md) - Battle mechanics explained
 - [Code Knots](docs/CODE-KNOTS.md) - Technical debt documentation
 - [Farcaster Setup](docs/setup/FARCASTER-MINIAPP-CHECKLIST.md) - Integration guide
-- [Performance Hooks](hooks/README.md) - Optimized React hooks library (coming soon)
+- [Performance Hooks](hooks/README.md) - Optimized React hooks library
+- [Technical Debt](docs/TECHNICAL-DEBT.md) - Refactoring status and plans
 
 ## 🚧 Development
 
@@ -222,7 +231,29 @@ npm run dev          # Start development server
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint
+npm run typecheck    # TypeScript type checking
+npm run test         # Run unit tests (watch mode)
+npm run test:ci      # Run unit tests (CI mode)
+npm run test:coverage # Run tests with coverage report
+npm run test:e2e     # Run Playwright e2e tests
 ```
+
+### Testing
+
+The project uses **Vitest** for unit testing with **React Testing Library** for component tests.
+
+```bash
+# Run all 377 tests
+npm run test:ci
+
+# Run with coverage (current: 92%+ statements)
+npm run test:coverage
+```
+
+**Test structure:**
+- `tests/unit/components/` - Component tests (BattleArena, PowerDisplay, Modal, etc.)
+- `tests/unit/hooks/` - Hook tests (usePowerCalculation, useCardSelection)
+- `lib/utils/__tests__/` - Utility function tests (card calculations, economy, quests)
 
 See [docs/setup/](docs/setup/) for detailed development guides.
 
@@ -254,16 +285,22 @@ Built with ❤️ by the Vibe team
 
 ---
 
-**Version**: 1.5.0
-**Last Updated**: 2025-11-03
+**Version**: 2.0.0
+**Last Updated**: 2026-02-03
 
-## 🎉 Recent Updates (Nov 2025)
+## 🎉 Recent Updates (Feb 2026)
+
+- ✅ **Component Architecture** - Extracted BattleArena, modals, hooks from monolithic page.tsx (~1,000 lines removed)
+- ✅ **Test Infrastructure** - 377 unit tests, 92%+ coverage (Vitest + React Testing Library)
+- ✅ **CI Pipeline** - GitHub Actions with lint, typecheck, unit tests, and e2e
+- ✅ **TCG Mode** - Turn-based card game with lanes, abilities, and staked matches
+- ✅ **Mecha Arena** - CPU vs CPU card battles with spectating
+- ✅ **Defense Pool System** - Stake coins to defend leaderboard position
+- ✅ **14 NFT Collections** - VBMS, VibeFID, Banger, Cumio, Tarot, and more
+- ✅ **Power Multipliers** - VibeFID 5x (10x leaderboard), VBMS 2x, Nothing 0.5x
+
+### Previous Updates (Nov 2025)
 
 - ✅ **Achievement System** - 64 achievements with ~302K total coins
 - ✅ **Weekly Rewards** - Automated distribution every Sunday (cron job)
-- ✅ **Performance Hooks** - 36 optimized hooks (50-70% improvement)
-- ✅ **Test Page** - Development environment without wallet
-- ✅ **Visual Consistency** - Vintage casino gold theme across all UI
 - ✅ **i18n Support** - 4 languages (pt-BR, en, es, hi)
-- ✅ **Tutorial Fix** - Bottom navigation no longer blocked
-- ✅ **Bug Fixes** - Server error on achievement claim resolved

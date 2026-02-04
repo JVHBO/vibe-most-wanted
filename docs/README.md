@@ -2,7 +2,7 @@
 
 **Complete documentation for the Vibe Most Wanted NFT card battle game**
 
-**Last Updated**: 2025-11-07
+**Last Updated**: 2026-02-03
 
 ---
 
@@ -35,6 +35,13 @@ New to the project? Start here:
 | [Farcaster Miniapp Checklist](./setup/FARCASTER-MINIAPP-CHECKLIST.md) | Deployment checklist (Portuguese) |
 | [Farcaster Fix Summary](./setup/FARCASTER-FIX-SUMMARY.md) | Common fixes (Portuguese) |
 | [Foil Effects Implementation](./guides/FOIL-EFFECTS-IMPLEMENTATION.md) | How to implement foil card effects |
+
+### 🧪 Testing & Architecture
+
+| Document | Description |
+|----------|-------------|
+| [Architecture Overview](./ARCHITECTURE.md) | Component structure, extracted modules, folder organization |
+| [Testing Guide](./TESTING.md) | Test setup, running tests, coverage, writing new tests |
 
 ### 🔧 Technical Documentation
 
@@ -187,21 +194,27 @@ Use GitHub's search or your editor's search functionality:
 
 ## 🆕 Recent Updates
 
+### 2026-02-03
+- ✅ Added [Architecture Overview](./ARCHITECTURE.md) documenting extracted components
+- ✅ Added [Testing Guide](./TESTING.md) with full test infrastructure docs
+- ✅ Updated README.md with current project structure and stats
+- ✅ Updated TECHNICAL-DEBT.md with refactoring progress
+
+### 2026-01 ~ 2026-02
+- ✅ Extracted BattleArena, PowerDisplay, BattleResults from page.tsx
+- ✅ Extracted DefenseDeckModal, MyCardsModal, LeaderboardRewardsModal, ChainSelectionModal
+- ✅ Created usePowerCalculation, useCardSelection hooks
+- ✅ Set up Vitest + React Testing Library (377 tests, 92%+ coverage)
+- ✅ Created CI pipeline (GitHub Actions)
+- ✅ Added TCG mode, Mecha Arena, Defense Pool system
+
 ### 2025-11-07
 - ✅ Created comprehensive [Farcaster Miniapp Development Guide](./guides/FARCASTER-MINIAPP-DEVELOPMENT-GUIDE.md)
 - ✅ Organized documentation with this README
-- ✅ Fixed security issues (removed exposed API keys)
 
 ### 2025-11-03
 - ✅ Fixed achievement claim bug (Bug #6)
 - ✅ Implemented custom toast notification system
-- ✅ Migrated to performance hooks library
-- ✅ Added weekly rewards UI
-
-### 2025-11-01
-- ✅ Fixed Farcaster miniapp meta tags
-- ✅ Updated manifest configuration
-- ✅ Improved documentation structure
 
 ---
 
@@ -282,11 +295,12 @@ setup/           # Configuration instructions
 
 ## 📊 Documentation Stats
 
-- **Total Documents**: 29
+- **Total Documents**: 31
 - **Guides**: 2
 - **Setup Docs**: 4
+- **Architecture/Testing**: 2
 - **Core Docs**: 23
-- **Last Major Update**: 2025-11-07
+- **Last Major Update**: 2026-02-03
 
 ---
 

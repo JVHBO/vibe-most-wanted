@@ -1,128 +1,95 @@
-# 🔧 Technical Debt & Refactoring TODO
+# Technical Debt & Refactoring Status
 
-**Data:** 2025-11-04
-**Status:** Para revisar quinta-feira quando resetar limite do Claude
-
----
-
-## 🚨 CRÍTICO - Alta Prioridade
-
-### 1. app/page.tsx é GIGANTE (7.116 linhas)
-- **Problema:** Arquivo monolítico com 134 hooks, difícil manutenção
-- **Impacto:** Alto risco de bugs, dificuldade de debug
-- **Solução:** Dividir em componentes:
-  ```
-  app/
-    page.tsx (container - 500 linhas)
-    components/
-      CardGrid.tsx
-      BattleArena.tsx
-      LeaderboardTab.tsx
-      MissionsTab.tsx
-      ProfileSection.tsx
-  ```
-
-### 2. Polling Manual vs Convex Reactive Queries
-- **Problema:** `setInterval` para leaderboard (linha 2853)
-- **Impacto:** Consome mais recursos, possíveis memory leaks
-- **Solução:** Migrar para `useQuery` do Convex
-  ```typescript
-  // ❌ Atual
-  const interval = setInterval(loadLeaderboard, 30 * 60 * 1000);
-
-  // ✅ Ideal
-  const leaderboard = useQuery(api.profiles.getLeaderboardLite, { limit: 100 });
-  ```
-
-### 3. Memory Leaks Potenciais
-- **Problema:** Vários `setInterval` sem cleanup garantido
-- **Solução:** Revisar todos os useEffect com intervals/timers
+**Last Updated**: 2026-02-03
 
 ---
 
-## ⚠️ IMPORTANTE - Média Prioridade
+## Refactoring Progress
 
-### 4. Console Logs em Produção
-- **Localização:**
-  - convex/economy.ts: 13 logs
-  - convex/profiles.ts: 14 logs
-- **Solução:** Garantir que `devLog` não apareça em prod
+### 1. app/page.tsx Size Reduction - IN PROGRESS
 
-### 5. TODO Pendente
-- **Arquivo:** convex/quests.ts:470
-- **Item:** `reward: 300, // TODO: Ajustar valores depois`
+**Original**: 7,116 lines | **Current**: ~5,480 lines | **Removed**: ~1,636 lines
 
-### 6. Otimização de Bandwidth Convex
-- **Status:** Já otimizado (47% redução) ✅
-- **Oportunidade:** Adicionar cache client-side com React Query
+| Extracted Component | Lines | Status |
+|---------------------|-------|--------|
+| BattleArena (+ AvatarBadge, BattleCardGrid, EliminationCard) | ~270 | Done |
+| DefenseDeckModal | ~220 | Done |
+| LeaderboardRewardsModal | ~70 | Done |
+| MyCardsModal | ~65 | Done |
+| ChainSelectionModal | ~55 | Done |
+| BattleResults | ~15 | Done |
+| PowerDisplay | ~24 | Done |
+| usePowerCalculation hook | ~20 | Done |
+| Battle Poker mode removal | ~200 | Done |
+| **Total extracted** | **~940** | |
 
----
+**Remaining candidates for extraction:**
+- PvP Preview Modal (~319 lines) - Pre-battle aura comparison
+- Attack Card Selection flow (~200+ lines)
+- Leaderboard Tab content (~300+ lines)
+- Missions Tab content (~200+ lines)
+- Profile Section (~150+ lines)
 
-## 💡 MELHORIAS SUGERIDAS
-
-### 7. Error Boundaries
-- Adicionar error boundaries para componentes críticos
-- Prevenir crash total do app
-
-### 8. Memoization
-- Memoizar componentes pesados (CardGrid, BattleArena)
-- `React.memo()` em componentes que re-renderizam muito
-
-### 9. Lazy Loading
-- Lazy load tabs (Missions, Achievements, Leaderboard)
-- Reduz bundle inicial
-
-### 10. React Server Components
-- Next.js 15 suporta RSC
-- Considerar migração gradual
+**Goal**: Reduce page.tsx to ~3,000 lines.
 
 ---
 
-## 📊 MÉTRICAS ATUAIS
+## Remaining Technical Debt
+
+### HIGH - Polling Manual vs Convex Reactive Queries
+- **Problem**: `setInterval` for leaderboard polling
+- **Impact**: Higher resource usage, potential memory leaks
+- **Fix**: Migrate to `useQuery` from Convex
+
+### HIGH - Memory Leak Potential
+- **Problem**: Multiple `setInterval` without guaranteed cleanup
+- **Fix**: Audit all useEffect with intervals/timers
+
+### MEDIUM - Console Logs in Production
+- **Location**: convex/economy.ts, convex/profiles.ts
+- **Fix**: Ensure `devLog` is silent in production
+
+### MEDIUM - Error Boundaries
+- No error boundaries around critical components
+- A single component crash can take down the whole app
+
+### LOW - Lazy Loading
+- Tabs (Missions, Achievements, Leaderboard) load eagerly
+- Could reduce initial bundle size with `React.lazy()`
+
+---
+
+## Completed Items
+
+- [x] Extract BattleArena component from page.tsx
+- [x] Extract battle sub-components (BattleResults, PowerDisplay)
+- [x] Extract modal components (DefenseDeckModal, MyCardsModal, LeaderboardRewardsModal, ChainSelectionModal)
+- [x] Create reusable Modal component
+- [x] Extract power calculation into usePowerCalculation hook
+- [x] Extract card selection into useCardSelection hook
+- [x] Create CardDisplay and CardSelector components
+- [x] Remove Battle Poker mode (dead code)
+- [x] Set up test infrastructure (Vitest + React Testing Library)
+- [x] Achieve 92%+ test coverage (377 tests)
+- [x] Create CI pipeline (GitHub Actions)
+- [x] Convex bandwidth optimization (47% reduction)
+- [x] Custom hooks for card calculations
+- [x] TypeScript strict typing
+- [x] Conditional logging (IS_DEV)
+
+---
+
+## Current Metrics
 
 ```
-Total arquivos TypeScript: 53
-Maior arquivo: app/page.tsx (7.116 linhas) ⚠️
-Segundo maior: convex/economy.ts (1.417 linhas)
-Hooks no page.tsx: 134 ⚠️
-TODOs pendentes: 1
-Console logs: 28 (backend)
+app/page.tsx:        ~5,480 lines (down from 7,116)
+convex/tcg.ts:       ~4,800 lines
+convex/economy.ts:   ~1,400 lines
+Unit tests:          377 (21 test files)
+Statement coverage:  92.36%
+Branch coverage:     78.98%
 ```
 
 ---
 
-## ✅ PONTOS POSITIVOS
-
-1. ✅ Sem vulnerabilidades (eval, dangerouslySetInnerHTML)
-2. ✅ Custom hooks já existem (useCardCalculations)
-3. ✅ Componentes isolados (Badge, DifficultyModal)
-4. ✅ TypeScript bem tipado
-5. ✅ Convex otimizado (getLeaderboardLite)
-6. ✅ Logging condicional (IS_DEV)
-
----
-
-## 🎯 PLANO DE AÇÃO (Quinta-feira)
-
-**Fase 1: Refatoração app/page.tsx (4-6 horas)**
-1. Criar pasta `app/components/game/`
-2. Extrair CardGrid
-3. Extrair BattleArena
-4. Extrair tabs (Leaderboard, Missions, Achievements)
-
-**Fase 2: Migrar para Convex Reactive (2-3 horas)**
-1. Substituir polling manual por useQuery
-2. Remover setIntervals
-3. Testar atualização reativa
-
-**Fase 3: Performance (1-2 horas)**
-1. Adicionar React.memo nos componentes pesados
-2. Lazy load de tabs
-3. Adicionar error boundaries
-
-**Estimativa total: 7-11 horas**
-
----
-
-**Última atualização:** 2025-11-04
-**Próxima revisão:** Quinta-feira (após reset do limite Claude)
+**Last Updated**: 2026-02-03
