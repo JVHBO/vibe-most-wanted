@@ -67,8 +67,8 @@
     "tukka": {
       "name": "💣 Time Bomb",
       "type": "onReveal",
-      "description": "Plant a BOMB! After 2 turns, DESTROY ALL cards in this lane (including Tukka)!",
-      "effect": { "action": "timeBomb", "delay": 2, "destroyAll": true },
+      "description": "Plant a BOMB! After 2 turns, DESTROY ALL cards in this lane!",
+      "effect": { "action": "timeBomb", "delay": 2 },
       "rarity": "Legendary"
     },
     "chilipepper": {
@@ -152,8 +152,8 @@
     "horsefarts": {
       "name": "🧠 Mind Parasite",
       "type": "onReveal",
-      "description": "Play in ENEMY lane! Locks lane 2 turns. Drains unspent energy. On destroy, YOUR team gains drained energy!",
-      "effect": { "action": "parasiteLane", "duration": 2, "drainEnergy": true, "playInEnemyLane": true },
+      "description": "PARASITE: -15 power to ALL enemies in this lane + lock their power gains!",
+      "effect": { "action": "parasiteLane", "debuff": 15 },
       "rarity": "Epic"
     },
     "jc denton": {
@@ -292,7 +292,7 @@
       "rarity": "Common"
     },
     "rizkybegitu": {
-      "name": "🎲 Lucky Roll",
+      "name": "🎲 Underdog",
       "type": "onReveal",
       "description": "+10 power. If you're LOSING this lane, +25 instead!",
       "effect": { "action": "buffIfLosing", "base": 10, "bonus": 25 },
@@ -336,7 +336,7 @@
     "landmine": {
       "name": "💣 Kamikaze",
       "type": "onReveal",
-      "description": "BOOM! Destroys itself AND the strongest enemy!",
+      "description": "BOOM! Destroy itself AND the strongest enemy on the board!",
       "effect": { "action": "kamikaze" },
       "rarity": "Common"
     },

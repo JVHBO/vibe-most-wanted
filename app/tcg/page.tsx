@@ -1740,8 +1740,14 @@ export default function TCGPage() {
         return { type: "copy", text: "SMART CONTRACT!", emoji: "📜" };
       case "moveCard":
         return { type: "shuffle", text: "COFFEE RUN!", emoji: "☕" };
-      case "gamble":
-        return { type: "buff", text: "RISKY PLAY!", emoji: "🎲" };
+      case "buffIfLosing":
+        return { type: "buff", text: "UNDERDOG!", emoji: "🎲" };
+      case "timeBomb":
+        return { type: "destroy", text: "BOMB PLANTED!", emoji: "💣" };
+      case "parasiteLane":
+        return { type: "steal", text: "PARASITE!", emoji: "🧠" };
+      case "kamikaze":
+        return { type: "destroy", text: "KAMIKAZE!", emoji: "💥" };
       case "debuffStrongest":
         return { type: "snipe", text: "DIRTY TACTICS!", emoji: "🎯" };
       case "buffByRarity":
