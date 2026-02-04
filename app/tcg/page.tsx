@@ -1360,6 +1360,7 @@ export default function TCGPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchElapsed, setSearchElapsed] = useState(0);
   const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const searchCancelledRef = useRef(false);
 
   // Staked match state (PvE local with stake tracking)
   const [stakedMatchInfo, setStakedMatchInfo] = useState<{
@@ -4986,17 +4987,9 @@ export default function TCGPage() {
             </button>
 
             {/* Center: Title */}
-            <div className="flex items-center gap-2">
-              <h1 className="text-base md:text-xl font-display font-bold text-vintage-gold uppercase tracking-widest">
-                {t('tcgTitle')}
-              </h1>
-              <button
-                onClick={() => setLobbyTab("rules")}
-                className="w-5 h-5 rounded-full bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50 text-xs font-bold flex items-center justify-center transition-all"
-              >
-                ?
-              </button>
-            </div>
+            <h1 className="text-base md:text-xl font-display font-bold text-vintage-gold uppercase tracking-widest">
+              {t('tcgTitle')}
+            </h1>
 
             {/* Right: Deck Builder Button */}
             <button
@@ -5196,6 +5189,7 @@ export default function TCGPage() {
                               <p className="text-xs text-vintage-burnt-gold/50 mb-2">{Math.max(0, Math.ceil(5 - searchElapsed))}s</p>
                               <button
                                 onClick={async () => {
+                                  searchCancelledRef.current = true;
                                   setIsSearching(false);
                                   if (address) await cancelSearchMutation({ address });
                                 }}
@@ -5212,6 +5206,7 @@ export default function TCGPage() {
                                   setError(null);
                                   setIsSearching(true);
                                   setSearchElapsed(0);
+                                  searchCancelledRef.current = false;
 
                                   // Start search on server
                                   await searchMatchMutation({ address, username, deckId: activeDeck._id });
@@ -5221,8 +5216,9 @@ export default function TCGPage() {
                                   let foundPlayer = false;
                                   const maxSearchTime = 5; // 5 seconds max
 
-                                  while (elapsed < maxSearchTime && !foundPlayer) {
+                                  while (elapsed < maxSearchTime && !foundPlayer && !searchCancelledRef.current) {
                                     await new Promise(resolve => setTimeout(resolve, 500));
+                                    if (searchCancelledRef.current) break;
                                     elapsed += 0.5;
                                     setSearchElapsed(elapsed);
 
@@ -5254,6 +5250,12 @@ export default function TCGPage() {
                                     } else if (matchStatus.status === "expired" || matchStatus.status === "not_searching") {
                                       break; // Exit polling loop
                                     }
+                                  }
+
+                                  // If cancelled, don't fall back to CPU
+                                  if (searchCancelledRef.current) {
+                                    setIsSearching(false);
+                                    return;
                                   }
 
                                   // No live player found - fall back to CPU auto match
