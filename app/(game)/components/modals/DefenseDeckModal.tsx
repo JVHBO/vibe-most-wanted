@@ -7,23 +7,15 @@ import { getCardDisplayPower } from '@/lib/power-utils';
 import { getCardUniqueId, filterCardsByCollections, type CollectionId } from '@/lib/collections/index';
 import { isSameCard } from '@/lib/nft';
 import { AudioManager } from '@/lib/audio-manager';
-
-interface BattleCard {
-  imageUrl?: string;
-  tokenId?: string;
-  rarity?: string;
-  power?: number;
-  collection?: string;
-  [key: string]: any;
-}
+import type { Card } from '@/lib/types/card';
 
 interface DefenseDeckModalProps {
   isOpen: boolean;
   onClose: () => void;
-  nfts: BattleCard[];
+  nfts: Card[];
   status: string;
-  selectedCards: BattleCard[];
-  setSelectedCards: (cards: BattleCard[]) => void;
+  selectedCards: Card[];
+  setSelectedCards: (cards: Card[]) => void;
   handSize: number;
   defenseDeckCollection: CollectionId | 'all';
   setDefenseDeckCollection: (v: CollectionId | 'all') => void;
