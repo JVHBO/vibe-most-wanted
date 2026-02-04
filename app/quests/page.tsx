@@ -585,8 +585,8 @@ export default function QuestsPage() {
 
                 {/* 2x Bonus Banners */}
                 {(() => {
-                  // 🚀 BANDWIDTH FIX: Use fid from profileDashboard instead of checking ownedTokenIds
-                  const hasVibeFID = !!profileDashboard?.fid;
+                  // 🐛 FIX: Check actual VibeFID NFT ownership, not just Farcaster FID
+                  const hasVibeFID = vibeBadgeEligibility?.hasVibeFIDCards || false;
                   const hasVibeBadge = profileDashboard?.hasVibeBadge;
                   const has2xBonus = hasVibeFID || hasVibeBadge;
                   const bonusSource = hasVibeBadge ? "VIBE Badge" : hasVibeFID ? "VibeFID" : "";
