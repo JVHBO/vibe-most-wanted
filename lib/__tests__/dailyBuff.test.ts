@@ -60,7 +60,7 @@ describe('getDailyBuffedCollection', () => {
     const day2 = getDailyBuffedCollection();
     // They could theoretically be the same if wrapping, but for consecutive days
     // with 6 collections they should differ (day % 6 increments by 1)
-    expect(day1 !== day2 || ARENA_COLLECTIONS.length === 1).toBe(true);
+    expect(day1 !== day2 || (ARENA_COLLECTIONS.length as number) === 1).toBe(true);
   });
 
   it('cycles through all collections over N days', () => {

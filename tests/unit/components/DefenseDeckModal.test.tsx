@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { DefenseDeckModal } from '@/app/(game)/components/modals/DefenseDeckModal';
+import type { Card } from '@/lib/types/card';
 
 vi.mock('@/components/CardMedia', () => ({
   CardMedia: (props: any) => <img src={props.src} alt={props.alt || ''} />,
@@ -25,12 +26,12 @@ vi.mock('@/lib/nft', () => ({
   isSameCard: (a: any, b: any) => a.tokenId === b.tokenId && a.collection === b.collection,
 }));
 
-const mockNfts = [
-  { tokenId: '1', imageUrl: '/c1.png', power: 100, collection: 'vibe', rarity: 'Common' },
-  { tokenId: '2', imageUrl: '/c2.png', power: 200, collection: 'vibe', rarity: 'Rare' },
-  { tokenId: '3', imageUrl: '/c3.png', power: 300, collection: 'vibe', rarity: 'Epic' },
-  { tokenId: '4', imageUrl: '/c4.png', power: 400, collection: 'vibe', rarity: 'Legendary' },
-  { tokenId: '5', imageUrl: '/c5.png', power: 500, collection: 'vibe', rarity: 'Mythic' },
+const mockNfts: Card[] = [
+  { tokenId: '1', name: 'Card 1', imageUrl: '/c1.png', power: 100, collection: 'vibe', rarity: 'Common' },
+  { tokenId: '2', name: 'Card 2', imageUrl: '/c2.png', power: 200, collection: 'vibe', rarity: 'Rare' },
+  { tokenId: '3', name: 'Card 3', imageUrl: '/c3.png', power: 300, collection: 'vibe', rarity: 'Epic' },
+  { tokenId: '4', name: 'Card 4', imageUrl: '/c4.png', power: 400, collection: 'vibe', rarity: 'Legendary' },
+  { tokenId: '5', name: 'Card 5', imageUrl: '/c5.png', power: 500, collection: 'vibe', rarity: 'Mythic' },
 ];
 
 const baseProps = {
