@@ -59,6 +59,7 @@ import { Roulette } from "@/components/Roulette";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
+import { usePowerCalculation } from "@/app/(game)/hooks/battle/usePowerCalculation";
 // 🚀 BANDWIDTH FIX: Cached hooks for infrequent data
 import { useCachedDailyQuest } from "@/lib/convex-cache";
 // 📝 Development logger (silent in production)
@@ -896,15 +897,8 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
 
   // 🚀 Performance: Memoized battle card power totals (for UI display)
   const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
-  // Collection power multipliers for leaderboard attacks (VibeFID 10x, VBMS 2x, Nothing 0.5x)
-  const calculateLeaderboardAttackPower = (cards: any[]) => {
-    return cards.reduce((sum, c) => {
-      const multiplier = c.collection === 'vibefid' ? 10 : c.collection === 'vibe' ? 2 : c.collection === 'nothing' ? 0.5 : 1;
-      return sum + Math.floor((c.power || 0) * multiplier);
-    }, 0);
-  };
-  const attackSelectedCardsPower = calculateLeaderboardAttackPower(attackSelectedCards);
-  const dealerCardsPower = calculateLeaderboardAttackPower(dealerCards); // VibeFID 10x applies to defender too
+  const { totalPower: attackSelectedCardsPower } = usePowerCalculation(attackSelectedCards, true);
+  const { totalPower: dealerCardsPower } = usePowerCalculation(dealerCards, true);
 
   // ✅ PvP Preview States
   const [showPvPPreview, setShowPvPPreview] = useState<boolean>(false);
