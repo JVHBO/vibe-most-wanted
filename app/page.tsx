@@ -60,6 +60,8 @@ import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
 import { usePowerCalculation } from "@/app/(game)/hooks/battle/usePowerCalculation";
+import { BattleResults } from "@/app/(game)/components/battle/BattleResults";
+import { PowerDisplay } from "@/app/(game)/components/battle/PowerDisplay";
 // 🚀 BANDWIDTH FIX: Cached hooks for infrequent data
 import { useCachedDailyQuest } from "@/lib/convex-cache";
 // 📝 Development logger (silent in production)
@@ -4238,18 +4240,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                         </div>
                       ))}
                     </div>
-                    <div className="mt-3 md:mt-4 text-center">
-                      <p
-                        className="text-3xl md:text-4xl font-bold text-vintage-neon-blue"
-                        style={{
-                          animation: battlePhase === 'result'
-                            ? 'battlePowerPulse 1.5s ease-in-out 3'
-                            : undefined
-                        }}
-                      >
-                        {playerPower}
-                      </p>
-                    </div>
+                    <PowerDisplay power={playerPower} color="blue" battlePhase={battlePhase} />
                   </>
                 )}
               </div>
@@ -4369,38 +4360,21 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                         </div>
                       ))}
                     </div>
-                    <div className="mt-3 md:mt-4 text-center">
-                      <p
-                        className="text-3xl md:text-4xl font-bold text-red-400"
-                        style={{
-                          animation: battlePhase === 'result'
-                            ? 'battlePowerPulse 1.5s ease-in-out 3'
-                            : undefined
-                        }}
-                      >
-                        {dealerPower}
-                      </p>
-                    </div>
+                    <PowerDisplay power={dealerPower} color="red" battlePhase={battlePhase} />
                   </>
                 )}
               </div>
             </div>
 
             {/* Result */}
-            {battlePhase === 'result' && result && (
-              <div className="text-center" style={{ animation: 'battleResultSlide 0.8s ease-out' }}>
-                <div className={`text-3xl md:text-6xl font-bold ${
-                  result === t('playerWins') ? 'text-green-400' :
-                  result === t('dealerWins') ? 'text-red-400' :
-                  'text-yellow-400'
-                }`}>
-                  {battleMode === 'elimination' && currentRound <= 5
-                    ? (result === t('playerWins') ? '★ ROUND WIN!' : result === t('dealerWins') ? '† ROUND LOST' : '~ ROUND TIE')
-                    : result
-                  }
-                </div>
-              </div>
-            )}
+            <BattleResults
+              result={result}
+              battlePhase={battlePhase}
+              battleMode={battleMode}
+              currentRound={currentRound}
+              winLabel={t('playerWins')}
+              loseLabel={t('dealerWins')}
+            />
           </div>
         </div>
       )}
