@@ -1,5 +1,5 @@
 {
-  "description": "TCG Abilities for all 53 VMW cards",
+  "description": "TCG Abilities for all 54 VMW cards",
   "version": "1.1.0",
   "lastUpdated": "2026-01-23",
   "abilityTypes": {
@@ -40,6 +40,13 @@
       "type": "onReveal",
       "description": "DESTROY highest enemy card + GAIN its power as bonus!",
       "effect": { "action": "destroyHighestEnemy", "gainPower": true },
+      "rarity": "Mythic"
+    },
+    "clawdmoltopenbot": {
+      "name": "🤖 System Override",
+      "type": "onReveal",
+      "description": "HACK ALL LANES: Steal +15 power from EVERY enemy card + Draw 2 cards!",
+      "effect": { "action": "systemOverride", "stealPerCard": 15, "draw": 2 },
       "rarity": "Mythic"
     },
 

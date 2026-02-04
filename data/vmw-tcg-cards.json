@@ -1,11 +1,12 @@
 {
   "description": "VMW TCG Card Data - Official data from Wield API",
-  "totalCards": 53,
+  "totalCards": 54,
   "apiEndpoint": "https://build.wield.xyz/vibe/boosterbox/metadata?contractAddress=0xf14c1dc8ce5fe65413379f76c43fa1460c31e728",
   "apiKey": "YUEPI-G3KJ7-5FCXV-ANSPV-BZ3DA",
   "lastUpdated": "2026-01-21",
   "cards": [
     { "onChainName": "neymar", "baccarat": "neymar", "suit": "???", "rank": "???", "rarity": "Mythic", "minted": false, "tokenId": null, "crime": "Farcaster's new king saved everyone from Goofy Romero's kingdom" },
+    { "onChainName": "ClawdMoltOpenbot", "baccarat": "clawdmoltopenbot", "suit": "???", "rank": "???", "rarity": "Mythic", "minted": false, "tokenId": null, "crime": "Hacked every system on the chain with a single protocol override" },
 
     { "onChainName": "anon", "baccarat": "anon", "suit": "hearts", "rank": "A", "rarity": "Mythic", "minted": false, "tokenId": null },
     { "onChainName": "Linda Xied", "baccarat": "linda xied", "suit": "diamonds", "rank": "A", "rarity": "Mythic", "minted": false, "tokenId": null },
@@ -89,10 +90,12 @@
     "jc": "jc denton",
     "nicogay": "nico",
     "deploya": "0xdeployer",
-    "deployer": "0xdeployer"
+    "deployer": "0xdeployer",
+    "ClawdMoltOpenbot": "clawdmoltopenbot",
+    "clawdmolt": "clawdmoltopenbot"
   },
   "rarityDistribution": {
-    "Mythic": { "count": 5, "cards": ["neymar", "anon", "Linda Xied", "vitalik jumpterin", "jesse"] },
+    "Mythic": { "count": 6, "cards": ["neymar", "ClawdMoltOpenbot", "anon", "Linda Xied", "vitalik jumpterin", "jesse"] },
     "Legendary": { "count": 8, "cards": ["antonio", "Goofy Romero", "tukka", "chilli", "miguel", "naughty santa", "ye", "nicogay"] },
     "Epic": { "count": 12, "cards": ["sartocrates", "0xdeployer", "lombra", "vibe", "jack", "Beeper", "horsefacts", "jc", "zurkchad", "proxy", "brian armstrong", "nftkid"] },
     "Rare": { "count": 8, "cards": ["smolemaru", "ventra", "bradymck", "shill", "beto", "qrcodo", "loground", "melted"] },

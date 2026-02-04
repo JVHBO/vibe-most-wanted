@@ -46,6 +46,8 @@ const CARD_NAME_ALIASES: Record<string, string> = {
   "goofy romero": "goofy romero",
   "linda xied": "linda xied",
   "beeper": "beeper",
+  "clawdmolt": "clawdmoltopenbot",
+  "clawdmolt openbot": "clawdmoltopenbot",
 };
 
 // Helper to resolve card name using aliases
@@ -1765,6 +1767,8 @@ export default function TCGPage() {
         return { type: "copy", text: "RATIO!", emoji: "👥" };
       case "vibefidDoxxed":
         return { type: "steal", text: "DOXXED!", emoji: "🌐" };
+      case "systemOverride":
+        return { type: "steal", text: "SYSTEM OVERRIDE!", emoji: "🤖" };
       default:
         if (ability.effect?.value && ability.effect.value > 0) {
           return { type: "buff", text: `+${ability.effect.value} POWER!`, emoji: "⬆️" };

@@ -30,7 +30,7 @@ const TCG_CONFIG = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TCG ABILITIES - All 53 card abilities
+// TCG ABILITIES - All 54 card abilities
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const TCG_ABILITIES: Record<string, { type: string; effect: any }> = {
@@ -47,6 +47,7 @@ const TCG_ABILITIES: Record<string, { type: string; effect: any }> = {
   "linda xied": { type: "onReveal", effect: { action: "copyHighest", stealFromAll: 20 } },
   "vitalik jumpterin": { type: "ongoing", effect: { action: "reduceEnergyCost", value: 1 } },
   "jesse": { type: "onReveal", effect: { action: "destroyHighestEnemy", gainPower: true } },
+  "clawdmoltopenbot": { type: "onReveal", effect: { action: "systemOverride", stealPerCard: 15, draw: 2 } },
 
   // LEGENDARY
   "antonio": { type: "onReveal", effect: { action: "buffPerCardInLane", value: 25 } },
@@ -119,6 +120,8 @@ const CARD_NAME_ALIASES: Record<string, string> = {
   "jack": "jack the sniper",
   "horsefacts": "horsefarts",
   "jc": "jc denton",
+  "clawdmolt openbot": "clawdmoltopenbot",
+  "clawdmolt": "clawdmoltopenbot",
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -706,6 +709,30 @@ function applyOnRevealAbility(
       });
       bonusPower = enemyTotalPower;
       console.log(`🌐 VibeFID Doxxed: +${enemyTotalPower} power from enemy lane`);
+      break;
+    }
+
+    case "systemOverride": {
+      // STEAL power from EVERY enemy card on the board + draw cards
+      let totalStolen = 0;
+      const stealAmount = effect.stealPerCard || 15;
+      newLanes.forEach((lane: any) => {
+        lane[enemyCards].forEach((c: any, cIdx: number) => {
+          const stolen = Math.min(stealAmount, c.power);
+          lane[enemyCards][cIdx] = { ...c, power: c.power - stolen };
+          lane[enemyPower] -= stolen;
+          totalStolen += stolen;
+        });
+      });
+      bonusPower = totalStolen;
+      console.log(`🤖 System Override: Stole ${totalStolen} total power from all enemies`);
+      // Draw cards
+      if (effect.draw && effect.draw > 0) {
+        for (let i = 0; i < effect.draw && newDeck.length > 0; i++) {
+          newHand.push(newDeck.shift());
+        }
+        console.log(`🤖 System Override: Drew ${effect.draw} cards`);
+      }
       break;
     }
 
