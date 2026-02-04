@@ -1,72 +1,88 @@
 {
   "description": "TCG Abilities for all 54 VMW cards",
-  "version": "1.1.0",
-  "lastUpdated": "2026-01-23",
+  "version": "1.2.0",
+  "lastUpdated": "2026-02-04",
   "abilityTypes": {
     "onReveal": "Triggers automatically when card is played",
     "ongoing": "Passive effect while on board"
   },
+  "categories": {
+    "offensive": { "emoji": "\u2694\uFE0F", "color": "red-400", "description": "Destroy, debuff, steal power" },
+    "support": { "emoji": "\uD83D\uDC9A", "color": "green-400", "description": "Buff allies, heal, fortify" },
+    "control": { "emoji": "\uD83C\uDFAD", "color": "purple-400", "description": "Shuffle, lock, immunity, disrupt" },
+    "economy": { "emoji": "\u26A1", "color": "yellow-400", "description": "Energy, draw, copy cards" },
+    "wildcard": { "emoji": "\uD83C\uDCCF", "color": "cyan-400", "description": "Conditional, adaptive effects" }
+  },
   "abilities": {
     "neymar": {
-      "name": "👑 King's Arrival",
+      "name": "\uD83D\uDC51 King's Arrival",
       "type": "onReveal",
+      "category": "support",
       "description": "+30 power to ALL cards + DOUBLE power if winning 2+ lanes!",
       "effect": { "action": "buffAllLanes", "value": 30, "doubleIfWinning": true },
       "rarity": "Mythic"
     },
     "anon": {
-      "name": "🎭 Hidden Identity",
+      "name": "\uD83C\uDFAD Hidden Identity",
       "type": "ongoing",
+      "category": "control",
       "description": "IMMUNE to all enemy effects + gains +10 power each turn!",
       "effect": { "action": "untargetable", "buffPerTurn": 10 },
       "rarity": "Mythic"
     },
     "linda xied": {
-      "name": "💎 Diamond Authority",
+      "name": "\uD83D\uDC8E Diamond Authority",
       "type": "onReveal",
+      "category": "offensive",
       "description": "COPY highest power card + STEAL 20 power from all enemies!",
       "effect": { "action": "copyHighest", "stealFromAll": 20 },
       "rarity": "Mythic"
     },
     "vitalik jumpterin": {
-      "name": "⛽ Gas Optimization",
+      "name": "\u26FD Gas Optimization",
       "type": "ongoing",
+      "category": "economy",
       "description": "ALL cards cost -1 energy + gain +2 ENERGY each turn!",
       "effect": { "action": "reduceEnergyCost", "value": 1, "energyPerTurn": 2 },
       "rarity": "Mythic"
     },
     "jesse": {
-      "name": "💀 Protocol Override",
+      "name": "\uD83D\uDC80 Protocol Override",
       "type": "onReveal",
+      "category": "offensive",
       "description": "DESTROY highest enemy card + GAIN its power as bonus!",
       "effect": { "action": "destroyHighestEnemy", "gainPower": true },
       "rarity": "Mythic"
     },
     "clawdmoltopenbot": {
-      "name": "🤖 System Override",
+      "name": "\uD83E\uDD16 System Override",
       "type": "onReveal",
+      "category": "offensive",
       "description": "HACK ALL LANES: Steal +15 power from EVERY enemy card + Draw 2 cards!",
       "effect": { "action": "systemOverride", "stealPerCard": 15, "draw": 2 },
       "rarity": "Mythic"
     },
 
     "antonio": {
-      "name": "👑 Logical Mind",
+      "name": "\uD83D\uDC51 Logical Mind",
       "type": "onReveal",
+      "category": "support",
       "description": "+25 power per card here. COMBO: If MIGUEL in play, DOUBLE all your power!",
       "effect": { "action": "buffPerCardInLane", "value": 25, "combo": { "partner": "miguel", "bonusAction": "doubleAllPower" } },
       "rarity": "Legendary"
     },
     "goofy romero": {
-      "name": "🌀 Chaotic Kingdom",
+      "name": "\uD83C\uDF00 Chaotic Kingdom",
       "type": "onReveal",
+      "category": "control",
       "description": "CHAOS: Shuffle ALL ENEMY cards between lanes! (Does NOT affect your cards)",
       "effect": { "action": "shuffleEnemyLanes", "shuffleEnemyHand": true },
       "rarity": "Legendary"
     },
     "tukka": {
-      "name": "💣 Time Bomb",
+      "name": "\uD83D\uDCA3 Time Bomb",
       "type": "onReveal",
+      "category": "offensive",
       "description": "Plant a BOMB! After 2 turns, DESTROY ALL cards in this lane!",
       "effect": { "action": "timeBomb", "delay": 2 },
       "rarity": "Legendary"
@@ -74,20 +90,23 @@
     "chilipepper": {
       "name": "Spicy Burn",
       "type": "onReveal",
+      "category": "offensive",
       "description": "-30 power to ALL enemies in this lane!",
       "effect": { "action": "debuffLane", "value": -30 },
       "rarity": "Legendary"
     },
     "miguel": {
-      "name": "👑 Royal Command",
+      "name": "\uD83D\uDC51 Royal Command",
       "type": "ongoing",
+      "category": "support",
       "description": "+15 power to allies here + +1 ENERGY/turn. COMBO: If ANTONIO in play, ALL allies IMMUNE!",
       "effect": { "action": "buffLaneOngoing", "value": 15, "energyPerTurn": 1, "combo": { "partner": "antonio", "bonusAction": "allImmune" } },
       "rarity": "Legendary"
     },
     "naughty santa": {
-      "name": "💋 Seduction",
+      "name": "\uD83D\uDC8B Seduction",
       "type": "onReveal",
+      "category": "offensive",
       "description": "CHARM: Automatically STEAL the weakest enemy card to your side!",
       "effect": { "action": "stealWeakest" },
       "rarity": "Legendary"
@@ -95,21 +114,24 @@
     "ye": {
       "name": "Visionary",
       "type": "onReveal",
+      "category": "economy",
       "description": "Draw 3 cards AND +10 power to all",
       "effect": { "action": "draw", "value": 3, "bonusBuff": 10 },
       "rarity": "Legendary"
     },
     "nico": {
-      "name": "🎭 Legendary Status",
+      "name": "\uD83C\uDFAD Legendary Status",
       "type": "ongoing",
+      "category": "wildcard",
       "description": "LOSING: Double power. TIE: +20 power. WINNING: Adjacent allies +15!",
       "effect": { "action": "adaptivePower", "ifLosing": "doublePower", "ifTie": 20, "ifWinning": { "buffAdjacent": 15 } },
       "rarity": "Legendary"
     },
 
     "sartocrates": {
-      "name": "🧠 Socratic Method",
+      "name": "\uD83E\uDDE0 Socratic Method",
       "type": "onReveal",
+      "category": "offensive",
       "description": "QUESTION: Enemy discards 1 card, you draw 1! COMBO: If ZURKCHAD in play, BOTH become IMMUNE + +10 power/turn!",
       "effect": { "action": "forceDiscardAndDraw", "enemyDiscard": 1, "selfDraw": 1, "combo": { "partner": "zurkchad", "bonusAction": "bothImmuneAndScale", "scaleValue": 10 } },
       "rarity": "Epic"
@@ -117,6 +139,7 @@
     "0xdeployer": {
       "name": "Smart Contract",
       "type": "onReveal",
+      "category": "economy",
       "description": "Add a COPY of this card to hand + gain +10 power!",
       "effect": { "action": "addCopyToHand", "bonusPower": 10 },
       "rarity": "Epic"
@@ -124,13 +147,15 @@
     "lombra jr": {
       "name": "Street Smarts",
       "type": "ongoing",
+      "category": "support",
       "description": "+5 power for each card you've played this game",
       "effect": { "action": "buffPerCardsPlayed", "value": 5 },
       "rarity": "Epic"
     },
     "vibe intern": {
-      "name": "⚡ Overtime",
+      "name": "\u26A1 Overtime",
       "type": "ongoing",
+      "category": "economy",
       "description": "At END OF GAME: Convert ALL unspent energy to +8 power EACH! Works hard to the end!",
       "effect": { "action": "convertEnergyEndGame", "powerPerEnergy": 8 },
       "rarity": "Epic"
@@ -138,6 +163,7 @@
     "jack the sniper": {
       "name": "Snipe Shot",
       "type": "onReveal",
+      "category": "offensive",
       "description": "-20 to STRONGEST enemy. If it dies (0 power), gain +15!",
       "effect": { "action": "debuffStrongest", "value": -20, "killBonus": 15 },
       "rarity": "Epic"
@@ -145,13 +171,15 @@
     "beeper": {
       "name": "Signal Boost",
       "type": "onReveal",
+      "category": "support",
       "description": "+15 power to ALL allies in this lane + DRAW 1 card!",
       "effect": { "action": "buffAdjacent", "value": 15, "draw": 1 },
       "rarity": "Epic"
     },
     "horsefarts": {
-      "name": "🧠 Mind Parasite",
+      "name": "\uD83E\uDDE0 Mind Parasite",
       "type": "onReveal",
+      "category": "offensive",
       "description": "PARASITE: -15 power to ALL enemies in this lane + lock their power gains!",
       "effect": { "action": "parasiteLane", "debuff": 15 },
       "rarity": "Epic"
@@ -159,13 +187,15 @@
     "jc denton": {
       "name": "Nano Augmentation",
       "type": "ongoing",
+      "category": "support",
       "description": "+8 power EACH turn! Augmentations online.",
       "effect": { "action": "buffEachTurn", "value": 8 },
       "rarity": "Epic"
     },
     "zurkchad": {
-      "name": "💪 Alpha Energy",
+      "name": "\uD83D\uDCAA Alpha Energy",
       "type": "onReveal",
+      "category": "support",
       "description": "+30 power if turn 3+. COMBO: If SARTOCRATES in play, BOTH become IMMUNE + +10 power/turn!",
       "effect": { "action": "buffIfTurn", "minTurn": 3, "value": 30, "combo": { "partner": "sartocrates", "bonusAction": "bothImmuneAndScale", "scaleValue": 10 } },
       "rarity": "Epic"
@@ -173,218 +203,249 @@
     "slaterg": {
       "name": "Proxy Power",
       "type": "onReveal",
+      "category": "support",
       "description": "+8 power. Gains +5 extra for each ENEMY card in this lane!",
       "effect": { "action": "buffPerEnemyInLane", "basePower": 8, "perEnemy": 5 },
       "rarity": "Epic"
     },
     "brian armstrong": {
-      "name": "📈 Coinbase Listing",
+      "name": "\uD83D\uDCC8 Coinbase Listing",
       "type": "onReveal",
+      "category": "support",
       "description": "+15 power to all Rare cards. COMBO: If VITALIK in play, +80 power to entire lane!",
       "effect": { "action": "buffByRarity", "targetRarity": "Rare", "value": 15, "combo": { "partner": "vitalik jumpterin", "bonusAction": "buffLane", "laneValue": 80 } },
       "rarity": "Epic"
     },
     "nftkid": {
-      "name": "💎 NFT Flip",
+      "name": "\uD83D\uDC8E NFT Flip",
       "type": "onReveal",
+      "category": "economy",
       "description": "+10 power per card in hand. COMBO: If JOHN PORN in play, DOUBLE power of both!",
       "effect": { "action": "buffPerHandSize", "multiplier": 10, "combo": { "partner": "john porn", "bonusAction": "doublePower" } },
       "rarity": "Epic"
     },
 
     "smolemaru": {
-      "name": "🎨 Creative Spark",
+      "name": "\uD83C\uDFA8 Creative Spark",
       "type": "onReveal",
+      "category": "support",
       "description": "+8 power per card you've played this game!",
       "effect": { "action": "buffPerCardsPlayed", "value": 8 },
       "rarity": "Rare"
     },
     "ventra": {
-      "name": "💎 Diamond Hands",
+      "name": "\uD83D\uDC8E Diamond Hands",
       "type": "ongoing",
+      "category": "control",
       "description": "IMMUNE to debuffs + always +10 power! COMBO: If MORLACOS in play, BOTH get DOUBLE scaling!",
       "effect": { "action": "immuneToDebuff", "bonusPower": 10, "combo": { "partner": "morlacos", "bonusAction": "doubleScaling" } },
       "rarity": "Rare"
     },
     "bradymck": {
-      "name": "🤝 Community Builder",
+      "name": "\uD83E\uDD1D Community Builder",
       "type": "onReveal",
+      "category": "support",
       "description": "+12 power per friendly card in play!",
       "effect": { "action": "buffPerFriendly", "value": 12 },
       "rarity": "Rare"
     },
     "shills": {
-      "name": "📢 Shill Campaign",
+      "name": "\uD83D\uDCE2 Shill Campaign",
       "type": "onReveal",
+      "category": "support",
       "description": "HYPE: +20 power to the weakest friendly card!",
       "effect": { "action": "buffWeakest", "value": 20 },
       "rarity": "Rare"
     },
     "betobutter": {
-      "name": "🧈 Butter Smooth",
+      "name": "\uD83E\uDDC8 Butter Smooth",
       "type": "ongoing",
+      "category": "support",
       "description": "+6 power/turn. COMBO: If SCUM in play, STEAL 40 power from enemies!",
       "effect": { "action": "buffPerTurn", "value": 6, "combo": { "partner": "scum", "bonusAction": "stealPower", "stealValue": 40 } },
       "rarity": "Rare"
     },
     "qrcodo": {
-      "name": "📱 Quick Response",
+      "name": "\uD83D\uDCF1 Quick Response",
       "type": "onReveal",
+      "category": "economy",
       "description": "SCAN: Draw 2 cards instantly!",
       "effect": { "action": "draw", "value": 2 },
       "rarity": "Rare"
     },
     "loground": {
-      "name": "🌐 Underground Network",
+      "name": "\uD83C\uDF10 Underground Network",
       "type": "onReveal",
+      "category": "support",
       "description": "SPREAD: +15 power to all cards in OTHER lanes!",
       "effect": { "action": "buffOtherLanes", "value": 15 },
       "rarity": "Rare"
     },
     "melted": {
-      "name": "🔥 Meltdown",
+      "name": "\uD83D\uDD25 Meltdown",
       "type": "onReveal",
+      "category": "support",
       "description": "SACRIFICE: Destroy self instantly and give +20 power to ALL allies!",
       "effect": { "action": "sacrificeBuffAll", "value": 20, "destroySelf": true },
       "rarity": "Rare"
     },
 
     "rachel": {
-      "name": "💕 Energy Heart",
+      "name": "\uD83D\uDC95 Energy Heart",
       "type": "ongoing",
+      "category": "economy",
       "description": "+1 ENERGY each turn! More cards, more plays!",
       "effect": { "action": "energyPerTurn", "value": 1 },
       "rarity": "Common"
     },
     "claude": {
-      "name": "🤖 Computing",
+      "name": "\uD83E\uDD16 Computing",
       "type": "ongoing",
+      "category": "wildcard",
       "description": "AI ANALYSIS: +4 power for EACH card in play (yours and enemy)!",
       "effect": { "action": "buffPerCardInPlay", "value": 4 },
       "rarity": "Common"
     },
     "gozaru": {
-      "name": "🌱 Steady Growth",
+      "name": "\uD83C\uDF31 Steady Growth",
       "type": "ongoing",
+      "category": "support",
       "description": "GROWTH: +3 power to ALL allies in this lane at END of each turn!",
       "effect": { "action": "buffLaneEndTurn", "value": 3 },
       "rarity": "Common"
     },
     "ink": {
-      "name": "🎯 Lone Hunter",
+      "name": "\uD83C\uDFAF Lone Hunter",
       "type": "ongoing",
+      "category": "offensive",
       "description": "PREDICTION: If enemy has only 1 card in this lane for 2 turns, DESTROY it!",
       "effect": { "action": "destroyLoneCard", "duration": 2 },
       "rarity": "Common"
     },
     "casa": {
-      "name": "🏠 Home Advantage",
+      "name": "\uD83C\uDFE0 Home Advantage",
       "type": "ongoing",
+      "category": "control",
       "description": "FIRST: +12 power if you played first in this lane!",
       "effect": { "action": "buffIfFirst", "value": 12 },
       "rarity": "Common"
     },
     "groko": {
-      "name": "🤖 AI Learning",
+      "name": "\uD83E\uDD16 AI Learning",
       "type": "onReveal",
+      "category": "wildcard",
       "description": "+5 power per Common card. COMBO: If CLAUDE in play, +50 power to each AI card!",
       "effect": { "action": "buffPerRarity", "targetRarity": "Common", "value": 5, "combo": { "partner": "claude", "bonusAction": "buffAI", "aiValue": 50 } },
       "rarity": "Common"
     },
     "rizkybegitu": {
-      "name": "🎲 Underdog",
+      "name": "\uD83C\uDFB2 Underdog",
       "type": "onReveal",
+      "category": "wildcard",
       "description": "+10 power. If you're LOSING this lane, +25 instead!",
       "effect": { "action": "buffIfLosing", "base": 10, "bonus": 25 },
       "rarity": "Common"
     },
     "thosmur": {
-      "name": "⚡ Energy Burst",
+      "name": "\u26A1 Energy Burst",
       "type": "onReveal",
+      "category": "wildcard",
       "description": "ALL IN: Consume ALL remaining energy for +5 power EACH! Save energy, then burst!",
       "effect": { "action": "consumeEnergyForPower", "powerPerEnergy": 5 },
       "rarity": "Common"
     },
     "brainpasta": {
-      "name": "🧠 Brain Boost",
+      "name": "\uD83E\uDDE0 Brain Boost",
       "type": "onReveal",
+      "category": "control",
       "description": "SMART: +15 power if you have 3+ cards in hand!",
       "effect": { "action": "buffIfHandSize", "minCards": 3, "value": 15 },
       "rarity": "Common"
     },
     "gaypt": {
-      "name": "🎭 AI Generated",
+      "name": "\uD83C\uDFAD AI Generated",
       "type": "onReveal",
+      "category": "wildcard",
       "description": "MIMIC: Copy +10 power from the card to your left!",
       "effect": { "action": "copyPowerLeft", "value": 10 },
       "rarity": "Common"
     },
     "dan romero": {
-      "name": "🥺 Too Cute",
+      "name": "\uD83E\uDD7A Too Cute",
       "type": "ongoing",
+      "category": "offensive",
       "description": "ADORABLE: Enemies deal -8 power in this lane!",
       "effect": { "action": "reduceEnemyPower", "value": -8 },
       "rarity": "Common"
     },
     "morlacos": {
-      "name": "💪 Never Give Up",
+      "name": "\uD83D\uDCAA Never Give Up",
       "type": "ongoing",
+      "category": "support",
       "description": "+8 power/turn. COMBO: If VENTRA in play, BOTH get DOUBLE scaling!",
       "effect": { "action": "buffPerTurn", "value": 8, "combo": { "partner": "ventra", "bonusAction": "doubleScaling" } },
       "rarity": "Common"
     },
     "landmine": {
-      "name": "💣 Kamikaze",
+      "name": "\uD83D\uDCA3 Kamikaze",
       "type": "onReveal",
+      "category": "offensive",
       "description": "BOOM! Destroy itself AND the strongest enemy on the board!",
       "effect": { "action": "kamikaze" },
       "rarity": "Common"
     },
     "linux": {
-      "name": "🐧 Open Source",
+      "name": "\uD83D\uDC27 Open Source",
       "type": "onReveal",
+      "category": "wildcard",
       "description": "+8 power to ALL Commons. COMBO: If HORSEFARTS in play, +45 power to each coder!",
       "effect": { "action": "buffByRarity", "targetRarity": "Common", "value": 8, "combo": { "partner": "horsefarts", "bonusAction": "buffCoders", "coderValue": 45 } },
       "rarity": "Common"
     },
     "joonx": {
-      "name": "⚡ Quick Strike",
+      "name": "\u26A1 Quick Strike",
       "type": "onReveal",
+      "category": "wildcard",
       "description": "EARLY BIRD: +20 power if played on turn 1!",
       "effect": { "action": "buffIfTurn", "maxTurn": 1, "value": 20 },
       "rarity": "Common"
     },
     "don filthy": {
-      "name": "🗑️ Dirty Tactics",
+      "name": "\uD83D\uDDD1\uFE0F Dirty Tactics",
       "type": "onReveal",
+      "category": "offensive",
       "description": "SABOTAGE: -12 power to strongest enemy + they can't gain power next turn!",
       "effect": { "action": "debuffStrongest", "value": -12, "lockPowerGain": true },
       "rarity": "Common"
     },
     "pooster": {
-      "name": "📮 Post Boost",
+      "name": "\uD83D\uDCEE Post Boost",
       "type": "onReveal",
+      "category": "support",
       "description": "VIRAL: +12 power to last card played. If it's Rare+, +20 instead!",
       "effect": { "action": "buffLastPlayed", "value": 12, "rareBonus": 20 },
       "rarity": "Common"
     },
     "john porn": {
-      "name": "😈 Distraction",
+      "name": "\uD83D\uDE08 Distraction",
       "type": "onReveal",
+      "category": "offensive",
       "description": "DISTRACT: -15 power to ALL enemy cards in this lane! They can't focus!",
       "effect": { "action": "debuffLane", "value": -15 },
       "rarity": "Common"
     },
     "scum": {
-      "name": "🦹 Scummy Move",
+      "name": "\uD83E\uDDB9 Scummy Move",
       "type": "onReveal",
+      "category": "offensive",
       "description": "DRAIN: Steal +12 power from an enemy here!",
       "effect": { "action": "stealPower", "value": 12 },
       "rarity": "Common"
     },
     "vlady": {
-      "name": "👻 Shadow Step",
+      "name": "\uD83D\uDC7B Shadow Step",
       "type": "onReveal",
+      "category": "wildcard",
       "description": "TELEPORT: Move to a random lane + gain +15 power! Unpredictable!",
       "effect": { "action": "moveRandom", "bonusPower": 15 },
       "rarity": "Common"

@@ -109,6 +109,7 @@ interface GameAction {
 interface TCGAbility {
   name: string;
   type: "onReveal" | "ongoing" | "active";
+  category?: "offensive" | "support" | "control" | "economy" | "wildcard";
   description: string;
   effect: Record<string, any>;
   rarity: string;
@@ -4820,11 +4821,25 @@ export default function TCGPage() {
           {/* Ability Section - Show for VBMS and VibeFID */}
           {ability && (card.type === "vbms" || card.type === "vibefid") && (() => {
             const translatedAbility = getTranslatedAbility(card.name);
+            const catConfig: Record<string, { emoji: string; color: string; bg: string; label: string }> = {
+              offensive: { emoji: "⚔️", color: "text-red-400", bg: "bg-red-500/20 border-red-500/40", label: "OFFENSIVE" },
+              support: { emoji: "💚", color: "text-green-400", bg: "bg-green-500/20 border-green-500/40", label: "SUPPORT" },
+              control: { emoji: "🎭", color: "text-purple-400", bg: "bg-purple-500/20 border-purple-500/40", label: "CONTROL" },
+              economy: { emoji: "⚡", color: "text-yellow-400", bg: "bg-yellow-500/20 border-yellow-500/40", label: "ECONOMY" },
+              wildcard: { emoji: "🃏", color: "text-cyan-400", bg: "bg-cyan-500/20 border-cyan-500/40", label: "WILDCARD" },
+            };
+            const abilityCat = (ability as any).category as string | undefined;
+            const catInfo = abilityCat ? catConfig[abilityCat] : null;
             return (
               <div className={`${card.type === "vibefid" ? "bg-cyan-900/20 border-cyan-500/20" : "bg-vintage-charcoal/30 border-vintage-gold/10"} border rounded-lg p-3 mb-3`}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-purple-400">⚡</span>
                   <span className={`${card.type === "vibefid" ? "text-cyan-400" : "text-vintage-gold"} font-bold text-sm`}>{translatedAbility?.name || ability.name}</span>
+                  {catInfo && (
+                    <span className={`${catInfo.bg} ${catInfo.color} border rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider`}>
+                      {catInfo.emoji} {catInfo.label}
+                    </span>
+                  )}
                 </div>
                 <p className="text-vintage-burnt-gold text-sm">{translatedAbility?.description || ability.description}</p>
               </div>
@@ -5358,15 +5373,49 @@ export default function TCGPage() {
                 </div>
               </div>
 
-              {/* Special Cards */}
-              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
-                <h3 className="font-bold text-red-400 mb-2 uppercase tracking-wider text-xs">{t('tcgSpecialCards')}</h3>
-                <div className="text-vintage-burnt-gold space-y-1 text-xs">
-                  <p>{t('tcgLandmineDesc')}</p>
-                  <p>{t('tcgSantaDesc')}</p>
-                  <p>{t('tcgJohnPornDesc')}</p>
-                </div>
-              </div>
+              {/* Card Categories */}
+              {(() => {
+                const categoryConfig: Record<string, { emoji: string; color: string; label: string }> = {
+                  offensive: { emoji: "⚔️", color: "text-red-400", label: "Offensive" },
+                  support: { emoji: "💚", color: "text-green-400", label: "Support" },
+                  control: { emoji: "🎭", color: "text-purple-400", label: "Control" },
+                  economy: { emoji: "⚡", color: "text-yellow-400", label: "Economy" },
+                  wildcard: { emoji: "🃏", color: "text-cyan-400", label: "Wildcard" },
+                };
+                const grouped: Record<string, { key: string; name: string; desc: string }[]> = {
+                  offensive: [], support: [], control: [], economy: [], wildcard: [],
+                };
+                Object.entries(tcgAbilities).forEach(([key, ab]) => {
+                  const cat = (ab as any).category as string;
+                  if (cat && grouped[cat]) {
+                    grouped[cat].push({ key, name: ab.name, desc: ab.description });
+                  }
+                });
+                return (
+                  <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
+                    <h3 className="font-bold text-vintage-gold mb-3 uppercase tracking-wider text-xs">Card Categories</h3>
+                    <div className="space-y-3">
+                      {Object.entries(categoryConfig).map(([cat, cfg]) => (
+                        <div key={cat}>
+                          <div className={`flex items-center gap-1.5 mb-1`}>
+                            <span>{cfg.emoji}</span>
+                            <span className={`${cfg.color} font-bold text-xs uppercase`}>{cfg.label}</span>
+                            <span className="text-vintage-burnt-gold/50 text-[10px]">({grouped[cat]?.length || 0})</span>
+                          </div>
+                          <div className="grid grid-cols-1 gap-0.5 text-[10px] ml-5">
+                            {grouped[cat]?.map((card) => (
+                              <p key={card.key}>
+                                <span className="text-vintage-gold font-semibold uppercase">{card.key}</span>
+                                <span className="text-vintage-burnt-gold/60"> — {card.desc.length > 60 ? card.desc.slice(0, 57) + "..." : card.desc}</span>
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Lane Effects */}
               <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
