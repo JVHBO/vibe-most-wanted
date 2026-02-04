@@ -508,7 +508,7 @@ export default function TCGPage() {
 
   // 🔗 Get cards from shared context (persists across routes!)
   // 🚀 BANDWIDTH FIX: Use context's loadNFTs instead of local duplicate
-  const { nfts: contextNfts, status: contextStatus, syncNftsFromHome, loadNFTs: contextLoadNFTs, forceReloadNFTs: contextForceReloadNFTs } = usePlayerCards();
+  const { nfts: contextNfts, status: contextStatus, syncNftsFromHome, loadNFTs: contextLoadNFTs, forceReloadNFTs: contextForceReloadNFTs, refreshUserProfile } = usePlayerCards();
 
   // Check sessionStorage on mount to skip loading if already loaded this session
   useEffect(() => {
@@ -5171,6 +5171,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
               claimAllMissions={claimAllMissions}
               setSuccessMessage={setSuccessMessage}
               t={t}
+              refreshUserProfile={refreshUserProfile}
             />
           )}
 

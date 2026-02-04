@@ -1298,7 +1298,19 @@ export default function TCGPage() {
   const [pvpCardAnimClass, setPvpCardAnimClass] = useState<Record<string, string>>({});
 
   // Battle Log
-  type BattleLogEntry = { turn: number; player: "you" | "cpu" | "opponent"; action: string; lane: number; cardName: string };
+  type BattleLogEntry = {
+    turn: number;
+    player: "you" | "cpu" | "opponent";
+    action: string;
+    lane: number;
+    cardName: string;
+    // Enhanced fields for detailed logging
+    abilityName?: string;
+    effectType?: "buff" | "debuff" | "destroy" | "steal" | "draw" | "move" | "copy" | "special";
+    targets?: string[];
+    powerChange?: number;
+    details?: string;
+  };
   const [battleLog, setBattleLog] = useState<BattleLogEntry[]>([]);
   const [showBattleLog, setShowBattleLog] = useState(false);
 
@@ -2175,8 +2187,17 @@ export default function TCGPage() {
       return { lanes, playerHand, playerDeckRemaining, bonusPower: 0, energyToConsume: 0 };
     }
 
-    // Helper to add ability log
-    const logAbility = (action: string) => {
+    // Helper to add ability log with enhanced details
+    const logAbility = (
+      action: string,
+      opts?: {
+        abilityName?: string;
+        effectType?: "buff" | "debuff" | "destroy" | "steal" | "draw" | "move" | "copy" | "special";
+        targets?: string[];
+        powerChange?: number;
+        details?: string;
+      }
+    ) => {
       if (addToBattleLog && currentTurn !== undefined) {
         addToBattleLog({
           turn: currentTurn,
@@ -2184,6 +2205,11 @@ export default function TCGPage() {
           action,
           lane: laneIndex + 1,
           cardName: card.name || "Unknown",
+          abilityName: opts?.abilityName || ability?.name,
+          effectType: opts?.effectType,
+          targets: opts?.targets,
+          powerChange: opts?.powerChange,
+          details: opts?.details,
         });
       }
     };
@@ -2202,7 +2228,7 @@ export default function TCGPage() {
     switch (effect.action) {
       case "buffSelf":
         bonusPower = effect.value || 0;
-        logAbility(`⚡ +${bonusPower} power (self buff)`);
+        logAbility(`⚡ +${bonusPower} power`, { effectType: "buff", powerChange: bonusPower, details: "Self buff" });
         break;
 
       case "buffOtherInLane":
@@ -2215,7 +2241,7 @@ export default function TCGPage() {
             power: targetCard.power + (effect.value || 0),
           };
           newLanes[laneIndex][myPower] += effect.value || 0;
-          logAbility(`⬆️ buffed ${targetCard.name} +${effect.value}`);
+          logAbility(`⬆️ buffed ally +${effect.value}`, { effectType: "buff", targets: [targetCard.name || "Unknown"], powerChange: effect.value || 0 });
         }
         break;
 
@@ -2229,7 +2255,7 @@ export default function TCGPage() {
             power: Math.max(0, targetCard.power - Math.abs(effect.value || 0)),
           };
           newLanes[laneIndex][enemyPower] = Math.max(0, newLanes[laneIndex][enemyPower] - Math.abs(effect.value || 0));
-          logAbility(`⬇️ debuffed enemy ${targetCard.name} -${Math.abs(effect.value || 0)}`);
+          logAbility(`⬇️ debuffed enemy -${Math.abs(effect.value || 0)}`, { effectType: "debuff", targets: [targetCard.name || "Unknown"], powerChange: -Math.abs(effect.value || 0) });
         }
         break;
 
@@ -2239,7 +2265,7 @@ export default function TCGPage() {
         for (let i = 0; i < drawCount && newDeck.length > 0; i++) {
           newHand.push(newDeck.shift()!);
         }
-        logAbility(`🃏 drew ${drawCount} card(s)`);
+        logAbility(`🃏 drew ${drawCount} card(s)`, { effectType: "draw", details: `${Math.min(drawCount, newDeck.length)} cards drawn` });
         break;
 
       case "buffAdjacent":
@@ -2259,18 +2285,22 @@ export default function TCGPage() {
             newHand.push(newDeck.shift()!);
           }
         }
+        logAbility(`📡 boosted ${myCardsInLane.length} allies +${effect.value}`, { effectType: "buff", powerChange: myCardsInLane.length * (effect.value || 0), details: effect.draw ? `+${effect.draw} draw` : undefined });
         break;
 
       case "buffOtherLanes":
         // +X power to all cards in OTHER lanes
+        let otherLaneCardCount = 0;
         newLanes.forEach((lane: any, idx: number) => {
           if (idx !== laneIndex) {
             lane[myCards].forEach((c: DeckCard, cIdx: number) => {
               lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) };
+              otherLaneCardCount++;
             });
             lane[myPower] += lane[myCards].length * (effect.value || 0);
           }
         });
+        logAbility(`🌐 buffed ${otherLaneCardCount} cards in other lanes +${effect.value}`, { effectType: "buff", powerChange: otherLaneCardCount * (effect.value || 0) });
         break;
 
       case "debuffLane":
@@ -2285,13 +2315,14 @@ export default function TCGPage() {
         newLanes[laneIndex][enemyPower] = Math.max(0,
           newLanes[laneIndex][enemyPower] - (enemyCount * Math.abs(effect.value || 0))
         );
-        logAbility(`💥 debuffed ${enemyCount} enemies -${Math.abs(effect.value || 0)} each`);
+        logAbility(`💥 debuffed ${enemyCount} enemies -${Math.abs(effect.value || 0)} each`, { effectType: "debuff", powerChange: -(enemyCount * Math.abs(effect.value || 0)) });
         break;
 
       case "buffPerCardInLane":
         // +X power for each card in this lane
         const cardsInLane = newLanes[laneIndex][myCards].length + 1; // +1 for self
         bonusPower = cardsInLane * (effect.value || 0);
+        logAbility(`📊 +${bonusPower} power (${cardsInLane} cards × ${effect.value})`, { effectType: "buff", powerChange: bonusPower, details: `${cardsInLane} cards in lane` });
         break;
 
       case "buffPerFriendly":
@@ -2301,18 +2332,21 @@ export default function TCGPage() {
           friendlyCount += lane[myCards].length;
         });
         bonusPower = Math.max(0, friendlyCount) * (effect.value || 0);
+        logAbility(`👥 +${bonusPower} power (${Math.max(0, friendlyCount)} allies × ${effect.value})`, { effectType: "buff", powerChange: bonusPower, details: `${Math.max(0, friendlyCount)} allies total` });
         break;
 
       case "buffPerEnemyInLane":
         // +basePower + perEnemy for each enemy in lane (Slaterg - Proxy Power)
         const enemiesInLane = newLanes[laneIndex][enemyCards].length;
         bonusPower = (effect.basePower || 0) + (enemiesInLane * (effect.perEnemy || 0));
+        logAbility(`🎯 +${bonusPower} power (base ${effect.basePower} + ${enemiesInLane} × ${effect.perEnemy})`, { effectType: "buff", powerChange: bonusPower, details: `${enemiesInLane} enemies in lane` });
         break;
 
       case "buffIfAlone":
         // +X power if this lane has no other cards
         if (newLanes[laneIndex][myCards].length === 0) {
           bonusPower = effect.value || 0;
+          logAbility(`🏝️ +${bonusPower} power (alone in lane)`, { effectType: "buff", powerChange: bonusPower, details: "Solo bonus" });
         }
         break;
 
@@ -2337,6 +2371,7 @@ export default function TCGPage() {
             power: cardToUpdate.power + (effect.value || 0),
           };
           newLanes[weakestLane][myPower] += effect.value || 0;
+          logAbility(`💪 buffed ${cardToUpdate.name} +${effect.value || 0} (weakest ally)`, { effectType: "buff", targets: [cardToUpdate.name || "Unknown"], powerChange: effect.value || 0 });
         }
         break;
 
@@ -2366,9 +2401,9 @@ export default function TCGPage() {
           // Kill bonus: if target reaches 0 power, gain bonus power (Jack the Sniper)
           if (newPowerValue === 0 && effect.killBonus) {
             bonusPower = effect.killBonus;
-            logAbility(`💀 KILLED ${cardToDebuff.name}! +${effect.killBonus} bonus`);
+            logAbility(`💀 KILLED ${cardToDebuff.name}! +${effect.killBonus} bonus`, { effectType: "destroy", targets: [cardToDebuff.name || "Unknown"], powerChange: effect.killBonus || 0, details: "Kill bonus activated" });
           } else {
-            logAbility(`🎯 sniped ${cardToDebuff.name} -${reduction}`);
+            logAbility(`🎯 sniped ${cardToDebuff.name} -${reduction}`, { effectType: "debuff", targets: [cardToDebuff.name || "Unknown"], powerChange: -reduction });
           }
         }
         break;
@@ -2378,11 +2413,13 @@ export default function TCGPage() {
         for (let i = newLanes.length - 1; i >= 0; i--) {
           if (newLanes[i][myCards].length > 0) {
             const lastIdx = newLanes[i][myCards].length - 1;
+            const lastPlayedCard = newLanes[i][myCards][lastIdx];
             newLanes[i][myCards][lastIdx] = {
-              ...newLanes[i][myCards][lastIdx],
-              power: newLanes[i][myCards][lastIdx].power + (effect.value || 0),
+              ...lastPlayedCard,
+              power: lastPlayedCard.power + (effect.value || 0),
             };
             newLanes[i][myPower] += effect.value || 0;
+            logAbility(`⏮️ buffed last played ${lastPlayedCard.name} +${effect.value}`, { effectType: "buff", targets: [lastPlayedCard.name || "Unknown"], powerChange: effect.value || 0 });
             break;
           }
         }
@@ -2392,22 +2429,27 @@ export default function TCGPage() {
         // Steal +X power from enemy here
         if (newLanes[laneIndex][enemyCards].length > 0) {
           const targetIdx = Math.floor(Math.random() * newLanes[laneIndex][enemyCards].length);
-          const stealAmount = Math.min(effect.value || 0, newLanes[laneIndex][enemyCards][targetIdx].power);
+          const targetCard = newLanes[laneIndex][enemyCards][targetIdx];
+          const stealAmount = Math.min(effect.value || 0, targetCard.power);
           newLanes[laneIndex][enemyCards][targetIdx] = {
-            ...newLanes[laneIndex][enemyCards][targetIdx],
-            power: newLanes[laneIndex][enemyCards][targetIdx].power - stealAmount,
+            ...targetCard,
+            power: targetCard.power - stealAmount,
           };
           newLanes[laneIndex][enemyPower] -= stealAmount;
           bonusPower = stealAmount;
+          logAbility(`🔥 stole ${stealAmount} power from ${targetCard.name}`, { effectType: "steal", targets: [targetCard.name || "Unknown"], powerChange: stealAmount });
         }
         break;
 
       case "gamble":
         // 50% chance: +win or -lose power
-        if (Math.random() > 0.5) {
+        const gambleWon = Math.random() > 0.5;
+        if (gambleWon) {
           bonusPower = effect.win || 0;
+          logAbility(`🎰 WON! +${bonusPower} power`, { effectType: "special", powerChange: bonusPower, details: "Lucky roll!" });
         } else {
           bonusPower = effect.lose || 0;
+          logAbility(`🎰 LOST! ${bonusPower} power`, { effectType: "special", powerChange: bonusPower, details: "Bad luck..." });
         }
         break;
 
@@ -2419,6 +2461,7 @@ export default function TCGPage() {
           bonusPower = remainingEnergy * powerPerEnergy;
           // Store for caller to consume
           energyToConsume = remainingEnergy;
+          logAbility(`⚡ consumed ${remainingEnergy} energy → +${bonusPower} power`, { effectType: "special", powerChange: bonusPower, details: `${remainingEnergy} × ${powerPerEnergy}` });
         }
         break;
 
@@ -2427,8 +2470,10 @@ export default function TCGPage() {
         const currentTurn = pveGameState?.currentTurn || 1;
         if (effect.minTurn && currentTurn >= effect.minTurn) {
           bonusPower = effect.value || 0;
+          logAbility(`🕐 late game bonus +${bonusPower}`, { effectType: "buff", powerChange: bonusPower, details: `Turn ${currentTurn}+` });
         } else if (effect.maxTurn && currentTurn <= effect.maxTurn) {
           bonusPower = effect.value || 0;
+          logAbility(`🕐 early game bonus +${bonusPower}`, { effectType: "buff", powerChange: bonusPower, details: `Turn ≤${effect.maxTurn}` });
         }
         break;
 
@@ -2436,6 +2481,7 @@ export default function TCGPage() {
         // +X power if you have Y+ cards in hand
         if (newHand.length >= (effect.minCards || 0)) {
           bonusPower = effect.value || 0;
+          logAbility(`🃏 hand size bonus +${bonusPower}`, { effectType: "buff", powerChange: bonusPower, details: `${newHand.length} cards in hand` });
         }
         break;
 
@@ -2446,13 +2492,16 @@ export default function TCGPage() {
           cardsPlayedTotal += lane[myCards].length;
         });
         bonusPower = cardsPlayedTotal * (effect.value || 0);
+        logAbility(`📈 +${bonusPower} power (${cardsPlayedTotal} cards played)`, { effectType: "buff", powerChange: bonusPower, details: `${cardsPlayedTotal} × ${effect.value}` });
         break;
 
       case "buffAllLanes":
         // +X power to all your cards + DOUBLE if winning 2+ lanes! (Neymar - King's Arrival - Mythic)
         let lanesWinning = 0;
+        let totalCardsBuffed = 0;
         newLanes.forEach((lane: any) => {
           if (lane[myPower] > lane[enemyPower]) lanesWinning++;
+          totalCardsBuffed += lane[myCards].length;
         });
         const buffMultiplier = (effect.doubleIfWinning && lanesWinning >= 2) ? 2 : 1;
         const buffValue = (effect.value || 30) * buffMultiplier;
@@ -2464,6 +2513,7 @@ export default function TCGPage() {
         });
         // Also buff self
         bonusPower = buffValue;
+        logAbility(`👑 KING'S ARRIVAL! +${buffValue} to ALL (${totalCardsBuffed + 1} cards)`, { effectType: "buff", powerChange: (totalCardsBuffed + 1) * buffValue, details: buffMultiplier === 2 ? "DOUBLED! (winning 2+ lanes)" : undefined });
         break;
 
       case "destroyHighestEnemy":
@@ -2486,6 +2536,9 @@ export default function TCGPage() {
           // MYTHIC BONUS: Gain the destroyed card's power!
           if (effect.gainPower) {
             bonusPower = removedCard.power;
+            logAbility(`💀 DESTROYED ${removedCard.name} (+${removedCard.power} power!)`, { effectType: "destroy", targets: [removedCard.name || "Unknown"], powerChange: removedCard.power, details: "Gained destroyed card's power" });
+          } else {
+            logAbility(`💀 DESTROYED ${removedCard.name}`, { effectType: "destroy", targets: [removedCard.name || "Unknown"] });
           }
         }
         break;
@@ -2495,6 +2548,7 @@ export default function TCGPage() {
         let kamikazeHighestPower = -1;
         let kamikazeHighestLane = -1;
         let kamikazeHighestIdx = -1;
+        let kamikazeTargetName = "";
         newLanes.forEach((lane: any, lIdx: number) => {
           lane[enemyCards].forEach((c: DeckCard, cIdx: number) => {
             const effectivePower = c.type === "nothing" || c.type === "other" ? Math.floor(c.power * 0.5) : c.power;
@@ -2502,6 +2556,7 @@ export default function TCGPage() {
               kamikazeHighestPower = effectivePower;
               kamikazeHighestLane = lIdx;
               kamikazeHighestIdx = cIdx;
+              kamikazeTargetName = c.name || "Unknown";
             }
           });
         });
@@ -2509,6 +2564,7 @@ export default function TCGPage() {
         if (kamikazeHighestLane >= 0 && kamikazeHighestIdx >= 0) {
           const removedEnemy = newLanes[kamikazeHighestLane][enemyCards].splice(kamikazeHighestIdx, 1)[0];
           newLanes[kamikazeHighestLane][enemyPower] -= removedEnemy.power;
+          logAbility(`💣 KAMIKAZE! Destroyed ${kamikazeTargetName} (self-destruct)`, { effectType: "destroy", targets: [kamikazeTargetName || "Unknown", card.name || "Unknown"], details: "Mutual destruction" });
         }
         // Mark self for destruction (will be removed after ability processing)
         card._sacrificed = true;
@@ -2519,9 +2575,14 @@ export default function TCGPage() {
       case "copyHighest":
         // Copy highest power + STEAL from all enemies! (Linda Xied - Diamond Authority - Mythic)
         let highestCopyCard: DeckCard | null = null;
+        let totalStolenFromAll = 0;
+        let highestCopyCardName = "Unknown";
         newLanes.forEach((lane: any) => {
           [...lane.playerCards, ...lane.cpuCards].forEach((c: DeckCard) => {
-            if (!highestCopyCard || c.power > highestCopyCard.power) highestCopyCard = c;
+            if (!highestCopyCard || c.power > highestCopyCard.power) {
+              highestCopyCard = c;
+              highestCopyCardName = c.name || "Unknown";
+            }
           });
         });
         if (highestCopyCard) bonusPower = (highestCopyCard as DeckCard).power;
@@ -2534,9 +2595,11 @@ export default function TCGPage() {
               lane[enemyCards][cIdx] = { ...c, power: Math.max(0, c.power - stolen) };
               lane[enemyPower] = Math.max(0, lane[enemyPower] - stolen);
               bonusPower += stolen;
+              totalStolenFromAll += stolen;
             });
           });
         }
+        logAbility(`💎 DIAMOND AUTHORITY! Copied ${highestCopyCardName} +stole ${totalStolenFromAll}`, { effectType: "copy", targets: [highestCopyCardName], powerChange: bonusPower, details: "Copied highest + stole from all" });
         break;
 
       case "swapEnemyPowers":
@@ -2552,9 +2615,12 @@ export default function TCGPage() {
           let i2 = Math.floor(Math.random() * enemyCardsFlat.length);
           while (i2 === i1 && enemyCardsFlat.length > 1) i2 = Math.floor(Math.random() * enemyCardsFlat.length);
           const c1 = enemyCardsFlat[i1], c2 = enemyCardsFlat[i2];
+          const card1Name = newLanes[c1.lane][enemyCards][c1.idx].name;
+          const card2Name = newLanes[c2.lane][enemyCards][c2.idx].name;
           const temp = newLanes[c1.lane][enemyCards][c1.idx].power;
           newLanes[c1.lane][enemyCards][c1.idx].power = newLanes[c2.lane][enemyCards][c2.idx].power;
           newLanes[c2.lane][enemyCards][c2.idx].power = temp;
+          logAbility(`🔀 swapped powers: ${card1Name} ↔ ${card2Name}`, { effectType: "special", targets: [card1Name, card2Name], details: "Enemy powers swapped" });
         }
         break;
 
@@ -2564,6 +2630,7 @@ export default function TCGPage() {
         const coalLane = Math.floor(Math.random() * 3);
         newLanes[coalLane][enemyCards].push(coalCard);
         newLanes[coalLane][enemyPower] += coalCard.power;
+        logAbility(`🎅 gave Coal to enemy (${effect.value} power)`, { effectType: "debuff", powerChange: effect.value, details: `Lane ${coalLane + 1}` });
         break;
 
       case "debuffRandomEnemy":
@@ -2573,8 +2640,10 @@ export default function TCGPage() {
         if (allEnemies.length > 0) {
           const t = allEnemies[Math.floor(Math.random() * allEnemies.length)];
           const debuff = Math.abs(effect.value || 10);
+          const randomTargetName = newLanes[t.lane][enemyCards][t.idx].name;
           newLanes[t.lane][enemyCards][t.idx].power = Math.max(0, newLanes[t.lane][enemyCards][t.idx].power - debuff);
           newLanes[t.lane][enemyPower] = Math.max(0, newLanes[t.lane][enemyPower] - debuff);
+          logAbility(`🎯 sniped random ${randomTargetName} -${debuff}`, { effectType: "debuff", targets: [randomTargetName], powerChange: -debuff });
         }
         break;
 
@@ -2582,12 +2651,15 @@ export default function TCGPage() {
         // Reveal enemy card AND steal 15 power (Horsefarts - Fact Check)
         if (newLanes[laneIndex][enemyCards].length > 0) {
           const targetIdx = Math.floor(Math.random() * newLanes[laneIndex][enemyCards].length);
+          const revealTargetName = newLanes[laneIndex][enemyCards][targetIdx].name;
           const stealAmt = Math.min(effect.stealPower || 15, newLanes[laneIndex][enemyCards][targetIdx].power);
           newLanes[laneIndex][enemyCards][targetIdx].power -= stealAmt;
           newLanes[laneIndex][enemyPower] -= stealAmt;
           bonusPower = stealAmt;
+          logAbility(`👁️ FACT CHECK! Stole ${stealAmt} from ${revealTargetName}`, { effectType: "steal", targets: [revealTargetName], powerChange: stealAmt });
         } else {
           bonusPower = 10; // Fallback if no enemies
+          logAbility(`👁️ no target, +10 fallback`, { effectType: "buff", powerChange: 10 });
         }
         break;
 
@@ -2595,8 +2667,10 @@ export default function TCGPage() {
         // Enemy loses power (John Porn)
         if (newLanes[laneIndex][enemyCards].length > 0) {
           const tIdx = Math.floor(Math.random() * newLanes[laneIndex][enemyCards].length);
+          const targetCardName = newLanes[laneIndex][enemyCards][tIdx].name;
           newLanes[laneIndex][enemyCards][tIdx].power = Math.max(0, newLanes[laneIndex][enemyCards][tIdx].power - 5);
           newLanes[laneIndex][enemyPower] = Math.max(0, newLanes[laneIndex][enemyPower] - 5);
+          logAbility(`📉 forced discard on ${targetCardName} (-5)`, { effectType: "debuff", targets: [targetCardName], powerChange: -5 });
         }
         break;
 
@@ -2604,6 +2678,7 @@ export default function TCGPage() {
         // Add copy to hand (0xdeployer) + bonus power to self
         newHand.push({ ...card, cardId: `${card.cardId}-copy-${Date.now()}` });
         bonusPower = effect.bonusPower || 0;
+        logAbility(`📋 added copy to hand +${bonusPower}`, { effectType: "copy", powerChange: bonusPower, details: "Copy created" });
         break;
 
       case "moveCard":
@@ -2615,6 +2690,7 @@ export default function TCGPage() {
             newLanes[li][myCards].push(moved);
             newLanes[laneIndex][myPower] -= mPower;
             newLanes[li][myPower] += mPower;
+            logAbility(`↔️ moved ${moved.name} to Lane ${li + 1}`, { effectType: "move", targets: [moved.name || "Unknown"], details: `Lane ${laneIndex + 1} → Lane ${li + 1}` });
             break;
           }
         }
@@ -2625,22 +2701,32 @@ export default function TCGPage() {
         // Note: +1 because this card is being added
         const myCardCount = newLanes[laneIndex][myCards].length + 1;
         const enemyCardCount = newLanes[laneIndex][enemyCards].length;
-        if (myCardCount <= enemyCardCount) bonusPower = effect.value || 30;
+        if (myCardCount <= enemyCardCount) {
+          bonusPower = effect.value || 30;
+          logAbility(`🎭 underdog bonus +${bonusPower} (${myCardCount} vs ${enemyCardCount})`, { effectType: "buff", powerChange: bonusPower, details: "Fewer cards than enemy" });
+        }
         break;
 
       case "buffByRarity":
         // Buff cards by rarity (Brian Armstrong, Linux)
         const tgtRarity = effect.targetRarity || "Common";
+        let rarityBuffCount = 0;
         newLanes.forEach((lane: any) => {
           lane[myCards].forEach((c: DeckCard, cIdx: number) => {
-            if (c.rarity === tgtRarity) { lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) }; lane[myPower] += effect.value || 0; }
+            if (c.rarity === tgtRarity) {
+              lane[myCards][cIdx] = { ...c, power: c.power + (effect.value || 0) };
+              lane[myPower] += effect.value || 0;
+              rarityBuffCount++;
+            }
           });
         });
+        logAbility(`✨ buffed ${rarityBuffCount} ${tgtRarity} cards +${effect.value}`, { effectType: "buff", powerChange: rarityBuffCount * (effect.value || 0), details: `${tgtRarity} bonus` });
         break;
 
       case "buffPerHandSize":
         // Power based on hand size (NFTKid)
         bonusPower = newHand.length * (effect.multiplier || 5);
+        logAbility(`🃏 +${bonusPower} power (${newHand.length} cards × ${effect.multiplier || 5})`, { effectType: "buff", powerChange: bonusPower, details: "Hand size bonus" });
         break;
 
       case "copyPowerLeft":
@@ -2649,8 +2735,10 @@ export default function TCGPage() {
         if (leftCardCount > 0) {
           const leftCard = newLanes[laneIndex][myCards][leftCardCount - 1];
           bonusPower = Math.floor(leftCard.power * 0.5) + (effect.value || 10); // Copy 50% + bonus
+          logAbility(`🤖 copied ${leftCard.name} (50%) +${effect.value} = +${bonusPower}`, { effectType: "copy", targets: [leftCard.name || "Unknown"], powerChange: bonusPower });
         } else {
           bonusPower = effect.value || 10; // Just bonus if no left card
+          logAbility(`🤖 no card to copy, +${bonusPower} base`, { effectType: "buff", powerChange: bonusPower });
         }
         break;
 
@@ -2663,6 +2751,7 @@ export default function TCGPage() {
           newLanes[laneIndex][enemyPower] = 0;
           // Bonus: gain half the destroyed card's power
           bonusPower = Math.floor(destroyedPower / 2);
+          logAbility(`🎯 LONE HUNTER! Destroyed ${destroyedCard.name} +${bonusPower}`, { effectType: "destroy", targets: [destroyedCard.name || "Unknown"], powerChange: bonusPower, details: "Target was alone" });
         }
         break;
 
@@ -2673,9 +2762,11 @@ export default function TCGPage() {
           const targetLane = availableLanes[Math.floor(Math.random() * availableLanes.length)];
           // Card will be added to target lane with bonus power
           bonusPower = effect.bonusPower || 15;
+          logAbility(`🎲 moved to Lane ${targetLane + 1} +${bonusPower}`, { effectType: "move", powerChange: bonusPower, details: "Random lane jump" });
           // Note: actual moving happens in handlePvEPlayCard after bonusPower is applied
         } else {
           bonusPower = effect.bonusPower || 15; // Just give bonus if no other lanes
+          logAbility(`🎲 +${bonusPower} (no move needed)`, { effectType: "buff", powerChange: bonusPower });
         }
         break;
 
@@ -2691,6 +2782,7 @@ export default function TCGPage() {
         });
         // Don't count self (will be added after)
         bonusPower = totalCardsPlayed * (effect.value || 5);
+        logAbility(`🎭 First Cast! +${bonusPower} (${totalCardsPlayed} cards × ${effect.value || 5})`, { effectType: "buff", powerChange: bonusPower, details: "VibeFID ability" });
         break;
 
       case "vibefidRatio":
@@ -2706,6 +2798,7 @@ export default function TCGPage() {
         });
         // bonusPower = difference to reach that power (will be added to card.power)
         bonusPower = Math.max(0, highestPowerOnField - card.power);
+        logAbility(`📊 Ratio'd! Matched highest power (${highestPowerOnField})`, { effectType: "copy", powerChange: bonusPower, details: "VibeFID ability" });
         break;
 
       case "vibefidDoxxed":
@@ -2715,6 +2808,7 @@ export default function TCGPage() {
           totalEnemyPowerInLane += c.power || 0;
         });
         bonusPower = totalEnemyPowerInLane;
+        logAbility(`🔍 Doxxed! +${bonusPower} (copied lane enemy power)`, { effectType: "copy", powerChange: bonusPower, details: "VibeFID ability" });
         break;
 
       case "buffIfLosing":
@@ -2723,6 +2817,7 @@ export default function TCGPage() {
         const enemyLanePower = newLanes[laneIndex][enemyPower];
         const isLosing = isPlayer ? myLanePower < enemyLanePower : enemyLanePower < myLanePower;
         bonusPower = isLosing ? (effect.bonus || 25) : (effect.base || 10);
+        logAbility(isLosing ? `🎲 Lucky comeback! +${bonusPower}` : `🎲 +${bonusPower} base`, { effectType: "buff", powerChange: bonusPower, details: isLosing ? "Underdog bonus!" : "Standard bonus" });
         break;
 
       // ═══════════════════════════════════════════════════════════════════════════════
@@ -2748,12 +2843,14 @@ export default function TCGPage() {
         if (weakestEnemyCard && weakestEnemyLane >= 0) {
           // Remove from enemy
           const stolenCard = newLanes[weakestEnemyLane][enemyCards].splice(weakestEnemyIdx, 1)[0];
+          const originalPower = stolenCard.power;
           newLanes[weakestEnemyLane][enemyPower] -= stolenCard.power;
           // Add to your side (same lane as this card) with 50% power
           const newPower = Math.floor(stolenCard.power * 0.5);
           stolenCard.power = newPower;
           newLanes[laneIndex][myCards].push(stolenCard);
           newLanes[laneIndex][myPower] += newPower;
+          logAbility(`💘 CHARMED ${stolenCard.name}! (${originalPower} → ${newPower})`, { effectType: "steal", targets: [stolenCard.name || "Unknown"], powerChange: newPower, details: "Card switched sides" });
         }
         break;
 
@@ -2764,13 +2861,16 @@ export default function TCGPage() {
         card._bombTurn = currentTurnBomb + (effect.delay || 2);
         card._bombLane = laneIndex;
         bonusPower = 0; // No immediate power bonus
+        logAbility(`💣 TIME BOMB planted! Explodes turn ${card._bombTurn}`, { effectType: "special", details: `Explodes in ${effect.delay || 2} turns` });
         break;
 
       case "forceDiscardAndDraw":
         // Enemy discards (loses power), you draw! (Sartocrates - Epic)
         // Debuff a random enemy card
+        let discardTargetName = "";
         if (newLanes[laneIndex][enemyCards].length > 0) {
           const targetIdx = Math.floor(Math.random() * newLanes[laneIndex][enemyCards].length);
+          discardTargetName = newLanes[laneIndex][enemyCards][targetIdx].name;
           const debuffAmount = 15;
           newLanes[laneIndex][enemyCards][targetIdx] = {
             ...newLanes[laneIndex][enemyCards][targetIdx],
@@ -2783,6 +2883,7 @@ export default function TCGPage() {
           newHand.push(newDeck.shift()!);
         }
         bonusPower = effect.selfDraw ? 5 : 0; // Small bonus
+        logAbility(`📜 ${discardTargetName ? `debuffed ${discardTargetName} -15` : ""} + drew 1`, { effectType: "debuff", targets: discardTargetName ? [discardTargetName] : [], powerChange: -15, details: "Discard + draw" });
         break;
 
       case "parasiteLane":
@@ -2790,30 +2891,36 @@ export default function TCGPage() {
         // Simplified: debuff all enemies in lane + steal some power
         let totalDrained = 0;
         const drainAmount = 10;
+        const drainedTargets: string[] = [];
         newLanes[laneIndex][enemyCards].forEach((c: DeckCard, cIdx: number) => {
           const drained = Math.min(drainAmount, c.power);
           newLanes[laneIndex][enemyCards][cIdx] = { ...c, power: Math.max(0, c.power - drained) };
           totalDrained += drained;
+          if (drained > 0) drainedTargets.push(c.name || "Unknown");
         });
         newLanes[laneIndex][enemyPower] = Math.max(0, newLanes[laneIndex][enemyPower] - totalDrained);
         bonusPower = totalDrained; // Gain drained power
+        logAbility(`🧠 MIND PARASITE! Drained ${totalDrained} power`, { effectType: "steal", targets: drainedTargets, powerChange: totalDrained, details: `${drainedTargets.length} enemies drained` });
         break;
 
       case "sacrificeBuffAll":
         // SACRIFICE: Destroy self and buff ALL allies! (Melted - Rare)
         const buffAllValue = effect.value || 20;
+        let alliesBuffedCount = 0;
         // Buff all friendly cards in all lanes
         newLanes.forEach((lane: any) => {
           lane[myCards].forEach((c: DeckCard, cIdx: number) => {
             if (c.cardId !== card.cardId) { // Don't buff self (will be destroyed)
               lane[myCards][cIdx] = { ...c, power: c.power + buffAllValue };
               lane[myPower] += buffAllValue;
+              alliesBuffedCount++;
             }
           });
         });
         // Mark card for destruction (will be removed after ability processing)
         card._sacrificed = true;
         bonusPower = -card.power; // Negate own power since card will be destroyed
+        logAbility(`💀 SACRIFICE! Buffed ${alliesBuffedCount} allies +${buffAllValue} each`, { effectType: "special", powerChange: alliesBuffedCount * buffAllValue, details: "Self-destruct for team" });
         break;
 
       case "shuffleEnemyLanes":
@@ -2837,6 +2944,7 @@ export default function TCGPage() {
           newLanes[targetLane][enemyPower] += enemyCard.power;
         });
         bonusPower = 10; // Chaos bonus
+        logAbility(`🌀 CHAOS! Shuffled ${allEnemyCardsToShuffle.length} enemy cards`, { effectType: "special", powerChange: 10, details: "All enemy positions scrambled" });
         break;
     }
 
@@ -7793,7 +7901,7 @@ export default function TCGPage() {
 
         {/* Battle Log Panel */}
         {showBattleLog && (
-          <div className="fixed right-0 top-0 bottom-0 w-64 bg-black/95 border-l border-vintage-gold/30 z-40 overflow-y-auto p-3">
+          <div className="fixed right-0 top-0 bottom-0 w-72 bg-black/95 border-l border-vintage-gold/30 z-40 overflow-y-auto p-3">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-vintage-gold font-bold text-sm uppercase tracking-wider">Battle Log</h3>
               <button onClick={() => setShowBattleLog(false)} className="text-gray-400 hover:text-white text-lg">✕</button>
@@ -7801,16 +7909,52 @@ export default function TCGPage() {
             {battleLog.length === 0 ? (
               <p className="text-gray-500 text-xs">No actions yet...</p>
             ) : (
-              <div className="space-y-1">
-                {battleLog.map((entry, i) => (
-                  <div key={i} className={`text-[10px] px-2 py-1 rounded ${
-                    entry.player === "you" ? "bg-blue-900/30 text-blue-300" : "bg-red-900/30 text-red-300"
-                  }`}>
-                    <span className="text-vintage-gold/60">T{entry.turn}:</span>{" "}
-                    <span className="font-bold">{entry.player === "you" ? "You" : "CPU"}</span>{" "}
-                    {entry.action} <span className="text-white font-medium">{entry.cardName}</span> → Lane {entry.lane}
-                  </div>
-                ))}
+              <div className="space-y-1.5">
+                {battleLog.map((entry, i) => {
+                  // Color based on effect type
+                  const effectColors: Record<string, string> = {
+                    buff: "border-l-green-500 bg-green-900/20",
+                    debuff: "border-l-red-500 bg-red-900/20",
+                    destroy: "border-l-orange-500 bg-orange-900/20",
+                    steal: "border-l-purple-500 bg-purple-900/20",
+                    draw: "border-l-cyan-500 bg-cyan-900/20",
+                    move: "border-l-yellow-500 bg-yellow-900/20",
+                    copy: "border-l-pink-500 bg-pink-900/20",
+                    special: "border-l-violet-500 bg-violet-900/20",
+                  };
+                  const baseColor = entry.player === "you" ? "text-blue-300" : "text-red-300";
+                  const effectStyle = entry.effectType ? effectColors[entry.effectType] || "" : "";
+                  const isAbilityLog = entry.abilityName || entry.effectType;
+
+                  return (
+                    <div key={i} className={`text-[10px] px-2 py-1.5 rounded border-l-2 ${
+                      isAbilityLog ? effectStyle : (entry.player === "you" ? "bg-blue-900/20 border-l-blue-500" : "bg-red-900/20 border-l-red-500")
+                    }`}>
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-vintage-gold/70 font-mono">T{entry.turn}</span>
+                        <span className={`font-bold ${baseColor}`}>{entry.player === "you" ? "You" : "CPU"}</span>
+                        <span className="text-white/90 font-medium truncate">{entry.cardName}</span>
+                        <span className="text-gray-500 ml-auto">L{entry.lane}</span>
+                      </div>
+                      <div className="text-[9px] text-gray-300">
+                        {entry.action}
+                        {entry.powerChange !== undefined && entry.powerChange !== 0 && (
+                          <span className={`ml-1 font-bold ${entry.powerChange > 0 ? "text-green-400" : "text-red-400"}`}>
+                            {entry.powerChange > 0 ? "+" : ""}{entry.powerChange}
+                          </span>
+                        )}
+                      </div>
+                      {entry.targets && entry.targets.length > 0 && (
+                        <div className="text-[8px] text-gray-400 mt-0.5">
+                          → {entry.targets.join(", ")}
+                        </div>
+                      )}
+                      {entry.details && (
+                        <div className="text-[8px] text-gray-500 italic mt-0.5">{entry.details}</div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -8836,7 +8980,7 @@ export default function TCGPage() {
 
         {/* Battle Log Panel (PvP) */}
         {showBattleLog && (
-          <div className="fixed right-0 top-0 bottom-0 w-64 bg-black/95 border-l border-vintage-gold/30 z-40 overflow-y-auto p-3">
+          <div className="fixed right-0 top-0 bottom-0 w-72 bg-black/95 border-l border-vintage-gold/30 z-40 overflow-y-auto p-3">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-vintage-gold font-bold text-sm uppercase tracking-wider">Battle Log</h3>
               <button onClick={() => setShowBattleLog(false)} className="text-gray-400 hover:text-white text-lg">✕</button>
@@ -8844,16 +8988,53 @@ export default function TCGPage() {
             {battleLog.length === 0 ? (
               <p className="text-gray-500 text-xs">No actions yet...</p>
             ) : (
-              <div className="space-y-1">
-                {battleLog.map((entry, i) => (
-                  <div key={i} className={`text-[10px] px-2 py-1 rounded ${
-                    entry.player === "you" ? "bg-blue-900/30 text-blue-300" : "bg-red-900/30 text-red-300"
-                  }`}>
-                    <span className="text-vintage-gold/60">T{entry.turn}:</span>{" "}
-                    <span className="font-bold">{entry.player === "you" ? "You" : entry.player === "cpu" ? "CPU" : "Opponent"}</span>{" "}
-                    {entry.action} <span className="text-white font-medium">{entry.cardName}</span> → Lane {entry.lane + 1}
-                  </div>
-                ))}
+              <div className="space-y-1.5">
+                {battleLog.map((entry, i) => {
+                  // Color based on effect type
+                  const effectColors: Record<string, string> = {
+                    buff: "border-l-green-500 bg-green-900/20",
+                    debuff: "border-l-red-500 bg-red-900/20",
+                    destroy: "border-l-orange-500 bg-orange-900/20",
+                    steal: "border-l-purple-500 bg-purple-900/20",
+                    draw: "border-l-cyan-500 bg-cyan-900/20",
+                    move: "border-l-yellow-500 bg-yellow-900/20",
+                    copy: "border-l-pink-500 bg-pink-900/20",
+                    special: "border-l-violet-500 bg-violet-900/20",
+                  };
+                  const baseColor = entry.player === "you" ? "text-blue-300" : "text-red-300";
+                  const effectStyle = entry.effectType ? effectColors[entry.effectType] || "" : "";
+                  const isAbilityLog = entry.abilityName || entry.effectType;
+                  const playerLabel = entry.player === "you" ? "You" : entry.player === "cpu" ? "CPU" : "Opponent";
+
+                  return (
+                    <div key={i} className={`text-[10px] px-2 py-1.5 rounded border-l-2 ${
+                      isAbilityLog ? effectStyle : (entry.player === "you" ? "bg-blue-900/20 border-l-blue-500" : "bg-red-900/20 border-l-red-500")
+                    }`}>
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-vintage-gold/70 font-mono">T{entry.turn}</span>
+                        <span className={`font-bold ${baseColor}`}>{playerLabel}</span>
+                        <span className="text-white/90 font-medium truncate">{entry.cardName}</span>
+                        <span className="text-gray-500 ml-auto">L{entry.lane + 1}</span>
+                      </div>
+                      <div className="text-[9px] text-gray-300">
+                        {entry.action}
+                        {entry.powerChange !== undefined && entry.powerChange !== 0 && (
+                          <span className={`ml-1 font-bold ${entry.powerChange > 0 ? "text-green-400" : "text-red-400"}`}>
+                            {entry.powerChange > 0 ? "+" : ""}{entry.powerChange}
+                          </span>
+                        )}
+                      </div>
+                      {entry.targets && entry.targets.length > 0 && (
+                        <div className="text-[8px] text-gray-400 mt-0.5">
+                          → {entry.targets.join(", ")}
+                        </div>
+                      )}
+                      {entry.details && (
+                        <div className="text-[8px] text-gray-500 italic mt-0.5">{entry.details}</div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

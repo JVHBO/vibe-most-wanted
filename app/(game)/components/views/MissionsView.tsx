@@ -35,6 +35,7 @@ interface MissionsViewProps {
   claimAllMissions: () => void;
   setSuccessMessage: (msg: string) => void;
   t: (key: any, params?: any) => string;
+  refreshUserProfile?: () => Promise<void>;
 }
 
 export function MissionsView({
@@ -53,6 +54,7 @@ export function MissionsView({
   claimAllMissions,
   setSuccessMessage,
   t,
+  refreshUserProfile,
 }: MissionsViewProps) {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -213,8 +215,12 @@ export function MissionsView({
           soundEnabled={soundEnabled}
           hasVibeBadge={userProfile?.hasVibeBadge}
           hasVibeFID={nfts.some((c: any) => c.collection === 'vibefid')}
-          onRewardClaimed={(amount: number) => {
+          onRewardClaimed={async (amount: number) => {
             setSuccessMessage(`Claimed ${amount} coins!`);
+            // 🔄 Refresh user profile to update coins display
+            if (refreshUserProfile) {
+              await refreshUserProfile();
+            }
           }}
         />
       )}
