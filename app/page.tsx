@@ -45,8 +45,6 @@ import { PvPEntryFeeModal } from "@/components/PvPEntryFeeModal";
 import { GamePopups } from "@/components/GamePopups";
 import { PvPInRoomModal } from "@/components/PvPInRoomModal";
 import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal";
-import { PokerBattleTable } from "@/components/PokerBattleTable";
-import { PokerMatchmaking } from "@/components/PokerMatchmaking";
 // RaidBossModal moved to /raid page
 import { PriceTicker } from "@/components/PriceTicker";
 import { AllCollectionsButton } from "@/components/AllCollectionsButton";
@@ -562,7 +560,7 @@ export default function TCGPage() {
   // PvP States
   const [gameMode, setGameMode] = useState<'ai' | 'pvp' | null>(null);
   const [pvpMode, setPvpMode] = useState<'menu' | 'pvpMenu' | 'autoMatch' | 'selectMode' | 'createRoom' | 'joinRoom' | 'inRoom' | null>(null);
-  const [modeMenuOpen, setModeMenuOpen] = useState<'poker' | 'battle' | 'boss' | null>(null);
+  const [modeMenuOpen, setModeMenuOpen] = useState<'battle' | 'boss' | null>(null);
   const [roomCode, setRoomCode] = useState<string>('');
   const [currentRoom, setCurrentRoom] = useState<any>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -571,7 +569,6 @@ export default function TCGPage() {
   // AI Difficulty (5 levels with progressive unlock)
   const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
   const [eliminationDifficulty, setEliminationDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
-  const [pokerCpuDifficulty, setPokerCpuDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
 
   // Convex client for imperative queries (already declared above)
 
@@ -603,7 +600,6 @@ export default function TCGPage() {
   // 🚀 Performance: Memoized JC NFTs (AI deck)
   const sortedJcNfts = useSortedByPower(jcNfts);
   const strongestJcNfts = useStrongestCards(jcNfts, HAND_SIZE);
-  const strongestJcNftsForPoker = useStrongestCards(jcNfts, 10); // Poker Battle needs 10 cards
 
   // Economy mutations
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
@@ -894,9 +890,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const [isAttacking, setIsAttacking] = useState<boolean>(false);
   const [isConfirmingCards, setIsConfirmingCards] = useState<boolean>(false);
 
-  // Poker Battle States
-  const [showPokerBattle, setShowPokerBattle] = useState<boolean>(false);
-  const [pokerMode, setPokerMode] = useState<'cpu' | 'pvp'>('pvp');
 
   // Raid Boss States
   // Raid Boss moved to /raid page
@@ -1477,7 +1470,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   };
 
   // Handler for game mode selection from GameGrid
-  type GameMode = 'poker-cpu' | 'battle-ai' | 'mecha' | 'raid' | 'baccarat' | 'tcg';
+  type GameMode = 'battle-ai' | 'mecha' | 'raid' | 'baccarat' | 'tcg';
   const handleGameModeSelect = (mode: GameMode) => {
     if (!userProfile) {
       setShowCreateProfile(true);
@@ -1486,11 +1479,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     if (soundEnabled) AudioManager.buttonClick();
 
     switch (mode) {
-      case 'poker-cpu':
-        setPokerMode('cpu');
-        setTempSelectedDifficulty(pokerCpuDifficulty);
-        setIsDifficultyModalOpen(true);
-        break;
       case 'battle-ai':
         setShowPveCardSelection(true);
         setPveSelectedCards([]);
@@ -3512,7 +3500,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
 
   // Close all modals when view changes (fix for modals persisting across views)
   useEffect(() => {
-    setShowPokerBattle(false);
     setShowPvPEntryFeeModal(false);
     setShowBattleScreen(false);
     setShowPveCardSelection(false);
@@ -4816,20 +4803,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         api={api}
       />
 
-      {/* Poker Battle - handles both CPU and PvP modes */}
-      {showPokerBattle && (
-        <PokerBattleTable
-          onClose={() => setShowPokerBattle(false)}
-          playerCards={sortedNfts}
-          isCPUMode={pokerMode === 'cpu'}
-          opponentDeck={pokerMode === 'cpu' ? strongestJcNftsForPoker : []}
-          difficulty={pokerMode === 'cpu' ? pokerCpuDifficulty : undefined}
-          playerAddress={address || ''}
-          playerUsername={userProfile?.username || ''}
-          isInFarcaster={isInFarcaster}
-          soundEnabled={soundEnabled}
-        />
-      )}
 
       {/* Raid Boss moved to /raid page */}
 
@@ -5650,60 +5623,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
 
             <div className="order-1 lg:order-2">
               <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-6 sticky top-6 shadow-gold" style={{boxShadow: '0 0 30px rgba(255, 215, 0, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5)'}}>
-                {/* 🎴 POKER MODE Button */}
-                <div className="mb-2">
-                  <button
-                    onClick={() => {
-                      if (soundEnabled) AudioManager.buttonClick();
-                      setModeMenuOpen(modeMenuOpen === 'poker' ? null : 'poker');
-                    }}
-                    disabled={!userProfile}
-                    className={`w-full px-4 py-2 rounded-xl font-display font-bold transition-all uppercase tracking-wide text-sm flex items-center justify-between ${
-                      userProfile
-                        ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
-                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="text-lg">♠</span>
-                      {t('homePokerBattle')}
-                    </span>
-                    <span className="text-lg">{modeMenuOpen === 'poker' ? '▼' : '▶'}</span>
-                  </button>
-
-                  {/* Poker Submenu */}
-                  {modeMenuOpen === 'poker' && (
-                    <div className="mt-2 ml-4 space-y-2 border-l-2 border-vintage-gold/30 pl-4">
-                      {/* Poker vs CPU */}
-                      <button
-                        onClick={() => {
-                          if (soundEnabled) AudioManager.buttonClick();
-                          setPokerMode('cpu');
-                          setTempSelectedDifficulty(pokerCpuDifficulty);
-                          setIsDifficultyModalOpen(true);
-                          setModeMenuOpen(null);
-                        }}
-                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 hover:border-purple-500/60"
-                      >
-                        ♣ {t('homeVsCpu')}
-                      </button>
-
-                      {/* Poker vs Player */}
-                      <button
-                        onClick={() => {
-                          if (soundEnabled) AudioManager.buttonClick();
-                          setPokerMode('pvp');
-                          setShowPokerBattle(true);
-                          setModeMenuOpen(null);
-                        }}
-                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-orange-600/20 hover:bg-orange-600/40 text-orange-300 border border-orange-500/30 hover:border-orange-500/60"
-                      >
-                        ♥ {t('homeVsPlayer')}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
                 {/* 🤖 MECHA ARENA Button */}
                 <div className="mb-2">
                   <button
@@ -5782,7 +5701,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                       <button
                         onClick={() => {
                           if (soundEnabled) AudioManager.buttonClick();
-                          setPokerMode('pvp'); // Reset poker mode
                           setShowPveCardSelection(true);
                           setPveSelectedCards([]);
                           setModeMenuOpen(null);
@@ -5796,7 +5714,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                       <button
                         onClick={() => {
                           if (soundEnabled) AudioManager.buttonClick();
-                          setPokerMode('pvp'); // Reset poker mode
                           setGameMode('pvp');
                           setPvpMode('pvpMenu');
                           setModeMenuOpen(null);
@@ -6138,14 +6055,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
           setTempSelectedDifficulty(difficulty);
         }}
         onBattle={async (difficulty) => {
-          // Check if this is Poker CPU mode
-          if (pokerMode === 'cpu') {
-            if (soundEnabled) AudioManager.buttonClick();
-            setPokerCpuDifficulty(difficulty);
-            setIsDifficultyModalOpen(false);
-            setTempSelectedDifficulty(null);
-            setShowPokerBattle(true);
-          } else {
             // PvE Mode: Consume daily attempt before starting battle
             try {
               if (address) {
@@ -6172,7 +6081,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
 
             // Pass difficulty directly to playHand to avoid state timing issues
             playHand(pveSelectedCards, difficulty);
-          }
         }}
         onEliminationBattle={(difficulty) => {
           if (soundEnabled) AudioManager.buttonClick();

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { AudioManager } from "@/lib/audio-manager";
 import { useLanguage } from "@/contexts/LanguageContext";
 
-type GameMode = 'poker-cpu' | 'battle-ai' | 'mecha' | 'raid' | 'baccarat' | 'tcg';
+type GameMode = 'battle-ai' | 'mecha' | 'raid' | 'baccarat' | 'tcg';
 
 // Wallets allowed to access TCG (testing phase)
 const TCG_ALLOWED_WALLETS = [
@@ -19,12 +19,6 @@ interface GameGridProps {
 }
 
 // SVG Icons
-const SpadeIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2C9.5 5 4 9 4 13c0 2.5 2 4 4 4 1.5 0 2.5-.5 3-1.5V20H9v2h6v-2h-2v-4.5c.5 1 1.5 1.5 3 1.5 2 0 4-1.5 4-4 0-4-5.5-8-8-11z" />
-  </svg>
-);
-
 const DiamondIcon = () => (
   <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
     <path d="M12 2L2 12l10 10 10-10L12 2z" />
@@ -77,15 +71,6 @@ const CardsIcon = () => (
 
 // Game mode configurations with translation keys
 const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string; fullWidth?: boolean; comingSoon?: boolean; restricted?: boolean; isNew?: boolean }[] = [
-  {
-    id: 'poker-cpu',
-    icon: <SpadeIcon />,
-    label: 'Battle Poker',
-    sublabel: '',
-    cards: 10,
-    iconColor: 'text-vintage-gold',
-    accentColor: 'hover:border-vintage-gold/50',
-  },
   {
     id: 'battle-ai',
     icon: <RobotIcon />,
