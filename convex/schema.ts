@@ -2018,7 +2018,8 @@ export default defineSchema({
 
     // Staking Info
     isStakedMatch: v.optional(v.boolean()), // Match com aposta
-    stakeAmount: v.optional(v.number()), // Valor apostado (ex: 10000)
+    stakeAmount: v.optional(v.number()), // Attack fee (10% da pool)
+    poolTier: v.optional(v.number()), // Pool total do defensor (ex: 1000, 5000, 10000)
     isCpuOpponent: v.optional(v.boolean()), // Oponente é CPU jogando pelo defense deck
     stakePaid: v.optional(v.boolean()), // Rewards já processados (anti-duplicate)
 

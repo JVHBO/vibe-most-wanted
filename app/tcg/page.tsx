@@ -4686,6 +4686,26 @@ export default function TCGPage() {
 
         // Sound for draw (new card in hand)
         setTimeout(() => playSound("draw"), 500);
+
+        // Detect and play combo voice announcements
+        let comboDelay = 0;
+        gs.lanes.forEach((lane: any, laneIdx: number) => {
+          const myLaneCards = lane[myCards] || [];
+          const enemyLaneCards = lane[enemyCards] || [];
+
+          [{ cards: myLaneCards, side: "player" }, { cards: enemyLaneCards, side: "enemy" }].forEach(({ cards, side }) => {
+            if (cards.length === 0) return;
+            const combos = detectCombos(cards);
+            combos.forEach(({ combo }) => {
+              const comboKey = `${laneIdx}-${side}-${combo.id}`;
+              if (!shownCombosRef.current.has(comboKey)) {
+                shownCombosRef.current.add(comboKey);
+                setTimeout(() => playComboVoice(combo.id), 600 + comboDelay);
+                comboDelay += 2500;
+              }
+            });
+          });
+        });
       }
     }
 
@@ -5253,11 +5273,11 @@ export default function TCGPage() {
                           )}
 
                           {/* Create / Join Room */}
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-2">
                             <button
                               onClick={handleCreateMatch}
                               disabled={!hasDeck}
-                              className="px-3 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 hover:border-purple-400 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="w-full px-3 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 hover:border-purple-400 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               Create Room
                             </button>
@@ -5266,7 +5286,7 @@ export default function TCGPage() {
                                 type="text"
                                 value={roomIdInput}
                                 onChange={(e) => setRoomIdInput(e.target.value.toUpperCase())}
-                                placeholder="CODE"
+                                placeholder="ROOM CODE"
                                 maxLength={6}
                                 disabled={!hasDeck}
                                 className="flex-1 bg-black/50 border border-vintage-gold/20 rounded-lg px-2 py-2 text-vintage-gold font-mono text-center uppercase tracking-wider focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-xs disabled:opacity-40"
@@ -5274,7 +5294,7 @@ export default function TCGPage() {
                               <button
                                 onClick={() => roomIdInput.length >= 4 && handleJoinMatch(roomIdInput)}
                                 disabled={!hasDeck || roomIdInput.length < 4}
-                                className="px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 hover:border-purple-400 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                                className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 hover:border-purple-400 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                               >
                                 Join
                               </button>
@@ -9000,13 +9020,13 @@ export default function TCGPage() {
             <div className={`mb-2 px-4 py-2 rounded-lg border ${isWinner ? "bg-green-900/30 border-green-500/40" : "bg-red-900/30 border-red-500/40"}`}>
               <p className={`text-sm font-bold ${isWinner ? "text-green-400" : "text-red-400"}`}>
                 {isWinner
-                  ? `+${Math.floor((currentMatch as any).stakeAmount * 2 * 0.9).toLocaleString()} VBMS`
+                  ? `+${((currentMatch as any).poolTier || Math.floor((currentMatch as any).stakeAmount * 10)).toLocaleString()} VBMS`
                   : `-${(currentMatch as any).stakeAmount.toLocaleString()} VBMS`
                 }
               </p>
-              {isWinner && (
-                <p className="text-[9px] text-green-400/60">Reward sent to your inbox. Claim on home page.</p>
-              )}
+              <p className="text-[9px] text-green-400/60">
+                {isWinner ? "Pool reward added to your balance." : "Attack fee lost."}
+              </p>
             </div>
           )}
 

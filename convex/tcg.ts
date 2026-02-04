@@ -3279,10 +3279,11 @@ export const autoMatchWithStake = mutation({
         expiresAt: Date.now() + (TCG_CONFIG.ROOM_EXPIRY_MINUTES * 60 * 1000),
         isStakedMatch: true,
         stakeAmount: attackFee,
+        poolTier: args.poolTier,
         isCpuOpponent: true,
       });
 
-      console.log(`[autoMatchWithStake] Match created: ${matchId} | ${args.username} vs ${opponentUsername} fee=${attackFee}`);
+      console.log(`[autoMatchWithStake] Match created: ${matchId} | ${args.username} vs ${opponentUsername} fee=${attackFee} pool=${args.poolTier}`);
       return {
         matchId,
         roomId,
