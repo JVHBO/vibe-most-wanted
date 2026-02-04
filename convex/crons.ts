@@ -63,11 +63,11 @@ crons.interval(
   internal.castAuctions.processAuctionLifecycle
 );
 
-// 🧹 Cleanup stale TCG matches (every 2 minutes)
-// Auto-forfeit disconnected players, cancel abandoned matches
+// 🧹 Cleanup stale TCG matches (every 5 minutes)
+// Auto-forfeit disconnected players, cancel abandoned matches, free gameState
 crons.interval(
   "cleanup stale tcg matches",
-  { minutes: 2 },
+  { minutes: 5 },
   internal.tcg.cleanupStaleMatches
 );
 

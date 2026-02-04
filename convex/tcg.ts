@@ -1991,10 +1991,12 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
       gameState: {
         ...gs,
         lanes,
-        player1Hand: p1Hand,
-        player2Hand: p2Hand,
-        player1DeckRemaining: p1DeckRemaining,
-        player2DeckRemaining: p2DeckRemaining,
+        player1Hand: [],
+        player2Hand: [],
+        player1DeckRemaining: [],
+        player2DeckRemaining: [],
+        player1Actions: undefined,
+        player2Actions: undefined,
         phase: "resolution",
       },
     });
@@ -2358,23 +2360,41 @@ export const claimVictoryByTimeout = mutation({
 export const cleanupStaleMatches = internalMutation({
   handler: async (ctx) => {
     const now = Date.now();
-    const BOTH_GONE_MS = 120_000; // 2 minutes
-    const ONE_GONE_MS = 90_000; // 90 seconds
+    const STALE_MS = 300_000; // 5 min without heartbeat = stale
+    const ANCIENT_MS = 600_000; // 10 min = force cancel regardless
+    const ONE_GONE_MS = 90_000; // 90s one player gone
 
-    // Limit to 50 matches per cleanup run to reduce bandwidth
+    // Process oldest first (by_status index sorts by createdAt), limit batch
     const matches = await ctx.db
       .query("tcgMatches")
       .withIndex("by_status", (q: any) => q.eq("status", "in-progress"))
-      .take(50);
+      .order("asc")
+      .take(20);
 
     let cleaned = 0;
     for (const match of matches) {
+      const age = now - match.createdAt;
       const p1Last = match.player1LastSeen;
       const p2Last = match.player2LastSeen;
 
-      // Both players gone > 2 min → cancel
-      if (p1Last && p2Last && (now - p1Last > BOTH_GONE_MS) && (now - p2Last > BOTH_GONE_MS)) {
-        await ctx.db.patch(match._id, { status: "cancelled", finishedAt: now });
+      // Ancient match (10+ min old) → force cancel, clear gameState
+      if (age > ANCIENT_MS) {
+        await ctx.db.patch(match._id, {
+          status: "cancelled",
+          finishedAt: now,
+          gameState: undefined,
+        });
+        cleaned++;
+        continue;
+      }
+
+      // Both players gone > 5 min → cancel + clear gameState
+      if (p1Last && p2Last && (now - p1Last > STALE_MS) && (now - p2Last > STALE_MS)) {
+        await ctx.db.patch(match._id, {
+          status: "cancelled",
+          finishedAt: now,
+          gameState: undefined,
+        });
         cleaned++;
         continue;
       }
@@ -2382,29 +2402,56 @@ export const cleanupStaleMatches = internalMutation({
       // One player gone > 90s, other active → forfeit
       if (p1Last && p2Last) {
         if ((now - p1Last > ONE_GONE_MS) && (now - p2Last < 30_000)) {
-          // Player 1 gone, player 2 wins
           await ctx.db.patch(match._id, {
             status: "finished",
             winnerId: match.player2Address,
             winnerUsername: match.player2Username,
             finishedAt: now,
+            gameState: undefined,
           });
           cleaned++;
         } else if ((now - p2Last > ONE_GONE_MS) && (now - p1Last < 30_000)) {
-          // Player 2 gone, player 1 wins
           await ctx.db.patch(match._id, {
             status: "finished",
             winnerId: match.player1Address,
             winnerUsername: match.player1Username,
             finishedAt: now,
+            gameState: undefined,
           });
           cleaned++;
         }
       }
     }
 
+    // Also clean up old finished/cancelled matches gameState (free storage)
+    const oldFinished = await ctx.db
+      .query("tcgMatches")
+      .withIndex("by_status", (q: any) => q.eq("status", "finished"))
+      .order("asc")
+      .take(20);
+
+    for (const match of oldFinished) {
+      if (match.gameState && match.finishedAt && (now - match.finishedAt > ANCIENT_MS)) {
+        await ctx.db.patch(match._id, { gameState: undefined });
+        cleaned++;
+      }
+    }
+
+    const oldCancelled = await ctx.db
+      .query("tcgMatches")
+      .withIndex("by_status", (q: any) => q.eq("status", "cancelled"))
+      .order("asc")
+      .take(20);
+
+    for (const match of oldCancelled) {
+      if (match.gameState) {
+        await ctx.db.patch(match._id, { gameState: undefined });
+        cleaned++;
+      }
+    }
+
     if (cleaned > 0) {
-      console.log(`🧹 Cleaned up ${cleaned} stale TCG matches`);
+      console.log(`🧹 Cleaned up ${cleaned} stale TCG matches / freed gameState`);
     }
   },
 });
