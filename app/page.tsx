@@ -60,8 +60,7 @@ import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
 import { usePowerCalculation } from "@/app/(game)/hooks/battle/usePowerCalculation";
-import { BattleResults } from "@/app/(game)/components/battle/BattleResults";
-import { PowerDisplay } from "@/app/(game)/components/battle/PowerDisplay";
+import { BattleArena } from "@/app/(game)/components/battle/BattleArena";
 // 🚀 BANDWIDTH FIX: Cached hooks for infrequent data
 import { useCachedDailyQuest } from "@/lib/convex-cache";
 // 📝 Development logger (silent in production)
@@ -4110,274 +4109,36 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         }}
       />
 
-      {showBattleScreen && (
-        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[300]">
-          <div className="w-full max-w-6xl p-8">
-            {/* Title - Different for Elimination Mode */}
-            {battleMode === 'elimination' ? (
-              <div className="text-center mb-6 md:mb-8">
-                <h2 className="text-2xl md:text-4xl font-bold text-purple-400 uppercase tracking-wider mb-2">
-                  ✦ ELIMINATION MODE
-                </h2>
-                <div className="flex items-center justify-center gap-4 md:gap-8 text-lg md:text-2xl font-bold">
-                  <span className="text-cyan-400">Round {currentRound}/5</span>
-                  <span className="text-vintage-gold">•</span>
-                  <span className="text-cyan-400">You {eliminationPlayerScore}</span>
-                  <span className="text-vintage-gold">-</span>
-                  <span className="text-red-400">{eliminationOpponentScore} Opponent</span>
-                </div>
-              </div>
-            ) : (
-              <h2 className="text-3xl md:text-5xl font-bold text-center mb-8 md:mb-12 text-yellow-400 uppercase tracking-wider" style={{ animation: 'battlePowerPulse 2s ease-in-out infinite' }}>
-                {t('battle')}
-              </h2>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-8">
-              {/* Player Cards */}
-              <div>
-                {/* Player Header with Avatar */}
-                <div className="flex flex-col items-center mb-3 md:mb-4">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-cyan-500 shadow-lg shadow-cyan-500/50 mb-2 bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center relative">
-                    {userProfile?.twitter ? (
-                      <img
-                        src={getAvatarUrl({ twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl }) || ''}
-                        alt={battlePlayerName}
-                        className="w-full h-full object-cover absolute inset-0"
-                        onLoad={() => devLog('Player PFP loaded:', userProfile.twitter)}
-                        onError={(e) => {
-                          devLog('Player PFP failed to load, using fallback:', userProfile.twitter);
-                          (e.target as HTMLImageElement).src = getAvatarFallback();
-                        }}
-                      />
-                    ) : null}
-                    <span className={`text-2xl md:text-3xl font-bold text-white ${userProfile?.twitter ? 'opacity-0' : 'opacity-100'}`}>
-                      {battlePlayerName?.substring(0, 2).toUpperCase() || '??'}
-                    </span>
-                  </div>
-                  <h3 className="text-xl md:text-2xl font-bold text-vintage-neon-blue text-center">{battlePlayerName}</h3>
-                </div>
-
-                {/* Cards Display - Different for Elimination Mode */}
-                {battleMode === 'elimination' ? (
-                  // Show only current round's card (single large card)
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="text-purple-400 font-bold text-lg">Position #{currentRound}</div>
-                    <div
-                      className="relative w-48 md:w-64 aspect-[2/3] rounded-lg overflow-hidden ring-4 ring-cyan-500"
-                      style={{
-                        animation: battlePhase === 'clash'
-                          ? `battleGlowBlue 1.5s ease-in-out infinite`
-                          : 'battleCardFadeIn 0.8s ease-out'
-                      }}
-                    >
-                      <FoilCardEffect
-                        foilType={(selectedCards[currentRound - 1]?.foil === 'Standard' || selectedCards[currentRound - 1]?.foil === 'Prize') ? selectedCards[currentRound - 1].foil : null}
-                        className="w-full h-full"
-                      >
-                        <CardMedia src={selectedCards[currentRound - 1]?.imageUrl} alt={`#${selectedCards[currentRound - 1]?.tokenId}`} className="w-full h-full object-cover" loading="eager" />
-                      </FoilCardEffect>
-                      <div
-                        className="absolute top-0 left-0 bg-cyan-500 text-white text-lg md:text-xl font-bold px-3 py-2 rounded-br"
-                        style={{
-                          animation: battlePhase === 'clash'
-                            ? 'battlePowerPulse 1s ease-in-out infinite'
-                            : undefined
-                        }}
-                      >
-                        {getCardDisplayPower(selectedCards[currentRound - 1])}
-                      </div>
-                    </div>
-                    {/* Show mini previous cards if not first round */}
-                    {currentRound > 1 && (
-                      <div className="flex gap-1 mt-2">
-                        {orderedPlayerCards.slice(0, currentRound - 1).map((card, i) => (
-                          <div key={i} className={`w-12 h-16 rounded border-2 ${roundResults[i] === 'win' ? 'border-green-500' : roundResults[i] === 'loss' ? 'border-red-500' : 'border-yellow-500'} opacity-50`}>
-                            <CardMedia src={card.imageUrl} alt="" className="w-full h-full object-cover" />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  // Normal mode - show all 5 cards
-                  <>
-                    <div
-                      className="grid grid-cols-5 gap-1 md:gap-2"
-                      style={{
-                        animation: battlePhase === 'clash'
-                          ? 'battleCardShake 2s ease-in-out'
-                          : 'battleCardFadeIn 0.8s ease-out'
-                      }}
-                    >
-                      {selectedCards.map((c, i) => (
-                        <div
-                          key={i}
-                          className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-cyan-500"
-                          style={{
-                            animation: battlePhase === 'clash'
-                              ? `battleGlowBlue 1.5s ease-in-out infinite`
-                              : undefined,
-                            animationDelay: `${i * 0.1}s`
-                          }}
-                        >
-                          <FoilCardEffect
-                            foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null}
-                            className="w-full h-full"
-                          >
-                            <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
-                          </FoilCardEffect>
-                          <div
-                            className="absolute top-0 left-0 bg-cyan-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
-                            style={{
-                              animation: battlePhase === 'clash'
-                                ? 'battlePowerPulse 1s ease-in-out infinite'
-                                : undefined
-                            }}
-                          >
-                            {getCardDisplayPower(c)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <PowerDisplay power={playerPower} color="blue" battlePhase={battlePhase} />
-                  </>
-                )}
-              </div>
-
-              {/* Opponent Cards */}
-              <div>
-                {/* Opponent Header with Avatar */}
-                <div className="flex flex-col items-center mb-3 md:mb-4">
-                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-red-500 shadow-lg shadow-red-500/50 mb-2 bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center relative">
-                    {battleOpponentPfp ? (
-                      <img
-                        src={battleOpponentPfp}
-                        alt={battleOpponentName}
-                        className="w-full h-full object-cover absolute inset-0"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          setBattleOpponentPfp(null); // Reset to null so initials show
-                        }}
-                      />
-                    ) : null}
-                    <span className={`text-2xl md:text-3xl font-bold text-white ${battleOpponentPfp ? 'opacity-0' : 'opacity-100'}`}>
-                      {battleOpponentName?.substring(0, 2).toUpperCase() || '??'}
-                    </span>
-                  </div>
-                  <h3 className="text-xl md:text-2xl font-bold text-red-400 text-center">{battleOpponentName}</h3>
-                </div>
-
-                {/* Cards Display - Different for Elimination Mode */}
-                {battleMode === 'elimination' ? (
-                  // Show only current round's card (single large card)
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="text-purple-400 font-bold text-lg">Position #{currentRound}</div>
-                    <div
-                      className="relative w-48 md:w-64 aspect-[2/3] rounded-lg overflow-hidden ring-4 ring-red-500"
-                      style={{
-                        animation: battlePhase === 'clash'
-                          ? `battleGlowRed 1.5s ease-in-out infinite`
-                          : 'battleCardFadeIn 0.8s ease-out'
-                      }}
-                    >
-                      <FoilCardEffect
-                        foilType={(dealerCards[currentRound - 1]?.foil === 'Standard' || dealerCards[currentRound - 1]?.foil === 'Prize') ? dealerCards[currentRound - 1].foil : null}
-                        className="w-full h-full"
-                      >
-                        <CardMedia src={dealerCards[currentRound - 1]?.imageUrl} alt={`#${dealerCards[currentRound - 1]?.tokenId}`} className="w-full h-full object-cover" loading="eager" />
-                      </FoilCardEffect>
-                      <div
-                        className="absolute top-0 left-0 bg-red-500 text-white text-lg md:text-xl font-bold px-3 py-2 rounded-br"
-                        style={{
-                          animation: battlePhase === 'clash'
-                            ? 'battlePowerPulse 1s ease-in-out infinite'
-                            : undefined
-                        }}
-                      >
-                        {getCardDisplayPower(dealerCards[currentRound - 1]).toLocaleString()}
-                      </div>
-                      {battlePhase === 'result' && (
-                        <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">
-                          #{dealerCards[currentRound - 1]?.tokenId}
-                        </div>
-                      )}
-                    </div>
-                    {/* Show mini previous cards if not first round */}
-                    {currentRound > 1 && (
-                      <div className="flex gap-1 mt-2">
-                        {orderedOpponentCards.slice(0, currentRound - 1).map((card, i) => (
-                          <div key={i} className={`w-12 h-16 rounded border-2 ${roundResults[i] === 'loss' ? 'border-green-500' : roundResults[i] === 'win' ? 'border-red-500' : 'border-yellow-500'} opacity-50`}>
-                            <CardMedia src={card.imageUrl} alt="" className="w-full h-full object-cover" />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  // Normal mode - show all 5 cards
-                  <>
-                    <div
-                      className="grid grid-cols-5 gap-1 md:gap-2"
-                      style={{
-                        animation: battlePhase === 'clash'
-                          ? 'battleCardShake 2s ease-in-out'
-                          : 'battleCardFadeIn 0.8s ease-out'
-                      }}
-                    >
-                      {dealerCards.map((c, i) => (
-                        <div
-                          key={i}
-                          className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500"
-                          style={{
-                            animation: battlePhase === 'clash'
-                              ? `battleGlowRed 1.5s ease-in-out infinite`
-                              : undefined,
-                            animationDelay: `${i * 0.1}s`
-                          }}
-                        >
-                          <FoilCardEffect
-                            foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null}
-                            className="w-full h-full"
-                          >
-                            <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" loading="eager" />
-                          </FoilCardEffect>
-                          <div
-                            className="absolute top-0 left-0 bg-red-500 text-white text-xs md:text-sm font-bold px-1 md:px-2 py-1 rounded-br"
-                            style={{
-                              animation: battlePhase === 'clash'
-                                ? 'battlePowerPulse 1s ease-in-out infinite'
-                                : undefined
-                            }}
-                          >
-                            {getCardDisplayPower(c)}
-                          </div>
-                          {battlePhase === 'result' && (
-                            <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">
-                              #{c.tokenId}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <PowerDisplay power={dealerPower} color="red" battlePhase={battlePhase} />
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Result */}
-            <BattleResults
-              result={result}
-              battlePhase={battlePhase}
-              battleMode={battleMode}
-              currentRound={currentRound}
-              winLabel={t('playerWins')}
-              loseLabel={t('dealerWins')}
-            />
-          </div>
-        </div>
-      )}
+      <BattleArena
+        isOpen={showBattleScreen}
+        battleMode={battleMode}
+        battlePhase={battlePhase}
+        playerCards={selectedCards}
+        opponentCards={dealerCards}
+        playerPower={playerPower}
+        opponentPower={dealerPower}
+        player={{
+          name: battlePlayerName,
+          pfp: battlePlayerPfp,
+          fallbackInitials: battlePlayerName?.substring(0, 2).toUpperCase() || '??',
+        }}
+        opponent={{
+          name: battleOpponentName,
+          pfp: battleOpponentPfp,
+          fallbackInitials: battleOpponentName?.substring(0, 2).toUpperCase() || '??',
+        }}
+        result={result}
+        winLabel={t('playerWins')}
+        loseLabel={t('dealerWins')}
+        currentRound={currentRound}
+        roundResults={roundResults}
+        eliminationPlayerScore={eliminationPlayerScore}
+        eliminationOpponentScore={eliminationOpponentScore}
+        orderedPlayerCards={orderedPlayerCards}
+        orderedOpponentCards={orderedOpponentCards}
+        battleTitle={t('battle')}
+        onOpponentPfpError={() => setBattleOpponentPfp(null)}
+      />
 
       {/* PvE Card Selection Modal */}
       <PveCardSelectionModal
