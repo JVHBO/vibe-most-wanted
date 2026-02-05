@@ -115,8 +115,8 @@
       "name": "Visionary",
       "type": "onReveal",
       "category": "economy",
-      "description": "Draw 3 cards AND +10 power to all",
-      "effect": { "action": "draw", "value": 3, "bonusBuff": 10 },
+      "description": "Draw 2 cards AND +10 power to all!",
+      "effect": { "action": "draw", "value": 2, "bonusBuff": 10 },
       "rarity": "Legendary"
     },
     "nico": {
@@ -252,9 +252,9 @@
     "shills": {
       "name": "\uD83D\uDCE2 Shill Campaign",
       "type": "onReveal",
-      "category": "support",
-      "description": "HYPE: +20 power to the weakest friendly card!",
-      "effect": { "action": "buffWeakest", "value": 20 },
+      "category": "economy",
+      "description": "HYPE: +20 power to the weakest friendly card + +1 ENERGY!",
+      "effect": { "action": "buffWeakest", "value": 20, "energy": 1 },
       "rarity": "Rare"
     },
     "betobutter": {
@@ -269,8 +269,8 @@
       "name": "\uD83D\uDCF1 Quick Response",
       "type": "onReveal",
       "category": "economy",
-      "description": "SCAN: Draw 2 cards instantly!",
-      "effect": { "action": "draw", "value": 2 },
+      "description": "SCAN: Draw 1 card + gain +1 ENERGY!",
+      "effect": { "action": "draw", "value": 1, "energy": 1 },
       "rarity": "Rare"
     },
     "loground": {
@@ -325,9 +325,9 @@
     "casa": {
       "name": "\uD83C\uDFE0 Home Advantage",
       "type": "ongoing",
-      "category": "control",
-      "description": "FIRST: +12 power if you played first in this lane!",
-      "effect": { "action": "buffIfFirst", "value": 12 },
+      "category": "economy",
+      "description": "FIRST: +12 power if you played first in this lane + +1 ENERGY!",
+      "effect": { "action": "buffIfFirst", "value": 12, "energyIfFirst": 1 },
       "rarity": "Common"
     },
     "groko": {
@@ -365,17 +365,17 @@
     "gaypt": {
       "name": "\uD83C\uDFAD AI Generated",
       "type": "onReveal",
-      "category": "wildcard",
-      "description": "MIMIC: Copy +10 power from the card to your left!",
-      "effect": { "action": "copyPowerLeft", "value": 10 },
+      "category": "economy",
+      "description": "MIMIC: Copy +10 power from the card to your left + gain +1 ENERGY!",
+      "effect": { "action": "copyPowerLeft", "value": 10, "energy": 1 },
       "rarity": "Common"
     },
     "dan romero": {
       "name": "\uD83E\uDD7A Too Cute",
       "type": "ongoing",
-      "category": "offensive",
-      "description": "ADORABLE: Enemies deal -8 power in this lane!",
-      "effect": { "action": "reduceEnemyPower", "value": -8 },
+      "category": "economy",
+      "description": "ADORABLE: Enemies deal -8 power in this lane + +1 ENERGY on reveal!",
+      "effect": { "action": "reduceEnemyPower", "value": -8, "energyOnReveal": 1 },
       "rarity": "Common"
     },
     "morlacos": {
