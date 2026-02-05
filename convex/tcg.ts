@@ -3603,3 +3603,87 @@ export const finishStakedMatch = mutation({
     };
   },
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TCG Daily Battle Tracking (Issue #3: server-side, replaces localStorage)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const recordPvEBattle = mutation({
+  args: {
+    address: v.string(),
+    won: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", addr))
+      .first();
+    if (!profile) return { pveCount: 0, rewardedCount: 0, auraAwarded: 0 };
+
+    const today = new Date().toISOString().split("T")[0]; // "2026-02-05"
+    const daily = profile.tcgDailyBattles;
+    let pveCount = 1;
+    let rewardedCount = 0;
+
+    if (daily && daily.date === today) {
+      pveCount = daily.pveCount + 1;
+      rewardedCount = daily.rewardedCount;
+    }
+
+    let auraAwarded = 0;
+    const MAX_REWARDED = 5;
+    const BATTLE_AURA_REWARD = 85;
+
+    if (args.won && rewardedCount < MAX_REWARDED) {
+      rewardedCount++;
+      auraAwarded = BATTLE_AURA_REWARD;
+
+      // Award aura (nested inside stats)
+      const currentAura = profile.stats.aura || 0;
+      await ctx.db.patch(profile._id, {
+        stats: {
+          ...profile.stats,
+          aura: currentAura + auraAwarded,
+        },
+      });
+    }
+
+    await ctx.db.patch(profile._id, {
+      tcgDailyBattles: {
+        date: today,
+        pveCount,
+        rewardedCount,
+      },
+    });
+
+    return { pveCount, rewardedCount, auraAwarded };
+  },
+});
+
+export const getDailyBattleStats = query({
+  args: {
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const addr = args.address.toLowerCase();
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", addr))
+      .first();
+    if (!profile) return { pveCount: 0, rewardedCount: 0, canStillEarnRewards: true };
+
+    const today = new Date().toISOString().split("T")[0];
+    const daily = profile.tcgDailyBattles;
+
+    if (!daily || daily.date !== today) {
+      return { pveCount: 0, rewardedCount: 0, canStillEarnRewards: true };
+    }
+
+    return {
+      pveCount: daily.pveCount,
+      rewardedCount: daily.rewardedCount,
+      canStillEarnRewards: daily.rewardedCount < 5,
+    };
+  },
+});

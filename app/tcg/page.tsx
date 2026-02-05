@@ -14,169 +14,38 @@ import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/lib/translations";
 import { Id } from "@/convex/_generated/dataModel";
-import tcgAbilitiesData from "@/data/tcg-abilities.json";
 import tcgCardsData from "@/data/vmw-tcg-cards.json";
 import { getCharacterFromImage } from "@/lib/vmw-image-mapping";
 import { CardMedia } from "@/components/CardMedia";
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TYPES
+// IMPORTS FROM EXTRACTED MODULES
 // ═══════════════════════════════════════════════════════════════════════════════
 
-type GameView = "lobby" | "deck-builder" | "waiting" | "battle" | "result";
+import { TCG_CONFIG, CARD_NAME_ALIASES, resolveCardName, CARD_COMBOS, type DeckCard, type TCGAbility, type GameLane } from "@/lib/tcgRules";
+import type { GameView, GameAction, CardPlayedInfo, PvEGameState, CardCombo, BattleLogEntry, VisualEffectState, CardAnimation, AbilityEffectAnim, FlyingCardState, VibeFIDComboModalState } from "@/lib/tcg/types";
+import type { GamePhase } from "@/lib/tcg/types";
+import { COLLECTION_COVERS, getCollectionCoverUrl, getVbmsBaccaratImageUrl, getCardDisplayImageUrl } from "@/lib/tcg/images";
+import { playSound, stopBgm, playComboVoice, playFiveSecondWarning, playTrackedAudio, playMemeSound, COMBO_VOICE_FILES } from "@/lib/tcg/audio";
+import { getRarityCost, sortByResolutionOrder, getVibeFIDAbility, getCardAbility, getTranslatedAbility, getAbilityVisualEffect, getFoilEffect, getFoilClass, getEnergyCost, getAbilityTypeColor, getAbilityTypeLabel, tcgAbilities } from "@/lib/tcg/abilities";
+import { generateCpuDeck, cpuPlayCards } from "@/lib/tcg/cpu-ai";
+import { detectCombos, getComboBonus, getComboSteal, COMBO_TRANSLATION_KEYS } from "@/lib/tcg/combos";
 
 // Collections that can be played in TCG (with 50% power like nothing)
 const OTHER_TCG_COLLECTIONS = ["gmvbrs", "cumioh", "viberotbangers", "meowverse", "teampothead", "tarot", "baseballcabal", "poorlydrawnpepes", "viberuto", "vibefx", "historyofcomputer"];
 
-// Card name aliases: onChainName -> baccarat/combo name
-// IMPORTANT: Used by detectCombos for matching cards to combos
-const CARD_NAME_ALIASES: Record<string, string> = {
-  "proxy": "slaterg",
-  "filthy": "don filthy",
-  "vlad": "vlady",
-  "shill": "shills",
-  "beto": "betobutter",
-  "lombra": "lombra jr",
-  "vibe": "vibe intern",
-  "jack": "jack the sniper",
-  "horsefacts": "horsefarts",
-  "jc": "jc denton",
-  "nicogay": "nico",
-  "chilli": "chilipepper",
-  "goofy romero": "goofy romero",
-  "linda xied": "linda xied",
-  "beeper": "beeper",
-  "clawdmolt": "clawdmoltopenbot",
-  "clawdmolt openbot": "clawdmoltopenbot",
-};
+// CARD_NAME_ALIASES and resolveCardName imported from @/lib/tcgRules
 
-// Helper to resolve card name using aliases
-const resolveCardName = (name: string): string => {
-  const lower = name.toLowerCase().trim();
-  return CARD_NAME_ALIASES[lower] || lower;
-};
+// COLLECTION_COVERS, getCollectionCoverUrl imported from @/lib/tcg/images
 
-// Collection cover images - same as Mecha Arena (PokerBattleTable)
-const COLLECTION_COVERS: Record<string, string> = {
-  vibefid: '/covers/vibefid-cover.png',
-  gmvbrs: 'https://nft-cdn.alchemy.com/base-mainnet/d0de7e9fa12eadb1ea2204e67d43e166',
-  vibe: 'https://nft-cdn.alchemy.com/base-mainnet/511915cc9b6f20839e2bf2999760530f',
-  viberuto: 'https://nft-cdn.alchemy.com/base-mainnet/ec58759f6df558aa4193d58ae9b0e74f',
-  meowverse: 'https://nft-cdn.alchemy.com/base-mainnet/16a8f93f75def1a771cca7e417b5d05e',
-  poorlydrawnpepes: 'https://nft-cdn.alchemy.com/base-mainnet/96282462557a81c42fad965a48c34f4c',
-  teampothead: 'https://nft-cdn.alchemy.com/base-mainnet/ae56485394d1e5f37322d498f0ea11a0',
-  tarot: 'https://nft-cdn.alchemy.com/base-mainnet/72ea458dbad1ce6a722306d811a42252',
-  baseballcabal: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F45e455d7-cd23-459b-7ea9-db14c6d36000%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
-  vibefx: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F5e6058d2-4c64-4cd9-ab57-66a939fec900%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
-  historyofcomputer: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fwieldcd.net%2Fcdn-cgi%2Fimagedelivery%2Fg4iQ0bIzMZrjFMgjAnSGfw%2Fa1a0d189-44e1-43e3-60dc-e8b053ec0c00%2Fw%3D600%2Cfit%3Dcontain%2Canim%3Dfalse',
-  cumioh: '/covers/cumioh-cover.png',
-  viberotbangers: 'https://vibechain.com/api/proxy?url=https%3A%2F%2Fnft-cdn.alchemy.com%2Fbase-mainnet%2F1269ebe2e27ff8a041cb7253fb5687b6',
-};
-
-// Get collection cover image URL (same as Mecha Arena)
-const getCollectionCoverUrl = (collection: string | undefined, rarity: string): string => {
-  const collectionKey = collection?.toLowerCase() || "vibe";
-  return COLLECTION_COVERS[collectionKey] || '/images/card-back.png';
-};
-
-interface TCGCard {
-  type: "vbms" | "nothing" | "vibefid" | "other";
-  cardId: string;
-  name?: string;
-  rarity: string;
-  power: number;
-  imageUrl: string;
-  foil?: string;
-  wear?: string;
-  collection?: string;
-}
-
-interface DeckCard extends TCGCard {
-  selected?: boolean;
-  // Ability markers (used internally during turn processing)
-  _bombTurn?: number;    // Time Bomb: turn when bomb explodes
-  _bombLane?: number;    // Time Bomb: lane where bomb is
-  _sacrificed?: boolean; // Sacrifice: card should be removed
-}
-
-interface GameAction {
-  type: "play" | "sacrifice-hand" | "sacrifice-lane";
-  cardIndex: number;
-  targetLane?: number;
-  targetCardIndex?: number;
-}
-
-interface TCGAbility {
-  name: string;
-  type: "onReveal" | "ongoing" | "active";
-  category?: "offensive" | "support" | "control" | "economy" | "wildcard";
-  description: string;
-  effect: Record<string, any>;
-  rarity: string;
-}
-
-interface GameLane {
-  laneId: number;
-  name: string;
-  effect: string;
-  value?: number;
-  description: string;
-  playerCards: DeckCard[];
-  cpuCards: DeckCard[];
-  playerPower: number;
-  cpuPower: number;
-}
-
-interface CardPlayedInfo {
-  cardId: string;
-  laneIndex: number;
-  energyCost: number;
-  hadOnReveal: boolean;
-}
-
-interface PvEGameState {
-  currentTurn: number;
-  energy: number;
-  cpuEnergy: number;
-  bonusEnergy: number;
-  cardsPlayedThisTurn: number;
-  cardsPlayedInfo: CardPlayedInfo[];
-  phase: string;
-  playerHand: DeckCard[];
-  playerDeckRemaining: DeckCard[];
-  cpuHand: DeckCard[];
-  cpuDeckRemaining: DeckCard[];
-  lanes: GameLane[];
-  playerConfirmed: boolean;
-  gameOver: boolean;
-  winner: string | null;
-  tiebreaker?: { type: string; playerPower: number; cpuPower: number } | null;
-  auraRewarded?: boolean;
-}
-
-// Abilities map from JSON
-const tcgAbilities: Record<string, TCGAbility> = tcgAbilitiesData.abilities as Record<string, TCGAbility>;
+// Types imported from @/lib/tcg/types and @/lib/tcgRules
+// TCGAbility helpers imported from @/lib/tcg/abilities
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const TCG_CONFIG = {
-  LANES: 3,
-  CARDS_PER_LANE: 4,
-  HAND_SIZE: 5,
-  DECK_SIZE: 12,
-  MIN_VBMS_OR_VIBEFID: 5, // Minimum 5 VBMS/VibeFID cards
-  MAX_NOTHING: 7, // Max 7 Nothing/Other cards
-  MAX_VIBEFID: 1, // Only 1 VibeFID card allowed per deck
-  TURN_TIME_SECONDS: 35,
-  TOTAL_TURNS: 6,
-  STARTING_ENERGY: 3,
-  ENERGY_PER_TURN: 1,
-  MAX_ENERGY: 10,
-  ABILITY_DELAY_MS: 900,
-  MAX_HAND_SIZE: 10, // Maximum cards in hand - excess cards are burned (discarded)
-};
+// TCG_CONFIG imported from @/lib/tcgRules
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GAME PHASES & ORDER SYSTEM
@@ -196,7 +65,7 @@ const TCG_CONFIG = {
 // - If same cost: Player's card resolves before CPU's card
 // - Combos check after all individual abilities resolve
 //
-type GamePhase = "play" | "reveal" | "ability" | "ongoing" | "resolve";
+// GamePhase imported from @/lib/tcg/types
 
 const PHASE_NAMES: Record<GamePhase, string> = {
   play: "🎴 PLAY PHASE",
@@ -225,989 +94,22 @@ const LANE_NAMES = [
 // CARD COMBOS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-interface CardCombo {
-  id: string;
-  name: string;
-  emoji: string;
-  cards: string[]; // Card names that trigger the combo (need all of them)
-  minCards?: number; // If set, only need this many of the cards (any combination)
-  bonus: {
-    type: "power" | "power_percent" | "steal" | "draw" | "energy";
-    value: number;
-    target: "self" | "lane" | "all_lanes" | "enemy_lane";
-  };
-  description: string;
-}
+// CardCombo type imported from @/lib/tcg/types
+// COMBO_TRANSLATION_KEYS imported from @/lib/tcg/combos
 
-// Mapping from combo.id to translation key base
-const COMBO_TRANSLATION_KEYS: Record<string, string> = {
-  romero_family: "tcgComboRomeroDynasty",
-  crypto_kings: "tcgComboCryptoKings",
-  mythic_assembly: "tcgComboMythicAssembly",
-  legends_unite: "tcgComboLegendsUnite",
-  ai_bros: "tcgComboAITakeover",
-  scam_squad: "tcgComboScamSquad",
-  degen_trio: "tcgComboDegenTrio",
-  vibe_team: "tcgComboVibeTeam",
-  dirty_duo: "tcgComboDirtyDuo",
-  code_masters: "tcgComboCodeMasters",
-  content_creators: "tcgComboContentCreators",
-  chaos_agents: "tcgComboChaosAgents",
-  sniper_support: "tcgComboSniperElite",
-  money_makers: "tcgComboMoneyMakers",
-  underdog_uprising: "tcgComboUnderdogUprising",
-  // Synergy combos (from card descriptions)
-  parallel: "tcgComboParallel",
-  royal_brothers: "tcgComboRoyalBrothers",
-  philosopher_chad: "tcgComboPhilosopherChad",
-  scaling_masters: "tcgComboScalingMasters",
-  christmas_spirit: "tcgComboChristmasSpirit",
-  shadow_network: "tcgComboShadowNetwork",
-  pixel_artists: "tcgComboPixelArtists",
-  dirty_money: "tcgComboDirtyMoney",
-};
+// CARD_COMBOS imported from @/lib/tcg/combos
 
-const CARD_COMBOS: CardCombo[] = [
-  // ═══ LEGENDARY COMBOS (Very Strong!) ═══
-  {
-    id: "romero_family",
-    name: "Romero Dynasty",
-    emoji: "👨‍👧",
-    cards: ["dan romero", "goofy romero"],
-    bonus: { type: "power", value: 60, target: "self" },
-    description: "+60 power EACH! Father & Son unite!",
-  },
-  {
-    id: "crypto_kings",
-    name: "Crypto Kings",
-    emoji: "👑",
-    cards: ["brian armstrong", "vitalik jumpterin"],
-    bonus: { type: "power", value: 80, target: "lane" },
-    description: "+80 power to ALL cards in lane!",
-  },
-  {
-    id: "mythic_assembly",
-    name: "MYTHIC ASSEMBLY",
-    emoji: "💎",
-    cards: ["neymar", "anon", "linda xied", "jesse"],
-    minCards: 2,
-    bonus: { type: "power", value: 100, target: "self" },
-    description: "+100 power to EACH Mythic! BROKEN!",
-  },
-  {
-    id: "legends_unite",
-    name: "Legends Unite",
-    emoji: "⭐",
-    cards: ["nico", "ye"],
-    bonus: { type: "power", value: 70, target: "self" },
-    description: "+70 power to each Legend!",
-  },
+// detectCombos imported from @/lib/tcg/combos (with LRU cache - Issue #10 fix)
 
-  // ═══ EPIC COMBOS ═══
-  {
-    id: "ai_bros",
-    name: "AI Takeover",
-    emoji: "🤖",
-    cards: ["claude", "groko", "gaypt"],
-    minCards: 2,
-    bonus: { type: "power", value: 50, target: "self" },
-    description: "+50 power to each AI card!",
-  },
-  {
-    id: "scam_squad",
-    name: "Scam Squad",
-    emoji: "🚨",
-    cards: ["shills", "landmine"],
-    bonus: { type: "steal", value: 25, target: "enemy_lane" },
-    description: "STEAL 25 power from EACH enemy!",
-  },
-  {
-    id: "degen_trio",
-    name: "Degen Trio",
-    emoji: "🎰",
-    cards: ["nftkid", "john porn"],
-    bonus: { type: "power_percent", value: 100, target: "self" },
-    description: "DOUBLE power of degen cards!",
-  },
-  {
-    id: "vibe_team",
-    name: "Vibe Team",
-    emoji: "✨",
-    cards: ["vibe intern", "beeper", "jc denton"],
-    minCards: 2,
-    bonus: { type: "power", value: 50, target: "lane" },
-    description: "+50 power to ALL cards in lane!",
-  },
-  {
-    id: "dirty_duo",
-    name: "Dirty Duo",
-    emoji: "💩",
-    cards: ["don filthy", "vlady"],
-    bonus: { type: "steal", value: 40, target: "enemy_lane" },
-    description: "STEAL 40 power from strongest enemy!",
-  },
-  {
-    id: "code_masters",
-    name: "Code Masters",
-    emoji: "💻",
-    cards: ["horsefarts", "0xdeployer", "linux"],
-    minCards: 2,
-    bonus: { type: "power", value: 45, target: "self" },
-    description: "+45 power to each coder!",
-  },
-  {
-    id: "content_creators",
-    name: "Content Creators",
-    emoji: "📱",
-    cards: ["pooster", "qrcodo"],
-    bonus: { type: "power", value: 40, target: "self" },
-    description: "+40 power each! Content is KING!",
-  },
-  {
-    id: "chaos_agents",
-    name: "Chaos Agents",
-    emoji: "🌀",
-    cards: ["tukka", "brainpasta", "chilipepper"],
-    minCards: 2,
-    bonus: { type: "power", value: 60, target: "all_lanes" },
-    description: "+60 power across ALL lanes!",
-  },
-  {
-    id: "sniper_support",
-    name: "Sniper Elite",
-    emoji: "🎯",
-    cards: ["jack the sniper", "loground"],
-    bonus: { type: "steal", value: 35, target: "enemy_lane" },
-    description: "STEAL 35 power from enemies!",
-  },
+// getComboBonus and getComboSteal imported from @/lib/tcg/combos
 
-  // ═══ RARE COMBOS ═══
-  {
-    id: "money_makers",
-    name: "Money Makers",
-    emoji: "💰",
-    cards: ["melted", "rachel"],
-    bonus: { type: "power", value: 40, target: "lane" },
-    description: "+40 power to entire lane!",
-  },
-  {
-    id: "underdog_uprising",
-    name: "Underdog Uprising",
-    emoji: "🐕",
-    cards: ["ink", "casa", "thosmur"],
-    minCards: 2,
-    bonus: { type: "power_percent", value: 80, target: "self" },
-    description: "+80% power! Commons RISE UP!",
-  },
+// Image helpers imported from @/lib/tcg/images
 
-  // ═══ SYNERGY COMBOS (From card descriptions) ═══
-  {
-    id: "parallel",
-    name: "Parallel",
-    emoji: "🔀",
-    cards: ["rizkybegitu", "bradymck"],
-    bonus: { type: "power_percent", value: 100, target: "self" },
-    description: "MIRROR: DOUBLE power! Rizky + Brady = unstoppable duo!",
-  },
-  {
-    id: "royal_brothers",
-    name: "Royal Brothers",
-    emoji: "👑",
-    cards: ["antonio", "miguel"],
-    bonus: { type: "power_percent", value: 100, target: "self" },
-    description: "ANTONIO + MIGUEL = DOUBLE power! Royal synergy!",
-  },
-  {
-    id: "philosopher_chad",
-    name: "Philosopher Chad",
-    emoji: "🧠",
-    cards: ["sartocrates", "zurkchad"],
-    bonus: { type: "power", value: 60, target: "self" },
-    description: "SARTOCRATES + ZURKCHAD = +60 power + IMMUNITY aura!",
-  },
-  {
-    id: "scaling_masters",
-    name: "Scaling Masters",
-    emoji: "📊",
-    cards: ["ventra", "morlacos"],
-    bonus: { type: "power_percent", value: 100, target: "self" },
-    description: "VENTRA + MORLACOS = DOUBLE scaling! Unstoppable!",
-  },
-  {
-    id: "christmas_spirit",
-    name: "Christmas Spirit",
-    emoji: "🎄",
-    cards: ["naughty santa", "gozaru"],
-    bonus: { type: "power", value: 40, target: "lane" },
-    description: "SANTA + GOZARU = +40 power to entire lane! Holiday cheer!",
-  },
-  {
-    id: "shadow_network",
-    name: "Shadow Network",
-    emoji: "🕶️",
-    cards: ["lombra jr", "slaterg"],
-    bonus: { type: "steal", value: 30, target: "enemy_lane" },
-    description: "LOMBRA + SLATERG = STEAL 30 power! Underground connections!",
-  },
-  {
-    id: "pixel_artists",
-    name: "Pixel Artists",
-    emoji: "🎨",
-    cards: ["smolemaru", "joonx"],
-    bonus: { type: "power", value: 35, target: "self" },
-    description: "SMOLEMARU + JOONX = +35 power each! Creative minds!",
-  },
-  {
-    id: "dirty_money",
-    name: "Dirty Money",
-    emoji: "💸",
-    cards: ["scum", "betobutter"],
-    bonus: { type: "steal", value: 40, target: "enemy_lane" },
-    description: "SCUM + BETO = STEAL 40 power! Crime pays!",
-  },
-];
+// Audio system imported from @/lib/tcg/audio
 
-// Combo detection cache for performance
-const comboCache = new Map<string, { combo: CardCombo; matchedCards: string[]; wildcardsUsed: number }[]>();
 
-// Detect combos in a set of cards (memoized)
-const detectCombos = (cards: DeckCard[]): { combo: CardCombo; matchedCards: string[]; wildcardsUsed: number }[] => {
-  // Create cache key from sorted card names + types (for vibefid wildcard)
-  const cacheKey = cards.map(c => `${resolveCardName(c.name || "")}:${c.type}`).sort().join("|");
+// playSound, playComboVoice, playMemeSound, stopBgm imported from @/lib/tcg/audio
 
-  // Return cached result if available
-  const cached = comboCache.get(cacheKey);
-  if (cached) return cached;
-
-  const activeCombos: { combo: CardCombo; matchedCards: string[]; wildcardsUsed: number }[] = [];
-  // Apply aliases to card names for proper matching!
-  const cardNames = cards.map(c => resolveCardName(c.name || ""));
-
-  // VibeFID cards act as wildcards - can substitute any card in a combo
-  const vibefidCount = cards.filter(c => c.type === "vibefid").length;
-
-  for (const combo of CARD_COMBOS) {
-    const comboCardsLower = combo.cards.map(c => c.toLowerCase());
-    const matchedCards = comboCardsLower.filter(cc => cardNames.includes(cc));
-
-    const requiredCount = combo.minCards || combo.cards.length;
-
-    // Use VibeFID as wildcards to complete combos
-    const wildcardsNeeded = Math.max(0, requiredCount - matchedCards.length);
-    const wildcardsAvailable = Math.min(vibefidCount, wildcardsNeeded);
-    const effectiveMatches = matchedCards.length + wildcardsAvailable;
-
-    if (effectiveMatches >= requiredCount) {
-      activeCombos.push({ combo, matchedCards, wildcardsUsed: wildcardsAvailable });
-    }
-  }
-
-  // Cache result (limit cache size to prevent memory issues)
-  if (comboCache.size > 100) comboCache.clear();
-  comboCache.set(cacheKey, activeCombos);
-
-  return activeCombos;
-};
-
-// Calculate combo bonus for a specific card
-// vibefidChoices: Record<string, string> - maps "laneIndex-cardId" to chosen comboId
-// laneIndex: optional, used to filter combos by vibefid choices
-// RULE: Only ONE combo per lane is active
-const getComboBonus = (card: DeckCard, allCardsInLane: DeckCard[], allLanes?: any[], vibefidChoices?: Record<string, string>, laneIndex?: number): number => {
-  let combos = detectCombos(allCardsInLane);
-  if (combos.length === 0) return 0;
-
-  let totalBonus = 0;
-  // Use resolved name to match against combo cards
-  const cardNameResolved = resolveCardName(card.name || "");
-
-  // ONLY ONE COMBO PER LANE - filter to single combo
-  if (vibefidChoices && laneIndex !== undefined) {
-    const vibefidCards = allCardsInLane.filter(c => c.type === "vibefid");
-    const chosenComboIds = vibefidCards
-      .map(c => vibefidChoices[`${laneIndex}-${c.cardId}`])
-      .filter(Boolean);
-
-    if (chosenComboIds.length > 0) {
-      // VibeFID choice exists - ONLY that combo is active
-      const chosenCombo = combos.find(({ combo }) => chosenComboIds.includes(combo.id));
-      combos = chosenCombo ? [chosenCombo] : [];
-    } else {
-      // No VibeFID choice - only first combo
-      combos = [combos[0]];
-    }
-  } else {
-    // No choices tracking - only first combo
-    combos = [combos[0]];
-  }
-
-  for (const { combo, matchedCards } of combos) {
-    // Check if this card is part of the combo
-    if (matchedCards.includes(cardNameResolved)) {
-      if (combo.bonus.target === "self" || combo.bonus.target === "lane") {
-        if (combo.bonus.type === "power") {
-          totalBonus += combo.bonus.value;
-        } else if (combo.bonus.type === "power_percent") {
-          // Percentage bonus will be calculated separately
-          totalBonus += Math.floor(card.power * (combo.bonus.value / 100));
-        }
-      }
-    }
-    // Lane-wide bonus (apply to all cards in lane, not just combo cards)
-    if (combo.bonus.target === "lane" && combo.bonus.type === "power") {
-      // Only apply once per card
-      if (!matchedCards.includes(cardNameResolved)) {
-        totalBonus += Math.floor(combo.bonus.value / allCardsInLane.length);
-      }
-    }
-  }
-
-  return totalBonus;
-};
-
-// Get steal amount from combos (negative power to enemies)
-// RULE: Only ONE combo per lane is active
-const getComboSteal = (playerCards: DeckCard[], vibefidChoices?: Record<string, string>, laneIndex?: number): number => {
-  let combos = detectCombos(playerCards);
-  if (combos.length === 0) return 0;
-
-  // ONLY ONE COMBO PER LANE - filter to single combo
-  if (vibefidChoices && laneIndex !== undefined) {
-    const vibefidCards = playerCards.filter(c => c.type === "vibefid");
-    const chosenComboIds = vibefidCards
-      .map(c => vibefidChoices[`${laneIndex}-${c.cardId}`])
-      .filter(Boolean);
-
-    if (chosenComboIds.length > 0) {
-      // VibeFID choice exists - ONLY that combo is active
-      const chosenCombo = combos.find(({ combo }) => chosenComboIds.includes(combo.id));
-      combos = chosenCombo ? [chosenCombo] : [];
-    } else {
-      // No VibeFID choice - only first combo
-      combos = [combos[0]];
-    }
-  } else {
-    // No choices tracking - only first combo
-    combos = [combos[0]];
-  }
-
-  let totalSteal = 0;
-
-  for (const { combo } of combos) {
-    if (combo.bonus.type === "steal") {
-      totalSteal += combo.bonus.value;
-    }
-  }
-
-  return totalSteal;
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// HELPER: VBMS Card Image URL
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Build baccarat image URL for VBMS cards (global helper)
-const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
-  if (!cardName) return null;
-  const nameLower = cardName.toLowerCase();
-  const allCards = tcgCardsData.cards || [];
-  const aliases = (tcgCardsData as any).aliases || {};
-
-  // Check if name is an alias first (e.g., "deployer" -> "0xdeployer")
-  const resolvedName = Object.entries(aliases).find(
-    ([alias]) => alias.toLowerCase() === nameLower
-  )?.[1] as string || nameLower;
-
-  // Find card by onChainName or baccarat name (using resolved name)
-  const cardData = allCards.find((c: any) =>
-    c.onChainName?.toLowerCase() === resolvedName.toLowerCase() ||
-    c.baccarat?.toLowerCase() === resolvedName.toLowerCase() ||
-    c.onChainName?.toLowerCase() === nameLower ||
-    c.baccarat?.toLowerCase() === nameLower
-  );
-
-  if (!cardData || !cardData.suit || !cardData.rank) return null;
-
-  // Get baccarat name (use alias if exists, or baccarat field, or onChainName)
-  const baccaratName = aliases[cardData.onChainName] || cardData.baccarat?.toLowerCase() || cardData.onChainName?.toLowerCase();
-
-  // Special case for neymar (joker)
-  if (baccaratName === "neymar" || cardData.rank?.includes("?")) {
-    return "/images/baccarat/joker, neymar.png";
-  }
-
-  // Build rank name
-  const rankMap: Record<string, string> = {
-    'A': 'ace', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
-    '7': '7', '8': '8', '9': '9', '10': '10', 'J': 'jack', 'Q': 'queen', 'K': 'king'
-  };
-  const rankName = rankMap[cardData.rank] || cardData.rank;
-
-  return `/images/baccarat/${rankName} ${cardData.suit}, ${baccaratName}.png`;
-};
-
-// Get the correct display image URL for any card
-// - VBMS (vibe most wanted): Use baccarat image
-// - All other collections: Use actual card image
-const getCardDisplayImageUrl = (card: DeckCard): string => {
-  if (card.type === "vbms" && card.name) {
-    return getVbmsBaccaratImageUrl(card.name) || card.imageUrl || "/images/card-back.png";
-  }
-  // For all other collections (nothing, vibefid, etc), use actual card image
-  return card.imageUrl || "/images/card-back.png";
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SOUND EFFECTS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Store current BGM audio to stop on game restart
-let currentBgmAudio: HTMLAudioElement | null = null;
-let allBgmAudios: HTMLAudioElement[] = []; // Track all BGM audios created
-
-const stopBgm = () => {
-  // Helper to aggressively stop an audio element
-  const killAudio = (audio: HTMLAudioElement | null) => {
-    if (!audio) return;
-    try {
-      audio.pause();
-      audio.muted = true;
-      audio.volume = 0;
-      audio.currentTime = 0;
-      audio.src = ""; // Force release
-      audio.load(); // Reset the audio element
-    } catch (e) {}
-  };
-
-  // Stop the tracked BGM
-  killAudio(currentBgmAudio);
-  currentBgmAudio = null;
-
-  // Also stop all tracked BGM audios (backup)
-  allBgmAudios.forEach(audio => killAudio(audio));
-  allBgmAudios = [];
-};
-
-// Track last played sounds to prevent overlap
-let lastSoundTime: Record<string, number> = {};
-const SOUND_COOLDOWN_MS = 150; // Minimum time between same sound type
-
-const playSound = (type: "card" | "turn" | "ability" | "victory" | "defeat" | "select" | "combo" | "error" | "tick" | "buff" | "debuff" | "destroy" | "steal" | "draw" | "energy" | "shuffle" | "heal" | "shield" | "bomb" | "hit" | "damage") => {
-  if (typeof window === "undefined") return;
-
-  // Prevent same sound from playing too quickly (overlap prevention)
-  const now = Date.now();
-  if (lastSoundTime[type] && now - lastSoundTime[type] < SOUND_COOLDOWN_MS) {
-    return; // Skip - sound played too recently
-  }
-  lastSoundTime[type] = now;
-
-  const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-  if (!AudioContext) return;
-
-  const audioCtx = new AudioContext();
-  const oscillator = audioCtx.createOscillator();
-  const gainNode = audioCtx.createGain();
-
-  oscillator.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
-
-  switch (type) {
-    case "card":
-      // Card play: quick swoosh sound
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.15);
-      break;
-
-    case "select":
-      // Card select: soft click
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
-      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.05);
-      break;
-
-    case "turn":
-      // Turn end: deeper confirmation sound
-      oscillator.type = "triangle";
-      oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
-      oscillator.frequency.setValueAtTime(400, audioCtx.currentTime + 0.1);
-      oscillator.frequency.setValueAtTime(500, audioCtx.currentTime + 0.2);
-      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.3);
-      break;
-
-    case "ability":
-      // Generic ability: magical sparkle (fallback)
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
-      oscillator.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.15);
-      gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.2);
-      break;
-
-    case "buff":
-      // Buff: ascending sparkle (positive power up)
-      const playBuffNote = (freq: number, delay: number) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + delay);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.1);
-        osc.start(audioCtx.currentTime + delay);
-        osc.stop(audioCtx.currentTime + delay + 0.1);
-      };
-      playBuffNote(523, 0);     // C5
-      playBuffNote(659, 0.06);  // E5
-      playBuffNote(784, 0.12);  // G5
-      return;
-
-    case "debuff":
-      // Debuff: descending dark tone (damage/weaken)
-      oscillator.type = "sawtooth";
-      oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.25);
-      break;
-
-    case "destroy":
-      // Destroy: explosive boom
-      const playBoom = (freq: number, delay: number, dur: number) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + delay + dur);
-        gain.gain.setValueAtTime(0.4, audioCtx.currentTime + delay);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + dur);
-        osc.start(audioCtx.currentTime + delay);
-        osc.stop(audioCtx.currentTime + delay + dur);
-      };
-      playBoom(150, 0, 0.3);
-      playBoom(100, 0.05, 0.25);
-      return;
-
-    case "steal":
-      // Steal: quick swoosh grab
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.08);
-      oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.15);
-      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.2);
-      break;
-
-    case "draw":
-      // Draw: card shuffle/flip
-      const playFlip = (delay: number) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(1200, audioCtx.currentTime + delay);
-        osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + delay + 0.05);
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime + delay);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.08);
-        osc.start(audioCtx.currentTime + delay);
-        osc.stop(audioCtx.currentTime + delay + 0.08);
-      };
-      playFlip(0);
-      playFlip(0.08);
-      return;
-
-    case "energy":
-      // Energy: power charging hum
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(100, audioCtx.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.2);
-      oscillator.frequency.setValueAtTime(400, audioCtx.currentTime + 0.25);
-      gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime + 0.15);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.3);
-      break;
-
-    case "shuffle":
-      // Shuffle: chaos/randomize
-      const playShuffle = (freq: number, delay: number) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = "square";
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-        osc.frequency.setValueAtTime(freq * 0.7, audioCtx.currentTime + delay + 0.03);
-        osc.frequency.setValueAtTime(freq * 1.2, audioCtx.currentTime + delay + 0.06);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime + delay);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.1);
-        osc.start(audioCtx.currentTime + delay);
-        osc.stop(audioCtx.currentTime + delay + 0.1);
-      };
-      playShuffle(400, 0);
-      playShuffle(600, 0.08);
-      playShuffle(300, 0.16);
-      return;
-
-    case "shield":
-      // Shield: protective hum
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
-      oscillator.frequency.setValueAtTime(350, audioCtx.currentTime + 0.1);
-      oscillator.frequency.setValueAtTime(300, audioCtx.currentTime + 0.2);
-      gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.3);
-      break;
-
-    case "bomb":
-      // Bomb: ticking then boom
-      const playTick2 = (delay: number) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(1000, audioCtx.currentTime + delay);
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + delay);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.05);
-        osc.start(audioCtx.currentTime + delay);
-        osc.stop(audioCtx.currentTime + delay + 0.05);
-      };
-      playTick2(0);
-      playTick2(0.1);
-      playTick2(0.2);
-      // Final boom
-      setTimeout(() => playSound("destroy"), 250);
-      return;
-
-    case "heal":
-      // Heal: gentle ascending chime
-      const playHeal = (freq: number, delay: number) => {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-        gain.gain.setValueAtTime(0.15, audioCtx.currentTime + delay);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.15);
-        osc.start(audioCtx.currentTime + delay);
-        osc.stop(audioCtx.currentTime + delay + 0.15);
-      };
-      playHeal(880, 0);
-      playHeal(1047, 0.1);
-      playHeal(1319, 0.2);
-      return;
-
-    case "victory":
-      // Victory: use actual victory music file (plays once)
-      try {
-        stopBgm(); // Stop any previous BGM
-        const victoryAudio = new Audio("/sounds/victory.mp3");
-        victoryAudio.volume = 0.6;
-        currentBgmAudio = victoryAudio; // Save reference to stop later
-        allBgmAudios.push(victoryAudio); // Also track in array for backup cleanup
-        victoryAudio.play().catch(() => {});
-      } catch {
-        // Fallback to synthesized sound
-        const playVictoryNote = (freq: number, delay: number) => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.type = "triangle";
-          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-          gain.gain.setValueAtTime(0.3, audioCtx.currentTime + delay);
-          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.2);
-          osc.start(audioCtx.currentTime + delay);
-          osc.stop(audioCtx.currentTime + delay + 0.2);
-        };
-        playVictoryNote(523, 0);
-        playVictoryNote(659, 0.15);
-        playVictoryNote(784, 0.3);
-        playVictoryNote(1047, 0.45);
-      }
-      return;
-
-    case "defeat":
-      // Defeat: use actual defeat music file
-      try {
-        stopBgm(); // Stop any previous BGM
-        const defeatAudio = new Audio("/sounds/defeat.mp3");
-        defeatAudio.volume = 0.6;
-        currentBgmAudio = defeatAudio; // Save reference to stop later
-        allBgmAudios.push(defeatAudio); // Also track in array for backup cleanup
-        defeatAudio.play().catch(() => {});
-      } catch {
-        // Fallback to synthesized sound
-        oscillator.type = "sawtooth";
-        oscillator.frequency.setValueAtTime(400, audioCtx.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(150, audioCtx.currentTime + 0.5);
-        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-        oscillator.start(audioCtx.currentTime);
-        oscillator.stop(audioCtx.currentTime + 0.5);
-      }
-      return;
-
-    case "combo":
-      // Combo: EPIC announcer-style power chord with dramatic buildup
-      const playComboChord = (freqs: number[], delay: number, duration: number, vol: number) => {
-        freqs.forEach(freq => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.type = "sawtooth";
-          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-          gain.gain.setValueAtTime(vol, audioCtx.currentTime + delay);
-          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + duration);
-          osc.start(audioCtx.currentTime + delay);
-          osc.stop(audioCtx.currentTime + delay + duration);
-        });
-      };
-      // Dramatic intro hit
-      playComboChord([150, 300], 0, 0.15, 0.4);
-      // Rising power chord
-      playComboChord([200, 400, 600], 0.1, 0.2, 0.35);
-      // Epic climax chord
-      playComboChord([300, 450, 600, 900], 0.25, 0.4, 0.45);
-      // Sparkle finish
-      const sparkle = (freq: number, d: number) => {
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.connect(g); g.connect(audioCtx.destination);
-        o.type = "sine";
-        o.frequency.setValueAtTime(freq, audioCtx.currentTime + d);
-        g.gain.setValueAtTime(0.2, audioCtx.currentTime + d);
-        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + d + 0.1);
-        o.start(audioCtx.currentTime + d);
-        o.stop(audioCtx.currentTime + d + 0.1);
-      };
-      sparkle(1200, 0.5);
-      sparkle(1500, 0.55);
-      sparkle(1800, 0.6);
-      return;
-
-    case "error":
-      // Error: buzzer/rejection sound
-      oscillator.type = "sawtooth";
-      oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
-      oscillator.frequency.setValueAtTime(100, audioCtx.currentTime + 0.1);
-      gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.2);
-      break;
-
-    case "tick":
-      // Tick: urgent countdown beep
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-      gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-      oscillator.start(audioCtx.currentTime);
-      oscillator.stop(audioCtx.currentTime + 0.08);
-      break;
-
-    case "hit":
-      // Hit: use actual attack sound file
-      try {
-        const attackAudio = new Audio("/sounds/attack.mp3");
-        attackAudio.volume = 0.3;
-        attackAudio.play().catch(() => {});
-      } catch {
-        // Fallback to synthesized sound
-        const playHit = (freq: number, delay: number, dur: number) => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.type = "sawtooth";
-          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-          osc.frequency.exponentialRampToValueAtTime(freq * 0.3, audioCtx.currentTime + delay + dur);
-          gain.gain.setValueAtTime(0.35, audioCtx.currentTime + delay);
-          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + dur);
-          osc.start(audioCtx.currentTime + delay);
-          osc.stop(audioCtx.currentTime + delay + dur);
-        };
-        playHit(200, 0, 0.1);
-        playHit(100, 0.02, 0.15);
-      }
-      return;
-
-    case "damage":
-      // Damage: SE_158 hit sound
-      try {
-        const damageAudio = new Audio("/sounds/hit.mp3");
-        damageAudio.volume = 0.3;
-        damageAudio.play().catch(() => {});
-      } catch {
-        // Fallback synthesized thud
-        const playImpact = (freq: number, delay: number, type: OscillatorType = "sawtooth") => {
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.type = type;
-          osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-          osc.frequency.exponentialRampToValueAtTime(freq * 0.3, audioCtx.currentTime + delay + 0.12);
-          gain.gain.setValueAtTime(0.5, audioCtx.currentTime + delay);
-          gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + 0.15);
-          osc.start(audioCtx.currentTime + delay);
-          osc.stop(audioCtx.currentTime + delay + 0.15);
-        };
-        playImpact(120, 0, "sawtooth");
-        playImpact(80, 0.02, "triangle");
-        playImpact(200, 0.01, "square");
-      }
-      return;
-  }
-};
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// COMBO VOICE AUDIO
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Mapping from combo ID to audio file name
-const COMBO_VOICE_FILES: Record<string, string> = {
-  romero_family: "romero.mp3",
-  crypto_kings: "cryptokings.mp3",
-  mythic_assembly: "mythic.mp3",
-  legends_unite: "legends_unite.mp3",
-  ai_bros: "ai_takeover.mp3",
-  scam_squad: "scam_squad.mp3",
-  degen_trio: "degen_trio.mp3",
-  vibe_team: "vibe_team.mp3",
-  dirty_duo: "dirty_duo.mp3",
-  code_masters: "code_masters.mp3",
-  content_creators: "content_creators.mp3",
-  chaos_agents: "chaos_agents.mp3",
-  sniper_support: "sniper_elite.mp3",
-  money_makers: "money_makers.mp3",
-  underdog_uprising: "underdog_uprising.mp3",
-  parallel: "PARALLEL.mp3",
-  royal_brothers: "royal_brothers.mp3",
-  philosopher_chad: "philosopher_chad.mp3",
-  scaling_masters: "scaling_masters.mp3",
-  christmas_spirit: "christmas_spirit.mp3",
-  shadow_network: "shadow_network.mp3",
-  pixel_artists: "pixel_artists.mp3",
-  dirty_money: "dirty_money.mp3",
-};
-
-// Play combo voice announcement
-const playComboVoice = (comboId: string) => {
-  if (typeof window === "undefined") return;
-
-  const audioFile = COMBO_VOICE_FILES[comboId];
-  if (!audioFile) return; // No voice for this combo
-
-  try {
-    const audio = new Audio(`/sounds/combos/${audioFile}`);
-    audio.volume = 0.5;
-    audio.play().catch(() => {});
-  } catch {
-    // Silently fail if audio can't play
-  }
-};
-
-// Meme sounds for profile menu
-const playMemeSound = (type: "mechaArena" | "ggez" | "bruh" | "emotional" | "wow") => {
-  if (typeof window === "undefined") return;
-
-  const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-  if (!AudioContext) return;
-
-  const audioCtx = new AudioContext();
-
-  const playNote = (freq: number, delay: number, duration: number, type: OscillatorType = "sine", gain: number = 0.3) => {
-    const osc = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    osc.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
-    gainNode.gain.setValueAtTime(gain, audioCtx.currentTime + delay);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + delay + duration);
-    osc.start(audioCtx.currentTime + delay);
-    osc.stop(audioCtx.currentTime + delay + duration);
-  };
-
-  switch (type) {
-    case "mechaArena":
-      // Epic mecha power-up sound (robotic ascending tones)
-      playNote(150, 0, 0.15, "sawtooth", 0.4);
-      playNote(200, 0.1, 0.15, "sawtooth", 0.4);
-      playNote(300, 0.2, 0.15, "square", 0.3);
-      playNote(400, 0.3, 0.15, "square", 0.3);
-      playNote(600, 0.4, 0.2, "sawtooth", 0.5);
-      playNote(800, 0.5, 0.3, "sawtooth", 0.4);
-      playNote(1000, 0.6, 0.4, "sine", 0.3);
-      break;
-
-    case "ggez":
-      // Taunting "GG EZ" jingle
-      playNote(523, 0, 0.1, "square", 0.3);
-      playNote(659, 0.1, 0.1, "square", 0.3);
-      playNote(784, 0.2, 0.1, "square", 0.3);
-      playNote(659, 0.35, 0.1, "square", 0.3);
-      playNote(523, 0.45, 0.15, "square", 0.3);
-      break;
-
-    case "bruh":
-      // Deep "bruh" descending tone
-      playNote(200, 0, 0.1, "sawtooth", 0.5);
-      playNote(150, 0.1, 0.15, "sawtooth", 0.4);
-      playNote(100, 0.25, 0.2, "sawtooth", 0.3);
-      playNote(80, 0.45, 0.3, "sawtooth", 0.2);
-      break;
-
-    case "emotional":
-      // Emotional damage meme sound
-      playNote(440, 0, 0.15, "sine", 0.3);
-      playNote(415, 0.15, 0.15, "sine", 0.3);
-      playNote(392, 0.3, 0.15, "sine", 0.3);
-      playNote(349, 0.45, 0.3, "sine", 0.4);
-      playNote(330, 0.75, 0.5, "sine", 0.3);
-      break;
-
-    case "wow":
-      // MLG "wow" ascending
-      playNote(300, 0, 0.1, "sine", 0.4);
-      playNote(400, 0.08, 0.1, "sine", 0.4);
-      playNote(500, 0.16, 0.1, "sine", 0.4);
-      playNote(700, 0.24, 0.15, "sine", 0.5);
-      playNote(900, 0.35, 0.2, "sine", 0.4);
-      playNote(1100, 0.5, 0.3, "sine", 0.3);
-      break;
-  }
-};
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
@@ -1289,7 +191,9 @@ export default function TCGPage() {
   const [showBattleIntro, setShowBattleIntro] = useState(false);
   const [showDefeatBait, setShowDefeatBait] = useState(false);
   const [autoMatch, setAutoMatch] = useState(false); // Auto replay mode for PvE
-  const [dailyBattles, setDailyBattles] = useState(0); // Track daily battles
+  const [dailyBattles, setDailyBattles] = useState(0); // Track daily battles (loaded from server)
+  const [dailyRewardedBattles, setDailyRewardedBattles] = useState(0); // Rewarded battles count
+  const [autoSelectCombo, setAutoSelectCombo] = useState(() => typeof window !== "undefined" && localStorage.getItem("tcg_auto_select_combo") === "true");
   const REWARDED_BATTLES_PER_DAY = 5; // First 5 battles give AURA reward
   const BATTLE_AURA_REWARD = 85; // AURA reward per win (first 5 daily)
 
@@ -1320,7 +224,7 @@ export default function TCGPage() {
   const [tcgWinStreak, setTcgWinStreak] = useState(0);
 
   // Turn timer state
-  const [turnTimeRemaining, setTurnTimeRemaining] = useState(TCG_CONFIG.TURN_TIME_SECONDS);
+  const [turnTimeRemaining, setTurnTimeRemaining] = useState<number>(TCG_CONFIG.TURN_TIME_SECONDS);
   const turnTimerRef = useRef<NodeJS.Timeout | null>(null);
   const handlePvEEndTurnRef = useRef<() => void>(() => {}); // Ref to avoid stale closure in timer
   const handleSubmitTurnRef = useRef<() => void>(() => {}); // Ref for PvP timer
@@ -1509,6 +413,7 @@ export default function TCGPage() {
   const autoMatchMutation = useMutation(api.tcg.autoMatch);
   const setDefenseDeckMutation = useMutation(api.tcg.setDefenseDeck);
   const markTcgMission = useMutation(api.tcg.markTcgMission);
+  const recordPvEBattle = useMutation(api.tcg.recordPvEBattle);
   const setDefensePoolMutation = useMutation(api.tcg.setDefensePool);
   const withdrawDefensePoolMutation = useMutation(api.tcg.withdrawDefensePool);
   const autoMatchWithStakeMutation = useMutation(api.tcg.autoMatchWithStake);
@@ -1538,51 +443,7 @@ export default function TCGPage() {
     return shuffled;
   };
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // ABILITY ORDER SYSTEM - Sort abilities by rarity cost (lower first)
-  // ═══════════════════════════════════════════════════════════════════════════════
-
-  // Get rarity-based priority cost for ability resolution order
-  const getRarityCost = (card: DeckCard): number => {
-    const rarity = (card.rarity || "common").toLowerCase();
-    switch (rarity) {
-      case "mythic": return 6;
-      case "legendary": return 5;
-      case "epic": return 4;
-      case "rare": return 3;
-      case "common": return 2;
-      default: return 1; // Nothing cards
-    }
-  };
-
-  // Sort cards by resolution order: Lane 1 → 2 → 3, dice roll per lane
-  // Matches PvP backend ordering for consistency
-  const sortByResolutionOrder = (
-    cards: { card: DeckCard; laneIndex: number; side: "player" | "cpu"; ability: any }[]
-  ) => {
-    // Roll dice for each lane (true = player first, false = cpu first)
-    const laneDiceResults = [
-      Math.random() < 0.5,
-      Math.random() < 0.5,
-      Math.random() < 0.5,
-    ];
-
-    return [...cards].sort((a, b) => {
-      // Lane order first (0, 1, 2)
-      if (a.laneIndex !== b.laneIndex) return a.laneIndex - b.laneIndex;
-
-      // Same lane: use dice result to decide player vs CPU
-      const playerFirst = laneDiceResults[a.laneIndex];
-
-      if (a.side === b.side) return 0;
-
-      if (playerFirst) {
-        return a.side === "player" ? -1 : 1;
-      } else {
-        return a.side === "cpu" ? -1 : 1;
-      }
-    });
-  };
+  // getRarityCost and sortByResolutionOrder imported from @/lib/tcg/abilities
 
   // Process ability queue sequentially with visual feedback
   const processAbilityQueue = async (
@@ -1622,447 +483,14 @@ export default function TCGPage() {
     return updatedLanes;
   };
 
-  // Use global CARD_NAME_ALIASES (defined at top of file)
-  const cardNameAliases = CARD_NAME_ALIASES;
 
-  // Get VibeFID ability based on rarity (with translations)
-  const getVibeFIDAbility = (rarity: string | undefined): TCGAbility | null => {
-    if (!rarity) return null;
-    const rarityLower = rarity.toLowerCase();
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // ABILITY HELPERS, CPU AI - imported from @/lib/tcg/abilities and @/lib/tcg/cpu-ai
+  // getVibeFIDAbility, getCardAbility, getTranslatedAbility, getAbilityVisualEffect,
+  // getFoilEffect, getFoilClass, getEnergyCost, getAbilityTypeColor, getAbilityTypeLabel
+  // generateCpuDeck, cpuPlayCards
+  // ═══════════════════════════════════════════════════════════════════════════════
 
-    const vibefidAbilities: Record<string, TCGAbility> = {
-      "common": {
-        name: t('ability_vibefid_common_name') || "📱 First Cast",
-        description: t('ability_vibefid_common_desc') || "+5 power for each card already played",
-        type: "onReveal",
-        effect: { action: "vibefidFirstCast", value: 5 },
-        rarity: "Common"
-      },
-      "rare": {
-        name: t('ability_vibefid_rare_name') || "🔗 Reply Guy",
-        description: t('ability_vibefid_rare_desc') || "Copy 50% power from strongest friendly in lane",
-        type: "ongoing",
-        effect: { action: "vibefidReplyGuy", value: 0.5 },
-        rarity: "Rare"
-      },
-      "epic": {
-        name: t('ability_vibefid_epic_name') || "✨ Verified",
-        description: t('ability_vibefid_epic_desc') || "IMMUNE to debuffs + DOUBLE power if losing lane",
-        type: "ongoing",
-        effect: { action: "vibefidVerified" },
-        rarity: "Epic"
-      },
-      "legendary": {
-        name: t('ability_vibefid_legendary_name') || "👥 Ratio",
-        description: t('ability_vibefid_legendary_desc') || "Power becomes EQUAL to strongest card on field!",
-        type: "onReveal",
-        effect: { action: "vibefidRatio" },
-        rarity: "Legendary"
-      },
-      "mythic": {
-        name: t('ability_vibefid_mythic_name') || "🌐 Doxxed",
-        description: t('ability_vibefid_mythic_desc') || "ADD total power of all enemy cards in this lane!",
-        type: "onReveal",
-        effect: { action: "vibefidDoxxed" },
-        rarity: "Mythic"
-      }
-    };
-
-    return vibefidAbilities[rarityLower] || null;
-  };
-
-  // Get card ability by name (or by rarity for VibeFID)
-  const getCardAbility = (cardName: string | undefined, card?: DeckCard | null): TCGAbility | null => {
-    // Check VibeFID first (ability based on rarity, not name)
-    if (card?.type === "vibefid") {
-      return getVibeFIDAbility(card.rarity);
-    }
-    if (!cardName) return null;
-    const normalizedName = cardName.toLowerCase().trim();
-    // Check for alias first
-    const resolvedName = cardNameAliases[normalizedName] || normalizedName;
-    return tcgAbilities[resolvedName] || null;
-  };
-
-  // Get translated ability name and description
-  const getTranslatedAbility = (cardName: string | undefined): { name: string; description: string } | null => {
-    if (!cardName) return null;
-    const normalizedName = cardName.toLowerCase().trim();
-    const resolvedName = cardNameAliases[normalizedName] || normalizedName;
-    const ability = tcgAbilities[resolvedName];
-    if (!ability) return null;
-
-    // Convert card name to camelCase for translation key: "linda xied" -> "LindaXied"
-    const keyName = resolvedName
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join('');
-
-    const nameKey = `ability${keyName}Name` as keyof typeof translations["pt-BR"];
-    const descKey = `ability${keyName}Desc` as keyof typeof translations["pt-BR"];
-
-    // Get translated values, fallback to original JSON values
-    const translatedName = t(nameKey) !== nameKey ? t(nameKey) : ability.name;
-    const translatedDesc = t(descKey) !== descKey ? t(descKey) : ability.description;
-
-    return { name: translatedName, description: translatedDesc };
-  };
-
-  // Get visual effect for ability - returns effect type and text
-  const getAbilityVisualEffect = (ability: TCGAbility | null, cardName: string): { type: string; text: string; emoji: string } | null => {
-    if (!ability) return null;
-    const action = ability.effect?.action;
-    switch (action) {
-      case "destroyHighestEnemy":
-        return { type: "destroy", text: "PROTOCOL OVERRIDE!", emoji: "💀" };
-      case "buffAllLanes":
-        return { type: "king", text: "KING'S ARRIVAL!", emoji: "👑" };
-      case "copyHighest":
-        return { type: "copy", text: "DIAMOND AUTHORITY!", emoji: "💎" };
-      case "shuffleEnemyLanes":
-        return { type: "shuffle", text: "CHAOTIC KINGDOM!", emoji: "🌀" };
-      case "swapEnemyPowers":
-        return { type: "shuffle", text: "COCK TWIST!", emoji: "🔄" };
-      case "debuffLane":
-        return { type: "debuff", text: "SPICY BURN!", emoji: "🌶️" };
-      case "giveCoal":
-        return { type: "debuff", text: "NAUGHTY GIFT!", emoji: "🎁" };
-      case "draw":
-        return { type: "draw", text: `DRAW ${ability.effect?.value || 1}!`, emoji: "🃏" };
-      case "debuffRandomEnemy":
-        return { type: "snipe", text: "SNIPE SHOT!", emoji: "🎯" };
-      case "revealEnemyCard":
-        return { type: "reveal", text: "FACT CHECK!", emoji: "👁️" };
-      case "forceDiscard":
-        return { type: "discard", text: "DISTRACTION!", emoji: "😈" };
-      case "stealPower":
-        return { type: "steal", text: "STOLEN POWER!", emoji: "🖐️" };
-      case "buffAdjacent":
-        return { type: "buff", text: "SIGNAL BOOST!", emoji: "📡" };
-      case "buffPerCardInLane":
-        return { type: "buff", text: "LOGICAL MIND!", emoji: "🧠" };
-      case "buffPerFriendly":
-        return { type: "buff", text: "COMMUNITY BUILDER!", emoji: "🤝" };
-      case "buffPerEnemyInLane":
-        return { type: "buff", text: "PROXY POWER!", emoji: "🔌" };
-      case "buffWeakest":
-        return { type: "buff", text: "SHILL CAMPAIGN!", emoji: "📢" };
-      case "buffOtherLanes":
-        return { type: "buff", text: "UNDERGROUND!", emoji: "🕳️" };
-      case "buffIfFewerCards":
-        return { type: "buff", text: "PHILOSOPHICAL STRIKE!", emoji: "🤔" };
-      case "addCopyToHand":
-        return { type: "copy", text: "SMART CONTRACT!", emoji: "📜" };
-      case "moveCard":
-        return { type: "shuffle", text: "COFFEE RUN!", emoji: "☕" };
-      case "buffIfLosing":
-        return { type: "buff", text: "UNDERDOG!", emoji: "🎲" };
-      case "timeBomb":
-        return { type: "destroy", text: "BOMB PLANTED!", emoji: "💣" };
-      case "parasiteLane":
-        return { type: "steal", text: "PARASITE!", emoji: "🧠" };
-      case "kamikaze":
-        return { type: "destroy", text: "KAMIKAZE!", emoji: "💥" };
-      case "debuffStrongest":
-        return { type: "snipe", text: "DIRTY TACTICS!", emoji: "🎯" };
-      case "buffByRarity":
-        return { type: "buff", text: ability.name?.toUpperCase() || "BUFF!", emoji: "✨" };
-      case "buffPerHandSize":
-        return { type: "buff", text: "NFT FLIP!", emoji: "💰" };
-      case "buffPerCardsPlayed":
-        return { type: "buff", text: ability.name?.toUpperCase() || "BUFF!", emoji: "📈" };
-      case "destroyLoneCard":
-        return { type: "destroy", text: "LONE HUNTER!", emoji: "🎯" };
-      case "stealOnSkip":
-        return { type: "steal", text: "STOLEN!", emoji: "🖐️" };
-      case "moveRandom":
-        return { type: "shuffle", text: "SHADOW STEP!", emoji: "👤" };
-      // VibeFID abilities
-      case "vibefidFirstCast":
-        return { type: "buff", text: "FIRST CAST!", emoji: "📱" };
-      case "vibefidReplyGuy":
-        return { type: "buff", text: "REPLY GUY!", emoji: "🔗" };
-      case "vibefidVerified":
-        return { type: "buff", text: "VERIFICADO!", emoji: "✨" };
-      case "vibefidRatio":
-        return { type: "copy", text: "RATIO!", emoji: "👥" };
-      case "vibefidDoxxed":
-        return { type: "steal", text: "DOXXED!", emoji: "🌐" };
-      case "systemOverride":
-        return { type: "steal", text: "SYSTEM OVERRIDE!", emoji: "🤖" };
-      default:
-        if (ability.effect?.value && ability.effect.value > 0) {
-          return { type: "buff", text: `+${ability.effect.value} POWER!`, emoji: "⬆️" };
-        }
-        return null;
-    }
-  };
-
-  // Get foil effect description (affects energy cost, not power)
-  const getFoilEffect = (foil: string | undefined): { energyDiscount: number; description: string; isFree: boolean } | null => {
-    if (!foil || foil === "None" || foil === "none") return null;
-    const foilLower = foil.toLowerCase();
-    if (foilLower === "standard") {
-      return { energyDiscount: 0.5, description: "Standard Foil: 50% energy discount", isFree: false };
-    }
-    if (foilLower === "prize") {
-      return { energyDiscount: 1.0, description: "Prize Foil: 100% energy discount", isFree: false };
-    }
-    return null;
-  };
-
-  // Helper for foil shimmer visual effect class
-  const getFoilClass = (foil: string | undefined) => {
-    if (!foil || foil === "None" || foil === "none") return "";
-    if (foil === "Prize" || foil === "prize") return "animate-pulse ring-2 ring-yellow-400/50";
-    return "ring-1 ring-white/30";
-  };
-
-  // Calculate energy cost for a card (centralized function)
-  // MUST match backend getCardEnergyCost in convex/tcg.ts
-  const getEnergyCost = (card: DeckCard): number => {
-    // Base cost by rarity (same as backend)
-    let baseCost = 1;
-    const rarity = (card.rarity || "").toLowerCase();
-    switch (rarity) {
-      case "mythic": baseCost = 6; break;
-      case "legendary": baseCost = 5; break;
-      case "epic": baseCost = 4; break;
-      case "rare": baseCost = 3; break;
-      case "common": baseCost = 2; break;
-      default: baseCost = 1; break; // Nothing/Other cards cost 1
-    }
-    // Apply foil discount
-    const foilEffect = getFoilEffect(card.foil);
-    if (!foilEffect) return baseCost;
-    return Math.max(1, Math.floor(baseCost * (1 - foilEffect.energyDiscount)));
-  };
-
-  // Get ability type color
-  const getAbilityTypeColor = (type: string): string => {
-    if (type === "ongoing") return "text-green-400";
-    if (type === "active") return "text-pink-400";
-    return "text-blue-400"; // onReveal
-  };
-
-  // Get ability type label
-  const getAbilityTypeLabel = (type: string): string => {
-    switch (type) {
-      case "ongoing": return t('tcgOngoing');
-      case "active": return "Active";
-      case "onReveal":
-      default:
-        return t('tcgOnReveal');
-    }
-  };
-
-  const generateCpuDeck = (playerDeck: DeckCard[]): DeckCard[] => {
-    // CPU gets ALL 53 VMW cards with random foils!
-    const allCards = tcgCardsData.cards || [];
-
-    // Base power by rarity
-    const rarityPower: Record<string, number> = {
-      "Mythic": 800,
-      "Legendary": 240,
-      "Epic": 80,
-      "Rare": 20,
-      "Common": 5,
-    };
-
-    // Build rank to name map for image paths
-    const rankMap: Record<string, string> = {
-      'A': 'ace', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
-      '7': '7', '8': '8', '9': '9', '10': '10', 'J': 'jack', 'Q': 'queen', 'K': 'king'
-    };
-
-    return allCards.map((card: any, i: number) => {
-      // Random foil: 10% Prize, 25% Standard, 65% None (balanced)
-      const foilRoll = Math.random();
-      const foil = foilRoll < 0.1 ? "Prize" : foilRoll < 0.35 ? "Standard" : "None";
-
-      // Calculate power with foil multiplier (reduced for balance)
-      const basePower = rarityPower[card.rarity] || 5;
-      const foilMult = foil === "Prize" ? 3 : foil === "Standard" ? 1.5 : 1;
-      // Add some randomness: -5% to +10%
-      const power = Math.floor(basePower * foilMult * (0.95 + Math.random() * 0.15));
-
-      // Build image path from baccarat folder
-      const baccarat = card.baccarat?.toLowerCase() || card.onChainName?.toLowerCase();
-      let imageUrl = "/images/card-back.png";
-
-      // Special case for neymar (joker) or any card with ??? suit/rank
-      if (baccarat === "neymar" || card.rank?.includes("?") || card.suit?.includes("?")) {
-        imageUrl = "/images/baccarat/joker, neymar.png";
-      } else if (card.suit && card.rank) {
-        const rankName = rankMap[card.rank] || card.rank;
-        imageUrl = `/images/baccarat/${rankName} ${card.suit}, ${baccarat}.png`;
-      }
-
-      return {
-        type: "vbms" as const,
-        cardId: `cpu-${i}-${baccarat}`,
-        name: baccarat,
-        rarity: card.rarity,
-        power,
-        imageUrl,
-        foil,
-      };
-    });
-  };
-
-  // Smart CPU AI logic with ability support
-  const cpuPlayCards = (gameState: any): any => {
-    let cpuHand = [...gameState.cpuHand];
-    let cpuDeckRemaining = [...(gameState.cpuDeckRemaining || [])];
-    let newLanes = gameState.lanes.map((l: any) => ({
-      ...l,
-      playerCards: [...l.playerCards],
-      cpuCards: [...l.cpuCards],
-    }));
-    let cpuEnergy = gameState.cpuEnergy || gameState.currentTurn;
-    const currentTurn = gameState.currentTurn;
-
-    if (cpuHand.length === 0) return { cpuHand, cpuDeckRemaining, lanes: newLanes, cpuEnergy };
-
-    // Sort hand by power (highest first), prioritizing cards with good abilities
-    const sortedHand = cpuHand
-      .map((card: DeckCard, idx: number) => {
-        const ability = getCardAbility(card.name, card);
-        // Bonus priority for cards with powerful abilities
-        const abilityBonus = ability ? (
-          ability.rarity === "Mythic" ? 100 :
-          ability.rarity === "Legendary" ? 50 :
-          ability.rarity === "Epic" ? 25 : 10
-        ) : 0;
-        return { card, originalIdx: idx, priority: card.power + abilityBonus };
-      })
-      .sort((a, b) => b.priority - a.priority);
-
-    // Analyze lane states
-    const analyzeLanes = () => newLanes.map((lane: any, idx: number) => {
-      const deficit = lane.playerPower - lane.cpuPower;
-      return {
-        laneIdx: idx,
-        deficit,
-        playerPower: lane.playerPower,
-        cpuPower: lane.cpuPower,
-        cpuCards: lane.cpuCards.length,
-        isWinning: lane.cpuPower > lane.playerPower,
-        isClose: Math.abs(deficit) < 30,
-      };
-    });
-
-    let cardsPlayed = 0;
-    const usedCardIndices = new Set<number>();
-    const cpuPlays: { cardName: string; lane: number }[] = [];
-
-    // Helper to add CPU card to lane (abilities processed later in handlePvEEndTurn)
-    const playCpuCard = (card: DeckCard, laneIdx: number) => {
-      cpuPlays.push({ cardName: card.name || "Unknown", lane: laneIdx + 1 });
-      // Mark card as played this turn for ability processing
-      // _revealed: false means card shows face-down until reveal phase
-      const cardWithMeta = {
-        ...card,
-        _playedThisTurn: true,
-        _playedLaneIndex: laneIdx,
-        _revealed: false,
-      };
-
-      // Add card to lane (no abilities applied here - processed after reveal)
-      newLanes[laneIdx].cpuCards.push(cardWithMeta);
-    };
-
-    // Calculate card energy cost (uses centralized getEnergyCost)
-    const getCardCost = (card: DeckCard) => getEnergyCost(card);
-
-    // Play cards while CPU has enough energy
-    while (cpuEnergy > 0 && usedCardIndices.size < sortedHand.length) {
-      const laneAnalysis = analyzeLanes();
-      const sortedLanes = [...laneAnalysis].sort((a, b) => {
-        if (a.isClose && !b.isClose) return -1;
-        if (!a.isClose && b.isClose) return 1;
-        if (a.deficit > 0 && b.deficit <= 0) return -1;
-        if (a.deficit <= 0 && b.deficit > 0) return 1;
-        return a.deficit - b.deficit;
-      });
-
-      let playedThisRound = false;
-      for (const laneInfo of sortedLanes) {
-        if (playedThisRound) break;
-
-        for (const { card, originalIdx } of sortedHand) {
-          if (usedCardIndices.has(originalIdx)) continue;
-
-          // Check if CPU can afford this card
-          const cardCost = getCardCost(card);
-          if (cardCost > cpuEnergy) continue;
-
-          // Don't over-commit to lanes we're already winning big
-          if (laneInfo.cpuPower > laneInfo.playerPower + 100 && laneInfo.cpuCards >= 2) {
-            continue;
-          }
-
-          playCpuCard(card, laneInfo.laneIdx);
-          usedCardIndices.add(originalIdx);
-          cpuEnergy -= cardCost; // Consume energy
-          cardsPlayed++;
-          playedThisRound = true;
-          break;
-        }
-      }
-
-      // If couldn't play to priority lanes, try worst lane with affordable card
-      if (!playedThisRound) {
-        const laneAnalysis = analyzeLanes();
-        const worstLane = laneAnalysis.reduce((worst: any, lane: any) =>
-          !worst || lane.deficit > worst.deficit ? lane : worst, null);
-
-        for (const { card, originalIdx } of sortedHand) {
-          if (usedCardIndices.has(originalIdx)) continue;
-          const cardCost = getCardCost(card);
-          if (cardCost > cpuEnergy) continue; // Can't afford
-          if (worstLane) {
-            playCpuCard(card, worstLane.laneIdx);
-            usedCardIndices.add(originalIdx);
-            cpuEnergy -= cardCost;
-            cardsPlayed++;
-          }
-          break;
-        }
-      }
-
-      // If no affordable cards, break
-      const hasAffordableCard = sortedHand.some(({ card, originalIdx }) =>
-        !usedCardIndices.has(originalIdx) && getCardCost(card) <= cpuEnergy
-      );
-      if (!hasAffordableCard) break;
-    }
-
-    // Remove played cards from hand
-    const newCpuHand = cpuHand.filter((_: any, idx: number) => !usedCardIndices.has(idx));
-
-    // Recalculate lane powers with ongoing effects
-    newLanes = newLanes.map((lane: any, laneIdx: number) => {
-      let playerPower = 0;
-      let cpuPower = 0;
-
-      lane.playerCards.forEach((card: DeckCard) => {
-        const basePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
-        const ongoingBonus = calculateOngoingBonus(card, laneIdx, newLanes, currentTurn, true);
-        playerPower += basePower + ongoingBonus;
-      });
-
-      lane.cpuCards.forEach((card: DeckCard) => {
-        const basePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
-        const ongoingBonus = calculateOngoingBonus(card, laneIdx, newLanes, currentTurn, false);
-        cpuPower += basePower + ongoingBonus;
-      });
-
-      return { ...lane, playerPower, cpuPower };
-    });
-
-    return { cpuHand: newCpuHand, cpuDeckRemaining, lanes: newLanes, cpuEnergy, cpuPlays };
-  };
 
   // Pick 3 random unique lane names
   const pickRandomLanes = () => {
@@ -2138,13 +566,8 @@ export default function TCGPage() {
       return;
     }
 
-    // Increment daily battle counter
-    const newCount = dailyBattles + 1;
-    setDailyBattles(newCount);
-    if (typeof window !== 'undefined') {
-      const today = new Date().toDateString();
-      localStorage.setItem('tcg_daily_battles', JSON.stringify({ date: today, count: newCount }));
-    }
+    // Increment daily battle counter (optimistic update, server records on match end)
+    setDailyBattles(prev => prev + 1);
 
     // CPU copies player's deck with power variations based on difficulty
     const cpuDeck = generateCpuDeck(activeDeck.cards as DeckCard[]);
@@ -2157,6 +580,7 @@ export default function TCGPage() {
     setSelectedHandCard(null);
     setShowTiebreakerAnimation(false);
     setVibefidComboChoices({}); // Reset combo choices for new game
+    shownCombosRef.current.clear(); // FIX Issue #8: Reset combo voice tracking per match (not per turn)
     setBattleLog([]); // Reset battle log for new game
     setShowBattleLog(false);
     setVibefidComboModal(null); // Close any open combo modal
@@ -2183,7 +607,7 @@ export default function TCGPage() {
     currentTurn?: number,
     addToBattleLog?: (entry: BattleLogEntry) => void
   ): { lanes: any[]; playerHand: DeckCard[]; playerDeckRemaining: DeckCard[]; bonusPower: number; energyToConsume: number } => {
-    const ability = getCardAbility(card.name, card);
+    const ability = getCardAbility(card.name, card, t as (k: string) => string);
     if (!ability || ability.type !== "onReveal") {
       return { lanes, playerHand, playerDeckRemaining, bonusPower: 0, energyToConsume: 0 };
     }
@@ -2270,8 +694,10 @@ export default function TCGPage() {
             newHand.push(newDeck.shift()!);
             actualDrawn++;
           } else {
-            newDeck.shift(); // Burn card (discard without drawing)
+            const burnedCard = newDeck.shift()!; // Burn card (discard without drawing)
             burned++;
+            playSound("destroy");
+            logAbility(`🔥 ${burnedCard?.name || "Card"} BURNED (hand full)`, { effectType: "destroy", details: "Hand full - card discarded" });
           }
         }
         logAbility(`🃏 drew ${actualDrawn} card(s)${burned > 0 ? ` (${burned} burned - hand full)` : ""}`, { effectType: "draw", details: `${actualDrawn} drawn${burned > 0 ? `, ${burned} burned` : ""}` });
@@ -2695,7 +1121,8 @@ export default function TCGPage() {
           logAbility(`📋 added copy to hand +${bonusPower}`, { effectType: "copy", powerChange: bonusPower, details: "Copy created" });
         } else {
           bonusPower = effect.bonusPower || 0;
-          logAbility(`📋 copy burned (hand full) +${bonusPower}`, { effectType: "copy", powerChange: bonusPower, details: "Hand full - copy discarded" });
+          playSound("destroy");
+          logAbility(`🔥 copy burned (hand full) +${bonusPower}`, { effectType: "destroy", powerChange: bonusPower, details: "Hand full - copy discarded" });
         }
         break;
 
@@ -2873,13 +1300,14 @@ export default function TCGPage() {
         break;
 
       case "timeBomb":
-        // Plant a BOMB! After 2 turns, DESTROY ALL cards in this lane (Tukka - Legendary)
-        // Mark this card with bomb info - will be processed in continueAfterReveal
-        const currentTurnBomb = pveGameState?.currentTurn || 1;
-        card._bombTurn = currentTurnBomb + (effect.delay || 2);
-        card._bombLane = laneIndex;
+        // Plant a BOMB on the LANE! After N turns, DESTROY ALL cards in this lane (Tukka - Legendary)
+        // Store bomb on lane (not card) so it persists between turns
+        newLanes[laneIndex].bomb = {
+          turnsLeft: effect.delay || 2,
+          owner: isPlayer ? "player" : "cpu",
+        };
         bonusPower = 0; // No immediate power bonus
-        logAbility(`💣 TIME BOMB planted! Explodes turn ${card._bombTurn}`, { effectType: "special", details: `Explodes in ${effect.delay || 2} turns` });
+        logAbility(`💣 TIME BOMB planted! Explodes in ${effect.delay || 2} turns`, { effectType: "special", details: `Explodes in ${effect.delay || 2} turns` });
         break;
 
       case "forceDiscardAndDraw":
@@ -2903,7 +1331,9 @@ export default function TCGPage() {
             newHand.push(newDeck.shift()!);
             drewCard = true;
           } else {
-            newDeck.shift(); // Burn if hand full
+            const burnedCard = newDeck.shift()!;
+            playSound("destroy");
+            logAbility(`🔥 ${burnedCard?.name || "Card"} BURNED (hand full)`, { effectType: "destroy", details: "Hand full - card discarded" });
           }
         }
         bonusPower = effect.selfDraw ? 5 : 0; // Small bonus
@@ -2977,7 +1407,7 @@ export default function TCGPage() {
 
   // Calculate ongoing power bonuses
   const calculateOngoingBonus = (card: DeckCard, laneIndex: number, lanes: any[], currentTurn: number, isPlayer: boolean): number => {
-    const ability = getCardAbility(card.name, card);
+    const ability = getCardAbility(card.name, card, t as (k: string) => string);
     if (!ability || ability.type !== "ongoing") return 0;
 
     const effect = ability.effect;
@@ -3148,15 +1578,15 @@ export default function TCGPage() {
         return allCards.length === 1 ? value : 0;
 
       case "buffCommon":
-        const abilityCommon = getCardAbility(card.name, card);
+        const abilityCommon = getCardAbility(card.name, card, t as (k: string) => string);
         return abilityCommon?.rarity === "Common" ? value : 0;
 
       case "buffEpic":
-        const abilityEpic = getCardAbility(card.name, card);
+        const abilityEpic = getCardAbility(card.name, card, t as (k: string) => string);
         return abilityEpic?.rarity === "Epic" ? value : 0;
 
       case "doubleLegendary":
-        const cardAbility = getCardAbility(card.name, card);
+        const cardAbility = getCardAbility(card.name, card, t as (k: string) => string);
         return cardAbility?.rarity === "Legendary" ? card.power : 0;
 
       case "buffFoil":
@@ -3169,11 +1599,11 @@ export default function TCGPage() {
         return card.collection === "vibefid" ? value : 0;
 
       case "buffOnReveal":
-        const abilityOR = getCardAbility(card.name, card);
+        const abilityOR = getCardAbility(card.name, card, t as (k: string) => string);
         return abilityOR?.type === "onReveal" ? value : 0;
 
       case "buffOngoing":
-        const abilityOG = getCardAbility(card.name, card);
+        const abilityOG = getCardAbility(card.name, card, t as (k: string) => string);
         return abilityOG?.type === "ongoing" ? value : 0;
 
       case "buffIfLosing":
@@ -3237,13 +1667,13 @@ export default function TCGPage() {
 
       // Apply lane-wide ongoing effects (like buffLaneOngoing)
       lane.playerCards.forEach((card: DeckCard) => {
-        const ability = getCardAbility(card.name, card);
+        const ability = getCardAbility(card.name, card, t as (k: string) => string);
         if (ability?.type === "ongoing" && ability.effect.action === "buffLaneOngoing") {
           playerPower += (lane.playerCards.length - 1) * (ability.effect.value || 0);
         }
       });
       lane.cpuCards.forEach((card: DeckCard) => {
-        const ability = getCardAbility(card.name, card);
+        const ability = getCardAbility(card.name, card, t as (k: string) => string);
         if (ability?.type === "ongoing" && ability.effect.action === "buffLaneOngoing") {
           cpuPower += (lane.cpuCards.length - 1) * (ability.effect.value || 0);
         }
@@ -3257,13 +1687,13 @@ export default function TCGPage() {
 
       // Apply reduceEnemyPower ongoing ability (Dan Romero - Too Cute)
       lane.playerCards.forEach((card: DeckCard) => {
-        const ability = getCardAbility(card.name, card);
+        const ability = getCardAbility(card.name, card, t as (k: string) => string);
         if (ability?.type === "ongoing" && ability.effect.action === "reduceEnemyPower") {
           cpuPower = Math.max(0, cpuPower + (ability.effect.value || 0) * lane.cpuCards.length);
         }
       });
       lane.cpuCards.forEach((card: DeckCard) => {
-        const ability = getCardAbility(card.name, card);
+        const ability = getCardAbility(card.name, card, t as (k: string) => string);
         if (ability?.type === "ongoing" && ability.effect.action === "reduceEnemyPower") {
           playerPower = Math.max(0, playerPower + (ability.effect.value || 0) * lane.playerCards.length);
         }
@@ -3362,14 +1792,25 @@ export default function TCGPage() {
         }
       }
 
-      // If there are multiple possible combos, show selection modal
+      // If there are multiple possible combos, show selection modal (or auto-select best)
       if (possibleCombos.length > 1) {
-        setVibefidComboModal({
-          laneIndex,
-          card: { ...card, _tempCardIndex: actualCardIndex } as any,
-          possibleCombos,
-        });
-        return; // Wait for player to choose
+        const autoSelect = typeof window !== "undefined" && localStorage.getItem("tcg_auto_select_combo") === "true";
+        if (autoSelect) {
+          // Auto-select combo with highest bonus value
+          const best = possibleCombos.reduce((a, b) => {
+            const aVal = a.combo.bonus?.value || 0;
+            const bVal = b.combo.bonus?.value || 0;
+            return bVal > aVal ? b : a;
+          });
+          chosenComboId = best.combo.id;
+        } else {
+          setVibefidComboModal({
+            laneIndex,
+            card: { ...card, _tempCardIndex: actualCardIndex } as any,
+            possibleCombos,
+          });
+          return; // Wait for player to choose
+        }
       } else if (possibleCombos.length === 1) {
         // Only one combo possible, auto-select it
         chosenComboId = possibleCombos[0].combo.id;
@@ -3398,7 +1839,17 @@ export default function TCGPage() {
         newHand.push(newDeck.shift()!);
         playSound("draw"); // Prize foil sound feedback
       } else {
-        newDeck.shift(); // Burn if hand full
+        const burnedCard = newDeck.shift()!;
+        playSound("destroy");
+        setBattleLog(prev => [...prev, {
+          turn: pveGameState.currentTurn,
+          player: "you" as const,
+          action: "🔥 BURNED (hand full - prize foil)",
+          lane: laneIndex + 1,
+          cardName: burnedCard?.name || "Card",
+          effectType: "destroy" as const,
+          details: "Hand full - card discarded",
+        }]);
       }
     }
 
@@ -3447,7 +1898,7 @@ export default function TCGPage() {
     });
 
     // Get ability to check type (for tracking, not applying)
-    const ability = getCardAbility(card.name, card);
+    const ability = getCardAbility(card.name, card, t as (k: string) => string);
 
     // Track card for undo feature
     const newCardPlayedInfo = {
@@ -3592,13 +2043,7 @@ export default function TCGPage() {
     triggerCardAnimation(laneIndex, "cpu", 0, "glow-green", undefined, 800); // Green = switching sides
 
     // Play Oiroke no Jutsu sound for Santa charm
-    try {
-      const audio = new Audio("/sounds/oiroke-no-jutsu.mp3");
-      audio.volume = 0.5;
-      audio.play().catch(() => {});
-    } catch {
-      playSound("ability");
-    }
+    playTrackedAudio("/sounds/oiroke-no-jutsu.mp3", 0.5);
 
     // Delay state change so animation plays first
     setTimeout(() => {
@@ -3707,7 +2152,7 @@ export default function TCGPage() {
     const cpuCardsBefore = pveGameState.lanes.reduce((sum: number, l: any) => sum + l.cpuCards.length, 0);
 
     // CPU plays cards using smart AI
-    const cpuResult = cpuPlayCards(pveGameState);
+    const cpuResult = cpuPlayCards(pveGameState, calculateOngoingBonus, t as (k: string) => string);
     const cpuHand = cpuResult.cpuHand;
     const cpuDeckRemaining = cpuResult.cpuDeckRemaining;
     const newLanes = cpuResult.lanes;
@@ -3880,7 +2325,7 @@ export default function TCGPage() {
         const delayAfterReveal = hadCombos ? 2500 : 500; // Extra delay for combo voices
         setTimeout(() => {
           setIsRevealing(false);
-          shownCombosRef.current.clear(); // Reset for next turn
+          // FIX Issue #8: Don't clear per turn - keep combos tracked per match to prevent voice spam
           continueAfterReveal();
         }, delayAfterReveal);
       }
@@ -3903,7 +2348,7 @@ export default function TCGPage() {
       for (let li = 0; li < 3; li++) {
         const playerCardsInLane = newLanes[li].playerCards || [];
         const hasStealOnSkip = playerCardsInLane.some((c: DeckCard) => {
-          const ability = getCardAbility(c.name, c);
+          const ability = getCardAbility(c.name, c, t as (k: string) => string);
           return ability?.effect?.action === "stealOnSkip";
         });
 
@@ -3943,7 +2388,7 @@ export default function TCGPage() {
     newLanes.forEach((lane: any, laneIdx: number) => {
       lane.playerCards.forEach((card: DeckCard) => {
         if ((card as any)._playedThisTurn) {
-          const ability = getCardAbility(card.name, card);
+          const ability = getCardAbility(card.name, card, t as (k: string) => string);
           if (ability?.type === "onReveal") {
             cardsToProcess.push({ card, laneIndex: laneIdx, side: "player", ability });
           }
@@ -3951,7 +2396,7 @@ export default function TCGPage() {
       });
       lane.cpuCards.forEach((card: DeckCard) => {
         if ((card as any)._playedThisTurn) {
-          const ability = getCardAbility(card.name, card);
+          const ability = getCardAbility(card.name, card, t as (k: string) => string);
           if (ability?.type === "onReveal") {
             cardsToProcess.push({ card, laneIndex: laneIdx, side: "cpu", ability });
           }
@@ -4174,30 +2619,20 @@ export default function TCGPage() {
       }
     });
 
-    // Process TIME BOMBS - destroy all cards in lane if bomb turn reached
-    const currentTurnNum = pveGameState.currentTurn;
-    newLanes.forEach((lane: any, laneIdx: number) => {
-      // Check player cards for bombs
-      lane.playerCards.forEach((c: any) => {
-        if (c._bombTurn && c._bombTurn <= currentTurnNum) {
+    // Process TIME BOMBS - decrement timer, destroy all cards in lane when expired
+    newLanes.forEach((lane: any) => {
+      if (lane.bomb) {
+        lane.bomb.turnsLeft--;
+        if (lane.bomb.turnsLeft <= 0) {
           // BOOM! Destroy ALL cards in this lane
           playSound("bomb");
           lane.playerCards = [];
           lane.cpuCards = [];
           lane.playerPower = 0;
           lane.cpuPower = 0;
+          delete lane.bomb;
         }
-      });
-      // Check CPU cards for bombs
-      lane.cpuCards.forEach((c: any) => {
-        if (c._bombTurn && c._bombTurn <= currentTurnNum) {
-          playSound("bomb");
-          lane.playerCards = [];
-          lane.cpuCards = [];
-          lane.playerPower = 0;
-          lane.cpuPower = 0;
-        }
-      });
+      }
     });
 
     // Remove SACRIFICED cards (from sacrificeBuffAll ability)
@@ -4247,7 +2682,7 @@ export default function TCGPage() {
       const remainingEnergy = pveGameState.energy || 0;
       newLanes.forEach((lane: any) => {
         lane.playerCards.forEach((c: DeckCard) => {
-          const ability = getCardAbility(c.name, c);
+          const ability = getCardAbility(c.name, c, t as (k: string) => string);
           if (ability?.effect?.action === "convertEnergyEndGame" && remainingEnergy > 0) {
             const powerPerEnergy = ability.effect.powerPerEnergy || 8;
             const bonusPower = remainingEnergy * powerPerEnergy;
@@ -4258,7 +2693,7 @@ export default function TCGPage() {
         // CPU version
         const cpuRemainingEnergy = pveGameState.cpuEnergy || 0;
         lane.cpuCards.forEach((c: DeckCard) => {
-          const ability = getCardAbility(c.name, c);
+          const ability = getCardAbility(c.name, c, t as (k: string) => string);
           if (ability?.effect?.action === "convertEnergyEndGame" && cpuRemainingEnergy > 0) {
             const powerPerEnergy = ability.effect.powerPerEnergy || 8;
             const bonusPower = cpuRemainingEnergy * powerPerEnergy;
@@ -4311,12 +2746,25 @@ export default function TCGPage() {
         }
       }
 
-      // Award AURA for wins within daily rewarded battles
-      const earnedAura = winner === "player" && dailyBattles <= REWARDED_BATTLES_PER_DAY;
-      if (earnedAura && address) {
-        awardPvECoins({ address, difficulty: "gey", won: true }).catch((e: any) => {
-          console.error("[TCG] Failed to award AURA:", e);
+      // Record battle and award AURA server-side (Issue #3)
+      let earnedAura = false;
+      if (address) {
+        recordPvEBattle({ address, won: winner === "player" }).then((result) => {
+          if (result) {
+            setDailyBattles(result.pveCount);
+            setDailyRewardedBattles(result.rewardedCount);
+            if (result.auraAwarded > 0) {
+              earnedAura = true;
+            }
+          }
+        }).catch((e: any) => {
+          console.error("[TCG] Failed to record battle:", e);
         });
+        // Also award coins via existing system
+        if (winner === "player" && dailyBattles <= REWARDED_BATTLES_PER_DAY) {
+          earnedAura = true;
+          awardPvECoins({ address, difficulty: "gey", won: true }).catch(() => {});
+        }
       }
 
       // TCG Missions
@@ -4408,7 +2856,7 @@ export default function TCGPage() {
     let energyPerTurnBonus = 0;
     newLanes.forEach((lane: any) => {
       lane.playerCards.forEach((c: DeckCard) => {
-        const ability = getCardAbility(c.name, c);
+        const ability = getCardAbility(c.name, c, t as (k: string) => string);
         if (ability?.effect?.action === "energyPerTurn") {
           energyPerTurnBonus += ability.effect.value || 1;
         }
@@ -4709,13 +3157,7 @@ export default function TCGPage() {
     const inBattle = view === "battle" && ((isPvE && pveGameState) || (!isPvE && currentMatch?.gameState));
     if (inBattle) {
       if (turnTimeRemaining === 5) {
-        try {
-          const countdownAudio = new Audio("/sounds/5 SEGUNDOS.mp3");
-          countdownAudio.volume = 0.5;
-          countdownAudio.play().catch(() => {});
-        } catch {
-          playSound("tick");
-        }
+        playFiveSecondWarning();
       } else if (turnTimeRemaining === 3 || turnTimeRemaining === 1) {
         playSound("tick");
       }
@@ -4772,7 +3214,7 @@ export default function TCGPage() {
 
             // Check if new cards have abilities
             const newCards = currEnemyCards.slice(prevEnemyCards.length);
-            if (newCards.some((c: any) => getCardAbility(c.name, c))) {
+            if (newCards.some((c: any) => getCardAbility(c.name, c, t as (k: string) => string))) {
               setTimeout(() => playSound("ability"), 300);
             }
           }
@@ -4862,25 +3304,18 @@ export default function TCGPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentMatch?.gameState?.currentTurn, view, isPvE]);
 
-  // Load daily battles count from localStorage
+  // Load daily battles count from server (Issue #3: server-side tracking)
+  const dailyStatsLoadedRef = useRef(false);
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const today = new Date().toDateString();
-      const stored = localStorage.getItem('tcg_daily_battles');
-      if (stored) {
-        const { date, count } = JSON.parse(stored);
-        if (date === today) {
-          setDailyBattles(count);
-        } else {
-          // New day - reset counter
-          setDailyBattles(0);
-          localStorage.setItem('tcg_daily_battles', JSON.stringify({ date: today, count: 0 }));
-        }
-      } else {
-        localStorage.setItem('tcg_daily_battles', JSON.stringify({ date: today, count: 0 }));
+    if (!address || dailyStatsLoadedRef.current) return;
+    dailyStatsLoadedRef.current = true;
+    convex.query(api.tcg.getDailyBattleStats, { address }).then((stats) => {
+      if (stats) {
+        setDailyBattles(stats.pveCount);
+        setDailyRewardedBattles(stats.rewardedCount);
       }
-    }
-  }, []);
+    }).catch(() => {});
+  }, [address, convex]);
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // COMPONENT: Card Detail Modal (memoized to prevent scroll reset on timer updates)
@@ -4888,7 +3323,7 @@ export default function TCGPage() {
 
   const CardDetailModal = useMemo(() => {
     return ({ card, onClose, onSelect }: { card: DeckCard; onClose: () => void; onSelect?: () => void }) => {
-    const ability = getCardAbility(card.name, card);
+    const ability = getCardAbility(card.name, card, t as (k: string) => string);
     const foilEffect = getFoilEffect(card.foil);
     const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
     const effectivePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
@@ -4897,7 +3332,7 @@ export default function TCGPage() {
 
     // Find combos for this card (apply alias for name matching)
     const cardNameLower = card.name?.toLowerCase() || "";
-    const resolvedName = cardNameAliases[cardNameLower] || cardNameLower;
+    const resolvedName = CARD_NAME_ALIASES[cardNameLower] || cardNameLower;
     const cardCombos = CARD_COMBOS.filter(combo =>
       combo.cards.map(c => c.toLowerCase()).includes(cardNameLower) ||
       combo.cards.map(c => c.toLowerCase()).includes(resolvedName)
@@ -4956,7 +3391,7 @@ export default function TCGPage() {
 
           {/* Ability Section - Show for VBMS and VibeFID */}
           {ability && (card.type === "vbms" || card.type === "vibefid") && (() => {
-            const translatedAbility = getTranslatedAbility(card.name);
+            const translatedAbility = getTranslatedAbility(card.name, t as (k: string) => string, translations, lang);
             const catConfig: Record<string, { emoji: string; color: string; bg: string; label: string }> = {
               offensive: { emoji: "⚔️", color: "text-red-400", bg: "bg-red-500/20 border-red-500/40", label: "OFFENSIVE" },
               support: { emoji: "💚", color: "text-green-400", bg: "bg-green-500/20 border-green-500/40", label: "SUPPORT" },
@@ -5464,6 +3899,24 @@ export default function TCGPage() {
                             </div>
                           </div>
                         </div>
+                      </div>
+
+                      {/* VibeFID Auto-Select Combo Toggle */}
+                      <div className="p-3 border-t border-vintage-gold/10 flex items-center justify-between">
+                        <div>
+                          <span className="text-xs text-vintage-burnt-gold">VibeFID Auto-Combo</span>
+                          <p className="text-[9px] text-vintage-burnt-gold/50">Auto-pick best combo</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const current = localStorage.getItem("tcg_auto_select_combo") === "true";
+                            localStorage.setItem("tcg_auto_select_combo", (!current).toString());
+                            setAutoSelectCombo(!current);
+                          }}
+                          className={`w-10 h-5 rounded-full transition-colors ${autoSelectCombo ? "bg-cyan-500" : "bg-gray-600"} relative`}
+                        >
+                          <span className={`absolute top-0.5 ${autoSelectCombo ? "right-0.5" : "left-0.5"} w-4 h-4 bg-white rounded-full transition-all shadow`} />
+                        </button>
                       </div>
                     </div>
                   </>
@@ -6193,7 +4646,7 @@ export default function TCGPage() {
                   // Resolve card name (apply aliases)
                   const resolveName = (name: string): string => {
                     const lower = name.toLowerCase();
-                    return cardNameAliases[lower] || lower;
+                    return CARD_NAME_ALIASES[lower] || lower;
                   };
 
                   // Build card lookup by resolved name (best power)
@@ -6426,7 +4879,7 @@ export default function TCGPage() {
             <h3 className="text-[9px] font-bold text-vintage-gold mb-2 uppercase tracking-[0.2em]">{t('tcgCurrentDeck')} <span className="text-vintage-burnt-gold/60">({selectedCards.length})</span></h3>
             <div className="flex flex-wrap gap-1.5 min-h-[70px]">
               {selectedCards.map((card: DeckCard) => {
-                const ability = getCardAbility(card.name, card);
+                const ability = getCardAbility(card.name, card, t as (k: string) => string);
                 return (
                   <div
                     key={card.cardId}
@@ -6500,7 +4953,7 @@ export default function TCGPage() {
               <div className="flex flex-wrap gap-1.5">
                 {vbmsCards.slice(vbmsPage * CARDS_PER_PAGE, (vbmsPage + 1) * CARDS_PER_PAGE).map((card: DeckCard) => {
                   const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
-                  const ability = getCardAbility(card.name, card);
+                  const ability = getCardAbility(card.name, card, t as (k: string) => string);
                   return (
                     <div
                       key={card.cardId}
@@ -6555,7 +5008,7 @@ export default function TCGPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {vibefidCards.slice(vibefidPage * CARDS_PER_PAGE, (vibefidPage + 1) * CARDS_PER_PAGE).map((card: DeckCard) => {
                     const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
-                    const ability = getCardAbility(card.name, card);
+                    const ability = getCardAbility(card.name, card, t as (k: string) => string);
                     return (
                       <div
                         key={card.cardId}
@@ -7130,7 +5583,7 @@ export default function TCGPage() {
                   <div className="flex-1 flex items-start justify-center pt-1 px-1 overflow-hidden">
                     <div className="grid grid-cols-2 gap-1 min-h-[124px]">
                       {lane.cpuCards.map((card: any, idx: number) => {
-                        const ability = getCardAbility(card.name, card);
+                        const ability = getCardAbility(card.name, card, t as (k: string) => string);
                         const foil = (card.foil || "").toLowerCase();
                         const hasFoil = foil && foil !== "none" && foil !== "";
                         const foilClass = foil.includes("prize") ? "prize-foil" : foil.includes("standard") ? "standard-foil" : "";
@@ -7265,7 +5718,7 @@ export default function TCGPage() {
                     )}
                     <div className="grid grid-cols-2 gap-1 min-h-[124px]">
                       {lane.playerCards.map((card: any, idx: number) => {
-                        const ability = getCardAbility(card.name, card);
+                        const ability = getCardAbility(card.name, card, t as (k: string) => string);
                         const animKey = `${laneIndex}-player-${idx}`;
                         const anim = cardAnimations[animKey];
                         const animClass = anim ? {
@@ -7518,7 +5971,7 @@ export default function TCGPage() {
             <div className={`flex justify-center mb-3 overflow-x-auto max-w-full px-2 ${(gs.playerHand?.length || 0) > 6 ? "gap-0.5" : "gap-1"}`}
                  style={{ scrollbarWidth: "thin" }}>
               {gs.playerHand?.map((card: any, idx: number) => {
-                const ability = getCardAbility(card.name, card);
+                const ability = getCardAbility(card.name, card, t as (k: string) => string);
                 const foilEffect = getFoilEffect(card.foil);
                 const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
                 const energyCost = getEnergyCost(card);
@@ -8383,7 +6836,7 @@ export default function TCGPage() {
                     )}
                     <div className="grid grid-cols-2 gap-1 min-h-[124px]">
                       {enemyLaneCards.map((card: any, idx: number) => {
-                        const ability = getCardAbility(card.name, card);
+                        const ability = getCardAbility(card.name, card, t as (k: string) => string);
                         const foil = (card.foil || "").toLowerCase();
                         const hasFoil = foil && foil !== "none" && foil !== "";
                         const foilClass = foil.includes("prize") ? "prize-foil" : foil.includes("standard") ? "standard-foil" : "";
@@ -8504,7 +6957,7 @@ export default function TCGPage() {
                     )}
                     <div className="grid grid-cols-2 gap-1 min-h-[124px]">
                       {myLaneCards.map((card: any, idx: number) => {
-                        const ability = getCardAbility(card.name, card);
+                        const ability = getCardAbility(card.name, card, t as (k: string) => string);
                         const isRevealed = (card as any)._revealed !== false;
                         const cardImageUrl = getCardDisplayImageUrl(card);
                         const coverUrl = getCollectionCoverUrl(card.collection, card.rarity);
@@ -8660,7 +7113,7 @@ export default function TCGPage() {
             <div className={`flex justify-center mb-3 overflow-x-auto max-w-full px-2 ${(myHand?.length || 0) > 6 ? "gap-0.5" : "gap-1"}`}
                  style={{ scrollbarWidth: "thin" }}>
               {myHand?.map((card: any, idx: number) => {
-                const ability = getCardAbility(card.name, card);
+                const ability = getCardAbility(card.name, card, t as (k: string) => string);
                 const foilEffect = getFoilEffect(card.foil);
                 const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
                 const energyCost = getEnergyCost(card);

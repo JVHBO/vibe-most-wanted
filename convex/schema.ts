@@ -130,6 +130,13 @@ export default defineSchema({
       streakBonus: v.boolean(),
     })),
 
+    // TCG Daily Battle Tracking (Issue #3: server-side)
+    tcgDailyBattles: v.optional(v.object({
+      date: v.string(), // "2026-02-05" format
+      pveCount: v.number(), // total PvE battles today
+      rewardedCount: v.number(), // battles that gave aura reward (max 5)
+    })),
+
     // Win Streak Tracking
     winStreak: v.optional(v.number()),
     lastWinTimestamp: v.optional(v.number()),

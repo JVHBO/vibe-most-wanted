@@ -2,8 +2,8 @@
  * TCG Rules Engine - Vibe Clash
  * Centralized game rules, ability processing, and combo detection
  *
- * IMPORTANT: This file must stay in sync with app/tcg/page.tsx
- * Any changes here should be reflected there and vice versa.
+ * SINGLE SOURCE OF TRUTH for TCG rules, types, combos, and config.
+ * app/tcg/page.tsx imports from this file - do NOT duplicate.
  */
 
 import tcgAbilitiesData from "@/data/tcg-abilities.json";
@@ -56,6 +56,7 @@ export interface GameLane {
   cpuCards: DeckCard[];
   playerPower: number;
   cpuPower: number;
+  bomb?: { turnsLeft: number; owner: "player" | "cpu" };
 }
 
 export interface FoilEffect {
@@ -87,7 +88,7 @@ export interface ComboResult {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CONFIGURATION - MUST MATCH page.tsx TCG_CONFIG
+// CONFIGURATION - Source of truth - TCG_CONFIG
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const TCG_CONFIG = {
@@ -98,16 +99,17 @@ export const TCG_CONFIG = {
   MIN_VBMS_OR_VIBEFID: 5,
   MAX_NOTHING: 7,
   MAX_VIBEFID: 1,
-  TURN_TIME_SECONDS: 35,
+  TURN_TIME_SECONDS: 35, // PvE: casual. Backend (convex/tcg.ts) uses 20s for PvP
   TOTAL_TURNS: 6,
   STARTING_ENERGY: 3,
   ENERGY_PER_TURN: 1,
   MAX_ENERGY: 10,
   ABILITY_DELAY_MS: 900,
+  MAX_HAND_SIZE: 10, // Maximum cards in hand - excess cards are burned (discarded)
 } as const;
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CARD NAME ALIASES - MUST MATCH page.tsx CARD_NAME_ALIASES
+// CARD NAME ALIASES - Source of truth - CARD_NAME_ALIASES
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const CARD_NAME_ALIASES: Record<string, string> = {
@@ -153,7 +155,7 @@ export function getAbilityCategory(cardName: string | undefined): AbilityCategor
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// FOIL EFFECTS - MUST MATCH page.tsx getFoilEffect
+// FOIL EFFECTS - Source of truth - getFoilEffect
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function getFoilEffect(foil: string | undefined): FoilEffect | null {
@@ -169,7 +171,7 @@ export function getFoilEffect(foil: string | undefined): FoilEffect | null {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ENERGY COST - MUST MATCH page.tsx getEnergyCost
+// ENERGY COST - Source of truth - getEnergyCost
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function getEnergyCost(card: TCGCard): number {
@@ -196,7 +198,7 @@ export function canPlayCard(card: TCGCard, currentEnergy: number): boolean {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// POWER CALCULATIONS - MUST MATCH page.tsx basePower calculation
+// POWER CALCULATIONS - Source of truth - basePower calculation
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
@@ -268,7 +270,7 @@ export function validateDeck(cards: TCGCard[]): DeckValidation {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// COMBOS - MUST MATCH page.tsx CARD_COMBOS exactly
+// COMBOS - Source of truth - CARD_COMBOS exactly
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const CARD_COMBOS: ComboDefinition[] = [
@@ -472,7 +474,7 @@ export const CARD_COMBOS: ComboDefinition[] = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// COMBO DETECTION - MUST MATCH page.tsx detectCombos logic
+// COMBO DETECTION - Source of truth - detectCombos logic
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const comboCache = new Map<string, ComboResult[]>();
