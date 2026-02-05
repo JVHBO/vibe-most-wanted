@@ -4,12 +4,9 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount } from "wagmi";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS";
-import { useApproveVBMS } from "@/lib/hooks/useVBMSContracts";
-import { CONTRACTS, ERC20_ABI } from "@/lib/contracts";
-import { parseEther, formatEther } from "viem";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { translations } from "@/lib/translations";
@@ -17,6 +14,21 @@ import { Id } from "@/convex/_generated/dataModel";
 import tcgCardsData from "@/data/vmw-tcg-cards.json";
 import { getCharacterFromImage } from "@/lib/vmw-image-mapping";
 import { CardMedia } from "@/components/CardMedia";
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMPORTS FROM EXTRACTED UI COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+import { CardDetailModal as CardDetailModalComponent } from "@/components/tcg/CardDetailModal";
+import { ComboDetailModal } from "@/components/tcg/ComboDetailModal";
+import { VibeFIDComboModal } from "@/components/tcg/VibeFIDComboModal";
+import { BattleLogPanel } from "@/components/tcg/BattleLogPanel";
+import { MemeSoundMenu } from "@/components/tcg/MemeSoundMenu";
+import { WaitingView } from "@/components/tcg/WaitingView";
+import { PvEResultView } from "@/components/tcg/PvEResultView";
+import { PvPResultView } from "@/components/tcg/PvPResultView";
+import { DeckBuilder } from "@/components/tcg/DeckBuilder";
+import { TCGLobby } from "@/components/tcg/TCGLobby";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // IMPORTS FROM EXTRACTED MODULES
@@ -34,38 +46,9 @@ import { detectCombos, getComboBonus, getComboSteal, COMBO_TRANSLATION_KEYS } fr
 // Collections that can be played in TCG (with 50% power like nothing)
 const OTHER_TCG_COLLECTIONS = ["gmvbrs", "cumioh", "viberotbangers", "meowverse", "teampothead", "tarot", "baseballcabal", "poorlydrawnpepes", "viberuto", "vibefx", "historyofcomputer"];
 
-// CARD_NAME_ALIASES and resolveCardName imported from @/lib/tcgRules
-
-// COLLECTION_COVERS, getCollectionCoverUrl imported from @/lib/tcg/images
-
-// Types imported from @/lib/tcg/types and @/lib/tcgRules
-// TCGAbility helpers imported from @/lib/tcg/abilities
-
 // ═══════════════════════════════════════════════════════════════════════════════
-// CONSTANTS
+// CONSTANTS & GAME PHASES
 // ═══════════════════════════════════════════════════════════════════════════════
-
-// TCG_CONFIG imported from @/lib/tcgRules
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// GAME PHASES & ORDER SYSTEM
-// ═══════════════════════════════════════════════════════════════════════════════
-//
-// TURN STRUCTURE:
-// 1. PLAY PHASE    - Player places cards (15 seconds)
-// 2. REVEAL PHASE  - In PvP: both players' cards revealed simultaneously
-// 3. ABILITY PHASE - OnReveal abilities resolve in ORDER (by energy cost, lower first)
-// 4. ONGOING PHASE - Ongoing effects are always active
-// 5. RESOLVE PHASE - Final power calculation, turn ends
-//
-// ABILITY ORDER RULES:
-// - OnReveal: Triggers WHEN card is played, in order by energy cost
-// - Ongoing: Passive effect, always active while card is in lane
-// - Lower energy cost cards resolve FIRST
-// - If same cost: Player's card resolves before CPU's card
-// - Combos check after all individual abilities resolve
-//
-// GamePhase imported from @/lib/tcg/types
 
 const PHASE_NAMES: Record<GamePhase, string> = {
   play: "🎴 PLAY PHASE",
@@ -91,27 +74,6 @@ const LANE_NAMES = [
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CARD COMBOS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// CardCombo type imported from @/lib/tcg/types
-// COMBO_TRANSLATION_KEYS imported from @/lib/tcg/combos
-
-// CARD_COMBOS imported from @/lib/tcg/combos
-
-// detectCombos imported from @/lib/tcg/combos (with LRU cache - Issue #10 fix)
-
-// getComboBonus and getComboSteal imported from @/lib/tcg/combos
-
-// Image helpers imported from @/lib/tcg/images
-
-// Audio system imported from @/lib/tcg/audio
-
-
-// playSound, playComboVoice, playMemeSound, stopBgm imported from @/lib/tcg/audio
-
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -123,11 +85,8 @@ export default function TCGPage() {
   const { nfts, isLoading: cardsLoading, loadNFTs, status } = usePlayerCards();
   const { t, lang } = useLanguage();
 
-  // VBMS onchain balance & transfer hooks
+  // VBMS onchain balance
   const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(address);
-  const { approve: approveVBMS, isPending: isApproving } = useApproveVBMS();
-  const { writeContractAsync: writeTransfer, isPending: isTransferring } = useWriteContract();
-  const [poolTxStep, setPoolTxStep] = useState<"idle" | "approving" | "transferring" | "done" | "error">("idle");
 
   // Load NFTs when wallet connects
   useEffect(() => {
@@ -154,20 +113,10 @@ export default function TCGPage() {
   }, [view]);
   const currentBgmRef = useRef<HTMLAudioElement | null>(null); // Track BGM to stop on restart
   const [currentMatchId, setCurrentMatchId] = useState<Id<"tcgMatches"> | null>(null);
-  const [roomIdInput, setRoomIdInput] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Deck builder state
-  const [selectedCards, setSelectedCards] = useState<DeckCard[]>([]);
-  const [deckName, setDeckName] = useState("My Deck");
-  const [deckSortBy, setDeckSortBy] = useState<"power" | "rarity">("power");
-  const [deckSortDesc, setDeckSortDesc] = useState(true); // true = highest first
-
-  // Deck builder pagination
-  const CARDS_PER_PAGE = 12;
-  const [vbmsPage, setVbmsPage] = useState(0);
-  const [vibefidPage, setVibefidPage] = useState(0);
-  const [othersPage, setOthersPage] = useState(0);
+  // (Deck builder state moved to components/tcg/DeckBuilder.tsx)
+  // (Lobby state moved to components/tcg/TCGLobby.tsx)
 
   // Battle state
   const [pendingActions, setPendingActions] = useState<GameAction[]>([]);
@@ -192,7 +141,6 @@ export default function TCGPage() {
   const [showDefeatBait, setShowDefeatBait] = useState(false);
   const [autoMatch, setAutoMatch] = useState(false); // Auto replay mode for PvE
   const [dailyBattles, setDailyBattles] = useState(0); // Track daily battles (loaded from server)
-  const [dailyRewardedBattles, setDailyRewardedBattles] = useState(0); // Rewarded battles count
   const [autoSelectCombo, setAutoSelectCombo] = useState(() => typeof window !== "undefined" && localStorage.getItem("tcg_auto_select_combo") === "true");
   const REWARDED_BATTLES_PER_DAY = 5; // First 5 battles give AURA reward
   const BATTLE_AURA_REWARD = 85; // AURA reward per win (first 5 daily)
@@ -202,20 +150,7 @@ export default function TCGPage() {
   const [pvpPowerChanges, setPvpPowerChanges] = useState<Record<string, number>>({});
   const [pvpCardAnimClass, setPvpCardAnimClass] = useState<Record<string, string>>({});
 
-  // Battle Log
-  type BattleLogEntry = {
-    turn: number;
-    player: "you" | "cpu" | "opponent";
-    action: string;
-    lane: number;
-    cardName: string;
-    // Enhanced fields for detailed logging
-    abilityName?: string;
-    effectType?: "buff" | "debuff" | "destroy" | "steal" | "draw" | "move" | "copy" | "special";
-    targets?: string[];
-    powerChange?: number;
-    details?: string;
-  };
+  // Battle Log (BattleLogEntry type imported from @/lib/tcg/types)
   const [battleLog, setBattleLog] = useState<BattleLogEntry[]>([]);
   const [showBattleLog, setShowBattleLog] = useState(false);
 
@@ -258,27 +193,7 @@ export default function TCGPage() {
   // Profile dropdown state
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
-  // Lobby tab state
-  const [lobbyTab, setLobbyTab] = useState<"play" | "rules" | "leaderboard">("play");
-
-  // Defense Pool state
-  const [showPoolModal, setShowPoolModal] = useState(false);
-  const [selectedPoolTier, setSelectedPoolTier] = useState(10000);
-
-  // Attack confirmation modal state
-  const [attackConfirmTarget, setAttackConfirmTarget] = useState<{
-    address: string;
-    username: string;
-    deckName: string;
-    poolAmount: number;
-    attackFee: number;
-  } | null>(null);
-
-  // Matchmaking state
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchElapsed, setSearchElapsed] = useState(0);
-  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const searchCancelledRef = useRef(false);
+  // (Lobby state moved to components/tcg/TCGLobby.tsx)
 
   // Staked match state (PvE local with stake tracking)
   const [stakedMatchInfo, setStakedMatchInfo] = useState<{
@@ -383,7 +298,6 @@ export default function TCGPage() {
     api.tcg.getPlayerDecks,
     address ? { address } : "skip"
   );
-  const waitingRooms = useQuery(api.tcg.getWaitingRooms, {});
   const currentMatch = useQuery(
     api.tcg.getMatchById,
     currentMatchId ? { matchId: currentMatchId } : "skip"
@@ -400,30 +314,18 @@ export default function TCGPage() {
     opponentAddress ? { address: opponentAddress } : "skip"
   );
 
-  // Convex mutations
-  const createMatch = useMutation(api.tcg.createMatch);
-  const joinMatch = useMutation(api.tcg.joinMatch);
-  const saveDeck = useMutation(api.tcg.saveDeck);
+  // Convex mutations (lobby mutations moved to components/tcg/TCGLobby.tsx)
   const submitActions = useMutation(api.tcg.submitActions);
   const cancelMatch = useMutation(api.tcg.cancelMatch);
   const forfeitMatch = useMutation(api.tcg.forfeitMatch);
   const heartbeatMutation = useMutation(api.tcg.heartbeat);
   const claimVictoryByTimeout = useMutation(api.tcg.claimVictoryByTimeout);
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
-  const autoMatchMutation = useMutation(api.tcg.autoMatch);
-  const setDefenseDeckMutation = useMutation(api.tcg.setDefenseDeck);
   const markTcgMission = useMutation(api.tcg.markTcgMission);
   const recordPvEBattle = useMutation(api.tcg.recordPvEBattle);
-  const setDefensePoolMutation = useMutation(api.tcg.setDefensePool);
-  const withdrawDefensePoolMutation = useMutation(api.tcg.withdrawDefensePool);
-  const autoMatchWithStakeMutation = useMutation(api.tcg.autoMatchWithStake);
   const finishStakedMatchMutation = useMutation(api.tcg.finishStakedMatch);
-  const searchMatchMutation = useMutation(api.tcg.searchMatch);
-  const cancelSearchMutation = useMutation(api.tcg.cancelSearch);
-  const createMatchFromMatchmakingMutation = useMutation(api.tcg.createMatchFromMatchmaking);
-  const deleteDeckMutation = useMutation(api.tcg.deleteDeck);
 
-  // Defense pool queries
+  // Defense pool queries (passed as props to TCGLobby)
   const defenseLeaderboard = useQuery(api.tcg.getDefenseLeaderboard, { limit: 50 });
   const myDefensePool = useQuery(api.tcg.getMyDefensePool, address ? { address } : "skip");
 
@@ -2752,7 +2654,6 @@ export default function TCGPage() {
         recordPvEBattle({ address, won: winner === "player" }).then((result) => {
           if (result) {
             setDailyBattles(result.pveCount);
-            setDailyRewardedBattles(result.rewardedCount);
             if (result.auraAwarded > 0) {
               earnedAura = true;
             }
@@ -2886,88 +2787,8 @@ export default function TCGPage() {
     }, 500);
   };
 
-  const handleCreateMatch = async () => {
-    if (!address) return;
-    setError(null);
-
-    try {
-      const result = await createMatch({ address, username });
-      setCurrentMatchId(result.matchId);
-      setView("waiting");
-    } catch (err: any) {
-      setError(err.message || "Failed to create match");
-    }
-  };
-
-  const handleJoinMatch = async (roomId: string) => {
-    if (!address) return;
-    setError(null);
-
-    try {
-      const result = await joinMatch({ roomId: roomId.toUpperCase(), address, username });
-      setCurrentMatchId(result.matchId);
-      setView("battle");
-    } catch (err: any) {
-      // Extract Convex error message
-      const msg = err?.data?.message || err?.message || "Failed to join match";
-      // Clean up Convex error format
-      const cleanMsg = msg.replace(/^\[.*?\]\s*/, '').replace(/Uncaught Error:\s*/i, '');
-      setError(cleanMsg || "Room not found or match unavailable");
-    }
-  };
-
-  const handleSaveDeck = async () => {
-    if (!address || selectedCards.length !== TCG_CONFIG.DECK_SIZE) return;
-    setError(null);
-
-    try {
-      await saveDeck({
-        address,
-        deckName,
-        cards: selectedCards.map((c: DeckCard) => ({
-          type: c.type,
-          cardId: c.cardId,
-          name: c.name,
-          rarity: c.rarity,
-          power: c.power,
-          imageUrl: c.imageUrl,
-          foil: c.foil,
-          wear: c.wear,
-          collection: c.collection,
-        })),
-        setActive: true,
-      });
-      setView("lobby");
-    } catch (err: any) {
-      setError(err.message || "Failed to save deck");
-    }
-  };
-
-  const handleCardSelect = (card: DeckCard) => {
-    if (selectedCards.find((c: DeckCard) => c.cardId === card.cardId)) {
-      // Remove from deck
-      setSelectedCards(selectedCards.filter((c: DeckCard) => c.cardId !== card.cardId));
-    } else if (selectedCards.length < TCG_CONFIG.DECK_SIZE) {
-      // Validate limits
-      const vbmsCount = selectedCards.filter((c: DeckCard) => c.type === "vbms").length;
-      const nothingCount = selectedCards.filter((c: DeckCard) => c.type === "nothing" || c.type === "other").length;
-
-      if ((card.type === "nothing" || card.type === "other") && nothingCount >= TCG_CONFIG.MAX_NOTHING) {
-        setError(`Max ${TCG_CONFIG.MAX_NOTHING} Nothing cards allowed`);
-        return;
-      }
-
-      // VibeFID limit: only 1 allowed per deck
-      const vibefidCount = selectedCards.filter((c: DeckCard) => c.type === "vibefid").length;
-      if (card.type === "vibefid" && vibefidCount >= TCG_CONFIG.MAX_VIBEFID) {
-        setError(`Max ${TCG_CONFIG.MAX_VIBEFID} VibeFID card allowed`);
-        return;
-      }
-
-      setSelectedCards([...selectedCards, card]);
-      setError(null);
-    }
-  };
+  // handleCreateMatch/handleJoinMatch moved to components/tcg/TCGLobby.tsx
+  // handleSaveDeck/handleCardSelect moved to components/tcg/DeckBuilder.tsx
 
   const handlePlayCard = (laneIndex: number) => {
     if (selectedHandCard === null) return;
@@ -3312,204 +3133,24 @@ export default function TCGPage() {
     convex.query(api.tcg.getDailyBattleStats, { address }).then((stats) => {
       if (stats) {
         setDailyBattles(stats.pveCount);
-        setDailyRewardedBattles(stats.rewardedCount);
       }
     }).catch(() => {});
   }, [address, convex]);
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // COMPONENT: Card Detail Modal (memoized to prevent scroll reset on timer updates)
-  // ═══════════════════════════════════════════════════════════════════════════════
-
+  // Card Detail Modal - uses extracted component (memoized via React.memo)
   const CardDetailModal = useMemo(() => {
-    return ({ card, onClose, onSelect }: { card: DeckCard; onClose: () => void; onSelect?: () => void }) => {
-    const ability = getCardAbility(card.name, card, t as (k: string) => string);
-    const foilEffect = getFoilEffect(card.foil);
-    const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
-    const effectivePower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
-    const energyCost = getEnergyCost(card);
-    const encodedImageUrl = card.imageUrl || null;
-
-    // Find combos for this card (apply alias for name matching)
-    const cardNameLower = card.name?.toLowerCase() || "";
-    const resolvedName = CARD_NAME_ALIASES[cardNameLower] || cardNameLower;
-    const cardCombos = CARD_COMBOS.filter(combo =>
-      combo.cards.map(c => c.toLowerCase()).includes(cardNameLower) ||
-      combo.cards.map(c => c.toLowerCase()).includes(resolvedName)
+    return ({ card, onClose, onSelect }: { card: DeckCard; onClose: () => void; onSelect?: () => void }) => (
+      <CardDetailModalComponent
+        card={card}
+        onClose={onClose}
+        onSelect={onSelect}
+        selectedCards={[]}
+        t={t as (k: string) => string}
+        lang={lang}
+      />
     );
-
-    return (
-      <div
-        className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-2"
-        onClick={onClose}
-      >
-        <div
-          className="bg-vintage-deep-black border border-vintage-gold/30 rounded-2xl p-4 max-w-sm w-full max-h-[90vh] overflow-y-auto backdrop-blur-sm overscroll-contain"
-          onClick={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
-        >
-          {/* Card Image/Video */}
-          <div className="flex justify-center mb-4">
-            <div
-              className={`relative w-32 h-48 rounded-xl border-4 overflow-hidden bg-gray-800 ${RARITY_COLORS[card.rarity] || "border-gray-500"}`}
-            >
-              <CardMedia
-                src={card.imageUrl}
-                alt={card.name}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              {card.foil && card.foil !== "None" && (
-                <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-white/10 rounded-lg" />
-              )}
-            </div>
-          </div>
-
-          {/* Card Info */}
-          <div className="text-center mb-4">
-            <h3 className="text-xl font-bold text-vintage-gold">{card.name}</h3>
-            <div className="flex items-center justify-center gap-2 mt-1 flex-wrap">
-              {card.foil && card.foil !== "None" && (
-                <span className="text-sm text-vintage-gold">{card.foil}</span>
-              )}
-              {(card.type === "nothing" || card.type === "other") && (
-                <span className="text-sm text-purple-400">(Nothing)</span>
-              )}
-            </div>
-            <div className="mt-2 flex items-center justify-center gap-4">
-              <div>
-                <span className="text-vintage-gold font-bold text-2xl">{effectivePower}</span>
-                <span className="text-vintage-burnt-gold text-sm ml-1">power</span>
-              </div>
-              <div>
-                <span className={`font-bold text-2xl ${energyCost === 0 ? "text-green-400" : "text-vintage-neon-blue"}`}>
-                  {energyCost === 0 ? "FREE" : energyCost}
-                </span>
-                <span className="text-vintage-burnt-gold text-sm ml-1">{energyCost === 0 ? "" : "⚡"}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Ability Section - Show for VBMS and VibeFID */}
-          {ability && (card.type === "vbms" || card.type === "vibefid") && (() => {
-            const translatedAbility = getTranslatedAbility(card.name, t as (k: string) => string, translations, lang);
-            const catConfig: Record<string, { emoji: string; color: string; bg: string; label: string }> = {
-              offensive: { emoji: "⚔️", color: "text-red-400", bg: "bg-red-500/20 border-red-500/40", label: "OFFENSIVE" },
-              support: { emoji: "💚", color: "text-green-400", bg: "bg-green-500/20 border-green-500/40", label: "SUPPORT" },
-              control: { emoji: "🎭", color: "text-purple-400", bg: "bg-purple-500/20 border-purple-500/40", label: "CONTROL" },
-              economy: { emoji: "⚡", color: "text-yellow-400", bg: "bg-yellow-500/20 border-yellow-500/40", label: "ECONOMY" },
-              wildcard: { emoji: "🃏", color: "text-cyan-400", bg: "bg-cyan-500/20 border-cyan-500/40", label: "WILDCARD" },
-            };
-            const abilityCat = (ability as any).category as string | undefined;
-            const catInfo = abilityCat ? catConfig[abilityCat] : null;
-            return (
-              <div className={`${card.type === "vibefid" ? "bg-cyan-900/20 border-cyan-500/20" : "bg-vintage-charcoal/30 border-vintage-gold/10"} border rounded-lg p-3 mb-3`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-purple-400">⚡</span>
-                  <span className={`${card.type === "vibefid" ? "text-cyan-400" : "text-vintage-gold"} font-bold text-sm`}>{translatedAbility?.name || ability.name}</span>
-                  {catInfo && (
-                    <span className={`${catInfo.bg} ${catInfo.color} border rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider`}>
-                      {catInfo.emoji} {catInfo.label}
-                    </span>
-                  )}
-                </div>
-                <p className="text-vintage-burnt-gold text-sm">{translatedAbility?.description || ability.description}</p>
-              </div>
-            );
-          })()}
-
-          {/* Combo Section - Compact for mobile */}
-          {cardCombos.length > 0 && card.type === "vbms" && (
-            <div className="mb-3 space-y-2">
-              {cardCombos.map((combo) => (
-                <div
-                  key={combo.id}
-                  className="bg-purple-900/20 border border-purple-500/20 rounded-lg p-3"
-                >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-vintage-gold font-bold text-sm">{COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id] as keyof typeof translations["pt-BR"]) : combo.name}</span>
-                    {combo.minCards && (
-                      <span className="text-vintage-burnt-gold/60 text-[10px]">({combo.minCards}+)</span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-1 mb-1">
-                    {combo.cards.map((comboCard) => {
-                      const isCurrentCard = comboCard.toLowerCase() === cardNameLower || comboCard.toLowerCase() === resolvedName;
-                      return (
-                        <span
-                          key={comboCard}
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            isCurrentCard
-                              ? "bg-vintage-gold text-black"
-                              : "bg-vintage-charcoal/50 text-vintage-burnt-gold"
-                          }`}
-                        >
-                          {comboCard}
-                        </span>
-                      );
-                    })}
-                  </div>
-                  <p className="text-green-400 text-xs font-bold">
-                    ⚡ {COMBO_TRANSLATION_KEYS[combo.id] ? t((COMBO_TRANSLATION_KEYS[combo.id] + "Desc") as keyof typeof translations["pt-BR"]) : combo.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* VibeFID Wildcard Info */}
-          {card.type === "vibefid" && (
-            <div className="bg-cyan-900/30 border border-cyan-500/30 rounded-lg p-3 mb-3">
-              <p className="text-cyan-400 text-sm font-bold">🃏 Completes ANY combo!</p>
-            </div>
-          )}
-
-          {/* Nothing/Other Card Info */}
-          {(card.type === "nothing" || card.type === "other") && (
-            <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-3 mb-3">
-              <p className="text-purple-300 text-xs font-bold mb-1">{t('tcgNothingCardTitle')}</p>
-              <p className="text-vintage-burnt-gold text-xs">• 50% base power penalty</p>
-              <p className="text-vintage-burnt-gold text-xs">• Can be sacrificed from hand (draw new card)</p>
-            </div>
-          )}
-
-          {/* Foil Effect Section */}
-          {foilEffect && (
-            <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3 mb-3">
-              <p className="text-vintage-gold text-xs font-bold mb-1">✨ {t('tcgFoilBonus')}</p>
-              <p className="text-vintage-burnt-gold text-sm">{foilEffect.description}</p>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="flex-1 bg-vintage-charcoal/50 hover:bg-vintage-charcoal border border-vintage-gold/20 hover:border-vintage-gold/40 text-vintage-burnt-gold hover:text-vintage-gold py-2 px-4 rounded-lg transition-all"
-            >
-              {t('tcgClose')}
-            </button>
-            {onSelect && (
-              <button
-                onClick={() => {
-                  onSelect();
-                  onClose();
-                }}
-                className={`flex-1 py-2 px-4 rounded-lg transition-all font-bold ${
-                  isSelected
-                    ? "bg-red-600/20 hover:bg-red-500/30 border border-red-500/50 text-red-400"
-                    : "bg-green-600/20 hover:bg-green-500/30 border border-green-500/50 text-green-400"
-                }`}
-              >
-                {isSelected ? t('tcgRemove') : t('tcgAddToDeck')}
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCards, lang]);
+  }, [lang]);
 
   // ═══════════════════════════════════════════════════════════════════════════════
   // RENDER: NOT CONNECTED
@@ -3535,917 +3176,35 @@ export default function TCGPage() {
   // ═══════════════════════════════════════════════════════════════════════════════
 
   if (view === "lobby") {
-    const hasDeck = activeDeck !== undefined && activeDeck !== null;
-
-    // Get player's VBMS cards for album
-    const playerVbmsCards = (nfts || []).filter((card: any) => card.collection === "vibe");
-
-    // Count owned cards by character name
-    const ownedCardCounts: Record<string, number> = {};
-    playerVbmsCards.forEach((card: any) => {
-      const imageUrl = card.imageUrl || card.image || "";
-      const characterFromImage = getCharacterFromImage(imageUrl);
-      const cardName = (card.character || characterFromImage || card.name || "").toLowerCase();
-      if (cardName) {
-        ownedCardCounts[cardName] = (ownedCardCounts[cardName] || 0) + 1;
-      }
-    });
-
-    // All TCG cards from data file
-    const allTcgCards = tcgCardsData.cards || [];
-    const totalOwned = Object.keys(ownedCardCounts).length;
-    const totalCards = allTcgCards.length;
-
     return (
-      <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
-
-        {/* ===== TOP HUD ===== */}
-        <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black via-black/90 to-transparent backdrop-blur-sm">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            {/* Left: Back button */}
-            <button
-              onClick={() => router.push("/")}
-              className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
-            >
-              <span className="group-hover:-translate-x-0.5 inline-block transition-transform">&larr;</span> {t('tcgBack')}
-            </button>
-
-            {/* Center: Title */}
-            <h1 className="text-base md:text-xl font-display font-bold text-vintage-gold uppercase tracking-widest">
-              {t('tcgTitle')}
-            </h1>
-
-            {/* Right: Deck Builder Button */}
-            <button
-              onClick={() => setView("deck-builder")}
-              className="px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
-            >
-              {hasDeck ? t('tcgEdit') : t('tcgBuildDeck')}
-            </button>
-          </div>
-        </div>
-
-        {/* ===== MAIN SCROLLABLE CONTENT ===== */}
-        <div className="absolute inset-0 pt-16 pb-24 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-4">
-
-          {/* Error */}
-          {error && (
-            <div className="mb-4 p-3 bg-red-900/30 border border-red-500/50 rounded-lg flex items-center justify-between gap-3">
-              <p className="text-red-300 text-xs flex-1">{error}</p>
-              <button onClick={() => setError(null)} className="text-red-500/50 hover:text-red-400 text-lg leading-none">&times;</button>
-            </div>
-          )}
-
-          {/* Tabs */}
-          <div className="flex gap-1 mb-4 bg-black/30 p-1 rounded-lg border border-vintage-gold/10">
-            <button
-              onClick={() => setLobbyTab("play")}
-              className={`flex-1 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded transition-all ${
-                lobbyTab === "play"
-                  ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30"
-                  : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold hover:bg-black/20"
-              }`}
-            >
-              {t('tcgPlay')}
-            </button>
-            <button
-              onClick={() => setLobbyTab("leaderboard")}
-              className={`flex-1 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded transition-all ${
-                lobbyTab === "leaderboard"
-                  ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30"
-                  : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold hover:bg-black/20"
-              }`}
-            >
-              Leaderboard
-            </button>
-            <button
-              onClick={() => setLobbyTab("rules")}
-              className={`flex-1 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded transition-all ${
-                lobbyTab === "rules"
-                  ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30"
-                  : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold hover:bg-black/20"
-              }`}
-            >
-              {t('tcgRules')}
-            </button>
-          </div>
-
-          {/* Tab Content */}
-          {lobbyTab === "play" && (
-            <div className="space-y-4">
-              {/* Active Deck Info */}
-              {hasDeck && (
-                <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 overflow-hidden">
-                  <div className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <p className="text-[10px] text-vintage-burnt-gold uppercase tracking-wide mb-1">{t('tcgActiveDeck')}</p>
-                        <p className="text-lg font-bold text-vintage-gold">{activeDeck.deckName}</p>
-                        <div className="flex items-center gap-3 mt-1 text-xs">
-                          <span className="text-vintage-burnt-gold"><span className="text-vintage-gold font-bold">{activeDeck.vbmsCount}</span> VBMS</span>
-                          <span className="text-vintage-gold/30">•</span>
-                          <span className="text-vintage-burnt-gold"><span className="text-vintage-gold font-bold">{activeDeck.nothingCount}</span> Nothing</span>
-                          <span className="text-vintage-gold/30">•</span>
-                          <span className="text-purple-400 font-bold">{activeDeck.totalPower} PWR</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setShowPoolModal(true)}
-                        className={`px-3 py-2 rounded text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-1.5 ${
-                          myDefensePool?.isActive
-                            ? "bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30"
-                            : "bg-black/50 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50"
-                        }`}
-                      >
-                        {myDefensePool?.isActive ? (
-                          <>Pool: {(myDefensePool.poolAmount || 0).toLocaleString()} <span className="text-green-400">✓</span></>
-                        ) : (
-                          "Defense Pool"
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Saved Decks List */}
-              {playerDecks && playerDecks.length > 1 && (
-                <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 overflow-hidden">
-                  <div className="p-3 border-b border-vintage-gold/20">
-                    <h3 className="text-sm font-bold text-vintage-gold uppercase tracking-wide">Saved Decks ({playerDecks.length})</h3>
-                  </div>
-                  <div className="divide-y divide-vintage-gold/10 max-h-40 overflow-y-auto">
-                    {playerDecks.map((deck: any) => {
-                      const isActive = deck._id === activeDeck?._id;
-                      return (
-                        <div
-                          key={deck._id}
-                          className={`flex items-center gap-3 p-3 hover:bg-vintage-gold/5 transition ${isActive ? 'bg-vintage-gold/10' : ''}`}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-bold truncate ${isActive ? "text-vintage-gold" : "text-vintage-burnt-gold"}`}>
-                              {deck.deckName}
-                              {isActive && <span className="text-green-400 ml-2 text-xs">(Active)</span>}
-                            </p>
-                            <p className="text-[10px] text-vintage-burnt-gold/50">
-                              {deck.vbmsCount || 0} VBMS • {deck.totalPower || 0} PWR
-                            </p>
-                          </div>
-                          {!isActive && (
-                            <button
-                              onClick={async () => {
-                                if (confirm(`Delete deck "${deck.deckName}"?`)) {
-                                  try {
-                                    await deleteDeckMutation({ deckId: deck._id });
-                                  } catch (e: any) {
-                                    setError(e.message || "Failed to delete deck");
-                                  }
-                                }
-                              }}
-                              className="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30"
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Play Buttons */}
-              <div className="space-y-4">
-                {!hasDeck ? (
-                  <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 p-6 text-center">
-                    <div className="w-16 h-16 rounded-full bg-vintage-gold/10 border border-vintage-gold/30 flex items-center justify-center mx-auto mb-4">
-                      <span className="text-vintage-gold text-2xl">🃏</span>
-                    </div>
-                    <h3 className="text-lg font-bold text-vintage-gold mb-2">No Deck Built</h3>
-                    <p className="text-vintage-burnt-gold text-sm mb-4">Create your first deck to start battling!</p>
-                    <button
-                      onClick={() => setView("deck-builder")}
-                      className="px-6 py-3 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold/50 hover:border-vintage-gold text-vintage-gold font-bold rounded-lg text-sm uppercase tracking-wide transition-all"
-                    >
-                      {t('tcgBuildDeck')}
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    {/* Battle Mode Selection */}
-                    <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 overflow-hidden">
-                      <div className="p-3 border-b border-vintage-gold/20 flex items-center justify-between">
-                        <h3 className="text-sm font-bold text-vintage-gold uppercase tracking-wide">Battle Mode</h3>
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="text-vintage-burnt-gold">Today:</span>
-                          {dailyBattles < REWARDED_BATTLES_PER_DAY ? (
-                            <span className="text-green-400 font-bold">{dailyBattles}/{REWARDED_BATTLES_PER_DAY} <span className="text-[10px]">(+{BATTLE_AURA_REWARD} AURA)</span></span>
-                          ) : (
-                            <span className="text-gray-400">{dailyBattles} (free)</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="p-4 space-y-3">
-                        {/* PvE Button */}
-                        <button
-                          onClick={() => startPvEMatch()}
-                          className="w-full px-4 py-3 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 hover:border-green-400 rounded-lg text-green-400 font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
-                        >
-                          <span>🤖</span>
-                          {t('tcgBattleCpu')} {dailyBattles < REWARDED_BATTLES_PER_DAY ? `(+${BATTLE_AURA_REWARD} AURA)` : ""}
-                        </button>
-
-                        {/* PvP Section */}
-                        <div className="border-t border-vintage-gold/10 pt-3">
-                          <p className="text-[10px] text-vintage-burnt-gold uppercase tracking-wide mb-3 text-center">PvP Battle</p>
-
-                          {/* Find Match (Matchmaking → CPU fallback) */}
-                          {isSearching ? (
-                            <div className="w-full bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-3 text-center">
-                              <div className="flex items-center justify-center gap-2 mb-2">
-                                <div className="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-                                <span className="text-amber-400 text-sm font-bold">
-                                  {searchElapsed < 5 ? "Searching for players..." : "Matching vs CPU..."}
-                                </span>
-                              </div>
-                              <p className="text-xs text-vintage-burnt-gold/50 mb-2">{Math.max(0, Math.ceil(5 - searchElapsed))}s</p>
-                              <button
-                                onClick={async () => {
-                                  searchCancelledRef.current = true;
-                                  setIsSearching(false);
-                                  if (address) await cancelSearchMutation({ address });
-                                }}
-                                className="px-4 py-1.5 text-xs text-red-400 border border-red-500/30 rounded hover:bg-red-900/20 transition"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={async () => {
-                                if (!address || !activeDeck?._id) return;
-                                try {
-                                  setError(null);
-                                  setIsSearching(true);
-                                  setSearchElapsed(0);
-                                  searchCancelledRef.current = false;
-
-                                  // Start search on server
-                                  await searchMatchMutation({ address, username, deckId: activeDeck._id });
-
-                                  // Poll checkMatchmaking every 500ms for up to 5 seconds
-                                  let elapsed = 0;
-                                  let foundPlayer = false;
-                                  const maxSearchTime = 5; // 5 seconds max
-
-                                  while (elapsed < maxSearchTime && !foundPlayer && !searchCancelledRef.current) {
-                                    await new Promise(resolve => setTimeout(resolve, 500));
-                                    if (searchCancelledRef.current) break;
-                                    elapsed += 0.5;
-                                    setSearchElapsed(elapsed);
-
-                                    // Poll the server to check for other players
-                                    const matchStatus = await convex.query(api.tcg.checkMatchmaking, { address });
-
-                                    if (matchStatus.status === "found_player" && matchStatus.opponent) {
-                                      // Found a real player! Create the match
-                                      foundPlayer = true;
-                                      const opponent = matchStatus.opponent;
-
-                                      const matchResult = await createMatchFromMatchmakingMutation({
-                                        player1Address: address,
-                                        player2Address: opponent.address,
-                                        player1Username: username,
-                                        player2Username: opponent.username,
-                                        player1DeckId: activeDeck._id,
-                                        player2DeckId: opponent.deckId,
-                                      });
-
-                                      if (matchResult?.matchId) {
-                                        setCurrentMatchId(matchResult.matchId);
-                                        setIsPvE(false);
-                                        setView("battle");
-                                        setBattleLog([]);
-                                      }
-                                      setIsSearching(false);
-                                      return;
-                                    } else if (matchStatus.status === "expired" || matchStatus.status === "not_searching") {
-                                      break; // Exit polling loop
-                                    }
-                                  }
-
-                                  // If cancelled, don't fall back to CPU
-                                  if (searchCancelledRef.current) {
-                                    setIsSearching(false);
-                                    return;
-                                  }
-
-                                  // No live player found - fall back to CPU auto match
-                                  await cancelSearchMutation({ address });
-                                  setSearchElapsed(elapsed + 0.5);
-
-                                  const result = await autoMatchMutation({ address, username });
-                                  if (result?.matchId) {
-                                    setCurrentMatchId(result.matchId);
-                                    setIsPvE(false);
-                                    setView("battle");
-                                    setBattleLog([]);
-                                  }
-                                  setIsSearching(false);
-                                } catch (e: any) {
-                                  setIsSearching(false);
-                                  if (searchTimerRef.current) clearInterval(searchTimerRef.current);
-                                  setError(e.message || "No opponents found");
-                                }
-                              }}
-                              disabled={!hasDeck}
-                              className="w-full px-4 py-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 hover:border-amber-400 rounded-lg text-amber-400 font-bold text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-2"
-                            >
-                              <span>⚔️</span>
-                              Find Match
-                            </button>
-                          )}
-
-                          {/* Create / Join Room */}
-                          <div className="space-y-2">
-                            <button
-                              onClick={handleCreateMatch}
-                              disabled={!hasDeck}
-                              className="w-full px-3 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 hover:border-purple-400 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              Create Room
-                            </button>
-                            <div className="flex gap-1">
-                              <input
-                                type="text"
-                                value={roomIdInput}
-                                onChange={(e) => setRoomIdInput(e.target.value.toUpperCase())}
-                                placeholder="ROOM CODE"
-                                maxLength={6}
-                                disabled={!hasDeck}
-                                className="flex-1 bg-black/50 border border-vintage-gold/20 rounded-lg px-2 py-2 text-vintage-gold font-mono text-center uppercase tracking-wider focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-xs disabled:opacity-40"
-                              />
-                              <button
-                                onClick={() => roomIdInput.length >= 4 && handleJoinMatch(roomIdInput)}
-                                disabled={!hasDeck || roomIdInput.length < 4}
-                                className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 hover:border-purple-400 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                              >
-                                Join
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* VibeFID Auto-Select Combo Toggle */}
-                      <div className="p-3 border-t border-vintage-gold/10 flex items-center justify-between">
-                        <div>
-                          <span className="text-xs text-vintage-burnt-gold">VibeFID Auto-Combo</span>
-                          <p className="text-[9px] text-vintage-burnt-gold/50">Auto-pick best combo</p>
-                        </div>
-                        <button
-                          onClick={() => {
-                            const current = localStorage.getItem("tcg_auto_select_combo") === "true";
-                            localStorage.setItem("tcg_auto_select_combo", (!current).toString());
-                            setAutoSelectCombo(!current);
-                          }}
-                          className={`w-10 h-5 rounded-full transition-colors ${autoSelectCombo ? "bg-cyan-500" : "bg-gray-600"} relative`}
-                        >
-                          <span className={`absolute top-0.5 ${autoSelectCombo ? "right-0.5" : "left-0.5"} w-4 h-4 bg-white rounded-full transition-all shadow`} />
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-            </div>
-          )}
-
-          {lobbyTab === "rules" && (
-            <div className="space-y-3 text-sm">
-              {/* Basic Rules */}
-              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
-                <h3 className="font-bold text-vintage-gold mb-2 uppercase tracking-wider text-xs">{t('tcgHowToPlay')}</h3>
-                <div className="text-vintage-burnt-gold space-y-1 text-xs">
-                  <p>{t('tcgHowToPlayDesc1')}</p>
-                  <p>{t('tcgHowToPlayDesc2')}</p>
-                  <p>{t('tcgHowToPlayDesc3')}</p>
-                  <p>{t('tcgHowToPlayDesc4')}</p>
-                  <p>{t('tcgHowToPlayDesc5')}</p>
-                </div>
-              </div>
-
-              {/* Energy System */}
-              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
-                <h3 className="font-bold text-vintage-neon-blue mb-2 uppercase tracking-wider text-xs">{t('tcgEnergySystem')}</h3>
-                <div className="text-vintage-burnt-gold space-y-1 text-xs">
-                  <p>{t('tcgEnergyTurn1')}</p>
-                  <p>{t('tcgEnergyTurn3')}</p>
-                  <p>{t('tcgEnergyTurn6')}</p>
-                  <p className="text-vintage-gold mt-1">{t('tcgEnergySkipBonus')}</p>
-                </div>
-              </div>
-
-              {/* Card Types */}
-              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
-                <h3 className="font-bold text-purple-400 mb-2 uppercase tracking-wider text-xs">{t('tcgCardTypes')}</h3>
-                <div className="text-vintage-burnt-gold space-y-1 text-xs">
-                  <p>{t('tcgCardVbms')}</p>
-                  <p>{t('tcgCardNothing')}</p>
-                  <p><span className="text-pink-400">{t('tcgCardPrizeFoil')}</span></p>
-                  <p><span className="text-purple-400">{t('tcgCardStandardFoil')}</span></p>
-                </div>
-              </div>
-
-              {/* Card Categories */}
-              {(() => {
-                const categoryConfig: Record<string, { emoji: string; color: string; label: string }> = {
-                  offensive: { emoji: "⚔️", color: "text-red-400", label: "Offensive" },
-                  support: { emoji: "💚", color: "text-green-400", label: "Support" },
-                  control: { emoji: "🎭", color: "text-purple-400", label: "Control" },
-                  economy: { emoji: "⚡", color: "text-yellow-400", label: "Economy" },
-                  wildcard: { emoji: "🃏", color: "text-cyan-400", label: "Wildcard" },
-                };
-                const grouped: Record<string, { key: string; name: string; desc: string }[]> = {
-                  offensive: [], support: [], control: [], economy: [], wildcard: [],
-                };
-                Object.entries(tcgAbilities).forEach(([key, ab]) => {
-                  const cat = (ab as any).category as string;
-                  if (cat && grouped[cat]) {
-                    grouped[cat].push({ key, name: ab.name, desc: ab.description });
-                  }
-                });
-                return (
-                  <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
-                    <h3 className="font-bold text-vintage-gold mb-3 uppercase tracking-wider text-xs">Card Categories</h3>
-                    <div className="space-y-3">
-                      {Object.entries(categoryConfig).map(([cat, cfg]) => (
-                        <div key={cat}>
-                          <div className={`flex items-center gap-1.5 mb-1`}>
-                            <span>{cfg.emoji}</span>
-                            <span className={`${cfg.color} font-bold text-xs uppercase`}>{cfg.label}</span>
-                            <span className="text-vintage-burnt-gold/50 text-[10px]">({grouped[cat]?.length || 0})</span>
-                          </div>
-                          <div className="grid grid-cols-1 gap-0.5 text-[10px] ml-5">
-                            {grouped[cat]?.map((card) => (
-                              <p key={card.key}>
-                                <span className="text-vintage-gold font-semibold uppercase">{card.key}</span>
-                                <span className="text-vintage-burnt-gold/60"> — {card.desc.length > 60 ? card.desc.slice(0, 57) + "..." : card.desc}</span>
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Lane Effects */}
-              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
-                <h3 className="font-bold text-cyan-400 mb-2 uppercase tracking-wider text-xs">{t('tcgLaneEffects')}</h3>
-                <div className="text-vintage-burnt-gold space-y-1 text-xs">
-                  <p><span className="text-green-400">{t('tcgBuffLabel')}:</span> {t('tcgBuffLanes')}</p>
-                  <p><span className="text-red-400">{t('tcgDebuffLabel')}:</span> {t('tcgDebuffLanes')}</p>
-                  <p><span className="text-purple-400">{t('tcgChaosLabel')}:</span> {t('tcgChaosLanesDesc')}</p>
-                  <p><span className="text-vintage-gold">{t('tcgSpecialLabel')}:</span> {t('tcgSpecialLanesDesc')}</p>
-                </div>
-              </div>
-
-              {/* Combos */}
-              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
-                <h3 className="font-bold text-pink-400 mb-2 uppercase tracking-wider text-xs">{t('tcgCombosTotal' as any)}</h3>
-                <div className="text-vintage-burnt-gold space-y-2 text-xs">
-                  <p className="text-vintage-gold font-semibold">{t('tcgSynergyCombos' as any)}</p>
-                  <div className="grid grid-cols-1 gap-0.5 text-[10px]">
-                    <p>👑 <span className="text-yellow-400">ANTONIO + MIGUEL</span> = 2x Power</p>
-                    <p>🧠 <span className="text-cyan-400">SARTOCRATES + ZURKCHAD</span> = +60 + Immune</p>
-                    <p>📊 <span className="text-orange-400">BETOBUTTER + MORLACOS</span> = 2x Scaling</p>
-                    <p>🔀 <span className="text-green-400">RIZKYBEGITU + BRADYMCK</span> = 2x Power</p>
-                    <p>🎨 <span className="text-pink-400">SMOLEMARU + JOONX</span> = +35</p>
-                    <p>🎄 <span className="text-red-400">NAUGHTY SANTA + GOZARU</span> = +40 lane</p>
-                    <p>🕶️ <span className="text-purple-400">LOMBRA JR + SLATERG</span> = Steal 30</p>
-                    <p>💸 <span className="text-lime-400">SCUM + BETOBUTTER</span> = Steal 40</p>
-                  </div>
-                  <p className="text-vintage-gold font-semibold pt-1">{t('tcgTeamCombos' as any)}</p>
-                  <div className="grid grid-cols-2 gap-0.5 text-[10px]">
-                    <p>👨‍👧 Romero Dynasty</p>
-                    <p>👑 Crypto Kings</p>
-                    <p>🤖 AI Takeover</p>
-                    <p>💩 Dirty Duo</p>
-                    <p>🎰 Degen Trio</p>
-                    <p>💻 Code Masters</p>
-                  </div>
-                  <p className="text-vintage-gold text-[10px] pt-1">{t('tcgClickComboInfo')}</p>
-                </div>
-              </div>
-
-              {/* Turn Phases & Ability Order */}
-              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-3">
-                <h3 className="font-bold text-yellow-400 mb-2 uppercase tracking-wider text-xs">{t('tcgSkillOrderTitle' as any)}</h3>
-                <div className="text-vintage-burnt-gold space-y-2 text-xs">
-                  {/* Phases */}
-                  <div className="space-y-1">
-                    <p className="text-vintage-gold font-semibold">{t('tcgTurnPhases' as any)}</p>
-                    <p><span className="text-blue-400">1. PLAY</span> - {t('tcgPhasePlay' as any)}</p>
-                    <p><span className="text-orange-400">2. REVEAL</span> - {t('tcgPhaseReveal' as any)}</p>
-                    <p><span className="text-purple-400">3. ABILITIES</span> - {t('tcgPhaseAbilities' as any)}</p>
-                    <p><span className="text-green-400">4. RESOLVE</span> - {t('tcgPhaseResolve' as any)}</p>
-                  </div>
-                  {/* Order Rules */}
-                  <div className="border-t border-vintage-gold/20 pt-2 space-y-1">
-                    <p className="text-vintage-gold font-semibold">{t('tcgActivationOrder' as any)}</p>
-                    <p>• <span className="text-cyan-400">{t('tcgLowerCostFirst' as any)}</span> (Common → Mythic)</p>
-                    <p>• {t('tcgTieBreaker' as any)}</p>
-                    <p>• {t('tcgSameLane' as any)}</p>
-                  </div>
-                  {/* Energy Cost Table */}
-                  <div className="border-t border-vintage-gold/20 pt-2">
-                    <p className="text-vintage-gold font-semibold mb-1">{t('tcgCostByRarity' as any)}</p>
-                    <div className="grid grid-cols-2 gap-1 text-[10px]">
-                      <span><span className="text-gray-400">Common</span> = 2⚡</span>
-                      <span><span className="text-blue-400">Rare</span> = 3⚡</span>
-                      <span><span className="text-purple-400">Epic</span> = 4⚡</span>
-                      <span><span className="text-orange-400">Legendary</span> = 5⚡</span>
-                      <span><span className="text-pink-400">Mythic</span> = 6⚡</span>
-                      <span><span className="text-gray-500">Nothing</span> = 1⚡</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tips */}
-              <div className="bg-vintage-gold/5 border border-vintage-gold/20 rounded-lg p-3">
-                <h3 className="font-bold text-vintage-gold mb-2 uppercase tracking-wider text-xs">{t('tcgTipsTitle')}</h3>
-                <div className="text-vintage-burnt-gold space-y-1 text-xs">
-                  <p>- {t('tcgTip1')}</p>
-                  <p>- {t('tcgTip2')}</p>
-                  <p>- {t('tcgTip3')}</p>
-                  <p>- {t('tcgTip4')}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Leaderboard Tab */}
-          {lobbyTab === "leaderboard" && (
-            <div className="space-y-3">
-              <div className="bg-gradient-to-b from-vintage-charcoal/60 to-vintage-charcoal/30 border border-vintage-gold/15 rounded-lg p-3">
-                <h3 className="text-xs font-bold text-vintage-gold uppercase tracking-[0.2em] mb-3 text-center">Defense Leaderboard</h3>
-
-                {/* My Pool Status */}
-                {myDefensePool?.isActive && (
-                  <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-2 mb-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-[9px] text-green-400/70 uppercase tracking-wider">Your Pool</p>
-                        <p className="text-sm font-bold text-green-400">{(myDefensePool.poolAmount || 0).toLocaleString()} VBMS</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[9px] text-vintage-burnt-gold/50">W: <span className="text-green-400">{myDefensePool.wins}</span> L: <span className="text-red-400">{myDefensePool.losses}</span></p>
-                        <p className="text-[9px] text-vintage-burnt-gold/50">Earned: <span className="text-green-400">+{(myDefensePool.totalEarned || 0).toLocaleString()}</span></p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Leaderboard List */}
-                {defenseLeaderboard && defenseLeaderboard.length > 0 ? (
-                  <div className="space-y-1">
-                    {defenseLeaderboard.map((entry: any) => {
-                      const isMe = address && entry.address.toLowerCase() === address.toLowerCase();
-                      return (
-                        <div
-                          key={entry.address}
-                          className={`flex items-center justify-between p-2 rounded ${
-                            isMe ? "bg-vintage-gold/10 border border-vintage-gold/30" : "bg-black/20 border border-vintage-gold/5"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs font-bold w-6 text-center ${entry.rank <= 3 ? "text-vintage-gold" : "text-vintage-burnt-gold/50"}`}>
-                              #{entry.rank}
-                            </span>
-                            <div>
-                              <p className={`text-xs font-bold truncate max-w-[120px] ${isMe ? "text-vintage-gold" : "text-vintage-burnt-gold"}`}>
-                                {entry.username}{isMe ? " *" : ""}
-                              </p>
-                              <p className="text-[8px] text-vintage-burnt-gold/40">{entry.deckName}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="text-right">
-                              <p className="text-xs font-bold text-vintage-gold">{(entry.poolAmount || 0).toLocaleString()}</p>
-                              <p className="text-[8px] text-vintage-burnt-gold/40">
-                                W:<span className="text-green-400">{entry.wins}</span> L:<span className="text-red-400">{entry.losses}</span>
-                              </p>
-                            </div>
-                            {!isMe && activeDeck && (
-                              <button
-                                onClick={() => {
-                                  if (!address) return;
-                                  // Show confirmation modal
-                                  setAttackConfirmTarget({
-                                    address: entry.address,
-                                    username: entry.username,
-                                    deckName: entry.deckName,
-                                    poolAmount: entry.poolAmount,
-                                    attackFee: Math.floor(entry.poolAmount * 0.1),
-                                  });
-                                }}
-                                disabled={poolTxStep === "transferring"}
-                                className="px-2 py-1.5 bg-orange-600/30 hover:bg-orange-600/50 text-orange-400 border border-orange-500/40 rounded text-[8px] font-bold uppercase tracking-wider transition-all whitespace-nowrap disabled:opacity-40"
-                              >
-                                {poolTxStep === "transferring" ? "..." : "Fight"}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-center text-vintage-burnt-gold/40 text-xs py-4">No defenders yet. Be the first to stake!</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Defense Pool Modal */}
-          {showPoolModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setShowPoolModal(false)}>
-              <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black border border-vintage-gold/30 rounded-xl p-4 max-w-sm mx-4 w-full" onClick={e => e.stopPropagation()}>
-                <h3 className="text-sm font-bold text-vintage-gold uppercase tracking-[0.2em] mb-3 text-center">Defense Pool</h3>
-
-                {/* Current Pool Status */}
-                {myDefensePool?.isActive ? (
-                  <div className="space-y-3">
-                    <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-3 text-center">
-                      <p className="text-[9px] text-green-400/70 uppercase tracking-wider mb-1">Active Pool</p>
-                      <p className="text-xl font-bold text-green-400">{(myDefensePool.poolAmount || 0).toLocaleString()} VBMS</p>
-                      <p className="text-[9px] text-vintage-burnt-gold/50 mt-1">
-                        W: {myDefensePool.wins} | L: {myDefensePool.losses} | Earned: +{(myDefensePool.totalEarned || 0).toLocaleString()}
-                      </p>
-                    </div>
-                    <button
-                      onClick={async () => {
-                        if (!address || !myDefensePool?.deckId) return;
-                        try {
-                          await withdrawDefensePoolMutation({ address, deckId: myDefensePool.deckId });
-                          setShowPoolModal(false);
-                          setError(null);
-                        } catch (e: any) {
-                          setError(e.message);
-                        }
-                      }}
-                      className="w-full py-2 bg-red-900/40 hover:bg-red-900/60 text-red-400 border border-red-500/40 rounded font-bold text-xs uppercase tracking-wider transition-all"
-                    >
-                      Withdraw Pool
-                    </button>
-                    <p className="text-[8px] text-vintage-burnt-gold/30 text-center">Withdrawn VBMS go to your inbox (claim on home page)</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {/* Tier Selection */}
-                    <div>
-                      <p className="text-[9px] text-vintage-burnt-gold/50 uppercase tracking-wider mb-2">Select Stake Amount</p>
-                      <div className="flex gap-1.5 flex-wrap">
-                        {[1000, 5000, 10000, 25000, 50000].map(tier => (
-                          <button
-                            key={tier}
-                            onClick={() => setSelectedPoolTier(tier)}
-                            className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
-                              selectedPoolTier === tier
-                                ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50"
-                                : "bg-black/40 text-vintage-burnt-gold/60 border border-vintage-gold/10 hover:border-vintage-gold/30"
-                            }`}
-                          >
-                            {(tier / 1000).toFixed(0)}k
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Info */}
-                    <div className="bg-black/30 border border-vintage-gold/10 rounded-lg p-2 space-y-1">
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-vintage-burnt-gold/50">You Stake:</span>
-                        <span className="text-vintage-gold font-bold">{selectedPoolTier.toLocaleString()} VBMS</span>
-                      </div>
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-vintage-burnt-gold/50">Attack Fee (10%):</span>
-                        <span className="text-vintage-burnt-gold/70">{Math.floor(selectedPoolTier * 0.1).toLocaleString()} VBMS</span>
-                      </div>
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-vintage-burnt-gold/50">Defense Win:</span>
-                        <span className="text-green-400 font-bold">+{Math.floor(selectedPoolTier * 0.1 * 0.9).toLocaleString()} coins</span>
-                      </div>
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-vintage-burnt-gold/50">Defense Lose:</span>
-                        <span className="text-red-400 font-bold">-{selectedPoolTier.toLocaleString()} VBMS (entire pool)</span>
-                      </div>
-                      <div className="flex justify-between text-[10px]">
-                        <span className="text-vintage-burnt-gold/50">Contract Tax:</span>
-                        <span className="text-vintage-burnt-gold/40">{Math.floor(selectedPoolTier * 0.1 * 0.1).toLocaleString()} VBMS (10% of fee)</span>
-                      </div>
-                    </div>
-
-                    {/* Balance */}
-                    <p className="text-[9px] text-vintage-burnt-gold/40 text-center">
-                      Your VBMS Balance: {Number(vbmsBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} VBMS
-                    </p>
-
-                    {/* Activate Button - Onchain VBMS transfer */}
-                    <button
-                      onClick={async () => {
-                        if (!address || !activeDeck?._id) return;
-                        try {
-                          setError(null);
-                          setPoolTxStep("transferring");
-
-                          // Transfer VBMS directly to pool contract
-                          await writeTransfer({
-                            address: CONTRACTS.VBMSToken as `0x${string}`,
-                            abi: ERC20_ABI,
-                            functionName: "transfer",
-                            args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(selectedPoolTier.toString())],
-                          });
-
-                          // Step 3: Register in Convex
-                          await setDefensePoolMutation({
-                            address,
-                            deckId: activeDeck._id,
-                            amount: selectedPoolTier,
-                            username,
-                          });
-
-                          setPoolTxStep("done");
-                          refetchVBMS();
-                          setShowPoolModal(false);
-                          setError(null);
-                        } catch (e: any) {
-                          setPoolTxStep("error");
-                          setError(e.message || "Transaction failed");
-                        }
-                      }}
-                      disabled={!activeDeck?._id || poolTxStep === "transferring" || Number(vbmsBalance || 0) < selectedPoolTier}
-                      className="w-full py-2.5 bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-600 hover:to-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded transition-all disabled:opacity-40"
-                    >
-                      {poolTxStep === "transferring" ? "Sending VBMS..." : "Activate Defense Pool"}
-                    </button>
-                    <p className="text-[8px] text-vintage-burnt-gold/30 text-center">VBMS tokens will be sent to the game pool onchain</p>
-                  </div>
-                )}
-
-                {/* Close */}
-                <button
-                  onClick={() => setShowPoolModal(false)}
-                  className="w-full mt-3 py-1.5 text-vintage-burnt-gold/50 hover:text-vintage-gold text-[10px] uppercase tracking-wider transition-colors"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Attack Confirmation Modal */}
-          {attackConfirmTarget && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setAttackConfirmTarget(null)}>
-              <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black border border-orange-500/30 rounded-xl p-4 max-w-sm mx-4 w-full" onClick={e => e.stopPropagation()}>
-                <h3 className="text-sm font-bold text-orange-400 uppercase tracking-[0.2em] mb-3 text-center">Confirm Attack</h3>
-
-                {/* Target Info */}
-                <div className="bg-black/30 border border-orange-500/20 rounded-lg p-3 mb-3 space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-vintage-burnt-gold/60 uppercase">Target</span>
-                    <span className="text-sm font-bold text-vintage-gold">{attackConfirmTarget.username}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-vintage-burnt-gold/60 uppercase">Deck</span>
-                    <span className="text-xs text-vintage-burnt-gold">{attackConfirmTarget.deckName}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] text-vintage-burnt-gold/60 uppercase">Pool</span>
-                    <span className="text-sm font-bold text-green-400">{attackConfirmTarget.poolAmount.toLocaleString()} VBMS</span>
-                  </div>
-                </div>
-
-                {/* Attack Fee */}
-                <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-3 mb-3 text-center">
-                  <p className="text-[9px] text-orange-400/70 uppercase tracking-wider mb-1">Attack Fee (10%)</p>
-                  <p className="text-xl font-bold text-orange-400">{attackConfirmTarget.attackFee.toLocaleString()} VBMS</p>
-                  <p className="text-[9px] text-vintage-burnt-gold/50 mt-1">
-                    Win: +{attackConfirmTarget.poolAmount.toLocaleString()} (entire pool) | Lose: -{attackConfirmTarget.attackFee.toLocaleString()}
-                  </p>
-                </div>
-
-                {/* Buttons */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setAttackConfirmTarget(null)}
-                    className="flex-1 py-2 bg-gray-800/50 hover:bg-gray-700/50 text-gray-400 border border-gray-600/40 rounded font-bold text-xs uppercase tracking-wider transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!address || !attackConfirmTarget) return;
-                      try {
-                        setError(null);
-                        const target = attackConfirmTarget;
-                        setAttackConfirmTarget(null); // Close modal
-
-                        setPoolTxStep("transferring");
-                        await writeTransfer({
-                          address: CONTRACTS.VBMSToken as `0x${string}`,
-                          abi: ERC20_ABI,
-                          functionName: "transfer",
-                          args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(target.attackFee.toString())],
-                        });
-
-                        setPoolTxStep("done");
-                        const result = await autoMatchWithStakeMutation({
-                          address,
-                          username,
-                          poolTier: target.poolAmount,
-                        });
-                        if (result?.matchId) {
-                          setCurrentMatchId(result.matchId);
-                          setIsPvE(false);
-                          setView("battle");
-                          setBattleLog([]);
-                        }
-                        refetchVBMS();
-                      } catch (e: any) {
-                        setPoolTxStep("idle");
-                        setError(e.message || "Failed to challenge");
-                      }
-                    }}
-                    disabled={poolTxStep === "transferring"}
-                    className="flex-1 py-2 bg-gradient-to-r from-orange-700 to-red-600 hover:from-orange-600 hover:to-red-500 text-white font-bold text-xs uppercase tracking-wider rounded transition-all disabled:opacity-40"
-                  >
-                    {poolTxStep === "transferring" ? "..." : "Attack!"}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          </div>
-        </div>
-
-        {/* ===== BOTTOM STATS BAR ===== */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black via-black/90 to-transparent pt-6 pb-3 px-3">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-black/60 backdrop-blur-sm rounded-lg border border-vintage-gold/20 px-4 py-2.5 flex items-center justify-between gap-4 text-xs">
-              {/* Deck Status */}
-              <div className="flex items-center gap-2">
-                <span className="text-vintage-burnt-gold uppercase tracking-wide">Deck</span>
-                {hasDeck ? (
-                  <span className="text-green-400 font-bold">Ready ✓</span>
-                ) : (
-                  <span className="text-red-400 font-bold">None</span>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div className="w-px h-4 bg-vintage-gold/20" />
-
-              {/* Power */}
-              {hasDeck && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <span className="text-vintage-burnt-gold uppercase tracking-wide">Power</span>
-                    <span className="font-bold text-purple-400">{activeDeck?.totalPower || 0}</span>
-                  </div>
-                  <div className="w-px h-4 bg-vintage-gold/20" />
-                </>
-              )}
-
-              {/* Daily Battles */}
-              <div className="flex items-center gap-2">
-                <span className="text-vintage-burnt-gold uppercase tracking-wide">Battles</span>
-                <span className={`font-bold ${dailyBattles < REWARDED_BATTLES_PER_DAY ? 'text-green-400' : 'text-gray-400'}`}>
-                  {dailyBattles}/{REWARDED_BATTLES_PER_DAY}
-                </span>
-              </div>
-
-              {/* Divider */}
-              <div className="hidden sm:block w-px h-4 bg-vintage-gold/20" />
-
-              {/* VBMS Balance */}
-              <div className="hidden sm:flex items-center gap-2">
-                <span className="text-vintage-burnt-gold uppercase tracking-wide">VBMS</span>
-                <span className="text-vintage-gold font-bold">{Number(vbmsBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <TCGLobby
+        activeDeck={activeDeck}
+        playerDecks={playerDecks}
+        address={address}
+        username={username}
+        nfts={nfts}
+        dailyBattles={dailyBattles}
+        vbmsBalance={vbmsBalance}
+        refetchVBMS={refetchVBMS}
+        myDefensePool={myDefensePool}
+        defenseLeaderboard={defenseLeaderboard}
+        autoSelectCombo={autoSelectCombo}
+        onAutoSelectComboChange={setAutoSelectCombo}
+        onStartPvE={() => startPvEMatch()}
+        onMatchCreated={(matchId) => {
+          setCurrentMatchId(matchId);
+          setView("waiting");
+        }}
+        onMatchJoined={(matchId) => {
+          setCurrentMatchId(matchId);
+          setIsPvE(false);
+          setView("battle");
+          setBattleLog([]);
+        }}
+        onNavigate={(v) => setView(v as GameView)}
+        onGoHome={() => router.push("/")}
+        t={t as (k: string) => string}
+      />
     );
   }
 
@@ -4454,648 +3213,16 @@ export default function TCGPage() {
   // ═══════════════════════════════════════════════════════════════════════════════
 
   if (view === "deck-builder") {
-    // Get available cards
-    // VBMS, VibeFID, Nothing, and other vibechain collections are allowed in TCG
-    const tcgEligibleCards = (nfts || []).filter((card: any) =>
-      card.collection === "vibe" ||
-      card.collection === "nothing" ||
-      card.collection === "vibefid" ||
-      OTHER_TCG_COLLECTIONS.includes(card.collection)
-    );
-
-    // Note: getVbmsBaccaratImageUrl is now a global helper function
-
-    const availableCards: DeckCard[] = tcgEligibleCards.map((card: any) => {
-      const characterFromImage = getCharacterFromImage(card.imageUrl || card.image || "");
-      const isVibeFID = card.collection === "vibefid";
-      const isVbms = card.collection === "vibe";
-      const isOtherCollection = OTHER_TCG_COLLECTIONS.includes(card.collection);
-      const cardName = card.character || characterFromImage || card.name || (isVibeFID ? card.displayName || card.username : undefined);
-
-      // For VBMS cards, use baccarat PNG images for consistency with CPU cards
-      let imageUrl: string;
-      if (isVbms && cardName) {
-        imageUrl = getVbmsBaccaratImageUrl(cardName) || card.imageUrl || card.image || "/images/card-back.png";
-      } else {
-        imageUrl = card.imageUrl || card.image || "/images/card-back.png";
-      }
-
-      // Determine card type
-      let cardType: "vbms" | "nothing" | "vibefid" | "other";
-      if (card.collection === "nothing") cardType = "nothing";
-      else if (card.collection === "vibefid") cardType = "vibefid";
-      else if (isOtherCollection) cardType = "other";
-      else cardType = "vbms";
-
-      return {
-        type: cardType,
-        cardId: card.tokenId || card.id || `${card.collection}-${card.name}`,
-        name: cardName,
-        rarity: card.rarity || "Common",
-        power: card.power || 50,
-        imageUrl,
-        foil: card.foil,
-        wear: card.wear,
-        collection: card.collection,
-      };
-    });
-
-    // Rarity order for sorting
-    const rarityOrder: Record<string, number> = {
-      mythic: 5,
-      legendary: 4,
-      epic: 3,
-      rare: 2,
-      common: 1,
-    };
-
-    // Sort function
-    const sortCards = (cards: DeckCard[]) => {
-      return [...cards].sort((a, b) => {
-        if (deckSortBy === "power") {
-          const powerA = a.type === "nothing" || a.type === "other" ? Math.floor(a.power * 0.5) : a.power;
-          const powerB = b.type === "nothing" || b.type === "other" ? Math.floor(b.power * 0.5) : b.power;
-          return deckSortDesc ? powerB - powerA : powerA - powerB;
-        } else {
-          const rarityA = rarityOrder[a.rarity?.toLowerCase() || "common"] || 1;
-          const rarityB = rarityOrder[b.rarity?.toLowerCase() || "common"] || 1;
-          if (rarityA !== rarityB) {
-            return deckSortDesc ? rarityB - rarityA : rarityA - rarityB;
-          }
-          // Same rarity: sort by power
-          return deckSortDesc ? b.power - a.power : a.power - b.power;
-        }
-      });
-    };
-
-    const vbmsCards = sortCards(availableCards.filter((c: DeckCard) => c.type === "vbms"));
-    const vibefidCards = sortCards(availableCards.filter((c: DeckCard) => c.type === "vibefid"));
-    const nothingCards = sortCards(availableCards.filter((c: DeckCard) => c.type === "nothing" || c.type === "other"));
-
-    const selectedVbms = selectedCards.filter((c: DeckCard) => c.type === "vbms").length;
-    const selectedVibefid = selectedCards.filter((c: DeckCard) => c.type === "vibefid").length;
-    const selectedVbmsOrVibefid = selectedVbms + selectedVibefid;
-    const selectedNothing = selectedCards.filter((c: DeckCard) => c.type === "nothing" || c.type === "other").length;
-    const totalPower = selectedCards.reduce((sum, c) => {
-      const power = c.type === "nothing" || c.type === "other" ? Math.floor(c.power * 0.5) : c.power;
-      return sum + power;
-    }, 0);
-
-    const canSave =
-      selectedCards.length === TCG_CONFIG.DECK_SIZE &&
-      selectedVbmsOrVibefid >= TCG_CONFIG.MIN_VBMS_OR_VIBEFID;
-
     return (
-      <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
-
-        {/* ===== TOP HUD ===== */}
-        <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black via-black/95 to-transparent">
-          <div className="max-w-6xl mx-auto flex items-center justify-between">
-            <button
-              onClick={() => setView("lobby")}
-              className="group flex items-center gap-1.5 px-3 py-1.5 text-vintage-burnt-gold/70 hover:text-vintage-gold transition-colors text-[11px] font-medium uppercase tracking-[0.15em]"
-            >
-              <span className="group-hover:-translate-x-0.5 inline-block transition-transform text-vintage-gold/50 group-hover:text-vintage-gold">←</span>
-              {t('tcgBack')}
-            </button>
-            <p className="text-[10px] text-vintage-burnt-gold/50 uppercase tracking-[0.2em]">Select 12 cards</p>
-            <button
-              onClick={handleSaveDeck}
-              disabled={!canSave}
-              className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${canSave ? 'bg-vintage-gold text-black hover:bg-yellow-400' : 'bg-black/30 text-vintage-burnt-gold/40 cursor-not-allowed'} transition-colors`}
-            >
-              {t('tcgSaveDeck')}
-            </button>
-          </div>
-        </div>
-
-        {/* ===== MAIN SCROLLABLE CONTENT ===== */}
-        <div className="absolute inset-0 pt-16 pb-4 overflow-y-auto">
-          <div className="max-w-6xl mx-auto px-4">
-
-          {/* Error */}
-          {error && (
-            <div className="bg-red-900/30 border border-red-500/50 text-red-300 px-4 py-2 rounded-lg mb-4 text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Loading Status */}
-          {cardsLoading && (
-            <div className="bg-vintage-neon-blue/10 border border-vintage-neon-blue/30 text-vintage-neon-blue px-4 py-2 rounded-lg mb-4 text-sm">
-              {t('tcgLoading')} (Status: {status})
-            </div>
-          )}
-
-          {/* Debug Info */}
-          {!cardsLoading && nfts.length === 0 && (
-            <div className="bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-gold px-4 py-2 rounded-lg mb-4 text-sm">
-              {t('tcgNoCardsFound')}
-              <br />
-              <span className="text-xs text-vintage-burnt-gold">Status: {status} | Address: {address || 'not connected'}</span>
-            </div>
-          )}
-
-          {/* Deck Name */}
-          <input
-            type="text"
-            value={deckName}
-            onChange={(e) => setDeckName(e.target.value)}
-            className="w-full bg-black/40 border border-vintage-gold/20 rounded px-3 py-2 text-vintage-gold font-bold tracking-wide focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-sm mb-3"
-            placeholder={t('tcgDeckName')}
-          />
-
-          {/* Stats Row */}
-          <div className="flex items-center justify-between gap-2 mb-3 text-[10px]">
-            <div className="flex items-center gap-2">
-              <span className={`px-2 py-1 rounded ${selectedCards.length === TCG_CONFIG.DECK_SIZE ? "bg-green-900/40 text-green-400" : "bg-black/40 text-vintage-burnt-gold"}`}>
-                {selectedCards.length}/{TCG_CONFIG.DECK_SIZE}
-              </span>
-              <span className={`px-2 py-1 rounded ${selectedVbmsOrVibefid >= TCG_CONFIG.MIN_VBMS_OR_VIBEFID ? "bg-green-900/40 text-green-400" : "bg-red-900/40 text-red-400"}`}>
-                {selectedVbmsOrVibefid}/{TCG_CONFIG.MIN_VBMS_OR_VIBEFID} VBMS
-              </span>
-              <span className="px-2 py-1 rounded bg-vintage-gold/20 text-vintage-gold font-bold">
-                {totalPower} PWR
-              </span>
-            </div>
-          </div>
-
-          {/* Buttons Row */}
-          <div className="flex items-center gap-2 mb-3 text-[10px]">
-            <button
-              onClick={() => { setDeckSortBy("power"); setDeckSortDesc(!deckSortDesc); }}
-              className={`px-3 py-1.5 rounded ${deckSortBy === "power" ? "bg-vintage-gold/20 text-vintage-gold" : "bg-black/40 text-vintage-burnt-gold"}`}
-            >
-              ⚡ Power {deckSortBy === "power" && (deckSortDesc ? "↓" : "↑")}
-            </button>
-            <button
-              onClick={() => { setDeckSortBy("rarity"); setDeckSortDesc(!deckSortDesc); }}
-              className={`px-3 py-1.5 rounded ${deckSortBy === "rarity" ? "bg-purple-900/40 text-purple-400" : "bg-black/40 text-vintage-burnt-gold"}`}
-            >
-              💎 Rarity {deckSortBy === "rarity" && (deckSortDesc ? "↓" : "↑")}
-            </button>
-            <div className="flex-1"></div>
-              <button
-                onClick={() => {
-                  // AUTO COMBO v6: VibeFID funciona como wildcard para TODOS os combos!
-                  const allCards = [...vbmsCards, ...vibefidCards, ...nothingCards];
-                  const hasVibeFID = vibefidCards.length > 0;
-
-                  // Resolve card name (apply aliases)
-                  const resolveName = (name: string): string => {
-                    const lower = name.toLowerCase();
-                    return CARD_NAME_ALIASES[lower] || lower;
-                  };
-
-                  // Build card lookup by resolved name (best power)
-                  const cardsByName = new Map<string, DeckCard>();
-                  for (const card of allCards) {
-                    const resolved = resolveName(card.name || "");
-                    if (!resolved) continue;
-                    const existing = cardsByName.get(resolved);
-                    if (!existing || card.power > existing.power) {
-                      cardsByName.set(resolved, card);
-                    }
-                  }
-
-                  // Find ALL combos we can complete (with or without VibeFID)
-                  type ComboOption = {
-                    combo: typeof CARD_COMBOS[0];
-                    cards: DeckCard[];
-                    needsWildcard: boolean;
-                  };
-                  const availableCombos: ComboOption[] = [];
-
-                  for (const combo of CARD_COMBOS) {
-                    const minRequired = combo.minCards || combo.cards.length;
-                    const foundCards: DeckCard[] = [];
-
-                    for (const comboCardName of combo.cards) {
-                      const card = cardsByName.get(comboCardName.toLowerCase());
-                      if (card) foundCards.push(card);
-                    }
-
-                    const missing = minRequired - foundCards.length;
-                    if (foundCards.length >= minRequired) {
-                      // Complete without wildcard - add ALL found cards (not just minRequired)
-                      availableCombos.push({
-                        combo,
-                        cards: foundCards,
-                        needsWildcard: false
-                      });
-                    } else if (missing === 1 && hasVibeFID) {
-                      // Can complete with VibeFID wildcard (VibeFID works for ALL combos!)
-                      availableCombos.push({
-                        combo,
-                        cards: foundCards,
-                        needsWildcard: true
-                      });
-                    }
-                  }
-
-                  // Sort by: fewer cards first (to fit more combos!), then higher bonus
-                  availableCombos.sort((a, b) => {
-                    // Fewer cards = more room for other combos
-                    if (a.cards.length !== b.cards.length) return a.cards.length - b.cards.length;
-                    // Then by bonus value
-                    return b.combo.bonus.value - a.combo.bonus.value;
-                  });
-
-                  // Select combos - VibeFID can complete UNLIMITED combos!
-                  const selectedCombos: ComboOption[] = [];
-                  const usedCardNames = new Set<string>();
-                  const cardsToAdd: DeckCard[] = [];
-
-                  for (const option of availableCombos) {
-                    // For wildcard combos, we only need 1 card (VibeFID is the other)
-                    // For regular combos, we need all cards
-                    const minRequired = option.combo.minCards || option.combo.cards.length;
-                    const cardsNeeded = option.needsWildcard ? minRequired - 1 : minRequired;
-
-                    // Get available cards from this combo
-                    const availableCards = option.cards.filter(c => {
-                      const resolved = resolveName(c.name || "");
-                      return !usedCardNames.has(resolved);
-                    });
-
-                    // Can we complete this combo?
-                    if (availableCards.length < cardsNeeded) continue;
-
-                    // Select best cards (by power) up to cardsNeeded
-                    const sortedCards = [...availableCards].sort((a, b) => b.power - a.power);
-                    const selectedCards = sortedCards.slice(0, cardsNeeded);
-
-                    // Select this combo!
-                    selectedCombos.push(option);
-                    for (const card of selectedCards) {
-                      usedCardNames.add(resolveName(card.name || ""));
-                      cardsToAdd.push(card);
-                    }
-                  }
-
-                  // Build deck from selected combos
-                  const newDeck: DeckCard[] = [];
-                  const usedCardIds = new Set<string>();
-                  let vbmsOrFidCount = 0;
-
-                  const addCard = (card: DeckCard): boolean => {
-                    if (usedCardIds.has(card.cardId)) return true;
-                    if (newDeck.length >= TCG_CONFIG.DECK_SIZE) return false;
-                    newDeck.push(card);
-                    usedCardIds.add(card.cardId);
-                    if (card.type === "vbms" || card.type === "vibefid") vbmsOrFidCount++;
-                    return true;
-                  };
-
-                  // Add VibeFID first (it completes ALL wildcard combos!)
-                  for (const vibefid of vibefidCards) {
-                    addCard(vibefid);
-                  }
-
-                  // Add cards from selected combos
-                  for (const card of cardsToAdd) {
-                    addCard(card);
-                  }
-
-                  // Fill remaining slots with high-power VBMS cards
-                  if (newDeck.length < TCG_CONFIG.DECK_SIZE) {
-                    const remainingCards = vbmsCards
-                      .filter(c => !usedCardIds.has(c.cardId))
-                      .sort((a, b) => b.power - a.power);
-                    for (const card of remainingCards) {
-                      if (!addCard(card)) break;
-                    }
-                  }
-
-                  setSelectedCards(newDeck);
-                  setError(null);
-                }}
-                className="px-2 py-1 rounded transition-all bg-yellow-900/30 border border-yellow-500/30 text-yellow-400 hover:bg-yellow-900/50 hover:border-yellow-500/50"
-                title="Auto-build deck - every card in a combo!"
-              >
-                🎯 COMBO
-              </button>
-              <button
-                onClick={() => {
-                  // Auto deck focusing on POWER
-                  const allCards = [...vbmsCards, ...vibefidCards, ...nothingCards];
-
-                  // Sort by effective power (accounting for 0.5x penalty)
-                  const sortedByPower = [...allCards].sort((a, b) => {
-                    const powerA = (a.type === "nothing" || a.type === "other") ? Math.floor(a.power * 0.5) : a.power;
-                    const powerB = (b.type === "nothing" || b.type === "other") ? Math.floor(b.power * 0.5) : b.power;
-                    return powerB - powerA;
-                  });
-
-                  // Build deck respecting constraints
-                  const newDeck: DeckCard[] = [];
-                  let vbmsOrFidCount = 0;
-                  let nothingOrOtherCount = 0;
-                  let vibefidUsed = false;
-
-                  for (const card of sortedByPower) {
-                    if (newDeck.length >= TCG_CONFIG.DECK_SIZE) break;
-
-                    if (card.type === "vibefid") {
-                      if (vibefidUsed) continue;
-                      vibefidUsed = true;
-                      vbmsOrFidCount++;
-                    } else if (card.type === "vbms") {
-                      vbmsOrFidCount++;
-                    } else if (card.type === "nothing" || card.type === "other") {
-                      if (nothingOrOtherCount >= TCG_CONFIG.MAX_NOTHING) continue;
-                      nothingOrOtherCount++;
-                    }
-
-                    newDeck.push(card);
-                  }
-
-                  // Ensure minimum VBMS requirement
-                  if (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID) {
-                    const vbmsNotInDeck = vbmsCards
-                      .filter(c => !newDeck.find(d => d.cardId === c.cardId))
-                      .sort((a, b) => b.power - a.power);
-                    const nothingInDeck = newDeck
-                      .filter(c => c.type === "nothing" || c.type === "other")
-                      .sort((a, b) => Math.floor(a.power * 0.5) - Math.floor(b.power * 0.5));
-
-                    while (vbmsOrFidCount < TCG_CONFIG.MIN_VBMS_OR_VIBEFID && vbmsNotInDeck.length > 0 && nothingInDeck.length > 0) {
-                      const toRemove = nothingInDeck.shift();
-                      const toAdd = vbmsNotInDeck.shift();
-                      if (toRemove && toAdd) {
-                        const idx = newDeck.findIndex(c => c.cardId === toRemove.cardId);
-                        if (idx !== -1) {
-                          newDeck[idx] = toAdd;
-                          vbmsOrFidCount++;
-                          nothingOrOtherCount--;
-                        }
-                      }
-                    }
-                  }
-
-                  setSelectedCards(newDeck);
-                  setError(null);
-                }}
-                className="px-2 py-1 rounded transition-all bg-orange-900/30 border border-orange-500/30 text-orange-400 hover:bg-orange-900/50 hover:border-orange-500/50"
-                title="Auto-build deck with highest power cards"
-              >
-                ⚡ POWER
-              </button>
-          </div>
-
-          {/* Combo Preview */}
-          {selectedCards.length >= 2 && (
-            <div className="bg-gradient-to-r from-yellow-900/20 to-amber-900/20 border border-yellow-500/20 rounded-lg p-2 mb-3">
-              <h3 className="text-[9px] font-bold text-yellow-400 mb-1.5 uppercase tracking-[0.2em]">🎯 Combos {selectedVibefid > 0 && <span className="text-cyan-400">(VibeFID = Wildcard!)</span>}</h3>
-              {(() => {
-                const deckCombos = detectCombos(selectedCards);
-                if (deckCombos.length === 0) {
-                  return <p className="text-[10px] text-gray-500 italic">No combos yet - add more cards!</p>;
-                }
-                return (
-                  <div className="flex flex-wrap gap-1.5">
-                    {deckCombos.map(({ combo, matchedCards, wildcardsUsed }) => (
-                      <div
-                        key={combo.name}
-                        className={`px-2 py-1 bg-black/40 rounded border text-[10px] ${wildcardsUsed > 0 ? 'border-cyan-500/50' : 'border-yellow-500/30'}`}
-                        title={`${combo.description}${wildcardsUsed > 0 ? ` (${wildcardsUsed} VibeFID wildcard)` : ''}`}
-                      >
-                        <span className="text-yellow-400">{combo.emoji}</span>
-                        <span className="text-white ml-1">{combo.name}</span>
-                        <span className="text-green-400 ml-1">+{combo.bonus.value}</span>
-                        {wildcardsUsed > 0 && <span className="text-cyan-400 ml-1">🃏</span>}
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </div>
-          )}
-
-          {/* Selected Cards */}
-          <div className="bg-gradient-to-b from-vintage-charcoal/40 to-black/30 border border-vintage-gold/20 rounded-lg p-3 mb-3">
-            <h3 className="text-[9px] font-bold text-vintage-gold mb-2 uppercase tracking-[0.2em]">{t('tcgCurrentDeck')} <span className="text-vintage-burnt-gold/60">({selectedCards.length})</span></h3>
-            <div className="flex flex-wrap gap-1.5 min-h-[70px]">
-              {selectedCards.map((card: DeckCard) => {
-                const ability = getCardAbility(card.name, card, t as (k: string) => string);
-                return (
-                  <div
-                    key={card.cardId}
-                    className={`relative w-12 h-[68px] rounded border-2 cursor-pointer transition-all hover:scale-105 overflow-hidden ${RARITY_COLORS[card.rarity] || "border-gray-500"}`}
-                    title={`${card.name} (${card.rarity}) - ${card.power} power`}
-                  >
-                    {/* Card image/video */}
-                    <CardMedia
-                      src={card.imageUrl}
-                      alt={card.name}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    {/* Info button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDetailCard(card);
-                      }}
-                      className="absolute top-0 right-0 w-3.5 h-3.5 bg-blue-600 hover:bg-blue-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center z-10"
-                    >
-                      i
-                    </button>
-                    {/* Remove on click */}
-                    <div
-                      onClick={() => handleCardSelect(card)}
-                      className="absolute inset-0 bg-black/40 rounded-lg flex flex-col items-center justify-end p-0.5"
-                    >
-                      <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
-                      <span className="text-[9px] text-yellow-400 font-bold">{card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power}</span>
-                      {ability && (card.type === "vbms" || card.type === "vibefid") && (
-                        <span className="text-[5px] text-purple-400">⚡</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              {selectedCards.length === 0 && (
-                <p className="text-vintage-burnt-gold/60 text-sm">{t('tcgClickToAdd')}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Available Cards */}
-          <div className="grid md:grid-cols-2 gap-3">
-            {/* VBMS Cards */}
-            <div className="bg-gradient-to-b from-vintage-charcoal/40 to-black/30 border border-vintage-gold/20 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-[9px] font-bold text-vintage-gold uppercase tracking-[0.2em]">VBMS <span className="text-vintage-burnt-gold/60">({vbmsCards.length})</span></h3>
-                {vbmsCards.length > CARDS_PER_PAGE && (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setVbmsPage(p => Math.max(0, p - 1))}
-                      disabled={vbmsPage === 0}
-                      className="w-5 h-5 flex items-center justify-center text-[10px] bg-vintage-gold/20 hover:bg-vintage-gold/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
-                    >
-                      ←
-                    </button>
-                    <span className="text-[8px] text-vintage-burnt-gold/60 min-w-[40px] text-center">
-                      {vbmsPage + 1}/{Math.ceil(vbmsCards.length / CARDS_PER_PAGE)}
-                    </span>
-                    <button
-                      onClick={() => setVbmsPage(p => Math.min(Math.ceil(vbmsCards.length / CARDS_PER_PAGE) - 1, p + 1))}
-                      disabled={vbmsPage >= Math.ceil(vbmsCards.length / CARDS_PER_PAGE) - 1}
-                      className="w-5 h-5 flex items-center justify-center text-[10px] bg-vintage-gold/20 hover:bg-vintage-gold/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
-                    >
-                      →
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {vbmsCards.slice(vbmsPage * CARDS_PER_PAGE, (vbmsPage + 1) * CARDS_PER_PAGE).map((card: DeckCard) => {
-                  const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
-                  const ability = getCardAbility(card.name, card, t as (k: string) => string);
-                  return (
-                    <div
-                      key={card.cardId}
-                      className={`relative w-14 h-20 rounded border-2 cursor-pointer transition-all hover:scale-105 overflow-hidden ${
-                        isSelected
-                          ? "border-green-500 ring-2 ring-green-500/50"
-                          : RARITY_COLORS[card.rarity] || "border-gray-500"
-                      }`}
-                      title={`${card.name} (${card.rarity}) - ${card.power} power`}
-                    >
-                      <CardMedia src={card.imageUrl} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
-                      <button onClick={(e) => { e.stopPropagation(); setDetailCard(card); }} className="absolute top-0 right-0 w-3.5 h-3.5 bg-blue-600 hover:bg-blue-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center z-10">i</button>
-                      <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-black/40 rounded flex flex-col items-center justify-end p-0.5">
-                        <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
-                        <span className="text-[10px] text-yellow-400 font-bold">{card.power}</span>
-                        {ability && <span className="text-[5px] text-purple-400">⚡</span>}
-                      </div>
-                    </div>
-                  );
-                })}
-                {vbmsCards.length === 0 && <p className="text-vintage-burnt-gold/60 text-xs">{t('tcgNoVbmsCards')}</p>}
-              </div>
-            </div>
-
-            {/* VibeFID Cards */}
-            {vibefidCards.length > 0 && (
-              <div className="bg-gradient-to-b from-cyan-950/40 to-black/30 border border-cyan-500/30 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-[9px] font-bold text-cyan-400 uppercase tracking-[0.2em]">VibeFID <span className="text-cyan-400/60">({vibefidCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">5x</span></h3>
-                  {vibefidCards.length > CARDS_PER_PAGE && (
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setVibefidPage(p => Math.max(0, p - 1))}
-                        disabled={vibefidPage === 0}
-                        className="w-5 h-5 flex items-center justify-center text-[10px] bg-cyan-500/20 hover:bg-cyan-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
-                      >
-                        ←
-                      </button>
-                      <span className="text-[8px] text-cyan-400/60 min-w-[40px] text-center">
-                        {vibefidPage + 1}/{Math.ceil(vibefidCards.length / CARDS_PER_PAGE)}
-                      </span>
-                      <button
-                        onClick={() => setVibefidPage(p => Math.min(Math.ceil(vibefidCards.length / CARDS_PER_PAGE) - 1, p + 1))}
-                        disabled={vibefidPage >= Math.ceil(vibefidCards.length / CARDS_PER_PAGE) - 1}
-                        className="w-5 h-5 flex items-center justify-center text-[10px] bg-cyan-500/20 hover:bg-cyan-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
-                      >
-                        →
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {vibefidCards.slice(vibefidPage * CARDS_PER_PAGE, (vibefidPage + 1) * CARDS_PER_PAGE).map((card: DeckCard) => {
-                    const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
-                    const ability = getCardAbility(card.name, card, t as (k: string) => string);
-                    return (
-                      <div
-                        key={card.cardId}
-                        className={`relative w-14 h-20 rounded border-2 cursor-pointer transition-all hover:scale-105 overflow-hidden ${
-                          isSelected ? "border-green-500 ring-2 ring-green-500/50" : RARITY_COLORS[card.rarity] || "border-cyan-500"
-                        }`}
-                        title={`${card.name} (${card.rarity}) - ${card.power} power`}
-                      >
-                        <CardMedia src={card.imageUrl} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
-                        <button onClick={(e) => { e.stopPropagation(); setDetailCard(card); }} className="absolute top-0 right-0 w-3.5 h-3.5 bg-cyan-600 hover:bg-cyan-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center z-10">i</button>
-                        <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-black/40 rounded flex flex-col items-center justify-end p-0.5">
-                          <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
-                          <span className="text-[10px] text-cyan-400 font-bold">{card.power}</span>
-                          {ability && <span className="text-[5px] text-purple-400">⚡</span>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Nothing Cards */}
-            <div className="bg-gradient-to-b from-purple-950/40 to-black/30 border border-purple-500/30 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-[9px] font-bold text-purple-400 uppercase tracking-[0.2em]">Others <span className="text-purple-400/60">({nothingCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">50% power</span></h3>
-                {nothingCards.length > CARDS_PER_PAGE && (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => setOthersPage(p => Math.max(0, p - 1))}
-                      disabled={othersPage === 0}
-                      className="w-5 h-5 flex items-center justify-center text-[10px] bg-purple-500/20 hover:bg-purple-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
-                    >
-                      ←
-                    </button>
-                    <span className="text-[8px] text-purple-400/60 min-w-[40px] text-center">
-                      {othersPage + 1}/{Math.ceil(nothingCards.length / CARDS_PER_PAGE)}
-                    </span>
-                    <button
-                      onClick={() => setOthersPage(p => Math.min(Math.ceil(nothingCards.length / CARDS_PER_PAGE) - 1, p + 1))}
-                      disabled={othersPage >= Math.ceil(nothingCards.length / CARDS_PER_PAGE) - 1}
-                      className="w-5 h-5 flex items-center justify-center text-[10px] bg-purple-500/20 hover:bg-purple-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
-                    >
-                      →
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {nothingCards.slice(othersPage * CARDS_PER_PAGE, (othersPage + 1) * CARDS_PER_PAGE).map((card: DeckCard) => {
-                  const isSelected = selectedCards.some((c: DeckCard) => c.cardId === card.cardId);
-                  return (
-                    <div
-                      key={card.cardId}
-                      className={`relative w-14 h-20 rounded border-2 cursor-pointer transition-all hover:scale-105 overflow-hidden ${
-                        isSelected ? "border-green-500 ring-2 ring-green-500/50" : "border-purple-500/50"
-                      }`}
-                      title={`${card.name} (${card.rarity}) - ${Math.floor(card.power * 0.5)} effective power`}
-                    >
-                      <CardMedia src={card.imageUrl} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
-                      <button onClick={(e) => { e.stopPropagation(); setDetailCard(card); }} className="absolute top-0 right-0 w-3.5 h-3.5 bg-purple-600 hover:bg-purple-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center z-10">i</button>
-                      <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-black/40 rounded flex flex-col items-center justify-end p-0.5">
-                        <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
-                        <span className="text-[10px] text-purple-400 font-bold">{Math.floor(card.power * 0.5)}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-                {nothingCards.length === 0 && <p className="text-vintage-burnt-gold/60 text-xs">{t('tcgNoNothingCards')}</p>}
-              </div>
-            </div>
-          </div>
-
-          </div>
-        </div>
-
-        {/* Card Detail Modal - using key to prevent remount on timer updates */}
-        {detailCard && (
-          <div key={`detail-modal-${detailCard.cardId}`}>
-            <CardDetailModal
-              card={detailCard}
-              onClose={() => setDetailCard(null)}
-              onSelect={() => handleCardSelect(detailCard)}
-            />
-          </div>
-        )}
-      </div>
+      <DeckBuilder
+        nfts={nfts}
+        cardsLoading={cardsLoading}
+        status={status}
+        address={address}
+        onBack={() => setView("lobby")}
+        t={t as (k: string) => string}
+        lang={lang}
+      />
     );
   }
 
@@ -5105,69 +3232,11 @@ export default function TCGPage() {
 
   if (view === "waiting") {
     return (
-      <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
-
-        {/* Subtle animated glow */}
-        <div className="absolute inset-0 opacity-30 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" />
-        </div>
-
-        <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
-          <div className="text-center max-w-md w-full">
-            {/* Header Badge */}
-            <div className="mb-8">
-              <span className="text-[10px] text-purple-300 bg-purple-900/40 border border-purple-500/30 px-4 py-1.5 rounded-full uppercase tracking-[0.25em] font-medium">PvP Battle</span>
-            </div>
-
-            <h1 className="text-2xl md:text-3xl font-black text-vintage-gold uppercase tracking-[0.2em] mb-2">{t('tcgWaitingOpponent')}</h1>
-            <p className="text-vintage-burnt-gold/70 mb-8 text-sm tracking-wide">Share this code with your opponent</p>
-
-            {/* Room Code Card */}
-            <div className="bg-gradient-to-b from-vintage-charcoal/60 to-black/40 border border-vintage-gold/20 rounded-xl p-8 mb-8 relative overflow-hidden shadow-2xl shadow-black/50">
-              {/* Animated border glow */}
-              <div className="absolute inset-0 bg-gradient-to-r from-vintage-gold/0 via-vintage-gold/10 to-vintage-gold/0 animate-pulse" />
-
-              <p className="text-[9px] text-vintage-burnt-gold/50 mb-4 uppercase tracking-[0.3em]">{t('tcgRoomCode')}</p>
-              <p className="text-5xl md:text-6xl font-mono font-black text-vintage-gold tracking-[0.4em] mb-6 relative drop-shadow-lg">
-                {currentMatch?.roomId || "..."}
-              </p>
-
-              {/* Copy button */}
-              <button
-                onClick={() => {
-                  if (currentMatch?.roomId) {
-                    navigator.clipboard.writeText(currentMatch.roomId);
-                  }
-                }}
-                className="relative overflow-hidden group"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-vintage-gold/80 via-yellow-500/80 to-vintage-gold/80 opacity-90 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
-                <span className="relative z-10 block py-2.5 px-6 text-black font-black text-xs uppercase tracking-[0.2em]">
-                  Copy Code
-                </span>
-              </button>
-            </div>
-
-            {/* Waiting animation */}
-            <div className="flex justify-center gap-3 mb-10">
-              <span className="w-2.5 h-2.5 bg-vintage-gold/80 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-              <span className="w-2.5 h-2.5 bg-vintage-gold/80 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-              <span className="w-2.5 h-2.5 bg-vintage-gold/80 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
-            </div>
-
-            {/* Cancel button */}
-            <button
-              onClick={handleCancelMatch}
-              className="group flex items-center gap-2 mx-auto text-red-400/70 hover:text-red-400 transition-colors text-[11px] uppercase tracking-[0.15em]"
-            >
-              <span className="text-red-500/50 group-hover:text-red-400 transition-colors">×</span>
-              Cancel Match
-            </button>
-          </div>
-        </div>
-      </div>
+      <WaitingView
+        roomId={currentMatch?.roomId}
+        onCancel={handleCancelMatch}
+        t={t as (k: string) => string}
+      />
     );
   }
 
@@ -5319,63 +3388,17 @@ export default function TCGPage() {
               </div>
 
               {/* Profile Dropdown Menu - Royal style */}
-              {showProfileMenu && (
-                <div className="absolute top-16 left-0 z-50 rounded-xl shadow-xl overflow-hidden min-w-[160px]"
-                  style={{
-                    background: "linear-gradient(180deg, rgba(20,20,20,0.98) 0%, rgba(10,10,10,0.98) 100%)",
-                    border: "2px solid",
-                    borderImage: "linear-gradient(135deg, #B8860B, #8B6914, #B8860B) 1",
-                    boxShadow: "0 10px 30px rgba(0,0,0,0.7)"
-                  }}
-                >
-                  <div className="p-2 text-xs text-[#B8860B]" style={{ borderBottom: "1px solid rgba(184,134,11,0.3)" }}>
-                    🔊 Meme Sounds
-                  </div>
-                  <button
-                    onClick={() => { playMemeSound("mechaArena"); setShowProfileMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-purple-600 flex items-center gap-2"
-                  >
-                    🤖 Mecha Arena
-                  </button>
-                  <button
-                    onClick={() => { playMemeSound("ggez"); setShowProfileMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-green-600 flex items-center gap-2"
-                  >
-                    😎 GG EZ
-                  </button>
-                  <button
-                    onClick={() => { playMemeSound("bruh"); setShowProfileMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-orange-600 flex items-center gap-2"
-                  >
-                    😐 Bruh
-                  </button>
-                  <button
-                    onClick={() => { playMemeSound("emotional"); setShowProfileMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-red-600 flex items-center gap-2"
-                  >
-                    💔 Emotional Damage
-                  </button>
-                  <button
-                    onClick={() => { playMemeSound("wow"); setShowProfileMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-yellow-600 flex items-center gap-2"
-                  >
-                    🤯 MLG Wow
-                  </button>
-                  <div style={{ borderTop: "1px solid rgba(184,134,11,0.3)" }}>
-                    <button
-                      onClick={() => {
-                        setIsPvE(false);
-                        setPveGameState(null);
-                        setView("lobby");
-                        setShowProfileMenu(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-900/50 flex items-center gap-2"
-                    >
-                      🏳️ {t('tcgSurrender')}
-                    </button>
-                  </div>
-                </div>
-              )}
+              <MemeSoundMenu
+                show={showProfileMenu}
+                onClose={() => setShowProfileMenu(false)}
+                onSurrender={() => {
+                  setIsPvE(false);
+                  setPveGameState(null);
+                  setView("lobby");
+                  setShowProfileMenu(false);
+                }}
+                t={t as (k: string) => string}
+              />
             </div>
 
             {/* Turn Indicator + Phase (center) - Royal style */}
@@ -6260,191 +4283,30 @@ export default function TCGPage() {
 
         {/* Combo Detail Modal */}
         {detailCombo && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setDetailCombo(null)}>
-            <div className="bg-gradient-to-br from-yellow-900 via-amber-900 to-orange-950 rounded-2xl p-6 max-w-sm w-full border-2 border-yellow-500 shadow-2xl shadow-yellow-500/30" onClick={e => e.stopPropagation()}>
-              {/* Header */}
-              <div className="text-center mb-4">
-                <div className="text-5xl mb-2">{detailCombo.emoji}</div>
-                <h2 className="text-2xl font-black text-yellow-400">{detailCombo.name}</h2>
-              </div>
-
-              {/* Cards in Combo */}
-              <div className="mb-4">
-                <p className="text-xs text-yellow-300/70 mb-2 uppercase tracking-wider">{t('tcgCardsRequired')}</p>
-                <div className="flex flex-wrap gap-1 justify-center">
-                  {detailCombo.cards.map((cardName, idx: number) => (
-                    <span key={idx} className="px-2 py-1 bg-black/40 rounded text-sm text-white capitalize">
-                      {cardName}
-                    </span>
-                  ))}
-                </div>
-                {detailCombo.minCards && (
-                  <p className="text-xs text-yellow-400/60 mt-1 text-center">
-                    (Need at least {detailCombo.minCards} of these)
-                  </p>
-                )}
-              </div>
-
-              {/* Effect */}
-              <div className="bg-black/30 rounded-xl p-4 mb-4">
-                <p className="text-xs text-yellow-300/70 mb-1 uppercase tracking-wider">{t('tcgBonusEffect')}</p>
-                <p className="text-yellow-100 font-bold">{detailCombo.description}</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                    detailCombo.bonus.type === "power" ? "bg-green-600" :
-                    detailCombo.bonus.type === "power_percent" ? "bg-purple-600" :
-                    detailCombo.bonus.type === "steal" ? "bg-red-600" : "bg-blue-600"
-                  }`}>
-                    {detailCombo.bonus.type === "power" ? `+${detailCombo.bonus.value} Power` :
-                     detailCombo.bonus.type === "power_percent" ? `+${detailCombo.bonus.value}% Power` :
-                     detailCombo.bonus.type === "steal" ? `-${detailCombo.bonus.value} Enemy` :
-                     detailCombo.bonus.type}
-                  </span>
-                  <span className="text-xs text-yellow-400/60">
-                    to {detailCombo.bonus.target === "self" ? "combo cards" : detailCombo.bonus.target}
-                  </span>
-                </div>
-              </div>
-
-              {/* Close Button */}
-              <button
-                onClick={() => setDetailCombo(null)}
-                className="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-2 rounded-lg transition-colors"
-              >
-                Got it!
-              </button>
-            </div>
-          </div>
+          <ComboDetailModal
+            combo={detailCombo}
+            onClose={() => setDetailCombo(null)}
+            t={t as (k: string) => string}
+          />
         )}
 
         {/* VibeFID Combo Selection Modal */}
         {vibefidComboModal && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-            <div className="bg-gradient-to-br from-cyan-900 via-blue-900 to-indigo-950 rounded-2xl p-6 max-w-sm w-full border-2 border-cyan-500 shadow-2xl shadow-cyan-500/30" onClick={e => e.stopPropagation()}>
-              {/* Header */}
-              <div className="text-center mb-4">
-                <div className="text-5xl mb-2">🃏</div>
-                <h2 className="text-2xl font-black text-cyan-400">{t('tcgChooseCombo') || "Choose Combo"}</h2>
-                <p className="text-sm text-cyan-300/70 mt-1">VibeFID = Wildcard 🌟</p>
-              </div>
-
-              {/* Combo Options */}
-              <div className="space-y-3 mb-4">
-                {vibefidComboModal.possibleCombos.map(({ combo, partnerCard }) => (
-                  <button
-                    key={combo.id}
-                    onClick={() => {
-                      const cardIndex = (vibefidComboModal.card as any)._tempCardIndex;
-                      setVibefidComboModal(null);
-                      handlePvEPlayCard(vibefidComboModal.laneIndex, cardIndex, combo.id);
-                    }}
-                    className="w-full bg-black/40 hover:bg-cyan-800/40 border border-cyan-500/40 hover:border-cyan-400 rounded-xl p-4 transition-all text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl">{combo.emoji}</span>
-                      <div>
-                        <div className="text-cyan-300 font-bold">
-                          {COMBO_TRANSLATION_KEYS[combo.id] ? t(COMBO_TRANSLATION_KEYS[combo.id] as keyof typeof translations["pt-BR"]) : combo.name}
-                        </div>
-                        <div className="text-xs text-cyan-400/60">
-                          VibeFID + {partnerCard}
-                        </div>
-                        <div className="text-xs text-green-400 mt-1">
-                          {combo.bonus.type === "power" ? `+${combo.bonus.value} Power` :
-                           combo.bonus.type === "steal" ? `Steal ${combo.bonus.value}` :
-                           combo.description}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* Cancel / Auto Button */}
-              <button
-                onClick={() => {
-                  // Auto-select first combo (default behavior)
-                  const firstCombo = vibefidComboModal.possibleCombos[0];
-                  const cardIndex = (vibefidComboModal.card as any)._tempCardIndex;
-                  setVibefidComboModal(null);
-                  handlePvEPlayCard(vibefidComboModal.laneIndex, cardIndex, firstCombo?.combo.id);
-                }}
-                className="w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 rounded-lg transition-colors text-sm"
-              >
-                {t('tcgAutoSelect') || "Auto (First Card)"} - {vibefidComboModal.possibleCombos[0]?.combo.emoji} {vibefidComboModal.possibleCombos[0]?.combo.name}
-              </button>
-            </div>
-          </div>
+          <VibeFIDComboModal
+            modal={vibefidComboModal}
+            onSelectCombo={(laneIndex, cardIndex, comboId) => handlePvEPlayCard(laneIndex, cardIndex, comboId)}
+            onClose={() => setVibefidComboModal(null)}
+            t={t as (k: string) => string}
+          />
         )}
 
-        {/* Battle Log Floating Button */}
-        <button
-          onClick={() => setShowBattleLog(!showBattleLog)}
-          className="fixed bottom-20 right-3 w-10 h-10 rounded-full bg-black/80 border border-vintage-gold/40 flex items-center justify-center z-30 hover:bg-black/90 transition-all"
-        >
-          <span className="text-lg">📜</span>
-        </button>
-
-        {/* Battle Log Panel */}
-        {showBattleLog && (
-          <div className="fixed right-0 top-0 bottom-0 w-72 bg-black/95 border-l border-vintage-gold/30 z-40 overflow-y-auto p-3">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-vintage-gold font-bold text-sm uppercase tracking-wider">Battle Log</h3>
-              <button onClick={() => setShowBattleLog(false)} className="text-gray-400 hover:text-white text-lg">✕</button>
-            </div>
-            {battleLog.length === 0 ? (
-              <p className="text-gray-500 text-xs">No actions yet...</p>
-            ) : (
-              <div className="space-y-1.5">
-                {battleLog.map((entry, i) => {
-                  // Color based on effect type
-                  const effectColors: Record<string, string> = {
-                    buff: "border-l-green-500 bg-green-900/20",
-                    debuff: "border-l-red-500 bg-red-900/20",
-                    destroy: "border-l-orange-500 bg-orange-900/20",
-                    steal: "border-l-purple-500 bg-purple-900/20",
-                    draw: "border-l-cyan-500 bg-cyan-900/20",
-                    move: "border-l-yellow-500 bg-yellow-900/20",
-                    copy: "border-l-pink-500 bg-pink-900/20",
-                    special: "border-l-violet-500 bg-violet-900/20",
-                  };
-                  const baseColor = entry.player === "you" ? "text-blue-300" : "text-red-300";
-                  const effectStyle = entry.effectType ? effectColors[entry.effectType] || "" : "";
-                  const isAbilityLog = entry.abilityName || entry.effectType;
-
-                  return (
-                    <div key={i} className={`text-[10px] px-2 py-1.5 rounded border-l-2 ${
-                      isAbilityLog ? effectStyle : (entry.player === "you" ? "bg-blue-900/20 border-l-blue-500" : "bg-red-900/20 border-l-red-500")
-                    }`}>
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-vintage-gold/70 font-mono">T{entry.turn}</span>
-                        <span className={`font-bold ${baseColor}`}>{entry.player === "you" ? "You" : "CPU"}</span>
-                        <span className="text-white/90 font-medium truncate">{entry.cardName}</span>
-                        <span className="text-gray-500 ml-auto">L{entry.lane}</span>
-                      </div>
-                      <div className="text-[9px] text-gray-300">
-                        {entry.action}
-                        {entry.powerChange !== undefined && entry.powerChange !== 0 && (
-                          <span className={`ml-1 font-bold ${entry.powerChange > 0 ? "text-green-400" : "text-red-400"}`}>
-                            {entry.powerChange > 0 ? "+" : ""}{entry.powerChange}
-                          </span>
-                        )}
-                      </div>
-                      {entry.targets && entry.targets.length > 0 && (
-                        <div className="text-[8px] text-gray-400 mt-0.5">
-                          → {entry.targets.join(", ")}
-                        </div>
-                      )}
-                      {entry.details && (
-                        <div className="text-[8px] text-gray-500 italic mt-0.5">{entry.details}</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Battle Log */}
+        <BattleLogPanel
+          battleLog={battleLog}
+          show={showBattleLog}
+          onToggle={() => setShowBattleLog(!showBattleLog)}
+          t={t as (k: string) => string}
+        />
       </div>
     );
   }
@@ -6563,63 +4425,17 @@ export default function TCGPage() {
               </div>
 
               {/* Profile Dropdown Menu - Royal style */}
-              {showProfileMenu && (
-                <div className="absolute top-16 left-0 z-50 rounded-xl shadow-xl overflow-hidden min-w-[160px]"
-                  style={{
-                    background: "linear-gradient(180deg, rgba(20,20,20,0.98) 0%, rgba(10,10,10,0.98) 100%)",
-                    border: "2px solid",
-                    borderImage: "linear-gradient(135deg, #B8860B, #8B6914, #B8860B) 1",
-                    boxShadow: "0 10px 30px rgba(0,0,0,0.7)"
-                  }}
-                >
-                  <div className="p-2 text-xs text-[#B8860B]" style={{ borderBottom: "1px solid rgba(184,134,11,0.3)" }}>
-                    🔊 Meme Sounds
-                  </div>
-                  <button
-                    onClick={() => { playMemeSound("mechaArena"); setShowProfileMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-purple-600 flex items-center gap-2"
-                  >
-                    🤖 Mecha Arena
-                  </button>
-                  <button
-                    onClick={() => { playMemeSound("ggez"); setShowProfileMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-green-600 flex items-center gap-2"
-                  >
-                    😎 GG EZ
-                  </button>
-                  <button
-                    onClick={() => { playMemeSound("bruh"); setShowProfileMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-orange-600 flex items-center gap-2"
-                  >
-                    😐 Bruh
-                  </button>
-                  <button
-                    onClick={() => { playMemeSound("emotional"); setShowProfileMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-red-600 flex items-center gap-2"
-                  >
-                    💔 Emotional Damage
-                  </button>
-                  <button
-                    onClick={() => { playMemeSound("wow"); setShowProfileMenu(false); }}
-                    className="w-full px-4 py-2 text-left text-sm text-white hover:bg-yellow-600 flex items-center gap-2"
-                  >
-                    🤯 MLG Wow
-                  </button>
-                  <div style={{ borderTop: "1px solid rgba(184,134,11,0.3)" }}>
-                    <button
-                      onClick={() => {
-                        if (currentMatchId && address) {
-                          forfeitMatch({ matchId: currentMatchId, address }).catch((e: any) => console.error("Forfeit error:", e));
-                        }
-                        setShowProfileMenu(false);
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-red-900/50 flex items-center gap-2"
-                    >
-                      🏳️ {t('tcgSurrender')}
-                    </button>
-                  </div>
-                </div>
-              )}
+              <MemeSoundMenu
+                show={showProfileMenu}
+                onClose={() => setShowProfileMenu(false)}
+                onSurrender={() => {
+                  if (currentMatchId && address) {
+                    forfeitMatch({ matchId: currentMatchId, address }).catch((e: any) => console.error("Forfeit error:", e));
+                  }
+                  setShowProfileMenu(false);
+                }}
+                t={t as (k: string) => string}
+              />
             </div>
 
             {/* Turn Indicator + PvP Status (center) */}
@@ -7411,125 +5227,21 @@ export default function TCGPage() {
 
         {/* Combo Detail Modal */}
         {detailCombo && (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setDetailCombo(null)}>
-            <div className="bg-gradient-to-br from-yellow-900 via-amber-900 to-orange-950 rounded-2xl p-6 max-w-sm w-full border-2 border-yellow-500 shadow-2xl shadow-yellow-500/30" onClick={e => e.stopPropagation()}>
-              <div className="text-center mb-4">
-                <div className="text-5xl mb-2">{detailCombo.emoji}</div>
-                <h2 className="text-2xl font-black text-yellow-400">{detailCombo.name}</h2>
-              </div>
-              <div className="mb-4">
-                <p className="text-xs text-yellow-300/70 mb-2 uppercase tracking-wider">{t('tcgCardsRequired')}</p>
-                <div className="flex flex-wrap gap-1 justify-center">
-                  {detailCombo.cards.map((cardName: string, idx: number) => (
-                    <span key={idx} className="px-2 py-1 bg-black/40 rounded text-sm text-white capitalize">
-                      {cardName}
-                    </span>
-                  ))}
-                </div>
-                {detailCombo.minCards && (
-                  <p className="text-xs text-yellow-400/60 mt-1 text-center">
-                    (Need at least {detailCombo.minCards} of these)
-                  </p>
-                )}
-              </div>
-              <div className="bg-black/30 rounded-xl p-4 mb-4">
-                <p className="text-xs text-yellow-300/70 mb-1 uppercase tracking-wider">{t('tcgBonusEffect')}</p>
-                <p className="text-yellow-100 font-bold">{detailCombo.description}</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                    detailCombo.bonus.type === "power" ? "bg-green-600" :
-                    detailCombo.bonus.type === "power_percent" ? "bg-purple-600" :
-                    detailCombo.bonus.type === "steal" ? "bg-red-600" : "bg-blue-600"
-                  }`}>
-                    {detailCombo.bonus.type === "power" ? `+${detailCombo.bonus.value} Power` :
-                     detailCombo.bonus.type === "power_percent" ? `+${detailCombo.bonus.value}% Power` :
-                     detailCombo.bonus.type === "steal" ? `-${detailCombo.bonus.value} Enemy` :
-                     detailCombo.bonus.type}
-                  </span>
-                  <span className="text-xs text-yellow-400/60">
-                    to {detailCombo.bonus.target === "self" ? "combo cards" : detailCombo.bonus.target}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => setDetailCombo(null)}
-                className="w-full bg-yellow-600 hover:bg-yellow-500 text-black font-bold py-2 rounded-lg transition-colors"
-              >
-                Got it!
-              </button>
-            </div>
-          </div>
+          <ComboDetailModal
+            combo={detailCombo}
+            onClose={() => setDetailCombo(null)}
+            t={t as (k: string) => string}
+          />
         )}
 
-        {/* Battle Log Floating Button (PvP) */}
-        <button
-          onClick={() => setShowBattleLog(!showBattleLog)}
-          className="fixed bottom-20 right-3 w-10 h-10 rounded-full bg-black/80 border border-vintage-gold/40 flex items-center justify-center z-30 hover:bg-black/90 transition-all"
-        >
-          <span className="text-lg">📜</span>
-        </button>
-
-        {/* Battle Log Panel (PvP) */}
-        {showBattleLog && (
-          <div className="fixed right-0 top-0 bottom-0 w-72 bg-black/95 border-l border-vintage-gold/30 z-40 overflow-y-auto p-3">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-vintage-gold font-bold text-sm uppercase tracking-wider">Battle Log</h3>
-              <button onClick={() => setShowBattleLog(false)} className="text-gray-400 hover:text-white text-lg">✕</button>
-            </div>
-            {battleLog.length === 0 ? (
-              <p className="text-gray-500 text-xs">No actions yet...</p>
-            ) : (
-              <div className="space-y-1.5">
-                {battleLog.map((entry, i) => {
-                  // Color based on effect type
-                  const effectColors: Record<string, string> = {
-                    buff: "border-l-green-500 bg-green-900/20",
-                    debuff: "border-l-red-500 bg-red-900/20",
-                    destroy: "border-l-orange-500 bg-orange-900/20",
-                    steal: "border-l-purple-500 bg-purple-900/20",
-                    draw: "border-l-cyan-500 bg-cyan-900/20",
-                    move: "border-l-yellow-500 bg-yellow-900/20",
-                    copy: "border-l-pink-500 bg-pink-900/20",
-                    special: "border-l-violet-500 bg-violet-900/20",
-                  };
-                  const baseColor = entry.player === "you" ? "text-blue-300" : "text-red-300";
-                  const effectStyle = entry.effectType ? effectColors[entry.effectType] || "" : "";
-                  const isAbilityLog = entry.abilityName || entry.effectType;
-                  const playerLabel = entry.player === "you" ? "You" : entry.player === "cpu" ? "CPU" : "Opponent";
-
-                  return (
-                    <div key={i} className={`text-[10px] px-2 py-1.5 rounded border-l-2 ${
-                      isAbilityLog ? effectStyle : (entry.player === "you" ? "bg-blue-900/20 border-l-blue-500" : "bg-red-900/20 border-l-red-500")
-                    }`}>
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-vintage-gold/70 font-mono">T{entry.turn}</span>
-                        <span className={`font-bold ${baseColor}`}>{playerLabel}</span>
-                        <span className="text-white/90 font-medium truncate">{entry.cardName}</span>
-                        <span className="text-gray-500 ml-auto">L{entry.lane + 1}</span>
-                      </div>
-                      <div className="text-[9px] text-gray-300">
-                        {entry.action}
-                        {entry.powerChange !== undefined && entry.powerChange !== 0 && (
-                          <span className={`ml-1 font-bold ${entry.powerChange > 0 ? "text-green-400" : "text-red-400"}`}>
-                            {entry.powerChange > 0 ? "+" : ""}{entry.powerChange}
-                          </span>
-                        )}
-                      </div>
-                      {entry.targets && entry.targets.length > 0 && (
-                        <div className="text-[8px] text-gray-400 mt-0.5">
-                          → {entry.targets.join(", ")}
-                        </div>
-                      )}
-                      {entry.details && (
-                        <div className="text-[8px] text-gray-500 italic mt-0.5">{entry.details}</div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Battle Log (PvP) */}
+        <BattleLogPanel
+          battleLog={battleLog}
+          show={showBattleLog}
+          onToggle={() => setShowBattleLog(!showBattleLog)}
+          isPvP
+          t={t as (k: string) => string}
+        />
       </div>
     );
   }
@@ -7540,358 +5252,37 @@ export default function TCGPage() {
 
   // PvE Result
   if (view === "result" && isPvE && pveGameState) {
-    const winner = pveGameState.winner;
-    const isWinner = winner === "player";
-    const isDraw = winner === "tie";
-
-    // Calculate lanes won
-    const lanesWon = pveGameState.lanes.filter((lane: any) => lane.playerPower > lane.cpuPower).length;
-    const lanesLost = pveGameState.lanes.filter((lane: any) => lane.cpuPower > lane.playerPower).length;
-    const lanesTied = pveGameState.lanes.filter((lane: any) => lane.playerPower === lane.cpuPower).length;
-
     return (
-      <div className={`min-h-screen flex items-center justify-center p-4 ${
-        isDraw
-          ? "bg-gradient-to-b from-gray-900 via-gray-800 to-black"
-          : isWinner
-            ? "bg-gradient-to-b from-yellow-900/30 via-gray-900 to-black"
-            : "bg-gradient-to-b from-red-900/30 via-gray-900 to-black"
-      }`}>
-        <div className="text-center max-w-md w-full">
-          {/* PvE Badge */}
-          <span className="text-xs text-green-400 bg-green-900/50 px-3 py-1 rounded-full mb-4 inline-flex items-center gap-1">
-            <span className="w-2 h-2 bg-green-400 rounded-full"></span>
-            {t('tcgCpuMode')}
-          </span>
-
-          {/* Result Icon & Title - OR Bait Video on defeat */}
-          <div className="my-6">
-            {showDefeatBait && !isWinner && !isDraw ? (
-              /* Bait video replaces the defeat text - loops */
-              <video
-                autoPlay
-                loop
-                playsInline
-                className="w-48 h-48 mx-auto mb-4 rounded-xl object-cover"
-                ref={(el) => {
-                  // Try to play with sound after user interaction
-                  if (el) {
-                    el.volume = 0.7;
-                    el.play().catch(() => {
-                      // If autoplay with sound fails, try muted
-                      el.muted = true;
-                      el.play().catch(() => {});
-                    });
-                  }
-                }}
-              >
-                <source src="/sounds/defeat-bait.mp4" type="video/mp4" />
-              </video>
-            ) : isWinner ? (
-              <img
-                src="/images/angry-angry-kid.png"
-                alt="Victory"
-                className="w-32 h-32 mx-auto mb-4 animate-bounce object-contain"
-              />
-            ) : (
-              <div className={`text-6xl mb-4`}>
-                {isDraw ? "🤝" : "💔"}
-              </div>
-            )}
-            {!showDefeatBait && (
-              <>
-                <h1
-                  className={`text-5xl font-black mb-2 ${
-                    isDraw ? "text-gray-400" : isWinner ? "text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]" : "text-red-400"
-                  }`}
-                >
-                  {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
-                </h1>
-                <p className="text-gray-500 text-sm">
-                  {isDraw ? "Both sides are equal!" : isWinner ? "You outsmarted the CPU!" : "The CPU was too strong..."}
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* Lane Results */}
-          <div className="bg-gray-800/30 rounded-xl p-4 mb-6 border border-gray-700/50">
-            <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Lane Breakdown</p>
-            <div className="flex gap-3 justify-center">
-              {pveGameState.lanes.map((lane: any, idx: number) => {
-                const playerWon = lane.playerPower > lane.cpuPower;
-                const isTie = lane.playerPower === lane.cpuPower;
-
-                return (
-                  <div
-                    key={idx}
-                    className={`flex-1 bg-gray-900/50 border-2 rounded-xl p-3 transition-all ${
-                      playerWon
-                        ? "border-green-500/70 shadow-[0_0_15px_rgba(34,197,94,0.2)]"
-                        : isTie
-                          ? "border-gray-600"
-                          : "border-red-500/70 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
-                    }`}
-                  >
-                    <div className={`text-lg mb-1 ${
-                      playerWon ? "text-green-400" : isTie ? "text-gray-400" : "text-red-400"
-                    }`}>
-                      {playerWon ? "✓" : isTie ? "=" : "✗"}
-                    </div>
-                    <p className="text-xs text-gray-500 mb-1">{lane.name || `${t('tcgLane')} ${idx + 1}`}</p>
-                    <div className="flex items-center justify-center gap-1">
-                      <span className={`text-lg font-bold ${playerWon ? "text-green-400" : "text-white"}`}>
-                        {lane.playerPower}
-                      </span>
-                      <span className="text-gray-600 text-xs">vs</span>
-                      <span className={`text-lg font-bold ${!playerWon && !isTie ? "text-red-400" : "text-white"}`}>
-                        {lane.cpuPower}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Summary Stats */}
-            <div className="flex justify-center gap-6 mt-4 pt-3 border-t border-gray-700/50">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-green-400">{lanesWon}</p>
-                <p className="text-xs text-gray-500">{t('tcgWinning')}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-gray-400">{lanesTied}</p>
-                <p className="text-xs text-gray-500">{t('tcgTied')}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-red-400">{lanesLost}</p>
-                <p className="text-xs text-gray-500">{t('tcgLosing')}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* AURA Reward Display */}
-          {isWinner && (
-            <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-yellow-900/30 to-amber-900/30 border border-yellow-500/30">
-              <p className="text-yellow-400 font-bold text-lg">
-                {pveGameState.auraRewarded ? (
-                  <>+{BATTLE_AURA_REWARD} AURA</>
-                ) : (
-                  <span className="text-gray-400 text-sm">No AURA reward (daily limit reached)</span>
-                )}
-              </p>
-            </div>
-          )}
-
-          {/* Buttons */}
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => startPvEMatch()}
-              className={`font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 ${
-                isWinner
-                  ? "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white shadow-lg shadow-green-500/30"
-                  : "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black shadow-lg shadow-yellow-500/30"
-              }`}
-            >
-              {t('tcgPlayAgain')}
-            </button>
-            <button
-              onClick={() => {
-                stopBgm(); // Stop victory/defeat music
-                setIsPvE(false);
-                setPveGameState(null);
-                setView("lobby");
-                setAutoMatch(false); // Reset auto match when leaving
-              }}
-              className="bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105"
-            >
-              {t('tcgBackToLobby')}
-            </button>
-          </div>
-        </div>
-      </div>
+      <PvEResultView
+        pveGameState={pveGameState}
+        showDefeatBait={showDefeatBait}
+        onPlayAgain={() => startPvEMatch()}
+        onBackToLobby={() => {
+          stopBgm();
+          setIsPvE(false);
+          setPveGameState(null);
+          setView("lobby");
+          setAutoMatch(false);
+        }}
+        t={t as (k: string) => string}
+      />
     );
   }
 
   // PvP Result
   if (view === "result" && currentMatch) {
-    const isWinner = currentMatch.winnerId === address?.toLowerCase();
-    const isDraw = !currentMatch.winnerId;
-    const isPlayer1 = currentMatch.player1Address === address?.toLowerCase();
-    const pvpOpponentName = isPlayer1 ? currentMatch.player2Username : currentMatch.player1Username;
-    const pvpIsCpu = (currentMatch as any).isCpuOpponent;
-    const pvpOpponentDisplay = pvpOpponentName ? (pvpIsCpu ? `${pvpOpponentName} (CPU)` : pvpOpponentName) : "Opponent";
-
-    // Calculate lanes won
-    const lanesWon = currentMatch.laneResults?.filter((lane: any) =>
-      lane.winner === (isPlayer1 ? "player1" : "player2")
-    ).length || 0;
-    const lanesLost = currentMatch.laneResults?.filter((lane: any) =>
-      lane.winner === (isPlayer1 ? "player2" : "player1")
-    ).length || 0;
-    const lanesTied = currentMatch.laneResults?.filter((lane: any) =>
-      lane.winner === "tie"
-    ).length || 0;
-
     return (
-      <div className={`min-h-screen flex items-center justify-center p-4 ${
-        isDraw
-          ? "bg-gradient-to-b from-gray-900 via-gray-800 to-black"
-          : isWinner
-            ? "bg-gradient-to-b from-yellow-900/30 via-gray-900 to-black"
-            : "bg-gradient-to-b from-red-900/30 via-gray-900 to-black"
-      }`}>
-        <div className="text-center max-w-md w-full">
-          {/* PvP Badge */}
-          <span className="text-xs text-purple-400 bg-purple-900/50 px-3 py-1 rounded-full mb-4 inline-flex items-center gap-1">
-            <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
-            {(currentMatch as any)?.isStakedMatch ? "Staked Battle" : "PvP Battle"}
-          </span>
-
-          {/* Staked Match Reward Info */}
-          {(currentMatch as any)?.isStakedMatch && (currentMatch as any)?.stakeAmount > 0 && (
-            <div className={`mb-2 px-4 py-2 rounded-lg border ${isWinner ? "bg-green-900/30 border-green-500/40" : "bg-red-900/30 border-red-500/40"}`}>
-              <p className={`text-sm font-bold ${isWinner ? "text-green-400" : "text-red-400"}`}>
-                {isWinner
-                  ? `+${((currentMatch as any).poolTier || Math.floor((currentMatch as any).stakeAmount * 10)).toLocaleString()} VBMS`
-                  : `-${(currentMatch as any).stakeAmount.toLocaleString()} VBMS`
-                }
-              </p>
-              <p className="text-[9px] text-green-400/60">
-                {isWinner ? "Pool reward added to your balance." : "Attack fee lost."}
-              </p>
-            </div>
-          )}
-
-          {/* Result Icon & Title - OR Bait Video on defeat */}
-          <div className="my-6">
-            {showDefeatBait && !isWinner && !isDraw ? (
-              /* Bait video replaces the defeat text - loops */
-              <video
-                autoPlay
-                loop
-                playsInline
-                className="w-48 h-48 mx-auto mb-4 rounded-xl object-cover"
-                ref={(el) => {
-                  // Try to play with sound after user interaction
-                  if (el) {
-                    el.volume = 0.7;
-                    el.play().catch(() => {
-                      // If autoplay with sound fails, try muted
-                      el.muted = true;
-                      el.play().catch(() => {});
-                    });
-                  }
-                }}
-              >
-                <source src="/sounds/defeat-bait.mp4" type="video/mp4" />
-              </video>
-            ) : isWinner ? (
-              <img
-                src="/images/angry-angry-kid.png"
-                alt="Victory"
-                className="w-32 h-32 mx-auto mb-4 animate-bounce object-contain"
-              />
-            ) : (
-              <div className={`text-6xl mb-4`}>
-                {isDraw ? "🤝" : "💔"}
-              </div>
-            )}
-            {!showDefeatBait && (
-              <>
-                <h1
-                  className={`text-5xl font-black mb-2 ${
-                    isDraw ? "text-gray-400" : isWinner ? "text-yellow-400 drop-shadow-[0_0_20px_rgba(250,204,21,0.5)]" : "text-red-400"
-                  }`}
-                >
-                  {isDraw ? t('tcgDraw') : isWinner ? t('tcgVictory') : t('tcgDefeat')}
-                </h1>
-                <p className="text-gray-500 text-sm">
-                  vs <span className="text-vintage-burnt-gold max-w-[150px] truncate inline-block align-bottom">{pvpOpponentDisplay}</span>
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* Lane Results */}
-          {currentMatch.laneResults && (
-            <div className="bg-gray-800/30 rounded-xl p-4 mb-6 border border-gray-700/50">
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Lane Breakdown</p>
-              <div className="flex gap-3 justify-center">
-                {currentMatch.laneResults.map((lane: any, idx: number) => {
-                  const playerWon = lane.winner === (isPlayer1 ? "player1" : "player2");
-                  const isTie = lane.winner === "tie";
-                  const yourPower = isPlayer1 ? lane.player1FinalPower : lane.player2FinalPower;
-                  const enemyPower = isPlayer1 ? lane.player2FinalPower : lane.player1FinalPower;
-
-                  return (
-                    <div
-                      key={idx}
-                      className={`flex-1 bg-gray-900/50 border-2 rounded-xl p-3 transition-all ${
-                        playerWon
-                          ? "border-green-500/70 shadow-[0_0_15px_rgba(34,197,94,0.2)]"
-                          : isTie
-                            ? "border-gray-600"
-                            : "border-red-500/70 shadow-[0_0_15px_rgba(239,68,68,0.2)]"
-                      }`}
-                    >
-                      <div className={`text-lg mb-1 ${
-                        playerWon ? "text-green-400" : isTie ? "text-gray-400" : "text-red-400"
-                      }`}>
-                        {playerWon ? "✓" : isTie ? "=" : "✗"}
-                      </div>
-                      <p className="text-xs text-gray-500 mb-1">{t('tcgLane')} {idx + 1}</p>
-                      <div className="flex items-center justify-center gap-1">
-                        <span className={`text-lg font-bold ${playerWon ? "text-green-400" : "text-white"}`}>
-                          {yourPower}
-                        </span>
-                        <span className="text-gray-600 text-xs">vs</span>
-                        <span className={`text-lg font-bold ${!playerWon && !isTie ? "text-red-400" : "text-white"}`}>
-                          {enemyPower}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Summary Stats */}
-              <div className="flex justify-center gap-6 mt-4 pt-3 border-t border-gray-700/50">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-400">{lanesWon}</p>
-                  <p className="text-xs text-gray-500">{t('tcgWinning')}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-gray-400">{lanesTied}</p>
-                  <p className="text-xs text-gray-500">{t('tcgTied')}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-red-400">{lanesLost}</p>
-                  <p className="text-xs text-gray-500">{t('tcgLosing')}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Buttons */}
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => {
-                stopBgm(); // Stop victory/defeat music
-                setCurrentMatchId(null);
-                setView("lobby");
-              }}
-              className={`font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 ${
-                isWinner
-                  ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black shadow-lg shadow-yellow-500/30"
-                  : "bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white"
-              }`}
-            >
-              {t('tcgBackToLobby')}
-            </button>
-          </div>
-        </div>
-      </div>
+      <PvPResultView
+        currentMatch={currentMatch}
+        address={address}
+        showDefeatBait={showDefeatBait}
+        onBackToLobby={() => {
+          stopBgm();
+          setCurrentMatchId(null);
+          setView("lobby");
+        }}
+        t={t as (k: string) => string}
+      />
     );
   }
 
