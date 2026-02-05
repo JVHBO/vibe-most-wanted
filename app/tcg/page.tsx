@@ -175,6 +175,7 @@ const TCG_CONFIG = {
   ENERGY_PER_TURN: 1,
   MAX_ENERGY: 10,
   ABILITY_DELAY_MS: 900,
+  MAX_HAND_SIZE: 10, // Maximum cards in hand - excess cards are burned (discarded)
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2260,12 +2261,20 @@ export default function TCGPage() {
         break;
 
       case "draw":
-        // Draw X cards
+        // Draw X cards (respecting MAX_HAND_SIZE)
         const drawCount = effect.value || 1;
+        let actualDrawn = 0;
+        let burned = 0;
         for (let i = 0; i < drawCount && newDeck.length > 0; i++) {
-          newHand.push(newDeck.shift()!);
+          if (newHand.length < TCG_CONFIG.MAX_HAND_SIZE) {
+            newHand.push(newDeck.shift()!);
+            actualDrawn++;
+          } else {
+            newDeck.shift(); // Burn card (discard without drawing)
+            burned++;
+          }
         }
-        logAbility(`🃏 drew ${drawCount} card(s)`, { effectType: "draw", details: `${Math.min(drawCount, newDeck.length)} cards drawn` });
+        logAbility(`🃏 drew ${actualDrawn} card(s)${burned > 0 ? ` (${burned} burned - hand full)` : ""}`, { effectType: "draw", details: `${actualDrawn} drawn${burned > 0 ? `, ${burned} burned` : ""}` });
         break;
 
       case "buffAdjacent":
@@ -2279,10 +2288,14 @@ export default function TCGPage() {
           };
           newLanes[laneIndex][myPower] += effect.value || 0;
         });
-        // Handle draw if specified (Beeper - Signal Boost)
+        // Handle draw if specified (Beeper - Signal Boost) - respects MAX_HAND_SIZE
         if (effect.draw && effect.draw > 0) {
           for (let i = 0; i < effect.draw && newDeck.length > 0; i++) {
-            newHand.push(newDeck.shift()!);
+            if (newHand.length < TCG_CONFIG.MAX_HAND_SIZE) {
+              newHand.push(newDeck.shift()!);
+            } else {
+              newDeck.shift(); // Burn if hand full
+            }
           }
         }
         logAbility(`📡 boosted ${myCardsInLane.length} allies +${effect.value}`, { effectType: "buff", powerChange: myCardsInLane.length * (effect.value || 0), details: effect.draw ? `+${effect.draw} draw` : undefined });
@@ -2675,10 +2688,15 @@ export default function TCGPage() {
         break;
 
       case "addCopyToHand":
-        // Add copy to hand (0xdeployer) + bonus power to self
-        newHand.push({ ...card, cardId: `${card.cardId}-copy-${Date.now()}` });
-        bonusPower = effect.bonusPower || 0;
-        logAbility(`📋 added copy to hand +${bonusPower}`, { effectType: "copy", powerChange: bonusPower, details: "Copy created" });
+        // Add copy to hand (0xdeployer) + bonus power to self - respects MAX_HAND_SIZE
+        if (newHand.length < TCG_CONFIG.MAX_HAND_SIZE) {
+          newHand.push({ ...card, cardId: `${card.cardId}-copy-${Date.now()}` });
+          bonusPower = effect.bonusPower || 0;
+          logAbility(`📋 added copy to hand +${bonusPower}`, { effectType: "copy", powerChange: bonusPower, details: "Copy created" });
+        } else {
+          bonusPower = effect.bonusPower || 0;
+          logAbility(`📋 copy burned (hand full) +${bonusPower}`, { effectType: "copy", powerChange: bonusPower, details: "Hand full - copy discarded" });
+        }
         break;
 
       case "moveCard":
@@ -2878,12 +2896,18 @@ export default function TCGPage() {
           };
           newLanes[laneIndex][enemyPower] = Math.max(0, newLanes[laneIndex][enemyPower] - debuffAmount);
         }
-        // Draw 1 card
+        // Draw 1 card (respects MAX_HAND_SIZE)
+        let drewCard = false;
         if (isPlayer && newDeck.length > 0) {
-          newHand.push(newDeck.shift()!);
+          if (newHand.length < TCG_CONFIG.MAX_HAND_SIZE) {
+            newHand.push(newDeck.shift()!);
+            drewCard = true;
+          } else {
+            newDeck.shift(); // Burn if hand full
+          }
         }
         bonusPower = effect.selfDraw ? 5 : 0; // Small bonus
-        logAbility(`📜 ${discardTargetName ? `debuffed ${discardTargetName} -15` : ""} + drew 1`, { effectType: "debuff", targets: discardTargetName ? [discardTargetName] : [], powerChange: -15, details: "Discard + draw" });
+        logAbility(`📜 ${discardTargetName ? `debuffed ${discardTargetName} -15` : ""}${drewCard ? " + drew 1" : " (hand full)"}`, { effectType: "debuff", targets: discardTargetName ? [discardTargetName] : [], powerChange: -15, details: "Discard + draw" });
         break;
 
       case "parasiteLane":
@@ -3367,11 +3391,15 @@ export default function TCGPage() {
     let newHand = [...pveGameState.playerHand];
     newHand.splice(actualCardIndex, 1);
 
-    // Prize foil bonus: Draw a card!
+    // Prize foil bonus: Draw a card! (respects MAX_HAND_SIZE)
     let newDeck = [...pveGameState.playerDeckRemaining];
     if (foilEffect && foilEffect.energyDiscount >= 1.0 && newDeck.length > 0) {
-      newHand.push(newDeck.shift()!);
-      playSound("draw"); // Prize foil sound feedback
+      if (newHand.length < TCG_CONFIG.MAX_HAND_SIZE) {
+        newHand.push(newDeck.shift()!);
+        playSound("draw"); // Prize foil sound feedback
+      } else {
+        newDeck.shift(); // Burn if hand full
+      }
     }
 
     // Add card to lane (with base power)
@@ -3460,9 +3488,9 @@ export default function TCGPage() {
     let newHand = [...pveGameState.playerHand];
     newHand.splice(cardIndex, 1);
 
-    // Draw a new card if deck has cards
+    // Draw a new card if deck has cards (respects MAX_HAND_SIZE)
     let newDeck = [...pveGameState.playerDeckRemaining];
-    if (newDeck.length > 0) {
+    if (newDeck.length > 0 && newHand.length < TCG_CONFIG.MAX_HAND_SIZE) {
       newHand.push(newDeck.shift()!);
     }
 
@@ -4359,13 +4387,13 @@ export default function TCGPage() {
       return;
     }
 
-    // Next turn
-    if (playerDeck.length > 0) {
+    // Next turn - draw cards (respects MAX_HAND_SIZE)
+    if (playerDeck.length > 0 && playerHand.length < TCG_CONFIG.MAX_HAND_SIZE) {
       playerHand.push(playerDeck.shift()!);
     }
     let cpuHandNext = [...cpuHand];
     let cpuDeckNext = [...cpuDeckRemaining];
-    if (cpuDeckNext.length > 0) {
+    if (cpuDeckNext.length > 0 && cpuHandNext.length < TCG_CONFIG.MAX_HAND_SIZE) {
       cpuHandNext.push(cpuDeckNext.shift()!);
     }
 
@@ -7486,8 +7514,9 @@ export default function TCGPage() {
                 <span className="text-green-400 text-xs font-bold bg-black/60 px-2 py-1 rounded">↩ Return to Hand</span>
               </div>
             )}
-            {/* Cards */}
-            <div className="flex justify-center gap-1 mb-3">
+            {/* Cards - scrollable when many cards, smaller cards if 7+ */}
+            <div className={`flex justify-center mb-3 overflow-x-auto max-w-full px-2 ${(gs.playerHand?.length || 0) > 6 ? "gap-0.5" : "gap-1"}`}
+                 style={{ scrollbarWidth: "thin" }}>
               {gs.playerHand?.map((card: any, idx: number) => {
                 const ability = getCardAbility(card.name, card);
                 const foilEffect = getFoilEffect(card.foil);
@@ -7496,6 +7525,10 @@ export default function TCGPage() {
                 const canAfford = energyCost <= (gs.energy || 1);
                 // Use actual card image (same as deck builder)
                 const battleHandImageUrl = getCardDisplayImageUrl(card);
+                // Smaller cards when hand is big
+                const handSize = gs.playerHand?.length || 0;
+                const cardWidth = handSize > 8 ? "w-[45px]" : handSize > 6 ? "w-[52px]" : "w-[60px]";
+                const cardHeight = handSize > 8 ? "h-[64px]" : handSize > 6 ? "h-[74px]" : "h-[85px]";
 
                 // Check if this card is part of any potential combo
                 // Use resolveCardName to handle aliases (e.g., "filthy" -> "don filthy")
@@ -7599,7 +7632,7 @@ export default function TCGPage() {
                       // Open card detail instead of selecting
                       setDetailCard(card);
                     }}
-                    className={`relative flex-shrink-0 w-[60px] h-[85px] rounded-lg border-2 transition-all duration-200 select-none ${
+                    className={`relative flex-shrink-0 ${cardWidth} ${cardHeight} rounded-lg border-2 transition-all duration-200 select-none ${
                       !canAfford
                         ? "border-red-500/50 opacity-50 cursor-not-allowed grayscale"
                         : draggedCardIndex === idx
@@ -8623,8 +8656,9 @@ export default function TCGPage() {
               borderImage: "linear-gradient(90deg, transparent 5%, #B8860B 20%, #FFD700 50%, #B8860B 80%, transparent 95%) 1"
             }}
           >
-            {/* Cards */}
-            <div className="flex justify-center gap-1 mb-3">
+            {/* Cards - scrollable when many cards, smaller cards if 7+ */}
+            <div className={`flex justify-center mb-3 overflow-x-auto max-w-full px-2 ${(myHand?.length || 0) > 6 ? "gap-0.5" : "gap-1"}`}
+                 style={{ scrollbarWidth: "thin" }}>
               {myHand?.map((card: any, idx: number) => {
                 const ability = getCardAbility(card.name, card);
                 const foilEffect = getFoilEffect(card.foil);
@@ -8633,6 +8667,10 @@ export default function TCGPage() {
                 const canAfford = energyCost <= remainingEnergy;
                 const battleHandImageUrl = getCardDisplayImageUrl(card);
                 const isPending = pendingActions.some(a => a.cardIndex === idx);
+                // Smaller cards when hand is big
+                const handSize = myHand?.length || 0;
+                const cardWidth = handSize > 8 ? "w-[45px]" : handSize > 6 ? "w-[52px]" : "w-[60px]";
+                const cardHeight = handSize > 8 ? "h-[64px]" : handSize > 6 ? "h-[74px]" : "h-[85px]";
 
                 // Check combo partners
                 const cardNameResolved = resolveCardName(card.name || "");
@@ -8744,7 +8782,7 @@ export default function TCGPage() {
                       playSound("select");
                       setSelectedHandCard(selectedHandCard === idx ? null : idx);
                     }}
-                    className={`relative flex-shrink-0 w-[60px] h-[85px] rounded-lg border-2 transition-all duration-200 select-none ${
+                    className={`relative flex-shrink-0 ${cardWidth} ${cardHeight} rounded-lg border-2 transition-all duration-200 select-none ${
                       !canAfford
                         ? "border-red-500/50 opacity-50 cursor-not-allowed grayscale"
                         : draggedCardIndex === idx
