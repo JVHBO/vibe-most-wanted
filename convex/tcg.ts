@@ -2540,16 +2540,6 @@ export const autoMatch = mutation({
   handler: async (ctx, args) => {
     const addr = args.address.toLowerCase();
 
-    // Rate limiting: check last match time
-    const recentMatch = await ctx.db
-      .query("tcgMatches")
-      .withIndex("by_player1", (q: any) => q.eq("player1Address", addr))
-      .order("desc")
-      .first();
-    if (recentMatch && Date.now() - recentMatch.createdAt < TCG_CONFIG.MATCH_COOLDOWN_MS) {
-      throw new Error("Please wait a few seconds between matches.");
-    }
-
     // Get player's active deck
     const activeDeck = await ctx.db
       .query("tcgDecks")

@@ -707,7 +707,7 @@ export default function ProfilePage() {
                       };
                       const baccaratImagePath = card.suit && card.rank && card.suit !== '???' && card.rank !== '???'
                         ? `/images/baccarat/${rankMap[card.rank] || card.rank} ${card.suit}, ${card.baccarat}.png`
-                        : card.baccarat === 'neymar'
+                        : (card.rank === '???' || card.baccarat === 'neymar' || card.baccarat === 'clawdmoltopenbot')
                           ? '/images/baccarat/joker, neymar.png'
                           : null;
 
