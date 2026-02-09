@@ -19,7 +19,7 @@
     "type:check": "tsc --noEmit"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.934.0",
+    "@aws-sdk/client-s3": "^3.985.0",
     "@coinbase/cdp-sdk": "^1.40.1",
     "@farcaster/miniapp-node": "^0.1.11",
     "@farcaster/miniapp-sdk": "^0.2.1",
@@ -30,6 +30,8 @@
     "@noble/secp256k1": "^3.0.0",
     "@pigment-css/react": "^0.0.30",
     "@rainbow-me/rainbowkit": "^2.2.9",
+    "@resvg/resvg-js": "^2.6.2",
+    "@resvg/resvg-wasm": "^2.6.2",
     "@sentry/nextjs": "^10.38.0",
     "@tanstack/react-query": "^5.90.20",
     "@tanstack/react-virtual": "^3.13.18",
@@ -42,7 +44,9 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "ethers": "^6.15.0",
+    "fix-webm-duration": "^1.0.6",
     "framer-motion": "^12.31.0",
+    "gifenc": "^1.0.3",
     "gifuct-js": "^2.1.2",
     "lodash-es": "^4.17.23",
     "lucide-react": "^0.555.0",
