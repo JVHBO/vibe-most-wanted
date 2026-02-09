@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
             notificationId: `vibefid-${Date.now()}`,
             title: sanitizedTitle,
             body: sanitizedBody,
-            targetUrl: targetUrl || "https://vibefid.xyz",
+            targetUrl: targetUrl || "https://vibemostwanted.lol/fid",
             tokens: [token],
           }),
         });
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
             notification_id: `vibefid-${Date.now()}`,
             title: sanitizedTitle,
             body: sanitizedBody,
-            target_url: targetUrl || "https://vibefid.xyz",
+            target_url: targetUrl || "https://vibemostwanted.lol/fid",
             tokens: [token],
           }),
         });
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
           notification: {
             title: sanitizedTitle,
             body: sanitizedBody,
-            target_url: targetUrl || "https://vibefid.xyz",
+            target_url: targetUrl || "https://vibemostwanted.lol/fid",
           },
         }),
       }

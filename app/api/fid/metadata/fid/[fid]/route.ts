@@ -89,7 +89,7 @@ export async function GET(
       description: `${cardData.displayName} (@${cardData.username}) - ${cardData.bio || 'A unique VibeFID card from the Farcaster ecosystem'}`,
       // Use cardImageUrl as thumbnail if video exists, otherwise use imageUrl
       image: hasVideo ? cardData.cardImageUrl : cardData.imageUrl,
-      external_url: `https://vibefid.xyz/share/fid/${cardData.fid}`,
+      external_url: `https://vibemostwanted.lol/share/fid/${cardData.fid}`,
       attributes: [
         {
           trait_type: 'Rarity',

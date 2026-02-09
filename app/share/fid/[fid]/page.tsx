@@ -10,7 +10,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { fid } = await params;
   const { lang = 'en', v } = await searchParams;
-  const baseUrl = 'https://vibefid.xyz';
+  const baseUrl = 'https://vibemostwanted.lol';
 
   // Use opengraph-image route which fetches shareImageUrl from IPFS
   // Cache bust with v parameter from URL

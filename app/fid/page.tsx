@@ -956,7 +956,7 @@ FID #${myCard.fid}
 
 ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
-      const shareUrl = `https://vibefid.xyz/share/score/${myCard.fid}?lang=${selectedLang}&v=${Date.now()}`;
+      const shareUrl = `https://vibemostwanted.lol/share/score/${myCard.fid}?lang=${selectedLang}&v=${Date.now()}`;
       await shareToFarcaster(castText, shareUrl);
     } catch (error) {
       console.error('Share failed:', error);
@@ -1312,7 +1312,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       }
 
       // Build metadata URL that OpenSea will read
-      const metadataUrl = `https://vibefid.xyz/api/metadata/fid/${userData.fid}`;
+      const metadataUrl = `https://vibemostwanted.lol/api/fid/metadata/fid/${userData.fid}`;
 
       // Get signature from backend
       setError("Verifying FID ownership and getting signature...");
@@ -1878,7 +1878,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                       <button
                         onClick={async () => {
                           AudioManager.buttonClick();
-                          const shareUrl = `https://vibefid.xyz/fid/${myCard?.fid}`;
+                          const shareUrl = `https://vibemostwanted.lol/fid/${myCard?.fid}`;
                           const scoreDiff = evolutionData.newScore - evolutionData.oldScore;
                           const diffSign = scoreDiff >= 0 ? '+' : '';
                           const castText = `My VibeFID just EVOLVED!\n\n${evolutionData.oldRarity} → ${evolutionData.newRarity}\nPower: ${evolutionData.oldPower} → ${evolutionData.newPower}\nNeynar Score: ${diffSign}${scoreDiff.toFixed(4)}\nBounty: ${evolutionData.newBounty.toLocaleString()}\n\n@jvhbo`;

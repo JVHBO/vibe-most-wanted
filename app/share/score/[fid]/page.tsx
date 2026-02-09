@@ -57,7 +57,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const t = metaTranslations[lang] || metaTranslations['en'];
 
   // Build GIF URL with language parameter
-  const gifUrl = `https://vibefid.xyz/share/score/${fid}/opengraph-image.gif?lang=${lang}&v=${v}`;
+  const gifUrl = `https://vibemostwanted.lol/share/score/${fid}/opengraph-image.gif?lang=${lang}&v=${v}`;
 
   return {
     title: `VibeFID #${fid} - Neynar Score`,
@@ -84,8 +84,8 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
           action: {
             type: 'launch_frame',
             name: 'VibeFID',
-            url: 'https://vibefid.xyz/fid',
-            splashImageUrl: 'https://vibefid.xyz/images/splash-200.png',
+            url: 'https://vibemostwanted.lol/fid',
+            splashImageUrl: 'https://vibemostwanted.lol/fid-assets/images/splash-200.png',
             splashBackgroundColor: '#1a1a1a',
           },
         },
