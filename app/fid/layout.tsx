@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { VibeFIDConvexProvider } from '@/contexts/VibeFIDConvexProvider';
 
-const baseUrl = 'https://vibemostwanted.lol';
+const baseUrl = 'https://vibemostwanted.xyz';
 
 export const metadata: Metadata = {
   title: 'VibeFID - Mint Your Farcaster Card',

@@ -68,7 +68,7 @@ export default function FidGenerationModal({
     };
 
     const emoji = rarityEmojis[generatedTraits.rarity] || '';
-    const shareUrl = `https://vibemostwanted.lol/share/fid/${fid}`;
+    const shareUrl = `https://vibemostwanted.xyz/share/fid/${fid}`;
     const text = `Just minted my VibeFID!
 
 ${generatedTraits.rarity}
@@ -113,7 +113,7 @@ ${shareT.shareTextEarnCoins}
 
 ${shareT.shareTextMintYours}`;
 
-      const shareUrl = `https://vibemostwanted.lol/share/fid/${fid}?lang=${selectedLang}&v=${Date.now()}`;
+      const shareUrl = `https://vibemostwanted.xyz/share/fid/${fid}?lang=${selectedLang}&v=${Date.now()}`;
       shareToFarcaster(text, shareUrl);
     } catch (error) {
       console.error('Share failed:', error);

@@ -174,7 +174,7 @@ export async function POST(request: NextRequest) {
     scoreText += `\nGet your playable VibeFID card:`;
 
     // Share page URL (the actual page with OG image)
-    const shareUrl = `https://vibemostwanted.lol/share/score/${targetFid}`;
+    const shareUrl = `https://vibemostwanted.xyz/share/score/${targetFid}`;
 
     // Reply directly to the user's cast
     const replyResponse = await fetch('https://api.neynar.com/v2/farcaster/cast', {

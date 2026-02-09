@@ -13,7 +13,7 @@ export const revalidate = 604800;
 
 export default async function Image() {
   // Fetch VibeFID card images from public URLs
-  const baseUrl = 'https://vibemostwanted.lol';
+  const baseUrl = 'https://vibemostwanted.xyz';
   const cardImage1 = fetch(`${baseUrl}/fid-assets/images/raid-bosses/vibefid/rare.png`).then(res => res.arrayBuffer());
   const cardImage2 = fetch(`${baseUrl}/fid-assets/images/raid-bosses/vibefid/epic.png`).then(res => res.arrayBuffer());
   const cardImage3 = fetch(`${baseUrl}/fid-assets/images/raid-bosses/vibefid/legendary.png`).then(res => res.arrayBuffer());

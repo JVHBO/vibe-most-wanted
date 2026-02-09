@@ -917,7 +917,7 @@ export const sendVibemailNotification = internalAction({
       const uuid = crypto.randomUUID();
       const payload = {
         target_fids: [recipientFid],
-        notification: { title, body, target_url: "https://vibemostwanted.lol/fid", uuid }
+        notification: { title, body, target_url: "https://vibemostwanted.xyz/fid", uuid }
       };
 
       const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {

@@ -391,7 +391,7 @@ export async function sendNeynarNotification(
   title: string,
   body: string,
   targetFids: number[] = [],
-  targetUrl: string = 'https://vibemostwanted.lol/fid'
+  targetUrl: string = 'https://vibemostwanted.xyz/fid'
 ): Promise<{
   success: boolean;
   deliveries: NotificationDelivery[];
@@ -470,7 +470,7 @@ export async function sendNeynarNotification(
 export async function broadcastNeynarNotification(
   title: string,
   body: string,
-  targetUrl: string = 'https://vibemostwanted.lol/fid'
+  targetUrl: string = 'https://vibemostwanted.xyz/fid'
 ): Promise<{
   success: boolean;
   successCount: number;
