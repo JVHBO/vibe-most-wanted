@@ -20,7 +20,7 @@ export default function HowToCompletePage() {
               Each card shows your Neynar social score and criminal backstory.
             </p>
             <Link
-              href="https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid"
+              href='/fid'
               target="_blank"
               className="inline-block bg-vintage-gold text-vintage-dark px-6 py-3 rounded-lg font-bold hover:bg-vintage-gold/80 transition text-lg"
             >

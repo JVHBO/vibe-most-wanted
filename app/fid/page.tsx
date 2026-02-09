@@ -307,7 +307,7 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
       // Redirect to main page to connect
       setError("Opening VibeFID miniapp in Farcaster...");
       setTimeout(() => {
-        window.location.href = 'https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid';
+        window.location.href = '/fid';
       }, 1000);
       return;
     }

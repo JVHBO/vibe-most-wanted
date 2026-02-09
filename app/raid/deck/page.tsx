@@ -471,7 +471,7 @@ export default function RaidDeckPage() {
                           onClick={async (e) => {
                             e.stopPropagation();
                             if (soundEnabled) AudioManager.buttonClick();
-                            await openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, true);
+                            await openMarketplace('/fid', sdk, true);
                           }}
                           className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black text-sm font-bold rounded-lg transition cursor-pointer"
                         >

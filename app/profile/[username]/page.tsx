@@ -544,7 +544,7 @@ export default function ProfilePage() {
                   <a href={`https://twitter.com/${profile.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-vintage-neon-blue hover:text-blue-400">𝕏</a>
                 )}
                 {profile.fid && (
-                  <button onClick={() => openMarketplace(`https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid/fid/${profile.fid}`, sdk, true)} className="text-vintage-gold hover:text-vintage-burnt-gold">{t('profileVibeFID')}</button>
+                  <button onClick={() => openMarketplace(`/fid/${profile.fid}`, sdk, true)} className="text-vintage-gold hover:text-vintage-burnt-gold">{t('profileVibeFID')}</button>
                 )}
               </div>
             </div>

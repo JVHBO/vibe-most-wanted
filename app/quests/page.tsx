@@ -607,7 +607,7 @@ export default function QuestsPage() {
                             <span className="text-vintage-ice text-xs">Get 2x rewards!</span>
                           </div>
                           <button
-                            onClick={() => window.open('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', '_blank')}
+                            onClick={() => window.location.href = '/fid'}
                             className="px-2 py-1 rounded bg-vintage-gold text-black font-bold text-[10px] animate-pulse"
                           >
                             Mint VibeFID

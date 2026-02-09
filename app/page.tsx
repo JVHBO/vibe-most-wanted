@@ -4202,7 +4202,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
             <button
               onClick={async () => {
                 if (soundEnabled) AudioManager.buttonClick();
-                await openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, isInFarcaster);
+                router.push('/fid');
               }}
               className="tour-vibefid-btn relative px-8 md:px-12 py-2 md:py-2 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
             >

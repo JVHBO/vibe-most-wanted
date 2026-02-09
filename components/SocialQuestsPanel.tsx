@@ -404,7 +404,7 @@ export function SocialQuestsPanel({
 
   // Open VibeFID miniapp to mint
   const openVibeFIDMint = () => {
-    window.open('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', '_blank');
+    window.location.href = '/fid';
   };
 
   return (

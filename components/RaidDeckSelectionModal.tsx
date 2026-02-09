@@ -472,7 +472,7 @@ export function RaidDeckSelectionModal({
                   <h3 className="text-xs font-bold text-vintage-gold">VibeFID - 6th Slot Special Card</h3>
                   {!hasVibeFID && (
                     <a
-                      href="https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid"
+                      href='/fid'
                       target="_blank"
                       rel="noopener noreferrer"
                       className="px-3 py-1 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black text-xs font-bold rounded-lg transition"

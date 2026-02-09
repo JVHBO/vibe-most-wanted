@@ -55,7 +55,7 @@ export default function HowToCompletePage() {
           </p>
 
           <Link
-            href="https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid"
+            href='/fid'
             target="_blank"
             className="bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black px-8 py-4 rounded-xl font-bold text-xl hover:shadow-gold-lg transition-all transform hover:scale-105"
           >

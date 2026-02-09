@@ -442,7 +442,7 @@ export function FeaturedCastAuctions({
               <div>
                 <span className="text-vintage-ice">{t('castAuctionGetBadge')}</span>
               </div>
-              <button onClick={() => openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, true)} className="text-vintage-gold hover:text-vintage-gold/80 font-bold cursor-pointer">{t('castAuctionMintBadge')}</button>
+              <button onClick={() => openMarketplace('/fid', sdk, true)} className="text-vintage-gold hover:text-vintage-gold/80 font-bold cursor-pointer">{t('castAuctionMintBadge')}</button>
             </div>
           )}
 

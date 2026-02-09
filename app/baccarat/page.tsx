@@ -1227,7 +1227,7 @@ export default function BaccaratPage() {
                   Get a <span className="text-vintage-gold font-bold">VibeFID card</span> and claim the <span className="text-vintage-gold font-bold">VIBE Badge</span> in missions to get {DAILY_LIMITS.WITH_BADGE} plays/day!
                 </p>
                 <button
-                  onClick={() => openMarketplace('https://farcaster.xyz/miniapps/aisYLhjuH5_G/vibefid', sdk, isInFarcaster)}
+                  onClick={() => openMarketplace('/fid', sdk, isInFarcaster)}
                   className="w-full py-3 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold rounded-xl text-vintage-gold font-bold font-modern transition-all mb-2"
                 >
                   Get VibeFID ↗
