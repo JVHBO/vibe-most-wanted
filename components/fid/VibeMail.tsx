@@ -242,7 +242,6 @@ export const VIBEMAIL_SOUNDS = [
 
 // Available meme images/GIFs for VibeMail
 export const VIBEMAIL_IMAGES = [
-  { id: 'arthur', name: '👊 Arthur', file: '/vibemail/arthur.jpg', isVideo: false },
   { id: 'john-pork', name: '🐷 John Pork', file: '/vibemail/john-pork.jpg', isVideo: false },
   { id: 'john-porn', name: '🍆 John Porn', file: '/vibemail/john-porn.jpg', isVideo: false },
   { id: 'dan-buttero', name: '🎸 Dan Buttero', file: '/vibemail/dan-buttero.png', isVideo: false },
