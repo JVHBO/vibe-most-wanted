@@ -19,7 +19,7 @@ export default async function Image({ params }: { params: Promise<{ fid: string 
 
     try {
       // Hardcode Convex URL for edge runtime reliability
-      const convexUrl = "https://agile-orca-761.convex.cloud";
+      const convexUrl = "https://scintillating-mandrill-101.convex.cloud";
       console.log(`[OG Image] Fetching from Convex: ${convexUrl}`);
 
       const response = await fetch(`${convexUrl}/api/query`, {
