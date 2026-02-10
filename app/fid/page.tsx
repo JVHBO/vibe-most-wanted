@@ -1466,7 +1466,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       <LanguageSelectionModal />
 
       {/* Floating Cards Background */}
-      <FloatingCardsBackground userFid={userFid} onMessageClick={() => window.location.href = '/vibemail'} />
+      <FloatingCardsBackground userFid={userFid} onMessageClick={() => window.location.href = '/fid/vibemail'} />
 
       {/* Header Bar */}
       <div className="fixed top-0 left-0 right-0 z-[9999] bg-vintage-charcoal/95 backdrop-blur-sm border-b border-vintage-gold/30 px-3 py-2">
@@ -2165,7 +2165,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
         <button
           onClick={() => {
             AudioManager.buttonClick();
-            window.location.href = '/vibemail';
+            window.location.href = '/fid/vibemail';
           }}
           className={`fixed bottom-24 right-4 z-[9998] w-16 h-16 rounded-full bg-vintage-gold/70 text-vintage-black hover:bg-vintage-gold hover:scale-110 transition-all flex items-center justify-center shadow-lg shadow-vintage-gold/30 backdrop-blur-sm border-2 border-vintage-gold/50 ${((unreadMessageCount ?? 0) > 0 || (vibeRewards?.pendingVbms ?? 0) > 0) ? "animate-bounce" : ""}`}
           title="VibeMail"
