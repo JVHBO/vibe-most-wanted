@@ -200,7 +200,7 @@ export async function generateNeynarScoreShareImage(params: NeynarScoreShareImag
         ctx.fillStyle = '#d4af37';
         ctx.font = 'bold 24px serif';
         ctx.textAlign = 'right';
-        ctx.fillText('vibefid.xyz', canvas.width - 50, bottomY + 12);
+        ctx.fillText('vibemostwanted.xyz', canvas.width - 50, bottomY + 12);
 
         // Convert to data URL
         const dataUrl = canvas.toDataURL('image/png');
