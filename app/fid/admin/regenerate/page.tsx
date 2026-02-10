@@ -41,7 +41,7 @@ export default function AdminRegenerate() {
 
     try {
       // 1. Fetch card data from Convex
-      const cardRes = await fetch(`/api/card-data?fid=${fid}`);
+      const cardRes = await fetch(`/api/fid/card-data?fid=${fid}`);
       if (!cardRes.ok) {
         const err = await cardRes.json();
         throw new Error(err.error || "Card not found");
@@ -50,7 +50,7 @@ export default function AdminRegenerate() {
 
       // 2. Fetch current Neynar score
       setResults(prev => ({ ...prev, [fid]: "Buscando score Neynar..." }));
-      const neynarRes = await fetch(`/api/neynar-score?fid=${fid}`);
+      const neynarRes = await fetch(`/api/fid/neynar-score?fid=${fid}`);
       if (!neynarRes.ok) throw new Error("Failed to fetch Neynar score");
       const neynarData = await neynarRes.json();
       const currentScore = neynarData.score;
@@ -94,7 +94,7 @@ export default function AdminRegenerate() {
       setResults(prev => ({ ...prev, [fid]: "Upload vídeo..." }));
       const videoFormData = new FormData();
       videoFormData.append("video", videoBlob, "card.webm");
-      const videoUploadRes = await fetch("/api/upload-nft-video", {
+      const videoUploadRes = await fetch("/api/fid/upload-nft-video", {
         method: "POST",
         body: videoFormData,
       });
@@ -106,7 +106,7 @@ export default function AdminRegenerate() {
       const pngBlob = await (await fetch(cardImageDataUrl)).blob();
       const pngFormData = new FormData();
       pngFormData.append("image", pngBlob, "card.png");
-      const pngUploadRes = await fetch("/api/upload-nft-image", {
+      const pngUploadRes = await fetch("/api/fid/upload-nft-image", {
         method: "POST",
         body: pngFormData,
       });
@@ -126,7 +126,7 @@ export default function AdminRegenerate() {
 
       // 9. Refresh OpenSea
       try {
-        await fetch("/api/opensea/refresh-metadata", {
+        await fetch("/api/fid/opensea/refresh-metadata", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ fid }),

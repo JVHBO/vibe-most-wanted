@@ -908,7 +908,7 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
       let globalRankText = '';
       const currentScore = neynarScoreData?.score ?? myCard.neynarScore ?? 0;
       try {
-        const openRankResponse = await fetch('/api/openrank', {
+        const openRankResponse = await fetch('/api/fid/openrank', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fid: myCard.fid }),
@@ -1051,7 +1051,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       const formData = new FormData();
       formData.append('video', videoBlob, 'card.webm');
 
-      const uploadResponse = await fetch('/api/upload-nft-video', {
+      const uploadResponse = await fetch('/api/fid/upload-nft-video', {
         method: 'POST',
         body: formData,
       });
@@ -1075,7 +1075,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       // Step 4: Refresh OpenSea metadata
       setRegenerationStatus('Refreshing OpenSea metadata...');
       try {
-        await fetch('/api/opensea/refresh-metadata', {
+        await fetch('/api/fid/opensea/refresh-metadata', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ fid: myCard.fid }),
@@ -1221,7 +1221,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       const pngFormData = new FormData();
       pngFormData.append('image', cardPngBlob, `card-${userData.fid}.png`);
 
-      const pngUploadResponse = await fetch('/api/upload-nft-image', {
+      const pngUploadResponse = await fetch('/api/fid/upload-nft-image', {
         method: 'POST',
         body: pngFormData,
       });
@@ -1264,7 +1264,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       const shareFormData = new FormData();
       shareFormData.append('image', shareImageBlob, `share-${userData.fid}.png`);
 
-      const shareUploadResponse = await fetch('/api/upload-nft-image', {
+      const shareUploadResponse = await fetch('/api/fid/upload-nft-image', {
         method: 'POST',
         body: shareFormData,
       });
@@ -1295,7 +1295,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       const formData = new FormData();
       formData.append('video', videoBlob, `card-${userData.fid}.webm`);
 
-      const uploadResponse = await fetch('/api/upload-nft-video', {
+      const uploadResponse = await fetch('/api/fid/upload-nft-video', {
         method: 'POST',
         body: formData,
       });
@@ -1316,7 +1316,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
       // Get signature from backend
       setError("Verifying FID ownership and getting signature...");
-      const signatureResponse = await fetch('/api/farcaster/mint-signature', {
+      const signatureResponse = await fetch('/api/fid/farcaster/mint-signature', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
