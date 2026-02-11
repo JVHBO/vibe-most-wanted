@@ -13,6 +13,7 @@ export interface CollectionConfig {
   displayName: string;
   description: string;
   contractAddress: string;
+  additionalContracts?: string[];
   chain: string;
   ownerAddress?: string;
   enabled: boolean;
@@ -157,13 +158,14 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-  // Collection VibeFID V2
+  // Collection VibeFID V2 (Base + Arbitrum)
   vibefid: {
     id: 'vibefid',
     name: 'vibefid',
     displayName: 'VibeFID',
     description: 'Collection VibeFID NFT',
     contractAddress: '0x60274A138d026E3cB337B40567100FdEC3127565',
+    additionalContracts: ['0xC39DDd9E2798D5612C700B899d0c80707c542dB0'], // Arbitrum
     chain: 'base-mainnet',
     enabled: true,
     marketplaceUrl: '/fid',

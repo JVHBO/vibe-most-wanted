@@ -31,9 +31,10 @@ const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const VIBEFID_ALCHEMY_REFRESH_MS = 24 * 60 * 60 * 1000; // 24 hours - refresh Alchemy metadata once per day
 
 // Collections config
-const COLLECTIONS: Record<string, { contract: string; name: string }> = {
+const VIBEFID_ARB_CONTRACT = "0xC39DDd9E2798D5612C700B899d0c80707c542dB0";
+const COLLECTIONS: Record<string, { contract: string; name: string; arbContract?: string }> = {
   vibe: { contract: "0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728", name: "VBMS" },
-  vibefid: { contract: "0x60274A138d026E3cB337B40567100FdEC3127565", name: "VibeFID" },
+  vibefid: { contract: "0x60274A138d026E3cB337B40567100FdEC3127565", name: "VibeFID", arbContract: VIBEFID_ARB_CONTRACT },
   gmvbrs: { contract: "0xefe512e73ca7356c20a21aa9433bad5fc9342d46", name: "GM VBRS" },
   viberuto: { contract: "0x70b4005a83a0b39325d27cf31bd4a7a30b15069f", name: "Viberuto" },
   meowverse: { contract: "0xF0BF71bcD1F1aeb1bA6BE0AfBc38A1ABe9aa9150", name: "Meowverse" },
@@ -85,17 +86,17 @@ function isUnopened(nft: any): boolean {
 }
 
 // Fetch from Alchemy
-async function fetchFromAlchemy(owner: string, contract: string, refreshCache: boolean = false): Promise<any[]> {
+async function fetchFromAlchemy(owner: string, contract: string, refreshCache: boolean = false, chain: string = CHAIN): Promise<any[]> {
   const refreshParam = refreshCache ? '&refreshCache=true' : '';
-  const url = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${refreshParam}`;
+  const url = `https://${chain}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100${refreshParam}`;
 
   if (refreshCache) {
-    console.log(`🔄 [nfts] Forcing Alchemy metadata refresh for ${contract.slice(0, 10)}...`);
+    console.log(`🔄 [nfts] Forcing Alchemy metadata refresh for ${contract.slice(0, 10)}... (${chain})`);
   }
 
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(`Alchemy error: ${res.status}`);
+    throw new Error(`Alchemy error: ${res.status} (${chain})`);
   }
 
   const data = await res.json();
@@ -166,7 +167,20 @@ export async function GET(
         // so refreshing always is acceptable and ensures correct power/rarity values
         const shouldRefreshAlchemy = isVibeFIDCollection;
         console.log(`🔄 [nfts] Fetching ${collectionId} from Alchemy...${shouldRefreshAlchemy ? ' (with metadata refresh)' : ''}`);
-        const rawNfts = await fetchFromAlchemy(owner, collection.contract, shouldRefreshAlchemy);
+        let rawNfts = await fetchFromAlchemy(owner, collection.contract, shouldRefreshAlchemy);
+
+        // Multi-chain: also fetch from Arbitrum for VibeFID
+        if (collection.arbContract) {
+          try {
+            const arbNfts = await fetchFromAlchemy(owner, collection.arbContract, shouldRefreshAlchemy, "arb-mainnet");
+            if (arbNfts.length > 0) {
+              console.log(`🔄 [nfts] Found ${arbNfts.length} ${collectionId} NFTs on Arbitrum`);
+              rawNfts = [...rawNfts, ...arbNfts];
+            }
+          } catch (arbErr) {
+            console.warn(`⚠️ [nfts] Arb fetch failed for ${collectionId}:`, arbErr);
+          }
+        }
         const processedNfts: any[] = [];
 
         for (const nft of rawNfts) {

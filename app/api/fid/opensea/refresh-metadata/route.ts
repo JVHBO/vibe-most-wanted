@@ -4,6 +4,7 @@ export const runtime = 'edge';
 
 const OPENSEA_API_KEY = process.env.OPENSEA_API_KEY || '7805aa61f1a04c90ab1e4a274af51617';
 const VIBEFID_CONTRACT = '0x60274A138d026E3cB337B40567100FdEC3127565';
+const VIBEFID_ARB_CONTRACT = '0xC39DDd9E2798D5612C700B899d0c80707c542dB0';
 
 /**
  * Refresh NFT metadata on OpenSea
@@ -14,6 +15,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const tokenId = body.tokenId || body.fid; // tokenId = fid for VibeFID
+    const chain = body.chain || 'base'; // Support multi-chain
 
     if (!tokenId) {
       return NextResponse.json(
@@ -22,9 +24,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const contract = chain === 'arbitrum' ? VIBEFID_ARB_CONTRACT : VIBEFID_CONTRACT;
+    const openseaChain = chain === 'arbitrum' ? 'arbitrum' : 'base';
+
     // Call OpenSea API to refresh metadata
     const response = await fetch(
-      `https://api.opensea.io/api/v2/chain/base/contract/${VIBEFID_CONTRACT}/nfts/${tokenId}/refresh`,
+      `https://api.opensea.io/api/v2/chain/${openseaChain}/contract/${contract}/nfts/${tokenId}/refresh`,
       {
         method: 'POST',
         headers: {

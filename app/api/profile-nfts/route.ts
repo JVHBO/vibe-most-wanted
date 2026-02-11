@@ -32,6 +32,14 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || "base-mainnet";
 
+// VibeFID Arbitrum
+const VIBEFID_ARB_CONTRACT = "0xC39DDd9E2798D5612C700B899d0c80707c542dB0";
+const ARB_RPCS = [
+  "https://arb1.arbitrum.io/rpc",
+  "https://arbitrum.llamarpc.com",
+  "https://rpc.ankr.com/arbitrum",
+];
+
 // Collections to fetch - only the 6 NFT collections used in the game
 // (Nothing/Free cards come from Convex, not blockchain)
 const COLLECTIONS = [
@@ -247,8 +255,8 @@ async function getFirstTokenId(owner: string, contract: string): Promise<string 
 }
 
 // Fetch NFTs from Alchemy
-async function fetchNFTsFromAlchemy(owner: string, contract: string): Promise<any[]> {
-  const url = `https://${CHAIN}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100`;
+async function fetchNFTsFromAlchemy(owner: string, contract: string, chain: string = CHAIN): Promise<any[]> {
+  const url = `https://${chain}.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${owner}&contractAddresses[]=${contract}&withMetadata=true&pageSize=100`;
 
   const res = await fetch(url);
   if (!res.ok) {
@@ -422,6 +430,27 @@ export async function GET(request: Request) {
 
     const fetchResults = await Promise.all(fetchPromises);
     fetchResults.forEach(nfts => allNfts.push(...nfts));
+
+    // Step 2b: Also fetch VibeFID from Arbitrum
+    try {
+      const arbNfts = await fetchNFTsFromAlchemy(address, VIBEFID_ARB_CONTRACT, "arb-mainnet");
+      for (const nft of arbNfts) {
+        if (isUnopened(nft)) continue;
+        allNfts.push({
+          tokenId: nft.tokenId,
+          name: nft?.raw?.metadata?.name || nft?.name || `#${nft.tokenId}`,
+          imageUrl: nft?.image?.cachedUrl || nft?.image?.thumbnailUrl || nft?.raw?.metadata?.image || "",
+          rarity: findAttr(nft, "rarity"),
+          wear: findAttr(nft, "wear"),
+          foil: findAttr(nft, "foil"),
+          power: calcPower(nft, true),
+          collection: "vibefid",
+          collectionName: "VibeFID",
+        });
+      }
+    } catch (arbErr) {
+      console.warn(`⚠️ [profile-nfts] Arb VibeFID fetch failed:`, arbErr);
+    }
 
     // Step 3: Get free cards from Convex
     let freeCards: any[] = [];

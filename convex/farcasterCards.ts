@@ -482,7 +482,10 @@ export const getFarcasterCardsByRarity = query({
 export const deleteAllOldVibeFIDCards = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const VIBEFID_CURRENT_CONTRACT = "0x60274A138d026E3cB337B40567100FdEC3127565";
+    const VIBEFID_VALID_CONTRACTS = [
+      "0x60274A138d026E3cB337B40567100FdEC3127565", // Base
+      "0xC39DDd9E2798D5612C700B899d0c80707c542dB0", // Arbitrum
+    ];
 
     // Get all cards
     const allCards = await ctx.db
@@ -491,11 +494,13 @@ export const deleteAllOldVibeFIDCards = internalMutation({
 
     let deletedCount = 0;
 
-    // Delete cards that are NOT from the current VibeFID contract
+    // Delete cards that are NOT from any valid VibeFID contract
     for (const card of allCards) {
-      const isCurrentContract = card.contractAddress?.toLowerCase() === VIBEFID_CURRENT_CONTRACT.toLowerCase();
+      const isValidContract = VIBEFID_VALID_CONTRACTS.some(
+        c => card.contractAddress?.toLowerCase() === c.toLowerCase()
+      );
 
-      if (!isCurrentContract) {
+      if (!isValidContract) {
         await ctx.db.delete(card._id);
         deletedCount++;
       }

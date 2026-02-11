@@ -17,8 +17,9 @@ import { applyLanguageBoost } from "./languageBoost";
 import { createAuditLog } from "./coinAudit";
 import { logTransaction } from "./coinsInbox";
 
-// VibeFID contract address (Base mainnet)
+// VibeFID contract addresses (Base + Arbitrum)
 const VIBEFID_CONTRACT = "0x60274A138d026E3cB337B40567100FdEC3127565";
+const VIBEFID_ARB_CONTRACT = "0xC39DDd9E2798D5612C700B899d0c80707c542dB0";
 
 // Mission rewards (halved - Vibe Clash is main mode now)
 // Exception: vibefid_minted stays at 5000 to incentivize minting
@@ -609,20 +610,25 @@ export const checkVibeBadgeEligibility = action({
     });
     const hasBadge = badgeStatus?.hasBadge === true;
 
-    // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy
+    // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy (Base + Arbitrum)
     const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || process.env.ALCHEMY_API_KEY;
-    const url = `https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_CONTRACT}`;
 
     let hasVibeFIDCards = false;
     try {
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        hasVibeFIDCards = data.isHolderOfContract === true;
+      const [baseRes, arbRes] = await Promise.all([
+        fetch(`https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_CONTRACT}`).catch(() => null),
+        fetch(`https://arb-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_ARB_CONTRACT}`).catch(() => null),
+      ]);
+      if (baseRes?.ok) {
+        const data = await baseRes.json();
+        if (data.isHolderOfContract === true) hasVibeFIDCards = true;
+      }
+      if (!hasVibeFIDCards && arbRes?.ok) {
+        const data = await arbRes.json();
+        if (data.isHolderOfContract === true) hasVibeFIDCards = true;
       }
     } catch (error) {
       console.error("❌ Alchemy check failed:", error);
-      // Fallback: if Alchemy fails, check Convex (not ideal but better than nothing)
       hasVibeFIDCards = false;
     }
 
@@ -702,16 +708,22 @@ export const claimVibeBadge = action({
   }> => {
     const normalizedAddress = playerAddress.toLowerCase();
 
-    // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy
+    // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy (Base + Arbitrum)
     const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || process.env.ALCHEMY_API_KEY;
-    const url = `https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_CONTRACT}`;
 
     let hasVibeFID = false;
     try {
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        hasVibeFID = data.isHolderOfContract === true;
+      const [baseRes, arbRes] = await Promise.all([
+        fetch(`https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_CONTRACT}`).catch(() => null),
+        fetch(`https://arb-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_ARB_CONTRACT}`).catch(() => null),
+      ]);
+      if (baseRes?.ok) {
+        const data = await baseRes.json();
+        if (data.isHolderOfContract === true) hasVibeFID = true;
+      }
+      if (!hasVibeFID && arbRes?.ok) {
+        const data = await arbRes.json();
+        if (data.isHolderOfContract === true) hasVibeFID = true;
       }
     } catch (error) {
       console.error("❌ Alchemy check failed:", error);

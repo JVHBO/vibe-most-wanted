@@ -1239,7 +1239,8 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                 <button
                   onClick={() => {
                     AudioManager.buttonClick();
-                    const url = `https://opensea.io/assets/base/${card.contractAddress || '0x60274A138d026E3cB337B40567100FdEC3127565'}/${card.fid}`;
+                    const chainSlug = card.chain === 'arbitrum' || card.contractAddress?.toLowerCase() === '0xc39ddd9e2798d5612c700b899d0c80707c542db0' ? 'arbitrum' : 'base';
+                    const url = `https://opensea.io/assets/${chainSlug}/${card.contractAddress || '0x60274A138d026E3cB337B40567100FdEC3127565'}/${card.fid}`;
                     window.open(url, '_blank');
                     setShowOpenSeaModal(false);
                   }}

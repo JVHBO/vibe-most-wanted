@@ -83,6 +83,12 @@ const BALANCE_CACHE_TIME = 1000 * 60 * 15; // 🚀 INCREASED: 15 minutes (was 5)
 const VIBEFID_REFRESH_KEY = 'vbms_vibefid_alchemy_refresh';
 const VIBEFID_REFRESH_TIME = 1000 * 60 * 60 * 24; // 24 hours
 const VIBEFID_CONTRACT = '0x60274a138d026e3cb337b40567100fdec3127565';
+const VIBEFID_ARB_CONTRACT = '0xc39ddd9e2798d5612c700b899d0c80707c542db0';
+const VIBEFID_CONTRACTS = [VIBEFID_CONTRACT, VIBEFID_ARB_CONTRACT];
+
+function isVibeFIDContract(contract: string): boolean {
+  return VIBEFID_CONTRACTS.includes(contract.toLowerCase());
+}
 
 function shouldRefreshVibeFIDMetadata(): boolean {
   if (typeof window === 'undefined') return false;
@@ -576,7 +582,7 @@ function getNftCache(owner: string, contract: string, currentBalance?: number): 
     // 🔄 VibeFID special handling: NEVER use balance-based caching!
     // VibeFID metadata can change (Neynar score updates) without balance changing
     // Use ONLY time-based expiration (24h refresh cycle)
-    const isVibeFID = contract.toLowerCase() === VIBEFID_CONTRACT.toLowerCase();
+    const isVibeFID = isVibeFIDContract(contract);
     if (isVibeFID) {
       if (!entry.timestamp) {
         console.log(`🔄 VibeFID cache has no timestamp - forcing refresh`);
@@ -762,7 +768,7 @@ export async function getImage(nft: any, collection?: string): Promise<string> {
   // 🎬 VIBEFID SPECIAL HANDLING: VibeFID stores VIDEO URL in metadata.image
   // Alchemy caches these as PNG thumbnails - we need the ORIGINAL video URL
   const contractAddr = nft?.contract?.address?.toLowerCase();
-  const isVibeFID = collection === 'vibefid' || contractAddr === '0x60274a138d026e3cb337b40567100fdec3127565';
+  const isVibeFID = collection === 'vibefid' || isVibeFIDContract(contractAddr || '');
 
   if (isVibeFID) {
     // 🎬 VibeFID MUST use VIDEO URL from IPFS/filebase, never Alchemy's converted PNG!
@@ -1139,7 +1145,7 @@ export async function fetchNFTs(
 
   // ALWAYS refresh VibeFID metadata from Alchemy
   // VibeFID is a small collection and metadata can change (Neynar score updates)
-  const isVibeFID = contract.toLowerCase() === VIBEFID_CONTRACT.toLowerCase();
+  const isVibeFID = isVibeFIDContract(contract);
   const needsVibeFIDRefresh = isVibeFID; // Always refresh for VibeFID
   if (needsVibeFIDRefresh) {
     console.log('🔄 VibeFID: Forcing Alchemy metadata refresh');
@@ -1234,9 +1240,8 @@ export async function fetchNFTs(
       return cached.nfts;
     }
 
-    // For VibeFID contract, try Convex fallback
-    const vibefidContract = '0x60274a138d026e3cb337b40567100fdec3127565';
-    if (contract.toLowerCase() === vibefidContract.toLowerCase()) {
+    // For VibeFID contract (any chain), try Convex fallback
+    if (isVibeFIDContract(contract)) {
       console.log('🔄 Trying VibeFID Convex fallback...');
       const convexCards = await fetchVibeFIDFromConvex(owner);
       if (convexCards.length > 0) {

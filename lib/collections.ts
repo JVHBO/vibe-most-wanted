@@ -13,6 +13,7 @@ export interface CollectionConfig {
   displayName: string;
   description: string;
   contractAddress: string;
+  additionalContracts?: string[]; // Multi-chain: additional contract addresses (e.g. Arbitrum)
   chain: string;
   ownerAddress?: string;
   enabled: boolean;
@@ -143,13 +144,14 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-  // Collection VibeFID V2
+  // Collection VibeFID V2 (Base + Arbitrum)
   vibefid: {
     id: 'vibefid',
     name: 'vibefid',
     displayName: 'VibeFID',
     description: 'Collection VibeFID NFT',
     contractAddress: '0x60274A138d026E3cB337B40567100FdEC3127565',
+    additionalContracts: ['0xC39DDd9E2798D5612C700B899d0c80707c542dB0'], // Arbitrum
     chain: 'base-mainnet',
     enabled: true,
     marketplaceUrl: '/fid',
@@ -372,6 +374,28 @@ export function isCollectionEnabled(id: CollectionId): boolean {
 export function getCollectionContract(id: CollectionId): string {
   return COLLECTIONS[id]?.contractAddress || '';
 }
+
+/**
+ * Returns ALL contract addresses for a collection (main + additional chains)
+ */
+export function getAllCollectionContracts(id: CollectionId): string[] {
+  const col = COLLECTIONS[id];
+  if (!col) return [];
+  const contracts = [col.contractAddress];
+  if (col.additionalContracts) contracts.push(...col.additionalContracts);
+  return contracts;
+}
+
+/**
+ * Check if a contract address belongs to a specific collection (any chain)
+ */
+export function isContractForCollection(contractAddress: string, id: CollectionId): boolean {
+  const contracts = getAllCollectionContracts(id);
+  return contracts.some(c => c.toLowerCase() === contractAddress.toLowerCase());
+}
+
+// VibeFID contracts (Base + Arbitrum) - convenience export
+export const VIBEFID_ALL_CONTRACTS = getAllCollectionContracts('vibefid');
 
 /**
  * Retorna a configuração de power de uma coleção
