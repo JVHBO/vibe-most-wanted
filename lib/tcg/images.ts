@@ -53,9 +53,9 @@ export const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
   // Get baccarat name (use alias if exists, or baccarat field, or onChainName)
   const baccaratName = aliases[cardData.onChainName] || cardData.baccarat?.toLowerCase() || cardData.onChainName?.toLowerCase();
 
-  // Special case for neymar (joker)
-  if (baccaratName === "neymar" || cardData.rank?.includes("?")) {
-    return "/images/baccarat/joker, neymar.png";
+  // Special case for joker cards (rank "???")
+  if (cardData.rank?.includes("?")) {
+    return `/images/baccarat/joker, ${baccaratName}.png`;
   }
 
   // Build rank name
