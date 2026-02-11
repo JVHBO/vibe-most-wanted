@@ -18,7 +18,7 @@ import haptics from "@/lib/fid/haptics";
 import { AudioRecorder } from './AudioRecorder';
 import { useMusic } from '@/contexts/MusicContext';
 import { openMarketplace } from "@/lib/fid/marketplace-utils";
-import { getAssetUrl } from "@/lib/fid/ipfs-assets";
+
 
 const VIBEMAIL_COST_VBMS = "100"; // Cost for paid VibeMail
 
@@ -230,25 +230,26 @@ export function getSecretaryForMessage(messageId: string): typeof VIBEMAIL_SECRE
   return VIBEMAIL_SECRETARIES[Math.abs(hash) % VIBEMAIL_SECRETARIES.length];
 }
 
-// Available meme sounds for VibeMail
+// Available meme sounds for VibeMail (IPFS URLs)
 export const VIBEMAIL_SOUNDS = [
-  { id: 'let-him-cook', name: 'Let Him Cook', file: '/sounds/let-him-cook-now.mp3' },
-  { id: 'quandale', name: 'Quandale Dingle', file: '/sounds/quandale-dingle-meme.mp3' },
-  { id: 'corteze', name: 'Corteze', file: '/sounds/corteze.MP3' },
-  { id: 'dry-fart', name: 'Dry Fart', file: '/sounds/dry-fart.mp3' },
-  { id: 'receba', name: 'Receba!', file: '/sounds/receba-luva.mp3' },
-  { id: 'ringtone', name: 'John Pork', file: '/john-pork-ringtone.mp3' },
+  { id: 'let-him-cook', name: 'Let Him Cook', file: 'https://ipfs.filebase.io/ipfs/QmSTdwK9NAeUiTAmH86wihNGXgnu2F6udx3dyLHgp6jXtx' },
+  { id: 'quandale', name: 'Quandale Dingle', file: 'https://ipfs.filebase.io/ipfs/QmZUtCfYP7nJrh1m8wiLJ1bmXfqmL2WfGAd6EQA8i9izjS' },
+  { id: 'corteze', name: 'Corteze', file: 'https://ipfs.filebase.io/ipfs/QmPMJ2PVvE5PhrDgpqQLjykwvJp1LZWWYLEXYekUHvMqTN' },
+  { id: 'dry-fart', name: 'Dry Fart', file: 'https://ipfs.filebase.io/ipfs/QmdJePGUk9Vh7KHtoRytiHsa1uKbWAzXQHMsvJeyqnEgC8' },
+  { id: 'receba', name: 'Receba!', file: 'https://ipfs.filebase.io/ipfs/QmY3B3ZNjEubzATJHZAhwh3S4Ui7cShGCBP7yy1mAQZK9N' },
+  { id: 'ringtone', name: 'John Pork', file: 'https://ipfs.filebase.io/ipfs/QmW4i6vcQgGQ7HpDAGbNspGqVXyVHN6AACnQJ9GEckr52x' },
 ] as const;
 
-// Available meme images/GIFs for VibeMail
+// Available meme images/GIFs for VibeMail (IPFS URLs)
 export const VIBEMAIL_IMAGES = [
-  { id: 'john-pork', name: '🐷 John Pork', file: '/vibemail/john-pork.jpg', isVideo: false },
-  { id: 'john-porn', name: '🍆 John Porn', file: '/vibemail/john-porn.jpg', isVideo: false },
-  { id: 'dan-buttero', name: '🎸 Dan Buttero', file: '/vibemail/dan-buttero.png', isVideo: false },
-  { id: 'lula', name: '🇧🇷 Lula', file: '/vibemail/lula.png', isVideo: false },
-  { id: 'vegetan', name: '💪 Vegetan', file: '/vibemail/vegetan.jpg', isVideo: false },
-  { id: 'suck-jones', name: '🏴‍☠️ Suck Jones', file: '/vibemail/suck-jones.mp4', isVideo: true },
-  { id: 'neymar', name: '⚽ Neymar', file: '/vibemail/neymar.png', isVideo: false },
+  { id: 'arthur', name: '👊 Arthur', file: 'https://ipfs.filebase.io/ipfs/QmWrSs9bS9P96aY6gY8K2NbYjjdXhi2PguBqEwGqwefhMu', isVideo: false },
+  { id: 'john-pork', name: '🐷 John Pork', file: 'https://ipfs.filebase.io/ipfs/Qmb4G2NJ9MPgXip4EpuAm79zzj61527wUAx6oLRdkLWinS', isVideo: false },
+  { id: 'john-porn', name: '🍆 John Porn', file: 'https://ipfs.filebase.io/ipfs/QmVNQA9KoJJpFKWzpc9ZNLMTMPXbLZPn391H98bzRKNMLQ', isVideo: false },
+  { id: 'dan-buttero', name: '🎸 Dan Buttero', file: 'https://ipfs.filebase.io/ipfs/QmeCqB3CxN4ADeizWajHGnuEHkwnfs6NE1PBeqwCWGvjFV', isVideo: false },
+  { id: 'lula', name: '🇧🇷 Lula', file: 'https://ipfs.filebase.io/ipfs/QmS4aYq5MJhXJBZyMYc3sdS1vVxro7XJNAHPX3xhg6Luyu', isVideo: false },
+  { id: 'vegetan', name: '💪 Vegetan', file: 'https://ipfs.filebase.io/ipfs/QmVGCwxPskMgRQExNkvvUnW1xUGfmG3qK5iSbqcL11pmtL', isVideo: false },
+  { id: 'suck-jones', name: '🏴‍☠️ Suck Jones', file: 'https://ipfs.filebase.io/ipfs/QmcQ2mSo2gXQgkAjLHFCu6DMLRFjehp2Aes58UWr3xxgaR', isVideo: true },
+  { id: 'neymar', name: '⚽ Neymar', file: 'https://ipfs.filebase.io/ipfs/QmRqEzZWPEE5Mo1ZKquMgud2xy3tSwLKE9ZqM6JoVAK3X9', isVideo: false },
 ] as const;
 
 // Check if audio is a custom recording (vs predefined sound)
@@ -327,10 +328,10 @@ export function getSoundFile(audioId: string): string | null {
   return sound?.file || null;
 }
 
-// Get image file from ID (uses IPFS in production)
+// Get image file from ID
 export function getImageFile(imageId: string): { file: string; isVideo: boolean } | null {
   const image = VIBEMAIL_IMAGES.find(i => i.id === imageId);
-  return image ? { file: getAssetUrl(image.file), isVideo: image.isVideo } : null;
+  return image ? { file: image.file, isVideo: image.isVideo } : null;
 }
 
 interface VibeMailMessage {
