@@ -232,8 +232,6 @@ export function getSecretaryForMessage(messageId: string): typeof VIBEMAIL_SECRE
 
 // Available meme sounds for VibeMail
 export const VIBEMAIL_SOUNDS = [
-  { id: 'let-him-cook', name: 'Let Him Cook', file: '/sounds/let-him-cook-now.mp3' },
-  { id: 'quandale', name: 'Quandale Dingle', file: '/sounds/quandale-dingle-meme.mp3' },
   { id: 'corteze', name: 'Corteze', file: '/sounds/corteze.MP3' },
   { id: 'dry-fart', name: 'Dry Fart', file: '/sounds/dry-fart.mp3' },
   { id: 'receba', name: 'Receba!', file: '/sounds/receba-luva.mp3' },
