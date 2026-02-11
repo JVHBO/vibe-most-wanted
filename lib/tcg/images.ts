@@ -55,6 +55,7 @@ export const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
 
   // Special case for joker cards (rank "???")
   if (cardData.rank?.includes("?")) {
+    if (baccaratName === "clawdmoltopenbot") return "https://ipfs.filebase.io/ipfs/QmUsuM3CEHM6FXBzqHiC8XvZfZeDPy6zuEFmorYX9saBqv";
     return `/images/baccarat/joker, ${baccaratName}.png`;
   }
 

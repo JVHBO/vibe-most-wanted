@@ -46,8 +46,10 @@ export const generateCpuDeck = (playerDeck: DeckCard[]): DeckCard[] => {
     const baccarat = card.baccarat?.toLowerCase() || card.onChainName?.toLowerCase();
     let imageUrl = "/images/card-back.png";
 
-    if (baccarat === "neymar" || card.rank?.includes("?") || card.suit?.includes("?")) {
-      imageUrl = "/images/baccarat/joker, neymar.png";
+    if (card.rank?.includes("?") || card.suit?.includes("?")) {
+      imageUrl = baccarat === "clawdmoltopenbot"
+        ? "https://ipfs.filebase.io/ipfs/QmUsuM3CEHM6FXBzqHiC8XvZfZeDPy6zuEFmorYX9saBqv"
+        : `/images/baccarat/joker, ${baccarat}.png`;
     } else if (card.suit && card.rank) {
       const rankName = rankMap[card.rank] || card.rank;
       imageUrl = `/images/baccarat/${rankName} ${card.suit}, ${baccarat}.png`;

@@ -707,8 +707,10 @@ export default function ProfilePage() {
                       };
                       const baccaratImagePath = card.suit && card.rank && card.suit !== '???' && card.rank !== '???'
                         ? `/images/baccarat/${rankMap[card.rank] || card.rank} ${card.suit}, ${card.baccarat}.png`
-                        : (card.rank === '???' || card.baccarat === 'neymar' || card.baccarat === 'clawdmoltopenbot')
-                          ? '/images/baccarat/joker, neymar.png'
+                        : (card.rank === '???')
+                          ? (card.baccarat === 'clawdmoltopenbot'
+                            ? 'https://ipfs.filebase.io/ipfs/QmUsuM3CEHM6FXBzqHiC8XvZfZeDPy6zuEFmorYX9saBqv'
+                            : `/images/baccarat/joker, ${card.baccarat}.png`)
                           : null;
 
                       // Get all owned copies of this card (by name or tokenId)
