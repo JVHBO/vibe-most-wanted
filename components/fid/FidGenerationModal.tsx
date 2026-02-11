@@ -11,6 +11,8 @@ import type { CriminalBackstoryData } from "@/lib/fid/generateCriminalBackstory"
 import { fidTranslations } from "@/lib/fid/fidTranslations";
 import type { SupportedLanguage } from "@/lib/translations";
 import { AudioManager } from "@/lib/fid/audio-manager";
+import type { VibeFIDChain } from "@/lib/fid/contracts/VibeFIDABI";
+import { MINT_PRICE, MINT_PRICE_ARB, VIBEFID_ARB_CONTRACT_ADDRESS } from "@/lib/fid/contracts/VibeFIDABI";
 
 interface FidGenerationModalProps {
   isOpen: boolean;
@@ -19,7 +21,7 @@ interface FidGenerationModalProps {
   displayName: string;
   previewImage: string | null;
   generatedTraits: any;
-  onMint: () => void;
+  onMint: (chain: VibeFIDChain) => void;
   isMinting: boolean;
   isMintedSuccessfully?: boolean;
   mintingStep?: string | null;
@@ -51,6 +53,10 @@ export default function FidGenerationModal({
 }: FidGenerationModalProps) {
   const { lang } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0); // 0 = backstory, 1 = card
+  const [selectedChain, setSelectedChain] = useState<VibeFIDChain>("base");
+  const arbAvailable = !!VIBEFID_ARB_CONTRACT_ADDRESS;
+  const currentMintPrice = selectedChain === "arbitrum" ? MINT_PRICE_ARB : MINT_PRICE;
+  const currentMintPriceUsd = selectedChain === "arbitrum" ? "~$0.68" : "~$0.90";
   const [showShareLangModal, setShowShareLangModal] = useState(false);
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
   const storyScrollRef = useRef<HTMLDivElement>(null);
@@ -314,11 +320,40 @@ ${shareT.shareTextMintYours}`;
               {/* Action Buttons */}
               {!isMintedSuccessfully ? (
                 <div className="flex flex-col gap-2 w-full">
+                  {/* Chain Selector */}
+                  {arbAvailable && (
+                    <div className="flex gap-2 w-full">
+                      <button
+                        onClick={() => { AudioManager.buttonClick(); setSelectedChain("base"); }}
+                        className={`flex-1 py-2 px-3 rounded border text-xs font-bold transition-colors ${
+                          selectedChain === "base"
+                            ? "bg-blue-600/30 border-blue-400 text-blue-300"
+                            : "bg-vintage-black/30 border-vintage-gold/20 text-vintage-ice/50 hover:border-vintage-gold/40"
+                        }`}
+                      >
+                        Base
+                      </button>
+                      <button
+                        onClick={() => { AudioManager.buttonClick(); setSelectedChain("arbitrum"); }}
+                        className={`flex-1 py-2 px-3 rounded border text-xs font-bold transition-colors ${
+                          selectedChain === "arbitrum"
+                            ? "bg-blue-600/30 border-blue-400 text-blue-300"
+                            : "bg-vintage-black/30 border-vintage-gold/20 text-vintage-ice/50 hover:border-vintage-gold/40"
+                        }`}
+                      >
+                        Arbitrum <span className="text-green-400">-25%</span>
+                      </button>
+                    </div>
+                  )}
+
                   {/* Mint Price */}
                   <div className="text-center py-2 bg-vintage-black/30 rounded border border-vintage-gold/20">
                     <p className="text-vintage-gold font-bold text-sm">
-                      {t.mintPrice || 'Mint Price'}: 0.0003 ETH <span className="text-vintage-ice/50 text-xs">~$0.90</span>
+                      {t.mintPrice || 'Mint Price'}: {currentMintPrice} ETH <span className="text-vintage-ice/50 text-xs">{currentMintPriceUsd}</span>
                     </p>
+                    {selectedChain === "arbitrum" && (
+                      <p className="text-green-400 text-xs mt-1">Arbitrum One - 25% discount!</p>
+                    )}
                   </div>
 
                   {/* Wallet status */}
@@ -357,9 +392,9 @@ ${shareT.shareTextMintYours}`;
                     ) : (
                       <button
                         onClick={() => {
-                          console.log('🔴 MINT BUTTON CLICKED');
+                          console.log('🔴 MINT BUTTON CLICKED, chain:', selectedChain);
                           AudioManager.buttonClick();
-                          onMint();
+                          onMint(selectedChain);
                         }}
                         disabled={isMinting || !walletAddress}
                         className="flex-1 px-4 py-3 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors disabled:opacity-50 text-sm"

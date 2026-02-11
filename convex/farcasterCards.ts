@@ -43,7 +43,8 @@ export const mintFarcasterCard = mutation({
 
     // Contract
     contractAddress: v.optional(v.string()), // NFT contract address
-    
+    chain: v.optional(v.string()), // "base" | "arbitrum"
+
     // Optional: User language preference
     language: v.optional(v.string()),
   },
@@ -89,6 +90,7 @@ export const mintFarcasterCard = mutation({
 
       // Contract
       contractAddress: args.contractAddress,
+      chain: args.chain || "base",
 
       // Card Properties
       cardId,

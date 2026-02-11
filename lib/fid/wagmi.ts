@@ -1,7 +1,7 @@
 'use client';
 
 import { http, createConfig } from 'wagmi';
-import { base } from 'wagmi/chains';
+import { base, arbitrum } from 'wagmi/chains';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import {
   coinbaseWallet,
@@ -33,10 +33,14 @@ const connectors = connectorsForWallets(
 // Add Farcaster miniapp connector
 const allConnectors = [...connectors, farcasterMiniApp()];
 
+// Arbitrum RPC
+const ARB_RPC_URL = process.env.NEXT_PUBLIC_ARBITRUM_RPC_URL || undefined;
+
 export const config = createConfig({
-  chains: [base],
+  chains: [base, arbitrum],
   transports: {
     [base.id]: http(BASE_RPC_URL),
+    [arbitrum.id]: http(ARB_RPC_URL),
   },
   connectors: allConnectors,
   ssr: true,

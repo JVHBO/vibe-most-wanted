@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount, useWaitForTransactionReceipt, useConnect, useSendTransaction } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt, useConnect, useSendTransaction, useSwitchChain } from "wagmi";
 import { useWriteContractWithAttribution, dataSuffix, BUILDER_CODE } from "@/hooks/fid/useWriteContractWithAttribution";
 import { encodeFunctionData, createPublicClient, http } from "viem";
-import { base } from "viem/chains";
+import { base, arbitrum } from "viem/chains";
 import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "@/lib/fid/convex-generated/api";
 import { getUserByFid, calculateRarityFromScore, getBasePowerFromRarity, generateRandomSuit, getSuitFromFid, generateRankFromRarity, getSuitSymbol, getSuitColor } from "@/lib/fid/neynar";
@@ -13,7 +13,8 @@ import { getFarcasterAccountCreationDate } from "@/lib/fid/farcasterRegistry";
 import type { NeynarUser, CardSuit, CardRank } from "@/lib/fid/neynar";
 import { generateFarcasterCardImage } from "@/lib/fid/generateFarcasterCard";
 import { generateCardVideo } from "@/lib/fid/generateCardVideo";
-import { VIBEFID_ABI, VIBEFID_CONTRACT_ADDRESS, MINT_PRICE } from "@/lib/fid/contracts/VibeFIDABI";
+import { VIBEFID_ABI, VIBEFID_CONTRACT_ADDRESS, MINT_PRICE, getVibeFIDConfig } from "@/lib/fid/contracts/VibeFIDABI";
+import type { VibeFIDChain } from "@/lib/fid/contracts/VibeFIDABI";
 import { parseEther } from "viem";
 import FoilCardEffect from "@/components/fid/FoilCardEffect";
 import { CardMedia } from "@/components/fid/CardMedia";
@@ -61,10 +62,12 @@ interface GeneratedTraits {
 }
 
 export default function FidPage() {
-  const { address } = useAccount();
+  const { address, chain: connectedChain } = useAccount();
   const { connect, connectors } = useConnect();
+  const { switchChainAsync } = useSwitchChain();
   const farcasterContext = useFarcasterContext();
   const { lang, setLang } = useLanguage();
+  const [mintChain, setMintChain] = useState<VibeFIDChain>("base");
 
   // Upgrade mutations
   const upgradeCardRarity = useMutation(api.farcasterCards.upgradeCardRarity);
@@ -598,7 +601,8 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
           suitSymbol: String(data.suitSymbol),
           color: String(data.color),
           imageUrl: String(data.imageUrl),
-          contractAddress: VIBEFID_CONTRACT_ADDRESS.toLowerCase(),
+          contractAddress: getVibeFIDConfig(data.chain || "base").address.toLowerCase(),
+          chain: data.chain || "base",
           language: lang, // Pass user's language for welcome message
         };
 
@@ -685,13 +689,16 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
 
           let fidMintedResult = false;
           try {
+            // Use the chain from pending mint data (or current mintChain)
+            const verifyChainConfig = getVibeFIDConfig(pendingMintData.chain || mintChain);
+            const viemChain = (pendingMintData.chain || mintChain) === "arbitrum" ? arbitrum : base;
             const rpcClient = createPublicClient({
-              chain: base,
-              transport: http('https://mainnet.base.org'),
+              chain: viemChain,
+              transport: http(verifyChainConfig.rpcUrl),
             });
 
             fidMintedResult = await rpcClient.readContract({
-              address: VIBEFID_CONTRACT_ADDRESS as `0x${string}`,
+              address: verifyChainConfig.address as `0x${string}`,
               abi: [{ name: 'fidMinted', type: 'function', stateMutability: 'view', inputs: [{ name: 'fid', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }] }],
               functionName: 'fidMinted',
               args: [BigInt(pendingMintData.fid)],
@@ -749,8 +756,10 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
             validatedData.cardImageUrl = String(pendingMintData.cardImageUrl);
           }
 
-          // Add contractAddress (VibeFID)
-          validatedData.contractAddress = VIBEFID_CONTRACT_ADDRESS.toLowerCase();
+          // Add contractAddress and chain (VibeFID multi-chain)
+          const mintedChainConfig = getVibeFIDConfig(pendingMintData.chain || mintChain);
+          validatedData.contractAddress = mintedChainConfig.address.toLowerCase();
+          validatedData.chain = pendingMintData.chain || mintChain;
 
           // Add user's language for welcome message
           validatedData.language = lang;
@@ -1143,8 +1152,10 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
     }
   };
 
-  const handleMintCard = async () => {
-    console.log('♣ handleMintCard called!', { address, userData: !!userData, farcasterUser: farcasterContext.user });
+  const handleMintCard = async (chain: VibeFIDChain = "base") => {
+    setMintChain(chain);
+    const chainConfig = getVibeFIDConfig(chain);
+    console.log('♣ handleMintCard called!', { address, userData: !!userData, farcasterUser: farcasterContext.user, chain });
 
     if (!address) {
       console.error('❌ No wallet address connected');
@@ -1158,11 +1169,24 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       return;
     }
 
-    console.log('✅ Starting mint process for FID:', userData.fid);
+    console.log('✅ Starting mint process for FID:', userData.fid, 'on chain:', chain);
     setLoading(true);
     setError(null);
 
     try {
+      // Switch chain if needed
+      const targetChainId = chainConfig.chainId;
+      if (connectedChain?.id !== targetChainId) {
+        setError(`Switching to ${chainConfig.chainName}...`);
+        try {
+          await switchChainAsync({ chainId: targetChainId });
+        } catch (switchErr: any) {
+          setError(`Please switch to ${chainConfig.chainName} in your wallet`);
+          setLoading(false);
+          return;
+        }
+      }
+
       const score = userData.experimental?.neynar_user_score || 0;
 
       // ALWAYS recalculate traits for mint (don't trust preview/localStorage)
@@ -1323,6 +1347,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
           address,
           fid: userData.fid,
           ipfsURI: metadataUrl, // Use metadata URL instead of image URL
+          chain, // multi-chain support
         }),
       });
 
@@ -1358,6 +1383,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
         imageUrl: ipfsUrl, // Video (MP4)
         cardImageUrl: cardImageIpfsUrl, // Static PNG for sharing
         shareImageUrl: shareImageIpfsUrl, // Share image with card + criminal text
+        chain, // Track which chain was used
         timestamp: Date.now(), // Track when mint was initiated
       };
 
@@ -1398,13 +1424,14 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       console.log('💾 Saved pending mint data to localStorage:', userData.fid);
 
       // Mint NFT on smart contract
-      setError("Minting NFT on-chain (confirm transaction in wallet)...");
+      setError(`Minting NFT on ${chainConfig.chainName} (confirm transaction in wallet)...`);
       console.log('🚀 Preparing mint transaction:', {
-        address: VIBEFID_CONTRACT_ADDRESS,
+        address: chainConfig.address,
         functionName: 'presignedMint',
         fid: userData.fid,
         metadataUrl,
-        mintPrice: MINT_PRICE,
+        mintPrice: chainConfig.mintPrice,
+        chain,
         userAddress: address,
       });
 
@@ -1412,44 +1439,25 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       console.log('📱 Device detection - iOS:', isIOS);
 
-      if (isIOS) {
-        // iOS: Use sendTransaction with encoded data (more compatible with Farcaster miniapp)
-        console.log('📱 Using sendTransaction for iOS compatibility');
-        const data = encodeFunctionData({
-          abi: VIBEFID_ABI,
-          functionName: 'presignedMint',
-          args: [BigInt(userData.fid), metadataUrl, signature as `0x${string}`],
-        });
+      // Encode transaction data (same for iOS and non-iOS)
+      const data = encodeFunctionData({
+        abi: VIBEFID_ABI,
+        functionName: 'presignedMint',
+        args: [BigInt(userData.fid), metadataUrl, signature as `0x${string}`],
+      });
 
-        // Add builder code suffix for Base attribution
-        const dataWithBuilderCode = (data + dataSuffix.slice(2)) as `0x${string}`;
-        console.log('🏗️ Builder code:', BUILDER_CODE);
+      // Add builder code suffix for Base attribution (only on Base)
+      const txData = chain === "base"
+        ? (data + dataSuffix.slice(2)) as `0x${string}`
+        : data;
+      if (chain === "base") console.log('🏗️ Builder code:', BUILDER_CODE);
 
-        sendTransaction({
-          to: VIBEFID_CONTRACT_ADDRESS,
-          data: dataWithBuilderCode,
-          value: parseEther(MINT_PRICE),
-        });
-      } else {
-        // Non-iOS: Use sendTransaction with builder code (same as iOS)
-        // CRITICAL: writeContract() sync version does NOT add builder code!
-        console.log('💻 Using sendTransaction for desktop/Android with builder code');
-        const data = encodeFunctionData({
-          abi: VIBEFID_ABI,
-          functionName: 'presignedMint',
-          args: [BigInt(userData.fid), metadataUrl, signature as `0x${string}`],
-        });
-
-        // Add builder code suffix for Base attribution
-        const dataWithBuilderCode = (data + dataSuffix.slice(2)) as `0x${string}`;
-        console.log('🏗️ Builder code:', BUILDER_CODE);
-
-        sendTransaction({
-          to: VIBEFID_CONTRACT_ADDRESS,
-          data: dataWithBuilderCode,
-          value: parseEther(MINT_PRICE),
-        });
-      }
+      sendTransaction({
+        to: chainConfig.address,
+        data: txData,
+        value: parseEther(chainConfig.mintPrice),
+        chainId: chainConfig.chainId,
+      });
 
       // Note: Transaction confirmation is handled by useWaitForTransactionReceipt hook
       // After confirmation, data is saved to Convex in useEffect above
