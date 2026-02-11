@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import { ConvexHttpClient } from 'convex/browser';
-import { api } from '@/convex/_generated/api';
+import { api } from '@/lib/fid/convex-generated/api';
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+const VIBEFID_CONVEX_URL =
+  process.env.NEXT_PUBLIC_VIBEFID_CONVEX_URL ||
+  'https://scintillating-mandrill-101.convex.cloud';
+
+const convex = new ConvexHttpClient(VIBEFID_CONVEX_URL);
 
 export async function POST(request: Request) {
   try {

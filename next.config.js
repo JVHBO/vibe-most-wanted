@@ -1,4 +1,6 @@
 module.exports = {
+  // Externalize native modules that can't be bundled
+  serverExternalPackages: ['@napi-rs/canvas'],
   // Silence Turbopack warning
   turbopack: {},
   webpack: (config) => {
