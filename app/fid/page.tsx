@@ -631,15 +631,17 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
         console.error('❌ Failed to recover mint data:', errorStr, err);
 
         // 🔧 IMPROVED: More keywords to detect duplicate/existing card errors
+        // Convex returns generic "server error" for thrown errors (including duplicate checks)
         const isDuplicateError =
           errorStr.includes('already') ||
           errorStr.includes('duplicate') ||
           errorStr.includes('fid') ||
           errorStr.includes('minted') ||
-          errorStr.includes('exists');
+          errorStr.includes('exists') ||
+          errorStr.includes('server error'); // Convex hides throw messages as "Server Error"
 
         if (isDuplicateError) {
-          console.log('ℹ️ Card already exists in Convex, clearing pending data');
+          console.log('ℹ️ Card likely already exists in Convex (or server error on duplicate), clearing pending data');
           localStorage.removeItem('vibefid_pending_mint');
           setPendingMintData(null);
           setError(null);
