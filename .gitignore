@@ -117,19 +117,16 @@ FETCH_HEAD
 CONVEX_OPTIMIZATION_PLAN.md
 DEPLOYMENT_GUIDE.md
 
-# Firebase (not used)
-.firebaserc
-firebase.json
-database.rules.json
-
 # Vercel temp files
 .vercel-force-deploy
 
 # Claude Code config (private)
 .claude/
 
-# Old configs backup
+# Temp/backup dirs
 configs/
+scripts-temp-backup/
+temp-backup/
 
 # Convex config (contains deployment names)
 .convex/
@@ -140,11 +137,7 @@ scripts/
 # Internal documentation (future plans, internal info - keep private)
 internal-docs/
 
-# Collections System Documentation (private - internal use only)
-COLLECTIONS_SYSTEM.md
-COLLECTIONS_README.md
-COLLECTIONS_SUMMARY.txt
-MIGRATION_GUIDE.md
+# Old docs (deleted from repo)
 examples/collection-usage-example.tsx
 
 # ============================================================

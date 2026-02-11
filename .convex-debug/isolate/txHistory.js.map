@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../convex/txHistory.ts"],
-  "mappings": ";;;;;;;;;;;;AAGO,IAAMA,IAAeC,EAAM;AAAA,EAChC,MAAM,EAAE,SAASC,EAAE,OAAO,EAAE;AAAA,EAC5B,SAAS,gBAAAC,EAAA,OAAOC,GAAK,EAAE,SAAAC,EAAQ,MAAM;AACnC,QAAMC,IAAOD,EAAQ,YAAY;AACjC,WAAO,MAAMD,EAAI,GACd,MAAM,kBAAkB,EACxB,UAAU,cAAc,CAACG,MAAMA,EAAE,GAAG,WAAWD,CAAI,CAAC,EACpD,MAAM,MAAM,EACZ,KAAK,GAAG;AAAA,EACb,GAPS;AAQX,CAAC;",
-  "names": ["getByAddress", "query", "v", "__name", "ctx", "address", "addr", "q"]
-}

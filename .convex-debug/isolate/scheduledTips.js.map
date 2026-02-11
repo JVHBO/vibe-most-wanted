@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../convex/scheduledTips.ts"],
-  "mappings": ";;;;;;;;;;AAGA,IAAMA,IAAQC,EAAS;AAIvBD,EAAM;AAAA,EACJ;AAAA,EACA,EAAE,SAAS,IAAI,WAAW,EAAE;AAAA,EAC5BE,EAAS,cAAc;AACzB;AAEA,IAAOC,IAAQH;",
-  "names": ["crons", "cronJobs", "internal", "scheduledTips_default"]
-}
