@@ -830,6 +830,17 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   }, [address, isInFarcaster, farcasterFidState, isCheckingFarcaster, userProfile, isLoadingProfile, upsertProfileFromFarcaster, refreshProfile]);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showChainModal, setShowChainModal] = useState(false);
+  const [showArbAnnounce, setShowArbAnnounce] = useState(false);
+  // Show Arb Mode announcement once per session
+  useEffect(() => {
+    if (!userProfile || !address) return;
+    const key = `arb_announce_seen_${address}`;
+    if (sessionStorage.getItem(key)) return;
+    // Only show if user is still on base (hasn't activated arb yet)
+    if ((userProfile as any)?.preferredChain === "arbitrum") return;
+    const timer = setTimeout(() => setShowArbAnnounce(true), 1500);
+    return () => clearTimeout(timer);
+  }, [userProfile, address]);
   const [pendingClaimAction, setPendingClaimAction] = useState<(() => void) | null>(null);
   const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
   const [showBaccarat, setShowBaccarat] = useState<boolean>(false);
@@ -3667,6 +3678,79 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
           if (pendingClaimAction) { pendingClaimAction(); setPendingClaimAction(null); }
         }}
       />
+
+      {/* Arb Mode Announcement Modal */}
+      {showArbAnnounce && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4"
+          onClick={() => {
+            if (address) sessionStorage.setItem(`arb_announce_seen_${address}`, '1');
+            setShowArbAnnounce(false);
+          }}
+        >
+          <div
+            className="bg-vintage-charcoal rounded-2xl border-2 border-purple-500 p-5 max-w-sm w-full shadow-gold animate-fade-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-4">
+              <span className="text-4xl">&#9670;</span>
+              <h2 className="text-lg font-bold text-purple-400 mt-2">Arbitrum Mode is here!</h2>
+              <p className="text-xs text-vintage-burnt-gold mt-2">
+                Switch to Arbitrum and get bonus rewards on all your claims
+              </p>
+            </div>
+
+            <div className="bg-purple-900/30 border border-purple-500/40 rounded-xl p-3 mb-4">
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2 text-green-400">
+                  <span>&#10003;</span><span>2x quest rewards</span>
+                </div>
+                <div className="flex items-center gap-2 text-green-400">
+                  <span>&#10003;</span><span>+1 free roulette spin</span>
+                </div>
+                <div className="flex items-center gap-2 text-green-400">
+                  <span>&#10003;</span><span>+1 free card pack</span>
+                </div>
+                <div className="flex items-center gap-2 text-green-400">
+                  <span>&#10003;</span><span>On-chain validation</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={async () => {
+                if (!address) return;
+                try {
+                  await setPreferredChainMutation({ address, chain: "arbitrum" });
+                  const updated = await ConvexProfileService.getProfile(address);
+                  setUserProfile(updated);
+                } catch (e) {
+                  console.error("Failed to set chain:", e);
+                }
+                sessionStorage.setItem(`arb_announce_seen_${address}`, '1');
+                setShowArbAnnounce(false);
+              }}
+              className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-all mb-2"
+            >
+              Activate Arbitrum Mode
+            </button>
+
+            <button
+              onClick={() => {
+                if (address) sessionStorage.setItem(`arb_announce_seen_${address}`, '1');
+                setShowArbAnnounce(false);
+              }}
+              className="w-full py-2 text-vintage-burnt-gold text-xs hover:text-vintage-gold transition-all"
+            >
+              Maybe later
+            </button>
+
+            <p className="text-[9px] text-vintage-burnt-gold/50 text-center mt-2">
+              You can change anytime in Settings
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Mecha Arena Modal */}
       <CpuArenaModal
