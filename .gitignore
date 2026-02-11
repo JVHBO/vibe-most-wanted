@@ -103,6 +103,7 @@ nul
 !public/sounds/defeat-bait.mp4
 !public/tie.mp4
 !public/davyjones.mp4
+!public/vibemail/suck-jones.mp4
 
 # Debug/temp JS scripts at root level
 check-*.js
