@@ -75,6 +75,7 @@ gemini-screenshots/
 # Backups
 .backups/
 backups/
+backup-filebase/
 
 # Admin scripts
 scripts/admin/
