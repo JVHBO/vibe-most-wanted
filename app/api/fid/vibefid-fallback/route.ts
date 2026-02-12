@@ -3,8 +3,7 @@ import { ConvexHttpClient } from 'convex/browser';
 import { api } from "@/lib/fid/convex-generated/api";
 
 function getConvexClient() {
-  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!url) throw new Error("NEXT_PUBLIC_CONVEX_URL not defined");
+  const url = process.env.NEXT_PUBLIC_VIBEFID_CONVEX_URL || 'https://scintillating-mandrill-101.convex.cloud';
   return new ConvexHttpClient(url);
 }
 

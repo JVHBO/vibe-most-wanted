@@ -164,7 +164,7 @@ export async function GET(
     // Fetch card data from Convex
     let cardData: any = null;
 
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+    const convexUrl = process.env.NEXT_PUBLIC_VIBEFID_CONVEX_URL || 'https://scintillating-mandrill-101.convex.cloud';
     const response = await fetch(`${convexUrl}/api/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

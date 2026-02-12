@@ -14,8 +14,8 @@ export async function GET(
   try {
     const { fid } = await params;
 
-    // Fetch card data from Convex
-    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+    // Fetch card data from VibeFID Convex (scintillating-mandrill, NOT VMW agile-orca)
+    const convexUrl = process.env.NEXT_PUBLIC_VIBEFID_CONVEX_URL || 'https://scintillating-mandrill-101.convex.cloud';
     const response = await fetch(`${convexUrl}/api/query`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -16,7 +16,7 @@ export async function GET(
     let cardData: any = null;
 
     try {
-      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+      const convexUrl = process.env.NEXT_PUBLIC_VIBEFID_CONVEX_URL || 'https://scintillating-mandrill-101.convex.cloud';
       console.log(`[Card Image API] Fetching from Convex: ${convexUrl}`);
 
       const response = await fetch(`${convexUrl}/api/query`, {
