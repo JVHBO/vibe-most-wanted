@@ -1,22 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { checkArbitrumSupport } from '@/lib/utils/miniapp';
-
 /**
- * Hook that checks if the current client supports Arbitrum.
- * In non-miniapp contexts (browser), always returns true.
- * In miniapp contexts, checks clientFid (only Warpcast supports ARB).
+ * @deprecated - Use isWarpcastClient(clientFid) from miniapp.ts instead.
+ * This hook was removed because calling sdk.context in a separate hook
+ * races with the wallet provider init and breaks Base App.
+ *
+ * ARB support is now derived from the Farcaster context clientFid
+ * that's already loaded in page.tsx.
  */
-export function useArbitrumSupport() {
-  const [arbSupported, setArbSupported] = useState(true); // default true (browser)
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    checkArbitrumSupport()
-      .then(setArbSupported)
-      .finally(() => setLoading(false));
-  }, []);
-
-  return { arbSupported, loading };
-}

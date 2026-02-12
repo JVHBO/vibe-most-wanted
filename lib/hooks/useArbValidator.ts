@@ -13,7 +13,7 @@ import { useAccount } from 'wagmi';
 import { parseEther, encodeFunctionData } from 'viem';
 import { CONTRACTS, VALIDATOR_ABI } from '../contracts';
 import { sdk } from '@farcaster/miniapp-sdk';
-import { isMiniappMode, checkArbitrumSupport } from '@/lib/utils/miniapp';
+import { isMiniappMode, isWarpcastClient } from '@/lib/utils/miniapp';
 
 // ClaimType enum matching contract
 export const ARB_CLAIM_TYPE = {
@@ -41,11 +41,16 @@ export function useArbValidator() {
   const validateOnArb = async (amount: number, claimType: ArbClaimType): Promise<string | null> => {
     if (!address) return null;
 
-    // Safety net: in miniapp context, check if ARB is actually supported
+    // Safety net: in miniapp context, only Warpcast supports ARB tx
     if (isMiniappMode()) {
-      const supported = await checkArbitrumSupport();
-      if (!supported) {
-        console.warn('[ArbValidator] ARB not supported by this client, skipping validation');
+      try {
+        const context = await sdk.context;
+        if (!isWarpcastClient(context?.client?.clientFid)) {
+          console.warn('[ArbValidator] Not Warpcast, skipping ARB validation');
+          return null;
+        }
+      } catch {
+        console.warn('[ArbValidator] Cannot determine client, skipping ARB validation');
         return null;
       }
     }

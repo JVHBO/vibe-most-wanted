@@ -14,7 +14,6 @@ import { encodeFunctionData, parseEther, erc20Abi } from 'viem';
 import { encodeBuilderCodeSuffix, BUILDER_CODE } from '@/lib/builder-code';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
-import { useArbitrumSupport } from '@/lib/hooks/useArbitrumSupport';
 
 // Roulette translations
 const rouletteTranslations = {
@@ -279,7 +278,6 @@ export function Roulette({ onClose }: RouletteProps) {
   const { address } = useAccount();
   const { lang } = useLanguage();
   const { validateOnArb } = useArbValidator();
-  const { arbSupported } = useArbitrumSupport();
   const t = rouletteTranslations[lang as keyof typeof rouletteTranslations] || rouletteTranslations.en;
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -455,9 +453,9 @@ export function Roulette({ onClose }: RouletteProps) {
     lastTickSegment.current = -1;
 
     try {
-      const chain = !arbSupported ? "base" : ((profileDashboard as any)?.preferredChain || "base");
-      // Arb validation tx BEFORE spin (skip if ARB not supported)
-      if (chain === "arbitrum" && arbSupported) {
+      const chain = (profileDashboard as any)?.preferredChain || "base";
+      // Arb validation tx BEFORE spin (safety net in useArbValidator blocks unsupported clients)
+      if (chain === "arbitrum") {
         await validateOnArb(0, ARB_CLAIM_TYPE.ROULETTE_SPIN);
       }
       const response = await spinMutation({ address, chain });

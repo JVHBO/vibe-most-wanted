@@ -19,7 +19,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { toast } from "sonner";
 import { isMiniappMode } from "@/lib/utils/miniapp";
-import { useArbitrumSupport } from "@/lib/hooks/useArbitrumSupport";
+import { isWarpcastClient } from "@/lib/utils/miniapp";
 
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
@@ -334,8 +334,8 @@ export default function TCGPage() {
   // State for Farcaster context detection
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
   const [farcasterFidState, setFarcasterFidState] = useState<number | undefined>(undefined);
+  const [farcasterClientFid, setFarcasterClientFid] = useState<number | undefined>(undefined);
   const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(true); // Start true to wait for Farcaster check
-  const { arbSupported } = useArbitrumSupport();
 
   // 🔧 DEV MODE: Force admin wallet for testing
   const DEV_WALLET_BYPASS = false; // DISABLED: Only for localhost testing
@@ -833,6 +833,9 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showChainModal, setShowChainModal] = useState(false);
   const [showArbAnnounce, setShowArbAnnounce] = useState(false);
+  // ARB supported only on Warpcast (clientFid 9152), not Base App or other clients
+  // For non-miniapp (browser), isInFarcaster=false so arbSupported=true
+  const arbSupported = !isInFarcaster || isWarpcastClient(farcasterClientFid);
   // Effective chain: force "base" when ARB not supported (e.g. Base App)
   const effectiveChain = !arbSupported ? "base" : ((userProfile as any)?.preferredChain || "base");
   // Show Arb Mode announcement once per session (only if ARB supported)
@@ -1106,6 +1109,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
           // ✅ We ARE in Farcaster miniapp - set this EARLY for correct analytics
           console.log('[Farcaster] ✅ Farcaster miniapp confirmed - FID:', context.user.fid);
           setFarcasterFidState(context.user.fid);
+          setFarcasterClientFid(context.client?.clientFid);
           setIsInFarcaster(true); // Set BEFORE wallet check!
         } catch (contextError) {
           console.log('[Farcaster] ⚠️ Failed to get valid SDK context:', contextError);

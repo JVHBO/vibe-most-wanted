@@ -12,7 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
-import { useArbitrumSupport } from "@/lib/hooks/useArbitrumSupport";
+import { isMiniappMode } from "@/lib/utils/miniapp";
 
 export default function QuestsPage() {
   const router = useRouter();
@@ -21,7 +21,6 @@ export default function QuestsPage() {
   const { t } = useLanguage();
   const { refreshProfile } = useProfile();
   const { validateOnArb } = useArbValidator();
-  const { arbSupported } = useArbitrumSupport();
 
   // Social Quests
   const socialQuestProgress = useQuery(
@@ -40,8 +39,9 @@ export default function QuestsPage() {
     address ? { address: address.toLowerCase() } : "skip"
   );
   const userFid = profileDashboard?.fid;
-  // Effective chain: force "base" when ARB not supported (e.g. Base App)
-  const effectiveChain = !arbSupported ? "base" : ((profileDashboard as any)?.preferredChain || "base");
+  // Effective chain: use profile preference (safety net in useArbValidator
+  // blocks ARB tx on unsupported clients like Base App)
+  const effectiveChain = (profileDashboard as any)?.preferredChain || "base";
 
   // State
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -297,7 +297,7 @@ export default function QuestsPage() {
     setClaiming(quest.id);
     try {
       const chain = effectiveChain;
-      if (chain === "arbitrum" && arbSupported) {
+      if (chain === "arbitrum") {
         await validateOnArb(quest.reward, ARB_CLAIM_TYPE.MISSION);
       }
       const result = await claimSocialReward({ address: address.toLowerCase(), questId: quest.id });
@@ -473,7 +473,7 @@ export default function QuestsPage() {
                         try {
                           const chain = effectiveChain;
                           const result = await claimAllMissions({ playerAddress: address.toLowerCase(), chain });
-                          if (result?.totalReward > 0 && arbSupported) {
+                          if (result?.totalReward > 0 ) {
                             await validateOnArb(result.totalReward, ARB_CLAIM_TYPE.MISSION);
                           }
                           await refreshMissions(); // 🚀 BANDWIDTH FIX: Refresh after claim
