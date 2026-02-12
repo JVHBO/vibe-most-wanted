@@ -6,21 +6,16 @@ import { checkArbitrumSupport } from '@/lib/utils/miniapp';
 /**
  * Hook that checks if the current client supports Arbitrum.
  * In non-miniapp contexts (browser), always returns true.
- * In miniapp contexts, uses sdk.getChains() to detect support.
- * Deferred to avoid racing with wallet provider initialization.
+ * In miniapp contexts, checks clientFid (only Warpcast supports ARB).
  */
 export function useArbitrumSupport() {
   const [arbSupported, setArbSupported] = useState(true); // default true (browser)
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Defer check to avoid racing with SDK wallet provider init
-    const timer = setTimeout(() => {
-      checkArbitrumSupport()
-        .then(setArbSupported)
-        .finally(() => setLoading(false));
-    }, 3000);
-    return () => clearTimeout(timer);
+    checkArbitrumSupport()
+      .then(setArbSupported)
+      .finally(() => setLoading(false));
   }, []);
 
   return { arbSupported, loading };

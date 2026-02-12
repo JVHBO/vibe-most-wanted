@@ -24,24 +24,24 @@ export function shouldDisableVoiceChat(): boolean {
   return false;
 }
 
+// Warpcast's clientFid - only client known to support Arbitrum
+const WARPCAST_CLIENT_FID = 9152;
+
 /**
- * Check if the current miniapp client supports Arbitrum (eip155:42161).
- * Uses sdk.getChains() which returns supported chain IDs.
- * Returns true for non-miniapp contexts (browser) or if ARB is supported.
- * Waits for SDK context to be ready before calling getChains().
+ * Check if the current miniapp client supports Arbitrum.
+ * Only Warpcast (clientFid 9152) is known to support ARB transactions.
+ * Other clients (Base App, etc.) get forced to Base chain.
+ * Returns true for non-miniapp contexts (browser).
  */
 export async function checkArbitrumSupport(): Promise<boolean> {
   if (!isMiniappMode()) return true; // Not a miniapp, no restrictions
 
   try {
     const { sdk } = await import('@farcaster/miniapp-sdk');
-    // Wait for SDK context to be ready (handshake complete)
     const context = await sdk.context;
-    if (!context) return true; // Can't determine, assume supported
-    const chains = await sdk.getChains();
-    return chains.includes('eip155:42161');
+    // Only Warpcast supports ARB; other clients (Base App etc.) don't
+    return context?.client?.clientFid === WARPCAST_CLIENT_FID;
   } catch {
-    // If getChains() fails, assume ARB not supported (safety)
     return false;
   }
 }
