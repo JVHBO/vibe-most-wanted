@@ -550,7 +550,7 @@ export default function QuestsPage() {
                                           missionId: mission._id,
                                           chain,
                                         });
-                                        if (mission.reward > 0 && arbSupported) {
+                                        if (mission.reward > 0) {
                                           await validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
                                         }
                                       }
