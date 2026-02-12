@@ -19,6 +19,7 @@ import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { toast } from "sonner";
 import { isMiniappMode } from "@/lib/utils/miniapp";
+import { useArbitrumSupport } from "@/lib/hooks/useArbitrumSupport";
 
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
@@ -334,6 +335,7 @@ export default function TCGPage() {
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
   const [farcasterFidState, setFarcasterFidState] = useState<number | undefined>(undefined);
   const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(true); // Start true to wait for Farcaster check
+  const { arbSupported } = useArbitrumSupport();
 
   // 🔧 DEV MODE: Force admin wallet for testing
   const DEV_WALLET_BYPASS = false; // DISABLED: Only for localhost testing
@@ -831,8 +833,11 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showChainModal, setShowChainModal] = useState(false);
   const [showArbAnnounce, setShowArbAnnounce] = useState(false);
-  // Show Arb Mode announcement once per session
+  // Effective chain: force "base" when ARB not supported (e.g. Base App)
+  const effectiveChain = !arbSupported ? "base" : ((userProfile as any)?.preferredChain || "base");
+  // Show Arb Mode announcement once per session (only if ARB supported)
   useEffect(() => {
+    if (!arbSupported) return;
     if (!userProfile || !address) return;
     const key = `arb_announce_seen_${address}`;
     if (sessionStorage.getItem(key)) return;
@@ -840,7 +845,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     if ((userProfile as any)?.preferredChain === "arbitrum") return;
     const timer = setTimeout(() => setShowArbAnnounce(true), 1500);
     return () => clearTimeout(timer);
-  }, [userProfile, address]);
+  }, [userProfile, address, arbSupported]);
   const [pendingClaimAction, setPendingClaimAction] = useState<(() => void) | null>(null);
   const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
   const [showBaccarat, setShowBaccarat] = useState<boolean>(false);
@@ -1440,7 +1445,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
       setIsClaimingQuest(true);
       devLog('🎯 Claiming quest reward...');
 
-      const chain = (userProfile as any)?.preferredChain || "base";
+      const chain = effectiveChain;
       const result = await claimQuestReward({ address, chain });
 
       devLog(`✓ Quest reward claimed: +${result.reward} $TESTVBMS`);
@@ -3650,7 +3655,8 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         pause={pause}
         play={play}
         disconnectWallet={disconnectWallet}
-        preferredChain={(userProfile as any)?.preferredChain || "base"}
+        preferredChain={effectiveChain}
+        canChangeChain={arbSupported}
         onChainChange={async (chain: string) => {
           if (!address) return;
           try {
@@ -3664,9 +3670,9 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         }}
       />
 
-      {/* Chain Select Modal (first-time) */}
+      {/* Chain Select Modal (first-time) - only if ARB supported */}
       <ChainSelectionModal
-        isOpen={showChainModal}
+        isOpen={showChainModal && arbSupported}
         onClose={() => setShowChainModal(false)}
         onSelectChain={async (chain) => {
           if (!address) return;
@@ -3679,8 +3685,8 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         }}
       />
 
-      {/* Arb Mode Announcement Modal */}
-      {showArbAnnounce && (
+      {/* Arb Mode Announcement Modal - only if ARB supported */}
+      {showArbAnnounce && arbSupported && (
         <div
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4"
           onClick={() => {

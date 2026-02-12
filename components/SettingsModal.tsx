@@ -62,6 +62,7 @@ interface SettingsModalProps {
   // Chain preference
   preferredChain?: string; // "base" | "arbitrum"
   onChainChange?: (chain: string) => void;
+  canChangeChain?: boolean; // false = hide network toggle (e.g. Base App)
 }
 
 export function SettingsModal({
@@ -106,6 +107,7 @@ export function SettingsModal({
   disconnectWallet,
   preferredChain,
   onChainChange,
+  canChangeChain = true,
 }: SettingsModalProps) {
   const { address: walletAddress, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -1007,7 +1009,7 @@ export function SettingsModal({
           </div>
 
           {/* 🔗 Network Toggle - Base / Arbitrum */}
-          {walletAddress && onChainChange && (
+          {walletAddress && onChainChange && canChangeChain && (
             <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">

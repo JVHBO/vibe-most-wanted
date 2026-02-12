@@ -23,3 +23,21 @@ export function shouldDisableVoiceChat(): boolean {
   // Only the native mobile app has restrictions
   return false;
 }
+
+/**
+ * Check if the current miniapp client supports Arbitrum (eip155:42161).
+ * Uses sdk.getChains() which returns supported chain IDs.
+ * Returns true for non-miniapp contexts (browser) or if ARB is supported.
+ */
+export async function checkArbitrumSupport(): Promise<boolean> {
+  if (!isMiniappMode()) return true; // Not a miniapp, no restrictions
+
+  try {
+    const { sdk } = await import('@farcaster/miniapp-sdk');
+    const chains = await sdk.getChains();
+    return chains.includes('eip155:42161');
+  } catch {
+    // If getChains() fails, assume ARB not supported (safety)
+    return false;
+  }
+}

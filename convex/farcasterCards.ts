@@ -794,6 +794,27 @@ export const updateCardPfp = mutation({
 });
 
 /**
+ * Admin: fix card field (suitSymbol, etc.)
+ */
+export const adminPatchCard = mutation({
+  args: {
+    fid: v.number(),
+    suitSymbol: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const card = await ctx.db
+      .query("farcasterCards")
+      .withIndex("by_fid", (q) => q.eq("fid", args.fid))
+      .first();
+    if (!card) throw new Error(`No card found for FID ${args.fid}`);
+    const updates: Record<string, string> = {};
+    if (args.suitSymbol) updates.suitSymbol = args.suitSymbol;
+    await ctx.db.patch(card._id, updates);
+    return { success: true, fid: args.fid, updates };
+  },
+});
+
+/**
  * Delete a card that was never minted on-chain (admin only)
  */
 export const deleteUnmintedCard = mutation({

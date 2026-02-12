@@ -12,6 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
+import { useArbitrumSupport } from "@/lib/hooks/useArbitrumSupport";
 
 export default function QuestsPage() {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function QuestsPage() {
   const { t } = useLanguage();
   const { refreshProfile } = useProfile();
   const { validateOnArb } = useArbValidator();
+  const { arbSupported } = useArbitrumSupport();
 
   // Social Quests
   const socialQuestProgress = useQuery(
@@ -38,6 +40,8 @@ export default function QuestsPage() {
     address ? { address: address.toLowerCase() } : "skip"
   );
   const userFid = profileDashboard?.fid;
+  // Effective chain: force "base" when ARB not supported (e.g. Base App)
+  const effectiveChain = !arbSupported ? "base" : ((profileDashboard as any)?.preferredChain || "base");
 
   // State
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -292,8 +296,8 @@ export default function QuestsPage() {
     if (!address) return;
     setClaiming(quest.id);
     try {
-      const chain = (profileDashboard as any)?.preferredChain || "base";
-      if (chain === "arbitrum") {
+      const chain = effectiveChain;
+      if (chain === "arbitrum" && arbSupported) {
         await validateOnArb(quest.reward, ARB_CLAIM_TYPE.MISSION);
       }
       const result = await claimSocialReward({ address: address.toLowerCase(), questId: quest.id });
@@ -420,8 +424,8 @@ export default function QuestsPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-vintage-gold font-bold text-xs">
-                              +{(profileDashboard as any)?.preferredChain === "arbitrum" ? quest.reward * 2 : quest.reward}
-                              {(profileDashboard as any)?.preferredChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
+                              +{effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward}
+                              {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
                             </span>
                             {status === "claimed" ? (
                               <span className="text-green-400 text-[10px]">{t('questsDone')}</span>
@@ -467,9 +471,9 @@ export default function QuestsPage() {
                         if (!address) return;
                         setIsClaimingAll(true);
                         try {
-                          const chain = (profileDashboard as any)?.preferredChain || "base";
+                          const chain = effectiveChain;
                           const result = await claimAllMissions({ playerAddress: address.toLowerCase(), chain });
-                          if (result?.totalReward > 0) {
+                          if (result?.totalReward > 0 && arbSupported) {
                             await validateOnArb(result.totalReward, ARB_CLAIM_TYPE.MISSION);
                           }
                           await refreshMissions(); // 🚀 BANDWIDTH FIX: Refresh after claim
@@ -524,8 +528,8 @@ export default function QuestsPage() {
                             <div className="flex items-center gap-2">
                               {mission.reward > 0 && (
                                 <span className="text-vintage-gold font-bold text-xs">
-                                  +{(profileDashboard as any)?.preferredChain === "arbitrum" ? mission.reward * 2 : mission.reward}
-                                  {(profileDashboard as any)?.preferredChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
+                                  +{effectiveChain === "arbitrum" ? mission.reward * 2 : mission.reward}
+                                  {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
                                 </span>
                               )}
                               {mission.claimed ? (
@@ -540,13 +544,13 @@ export default function QuestsPage() {
                                         await claimVibeBadge({ playerAddress: address.toLowerCase() });
                                         await refreshProfile();
                                       } else {
-                                        const chain = (profileDashboard as any)?.preferredChain || "base";
+                                        const chain = effectiveChain;
                                         await claimMission({
                                           playerAddress: address.toLowerCase(),
                                           missionId: mission._id,
                                           chain,
                                         });
-                                        if (mission.reward > 0) {
+                                        if (mission.reward > 0 && arbSupported) {
                                           await validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
                                         }
                                       }
@@ -590,7 +594,7 @@ export default function QuestsPage() {
                   const hasVibeBadge = profileDashboard?.hasVibeBadge;
                   const has2xBonus = hasVibeFID || hasVibeBadge;
                   const bonusSource = hasVibeBadge ? "VIBE Badge" : hasVibeFID ? "VibeFID" : "";
-                  const isArb = (profileDashboard as any)?.preferredChain === "arbitrum";
+                  const isArb = effectiveChain === "arbitrum";
 
                   return (
                     <>
@@ -665,8 +669,8 @@ export default function QuestsPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-vintage-gold font-bold text-xs">
-                              +{(profileDashboard as any)?.preferredChain === "arbitrum" ? quest.reward * 2 : quest.reward}
-                              {(profileDashboard as any)?.preferredChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
+                              +{effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward}
+                              {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
                             </span>
                             {status === "claimed" ? (
                               <span className="text-green-400 text-[10px]">{t('questsDone')}</span>

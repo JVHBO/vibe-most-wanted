@@ -13,6 +13,7 @@ import { useAccount } from 'wagmi';
 import { parseEther, encodeFunctionData } from 'viem';
 import { CONTRACTS, VALIDATOR_ABI } from '../contracts';
 import { sdk } from '@farcaster/miniapp-sdk';
+import { isMiniappMode } from '@/lib/utils/miniapp';
 
 // ClaimType enum matching contract
 export const ARB_CLAIM_TYPE = {
@@ -39,6 +40,20 @@ export function useArbValidator() {
 
   const validateOnArb = async (amount: number, claimType: ArbClaimType): Promise<string | null> => {
     if (!address) return null;
+
+    // Safety net: in miniapp context, check if ARB is actually supported
+    if (isMiniappMode()) {
+      try {
+        const chains = await sdk.getChains();
+        if (!chains.includes('eip155:42161')) {
+          console.warn('[ArbValidator] ARB not supported by this client, skipping validation');
+          return null;
+        }
+      } catch {
+        console.warn('[ArbValidator] getChains() failed, skipping ARB validation');
+        return null;
+      }
+    }
 
     try {
       // Generate nonce
