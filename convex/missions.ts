@@ -37,6 +37,16 @@ async function getProfileByAddress(ctx: any, address: string) {
     .first();
 }
 
+// Resolve linked address to primary address (multi-wallet support)
+async function resolveAddress(ctx: any, address: string): Promise<string> {
+  const normalized = address.toLowerCase();
+  const link = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalized))
+    .first();
+  return link?.primaryAddress || normalized;
+}
+
 // VibeFID contract addresses (Base + Arbitrum)
 const VIBEFID_CONTRACT = "0x60274A138d026E3cB337B40567100FdEC3127565";
 const VIBEFID_ARB_CONTRACT = "0xC39DDd9E2798D5612C700B899d0c80707c542dB0";
@@ -69,7 +79,7 @@ export const getPlayerMissions = query({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
     const today = new Date().toISOString().split('T')[0];
-    const normalizedAddress = playerAddress.toLowerCase();
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
     // Get today's missions + one-time missions
     const missions = await ctx.db
@@ -103,7 +113,7 @@ export const markDailyLogin = mutation({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
     const today = new Date().toISOString().split('T')[0];
-    const normalizedAddress = playerAddress.toLowerCase();
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
     // 🚀 BANDWIDTH FIX: Use compound index instead of filter post-query
     const existing = await ctx.db
@@ -141,7 +151,7 @@ export const markFirstPveWin = mutation({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
     const today = new Date().toISOString().split('T')[0];
-    const normalizedAddress = playerAddress.toLowerCase();
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
     // 🚀 BANDWIDTH FIX: Use compound index
     const existing = await ctx.db
@@ -176,7 +186,7 @@ export const markFirstPvpMatch = mutation({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
     const today = new Date().toISOString().split('T')[0];
-    const normalizedAddress = playerAddress.toLowerCase();
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
     // 🚀 BANDWIDTH FIX: Use compound index
     const existing = await ctx.db
@@ -214,7 +224,7 @@ export const markWinStreak = mutation({
   },
   handler: async (ctx, { playerAddress, streak }) => {
     const today = new Date().toISOString().split('T')[0];
-    const normalizedAddress = playerAddress.toLowerCase();
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
     const missionType = `streak_${streak}` as "streak_3" | "streak_5" | "streak_10";
 
     // 🚀 BANDWIDTH FIX: Use compound index
@@ -247,7 +257,7 @@ export const markWinStreak = mutation({
 export const markVibeFIDMinted = mutation({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
-    const normalizedAddress = playerAddress.toLowerCase();
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
     // 🚀 BANDWIDTH FIX: Use compound index instead of filter post-query
     const existing = await ctx.db
@@ -298,7 +308,7 @@ export const claimMission = mutation({
     chain: v.optional(v.string()), // "base" | "arbitrum" - arbitrum gives 2x
   },
   handler: async (ctx, { playerAddress, missionId, language, skipCoins, chain }) => {
-    const normalizedAddress = playerAddress.toLowerCase();
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
     // Get mission
     const mission = await ctx.db.get(missionId);
@@ -424,7 +434,7 @@ export const claimAllMissions = mutation({
     chain: v.optional(v.string()), // "base" | "arbitrum" - arbitrum gives 2x
   },
   handler: async (ctx, { playerAddress, language, chain }) => {
-    const normalizedAddress = playerAddress.toLowerCase();
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
     const today = new Date().toISOString().split('T')[0];
 
     // Get all unclaimed but completed missions
@@ -532,7 +542,7 @@ export const claimAllMissions = mutation({
 export const ensureWelcomeGift = mutation({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
-    const normalizedAddress = playerAddress.toLowerCase();
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
     // 🔒 STEP 1: Check profile flag FIRST (atomic check)
     const profile = await getProfileByAddress(ctx, normalizedAddress);
@@ -610,7 +620,7 @@ export const checkVibeBadgeEligibility = action({
     hasBadge: boolean;
     vibeFIDCount: number;
   }> => {
-    const normalizedAddress = playerAddress.toLowerCase();
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
     // Get badge status from profile
     const badgeStatus = await ctx.runQuery(internal.missions.getProfileBadgeStatus, {
@@ -711,7 +721,7 @@ export const claimVibeBadge = action({
     success: boolean;
     message: string;
   }> => {
-    const normalizedAddress = playerAddress.toLowerCase();
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
     // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy (Base + Arbitrum)
     const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || process.env.ALCHEMY_API_KEY;
