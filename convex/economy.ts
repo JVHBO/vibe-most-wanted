@@ -1906,7 +1906,7 @@ export const recordAttackResult = mutation({
     const profileWithDefenseDeck = updatedProfile
       ? {
           ...updatedProfile,
-          hasDefenseDeck: (updatedProfile.defenseDeck?.length || 0) === 5,
+          hasDefenseDeck: ((updatedProfile as any).defenseDeck?.length || 0) === 5,
         }
       : updatedProfile;
 
