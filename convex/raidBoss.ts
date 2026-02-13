@@ -33,6 +33,26 @@ async function resolvePrimaryAddress(ctx: QueryCtx | MutationCtx, address: strin
   return normalizedAddress;
 }
 
+// ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
+async function getProfileByAddress(ctx: any, address: string) {
+  const normalizedAddress = address.toLowerCase();
+  const addressLink = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+
+  if (addressLink) {
+    return ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addressLink.primaryAddress))
+      .first();
+  }
+  return ctx.db
+    .query("profiles")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+}
+
 /**
  * 🔒 SECURITY FIX: Crypto-secure random for critical hits
  */
@@ -519,10 +539,7 @@ export const setRaidDeck = mutation({
     const address = await resolvePrimaryAddress(ctx, args.address);
 
     // 🚀 Fetch username for caching (avoids N+1 in leaderboard)
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .first();
+    const profile = await getProfileByAddress(ctx, address);
     const username = profile?.username;
 
     // Validate deck size (5 regular, optionally +1 VibeFID)
@@ -1165,10 +1182,7 @@ export const claimRaidRewards = mutation({
     );
 
     // Get player profile to add coins
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     if (!profile) {
       return { success: false, message: "Profile not found", totalClaimed: 0 };
@@ -1280,10 +1294,7 @@ export const manualDistributeRewards = internalMutation({
       });
 
       // Add reward to player's inbox
-      const profile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", contribution.address))
-        .first();
+      const profile = await getProfileByAddress(ctx, contribution.address);
 
       if (profile) {
         // Reward saved in contribution, player must claim via UI
@@ -1323,10 +1334,7 @@ export const getPlayerRaidDeckByAddress = query({
     if (!raidDeck) return null;
 
     // Get player profile for username
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", primaryAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, primaryAddress);
 
     return {
       address: raidDeck.address,

@@ -17,6 +17,26 @@ import { applyLanguageBoost } from "./languageBoost";
 import { createAuditLog } from "./coinAudit";
 import { logTransaction } from "./coinsInbox";
 
+// ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
+async function getProfileByAddress(ctx: any, address: string) {
+  const normalizedAddress = address.toLowerCase();
+  const addressLink = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+
+  if (addressLink) {
+    return ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addressLink.primaryAddress))
+      .first();
+  }
+  return ctx.db
+    .query("profiles")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+}
+
 // VibeFID contract addresses (Base + Arbitrum)
 const VIBEFID_CONTRACT = "0x60274A138d026E3cB337B40567100FdEC3127565";
 const VIBEFID_ARB_CONTRACT = "0xC39DDd9E2798D5612C700B899d0c80707c542dB0";
@@ -301,11 +321,8 @@ export const claimMission = mutation({
       throw new Error("Mission not completed yet");
     }
 
-    // Get player profile
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    // Get player profile (supports multi-wallet)
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -434,11 +451,8 @@ export const claimAllMissions = mutation({
       };
     }
 
-    // Get player profile
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    // Get player profile (supports multi-wallet)
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -521,10 +535,7 @@ export const ensureWelcomeGift = mutation({
     const normalizedAddress = playerAddress.toLowerCase();
 
     // 🔒 STEP 1: Check profile flag FIRST (atomic check)
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     if (!profile) {
       // No profile = no welcome gift possible
@@ -579,10 +590,7 @@ export const ensureWelcomeGift = mutation({
 export const getProfileBadgeStatus = internalQuery({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    const profile = await getProfileByAddress(ctx, address);
 
     return {
       hasBadge: profile?.hasVibeBadge === true,
@@ -649,10 +657,7 @@ export const grantVibeBadgeInternal = internalMutation({
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
 
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -759,10 +764,7 @@ export const setPreferredChain = mutation({
       throw new Error("Invalid chain. Must be 'base' or 'arbitrum'.");
     }
     const normalizedAddress = address.toLowerCase();
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
     if (!profile) throw new Error("Profile not found");
     await ctx.db.patch(profile._id, { preferredChain: chain });
     return { success: true, chain };
@@ -776,10 +778,7 @@ export const markChainModalSeen = mutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
     if (!profile) throw new Error("Profile not found");
     await ctx.db.patch(profile._id, { chainModalSeen: true });
     return { success: true };

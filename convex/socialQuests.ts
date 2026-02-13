@@ -31,6 +31,26 @@ const QUEST_REWARDS: Record<string, number> = {
   follow_viberotbangers_creator: 50, // was 100
 };
 
+// ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
+async function getProfileByAddress(ctx: any, address: string) {
+  const normalizedAddress = address.toLowerCase();
+  const addressLink = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+
+  if (addressLink) {
+    return ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addressLink.primaryAddress))
+      .first();
+  }
+  return ctx.db
+    .query("profiles")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+}
+
 // VibeFID contract for 2x bonus check
 const VIBEFID_CONTRACT = "0x60274a138d026e3cb337b40567100fdec3127565";
 
@@ -38,10 +58,7 @@ const VIBEFID_CONTRACT = "0x60274a138d026e3cb337b40567100fdec3127565";
  * Check if player has 2x bonus (VibeFID or VIBE Badge)
  */
 async function has2xBonus(ctx: any, playerAddress: string): Promise<{ has2x: boolean; reason: string }> {
-  const profile = await ctx.db
-    .query("profiles")
-    .withIndex("by_address", (q: any) => q.eq("address", playerAddress))
-    .first();
+  const profile = await getProfileByAddress(ctx, playerAddress);
 
   if (!profile) return { has2x: false, reason: "" };
 
@@ -233,10 +250,7 @@ export const claimSocialQuestReward = mutation({
     }
 
     // Get player profile
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     if (!profile) {
       throw new Error("Profile not found");

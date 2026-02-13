@@ -17,6 +17,26 @@ import { applyLanguageBoost } from "./languageBoost";
 import { createAuditLog } from "./coinAudit";
 import { logTransaction } from "./coinsInbox";
 
+// ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
+async function getProfileByAddress(ctx: any, address: string) {
+  const normalizedAddress = address.toLowerCase();
+  const addressLink = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+
+  if (addressLink) {
+    return ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addressLink.primaryAddress))
+      .first();
+  }
+  return ctx.db
+    .query("profiles")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+}
+
 // Constants
 const DAILY_CAP = 1500; // Max $TESTVBMS per day per player (reduced from 3500)
 const PVE_WIN_LIMIT = 30; // Max PvE wins per day
@@ -82,10 +102,7 @@ export const initializeEconomy = mutation({
     address: v.string(),
   },
   handler: async (ctx, { address }) => {
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    const profile = await getProfileByAddress(ctx, address);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -125,10 +142,7 @@ export const getPlayerEconomy = query({
     address: v.string(),
   },
   handler: async (ctx, { address }) => {
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    const profile = await getProfileByAddress(ctx, address);
 
     if (!profile) {
       return null;
@@ -307,10 +321,7 @@ function calculateAuraMultiplier(playerAura: number, opponentAura: number, isWin
 
 // Legacy function kept for awardPvPCoins (used in actual battles, less frequent)
 async function getOpponentRanking(ctx: any, opponentAddress: string): Promise<number> {
-  const opponent = await ctx.db
-    .query("profiles")
-    .withIndex("by_address", (q: any) => q.eq("address", opponentAddress.toLowerCase()))
-    .first();
+  const opponent = await getProfileByAddress(ctx, opponentAddress);
 
   if (!opponent) return 999;
 
@@ -401,19 +412,13 @@ export const previewPvPRewards = query({
   },
   handler: async (ctx, { playerAddress, opponentAddress }) => {
     // 🚀 OPTIMIZED: Fetch both profiles in parallel-ish (2 reads total)
-    const player = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", playerAddress.toLowerCase()))
-      .first();
+    const player = await getProfileByAddress(ctx, playerAddress);
 
     if (!player) {
       throw new Error("Player profile not found");
     }
 
-    const opponent = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", opponentAddress.toLowerCase()))
-      .first();
+    const opponent = await getProfileByAddress(ctx, opponentAddress);
 
     if (!opponent) {
       throw new Error("Opponent profile not found");
@@ -555,10 +560,7 @@ export const awardPvECoins = mutation({
     skipCoins: v.optional(v.boolean()), // If true, only calculate reward without adding coins
   },
   handler: async (ctx, { address, difficulty, won, language, skipCoins }) => {
-    let profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    let profile = await getProfileByAddress(ctx, address);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -770,10 +772,7 @@ export const awardPvPCoins = mutation({
     )),
   },
   handler: async (ctx, { address, won, opponentAddress, language }) => {
-    let profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    let profile = await getProfileByAddress(ctx, address);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -833,10 +832,7 @@ export const awardPvPCoins = mutation({
     let rankingMultiplier = 1.0;
     let opponentAura = 500;
     if (opponentAddress) {
-      const opponentProfile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", opponentAddress.toLowerCase()))
-        .first();
+      const opponentProfile = await getProfileByAddress(ctx, opponentAddress);
       const playerAura = profile.stats?.aura ?? 500;
       opponentAura = opponentProfile?.stats?.aura ?? 500;
       rankingMultiplier = calculateAuraMultiplier(playerAura, opponentAura, won);
@@ -1064,10 +1060,7 @@ export const chargeEntryFee = mutation({
     mode: v.union(v.literal("attack"), v.literal("pvp")),
   },
   handler: async (ctx, { address, mode }) => {
-    let profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    let profile = await getProfileByAddress(ctx, address);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -1116,10 +1109,7 @@ export const claimLoginBonus = mutation({
     address: v.string(),
   },
   handler: async (ctx, { address }) => {
-    let profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    let profile = await getProfileByAddress(ctx, address);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -1204,10 +1194,7 @@ export const claimShareBonus = mutation({
     const normalizedAddress = address.toLowerCase();
     const today = new Date().toISOString().split('T')[0];
 
-    let profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    let profile = await getProfileByAddress(ctx, normalizedAddress);
 
     if (!profile) {
       return { success: false, message: "Profile not found" };
@@ -1276,10 +1263,7 @@ export const payEntryFee = mutation({
     mode: v.union(v.literal("pvp"), v.literal("attack")),
   },
   handler: async (ctx, { address, mode }) => {
-    let profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    let profile = await getProfileByAddress(ctx, address);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -1359,10 +1343,7 @@ export const addCoins = internalMutation({
     reason: v.string(),
   },
   handler: async (ctx, { address, amount, reason }) => {
-    let profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    let profile = await getProfileByAddress(ctx, address);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -1502,10 +1483,7 @@ export const recordAttackResult = mutation({
     const normalizedOpponentAddress = args.opponentAddress.toLowerCase();
 
     // ===== STEP 1: Get profile and initialize economy if needed =====
-    let profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedPlayerAddress))
-      .first();
+    let profile = await getProfileByAddress(ctx, normalizedPlayerAddress);
 
     if (!profile) {
       throw new Error("Player profile not found");
@@ -1565,10 +1543,7 @@ export const recordAttackResult = mutation({
     // Daily cap only applies to PvE (which has 30 wins/day limit)
 
     // ===== STEP 2: Calculate aura-based bonus (OPTIMIZED - 1 query instead of 200) =====
-    const opponentProfile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
-      .first();
+    const opponentProfile = await getProfileByAddress(ctx, normalizedOpponentAddress);
 
     const playerAura = profile.stats?.aura ?? 500;
     const opponentAura = opponentProfile?.stats?.aura ?? 500;
@@ -1711,10 +1686,7 @@ export const recordAttackResult = mutation({
       const defenderReward = penaltyAmount - poolFee; // 95% goes to defender
 
       // Get defender profile
-      let defenderProfile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
-        .first();
+      let defenderProfile = await getProfileByAddress(ctx, normalizedOpponentAddress);
 
       if (defenderProfile) {
         // Initialize economy if needed
@@ -1822,10 +1794,7 @@ export const recordAttackResult = mutation({
       newStats.aura = currentAura + auraChange;
 
       // DEFENDER LOSES: Loses -10 aura (nerfed from -20, Vibe Clash is main mode)
-      const defenderProfile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
-        .first();
+      const defenderProfile = await getProfileByAddress(ctx, normalizedOpponentAddress);
 
       if (defenderProfile) {
         const defenderAura = defenderProfile.stats?.aura ?? 500;
@@ -1852,10 +1821,7 @@ export const recordAttackResult = mutation({
       newStats.aura = currentAura;
 
       // DEFENDER WINS: Track defense win
-      const defenderProfile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", normalizedOpponentAddress))
-        .first();
+      const defenderProfile = await getProfileByAddress(ctx, normalizedOpponentAddress);
 
       if (defenderProfile) {
         await ctx.db.patch(defenderProfile._id, {
@@ -2017,10 +1983,7 @@ export const awardShareBonus = mutation({
     const { address, type } = args;
 
     // Get profile
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    const profile = await getProfileByAddress(ctx, address);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -2156,10 +2119,7 @@ export const awardPokerCoins = mutation({
     matchId: v.id("matches"),
   },
   handler: async (ctx, { address, matchId }) => {
-    let profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
-      .first();
+    let profile = await getProfileByAddress(ctx, address);
 
     if (!profile) {
       throw new Error("Profile not found");

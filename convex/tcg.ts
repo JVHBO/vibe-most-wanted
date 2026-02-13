@@ -12,6 +12,26 @@ import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 
+// ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
+async function getProfileByAddress(ctx: any, address: string) {
+  const normalizedAddress = address.toLowerCase();
+  const addressLink = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+
+  if (addressLink) {
+    return ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addressLink.primaryAddress))
+      .first();
+  }
+  return ctx.db
+    .query("profiles")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2027,10 +2047,7 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
         : match.player1Address;
 
       // Update winner's aura (+50)
-      const winnerProfile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q: any) => q.eq("address", winnerId))
-        .first();
+      const winnerProfile = await getProfileByAddress(ctx, winnerId);
 
       if (winnerProfile) {
         const winnerCurrentAura = winnerProfile.stats?.aura ?? 500;
@@ -2045,10 +2062,7 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
 
       // Update loser's aura (-40)
       if (loserId) {
-        const loserProfile = await ctx.db
-          .query("profiles")
-          .withIndex("by_address", (q: any) => q.eq("address", loserId))
-          .first();
+        const loserProfile = await getProfileByAddress(ctx, loserId);
 
         if (loserProfile) {
           const loserCurrentAura = loserProfile.stats?.aura ?? 500;
@@ -2207,10 +2221,7 @@ export const forfeitMatch = mutation({
 
     // 🎯 Vibe Clash PvP Aura Rewards on Forfeit (+50 win, -40 loss)
     if (winnerId) {
-      const winnerProfile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q: any) => q.eq("address", winnerId))
-        .first();
+      const winnerProfile = await getProfileByAddress(ctx, winnerId);
 
       if (winnerProfile) {
         const winnerCurrentAura = winnerProfile.stats?.aura ?? 500;
@@ -2225,10 +2236,7 @@ export const forfeitMatch = mutation({
     }
 
     // Update forfeiter's aura (-40)
-    const loserProfile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q: any) => q.eq("address", loserId))
-      .first();
+    const loserProfile = await getProfileByAddress(ctx, loserId);
 
     if (loserProfile) {
       const loserCurrentAura = loserProfile.stats?.aura ?? 500;
@@ -2323,10 +2331,7 @@ export const claimVictoryByTimeout = mutation({
     });
 
     // Aura rewards: +50 winner, -40 loser (same as forfeit)
-    const winnerProfile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q: any) => q.eq("address", winnerId))
-      .first();
+    const winnerProfile = await getProfileByAddress(ctx, winnerId);
 
     if (winnerProfile) {
       const currentAura = winnerProfile.stats?.aura ?? 500;
@@ -2337,10 +2342,7 @@ export const claimVictoryByTimeout = mutation({
     }
 
     if (loserId) {
-      const loserProfile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q: any) => q.eq("address", loserId))
-        .first();
+      const loserProfile = await getProfileByAddress(ctx, loserId);
 
       if (loserProfile) {
         const currentAura = loserProfile.stats?.aura ?? 500;
@@ -2573,10 +2575,7 @@ export const autoMatch = mutation({
     }
 
     // Get opponent profile for username
-    const opponentProfile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q: any) => q.eq("address", opponent.address))
-      .first();
+    const opponentProfile = await getProfileByAddress(ctx, opponent.address);
 
     const opponentUsername = opponentProfile?.username || "Unknown";
 
@@ -2704,10 +2703,7 @@ export const setDefensePool = mutation({
     }
 
     // Get profile (no balance check - VBMS sent onchain to pool contract)
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q: any) => q.eq("address", addr))
-      .first();
+    const profile = await getProfileByAddress(ctx, addr);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -2811,10 +2807,7 @@ export const withdrawDefensePool = mutation({
     }
 
     // Get profile
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q: any) => q.eq("address", addr))
-      .first();
+    const profile = await getProfileByAddress(ctx, addr);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -3172,14 +3165,8 @@ export const createMatchFromMatchmaking = mutation({
 
     // If staked match, deduct from both players
     if (args.poolTier && args.poolTier > 0) {
-      const profile1 = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q: any) => q.eq("address", addr1))
-        .first();
-      const profile2 = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q: any) => q.eq("address", addr2))
-        .first();
+      const profile1 = await getProfileByAddress(ctx, addr1);
+      const profile2 = await getProfileByAddress(ctx, addr2);
 
       if (!profile1 || !profile2) {
         throw new Error("One or both profiles not found");
@@ -3266,10 +3253,7 @@ export const autoMatchWithStake = mutation({
       console.log(`[autoMatchWithStake] Active deck found: ${activeDeck.cards.length} cards`);
 
       // Check player profile exists
-      const profile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q: any) => q.eq("address", addr))
-        .first();
+      const profile = await getProfileByAddress(ctx, addr);
 
       if (!profile) {
         throw new Error("Profile not found");
@@ -3306,10 +3290,7 @@ export const autoMatchWithStake = mutation({
       }
 
       // Get opponent profile for username
-      const opponentProfile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q: any) => q.eq("address", opponent.address))
-        .first();
+      const opponentProfile = await getProfileByAddress(ctx, opponent.address);
 
       const opponentUsername = opponentProfile?.username || "Unknown";
       console.log(`[autoMatchWithStake] Opponent: ${opponentUsername} (${opponent.address})`);
@@ -3456,10 +3437,7 @@ export const finishStakedMatch = mutation({
         const winnerReward = defenderPool;
 
         // Award attacker coins
-        const attackerProfile = await ctx.db
-          .query("profiles")
-          .withIndex("by_address", (q: any) => q.eq("address", attackerAddr))
-          .first();
+        const attackerProfile = await getProfileByAddress(ctx, attackerAddr);
 
         if (attackerProfile) {
           const currentCoins = attackerProfile.coins || 0;
@@ -3515,10 +3493,7 @@ export const finishStakedMatch = mutation({
         const defenderReward = attackFee - contractTax; // 90% of fee
 
         // Award defender coins
-        const defenderProfile = await ctx.db
-          .query("profiles")
-          .withIndex("by_address", (q: any) => q.eq("address", defenderAddr))
-          .first();
+        const defenderProfile = await getProfileByAddress(ctx, defenderAddr);
 
         if (defenderProfile) {
           const currentCoins = defenderProfile.coins || 0;
@@ -3566,10 +3541,7 @@ export const finishStakedMatch = mutation({
     // Non-CPU staked match (PvP staked) - original logic with 90% of fee
     const winnerReward = attackFee - contractTax;
 
-    const winnerProfile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q: any) => q.eq("address", winnerAddr))
-      .first();
+    const winnerProfile = await getProfileByAddress(ctx, winnerAddr);
 
     if (winnerProfile) {
       const currentCoins = winnerProfile.coins || 0;
@@ -3615,10 +3587,7 @@ export const recordPvEBattle = mutation({
   },
   handler: async (ctx, args) => {
     const addr = args.address.toLowerCase();
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", addr))
-      .first();
+    const profile = await getProfileByAddress(ctx, addr);
     if (!profile) return { pveCount: 0, rewardedCount: 0, auraAwarded: 0 };
 
     const today = new Date().toISOString().split("T")[0]; // "2026-02-05"
@@ -3667,10 +3636,7 @@ export const getDailyBattleStats = query({
   },
   handler: async (ctx, args) => {
     const addr = args.address.toLowerCase();
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", addr))
-      .first();
+    const profile = await getProfileByAddress(ctx, addr);
     if (!profile) return { pveCount: 0, rewardedCount: 0, canStillEarnRewards: true };
 
     const today = new Date().toISOString().split("T")[0];

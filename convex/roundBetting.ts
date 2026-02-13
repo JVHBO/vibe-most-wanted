@@ -12,6 +12,26 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 
+// ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
+async function getProfileByAddress(ctx: any, address: string) {
+  const normalizedAddress = address.toLowerCase();
+  const addressLink = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+
+  if (addressLink) {
+    return ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addressLink.primaryAddress))
+      .first();
+  }
+  return ctx.db
+    .query("profiles")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+}
+
 // Odds configuration (can be adjusted)
 const ODDS_CONFIG = {
   rounds1to3: 1.5, // Early rounds: 1.5x
@@ -411,10 +431,7 @@ export const convertCreditsToCoins = mutation({
     const amount = credits.balance;
 
     // Get profile
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     if (!profile) {
       throw new Error("Profile not found");

@@ -16,6 +16,26 @@ import { Id } from "./_generated/dataModel";
 import { internal, api } from "./_generated/api";
 import { COLLECTION_CARDS, AVAILABLE_COLLECTIONS } from "./arenaCardsData";
 
+// ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
+async function getProfileByAddress(ctx: any, address: string) {
+  const normalizedAddress = address.toLowerCase();
+  const addressLink = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+
+  if (addressLink) {
+    return ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addressLink.primaryAddress))
+      .first();
+  }
+  return ctx.db
+    .query("profiles")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+}
+
 /**
  * ⚡ Collection Power Multipliers
  * VibeFID: 5x, VBMS (vibe): 2x, Nothing: 0.5x, Others: 1x
@@ -393,10 +413,7 @@ export const leaveSpectate = mutation({
       convertedAmount = credits.balance;
 
       // Get profile and add to coins
-      const profile = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-        .first();
+      const profile = await getProfileByAddress(ctx, normalizedAddress);
 
       if (profile) {
         const currentBalance = profile.coins || 0;
@@ -1143,10 +1160,7 @@ export const placeBet = mutation({
     }
 
     // Get bettor's profile to deduct coins
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", bettorAddr))
-      .first();
+    const profile = await getProfileByAddress(ctx, bettorAddr);
 
     if (!profile) {
       console.error(`❌ Profile not found for bettor: ${bettorAddr}`);

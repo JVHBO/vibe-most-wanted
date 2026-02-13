@@ -24,6 +24,26 @@ async function resolvePrimaryAddress(ctx: QueryCtx | MutationCtx, address: strin
   return normalizedAddress;
 }
 
+// ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
+async function getProfileByAddress(ctx: any, address: string) {
+  const normalizedAddress = address.toLowerCase();
+  const addressLink = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+
+  if (addressLink) {
+    return ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addressLink.primaryAddress))
+      .first();
+  }
+  return ctx.db
+    .query("profiles")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+}
+
 // Configuration
 const AUCTION_RESET_HOUR_UTC = 20; // 20:00 UTC = 17:00 Brasília - DAILY RESET TIME
 const FEATURE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours per position
@@ -422,10 +442,7 @@ export const placeBid = mutation({
     }
 
     // 5. Get bidder profile and check balance
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     console.log(`[PlaceBid DEBUG] Address: ${normalizedAddress}, Profile found: ${!!profile}, Username: ${profile?.username}`);
 
@@ -479,10 +496,7 @@ export const placeBid = mutation({
 
       if (previousBid) {
         // Refund to previous bidder's coins (TESTVBMS)
-        const prevBidderProfile = await ctx.db
-          .query("profiles")
-          .withIndex("by_address", (q) => q.eq("address", previousBid.bidderAddress))
-          .first();
+        const prevBidderProfile = await getProfileByAddress(ctx, previousBid.bidderAddress);
 
         if (prevBidderProfile) {
           await ctx.db.patch(prevBidderProfile._id, {
@@ -615,10 +629,7 @@ export const placeBidWithVBMS = mutation({
     }
 
     // 3. Get bidder profile
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -809,10 +820,7 @@ export const addToPool = mutation({
     }
 
     // 3. Get bidder profile
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     console.log(`[AddToPool DEBUG] Address: ${normalizedAddress}, Profile found: ${!!profile}, Username: ${profile?.username}`);
 
@@ -965,10 +973,7 @@ export const requestRefund = mutation({
     const now = Date.now();
 
     // Get user profile and credit coins directly
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -1575,10 +1580,7 @@ export const testCreatePendingRefund = internalMutation({
     if (!testAuction) throw new Error("Failed to create test auction");
 
     // Get profile
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
 
     // Create a pending_refund bid
     const bidId = await ctx.db.insert("castAuctionBids", {
@@ -1702,10 +1704,7 @@ export const refundBid = internalMutation({
     const bid = await ctx.db.get(bidId);
     if (!bid || bid.status !== "active") return;
     
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", bid.bidderAddress.toLowerCase()))
-      .first();
+    const profile = await getProfileByAddress(ctx, bid.bidderAddress);
 
     if (profile) {
       await ctx.db.patch(profile._id, {
