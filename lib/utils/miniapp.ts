@@ -26,10 +26,10 @@ export function shouldDisableVoiceChat(): boolean {
 
 /**
  * Check if the current miniapp client supports Arbitrum.
- * Both Warpcast (9152) and Base App (309857) support ARB.
+ * Only Warpcast (9152) supports ARB. Base App (309857) does NOT.
  * Does NOT call any SDK methods to avoid racing with wallet provider init.
  * Uses clientFid passed from the already-loaded Farcaster context.
  */
 export function isWarpcastClient(clientFid: number | undefined): boolean {
-  return clientFid === 9152 || clientFid === 309857;
+  return clientFid === 9152;
 }
