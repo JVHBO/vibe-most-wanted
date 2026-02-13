@@ -787,17 +787,20 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const upsertProfileFromFarcaster = useMutation(api.profiles.upsertProfileFromFarcaster);
   const hasAutoCreatedProfile = useRef(false);
 
-  // 🆕 AUTO-CREATE PROFILE: When user enters via Farcaster with FID + wallet but no profile
+  // 🆕 AUTO-CREATE/UPDATE PROFILE: When user enters via Farcaster with FID + wallet
+  // Also updates existing profiles that are missing farcasterFid (fixes Base App claim)
   useEffect(() => {
-    const autoCreateProfile = async () => {
+    const autoCreateOrUpdateProfile = async () => {
       // Only run once, when we have all required data
       if (hasAutoCreatedProfile.current) return;
       if (!address) return;
       if (!isInFarcaster) return;
       if (!farcasterFidState) return;
       if (isCheckingFarcaster) return;
-      if (userProfile) return; // Already has profile
       if (isLoadingProfile) return; // Still loading
+
+      // If profile exists AND already has farcasterFid, skip
+      if (userProfile && (userProfile as any).farcasterFid) return;
 
       // Get Farcaster context for username/displayName/pfpUrl
       try {
@@ -807,7 +810,8 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         const { fid, username, displayName, pfpUrl } = context.user;
         if (!fid) return;
 
-        console.log('[AutoCreate] 🆕 Creating profile for Farcaster user:', { fid, username, address });
+        const action = userProfile ? 'Updating' : 'Creating';
+        console.log(`[AutoCreate] 🆕 ${action} profile for Farcaster user:`, { fid, username, address });
         hasAutoCreatedProfile.current = true;
 
         await upsertProfileFromFarcaster({
@@ -818,17 +822,17 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
           pfpUrl: pfpUrl || undefined,
         });
 
-        console.log('[AutoCreate] ✅ Profile created successfully!');
+        console.log(`[AutoCreate] ✅ Profile ${action.toLowerCase()}d successfully!`);
 
         // Refresh profile to get the new data
         await refreshProfile();
       } catch (error) {
-        console.error('[AutoCreate] ❌ Failed to auto-create profile:', error);
+        console.error('[AutoCreate] ❌ Failed to auto-create/update profile:', error);
         hasAutoCreatedProfile.current = false; // Allow retry
       }
     };
 
-    autoCreateProfile();
+    autoCreateOrUpdateProfile();
   }, [address, isInFarcaster, farcasterFidState, isCheckingFarcaster, userProfile, isLoadingProfile, upsertProfileFromFarcaster, refreshProfile]);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showChainModal, setShowChainModal] = useState(false);
