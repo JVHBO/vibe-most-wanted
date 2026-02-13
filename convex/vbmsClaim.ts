@@ -16,13 +16,29 @@ import { createAuditLog } from "./coinAudit";
 import { isBlacklisted, getBlacklistInfo } from "./blacklist";
 import { logTransaction } from "./coinsInbox";
 
-// ========== HELPER: Get Profile ==========
+// ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
 
 async function getProfile(ctx: any, address: string) {
-  const profile = await ctx.db
-    .query("profiles")
-    .withIndex("by_address", (q: any) => q.eq("address", address.toLowerCase()))
+  const normalizedAddress = address.toLowerCase();
+
+  // Check addressLinks first (multi-wallet support, e.g. Base App wallet)
+  const addressLink = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
     .first();
+
+  let profile;
+  if (addressLink) {
+    profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addressLink.primaryAddress))
+      .first();
+  } else {
+    profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+      .first();
+  }
 
   if (!profile) {
     throw new Error(`Profile not found for address: ${address}`);
