@@ -944,9 +944,16 @@ export const convertTESTVBMSInternal = internalMutation({
     // This prevents direct API calls with fake/stolen FIDs
     // Support both old `fid` (string) and new `farcasterFid` (number) fields
     const profileFid = profile.farcasterFid || (profile.fid ? Number(profile.fid) : null);
-    if (!profileFid || profileFid !== fid) {
+    if (profileFid && profileFid !== fid) {
+      // Profile has a FID but it doesn't match - block
       console.log(`🚫 [SECURITY] FID mismatch! Provided: ${fid}, Profile FID: ${profileFid}, Address: ${address}`);
       throw new Error("[CLAIM_FID_MISMATCH]");
+    }
+
+    // Auto-link FID if profile has none (e.g. created via wallet connect before Farcaster)
+    if (!profileFid) {
+      console.log(`🔗 [AUTO-LINK] Setting farcasterFid=${fid} on profile ${address} (was null)`);
+      await ctx.db.patch(profile._id, { farcasterFid: fid });
     }
 
     console.log(`✅ [SECURITY] FID verified: ${fid} for address ${address}`);
