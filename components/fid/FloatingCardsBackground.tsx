@@ -3,7 +3,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import { useConvex } from "convex/react";
 import { api } from "@/lib/fid/convex-generated/api";
-import Link from "next/link";
 
 const CARD_W = 100;
 const CARD_H = 140;
