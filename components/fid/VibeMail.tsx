@@ -902,7 +902,8 @@ export function VibeMailInboxWithClaim({
                 </span>
                 {pendingVbms > 0 && (
                   <span className="text-vintage-gold flex items-center gap-1">
-                    💰 {pendingVbms}
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke="#1a1a1a" strokeWidth="2" fill="none" strokeLinecap="round"/></svg>
+                    {pendingVbms}
                   </span>
                 )}
               </div>
@@ -967,7 +968,10 @@ export function VibeMailInboxWithClaim({
                   : 'bg-vintage-black/50 text-vintage-ice/70 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
               }`}
             >
-              📥 {t.inboxTab} ({messages?.length || 0})
+              <span className="flex items-center justify-center gap-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+                {t.inboxTab} ({messages?.length || 0})
+              </span>
             </button>
             <button
               onClick={() => setActiveTab('sent')}
@@ -977,7 +981,10 @@ export function VibeMailInboxWithClaim({
                   : 'bg-vintage-black/50 text-vintage-ice/70 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
               }`}
             >
-              📤 {t.sentTab} ({sentMessages?.length || 0})
+              <span className="flex items-center justify-center gap-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                {t.sentTab} ({sentMessages?.length || 0})
+              </span>
             </button>
           </div>
         )}
@@ -1719,7 +1726,19 @@ export function VibeMailInboxWithClaim({
                       : 'bg-vintage-black text-vintage-gold'
                   }`}
                 >
-                  {deleteMode ? '✕ Cancel' : `🗑️ ${t.vibemailDeleteMode || 'Select'}`}
+                  <span className="flex items-center gap-1">
+                    {deleteMode ? (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        Cancel
+                      </>
+                    ) : (
+                      <>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                        {t.vibemailDeleteMode || 'Select'}
+                      </>
+                    )}
+                  </span>
                 </button>
                 {deleteMode && (
                   <div className="flex gap-2">
@@ -1755,7 +1774,10 @@ export function VibeMailInboxWithClaim({
                         }}
                         className="text-xs px-2 py-1 bg-red-500/30 border border-red-500/50 text-red-400 rounded-lg hover:bg-red-500/40"
                       >
-                        🗑️ {(t.vibemailDeleteSelected || 'Delete ({count})').replace('{count}', String(selectedForDelete.size))}
+                        <span className="flex items-center gap-1">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+                          {(t.vibemailDeleteSelected || 'Delete ({count})').replace('{count}', String(selectedForDelete.size))}
+                        </span>
                       </button>
                     )}
                   </div>
@@ -1818,10 +1840,10 @@ export function VibeMailInboxWithClaim({
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         {msg.audioId && (
-                          <span className="text-xs text-vintage-burnt-gold">🔊</span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C8962E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                         )}
                         {msg.imageId && (
-                          <span className="text-xs text-vintage-burnt-gold">🖼️</span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C8962E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                         )}
                         <span className="text-xs text-vintage-ice/40">
                           {new Date(msg.createdAt).toLocaleDateString()}
@@ -1855,7 +1877,7 @@ export function VibeMailInboxWithClaim({
               disabled={isClaimingRewards || isClaimTxPending}
               className="w-full py-4 bg-vintage-gold text-black font-bold text-lg border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 flex items-center justify-center gap-3"
             >
-              <span className="text-2xl">💰</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
               <span>
                 {isClaimingRewards || isClaimTxPending ? 'Claiming...' : `CLAIM ${pendingVbms} VBMS`}
               </span>
