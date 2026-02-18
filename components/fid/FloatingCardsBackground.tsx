@@ -79,11 +79,11 @@ export function FloatingCardsBackground() {
     async function loadCards() {
       try {
         const today = new Date().toISOString().split("T")[0];
-        const cachedDate = sessionStorage.getItem(CACHE_DATE_KEY);
+        const cachedDate = localStorage.getItem(CACHE_DATE_KEY);
         let cards: CardData[] | null = null;
 
         if (cachedDate === today) {
-          const raw = sessionStorage.getItem(CACHE_KEY);
+          const raw = localStorage.getItem(CACHE_KEY);
           if (raw) cards = JSON.parse(raw) as CardData[];
         }
 
@@ -93,8 +93,8 @@ export function FloatingCardsBackground() {
             { limit: 7 }
           ) as CardData[];
           cards = result;
-          sessionStorage.setItem(CACHE_KEY, JSON.stringify(cards));
-          sessionStorage.setItem(CACHE_DATE_KEY, today);
+          localStorage.setItem(CACHE_KEY, JSON.stringify(cards));
+          localStorage.setItem(CACHE_DATE_KEY, today);
         }
 
         if (!mountedRef.current || !cards || cards.length === 0) return;
