@@ -66,19 +66,9 @@ body.neobrutalism [class*="bg-vintage-black/"],
 body.neobrutalism [class*="bg-black/"] {
   background-color: #252525 !important;
 }
-body.neobrutalism [class*="bg-vintage-gold"] {
+/* bg-vintage-gold → gold APENAS quando o bg real é gold (exclui hover:bg-vintage-gold e border-vintage-gold) */
+body.neobrutalism [class*="bg-vintage-gold"]:not([class*="hover:bg-vintage-gold"]):not([class*="border-vintage-gold"]) {
   background-color: #FFD400 !important;
-}
-/* Fix: elementos com fundo escuro que TEM hover:bg-vintage-gold nao devem ficar dourados */
-body.neobrutalism [class*="bg-vintage-black"][class*="hover:bg-vintage-gold"],
-body.neobrutalism [class*="bg-black"][class*="hover:bg-vintage-gold"],
-body.neobrutalism [class*="bg-vintage-charcoal"][class*="hover:bg-vintage-gold"],
-body.neobrutalism [class*="bg-vintage-dark"][class*="hover:bg-vintage-gold"] {
-  background-color: #252525 !important;
-}
-/* Fix: elementos que SO tem hover:bg-vintage-gold (sem bg proprio) ficam transparentes */
-body.neobrutalism [class*="hover:bg-vintage-gold"]:not([class*=" bg-"]):not([class^="bg-"]) {
-  background-color: transparent !important;
 }
 
 /* --- Gradients → flat dark --- */
@@ -162,6 +152,7 @@ body.neobrutalism [class*="border-vintage-gold"],
 body.neobrutalism [class*="border-vintage-gold/"] {
   border-color: #000 !important;
   border-width: 4px !important;
+  box-sizing: border-box !important;
 }
 body.neobrutalism [class*="border-purple"],
 body.neobrutalism [class*="border-green"],
@@ -179,17 +170,17 @@ body.neobrutalism [class*="shadow-neon"],
 body.neobrutalism [class*="shadow-lg"],
 body.neobrutalism [class*="shadow-xl"],
 body.neobrutalism [class*="shadow-2xl"] {
-  box-shadow: 6px 6px 0px #000 !important;
+  box-shadow: 0 0 0 3px #000, 6px 6px 0px #000 !important;
 }
 body.neobrutalism [style*="box-shadow"] {
-  box-shadow: 6px 6px 0px #000 !important;
+  box-shadow: 0 0 0 3px #000, 6px 6px 0px #000 !important;
 }
 
 /* --- Corners → angular --- */
 body.neobrutalism [class*="rounded-2xl"],
 body.neobrutalism [class*="rounded-3xl"] { border-radius: 4px !important; }
 body.neobrutalism [class*="rounded-xl"] { border-radius: 4px !important; }
-body.neobrutalism [class*="rounded-full"]:not(svg *):not([class*="w-72"]):not([class*="w-6"]):not([class*="w-3"]):not(img):not([class*="rounded-full"][class*="border-vintage-gold"]) { border-radius: 4px !important; }
+body.neobrutalism [class*="rounded-full"]:not(svg *):not([class*="w-72"]):not([class*="w-6"]):not([class*="w-3"]):not([class*="w-8"]):not([class*="w-12"]):not([class*="w-14"]):not([class*="w-full"]):not(img):not([class*="rounded-full"][class*="border-vintage-gold"]):not([class*="border-gray-500"]):not([class*="border-red-900"]):not([class*="border-blue-700"]):not([class*="border-emerald-700"]):not([class*="border-purple-600"]) { border-radius: 4px !important; }
 /* Keep circles for: roulette wheel, avatars, notification dots, SVG elements, progress track */
 /* Progress bar track → keep pill shape */
 body.neobrutalism .tour-dex-btn [class*="rounded-full"] {
@@ -362,7 +353,7 @@ body.neobrutalism *:not(.animate-ticker):not(.animate-spin) {
    =================================================== */
 
 /* --- PROFILE BAR (top bar) → DARK with sticker elements --- */
-body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="backdrop-blur"],
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="backdrop-blur"]:not([class*="rounded-2xl"]),
 body.neobrutalism .tour-header > div {
   background-color: #1E1E1E !important;
   border-color: #000 !important;
@@ -451,6 +442,11 @@ body.neobrutalism [class*="bg-vintage-charcoal/80"] [class*="text-vintage-gold"]
 body.neobrutalism [class*="text-vintage-burnt-gold/80"],
 body.neobrutalism [class*="text-vintage-burnt-gold"] {
   color: #FFF !important;
+}
+/* Price ticker loading text → preto no fundo dourado */
+body.neobrutalism .tour-price-ticker [class*="animate-pulse"],
+body.neobrutalism [class*="bg-vintage-deep-black/50"] [class*="animate-pulse"] {
+  color: #000 !important;
 }
 body.neobrutalism [class*="bg-vintage-deep-black"][class*="animate-ticker"] *,
 body.neobrutalism [class*="bg-vintage-deep-black"] .animate-ticker *,
@@ -603,14 +599,14 @@ body.neobrutalism .tour-nav-bar img {
 /* Nav: Color each button differently via nth-child
    PADRÃO: cada botao = cor da página/seção que abre
    HOME=Gold(ativo), CLAIM=Pink, LEADERBOARD=Red, SHOP=Cyan, WANTED=Green */
-/* 1. HOME → Gold (brand, único com texto preto) */
+/* 1. HOME → Gold (brand, texto branco igual aos outros) */
 body.neobrutalism .tour-nav-bar > *:nth-child(1) {
   background-color: #FFD400 !important;
-  color: #000 !important;
+  color: #FFF !important;
 }
 body.neobrutalism .tour-nav-bar > *:nth-child(1) * {
-  color: #000 !important;
-  stroke: #000 !important;
+  color: #FFF !important;
+  stroke: #FFF !important;
 }
 /* 2. CLAIM → Hot Pink */
 body.neobrutalism .tour-nav-bar > *:nth-child(2) {
@@ -1009,4 +1005,1388 @@ body.neobrutalism .tour-profile-dropdown > div[style*="z-index"] a:hover *,
 body.neobrutalism .tour-profile-dropdown > div[style*="z-index"] button:hover * {
   color: #000 !important;
   stroke: #000 !important;
+}
+
+/* ===================================================
+   FID PAGES - HEADER HEIGHT FIX
+   Neo header is ~4px taller due to border-b-4
+   =================================================== */
+
+/* Card page main content - push down to clear taller header */
+body.neobrutalism [class*="overflow-hidden"] > [class*="z-10"][class*="fixed"] {
+  top: 64px !important;
+}
+
+/* ===================================================
+   FID MOST WANTED PAGE (/fid/most-wanted)
+   =================================================== */
+
+/* Page background */
+body.neobrutalism [class*="from-vintage-charcoal"][class*="to-vintage-deep-black"][class*="p-4"] {
+  background: #1E1E1E !important;
+  background-image: none !important;
+}
+
+/* Title */
+body.neobrutalism [class*="from-vintage-charcoal"][class*="p-4"] h1 {
+  color: #FFD400 !important;
+  font-weight: 900 !important;
+  font-size: 1.5rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+}
+
+/* Language select */
+body.neobrutalism [class*="from-vintage-charcoal"][class*="p-4"] select {
+  background: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  box-shadow: 2px 2px 0px #000 !important;
+  border-radius: 4px !important;
+  color: #FFD400 !important;
+}
+
+/* Search input */
+body.neobrutalism [class*="from-vintage-charcoal"][class*="p-4"] input {
+  background: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  color: #FFF !important;
+}
+
+/* Card list items */
+body.neobrutalism [class*="space-y-2"] > a[class*="bg-vintage-charcoal"] {
+  background: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  border-radius: 4px !important;
+}
+body.neobrutalism [class*="space-y-2"] > a[class*="bg-vintage-charcoal"]:hover {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 2px 2px 0px #000 !important;
+}
+
+/* Card image inside list */
+body.neobrutalism [class*="space-y-2"] img[class*="rounded-lg"] {
+  border: 2px solid #000 !important;
+  border-radius: 2px !important;
+  box-shadow: 2px 2px 0px #000 !important;
+}
+
+/* Rank badge - keep colors but make square */
+body.neobrutalism [class*="space-y-2"] [class*="rounded-full"][class*="bg-yellow-5"] {
+  background: #FFD400 !important;
+  color: #000 !important;
+  border: 2px solid #000 !important;
+  border-radius: 4px !important;
+  font-weight: 900 !important;
+}
+body.neobrutalism [class*="space-y-2"] [class*="rounded-full"][class*="bg-gray-4"] {
+  background: #999 !important;
+  color: #000 !important;
+  border: 2px solid #000 !important;
+  border-radius: 4px !important;
+}
+body.neobrutalism [class*="space-y-2"] [class*="rounded-full"][class*="bg-amber-6"] {
+  background: #CC5500 !important;
+  color: #FFF !important;
+  border: 2px solid #000 !important;
+  border-radius: 4px !important;
+}
+body.neobrutalism [class*="space-y-2"] [class*="rounded-full"][class*="bg-vintage-gold/20"] {
+  background: #2C2C2C !important;
+  color: #FFD400 !important;
+  border: 2px solid #000 !important;
+  border-radius: 4px !important;
+}
+
+/* Pagination buttons */
+body.neobrutalism [class*="gap-4"][class*="mb-20"] button,
+body.neobrutalism [class*="gap-4"][class*="mb-20"] [class*="rounded-lg"] {
+  background: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  color: #FFF !important;
+  font-weight: 900 !important;
+}
+body.neobrutalism [class*="gap-4"][class*="mb-20"] [class*="bg-vintage-gold"] {
+  background: #FFD400 !important;
+  color: #000 !important;
+}
+
+/* Bottom nav - Most Wanted active state → gold + black text (pressed) */
+body.neobrutalism .safe-area-bottom > div > [class*="bg-vintage-gold/20"][class*="border-vintage-gold"] {
+  background-color: #FFD400 !important;
+  color: #000 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 0px 0px 0px #000 !important;
+  transform: translate(3px, 3px) !important;
+}
+body.neobrutalism .safe-area-bottom > div > [class*="bg-vintage-gold/20"][class*="border-vintage-gold"] * {
+  color: #000 !important;
+}
+
+/* ===================================================
+   FID CARD PAGE (/fid/[fid])
+   =================================================== */
+
+/* Page background */
+body.neobrutalism [class*="from-vintage-charcoal"][class*="to-vintage-deep-black"] {
+  background: #1E1E1E !important;
+  background-image: none !important;
+}
+
+/* Header bar - gold + borda preta */
+body.neobrutalism [class*="backdrop-blur-sm"][class*="border-b"][class*="border-vintage-gold/30"] {
+  background: #FFD400 !important;
+  border-bottom: 4px solid #000 !important;
+  box-shadow: 0 4px 0px #000 !important;
+  backdrop-filter: none !important;
+}
+/* Header user info → dark chip sem borda extra */
+body.neobrutalism [class*="backdrop-blur-sm"][class*="border-b"][class*="border-vintage-gold/30"] .flex.items-center.gap-2 {
+  background: #1E1E1E !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 3px 8px 3px 4px !important;
+  box-shadow: none !important;
+}
+/* Texto dourado */
+body.neobrutalism [class*="backdrop-blur-sm"][class*="border-b"][class*="border-vintage-gold/30"] a,
+body.neobrutalism [class*="backdrop-blur-sm"][class*="border-b"][class*="border-vintage-gold/30"] p {
+  color: #FFD400 !important;
+}
+/* Header avatar border → black */
+body.neobrutalism [class*="backdrop-blur-sm"][class*="border-b"][class*="border-vintage-gold/30"] img {
+  border: 2px solid #000 !important;
+}
+
+/* Language select */
+body.neobrutalism [class*="bg-\[#1a1a1a\]"] {
+  background: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  box-shadow: 2px 2px 0px #000 !important;
+  border-radius: 4px !important;
+  color: #FFD400 !important;
+}
+
+/* Stats panel */
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="rounded-lg"] {
+  background: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+/* Internal divider inside stats */
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="rounded-lg"] [class*="border-t"][class*="border-vintage-gold"] {
+  border-color: #444 !important;
+}
+
+/* Action buttons (OpenSea, Score) - only small buttons, not full panels */
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="border-vintage-gold/50"][class*="rounded-lg"]:not([class*="p-3"]):not([class*="p-4"]) {
+  background: #FFD400 !important;
+  color: #000 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 900 !important;
+}
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="border-vintage-gold/50"][class*="rounded-lg"]:not([class*="p-3"]):not([class*="p-4"]) * {
+  color: #000 !important;
+}
+
+/* ===================================================
+   FID GENERATION MODAL (Criminal Record / Mint)
+   =================================================== */
+
+/* Modal container → vira card centralizado */
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="w-full"][class*="h-full"][class*="flex-col"] {
+  background: #111 !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 420px !important;
+  max-height: calc(100vh - 140px) !important;
+  border: 4px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  border-radius: 4px !important;
+  overflow-y: auto !important;
+}
+
+/* Criminal Record panel - usa /80 e /50 para ser especifico */
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="border-vintage-gold/50"] {
+  background: #000 !important;
+  border: 4px solid #FFD400 !important;
+  box-shadow: none !important;
+  border-radius: 4px !important;
+}
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="border-vintage-gold/50"] [class*="text-vintage-burnt-gold"],
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="border-vintage-gold/50"] [class*="text-vintage-gold"] {
+  color: #FFD400 !important;
+}
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="border-vintage-gold/50"] [class*="text-vintage-ice"] {
+  color: #EEE !important;
+}
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="border-vintage-gold/50"] [class*="border-b-2"] {
+  border-bottom: 2px solid #FFD400 !important;
+}
+
+/* Biography text box */
+body.neobrutalism [class*="bg-vintage-black/40"][class*="border-vintage-gold/20"] {
+  background: #1A1A1A !important;
+  border: 2px solid #333 !important;
+  border-radius: 4px !important;
+}
+
+/* Slide 2: card + traits → 2 colunas (carta esq, info dir) */
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="w-full"][class*="h-full"] [class*="flex-col"][class*="items-center"][class*="gap-3"][class*="w-full"] {
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  gap: 12px !important;
+}
+/* Carta menor */
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="w-full"][class*="h-full"] [class*="max-w-\[200px\]"] {
+  max-width: 140px !important;
+  flex-shrink: 0 !important;
+}
+/* Traits ao lado da carta */
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="w-full"][class*="h-full"] [class*="max-w-\[200px\]"][class*="bg-vintage-charcoal/80"] {
+  max-width: 100% !important;
+  flex: 1 !important;
+}
+/* Reduz padding interno */
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="w-full"][class*="h-full"] [class*="space-y-3"][class*="max-w-md"] {
+  padding: 12px !important;
+}
+
+/* View Card / Mint button → gold */
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="w-full"][class*="h-full"] [class*="bg-vintage-gold"][class*="rounded-lg"] {
+  background: #FFD400 !important;
+  color: #000 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 900 !important;
+}
+
+/* Back button → usa flex-1 px-4 para ser especifico */
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="w-full"][class*="h-full"] button[class*="flex-1"][class*="rounded-lg"]:not([class*="bg-vintage-gold"]) {
+  background: #CC2222 !important;
+  color: #FFF !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 900 !important;
+}
+
+/* Close X button */
+body.neobrutalism [class*="bg-vintage-black/70"][class*="rounded-full"] {
+  background: #000 !important;
+  border: 2px solid #FFD400 !important;
+  border-radius: 4px !important;
+  color: #FFD400 !important;
+}
+
+/* Card corner buttons - base neo shape */
+/* Lore button has classes directly on <button>; others have a <div> wrapper */
+body.neobrutalism button[class*="-top-2"][class*="-left-2"][class*="z-20"],
+body.neobrutalism [class*="-top-2"][class*="-right-2"][class*="z-20"] button,
+body.neobrutalism [class*="-bottom-2"][class*="-left-2"][class*="z-20"] button,
+body.neobrutalism button[class*="-bottom-2"][class*="-right-2"][class*="z-20"] {
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 900 !important;
+}
+
+/* L (Lore) - Top Left → Purple (button itself has the position classes) */
+body.neobrutalism button[class*="-top-2"][class*="-left-2"][class*="z-20"] {
+  background-color: #9B5CFF !important;
+  color: #FFF !important;
+}
+
+/* Refresh - Top Right → Cyan (div wrapper has position classes) */
+body.neobrutalism [class*="-top-2"][class*="-right-2"][class*="z-20"] button {
+  background-color: #0099BB !important;
+  color: #FFF !important;
+}
+
+/* T (Traits) - Bottom Left → Gold (div wrapper has position classes) */
+body.neobrutalism [class*="-bottom-2"][class*="-left-2"][class*="z-20"] button {
+  background-color: #FFD400 !important;
+  color: #000 !important;
+}
+
+/* Envelope (VibeMail) - Bottom Right → Pink (button itself has position classes) */
+body.neobrutalism button[class*="-bottom-2"][class*="-right-2"][class*="z-20"] {
+  background-color: #E8185A !important;
+  color: #FFF !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+/* Bottom nav bar */
+/* FID bottom nav (safe-area-bottom) — only when NOT tour-nav-bar (home page) */
+body.neobrutalism .safe-area-bottom > div:not(.tour-nav-bar) {
+  background: #1E1E1E !important;
+  border-top: 4px solid #000 !important;
+  backdrop-filter: none !important;
+}
+
+body.neobrutalism .safe-area-bottom > div:not(.tour-nav-bar) > * {
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 900 !important;
+}
+
+/* FID Vibe (1st) → Gold */
+body.neobrutalism .safe-area-bottom > div:not(.tour-nav-bar) > *:nth-child(1) {
+  background-color: #FFD400 !important;
+  color: #000 !important;
+}
+body.neobrutalism .safe-area-bottom > div:not(.tour-nav-bar) > *:nth-child(1) * { color: #000 !important; }
+
+/* FID Most Wanted (2nd) → Gold */
+body.neobrutalism .safe-area-bottom > div:not(.tour-nav-bar) > *:nth-child(2) {
+  background-color: #FFD400 !important;
+  color: #000 !important;
+}
+body.neobrutalism .safe-area-bottom > div:not(.tour-nav-bar) > *:nth-child(2) * { color: #000 !important; }
+
+/* FID Back (3rd) → Red */
+body.neobrutalism .safe-area-bottom > div:not(.tour-nav-bar) > *:nth-child(3) {
+  background-color: #CC2222 !important;
+  color: #FFF !important;
+}
+body.neobrutalism .safe-area-bottom > div:not(.tour-nav-bar) > *:nth-child(3) * { color: #FFF !important; }
+
+/* HOME nav in Farcaster (safe-area-bottom .tour-nav-bar) — inherit colors from .tour-nav-bar rules above */
+body.neobrutalism .safe-area-bottom > .tour-nav-bar {
+  background: #1E1E1E !important;
+  border-top: 4px solid #000 !important;
+  backdrop-filter: none !important;
+}
+
+/* Card container - neo shadow */
+body.neobrutalism [class*="relative w-full"] {
+  filter: none !important;
+}
+
+/* Score modal backdrop - z-index alto pra ficar acima do botao envelope + menos espaco embaixo */
+body.neobrutalism [class*="bg-black/80"][class*="z-50"][class*="overflow-y-auto"] {
+  z-index: 500 !important;
+  padding-top: 68px !important;
+  padding-bottom: 16px !important;
+}
+
+/* Neynar/Score modal → neo */
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="rounded-xl"][class*="border-vintage-gold/50"] {
+  background: #1E1E1E !important;
+  border: 4px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+/* Score inner box (current score) */
+body.neobrutalism [class*="bg-vintage-black/50"][class*="rounded-lg"][class*="border-vintage-gold/30"] {
+  background: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+}
+/* Rarity Available separator */
+body.neobrutalism [class*="bg-vintage-black/50"][class*="rounded-lg"][class*="border-vintage-gold/30"] [class*="border-t"] {
+  border-top: 2px solid #444 !important;
+}
+/* Rarity Available text - sobe só o texto */
+body.neobrutalism [class*="bg-vintage-black/50"][class*="rounded-lg"][class*="border-vintage-gold/30"] [class*="border-t"] span {
+  transform: translateY(-4px) !important;
+  display: inline-block !important;
+}
+
+/* Score history box */
+body.neobrutalism [class*="bg-vintage-black/30"][class*="rounded-lg"][class*="border-vintage-gold/20"] {
+  background: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+}
+
+/* ===== BACCARAT ===== */
+
+/* --- PAGE --- */
+
+/* Page background */
+body.neobrutalism [class*="via-vintage-deep-black"] {
+  background: #181818 !important;
+}
+
+/* Header bar */
+body.neobrutalism [class*="via-vintage-deep-black"] > [class*="bg-vintage-charcoal/90"] {
+  background: #FFD400 !important;
+  border-bottom: 4px solid #000 !important;
+}
+
+/* Header: back button, title, credits text */
+body.neobrutalism [class*="via-vintage-deep-black"] > [class*="bg-vintage-charcoal/90"] button,
+body.neobrutalism [class*="via-vintage-deep-black"] > [class*="bg-vintage-charcoal/90"] h1,
+body.neobrutalism [class*="via-vintage-deep-black"] > [class*="bg-vintage-charcoal/90"] span {
+  color: #000 !important;
+  text-shadow: none !important;
+}
+
+/* Header: ? rules button → black circle with gold text */
+body.neobrutalism [class*="via-vintage-deep-black"] [class*="rounded-full"][class*="bg-vintage-gold/20"] {
+  background: #000 !important;
+  border: 2px solid #000 !important;
+  color: #FFD400 !important;
+}
+
+/* Table (green felt) — remove arch, flat rectangle */
+body.neobrutalism [class*="rounded-t-\[100px\]"] {
+  border-radius: 4px !important;
+  border: 4px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+}
+
+/* Hide decorative SVG oval inside table */
+body.neobrutalism [class*="rounded-t-"] svg.absolute {
+  display: none !important;
+}
+
+/* Betting areas - base style */
+body.neobrutalism [class*="w-56"][class*="h-16"][class*="rounded-xl"] {
+  border-radius: 4px !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  transition: none !important;
+}
+
+/* TIE betting area */
+body.neobrutalism [class*="w-56"][class*="h-16"]:has(span[class*="text-vintage-gold"][class*="font-display"]) {
+  background: rgba(255, 212, 0, 0.3) !important;
+}
+body.neobrutalism [class*="w-56"][class*="h-16"] span[class*="text-vintage-gold"][class*="font-display"] {
+  color: #FFD400 !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 8px rgba(255,212,0,0.6) !important;
+}
+
+/* BANKER betting area */
+body.neobrutalism [class*="w-56"][class*="h-16"]:has(span[class*="text-red-200"]) {
+  background: rgba(180, 20, 20, 0.4) !important;
+}
+body.neobrutalism [class*="w-56"][class*="h-16"] span[class*="text-red-200"] {
+  color: #FF7777 !important;
+  font-weight: 900 !important;
+}
+
+/* PLAYER betting area */
+body.neobrutalism [class*="w-56"][class*="h-16"]:has(span[class*="text-vintage-neon-blue"]) {
+  background: rgba(0, 60, 160, 0.5) !important;
+}
+body.neobrutalism [class*="w-56"][class*="h-16"] span[class*="text-vintage-neon-blue"] {
+  color: #55BBFF !important;
+  font-weight: 900 !important;
+}
+
+/* Multiplier subtext */
+body.neobrutalism [class*="w-56"][class*="h-16"] span[class*="text-\[10px\]"] {
+  opacity: 0.7 !important;
+}
+
+/* --- CHIPS --- */
+/* Force chip colors to stay circular — target by bg color class for high specificity */
+body.neobrutalism [class*="rounded-full"][class*="bg-vintage-silver"],
+body.neobrutalism [class*="rounded-full"][class*="bg-vintage-wine"][class*="border-red-900"],
+body.neobrutalism [class*="rounded-full"][class*="bg-blue-900"][class*="border-blue-700"],
+body.neobrutalism [class*="rounded-full"][class*="bg-emerald-900"][class*="border-emerald-700"],
+body.neobrutalism [class*="rounded-full"][class*="bg-vintage-charcoal"][class*="border-vintage-gold"],
+body.neobrutalism [class*="rounded-full"][class*="bg-vintage-purple"][class*="border-purple-600"] {
+  border-radius: 50% !important;
+  border-color: #000 !important;
+}
+/* Selected chip: gold ring */
+body.neobrutalism [class*="rounded-full"][class*="scale-110"],
+body.neobrutalism [class*="rounded-full"][class*="ring-vintage-gold"] {
+  border-radius: 50% !important;
+  outline: 3px solid #FFD400 !important;
+  outline-offset: 2px !important;
+  transform: none !important;
+}
+
+/* --- BOTTOM PANEL --- */
+
+/* Bottom panel container */
+body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-vintage-charcoal"][class*="border-t-2"][class*="border-vintage-gold/30"] {
+  background: #1E1E1E !important;
+  border-top: 4px solid #000 !important;
+}
+
+/* Credits "avail" box */
+body.neobrutalism [class*="bg-vintage-black/70"][class*="rounded-lg"][class*="border-vintage-gold/30"] {
+  background: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+body.neobrutalism [class*="bg-vintage-black/70"][class*="rounded-lg"][class*="border-vintage-gold/30"] span {
+  color: #FFD400 !important;
+}
+
+/* +Deposit button */
+body.neobrutalism [class*="bg-emerald-900/50"][class*="rounded-lg"][class*="border-emerald-600/40"] {
+  background: #00AA44 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  color: #FFF !important;
+  font-weight: 900 !important;
+}
+
+/* Min Cashout button (disabled-looking) */
+body.neobrutalism [class*="bg-vintage-charcoal/50"][class*="border-vintage-burnt-gold/30"][class*="rounded-lg"] {
+  background: #333 !important;
+  border: 3px solid #555 !important;
+  border-radius: 4px !important;
+  color: #888 !important;
+  font-weight: 900 !important;
+}
+
+/* CLEAR button */
+body.neobrutalism [class*="bg-vintage-black/50"][class*="border-vintage-burnt-gold/40"][class*="rounded-xl"] {
+  background: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  color: #AAA !important;
+  font-weight: 900 !important;
+}
+
+/* REBET button */
+body.neobrutalism [class*="bg-vintage-gold/10"][class*="border-vintage-gold/40"][class*="rounded-xl"] {
+  background: #FFD400 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  color: #000 !important;
+  font-weight: 900 !important;
+}
+
+/* DEAL button */
+body.neobrutalism [class*="bg-gradient-to-r"][class*="from-vintage-wine"][class*="to-red-900"][class*="rounded-xl"] {
+  background: #CC2222 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 5px 5px 0px #000 !important;
+  color: #FFF !important;
+  font-weight: 900 !important;
+}
+
+/* Limits text */
+body.neobrutalism [class*="via-vintage-deep-black"] [class*="text-vintage-burnt-gold/70"] {
+  color: #888 !important;
+}
+
+/* Rules modal container */
+body.neobrutalism [class*="bg-gradient-to-b"][class*="from-vintage-charcoal"][class*="rounded-2xl"][class*="border-vintage-gold/40"] {
+  background: #1E1E1E !important;
+  border: 4px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 6px 6px 0px #000 !important;
+}
+
+/* Rules modal payout boxes - PLAYER */
+body.neobrutalism [class*="bg-blue-900/30"][class*="rounded-lg"][class*="border-blue-700/30"] {
+  background: #0055DD !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+body.neobrutalism [class*="bg-blue-900/30"][class*="rounded-lg"][class*="border-blue-700/30"] p {
+  color: #FFF !important;
+  font-weight: 900 !important;
+}
+
+/* Rules modal payout boxes - BANKER */
+body.neobrutalism [class*="bg-vintage-wine/30"][class*="rounded-lg"][class*="border-red-700/30"] {
+  background: #CC2222 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+body.neobrutalism [class*="bg-vintage-wine/30"][class*="rounded-lg"][class*="border-red-700/30"] p {
+  color: #FFF !important;
+  font-weight: 900 !important;
+}
+
+/* Rules modal payout boxes - TIE (exclude hover: variants used in header buttons) */
+body.neobrutalism [class*="bg-vintage-gold/10"]:not([class*="hover:bg-vintage-gold"])[class*="rounded-lg"][class*="border-vintage-gold/30"] {
+  background: #FFD400 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+
+/* TIE text color - black on gold background */
+body.neobrutalism [class*="bg-vintage-gold/10"]:not([class*="hover:bg-vintage-gold"])[class*="rounded-lg"][class*="border-vintage-gold/30"] p {
+  color: #000 !important;
+  font-weight: 900 !important;
+}
+
+/* Rules modal OK button */
+body.neobrutalism [class*="bg-vintage-gold/20"][class*="border-vintage-gold/50"][class*="rounded-xl"] {
+  background: #FFD400 !important;
+  color: #000 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  font-weight: 900 !important;
+}
+
+/* ===== ROULETTE WHEEL ===== */
+
+/* Roulette outer gold ring — restore gold color, remove black shadow */
+body.neobrutalism [class*="w-72"][class*="h-72"] [class*="inset-0"][class*="rounded-full"] {
+  border-color: #FFD400 !important;
+  border-width: 4px !important;
+  box-shadow: none !important;
+}
+
+/* Roulette SVG wheel — remove forced black box-shadow */
+body.neobrutalism [class*="w-72"][class*="h-72"] svg {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Roulette wheel container — no border/shadow */
+body.neobrutalism [class*="w-72"][class*="h-72"] {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Roulette arrow pointer — CSS triangle uses w-0 h-0; drop-shadow-lg was matching shadow-lg rule */
+body.neobrutalism [class*="w-0"][class*="h-0"][class*="border-t-"] {
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* Back button → Red */
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="rounded-xl"][class*="border-vintage-gold/50"] .flex.gap-2 button:first-child {
+  background: #CC2222 !important;
+  color: #FFF !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 900 !important;
+}
+
+/* ===== SHOP ===== */
+
+/* Pack purchase card */
+body.neobrutalism [class*="bg-vintage-charcoal/50"][class*="rounded-xl"] {
+  background-color: #2C2C2C !important;
+  border: 4px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 6px 6px 0px #000 !important;
+}
+/* Welcome banner (div, not button) */
+body.neobrutalism div[class*="from-green-5"][class*="to-emerald-5"] {
+  background: #1A3A20 !important;
+  background-image: none !important;
+  border: 4px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 6px 6px 0px #000 !important;
+}
+/* Claim/free buttons (button, green gradient) */
+body.neobrutalism button[class*="from-green-5"][class*="to-emerald-5"],
+body.neobrutalism button[class*="from-green-4"][class*="to-emerald-4"] {
+  background: #22AA44 !important;
+  background-image: none !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  color: #FFF !important;
+}
+/* Buy button: purple→pink */
+body.neobrutalism [class*="from-purple-6"][class*="to-pink-6"] {
+  background: #7B3DF0 !important;
+  background-image: none !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  color: #FFF !important;
+}
+/* Luck boost buy + pack open: yellow→orange */
+body.neobrutalism [class*="from-yellow-5"][class*="to-orange-5"] {
+  background: #FFD400 !important;
+  background-image: none !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  color: #000 !important;
+}
+body.neobrutalism [class*="from-yellow-5"][class*="to-orange-5"] * { color: #000 !important; }
+/* Pack OPEN button: vintage-gold→burnt-gold */
+body.neobrutalism [class*="from-vintage-gold"][class*="to-vintage-burnt-gold"] {
+  background: #FFD400 !important;
+  background-image: none !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  color: #000 !important;
+}
+/* Open Packs action button */
+body.neobrutalism [class*="bg-vintage-gold/20"][class*="border-vintage-gold/50"][class*="rounded-xl"] {
+  background-color: #FFD400 !important;
+  border: 4px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  color: #000 !important;
+}
+body.neobrutalism [class*="bg-vintage-gold/20"][class*="border-vintage-gold/50"][class*="rounded-xl"] * {
+  color: #000 !important;
+  stroke: #000 !important;
+}
+/* Burn Cards action button */
+body.neobrutalism [class*="bg-red-500/20"][class*="border-red-500/50"][class*="rounded-xl"] {
+  background-color: #CC2222 !important;
+  border: 4px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  color: #FFF !important;
+}
+body.neobrutalism [class*="bg-red-500/20"][class*="border-red-500/50"][class*="rounded-xl"] * {
+  color: #FFF !important;
+  stroke: #FFF !important;
+}
+/* Help button → styled */
+body.neobrutalism [class*="bg-vintage-charcoal/90"][class*="border-t"] button[class*="text-vintage-ice"] {
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+  color: #FFF !important;
+  background-color: #2C2C2C !important;
+}
+
+/* Shop back button → red */
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] button[class*="bg-black/50"] {
+  background-color: #CC2222 !important;
+  color: #FFF !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+/* Pack cover image shadow - outline nos 4 lados + offset */
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] img[class*="w-16"][class*="object-contain"] {
+  filter: drop-shadow(4px 4px 0px #000) !important;
+}
+
+/* Quantity buttons: - = red, + and MAX = gold, borda nos 4 lados */
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="gap-1"] button:nth-of-type(1) {
+  background-color: #CC2222 !important;
+  color: #FFF !important;
+  box-shadow: 0 0 0 3px #000, 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+}
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="gap-1"] button:nth-of-type(2),
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="gap-1"] button:nth-of-type(3) {
+  background-color: #FFD400 !important;
+  color: #000 !important;
+  box-shadow: 0 0 0 3px #000, 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+/* Shop notification inner card (success = from-vintage-gold/20) → dark neo */
+body.neobrutalism [class*="fixed inset-0"] > [class*="from-vintage-gold"][class*="border-2"][class*="border-vintage-gold"],
+body.neobrutalism [class*="fixed inset-0"] > [class*="from-vintage-gold"] {
+  background: #2C2C2C !important;
+  background-image: none !important;
+  border: 5px solid #FFD400 !important;
+  border-radius: 4px !important;
+  box-shadow: 8px 8px 0px #000 !important;
+}
+
+/* BASIC badge */
+body.neobrutalism [class*="bg-vintage-gold/20"][class*="text-vintage-gold"][class*="rounded-full"] {
+  box-shadow: 3px 3px 0px #000 !important;
+  border: 2px solid #000 !important;
+  border-radius: 4px !important;
+  color: #000 !important;
+}
+/* BOOSTED badge */
+body.neobrutalism [class*="bg-yellow-500"][class*="text-black"][class*="rounded-full"] {
+  box-shadow: 3px 3px 0px #000 !important;
+  border: 2px solid #000 !important;
+  border-radius: 4px !important;
+}
+/* Burn value cells (normal + boosted) */
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="bg-vintage-charcoal/30"][class*="rounded"][class*="p-2"] {
+  box-shadow: 3px 3px 0px #000 !important;
+  border: 2px solid #000 !important;
+  border-radius: 4px !important;
+}
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="bg-yellow-500/10"][class*="rounded"][class*="p-2"] {
+  box-shadow: 3px 3px 0px #000 !important;
+  border: 2px solid #000 !important;
+  border-radius: 4px !important;
+  background-color: #1E1E1E !important;
+}
+/* Drop rates + luck boost sections with yellow border → same weight as gold border */
+body.neobrutalism [class*="bg-yellow-500/10"][class*="border-yellow-500"] {
+  border: 4px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  background-color: #1E1E1E !important;
+  border-radius: 4px !important;
+}
+
+/* Bottom bar */
+body.neobrutalism [class*="bg-vintage-charcoal/90"][class*="border-t"] {
+  background-color: #2C2C2C !important;
+  border-top: 4px solid #000 !important;
+  box-shadow: none !important;
+}
+
+/* ===== DEX PAGE ===== */
+
+/* Bonding progress bar track → thin border so content isn't crushed */
+body.neobrutalism [class*="h-2"][class*="bg-vintage-deep-black"][class*="rounded-full"] {
+  border: 1px solid #444 !important;
+  border-radius: 99px !important;
+  height: 8px !important;
+}
+/* Bonding progress bar fill → gold */
+body.neobrutalism [class*="h-2"][class*="bg-vintage-deep-black"] > div {
+  background-color: #FFD400 !important;
+  background-image: none !important;
+  height: 100% !important;
+}
+
+/* Header bar → flat dark */
+body.neobrutalism [class*="from-vintage-gold/20"][class*="to-vintage-orange/20"] {
+  background: #2C2C2C !important;
+  background-image: none !important;
+  border-bottom: 4px solid #000 !important;
+}
+/* Back link → red button */
+body.neobrutalism [class*="from-vintage-gold/20"][class*="to-vintage-orange/20"] a {
+  display: inline-block !important;
+  background-color: #CC2222 !important;
+  color: #FFF !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  padding: 4px 10px !important;
+  font-weight: 900 !important;
+  text-decoration: none !important;
+}
+/* Swap card outer */
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="rounded-2xl"][class*="overflow-hidden"] {
+  background-color: #2C2C2C !important;
+  border: 4px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  overflow: hidden !important;
+}
+/* BUY tab active */
+body.neobrutalism button[class*="bg-green-500/20"][class*="border-b-2"][class*="border-green-4"] {
+  background-color: #1A3A1A !important;
+  border-bottom: 4px solid #22AA44 !important;
+  color: #22AA44 !important;
+}
+/* SELL tab active */
+body.neobrutalism button[class*="bg-red-500/20"][class*="border-b-2"][class*="border-red-4"] {
+  background-color: #3A1A1A !important;
+  border-bottom: 4px solid #CC2222 !important;
+  color: #CC2222 !important;
+}
+/* Buy VBMS Packs button (has inline gradient + shadow-gold) */
+body.neobrutalism button[class*="border-vintage-gold"][class*="shadow-gold"] {
+  background: #FFD400 !important;
+  background-image: none !important;
+  color: #000 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+}
+/* - button → red */
+body.neobrutalism [class*="rounded-xl"][class*="p-4"] button[class*="w-12"]:first-of-type {
+  background-color: #CC2222 !important;
+  color: #FFF !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+/* + button → gold */
+body.neobrutalism [class*="rounded-xl"][class*="p-4"] button[class*="w-12"]:last-of-type {
+  background-color: #FFD400 !important;
+  color: #000 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+/* Arrow div → gold square */
+body.neobrutalism [class*="bg-vintage-gold/20"][class*="rounded-full"][class*="p-3"][class*="border-vintage-gold"] {
+  background-color: #FFD400 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+body.neobrutalism [class*="bg-vintage-gold/20"][class*="rounded-full"][class*="p-3"][class*="border-vintage-gold"] svg {
+  color: #000 !important;
+  stroke: #000 !important;
+}
+/* Buy execute button */
+body.neobrutalism button[class*="from-green-5"][class*="to-green-6"] {
+  background: #22AA44 !important;
+  background-image: none !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  color: #FFF !important;
+}
+/* Sell execute button */
+body.neobrutalism button[class*="from-red-5"][class*="to-red-6"] {
+  background: #CC2222 !important;
+  background-image: none !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  color: #FFF !important;
+}
+/* QuickButton active (gold) */
+body.neobrutalism button[class*="bg-vintage-gold/30"][class*="border-vintage-gold/60"] {
+  background-color: #FFD400 !important;
+  color: #000 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0px #000 !important;
+}
+/* QuickButton inactive */
+body.neobrutalism button[class*="bg-vintage-gold/10"][class*="border-vintage-gold/20"] {
+  background-color: #2C2C2C !important;
+  color: #FFD400 !important;
+  border: 2px solid #555 !important;
+  border-radius: 4px !important;
+}
+/* Fee breakdown */
+body.neobrutalism [class*="bg-yellow-500/10"][class*="rounded-lg"][class*="border-yellow-500/30"] {
+  background-color: #1E1E1E !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+}
+
+/* ===== BURN PAGE ===== */
+
+/* Top HUD */
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="border-b"][class*="border-red-500"] {
+  background-color: #2C2C2C !important;
+  border-bottom: 4px solid #000 !important;
+  border-top: none !important; border-left: none !important; border-right: none !important;
+  box-shadow: none !important;
+}
+/* Filter bar */
+body.neobrutalism [class*="bg-vintage-charcoal/60"][class*="border-b"] {
+  background-color: #222 !important;
+  border-bottom: 4px solid #000 !important;
+  border-top: none !important; border-left: none !important; border-right: none !important;
+  box-shadow: none !important;
+}
+/* Preserve horizontal scroll — prevent flex children from shrinking */
+body.neobrutalism [class*="overflow-x-auto"] {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+body.neobrutalism [class*="overflow-x-auto"] > * {
+  flex-shrink: 0 !important;
+}
+/* Filter/quick-select buttons (rounded-full) */
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="border-red-5"][class*="rounded-full"] {
+  border: 3px solid #CC2222 !important; border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0px #000 !important;
+}
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="border-gray-5"][class*="rounded-full"] {
+  border: 3px solid #555 !important; border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0px #000 !important;
+}
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="border-blue-5"][class*="rounded-full"] {
+  border: 3px solid #0066CC !important; border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0px #000 !important;
+}
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="border-purple-5"][class*="rounded-full"] {
+  border: 3px solid #7700CC !important; border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0px #000 !important;
+}
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="border-yellow-5"][class*="rounded-full"] {
+  border: 3px solid #FFD400 !important; border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0px #000 !important;
+}
+/* Card grid items */
+body.neobrutalism [class*="bg-vintage-charcoal/30"][class*="rounded-xl"] {
+  background-color: #1E1E1E !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 3px #000, 4px 4px 0px #000 !important;
+}
+/* Card image area */
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="w-20"][class*="h-28"] {
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+}
+/* Selected card */
+body.neobrutalism [class*="ring-2"][class*="ring-red-5"][class*="bg-red-5"] {
+  background-color: #3A1010 !important;
+  border: 3px solid #CC2222 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #CC2222, 4px 4px 0px #000 !important;
+}
+/* Inactive filter buttons → grey border + shadow */
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] button[class*="border-vintage-gold/20"][class*="rounded-full"] {
+  border: 3px solid #555 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0px #000 !important;
+  color: #999 !important;
+}
+/* Active filter buttons — restore colored borders (override global black border rule) */
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] button[class*="border-red-5"][class*="rounded-full"] {
+  border: 3px solid #CC2222 !important; border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0px #000 !important; color: #FF4444 !important;
+}
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] button[class*="border-gray-5"][class*="rounded-full"] {
+  border: 3px solid #888 !important; border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0px #000 !important; color: #AAA !important;
+}
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] button[class*="border-blue-5"][class*="rounded-full"] {
+  border: 3px solid #0066CC !important; border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0px #000 !important; color: #4499FF !important;
+}
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] button[class*="border-purple-5"][class*="rounded-full"] {
+  border: 3px solid #8800CC !important; border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0px #000 !important; color: #BB55FF !important;
+}
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] button[class*="border-yellow-5"][class*="rounded-full"] {
+  border: 3px solid #FFD400 !important; border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 3px 3px 0px #000 !important; color: #FFD400 !important;
+}
+/* BURN button (active) */
+body.neobrutalism [class*="from-red-6"][class*="to-orange-6"] {
+  background: #CC2222 !important;
+  background-image: none !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 0 2px #000, 4px 4px 0px #000 !important;
+  color: #FFF !important;
+}
+/* BURN button (disabled) */
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] button[class*="cursor-not-allowed"][class*="rounded-xl"] {
+  border: 3px solid #444 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+/* Bottom bar */
+body.neobrutalism [class*="bg-vintage-charcoal/95"][class*="border-t"] {
+  background-color: #2C2C2C !important;
+  border-top: 4px solid #000 !important;
+}
+
+/* ===== QUESTS / MISSIONS / WANTED CAST ===== */
+
+/* Header bar */
+body.neobrutalism [class*="bg-vintage-charcoal/90"][class*="border-b-2"][class*="border-vintage-gold"] {
+  background-color: #1A1A1A !important;
+  border-bottom: 4px solid #000 !important;
+  border-left: none !important; border-right: none !important; border-top: none !important;
+  box-shadow: none !important;
+}
+
+/* Active tab underline */
+body.neobrutalism [class*="border-b-2"][class*="border-vintage-gold"][class*="bg-vintage-gold/10"] {
+  background-color: #1E1800 !important;
+  border-bottom: 4px solid #FFD400 !important;
+  color: #FFD400 !important;
+}
+
+/* Inactive tab text */
+body.neobrutalism [class*="text-vintage-ice/60"][class*="hover:text-vintage-ice"] {
+  color: #888 !important;
+}
+
+/* Mission/social card container */
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="border-2"][class*="border-vintage-gold/40"][class*="rounded-xl"] {
+  background-color: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+}
+
+/* Mission row active (gold left bar) - reset o amarelo cheio da regra global */
+body.neobrutalism [class*="divide-y"] [class*="bg-vintage-gold/5"],
+body.neobrutalism [class*="divide-y"] [class*="transition-all"][class*="bg-vintage-gold/5"] {
+  background-color: #181400 !important;
+}
+
+/* Social quest row completed */
+body.neobrutalism [class*="divide-x"] [class*="bg-vintage-gold/5"],
+body.neobrutalism [class*="divide-y"] > div[class*="bg-vintage-gold/5"] {
+  background-color: #181400 !important;
+}
+
+/* Cast interaction buttons grid - reset gold */
+body.neobrutalism [class*="grid-cols-3"] [class*="bg-vintage-gold"] {
+  background-color: transparent !important;
+}
+
+/* Cast card */
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="border-2"][class*="border-vintage-gold/40"][class*="rounded-xl"][class*="overflow-hidden"] {
+  background-color: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+}
+
+/* Cast interaction buttons row */
+body.neobrutalism [class*="grid"][class*="grid-cols-3"][class*="divide-x"] button {
+  background-color: #222 !important;
+  border-radius: 0 !important;
+  transition: background-color 0.15s !important;
+}
+body.neobrutalism [class*="grid"][class*="grid-cols-3"][class*="divide-x"] button:hover {
+  background-color: #333 !important;
+}
+body.neobrutalism [class*="grid"][class*="grid-cols-3"][class*="divide-x"] button[class*="bg-green-900"] {
+  background-color: #0D2A0D !important;
+}
+
+/* Claim button (gold) */
+body.neobrutalism [class*="bg-vintage-gold"][class*="border-2"][class*="border-black"][class*="font-bold"] {
+  background-color: #FFD400 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  color: #000 !important;
+}
+
+/* Go/Verify button */
+body.neobrutalism [class*="bg-vintage-charcoal"][class*="border-vintage-gold/50"][class*="text-vintage-gold"][class*="rounded"] {
+  background-color: #2C2C2C !important;
+  border: 2px solid #FFD400 !important;
+  border-radius: 4px !important;
+  color: #FFD400 !important;
+}
+
+/* View cast link button */
+body.neobrutalism [class*="bg-blue-600/20"][class*="border-blue-5"] {
+  background-color: #001833 !important;
+  border: 2px solid #0055AA !important;
+  border-radius: 4px !important;
+  color: #4499FF !important;
+}
+
+/* Arbitrum gas warning */
+body.neobrutalism [class*="bg-orange-900/30"][class*="border-orange-5"] {
+  background-color: #1A0D00 !important;
+  border: 2px solid #994400 !important;
+  border-radius: 4px !important;
+}
+
+/* BONUS QUESTS banner */
+body.neobrutalism [class*="from-vintage-gold/30"][class*="to-vintage-charcoal/90"][class*="border-2"][class*="border-vintage-gold/50"] {
+  background: #1A1200 !important;
+  background-image: none !important;
+  border: 3px solid #FFD400 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+}
+
+/* ===== LEADERBOARD PAGE ===== */
+
+/* Header: flat dark + border */
+body.neobrutalism [class*="absolute top-0"][class*="bg-gradient-to-b"][class*="from-black"][class*="backdrop-blur-sm"] {
+  background: #1A1A1A !important;
+  background-image: none !important;
+  border-bottom: 4px solid #000 !important;
+  box-shadow: none !important;
+}
+
+/* Back button → red neo */
+body.neobrutalism [class*="absolute top-0"] a[class*="bg-black/50"][class*="border-vintage-gold"] {
+  background-color: #CC2222 !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  color: #FFF !important;
+}
+
+/* Title */
+body.neobrutalism [class*="absolute top-0"] h1[class*="text-vintage-gold"] {
+  color: #FFD400 !important;
+  letter-spacing: 0.1em !important;
+}
+
+/* Defense deck button */
+body.neobrutalism [class*="absolute top-0"] button[class*="bg-black/50"][class*="border-vintage-gold"] {
+  background-color: #2C2C2C !important;
+  border: 2px solid #FFD400 !important;
+  border-radius: 4px !important;
+  color: #FFD400 !important;
+}
+body.neobrutalism [class*="absolute top-0"] button[class*="bg-amber-5"] {
+  background-color: #3A2200 !important;
+  border: 2px solid #FF8800 !important;
+  border-radius: 4px !important;
+  color: #FFAA44 !important;
+}
+
+/* Weekly Claim button */
+body.neobrutalism [class*="absolute top-0"] button[class*="bg-green-5"] {
+  background-color: #003A00 !important;
+  border: 2px solid #00AA44 !important;
+  border-radius: 4px !important;
+  box-shadow: 2px 2px 0px #000 !important;
+  color: #00FF88 !important;
+}
+
+/* Podium: each position card */
+body.neobrutalism [class*="flex items-end justify-center"] > div {
+  background-color: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  padding: 12px 8px !important;
+}
+
+/* Podium rank badge circles */
+body.neobrutalism [class*="flex items-end justify-center"] [class*="rounded-full"][class*="border-2"][class*="flex items-center justify-center"][class*="font-bold"] {
+  border-radius: 4px !important;
+}
+
+/* Podium avatars */
+body.neobrutalism [class*="flex items-end justify-center"] [class*="rounded-full"][class*="overflow-hidden"][class*="border-2"] {
+  border-radius: 4px !important;
+  border-width: 3px !important;
+}
+
+/* Rankings list container */
+body.neobrutalism [class*="bg-vintage-charcoal/50"][class*="backdrop-blur-sm"][class*="rounded-xl"][class*="border-vintage-gold/20"][class*="overflow-hidden"] {
+  background-color: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 5px 5px 0px #000 !important;
+}
+
+/* Rankings header */
+body.neobrutalism [class*="bg-vintage-charcoal/50"][class*="backdrop-blur-sm"] .p-3.border-b h3 {
+  color: #FFD400 !important;
+}
+
+/* Rankings row */
+body.neobrutalism [class*="divide-y"] > div[class*="flex items-center gap-3 p-3"] {
+  background-color: transparent !important;
+}
+
+/* "You" row - subtle highlight */
+body.neobrutalism [class*="divide-y"] > div[class*="bg-vintage-gold/10"] {
+  background-color: #1E1800 !important;
+}
+
+/* Row hover */
+body.neobrutalism [class*="divide-y"] > div[class*="hover:bg-vintage-gold/5"]:hover {
+  background-color: #181200 !important;
+}
+
+/* Rank number */
+body.neobrutalism [class*="divide-y"] [class*="text-gray-500"] {
+  color: #666 !important;
+}
+
+/* Username link */
+body.neobrutalism [class*="divide-y"] span[class*="text-vintage-neon-blue"] {
+  color: #88CCFF !important;
+}
+
+/* Aura score */
+body.neobrutalism [class*="divide-y"] p[class*="text-purple-400"] {
+  color: #BB88FF !important;
+}
+
+/* Avatar in rankings */
+body.neobrutalism [class*="divide-y"] [class*="w-10 h-10 rounded-full"] {
+  border-radius: 4px !important;
+  border: 2px solid #444 !important;
+}
+
+/* Attack button in rankings */
+body.neobrutalism [class*="divide-y"] button[class*="bg-red-5"][class*="border-red-5"] {
+  background-color: #330000 !important;
+  border: 2px solid #CC2222 !important;
+  border-radius: 4px !important;
+  color: #FF4444 !important;
+}
+body.neobrutalism [class*="divide-y"] button[class*="cursor-not-allowed"] {
+  background-color: #1A1A1A !important;
+  border: 2px solid #333 !important;
+  border-radius: 4px !important;
+  color: #444 !important;
+}
+
+/* Pagination buttons */
+body.neobrutalism [class*="border-t border-vintage-gold/20"] button[class*="bg-transparent"] {
+  background-color: #2C2C2C !important;
+  border: 2px solid #FFD400 !important;
+  border-radius: 4px !important;
+  color: #FFD400 !important;
+  box-shadow: 2px 2px 0px #000 !important;
+}
+body.neobrutalism [class*="border-t border-vintage-gold/20"] button:disabled {
+  border-color: #333 !important;
+  color: #444 !important;
+  box-shadow: none !important;
+}
+
+/* Bottom stats bar */
+body.neobrutalism [class*="absolute bottom-0"][class*="bg-gradient-to-t"][class*="from-black"] {
+  background: #1A1A1A !important;
+  background-image: none !important;
+  border-top: 4px solid #000 !important;
+  padding-top: 0 !important;
+}
+body.neobrutalism [class*="absolute bottom-0"] [class*="bg-black/60"][class*="backdrop-blur-sm"][class*="rounded-lg"] {
+  background-color: #111 !important;
+  border: 2px solid #333 !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+/* Stats labels */
+body.neobrutalism [class*="absolute bottom-0"] span[class*="text-vintage-burnt-gold"] {
+  color: #888 !important;
+  text-transform: uppercase !important;
+  font-size: 9px !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* ===== FINAL OVERRIDES (highest priority — end of file) ===== */
+
+/* FIX: hover:bg-vintage-gold/10 buttons → must stay DARK, not gold */
+/* Profile button and DEX button in home header */
+body.neobrutalism .tour-profile-dropdown > button[class*="bg-vintage-black"] {
+  background-color: #2C2C2C !important;
+}
+body.neobrutalism .tour-profile-dropdown > button[class*="bg-vintage-black"] span {
+  color: #FFD400 !important;
+}
+body.neobrutalism .tour-dex-btn[class*="bg-vintage-black"] {
+  background-color: #2C2C2C !important;
+}
+body.neobrutalism .tour-dex-btn[class*="bg-vintage-black"] span {
+  color: #FFD400 !important;
+}
+
+/* FIX: gradient overlays using via-transparent must stay see-through (boss image, etc.) */
+body.neobrutalism [class*="via-transparent"] {
+  background-color: transparent !important;
+  background-image: linear-gradient(to top, rgba(0,0,0,0.95), transparent, rgba(0,0,0,0.4)) !important;
 }
