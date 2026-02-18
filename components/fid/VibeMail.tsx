@@ -834,7 +834,7 @@ export function VibeMailInboxWithClaim({
 
       <div className={asPage
         ? "bg-vintage-charcoal h-screen w-full flex flex-col"
-        : "bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-4 w-full max-w-md max-h-[calc(100vh-120px)] overflow-hidden flex flex-col"
+        : "bg-vintage-charcoal border-2 border-black shadow-[4px_4px_0px_#000] p-4 w-full max-w-md max-h-[calc(100vh-120px)] overflow-hidden flex flex-col"
       }>
         {/* Success Feedback Toast */}
         {sendSuccess && (
@@ -885,10 +885,10 @@ export function VibeMailInboxWithClaim({
             <img
               src={secretary.image}
               alt={secretary.name}
-              className="w-12 h-12 rounded-full border-2 border-vintage-gold"
+              className="w-12 h-12 rounded-full border-2 border-black shadow-[2px_2px_0px_#000]"
             />
               <div>
-              <h3 className="text-vintage-gold font-bold text-lg">{t.vibeMailTitle}</h3>
+              <h3 className="text-vintage-gold font-bold text-lg uppercase tracking-wide">{t.vibeMailTitle}</h3>
               <p className="text-vintage-ice/60 text-xs">
                 {messages?.length || 0} {t.messagesCount}
               </p>
@@ -916,7 +916,7 @@ export function VibeMailInboxWithClaim({
                   setShowComposer(true);
                   setReplyToMessageId(null);
                 }}
-                className="w-8 h-8 bg-vintage-gold/20 border border-vintage-gold/50 rounded-full text-vintage-gold hover:bg-vintage-gold/30 transition-all flex items-center justify-center"
+                className="w-8 h-8 bg-vintage-gold text-black border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
                 title="New VibeMail"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -931,7 +931,7 @@ export function VibeMailInboxWithClaim({
                 AudioManager.buttonClick();
                 setIsMusicEnabled(!isMusicEnabled);
               }}
-              className="w-8 h-8 bg-vintage-black/50 border border-vintage-gold/30 rounded-full text-vintage-gold hover:bg-vintage-gold/20 transition-all flex items-center justify-center"
+              className="w-8 h-8 bg-vintage-black border-2 border-black shadow-[2px_2px_0px_#000] text-vintage-gold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
               title={isMusicEnabled ? "Mute" : "Unmute"}
             >
               {isMusicEnabled ? (
@@ -949,7 +949,7 @@ export function VibeMailInboxWithClaim({
                 stopAudio();
                 onClose();
               }}
-              className="w-8 h-8 bg-vintage-black/50 border border-vintage-gold/30 rounded-full text-vintage-gold hover:bg-vintage-gold/20 transition-all"
+              className="w-8 h-8 bg-vintage-black border-2 border-black shadow-[2px_2px_0px_#000] text-vintage-gold font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
             >
               X
             </button>
@@ -958,23 +958,23 @@ export function VibeMailInboxWithClaim({
 
         {/* Tabs - Inbox/Sent */}
         {myFid && !selectedMessage && !showComposer && (
-          <div className="flex mb-3 border-b border-vintage-gold/30">
+          <div className="flex gap-2 mb-3">
             <button
               onClick={() => setActiveTab('inbox')}
-              className={`flex-1 py-2 text-sm font-bold transition-all ${
+              className={`flex-1 py-2 text-sm font-bold border-2 border-black transition-all ${
                 activeTab === 'inbox'
-                  ? 'text-vintage-gold border-b-2 border-vintage-gold'
-                  : 'text-vintage-ice/50 hover:text-vintage-ice/70'
+                  ? 'bg-vintage-gold text-black shadow-[2px_2px_0px_#000]'
+                  : 'bg-vintage-black/50 text-vintage-ice/70 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
               }`}
             >
               📥 {t.inboxTab} ({messages?.length || 0})
             </button>
             <button
               onClick={() => setActiveTab('sent')}
-              className={`flex-1 py-2 text-sm font-bold transition-all ${
+              className={`flex-1 py-2 text-sm font-bold border-2 border-black transition-all ${
                 activeTab === 'sent'
-                  ? 'text-vintage-gold border-b-2 border-vintage-gold'
-                  : 'text-vintage-ice/50 hover:text-vintage-ice/70'
+                  ? 'bg-vintage-gold text-black shadow-[2px_2px_0px_#000]'
+                  : 'bg-vintage-black/50 text-vintage-ice/70 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
               }`}
             >
               📤 {t.sentTab} ({sentMessages?.length || 0})
@@ -1697,7 +1697,7 @@ export function VibeMailInboxWithClaim({
                 stopAudio();
                 setSelectedMessage(null);
               }}
-              className="mt-3 w-full py-2 bg-vintage-black border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10"
+              className="mt-3 w-full py-2 bg-vintage-black text-vintage-gold font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
             >
               {t.back}
             </button>
@@ -1713,10 +1713,10 @@ export function VibeMailInboxWithClaim({
                     setDeleteMode(!deleteMode);
                     setSelectedForDelete(new Set());
                   }}
-                  className={`text-xs px-2 py-1 rounded-lg border transition-all ${
+                  className={`text-xs px-2 py-1 border-2 border-black font-bold shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all ${
                     deleteMode
-                      ? 'bg-red-500/20 border-red-500/50 text-red-400'
-                      : 'bg-vintage-black/30 border-vintage-gold/30 text-vintage-ice/70 hover:border-vintage-gold/50'
+                      ? 'bg-red-500 text-white'
+                      : 'bg-vintage-black text-vintage-gold'
                   }`}
                 >
                   {deleteMode ? '✕ Cancel' : `🗑️ ${t.vibemailDeleteMode || 'Select'}`}
@@ -1798,10 +1798,10 @@ export function VibeMailInboxWithClaim({
                 <button
                   onClick={() => !deleteMode && handleOpenMessage(msg)}
                   disabled={deleteMode}
-                  className={`flex-1 text-left p-3 rounded-lg border transition-all ${
+                  className={`flex-1 text-left p-3 border-2 border-black shadow-[2px_2px_0px_#000] transition-all ${
                     msg.isRead
-                      ? 'bg-vintage-black/30 border-vintage-gold/20 hover:border-vintage-gold/40'
-                      : 'bg-vintage-gold/10 border-vintage-gold/50 hover:bg-vintage-gold/20'
+                      ? 'bg-vintage-black/40 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
+                      : 'bg-vintage-gold/15 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
                   } ${deleteMode ? 'opacity-80' : ''}`}
                 >
                   <div className="flex items-center gap-3">
@@ -1853,7 +1853,7 @@ export function VibeMailInboxWithClaim({
                 onClaim();
               }}
               disabled={isClaimingRewards || isClaimTxPending}
-              className="w-full py-4 bg-gradient-to-r from-vintage-gold to-yellow-500 text-vintage-black font-bold text-lg rounded-xl hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg shadow-vintage-gold/30"
+              className="w-full py-4 bg-vintage-gold text-black font-bold text-lg border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 flex items-center justify-center gap-3"
             >
               <span className="text-2xl">💰</span>
               <span>
