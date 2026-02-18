@@ -20,7 +20,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistema de Economia",
-    economyIntro: "$VBMS é uma coleção de Liquid Trading Cards (LTC) no Vibe Market, inspirada nas cartas de baralho Most Wanted do Iraque. O jogo tem duas moedas: TESTVBMS (moeda in-game ganha jogando) e $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Atualmente em presale - compre/venda $VBMS pelo DEX no app.",
+    economyIntro: "$VBMS é uma coleção de Liquid Trading Cards (LTC) no Vibe Market, inspirada nas cartas de baralho Most Wanted do Iraque. O jogo tem duas moedas: Coins (moeda in-game ganha jogando) e $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Atualmente em presale - compre/venda $VBMS pelo DEX no app.",
 
     howToEarnCoins: "Como Ganhar Moedas",
     earnPve: "PvE (Jogador vs IA)",
@@ -202,7 +202,7 @@ export const docsTranslations = {
     raidStep4: "Contribua para o esforço da comunidade",
     raidStep5: "Ganhe recompensas baseadas na sua contribuição de dano",
     raidRewards: "Recompensas",
-    raidReward1: "Moedas TESTVBMS baseadas no dano causado",
+    raidReward1: "Moedas Coins baseadas no dano causado",
     raidReward2: "Recompensas bônus para os maiores contribuidores",
     raidReward3: "Conquistas especiais por derrotar chefes",
     raidTips: "Dicas",
@@ -251,7 +251,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Economy System",
-    economyIntro: "$VBMS is a Liquid Trading Cards (LTC) collection on Vibe Market, inspired by the Most Wanted Iraqi playing cards. The game has two currencies: TESTVBMS (in-game currency earned by playing) and $VBMS (blockchain token). 100,000 $VBMS = 1 pack. Currently in presale - buy/sell $VBMS through the in-app DEX.",
+    economyIntro: "$VBMS is a Liquid Trading Cards (LTC) collection on Vibe Market, inspired by the Most Wanted Iraqi playing cards. The game has two currencies: Coins (in-game currency earned by playing) and $VBMS (blockchain token). 100,000 $VBMS = 1 pack. Currently in presale - buy/sell $VBMS through the in-app DEX.",
 
     howToEarnCoins: "How to Earn Coins",
     earnPve: "PvE (Player vs AI)",
@@ -433,7 +433,7 @@ export const docsTranslations = {
     raidStep4: "Contribute to the community effort",
     raidStep5: "Earn rewards based on damage contribution",
     raidRewards: "Rewards",
-    raidReward1: "TESTVBMS coins based on damage dealt",
+    raidReward1: "Coins coins based on damage dealt",
     raidReward2: "Bonus rewards for top contributors",
     raidReward3: "Special achievements for boss defeats",
     raidTips: "Tips",
@@ -482,7 +482,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistema de Economía",
-    economyIntro: "$VBMS es una colección de Liquid Trading Cards (LTC) en Vibe Market, inspirada en las cartas Most Wanted de Irak. El juego tiene dos monedas: TESTVBMS (moneda in-game) y $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Actualmente en preventa - compra/vende $VBMS en el DEX de la app.",
+    economyIntro: "$VBMS es una colección de Liquid Trading Cards (LTC) en Vibe Market, inspirada en las cartas Most Wanted de Irak. El juego tiene dos monedas: Coins (moneda in-game) y $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Actualmente en preventa - compra/vende $VBMS en el DEX de la app.",
 
     howToEarnCoins: "Cómo Ganar Monedas",
     earnPve: "PvE (Jugador vs IA)",
@@ -664,7 +664,7 @@ export const docsTranslations = {
     raidStep4: "Contribuye al esfuerzo de la comunidad",
     raidStep5: "Gana recompensas basadas en tu contribución de daño",
     raidRewards: "Recompensas",
-    raidReward1: "Monedas TESTVBMS basadas en el daño causado",
+    raidReward1: "Monedas Coins basadas en el daño causado",
     raidReward2: "Recompensas bonus para los mayores contribuidores",
     raidReward3: "Logros especiales por derrotar jefes",
     raidTips: "Consejos",
@@ -713,7 +713,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated for brevity - full translation recommended)
     economyTitle: "अर्थव्यवस्था प्रणाली",
-    economyIntro: "$VBMS एक Liquid Trading Cards (LTC) संग्रह है Vibe Market पर, इराक के Most Wanted कार्ड से प्रेरित। गेम में दो मुद्राएं हैं: TESTVBMS (इन-गेम) और $VBMS (ब्लॉकचेन टोकन)। 100,000 $VBMS = 1 पैक। वर्तमान में प्रीसेल में - ऐप के DEX पर $VBMS खरीदें/बेचें।",
+    economyIntro: "$VBMS एक Liquid Trading Cards (LTC) संग्रह है Vibe Market पर, इराक के Most Wanted कार्ड से प्रेरित। गेम में दो मुद्राएं हैं: Coins (इन-गेम) और $VBMS (ब्लॉकचेन टोकन)। 100,000 $VBMS = 1 पैक। वर्तमान में प्रीसेल में - ऐप के DEX पर $VBMS खरीदें/बेचें।",
 
     howToEarnCoins: "सिक्के कैसे कमाएं",
     earnPve: "PvE (खिलाड़ी बनाम AI)",
@@ -872,7 +872,7 @@ export const docsTranslations = {
     raidStep4: "समुदाय के प्रयास में योगदान करें",
     raidStep5: "नुकसान के योगदान के आधार पर पुरस्कार अर्जित करें",
     raidRewards: "पुरस्कार",
-    raidReward1: "पहुंचाए गए नुकसान के आधार पर TESTVBMS सिक्के",
+    raidReward1: "पहुंचाए गए नुकसान के आधार पर Coins सिक्के",
     raidReward2: "शीर्ष योगदानकर्ताओं के लिए बोनस पुरस्कार",
     raidReward3: "बॉस हराने के लिए विशेष उपलब्धियां",
     raidTips: "टिप्स",
@@ -921,7 +921,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated - full translation recommended)
     economyTitle: "Экономическая система",
-    economyIntro: "$VBMS - коллекция Liquid Trading Cards (LTC) на Vibe Market, вдохновлённая картами Most Wanted Ирака. В игре две валюты: TESTVBMS (внутриигровая) и $VBMS (блокчейн-токен). 100,000 $VBMS = 1 пак. Сейчас в пресейле - покупайте/продавайте $VBMS через DEX в приложении.",
+    economyIntro: "$VBMS - коллекция Liquid Trading Cards (LTC) на Vibe Market, вдохновлённая картами Most Wanted Ирака. В игре две валюты: Coins (внутриигровая) и $VBMS (блокчейн-токен). 100,000 $VBMS = 1 пак. Сейчас в пресейле - покупайте/продавайте $VBMS через DEX в приложении.",
 
     howToEarnCoins: "Как заработать монеты",
     earnPve: "PvE (Игрок против ИИ)",
@@ -1103,7 +1103,7 @@ export const docsTranslations = {
     raidStep4: "Вносите вклад в общие усилия сообщества",
     raidStep5: "Получайте награды на основе вклада в урон",
     raidRewards: "Награды",
-    raidReward1: "Монеты TESTVBMS на основе нанесенного урона",
+    raidReward1: "Монеты Coins на основе нанесенного урона",
     raidReward2: "Бонусные награды для топ-контрибьютеров",
     raidReward3: "Специальные достижения за победу над боссами",
     raidTips: "Советы",
@@ -1152,7 +1152,7 @@ export const docsTranslations = {
 
     // Economy section (abbreviated)
     economyTitle: "经济系统",
-    economyIntro: "$VBMS是Vibe Market上的Liquid Trading Cards (LTC)收藏，灵感来自伊拉克通缉令扑克牌。游戏有两种货币：TESTVBMS（游戏内）和$VBMS（区块链代币）。100,000 $VBMS = 1个卡包。目前处于预售阶段 - 通过应用内DEX买卖$VBMS。",
+    economyIntro: "$VBMS是Vibe Market上的Liquid Trading Cards (LTC)收藏，灵感来自伊拉克通缉令扑克牌。游戏有两种货币：Coins（游戏内）和$VBMS（区块链代币）。100,000 $VBMS = 1个卡包。目前处于预售阶段 - 通过应用内DEX买卖$VBMS。",
 
     howToEarnCoins: "如何赚取金币",
     earnPve: "PvE (玩家对AI)",
@@ -1333,7 +1333,7 @@ export const docsTranslations = {
     raidStep4: "为社区努力做出贡献",
     raidStep5: "根据伤害贡献获得奖励",
     raidRewards: "奖励",
-    raidReward1: "根据造成的伤害获得TESTVBMS金币",
+    raidReward1: "根据造成的伤害获得Coins金币",
     raidReward2: "顶级贡献者的额外奖励",
     raidReward3: "击败Boss的特殊成就",
     raidTips: "提示",
@@ -1382,7 +1382,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistem Ekonomi",
-    economyIntro: "$VBMS adalah koleksi Liquid Trading Cards (LTC) di Vibe Market, terinspirasi kartu Most Wanted Irak. Game ini punya dua mata uang: TESTVBMS (koin in-game dari bermain) dan $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Saat ini presale - beli/jual $VBMS melalui DEX in-app.",
+    economyIntro: "$VBMS adalah koleksi Liquid Trading Cards (LTC) di Vibe Market, terinspirasi kartu Most Wanted Irak. Game ini punya dua mata uang: Coins (koin in-game dari bermain) dan $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Saat ini presale - beli/jual $VBMS melalui DEX in-app.",
 
     howToEarnCoins: "Cara Dapat Koin",
     earnPve: "PvE (Pemain vs AI)",
@@ -1564,7 +1564,7 @@ export const docsTranslations = {
     raidStep4: "Berkontribusi pada usaha komunitas",
     raidStep5: "Dapat hadiah berdasarkan kontribusi damage",
     raidRewards: "Hadiah",
-    raidReward1: "Koin TESTVBMS berdasarkan damage yang diberikan",
+    raidReward1: "Koin Coins berdasarkan damage yang diberikan",
     raidReward2: "Hadiah bonus untuk kontributor teratas",
     raidReward3: "Prestasi spesial untuk kalahkan bos",
     raidTips: "Tips",
@@ -1613,7 +1613,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Système Économique",
-    economyIntro: "$VBMS est une collection de Liquid Trading Cards (LTC) sur Vibe Market, inspirée des cartes Most Wanted irakiennes. Le jeu a deux devises : TESTVBMS (monnaie in-game gagnée en jouant) et $VBMS (token blockchain). 100 000 $VBMS = 1 pack. Actuellement en prévente - achetez/vendez $VBMS via le DEX in-app.",
+    economyIntro: "$VBMS est une collection de Liquid Trading Cards (LTC) sur Vibe Market, inspirée des cartes Most Wanted irakiennes. Le jeu a deux devises : Coins (monnaie in-game gagnée en jouant) et $VBMS (token blockchain). 100 000 $VBMS = 1 pack. Actuellement en prévente - achetez/vendez $VBMS via le DEX in-app.",
 
     howToEarnCoins: "Comment Gagner des Pièces",
     earnPve: "PvE (Joueur vs IA)",
@@ -1795,7 +1795,7 @@ export const docsTranslations = {
     raidStep4: "Contribuez à l'effort communautaire",
     raidStep5: "Gagnez des récompenses basées sur votre contribution en dégâts",
     raidRewards: "Récompenses",
-    raidReward1: "Pièces TESTVBMS basées sur les dégâts infligés",
+    raidReward1: "Pièces Coins basées sur les dégâts infligés",
     raidReward2: "Récompenses bonus pour les meilleurs contributeurs",
     raidReward3: "Succès spéciaux pour avoir vaincu des boss",
     raidTips: "Conseils",
@@ -1844,7 +1844,7 @@ export const docsTranslations = {
 
     // Economy section
     economyTitle: "Sistema Economico",
-    economyIntro: "$VBMS è una collezione di Liquid Trading Cards (LTC) su Vibe Market, ispirata alle carte Most Wanted irachene. Il gioco ha due valute: TESTVBMS (valuta in-game guadagnata giocando) e $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Attualmente in presale - compra/vendi $VBMS tramite il DEX in-app.",
+    economyIntro: "$VBMS è una collezione di Liquid Trading Cards (LTC) su Vibe Market, ispirata alle carte Most Wanted irachene. Il gioco ha due valute: Coins (valuta in-game guadagnata giocando) e $VBMS (token blockchain). 100.000 $VBMS = 1 pack. Attualmente in presale - compra/vendi $VBMS tramite il DEX in-app.",
 
     howToEarnCoins: "Come Guadagnare Monete",
     earnPve: "PvE (Giocatore vs IA)",
@@ -2026,7 +2026,7 @@ export const docsTranslations = {
     raidStep4: "Contribuisci allo sforzo della comunità",
     raidStep5: "Guadagna ricompense in base al contributo di danno",
     raidRewards: "Ricompense",
-    raidReward1: "Monete TESTVBMS in base ai danni inflitti",
+    raidReward1: "Monete Coins in base ai danni inflitti",
     raidReward2: "Ricompense bonus per i migliori contributori",
     raidReward3: "Obiettivi speciali per le sconfitte dei boss",
     raidTips: "Consigli",

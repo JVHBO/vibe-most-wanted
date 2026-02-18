@@ -1,224 +1,216 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useQuery } from "convex/react";
+import { useEffect, useRef, useCallback } from "react";
+import { useConvex } from "convex/react";
 import { api } from "@/lib/fid/convex-generated/api";
+import Link from "next/link";
 
-interface FloatingCard {
-  id: string;
+const CARD_W = 100;
+const CARD_H = 140;
+const SPEED = 1.2; // px per frame at 60fps
+
+const RARITY_BORDER: Record<string, string> = {
+  Mythic: "3px solid #a855f7",
+  Legendary: "3px solid #FFD700",
+  Epic: "3px solid #ec4899",
+};
+
+const RARITY_SHADOW: Record<string, string> = {
+  Mythic: "0 0 12px rgba(168,85,247,0.6)",
+  Legendary: "0 0 12px rgba(255,215,0,0.5)",
+  Epic: "0 0 12px rgba(236,72,153,0.5)",
+};
+
+interface CardData {
+  _id: string;
   fid: number;
-  imageUrl: string;
+  cardImageUrl: string;
+  rarity: string;
+}
+
+interface PhysicsCard extends CardData {
   x: number;
-  duration: number;
-  delay: number;
+  y: number;
+  vx: number;
+  vy: number;
+  el: HTMLDivElement | null;
 }
 
-interface FloatingMessage {
-  id: string;
-  message: string;
-  cardFid: number;
-  x: number;
-  duration: number;
-  delay: number;
-}
+const CACHE_KEY = "vibefid_bg_cards";
+const CACHE_DATE_KEY = "vibefid_bg_cards_date";
 
-interface FloatingCardsBackgroundProps {
-  userFid?: number; // Current user's FID to show their messages
-  onMessageClick?: () => void; // Callback when clicking on a floating message
-}
+export function FloatingCardsBackground() {
+  const convex = useConvex();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cardsRef = useRef<PhysicsCard[]>([]);
+  const rafRef = useRef<number>(0);
+  const mountedRef = useRef(true);
 
-export function FloatingCardsBackground({ userFid, onMessageClick }: FloatingCardsBackgroundProps) {
-  const [floatingCards, setFloatingCards] = useState<FloatingCard[]>([]);
-  const [floatingMessages, setFloatingMessages] = useState<FloatingMessage[]>([]);
+  const runPhysics = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-  const recentCards = useQuery(api.farcasterCards.getCardImagesOnly, {
-    limit: 8,
-  });
+    const W = container.clientWidth;
+    const H = container.clientHeight;
+    const maxX = W - CARD_W;
+    const maxY = H - CARD_H;
 
-  // Get VibeMails for the current user only
-  const recentVibeMails = useQuery(
-    api.cardVotes.getRecentVibeMails,
-    userFid ? { cardFid: userFid, limit: 4 } : "skip"
-  );
+    for (const card of cardsRef.current) {
+      card.x += card.vx;
+      card.y += card.vy;
+
+      if (card.x <= 0) { card.x = 0; card.vx = Math.abs(card.vx); }
+      if (card.x >= maxX) { card.x = maxX; card.vx = -Math.abs(card.vx); }
+      if (card.y <= 0) { card.y = 0; card.vy = Math.abs(card.vy); }
+      if (card.y >= maxY) { card.y = maxY; card.vy = -Math.abs(card.vy); }
+
+      if (card.el) {
+        card.el.style.transform = `translate(${card.x}px, ${card.y}px)`;
+      }
+    }
+
+    if (mountedRef.current) {
+      rafRef.current = requestAnimationFrame(runPhysics);
+    }
+  }, []);
 
   useEffect(() => {
-    if (recentCards && recentCards.length > 0) {
-      // Função para gerar número aleatório em range
-      const random = (min: number, max: number) => Math.random() * (max - min) + min;
+    mountedRef.current = true;
 
-      const numCards = Math.min(8, recentCards.length);
+    async function loadCards() {
+      try {
+        const today = new Date().toISOString().split("T")[0];
+        const cachedDate = sessionStorage.getItem(CACHE_DATE_KEY);
+        let cards: CardData[] | null = null;
 
-      // Dividir a tela horizontalmente em seções (uma por carta)
-      const sectionWidth = 100 / numCards;
+        if (cachedDate === today) {
+          const raw = sessionStorage.getItem(CACHE_KEY);
+          if (raw) cards = JSON.parse(raw) as CardData[];
+        }
 
-      const cards = recentCards.slice(0, numCards).map((card: any, index: number) => {
-        // Calcular a seção horizontal desta carta
-        const sectionStart = index * sectionWidth;
-        // Posição X com variação dentro da seção (margem de 2% nas bordas)
-        const x = sectionStart + random(5, sectionWidth - 5);
+        if (!cards) {
+          const result = await convex.query(
+            (api as any).farcasterCards.getHighRarityCards,
+            { limit: 7 }
+          ) as CardData[];
+          cards = result;
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(cards));
+          sessionStorage.setItem(CACHE_DATE_KEY, today);
+        }
 
-        // Delay escalonado para não começarem todas juntas
-        // Delays mais curtos para aparecer mais rápido
-        const delay = index * 3 + random(0, 1);
+        if (!mountedRef.current || !cards || cards.length === 0) return;
 
-        return {
-          id: card._id || `card-${index}`,
-          fid: card.fid,
-          imageUrl: card.cardImageUrl || card.pfpUrl,
-          x,
-          duration: random(18, 25),
-          delay, // Delay em segundos
-        };
-      });
+        const container = containerRef.current;
+        if (!container) return;
 
-      setFloatingCards(cards);
-    }
-  }, [recentCards]);
+        const W = container.clientWidth;
+        const H = container.clientHeight;
 
-  // Process VibeMail messages
-  useEffect(() => {
-    if (recentVibeMails && recentVibeMails.length > 0) {
-      const random = (min: number, max: number) => Math.random() * (max - min) + min;
+        cardsRef.current = cards.map((card, i) => {
+          // Spread initial positions evenly, avoid stacking
+          const cols = Math.ceil(Math.sqrt(cards!.length));
+          const col = i % cols;
+          const row = Math.floor(i / cols);
+          const cellW = (W - CARD_W) / cols;
+          const cellH = (H - CARD_H) / Math.ceil(cards!.length / cols);
+          const x = col * cellW + Math.random() * (cellW * 0.5);
+          const y = row * cellH + Math.random() * (cellH * 0.5);
 
-      const messages = recentVibeMails.map((msg: any, index: number) => ({
-        id: msg._id || `msg-${index}`,
-        message: msg.message || "💌",
-        cardFid: msg.cardFid,
-        x: random(10, 90),
-        duration: random(22, 30),
-        delay: index * 5 + random(2, 4),
-      }));
+          // Random angle, constant speed
+          const angle = Math.random() * Math.PI * 2;
+          const vx = Math.cos(angle) * SPEED;
+          const vy = Math.sin(angle) * SPEED;
 
-      setFloatingMessages(messages);
-    }
-  }, [recentVibeMails]);
+          return { ...card, x, y, vx, vy, el: null };
+        });
 
-  // Memoize keyframes CSS to avoid re-renders
-  const keyframesCSS = useMemo(() => {
-    const cardKeyframes = floatingCards.map((_, index) => `
-      @keyframes floatUp${index} {
-        0% { transform: translateY(0) translateZ(0); }
-        100% { transform: translateY(-150vh) translateZ(0); }
+        // Force re-render by creating elements manually into container
+        // (we use DOM directly for perf, no React state churn)
+        container.innerHTML = "";
+
+        for (let i = 0; i < cardsRef.current.length; i++) {
+          const c = cardsRef.current[i];
+
+          const wrapper = document.createElement("div");
+          wrapper.style.cssText = `
+            position: absolute;
+            top: 0; left: 0;
+            width: ${CARD_W}px;
+            height: ${CARD_H}px;
+            transform: translate(${c.x}px, ${c.y}px);
+            will-change: transform;
+            cursor: pointer;
+            overflow: hidden;
+            border-radius: 8px;
+            border: ${RARITY_BORDER[c.rarity] || "2px solid #555"};
+            box-shadow: ${RARITY_SHADOW[c.rarity] || "none"};
+            transition: filter 0.2s;
+            pointer-events: auto;
+          `;
+
+          const link = document.createElement("a");
+          link.href = `/fid/${c.fid}`;
+          link.style.cssText = "display:block;width:100%;height:100%;";
+          link.addEventListener("mouseenter", () => {
+            wrapper.style.filter = "brightness(0.75)";
+          });
+          link.addEventListener("mouseleave", () => {
+            wrapper.style.filter = "brightness(0.35)";
+          });
+
+          const img = document.createElement("img");
+          img.src = c.cardImageUrl;
+          img.alt = "";
+          img.loading = "lazy";
+          img.style.cssText = `
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+            filter: brightness(0.35);
+            transition: filter 0.2s;
+          `;
+          img.addEventListener("mouseenter", () => {
+            img.style.filter = "brightness(0.75)";
+          });
+          img.addEventListener("mouseleave", () => {
+            img.style.filter = "brightness(0.35)";
+          });
+          img.onerror = () => { wrapper.style.display = "none"; };
+
+          link.appendChild(img);
+          wrapper.appendChild(link);
+          container.appendChild(wrapper);
+          cardsRef.current[i].el = wrapper;
+        }
+
+        rafRef.current = requestAnimationFrame(runPhysics);
+      } catch (e) {
+        console.warn("FloatingCardsBackground error:", e);
       }
-    `).join('\n');
+    }
 
-    const msgKeyframes = floatingMessages.map((_, index) => `
-      @keyframes floatMsg${index} {
-        0% { transform: translateY(0) rotate(-3deg) translateZ(0); opacity: 0.6; }
-        50% { opacity: 0.8; }
-        100% { transform: translateY(-150vh) rotate(3deg) translateZ(0); opacity: 0.4; }
-      }
-    `).join('\n');
+    loadCards();
 
-    return cardKeyframes + msgKeyframes;
-  }, [floatingCards.length, floatingMessages.length]);
-
-  if (floatingCards.length === 0 && floatingMessages.length === 0) return null;
+    return () => {
+      mountedRef.current = false;
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [convex, runPhysics]);
 
   return (
     <div
+      ref={containerRef}
       style={{
-        position: 'fixed',
+        position: "fixed",
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        pointerEvents: 'auto',
-        overflow: 'hidden',
+        pointerEvents: "none",
+        overflow: "hidden",
         zIndex: 0,
       }}
-    >
-      {floatingCards.map((card, index) => (
-        <div
-          key={card.id}
-          onClick={() => window.location.href = `/fid/${card.fid}`}
-          style={{
-            position: 'absolute',
-            width: '140px',
-            height: '196px',
-            cursor: 'pointer',
-            left: `${card.x}%`,
-            marginLeft: '-70px',
-            top: 'calc(100% + 220px)', // Sempre começa abaixo da tela
-            backgroundColor: '#0a0a0a',
-            borderRadius: '12px',
-            overflow: 'hidden',
-            zIndex: index + 1,
-            willChange: 'transform',
-            animation: `floatUp${index} ${card.duration}s linear ${card.delay}s infinite`,
-          }}
-        >
-          <img
-            src={card.imageUrl}
-            alt=""
-            loading="lazy"
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-              filter: 'brightness(0.35)',
-              transition: 'filter 0.3s ease',
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLImageElement).style.filter = 'brightness(0.6)';
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLImageElement).style.filter = 'brightness(0.35)';
-            }}
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        </div>
-      ))}
-
-      {/* Floating VibeMail Messages */}
-      {floatingMessages.map((msg, index) => (
-        <div
-          key={msg.id}
-          onClick={() => onMessageClick ? onMessageClick() : null}
-          style={{
-            position: 'absolute',
-            maxWidth: '180px',
-            padding: '10px 14px',
-            cursor: 'pointer',
-            left: `${msg.x}%`,
-            marginLeft: '-90px',
-            top: 'calc(100% + 100px)',
-            backgroundColor: 'rgba(212, 175, 55, 0.15)',
-            border: '1px solid rgba(212, 175, 55, 0.3)',
-            borderRadius: '16px',
-            zIndex: 50 + index,
-            willChange: 'transform, opacity',
-            animation: `floatMsg${index} ${msg.duration}s linear ${msg.delay}s infinite`,
-            backdropFilter: 'blur(4px)',
-          }}
-        >
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-          }}>
-            <span style={{ fontSize: '16px' }}>💌</span>
-            <span style={{
-              color: 'rgba(212, 175, 55, 0.7)',
-              fontSize: '12px',
-              fontStyle: 'italic',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}>
-              {msg.message}
-            </span>
-          </div>
-        </div>
-      ))}
-
-      <style jsx global>{`
-        ${keyframesCSS}
-      `}</style>
-    </div>
+    />
   );
 }
 

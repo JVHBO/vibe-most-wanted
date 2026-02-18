@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Cinzel_Decorative, Playfair_Display_SC, Rajdhani } from "next/font/google";
 import "./globals.css";
+import "./neobrutalism.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { MusicProvider } from "@/contexts/MusicContext";
 import { Web3Provider } from "@/contexts/Web3Provider";
 import { ConvexClientProvider } from "@/contexts/ConvexClientProvider";
@@ -125,6 +127,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased overflow-x-hidden`}
       >
         <ErrorBoundary>
+          <ThemeProvider>
           <NeynarMiniAppProvider>
             <ConvexClientProvider>
               <Web3Provider>
@@ -141,6 +144,7 @@ export default function RootLayout({
               </Web3Provider>
             </ConvexClientProvider>
           </NeynarMiniAppProvider>
+          </ThemeProvider>
         </ErrorBoundary>
         <Analytics />
       </body>

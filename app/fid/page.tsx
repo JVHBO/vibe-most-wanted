@@ -1484,7 +1484,11 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
           {/* Left: User Info */}
           <div className="flex items-center gap-2">
             {farcasterContext.user ? (
-              <>
+              <Link
+                href={myCard ? `/fid/${myCard.fid}` : '#'}
+                onClick={() => AudioManager.buttonClick()}
+                className="flex items-center gap-2 px-2 py-1 border-2 border-black shadow-[3px_3px_0px_#000] bg-[#1a1a1a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+              >
                 <img
                   src={farcasterContext.user.pfpUrl || '/images/default-avatar.png'}
                   alt="Profile"
@@ -1498,7 +1502,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                     FID #{farcasterContext.user.fid}
                   </p>
                 </div>
-              </>
+              </Link>
             ) : (
               <span className="text-vintage-ice/50 text-sm">Not connected</span>
             )}

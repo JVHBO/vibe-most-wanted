@@ -51,11 +51,17 @@ export function LanguageSelectionModal() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[250] p-4">
+    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] p-4">
       <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold/50 p-6 max-w-sm w-full shadow-[0_0_60px_rgba(255,215,0,0.15)]">
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="text-4xl mb-3">🌍</div>
+          <div className="flex justify-center mb-3">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M2 12h20"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </div>
           <h2 className="font-display text-2xl text-vintage-gold tracking-wide mb-2">
             Select Language
           </h2>
@@ -87,7 +93,7 @@ export function LanguageSelectionModal() {
         {/* Confirm Button */}
         <button
           onClick={handleConfirm}
-          className="w-full py-4 bg-gradient-to-r from-vintage-gold to-vintage-gold-dark text-vintage-black font-display font-bold text-lg rounded-xl shadow-gold hover:shadow-gold-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full py-4 bg-vintage-gold text-black font-display font-bold text-lg border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all"
         >
           Continue
         </button>

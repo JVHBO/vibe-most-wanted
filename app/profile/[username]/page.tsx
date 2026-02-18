@@ -18,6 +18,7 @@ import { GiftIcon, FarcasterIcon } from '@/components/PokerIcons';
 import { filterCardsByCollections, COLLECTIONS, type CollectionId, getCardUniqueId } from "@/lib/collections/index";
 import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
+import { AudioManager } from '@/lib/audio-manager';
 import { openMarketplace } from '@/lib/marketplace-utils';
 import { isUnrevealed as isUnrevealedShared, findAttr, calcPower } from '@/lib/nft/attributes';
 import { isSameCard, findCard, getCardKey } from '@/lib/nft';
@@ -127,6 +128,8 @@ export default function ProfilePage() {
   const rewardProfileShare = useMutation(api.cardPacks.rewardProfileShare);
   const claimShareBonus = useMutation(api.economy.claimShareBonus);
   const [showShareReward, setShowShareReward] = useState(false);
+  const [albumPage, setAlbumPage] = useState(0);
+  const ALBUM_PER_PAGE = 60;
 
   // Album card modal state
   const [selectedAlbumCard, setSelectedAlbumCard] = useState<{
@@ -501,14 +504,6 @@ export default function ProfilePage() {
       {/* Compact Profile Header */}
       <div className="max-w-6xl mx-auto mb-4">
         <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/50 p-4 md:p-5">
-          {/* Back button */}
-          <button
-            onClick={() => router.push('/')}
-            className="text-vintage-gold hover:text-vintage-gold-dark text-sm font-modern mb-3"
-          >
-            {t('profileBack')}
-          </button>
-
           {/* Main profile row */}
           <div className="flex items-center gap-4">
             {/* Avatar */}
@@ -530,7 +525,7 @@ export default function ProfilePage() {
             {/* Name + Links */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl md:text-2xl font-display font-bold text-vintage-gold truncate">{profile.username}</h1>
+                <h1 className="text-xl md:text-2xl font-display font-bold text-vintage-gold uppercase tracking-wide drop-shadow-[2px_2px_0px_#000] truncate">{profile.username}</h1>
                 <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999, profile.hasVibeBadge)} size="sm" />
               </div>
               <div className="flex items-center gap-2 mt-1 flex-wrap text-xs">
@@ -538,13 +533,13 @@ export default function ProfilePage() {
                   {profile.address.slice(0, 6)}...{profile.address.slice(-4)} {copiedAddress ? '✓' : ''}
                 </button>
                 {profile.fid && farcasterUsername && (
-                  <a href={`https://warpcast.com/${farcasterUsername}`} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300">@{farcasterUsername}</a>
+                  <a href={`https://warpcast.com/${farcasterUsername}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-2 py-0.5 bg-purple-600 text-white text-xs font-bold border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all">@{farcasterUsername}</a>
                 )}
                 {profile.twitter && (
                   <a href={`https://twitter.com/${profile.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-vintage-neon-blue hover:text-blue-400">𝕏</a>
                 )}
                 {profile.fid && (
-                  <button onClick={() => openMarketplace(`/fid/${profile.fid}`, sdk, true)} className="text-vintage-gold hover:text-vintage-burnt-gold">{t('profileVibeFID')}</button>
+                  <button onClick={() => openMarketplace(`/fid/${profile.fid}`, sdk, true)} className="inline-flex items-center px-2 py-0.5 bg-vintage-gold text-black text-xs font-bold border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all">{t('profileVibeFID')}</button>
                 )}
               </div>
             </div>
@@ -552,26 +547,37 @@ export default function ProfilePage() {
           </div>
 
           {/* Stats row - compact horizontal */}
-          <div className="grid grid-cols-4 gap-2 mt-4 pt-3 border-t border-vintage-gold/20">
-            <div className="text-center">
-              <p className="text-sm md:text-lg font-bold text-vintage-gold">{nfts.length || profile.stats.totalCards}</p>
-              <p className="text-[9px] text-vintage-burnt-gold">{t('profileCards')}</p>
+          <div className="flex mt-4 border-2 border-black bg-vintage-black/40 shadow-[3px_3px_0px_#000]">
+            <div className="flex-1 flex flex-col items-center justify-center py-2">
+              <p className="text-sm md:text-base font-bold text-vintage-gold leading-none">{nfts.length || profile.stats.totalCards}</p>
+              <p className="text-[9px] text-vintage-burnt-gold uppercase tracking-wide mt-1">{t('profileCards')}</p>
             </div>
-            <div className="text-center">
-              <p className="text-sm md:text-lg font-bold text-vintage-gold">{(profile.stats.totalPower || 0).toLocaleString()}</p>
-              <p className="text-[9px] text-vintage-burnt-gold">{t('profilePower')}</p>
+            <div className="w-px bg-black/40" />
+            <div className="flex-1 flex flex-col items-center justify-center py-2">
+              <p className="text-sm md:text-base font-bold text-vintage-gold leading-none">{(profile.stats.totalPower || 0).toLocaleString()}</p>
+              <p className="text-[9px] text-vintage-burnt-gold uppercase tracking-wide mt-1">{t('profilePower')}</p>
             </div>
-            <div className="text-center">
-              <p className="text-sm md:text-lg font-bold text-purple-400">{(profile.stats.aura ?? 500).toLocaleString()}</p>
-              <p className="text-[9px] text-vintage-burnt-gold">{t('profileAura')}</p>
+            <div className="w-px bg-black/40" />
+            <div className="flex-1 flex flex-col items-center justify-center py-2">
+              <p className="text-sm md:text-base font-bold text-purple-400 leading-none">{(profile.stats.aura ?? 500).toLocaleString()}</p>
+              <p className="text-[9px] text-vintage-burnt-gold uppercase tracking-wide mt-1">{t('profileAura')}</p>
             </div>
-            <div className="text-center">
-              <p className="text-sm md:text-lg font-bold text-vintage-gold">
+            <div className="w-px bg-black/40" />
+            <div className="flex-1 flex flex-col items-center justify-center py-2">
+              <p className="text-sm md:text-base font-bold text-vintage-gold leading-none">
                 {(() => { const b = Number(vbmsBalance || 0); if (b >= 1_000_000) return `${(b / 1_000_000).toFixed(1)}M`; if (b >= 1_000) return `${(b / 1_000).toFixed(1)}K`; return b.toLocaleString(undefined, { maximumFractionDigits: 0 }); })()}
               </p>
-              <p className="text-[9px] text-vintage-burnt-gold">{t('profileVbms')}</p>
+              <p className="text-[9px] text-vintage-burnt-gold uppercase tracking-wide mt-1">{t('profileVbms')}</p>
             </div>
           </div>
+
+          {/* Back button */}
+          <button
+            onClick={() => router.push('/')}
+            className="mt-3 inline-flex items-center gap-1 px-3 py-1 bg-vintage-gold text-black text-xs font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+          >
+            {t('profileBack')}
+          </button>
         </div>
       </div>
 
@@ -659,6 +665,9 @@ export default function ProfilePage() {
                 return (rarityOrder[a.rarity] ?? 5) - (rarityOrder[b.rarity] ?? 5);
               });
 
+              const albumTotalPages = Math.ceil(sortedCards.length / ALBUM_PER_PAGE);
+              const pagedCards = sortedCards.slice(albumPage * ALBUM_PER_PAGE, (albumPage + 1) * ALBUM_PER_PAGE);
+
               return (
                 <>
                   <div className="w-full bg-vintage-black rounded-full h-2 overflow-hidden mb-3">
@@ -669,8 +678,8 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Card Grid */}
-                  <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-13 gap-1">
-                    {sortedCards.map((card: any, idx: number) => {
+                  <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 max-h-[50vh] overflow-y-auto">
+                    {pagedCards.map((card: any, idx: number) => {
                       const cardKey = card.baccarat?.toLowerCase() || card.onChainName?.toLowerCase();
                       const owned = ownedCardCounts[cardKey] || 0;
                       const ability = tcgAbilities[cardKey];
@@ -723,6 +732,7 @@ export default function ProfilePage() {
                         <div
                           key={idx}
                           onClick={() => {
+                            AudioManager.selectCard();
                             // Clickable for all cards - pass baccaratImagePath for unowned cards
                             setSelectedAlbumCard({
                               card,
@@ -732,10 +742,11 @@ export default function ProfilePage() {
                               baccaratImagePath: baccaratImagePath || undefined
                             });
                           }}
-                          className={`relative aspect-[2/3] rounded overflow-hidden transition-all cursor-pointer hover:scale-105 ${
+                          onMouseEnter={() => AudioManager.buttonHover()}
+                          className={`relative aspect-[2/3] overflow-hidden cursor-pointer transition-all border-2 border-black shadow-[3px_3px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#000] ${
                             owned > 0
-                              ? `ring-1 ${rarityBorder} shadow-sm`
-                              : "ring-1 ring-gray-800 opacity-50 grayscale hover:opacity-80 hover:grayscale-0"
+                              ? `hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000]`
+                              : "opacity-50 grayscale hover:opacity-80 hover:grayscale-0"
                           }`}
                           title={`${card.onChainName} (${card.rarity})${owned > 0 ? ` - ${owned}x` : ""}`}
                         >
@@ -788,6 +799,41 @@ export default function ProfilePage() {
                       );
                     })}
                   </div>
+
+                  {/* Paginação */}
+                  {albumTotalPages > 1 && (
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-vintage-gold/20">
+                      <button
+                        onClick={() => setAlbumPage(p => Math.max(0, p - 1))}
+                        disabled={albumPage === 0}
+                        className="px-4 py-1.5 bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-bold disabled:opacity-30"
+                      >
+                        ←
+                      </button>
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: albumTotalPages }).map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => setAlbumPage(i)}
+                            className={`w-7 h-7 rounded text-xs font-bold transition-all ${
+                              i === albumPage
+                                ? 'bg-vintage-gold text-vintage-black'
+                                : 'bg-vintage-black text-vintage-gold border border-vintage-gold/30'
+                            }`}
+                          >
+                            {i + 1}
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => setAlbumPage(p => Math.min(albumTotalPages - 1, p + 1))}
+                        disabled={albumPage === albumTotalPages - 1}
+                        className="px-4 py-1.5 bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-bold disabled:opacity-30"
+                      >
+                        →
+                      </button>
+                    </div>
+                  )}
 
                 </>
               );

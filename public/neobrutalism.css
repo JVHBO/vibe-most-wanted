@@ -1,0 +1,633 @@
+/* ===========================================
+   NEOBRUTALISM v2 - SATURATED STICKER STYLE
+   ?theme=neobrutalism
+
+   Palette:
+   - Yellow  #FFD400  (buttons, active nav, titles)
+   - Purple  #9B5CFF  (arena, VibeFID, accents)
+   - Red     #FF3B3B  (boss, danger, NEO badge)
+   - Green   #00FF85  (bet, success)
+   - Blue    #00A6FF  (profile bar, spin, primary)
+
+   REGRA DE OURO: genéricos PRIMEIRO, específicos DEPOIS
+   =========================================== */
+
+/* ===================================================
+   1. BASE & RESET
+   =================================================== */
+body.neobrutalism {
+  background: #1E1E1E !important;
+  color: #FFF !important;
+}
+
+body.neobrutalism .game-background {
+  background: #1E1E1E !important;
+  background-image: none !important;
+}
+
+body.neobrutalism * {
+  text-shadow: none !important;
+}
+
+body.neobrutalism [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+}
+
+body.neobrutalism .blur-3xl {
+  display: none !important;
+}
+
+body.neobrutalism [class*="drop-shadow"] {
+  filter: none !important;
+}
+
+body.neobrutalism [class*="bg-gradient-to"] {
+  background-image: none !important;
+}
+
+/* ===================================================
+   2. GENERIC COLOR OVERRIDES
+   =================================================== */
+
+/* --- Dark backgrounds --- */
+body.neobrutalism [class*="bg-vintage-black"] {
+  background-color: #2C2C2C !important;
+}
+body.neobrutalism [class*="bg-vintage-charcoal"] {
+  background-color: #2C2C2C !important;
+}
+body.neobrutalism [class*="bg-vintage-deep"] {
+  background-color: #1E1E1E !important;
+}
+body.neobrutalism [class*="bg-vintage-black/"],
+body.neobrutalism [class*="bg-black/"] {
+  background-color: #252525 !important;
+}
+body.neobrutalism [class*="bg-vintage-gold"] {
+  background-color: #FFD400 !important;
+}
+
+/* --- Gradients → flat --- */
+body.neobrutalism [class*="from-vintage-charcoal"],
+body.neobrutalism [class*="from-vintage-black"],
+body.neobrutalism [class*="from-black"] {
+  background-color: #2C2C2C !important;
+  background-image: none !important;
+}
+body.neobrutalism [class*="from-pink-6"][class*="via-purple-6"] {
+  background-color: #9B5CFF !important;
+}
+body.neobrutalism [class*="from-green-7"][class*="via-emerald-6"] {
+  background-color: #00FF85 !important;
+}
+body.neobrutalism [class*="from-pink-6"] *,
+body.neobrutalism [class*="from-green-7"] * {
+  color: #000 !important;
+}
+
+/* --- Semantic panels --- */
+body.neobrutalism [class*="bg-purple-900/"],
+body.neobrutalism [class*="bg-purple-800/"] {
+  background-color: #2D1F4E !important;
+}
+body.neobrutalism [class*="bg-green-900/"],
+body.neobrutalism [class*="bg-green-800/"] {
+  background-color: #1A3D2D !important;
+}
+body.neobrutalism [class*="bg-red-900/"],
+body.neobrutalism [class*="bg-red-800/"],
+body.neobrutalism [class*="bg-red-600/"] {
+  background-color: #3D1A1A !important;
+}
+body.neobrutalism [class*="bg-orange-500/"],
+body.neobrutalism [class*="bg-orange-900/"] {
+  background-color: #3D2D1A !important;
+}
+body.neobrutalism [class*="bg-blue-900/"],
+body.neobrutalism [class*="bg-blue-800/"],
+body.neobrutalism [class*="bg-blue-600/"] {
+  background-color: #1A2D4E !important;
+}
+body.neobrutalism [class*="bg-gray-8"],
+body.neobrutalism [class*="bg-zinc-8"],
+body.neobrutalism [class*="bg-gray-7"],
+body.neobrutalism [class*="bg-zinc-7"] {
+  background-color: #333 !important;
+}
+
+/* --- Text → brighter --- */
+body.neobrutalism [class*="text-vintage-ice"] { color: #FFF !important; }
+body.neobrutalism [class*="text-vintage-gold"] { color: #FFD400 !important; }
+body.neobrutalism [class*="text-vintage-silver"],
+body.neobrutalism [class*="text-vintage-burnt"] { color: #AAA !important; }
+body.neobrutalism [class*="text-white"] { color: #FFF !important; }
+body.neobrutalism [class*="text-green-4"],
+body.neobrutalism [class*="text-green-3"],
+body.neobrutalism [class*="text-green-1"],
+body.neobrutalism [class*="text-emerald"] { color: #00FF85 !important; }
+body.neobrutalism [class*="text-red-4"],
+body.neobrutalism [class*="text-red-3"],
+body.neobrutalism [class*="text-red-5"],
+body.neobrutalism [class*="text-red-1"],
+body.neobrutalism [class*="text-red-2"] { color: #FF3B3B !important; }
+body.neobrutalism [class*="text-yellow"],
+body.neobrutalism [class*="text-amber"] { color: #FFD400 !important; }
+body.neobrutalism [class*="text-purple-3"],
+body.neobrutalism [class*="text-purple-2"],
+body.neobrutalism [class*="text-purple-1"] { color: #9B5CFF !important; }
+body.neobrutalism [class*="text-blue"],
+body.neobrutalism [class*="text-cyan"] { color: #00A6FF !important; }
+body.neobrutalism [class*="text-orange"] { color: #FFD400 !important; }
+body.neobrutalism [class*="text-gray-4"],
+body.neobrutalism [class*="text-gray-5"],
+body.neobrutalism [class*="text-gray-3"] { color: #999 !important; }
+body.neobrutalism [class*="text-vintage-gold/4"] { color: #666 !important; }
+
+/* --- Borders → thick black --- */
+body.neobrutalism [class*="border-vintage-gold"],
+body.neobrutalism [class*="border-vintage-gold/"] {
+  border-color: #000 !important;
+  border-width: 4px !important;
+}
+body.neobrutalism [class*="border-purple"],
+body.neobrutalism [class*="border-green"],
+body.neobrutalism [class*="border-red"],
+body.neobrutalism [class*="border-blue"],
+body.neobrutalism [class*="border-orange"],
+body.neobrutalism [class*="border-yellow"],
+body.neobrutalism [class*="border-pink"] {
+  border-color: #000 !important;
+}
+
+/* --- Shadows → hard offset black --- */
+body.neobrutalism [class*="shadow-gold"],
+body.neobrutalism [class*="shadow-neon"],
+body.neobrutalism [class*="shadow-lg"],
+body.neobrutalism [class*="shadow-xl"],
+body.neobrutalism [class*="shadow-2xl"] {
+  box-shadow: 6px 6px 0px #000 !important;
+}
+body.neobrutalism [style*="box-shadow"] {
+  box-shadow: 6px 6px 0px #000 !important;
+}
+
+/* --- Corners → angular --- */
+body.neobrutalism [class*="rounded-2xl"],
+body.neobrutalism [class*="rounded-3xl"] { border-radius: 4px !important; }
+body.neobrutalism [class*="rounded-xl"] { border-radius: 4px !important; }
+body.neobrutalism [class*="rounded-full"] { border-radius: 4px !important; }
+
+/* --- Buttons base --- */
+body.neobrutalism button,
+body.neobrutalism [role="button"] {
+  background-image: none !important;
+  border: 4px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  transition: transform 0.1s, box-shadow 0.1s !important;
+}
+body.neobrutalism button:hover,
+body.neobrutalism [role="button"]:hover,
+body.neobrutalism a[class*="bg-"]:hover,
+body.neobrutalism a[class*="border"]:hover,
+body.neobrutalism a[class*="flex"]:hover {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 4px 4px 0px #000 !important;
+}
+body.neobrutalism button:active,
+body.neobrutalism [role="button"]:active,
+body.neobrutalism a[class*="bg-"]:active,
+body.neobrutalism a[class*="border"]:active,
+body.neobrutalism a[class*="flex"]:active {
+  transform: translate(6px, 6px) !important;
+  box-shadow: 0px 0px 0px #000 !important;
+}
+body.neobrutalism button:disabled {
+  background-color: #444 !important;
+  color: #666 !important;
+  box-shadow: 2px 2px 0px #333 !important;
+  border-color: #333 !important;
+  transform: none !important;
+}
+
+/* --- Inputs --- */
+body.neobrutalism input,
+body.neobrutalism select,
+body.neobrutalism textarea {
+  background: #2C2C2C !important;
+  color: #FFF !important;
+  border: 3px solid #000 !important;
+  border-radius: 4px !important;
+  box-shadow: 4px 4px 0px #000 !important;
+}
+body.neobrutalism input:focus,
+body.neobrutalism select:focus,
+body.neobrutalism textarea:focus {
+  outline: 3px solid #00A6FF !important;
+  outline-offset: 0 !important;
+}
+
+/* --- Modals --- */
+body.neobrutalism [class*="fixed inset-0"][class*="bg-black/"] {
+  background: rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: none !important;
+}
+body.neobrutalism [class*="fixed inset-0"] > [class*="bg-gradient"],
+body.neobrutalism [class*="fixed inset-0"] > [class*="bg-vintage"] {
+  background: #1E1E1E !important;
+  border: 5px solid #000 !important;
+  box-shadow: 8px 8px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+/* Modal titles */
+body.neobrutalism [class*="fixed inset-0"] [class*="text-vintage-gold"],
+body.neobrutalism [class*="fixed inset-0"] [class*="text-2xl"],
+body.neobrutalism [class*="fixed inset-0"] [class*="text-xl"] {
+  color: #FFD400 !important;
+}
+
+/* --- Animations --- */
+body.neobrutalism [class*="animate-pulse"],
+body.neobrutalism [class*="animate-glow"],
+body.neobrutalism [class*="animate-shimmer"] {
+  animation: none !important;
+}
+body.neobrutalism [class*="transition-"] {
+  transition-duration: 0.15s !important;
+}
+
+/* ===================================================
+   3. SPECIFIC COMPONENT OVERRIDES
+   =================================================== */
+
+/* --- PROFILE BAR (fixed top) → BLUE, no shadow --- */
+body.neobrutalism [class*="bg-vintage-charcoal/80"][class*="backdrop-blur"],
+body.neobrutalism .tour-header > div {
+  background-color: #00A6FF !important;
+  border-color: #000 !important;
+  border-width: 4px !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 4px solid #000 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
+/* Ensure dropdown can overflow header */
+body.neobrutalism .tour-header,
+body.neobrutalism .tour-header *:not([class*="absolute"]) {
+  overflow: visible !important;
+}
+
+/* Profile chip button - no transform on hover (breaks dropdown position) */
+body.neobrutalism .tour-header button:hover,
+body.neobrutalism .tour-header button:active {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Profile dropdown menu */
+body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] {
+  background: #1A1A1A !important;
+  border: 4px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  border-radius: 4px !important;
+}
+body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a,
+body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] button {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  color: #FFF !important;
+  margin: 0 !important;
+  padding: 8px 12px !important;
+  width: 100% !important;
+}
+body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a:hover,
+body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] button:hover {
+  background: #FFD400 !important;
+  color: #000 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a:hover *,
+body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] button:hover * {
+  color: #000 !important;
+  stroke: #000 !important;
+}
+body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a:active,
+body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] button:active {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Profile link chip → dark on blue bar */
+body.neobrutalism [class*="bg-vintage-charcoal/80"] [class*="bg-vintage-black"] {
+  background-color: #1A1A1A !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+body.neobrutalism [class*="bg-vintage-charcoal/80"] [class*="bg-vintage-black"] * {
+  color: #FFF !important;
+}
+body.neobrutalism [class*="bg-vintage-charcoal/80"] [class*="text-vintage-gold"] {
+  color: #000 !important;
+  font-weight: 800 !important;
+}
+
+/* DEX/Balance button → yellow chip on blue bar */
+body.neobrutalism .tour-dex-btn {
+  background-color: #FFD400 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+body.neobrutalism .tour-dex-btn * {
+  color: #000 !important;
+}
+body.neobrutalism .tour-dex-btn [class*="text-vintage-gold"] {
+  color: #000 !important;
+}
+
+/* Settings & help inside header → dark chip */
+body.neobrutalism .tour-settings-btn {
+  background-color: #2C2C2C !important;
+  border: 3px solid #000 !important;
+}
+
+/* --- HEADER (tour-header) → dark, blends with page --- */
+body.neobrutalism .tour-header {
+  background: #1E1E1E !important;
+  border: 4px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+}
+body.neobrutalism .tour-header [class*="text-vintage-gold"] {
+  color: #FFD400 !important;
+}
+body.neobrutalism .tour-header [class*="text-vintage-burnt"] {
+  color: #AAA !important;
+}
+
+/* --- VIBEFID BUTTON → PURPLE VIBRANT --- */
+body.neobrutalism .tour-vibefid-btn,
+body.neobrutalism button.tour-vibefid-btn,
+body.neobrutalism .tour-vibefid-btn[class*="bg-vintage-gold"] {
+  background-color: #9B5CFF !important;
+  color: #FFF !important;
+  border: 5px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+}
+body.neobrutalism .tour-vibefid-btn *,
+body.neobrutalism .tour-vibefid-btn span,
+body.neobrutalism .tour-vibefid-btn div {
+  color: #FFF !important;
+}
+
+/* --- NAV BAR → DARK WITH THICK BORDERS --- */
+body.neobrutalism .tour-nav-bar {
+  background: #1A1A1A !important;
+  border-color: #000 !important;
+  border-width: 4px !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: 4px solid #000 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  gap: 6px !important;
+  padding: 6px !important;
+}
+
+/* Nav: ALL items → dark, white text, thick borders */
+body.neobrutalism .tour-nav-bar button,
+body.neobrutalism .tour-nav-bar a,
+body.neobrutalism .tour-nav-bar > * {
+  background-color: #2C2C2C !important;
+  color: #FFF !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+/* Nav: ALL content inside items → white */
+body.neobrutalism .tour-nav-bar button *,
+body.neobrutalism .tour-nav-bar a *,
+body.neobrutalism .tour-nav-bar span,
+body.neobrutalism .tour-nav-bar svg {
+  color: #FFF !important;
+  stroke: #FFF !important;
+}
+
+/* Nav: ACTIVE item → yellow bg, black text */
+body.neobrutalism .tour-nav-bar [class*="bg-vintage-gold"][class*="text-vintage-black"] {
+  background-color: #FFD400 !important;
+  color: #000 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+
+body.neobrutalism .tour-nav-bar [class*="bg-vintage-gold"][class*="text-vintage-black"] *,
+body.neobrutalism .tour-nav-bar [class*="bg-vintage-gold"][class*="text-vintage-black"] span,
+body.neobrutalism .tour-nav-bar [class*="bg-vintage-gold"][class*="text-vintage-black"] svg {
+  color: #000 !important;
+  stroke: #000 !important;
+}
+
+/* Nav: SVG images (inbox.svg etc) inside INACTIVE → white */
+body.neobrutalism .tour-nav-bar [class*="bg-vintage-black"] img {
+  filter: brightness(0) invert(1) !important;
+}
+
+/* Nav: SVG images inside ACTIVE → black */
+body.neobrutalism .tour-nav-bar [class*="bg-vintage-gold"][class*="text-vintage-black"] img {
+  filter: brightness(0) !important;
+}
+
+/* --- GAME GRID → EACH MODE WITH ITS OWN COLOR --- */
+body.neobrutalism .tour-game-grid button,
+body.neobrutalism .tour-game-grid a,
+body.neobrutalism .tour-game-grid [class*="bg-vintage-charcoal"] {
+  border: 5px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+/* Battle Auto - has text-cyan icon → Yellow */
+body.neobrutalism .tour-game-grid button:has([class*="text-cyan"]) {
+  background-color: #FFD400 !important;
+}
+body.neobrutalism .tour-game-grid button:has([class*="text-cyan"]) * {
+  color: #000 !important;
+}
+body.neobrutalism .tour-game-grid button:has([class*="text-cyan"]) svg {
+  color: #000 !important;
+  stroke: #000 !important;
+}
+
+/* Mecha Arena - has text-green (not emerald) → Purple */
+body.neobrutalism .tour-game-grid button:has(> [class*="text-green"]),
+body.neobrutalism .tour-game-grid button:has([class*="text-green-4"]) {
+  background-color: #9B5CFF !important;
+}
+body.neobrutalism .tour-game-grid button:has(> [class*="text-green"]) *,
+body.neobrutalism .tour-game-grid button:has([class*="text-green-4"]) * {
+  color: #FFF !important;
+}
+body.neobrutalism .tour-game-grid button:has(> [class*="text-green"]) svg,
+body.neobrutalism .tour-game-grid button:has([class*="text-green-4"]) svg {
+  color: #FFF !important;
+  stroke: #FFF !important;
+}
+
+/* Raid Boss - has text-red → Red */
+body.neobrutalism .tour-game-grid button:has([class*="text-red"]) {
+  background-color: #FF3B3B !important;
+}
+body.neobrutalism .tour-game-grid button:has([class*="text-red"]) * {
+  color: #FFF !important;
+}
+body.neobrutalism .tour-game-grid button:has([class*="text-red"]) svg {
+  color: #FFF !important;
+  stroke: #FFF !important;
+}
+
+/* Baccarat - has text-emerald → Green */
+body.neobrutalism .tour-game-grid button:has([class*="text-emerald"]) {
+  background-color: #00FF85 !important;
+}
+body.neobrutalism .tour-game-grid button:has([class*="text-emerald"]) * {
+  color: #000 !important;
+}
+body.neobrutalism .tour-game-grid button:has([class*="text-emerald"]) svg {
+  color: #000 !important;
+  stroke: #000 !important;
+}
+
+/* Vibe Clash - has text-orange → Blue */
+body.neobrutalism .tour-game-grid button:has([class*="text-orange"]) {
+  background-color: #00A6FF !important;
+}
+body.neobrutalism .tour-game-grid button:has([class*="text-orange"]) * {
+  color: #000 !important;
+}
+body.neobrutalism .tour-game-grid button:has([class*="text-orange"]) svg {
+  color: #000 !important;
+  stroke: #000 !important;
+}
+
+/* Fallback: nth-child for webviews without :has() support */
+@supports not selector(:has(*)) {
+  body.neobrutalism .tour-game-grid button:nth-child(1) { background-color: #FFD400 !important; }
+  body.neobrutalism .tour-game-grid button:nth-child(1) * { color: #000 !important; }
+  body.neobrutalism .tour-game-grid button:nth-child(2) { background-color: #9B5CFF !important; }
+  body.neobrutalism .tour-game-grid button:nth-child(2) * { color: #FFF !important; }
+  body.neobrutalism .tour-game-grid button:nth-child(3) { background-color: #FF3B3B !important; }
+  body.neobrutalism .tour-game-grid button:nth-child(3) * { color: #FFF !important; }
+  body.neobrutalism .tour-game-grid button:nth-child(4) { background-color: #00FF85 !important; }
+  body.neobrutalism .tour-game-grid button:nth-child(4) * { color: #000 !important; }
+  body.neobrutalism .tour-game-grid button:nth-child(5) { background-color: #00A6FF !important; }
+  body.neobrutalism .tour-game-grid button:nth-child(5) * { color: #000 !important; }
+}
+
+/* --- SPIN BUTTON → Blue solid --- */
+body.neobrutalism button[class*="animate-pulse"][class*="shadow-gold"],
+body.neobrutalism button[class*="from-vintage-gold"] {
+  background: #00A6FF !important;
+  background-image: none !important;
+  border: 5px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  color: #000 !important;
+  font-weight: 900 !important;
+  animation: none !important;
+  border-radius: 4px !important;
+}
+
+/* --- CARDS SECTION → dark with black shadow --- */
+body.neobrutalism .tour-cards-section {
+  border: 4px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+/* Cards section: inner container no extra shadow */
+body.neobrutalism .tour-cards-section > div {
+  box-shadow: none !important;
+}
+
+/* Cards section: text */
+body.neobrutalism .tour-cards-section [class*="text-vintage-gold"] {
+  color: #FFD400 !important;
+}
+
+/* Cards section: "X Cards" button */
+body.neobrutalism .tour-cards-section button {
+  background-color: #2C2C2C !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+
+/* Card thumbnails: rarity-colored neo shadows */
+body.neobrutalism .tour-cards-section [class*="border-pink-4"] {
+  box-shadow: 4px 4px 0px #EC4899 !important;
+}
+body.neobrutalism .tour-cards-section [class*="border-yellow-4"] {
+  box-shadow: 4px 4px 0px #FFD400 !important;
+}
+body.neobrutalism .tour-cards-section [class*="border-purple-4"] {
+  box-shadow: 4px 4px 0px #9B5CFF !important;
+}
+body.neobrutalism .tour-cards-section [class*="border-blue-4"] {
+  box-shadow: 4px 4px 0px #00A6FF !important;
+}
+body.neobrutalism .tour-cards-section [class*="border-vintage-ice"] {
+  box-shadow: 4px 4px 0px #888 !important;
+}
+
+/* --- WANTED CAST → dark with black shadow --- */
+body.neobrutalism .tour-wanted-cast > * {
+  border: 4px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+body.neobrutalism .tour-wanted-cast > * * {
+  box-shadow: none !important;
+}
+
+/* ===================================================
+   4. SCROLLBAR, SELECTION, INDICATOR
+   =================================================== */
+body.neobrutalism ::-webkit-scrollbar { width: 10px; }
+body.neobrutalism ::-webkit-scrollbar-track {
+  background: #1E1E1E;
+  border-left: 3px solid #000;
+}
+body.neobrutalism ::-webkit-scrollbar-thumb {
+  background: #FFD400;
+  border: 3px solid #000;
+}
+
+body.neobrutalism ::selection {
+  background: #FFD400 !important;
+  color: #000 !important;
+}
+
+body.neobrutalism::after {
+  content: "NEO";
+  position: fixed;
+  bottom: 6px;
+  right: 6px;
+  background: #FF3B3B;
+  color: #FFF;
+  font-weight: 900;
+  font-size: 9px;
+  padding: 2px 6px;
+  border: 3px solid #000;
+  box-shadow: 3px 3px 0px #000;
+  z-index: 99999;
+  pointer-events: none;
+  letter-spacing: 1px;
+  border-radius: 2px;
+}

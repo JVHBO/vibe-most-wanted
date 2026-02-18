@@ -867,6 +867,42 @@ export const getCardImagesOnly = query({
   },
 });
 
+export const getHighRarityCards = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = Math.min(args.limit || 7, 20);
+
+    // Try Mythic first, then Legendary, then Epic
+    const rarities = ['Mythic', 'Legendary', 'Epic'];
+    const results: Array<{ _id: string; fid: number; cardImageUrl: string; rarity: string }> = [];
+
+    for (const rarity of rarities) {
+      if (results.length >= limit) break;
+      const cards = await ctx.db
+        .query("farcasterCards")
+        .withIndex("by_rarity", q => q.eq("rarity", rarity))
+        .filter(q => q.neq(q.field("cardImageUrl"), undefined))
+        .take(limit * 3);
+
+      for (const card of cards) {
+        if (results.length >= limit) break;
+        if (card.cardImageUrl) {
+          results.push({
+            _id: card._id,
+            fid: card.fid,
+            cardImageUrl: card.cardImageUrl,
+            rarity: card.rarity || 'Common',
+          });
+        }
+      }
+    }
+
+    return results;
+  },
+});
+
 /**
  * Reimport a Farcaster card from backup/blockchain data
  * Used to restore accidentally deleted cards
