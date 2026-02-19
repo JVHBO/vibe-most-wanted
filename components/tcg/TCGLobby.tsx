@@ -457,7 +457,8 @@ export function TCGLobby({
                       {/* PvE Button */}
                       <button
                         onClick={onStartPvE}
-                        className="w-full px-4 py-3 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 hover:border-green-400 rounded-lg text-green-400 font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
+                        className="w-full px-4 py-3 bg-green-500/20 hover:bg-green-500/30 rounded-lg text-green-400 font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
+                        style={{ border: '3px solid #22C55E', boxShadow: '3px 3px 0px #000' }}
                       >
                         <span>🤖</span>
                         {t('tcgBattleCpu')} {dailyBattles < REWARDED_BATTLES_PER_DAY ? `(+${BATTLE_AURA_REWARD} AURA)` : ""}
@@ -488,7 +489,8 @@ export function TCGLobby({
                           <button
                             onClick={handleFindMatch}
                             disabled={!hasDeck}
-                            className="w-full px-4 py-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 hover:border-amber-400 rounded-lg text-amber-400 font-bold text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-2"
+                            className="w-full px-4 py-3 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg text-amber-400 font-bold text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-2"
+                            style={{ border: '3px solid #F59E0B', boxShadow: '3px 3px 0px #000' }}
                           >
                             <span>⚔️</span>
                             Find Match
@@ -500,7 +502,8 @@ export function TCGLobby({
                           <button
                             onClick={handleCreateMatch}
                             disabled={!hasDeck}
-                            className="w-full px-3 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 hover:border-purple-400 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="w-full px-3 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            style={{ border: '3px solid #A855F7', boxShadow: '3px 3px 0px #000' }}
                           >
                             Create Room
                           </button>
@@ -517,7 +520,8 @@ export function TCGLobby({
                             <button
                               onClick={() => roomIdInput.length >= 4 && handleJoinMatch(roomIdInput)}
                               disabled={!hasDeck || roomIdInput.length < 4}
-                              className="px-4 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 hover:border-purple-400 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                              style={{ border: '3px solid #EF4444', boxShadow: '3px 3px 0px #000' }}
                             >
                               Join
                             </button>
@@ -526,23 +530,6 @@ export function TCGLobby({
                       </div>
                     </div>
 
-                    {/* VibeFID Auto-Select Combo Toggle */}
-                    <div className="p-3 border-t border-vintage-gold/10 flex items-center justify-between">
-                      <div>
-                        <span className="text-xs text-vintage-burnt-gold">VibeFID Auto-Combo</span>
-                        <p className="text-[9px] text-vintage-burnt-gold/50">Auto-pick best combo</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const current = localStorage.getItem("tcg_auto_select_combo") === "true";
-                          localStorage.setItem("tcg_auto_select_combo", (!current).toString());
-                          onAutoSelectComboChange(!current);
-                        }}
-                        className={`w-10 h-5 rounded-full transition-colors ${autoSelectCombo ? "bg-cyan-500" : "bg-gray-600"} relative`}
-                      >
-                        <span className={`absolute top-0.5 ${autoSelectCombo ? "right-0.5" : "left-0.5"} w-4 h-4 bg-white rounded-full transition-all shadow`} />
-                      </button>
-                    </div>
                   </div>
                 </>
               )}
