@@ -130,7 +130,7 @@ export function SpectatorBetFeedback({
 
       {/* Bet History Panel - Always open at top right */}
       <div className="fixed top-14 right-2 z-[200]">
-        <div className="bg-vintage-charcoal/95 backdrop-blur-md border border-vintage-gold/50 rounded-lg p-2 shadow-xl min-w-[120px] text-[10px]">
+        <div className="arena-bets-panel bg-vintage-charcoal/95 backdrop-blur-md border border-vintage-gold/50 rounded-lg p-2 shadow-xl min-w-[120px] text-[10px]">
           {/* Header */}
           <div className="w-full flex items-center justify-between mb-1.5 pb-1 border-b border-vintage-gold/30">
             <span className="text-vintage-gold font-bold">Bets</span>

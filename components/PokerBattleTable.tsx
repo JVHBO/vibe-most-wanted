@@ -2777,7 +2777,7 @@ export function PokerBattleTable({
             {/* Game info header - Simplified for Mecha Arena (CPU vs CPU), full for PvP */}
             {room?.isCpuVsCpu ? (
               /* Mecha Arena: Only show round info */
-              <div className="bg-vintage-charcoal border-b-2 border-vintage-gold/50 p-2 flex justify-center">
+              <div className="arena-round-header bg-vintage-charcoal border-b-2 border-vintage-gold/50 p-2 flex justify-center">
                 <div className="text-vintage-gold font-display font-bold text-sm">
                   Round {currentRound}/7 | {playerScore}-{opponentScore}
                 </div>
@@ -3410,7 +3410,7 @@ export function PokerBattleTable({
             {/* Chat Toggle Button */}
             <button
               onClick={() => setIsChatOpen(!isChatOpen)}
-              className={`fixed ${isInFarcaster ? 'bottom-4 right-4' : 'bottom-6 right-6'} z-[300] ${
+              className={`arena-chat-btn fixed ${isInFarcaster ? 'bottom-4 right-4' : 'bottom-6 right-6'} z-[300] ${
                 isChatOpen ? 'bg-vintage-gold' : 'bg-vintage-gold/80'
               } hover:bg-vintage-gold text-vintage-black rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center font-bold text-lg sm:text-xl shadow-2xl transition-all hover:scale-110 active:scale-95`}
               title="Toggle Chat"
@@ -3420,11 +3420,11 @@ export function PokerBattleTable({
 
             {/* Chat Panel */}
             {isChatOpen && (
-              <div className={`fixed ${isInFarcaster ? 'bottom-20 right-2 left-2' : 'bottom-24 right-6'} z-[250] bg-vintage-charcoal border-2 border-vintage-gold rounded-xl shadow-2xl ${
+              <div className={`arena-chat-panel fixed ${isInFarcaster ? 'bottom-20 right-2 left-2' : 'bottom-24 right-6'} z-[250] bg-vintage-charcoal border-2 border-vintage-gold rounded-xl shadow-2xl ${
                 isInFarcaster ? 'h-[250px]' : 'w-80 h-96'
               } flex flex-col`}>
                 {/* Chat Header */}
-                <div className="bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold p-2 rounded-t-lg">
+                <div className="arena-chat-header bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold p-2 rounded-t-lg">
                   <h3 className="font-display font-bold text-vintage-black text-center text-sm sm:text-base flex items-center justify-center gap-2">
                     <ChatIcon className="text-vintage-black" size={18} /> Match Chat
                   </h3>
@@ -3607,7 +3607,7 @@ export function PokerBattleTable({
         <>
           <button
             onClick={() => setIsHelpOpen(!isHelpOpen)}
-            className={`fixed ${isInFarcaster ? 'bottom-4 left-4' : 'bottom-6 left-6'} z-[300] ${
+            className={`arena-help-btn fixed ${isInFarcaster ? 'bottom-4 left-4' : 'bottom-6 left-6'} z-[300] ${
               isHelpOpen ? 'bg-vintage-gold' : 'bg-vintage-gold/80'
             } hover:bg-vintage-gold text-vintage-black rounded-full w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center font-bold text-lg sm:text-xl shadow-2xl transition-all hover:scale-110 active:scale-95`}
             title="Help"

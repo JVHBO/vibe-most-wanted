@@ -2689,3 +2689,154 @@ body.neobrutalism .arena-betting-overlay button:nth-child(3):hover {
   transform: translate(1.5px, 1.5px) !important;
   box-shadow: 1.5px 1.5px 0px #000 !important;
 }
+
+/* ── ARENA ROUND HEADER ── */
+body.neobrutalism .arena-round-header {
+  background: #1A1A1A !important;
+  background-color: #1A1A1A !important;
+  border-bottom: 3px solid #FFD400 !important;
+}
+body.neobrutalism .arena-round-header div {
+  color: #FFD400 !important;
+}
+
+/* ── ARENA BETS PANEL (SpectatorBetFeedback) ── */
+body.neobrutalism .arena-bets-panel {
+  background: #1A1A1A !important;
+  background-color: #1A1A1A !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  backdrop-filter: none !important;
+}
+/* Header row */
+body.neobrutalism .arena-bets-panel > div:first-child {
+  border-bottom-color: #555 !important;
+}
+body.neobrutalism .arena-bets-panel > div:first-child span {
+  color: #FFD400 !important;
+}
+/* Stats (wins/losses/net) */
+body.neobrutalism .arena-bets-panel .grid span {
+  font-weight: 700 !important;
+}
+/* Active bet rows - kill gold bg */
+body.neobrutalism .arena-bets-panel [class*="bg-vintage-gold"] {
+  background-color: #2A2A2A !important;
+  color: #CCC !important;
+}
+body.neobrutalism .arena-bets-panel [class*="text-vintage-gold"] {
+  color: #CCC !important;
+}
+
+/* ── ARENA CHAT BUTTON ── */
+body.neobrutalism .arena-chat-btn,
+body.neobrutalism button.arena-chat-btn {
+  background: #1A1A1A !important;
+  background-color: #1A1A1A !important;
+  border: 3px solid #FFD400 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  color: #FFD400 !important;
+}
+body.neobrutalism .arena-chat-btn:hover,
+body.neobrutalism button.arena-chat-btn:hover {
+  background: #2C2C2C !important;
+  background-color: #2C2C2C !important;
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #000 !important;
+}
+body.neobrutalism .arena-chat-btn svg,
+body.neobrutalism .arena-chat-btn * {
+  color: #FFD400 !important;
+}
+
+/* ── ARENA HELP BUTTON - dark with gold ring and gold ? ── */
+body.neobrutalism .arena-help-btn,
+body.neobrutalism button.arena-help-btn {
+  background: #1A1A1A !important;
+  background-color: #1A1A1A !important;
+  border: 3px solid #FFD400 !important;
+  box-shadow: 3px 3px 0px #000, 0 0 0 3px #FFD400 inset !important;
+  color: #FFD400 !important;
+}
+body.neobrutalism .arena-help-btn:hover,
+body.neobrutalism button.arena-help-btn:hover {
+  background: #2C2C2C !important;
+  background-color: #2C2C2C !important;
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #000, 0 0 0 3px #FFD400 inset !important;
+}
+body.neobrutalism .arena-help-btn svg,
+body.neobrutalism .arena-help-btn * {
+  color: #FFD400 !important;
+}
+
+/* ── ARENA CHAT PANEL ── */
+body.neobrutalism .arena-chat-panel {
+  background: #1A1A1A !important;
+  background-color: #1A1A1A !important;
+  border: 3px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  border-radius: 4px !important;
+}
+/* Chat header - gold strip */
+body.neobrutalism .arena-chat-header {
+  background: #FFD400 !important;
+  background-image: none !important;
+  border-bottom: 3px solid #000 !important;
+  border-radius: 0 !important;
+}
+body.neobrutalism .arena-chat-header * {
+  color: #000 !important;
+}
+/* Messages area */
+body.neobrutalism .arena-chat-panel [class*="bg-vintage-deep-black"] {
+  background-color: #111 !important;
+}
+/* Own message bubble - gold bg dark text */
+body.neobrutalism .arena-chat-panel [class*="bg-vintage-gold"]:not(.arena-chat-header) {
+  background-color: #FFD400 !important;
+  color: #000 !important;
+}
+/* Other message bubble - dark bg, white text */
+body.neobrutalism .arena-chat-panel [class*="bg-vintage-charcoal"] {
+  background-color: #2C2C2C !important;
+  color: #FFF !important;
+  border-color: #444 !important;
+}
+body.neobrutalism .arena-chat-panel [class*="bg-vintage-charcoal"] * {
+  color: #FFF !important;
+}
+/* Input area */
+body.neobrutalism .arena-chat-panel [class*="border-t"] {
+  background-color: #1A1A1A !important;
+  border-top-color: #333 !important;
+}
+body.neobrutalism .arena-chat-panel input {
+  background: #0D0D0D !important;
+  border: 2px solid #444 !important;
+  color: #FFF !important;
+  border-radius: 4px !important;
+}
+body.neobrutalism .arena-chat-panel input:focus {
+  border-color: #FFD400 !important;
+}
+body.neobrutalism .arena-chat-panel input::placeholder {
+  color: #666 !important;
+}
+/* Send button */
+body.neobrutalism .arena-chat-panel button[class*="bg-vintage-gold"] {
+  background: #FFD400 !important;
+  color: #000 !important;
+  border: 2px solid #000 !important;
+  box-shadow: 2px 2px 0px #000 !important;
+  border-radius: 4px !important;
+}
+/* Char count */
+body.neobrutalism .arena-chat-panel p[class*="text-vintage-gold"] {
+  color: #555 !important;
+}
+/* Username labels */
+body.neobrutalism .arena-chat-panel span[class*="text-vintage-gold"] {
+  color: #888 !important;
+}
