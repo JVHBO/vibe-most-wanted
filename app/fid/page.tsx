@@ -2218,12 +2218,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
           <button
             onClick={async () => {
               AudioManager.buttonClick();
-              const VBMS_MINIAPP_URL = 'https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast';
-              if (farcasterContext.isInMiniapp) {
-                try { await sdk.actions.openMiniApp({ url: VBMS_MINIAPP_URL }); } catch { window.open(VBMS_MINIAPP_URL, '_blank'); }
-              } else {
-                window.location.href = 'https://vibemostwanted.xyz';
-              }
+              window.location.href = '/';
             }}
             className="flex-1 min-w-0 px-1 py-2 flex flex-col items-center justify-center gap-0.5 rounded-lg font-semibold transition-all text-[10px] leading-tight bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30"
           >
