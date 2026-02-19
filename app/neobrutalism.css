@@ -447,7 +447,8 @@ body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] 
 /* Profile username chip → DARK with gold text */
 body.neobrutalism [class*="bg-vintage-charcoal/80"] [class*="bg-vintage-black"],
 body.neobrutalism .tour-profile-dropdown > button {
-  background-color: #2C2C2C !important;
+  background-color: #1A1A1A !important;
+  background: #1A1A1A !important;
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
 }
@@ -2381,12 +2382,13 @@ body.neobrutalism [class*="absolute bottom-0"] span[class*="text-vintage-burnt-g
 
 /* ===== FINAL OVERRIDES (highest priority — end of file) ===== */
 
-/* Profile button → BLUE (highest priority override) */
+/* Profile button → DARK (same as dropdown) */
 body.neobrutalism .tour-profile-btn,
 body.neobrutalism button.tour-profile-btn,
+body.neobrutalism .tour-profile-dropdown > button.tour-profile-btn,
 body.neobrutalism .tour-header .tour-profile-btn {
-  background: #0A4DB5 !important;
-  background-color: #0A4DB5 !important;
+  background: #1A1A1A !important;
+  background-color: #1A1A1A !important;
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
   border-radius: 4px !important;
