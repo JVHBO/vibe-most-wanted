@@ -80,7 +80,8 @@ export function HomeHeader({
                     if (soundEnabled) AudioManager.buttonClick();
                     setShowDropdown(prev => !prev);
                   }}
-                  className="tour-profile-btn flex items-center gap-1.5 text-white border border-vintage-gold/30 rounded-lg px-1 py-2 transition"
+                  className="tour-profile-btn flex items-center gap-1.5 text-white rounded-lg px-1 py-2 transition"
+                  style={{ background: '#0A4DB5', border: '3px solid #000', boxShadow: '3px 3px 0px #000' }}
                 >
                   {userProfile.twitter ? (
                     <img
@@ -167,7 +168,7 @@ export function HomeHeader({
           )}
           <div className="flex items-center gap-1">
             {userProfile && (
-              <div className="tour-dex-btn text-white border border-vintage-gold/30 rounded-lg px-1 py-2 flex items-center gap-1">
+              <div className="tour-dex-btn text-white rounded-lg px-1 py-2 flex items-center gap-1" style={{ background: '#6B1AB5', border: '3px solid #000', boxShadow: '3px 3px 0px #000' }}>
                 <span className="text-white text-sm font-bold">$</span>
                 <div className="flex flex-col">
                   <span className="text-white font-display font-bold text-[10px] leading-none">
