@@ -4157,59 +4157,19 @@ export default function TCGPage() {
                     <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-2 border-yellow-200 flex items-center justify-center shadow-lg">
                       <span className="text-[10px] font-bold text-black">{displayPower}</span>
                     </div>
-                    {/* Combo Indicator (top-right) - only if has combo - CLICKABLE */}
-                    {hasComboPartner && potentialCombo && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDetailCombo(potentialCombo); }}
-                        className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-2 border-yellow-200 flex items-center justify-center shadow-lg z-10 animate-bounce hover:scale-125 transition-transform cursor-pointer"
-                      >
-                        <span className="text-xs">{potentialCombo.emoji}</span>
-                      </button>
-                    )}
-                    {/* Info Button (top-right) - only if no combo indicator */}
-                    {(!hasComboPartner || !potentialCombo) && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDetailCard(card); }}
-                        className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 hover:bg-blue-500 rounded-full text-[9px] text-white font-bold flex items-center justify-center z-10 shadow-lg"
-                      >
-                        ?
-                      </button>
-                    )}
-                    {/* Info Button below combo indicator when combo exists */}
-                    {hasComboPartner && potentialCombo && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setDetailCard(card); }}
-                        className="absolute top-5 -right-1 w-4 h-4 bg-blue-600 hover:bg-blue-500 rounded-full text-[8px] text-white font-bold flex items-center justify-center z-10 shadow-lg"
-                      >
-                        ?
-                      </button>
-                    )}
-                    {/* Card Name */}
-                    <div className="absolute bottom-5 left-0 right-0 text-center">
-                      <span className="text-[7px] text-white font-bold drop-shadow-lg bg-black/50 px-1 rounded">{card.name}</span>
-                    </div>
                     {/* Sacrifice Button for Nothing cards (bottom-left) */}
                     {(card.type === "nothing" || card.type === "other") && (() => {
                       const sacrificeEnergy = Math.max(1, Math.floor(energyCost / 2));
                       return (
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleSacrificeNothingFromHand(idx);
-                          }}
+                          onClick={(e) => { e.stopPropagation(); handleSacrificeNothingFromHand(idx); }}
                           className="absolute -bottom-2 -left-2 w-7 h-7 bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-400 hover:to-purple-600 rounded-full text-[9px] text-white font-bold flex items-center justify-center z-10 shadow-lg border-2 border-purple-300 animate-pulse"
-                          title={`Sacrifice: +${sacrificeEnergy}⚡ + Draw`}
+                          title={`Sacrifice: +${sacrificeEnergy} energy + Draw`}
                         >
-                          +{sacrificeEnergy}⚡
+                          +{sacrificeEnergy}
                         </button>
                       );
                     })()}
-                    {/* Combo hint on hover */}
-                    {hasComboPartner && potentialCombo && selectedHandCard !== idx && (
-                      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">
-                        <span className="text-[8px] text-yellow-400 bg-black/80 px-1 rounded">{potentialCombo.name}</span>
-                      </div>
-                    )}
                   </div>
                 );
               })}
