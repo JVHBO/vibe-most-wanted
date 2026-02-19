@@ -81,7 +81,7 @@ export function HomeHeader({
                     setShowDropdown(prev => !prev);
                   }}
                   className="tour-profile-btn flex items-center gap-1.5 text-white rounded-lg px-1 py-2 transition"
-                  style={{ background: '#0E1A30', border: '3px solid #000', boxShadow: '3px 3px 0px #000' }}
+                  style={{ background: '#1D4ED8', border: '3px solid #000', boxShadow: '3px 3px 0px #000' }}
                 >
                   {userProfile.twitter ? (
                     <img
