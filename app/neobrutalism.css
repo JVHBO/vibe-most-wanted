@@ -372,11 +372,26 @@ body.neobrutalism .tour-header *:not([class*="absolute"]) {
   overflow: visible !important;
 }
 
-/* Profile chip button - no transform on hover */
-body.neobrutalism .tour-header button:hover,
-body.neobrutalism .tour-header button:active {
-  transform: none !important;
-  box-shadow: none !important;
+/* Profile chip button - neobrutalism bold style */
+body.neobrutalism .tour-profile-btn {
+  background: #1E1E1E !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  padding: 4px 8px !important;
+}
+body.neobrutalism .tour-profile-btn *,
+body.neobrutalism .tour-profile-btn span {
+  color: #FFD400 !important;
+}
+body.neobrutalism .tour-profile-btn:hover {
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0px #000 !important;
+  background: #2C2C2C !important;
+}
+body.neobrutalism .tour-profile-btn:active {
+  transform: translate(3px, 3px) !important;
+  box-shadow: 0px 0px 0px #000 !important;
 }
 
 /* Profile dropdown menu → DARK with white text */
@@ -918,18 +933,19 @@ body.neobrutalism .tour-dex-dropdown > div[style*="z-index"] a:hover * {
   color: #000 !important;
 }
 
-/* DEX/Balance chip → DARK with white text */
+/* DEX/Balance chip → DARK with gold text, bold border */
 body.neobrutalism .tour-dex-btn,
 body.neobrutalism a.tour-dex-btn,
 body.neobrutalism .tour-dex-btn[class*="bg-vintage-black"] {
-  background-color: #2C2C2C !important;
+  background-color: #1E1E1E !important;
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
 }
 body.neobrutalism .tour-dex-btn *,
 body.neobrutalism .tour-dex-btn span,
 body.neobrutalism .tour-dex-btn [class*="text-"] {
-  color: #FFF !important;
+  color: #FFD400 !important;
   font-weight: 800 !important;
 }
 /* Bonding progress bar → restore colors */

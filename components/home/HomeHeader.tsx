@@ -71,7 +71,7 @@ export function HomeHeader({
             {userProfile ? (
               <div
                 ref={dropdownRef}
-                className="relative"
+                className="tour-profile-dropdown relative"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
               >
@@ -80,7 +80,7 @@ export function HomeHeader({
                     if (soundEnabled) AudioManager.buttonClick();
                     setShowDropdown(prev => !prev);
                   }}
-                  className="flex items-center gap-1.5 text-white border border-vintage-gold/30 rounded-lg px-1 py-2 transition"
+                  className="tour-profile-btn flex items-center gap-1.5 text-white border border-vintage-gold/30 rounded-lg px-1 py-2 transition"
                 >
                   {userProfile.twitter ? (
                     <img
