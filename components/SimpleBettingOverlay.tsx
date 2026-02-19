@@ -151,8 +151,8 @@ export function SimpleBettingOverlay({
   if (existingBet) {
     const displayOdds = getExistingBetOdds();
     return (
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] bg-vintage-gold/80 backdrop-blur-sm border border-vintage-gold rounded-lg px-2 py-1">
-        <p className="text-vintage-black text-[10px] font-bold text-center">
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] rounded-lg px-2 py-1" style={{ background: '#111', border: '2px solid #FFD400', boxShadow: '2px 2px 0px #000' }}>
+        <p className="text-[10px] font-bold text-center" style={{ color: '#FFD400' }}>
           BET: {existingBet.amount}c on {getBetDisplayName(existingBet.betOn)} (+{Math.floor(existingBet.amount * displayOdds)}c)
         </p>
       </div>
