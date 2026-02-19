@@ -16,85 +16,79 @@ interface GameGridProps {
   disabled?: boolean;
   onSelect: (mode: GameMode) => void;
   userAddress?: string; // For conditional TCG access
+  onSpin?: () => void; // SPIN roulette callback
 }
 
-// SVG Icons
-const DiamondIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2L2 12l10 10 10-10L12 2z" />
+// SVG Icons - outline/sticker style
+
+// Lock/shield icon for Battle Auto
+const AutoIcon = () => (
+  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+    <path d="M7 11V7a5 5 0 0110 0v4" />
   </svg>
 );
 
-// Robot icon for Battle AI
-const RobotIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H6a2 2 0 01-2-2v-1H3a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2M7.5 13A2.5 2.5 0 005 15.5 2.5 2.5 0 007.5 18a2.5 2.5 0 002.5-2.5A2.5 2.5 0 007.5 13m9 0a2.5 2.5 0 00-2.5 2.5 2.5 2.5 0 002.5 2.5 2.5 2.5 0 002.5-2.5 2.5 2.5 0 00-2.5-2.5z" />
+// Sword/pen icon for Arena
+const ArenaIcon = () => (
+  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 19l7-7 3 3-7 7-3-3z" />
+    <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+    <path d="M2 2l7.586 7.586" />
+    <circle cx="11" cy="11" r="2" />
   </svg>
 );
 
-// Two players facing each other for PvP
-const VsPlayersIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M16 17v2H2v-2s0-4 7-4 7 4 7 4m-3.5-9.5A3.5 3.5 0 109 11a3.5 3.5 0 003.5-3.5m3.44 5.5A5.32 5.32 0 0118 17v2h4v-2s0-3.63-6.06-4M15 4a3.39 3.39 0 00-1.93.59 5 5 0 010 5.82A3.39 3.39 0 0015 11a3.5 3.5 0 000-7z" />
+// Skull icon for Raid Boss
+const BossIcon = () => (
+  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    {/* Cranio */}
+    <path d="M12 3 C7 3 4 7 4 11 C4 14 6 16 8 17 L8 20 L16 20 L16 17 C18 16 20 14 20 11 C20 7 17 3 12 3 Z" />
+    {/* Olhos vazios */}
+    <circle cx="9" cy="11" r="2" fill="currentColor" stroke="none" />
+    <circle cx="15" cy="11" r="2" fill="currentColor" stroke="none" />
+    {/* Dentes */}
+    <line x1="10" y1="20" x2="10" y2="17" />
+    <line x1="14" y1="20" x2="14" y2="17" />
   </svg>
 );
 
-// Mecha/Robot arm icon
-const MechaIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2a2 2 0 012 2 2 2 0 01-2 2 2 2 0 01-2-2 2 2 0 012-2m-1.5 5h3l.5 3h2.25L17.5 18H15v4h-2v-4h-2v4H9v-4H6.5l1.25-8H10l.5-3z" />
-  </svg>
-);
-
-// Skull icon for Raid
-const SkullIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M12 2C6.48 2 2 6.48 2 12c0 3.69 2.47 6.86 6 8.25V22h8v-1.75c3.53-1.39 6-4.56 6-8.25 0-5.52-4.48-10-10-10zm-2 15c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm4 0c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
-  </svg>
-);
-
-// Casino chip icon for Baccarat
-const CasinoIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none"/>
-    <circle cx="12" cy="12" r="6" fill="currentColor"/>
-    <text x="12" y="16" textAnchor="middle" fontSize="10" fill="white" fontWeight="bold">$</text>
+// Dice icon for Bet/Baccarat
+const BetIcon = () => (
+  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="2" width="20" height="20" rx="3" />
+    <circle cx="8" cy="8" r="1.5" fill="currentColor" />
+    <circle cx="16" cy="8" r="1.5" fill="currentColor" />
+    <circle cx="8" cy="16" r="1.5" fill="currentColor" />
+    <circle cx="16" cy="16" r="1.5" fill="currentColor" />
   </svg>
 );
 
 // Cards icon for TCG
 const CardsIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M21.47 4.35l-1.34-.56v9.03l2.43-5.86c.41-1.02-.06-2.19-1.09-2.61m-19.5 3.7L6.93 20a2.02 2.02 0 001.81 1.26c.26 0 .53-.05.79-.16l7.37-3.05c.75-.31 1.21-1.05 1.23-1.79.01-.26-.04-.55-.13-.81L13 3.5a1.954 1.954 0 00-1.81-1.25c-.26 0-.52.06-.77.15L3.06 5.45a1.994 1.994 0 00-1.09 2.6m16.15-3.8a2 2 0 00-2-2h-1.45l3.45 8.34" />
+  <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="4" width="14" height="18" rx="2" />
+    <path d="M8 2h10a2 2 0 012 2v14" />
   </svg>
 );
 
 // Game mode configurations with translation keys
 const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string; fullWidth?: boolean; comingSoon?: boolean; restricted?: boolean; isNew?: boolean }[] = [
   {
-    id: 'battle-ai',
-    icon: <RobotIcon />,
-    label: 'Battle Auto',
-    sublabel: '',
-    cards: 5,
-    iconColor: 'text-cyan-400',
-    accentColor: 'hover:border-cyan-400/50',
-  },
-  {
     id: 'mecha',
-    icon: <MechaIcon />,
-    label: 'Mecha Arena',
-    sublabel: 'homeBetVbms',
+    icon: <ArenaIcon />,
+    label: 'ARENA',
+    sublabel: '',
     cards: null,
     iconColor: 'text-green-400',
     accentColor: 'hover:border-green-400/50',
   },
   {
     id: 'raid',
-    icon: <SkullIcon />,
-    label: 'Raid Boss',
+    icon: <BossIcon />,
+    label: 'BOSS',
     sublabel: '',
-    cards: 'home5Plus1Cards',
+    cards: null,
     iconColor: 'text-red-400',
     accentColor: 'hover:border-red-400/50',
     isLink: true,
@@ -102,9 +96,9 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sub
   },
   {
     id: 'baccarat',
-    icon: <CasinoIcon />,
-    label: 'Baccarat',
-    sublabel: 'homeBetVbms',
+    icon: <BetIcon />,
+    label: 'BET',
+    sublabel: '',
     cards: null,
     iconColor: 'text-emerald-400',
     accentColor: 'hover:border-emerald-400/50',
@@ -114,18 +108,17 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sub
   {
     id: 'tcg',
     icon: <CardsIcon />,
-    label: 'Vibe Clash',
-    sublabel: 'TCG Mode',
-    cards: 15,
+    label: 'TCG',
+    sublabel: '',
+    cards: null,
     iconColor: 'text-orange-400',
     accentColor: 'hover:border-orange-400/50',
     isLink: true,
     href: '/tcg',
-    isNew: true, // Show NEW badge
   },
 ];
 
-export function GameGrid({ soundEnabled, disabled, onSelect, userAddress }: GameGridProps) {
+export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin }: GameGridProps) {
   const { t } = useLanguage();
 
   const handleClick = (mode: GameMode) => {
@@ -138,36 +131,24 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress }: Game
   const isAllowedTCG = userAddress && TCG_ALLOWED_WALLETS.includes(userAddress.toLowerCase());
 
   return (
-    <div className="grid grid-cols-2 gap-1.5 px-1">
+    <div className="grid grid-cols-2 gap-2 px-0">
       {gameModeConfigs.map((mode) => {
         // Show "SOON" for restricted modes if user doesn't have access
         const showAsSoon = mode.restricted && !isAllowedTCG;
         const buttonContent = (
           <>
-            <div className={`${mode.iconColor} scale-90`}>{mode.icon}</div>
-            <div className="flex flex-col items-center">
-              <span className="text-vintage-gold font-display font-bold text-[10px] leading-tight">
-                {mode.label}
-              </span>
-              {mode.sublabel && (
-                <span className="text-vintage-burnt-gold text-[8px] font-modern leading-tight">
-                  {t(mode.sublabel as any)}
-                </span>
-              )}
-              {mode.cards !== null && (
-                <span className="text-vintage-burnt-gold/70 text-[8px] font-modern">
-                  {typeof mode.cards === 'string' ? t(mode.cards as any) : `${mode.cards} ${t('gameCards')}`}
-                </span>
-              )}
-            </div>
+            <div className={`${mode.iconColor} scale-110`}>{mode.icon}</div>
+            <span className="text-vintage-gold font-display font-bold text-xs leading-tight tracking-wider uppercase">
+              {mode.label}
+            </span>
           </>
         );
 
         const isSoon = mode.comingSoon || showAsSoon;
         const isDisabled = disabled || isSoon;
         const buttonClasses = `
-          flex flex-col items-center justify-center gap-0.5
-          py-1.5 px-1 rounded-lg
+          flex flex-col items-center justify-center gap-1
+          py-4 px-3 rounded-lg
           bg-vintage-charcoal/80
           border border-vintage-gold/20
           ${isSoon ? '' : mode.accentColor}
@@ -192,6 +173,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress }: Game
               key={mode.id}
               href={mode.href}
               onClick={() => soundEnabled && AudioManager.buttonClick()}
+              onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
               className={buttonClasses}
             >
               {newBadge}
@@ -204,6 +186,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress }: Game
           <button
             key={mode.id}
             onClick={() => !isSoon && handleClick(mode.id)}
+            onMouseEnter={() => soundEnabled && !isSoon && AudioManager.buttonHover()}
             disabled={isDisabled}
             className={buttonClasses}
           >
@@ -217,6 +200,20 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress }: Game
           </button>
         );
       })}
+
+      {/* SPIN - full width button at bottom of grid */}
+      {onSpin && (
+        <button
+          onClick={() => {
+            if (soundEnabled) AudioManager.buttonClick();
+            onSpin();
+          }}
+          onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
+          className="tour-spin-btn col-span-2 flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-gradient-to-r from-vintage-gold to-yellow-500 border border-vintage-gold/20 font-display font-bold text-xs text-black hover:scale-[1.02] active:scale-[0.97] transition-all duration-200 shadow-gold"
+        >
+          SPIN
+        </button>
+      )}
     </div>
   );
 }

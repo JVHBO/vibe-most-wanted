@@ -79,6 +79,7 @@ export function CardsPreview({ cards, soundEnabled, loading = false, onViewAll }
         {/* View all button */}
         <button
           onClick={handleViewAll}
+          onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
           disabled={loading}
           className={`flex items-center gap-1 px-3 py-1.5 rounded-lg bg-vintage-gold/10 border border-vintage-gold/30 transition-all ${
             loading ? 'opacity-70' : 'hover:bg-vintage-gold/20 hover:border-vintage-gold/50'

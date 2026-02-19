@@ -2707,7 +2707,7 @@ export function PokerBattleTable({
 
             {/* Sound Panel - Always open on LEFT side */}
             <div className={`absolute left-2 z-20 ${isCPUMode ? 'top-2' : 'top-12 sm:top-14'}`}>
-              <div className="bg-vintage-charcoal/95 border border-vintage-gold/30 rounded-lg p-1.5 shadow-lg">
+              <div className="arena-sfx-panel bg-vintage-charcoal/95 border border-vintage-gold/30 rounded-lg p-1.5 shadow-lg">
                 <div className="text-vintage-gold font-bold text-[9px] mb-1 text-center">
                   SFX
                 </div>

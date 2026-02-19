@@ -12,7 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
-import { isMiniappMode } from "@/lib/utils/miniapp";
+import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
 
 export default function QuestsPage() {
   const router = useRouter();
@@ -108,6 +108,26 @@ export default function QuestsPage() {
   const [missions, setMissions] = useState<any[]>([]);
   const [isLoadingMissions, setIsLoadingMissions] = useState(true);
   const [isClaimingAll, setIsClaimingAll] = useState(false);
+  const [arbSupported, setArbSupported] = useState(false);
+
+  useEffect(() => {
+    if (!isMiniappMode()) { setArbSupported(true); return; }
+    const checkArb = async () => {
+      try {
+        const { sdk } = await import('@farcaster/miniapp-sdk');
+        const ctx = await sdk.context;
+        setArbSupported(isWarpcastClient(ctx?.client?.clientFid));
+      } catch { setArbSupported(false); }
+    };
+    const timer = setTimeout(checkArb, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleSwitchChain = async (chain: 'base' | 'arbitrum') => {
+    if (!address) return;
+    try { await setPreferredChainMutation({ address, chain }); }
+    catch (e) { console.error('Failed to switch chain:', e); }
+  };
 
   // All mission types (matching backend) - using translation keys
   const ALL_MISSION_TYPES = [
@@ -340,36 +360,41 @@ export default function QuestsPage() {
 
   return (
     <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-vintage-charcoal/50" />
+      <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
 
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-10 p-3">
-        <div className="flex items-center justify-between">
+      <div className="absolute top-0 left-0 right-0 z-20 bg-vintage-charcoal/90 border-b-2 border-vintage-gold/40 backdrop-blur-sm">
+        <div className="flex items-center justify-between px-3 py-2.5">
           <button
             onClick={() => router.push("/")}
-            className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-ice hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white border-2 border-black rounded text-xs font-bold uppercase tracking-wider"
+            style={{ boxShadow: "2px 2px 0px #000" }}
           >
-            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> {t('questsHome')}
+            ← {t('questsHome')}
           </button>
-
-          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider">{t('questsTitle')}</h1>
-
-          <div className="w-20" />
+          <h1 className="text-xl font-display font-bold text-vintage-gold tracking-wider">{t('questsTitle')}</h1>
+          {arbSupported ? (
+            <div className="flex items-center gap-1 text-xs">
+              <button
+                onClick={() => handleSwitchChain('base')}
+                className={`px-2 py-1 rounded font-bold border transition ${effectiveChain === 'base' ? 'bg-blue-600 text-white border-blue-700' : 'text-white/50 border-white/20 hover:text-white'}`}
+              >BASE</button>
+              <button
+                onClick={() => handleSwitchChain('arbitrum')}
+                className={`px-2 py-1 rounded font-bold border transition ${effectiveChain === 'arbitrum' ? 'bg-blue-400 text-black border-blue-500' : 'text-white/50 border-white/20 hover:text-white'}`}
+              >ARB</button>
+            </div>
+          ) : <div className="w-20" />}
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="absolute top-14 left-0 right-0 z-10 px-3 py-2">
-        <div className="flex gap-2 max-w-md mx-auto">
-          <button
-            className="flex-1 py-2 px-3 rounded-lg font-bold text-sm transition-all bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold"
-          >
+        {/* Tabs */}
+        <div className="flex border-t border-vintage-gold/20">
+          <button className="flex-1 py-2.5 text-sm font-bold text-vintage-gold border-b-2 border-vintage-gold bg-vintage-gold/10 border-r border-r-vintage-gold/20">
             {t('questsMissions')}
           </button>
           <button
             onClick={() => router.push("/quests/cast")}
-            className="flex-1 py-2 px-3 rounded-lg font-bold text-sm transition-all bg-vintage-charcoal/30 border border-vintage-gold/20 text-vintage-ice/70"
+            className="flex-1 py-2.5 text-sm font-bold text-vintage-ice/60 hover:text-vintage-ice transition-colors"
           >
             {t('questsWantedCasts')}
           </button>
@@ -377,11 +402,11 @@ export default function QuestsPage() {
       </div>
 
       {/* Main Content */}
-      <div className="absolute inset-0 pt-28 pb-4 overflow-hidden">
-        <div className="relative z-10 px-4 py-2 max-w-md mx-auto h-full flex flex-col">
+      <div className="absolute inset-0 pt-24 pb-4 overflow-y-auto">
+        <div className="relative z-10 px-3 py-2 max-w-md mx-auto space-y-3">
 
           {/* Missions */}
-          <div className="flex-1 overflow-y-auto space-y-3 max-h-[calc(100vh-180px)]">
+          <div className="space-y-3">
               {/* 🎁 BONUS QUESTS - Hide if all claimed */}
               {SOCIAL_QUESTS.filter(q => (q.type === 'notification' || q.type === 'miniapp') && getQuestStatus(q) !== 'claimed').length > 0 && (
               <div className="bg-gradient-to-b from-vintage-gold/30 to-vintage-charcoal/90 rounded-xl border-2 border-vintage-gold/50 p-3 shadow-lg">
@@ -455,16 +480,10 @@ export default function QuestsPage() {
               </div>
               )}
 
-              {/* Arbitrum gas warning */}
-              <div className="bg-orange-900/30 border border-orange-500/40 rounded-xl p-2 mb-2 flex items-center gap-2">
-                <span className="text-orange-400 text-lg">⛽</span>
-                <p className="text-orange-300/90 text-[10px]">Mission rewards require a small Arbitrum TX. Make sure you have ETH on Arbitrum for gas.</p>
-              </div>
-
               {/* Personal Missions (Welcome, VibeFID, etc) */}
-              <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-vintage-gold text-xs font-bold">{t('questsPersonalMissions')}</p>
+              <div className="bg-vintage-charcoal/80 border-2 border-vintage-gold/40 rounded-xl overflow-hidden" style={{ boxShadow: "3px 3px 0px rgba(0,0,0,0.5)" }}>
+                <div className="flex items-center justify-between px-3 py-2 border-b border-vintage-gold/20">
+                  <p className="text-vintage-gold text-sm font-bold">{t('questsPersonalMissions')}</p>
                   {missions.some(m => m.completed && !m.claimed) && (
                     <button
                       onClick={async () => {
@@ -473,10 +492,10 @@ export default function QuestsPage() {
                         try {
                           const chain = effectiveChain;
                           const result = await claimAllMissions({ playerAddress: address.toLowerCase(), chain });
-                          if (result?.totalReward > 0 ) {
+                          if (chain === "arbitrum" && result?.totalReward > 0) {
                             await validateOnArb(result.totalReward, ARB_CLAIM_TYPE.MISSION);
                           }
-                          await refreshMissions(); // 🚀 BANDWIDTH FIX: Refresh after claim
+                          await refreshMissions();
                         } catch (e) {
                           console.error(e);
                         } finally {
@@ -484,7 +503,8 @@ export default function QuestsPage() {
                         }
                       }}
                       disabled={isClaimingAll}
-                      className="relative px-2 py-1 rounded bg-vintage-gold text-black font-bold text-[10px]"
+                      className="relative px-3 py-1 bg-vintage-gold text-black font-bold text-xs rounded border-2 border-black"
+                      style={{ boxShadow: "2px 2px 0px #000" }}
                     >
                       <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
                       {isClaimingAll ? "..." : t('mission_claim_all')}
@@ -492,11 +512,11 @@ export default function QuestsPage() {
                   )}
                 </div>
                 {isLoadingMissions ? (
-                  <div className="flex items-center justify-center py-4">
+                  <div className="flex items-center justify-center py-6">
                     <div className="animate-spin w-5 h-5 border-2 border-vintage-gold border-t-transparent rounded-full" />
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="divide-y divide-vintage-gold/10">
                     {missions
                     .filter((m: any) => !m.claimed)
                     .sort((a: any, b: any) => {
@@ -512,69 +532,55 @@ export default function QuestsPage() {
                       return (
                         <div
                           key={mission._id}
-                          className={`p-2 rounded-lg border transition-all ${
-                            mission.claimed
-                              ? "bg-green-900/20 border-green-500/30 opacity-60"
-                              : mission.completed
-                              ? "bg-vintage-gold/10 border-vintage-gold/50"
-                              : "bg-vintage-black/30 border-vintage-gold/20 opacity-50"
+                          className={`flex items-center gap-3 px-3 py-2.5 transition-all ${
+                            mission.completed ? "bg-yellow-400/5" : "opacity-50"
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-vintage-ice text-xs font-medium truncate">{t(mission.titleKey)}</p>
-                              <p className="text-[10px] text-vintage-ice/50 truncate">{t(mission.descKey)}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              {mission.reward > 0 && (
-                                <span className="text-vintage-gold font-bold text-xs">
-                                  +{effectiveChain === "arbitrum" ? mission.reward * 2 : mission.reward}
-                                  {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
-                                </span>
-                              )}
-                              {mission.claimed ? (
-                                <span className="text-green-400 text-[10px]">{t('mission_done')}</span>
-                              ) : mission.completed && !isPlaceholder ? (
-                                <button
-                                  onClick={async () => {
-                                    if (!address) return;
-                                    setClaimingMission(mission._id);
-                                    try {
-                                      if (isVibeBadge) {
-                                        await claimVibeBadge({ playerAddress: address.toLowerCase() });
-                                        await refreshProfile();
-                                      } else {
-                                        const chain = effectiveChain;
-                                        await claimMission({
-                                          playerAddress: address.toLowerCase(),
-                                          missionId: mission._id,
-                                          chain,
-                                        });
-                                        if (mission.reward > 0) {
-                                          await validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
-                                        }
-                                      }
-                                      await refreshMissions();
-                                    } catch (e) {
-                                      console.error(e);
-                                    } finally {
-                                      setClaimingMission(null);
+                          {/* State indicator */}
+                          <div className={`w-1 self-stretch flex-shrink-0 ${
+                            mission.completed ? "bg-yellow-400" : "bg-white/10"
+                          }`} />
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-xs font-bold truncate ${mission.completed ? "text-vintage-ice" : "text-vintage-ice/50"}`}>
+                              {t(mission.titleKey)}
+                            </p>
+                            <p className="text-[10px] text-vintage-ice/40 truncate">{t(mission.descKey)}</p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {mission.reward > 0 && (
+                              <span className="text-vintage-gold font-bold text-xs">
+                                +{effectiveChain === "arbitrum" ? mission.reward * 2 : mission.reward}
+                                {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
+                              </span>
+                            )}
+                            {mission.completed && !isPlaceholder ? (
+                              <button
+                                onClick={async () => {
+                                  if (!address) return;
+                                  setClaimingMission(mission._id);
+                                  try {
+                                    if (isVibeBadge) {
+                                      await claimVibeBadge({ playerAddress: address.toLowerCase() });
+                                      await refreshProfile();
+                                    } else {
+                                      const chain = effectiveChain;
+                                      await claimMission({ playerAddress: address.toLowerCase(), missionId: mission._id, chain });
+                                      if (chain === "arbitrum" && mission.reward > 0) await validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
                                     }
-                                  }}
-                                  disabled={isClaiming}
-                                  className={`relative px-2 py-1 rounded font-bold text-[10px] ${
-                                    isVibeBadge
-                                      ? "bg-purple-500 text-white"
-                                      : "bg-vintage-gold text-black"
-                                  }`}
-                                >
-                                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
-                                  {isClaiming ? "..." : t('mission_claim')}
-                                </button>
-                              ) : (
-                                <span className="text-vintage-ice/30 text-[10px]">{t('mission_locked')}</span>
-                              )}
-                            </div>
+                                    await refreshMissions();
+                                  } catch (e) { console.error(e); }
+                                  finally { setClaimingMission(null); }
+                                }}
+                                disabled={isClaiming}
+                                className={`relative px-2.5 py-1 rounded border-2 border-black font-bold text-xs ${isVibeBadge ? "bg-purple-500 text-white" : "bg-vintage-gold text-black"}`}
+                                style={{ boxShadow: "2px 2px 0px #000" }}
+                              >
+                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                                {isClaiming ? "..." : t('mission_claim')}
+                              </button>
+                            ) : (
+                              <span className="text-vintage-ice/20 text-[10px]">{t('mission_locked')}</span>
+                            )}
                           </div>
                         </div>
                       );
@@ -584,8 +590,10 @@ export default function QuestsPage() {
               </div>
 
               {/* Social Quests (Follow & Join) */}
-              <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3">
-                <p className="text-vintage-gold text-xs font-bold mb-2">{t('questsSocialQuests')}</p>
+              <div className="bg-vintage-charcoal/80 border-2 border-vintage-gold/40 rounded-xl overflow-hidden" style={{ boxShadow: "3px 3px 0px rgba(0,0,0,0.5)" }}>
+                <div className="px-3 py-2 border-b border-vintage-gold/20">
+                  <p className="text-vintage-gold text-sm font-bold">{t('questsSocialQuests')}</p>
+                </div>
 
                 {/* 2x Bonus Banners */}
                 {(() => {
@@ -628,7 +636,7 @@ export default function QuestsPage() {
                     </>
                   );
                 })()}
-                <div className="space-y-2">
+                <div className="divide-y divide-vintage-gold/10">
                   {SOCIAL_QUESTS
                   .filter(q => q.type !== 'notification' && q.type !== 'miniapp' && getQuestStatus(q) !== 'claimed')
                   .sort((a, b) => {
@@ -644,61 +652,41 @@ export default function QuestsPage() {
                     const isClaimingSocial = claiming === quest.id;
 
                     return (
-                      <div
-                        key={quest.id}
-                        className={`p-2 rounded-lg border transition-all ${
-                          status === "claimed"
-                            ? "bg-green-900/20 border-green-500/30 opacity-60"
-                            : status === "completed"
-                            ? "bg-vintage-gold/10 border-vintage-gold/50"
-                            : "bg-vintage-black/30 border-vintage-gold/20"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                              quest.type === "channel"
-                                ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
-                                : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                            }`}>
-                              {quest.type === "channel" ? "#" : "@"}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-vintage-ice font-medium text-xs truncate">{quest.displayName}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-vintage-gold font-bold text-xs">
-                              +{effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward}
-                              {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
-                            </span>
-                            {status === "claimed" ? (
-                              <span className="text-green-400 text-[10px]">{t('questsDone')}</span>
-                            ) : status === "completed" ? (
-                              <button
-                                onClick={() => handleClaimSocial(quest)}
-                                disabled={isClaimingSocial}
-                                className="px-2 py-1 rounded bg-vintage-gold text-black font-bold text-[10px]"
-                              >
-                                {isClaimingSocial ? "..." : t('questsClaim')}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => verifyQuest(quest)}
-                                disabled={isVerifying}
-                                className="px-2 py-1 rounded bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold font-bold text-[10px]"
-                              >
-                                {isVerifying ? "..." : visitedQuests.has(quest.id) ? t('questsVerify') : t('questsGo')}
-                              </button>
-                            )}
-                          </div>
+                      <div key={quest.id} className={`flex items-center gap-3 px-3 py-2.5 transition-all ${status === "completed" ? "bg-yellow-400/5" : ""}`}>
+                        <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                          quest.type === "channel"
+                            ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
+                            : "bg-blue-500/20 text-blue-400 border border-blue-500/40"
+                        }`}>
+                          {quest.type === "channel" ? "#" : "@"}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-vintage-ice font-bold text-xs truncate">{quest.displayName}</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span className="text-vintage-gold font-bold text-xs">
+                            +{effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward}
+                            {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
+                          </span>
+                          {status === "completed" ? (
+                            <button onClick={() => handleClaimSocial(quest)} disabled={isClaimingSocial}
+                              className="px-2.5 py-1 bg-vintage-gold text-black font-bold text-xs rounded border-2 border-black"
+                              style={{ boxShadow: "2px 2px 0px #000" }}>
+                              {isClaimingSocial ? "..." : t('questsClaim')}
+                            </button>
+                          ) : (
+                            <button onClick={() => verifyQuest(quest)} disabled={isVerifying}
+                              className="px-2.5 py-1 bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold font-bold text-xs rounded">
+                              {isVerifying ? "..." : visitedQuests.has(quest.id) ? t('questsVerify') : t('questsGo')}
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
                   })}
                 </div>
                 {!userFid && (
-                  <p className="text-vintage-ice/50 text-[10px] text-center mt-2">{t('questsConnectFarcaster')}</p>
+                  <p className="text-vintage-ice/50 text-[10px] text-center px-3 py-2">{t('questsConnectFarcaster')}</p>
                 )}
               </div>
             </div>

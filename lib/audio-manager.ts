@@ -392,68 +392,100 @@ export const AudioManager = {
     // Throttle: 50ms cooldown to prevent spam
     if (!canPlaySound('buttonClick', 50)) return;
 
-    // 4 variations of button click sounds
+    // 4 juicy variations - two-tone "pop" for satisfying feel
     const variation = pickVariation('buttonClick', 4);
-    const frequencies = [580, 620, 550, 640];
-    const types: OscillatorType[] = ['sine', 'triangle', 'sine', 'triangle'];
+    if (variation === 0) {
+      await this.playTone(680, 0.06, 0.13, { type: 'triangle', randomize: true });
+      setTimeout(() => this.playTone(880, 0.04, 0.08, { type: 'sine' }), 30);
+    } else if (variation === 1) {
+      await this.playTone(720, 0.06, 0.12, { type: 'sine', randomize: true });
+      setTimeout(() => this.playTone(960, 0.04, 0.09, { type: 'triangle' }), 35);
+    } else if (variation === 2) {
+      await this.playTone(640, 0.07, 0.14, { type: 'triangle', randomize: true });
+      setTimeout(() => this.playTone(840, 0.04, 0.07, { type: 'sine' }), 25);
+    } else {
+      await this.playTone(760, 0.05, 0.11, { type: 'sine', randomize: true });
+      setTimeout(() => this.playTone(1000, 0.03, 0.08, { type: 'triangle' }), 30);
+    }
+    this.hapticFeedback('light');
+  },
+  async buttonHover() {
+    // Throttle: 100ms cooldown - subtle soft tick
+    if (!canPlaySound('buttonHover', 100)) return;
 
-    await this.playTone(frequencies[variation], 0.07, 0.1, {
-      type: types[variation],
+    const variation = pickVariation('buttonHover', 3);
+    const frequencies = [1200, 1350, 1100];
+    await this.playTone(frequencies[variation], 0.02, 0.04, {
+      type: 'sine',
       randomize: true
     });
   },
-  async buttonHover() {
-    // Throttle: 80ms cooldown
-    if (!canPlaySound('buttonHover', 80)) return;
-    await this.playTone(500, 0.03, 0.06, { randomize: true });
-  },
   async buttonSuccess() {
-    // Throttle: 200ms cooldown
+    // Throttle: 200ms cooldown - triumphant ascending 3-tone
     if (!canPlaySound('buttonSuccess', 200)) return;
 
     const variation = pickVariation('buttonSuccess', 3);
     if (variation === 0) {
-      await this.playTone(700, 0.08, 0.14, { harmonics: true, randomize: true });
-      setTimeout(() => this.playTone(920, 0.1, 0.14, { harmonics: true }), 90);
+      await this.playTone(600, 0.08, 0.16, { type: 'triangle', harmonics: true, randomize: true });
+      setTimeout(() => this.playTone(800, 0.08, 0.18, { type: 'triangle', harmonics: true }), 70);
+      setTimeout(() => this.playTone(1100, 0.1, 0.14, { type: 'sine', harmonics: true }), 140);
     } else if (variation === 1) {
-      await this.playTone(650, 0.07, 0.12, { type: 'triangle', randomize: true });
-      setTimeout(() => this.playTone(850, 0.09, 0.14, { type: 'triangle' }), 80);
-      setTimeout(() => this.playTone(1000, 0.07, 0.1, { type: 'sine' }), 150);
+      await this.playTone(550, 0.07, 0.14, { type: 'sine', randomize: true });
+      setTimeout(() => this.playTone(750, 0.08, 0.16, { type: 'triangle' }), 65);
+      setTimeout(() => this.playTone(1000, 0.1, 0.15, { type: 'sine', harmonics: true }), 130);
     } else {
-      await this.playTone(800, 0.06, 0.12, { randomize: true });
-      setTimeout(() => this.playTone(1000, 0.08, 0.14), 60);
+      await this.playTone(700, 0.06, 0.15, { type: 'triangle', randomize: true });
+      setTimeout(() => this.playTone(950, 0.08, 0.17, { type: 'sine', harmonics: true }), 60);
+      setTimeout(() => this.playTone(1200, 0.1, 0.13, { type: 'triangle' }), 120);
     }
+    this.hapticFeedback('medium');
   },
   async buttonError() {
-    // Throttle: 150ms cooldown
+    // Throttle: 150ms cooldown - buzzy descending
     if (!canPlaySound('buttonError', 150)) return;
 
     const variation = pickVariation('buttonError', 2);
     if (variation === 0) {
-      await this.playTone(280, 0.12, 0.18, { type: 'sawtooth', randomize: true });
-      setTimeout(() => this.playTone(220, 0.14, 0.2, { type: 'sawtooth' }), 110);
+      await this.playTone(350, 0.1, 0.2, { type: 'sawtooth', randomize: true });
+      setTimeout(() => this.playTone(250, 0.12, 0.22, { type: 'sawtooth' }), 80);
+      setTimeout(() => this.playTone(180, 0.08, 0.15, { type: 'sawtooth' }), 160);
     } else {
-      await this.playTone(320, 0.1, 0.16, { randomize: true });
-      setTimeout(() => this.playTone(200, 0.15, 0.18), 100);
+      await this.playTone(400, 0.08, 0.18, { type: 'square', randomize: true });
+      setTimeout(() => this.playTone(280, 0.1, 0.2, { type: 'sawtooth' }), 90);
     }
+    this.hapticFeedback('heavy');
   },
   async buttonNav() {
-    // Throttle: 60ms cooldown
+    // Throttle: 60ms cooldown - soft swoosh-like tick
     if (!canPlaySound('buttonNav', 60)) return;
 
     const variation = pickVariation('buttonNav', 3);
-    const frequencies = [530, 560, 520];
-    await this.playTone(frequencies[variation], 0.05, 0.08, { randomize: true });
+    if (variation === 0) {
+      await this.playTone(600, 0.04, 0.09, { type: 'triangle', randomize: true });
+      setTimeout(() => this.playTone(800, 0.03, 0.06, { type: 'sine' }), 25);
+    } else if (variation === 1) {
+      await this.playTone(650, 0.04, 0.08, { type: 'sine', randomize: true });
+      setTimeout(() => this.playTone(850, 0.03, 0.05, { type: 'triangle' }), 30);
+    } else {
+      await this.playTone(580, 0.05, 0.1, { type: 'triangle', randomize: true });
+      setTimeout(() => this.playTone(780, 0.03, 0.06, { type: 'sine' }), 20);
+    }
   },
   async toggleOn() {
+    // Ascending "boop" - satisfying on
     if (!canPlaySound('toggle', 150)) return;
-    await this.playTone(600, 0.07, 0.11, { randomize: true });
-    setTimeout(() => this.playTone(820, 0.08, 0.12, { type: 'triangle' }), 55);
+    await this.playTone(500, 0.06, 0.12, { type: 'triangle', randomize: true });
+    setTimeout(() => this.playTone(750, 0.06, 0.14, { type: 'sine' }), 45);
+    setTimeout(() => this.playTone(1000, 0.04, 0.08, { type: 'sine' }), 90);
+    this.hapticFeedback('light');
   },
   async toggleOff() {
+    // Descending "boop" - satisfying off
     if (!canPlaySound('toggle', 150)) return;
-    await this.playTone(780, 0.07, 0.11, { randomize: true });
-    setTimeout(() => this.playTone(580, 0.08, 0.12, { type: 'triangle' }), 55);
+    await this.playTone(900, 0.06, 0.12, { type: 'triangle', randomize: true });
+    setTimeout(() => this.playTone(650, 0.06, 0.14, { type: 'sine' }), 45);
+    setTimeout(() => this.playTone(450, 0.04, 0.08, { type: 'sine' }), 90);
+    this.hapticFeedback('light');
   },
   // Haptic feedback for mobile devices
   hapticFeedback(style: 'light' | 'medium' | 'heavy' = 'medium') {

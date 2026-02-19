@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from 'react';
 import { CardMedia } from '@/components/CardMedia';
 import { getCardUniqueId } from '@/lib/collections/index';
 import { AudioManager } from '@/lib/audio-manager';
 import Link from 'next/link';
+
+const CARDS_PER_PAGE = 12;
 
 interface CardNft {
   imageUrl?: string;
@@ -21,7 +24,17 @@ interface MyCardsModalProps {
 }
 
 export function MyCardsModal({ isOpen, onClose, nfts, soundEnabled }: MyCardsModalProps) {
+  const [page, setPage] = useState(0);
+
   if (!isOpen) return null;
+
+  const totalPages = Math.ceil(nfts.length / CARDS_PER_PAGE);
+  const pageCards = nfts.slice(page * CARDS_PER_PAGE, (page + 1) * CARDS_PER_PAGE);
+
+  const goTo = (p: number) => {
+    if (soundEnabled) AudioManager.buttonClick();
+    setPage(p);
+  };
 
   return (
     <div
@@ -51,7 +64,7 @@ export function MyCardsModal({ isOpen, onClose, nfts, soundEnabled }: MyCardsMod
         <div className="flex-1 overflow-y-auto p-3">
           {nfts.length > 0 ? (
             <div className="grid grid-cols-3 gap-2">
-              {nfts.map((nft) => (
+              {pageCards.map((nft) => (
                 <div
                   key={getCardUniqueId(nft)}
                   className={`aspect-[2/3] rounded-lg overflow-hidden border-2 ${
@@ -86,6 +99,43 @@ export function MyCardsModal({ isOpen, onClose, nfts, soundEnabled }: MyCardsMod
             </div>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex-shrink-0 p-3 border-t border-vintage-gold/30 flex items-center justify-between gap-2">
+            <button
+              onClick={() => goTo(page - 1)}
+              disabled={page === 0}
+              className="px-4 py-1.5 bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-bold disabled:opacity-30"
+            >
+              ←
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => goTo(i)}
+                  className={`w-7 h-7 rounded text-xs font-bold transition-all ${
+                    i === page
+                      ? 'bg-vintage-gold text-vintage-black'
+                      : 'bg-vintage-black text-vintage-gold border border-vintage-gold/30'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => goTo(page + 1)}
+              disabled={page === totalPages - 1}
+              className="px-4 py-1.5 bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-bold disabled:opacity-30"
+            >
+              →
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

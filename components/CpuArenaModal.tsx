@@ -290,36 +290,6 @@ export function CpuArenaModal({
               </div>
             </div>
 
-            {/* Daily Buff Banner */}
-            <div className="mx-4 mt-3 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-vintage-gold text-sm font-bold">
-                    +{BUFF_CONFIG.oddsBonus}x {buffedCollectionInfo?.name || buffedCollection}
-                  </p>
-                  <p className="text-vintage-ice/50 text-xs">
-                    {t('mechaResetsIn')} {String(buffCountdown.hours).padStart(2, '0')}:{String(buffCountdown.minutes).padStart(2, '0')}:{String(buffCountdown.seconds).padStart(2, '0')}
-                  </p>
-                </div>
-                {(() => {
-                  const collectionConfig = COLLECTIONS[buffedCollection as CollectionId];
-                  const marketUrl = collectionConfig?.marketplaceUrl;
-                  if (!marketUrl) return null;
-                  return (
-                    <button
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        await openMarketplace(marketUrl, sdk, isInFarcaster);
-                      }}
-                      className="px-3 py-1 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold/50 rounded-lg text-vintage-gold text-xs font-bold transition-all"
-                    >
-                      BUY
-                    </button>
-                  );
-                })()}
-              </div>
-            </div>
-
             {/* Available Rooms */}
             <div className="p-4">
               <div className="space-y-2">

@@ -110,7 +110,6 @@ export function GuidedTour({
   // Calculate tooltip position with viewport bounds checking
   const getTooltipStyle = (): React.CSSProperties => {
     if (!targetRect) {
-      // Center if no target
       return {
         position: 'fixed',
         top: '50%',
@@ -121,11 +120,10 @@ export function GuidedTour({
 
     const padding = step.highlightPadding || 12;
     const tooltipWidth = Math.min(320, window.innerWidth - 32);
-    const tooltipHeight = 280; // Approximate max height
-    const margin = 16;
-    const safeArea = 80; // Safe area for Farcaster miniapp bottom bar
+    const tooltipHeight = 280;
+    const margin = 12;
+    const safeArea = 16; // Tour is z-[300], above nav z-[100]
 
-    // Calculate horizontal center position
     const centerX = Math.max(
       margin,
       Math.min(
@@ -134,42 +132,26 @@ export function GuidedTour({
       )
     );
 
-    // Check available space
     const spaceBelow = window.innerHeight - targetRect.bottom - padding - margin - safeArea;
     const spaceAbove = targetRect.top - padding - margin;
+    const fitsBelow = spaceBelow >= tooltipHeight;
+    const fitsAbove = spaceAbove >= tooltipHeight;
 
-    // Smart positioning - prefer the side with more space
-    let preferredPosition = step.position;
+    // Screen-edge anchored positions (never overlap element)
+    const atTop = { position: 'fixed' as const, top: `${margin}px`, left: `${centerX}px`, maxWidth: `${tooltipWidth}px` };
+    const atBottom = { position: 'fixed' as const, top: `${window.innerHeight - tooltipHeight - safeArea}px`, left: `${centerX}px`, maxWidth: `${tooltipWidth}px` };
+    const adjBelow = { position: 'fixed' as const, top: `${targetRect.bottom + padding + margin}px`, left: `${centerX}px`, maxWidth: `${tooltipWidth}px` };
+    const adjAbove = { position: 'fixed' as const, top: `${Math.max(margin, targetRect.top - padding - margin - tooltipHeight)}px`, left: `${centerX}px`, maxWidth: `${tooltipWidth}px` };
 
-    // For bottom/top positions, check if there's enough space
-    if (preferredPosition === 'bottom' && spaceBelow < tooltipHeight && spaceAbove > spaceBelow) {
-      preferredPosition = 'top';
-    } else if (preferredPosition === 'top' && spaceAbove < tooltipHeight && spaceBelow > spaceAbove) {
-      preferredPosition = 'bottom';
-    }
-
-    switch (preferredPosition) {
-      case 'top': {
-        const topPos = Math.max(margin, targetRect.top - padding - margin - tooltipHeight);
-        return {
-          position: 'fixed',
-          top: `${topPos}px`,
-          left: `${centerX}px`,
-          maxWidth: `${tooltipWidth}px`,
-        };
-      }
-      case 'bottom': {
-        const bottomPos = Math.min(
-          targetRect.bottom + padding + margin,
-          window.innerHeight - tooltipHeight - safeArea
-        );
-        return {
-          position: 'fixed',
-          top: `${bottomPos}px`,
-          left: `${centerX}px`,
-          maxWidth: `${tooltipWidth}px`,
-        };
-      }
+    switch (step.position) {
+      case 'bottom':
+        if (fitsBelow) return adjBelow;
+        if (fitsAbove) return adjAbove;
+        return spaceAbove >= spaceBelow ? atTop : atBottom;
+      case 'top':
+        if (fitsAbove) return adjAbove;
+        if (fitsBelow) return adjBelow;
+        return spaceAbove >= spaceBelow ? atTop : atBottom;
       case 'left':
         return {
           position: 'fixed',

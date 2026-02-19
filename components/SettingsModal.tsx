@@ -616,15 +616,6 @@ export function SettingsModal({
               </div>
             )}
 
-            {/* Warning for miniapp in desktop browser */}
-            {isInMiniappBrowser && (
-              <div className="mt-3 p-3 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
-                <p className="text-sm text-yellow-300 font-modern flex items-center gap-2">
-                  <span className="text-lg">⚠️</span>
-                  <span>{t('musicDesktopWarning')}</span>
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Language Selector */}

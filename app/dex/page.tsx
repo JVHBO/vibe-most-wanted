@@ -932,10 +932,19 @@ export default function DexPage() {
   // Current language option
   const currentLangOption = languageOptions.find((l) => l.code === lang) || languageOptions[0];
 
+  const fmtVBMS = (v: string) => {
+    const n = parseFloat(v);
+    if (isNaN(n)) return "0";
+    if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    return n.toLocaleString();
+  };
+
   return (
-    <div className="min-h-screen bg-vintage-deep-black text-vintage-ice">
+    <div className="h-screen flex flex-col bg-vintage-deep-black text-vintage-ice overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-orange/20 border-b-2 border-vintage-gold/50 p-4">
+      <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-orange/20 border-b-2 border-vintage-gold/50 p-4 flex-shrink-0">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Link href="/" className="text-vintage-gold hover:text-vintage-orange transition">
             &larr; {t.back}
@@ -943,44 +952,29 @@ export default function DexPage() {
           <h1 className="text-2xl font-display font-bold text-vintage-gold">
             {t.title}
           </h1>
-          {/* Spacer for layout balance */}
           <div className="w-[60px]"></div>
         </div>
       </div>
 
-            <div className="max-w-lg mx-auto p-4">
-        {/* Market Cap & Bonding Progress - Compact */}
-        <div className="mb-3 bg-vintage-charcoal/50 rounded-xl p-3 border border-vintage-gold/20">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-vintage-burnt-gold text-xs">{t.marketCap}</span>
-            <span className="text-vintage-gold font-mono font-bold text-sm">{marketCap.isLoading ? "..." : marketCap.marketCapFormatted}</span>
-          </div>
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-vintage-burnt-gold text-xs">{t.ethPrice}</span>
-            <span className="text-vintage-gold font-mono font-bold text-sm">{bondingProgress.ethPrice ? "$" + bondingProgress.ethPrice.toLocaleString() : "..."}</span>
-          </div>
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-vintage-burnt-gold text-xs">{t.contract}</span>
-            <a href="https://basescan.org/token/0xb03439567cd22f278b21e1ffcdfb8e1696763827" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 font-mono text-xs underline">0xb034...3827</a>
-          </div>
-          {/* Bonding Progress Bar */}
-          <div className="mt-2">
-            <div className="flex items-center justify-between text-xs mb-1">
-              <span className="text-vintage-burnt-gold">{t.bondingCurve}</span>
-              <div className="flex items-center gap-1">
-                <span className="text-vintage-gold font-mono font-bold">{bondingProgress.ethBalance.toFixed(4)}</span>
-                <span className="text-vintage-ice/50">{t.ethTarget}</span>
-                <button onClick={() => setShowBondingInfo(true)} className="ml-1 w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-xs font-bold">?</button>
-              </div>
+      <div className="flex-1 overflow-y-auto">
+      <div className="max-w-lg mx-auto p-4 h-full flex flex-col">
+        {/* Bonding Progress Bar - Compact */}
+        <div className="mb-3">
+          <div className="flex items-center justify-between text-xs mb-1">
+            <span className="text-vintage-burnt-gold">{t.bondingCurve}</span>
+            <div className="flex items-center gap-1">
+              <span className="text-vintage-gold font-mono font-bold">{bondingProgress.ethBalance.toFixed(4)}</span>
+              <span className="text-vintage-ice/50">{t.ethTarget}</span>
+              <button onClick={() => setShowBondingInfo(true)} className="ml-1 w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 text-xs font-bold">?</button>
             </div>
-            <div className="h-2 bg-vintage-deep-black rounded-full overflow-hidden border border-vintage-gold/20">
-              <div
-                className="h-full bg-gradient-to-r from-vintage-gold via-yellow-400 to-green-400 transition-all duration-500"
-                style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }}
-              />
-            </div>
-            <div className="flex justify-end text-[10px] mt-0.5"><span className="text-vintage-ice/40">{bondingProgress.progress.toFixed(1)}%</span></div>
           </div>
+          <div className="h-2 bg-vintage-deep-black rounded-full overflow-hidden border border-vintage-gold/20">
+            <div
+              className="h-full bg-gradient-to-r from-vintage-gold via-yellow-400 to-green-400 transition-all duration-500"
+              style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }}
+            />
+          </div>
+          <div className="flex justify-end text-[10px] mt-0.5"><span className="text-vintage-ice/40">{bondingProgress.progress.toFixed(1)}%</span></div>
         </div>
 
         {/* Buy VBMS Packs Link - Compact */}
@@ -990,7 +984,7 @@ export default function DexPage() {
         </button>
 
         {/* Swap Card */}
-        <div className="bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold overflow-hidden">
+        <div className="flex-1 flex flex-col bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold overflow-hidden">
           {/* Mode Toggle */}
           <div className="flex border-b border-vintage-gold/30">
             <button
@@ -1019,147 +1013,84 @@ export default function DexPage() {
             </button>
           </div>
 
-          <div className="p-6 space-y-6">
+          <div className="flex-1 flex flex-col p-4 space-y-4">
             {mode === "buy" ? (
               <>
-                {/* Pack Selection for Buy */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-vintage-burnt-gold">{t.youBuy}</span>
-                    <span className="text-vintage-gold/60">
-                      {t.balance}: {parseFloat(ethBalance?.formatted || "0").toFixed(4)} ETH
+                {/* Pack counter row */}
+                <div className="flex items-center justify-between gap-3">
+                  <button
+                    onClick={() => setPackCount(Math.max(1, packCount - 1))}
+                    disabled={isLoading || packCount <= 1}
+                    className="w-10 h-10 rounded-lg bg-vintage-gold/20 text-vintage-gold text-2xl font-bold hover:bg-vintage-gold/30 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
+                  >-</button>
+                  <div className="flex-1 text-center">
+                    <span className="text-3xl text-vintage-ice font-mono font-bold">{packCount}</span>
+                    <span className="text-vintage-gold/70 text-sm ml-2">{t.packs}</span>
+                  </div>
+                  <button
+                    onClick={() => setPackCount(packCount + 1)}
+                    disabled={isLoading}
+                    className="w-10 h-10 rounded-lg bg-vintage-gold/20 text-vintage-gold text-2xl font-bold hover:bg-vintage-gold/30 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
+                  >+</button>
+                </div>
+
+                {/* Quick + price row */}
+                <div className="flex items-center gap-2">
+                  {[1, 2, 5, 10].map((n) => (
+                    <QuickButton key={n} label={`${n}`} onClick={() => setPackCount(n)} active={packCount === n} />
+                  ))}
+                  <div className="flex-1 text-right">
+                    <span className="text-vintage-gold font-mono font-bold text-sm">
+                      {priceLoading ? "..." : parseFloat(priceEth || "0").toFixed(6)} ETH
                     </span>
                   </div>
-                  <div className="bg-vintage-deep-black rounded-xl p-4 border border-vintage-gold/20">
-                    <div className="flex items-center justify-between gap-4">
-                      <button
-                        onClick={() => setPackCount(Math.max(1, packCount - 1))}
-                        disabled={isLoading || packCount <= 1}
-                        className="w-12 h-12 rounded-xl bg-vintage-gold/20 text-vintage-gold text-2xl font-bold hover:bg-vintage-gold/30 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                      >
-                        -
-                      </button>
-                      <div className="flex-1 text-center">
-                        <span className="text-4xl text-vintage-ice font-mono font-bold">
-                          {packCount}
-                        </span>
-                        <span className="text-vintage-gold ml-2">{t.packs}</span>
-                      </div>
-                      <button
-                        onClick={() => setPackCount(packCount + 1)}
-                        disabled={isLoading}
-                        className="w-12 h-12 rounded-xl bg-vintage-gold/20 text-vintage-gold text-2xl font-bold hover:bg-vintage-gold/30 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                      >
-                        +
-                      </button>
-                    </div>
-                    {/* Quick pack buttons */}
-                    <div className="flex gap-2 mt-4">
-                      {[1, 2, 5, 10].map((n) => (
-                        <QuickButton
-                          key={n}
-                          label={`${n}`}
-                          onClick={() => setPackCount(n)}
-                          active={packCount === n}
-                        />
-                      ))}
-                    </div>
-                  </div>
                 </div>
+                {!hasEnoughEth && isConnected && (
+                  <p className="text-red-400 text-xs text-right -mt-2">{t.insufficientEth}</p>
+                )}
 
-                {/* Cost display */}
-                <div className="bg-vintage-deep-black/50 rounded-xl p-4 border border-vintage-gold/10">
-                  <div className="flex justify-between items-center">
-                    <span className="text-vintage-burnt-gold text-sm">{t.youPay}:</span>
-                    <span className="text-vintage-gold text-xl font-mono font-bold">
-                      {priceLoading ? "..." : priceEth} ETH
-                    </span>
-                  </div>
-                  {!hasEnoughEth && isConnected && (
-                    <p className="text-red-400 text-xs mt-2 text-right">{t.insufficientEth}</p>
-                  )}
-                </div>
-
-                {/* Arrow */}
-                <div className="flex justify-center">
-                  <div className="bg-vintage-gold/20 rounded-full p-3 border border-vintage-gold/30">
-                    <svg className="w-6 h-6 text-vintage-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* Output Section */}
-                <div className="space-y-2">
-                  <span className="text-vintage-burnt-gold text-sm">{t.youReceive} (VBMS)</span>
-                  <div className="bg-vintage-deep-black rounded-xl p-4 border border-vintage-gold/20">
-                    <div className="flex items-center gap-4">
-                      <span className="flex-1 text-3xl text-vintage-gold font-mono">
-                        ~{estimatedVBMS.toLocaleString()}
-                      </span>
-                      <span className="text-vintage-gold font-bold">VBMS</span>
-                    </div>
-                    <p className="text-vintage-gold/40 text-xs mt-2">
-                      {packCount} {t.packCount} = ~{estimatedVBMS.toLocaleString()} VBMS
-                    </p>
-                  </div>
+                {/* Receive row */}
+                <div className="flex items-center justify-between bg-vintage-deep-black/50 rounded-xl px-4 py-3 border border-vintage-gold/10">
+                  <span className="text-vintage-burnt-gold text-sm">{t.youReceive}</span>
+                  <span className="text-vintage-gold text-xl font-mono font-bold">~{estimatedVBMS.toLocaleString()} VBMS</span>
                 </div>
               </>
             ) : (
               <>
-                {/* Sell Input */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-vintage-burnt-gold">{t.youSell}</span>
-                    <span className="text-vintage-gold/60">
-                      {t.balance}: {parseFloat(vbmsBalance).toLocaleString()} VBMS
-                    </span>
-                  </div>
-                  <div className="bg-vintage-deep-black rounded-xl p-4 border border-vintage-gold/20">
-                    <div className="flex items-center gap-4">
-                      <input
-                        type="number"
-                        value={sellAmount}
-                        onChange={(e) => setSellAmount(e.target.value)}
-                        placeholder="0"
-                        className="flex-1 bg-transparent text-3xl text-vintage-ice outline-none font-mono"
-                        disabled={isLoading}
-                      />
-                      <span className="text-vintage-gold font-bold">VBMS</span>
-                    </div>
-                    {/* Quick amounts */}
-                    <div className="flex gap-2 mt-3">
-                      <QuickButton label="100k" onClick={() => setSellAmount("100000")} />
-                      <QuickButton label="500k" onClick={() => setSellAmount("500000")} />
-                      <QuickButton label="1M" onClick={() => setSellAmount("1000000")} />
-                      <QuickButton label="MAX" onClick={() => setSellAmount(vbmsBalance)} />
-                    </div>
+                {/* Sell input row */}
+                <div className="bg-vintage-deep-black rounded-xl px-4 py-3 border border-vintage-gold/20">
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      value={sellAmount}
+                      onChange={(e) => setSellAmount(e.target.value)}
+                      placeholder="0"
+                      className="flex-1 min-w-0 bg-transparent text-3xl text-vintage-ice outline-none font-mono"
+                      disabled={isLoading}
+                    />
+                    <span className="text-vintage-gold font-bold">VBMS</span>
                   </div>
                 </div>
 
-                {/* Arrow */}
-                <div className="flex justify-center">
-                  <div className="bg-vintage-gold/20 rounded-full p-3 border border-vintage-gold/30">
-                    <svg className="w-6 h-6 text-vintage-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
+                {/* Quick amounts + balance */}
+                <div className="flex items-center gap-2">
+                  <QuickButton label="100k" onClick={() => setSellAmount("100000")} />
+                  <QuickButton label="500k" onClick={() => setSellAmount("500000")} />
+                  <QuickButton label="1M" onClick={() => setSellAmount("1000000")} />
+                  <QuickButton label="MAX" onClick={() => setSellAmount(vbmsBalance)} />
+                  <div className="flex-1 text-right">
+                    <span className="text-vintage-gold/60 text-xs">{fmtVBMS(vbmsBalance)} VBMS</span>
                   </div>
                 </div>
 
-                {/* Output Section */}
-                <div className="space-y-2">
-                  <span className="text-vintage-burnt-gold text-sm">{t.youReceive} (ETH)</span>
-                  <div className="bg-vintage-deep-black rounded-xl p-4 border border-vintage-gold/20">
-                    <div className="flex items-center gap-4">
-                      <span className="flex-1 text-3xl text-vintage-gold font-mono">
-                        {parseFloat(sellQuote.estimatedEth) > 0
-                          ? `~${parseFloat(sellQuote.estimatedEth).toFixed(6)}`
-                          : "0"}
-                      </span>
-                      <span className="text-vintage-gold font-bold">ETH</span>
-                    </div>
-                    <p className="text-vintage-gold/40 text-xs mt-2">{t.realQuote}</p>
-                  </div>
+                {/* Receive row */}
+                <div className="flex items-center justify-between bg-vintage-deep-black/50 rounded-xl px-4 py-3 border border-vintage-gold/10">
+                  <span className="text-vintage-burnt-gold text-sm">{t.youReceive}</span>
+                  <span className="text-vintage-gold text-xl font-mono font-bold">
+                    {parseFloat(sellQuote.estimatedEth) > 0
+                      ? `~${parseFloat(sellQuote.estimatedEth).toFixed(6)}`
+                      : "0"} ETH
+                  </span>
                 </div>
               </>
             )}
@@ -1196,6 +1127,8 @@ export default function DexPage() {
               </div>
             )}
 
+            <div className="flex-1" />
+
             {/* Swap Button */}
             {!isConnected ? (
               <button
@@ -1230,44 +1163,20 @@ export default function DexPage() {
           </div>
         </div>
 
-        {/* Fee Breakdown - Compact */}
-        <div className="mt-4 bg-yellow-500/10 rounded-lg border border-yellow-500/30 px-4 py-2">
-          <div className="flex items-center justify-center gap-4 text-xs">
-            <span className="text-green-400">{t.buyFee}</span>
-            <span className="text-vintage-gold/30">|</span>
-            <span className="text-red-400">{t.sellFee}</span>
-            <span className="text-vintage-gold/30">|</span>
-            <span className="text-yellow-400 font-bold">{t.totalFee}</span>
-          </div>
-        </div>
-
-        {/* Your Balances */}
-        {isConnected && (
-          <div className="mt-6 grid grid-cols-2 gap-4">
-            <div className="bg-vintage-charcoal/50 rounded-xl border border-vintage-gold/20 p-4 text-center">
-              <p className="text-vintage-burnt-gold text-sm">{t.ethBalance}</p>
-              <p className="text-vintage-gold text-xl font-bold font-mono">
-                {parseFloat(ethBalance?.formatted || "0").toFixed(4)}
-              </p>
-            </div>
-            <div className="bg-vintage-charcoal/50 rounded-xl border border-vintage-gold/20 p-4 text-center">
-              <p className="text-vintage-burnt-gold text-sm">{t.vbmsBalance}</p>
-              <p className="text-vintage-gold text-xl font-bold font-mono">
-                {parseFloat(vbmsBalance).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Zazza Credits - Compact */}
-        <div className="mt-4 text-center">
-          <p className="text-purple-300/60 text-xs">
+        {/* Fees + Zazza */}
+        <div className="mt-3 flex items-center justify-between text-xs px-1 flex-shrink-0">
+          <span className="text-vintage-ice/30">
+            <span className="text-green-400/60">{t.buyFee}</span>
+            <span className="text-vintage-ice/20 mx-1">|</span>
+            <span className="text-red-400/60">{t.sellFee}</span>
+          </span>
+          <p className="text-purple-300/50">
             {t.zazzaCredit}{" "}
-            <a href="https://farcaster.xyz/zazza" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 font-bold underline">@zazza</a>
-            {" "}-{" "}
-            <a href="https://farcaster.xyz/miniapps/Eq4-Pg-zw9fX/poorly-drawn-binders" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 underline">{t.viewMiniapp}</a>
+            <a href="https://farcaster.xyz/zazza" target="_blank" rel="noopener noreferrer" className="text-purple-400/70 hover:text-purple-300 font-bold underline">@zazza</a>
           </p>
         </div>
+
+      </div>
       </div>
 
       {/* Bonding Info Modal */}
@@ -1330,14 +1239,33 @@ export default function DexPage() {
               </div>
             </div>
 
-            {/* Bonding Curve Balance */}
-            <div className="bg-vintage-charcoal/50 rounded-lg p-3 mb-3">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="text-vintage-burnt-gold">Bonding Curve Balance</span>
+            {/* Market Stats */}
+            <div className="bg-vintage-charcoal/50 rounded-lg p-3 mb-3 space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-vintage-burnt-gold">{t.marketCap}</span>
+                <span className="text-vintage-gold font-mono font-bold">{marketCap.isLoading ? "..." : marketCap.marketCapFormatted}</span>
               </div>
-              <div className="flex items-center justify-center gap-2 py-2">
-                <span className="text-vintage-gold font-mono text-xl font-bold">{bondingProgress.ethBalance.toFixed(4)} ETH</span>
-                <span className="text-vintage-ice/50 text-sm">(~${bondingProgress.usdBalance.toFixed(0)})</span>
+              <div className="flex justify-between text-xs">
+                <span className="text-vintage-burnt-gold">{t.ethPrice}</span>
+                <span className="text-vintage-gold font-mono font-bold">{bondingProgress.ethPrice ? "$" + bondingProgress.ethPrice.toLocaleString() : "..."}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-vintage-burnt-gold">Bonding Curve Balance</span>
+                <span className="text-vintage-gold font-mono font-bold">{bondingProgress.ethBalance.toFixed(4)} ETH (~${bondingProgress.usdBalance.toFixed(0)})</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-vintage-burnt-gold">{t.contract}</span>
+                <a href="https://basescan.org/token/0xb03439567cd22f278b21e1ffcdfb8e1696763827" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 font-mono underline">0xb034...3827</a>
+              </div>
+            </div>
+
+            {/* Fee Breakdown */}
+            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 mb-3">
+              <p className="text-yellow-400 font-bold text-xs mb-1">Trading Fees</p>
+              <div className="flex justify-between text-xs">
+                <span className="text-green-400">{t.buyFee}</span>
+                <span className="text-red-400">{t.sellFee}</span>
+                <span className="text-yellow-400 font-bold">{t.totalFee}</span>
               </div>
             </div>
 

@@ -344,7 +344,7 @@ body.neobrutalism *::after {
   transition-duration: 0s !important;
   transition-delay: 0s !important;
 }
-body.neobrutalism *:not(.animate-ticker):not(.animate-spin) {
+body.neobrutalism *:not(.animate-ticker):not(.animate-spin):not(.animate-boss-hit):not(.animate-card-attack):not(.animate-damage-float) {
   animation-duration: 0s !important;
 }
 
@@ -450,7 +450,7 @@ body.neobrutalism [class*="bg-vintage-deep-black/50"] [class*="animate-pulse"] {
 }
 body.neobrutalism [class*="bg-vintage-deep-black"][class*="animate-ticker"] *,
 body.neobrutalism [class*="bg-vintage-deep-black"] .animate-ticker *,
-body.neobrutalism [class*="bg-vintage-deep-black"] button {
+body.neobrutalism [class*="bg-vintage-deep-black"] button:not([class*="raid-btn-"]) {
   color: #000 !important;
   border: none !important;
   box-shadow: none !important;
@@ -873,23 +873,6 @@ body.neobrutalism ::selection {
   color: #000 !important;
 }
 
-body.neobrutalism::after {
-  content: "NEO";
-  position: fixed;
-  bottom: 70px;
-  right: 6px;
-  background: #FF3B3B;
-  color: #FFF;
-  font-weight: 900;
-  font-size: 9px;
-  padding: 2px 6px;
-  border: 3px solid #000;
-  box-shadow: 3px 3px 0px #000;
-  z-index: 99999;
-  pointer-events: none;
-  letter-spacing: 1px;
-  border-radius: 2px;
-}
 
 /* ===================================================
    5. LATE OVERRIDES (high specificity, end of file)
@@ -2385,6 +2368,119 @@ body.neobrutalism .tour-dex-btn[class*="bg-vintage-black"] span {
   color: #FFD400 !important;
 }
 
+/* ===================================================
+   RAID PAGE - NEO BRUTALISM
+   =================================================== */
+
+/* ── RAID BUTTONS - base mixin ── */
+body.neobrutalism [class*="raid-btn-"] {
+  border: 4px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  transform: translate(0, 0) !important;
+}
+body.neobrutalism [class*="raid-btn-"]:hover {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 2px 2px 0px #000 !important;
+}
+body.neobrutalism [class*="raid-btn-"]:active {
+  transform: translate(4px, 4px) !important;
+  box-shadow: 0px 0px 0px #000 !important;
+}
+
+/* ── RAID TOP BUTTONS ── */
+body.neobrutalism .raid-btn-back {
+  background-color: #FF3B3B !important;
+  color: #fff !important;
+}
+body.neobrutalism .raid-btn-rank {
+  background-color: #9B5CFF !important;
+  color: #fff !important;
+}
+body.neobrutalism .raid-btn-help {
+  background-color: #FFD400 !important;
+  color: #000 !important;
+}
+
+/* ── RAID DECK BUTTONS ── */
+body.neobrutalism .raid-btn-refuel {
+  background-color: #00FF85 !important;
+  color: #000 !important;
+}
+body.neobrutalism .raid-btn-refuel:disabled {
+  background-color: #006633 !important;
+  color: #004422 !important;
+  box-shadow: 2px 2px 0px #000 !important;
+  transform: none !important;
+}
+body.neobrutalism .raid-btn-edit {
+  background-color: #00A6FF !important;
+  color: #000 !important;
+}
+body.neobrutalism .raid-btn-share {
+  background-color: #9B5CFF !important;
+  color: #fff !important;
+}
+body.neobrutalism .raid-btn-clear {
+  background-color: #FF3B3B !important;
+  color: #000 !important;
+}
+
+/* ── RAID HP BAR ── */
+body.neobrutalism .raid-hp-bar {
+  background-color: #1A1A1A !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+body.neobrutalism .raid-hp-fill {
+  background: #FFD400 !important;
+  background-image: none !important;
+}
+
+/* ── RAID DECK BAR ── */
+body.neobrutalism .raid-deck-bar {
+  background-color: transparent !important;
+  background-image: linear-gradient(to top, #000 0%, rgba(0,0,0,0.9) 60%, transparent 100%) !important;
+  border-top: none !important;
+  box-shadow: none !important;
+}
+
+/* Raid boss rotation dots - shrink border so dots stay dots */
+body.neobrutalism .raid-boss-dot {
+  border: 2px solid #000 !important;
+  box-shadow: 1px 1px 0px #000 !important;
+  border-radius: 50% !important;
+}
+
+/* Boss name banner */
+body.neobrutalism .raid-boss-name {
+  background-color: #000 !important;
+  border: 2px solid #FFD400 !important;
+  border-radius: 4px !important;
+  padding: 2px 8px !important;
+}
+
+/* Damage numbers - keep visible, bright */
+body.neobrutalism .animate-damage-float {
+  text-shadow: 2px 2px 0px #000 !important;
+  -webkit-text-stroke: 1px #000 !important;
+}
+
+/* Boss hit animation - allow filter */
+body.neobrutalism .animate-boss-hit {
+  animation: bossHit 0.4s ease-out !important;
+  animation-duration: 0.4s !important;
+}
+
+/* Card attack animation */
+body.neobrutalism .animate-card-attack {
+  animation: cardAttack 0.5s ease-in-out !important;
+  animation-duration: 0.5s !important;
+}
+
 /* FIX: gradient overlays using via-transparent must stay see-through (boss image, etc.) */
 body.neobrutalism [class*="via-transparent"] {
   background-color: transparent !important;
@@ -2395,4 +2491,156 @@ body.neobrutalism [class*="via-transparent"] {
 body.neobrutalism [class*="to-transparent"] {
   background-color: transparent !important;
   background-image: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0.9), transparent) !important;
+}
+
+/* ===================================================
+   RAID DECK PAGE - NEO BRUTALISM
+   =================================================== */
+
+/* Header bar → gold strip */
+body.neobrutalism .raid-deck-header {
+  background-color: #FFD400 !important;
+  border-bottom: 4px solid #000 !important;
+}
+body.neobrutalism .raid-deck-header h1 {
+  color: #000 !important;
+}
+
+/* Back button */
+body.neobrutalism .raid-deck-btn-back {
+  background-color: #FF3B3B !important;
+  color: #000 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  transform: translate(0, 0) !important;
+}
+body.neobrutalism .raid-deck-btn-back:hover {
+  transform: translate(1.5px, 1.5px) !important;
+  box-shadow: 1.5px 1.5px 0px #000 !important;
+}
+body.neobrutalism .raid-deck-btn-back:active {
+  transform: translate(3px, 3px) !important;
+  box-shadow: 0px 0px 0px #000 !important;
+}
+
+/* Confirm button (enabled) */
+body.neobrutalism .raid-deck-btn-confirm:not(:disabled) {
+  border: 4px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  border-radius: 4px !important;
+  color: #000 !important;
+  transform: translate(0, 0) !important;
+}
+body.neobrutalism .raid-deck-btn-confirm:not(:disabled):hover {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 2px 2px 0px #000 !important;
+}
+body.neobrutalism .raid-deck-btn-confirm:not(:disabled):active {
+  transform: translate(4px, 4px) !important;
+  box-shadow: 0px 0px 0px #000 !important;
+}
+
+/* Cancel button */
+body.neobrutalism .raid-deck-btn-cancel {
+  background-color: #333 !important;
+  color: #FFD400 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  transform: translate(0, 0) !important;
+}
+body.neobrutalism .raid-deck-btn-cancel:hover {
+  transform: translate(1.5px, 1.5px) !important;
+  box-shadow: 1.5px 1.5px 0px #000 !important;
+}
+body.neobrutalism .raid-deck-btn-cancel:active {
+  transform: translate(3px, 3px) !important;
+  box-shadow: 0px 0px 0px #000 !important;
+}
+
+/* ===================================================
+   MECHA ARENA - NEO BRUTALISM
+   =================================================== */
+
+/* SFX Panel */
+body.neobrutalism .arena-sfx-panel {
+  background-color: #1A1A1A !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+/* SFX buttons - each gets a distinct color */
+body.neobrutalism .arena-sfx-panel button:nth-child(1) { background-color: #FF3B3B !important; color: #000 !important; border: 2px solid #000 !important; border-radius: 2px !important; }
+body.neobrutalism .arena-sfx-panel button:nth-child(2) { background-color: #FF69B4 !important; color: #000 !important; border: 2px solid #000 !important; border-radius: 2px !important; }
+body.neobrutalism .arena-sfx-panel button:nth-child(3) { background-color: #9B5CFF !important; color: #fff !important; border: 2px solid #000 !important; border-radius: 2px !important; }
+body.neobrutalism .arena-sfx-panel button:nth-child(4) { background-color: #00A6FF !important; color: #000 !important; border: 2px solid #000 !important; border-radius: 2px !important; }
+body.neobrutalism .arena-sfx-panel button:nth-child(5) { background-color: #FF9900 !important; color: #000 !important; border: 2px solid #000 !important; border-radius: 2px !important; }
+body.neobrutalism .arena-sfx-panel button:nth-child(6) { background-color: #00FF85 !important; color: #000 !important; border: 2px solid #000 !important; border-radius: 2px !important; }
+body.neobrutalism .arena-sfx-panel button:nth-child(7) { background-color: #FFD400 !important; color: #000 !important; border: 2px solid #000 !important; border-radius: 2px !important; }
+
+/* SFX button text */
+body.neobrutalism .arena-sfx-panel button {
+  font-weight: 900 !important;
+  font-size: 7px !important;
+}
+
+/* Betting overlay - fix background */
+body.neobrutalism .arena-betting-overlay {
+  background-color: #1A1A1A !important;
+  background-image: none !important;
+  border: 3px solid #FFD400 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  border-radius: 4px !important;
+}
+
+/* Odds multiplier text */
+body.neobrutalism .arena-betting-overlay p[class*="font-bold"][class*="text-sm"] {
+  color: #FFD400 !important;
+  font-size: 1.25rem !important;
+}
+
+/* Player 1 bet button (left) */
+body.neobrutalism .arena-betting-overlay button:nth-child(1) {
+  background-color: #FF3B3B !important;
+  color: #000 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+}
+body.neobrutalism .arena-betting-overlay button:nth-child(1):hover {
+  transform: translate(1.5px, 1.5px) !important;
+  box-shadow: 1.5px 1.5px 0px #000 !important;
+}
+
+/* TIE bet button (center) */
+body.neobrutalism .arena-betting-overlay button:nth-child(2) {
+  background-color: #555 !important;
+  color: #fff !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+}
+body.neobrutalism .arena-betting-overlay button:nth-child(2):hover {
+  transform: translate(1.5px, 1.5px) !important;
+  box-shadow: 1.5px 1.5px 0px #000 !important;
+}
+
+/* Player 2 bet button (right) */
+body.neobrutalism .arena-betting-overlay button:nth-child(3) {
+  background-color: #00A6FF !important;
+  color: #000 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+}
+body.neobrutalism .arena-betting-overlay button:nth-child(3):hover {
+  transform: translate(1.5px, 1.5px) !important;
+  box-shadow: 1.5px 1.5px 0px #000 !important;
 }

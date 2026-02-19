@@ -591,25 +591,25 @@ export default function RaidPage() {
       )}
 
       {/* Top HUD - Compact header */}
-      <div className="absolute top-0 left-0 right-0 z-10 p-3 pointer-events-none">
-        <div className="flex items-center justify-between pointer-events-auto">
+      <div className="absolute top-0 left-0 right-0 z-10 px-3 pt-2 pb-1 pointer-events-none">
+        <div className="flex items-start gap-2 pointer-events-auto">
           {/* Left - Back */}
           <button
             onClick={() => router.push('/')}
-            className="px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/30 rounded font-bold text-xs transition uppercase tracking-wide"
+            className="raid-btn-back shrink-0 mt-0.5 px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/30 rounded font-bold text-xs transition uppercase tracking-wide"
           >
             ← Back
           </button>
 
-          {/* Center - Boss Name & Description */}
+          {/* Center - Boss Name + Description */}
           {currentBoss && (() => {
             const bossCard = currentBoss.collection ? getBossCard(currentBoss.collection as any, currentBoss.rarity as any) : null;
             return (
-              <div className="text-center max-w-xs">
-                <p className="text-vintage-gold/60 text-[9px] font-bold uppercase tracking-wider">
+              <div className="flex-1 min-w-0 text-center">
+                <p className="text-vintage-gold/60 text-[9px] font-bold uppercase tracking-wider leading-none mb-0.5">
                   {currentBoss.rarity}
                 </p>
-                <h1 className="text-base font-display font-bold text-vintage-gold drop-shadow-lg">
+                <h1 className="text-sm font-display font-bold text-vintage-gold drop-shadow-lg leading-tight line-clamp-2">
                   {currentBoss.name}
                 </h1>
                 {bossCard?.description && (
@@ -621,8 +621,8 @@ export default function RaidPage() {
             );
           })()}
 
-          {/* Right - Action buttons row */}
-          <div className="flex items-center gap-2">
+          {/* Right - Action buttons */}
+          <div className="shrink-0 flex items-center gap-1.5 mt-0.5">
             {unclaimedRewards && unclaimedRewards.totalUnclaimed > 0 && (
               <button
                 onClick={handleClaimRewards}
@@ -636,13 +636,13 @@ export default function RaidPage() {
             )}
             <button
               onClick={() => router.push('/raid/leaderboard?boss=current')}
-              className="px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/30 rounded font-bold text-xs transition uppercase tracking-wide"
+              className="raid-btn-rank px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/30 rounded font-bold text-xs transition uppercase tracking-wide"
             >
               Rank
             </button>
             <button
               onClick={() => setShowHelp(true)}
-              className="w-8 h-8 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold/60 border border-vintage-gold/20 rounded flex items-center justify-center font-bold text-xs transition"
+              className="raid-btn-help w-8 h-8 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold/60 border border-vintage-gold/20 rounded flex items-center justify-center font-bold text-xs transition"
             >
               ?
             </button>
@@ -650,15 +650,15 @@ export default function RaidPage() {
         </div>
       </div>
 
-      {/* HP Bar - Top below header */}
+      {/* HP Bar - right below header */}
       {currentBoss && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-md">
-          <div className="bg-black/50 backdrop-blur-sm rounded-xl p-2 border border-vintage-gold/20">
+        <div className="absolute top-[72px] left-1/2 -translate-x-1/2 z-10 w-[90%] max-w-md">
+          <div className="raid-hp-bar bg-black/50 backdrop-blur-sm rounded-xl p-2 border border-vintage-gold/20">
             <div className="flex items-center gap-2">
-              <span className="text-vintage-gold text-xs">💛</span>
+              <span className="text-vintage-gold text-xs">HP</span>
               <div className="flex-1 h-4 bg-black/60 rounded-full overflow-hidden border border-vintage-gold/30">
                 <div
-                  className={`h-full ${getHpBarColor(hpPercentage)} transition-all duration-1000 relative`}
+                  className={`raid-hp-fill h-full ${getHpBarColor(hpPercentage)} transition-all duration-1000 relative`}
                   style={{ width: `${hpPercentage}%` }}
                 >
                   <span className="absolute inset-0 flex items-center justify-center text-white font-bold text-[10px] drop-shadow-lg">
@@ -705,7 +705,7 @@ export default function RaidPage() {
                           if (isPast) router.push(`/raid/leaderboard?boss=${idx}`);
                           else if (isCurrent) router.push('/raid/leaderboard?boss=current');
                         }}
-                        className={`rounded-full transition-all ${
+                        className={`raid-boss-dot rounded-full transition-all ${
                           isCurrent
                             ? 'w-3 h-3 bg-vintage-gold shadow-lg shadow-vintage-gold/50'
                             : isPast
@@ -739,11 +739,11 @@ export default function RaidPage() {
         )}
 
         {/* Deck Cards */}
-        <div className="bg-gradient-to-t from-black via-black/90 to-transparent pt-8 pb-4 px-4">
+        <div className="raid-deck-bar bg-gradient-to-t from-black via-black/90 to-transparent pt-8 pb-4 px-4">
           {hasDeck ? (
             <div className="max-w-2xl mx-auto">
               {/* Deck Power & Actions */}
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 bg-black/70 rounded-lg px-2 py-1.5">
                 <span className="text-vintage-gold font-bold text-sm">
                   {playerDeck.deckPower.toLocaleString()} PWR
                 </span>
@@ -751,25 +751,25 @@ export default function RaidPage() {
                   <button
                     onClick={handleRefuelAll}
                     disabled={isRefueling}
-                    className="px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition disabled:opacity-50 uppercase tracking-wide"
+                    className="raid-btn-refuel px-3 py-1.5 bg-black/60 hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition disabled:opacity-50 uppercase tracking-wide"
                   >
                     {isRefueling ? '...' : 'Refuel'}
                   </button>
                   <button
                     onClick={() => router.push('/raid/deck')}
-                    className="px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition uppercase tracking-wide"
+                    className="raid-btn-edit px-3 py-1.5 bg-black/60 hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition uppercase tracking-wide"
                   >
                     Edit Deck
                   </button>
                   <button
                     onClick={handleShare}
-                    className="px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition uppercase tracking-wide"
+                    className="raid-btn-share px-3 py-1.5 bg-black/60 hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition uppercase tracking-wide"
                   >
                     Share
                   </button>
                   <button
                     onClick={() => setShowClearConfirm(true)}
-                    className="px-3 py-1.5 bg-transparent hover:bg-red-900/50 text-red-400 border border-red-500/50 rounded font-bold text-xs transition uppercase tracking-wide"
+                    className="raid-btn-clear px-3 py-1.5 bg-black/60 hover:bg-red-900/50 text-red-400 border border-red-500/50 rounded font-bold text-xs transition uppercase tracking-wide"
                   >
                     Clear
                   </button>

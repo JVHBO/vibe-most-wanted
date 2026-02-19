@@ -142,6 +142,7 @@ export default function VibeMailPage() {
     <VibeMailInboxWithClaim
       cardFid={userFid}
       username={myCard?.username}
+      userPfpUrl={myCard?.pfpUrl}
       onClose={() => {
         // Navigate back to home
         window.location.href = '/fid';

@@ -307,22 +307,22 @@ export default function RaidDeckPage() {
   }
 
   return (
-    <div className="min-h-screen bg-vintage-deep-black flex flex-col">
+    <div className="h-screen bg-vintage-deep-black flex flex-col overflow-hidden">
       <PriceTicker />
 
       {/* Header */}
-      <div className="flex-shrink-0 bg-vintage-charcoal border-b-2 border-vintage-gold/30 p-4">
+      <div className="raid-deck-header flex-shrink-0 bg-vintage-charcoal border-b-2 border-vintage-gold/30 px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <button
             onClick={handleCancel}
-            className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+            className="raid-deck-btn-back px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 rounded font-bold text-xs uppercase tracking-wider transition"
           >
-            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> Back
+            ← Back
           </button>
           <h1 className="text-lg md:text-2xl font-display font-bold text-vintage-gold whitespace-nowrap">
             {showVibeFIDStep ? 'VibeFID Card?' : 'Raid Deck'}
           </h1>
-          <div className="w-20" /> {/* Spacer */}
+          <div className="w-20" />
         </div>
       </div>
 
@@ -458,74 +458,40 @@ export default function RaidDeckPage() {
         ) : (
           /* Step 1: Regular Card Selection */
           <>
-            {/* VibeFID Benefits Box */}
+            {/* VibeFID Benefits - compact single row */}
             {(() => {
               const hasVibeFID = (availableCards || []).some(card => card.collection === 'vibefid');
               return (
-                <div className="mb-4 flex-shrink-0">
-                  <div className={`border rounded-lg p-3 ${hasVibeFID ? 'bg-purple-900/20 border-purple-500/50' : 'bg-vintage-gold/10 border-vintage-gold/50'}`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-sm font-bold text-vintage-gold">VibeFID - 6th Slot Special Card</h3>
-                      {!hasVibeFID && (
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (soundEnabled) AudioManager.buttonClick();
-                            await openMarketplace('/fid', sdk, true);
-                          }}
-                          className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black text-sm font-bold rounded-lg transition cursor-pointer"
-                        >
-                          Mint VibeFID
-                        </button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                      <div className="flex items-center gap-1">
-                        <span className="text-red-400">💥</span>
-                        <span className="text-purple-400">5x Card Damage!</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-yellow-400">👥</span>
-                        <span className="text-vintage-burnt-gold">+50% Team Buff</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-purple-400">⚡</span>
-                        <span className="text-vintage-burnt-gold">Infinite Energy</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-green-400">🎯</span>
-                        <span className="text-vintage-burnt-gold">30% Crit Chance</span>
-                      </div>
-                    </div>
+                <div className="mb-2 flex-shrink-0">
+                  <div className={`border rounded-lg px-3 py-2 flex items-center gap-2 flex-wrap ${hasVibeFID ? 'bg-purple-900/20 border-purple-500/50' : 'bg-vintage-gold/10 border-vintage-gold/50'}`}>
+                    <span className="text-xs font-bold text-vintage-gold shrink-0">VibeFID 6th Slot:</span>
+                    <span className="text-xs text-purple-400">5x DMG</span>
+                    <span className="text-xs text-vintage-burnt-gold">+50% Team</span>
+                    <span className="text-xs text-vintage-burnt-gold">Inf. Energy</span>
+                    <span className="text-xs text-vintage-burnt-gold">30% Crit</span>
                     {!hasVibeFID && (
-                      <p className="text-vintage-burnt-gold text-xs mt-2 italic">
-                        You don't have a VibeFID yet. Mint one to unlock these powerful benefits!
-                      </p>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (soundEnabled) AudioManager.buttonClick();
+                          await openMarketplace('/fid', sdk, true);
+                        }}
+                        className="ml-auto px-3 py-1 bg-vintage-gold text-vintage-black text-xs font-bold rounded transition cursor-pointer shrink-0"
+                      >
+                        Mint VibeFID
+                      </button>
                     )}
                   </div>
                 </div>
               );
             })()}
 
-            {/* Info */}
-            <div className="text-center mb-2 flex-shrink-0">
-              <p className="text-vintage-burnt-gold text-sm font-modern">
-                Select {DECK_SIZE} cards • Fee: {totalCost > 0 ? `${totalCost} VBMS` : 'Based on rarities'} • Selected {selectedCards.length}/{DECK_SIZE}
+            {/* Info + Controls Row */}
+            <div className="flex items-center gap-2 mb-2 flex-shrink-0">
+              <p className="text-vintage-burnt-gold text-xs font-modern flex-1 min-w-0 truncate">
+                Select {DECK_SIZE} cards • {totalCost > 0 ? `${totalCost} VBMS` : 'Based on rarities'} • {selectedCards.length}/{DECK_SIZE}
+                {currentBoss && <span className="text-purple-400 ml-2">VibeFID: +50%</span>}
               </p>
-              {currentBoss && (
-                <div className="text-xs font-modern mt-1 flex gap-3 justify-center">
-                  <span className="text-purple-400">VibeFID: +50%</span>
-                  <span className="text-blue-400">
-                    {currentBoss.collection === 'vibe' ? 'VBMS' :
-                     currentBoss.collection === 'gmvbrs' ? 'GM VBRS' :
-                     currentBoss.collection === 'vibefid' ? 'VibeFID' : currentBoss.collection}: 2x
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Controls Row */}
-            <div className="flex flex-wrap items-center justify-center gap-2 mb-4 flex-shrink-0">
               <select
                 value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
                 onChange={(e) => {
@@ -537,60 +503,49 @@ export default function RaidDeckPage() {
                   setCurrentPage(0);
                   if (soundEnabled) AudioManager.buttonClick();
                 }}
-                className="px-3 py-2 rounded-lg text-sm font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
+                className="shrink-0 px-2 py-1 rounded text-xs font-modern bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold focus:outline-none [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
               >
-                <option value="all">All Collections</option>
+                <option value="all">All</option>
                 {getEnabledCollections().map(col => (
                   <option key={col.id} value={col.id}>{col.displayName}</option>
                 ))}
               </select>
-
               <button
-                onClick={() => {
-                  setSortByPower(!sortByPower);
-                  setCurrentPage(0);
-                  if (soundEnabled) AudioManager.buttonClick();
-                }}
-                className={`px-3 py-2 rounded-lg font-bold text-sm transition-all ${
-                  sortByPower
-                    ? 'bg-vintage-gold text-vintage-black'
-                    : 'bg-vintage-gold/20 text-vintage-gold hover:bg-vintage-gold/30'
-                }`}
+                onClick={() => { setSortByPower(!sortByPower); setCurrentPage(0); if (soundEnabled) AudioManager.buttonClick(); }}
+                className={`shrink-0 px-2 py-1 rounded font-bold text-xs transition-all ${sortByPower ? 'bg-vintage-gold text-vintage-black' : 'bg-vintage-gold/20 text-vintage-gold'}`}
               >
-                {sortByPower ? '⚡ Sorted by Power' : '⚡ Sort by Power'}
+                {sortByPower ? 'PWR' : 'Sort'}
               </button>
             </div>
 
-            {/* Selected Deck Display */}
-            <div className="mb-4 bg-vintage-gold/20 border border-vintage-gold/50 rounded-lg p-3 flex-shrink-0">
-              <div className="grid grid-cols-5 gap-2">
+            {/* Selected Deck Display - compact */}
+            <div className="mb-2 bg-vintage-gold/20 border border-vintage-gold/50 rounded-lg px-2 py-1.5 flex-shrink-0">
+              <div className="flex gap-1.5 items-center">
                 {Array.from({ length: DECK_SIZE }).map((_, i) => (
                   <div
                     key={i}
-                    className="aspect-[2/3] border border-dashed border-vintage-gold/50 rounded-lg flex flex-col items-center justify-center overflow-hidden relative"
+                    className="flex-1 h-14 border border-dashed border-vintage-gold/50 rounded flex flex-col items-center justify-center overflow-hidden relative"
                   >
                     {selectedCards[i] ? (
                       <>
                         <CardMedia
                           src={selectedCards[i].imageUrl}
                           alt={`#${selectedCards[i].tokenId}`}
-                          className="w-full h-full object-cover rounded-lg"
+                          className="w-full h-full object-cover"
                         />
-                        <div className="absolute bottom-0 left-0 right-0 bg-black/80 py-1 text-vintage-gold text-xs font-bold text-center">
+                        <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-vintage-gold text-[9px] font-bold text-center leading-tight">
                           {selectedCards[i].power?.toLocaleString()}
                         </div>
                       </>
                     ) : (
-                      <span className="text-vintage-gold text-2xl">+</span>
+                      <span className="text-vintage-gold/50 text-xl leading-none">+</span>
                     )}
                   </div>
                 ))}
-              </div>
-              <div className="mt-2 text-center">
-                <p className="text-vintage-gold font-bold text-lg">{totalPower.toLocaleString()}</p>
-                {totalPower !== totalBasePower && (
-                  <p className="text-xs text-green-400">Base: {totalBasePower.toLocaleString()}</p>
-                )}
+                <div className="text-center pl-1 shrink-0">
+                  <p className="text-vintage-gold font-bold text-sm leading-tight">{totalPower.toLocaleString()}</p>
+                  <p className="text-vintage-gold/50 text-[9px]">PWR</p>
+                </div>
               </div>
             </div>
 
@@ -704,7 +659,7 @@ export default function RaidDeckPage() {
               <button
                 onClick={handleConfirm}
                 disabled={selectedCards.length !== DECK_SIZE || isSettingDeck}
-                className={`w-full px-4 py-3 rounded-lg font-display font-bold text-base transition-all uppercase ${
+                className={`raid-deck-btn-confirm w-full px-4 py-3 rounded-lg font-display font-bold text-base transition-all uppercase ${
                   selectedCards.length === DECK_SIZE && !isSettingDeck
                     ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold'
                     : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
@@ -722,13 +677,6 @@ export default function RaidDeckPage() {
                 )}
               </button>
 
-              <button
-                onClick={handleCancel}
-                disabled={isSettingDeck}
-                className="w-full px-4 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-modern font-semibold text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Cancel
-              </button>
             </div>
           </>
         )}

@@ -1476,7 +1476,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       <LanguageSelectionModal />
 
       {/* Floating Cards Background */}
-      <FloatingCardsBackground userFid={userFid} onMessageClick={() => window.location.href = '/fid/vibemail'} />
+      <FloatingCardsBackground />
 
       {/* Header Bar */}
       <div className="fixed top-0 left-0 right-0 z-[9999] bg-vintage-charcoal/95 backdrop-blur-sm border-b border-vintage-gold/30 px-3 py-2">
@@ -1636,7 +1636,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
         {/* Neynar Score Modal - EXACT COPY FROM CARD PAGE */}
         {showScoreModal && neynarScoreData && (
-          <div className="fixed inset-0 bg-black/80 flex items-start justify-center z-50 p-4 pt-16 pb-20 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[8000] p-4" style={{ paddingTop: '64px', paddingBottom: '72px' }}>
             <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 p-4 max-w-md w-full">
               <h2 className="text-xl font-bold text-vintage-gold mb-3 text-center">
                 {t.neynarScoreTitle}
@@ -2174,8 +2174,8 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       )}
 
       
-      {/* Floating VibeMail Envelope Button - hides when modal is open */}
-      {userFid && !showVibeMailInbox && (
+{/* Floating VibeMail Envelope Button - hides when modal is open */}
+      {userFid && !showVibeMailInbox && !showScoreModal && !showModal && !showAboutModal && (
         <button
           onClick={() => {
             AudioManager.buttonClick();
@@ -2202,6 +2202,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
         <VibeMailInboxWithClaim
           cardFid={userFid}
           username={myCard?.username || userData?.username}
+          userPfpUrl={myCard?.pfpUrl || userData?.pfp_url}
           onClose={() => setShowVibeMailInbox(false)}
           pendingVbms={vibeRewards?.pendingVbms || 0}
           address={address}

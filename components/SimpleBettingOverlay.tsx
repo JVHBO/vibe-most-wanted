@@ -160,7 +160,7 @@ export function SimpleBettingOverlay({
   }
 
   return (
-    <div className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] backdrop-blur-md rounded-lg p-2 shadow-xl w-72 sm:w-96 transition-all ${
+    <div className={`arena-betting-overlay fixed bottom-20 left-1/2 -translate-x-1/2 z-[200] backdrop-blur-md rounded-lg p-2 shadow-xl w-72 sm:w-96 transition-all ${
       isFinalRound && isAllIn
         ? 'bg-gradient-to-br from-vintage-charcoal to-vintage-black border-2 border-vintage-gold animate-pulse'
         : isFinalRound

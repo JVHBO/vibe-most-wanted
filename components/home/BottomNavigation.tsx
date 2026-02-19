@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AudioManager } from "@/lib/audio-manager";
@@ -49,6 +48,7 @@ export function BottomNavigation({
         {/* Home */}
         <button
           onClick={() => handleClick(() => {})}
+          onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
           className={`${baseButtonClass} ${activeTab === 'home' ? activeClass : inactiveClass}`}
         >
           {isInFarcaster ? (
@@ -67,6 +67,7 @@ export function BottomNavigation({
         {/* Claim */}
         <button
           onClick={() => handleClick(onClaimClick)}
+          onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
           className={`relative ${baseButtonClass} ${activeTab === 'claim' ? activeClass : inactiveClass}`}
         >
           {hasClaimableRewards && (
@@ -74,12 +75,12 @@ export function BottomNavigation({
           )}
           {isInFarcaster ? (
             <>
-              <Image src="/images/icons/inbox.svg" alt={t('navClaim')} width={20} height={20} className="w-5 h-5" />
+              <span className="text-xl leading-none">🎁</span>
               <span className="text-[9px] font-bold">{t('navClaim')}</span>
             </>
           ) : (
             <>
-              <Image src="/images/icons/inbox.svg" alt={t('navClaim')} width={20} height={20} className="w-5 h-5" />
+              <span className="text-lg">🎁</span>
               <span className="hidden sm:inline">{t('navClaim')}</span>
             </>
           )}
@@ -89,6 +90,7 @@ export function BottomNavigation({
         <Link
           href="/leaderboard"
           onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
+          onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
           className={`${baseButtonClass} ${activeTab === 'leaderboard' ? activeClass : inactiveClass}`}
         >
           {isInFarcaster ? (
@@ -108,33 +110,27 @@ export function BottomNavigation({
         <Link
           href="/shop"
           onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
+          onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
           className={`${baseButtonClass} ${activeTab === 'shop' ? activeClass : inactiveClass}`}
         >
           {isInFarcaster ? (
             <>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 0 1-8 0" />
-              </svg>
+              <span className="text-xl leading-none">🛒</span>
               <span className="text-[9px] font-bold">{t('navShop')}</span>
             </>
           ) : (
             <>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                <line x1="3" y1="6" x2="21" y2="6" />
-                <path d="M16 10a4 4 0 0 1-8 0" />
-              </svg>
+              <span className="text-lg">🛒</span>
               <span className="hidden sm:inline">{t('navShop')}</span>
             </>
           )}
         </Link>
 
-        {/* Quests */}
+        {/* Wanted */}
         <Link
-          href="/quests"
+          href="/quests/cast"
           onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
+          onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
           className={`relative ${baseButtonClass} ${activeTab === 'quests' ? activeClass : inactiveClass}`}
         >
           {hasClaimableMissions && (
@@ -142,13 +138,13 @@ export function BottomNavigation({
           )}
           {isInFarcaster ? (
             <>
-              <span className="text-xl leading-none">◈</span>
-              <span className="text-[9px] font-bold">{t('navQuests')}</span>
+              <span className="text-xl leading-none">★</span>
+              <span className="text-[9px] font-bold">Wanted</span>
             </>
           ) : (
             <>
-              <span className="text-lg">◈</span>
-              <span className="hidden sm:inline">{t('navQuests')}</span>
+              <span className="text-lg">★</span>
+              <span className="hidden sm:inline">Wanted</span>
             </>
           )}
         </Link>

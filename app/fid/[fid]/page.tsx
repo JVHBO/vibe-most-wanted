@@ -124,6 +124,7 @@ export default function FidCardPage() {
   // Share with language state
   const [showShareModal, setShowShareModal] = useState(false);
   const [showBackstoryModal, setShowBackstoryModal] = useState(false);
+  const [showTraitsPopup, setShowTraitsPopup] = useState(false);
   const [shareLanguage, setShareLanguage] = useState(lang);
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
 
@@ -768,6 +769,45 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                 />
                             </FoilCardEffect>
 
+              {/* Traits Button - Bottom Left Corner */}
+              <div className="absolute -bottom-2 -left-2 z-20">
+                <button
+                  onClick={() => { AudioManager.buttonClick(); setShowTraitsPopup(v => !v); }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20 transition-all"
+                  title="Card Traits"
+                >
+                  <span className="text-xs font-bold">T</span>
+                </button>
+                {showTraitsPopup && (
+                  <div className="absolute bottom-10 left-0 z-30 bg-[#1E1E1E] border-2 border-black shadow-[4px_4px_0px_#000] rounded-sm p-3 min-w-[160px] text-xs">
+                    <div className="flex items-center gap-2 mb-2 pb-2 border-b border-[#444]">
+                      <span className={`font-black text-lg ${card.color === 'red' ? 'text-red-500' : 'text-white'}`}>{card.rank}{card.suitSymbol}</span>
+                      <span className="text-vintage-ice font-bold">{card.rarity}</span>
+                    </div>
+                    {currentTraits?.foil && currentTraits.foil !== 'None' && (
+                      <div className="flex justify-between mb-1.5">
+                        <span className="text-gray-400">Foil</span>
+                        <span className={`font-bold ${currentTraits.foil === 'Prize' ? 'text-purple-400' : 'text-blue-400'}`}>{currentTraits.foil}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between mb-1.5">
+                      <span className="text-gray-400">Power</span>
+                      <span className="text-[#FFD400] font-black">⚡ {correctPower}</span>
+                    </div>
+                    <div className="flex justify-between mb-1.5">
+                      <span className="text-gray-400">Neynar</span>
+                      <span className="text-white font-bold">{card.neynarScore.toFixed(3)}</span>
+                    </div>
+                    {currentTraits?.wear && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Wear</span>
+                        <span className="text-white font-bold">{currentTraits.wear}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Vibe/VibeMail Button - Bottom Right Corner */}
               <button
                 onClick={async () => {
@@ -818,32 +858,6 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
               </button>
 
 </div>
-
-            {/* Compact Stats Row */}
-            <div className="w-full bg-vintage-charcoal/80 rounded-lg border border-vintage-gold/30 p-3">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-3">
-                  <span className={`font-bold text-lg ${card.color === 'red' ? 'text-red-500' : 'text-white'}`}>
-                    {card.rank}{card.suitSymbol}
-                  </span>
-                  <span className="text-vintage-ice">{card.rarity}</span>
-                  <span className={`${
-                    currentTraits?.foil === 'Prize' ? 'text-purple-400' :
-                    currentTraits?.foil === 'Standard' ? 'text-blue-400' :
-                    'text-vintage-ice/50'
-                  }`}>
-                    {currentTraits?.foil !== 'None' ? `${currentTraits?.foil} Foil` : ''}
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-vintage-gold font-bold">⚡ {correctPower}</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-vintage-gold/20">
-                <span className="text-vintage-burnt-gold">Neynar: {card.neynarScore.toFixed(3)}</span>
-                <span className="text-vintage-ice/50">{currentTraits?.wear}</span>
-              </div>
-            </div>
 
             {/* Action Buttons Row */}
             <div className="w-full flex gap-2">

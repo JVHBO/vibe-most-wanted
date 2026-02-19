@@ -12,6 +12,7 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { isMiniappMode } from '@/lib/utils/miniapp';
 import { MINT_PRICE } from '@/lib/contracts/VibeFIDABI';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { AudioManager } from '@/lib/audio-manager';
 
 // Marketplace URLs for each collection
 const COLLECTION_MARKETPLACE: Record<string, string> = {
@@ -69,7 +70,8 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
     <>
       {/* Subtle Button */}
       <button
-        onClick={() => setShowModal(true)}
+        onClick={() => { AudioManager.buttonClick(); setShowModal(true); }}
+        onMouseEnter={() => AudioManager.buttonHover()}
         className={`text-vintage-burnt-gold/70 hover:text-vintage-gold text-xs transition-all ${className}`}
       >
         {t('allCollections') || 'All Collections'} →
@@ -93,15 +95,16 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
             <div className="flex-1 overflow-y-auto space-y-2">
               {/* Nothing Pack - goes to /shop */}
               <button
-                onClick={() => { setShowModal(false); router.push('/shop'); }}
-                className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-gray-800/50 to-gray-700/50 hover:from-gray-700/50 hover:to-gray-600/50 rounded-xl transition-all group text-left border border-gray-500/50"
+                onClick={() => { AudioManager.buttonClick(); setShowModal(false); router.push('/shop'); }}
+                onMouseEnter={() => AudioManager.buttonHover()}
+                className="w-full flex items-center justify-between p-3 bg-black hover:bg-vintage-charcoal rounded-xl transition-all group text-left border border-vintage-gold/30"
               >
-                <span className="text-vintage-ice text-sm font-medium group-hover:text-vintage-gold truncate flex-1">
+                <span className="text-vintage-gold text-sm font-medium truncate flex-1">
                   🎁 Nothing Pack <span className="text-red-400 text-xs">(-50% power)</span>
                 </span>
                 <div className="flex items-center gap-2 ml-2">
                   <span className="text-yellow-400 text-sm font-bold">FREE</span>
-                  <span className="px-2 py-1 bg-gray-600 hover:bg-gray-500 text-white text-xs font-bold rounded-lg">
+                  <span className="px-2 py-1 bg-vintage-gold text-vintage-black text-xs font-bold rounded-lg">
                     Shop →
                   </span>
                 </div>
@@ -109,17 +112,18 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
 
               {/* VibeFID - Special Entry */}
               <button
-                onClick={handleVibeFidMint}
-                className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-purple-900/50 to-pink-900/50 hover:from-purple-800/50 hover:to-pink-800/50 rounded-xl transition-all group text-left border border-purple-500/50"
+                onClick={() => { AudioManager.buttonClick(); handleVibeFidMint(); }}
+                onMouseEnter={() => AudioManager.buttonHover()}
+                className="w-full flex items-center justify-between p-3 bg-black hover:bg-vintage-charcoal rounded-xl transition-all group text-left border border-vintage-gold/30"
               >
-                <span className="text-vintage-ice text-sm font-medium group-hover:text-vintage-gold truncate flex-1">
+                <span className="text-vintage-gold text-sm font-medium truncate flex-1">
                   🆔 VibeFID <span className="text-purple-400 text-xs">(5x power)</span>
                 </span>
                 <div className="flex items-center gap-2 ml-2">
                   <span className="text-green-400 text-sm font-bold">
                     ${vibeFidPriceUsd.toFixed(2)}
                   </span>
-                  <span className="px-2 py-1 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-lg">
+                  <span className="px-2 py-1 bg-vintage-gold text-vintage-black text-xs font-bold rounded-lg">
                     Mint
                   </span>
                 </div>
@@ -129,8 +133,9 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
               {prices.map((priceData) => (
                 <button
                   key={priceData.id}
-                  onClick={() => handleCollectionClick(priceData.id, priceData.displayName)}
-                  className="w-full flex items-center justify-between p-3 bg-vintage-black/50 hover:bg-vintage-gold/20 rounded-xl transition-all group text-left border border-vintage-gold/30"
+                  onClick={() => { AudioManager.buttonClick(); handleCollectionClick(priceData.id, priceData.displayName); }}
+                  onMouseEnter={() => AudioManager.buttonHover()}
+                  className="w-full flex items-center justify-between p-3 bg-black hover:bg-vintage-charcoal rounded-xl transition-all group text-left border border-vintage-gold/30"
                 >
                   <span className="text-vintage-ice text-sm font-medium group-hover:text-vintage-gold truncate flex-1">
                     {priceData.emoji} {priceData.displayName} {priceData.id === 'vibe' && <span className="text-green-400 text-xs">(2x power)</span>}
@@ -146,8 +151,9 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
             
 
             <button
-              onClick={() => setShowModal(false)}
-              className="mt-4 w-full py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold font-display font-bold rounded-xl transition-all"
+              onClick={() => { AudioManager.buttonClick(); setShowModal(false); }}
+              onMouseEnter={() => AudioManager.buttonHover()}
+              className="mt-4 w-full py-2 bg-black hover:bg-vintage-charcoal text-vintage-gold border border-vintage-gold/30 font-display font-bold rounded-xl transition-all"
             >
               {t('close') || 'Close'}
             </button>

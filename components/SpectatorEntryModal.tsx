@@ -69,10 +69,10 @@ export function SpectatorEntryModal({
 
     try {
       setStep("approving");
-      await approve(CONTRACTS.VBMSBetting as `0x${string}`, parseEther(amount));
+      await approve(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(amount));
 
       setStep("transferring");
-      const txHash = await transfer(CONTRACTS.VBMSBetting as `0x${string}`, parseEther(amount));
+      const txHash = await transfer(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(amount));
 
       console.log("✅ Deposited to betting:", txHash);
 

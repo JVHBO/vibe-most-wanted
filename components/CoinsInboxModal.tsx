@@ -547,121 +547,96 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     <>
       {createPortal(
         <div
-          className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 flex items-center justify-center bg-black/85"
           style={{ zIndex: Z_INDEX.modal }}
           onClick={onClose}
         >
           <div
-            className="relative bg-gradient-to-br from-vintage-deep-black to-vintage-rich-black border-2 border-vintage-gold rounded-lg p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
+            className="relative bg-[#1E1E1E] border-4 border-black shadow-[6px_6px_0px_#000] max-w-sm w-full mx-4 max-h-[90vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-vintage-gold/60 hover:text-vintage-gold text-2xl z-20 p-2"
-        >
-          ✕
-        </button>
-
-        {/* Transaction History Icon Button */}
-        <button
-          onClick={() => {
-            console.log('[CoinsInboxModal] History button clicked');
-            setShowHistory(true);
-          }}
-          className="absolute top-3 right-14 p-2 z-20 bg-vintage-gold/10 hover:bg-vintage-gold/20 rounded-lg text-vintage-gold/80 hover:text-vintage-gold transition-all group border border-vintage-gold/20"
-          title="Histórico de Transações"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="group-hover:scale-110 transition-transform"
-          >
-            <path d="M3 3v18h18" />
-            <path d="m19 9-5 5-4-4-3 3" />
-          </svg>
-        </button>
-
-        {/* Header with gradient */}
-        <div className="relative bg-gradient-to-br from-vintage-gold/10 via-transparent to-transparent p-6 pb-4">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-vintage-gold/20 to-vintage-burnt-gold/20 border-2 border-vintage-gold/30 mb-3">
-              <NextImage src="/images/icons/convert.svg" alt="Convert" width={32} height={32} className="w-8 h-8" />
+        {/* Header bar - gold strip */}
+        <div className="bg-[#FFD400] border-b-4 border-black px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-black flex items-center justify-center border-2 border-black">
+              <NextImage src="/images/icons/convert.svg" alt="Convert" width={20} height={20} className="w-5 h-5" style={{ filter: 'brightness(0) saturate(100%) invert(91%) sepia(50%) saturate(800%) hue-rotate(5deg)' }} />
             </div>
-            <h2 className="text-3xl font-display font-bold text-vintage-gold mb-2">
-              {t('convertTitle')}
-            </h2>
-            <p className="text-sm text-vintage-gold/70">
-              {t('convertSubtitle')}
-            </p>
+            <div>
+              <h2 className="text-lg font-display font-bold text-black leading-none">{t('convertTitle')}</h2>
+              <p className="text-[10px] font-bold text-black/60 uppercase tracking-wider">{t('convertSubtitle')}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* History button */}
+            <button
+              onClick={() => setShowHistory(true)}
+              className="w-9 h-9 bg-black text-[#FFD400] border-2 border-black flex items-center justify-center hover:bg-[#333] transition shadow-[2px_2px_0px_rgba(0,0,0,0.4)]"
+              title="Histórico"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" />
+              </svg>
+            </button>
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              className="w-9 h-9 bg-[#FF3B3B] text-black font-bold border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all text-base leading-none"
+            >
+              ✕
+            </button>
           </div>
         </div>
 
-        <div className="px-6 pb-6 space-y-3">
-          {/* COINS Balance (what you can convert) - Compact */}
-          <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-400/40 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <NextImage src="/images/icons/coins.svg" alt="Coins" width={24} height={24} className="w-6 h-6" />
-                <span className="text-xs font-bold text-green-300 uppercase">{t('convertCoins')}</span>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-green-100">
-                  {testvbmsBalance.toLocaleString()}
-                </div>
-                <div className="text-xs text-green-300/50">{t('convertToConvert')}</div>
-              </div>
+        <div className="p-4 space-y-3">
+          {/* COINS Balance */}
+          <div className="bg-[#1A4A1A] border-3 border-black shadow-[3px_3px_0px_#000] p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <NextImage src="/images/icons/coins.svg" alt="Coins" width={24} height={24} className="w-6 h-6" />
+              <span className="text-xs font-bold text-[#00FF85] uppercase tracking-wider">{t('convertCoins')}</span>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-white font-mono">{testvbmsBalance.toLocaleString()}</div>
+              <div className="text-[10px] text-[#00FF85]/60 font-bold uppercase">{t('convertToConvert')}</div>
             </div>
           </div>
 
-          {/* VBMS Balance (blockchain) - REMOVED, not showing wallet balance anymore */}
-
-          {/* Daily Claim Limits - Compact Display */}
-          <div className="bg-vintage-deep-black/60 border border-vintage-gold/20 rounded-lg p-3 mb-3">
+          {/* Daily Limits */}
+          <div className="bg-[#252525] border-2 border-[#444] p-3">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-vintage-gold/60">{t('convertDailyLimit')}</span>
-              <span className={`font-bold ${exceedsDailyLimit ? 'text-red-400' : 'text-green-400'}`}>
+              <span className="text-[#aaa] font-bold uppercase tracking-wide">{t('convertDailyLimit')}</span>
+              <span className={`font-bold font-mono ${exceedsDailyLimit ? 'text-[#FF3B3B]' : 'text-[#00FF85]'}`}>
                 {isLoadingLimits ? '...' : `${Number(dailyRemaining).toLocaleString()} VBMS`}
               </span>
             </div>
             <div className="flex items-center justify-between text-xs mt-1">
-              <span className="text-vintage-gold/40">{t('convertResetsIn')}</span>
-              <span className="text-vintage-gold/60">{getResetTimeString()}</span>
+              <span className="text-[#666]">{t('convertResetsIn')}</span>
+              <span className="text-[#aaa] font-mono">{getResetTimeString()}</span>
             </div>
             {exceedsDailyLimit && testvbmsBalance >= 100 && (
-              <div className="mt-2 p-2 bg-red-500/20 border border-red-500/40 rounded text-xs text-red-300 text-center">
-                ⚠️ Your balance ({testvbmsBalance.toLocaleString()}) exceeds daily limit ({Number(dailyRemaining).toLocaleString()})
+              <div className="mt-2 p-2 bg-[#FF3B3B]/20 border border-[#FF3B3B]/50 text-[10px] text-[#FF6666] text-center font-bold">
+                Balance ({testvbmsBalance.toLocaleString()}) exceeds limit ({Number(dailyRemaining).toLocaleString()})
               </div>
             )}
             {isOnCooldown && (
-              <div className="mt-2 p-2 bg-orange-500/20 border border-orange-500/40 rounded text-xs text-orange-300 text-center">
-                ⏳ Cooldown: {Math.floor(cooldown / 60)}:{String(cooldown % 60).padStart(2, '0')} until next conversion
+              <div className="mt-2 p-2 bg-orange-900/40 border border-orange-500/40 text-[10px] text-orange-300 text-center font-bold">
+                Cooldown: {Math.floor(cooldown / 60)}:{String(cooldown % 60).padStart(2, '0')}
               </div>
             )}
             {limitUnavailable && (
-              <div className="mt-2 p-2 bg-yellow-500/20 border border-yellow-500/40 rounded text-xs text-yellow-300 text-center">
-                ⚠️ Daily limit reached or unavailable. Try again later or wait for reset.
+              <div className="mt-2 p-2 bg-yellow-900/30 border border-yellow-500/40 text-[10px] text-yellow-300 text-center font-bold">
+                Daily limit reached. Try again later.
               </div>
             )}
           </div>
 
           {/* Action Buttons */}
           <div className="space-y-2">
-          {/* Convert button - ONLY in miniapp (iframe), disabled in browser */}
           {useFarcasterSDK ? (
-            // MINIAPP: Show amount input + convert button
             testvbmsBalance >= 100 ? (
               <>
                 {/* Amount Input */}
-                <div className="space-y-2">
-                  <label className="text-xs text-vintage-gold/70">{t('convertAmountLabel')}</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-[#aaa] font-bold uppercase tracking-wider">{t('convertAmountLabel')}</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
@@ -670,108 +645,101 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
                       placeholder="Enter amount..."
                       min="100"
                       max={Math.min(testvbmsBalance, dailyRemainingNum)}
-                      className="flex-1 px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-cream text-sm focus:border-vintage-gold focus:outline-none"
+                      className="flex-1 px-3 py-2 bg-[#2C2C2C] border-2 border-[#555] text-white text-sm focus:border-[#FFD400] focus:outline-none font-mono"
                     />
                     <button
                       onClick={() => setConvertAmount(Math.min(testvbmsBalance, dailyRemainingNum).toString())}
-                      className="px-3 py-2 bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold rounded-lg text-xs font-bold hover:bg-vintage-gold/30 transition-all"
+                      className="px-3 py-2 bg-[#FFD400] border-2 border-black text-black text-xs font-bold shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
                     >
                       {t('convertMax')}
                     </button>
                   </div>
-                  {exceedsBalance && (
-                    <p className="text-red-400 text-xs">Exceeds your balance ({testvbmsBalance.toLocaleString()})</p>
-                  )}
-                  {exceedsDailyLimit && !exceedsBalance && (
-                    <p className="text-red-400 text-xs">Exceeds daily limit ({Math.floor(dailyRemainingNum).toLocaleString()})</p>
-                  )}
+                  {exceedsBalance && <p className="text-[#FF3B3B] text-xs font-bold">Exceeds balance ({testvbmsBalance.toLocaleString()})</p>}
+                  {exceedsDailyLimit && !exceedsBalance && <p className="text-[#FF3B3B] text-xs font-bold">Exceeds daily limit ({Math.floor(dailyRemainingNum).toLocaleString()})</p>}
                 </div>
+                {/* Convert Button */}
                 <button
                   onClick={handleConvertTESTVBMS}
                   disabled={!canConvertTESTVBMS || isProcessing}
-                  className={`w-full group relative overflow-hidden rounded-lg p-3 font-bold transition-all text-sm ${
+                  className={`w-full py-3 px-4 font-bold text-sm flex items-center justify-between transition-all ${
                     canConvertTESTVBMS
-                      ? "bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold hover:from-vintage-burnt-gold hover:to-vintage-gold text-vintage-deep-black shadow-lg shadow-vintage-gold/20 hover:shadow-vintage-gold/40 hover:scale-[1.01]"
-                      : "bg-vintage-deep-black/50 text-vintage-gold/30 cursor-not-allowed border border-vintage-gold/10"
+                      ? 'bg-[#FFD400] border-3 border-black text-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000]'
+                      : 'bg-[#333] border-2 border-[#555] text-[#666] cursor-not-allowed'
                   }`}
                 >
-                  <div className="relative flex items-center justify-between">
-                    <span className="flex items-center gap-2">
-                      <NextImage src="/images/icons/convert.svg" alt="Convert" width={16} height={16} className="w-4 h-4" />
-                      <span>{t('convertButton')} {selectedAmount > 0 ? selectedAmount.toLocaleString() : '0'} → VBMS</span>
-                    </span>
-                    <span className="text-xs opacity-80 bg-black/20 px-2 py-0.5 rounded">Gas</span>
-                  </div>
+                  <span className="flex items-center gap-2">
+                    <NextImage src="/images/icons/convert.svg" alt="" width={16} height={16} className="w-4 h-4" style={{ filter: 'brightness(0)' }} />
+                    {t('convertButton')} {selectedAmount > 0 ? selectedAmount.toLocaleString() : '0'} → VBMS
+                  </span>
+                  <span className="text-[10px] bg-black text-[#FFD400] border border-[#FFD400] px-2 py-0.5 font-mono font-bold">Gas</span>
                 </button>
               </>
             ) : (
-              <div className="text-center py-3">
-                <p className="text-vintage-gold/60 text-xs">
-                  {t('convertMinRequired')}
-                </p>
+              <div className="text-center py-4 bg-[#252525] border-2 border-[#444]">
+                <p className="text-[#aaa] text-xs font-bold">{t('convertMinRequired')}</p>
               </div>
             )
           ) : (
-            // BROWSER: Show disabled message with miniapp redirect
-            <div className="bg-purple-950/30 border-2 border-purple-800/50 rounded-xl p-6 text-center">
-              <div className="text-4xl mb-3">📱</div>
-              <h3 className="text-purple-400 font-bold text-lg mb-2">{t('convertUseMiniapp')}</h3>
-              <p className="text-purple-400/70 text-sm mb-3">
-                {t('convertMiniappOnly')}
-              </p>
+            <div className="bg-[#1A1A2E] border-3 border-[#9B5CFF] shadow-[3px_3px_0px_#000] p-5 text-center">
+              <div className="text-4xl mb-2">📱</div>
+              <h3 className="text-[#BB77FF] font-bold text-base mb-1">{t('convertUseMiniapp')}</h3>
+              <p className="text-[#9B5CFF]/70 text-xs mb-3">{t('convertMiniappOnly')}</p>
               <a
                 href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-block bg-purple-600 hover:bg-purple-500 text-white font-bold px-4 py-2 rounded-lg transition-all"
+                className="inline-block bg-[#9B5CFF] border-3 border-black text-black font-bold px-4 py-2 shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] transition-all"
               >
                 {t('convertOpenMiniapp')}
               </a>
               {testvbmsBalance > 0 && (
-                <div className="mt-4 bg-vintage-black/50 rounded-lg p-3">
-                  <p className="text-vintage-gold/60 text-xs">Your COINS Balance:</p>
-                  <p className="text-vintage-gold font-bold text-xl">{testvbmsBalance.toLocaleString()}</p>
+                <div className="mt-3 bg-[#252525] border-2 border-[#444] p-2">
+                  <p className="text-[#aaa] text-xs font-bold uppercase">Your COINS</p>
+                  <p className="text-[#FFD400] font-bold text-xl font-mono">{testvbmsBalance.toLocaleString()}</p>
                 </div>
               )}
             </div>
           )}
 
-          {/* 🚨 Pending Conversion Alert - Show prominently when there's a pending conversion */}
+          {/* Pending Conversion Alert */}
           {pendingConversion && pendingConversion.amount > 0 && useFarcasterSDK && (
-            <div className="bg-amber-900/40 border-2 border-amber-500/60 rounded-xl p-4 animate-pulse">
+            <div className="bg-[#2A1A00] border-3 border-[#FF9900] shadow-[3px_3px_0px_#000] p-3">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-2xl">⚠️</span>
-                <h4 className="text-amber-300 font-bold text-sm">{t('convertPendingTitle')}</h4>
+                <span className="text-xl">⚠️</span>
+                <h4 className="text-[#FF9900] font-bold text-sm">{t('convertPendingTitle')}</h4>
               </div>
-              <p className="text-amber-200/80 text-xs mb-3">
+              <p className="text-[#FFCC66]/80 text-xs mb-2">
                 {t('convertPendingDesc').replace('{amount}', pendingConversion.amount.toLocaleString())}
               </p>
               {recoveryTimeRemaining !== null && recoveryTimeRemaining > 0 ? (
                 <div className="text-center">
-                  <span className="text-amber-400 text-xs">
-                    ⏳ {t('convertPendingWait')} {Math.floor(recoveryTimeRemaining / 60)}:{String(recoveryTimeRemaining % 60).padStart(2, '0')} {t('convertPendingToRecover')}
+                  <span className="text-[#FF9900] text-xs font-bold font-mono">
+                    ⏳ {Math.floor(recoveryTimeRemaining / 60)}:{String(recoveryTimeRemaining % 60).padStart(2, '0')} {t('convertPendingToRecover')}
                   </span>
                 </div>
               ) : (
                 <button
                   onClick={handleRecoverConversion}
                   disabled={isProcessing}
-                  className="w-full py-2.5 px-4 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-bold text-sm transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-2 bg-[#FF9900] border-2 border-black text-black font-bold text-xs shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all disabled:opacity-50 flex items-center justify-center gap-1"
                 >
-                  <span>🔄</span>
-                  <span>{t('convertRecoverNow').replace('{amount}', pendingConversion.amount.toLocaleString())}</span>
+                  🔄 {t('convertRecoverNow').replace('{amount}', pendingConversion.amount.toLocaleString())}
                 </button>
               )}
             </div>
           )}
 
-          {/* Recovery button for failed conversions - only in miniapp (smaller version when no pending) */}
+          {/* Recover Failed TX */}
           {useFarcasterSDK && !pendingConversion && (
             <button
               onClick={handleRecoverConversion}
               disabled={isProcessing}
-              className="w-full text-xs py-2 px-3 rounded-lg bg-orange-900/30 hover:bg-orange-900/50 border border-orange-500/30 text-orange-300/80 hover:text-orange-200 transition-all disabled:opacity-50"
+              className="w-full text-xs py-2 px-3 bg-[#1A0A00] border-2 border-[#FF6600]/60 text-[#FF9944] font-bold flex items-center justify-center gap-2 hover:bg-[#2A1500] transition-all disabled:opacity-50"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+                <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+              </svg>
               {t('convertRecoverFailed')}
             </button>
           )}

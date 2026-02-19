@@ -202,7 +202,7 @@ export default function BurnCardsPage() {
 
       {/* FILTER BAR */}
       <div className="absolute top-14 left-0 right-0 z-20 px-3 py-2 bg-vintage-charcoal/60 border-b border-red-500/20 backdrop-blur-sm">
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="flex items-center gap-2 flex-wrap">
           {["all", "Common", "Rare", "Epic", "Legendary"].map((f) => {
             const count = f === "all" ? cards.length : cards.filter((c: any) => c.rarity === f).length;
             if (count === 0 && f !== "all") return null;
@@ -228,56 +228,6 @@ export default function BurnCardsPage() {
             );
           })}
 
-          <div className="w-px h-5 bg-red-500/30 mx-1" />
-
-          <button
-            onClick={selectAll}
-            className="px-3 py-1 rounded-full text-xs font-bold border border-red-500/30 text-red-400 whitespace-nowrap"
-          >
-            All
-          </button>
-          <button
-            onClick={selectNone}
-            className="px-3 py-1 rounded-full text-xs font-bold border border-vintage-gold/20 text-vintage-ice/50 whitespace-nowrap"
-          >
-            Clear
-          </button>
-
-          <div className="w-px h-5 bg-red-500/30 mx-1" />
-
-          {/* Quick select by rarity */}
-          {cards.filter((c: any) => c.rarity === "Common").length > 0 && (
-            <button
-              onClick={() => selectByRarity("Common")}
-              className="px-2 py-1 rounded-full text-xs font-bold border border-gray-500/30 text-gray-400 whitespace-nowrap"
-            >
-              +C
-            </button>
-          )}
-          {cards.filter((c: any) => c.rarity === "Rare").length > 0 && (
-            <button
-              onClick={() => selectByRarity("Rare")}
-              className="px-2 py-1 rounded-full text-xs font-bold border border-blue-500/30 text-blue-400 whitespace-nowrap"
-            >
-              +R
-            </button>
-          )}
-          {cards.filter((c: any) => c.rarity === "Epic").length > 0 && (
-            <button
-              onClick={() => selectByRarity("Epic")}
-              className="px-2 py-1 rounded-full text-xs font-bold border border-purple-500/30 text-purple-400 whitespace-nowrap"
-            >
-              +E
-            </button>
-          )}
-          {cards.filter((c: any) => c.rarity === "Legendary").length > 0 && (
-            <button
-              onClick={() => selectByRarity("Legendary")}
-              className="px-2 py-1 rounded-full text-xs font-bold border border-yellow-500/30 text-yellow-400 whitespace-nowrap"
-            >
-              +L
-            </button>
-          )}
         </div>
       </div>
 

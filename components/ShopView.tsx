@@ -47,6 +47,15 @@ export function ShopView({ address }: ShopViewProps) {
   const effectiveAddress = address || walletAddress;
 
   const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(effectiveAddress);
+
+  const formatVBMS = (val: string) => {
+    const n = parseFloat(val);
+    if (isNaN(n)) return "0";
+    if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+    if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
+    return n.toLocaleString();
+  };
   const { transfer, isPending: isTransferring, error: transferError } = useFarcasterTransferVBMS();
 
   // State
@@ -293,22 +302,22 @@ export function ShopView({ address }: ShopViewProps) {
 
       {/* TOP HUD */}
       <div className="absolute top-0 left-0 right-0 z-10 p-3">
-        <div className="flex items-center justify-between">
+        <div className="relative flex items-center justify-between">
           {/* Back button - always go to home, not browser history */}
           <button
             onClick={() => router.push("/")}
             className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
           >
-            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> {t('shopHome')}
+            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> BACK
           </button>
 
-          {/* Title - centered */}
-          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider">{t('shopTitle')}</h1>
+          {/* Title - truly centered */}
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider whitespace-nowrap">{t('shopTitle')}</h1>
 
           {/* Balance */}
           <div className="text-right">
-            <p className="text-xs text-vintage-ice/60">{t('shopBalance')}</p>
-            <p className="text-sm font-display font-bold text-purple-400">{parseFloat(vbmsBalance).toLocaleString()} VBMS</p>
+            <p className="text-[10px] text-vintage-ice/50 uppercase tracking-wider">{t('shopBalance')}</p>
+            <p className="text-sm font-bold text-vintage-gold leading-tight">{formatVBMS(vbmsBalance)} <span className="text-vintage-ice/80">VBMS</span></p>
           </div>
         </div>
       </div>
@@ -345,7 +354,7 @@ export function ShopView({ address }: ShopViewProps) {
 
               {/* Pack Header with Image */}
               <div className="flex items-center gap-4 mb-3">
-                <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className={`w-16 h-16 object-contain ${luckBoost ? 'animate-pulse' : ''}`} />
+                <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className={`w-16 h-16 object-contain drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] ${luckBoost ? 'animate-pulse' : ''}`} />
                 <div className="flex-1">
                   <h3 className="text-xl font-display font-bold text-vintage-gold">
                     {luckBoost ? t('shopLuckyPack') : t('shopBasicPack')}
@@ -545,7 +554,6 @@ export function ShopView({ address }: ShopViewProps) {
             onClick={() => setShowHelpModal(true)}
             className="text-vintage-ice/60 hover:text-vintage-gold transition-colors text-sm flex items-center gap-1"
           >
-            <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-xs">?</span>
             <span>Help</span>
           </button>
 

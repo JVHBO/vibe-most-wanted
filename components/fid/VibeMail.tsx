@@ -18,6 +18,7 @@ import haptics from "@/lib/fid/haptics";
 import { AudioRecorder } from './AudioRecorder';
 import { useMusic } from '@/contexts/MusicContext';
 import { openMarketplace } from "@/lib/fid/marketplace-utils";
+import { VibeDexModal } from './VibeDexModal';
 
 
 const VIBEMAIL_COST_VBMS = "100"; // Cost for paid VibeMail
@@ -240,14 +241,14 @@ export const VIBEMAIL_SOUNDS = [
 
 // Available meme images/GIFs for VibeMail
 export const VIBEMAIL_IMAGES = [
-  { id: 'arthur', name: '👊 Arthur', file: '/vibemail/arthur.jpg', isVideo: false },
-  { id: 'john-pork', name: '🐷 John Pork', file: '/vibemail/john-pork.jpg', isVideo: false },
-  { id: 'john-porn', name: '🍆 John Porn', file: '/vibemail/john-porn.jpg', isVideo: false },
-  { id: 'dan-buttero', name: '🎸 Dan Buttero', file: '/vibemail/dan-buttero.png', isVideo: false },
-  { id: 'lula', name: '🇧🇷 Lula', file: '/vibemail/lula.png', isVideo: false },
-  { id: 'vegetan', name: '💪 Vegetan', file: '/vibemail/vegetan.jpg', isVideo: false },
-  { id: 'suck-jones', name: '🏴‍☠️ Suck Jones', file: '/vibemail/suck-jones.mp4', isVideo: true },
-  { id: 'neymar', name: '⚽ Neymar', file: '/vibemail/neymar.png', isVideo: false },
+  { id: 'arthur', name: 'Arthur', file: '/vibemail/arthur.jpg', isVideo: false },
+  { id: 'john-pork', name: 'John Pork', file: '/vibemail/john-pork.jpg', isVideo: false },
+  { id: 'john-porn', name: 'John Porn', file: '/vibemail/john-porn.jpg', isVideo: false },
+  { id: 'dan-buttero', name: 'Dan Buttero', file: '/vibemail/dan-buttero.png', isVideo: false },
+  { id: 'lula', name: 'Lula', file: '/vibemail/lula.png', isVideo: false },
+  { id: 'vegetan', name: 'Vegetan', file: '/vibemail/vegetan.jpg', isVideo: false },
+  { id: 'suck-jones', name: 'Suck Jones', file: '/vibemail/suck-jones.mp4', isVideo: true },
+  { id: 'neymar', name: 'Neymar', file: '/vibemail/neymar.png', isVideo: false },
 ] as const;
 
 // Check if audio is a custom recording (vs predefined sound)
@@ -507,7 +508,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
                   </button>
                   <div className="flex-1">
                     <p className="text-vintage-gold font-bold text-sm">
-                      {isCustomAudio(selectedMessage.audioId) ? '🎤 Voice message' : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound)}
+                      {isCustomAudio(selectedMessage.audioId) ? <span className="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg> Voice message</span> : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound)}
                     </p>
                     <p className="text-vintage-ice/50 text-xs">
                       {playingAudio === selectedMessage.audioId ? t.playing : t.tapToPlay}
@@ -534,13 +535,13 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
                         (e.target as HTMLImageElement).src = '/placeholder.png';
                       }}
                     />
-                    <span className="absolute -top-1 -right-1 text-base">🎁</span>
+                    <span className="absolute -top-1 -right-1 bg-vintage-gold rounded-full p-0.5"><svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-vintage-gold font-bold text-xs truncate">{selectedMessage.giftNftName}</p>
                     <p className="text-vintage-ice/50 text-[10px]">{selectedMessage.giftNftCollection}</p>
                   </div>
-                  <span className="text-vintage-gold text-lg">🛒</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-vintage-gold flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                 </div>
               )}
 
@@ -620,6 +621,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
 interface VibeMailInboxWithClaimProps {
   cardFid: number;
   username?: string;
+  userPfpUrl?: string;
   onClose: () => void;
   pendingVbms: number;
   address?: string;
@@ -634,6 +636,7 @@ interface VibeMailInboxWithClaimProps {
 export function VibeMailInboxWithClaim({
   cardFid,
   username,
+  userPfpUrl,
   onClose,
   pendingVbms,
   address,
@@ -659,6 +662,7 @@ export function VibeMailInboxWithClaim({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const convex = useConvex();
   const [showComposer, setShowComposer] = useState(false);
+  const [showDexModal, setShowDexModal] = useState(false);
   const [replyToMessageId, setReplyToMessageId] = useState<Id<'cardVotes'> | null>(null);
   const [replyToFid, setReplyToFid] = useState<number | null>(null); // FID of user we're replying to
   const [composerMessage, setComposerMessage] = useState('');
@@ -839,14 +843,14 @@ export function VibeMailInboxWithClaim({
         {/* Success Feedback Toast */}
         {sendSuccess && (
           <div className="mb-3 p-3 bg-green-500/20 border border-green-500/50 rounded-lg flex items-center gap-2 animate-pulse">
-            <span className="text-green-400 text-lg">✅</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-green-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
             <p className="text-green-400 text-sm font-bold">
               VibeMail sent to @{sendSuccess.recipient}!
             </p>
             <button
               onClick={() => setSendSuccess(null)}
               className="ml-auto text-green-400/70 hover:text-green-400"
-            >✕</button>
+            ><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           </div>
         )}
 
@@ -859,8 +863,13 @@ export function VibeMailInboxWithClaim({
                 ? 'bg-yellow-500/20 border border-yellow-500/50'
                 : 'bg-red-500/20 border border-red-500/50'
           }`}>
-            <span className="text-lg">
-              {broadcastResult.failed === 0 ? '✅' : broadcastResult.sent > 0 ? '⚠️' : '❌'}
+            <span className="flex-shrink-0">
+              {broadcastResult.failed === 0
+                ? <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                : broadcastResult.sent > 0
+                  ? <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  : <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              }
             </span>
             <p className={`text-sm font-bold ${
               broadcastResult.failed === 0 ? 'text-green-400' : broadcastResult.sent > 0 ? 'text-yellow-400' : 'text-red-400'
@@ -875,7 +884,7 @@ export function VibeMailInboxWithClaim({
             <button
               onClick={() => setBroadcastResult(null)}
               className="ml-auto text-vintage-ice/70 hover:text-vintage-ice"
-            >✕</button>
+            ><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
           </div>
         )}
 
@@ -883,8 +892,8 @@ export function VibeMailInboxWithClaim({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <img
-              src={secretary.image}
-              alt={secretary.name}
+              src={userPfpUrl || farcasterContext?.pfpUrl || secretary.image}
+              alt={username || 'User'}
               className="w-12 h-12 rounded-full border-2 border-black shadow-[2px_2px_0px_#000]"
             />
               <div>
@@ -1032,22 +1041,10 @@ export function VibeMailInboxWithClaim({
               <div className="flex items-center justify-between mb-1">
                 <p className="text-vintage-ice/60 text-xs">{(t as any).yourVbmsBalance || 'Your VBMS Balance'}</p>
                 <button
-                  onClick={async () => {
-                    AudioManager.buttonClick();
-                    const DEX_URL = 'https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast/dex';
-                    if (farcasterContext?.isInMiniapp) {
-                      try {
-                        await sdk.actions.openMiniApp({ url: DEX_URL });
-                      } catch (err) {
-                        window.open(DEX_URL, '_blank');
-                      }
-                    } else {
-                      window.open(DEX_URL, '_blank');
-                    }
-                  }}
-                  className="text-vintage-burnt-gold text-xs hover:text-vintage-gold transition-colors"
+                  onClick={() => { AudioManager.buttonClick(); setShowDexModal(true); }}
+                  className="text-vintage-burnt-gold text-xs hover:text-vintage-gold transition-colors flex items-center gap-1"
                 >
-                  {(t as any).needMoreVbms || 'Need more VBMS'} →
+                  Need more $VBMS?
                 </button>
               </div>
               <p className="text-vintage-gold font-bold text-lg">
@@ -1106,8 +1103,8 @@ export function VibeMailInboxWithClaim({
             {sendMode === 'random' && !replyToMessageId && (
               <div className="mb-3">
                 {/* Quick Select Quantity */}
-                <div className="mb-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/50 rounded-lg p-3">
-                  <p className="text-vintage-gold text-xs font-bold mb-2">🎲 {(t as any).vibemailQuickRandom || 'Quick Random Select'}</p>
+                <div className="mb-3 bg-[#1E1E1E] border-2 border-black shadow-[3px_3px_0px_#000] rounded-sm p-3">
+                  <p className="text-vintage-gold text-xs font-bold mb-2 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8" cy="8" r="1" fill="currentColor"/><circle cx="16" cy="8" r="1" fill="currentColor"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg> {(t as any).vibemailQuickRandom || 'Quick Random Select'}</p>
                   <div className="flex items-center gap-2">
                     <select
                       value={randomQuantity}
@@ -1119,17 +1116,22 @@ export function VibeMailInboxWithClaim({
                       <option value={25}>25 {(t as any).vibemailPeople || 'people'}</option>
                       <option value={50}>50 {(t as any).vibemailPeople || 'people'}</option>
                       <option value={100}>100 {(t as any).vibemailPeople || 'people'}</option>
+                      <option value={250}>250 {(t as any).vibemailPeople || 'people'}</option>
+                      <option value={500}>500 {(t as any).vibemailPeople || 'people'}</option>
                     </select>
                     <button
                       onClick={autoFillRandomList}
                       disabled={isLoadingRandom}
-                      className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-lg hover:from-purple-400 hover:to-pink-400 transition-all disabled:opacity-50 text-sm"
+                      className="px-4 py-2 bg-[#FFD400] text-black font-bold rounded-sm border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-none disabled:opacity-50 text-sm"
                     >
-                      {isLoadingRandom ? '⏳' : '🎲'} {(t as any).vibemailAutoSelect || 'Select'}
+                      {isLoadingRandom
+                        ? <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                        : <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8" cy="8" r="1" fill="currentColor"/><circle cx="16" cy="8" r="1" fill="currentColor"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+                      } {(t as any).vibemailAutoSelect || 'Select'}
                     </button>
                   </div>
                   <p className="text-vintage-ice/50 text-[10px] mt-1 text-center">
-                    💰 {randomQuantity * 100} VBMS ({randomQuantity} × 100)
+                    {randomQuantity * 100} VBMS ({randomQuantity} × 100)
                   </p>
                 </div>
 
@@ -1138,7 +1140,7 @@ export function VibeMailInboxWithClaim({
                   <div className="mb-2 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-2">
                     <div className="flex justify-between items-center mb-1">
                       <p className="text-vintage-gold text-xs font-bold">
-                        📋 {(t.vibemailRandomListCount || '{count} in list').replace('{count}', String(randomList.length))}
+                        <span className="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> {(t.vibemailRandomListCount || '{count} in list').replace('{count}', String(randomList.length))}</span>
                       </p>
                       <button
                         onClick={() => setRandomList([])}
@@ -1167,7 +1169,7 @@ export function VibeMailInboxWithClaim({
                   {randomCard ? (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">🎲</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8" cy="8" r="1" fill="currentColor"/><circle cx="16" cy="8" r="1" fill="currentColor"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
                           <div>
                           <p className="text-vintage-gold font-bold text-xs">@{randomCard.username}</p>
                           <p className="text-vintage-ice/50 text-[10px]">FID: {randomCard.fid}</p>
@@ -1179,13 +1181,13 @@ export function VibeMailInboxWithClaim({
                           disabled={randomList.some(c => c.fid === randomCard.fid)}
                           className="px-2 py-1 bg-green-500/20 border border-green-500/50 rounded text-green-400 text-[10px] hover:bg-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          ➕
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         </button>
                         <button
                           onClick={shuffleRandomCard}
                           className="px-2 py-1 bg-vintage-gold/20 border border-vintage-gold/50 rounded text-vintage-gold text-[10px] hover:bg-vintage-gold/30"
                         >
-                          🔄
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.4"/></svg>
                         </button>
                       </div>
                     </div>
@@ -1196,7 +1198,7 @@ export function VibeMailInboxWithClaim({
 
                 {randomList.length > 0 && (
                   <p className="text-green-400 text-xs mt-2 text-center font-bold">
-                    ✅ {((t as any).vibemailReadyToSend || 'Ready to send to {count} people').replace('{count}', String(randomList.length))} = {randomList.length * 100} VBMS
+                    <span className="flex items-center justify-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> {((t as any).vibemailReadyToSend || 'Ready to send to {count} people').replace('{count}', String(randomList.length))} = {randomList.length * 100} VBMS</span>
                   </p>
                 )}
               </div>
@@ -1218,7 +1220,7 @@ export function VibeMailInboxWithClaim({
                 </div>
                 <div className="flex justify-between items-center mb-1">
                   <p className={`text-xs ${broadcastRecipients.length >= MAX_BROADCAST_RECIPIENTS ? 'text-red-400' : 'text-vintage-ice/50'}`}>
-                    📢 {broadcastRecipients.length}/{MAX_BROADCAST_RECIPIENTS} {t.vibemailBroadcastLimit || `max ${MAX_BROADCAST_RECIPIENTS}`}
+                    <span className="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> {broadcastRecipients.length}/{MAX_BROADCAST_RECIPIENTS} {t.vibemailBroadcastLimit || `max ${MAX_BROADCAST_RECIPIENTS}`}</span>
                   </p>
                   {broadcastRecipients.length > 0 && (
                     <button
@@ -1269,12 +1271,12 @@ export function VibeMailInboxWithClaim({
                         : 'bg-red-500/20 text-red-400 border border-red-500/50'
                   }`}>
                     {broadcastResult.failed === 0
-                      ? (t.vibemailBroadcastSuccess || '✅ Broadcast sent!').replace('{sent}', String(broadcastResult.sent)).replace('{total}', String(broadcastResult.total))
+                      ? (t.vibemailBroadcastSuccess || 'Broadcast sent!').replace('{sent}', String(broadcastResult.sent)).replace('{total}', String(broadcastResult.total))
                       : broadcastResult.sent > 0
-                        ? (t.vibemailBroadcastPartial || '⚠️ Partial').replace('{sent}', String(broadcastResult.sent)).replace('{total}', String(broadcastResult.total)).replace('{failed}', String(broadcastResult.failed))
-                        : (t.vibemailBroadcastError || '❌ Error').replace('{error}', 'All messages failed')
+                        ? (t.vibemailBroadcastPartial || 'Partial').replace('{sent}', String(broadcastResult.sent)).replace('{total}', String(broadcastResult.total)).replace('{failed}', String(broadcastResult.failed))
+                        : (t.vibemailBroadcastError || 'Error: All messages failed').replace('{error}', 'All messages failed')
                     }
-                    <button onClick={() => setBroadcastResult(null)} className="ml-2 text-vintage-ice/50 hover:text-vintage-ice">✕</button>
+                    <button onClick={() => setBroadcastResult(null)} className="ml-2 text-vintage-ice/50 hover:text-vintage-ice"><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                   </div>
                 )}
               </div>
@@ -1285,8 +1287,9 @@ export function VibeMailInboxWithClaim({
               <div className="mb-3">
                 {recipientFid ? (
                   <div className="flex items-center justify-between bg-vintage-gold/20 border border-vintage-gold/50 rounded-lg p-2">
-                    <span className="text-vintage-gold text-sm">
-                      📬 To: <strong>{recipientUsername}</strong> (FID: {recipientFid})
+                    <span className="text-vintage-gold text-sm flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                      To: <strong>{recipientUsername}</strong> (FID: {recipientFid})
                     </span>
                     <button
                       onClick={() => {
@@ -1296,7 +1299,7 @@ export function VibeMailInboxWithClaim({
                       }}
                       className="text-vintage-ice/60 hover:text-red-400 text-sm"
                     >
-                      ✕
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                   </div>
                 ) : (
@@ -1855,7 +1858,7 @@ export function VibeMailInboxWithClaim({
                           : 'border-vintage-gold/50 hover:border-vintage-gold'
                       }`}
                     >
-                      {selectedForDelete.has(msg._id) && '✓'}
+                      {selectedForDelete.has(msg._id) && <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
                     </button>
                   )}
                 <button
@@ -1969,6 +1972,10 @@ export function VibeMailInboxWithClaim({
           isPaidVibeMail={!hasFreeVotes}
           replyToMessageId={replyToMessageId || undefined}
         />
+      )}
+
+      {showDexModal && (
+        <VibeDexModal onClose={() => setShowDexModal(false)} />
       )}
     </div>
   );
@@ -2095,7 +2102,7 @@ export function VibeMailComposer({ message, setMessage, audioId, setAudioId, ima
             className="w-full flex items-center justify-between p-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-ice text-sm hover:border-vintage-gold/50"
           >
             <span>
-              {imageId ? `🖼️ ${VIBEMAIL_IMAGES.find(i => i.id === imageId)?.name}` : '🖼️ Add meme image (optional)'}
+              <span className="flex items-center gap-1.5"><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>{imageId ? VIBEMAIL_IMAGES.find(i => i.id === imageId)?.name : 'Add meme image (optional)'}</span>
             </span>
             <span className="text-vintage-gold">{showImagePicker ? '▲' : '▼'}</span>
           </button>

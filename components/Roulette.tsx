@@ -14,6 +14,7 @@ import { encodeFunctionData, parseEther, erc20Abi } from 'viem';
 import { encodeBuilderCodeSuffix, BUILDER_CODE } from '@/lib/builder-code';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
+import { isMiniappMode, isWarpcastClient } from '@/lib/utils/miniapp';
 
 // Roulette translations
 const rouletteTranslations = {
@@ -297,6 +298,7 @@ export function Roulette({ onClose }: RouletteProps) {
   );
   const spinMutation = useMutation(api.roulette.spin);
   const recordPaidSpinMutation = useMutation(api.roulette.recordPaidSpin);
+  const setPreferredChainMutation = useMutation(api.missions.setPreferredChain);
   const canBuyPaidSpinData = useQuery(
     api.roulette.canBuyPaidSpin,
     address ? { address } : "skip"
@@ -312,6 +314,27 @@ export function Roulette({ onClose }: RouletteProps) {
   const [isClaiming, setIsClaiming] = useState(false);
   const [isBuyingPaidSpin, setIsBuyingPaidSpin] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
+  const [arbSupported, setArbSupported] = useState(false);
+
+  const currentChain = (profileDashboard as any)?.preferredChain || 'base';
+
+  useEffect(() => {
+    if (!isMiniappMode()) { setArbSupported(true); return; }
+    const checkArb = async () => {
+      try {
+        const ctx = await sdk.context;
+        setArbSupported(isWarpcastClient(ctx?.client?.clientFid));
+      } catch { setArbSupported(false); }
+    };
+    const timer = setTimeout(checkArb, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleSwitchChain = async (chain: 'base' | 'arbitrum') => {
+    if (!address) return;
+    try { await setPreferredChainMutation({ address, chain }); }
+    catch (e) { console.error('Failed to switch chain:', e); }
+  };
 
   // Check for Farcaster SDK
   useEffect(() => {
@@ -806,14 +829,28 @@ export function Roulette({ onClose }: RouletteProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-vintage-gold font-bold text-xl">{t.title}</h2>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="text-vintage-gold hover:text-vintage-burnt-gold text-xl font-bold"
-          >
-            x
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {arbSupported && (
+            <div className="flex items-center gap-1 text-xs">
+              <button
+                onClick={() => handleSwitchChain('base')}
+                className={`px-2 py-1 rounded font-bold border transition ${currentChain === 'base' ? 'bg-blue-600 text-white border-blue-700' : 'text-white/50 border-white/20 hover:text-white'}`}
+              >BASE</button>
+              <button
+                onClick={() => handleSwitchChain('arbitrum')}
+                className={`px-2 py-1 rounded font-bold border transition ${currentChain === 'arbitrum' ? 'bg-blue-400 text-black border-blue-500' : 'text-white/50 border-white/20 hover:text-white'}`}
+              >ARB</button>
+            </div>
+          )}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="text-vintage-gold hover:text-vintage-burnt-gold text-xl font-bold"
+            >
+              x
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Spins Info */}

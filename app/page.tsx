@@ -3675,7 +3675,10 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
       {/* Chain Select Modal (first-time) - only if ARB supported */}
       <ChainSelectionModal
         isOpen={showChainModal && arbSupported}
-        onClose={() => setShowChainModal(false)}
+        onClose={async () => {
+          if (address) { try { await markChainModalSeenMutation({ address }); } catch {} }
+          setShowChainModal(false);
+        }}
         onSelectChain={async (chain) => {
           if (!address) return;
           await setPreferredChainMutation({ address, chain });
