@@ -2974,23 +2974,23 @@ body.neobrutalism div.arena-bets-panel .grid > span:first-child { color: #4ADE80
 body.neobrutalism div.arena-bets-panel .grid > span:nth-child(2) { color: #F87171 !important; }
 
 /* ===== TCG LOBBY BUTTONS ===== */
-body.neobrutalism .tcg-btn-cpu {
+body.neobrutalism button.tcg-btn-cpu {
   border: 3px solid #22C55E !important;
   box-shadow: 3px 3px 0px #000 !important;
 }
-body.neobrutalism .tcg-btn-findmatch {
+body.neobrutalism button.tcg-btn-findmatch {
   border: 3px solid #F59E0B !important;
   box-shadow: 3px 3px 0px #000 !important;
 }
-body.neobrutalism .tcg-btn-createroom {
+body.neobrutalism button.tcg-btn-createroom {
   border: 3px solid #A855F7 !important;
   box-shadow: 3px 3px 0px #000 !important;
 }
-body.neobrutalism .tcg-btn-join {
+body.neobrutalism button.tcg-btn-join {
   border: 3px solid #EF4444 !important;
   box-shadow: 3px 3px 0px #000 !important;
 }
-body.neobrutalism .tcg-btn-pool {
+body.neobrutalism button.tcg-btn-pool {
   background: rgba(34,197,94,0.15) !important;
   border: 3px solid #22C55E !important;
   box-shadow: 3px 3px 0px #000 !important;
