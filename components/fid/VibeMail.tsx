@@ -892,7 +892,7 @@ export function VibeMailInboxWithClaim({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <img
-              src={userPfpUrl || farcasterContext?.pfpUrl || secretary.image}
+              src={userPfpUrl || farcasterContext?.user?.pfpUrl || secretary.image}
               alt={username || 'User'}
               className="w-12 h-12 rounded-full border-2 border-black shadow-[2px_2px_0px_#000]"
             />
