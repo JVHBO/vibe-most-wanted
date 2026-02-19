@@ -358,17 +358,9 @@ export function TCGLobby({
                     </div>
                     <button
                       onClick={() => setShowPoolModal(true)}
-                      className={`px-3 py-2 rounded text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-1.5 ${
-                        myDefensePool?.isActive
-                          ? "bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30"
-                          : "bg-black/50 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50"
-                      }`}
+                      className="tcg-btn-pool px-3 py-2 rounded text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-1.5 text-green-400"
                     >
-                      {myDefensePool?.isActive ? (
-                        <>Pool: {(myDefensePool.poolAmount || 0).toLocaleString()} <span className="text-green-400">&#10003;</span></>
-                      ) : (
-                        "Defense Pool"
-                      )}
+                      Pool: {(myDefensePool?.poolAmount || 0).toLocaleString()} {myDefensePool?.isActive && <span className="text-green-400">&#10003;</span>}
                     </button>
                   </div>
                 </div>
@@ -414,7 +406,6 @@ export function TCGLobby({
                         onClick={onStartPvE}
                         className="tcg-btn-cpu w-full px-4 py-3 bg-green-500/20 hover:bg-green-500/30 rounded-lg text-green-400 font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
                       >
-                        <span>🤖</span>
                         {t('tcgBattleCpu')} {dailyBattles < REWARDED_BATTLES_PER_DAY ? `(+${BATTLE_AURA_REWARD} AURA)` : ""}
                       </button>
 
@@ -443,10 +434,8 @@ export function TCGLobby({
                           <button
                             onClick={handleFindMatch}
                             disabled={!hasDeck}
-                            className="w-full px-4 py-3 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg text-amber-400 font-bold text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-2"
-                            style={{ border: '3px solid #F59E0B', boxShadow: '3px 3px 0px #000' }}
+                            className="tcg-btn-findmatch w-full px-4 py-3 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg text-amber-400 font-bold text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-2"
                           >
-                            <span>⚔️</span>
                             Find Match
                           </button>
                         )}
@@ -456,8 +445,7 @@ export function TCGLobby({
                           <button
                             onClick={handleCreateMatch}
                             disabled={!hasDeck}
-                            className="w-full px-3 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                            style={{ border: '3px solid #A855F7', boxShadow: '3px 3px 0px #000' }}
+                            className="tcg-btn-createroom w-full px-3 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             Create Room
                           </button>
@@ -474,8 +462,7 @@ export function TCGLobby({
                             <button
                               onClick={() => roomIdInput.length >= 4 && handleJoinMatch(roomIdInput)}
                               disabled={!hasDeck || roomIdInput.length < 4}
-                              className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                              style={{ border: '3px solid #EF4444', boxShadow: '3px 3px 0px #000' }}
+                              className="tcg-btn-join px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             >
                               Join
                             </button>
