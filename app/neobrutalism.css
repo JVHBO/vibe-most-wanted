@@ -2840,3 +2840,98 @@ body.neobrutalism .arena-chat-panel p[class*="text-vintage-gold"] {
 body.neobrutalism .arena-chat-panel span[class*="text-vintage-gold"] {
   color: #888 !important;
 }
+
+/* ===== ARENA ABSOLUTE FINAL OVERRIDES (highest specificity) ===== */
+
+/* Help button: dark + gold ring - must beat [class*="bg-vintage-gold"] rules */
+body.neobrutalism button.arena-help-btn,
+body.neobrutalism button.arena-help-btn[class*="bg-vintage-gold"] {
+  background: #111 !important;
+  background-color: #111 !important;
+  background-image: none !important;
+  border: 3px solid #FFD400 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  color: #FFD400 !important;
+  transform: none !important;
+}
+body.neobrutalism button.arena-help-btn *,
+body.neobrutalism button.arena-help-btn[class*="bg-vintage-gold"] * {
+  color: #FFD400 !important;
+}
+body.neobrutalism button.arena-help-btn:hover,
+body.neobrutalism button.arena-help-btn[class*="bg-vintage-gold"]:hover {
+  background: #222 !important;
+  background-color: #222 !important;
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #000 !important;
+}
+
+/* Chat button: dark + gold ring - must beat [class*="bg-vintage-gold"] rules */
+body.neobrutalism button.arena-chat-btn,
+body.neobrutalism button.arena-chat-btn[class*="bg-vintage-gold"] {
+  background: #111 !important;
+  background-color: #111 !important;
+  background-image: none !important;
+  border: 3px solid #FFD400 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  color: #FFD400 !important;
+  transform: none !important;
+}
+body.neobrutalism button.arena-chat-btn *,
+body.neobrutalism button.arena-chat-btn[class*="bg-vintage-gold"] * {
+  color: #FFD400 !important;
+}
+body.neobrutalism button.arena-chat-btn:hover,
+body.neobrutalism button.arena-chat-btn[class*="bg-vintage-gold"]:hover {
+  background: #222 !important;
+  background-color: #222 !important;
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #000 !important;
+}
+
+/* Bets panel: dark + proper bet row colors */
+body.neobrutalism div.arena-bets-panel,
+body.neobrutalism div.arena-bets-panel[class*="bg-vintage-charcoal"],
+body.neobrutalism div.arena-bets-panel[class*="border-vintage-gold"] {
+  background: #111 !important;
+  background-color: #111 !important;
+  background-image: none !important;
+  border: 3px solid #333 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  backdrop-filter: none !important;
+}
+/* Kill gold on active bet rows */
+body.neobrutalism div.arena-bets-panel div[class*="bg-vintage-gold"] {
+  background-color: #2A2A2A !important;
+  background-image: none !important;
+}
+body.neobrutalism div.arena-bets-panel div[class*="text-vintage-gold"],
+body.neobrutalism div.arena-bets-panel span[class*="text-vintage-gold"] {
+  color: #AAA !important;
+}
+/* Win rows: GREEN */
+body.neobrutalism div.arena-bets-panel div[class*="bg-green"] {
+  background-color: #0A2A0A !important;
+}
+body.neobrutalism div.arena-bets-panel div[class*="text-green"] {
+  color: #4ADE80 !important;
+}
+/* Loss rows: RED */
+body.neobrutalism div.arena-bets-panel div[class*="bg-red"] {
+  background-color: #2A0A0A !important;
+}
+body.neobrutalism div.arena-bets-panel div[class*="text-red"] {
+  color: #F87171 !important;
+}
+/* Refund rows: YELLOW */
+body.neobrutalism div.arena-bets-panel div[class*="bg-yellow"] {
+  background-color: #2A2A0A !important;
+}
+body.neobrutalism div.arena-bets-panel div[class*="text-yellow"] {
+  color: #FDE047 !important;
+}
+/* Stats row: win=green, loss=red, net=green/red */
+body.neobrutalism div.arena-bets-panel .grid > span:first-child { color: #4ADE80 !important; }
+body.neobrutalism div.arena-bets-panel .grid > span:nth-child(2) { color: #F87171 !important; }
+/* Header Bets label and balance */
+body.neobrutalism div.arena-bets-panel > div:first-child span { color: #FFD400 !important; }
