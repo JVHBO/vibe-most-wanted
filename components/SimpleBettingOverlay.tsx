@@ -207,14 +207,14 @@ export function SimpleBettingOverlay({
         <button
           onClick={() => handleBet(player1Address, player1Username)}
           disabled={isBetting || !credits || credits.balance < betAmount}
-          className={`rounded-lg py-2 px-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-            isFinalRound && isAllIn
-              ? 'bg-vintage-gold/30 hover:bg-vintage-gold/50 border-2 border-vintage-gold'
-              : 'bg-vintage-gold/20 hover:bg-vintage-gold/40 border border-vintage-gold/50'
-          }`}
+          className="rounded-lg py-2 px-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background: isFinalRound && isAllIn ? 'rgba(239,68,68,0.35)' : 'rgba(239,68,68,0.2)',
+            border: isFinalRound && isAllIn ? '2px solid #EF4444' : '1px solid rgba(239,68,68,0.6)',
+          }}
         >
-          <p className="text-vintage-gold font-bold text-xs truncate">{getShortName(player1Username)}</p>
-          <p className={`text-[10px] ${isAllIn ? 'text-vintage-gold font-bold' : 'text-vintage-burnt-gold'}`}>
+          <p className="font-bold text-xs truncate" style={{ color: '#F87171' }}>{getShortName(player1Username)}</p>
+          <p className="text-[10px]" style={{ color: isFinalRound && isAllIn ? '#F87171' : '#FCA5A5' }}>
             +{Math.floor(betAmount * odds)}c
           </p>
         </button>
@@ -234,14 +234,14 @@ export function SimpleBettingOverlay({
         <button
           onClick={() => handleBet(player2Address, player2Username)}
           disabled={isBetting || !credits || credits.balance < betAmount}
-          className={`rounded-lg py-2 px-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-            isFinalRound && isAllIn
-              ? 'bg-vintage-burnt-gold/30 hover:bg-vintage-burnt-gold/50 border-2 border-vintage-burnt-gold'
-              : 'bg-vintage-burnt-gold/20 hover:bg-vintage-burnt-gold/40 border border-vintage-burnt-gold/50'
-          }`}
+          className="rounded-lg py-2 px-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            background: isFinalRound && isAllIn ? 'rgba(59,130,246,0.35)' : 'rgba(59,130,246,0.2)',
+            border: isFinalRound && isAllIn ? '2px solid #3B82F6' : '1px solid rgba(59,130,246,0.6)',
+          }}
         >
-          <p className="text-vintage-burnt-gold font-bold text-xs truncate">{getShortName(player2Username)}</p>
-          <p className={`text-[10px] ${isAllIn ? 'text-vintage-burnt-gold font-bold' : 'text-vintage-burnt-gold/70'}`}>
+          <p className="font-bold text-xs truncate" style={{ color: '#60A5FA' }}>{getShortName(player2Username)}</p>
+          <p className="text-[10px]" style={{ color: isFinalRound && isAllIn ? '#60A5FA' : '#93C5FD' }}>
             +{Math.floor(betAmount * odds)}c
           </p>
         </button>

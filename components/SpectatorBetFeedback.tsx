@@ -130,48 +130,63 @@ export function SpectatorBetFeedback({
 
       {/* Bet History Panel - Always open at top right */}
       <div className="fixed top-14 right-2 z-[200]">
-        <div className="arena-bets-panel bg-vintage-charcoal/95 backdrop-blur-md border border-vintage-gold/50 rounded-lg p-2 shadow-xl min-w-[120px] text-[10px]">
+        <div
+          className="rounded-lg p-2 shadow-xl min-w-[120px] text-[10px]"
+          style={{
+            background: '#111',
+            border: '2px solid #444',
+            boxShadow: '3px 3px 0px #000',
+          }}
+        >
           {/* Header */}
-          <div className="w-full flex items-center justify-between mb-1.5 pb-1 border-b border-vintage-gold/30">
-            <span className="text-vintage-gold font-bold">Bets</span>
-            <span className="text-vintage-gold font-bold">{credits?.balance || 0}c</span>
+          <div
+            className="w-full flex items-center justify-between mb-1.5 pb-1"
+            style={{ borderBottom: '1px solid #444' }}
+          >
+            <span style={{ color: '#fff', fontWeight: 700 }}>Bets</span>
+            <span style={{ color: '#FFD400', fontWeight: 700 }}>{credits?.balance || 0}c</span>
           </div>
 
-          {/* Compact Stats Row - Grid for alignment */}
+          {/* Compact Stats Row */}
           <div className="grid grid-cols-3 gap-1 mb-1.5 text-center text-[9px]">
-            <span className="text-green-400 font-bold">{wins}W</span>
-            <span className="text-red-400 font-bold">{losses}L</span>
-            <span className={`font-bold ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            <span style={{ color: '#4ADE80', fontWeight: 700 }}>{wins}W</span>
+            <span style={{ color: '#F87171', fontWeight: 700 }}>{losses}L</span>
+            <span style={{ color: netProfit >= 0 ? '#4ADE80' : '#F87171', fontWeight: 700 }}>
               {netProfit >= 0 ? '+' : ''}{netProfit}
             </span>
           </div>
 
-          {/* Bet History List - Grid for alignment */}
+          {/* Bet History List */}
           {totalBets > 0 ? (
             <div className="max-h-24 overflow-y-auto space-y-0.5">
-              {myBets?.sort((a: RoundBet, b: RoundBet) => b.roundNumber - a.roundNumber).map((bet: RoundBet, idx: number) => (
-                <div
-                  key={idx}
-                  className={`grid grid-cols-3 gap-1 px-1 py-0.5 rounded text-center ${
-                    bet.status === 'won'
-                      ? 'bg-green-500/20 text-green-300'
-                      : bet.status === 'lost'
-                      ? 'bg-red-500/20 text-red-300'
-                      : bet.status === 'refunded'
-                      ? 'bg-yellow-500/20 text-yellow-300'
-                      : 'bg-vintage-gold/20 text-vintage-gold'
-                  }`}
-                >
-                  <span>R{bet.roundNumber}</span>
-                  <span className="font-mono">{bet.amount}c</span>
-                  <span className="font-bold">
-                    {bet.status === 'won' ? `+${bet.payout}` : bet.status === 'lost' ? `-${bet.amount}` : '-'}
-                  </span>
-                </div>
-              ))}
+              {myBets?.sort((a: RoundBet, b: RoundBet) => b.roundNumber - a.roundNumber).map((bet: RoundBet, idx: number) => {
+                const rowBg =
+                  bet.status === 'won' ? 'rgba(74,222,128,0.15)' :
+                  bet.status === 'lost' ? 'rgba(248,113,113,0.15)' :
+                  bet.status === 'refunded' ? 'rgba(251,191,36,0.15)' :
+                  'rgba(255,255,255,0.07)';
+                const rowColor =
+                  bet.status === 'won' ? '#4ADE80' :
+                  bet.status === 'lost' ? '#F87171' :
+                  bet.status === 'refunded' ? '#FCD34D' :
+                  '#9CA3AF';
+                return (
+                  <div
+                    key={idx}
+                    className="grid grid-cols-3 gap-1 px-1 py-0.5 rounded text-center"
+                    style={{ background: rowBg, color: rowColor }}
+                  >
+                    <span>R{bet.roundNumber}</span>
+                    <span className="font-mono">{bet.amount}c</span>
+                    <span style={{ fontWeight: 700 }}>
+                      {bet.status === 'won' ? `+${bet.payout}` : bet.status === 'lost' ? `-${bet.amount}` : '-'}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           ) : (
-            <p className="text-vintage-ice/50 text-[9px] text-center py-1">
+            <p className="text-[9px] text-center py-1" style={{ color: '#6B7280' }}>
               No bets yet
             </p>
           )}

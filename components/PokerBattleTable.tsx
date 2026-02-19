@@ -2832,10 +2832,11 @@ export function PokerBattleTable({
                   }`}>
                     {/* Opponent Card */}
                     <div className="flex flex-col items-center">
-                      <div className={`text-vintage-gold font-bold mb-1 ${
-                        isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm'
-                      }`}>
-                        <span className="max-w-[100px] truncate inline-block">{isSpectatorMode && room?.guestUsername ? room.guestUsername.toUpperCase() : 'OPPONENT'}</span>
+                      <div
+                        className={`font-bold mb-1 ${isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm'}`}
+                        style={room?.isCpuVsCpu ? { color: '#F87171', textShadow: '0 0 8px rgba(248,113,113,0.6)' } : undefined}
+                      >
+                        <span className={`max-w-[100px] truncate inline-block ${!room?.isCpuVsCpu ? 'text-vintage-gold' : ''}`}>{isSpectatorMode && room?.guestUsername ? room.guestUsername.toUpperCase() : 'OPPONENT'}</span>
                       </div>
                       <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 transition-all duration-700 ${
                         isInFarcaster ? 'w-20' : isSpectatorMode ? 'w-28 sm:w-32 md:w-36' : 'w-24 sm:w-28 md:w-32'
@@ -2907,10 +2908,11 @@ export function PokerBattleTable({
 
                     {/* Player Card */}
                     <div className="flex flex-col items-center">
-                      <div className={`text-vintage-gold font-bold mb-1 ${
-                        isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm mb-2'
-                      }`}>
-                        <span className="max-w-[100px] truncate inline-block">{isSpectatorMode && room?.hostUsername ? room.hostUsername.toUpperCase() : 'YOU'}</span>
+                      <div
+                        className={`font-bold mb-1 ${isInFarcaster ? 'text-[10px]' : 'text-xs sm:text-sm mb-2'}`}
+                        style={room?.isCpuVsCpu ? { color: '#60A5FA', textShadow: '0 0 8px rgba(96,165,250,0.6)' } : undefined}
+                      >
+                        <span className={`max-w-[100px] truncate inline-block ${!room?.isCpuVsCpu ? 'text-vintage-gold' : ''}`}>{isSpectatorMode && room?.hostUsername ? room.hostUsername.toUpperCase() : 'YOU'}</span>
                       </div>
                       <div className={`aspect-[2/3] rounded-lg overflow-hidden border-2 transition-all duration-700 ${
                         isInFarcaster ? 'w-20' : isSpectatorMode ? 'w-28 sm:w-32 md:w-36' : 'w-32 sm:w-40 md:w-48'
