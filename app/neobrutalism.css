@@ -2841,6 +2841,43 @@ body.neobrutalism .arena-chat-panel span[class*="text-vintage-gold"] {
   color: #888 !important;
 }
 
+/* ── ARENA TIMER ── */
+body.neobrutalism .arena-timer,
+body.neobrutalism div.arena-timer,
+body.neobrutalism .arena-timer[class*="bg-vintage"],
+body.neobrutalism .arena-timer[class*="border-vintage-gold"] {
+  background: #1A1A1A !important;
+  background-color: #1A1A1A !important;
+  background-image: none !important;
+  border: 3px solid #FFD400 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+}
+/* Timer urgent states */
+body.neobrutalism .arena-timer[class*="bg-red"],
+body.neobrutalism .arena-timer[class*="border-red"] {
+  background: #2A0A0A !important;
+  background-color: #2A0A0A !important;
+  border-color: #EF4444 !important;
+}
+body.neobrutalism .arena-timer[class*="bg-purple"],
+body.neobrutalism .arena-timer[class*="border-purple"] {
+  background: #1A0A2A !important;
+  background-color: #1A0A2A !important;
+  border-color: #A855F7 !important;
+}
+body.neobrutalism .arena-timer * {
+  color: #FFD400 !important;
+}
+body.neobrutalism .arena-timer[class*="bg-red"] *,
+body.neobrutalism .arena-timer[class*="border-red"] * {
+  color: #FCA5A5 !important;
+}
+body.neobrutalism .arena-timer[class*="bg-purple"] *,
+body.neobrutalism .arena-timer[class*="border-purple"] * {
+  color: #D8B4FE !important;
+}
+
 /* ===== ARENA ABSOLUTE FINAL OVERRIDES (highest specificity) ===== */
 
 /* Help button: dark + gold ring - must beat [class*="bg-vintage-gold"] rules */

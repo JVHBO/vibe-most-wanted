@@ -2977,7 +2977,7 @@ export function PokerBattleTable({
                   {/* Timer Display */}
                   {(phase === 'card-selection' || phase === 'reveal') && (
                     <div className="mt-2 sm:mt-3">
-                      <div className={`inline-block px-3 sm:px-6 py-1 sm:py-2 rounded-lg border-2 transition-all ${
+                      <div className={`arena-timer inline-block px-3 sm:px-6 py-1 sm:py-2 rounded-lg border-2 transition-all ${
                         room?.isCpuVsCpu ? (
                           // Mecha Arena timer styles
                           timeRemaining === -1
