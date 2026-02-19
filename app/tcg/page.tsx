@@ -4250,16 +4250,12 @@ export default function TCGPage() {
               {/* End Turn Button (right) - Royal style */}
               <button
                 onClick={handlePvEEndTurn}
-                className={`font-bold py-2 px-4 rounded-lg text-sm shadow-lg transition-all min-w-[100px] ${
-                  turnTimeRemaining <= 5
-                    ? 'bg-gradient-to-r from-red-700 to-red-900 border-2 border-red-500 text-white animate-pulse'
-                    : turnTimeRemaining <= 10
-                      ? 'bg-gradient-to-r from-orange-600 to-amber-700 border-2 border-orange-400 text-white'
-                      : 'bg-gradient-to-r from-[#B8860B] to-[#8B6914] hover:from-[#FFD700] hover:to-[#B8860B] text-black border-2 border-[#FFD700]'
-                }`}
-                style={turnTimeRemaining > 10 ? {
-                  boxShadow: "0 0 15px rgba(255,215,0,0.3), inset 0 1px 2px rgba(255,255,255,0.3)"
-                } : undefined}
+                className={`font-bold py-2 px-4 rounded-lg text-sm text-white transition-all min-w-[100px] ${turnTimeRemaining <= 5 ? 'animate-pulse' : ''}`}
+                style={{
+                  background: turnTimeRemaining <= 5 ? '#7F1D1D' : '#DC2626',
+                  border: '3px solid #000',
+                  boxShadow: '3px 3px 0px #000',
+                }}
               >
                 {turnTimeRemaining <= 10 ? (
                   <span className="text-2xl font-black">{turnTimeRemaining}</span>

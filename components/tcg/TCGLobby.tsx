@@ -412,8 +412,7 @@ export function TCGLobby({
                       {/* PvE Button */}
                       <button
                         onClick={onStartPvE}
-                        className="w-full px-4 py-3 bg-green-500/20 hover:bg-green-500/30 rounded-lg text-green-400 font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
-                        style={{ border: '3px solid #22C55E', boxShadow: '3px 3px 0px #000' }}
+                        className="tcg-btn-cpu w-full px-4 py-3 bg-green-500/20 hover:bg-green-500/30 rounded-lg text-green-400 font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
                       >
                         <span>🤖</span>
                         {t('tcgBattleCpu')} {dailyBattles < REWARDED_BATTLES_PER_DAY ? `(+${BATTLE_AURA_REWARD} AURA)` : ""}
