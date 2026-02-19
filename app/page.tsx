@@ -95,7 +95,7 @@ import { isSameCard, findCard, getCardKey } from "@/lib/nft";
 import { getImage, fetchNFTs, clearAllNftCache } from "@/lib/nft/fetcher"; // checkCollectionBalances removed - now only used by Context
 import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 import type { Card } from "@/lib/types/card";
-import { RunawayEasterEgg } from "@/components/RunawayEasterEgg";
+// RunawayEasterEgg removed
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -550,6 +550,10 @@ export default function TCGPage() {
   const [showLossPopup, setShowLossPopup] = useState<boolean>(false);
   const [showWinPopup, setShowWinPopup] = useState<boolean>(false);
   const [showRoulette, setShowRoulette] = useState<boolean>(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState<boolean>(false);
+  const profileDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [showDexDropdown, setShowDexDropdown] = useState<boolean>(false);
+  const dexDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   // Miniapp: 12 cards (1.5 rows), Website: 24 cards (3 full rows of 8)
   const CARDS_PER_PAGE = isInFarcaster ? 12 : 24;
@@ -842,17 +846,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const arbSupported = !isInFarcaster || isWarpcastClient(farcasterClientFid);
   // Effective chain: force "base" when ARB not supported (e.g. Base App)
   const effectiveChain = !arbSupported ? "base" : ((userProfile as any)?.preferredChain || "base");
-  // Show Arb Mode announcement once per session (only if ARB supported)
-  useEffect(() => {
-    if (!arbSupported) return;
-    if (!userProfile || !address) return;
-    const key = `arb_announce_seen_${address}`;
-    if (sessionStorage.getItem(key)) return;
-    // Only show if user is still on base (hasn't activated arb yet)
-    if ((userProfile as any)?.preferredChain === "arbitrum") return;
-    const timer = setTimeout(() => setShowArbAnnounce(true), 1500);
-    return () => clearTimeout(timer);
-  }, [userProfile, address, arbSupported]);
+  // Arb Mode announcement disabled - no longer needed
   const [pendingClaimAction, setPendingClaimAction] = useState<(() => void) | null>(null);
   const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
   const [showBaccarat, setShowBaccarat] = useState<boolean>(false);
@@ -3693,78 +3687,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         }}
       />
 
-      {/* Arb Mode Announcement Modal - only if ARB supported */}
-      {showArbAnnounce && arbSupported && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-4"
-          onClick={() => {
-            if (address) sessionStorage.setItem(`arb_announce_seen_${address}`, '1');
-            setShowArbAnnounce(false);
-          }}
-        >
-          <div
-            className="bg-vintage-charcoal rounded-2xl border-2 border-purple-500 p-5 max-w-sm w-full shadow-gold animate-fade-in"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="text-center mb-4">
-              <span className="text-4xl">&#9670;</span>
-              <h2 className="text-lg font-bold text-purple-400 mt-2">Arbitrum Mode is here!</h2>
-              <p className="text-xs text-vintage-burnt-gold mt-2">
-                Switch to Arbitrum and get bonus rewards on all your claims
-              </p>
-            </div>
-
-            <div className="bg-purple-900/30 border border-purple-500/40 rounded-xl p-3 mb-4">
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-green-400">
-                  <span>&#10003;</span><span>2x quest rewards</span>
-                </div>
-                <div className="flex items-center gap-2 text-green-400">
-                  <span>&#10003;</span><span>+1 free roulette spin</span>
-                </div>
-                <div className="flex items-center gap-2 text-green-400">
-                  <span>&#10003;</span><span>+1 free card pack</span>
-                </div>
-                <div className="flex items-center gap-2 text-green-400">
-                  <span>&#10003;</span><span>On-chain validation</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={async () => {
-                if (!address) return;
-                try {
-                  await setPreferredChainMutation({ address, chain: "arbitrum" });
-                  const updated = await ConvexProfileService.getProfile(address);
-                  setUserProfile(updated);
-                } catch (e) {
-                  console.error("Failed to set chain:", e);
-                }
-                sessionStorage.setItem(`arb_announce_seen_${address}`, '1');
-                setShowArbAnnounce(false);
-              }}
-              className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl transition-all mb-2"
-            >
-              Activate Arbitrum Mode
-            </button>
-
-            <button
-              onClick={() => {
-                if (address) sessionStorage.setItem(`arb_announce_seen_${address}`, '1');
-                setShowArbAnnounce(false);
-              }}
-              className="w-full py-2 text-vintage-burnt-gold text-xs hover:text-vintage-gold transition-all"
-            >
-              Maybe later
-            </button>
-
-            <p className="text-[9px] text-vintage-burnt-gold/50 text-center mt-2">
-              You can change anytime in Settings
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Arb Mode Announcement Modal - REMOVED */}
 
       {/* Mecha Arena Modal */}
       <CpuArenaModal
@@ -4302,7 +4225,8 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                 if (soundEnabled) AudioManager.buttonClick();
                 router.push('/fid');
               }}
-              className="tour-vibefid-btn relative px-8 md:px-12 py-2 md:py-2 border border-vintage-gold/30 bg-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-vintage-gold/80 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
+              onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
+              className="tour-vibefid-btn relative px-8 md:px-12 py-2 md:py-2 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
             >
               {/* 📬 Red notification dot when there are unread VibeMails */}
               {typeof unreadVibeMailCount === 'number' && unreadVibeMailCount > 0 && (
@@ -4327,30 +4251,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
           )}
         </div>
 
-        <div className="flex items-center gap-3 justify-center w-full">
-          {/* REMOVED: Referrals Button - System disabled */}
-
-          <button
-            onClick={() => {
-              if (soundEnabled) AudioManager.buttonClick();
-              setShowSettings(true);
-            }}
-            className="tour-settings-btn bg-vintage-charcoal/80 border border-vintage-gold/30 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/10 transition font-bold text-sm md:text-base"
-            title={t('settings')}
-          >
-            <NextImage src="/images/icons/settings.svg" alt="Settings" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
-          </button>
-
-          {/* Coins Inbox removed from header - use navigation tab "Claim" button instead */}
-
-          <Link
-            href="/docs"
-            className="bg-vintage-charcoal/80 border border-vintage-gold/30 text-vintage-gold px-3 md:px-4 py-1.5 md:py-2 rounded-lg hover:bg-vintage-gold/10 transition font-bold text-sm md:text-base inline-flex items-center justify-center"
-            title="Documentação"
-          >
-            <NextImage src="/images/icons/help.svg" alt="Help" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
-          </Link>
-        </div>
+        {/* Settings & Docs moved to profile dropdown */}
       </header>
 
       {!address ? (
@@ -4462,45 +4363,81 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         </div>
       ) : (
         <>
-          <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`}>
-            <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-1 md:p-3 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30`}>
-              <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3">
+          <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`} style={{ overflow: 'visible' }}>
+            <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-1 md:p-3 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30`} style={{ overflow: 'visible' }}>
+              <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3" style={{ overflow: 'visible' }}>
                 {/* Left: Profile */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2" style={{ overflow: 'visible' }}>
                   { isLoadingProfile ? (
                     <div className="px-4 py-2 bg-vintage-black/50 border border-vintage-gold/20 rounded-lg">
                       <div className="w-20 h-4 bg-vintage-gold/20 rounded animate-pulse" />
                     </div>
                   ) : userProfile ? (
-                    <Link
-                      href={`/profile/${userProfile.username}`}
-                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
-                      className="flex items-center gap-2 px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg transition"
-                    >
-                      {userProfile.farcasterPfpUrl ? (
-                        <img
-                          src={userProfile.farcasterPfpUrl}
-                          alt={userProfile.username}
-                          className="w-6 h-6 rounded-full object-cover"
-                          onError={(e) => { (e.target as HTMLImageElement).src = getAvatarFallback(); }}
-                        />
-                      ) : userProfile.twitter ? (
-                        <img
-                          src={getAvatarUrl({ twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl }) || ''}
-                          alt={userProfile.username}
-                          className="w-6 h-6 rounded-full"
-                          onError={(e) => { (e.target as HTMLImageElement).src = getAvatarFallback(); }}
-                        />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold flex items-center justify-center text-xs font-bold text-vintage-black">
-                          {userProfile.username[0].toUpperCase()}
+                    <div className="tour-profile-dropdown relative" style={{ overflow: 'visible' }}>
+                      <button
+                        onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown((p: boolean) => !p); }}
+                        onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); setShowProfileDropdown(true); }}
+                        onMouseLeave={() => { profileDropdownTimeout.current = setTimeout(() => setShowProfileDropdown(false), 300); }}
+                        className="tour-settings-btn flex items-center gap-2 px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg transition cursor-pointer"
+                      >
+                        {userProfile.farcasterPfpUrl ? (
+                          <img
+                            src={userProfile.farcasterPfpUrl}
+                            alt={userProfile.username}
+                            className="w-6 h-6 rounded-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).src = getAvatarFallback(); }}
+                          />
+                        ) : userProfile.twitter ? (
+                          <img
+                            src={getAvatarUrl({ twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl }) || ''}
+                            alt={userProfile.username}
+                            className="w-6 h-6 rounded-full"
+                            onError={(e) => { (e.target as HTMLImageElement).src = getAvatarFallback(); }}
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold flex items-center justify-center text-xs font-bold text-vintage-black">
+                            {userProfile.username[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-vintage-gold">@{userProfile.username}</span>
+                          <BadgeList badges={getUserBadges(userProfile.address, userProfile.userIndex ?? 9999, userProfile.hasVibeBadge)} size="sm" />
+                        </div>
+                      </button>
+                      {showProfileDropdown && (
+                        <div
+                          className="absolute top-full left-0 mt-1 bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-lg overflow-hidden min-w-[150px] shadow-xl"
+                          style={{ zIndex: 9999 }}
+                          onMouseEnter={() => { if (profileDropdownTimeout.current) clearTimeout(profileDropdownTimeout.current); }}
+                          onMouseLeave={() => setShowProfileDropdown(false)}
+                        >
+                          <Link
+                            href={`/profile/${userProfile.username}`}
+                            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); }}
+                            className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
+                          >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                            Profile
+                          </Link>
+                          <button
+                            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); setShowSettings(true); }}
+                            className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold w-full text-left border-none shadow-none"
+                            style={{ border: 'none', boxShadow: 'none' }}
+                          >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.38.64 1 1.07 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+                            Settings
+                          </button>
+                          <Link
+                            href="/docs"
+                            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); }}
+                            className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
+                          >
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                            Docs
+                          </Link>
                         </div>
                       )}
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-vintage-gold">@{userProfile.username}</span>
-                        <BadgeList badges={getUserBadges(userProfile.address, userProfile.userIndex ?? 9999, userProfile.hasVibeBadge)} size="sm" />
-                      </div>
-                    </Link>
+                    </div>
                   ) : (
                     <button
                       onClick={() => {
@@ -4517,22 +4454,49 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                 {/* Right: VBMS Balance */}
                 <div className="flex items-center gap-2">
                   {address && userProfile && (
-                    <Link
-                      href="/dex"
-                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
-                      className="tour-dex-btn bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 px-2 md:px-3 py-1.5 md:py-2 rounded-lg flex flex-col items-center gap-1 transition"
-                    >
-                      <div className="flex items-baseline justify-center gap-0">
-                        <span className="text-vintage-gold text-base md:text-lg font-bold leading-none">$</span>
-                        <span className="text-vintage-gold font-display font-bold text-base md:text-lg leading-none ml-0.5">
-                          {Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                        </span>
-                        <span className="text-vintage-gold text-base md:text-lg font-bold leading-none ml-1">+</span>
-                      </div>
-                      <div className="w-full h-1 bg-vintage-deep-black rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-vintage-gold to-green-400 transition-all" style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }} />
-                      </div>
-                    </Link>
+                    <div className="tour-dex-dropdown relative" style={{ overflow: 'visible' }}>
+                      <button
+                        onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown((p: boolean) => !p); }}
+                        onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); setShowDexDropdown(true); }}
+                        onMouseLeave={() => { dexDropdownTimeout.current = setTimeout(() => setShowDexDropdown(false), 300); }}
+                        className="tour-dex-btn bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 px-2 md:px-3 py-1.5 md:py-2 rounded-lg flex flex-col items-center gap-1 transition cursor-pointer"
+                      >
+                        <div className="flex items-baseline justify-center gap-0">
+                          <span className="text-vintage-gold text-base md:text-lg font-bold leading-none">$</span>
+                          <span className="text-vintage-gold font-display font-bold text-base md:text-lg leading-none ml-0.5">
+                            {Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                          </span>
+                        </div>
+                        <div className="w-full h-1 bg-vintage-deep-black rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-vintage-gold to-green-400 transition-all" style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }} />
+                        </div>
+                      </button>
+                      {showDexDropdown && (
+                        <div
+                          className="absolute top-full right-0 mt-1 bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-lg overflow-hidden min-w-[120px] shadow-xl"
+                          style={{ zIndex: 9999 }}
+                          onMouseEnter={() => { if (dexDropdownTimeout.current) clearTimeout(dexDropdownTimeout.current); }}
+                          onMouseLeave={() => setShowDexDropdown(false)}
+                        >
+                          <Link
+                            href="/dex?tab=buy"
+                            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown(false); }}
+                            onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
+                            className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
+                          >
+                            <span className="text-green-400 text-sm">▲</span> Buy
+                          </Link>
+                          <Link
+                            href="/dex?tab=sell"
+                            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown(false); }}
+                            onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
+                            className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
+                          >
+                            <span className="text-red-400 text-sm">▼</span> Sell
+                          </Link>
+                        </div>
+                      )}
+                    </div>
                   )}
                   {!isInFarcaster && (
                     <div className="tour-price-ticker hidden md:block">
@@ -4552,6 +4516,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('game');
                 }}
+                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
                 className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'game'
                     ? 'bg-vintage-gold text-vintage-black'
@@ -4561,11 +4526,17 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                 {isInFarcaster ? (
                   <>
                     <span className="text-[10px] font-bold whitespace-nowrap">{t('title')}</span>
-                    <span className="text-xl leading-none">♠</span>
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                      <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
                   </>
                 ) : (
                   <>
-                    <span className="text-base md:text-lg">♠</span>
+                    <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                      <polyline points="9 22 9 12 15 12 15 22" />
+                    </svg>
                     <span className="hidden sm:inline">{t('title')}</span>
                   </>
                 )}
@@ -4575,6 +4546,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                   if (soundEnabled) AudioManager.buttonClick();
                   setCurrentView('inbox');
                 }}
+                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
                 className={`relative flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
                   currentView === 'inbox'
                     ? 'bg-vintage-gold text-vintage-black'
@@ -4588,11 +4560,25 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                 {isInFarcaster ? (
                   <>
                     <span className="text-[10px] font-bold whitespace-nowrap">Claim</span>
-                    <NextImage src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5" />
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="10" width="18" height="12" rx="2" />
+                      <path d="M12 10V4" />
+                      <path d="M12 4c-2 0-4 2-4 4h4" />
+                      <path d="M12 4c2 0 4 2 4 4h-4" />
+                      <line x1="12" y1="10" x2="12" y2="22" />
+                      <line x1="3" y1="15" x2="21" y2="15" />
+                    </svg>
                   </>
                 ) : (
                   <>
-                    <NextImage src="/images/icons/inbox.svg" alt="Claim" width={20} height={20} className="w-5 h-5 md:w-6 md:h-6" />
+                    <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="10" width="18" height="12" rx="2" />
+                      <path d="M12 10V4" />
+                      <path d="M12 4c-2 0-4 2-4 4h4" />
+                      <path d="M12 4c2 0 4 2 4 4h-4" />
+                      <line x1="12" y1="10" x2="12" y2="22" />
+                      <line x1="3" y1="15" x2="21" y2="15" />
+                    </svg>
                     <span className="hidden sm:inline">Claim</span>
                   </>
                 )}
@@ -4602,16 +4588,29 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                   if (soundEnabled) AudioManager.buttonClick();
                   router.push('/leaderboard');
                 }}
+                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
                 className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30`}
               >
                 {isInFarcaster ? (
                   <>
                     <span className="text-[9px] font-bold whitespace-nowrap">{t('leaderboard')}</span>
-                    <span className="text-xl leading-none">♔</span>
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 9H3a1 1 0 0 0-1 1v2a4 4 0 0 0 4 4h1" />
+                      <path d="M18 9h3a1 1 0 0 1 1 1v2a4 4 0 0 1-4 4h-1" />
+                      <path d="M6 3h12v6a6 6 0 0 1-12 0V3z" />
+                      <path d="M9 19h6v3H9z" />
+                      <line x1="7" y1="22" x2="17" y2="22" />
+                    </svg>
                   </>
                 ) : (
                   <>
-                    <span className="text-base md:text-lg">♔</span>
+                    <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 9H3a1 1 0 0 0-1 1v2a4 4 0 0 0 4 4h1" />
+                      <path d="M18 9h3a1 1 0 0 1 1 1v2a4 4 0 0 1-4 4h-1" />
+                      <path d="M6 3h12v6a6 6 0 0 1-12 0V3z" />
+                      <path d="M9 19h6v3H9z" />
+                      <line x1="7" y1="22" x2="17" y2="22" />
+                    </svg>
                     <span className="hidden sm:inline">{t('leaderboard')}</span>
                   </>
                 )}
@@ -4621,42 +4620,54 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
                 }}
+                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
                 className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30`}
               >
                 {isInFarcaster ? (
                   <>
                     <span className="text-[10px] font-bold whitespace-nowrap">{t('navShop')}</span>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                      <polyline points="9 22 9 12 15 12 15 22" />
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <path d="M16 10a4 4 0 0 1-8 0" />
                     </svg>
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                      <polyline points="9 22 9 12 15 12 15 22" />
+                    <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+                      <line x1="3" y1="6" x2="21" y2="6" />
+                      <path d="M16 10a4 4 0 0 1-8 0" />
                     </svg>
                     <span className="hidden sm:inline">{t('navShop')}</span>
                   </>
                 )}
               </Link>
               <Link
-                href="/quests"
+                href="/quests/cast"
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
                 }}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} relative bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30`}
+                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
+                className={`tour-wanted-btn flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} relative bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30`}
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">{t('navQuests')}</span>
-                    <span className="text-xl leading-none">◈</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap">Wanted</span>
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <circle cx="12" cy="12" r="6" />
+                      <circle cx="12" cy="12" r="2" />
+                    </svg>
                   </>
                 ) : (
                   <>
-                    <span className="text-base md:text-lg">◈</span>
-                    <span className="hidden sm:inline">{t('navQuests')}</span>
+                    <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <circle cx="12" cy="12" r="6" />
+                      <circle cx="12" cy="12" r="2" />
+                    </svg>
+                    <span className="hidden sm:inline">Wanted</span>
                   </>
                 )}
                 {hasClaimableMissions && (
@@ -4689,73 +4700,28 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
           {currentView === 'game' && (
           <>
           {/* GAME BUTTONS - EXACT CENTER */}
-          {isInFarcaster ? (
-            <>
-              <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xs px-2 z-10">
-                <div className="tour-game-grid">
-                  <GameGrid
-                    soundEnabled={soundEnabled}
-                    disabled={!userProfile || (status !== 'loaded' && status !== 'failed' && contextStatus !== 'loaded')}
-                    onSelect={handleGameModeSelect}
-                    userAddress={address}
-                  />
-                </div>
-              </div>
-              {/* CARDS - BELOW CENTER */}
-              <div className="fixed top-[66%] left-1/2 -translate-x-1/2 w-full max-w-xs px-2 z-10">
-                <div className="tour-cards-section">
-                  <CardsPreview
-                    cards={nfts}
-                    soundEnabled={soundEnabled}
-                    loading={status === 'fetching' || contextStatus === 'fetching' || (status === 'idle' && nfts.length === 0 && contextStatus !== 'loaded')}
-                    onViewAll={() => {
-                      if (soundEnabled) AudioManager.buttonClick();
-                      setShowMyCardsModal(true);
-                    }}
-                  />
-                </div>
-              </div>
-              {/* WANTED CAST - SAME GAP AS GAMEMODE TO CARDS */}
-              <div className="tour-wanted-cast fixed top-[78%] left-1/2 -translate-x-1/2 w-full max-w-xs px-2 z-10">
-                <WantedCast soundEnabled={soundEnabled} />
-              </div>
-              {/* ROULETTE BUTTON */}
-              <button
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
-                  setShowRoulette(true);
-                }}
-                className="fixed top-[88%] right-4 z-20 bg-gradient-to-r from-vintage-gold to-yellow-500 text-black font-bold py-2 px-4 rounded-full shadow-gold animate-pulse hover:scale-105 transition-transform"
-              >
-                SPIN
-              </button>
-            </>
-          ) : (
-            <div className="flex flex-col items-center px-2">
-              <div className="tour-game-grid w-full max-w-xs">
-                <GameGrid
-                  soundEnabled={soundEnabled}
-                  disabled={!userProfile || (status !== 'loaded' && status !== 'failed')}
-                  onSelect={handleGameModeSelect}
-                  userAddress={address}
-                />
-              </div>
-              <div className="tour-cards-section w-full max-w-xs mt-4">
-                <CardsPreview
-                  cards={nfts}
-                  soundEnabled={soundEnabled}
-                  loading={status === 'fetching' || contextStatus === 'fetching' || (status === 'idle' && nfts.length === 0 && contextStatus !== 'loaded')}
-                  onViewAll={() => {
-                    if (soundEnabled) AudioManager.buttonClick();
-                    setShowMyCardsModal(true);
-                  }}
-                />
-              </div>
-              <div className="tour-wanted-cast mt-2 w-full max-w-xs">
-                <WantedCast soundEnabled={soundEnabled} />
-              </div>
+          <div className={`flex flex-col items-center ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto' : 'px-2'}`}>
+            <div className="tour-game-grid w-full max-w-xs">
+              <GameGrid
+                soundEnabled={soundEnabled}
+                disabled={!userProfile || (status !== 'loaded' && status !== 'failed' && (isInFarcaster ? contextStatus !== 'loaded' : true))}
+                onSelect={handleGameModeSelect}
+                userAddress={address}
+                onSpin={() => setShowRoulette(true)}
+              />
             </div>
-          )}
+            <div className="tour-cards-section w-full max-w-xs mt-2">
+              <CardsPreview
+                cards={nfts}
+                soundEnabled={soundEnabled}
+                loading={status === 'fetching' || contextStatus === 'fetching' || (status === 'idle' && nfts.length === 0 && contextStatus !== 'loaded')}
+                onViewAll={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setShowMyCardsModal(true);
+                }}
+              />
+            </div>
+          </div>
 
           {/* LEGACY LAYOUT - HIDDEN (replaced by new compact layout above) */}
           <div className="hidden">
@@ -5389,8 +5355,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         totalAttempts={pveAttemptsData?.total ?? 10}
       />
 
-      {/* Easter Egg - Runaway Image */}
-      <RunawayEasterEgg />
+      {/* Easter Egg removed */}
 
       {/* TEMPORARILY DISABLED - Causing performance issues */}
       {/* <MobileDebugConsole /> */}

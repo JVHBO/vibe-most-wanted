@@ -289,12 +289,11 @@ export function GuidedTour({
             {step.id === 'cards' && '🃏'}
             {step.id === 'dex' && '💱'}
             {step.id === 'vibefid' && '🎴'}
-            {step.id === 'wantedcast' && '📢'}
-            {step.id === 'priceticker' && '📊'}
+            {step.id === 'wantedcast' && '🎯'}
             {step.id === 'navbar' && '🧭'}
             {step.id === 'settings' && '⚙️'}
             {step.id === 'ready' && '🚀'}
-            {!['welcome', 'games', 'cards', 'dex', 'vibefid', 'wantedcast', 'priceticker', 'navbar', 'settings', 'ready'].includes(step.id) && '💡'}
+            {!['welcome', 'games', 'cards', 'dex', 'vibefid', 'wantedcast', 'navbar', 'settings', 'ready'].includes(step.id) && '💡'}
           </div>
 
           <h3 className="font-display text-xl text-vintage-gold mb-2">
@@ -363,14 +362,14 @@ export function GuidedTour({
 export const DEFAULT_TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
-    targetSelector: '.tour-header', // Will highlight the header/title area
+    targetSelector: '.tour-header',
     titleKey: 'tourWelcomeTitle',
     descriptionKey: 'tourWelcomeDesc',
     position: 'bottom',
   },
   {
     id: 'games',
-    targetSelector: '.tour-game-grid', // Will highlight game mode buttons
+    targetSelector: '.tour-game-grid',
     titleKey: 'tourGamesTitle',
     descriptionKey: 'tourGamesDesc',
     position: 'bottom',
@@ -378,14 +377,14 @@ export const DEFAULT_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'cards',
-    targetSelector: '.tour-cards-section', // Will highlight cards area
+    targetSelector: '.tour-cards-section',
     titleKey: 'tourCardsTitle',
     descriptionKey: 'tourCardsDesc',
     position: 'bottom',
   },
   {
     id: 'dex',
-    targetSelector: '.tour-dex-btn', // DEX button
+    targetSelector: '.tour-dex-btn',
     titleKey: 'tourDexTitle',
     descriptionKey: 'tourDexDesc',
     position: 'top',
@@ -393,46 +392,38 @@ export const DEFAULT_TOUR_STEPS: TourStep[] = [
   },
   {
     id: 'vibefid',
-    targetSelector: '.tour-vibefid-btn', // VibeFID button
+    targetSelector: '.tour-vibefid-btn',
     titleKey: 'tourVibefidTitle',
     descriptionKey: 'tourVibefidDesc',
-    position: 'top',
-    action: 'click',
-  },
-  {
-    id: 'wantedcast',
-    targetSelector: '.tour-wanted-cast', // Wanted Cast section
-    titleKey: 'tourWantedCastTitle',
-    descriptionKey: 'tourWantedCastDesc',
-    position: 'top',
-    action: 'click',
-  },
-  {
-    id: 'priceticker',
-    targetSelector: '.tour-price-ticker', // Price Ticker
-    titleKey: 'tourPriceTickerTitle',
-    descriptionKey: 'tourPriceTickerDesc',
-    position: 'top',
+    position: 'bottom',
     action: 'click',
   },
   {
     id: 'navbar',
-    targetSelector: '.tour-nav-bar', // Bottom nav bar
+    targetSelector: '.tour-nav-bar',
     titleKey: 'tourNavbarTitle',
     descriptionKey: 'tourNavbarDesc',
     position: 'top',
     action: 'click',
   },
   {
+    id: 'wantedcast',
+    targetSelector: '.tour-wanted-btn',
+    titleKey: 'tourWantedCastTitle',
+    descriptionKey: 'tourWantedCastDesc',
+    position: 'top',
+    action: 'click',
+  },
+  {
     id: 'settings',
-    targetSelector: '.tour-settings-btn', // Settings button
+    targetSelector: '.tour-settings-btn',
     titleKey: 'tourSettingsTitle',
     descriptionKey: 'tourSettingsDesc',
     position: 'bottom',
   },
   {
     id: 'ready',
-    targetSelector: '.tour-header', // Back to header for final step
+    targetSelector: '.tour-header',
     titleKey: 'tourReadyTitle',
     descriptionKey: 'tourReadyDesc',
     position: 'bottom',
