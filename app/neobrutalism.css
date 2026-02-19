@@ -2972,5 +2972,23 @@ body.neobrutalism div.arena-bets-panel div[class*="text-yellow"] {
 /* Stats row: win=green, loss=red, net=green/red */
 body.neobrutalism div.arena-bets-panel .grid > span:first-child { color: #4ADE80 !important; }
 body.neobrutalism div.arena-bets-panel .grid > span:nth-child(2) { color: #F87171 !important; }
+
+/* ===== TCG LOBBY BUTTONS ===== */
+body.neobrutalism .tcg-btn-cpu {
+  border: 3px solid #22C55E !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+body.neobrutalism button[class*="bg-amber-500"] {
+  border: 3px solid #F59E0B !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+body.neobrutalism button[class*="bg-purple-500"] {
+  border: 3px solid #A855F7 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
+body.neobrutalism button[class*="bg-red-500"][class*="rounded-lg"] {
+  border: 3px solid #EF4444 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+}
 /* Header Bets label and balance */
 body.neobrutalism div.arena-bets-panel > div:first-child span { color: #FFD400 !important; }
