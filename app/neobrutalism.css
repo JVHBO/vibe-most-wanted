@@ -372,24 +372,30 @@ body.neobrutalism .tour-header *:not([class*="absolute"]) {
   overflow: visible !important;
 }
 
-/* Profile chip button - navy dark */
-body.neobrutalism .tour-profile-btn {
-  background: #0E1A30 !important;
+/* Profile chip button - solid blue, neobrutalism */
+body.neobrutalism .tour-profile-btn,
+body.neobrutalism button.tour-profile-btn {
+  background: #0A4DB5 !important;
+  background-color: #0A4DB5 !important;
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
   border-radius: 4px !important;
   padding: 4px 8px !important;
 }
 body.neobrutalism .tour-profile-btn *,
-body.neobrutalism .tour-profile-btn span {
-  color: #7EB8FF !important;
+body.neobrutalism .tour-profile-btn span,
+body.neobrutalism button.tour-profile-btn * {
+  color: #FFF !important;
 }
-body.neobrutalism .tour-profile-btn:hover {
-  transform: translate(1px, 1px) !important;
+body.neobrutalism .tour-profile-btn:hover,
+body.neobrutalism button.tour-profile-btn:hover {
+  transform: translate(2px, 2px) !important;
   box-shadow: 1px 1px 0px #000 !important;
-  background: #162540 !important;
+  background: #0940A0 !important;
+  background-color: #0940A0 !important;
 }
-body.neobrutalism .tour-profile-btn:active {
+body.neobrutalism .tour-profile-btn:active,
+body.neobrutalism button.tour-profile-btn:active {
   transform: translate(3px, 3px) !important;
   box-shadow: 0px 0px 0px #000 !important;
 }
@@ -937,11 +943,13 @@ body.neobrutalism .tour-dex-dropdown > div[style*="z-index"] a:hover * {
   color: #000 !important;
 }
 
-/* DEX/Balance chip → dark purple with gold text */
+/* DEX/Balance chip → solid purple with gold text */
 body.neobrutalism .tour-dex-btn,
 body.neobrutalism a.tour-dex-btn,
+body.neobrutalism div.tour-dex-btn,
 body.neobrutalism .tour-dex-btn[class*="bg-vintage-black"] {
-  background-color: #1A0D30 !important;
+  background: #6B1AB5 !important;
+  background-color: #6B1AB5 !important;
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
   border-radius: 4px !important;
@@ -2373,19 +2381,36 @@ body.neobrutalism [class*="absolute bottom-0"] span[class*="text-vintage-burnt-g
 
 /* ===== FINAL OVERRIDES (highest priority — end of file) ===== */
 
-/* FIX: hover:bg-vintage-gold/10 buttons → must stay DARK, not gold */
-/* Profile button and DEX button in home header */
-body.neobrutalism .tour-profile-dropdown > button[class*="bg-vintage-black"] {
-  background-color: #2C2C2C !important;
+/* Profile button → BLUE (highest priority override) */
+body.neobrutalism .tour-profile-btn,
+body.neobrutalism button.tour-profile-btn,
+body.neobrutalism .tour-header .tour-profile-btn {
+  background: #0A4DB5 !important;
+  background-color: #0A4DB5 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
 }
-body.neobrutalism .tour-profile-dropdown > button[class*="bg-vintage-black"] span {
-  color: #FFD400 !important;
+body.neobrutalism .tour-profile-btn span,
+body.neobrutalism .tour-profile-btn *:not(img) {
+  color: #FFF !important;
 }
+
+/* DEX button → PURPLE (highest priority override) */
+body.neobrutalism .tour-dex-btn,
+body.neobrutalism div.tour-dex-btn,
+body.neobrutalism .tour-header .tour-dex-btn,
 body.neobrutalism .tour-dex-btn[class*="bg-vintage-black"] {
-  background-color: #2C2C2C !important;
+  background: #6B1AB5 !important;
+  background-color: #6B1AB5 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
 }
-body.neobrutalism .tour-dex-btn[class*="bg-vintage-black"] span {
+body.neobrutalism .tour-dex-btn span,
+body.neobrutalism .tour-dex-btn *:not(img) {
   color: #FFD400 !important;
+  font-weight: 800 !important;
 }
 
 /* ===================================================
