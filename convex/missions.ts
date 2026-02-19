@@ -608,6 +608,19 @@ export const getProfileBadgeStatus = internalQuery({
   },
 });
 
+// Internal query for actions to resolve linked address (since actions can't use ctx.db)
+export const resolveAddressQuery = internalQuery({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalized = address.toLowerCase();
+    const link = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalized))
+      .first();
+    return link?.primaryAddress || normalized;
+  },
+});
+
 /**
  * Check if player is eligible for VIBE badge (has VibeFID cards)
  * 🚀 ON-CHAIN VERIFICATION: Uses Alchemy to check NFT ownership (source of truth)
@@ -620,7 +633,8 @@ export const checkVibeBadgeEligibility = action({
     hasBadge: boolean;
     vibeFIDCount: number;
   }> => {
-    const normalizedAddress = await resolveAddress(ctx, playerAddress);
+    // Actions can't use ctx.db directly - use internal query
+    const normalizedAddress = await ctx.runQuery(internal.missions.resolveAddressQuery, { address: playerAddress });
 
     // Get badge status from profile
     const badgeStatus = await ctx.runQuery(internal.missions.getProfileBadgeStatus, {
@@ -721,7 +735,8 @@ export const claimVibeBadge = action({
     success: boolean;
     message: string;
   }> => {
-    const normalizedAddress = await resolveAddress(ctx, playerAddress);
+    // Actions can't use ctx.db directly - use internal query
+    const normalizedAddress = await ctx.runQuery(internal.missions.resolveAddressQuery, { address: playerAddress });
 
     // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy (Base + Arbitrum)
     const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || process.env.ALCHEMY_API_KEY;
