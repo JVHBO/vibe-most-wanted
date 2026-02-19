@@ -375,51 +375,6 @@ export function TCGLobby({
               </div>
             )}
 
-            {/* Saved Decks List */}
-            {playerDecks && playerDecks.length > 1 && (
-              <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 overflow-hidden">
-                <div className="p-3 border-b border-vintage-gold/20">
-                  <h3 className="text-sm font-bold text-vintage-gold uppercase tracking-wide">Saved Decks ({playerDecks.length})</h3>
-                </div>
-                <div className="divide-y divide-vintage-gold/10 max-h-40 overflow-y-auto">
-                  {playerDecks.map((deck: any) => {
-                    const isActive = deck._id === activeDeck?._id;
-                    return (
-                      <div
-                        key={deck._id}
-                        className={`flex items-center gap-3 p-3 hover:bg-vintage-gold/5 transition ${isActive ? 'bg-vintage-gold/10' : ''}`}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-sm font-bold truncate ${isActive ? "text-vintage-gold" : "text-vintage-burnt-gold"}`}>
-                            {deck.deckName}
-                            {isActive && <span className="text-green-400 ml-2 text-xs">(Active)</span>}
-                          </p>
-                          <p className="text-[10px] text-vintage-burnt-gold/50">
-                            {deck.vbmsCount || 0} VBMS &bull; {deck.totalPower || 0} PWR
-                          </p>
-                        </div>
-                        {!isActive && (
-                          <button
-                            onClick={async () => {
-                              if (confirm(`Delete deck "${deck.deckName}"?`)) {
-                                try {
-                                  await deleteDeckMutation({ deckId: deck._id });
-                                } catch (e: any) {
-                                  setError(e.message || "Failed to delete deck");
-                                }
-                              }
-                            }}
-                            className="px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30"
-                          >
-                            Delete
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* Play Buttons */}
             <div className="space-y-4">
