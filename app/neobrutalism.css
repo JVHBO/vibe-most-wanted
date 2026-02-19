@@ -402,7 +402,7 @@ body.neobrutalism button.tour-profile-btn:active {
 
 /* Profile dropdown → same navy as profile button */
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] {
-  background: #0E1A30 !important;
+  background: #1D4ED8 !important;
   border: 4px solid #000 !important;
   box-shadow: 6px 6px 0px #000 !important;
   border-radius: 4px !important;
@@ -984,8 +984,8 @@ body.neobrutalism [class*="bg-vintage-charcoal/80"] [class*="bg-vintage-black"] 
 /* Profile dropdown → DARK (late override) */
 body.neobrutalism .tour-profile-dropdown > div:not(:first-child),
 body.neobrutalism .tour-profile-dropdown > div[style*="z-index"] {
-  background: #2C2C2C !important;
-  background-color: #2C2C2C !important;
+  background: #1D4ED8 !important;
+  background-color: #1D4ED8 !important;
   border: 4px solid #000 !important;
   box-shadow: 6px 6px 0px #000 !important;
 }
