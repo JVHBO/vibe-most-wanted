@@ -372,9 +372,9 @@ body.neobrutalism .tour-header *:not([class*="absolute"]) {
   overflow: visible !important;
 }
 
-/* Profile chip button - neobrutalism bold style */
+/* Profile chip button - navy dark */
 body.neobrutalism .tour-profile-btn {
-  background: #1E1E1E !important;
+  background: #0E1A30 !important;
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
   border-radius: 4px !important;
@@ -382,21 +382,21 @@ body.neobrutalism .tour-profile-btn {
 }
 body.neobrutalism .tour-profile-btn *,
 body.neobrutalism .tour-profile-btn span {
-  color: #FFD400 !important;
+  color: #7EB8FF !important;
 }
 body.neobrutalism .tour-profile-btn:hover {
   transform: translate(1px, 1px) !important;
   box-shadow: 1px 1px 0px #000 !important;
-  background: #2C2C2C !important;
+  background: #162540 !important;
 }
 body.neobrutalism .tour-profile-btn:active {
   transform: translate(3px, 3px) !important;
   box-shadow: 0px 0px 0px #000 !important;
 }
 
-/* Profile dropdown menu → DARK with white text */
+/* Profile dropdown → same navy as profile button */
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] {
-  background: #2C2C2C !important;
+  background: #0E1A30 !important;
   border: 4px solid #000 !important;
   box-shadow: 6px 6px 0px #000 !important;
   border-radius: 4px !important;
@@ -406,14 +406,18 @@ body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] 
   border: none !important;
   box-shadow: none !important;
   border-radius: 0 !important;
-  color: #FFF !important;
+  color: #7EB8FF !important;
   margin: 0 !important;
   padding: 8px 12px !important;
   width: 100% !important;
 }
+body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a:hover,
+body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] button:hover {
+  background: #162540 !important;
+}
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a *,
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] button * {
-  color: #FFF !important;
+  color: #7EB8FF !important;
   stroke: #FFF !important;
 }
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a:hover,
@@ -933,11 +937,11 @@ body.neobrutalism .tour-dex-dropdown > div[style*="z-index"] a:hover * {
   color: #000 !important;
 }
 
-/* DEX/Balance chip → DARK with gold text, bold border */
+/* DEX/Balance chip → dark purple with gold text */
 body.neobrutalism .tour-dex-btn,
 body.neobrutalism a.tour-dex-btn,
 body.neobrutalism .tour-dex-btn[class*="bg-vintage-black"] {
-  background-color: #1E1E1E !important;
+  background-color: #1A0D30 !important;
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
   border-radius: 4px !important;

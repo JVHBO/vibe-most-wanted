@@ -311,6 +311,7 @@ export function Roulette({ onClose }: RouletteProps) {
   const canSpin = canSpinData?.canSpin ?? false;
   const spinsRemaining = canSpinData?.spinsRemaining ?? 0;
   const isVibeFidHolder = canSpinData?.isVibeFidHolder ?? false;
+  const isArbMode = canSpinData?.isArbMode ?? false;
   const [isClaiming, setIsClaiming] = useState(false);
   const [isBuyingPaidSpin, setIsBuyingPaidSpin] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
@@ -868,7 +869,7 @@ export function Roulette({ onClose }: RouletteProps) {
                 )}
               </span>
               <span className="text-vintage-ice/50 ml-2">
-                ({t.freeSpin}{isVibeFidHolder && <span className="text-purple-400"> {t.vibefidBonus}</span>})
+                ({t.freeSpin}{isVibeFidHolder && <span className="text-purple-400"> {t.vibefidBonus}</span>}{isArbMode && <span className="text-blue-400"> +1 ARB</span>})
               </span>
             </>
           )}

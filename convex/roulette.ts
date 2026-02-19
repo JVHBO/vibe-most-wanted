@@ -103,10 +103,13 @@ export const canSpin = query({
     const vibeFidCard = await findVibeFidByAddress(ctx, normalizedAddress);
 
     const isVibeFidHolder = !!vibeFidCard;
-    const maxSpins = isVibeFidHolder ? 3 : 1;
+    // 🔗 Arbitrum bonus: +1 spin (read from profile.preferredChain)
+    const chain = (profile as any)?.preferredChain || "base";
+    const arbBonus = chain === "arbitrum" ? 1 : 0;
+    const maxSpins = (isVibeFidHolder ? 3 : 1) + arbBonus;
 
     // 🚀 BANDWIDTH FIX: Use .take(maxSpins) instead of .collect()
-    // Since max is 3, we never need to fetch more than 3 spins
+    // Since max is 4 (3 VibeFID + 1 ARB), we never need to fetch more than 4 spins
     const spins = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
@@ -126,6 +129,7 @@ export const canSpin = query({
       spinsRemaining,
       isVibeFidHolder,
       maxSpins,
+      isArbMode: arbBonus > 0,
     };
   },
 });
