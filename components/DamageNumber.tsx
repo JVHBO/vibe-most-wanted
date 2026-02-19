@@ -33,7 +33,7 @@ export function DamageNumber({ damage, isCritical, x, y, onComplete }: DamageNum
 
   return (
     <div
-      className={`absolute pointer-events-none font-bold text-2xl animate-damage-float ${
+      className={`absolute pointer-events-none font-bold text-2xl z-[10] ${
         isCritical ? 'text-red-500 text-4xl' : 'text-yellow-400'
       }`}
       style={{

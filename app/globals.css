@@ -54,6 +54,36 @@ body > * {
   max-width: 100vw;
 }
 
+/* ===== RAID BOSS ANIMATIONS ===== */
+
+@keyframes damageFloat {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  20%  { opacity: 1; transform: translateY(-20px) scale(1.25); }
+  100% { opacity: 0; transform: translateY(-80px) scale(0.8); }
+}
+
+@keyframes boss-hit {
+  0%   { filter: brightness(1); }
+  20%  { filter: brightness(2.5) saturate(0.5); }
+  50%  { filter: brightness(1.8) saturate(0.2); }
+  100% { filter: brightness(1); }
+}
+
+.animate-boss-hit {
+  animation: boss-hit 0.4s ease-out forwards;
+}
+
+@keyframes card-attack {
+  0%   { transform: translateY(0) scale(1); }
+  35%  { transform: translateY(-14px) scale(1.18); }
+  70%  { transform: translateY(-6px) scale(1.06); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+.animate-card-attack {
+  animation: card-attack 0.5s ease-out forwards;
+}
+
 /* Hide/customize scrollbars globally for cleaner UI */
 * {
   scrollbar-width: thin;
