@@ -2129,49 +2129,6 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
         <div className="h-20"></div>
       </div>
 
-      {/* VBMS Confirmation Modal */}
-      {showVBMSModal && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-4 w-full max-w-sm">
-            <h3 className="text-vintage-gold font-bold text-lg mb-3 text-center">
-              {(t as unknown as Record<string, string>).openVBMS || 'Open Vibe Most Wanted?'}
-            </h3>
-            <p className="text-vintage-ice/80 text-sm text-center mb-4">
-              {(t as unknown as Record<string, string>).openVBMSDesc || 'You will be redirected to Vibe Most Wanted to play the game.'}
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  AudioManager.buttonClick();
-                  setShowVBMSModal(false);
-                }}
-                className="flex-1 py-2 bg-vintage-burnt-gold/30 hover:bg-vintage-burnt-gold/50 text-vintage-gold font-bold rounded-xl transition-all"
-              >
-                {t.cancel || 'Cancel'}
-              </button>
-              <button
-                onClick={async () => {
-                  AudioManager.buttonClick();
-                  const VBMS_MINIAPP_URL = 'https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast';
-                  if (farcasterContext.isInMiniapp) {
-                    try {
-                      await sdk.actions.openMiniApp({ url: VBMS_MINIAPP_URL });
-                    } catch (err) {
-                      window.open(VBMS_MINIAPP_URL, '_blank');
-                    }
-                  } else {
-                    window.open(VBMS_MINIAPP_URL, '_blank');
-                  }
-                  setShowVBMSModal(false);
-                }}
-                className="flex-1 py-2 bg-vintage-gold hover:bg-yellow-500 text-vintage-black font-bold rounded-xl transition-all"
-              >
-                {t.open || 'Open'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       
 {/* Floating VibeMail Envelope Button - hides when modal is open */}
@@ -2259,9 +2216,14 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       <div className="fixed bottom-0 left-0 right-0 z-[9999] safe-area-bottom">
         <div className="bg-vintage-charcoal/95 backdrop-blur-lg rounded-none border-t-2 border-vintage-gold/30 p-1 flex gap-1">
           <button
-            onClick={() => {
+            onClick={async () => {
               AudioManager.buttonClick();
-              setShowVBMSModal(true);
+              const VBMS_MINIAPP_URL = 'https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast';
+              if (farcasterContext.isInMiniapp) {
+                try { await sdk.actions.openMiniApp({ url: VBMS_MINIAPP_URL }); } catch { window.open(VBMS_MINIAPP_URL, '_blank'); }
+              } else {
+                window.location.href = 'https://vibemostwanted.xyz';
+              }
             }}
             className="flex-1 min-w-0 px-1 py-2 flex flex-col items-center justify-center gap-0.5 rounded-lg font-semibold transition-all text-[10px] leading-tight bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30"
           >
