@@ -2390,3 +2390,9 @@ body.neobrutalism [class*="via-transparent"] {
   background-color: transparent !important;
   background-image: linear-gradient(to top, rgba(0,0,0,0.95), transparent, rgba(0,0,0,0.4)) !important;
 }
+
+/* FIX: gradient overlays that fade to-transparent (deck bar, etc.) must not be opaque */
+body.neobrutalism [class*="to-transparent"] {
+  background-color: transparent !important;
+  background-image: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0.9), transparent) !important;
+}
