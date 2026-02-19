@@ -188,7 +188,7 @@ body.neobrutalism .tour-dex-btn [class*="rounded-full"] {
 }
 
 /* --- Buttons base --- */
-body.neobrutalism button,
+body.neobrutalism button:not([class*="tcg-btn"]),
 body.neobrutalism [role="button"],
 body.neobrutalism a[class*="bg-"] {
   background-image: none !important;
@@ -199,6 +199,15 @@ body.neobrutalism a[class*="bg-"] {
   transform: translate(0, 0) !important;
   --tw-scale-x: 1 !important;
   --tw-scale-y: 1 !important;
+}
+body.neobrutalism button[class*="tcg-btn"] {
+  background-image: none !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  transform: translate(0, 0) !important;
+}
+body.neobrutalism button[class*="tcg-btn"]:hover {
+  transform: translate(2px, 2px) !important;
 }
 body.neobrutalism button:hover,
 body.neobrutalism [role="button"]:hover,
