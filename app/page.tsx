@@ -4620,11 +4620,11 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
               </button>
               <Link
                 href="/shop"
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
+                onClick={(e) => {
+                  e.preventDefault();
                 }}
                 onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30`}
+                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} bg-vintage-black text-vintage-gold/30 border border-vintage-gold/10 cursor-not-allowed opacity-50`}
               >
                 {isInFarcaster ? (
                   <>
