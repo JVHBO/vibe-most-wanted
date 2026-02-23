@@ -459,6 +459,14 @@ export const getPlayerEconomy = query({
 
       // Calculate claimable
       claimableBalance: Math.max(0, (profile.coinsInbox || 0) - (profile.poolDebt || 0)),
+
+      // Daily convert limit
+      dailyConvertLimit: DAILY_CONVERT_LIMIT,
+      dailyConvertRemaining: (() => {
+        const today = new Date().toISOString().slice(0, 10);
+        const used = profile.dailyConvertDate === today ? (profile.dailyConvertedVBMS || 0) : 0;
+        return Math.max(0, DAILY_CONVERT_LIMIT - used);
+      })(),
     };
   },
 });
@@ -920,9 +928,9 @@ export const convertTESTVBMStoVBMS = action({
 
 // Conversion cooldown (3 minutes)
 const CONVERSION_COOLDOWN_MS = 3 * 60 * 1000;
-// Claim limits - LOWER than contract to have buffer
-// Contract dailyClaimLimit: 750k, but site uses 200k for safety margin
-const MAX_CLAIM_AMOUNT = 200_000;
+// Claim limits
+const MAX_CLAIM_AMOUNT = 200_000;   // Per conversion max
+const DAILY_CONVERT_LIMIT = 200_000; // Per day total max
 const MIN_CLAIM_AMOUNT = 100;
 
 // Internal mutation to handle database operations
@@ -988,6 +996,14 @@ export const convertTESTVBMSInternal = internalMutation({
       throw new Error(`[CLAIM_COOLDOWN]${remainingSeconds}`);
     }
 
+    // 🔒 DAILY LIMIT CHECK - 200k max per day
+    const today = new Date().toISOString().slice(0, 10);
+    const dailyConverted = profile.dailyConvertDate === today ? (profile.dailyConvertedVBMS || 0) : 0;
+    const dailyRemaining = DAILY_CONVERT_LIMIT - dailyConverted;
+    if (dailyRemaining <= 0) {
+      throw new Error(`[CLAIM_DAILY_LIMIT]`);
+    }
+
     const testVBMSBalance = profile.coins || 0;
 
     if (testVBMSBalance < MIN_CLAIM_AMOUNT) {
@@ -1004,10 +1020,10 @@ export const convertTESTVBMSInternal = internalMutation({
       if (amount > testVBMSBalance) {
         throw new Error(`[CLAIM_INSUFFICIENT_BALANCE]${testVBMSBalance}|${amount}`);
       }
-      claimAmount = Math.min(amount, MAX_CLAIM_AMOUNT);
+      claimAmount = Math.min(amount, MAX_CLAIM_AMOUNT, dailyRemaining);
     } else {
       // Default: convert all up to max
-      claimAmount = Math.min(testVBMSBalance, MAX_CLAIM_AMOUNT);
+      claimAmount = Math.min(testVBMSBalance, MAX_CLAIM_AMOUNT, dailyRemaining);
     }
 
     const remainingBalance = testVBMSBalance - claimAmount;
@@ -1021,11 +1037,13 @@ export const convertTESTVBMSInternal = internalMutation({
     // Store nonce for on-chain verification during recovery (anti double-spend)
     const now = Date.now();
     await ctx.db.patch(profile._id, {
-      coins: remainingBalance, // Keep any amount over 100k
-      pendingConversion: claimAmount, // Track pending conversion for recovery if needed
+      coins: remainingBalance,
+      pendingConversion: claimAmount,
       pendingConversionTimestamp: now,
-      pendingNonce: nonce, // 🔒 Store nonce to verify on-chain before allowing recovery
-      lastConversionAttempt: now, // 🔒 Track attempt time for cooldown (even if fails)
+      pendingNonce: nonce,
+      lastConversionAttempt: now,
+      dailyConvertedVBMS: dailyConverted + claimAmount,
+      dailyConvertDate: today,
     });
 
     // 📊 Log pending conversion to transaction history

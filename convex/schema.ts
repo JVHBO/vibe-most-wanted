@@ -115,6 +115,8 @@ export default defineSchema({
     lastConversionAttempt: v.optional(v.number()), // Last conversion attempt (success or fail)
     dailyRecoveryCount: v.optional(v.number()), // How many recovers today
     lastRecoveryDay: v.optional(v.string()), // "2026-01-01" format for daily reset
+    dailyConvertedVBMS: v.optional(v.number()), // Total VBMS converted today
+    dailyConvertDate: v.optional(v.string()), // "2026-01-01" format for daily reset
 
     // Daily Limits for Economy
     dailyLimits: v.optional(v.object({
