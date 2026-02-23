@@ -113,8 +113,7 @@ export default function TestResultsPage() {
         tieGifLoaded={true} errorMessage={null} setErrorMessage={() => {}} successMessage={null}
         setSuccessMessage={() => {}} showDailyClaimPopup={false} setShowDailyClaimPopup={() => {}}
         loginBonusClaimed={true} isClaimingBonus={false} handleClaimLoginBonus={() => {}}
-        showWelcomePackPopup={false} setShowWelcomePackPopup={() => {}} isClaimingWelcomePack={false}
-        handleClaimWelcomePack={() => {}} t={t}
+        t={t}
       />
     </div>
   );

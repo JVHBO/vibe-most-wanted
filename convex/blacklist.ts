@@ -577,3 +577,55 @@ export const adminZeroBlacklistedBalances = mutation({
     return { coinsReset, creditsReset, total: allBlacklisted.length };
   },
 });
+
+// ========== ADMIN: Analyze recent VBMS claimers (last N days) ==========
+
+export const adminAnalyzeRecentClaimers = query({
+  args: { days: v.optional(v.number()) },
+  handler: async (ctx, { days = 3 }) => {
+    const since = Date.now() - days * 24 * 60 * 60 * 1000;
+
+    const recentClaims = await ctx.db
+      .query("claimAnalytics")
+      .withIndex("by_timestamp", (q: any) => q.gte("timestamp", since))
+      .order("desc")
+      .take(2000);
+
+    // Aggregate by address
+    const byAddress: Record<string, { totalEarned: number; claimCount: number; lastClaim: number }> = {};
+    for (const c of recentClaims) {
+      const addr = c.playerAddress;
+      if (!byAddress[addr]) byAddress[addr] = { totalEarned: 0, claimCount: 0, lastClaim: 0 };
+      byAddress[addr].totalEarned += c.amount;
+      byAddress[addr].claimCount++;
+      if (c.timestamp > byAddress[addr].lastClaim) byAddress[addr].lastClaim = c.timestamp;
+    }
+
+    // For each address, get profile info
+    const results = [];
+    for (const [addr, stats] of Object.entries(byAddress)) {
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q: any) => q.eq("address", addr))
+        .first();
+      results.push({
+        address: addr,
+        username: profile?.username || profile?.farcasterDisplayName || "unknown",
+        fid: profile?.farcasterFid || null,
+        totalEarned3d: stats.totalEarned,
+        claimCount: stats.claimCount,
+        currentCoins: profile?.coins || 0,
+        lifetimeEarned: profile?.lifetimeEarned || 0,
+        pvpWins: profile?.stats?.pvpWins || 0,
+        pveWins: profile?.stats?.pveWins || 0,
+        createdAt: profile?.createdAt || profile?._creationTime || null,
+        isBanned: isBlacklisted(addr),
+      });
+    }
+
+    return results
+      .filter(r => !r.isBanned)
+      .sort((a, b) => b.totalEarned3d - a.totalEarned3d)
+      .slice(0, 50);
+  },
+});
