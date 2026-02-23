@@ -549,6 +549,8 @@ export const adminZeroBlacklistedBalances = mutation({
     const allBlacklisted = Object.keys(EXPLOITER_BLACKLIST);
     let coinsReset = 0;
     let creditsReset = 0;
+    let packsDeleted = 0;
+    let cardsDeleted = 0;
 
     for (const address of allBlacklisted) {
       // Zero coins in profile
@@ -556,10 +558,11 @@ export const adminZeroBlacklistedBalances = mutation({
         .query("profiles")
         .withIndex("by_address", (q: any) => q.eq("address", address))
         .first();
-      if (profile && (profile.coins || 0) > 0) {
-        await ctx.db.patch(profile._id, { coins: 0, coinsInbox: 0 });
-        coinsReset++;
-        console.log(`🚫 Zeroed coins for: ${address} (was ${profile.coins})`);
+      if (profile) {
+        if ((profile.coins || 0) > 0 || (profile.coinsInbox || 0) > 0) {
+          await ctx.db.patch(profile._id, { coins: 0, coinsInbox: 0, pendingConversion: 0 });
+          coinsReset++;
+        }
       }
 
       // Zero betting credits
@@ -570,11 +573,34 @@ export const adminZeroBlacklistedBalances = mutation({
       if (credits && (credits.balance || 0) > 0) {
         await ctx.db.patch(credits._id, { balance: 0 });
         creditsReset++;
-        console.log(`🚫 Zeroed bettingCredits for: ${address} (was ${credits.balance})`);
+      }
+
+      // Delete all card packs
+      const packs = await ctx.db
+        .query("cardPacks")
+        .withIndex("by_address", (q: any) => q.eq("address", address))
+        .collect();
+      for (const pack of packs) {
+        await ctx.db.delete(pack._id);
+        packsDeleted++;
+      }
+
+      // Delete all cards from inventory
+      const cards = await ctx.db
+        .query("cardInventory")
+        .withIndex("by_address", (q: any) => q.eq("address", address))
+        .collect();
+      for (const card of cards) {
+        await ctx.db.delete(card._id);
+        cardsDeleted++;
+      }
+
+      if (packs.length > 0 || cards.length > 0) {
+        console.log(`🚫 Wiped ${address}: ${packs.length} packs, ${cards.length} cards`);
       }
     }
 
-    return { coinsReset, creditsReset, total: allBlacklisted.length };
+    return { coinsReset, creditsReset, packsDeleted, cardsDeleted, total: allBlacklisted.length };
   },
 });
 
