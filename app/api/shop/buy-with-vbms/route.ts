@@ -5,6 +5,8 @@
  * 1. Player transfers VBMS to pool (done in frontend)
  * 2. Player sends txHash to API
  * 3. API verifies transaction and mints packs
+ *
+ * TO REOPEN SHOP: set SHOP_ENABLED = true
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,12 +15,16 @@ import { api } from '@/convex/_generated/api';
 import { parseEther } from 'viem';
 import { verifyERC20TransferByLogs } from '@/lib/blockchain/tx-utils';
 
+const SHOP_ENABLED = false; // Set to true to reopen shop
+
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
 const VBMS_TOKEN = '0xb03439567cd22f278b21e1ffcdfb8e1696763827';
 const VBMS_POOL = '0x062b914668f3fD35c3Ae02e699cB82e1cF4bE18b';
 
 export async function POST(request: NextRequest) {
-  return NextResponse.json({ error: 'Shop temporarily unavailable' }, { status: 503 });
+  if (!SHOP_ENABLED) {
+    return NextResponse.json({ error: 'Shop temporarily unavailable' }, { status: 503 });
+  }
 
   try {
     const body = await request.json();
@@ -31,36 +37,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const normalizedAddress = address.toLowerCase();
+
+    // 🔒 Blacklist check
+    const convex = new ConvexHttpClient(CONVEX_URL);
+    const banCheck = await convex.query(api.blacklist.checkBlacklist, { address: normalizedAddress });
+    if (banCheck.isBlacklisted) {
+      return NextResponse.json({ error: 'Account banned' }, { status: 403 });
+    }
+
     // Pack prices - must match frontend ShopView.tsx prices!
-    // NORMAL_PRICE = 1000, BOOSTED_PRICE = 5000
     const PACK_PRICES: Record<string, number> = {
-      basic: 1000,      // Normal pack
-      boosted: 5000,    // Luck boost pack (5x price for better odds)
-      premium: 500,     // Legacy - kept for backwards compatibility
-      elite: 1500,      // Legacy - kept for backwards compatibility
+      basic: 1000,
+      boosted: 5000,
     };
 
     const vbmsAmount = PACK_PRICES[packType] * quantity;
     if (!vbmsAmount) {
-      return NextResponse.json(
-        { error: 'Invalid pack type' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid pack type' }, { status: 400 });
+    }
+
+    // 🔒 Max quantity per request
+    if (quantity > 10) {
+      return NextResponse.json({ error: 'Max 10 packs per transaction' }, { status: 400 });
     }
 
     console.log(`💎 Verifying VBMS purchase: ${quantity}x ${packType} for ${vbmsAmount} VBMS from ${address}`);
-    console.log(`📝 Transaction hash: ${txHash}`);
 
     // Verify ERC20 transfer using Transfer event logs
-    // This method works with Smart Contract Wallets (Coinbase Smart Wallet, etc.)
-    // because it checks the Transfer event `from` field, not tx.from
     const expectedAmount = parseEther(vbmsAmount.toString());
     const verification = await verifyERC20TransferByLogs(
       txHash as `0x${string}`,
-      address,          // expected from (token holder)
-      VBMS_POOL,        // expected to (pool)
-      expectedAmount,   // minimum amount
-      VBMS_TOKEN        // token contract
+      address,
+      VBMS_POOL,
+      expectedAmount,
+      VBMS_TOKEN
     );
 
     if (!verification.verified) {
@@ -69,14 +80,13 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Transaction verified: ${vbmsAmount} VBMS from ${verification.actualFrom} to pool`);
 
-    // Mint packs in Convex
-    const convex = new ConvexHttpClient(CONVEX_URL);
+    // Mint packs in Convex (buyPackWithVBMS checks txHash uniqueness)
     const result = await convex.mutation(api.cardPacks.buyPackWithVBMS, {
       address,
       packType,
       quantity,
       txHash,
-      vbmsAmount, // Pass actual VBMS spent for transaction history
+      vbmsAmount,
     });
 
     console.log(`🎁 Packs minted: ${result.packsReceived}x ${packType}`);
