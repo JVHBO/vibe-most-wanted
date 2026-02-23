@@ -18,6 +18,8 @@ const VBMS_TOKEN = '0xb03439567cd22f278b21e1ffcdfb8e1696763827';
 const VBMS_POOL = '0x062b914668f3fD35c3Ae02e699cB82e1cF4bE18b';
 
 export async function POST(request: NextRequest) {
+  return NextResponse.json({ error: 'Shop temporarily unavailable' }, { status: 503 });
+
   try {
     const body = await request.json();
     const { address, packType, quantity, txHash } = body;
