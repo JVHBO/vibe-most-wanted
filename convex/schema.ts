@@ -1229,7 +1229,8 @@ export default defineSchema({
     txHash: v.optional(v.string()), // Blockchain tx hash (for conversions)
   })
     .index("by_address", ["address"])
-    .index("by_address_timestamp", ["address", "timestamp"]),
+    .index("by_address_timestamp", ["address", "timestamp"])
+    .index("by_txHash", ["txHash"]),
 
   // Price Ticker Snapshots (Daily price history for showing up/down trends)
   priceSnapshots: defineTable({

@@ -539,6 +539,15 @@ export const buyPackWithVBMS = mutation({
       throw new Error("This pack type cannot be purchased");
     }
 
+    // 🔒 SECURITY: Check for duplicate txHash (prevents replaying same on-chain tx)
+    const existingTx = await ctx.db
+      .query("coinTransactions")
+      .withIndex("by_txHash", (q) => q.eq("txHash", args.txHash))
+      .first();
+    if (existingTx) {
+      throw new Error("Transaction already processed");
+    }
+
     // Get player profile (create if doesn't exist)
     let profile = await ctx.db
       .query("profiles")
