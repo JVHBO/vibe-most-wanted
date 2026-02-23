@@ -3753,10 +3753,6 @@ export function PokerBattleTable({
         loginBonusClaimed={false}
         isClaimingBonus={false}
         handleClaimLoginBonus={() => {}}
-        showWelcomePackPopup={false}
-        setShowWelcomePackPopup={() => {}}
-        isClaimingWelcomePack={false}
-        handleClaimWelcomePack={() => {}}
         t={(key: string) => key} // Simple mock translation
       />
 

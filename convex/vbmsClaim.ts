@@ -356,6 +356,11 @@ export const prepareInboxClaimInternal = internalMutation({
     bonus: number;
     bonusReasons: string[];
   }> => {
+    // 🚫 BLACKLIST CHECK
+    if (isBlacklisted(address)) {
+      throw new Error("[CLAIM_BLACKLISTED]");
+    }
+
     const profile = await getProfile(ctx, address);
 
     const inboxAmount = profile.coinsInbox || 0;
@@ -916,8 +921,8 @@ export const convertTESTVBMStoVBMS = action({
 // Conversion cooldown (3 minutes)
 const CONVERSION_COOLDOWN_MS = 3 * 60 * 1000;
 // Claim limits - LOWER than contract to have buffer
-// Contract dailyClaimLimit: 750k, but site uses 500k for safety margin
-const MAX_CLAIM_AMOUNT = 500_000;
+// Contract dailyClaimLimit: 750k, but site uses 200k for safety margin
+const MAX_CLAIM_AMOUNT = 200_000;
 const MIN_CLAIM_AMOUNT = 100;
 
 // Internal mutation to handle database operations

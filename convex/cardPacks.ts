@@ -13,6 +13,7 @@ import { mutation, query, internalQuery, internalMutation } from "./_generated/s
 import { Id } from "./_generated/dataModel";
 import { logTransaction } from "./coinsInbox";
 import { createAuditLog } from "./coinAudit";
+import { isBlacklisted } from "./blacklist";
 
 /**
  * 🔒 SECURITY FIX: Crypto-secure random functions
@@ -762,7 +763,9 @@ export const openAllPacks = mutation({
 /**
  * AWARD pack to player (for missions/achievements)
  */
-export const awardPack = mutation({
+// 🔒 SECURITY FIX (Feb 2026): Changed from mutation to internalMutation.
+// Was exploited to award unlimited packs to any address without auth.
+export const awardPack = internalMutation({
   args: {
     address: v.string(),
     packType: v.string(),
@@ -810,7 +813,8 @@ export const awardPack = mutation({
 /**
  * Give starter pack to new players
  */
-export const giveStarterPack = mutation({
+// 🔒 SECURITY (Feb 2026): internalMutation - free starter packs removed
+export const giveStarterPack = internalMutation({
   args: { address: v.string() },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
@@ -844,7 +848,8 @@ export const giveStarterPack = mutation({
  * - Can only be claimed once per account
  * - Daily shares give tokens instead (see economy.ts)
  */
-export const rewardProfileShare = mutation({
+// 🔒 SECURITY (Feb 2026): internalMutation - free share packs removed
+export const rewardProfileShare = internalMutation({
   args: { address: v.string() },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
@@ -1073,11 +1078,12 @@ const BURN_FOIL_MULTIPLIER: Record<string, number> = {
 const DEFAULT_PACK_PRICE = 1000; // Basic pack price
 
 // Helper function to get pack price
+// 🔒 SECURITY FIX (Feb 2026): Free packs (price=0) return 0 for burn calculations.
+// Previously returned DEFAULT_PACK_PRICE as "minimum", enabling free card burn exploit.
 function getPackPrice(packType?: string): number {
   if (!packType) return DEFAULT_PACK_PRICE;
   const pack = PACK_TYPES[packType as keyof typeof PACK_TYPES];
-  // For free packs (price 0), use basic pack price as minimum
-  return pack ? (pack.price > 0 ? pack.price : DEFAULT_PACK_PRICE) : DEFAULT_PACK_PRICE;
+  return pack ? pack.price : DEFAULT_PACK_PRICE;
 }
 
 // Legacy BURN_VALUES for backwards compatibility (getBurnValues query)
@@ -1107,6 +1113,11 @@ export const burnCard = mutation({
   },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
+
+    // 🚫 BLACKLIST CHECK
+    if (isBlacklisted(address)) {
+      throw new Error("Account banned");
+    }
 
     // Get the card
     const card = await ctx.db.get(args.cardId);
@@ -1195,6 +1206,11 @@ export const burnMultipleCards = mutation({
   },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
+
+    // 🚫 BLACKLIST CHECK
+    if (isBlacklisted(address)) {
+      throw new Error("Account banned");
+    }
 
     if (args.cardIds.length === 0) {
       throw new Error("No cards selected");

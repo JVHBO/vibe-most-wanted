@@ -648,11 +648,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const { finishBattle: finishVBMSBattle } = useFinishVBMSBattle();
   const { battleId: activeBattleId, refetch: refetchActiveBattle } = useActiveBattle(address as `0x${string}`);
 
-  // 🎁 Welcome Pack (enabled in miniapp too)
-  // 🚀 BANDWIDTH FIX: Use profileDashboard instead of separate query
-  const hasReceivedWelcomePack = profileDashboard?.hasReceivedWelcomePack ?? undefined;
-  const claimWelcomePack = useMutation(api.welcomePack.claimWelcomePack);
-
   // 🎯 Weekly Quests mutations
   const claimWeeklyReward = useMutation(api.quests.claimWeeklyReward);
 
@@ -731,9 +726,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
 
   const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
   const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
-  const [showWelcomePackPopup, setShowWelcomePackPopup] = useState<boolean>(false);
-  const [isClaimingWelcomePack, setIsClaimingWelcomePack] = useState<boolean>(false);
-  const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
+const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const [unlockedDifficulties, setUnlockedDifficulties] = useState<Set<string>>(new Set(['gey']));
   const [isDifficultyModalOpen, setIsDifficultyModalOpen] = useState(false);
   const [tempSelectedDifficulty, setTempSelectedDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad' | null>(null);
@@ -1410,28 +1403,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     }
   };
 
-  // 🎁 Handler to claim welcome pack
-  const handleClaimWelcomePack = async () => {
-    if (!address || isClaimingWelcomePack) return;
-
-    try {
-      setIsClaimingWelcomePack(true);
-      devLog('🎁 Claiming welcome pack...');
-
-      const result = await claimWelcomePack({ address });
-
-      devLog('✓ Welcome pack claimed: 1 Basic Pack!');
-      setShowWelcomePackPopup(false);
-      if (soundEnabled) AudioManager.buttonClick();
-    } catch (error: any) {
-      devError('✗ Error claiming welcome pack:', error);
-      alert(error.message || 'Failed to claim welcome pack');
-      if (soundEnabled) AudioManager.buttonError();
-    } finally {
-      setIsClaimingWelcomePack(false);
-    }
-  };
-
   // 🎯 Handler to claim daily quest reward
   const handleClaimQuestReward = async () => {
     if (!address || isClaimingQuest) return;
@@ -1549,12 +1520,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     }
   }, [musicVolume]);
 
-  // 🎁 Show welcome pack popup if user hasn't received it (only AFTER profile is created)
-  useEffect(() => {
-    if (address && userProfile && hasReceivedWelcomePack === false) {
-      setShowWelcomePackPopup(true);
-    }
-  }, [address, userProfile, hasReceivedWelcomePack]);
 
 
 
@@ -3562,10 +3527,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         isClaimingBonus={isClaimingBonus}
         handleClaimLoginBonus={handleClaimLoginBonus}
         onDailyClaimNow={handleDailyClaimNow}
-        showWelcomePackPopup={showWelcomePackPopup}
-        setShowWelcomePackPopup={setShowWelcomePackPopup}
-        isClaimingWelcomePack={isClaimingWelcomePack}
-        handleClaimWelcomePack={handleClaimWelcomePack}
         t={t}
       />
 

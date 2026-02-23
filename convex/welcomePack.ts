@@ -28,7 +28,8 @@ export const hasReceivedWelcomePack = query({
 /**
  * Give welcome pack (1 Basic Pack) - ONE TIME ONLY
  */
-export const claimWelcomePack = mutation({
+// 🔒 SECURITY (Feb 2026): internalMutation - welcome packs removed
+export const claimWelcomePack = internalMutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();

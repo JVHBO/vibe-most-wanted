@@ -128,12 +128,34 @@ export const EXPLOITER_BLACKLIST: Record<string, { username: string; fid: number
   "0x384636c26ea99d347196dd8339bab542e15a44da": { username: "kebejj", fid: 0, amountStolen: 35000, claims: 5 },
   "0xb8d364933c26a82b46e9533742fe15c20264881a": { username: "ansatt", fid: 0, amountStolen: 35000, claims: 5 },
   "0x3ae4fa9293265527f9c8d76b83910eaaba20f1cb": { username: "salmane", fid: 0, amountStolen: 22500, claims: 4 },
+  // ===== EXPLOIT #3: Multi-account farming (Feb 22, 2026) =====
+  "0x9604fb9a88daef5f38681d7518092bd2a8508a65": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
+  "0xe167bfc5c8f6167fdb7a6667122418e026a4ce26": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
+  "0x1d7d4da72a32b0ab37b92c773c15412381c7203a": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
+  "0xd453151b8f811186bbe7b9a62e6537cd68abca3d": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
+  "0x02d50610393e528c381420c868200eff50f167d7": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
+  "0xddc754417cae5cd97b00b8fc7fcbae5f573216dd": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
+  "0xcf60075a449dec39843309c74ff7693baa35b824": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
+  "0x247116c752420ec7fe870d1549a1c2e8d44675c6": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
 };
 
 // ========== CHECK BLACKLIST ==========
 
+// ===== EXPLOIT #3: Multi-account farming (Feb 22, 2026) =====
+const EXPLOIT3_BANNED = new Set([
+  "0x9604fb9a88daef5f38681d7518092bd2a8508a65",
+  "0xe167bfc5c8f6167fdb7a6667122418e026a4ce26",
+  "0x1d7d4da72a32b0ab37b92c773c15412381c7203a",
+  "0xd453151b8f811186bbe7b9a62e6537cd68abca3d",
+  "0x02d50610393e528c381420c868200eff50f167d7",
+  "0xddc754417cae5cd97b00b8fc7fcbae5f573216dd",
+  "0xcf60075a449dec39843309c74ff7693baa35b824",
+  "0x247116c752420ec7fe870d1549a1c2e8d44675c6",
+]);
+
 export function isBlacklisted(address: string): boolean {
-  return address.toLowerCase() in EXPLOITER_BLACKLIST;
+  const lower = address.toLowerCase();
+  return lower in EXPLOITER_BLACKLIST || EXPLOIT3_BANNED.has(lower);
 }
 
 export function getBlacklistInfo(address: string) {
@@ -197,13 +219,14 @@ export const checkBlacklist = query({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
+    const banned = isBlacklisted(normalizedAddress);
     const info = EXPLOITER_BLACKLIST[normalizedAddress];
 
-    if (info) {
+    if (banned) {
       return {
         isBlacklisted: true,
         reason: "VBMS Exploit - December 2025",
-        ...info,
+        ...(info || { username: "unknown", fid: 0, amountStolen: 0, claims: 0 }),
       };
     }
 
@@ -462,5 +485,55 @@ export const shameExploiter = mutation({
       remainingShames: MAX_SHAMES_PER_PLAYER - playerShames.length - 1,
       exploiterUsername: exploiterInfo?.username,
     };
+  },
+});
+
+// ========== ADMIN: Dynamic Blacklist ==========
+
+export const adminAddToBlacklist = mutation({
+  args: {
+    address: v.string(),
+    reason: v.optional(v.string()),
+    addedBy: v.optional(v.string()),
+  },
+  handler: async (ctx, { address, reason, addedBy }) => {
+    const normalized = address.toLowerCase();
+    const existing = await ctx.db
+      .query("dynamicBlacklist")
+      .withIndex("by_address", (q) => q.eq("address", normalized))
+      .first();
+    if (existing) return { success: false, message: "Already blacklisted" };
+    await ctx.db.insert("dynamicBlacklist", {
+      address: normalized,
+      reason,
+      addedAt: Date.now(),
+      addedBy,
+    });
+    return { success: true };
+  },
+});
+
+export const adminRemoveFromBlacklist = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalized = address.toLowerCase();
+    const existing = await ctx.db
+      .query("dynamicBlacklist")
+      .withIndex("by_address", (q) => q.eq("address", normalized))
+      .first();
+    if (!existing) return { success: false, message: "Not found" };
+    await ctx.db.delete(existing._id);
+    return { success: true };
+  },
+});
+
+export const isDynamicBlacklisted = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const entry = await ctx.db
+      .query("dynamicBlacklist")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+    return entry ? { isBanned: true, reason: entry.reason, addedAt: entry.addedAt } : { isBanned: false };
   },
 });

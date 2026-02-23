@@ -29,7 +29,6 @@ export function ShopView({ address }: ShopViewProps) {
   const playerCards = useQuery(api.cardPacks.getPlayerCards, address ? { address } : "skip");
   const lockedCardIds = useQuery(api.cardPacks.getLockedFreeCardIds, address ? { address } : "skip");
   const dailyFreeStatus = useQuery(api.cardPacks.canClaimDailyFree, address ? { address } : "skip");
-  const hasReceivedWelcomePack = useQuery(api.welcomePack.hasReceivedWelcomePack, address ? { address } : "skip");
 
   // Mutations
   const openPack = useMutation(api.cardPacks.openPack);
@@ -40,7 +39,6 @@ export function ShopView({ address }: ShopViewProps) {
     api.profiles.getProfileDashboard,
     address ? { address: address.toLowerCase() } : "skip"
   );
-  const claimWelcomePack = useMutation(api.welcomePack.claimWelcomePack);
 
   // VBMS Blockchain hooks
   const { address: walletAddress } = useAccount();
@@ -67,7 +65,6 @@ export function ShopView({ address }: ShopViewProps) {
   const [luckBoost, setLuckBoost] = useState(false); // Elite odds for 5x price
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [claimingDaily, setClaimingDaily] = useState(false);
-  const [claimingWelcome, setClaimingWelcome] = useState(false);
   const [showPacksModal, setShowPacksModal] = useState(false);
   const [openQuantities, setOpenQuantities] = useState<Record<string, number>>({});
 
@@ -240,26 +237,6 @@ export function ShopView({ address }: ShopViewProps) {
     }
   };
 
-  // Handle welcome pack claim
-  const handleClaimWelcomePack = async () => {
-    if (!address || claimingWelcome) return;
-
-    setClaimingWelcome(true);
-    try {
-      await claimWelcomePack({ address });
-      setNotification({
-        type: 'success',
-        message: t('shopWelcomePackClaimed')
-      });
-    } catch (error: any) {
-      setNotification({
-        type: 'error',
-        message: error.message || "Failed to claim welcome pack"
-      });
-    } finally {
-      setClaimingWelcome(false);
-    }
-  };
 
   // Format time remaining
   const formatTimeRemaining = (ms: number) => {
@@ -326,27 +303,6 @@ export function ShopView({ address }: ShopViewProps) {
       <div className="absolute inset-0 pt-14 pb-16 overflow-hidden flex flex-col">
         <div className="relative z-10 px-4 py-2 flex-1 flex flex-col justify-center">
 
-          {/* Welcome Gift Banner - Shows if user hasn't claimed */}
-          {hasReceivedWelcomePack === false && (
-            <div className="max-w-sm mx-auto mb-4">
-              <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-400/50 rounded-xl p-4 animate-pulse">
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-3xl">🎁</span>
-                  <div>
-                    <h3 className="text-lg font-display font-bold text-green-400">{t('shopWelcomeGift')}</h3>
-                    <p className="text-green-300/70 text-xs">{t('shopWelcomeGiftDesc')}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleClaimWelcomePack}
-                  disabled={claimingWelcome}
-                  className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-display font-bold rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-green-500/30"
-                >
-                  {claimingWelcome ? '...' : t('shopClaimWelcome')}
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Pack Purchase Card - Compact */}
           <div className="max-w-sm mx-auto mb-4">

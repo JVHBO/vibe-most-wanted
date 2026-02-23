@@ -1467,75 +1467,9 @@ export default defineSchema({
   // REFERRAL SYSTEM (Invite friends, earn rewards)
   // ═══════════════════════════════════════════════════════════════════════════════
 
-  // Referrals - Track who invited who
-  referrals: defineTable({
-    // Referrer (person who shared the link)
-    referrerAddress: v.string(),
-    referrerUsername: v.string(),
-    referrerFid: v.optional(v.number()),
-
-    // Referred (person who joined via the link)
-    referredAddress: v.string(),
-    referredUsername: v.string(),
-    referredFid: v.optional(v.number()),
-
-    // Status
-    status: v.union(
-      v.literal("pending"),    // User clicked but hasn't completed signup
-      v.literal("completed"),  // User completed account creation
-      v.literal("qualified")   // User met qualification requirements (optional: first battle, etc)
-    ),
-
-    // Timestamps
-    clickedAt: v.number(),     // When referral link was clicked
-    completedAt: v.optional(v.number()), // When account was created
-    qualifiedAt: v.optional(v.number()), // When qualification was met
-  })
-    .index("by_referrer", ["referrerAddress"])
-    .index("by_referred", ["referredAddress"])
-    .index("by_referrer_status", ["referrerAddress", "status"]),
-
-  // Referral Stats - Aggregated stats for quick lookup
-  referralStats: defineTable({
-    address: v.string(),
-    username: v.string(),
-
-    // Counts
-    totalReferrals: v.number(),      // Total completed referrals
-    qualifiedReferrals: v.number(),  // Referrals that met qualification
-    pendingReferrals: v.number(),    // Pending referrals (clicked but not completed)
-
-    // Rewards
-    claimedTiers: v.array(v.number()), // Array of tier numbers already claimed [1, 2, 3, ...]
-    totalVbmsEarned: v.number(),       // Total VBMS earned from referrals
-    totalPacksEarned: v.number(),      // Total packs earned from referrals
-    hasBadge: v.boolean(),             // Whether 100-invite badge was earned
-
-    // Timestamps
-    lastReferralAt: v.optional(v.number()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_address", ["address"])
-    .index("by_total_referrals", ["totalReferrals"]),
-
-  // Referral Reward Claims - Track individual claim transactions
-  referralClaims: defineTable({
-    address: v.string(),
-    tier: v.number(),                // Which tier was claimed (1-1000)
-    rewardType: v.union(
-      v.literal("vbms"),
-      v.literal("pack"),
-      v.literal("badge")
-    ),
-    amount: v.number(),              // Amount of VBMS or number of packs
-    packType: v.optional(v.string()), // Type of pack if pack reward
-    claimedAt: v.number(),
-  })
-    .index("by_address", ["address", "claimedAt"])
-    .index("by_tier", ["tier"]),
-
   // ═══════════════════════════════════════════════════════════════════════════════
+  // NOTE: Referral system (referrals, referralStats, referralClaims tables) was
+  // REMOVED Feb 2026 due to Exploit #2 - referral farming with fake accounts.
   // MULTI-WALLET ADDRESS LINKS (Reverse lookup for linked addresses)
   // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -2141,4 +2075,13 @@ export default defineSchema({
     .index("by_address", ["address"])
     .index("by_searching", ["expiresAt"])
     .index("by_pool_tier", ["poolTier", "expiresAt"]),
+
+  // Dynamic blacklist (managed via admin mutations)
+  dynamicBlacklist: defineTable({
+    address: v.string(),
+    reason: v.optional(v.string()),
+    addedAt: v.number(),
+    addedBy: v.optional(v.string()),
+  })
+    .index("by_address", ["address"]),
 });
