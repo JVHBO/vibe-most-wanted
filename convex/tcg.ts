@@ -11,6 +11,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { isBlacklisted } from "./blacklist";
 
 // ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
 async function getProfileByAddress(ctx: any, address: string) {
@@ -2790,6 +2791,10 @@ export const withdrawDefensePool = mutation({
   },
   handler: async (ctx, args) => {
     const addr = args.address.toLowerCase();
+
+    if (isBlacklisted(addr)) {
+      throw new Error("Account banned");
+    }
 
     // Verify deck ownership
     const deck = await ctx.db.get(args.deckId);

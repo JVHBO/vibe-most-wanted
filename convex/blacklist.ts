@@ -137,11 +137,13 @@ export const EXPLOITER_BLACKLIST: Record<string, { username: string; fid: number
   "0xddc754417cae5cd97b00b8fc7fcbae5f573216dd": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
   "0xcf60075a449dec39843309c74ff7693baa35b824": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
   "0x247116c752420ec7fe870d1549a1c2e8d44675c6": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
+  // ===== EXPLOIT #3b: Multi-account farming (Feb 23, 2026) =====
+  "0x8215db2678e8482dd6051b6847e148ce058ec3b6": { username: "hancox", fid: 1134926, amountStolen: 1510500, claims: 0 },
 };
 
 // ========== CHECK BLACKLIST ==========
 
-// ===== EXPLOIT #3: Multi-account farming (Feb 22, 2026) =====
+// ===== EXPLOIT #3: Multi-account farming (Feb 22-23, 2026) =====
 const EXPLOIT3_BANNED = new Set([
   "0x9604fb9a88daef5f38681d7518092bd2a8508a65",
   "0xe167bfc5c8f6167fdb7a6667122418e026a4ce26",
@@ -151,6 +153,7 @@ const EXPLOIT3_BANNED = new Set([
   "0xddc754417cae5cd97b00b8fc7fcbae5f573216dd",
   "0xcf60075a449dec39843309c74ff7693baa35b824",
   "0x247116c752420ec7fe870d1549a1c2e8d44675c6",
+  "0x8215db2678e8482dd6051b6847e148ce058ec3b6",
 ]);
 
 export function isBlacklisted(address: string): boolean {
@@ -535,5 +538,42 @@ export const isDynamicBlacklisted = query({
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
       .first();
     return entry ? { isBanned: true, reason: entry.reason, addedAt: entry.addedAt } : { isBanned: false };
+  },
+});
+
+// ========== ADMIN: Zero all balances for blacklisted accounts ==========
+
+export const adminZeroBlacklistedBalances = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allBlacklisted = Object.keys(EXPLOITER_BLACKLIST);
+    let coinsReset = 0;
+    let creditsReset = 0;
+
+    for (const address of allBlacklisted) {
+      // Zero coins in profile
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q: any) => q.eq("address", address))
+        .first();
+      if (profile && (profile.coins || 0) > 0) {
+        await ctx.db.patch(profile._id, { coins: 0, coinsInbox: 0 });
+        coinsReset++;
+        console.log(`🚫 Zeroed coins for: ${address} (was ${profile.coins})`);
+      }
+
+      // Zero betting credits
+      const credits = await ctx.db
+        .query("bettingCredits")
+        .withIndex("by_address", (q: any) => q.eq("address", address))
+        .first();
+      if (credits && (credits.balance || 0) > 0) {
+        await ctx.db.patch(credits._id, { balance: 0 });
+        creditsReset++;
+        console.log(`🚫 Zeroed bettingCredits for: ${address} (was ${credits.balance})`);
+      }
+    }
+
+    return { coinsReset, creditsReset, total: allBlacklisted.length };
   },
 });

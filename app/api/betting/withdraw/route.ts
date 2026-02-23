@@ -50,8 +50,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get betting credits balance from Convex
+    // Blacklist check
     const convex = new ConvexHttpClient(CONVEX_URL);
+    const banCheck = await convex.query(api.blacklist.checkBlacklist, { address: normalizedAddress });
+    if (banCheck.isBlacklisted) {
+      return NextResponse.json(
+        { error: 'Account banned' },
+        { status: 403 }
+      );
+    }
+
+    // Get betting credits balance from Convex
     const credits = await convex.query(api.bettingCredits.getBettingCredits, {
       address: normalizedAddress,
     });

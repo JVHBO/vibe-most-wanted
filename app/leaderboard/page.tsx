@@ -1213,10 +1213,6 @@ const convex = useConvex();
         isClaimingBonus={isClaimingBonus}
         handleClaimLoginBonus={() => {}}
         onDailyClaimNow={() => {}}
-        showWelcomePackPopup={showWelcomePackPopup}
-        setShowWelcomePackPopup={setShowWelcomePackPopup}
-        isClaimingWelcomePack={isClaimingWelcomePack}
-        handleClaimWelcomePack={() => {}}
         t={t}
       />
 
