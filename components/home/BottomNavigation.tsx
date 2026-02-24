@@ -139,12 +139,12 @@ export function BottomNavigation({
           {isInFarcaster ? (
             <>
               <span className="text-xl leading-none">★</span>
-              <span className="text-[9px] font-bold">Wanted</span>
+              <span className="text-[9px] font-bold">{t('navWanted')}</span>
             </>
           ) : (
             <>
               <span className="text-lg">★</span>
-              <span className="hidden sm:inline">Wanted</span>
+              <span className="hidden sm:inline">{t('navWanted')}</span>
             </>
           )}
         </Link>

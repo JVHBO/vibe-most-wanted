@@ -20,6 +20,7 @@ import { useQuery, useMutation, useConvex } from "convex/react";
 import { toast } from "sonner";
 import { isMiniappMode } from "@/lib/utils/miniapp";
 import { isWarpcastClient } from "@/lib/utils/miniapp";
+import { useMiniappFrameContext } from "@/components/MiniappFrame";
 
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
@@ -330,6 +331,10 @@ export default function TCGPage() {
   const { address: wagmiAddress, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const { connect, connectors } = useConnect();
+
+  // Desktop frame mode: MiniappFrame wraps app on desktop browser
+  // When true, force miniapp layout (nav at bottom, compact labels) even outside Farcaster
+  const isFrameMode = useMiniappFrameContext();
 
   // State for Farcaster context detection
   const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
@@ -836,7 +841,8 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const [showArbAnnounce, setShowArbAnnounce] = useState(false);
   // ARB supported only on Warpcast (clientFid 9152), not Base App or other clients
   // For non-miniapp (browser), isInFarcaster=false so arbSupported=true
-  const arbSupported = !isInFarcaster || isWarpcastClient(farcasterClientFid);
+  // Frame mode = desktop browser, always ARB supported
+  const arbSupported = isFrameMode || !isInFarcaster || isWarpcastClient(farcasterClientFid);
   // Effective chain: force "base" when ARB not supported (e.g. Base App)
   const effectiveChain = !arbSupported ? "base" : ((userProfile as any)?.preferredChain || "base");
   // Arb Mode announcement disabled - no longer needed
@@ -1064,6 +1070,14 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   // Auto-connect Farcaster wallet in miniapp context (Nov 14 simple version)
   useEffect(() => {
     const initFarcasterWallet = async () => {
+      // Frame mode: desktop browser with MiniappFrame wrapper → force miniapp layout
+      // No real Farcaster SDK, no FID, no wallet auto-connect — just use miniapp UI layout
+      if (isFrameMode) {
+        setIsInFarcaster(true);
+        setIsCheckingFarcaster(false);
+        return;
+      }
+
       console.log('[Farcaster] 🔍 Initializing wallet connection...');
       try {
         console.log('[Farcaster] SDK check:', {
@@ -1186,7 +1200,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
       }
     };
     initFarcasterWallet();
-  }, [connect, connectors]);
+  }, [connect, connectors, isFrameMode]);
 
   // 📊 Log access analytics (miniapp vs farcaster_web vs web)
   const logAccessMutation = useMutation(api.accessAnalytics.logAccess);
@@ -4423,14 +4437,20 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                         onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown((p: boolean) => !p); }}
                         onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); setShowDexDropdown(true); }}
                         onMouseLeave={() => { dexDropdownTimeout.current = setTimeout(() => setShowDexDropdown(false), 300); }}
-                        className="tour-dex-btn bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 px-2 md:px-3 py-1.5 md:py-2 rounded-lg flex flex-col items-center gap-1 transition cursor-pointer"
+                        className="tour-dex-btn bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 px-4 py-2 rounded-lg flex flex-col items-center gap-1 transition cursor-pointer min-w-[120px]"
                       >
-                        <div className="flex items-baseline justify-center gap-0">
-                          <span className="text-vintage-gold text-base md:text-lg font-bold leading-none">$</span>
-                          <span className="text-vintage-gold font-display font-bold text-base md:text-lg leading-none ml-0.5">
-                            {Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                          </span>
-                        </div>
+                        {(() => {
+                          const formatted = Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+                          const fontSize = formatted.length <= 7 ? 'text-2xl' : formatted.length <= 9 ? 'text-xl' : 'text-base';
+                          return (
+                            <div className="flex items-baseline justify-center gap-0 w-full overflow-hidden">
+                              <span className={`text-vintage-gold ${fontSize} font-bold leading-none`}>$</span>
+                              <span className={`text-vintage-gold font-display font-bold ${fontSize} leading-none ml-0.5 truncate`}>
+                                {formatted}
+                              </span>
+                            </div>
+                          );
+                        })()}
                         <div className="w-full h-1 bg-vintage-deep-black rounded-full overflow-hidden">
                           <div className="h-full bg-gradient-to-r from-vintage-gold to-green-400 transition-all" style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }} />
                         </div>

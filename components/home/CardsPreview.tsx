@@ -29,7 +29,7 @@ export function CardsPreview({ cards, soundEnabled, loading = false, onViewAll }
   const previewCards = cards.slice(0, 5);
 
   return (
-    <div className="bg-vintage-charcoal/80 backdrop-blur-sm rounded-xl border border-vintage-gold/30 px-3 py-2">
+    <div className="rounded-xl px-3 py-2">
       <div className="flex items-center gap-2">
         {/* Card previews */}
         <div className="flex -space-x-2 flex-1">
@@ -51,7 +51,6 @@ export function CardsPreview({ cards, soundEnabled, loading = false, onViewAll }
                 className={`
                   w-10 h-14 rounded-md overflow-hidden
                   border-2 ${RARITY_BORDERS[card.rarity] || RARITY_BORDERS.Common}
-                  shadow-md
                 `}
                 style={{ zIndex: 5 - idx }}
               >

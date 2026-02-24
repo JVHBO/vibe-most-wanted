@@ -14,6 +14,7 @@ import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useFarcasterContext } from '@/lib/hooks/useFarcasterContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -1370,5 +1371,38 @@ export function SettingsModal({
       </div>
     </div>,
     document.body
+  );
+}
+
+/** Standalone language selector — same options as Settings, uses useLanguage() directly */
+export function LanguageSelect() {
+  const { lang, setLang } = useLanguage();
+  return (
+    <select
+      value={lang}
+      onChange={(e) => setLang(e.target.value as any)}
+      style={{
+        background: "rgba(0,0,0,0.6)",
+        color: "rgba(255,255,255,0.8)",
+        border: "1px solid rgba(255,255,255,0.15)",
+        borderRadius: "8px",
+        padding: "4px 8px",
+        fontSize: "12px",
+        cursor: "pointer",
+        fontFamily: "system-ui, sans-serif",
+        outline: "none",
+      }}
+    >
+      <option value="en">🇺🇸 EN</option>
+      <option value="pt-BR">🇧🇷 PT</option>
+      <option value="es">🇪🇸 ES</option>
+      <option value="hi">🇮🇳 HI</option>
+      <option value="ru">🇷🇺 RU</option>
+      <option value="zh-CN">🇨🇳 ZH</option>
+      <option value="id">🇮🇩 ID</option>
+      <option value="fr">🇫🇷 FR</option>
+      <option value="ja">🇯🇵 JA</option>
+      <option value="it">🇮🇹 IT</option>
+    </select>
   );
 }

@@ -19,7 +19,7 @@ interface SessionLockedModalProps {
 // Helper to get language from localStorage (since createPortal renders outside context)
 function getStoredLanguage(): SupportedLanguage {
   if (typeof window === 'undefined') return 'en';
-  const stored = localStorage.getItem('vmw_language') as SupportedLanguage;
+  const stored = localStorage.getItem('language') as SupportedLanguage;
   const validLanguages: SupportedLanguage[] = ['pt-BR', 'en', 'es', 'hi', 'ru', 'zh-CN', 'id', 'fr', 'ja', 'it'];
   return stored && validLanguages.includes(stored) ? stored : 'en';
 }

@@ -10,9 +10,11 @@ import { ConvexClientProvider } from "@/contexts/ConvexClientProvider";
 import { PlayerCardsProvider } from "@/contexts/PlayerCardsContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
 import { FarcasterNotificationRegistration } from "@/components/FarcasterNotificationRegistration";
+import { BrowserNotifications } from "@/components/BrowserNotifications";
 import { Analytics } from "@vercel/analytics/react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { NeynarMiniAppProvider } from "@/contexts/NeynarMiniAppProvider";
+import { MiniappFrame } from "@/components/MiniappFrame";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -136,7 +138,10 @@ export default function RootLayout({
                   <LanguageProvider>
                     <MusicProvider>
                       <FarcasterNotificationRegistration />
-                      {children}
+                      <BrowserNotifications />
+                      <MiniappFrame>
+                        {children}
+                      </MiniappFrame>
                     </MusicProvider>
                   </LanguageProvider>
                 </PlayerCardsProvider>

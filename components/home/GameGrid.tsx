@@ -73,11 +73,11 @@ const CardsIcon = () => (
 );
 
 // Game mode configurations with translation keys
-const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string; fullWidth?: boolean; comingSoon?: boolean; restricted?: boolean; isNew?: boolean }[] = [
+const gameModeConfigs: { id: GameMode; icon: React.ReactNode; labelKey: string; sublabel: string; cards: number | string | null; iconColor: string; accentColor: string; isLink?: boolean; href?: string; fullWidth?: boolean; comingSoon?: boolean; restricted?: boolean; isNew?: boolean }[] = [
   {
     id: 'mecha',
     icon: <ArenaIcon />,
-    label: 'ARENA',
+    labelKey: 'gameArena',
     sublabel: '',
     cards: null,
     iconColor: 'text-green-400',
@@ -86,7 +86,7 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sub
   {
     id: 'raid',
     icon: <BossIcon />,
-    label: 'BOSS',
+    labelKey: 'gameBoss',
     sublabel: '',
     cards: null,
     iconColor: 'text-red-400',
@@ -97,7 +97,7 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sub
   {
     id: 'baccarat',
     icon: <BetIcon />,
-    label: 'BET',
+    labelKey: 'gameBet',
     sublabel: '',
     cards: null,
     iconColor: 'text-emerald-400',
@@ -108,7 +108,7 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; label: string; sub
   {
     id: 'tcg',
     icon: <CardsIcon />,
-    label: 'TCG',
+    labelKey: 'gameTcg',
     sublabel: '',
     cards: null,
     iconColor: 'text-orange-400',
@@ -139,7 +139,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
           <>
             <div className={`${mode.iconColor} scale-110`}>{mode.icon}</div>
             <span className="text-vintage-gold font-display font-bold text-xs leading-tight tracking-wider uppercase">
-              {mode.label}
+              {t(mode.labelKey as any)}
             </span>
           </>
         );
@@ -211,7 +211,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
           onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
           className="tour-spin-btn col-span-2 flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-gradient-to-r from-vintage-gold to-yellow-500 border border-vintage-gold/20 font-display font-bold text-xs text-black hover:scale-[1.02] active:scale-[0.97] transition-all duration-200 shadow-gold"
         >
-          SPIN
+          {t('gameSpin' as any)}
         </button>
       )}
     </div>
