@@ -209,16 +209,12 @@ export function ShopView({ address }: ShopViewProps) {
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleSwitchChain('base')}
-                      className={`px-2 py-1 rounded font-bold text-xs border transition ${!isArb ? 'bg-vintage-gold text-black border-vintage-gold' : 'text-white/50 border-white/20 hover:text-white'}`}
-                    >
-                      Base
-                    </button>
+                      className={`px-2 py-1 rounded font-bold text-xs border transition ${!isArb ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black border-vintage-gold' : 'text-vintage-gold/60 border-vintage-gold/20 hover:text-vintage-gold'}`}
+                    >BASE</button>
                     <button
                       onClick={() => handleSwitchChain('arbitrum')}
-                      className={`px-2 py-1 rounded font-bold text-xs border transition ${isArb ? 'bg-blue-400 text-black border-blue-500' : 'text-white/50 border-white/20 hover:text-white'}`}
-                    >
-                      ARB 3x
-                    </button>
+                      className={`px-2 py-1 rounded font-bold text-xs border transition ${isArb ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black border-vintage-gold' : 'text-vintage-gold/60 border-vintage-gold/20 hover:text-vintage-gold'}`}
+                    >ARB</button>
                   </div>
                 </div>
               )}

@@ -374,14 +374,14 @@ export default function QuestsPage() {
           </button>
           <h1 className="text-xl font-display font-bold text-vintage-gold tracking-wider">{t('questsTitle')}</h1>
           {arbSupported ? (
-            <div className="flex items-center gap-1 text-xs">
+            <div className="flex gap-1 text-xs">
               <button
                 onClick={() => handleSwitchChain('base')}
-                className={`px-2 py-1 rounded font-bold border transition ${effectiveChain === 'base' ? 'bg-blue-600 text-white border-blue-700' : 'text-white/50 border-white/20 hover:text-white'}`}
+                className={`px-2 py-1 rounded font-bold border transition ${effectiveChain === 'base' ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black border-vintage-gold' : 'text-vintage-gold/60 border-vintage-gold/20 hover:text-vintage-gold'}`}
               >BASE</button>
               <button
                 onClick={() => handleSwitchChain('arbitrum')}
-                className={`px-2 py-1 rounded font-bold border transition ${effectiveChain === 'arbitrum' ? 'bg-blue-400 text-black border-blue-500' : 'text-white/50 border-white/20 hover:text-white'}`}
+                className={`px-2 py-1 rounded font-bold border transition ${effectiveChain === 'arbitrum' ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black border-vintage-gold' : 'text-vintage-gold/60 border-vintage-gold/20 hover:text-vintage-gold'}`}
               >ARB</button>
             </div>
           ) : <div className="w-20" />}
