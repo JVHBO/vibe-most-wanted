@@ -7,37 +7,14 @@ import { useRouter } from "next/navigation";
 
 // 5 gentle drift paths — no bounce, no rise-from-bottom
 const FLOAT_CSS = `
-@keyframes hfb-float1 {
-  0%,100% { transform: translate(0,0) rotate(0deg); }
-  25%      { transform: translate(40px,-28px) rotate(4deg); }
-  50%      { transform: translate(-22px,36px) rotate(-3deg); }
-  75%      { transform: translate(32px,14px) rotate(2deg); }
-}
-@keyframes hfb-float2 {
-  0%,100% { transform: translate(0,0) rotate(0deg); }
-  30%      { transform: translate(-36px,32px) rotate(-4deg); }
-  60%      { transform: translate(26px,-38px) rotate(3.5deg); }
-  80%      { transform: translate(-16px,18px) rotate(-2deg); }
-}
-@keyframes hfb-float3 {
-  0%,100% { transform: translate(0,0) rotate(0deg); }
-  20%      { transform: translate(30px,26px) rotate(3deg); }
-  50%      { transform: translate(-34px,-22px) rotate(-3.5deg); }
-  80%      { transform: translate(18px,-12px) rotate(2deg); }
-}
-@keyframes hfb-float4 {
-  0%,100% { transform: translate(0,0) rotate(0deg); }
-  33%      { transform: translate(-28px,-34px) rotate(-3deg); }
-  66%      { transform: translate(38px,22px) rotate(4deg); }
-}
-@keyframes hfb-float5 {
-  0%,100% { transform: translate(0,0) rotate(0deg); }
-  40%      { transform: translate(20px,38px) rotate(2deg); }
-  70%      { transform: translate(-30px,-16px) rotate(-4deg); }
+@keyframes hfb-rise {
+  0%   { transform: translateY(0) translateX(0) rotate(0deg);         opacity: 0; }
+  8%   { opacity: 0.22; }
+  50%  { transform: translateY(calc(-1 * var(--rise) * 0.5)) translateX(var(--driftH)) rotate(var(--rot)); }
+  92%  { opacity: 0.22; }
+  100% { transform: translateY(calc(-1 * var(--rise)))       translateX(var(--driftH)) rotate(calc(var(--rot) * 1.5)); opacity: 0; }
 }
 `;
-
-const ANIMS = ["hfb-float1","hfb-float2","hfb-float3","hfb-float4","hfb-float5"];
 
 interface CardItem {
   id: string;
@@ -151,33 +128,36 @@ export function HomeFloatingBackground() {
           const w = isCard ? 80 : 52;
           const h = isCard ? 112 : 52;
 
-          // Spread items across the full area, avoiding center cluster
-          const x = 40 + Math.random() * (W - w - 80);
-          const y = 40 + Math.random() * (H - h - 80);
+          // Spread horizontally, start at bottom
+          const x = 30 + Math.random() * (W - w - 60);
+          const rise = H + h + 40; // total distance to travel up
+          const driftH = (Math.random() - 0.5) * 100; // ±50px horizontal drift
+          const rot = (Math.random() - 0.5) * 18; // ±9deg rotation
 
-          const anim = ANIMS[i % ANIMS.length];
-          const dur = 6 + Math.random() * 6; // 6-12s
-          const delay = -(Math.random() * dur);  // random start point in cycle
+          const dur = 7 + Math.random() * 8; // 7-15s per cycle
+          const delay = -(Math.random() * dur); // staggered start
 
           const wrapper = document.createElement("div");
           wrapper.style.cssText = `
             position: absolute;
             left: ${x}px;
-            top: ${y}px;
+            top: ${H + h}px;
             width: ${w}px;
             height: ${h}px;
-            animation: ${anim} ${dur.toFixed(1)}s ease-in-out ${delay.toFixed(1)}s infinite;
+            --rise: ${rise}px;
+            --driftH: ${driftH.toFixed(1)}px;
+            --rot: ${rot.toFixed(1)}deg;
+            animation: hfb-rise ${dur.toFixed(1)}s linear ${delay.toFixed(1)}s infinite;
             will-change: transform;
             cursor: pointer;
             border-radius: ${isCard ? "8px" : "50%"};
             overflow: hidden;
             opacity: 0;
-            transition: opacity 0.6s;
             pointer-events: none;
           `;
 
-          wrapper.addEventListener("mouseenter", () => { wrapper.style.opacity = "0.65"; });
-          wrapper.addEventListener("mouseleave", () => { wrapper.style.opacity = "0.18"; });
+          wrapper.addEventListener("mouseenter", () => { wrapper.style.filter = "brightness(2.5) saturate(1.4)"; });
+          wrapper.addEventListener("mouseleave", () => { wrapper.style.filter = "none"; });
 
           wrapper.addEventListener("click", (e) => {
             e.preventDefault();
@@ -194,7 +174,6 @@ export function HomeFloatingBackground() {
           img.alt = "";
           img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;";
           img.onload = () => {
-            wrapper.style.opacity = "0.18";
             wrapper.style.pointerEvents = "auto";
           };
           img.onerror = () => { wrapper.style.display = "none"; };
