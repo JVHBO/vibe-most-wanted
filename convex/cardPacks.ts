@@ -438,83 +438,9 @@ export const buyPack = mutation({
     packType: v.union(v.literal("basic"), v.literal("premium"), v.literal("elite")),
     quantity: v.number(),
   },
-  handler: async (ctx, args) => {
-    const address = args.address.toLowerCase();
-
-    // 🔒 SECURITY: Shop purchases disabled
+  handler: async (_ctx, _args) => {
+    // 🔒 SECURITY: Shop purchases disabled — only daily free pack available
     throw new Error("Shop purchases are currently disabled");
-
-    // Get pack info
-    const packInfo = PACK_TYPES[args.packType];
-    if (!packInfo || packInfo.price === 0) {
-      throw new Error("This pack type cannot be purchased");
-    }
-
-    // Calculate total cost
-    const totalCost = packInfo.price * args.quantity;
-
-    // Get player profile
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .first();
-
-    if (!profile) {
-      throw new Error("Profile not found");
-    }
-
-    // Check if player has enough coins
-    const coins = profile.coins || 0;
-    if (coins < totalCost) {
-      throw new Error(`Not enough coins. Need ${totalCost} coins, have ${coins} coins`);
-    }
-
-    // Deduct coins
-    await ctx.db.patch(profile._id, {
-      coins: coins - totalCost,
-      lifetimeSpent: (profile.lifetimeSpent || 0) + totalCost,
-    });
-
-    // 📊 Log spend transaction for history
-    await ctx.db.insert("coinTransactions", {
-      address: address,
-      amount: -totalCost,
-      type: "spend",
-      source: `buy_pack_${args.packType}`,
-      description: `Bought ${args.quantity}x ${args.packType} pack`,
-      timestamp: Date.now(),
-      balanceBefore: coins,
-      balanceAfter: coins - totalCost,
-    });
-
-    // Give packs to player
-    // 🚀 PERF: Use compound index instead of filter
-    const existingPack = await ctx.db
-      .query("cardPacks")
-      .withIndex("by_address_packType", (q) => q.eq("address", address).eq("packType", args.packType))
-      .first();
-
-    if (existingPack) {
-      // Add to existing pack count
-      await ctx.db.patch(existingPack._id, {
-        unopened: existingPack.unopened + args.quantity,
-      });
-    } else {
-      // Create new pack entry
-      await ctx.db.insert("cardPacks", {
-        address,
-        packType: args.packType,
-        unopened: args.quantity,
-        earnedAt: Date.now(),
-      });
-    }
-
-    return {
-      success: true,
-      packsReceived: args.quantity,
-      coinsSpent: totalCost,
-      remainingCoins: coins - totalCost,
-    };
   },
 });
 
