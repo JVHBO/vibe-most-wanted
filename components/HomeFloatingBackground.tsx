@@ -171,9 +171,9 @@ export function HomeFloatingBackground() {
             cursor: pointer;
             border-radius: ${isCard ? "8px" : "50%"};
             overflow: hidden;
-            opacity: 0.18;
-            transition: opacity 0.3s;
-            pointer-events: auto;
+            opacity: 0;
+            transition: opacity 0.6s;
+            pointer-events: none;
           `;
 
           wrapper.addEventListener("mouseenter", () => { wrapper.style.opacity = "0.65"; });
@@ -192,8 +192,11 @@ export function HomeFloatingBackground() {
           const img = document.createElement("img");
           img.src = item.imageUrl;
           img.alt = "";
-          img.loading = "lazy";
           img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;";
+          img.onload = () => {
+            wrapper.style.opacity = "0.18";
+            wrapper.style.pointerEvents = "auto";
+          };
           img.onerror = () => { wrapper.style.display = "none"; };
 
           wrapper.appendChild(img);
