@@ -471,6 +471,13 @@ export const AudioManager = {
       setTimeout(() => this.playTone(780, 0.03, 0.06, { type: 'sine' }), 20);
     }
   },
+  async buttonFlap() {
+    // Quick descending sweep — "paper/card flap" effect for collapse button
+    if (!canPlaySound('buttonFlap', 150)) return;
+    await this.playTone(900, 0.01, 0.04, { type: 'sawtooth' });
+    setTimeout(() => this.playTone(500, 0.03, 0.07, { type: 'triangle' }), 20);
+    setTimeout(() => this.playTone(220, 0.02, 0.10, { type: 'sine' }), 55);
+  },
   async toggleOn() {
     // Ascending "boop" - satisfying on
     if (!canPlaySound('toggle', 150)) return;

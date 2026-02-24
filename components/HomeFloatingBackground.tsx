@@ -12,8 +12,8 @@ interface CardItem {
   isCard: boolean;
 }
 
-const CACHE_KEY = "vmw_hfb_items_v3";
-const CACHE_DATE_KEY = "vmw_hfb_date_v3";
+const CACHE_KEY = "vmw_hfb_v4";
+const CACHE_DATE_KEY = "vmw_hfb_date_v4";
 
 export function HomeFloatingBackground() {
   const convex = useConvex();
@@ -21,10 +21,9 @@ export function HomeFloatingBackground() {
   const routerRef = useRef<ReturnType<typeof useRouter> | null>(null);
   const mountedRef = useRef(true);
   const router = useRouter();
+  const rafRef = useRef<number>(0);
 
-  useEffect(() => {
-    routerRef.current = router;
-  }, [router]);
+  useEffect(() => { routerRef.current = router; }, [router]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -48,7 +47,7 @@ export function HomeFloatingBackground() {
           const casts = await convex.query(
             (api as any).featuredCasts.getActiveCasts,
             {}
-          ) as Array<{ _id: string; warpcastUrl: string; castHash: string }>;
+          ) as Array<{ _id: string; warpcastUrl: string }>;
 
           items = cards.filter(c => c.cardImageUrl).map(c => ({
             id: c._id,
@@ -57,20 +56,15 @@ export function HomeFloatingBackground() {
             isCard: true,
           }));
 
-          for (const cast of casts.slice(0, 8)) {
+          for (const cast of casts.slice(0, 6)) {
             try {
               const res = await fetch(`/api/cast-by-url?url=${encodeURIComponent(cast.warpcastUrl)}`);
-              if (res.ok) {
-                const data = await res.json();
-                const embedImg = data.cast?.embeds?.[0]?.metadata?.image?.url
-                  || data.cast?.embeds?.find((e: any) => /\.(jpg|jpeg|png|gif|webp)/i.test(e.url || ''))?.url;
-                if (embedImg) {
-                  items!.push({ id: cast._id + '_e', imageUrl: embedImg, href: cast.warpcastUrl, isCard: false });
-                }
-                if (data.cast?.author?.pfp_url) {
-                  items!.push({ id: cast._id + '_p', imageUrl: data.cast.author.pfp_url, href: cast.warpcastUrl, isCard: false });
-                }
-              }
+              if (!res.ok) continue;
+              const data = await res.json();
+              const embedImg = data.cast?.embeds?.[0]?.metadata?.image?.url
+                || data.cast?.embeds?.find((e: any) => /\.(jpg|jpeg|png|gif|webp)/i.test(e.url || ""))?.url;
+              if (embedImg) items!.push({ id: cast._id + "_e", imageUrl: embedImg, href: cast.warpcastUrl, isCard: false });
+              if (data.cast?.author?.pfp_url) items!.push({ id: cast._id + "_p", imageUrl: data.cast.author.pfp_url, href: cast.warpcastUrl, isCard: false });
             } catch {}
           }
 
@@ -79,92 +73,98 @@ export function HomeFloatingBackground() {
         }
 
         if (!mountedRef.current || !items?.length) return;
-
         const container = containerRef.current;
         if (!container) return;
 
-        // Use window dimensions — container is position:fixed inset:0
         const W = window.innerWidth;
         const H = window.innerHeight;
         container.innerHTML = "";
 
-        // Remove old per-item keyframes
-        const oldStyle = document.getElementById("hfb-item-styles");
-        if (oldStyle) oldStyle.remove();
+        // Per-item state for rAF
+        const particles: Array<{
+          el: HTMLDivElement;
+          x: number;
+          w: number;
+          h: number;
+          rise: number;
+          drift: number;
+          dur: number;
+          phase: number; // 0-1, starting offset
+        }> = [];
 
-        // Build all keyframes with hardcoded values
-        let css = "";
-        const configs: Array<{ x: number; startY: number; rise: number; driftH: number; rot: number; dur: number; delay: number; w: number; h: number; isCard: boolean }> = [];
-
-        items.forEach((_, i) => {
-          const isCard = i % 3 !== 2; // mix cards and circles
-          const w = isCard ? 80 : 52;
-          const h = isCard ? 112 : 52;
-          const x = 20 + Math.random() * (W - w - 40);
-          const rise = H + h + 20;
-          const midDrift = (Math.random() - 0.5) * 80;
-          const endDrift = midDrift + (Math.random() - 0.5) * 40;
-          const rot = (Math.random() - 0.5) * 16;
-          const dur = 8 + Math.random() * 7;
-          const delay = -(Math.random() * dur);
-
-          configs.push({ x, startY: H + h, rise, driftH: endDrift, rot, dur, delay, w, h, isCard: i < items!.length });
-
-          css += `
-@keyframes hfb-r${i} {
-  0%   { transform: translateY(0px) translateX(0px) rotate(0deg); opacity: 0; }
-  8%   { opacity: 0.2; }
-  50%  { transform: translateY(-${(rise * 0.5).toFixed(0)}px) translateX(${midDrift.toFixed(0)}px) rotate(${(rot * 0.6).toFixed(1)}deg); }
-  92%  { opacity: 0.2; }
-  100% { transform: translateY(-${rise}px) translateX(${endDrift.toFixed(0)}px) rotate(${rot.toFixed(1)}deg); opacity: 0; }
-}`;
-        });
-
-        const styleEl = document.createElement("style");
-        styleEl.id = "hfb-item-styles";
-        styleEl.textContent = css;
-        document.head.appendChild(styleEl);
-
-        items.forEach((item, i) => {
-          const cfg = configs[i];
+        items.forEach((item) => {
           const isCard = item.isCard;
           const w = isCard ? 80 : 52;
           const h = isCard ? 112 : 52;
+          const x = 20 + Math.random() * (W - w - 40);
+          const drift = (Math.random() - 0.5) * 100;
+          const dur = (8 + Math.random() * 7) * 1000; // ms
+          const phase = Math.random(); // start at random point in cycle
 
-          const wrapper = document.createElement("div");
-          wrapper.style.position = "absolute";
-          wrapper.style.left = cfg.x + "px";
-          wrapper.style.top = cfg.startY + "px";
-          wrapper.style.width = w + "px";
-          wrapper.style.height = h + "px";
-          wrapper.style.borderRadius = isCard ? "8px" : "50%";
-          wrapper.style.overflow = "hidden";
-          wrapper.style.pointerEvents = "none";
-          wrapper.style.cursor = "pointer";
-          wrapper.style.animation = `hfb-r${i} ${cfg.dur.toFixed(1)}s linear ${cfg.delay.toFixed(1)}s infinite`;
-          wrapper.style.willChange = "transform";
+          const el = document.createElement("div");
+          el.style.cssText = `
+            position:absolute;
+            left:${x}px;
+            top:0px;
+            width:${w}px;
+            height:${h}px;
+            border-radius:${isCard ? "8px" : "50%"};
+            overflow:hidden;
+            opacity:0;
+            will-change:transform,opacity;
+            cursor:pointer;
+            pointer-events:none;
+          `;
 
-          wrapper.addEventListener("mouseenter", () => { wrapper.style.filter = "brightness(2) saturate(1.3)"; });
-          wrapper.addEventListener("mouseleave", () => { wrapper.style.filter = ""; });
-          wrapper.addEventListener("click", (e) => {
+          el.addEventListener("mouseenter", () => { el.style.filter = "brightness(2) saturate(1.3)"; });
+          el.addEventListener("mouseleave", () => { el.style.filter = ""; });
+          el.addEventListener("click", (e) => {
             e.preventDefault();
-            if (item.href.startsWith("http")) {
-              window.open(item.href, "_blank", "noopener");
-            } else {
-              routerRef.current?.push(item.href);
-            }
+            if (item.href.startsWith("http")) window.open(item.href, "_blank", "noopener");
+            else routerRef.current?.push(item.href);
           });
 
           const img = document.createElement("img");
           img.src = item.imageUrl;
           img.alt = "";
           img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;";
-          img.onload = () => { wrapper.style.pointerEvents = "auto"; };
-          img.onerror = () => { wrapper.style.display = "none"; };
+          img.onload = () => { el.style.pointerEvents = "auto"; };
+          img.onerror = () => { el.style.display = "none"; };
 
-          wrapper.appendChild(img);
-          container.appendChild(wrapper);
+          el.appendChild(img);
+          container.appendChild(el);
+
+          particles.push({ el, x, w, h, rise: H + h + 20, drift, dur, phase });
         });
+
+        let startTime: number | null = null;
+
+        function frame(now: number) {
+          if (!mountedRef.current) return;
+          if (!startTime) startTime = now;
+
+          for (const p of particles) {
+            const t = ((now - startTime) / p.dur + p.phase) % 1; // 0 → 1 cycle
+
+            // Y: from bottom (H+h) rising to top (-h)
+            const y = H + p.h - t * (p.rise);
+
+            // Horizontal drift: sinusoidal
+            const dx = Math.sin(t * Math.PI * 2) * p.drift * 0.5 + t * p.drift * 0.5;
+
+            // Opacity: fade in first 8%, full in middle, fade out last 8%
+            const opacity = t < 0.08 ? t / 0.08 * 0.22
+                          : t > 0.92 ? (1 - t) / 0.08 * 0.22
+                          : 0.22;
+
+            p.el.style.transform = `translateY(${y}px) translateX(${dx.toFixed(1)}px)`;
+            p.el.style.opacity = opacity.toFixed(3);
+          }
+
+          rafRef.current = requestAnimationFrame(frame);
+        }
+
+        rafRef.current = requestAnimationFrame(frame);
 
       } catch (e) {
         console.warn("HomeFloatingBackground:", e);
@@ -175,6 +175,7 @@ export function HomeFloatingBackground() {
 
     return () => {
       mountedRef.current = false;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [convex]);
 
