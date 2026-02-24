@@ -553,7 +553,7 @@ export function SettingsModal({
       onClick={onClose}
     >
       <div
-        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-3 sm:p-5 max-w-md w-full shadow-gold max-h-[95vh] overflow-y-auto"
+        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-3 sm:p-5 max-w-md w-full shadow-gold max-h-[90%] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-2 sm:mb-3">
