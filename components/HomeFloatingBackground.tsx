@@ -46,8 +46,8 @@ interface CardItem {
   isCard: boolean; // card (rect) vs avatar (circle)
 }
 
-const CACHE_KEY = "vmw_hfb_items";
-const CACHE_DATE_KEY = "vmw_hfb_date";
+const CACHE_KEY = "vmw_hfb_items_v2";
+const CACHE_DATE_KEY = "vmw_hfb_date_v2";
 
 export function HomeFloatingBackground() {
   const convex = useConvex();
@@ -85,10 +85,10 @@ export function HomeFloatingBackground() {
           // Fetch VibeFID high-rarity cards
           const cards = await convex.query(
             (api as any).farcasterCards.getHighRarityCards,
-            { limit: 8 }
+            { limit: 16 }
           ) as Array<{ _id: string; fid: number; cardImageUrl: string; rarity: string }>;
 
-          // Fetch active casts for pfp avatars
+          // Fetch active casts
           const casts = await convex.query(
             (api as any).featuredCasts.getActiveCasts,
             {}
@@ -103,16 +103,26 @@ export function HomeFloatingBackground() {
             })),
           ];
 
-          // Fetch pfp for first 4 casts
-          const pfpItems: CardItem[] = [];
-          for (const cast of casts.slice(0, 4)) {
+          // Fetch cast embed images + author pfp for all casts
+          const castItems: CardItem[] = [];
+          for (const cast of casts.slice(0, 8)) {
             try {
               const res = await fetch(`/api/cast-by-url?url=${encodeURIComponent(cast.warpcastUrl)}`);
               if (res.ok) {
                 const data = await res.json();
+                const embedImg = data.cast?.embeds?.[0]?.metadata?.image?.url
+                  || data.cast?.embeds?.find((e: any) => /\.(jpg|jpeg|png|gif|webp)/i.test(e.url || ''))?.url;
+                if (embedImg) {
+                  castItems.push({
+                    id: cast._id + '_embed',
+                    imageUrl: embedImg,
+                    href: cast.warpcastUrl,
+                    isCard: false,
+                  });
+                }
                 if (data.cast?.author?.pfp_url) {
-                  pfpItems.push({
-                    id: cast._id,
+                  castItems.push({
+                    id: cast._id + '_pfp',
                     imageUrl: data.cast.author.pfp_url,
                     href: cast.warpcastUrl,
                     isCard: false,
@@ -122,7 +132,7 @@ export function HomeFloatingBackground() {
             } catch {}
           }
 
-          items = [...items, ...pfpItems];
+          items = [...items, ...castItems];
           localStorage.setItem(CACHE_KEY, JSON.stringify(items));
           localStorage.setItem(CACHE_DATE_KEY, today);
         }
