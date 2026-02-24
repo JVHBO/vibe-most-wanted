@@ -930,32 +930,37 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Ref so click handler always has latest crossfade without stale closure
+  const crossfadeRef = useRef(crossfade);
+  useEffect(() => { crossfadeRef.current = crossfade; }, [crossfade]);
+
   /**
    * Resume music on user interaction (fixes browser autoplay block)
-   * FIX: Keep trying on each click if audio is paused, not just first interaction
+   * Also restarts audio if it was lost while app was in background.
    */
   useEffect(() => {
     const handleClick = () => {
       if (!isMusicEnabled || isPaused) return;
 
-      // Try to play HTML audio if it exists and is paused
-      if (audioRef.current && audioRef.current.paused) {
-        audioRef.current.play().catch(() => {
-          // Still blocked, will try again on next click
-        });
+      // Audio lost (e.g. returned from miniapp) — restart it on first gesture
+      if (!audioRef.current && currentTrackRef.current) {
+        crossfadeRef.current(currentTrackRef.current);
+        return;
       }
 
-      // Try to play YouTube if it exists and is not playing
+      // Audio exists but paused — resume
+      if (audioRef.current && audioRef.current.paused) {
+        audioRef.current.play().catch(() => {});
+      }
+
+      // YouTube resume
       if (youtubePlayerRef.current && typeof youtubePlayerRef.current.playVideo === 'function') {
         try {
           const state = youtubePlayerRef.current.getPlayerState();
-          // State: -1 = unstarted, 0 = ended, 2 = paused, 5 = video cued
           if (state === -1 || state === 0 || state === 2 || state === 5) {
             youtubePlayerRef.current.playVideo();
           }
-        } catch(e) {
-          // Ignore errors
-        }
+        } catch(e) {}
       }
     };
 
