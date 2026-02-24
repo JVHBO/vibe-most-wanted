@@ -139,7 +139,6 @@ export function HomeFloatingBackground() {
           wrapper.style.height = h + "px";
           wrapper.style.borderRadius = isCard ? "8px" : "50%";
           wrapper.style.overflow = "hidden";
-          wrapper.style.opacity = "0";
           wrapper.style.pointerEvents = "none";
           wrapper.style.cursor = "pointer";
           wrapper.style.animation = `hfb-r${i} ${cfg.dur.toFixed(1)}s linear ${cfg.delay.toFixed(1)}s infinite`;
