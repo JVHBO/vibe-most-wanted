@@ -720,7 +720,8 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                     AudioManager.buttonClick();
                     setShowBackstoryModal(true);
                   }}
-                  className="absolute -top-2 -left-2 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20"
+                  className="absolute -top-2 -left-2 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                  style={{ background: "#7C3AED", border: "2px solid #000", boxShadow: "2px 2px 0px #000", color: "#fff" }}
                   title="View Lore"
                 >
                   <span className="text-xs font-bold">L</span>
@@ -732,11 +733,10 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                 <button
                   onClick={handleRefreshMetadata}
                   disabled={isRefreshingMetadata}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                    metadataRefreshed
-                      ? 'bg-green-600 text-white scale-110'
-                      : 'bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20'
-                  } disabled:opacity-50`}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all disabled:opacity-50 ${metadataRefreshed ? 'scale-110' : ''}`}
+                  style={metadataRefreshed
+                    ? { background: "#16A34A", border: "2px solid #000", boxShadow: "2px 2px 0px #000", color: "#fff" }
+                    : { background: "#0891B2", border: "2px solid #000", boxShadow: "2px 2px 0px #000", color: "#fff" }}
                   title="Refresh OpenSea Metadata"
                 >
                   {isRefreshingMetadata ? (
@@ -773,7 +773,8 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
               <div className="absolute -bottom-2 -left-2 z-20">
                 <button
                   onClick={() => { AudioManager.buttonClick(); setShowTraitsPopup(v => !v); }}
-                  className="w-8 h-8 rounded-full flex items-center justify-center bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/20 transition-all"
+                  className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                  style={{ background: "#059669", border: "2px solid #000", boxShadow: "2px 2px 0px #000", color: "#fff" }}
                   title="Card Traits"
                 >
                   <span className="text-xs font-bold">T</span>
@@ -834,13 +835,8 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                   }
                 }}
                 disabled={isVoting}
-                className={`absolute -bottom-2 -right-2 z-20 w-10 h-10 rounded-xl flex items-center justify-center transition-all bg-vintage-black border-2 ${
-                  isOwnCard
-                    ? 'border-vintage-gold text-vintage-gold hover:bg-vintage-gold/10'
-                    : hasVoted
-                      ? 'border-vintage-gold text-vintage-gold hover:bg-vintage-gold/10'
-                      : 'border-vintage-gold/50 text-vintage-gold hover:border-vintage-gold hover:bg-vintage-gold/10'
-                } disabled:opacity-70`}
+                className="absolute -bottom-2 -right-2 z-20 w-10 h-10 rounded-xl flex items-center justify-center transition-all disabled:opacity-70"
+                style={{ background: "#BE185D", border: "2px solid #000", boxShadow: "2px 2px 0px #000", color: "#fff" }}
                 title={isOwnCard ? `VibeMail • ${totalVotes} vibes` : hasVoted ? `${totalVotes} vibes • Send more` : `Send vibe • ${totalVotes} vibes`}
               >
                 {isVoting ? (
