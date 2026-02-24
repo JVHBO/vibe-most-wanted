@@ -2,18 +2,13 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useState } from "react";
-import { Id } from "@/convex/_generated/dataModel";
+import { useState, useEffect } from "react";
 import { ShopNotification } from "./ShopNotification";
 import { PackOpeningAnimation } from "./PackOpeningAnimation";
-import { useFarcasterVBMSBalance, useFarcasterTransferVBMS } from "@/lib/hooks/useFarcasterVBMS";
-import { CONTRACTS } from "@/lib/contracts";
-import { useAccount } from "wagmi";
-import { parseEther } from "viem";
-
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "next/navigation";
 import { getAssetUrl } from "@/lib/ipfs-assets";
+import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
 
 interface ShopViewProps {
   address: string | undefined;
@@ -24,208 +19,64 @@ export function ShopView({ address }: ShopViewProps) {
   const router = useRouter();
 
   // Fetch data
-  const shopPacks = useQuery(api.cardPacks.getShopPacks);
   const playerPacks = useQuery(api.cardPacks.getPlayerPacks, address ? { address } : "skip");
   const playerCards = useQuery(api.cardPacks.getPlayerCards, address ? { address } : "skip");
-  const lockedCardIds = useQuery(api.cardPacks.getLockedFreeCardIds, address ? { address } : "skip");
   const dailyFreeStatus = useQuery(api.cardPacks.canClaimDailyFree, address ? { address } : "skip");
-
-  // Mutations
-  const openPack = useMutation(api.cardPacks.openPack);
-  const openAllPacks = useMutation(api.cardPacks.openAllPacks);
-  const buyPackWithLuckBoost = useMutation(api.cardPacks.buyPackWithLuckBoost);
-  const claimDailyFree = useMutation(api.cardPacks.claimDailyFreePack);
   const profileDashboard = useQuery(
     api.profiles.getProfileDashboard,
     address ? { address: address.toLowerCase() } : "skip"
   );
 
-  // VBMS Blockchain hooks
-  const { address: walletAddress } = useAccount();
-  const effectiveAddress = address || walletAddress;
+  // Mutations
+  const openPack = useMutation(api.cardPacks.openPack);
+  const openAllPacks = useMutation(api.cardPacks.openAllPacks);
+  const claimDailyFree = useMutation(api.cardPacks.claimDailyFreePack);
+  const setPreferredChainMutation = useMutation(api.profiles.setPreferredChain);
 
-  const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(effectiveAddress);
+  // ARB mode detection (same pattern as quests/roulette)
+  const [arbSupported, setArbSupported] = useState(false);
+  useEffect(() => {
+    if (!isMiniappMode()) { setArbSupported(true); return; }
+    const checkArb = async () => {
+      try {
+        const { sdk } = await import('@farcaster/miniapp-sdk');
+        const ctx = await sdk.context;
+        setArbSupported(isWarpcastClient(ctx?.client?.clientFid));
+      } catch { setArbSupported(false); }
+    };
+    const timer = setTimeout(checkArb, 300);
+    return () => clearTimeout(timer);
+  }, []);
 
-  const formatVBMS = (val: string) => {
-    const n = parseFloat(val);
-    if (isNaN(n)) return "0";
-    if (n >= 1_000_000_000) return (n / 1_000_000_000).toFixed(1).replace(/\.0$/, "") + "B";
-    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-    if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
-    return n.toLocaleString();
+  const effectiveChain = (profileDashboard as any)?.preferredChain || "base";
+  const isArb = effectiveChain === "arbitrum";
+  const packsPerDay = isArb ? 3 : 1;
+
+  const handleSwitchChain = async (chain: 'base' | 'arbitrum') => {
+    if (!address) return;
+    try { await setPreferredChainMutation({ address, chain }); }
+    catch (e) { console.error('Failed to switch chain:', e); }
   };
-  const { transfer, isPending: isTransferring, error: transferError } = useFarcasterTransferVBMS();
 
   // State
-  const [quantity, setQuantity] = useState(1);
-  const [loading, setLoading] = useState(false);
   const [openingPack, setOpeningPack] = useState(false);
   const [revealedCards, setRevealedCards] = useState<any[]>([]);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [luckBoost, setLuckBoost] = useState(false); // Elite odds for 5x price
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [claimingDaily, setClaimingDaily] = useState(false);
   const [showPacksModal, setShowPacksModal] = useState(false);
   const [openQuantities, setOpenQuantities] = useState<Record<string, number>>({});
 
-  // Prices
-  const NORMAL_PRICE = 1000;
-  const BOOSTED_PRICE = 5000;
-  const currentPrice = luckBoost ? BOOSTED_PRICE : NORMAL_PRICE;
-
-  // Odds for display
-  const NORMAL_ODDS = { Common: 93, Rare: 6, Epic: 0.8, Legendary: 0.2 };
-  const ELITE_ODDS = { Common: 82, Rare: 14, Epic: 3.5, Legendary: 0.5 }; // NERFED for ROI ~0.68x
-  const currentOdds = luckBoost ? ELITE_ODDS : NORMAL_ODDS;
-
-  // Handle purchase with VBMS (blockchain)
-  const handleBuyWithVBMS = async (packType: string, packPrice: number) => {
-    if (!effectiveAddress) {
-      setNotification({
-        type: 'error',
-        message: t('shopConnectWallet')
-      });
-      return;
-    }
-
-    const totalVBMS = (packPrice * quantity).toString();
-
-    // Check balance
-    if (parseFloat(vbmsBalance) < parseFloat(totalVBMS)) {
-      setNotification({
-        type: 'error',
-        message: t('shopInsufficientVbms', { amount: totalVBMS })
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // Step 1: Transfer VBMS to pool
-      setNotification({
-        type: 'success',
-        message: t('shopTransferring')
-      });
-
-      console.log('💸 Initiating transfer...');
-      const transferHash = await transfer(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(totalVBMS));
-
-      console.log('✅ Transfer confirmed:', transferHash);
-
-      // Step 2: Call backend to verify and mint packs
-      setNotification({
-        type: 'success',
-        message: t('shopTransferConfirmed')
-      });
-
-      console.log('💎 Calling backend with tx hash:', transferHash);
-
-      const response = await fetch('/api/shop/buy-with-vbms', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          address,
-          packType,
-          quantity,
-          txHash: transferHash,
-        }),
-      });
-
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        console.error('Non-JSON response:', text);
-        throw new Error('Server returned invalid response (not JSON)');
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Purchase failed');
-      }
-
-      setNotification({
-        type: 'success',
-        message: `Bought ${data.packsReceived} ${packType} pack(s) for ${data.vbmsSpent} VBMS! 💎`
-      });
-
-      refetchVBMS();
-      setQuantity(1);
-    } catch (error: any) {
-      console.error('❌ Pack purchase error:', error);
-      setNotification({
-        type: 'error',
-        message: error.message || "Failed to buy with VBMS"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-
-  // Handle pack opening
-  const handleOpenPack = async (packId: Id<"cardPacks">) => {
-    if (!address) return;
-
-    setOpeningPack(true);
-    try {
-      const result = await openPack({
-        address,
-        packId,
-      });
-
-      setRevealedCards(result.cards);
-    } catch (error: any) {
-      setNotification({
-        type: 'error',
-        message: error.message || "Failed to open pack"
-      });
-    } finally {
-      setOpeningPack(false);
-    }
-  };
-
-  // Handle opening ALL packs at once
-  const handleOpenAllPacks = async (packId: Id<"cardPacks">) => {
-    if (!address) return;
-
-    setOpeningPack(true);
-    try {
-      const result = await openAllPacks({
-        address,
-        packId,
-      });
-
-      setRevealedCards(result.cards);
-      setNotification({
-        type: 'success',
-        message: `Opened ${result.packsOpened} packs! Got ${result.cards.length} cards!`
-      });
-    } catch (error: any) {
-      setNotification({
-        type: 'error',
-        message: error.message || "Failed to open packs"
-      });
-    } finally {
-      setOpeningPack(false);
-    }
-  };
-
-  // Handle daily free claim - gives a pack to open (requires 0 VBMS TX for verification)
+  // Handle daily free claim
   const handleClaimDailyFree = async () => {
-    if (!address || claimingDaily || !effectiveAddress) return;
+    if (!address || claimingDaily) return;
 
     setClaimingDaily(true);
     try {
-      // Step 1: Claim the pack in backend
-      const chain = (profileDashboard as any)?.preferredChain || "base";
-      await claimDailyFree({ address, chain });
-
+      await claimDailyFree({ address, chain: effectiveChain });
       setNotification({
         type: 'success',
-        message: `🎁 Free pack claimed! Open it below.`
+        message: `Free pack${packsPerDay > 1 ? 's' : ''} claimed! Open ${packsPerDay > 1 ? 'them' : 'it'} below.`
       });
     } catch (error: any) {
       setNotification({
@@ -236,7 +87,6 @@ export function ShopView({ address }: ShopViewProps) {
       setClaimingDaily(false);
     }
   };
-
 
   // Format time remaining
   const formatTimeRemaining = (ms: number) => {
@@ -280,7 +130,6 @@ export function ShopView({ address }: ShopViewProps) {
       {/* TOP HUD */}
       <div className="absolute top-0 left-0 right-0 z-10 p-3">
         <div className="relative flex items-center justify-between">
-          {/* Back button - always go to home, not browser history */}
           <button
             onClick={() => router.push("/")}
             className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
@@ -288,13 +137,11 @@ export function ShopView({ address }: ShopViewProps) {
             <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> BACK
           </button>
 
-          {/* Title - truly centered */}
           <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider whitespace-nowrap">{t('shopTitle')}</h1>
 
-          {/* Balance */}
           <div className="text-right">
-            <p className="text-[10px] text-vintage-ice/50 uppercase tracking-wider">{t('shopBalance')}</p>
-            <p className="text-sm font-bold text-vintage-gold leading-tight">{formatVBMS(vbmsBalance)} <span className="text-vintage-ice/80">VBMS</span></p>
+            <p className="text-[10px] text-vintage-ice/50 uppercase tracking-wider">Your Cards</p>
+            <p className="text-sm font-bold text-vintage-gold leading-tight">{playerCards?.length || 0}</p>
           </div>
         </div>
       </div>
@@ -303,22 +150,21 @@ export function ShopView({ address }: ShopViewProps) {
       <div className="absolute inset-0 pt-14 pb-16 overflow-hidden flex flex-col">
         <div className="relative z-10 px-4 py-2 flex-1 flex flex-col justify-center">
 
-
-          {/* Pack Purchase Card - Compact */}
+          {/* Daily Free Pack Card */}
           <div className="max-w-sm mx-auto mb-4">
-            <div className={`bg-vintage-charcoal/50 border ${luckBoost ? 'border-yellow-400/50' : 'border-vintage-gold/30'} rounded-xl p-4 transition-all`}>
+            <div className={`bg-vintage-charcoal/50 border ${isArb ? 'border-blue-400/50' : 'border-vintage-gold/30'} rounded-xl p-4 transition-all`}>
 
-              {/* Pack Header with Image */}
+              {/* Pack Header */}
               <div className="flex items-center gap-4 mb-3">
-                <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className={`w-16 h-16 object-contain drop-shadow-[4px_4px_0px_rgba(0,0,0,1)] ${luckBoost ? 'animate-pulse' : ''}`} />
+                <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className="w-16 h-16 object-contain drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]" />
                 <div className="flex-1">
                   <h3 className="text-xl font-display font-bold text-vintage-gold">
-                    {luckBoost ? t('shopLuckyPack') : t('shopBasicPack')}
+                    Daily Free Pack
                   </h3>
                   <p className="text-vintage-ice/60 text-xs">1 Nothing card per pack</p>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-xs font-bold ${luckBoost ? 'bg-yellow-500 text-black' : 'bg-vintage-gold/20 text-vintage-gold'}`}>
-                  {luckBoost ? t('shopBoosted') : t('shopBasic')}
+                <div className={`px-3 py-1 rounded-full text-xs font-bold ${isArb ? 'bg-blue-500 text-white' : 'bg-green-500/20 text-green-400'}`}>
+                  {isArb ? `3/day ARB` : `1/day`}
                 </div>
               </div>
 
@@ -329,106 +175,84 @@ export function ShopView({ address }: ShopViewProps) {
                 </p>
               </div>
 
-              {/* Drop Rates - Compact Grid */}
-              <div className={`rounded-lg p-2 mb-3 border text-xs ${luckBoost ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-vintage-black/30 border-vintage-gold/20'}`}>
+              {/* Drop Rates */}
+              <div className="bg-vintage-black/30 border border-vintage-gold/20 rounded-lg p-2 mb-3 text-xs">
                 <div className="grid grid-cols-4 gap-1 text-center">
                   <div>
                     <span className="text-vintage-ice/50 block">Common</span>
-                    <span className={`font-bold ${luckBoost ? 'text-green-400' : 'text-vintage-ice'}`}>{currentOdds.Common}%</span>
+                    <span className="text-vintage-ice font-bold">93%</span>
                   </div>
                   <div>
                     <span className="text-blue-400/70 block">Rare</span>
-                    <span className={`font-bold ${luckBoost ? 'text-green-400' : 'text-blue-400'}`}>{currentOdds.Rare}%</span>
+                    <span className="text-blue-400 font-bold">6%</span>
                   </div>
                   <div>
                     <span className="text-purple-400/70 block">Epic</span>
-                    <span className={`font-bold ${luckBoost ? 'text-green-400' : 'text-purple-400'}`}>{currentOdds.Epic}%</span>
+                    <span className="text-purple-400 font-bold">0.8%</span>
                   </div>
                   <div>
                     <span className="text-yellow-400/70 block">Legend</span>
-                    <span className={`font-bold ${luckBoost ? 'text-green-400' : 'text-yellow-400'}`}>{currentOdds.Legendary}%</span>
+                    <span className="text-yellow-400 font-bold">0.2%</span>
                   </div>
                 </div>
               </div>
 
-              {/* Luck Boost Toggle - Inline */}
-              <div className="flex items-center justify-between bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 mb-3">
-                <div>
-                  <p className="text-yellow-400 font-bold text-sm">{t('shopLuckBoost')}</p>
-                  <p className="text-vintage-ice/50 text-xs">{t('shopLuckBoostDesc')}</p>
-                </div>
-                <button
-                  onClick={() => setLuckBoost(!luckBoost)}
-                  className={`w-14 h-7 rounded-full transition-all relative ${luckBoost ? 'bg-yellow-500' : 'bg-vintage-charcoal border border-vintage-gold/30'}`}
-                >
-                  <div className={`absolute top-1 w-5 h-5 rounded-full transition-all ${luckBoost ? 'right-1 bg-black' : 'left-1 bg-vintage-gold/50'}`} />
-                </button>
-              </div>
-
-              {/* Price + Quantity + Buy - All in one row */}
-              <div className="flex items-center gap-2">
-                {/* Quantity */}
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-8 h-8 rounded bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold font-bold hover:bg-vintage-gold/20"
-                  >
-                    -
-                  </button>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-                    className="w-12 h-8 text-center bg-vintage-black border border-vintage-gold/30 rounded text-vintage-ice font-bold text-sm"
-                  />
-                  <button
-                    onClick={() => setQuantity(Math.min(100, quantity + 1))}
-                    className="w-8 h-8 rounded bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold font-bold hover:bg-vintage-gold/20"
-                  >
-                    +
-                  </button>
-                </div>
-
-                {/* Buy Button */}
-                <div className="flex-1">
-                  {dailyFreeStatus?.canClaim && !luckBoost && quantity === 1 ? (
+              {/* ARB Mode Toggle */}
+              {arbSupported && (
+                <div className={`flex items-center justify-between rounded-lg px-3 py-2 mb-3 border transition-all ${isArb ? 'bg-blue-500/10 border-blue-400/40' : 'bg-vintage-black/30 border-vintage-gold/20'}`}>
+                  <div>
+                    <p className={`font-bold text-sm ${isArb ? 'text-blue-400' : 'text-vintage-ice/70'}`}>
+                      Arbitrum Mode
+                    </p>
+                    <p className="text-vintage-ice/50 text-xs">3 packs/day instead of 1</p>
+                  </div>
+                  <div className="flex gap-1">
                     <button
-                      onClick={handleClaimDailyFree}
-                      disabled={claimingDaily}
-                      className="w-full h-10 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white font-display font-bold rounded-lg transition-all disabled:opacity-50"
+                      onClick={() => handleSwitchChain('base')}
+                      className={`px-2 py-1 rounded font-bold text-xs border transition ${!isArb ? 'bg-vintage-gold text-black border-vintage-gold' : 'text-white/50 border-white/20 hover:text-white'}`}
                     >
-                      {claimingDaily ? "..." : t('shopFree')}
+                      Base
                     </button>
-                  ) : (
                     <button
-                      onClick={() => handleBuyWithVBMS(luckBoost ? 'boosted' : 'basic', currentPrice)}
-                      disabled={loading || parseFloat(vbmsBalance) < currentPrice * quantity}
-                      className={`w-full h-10 ${luckBoost ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gradient-to-r from-purple-600 to-pink-600'} disabled:bg-vintage-charcoal/50 text-white disabled:text-vintage-ice/30 font-display font-bold rounded-lg transition-all disabled:cursor-not-allowed`}
+                      onClick={() => handleSwitchChain('arbitrum')}
+                      className={`px-2 py-1 rounded font-bold text-xs border transition ${isArb ? 'bg-blue-400 text-black border-blue-500' : 'text-white/50 border-white/20 hover:text-white'}`}
                     >
-                      {loading ? "..." : `${(currentPrice * quantity).toLocaleString()} VBMS`}
+                      ARB 3x
                     </button>
-                  )}
+                  </div>
                 </div>
-              </div>
-
-              {/* Daily free timer */}
-              {dailyFreeStatus && !dailyFreeStatus.canClaim && dailyFreeStatus.timeRemaining && (
-                <p className="text-xs text-center text-green-400/70 mt-2">
-                  Free pack in {formatTimeRemaining(dailyFreeStatus.timeRemaining)}
-                </p>
               )}
+
+              {/* Claim Button */}
+              <div>
+                {dailyFreeStatus?.canClaim ? (
+                  <button
+                    onClick={handleClaimDailyFree}
+                    disabled={claimingDaily}
+                    className={`w-full h-11 font-display font-bold rounded-lg transition-all disabled:opacity-50 text-white ${isArb ? 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400' : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400'}`}
+                  >
+                    {claimingDaily ? "..." : isArb ? `Claim 3 Free Packs (ARB)` : `Claim 1 Free Pack`}
+                  </button>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full h-11 bg-vintage-charcoal/50 border border-vintage-gold/20 text-vintage-ice/40 font-display font-bold rounded-lg cursor-not-allowed"
+                  >
+                    {dailyFreeStatus?.timeRemaining
+                      ? `Next pack in ${formatTimeRemaining(dailyFreeStatus.timeRemaining)}`
+                      : "Already claimed today"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
           {/* Action Buttons Row */}
           <div className="max-w-sm mx-auto grid grid-cols-2 gap-3 mb-4">
-            {/* Your Packs Button - Opens modal to select packs */}
+            {/* Your Packs Button */}
             <button
               onClick={() => {
                 if (playerPacks && playerPacks.length > 0) {
-                  // Initialize quantities for each pack type
                   const initialQuantities: Record<string, number> = {};
                   playerPacks.forEach((pack: any) => {
                     initialQuantities[pack._id] = 1;
@@ -444,7 +268,6 @@ export function ShopView({ address }: ShopViewProps) {
                   : 'bg-vintage-charcoal/30 border border-vintage-gold/20 text-vintage-ice/30 cursor-not-allowed'
               }`}
             >
-              {/* Gift/unbox icon */}
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 12v10H4V12" />
                 <path d="M2 7h20v5H2z" />
@@ -455,7 +278,7 @@ export function ShopView({ address }: ShopViewProps) {
               <span>{t('shopOpenPacks')} {totalUnopenedPacks > 0 ? `(${totalUnopenedPacks})` : ''}</span>
             </button>
 
-            {/* Burn Cards Button - Navigate to burn page */}
+            {/* Burn Cards Button */}
             <button
               onClick={() => router.push('/shop/burn')}
               disabled={!playerCards || playerCards.length === 0}
@@ -465,7 +288,6 @@ export function ShopView({ address }: ShopViewProps) {
                   : 'bg-vintage-charcoal/30 border border-vintage-gold/20 text-vintage-ice/30 cursor-not-allowed'
               }`}
             >
-              {/* Trash/delete icon */}
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 6h18" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
@@ -477,25 +299,25 @@ export function ShopView({ address }: ShopViewProps) {
             </button>
           </div>
 
-          {/* Burn Values Info - Compact - Changes with Luck Pack */}
+          {/* Burn Values Info */}
           <div className="max-w-sm mx-auto">
             <p className="text-xs text-vintage-ice/40 text-center mb-2">Burn Values (VBMS)</p>
             <div className="grid grid-cols-4 gap-1 text-xs text-center">
-              <div className={`rounded p-2 ${luckBoost ? 'bg-yellow-500/10' : 'bg-vintage-charcoal/30'}`}>
+              <div className="rounded p-2 bg-vintage-charcoal/30">
                 <span className="text-vintage-ice/50 block">Common</span>
-                <span className="text-green-400 font-bold">{luckBoost ? '1k' : '200'}</span>
+                <span className="text-green-400 font-bold">200</span>
               </div>
-              <div className={`rounded p-2 ${luckBoost ? 'bg-yellow-500/10' : 'bg-vintage-charcoal/30'}`}>
+              <div className="rounded p-2 bg-vintage-charcoal/30">
                 <span className="text-blue-400/70 block">Rare</span>
-                <span className="text-green-400 font-bold">{luckBoost ? '5.5k' : '1.1k'}</span>
+                <span className="text-green-400 font-bold">1.1k</span>
               </div>
-              <div className={`rounded p-2 ${luckBoost ? 'bg-yellow-500/10' : 'bg-vintage-charcoal/30'}`}>
+              <div className="rounded p-2 bg-vintage-charcoal/30">
                 <span className="text-purple-400/70 block">Epic</span>
-                <span className="text-green-400 font-bold">{luckBoost ? '20k' : '4k'}</span>
+                <span className="text-green-400 font-bold">4k</span>
               </div>
-              <div className={`rounded p-2 ${luckBoost ? 'bg-yellow-500/10' : 'bg-vintage-charcoal/30'}`}>
+              <div className="rounded p-2 bg-vintage-charcoal/30">
                 <span className="text-yellow-400/70 block">Legend</span>
-                <span className="text-green-400 font-bold">{luckBoost ? '200k' : '40k'}</span>
+                <span className="text-green-400 font-bold">40k</span>
               </div>
             </div>
           </div>
@@ -508,21 +330,21 @@ export function ShopView({ address }: ShopViewProps) {
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => setShowHelpModal(true)}
-            className="text-vintage-ice/60 hover:text-vintage-gold transition-colors text-sm flex items-center gap-1"
+            className="text-vintage-ice/60 hover:text-vintage-gold transition-colors text-sm"
           >
-            <span>Help</span>
+            Help
           </button>
 
           <div className="text-center">
-            <p className="text-xs text-vintage-ice/50">Pack Price</p>
-            <p className={`text-sm font-bold ${luckBoost ? 'text-yellow-400' : 'text-purple-400'}`}>
-              {currentPrice.toLocaleString()} VBMS
+            <p className="text-xs text-vintage-ice/50">Daily Packs</p>
+            <p className={`text-sm font-bold ${isArb ? 'text-blue-400' : 'text-green-400'}`}>
+              {packsPerDay}/day {isArb ? '(ARB)' : ''}
             </p>
           </div>
 
           <div className="text-right">
-            <p className="text-xs text-vintage-ice/50">Your Cards</p>
-            <p className="text-sm font-bold text-vintage-gold">{playerCards?.length || 0}</p>
+            <p className="text-xs text-vintage-ice/50">Your Packs</p>
+            <p className="text-sm font-bold text-vintage-gold">{totalUnopenedPacks}</p>
           </div>
         </div>
       </div>
@@ -538,13 +360,13 @@ export function ShopView({ address }: ShopViewProps) {
 
             <div className="space-y-4 text-sm">
               <div>
-                <h4 className="font-bold text-vintage-gold mb-1">Basic Pack</h4>
-                <p className="text-vintage-ice/70 text-xs">1,000 VBMS per pack. Contains 1 Nothing card with random rarity.</p>
+                <h4 className="font-bold text-green-400 mb-1">Daily Free Pack</h4>
+                <p className="text-vintage-ice/70 text-xs">Claim 1 free pack every 24 hours. Switch to Arbitrum mode to get 3 packs per day.</p>
               </div>
 
               <div>
-                <h4 className="font-bold text-yellow-400 mb-1">Luck Boost</h4>
-                <p className="text-vintage-ice/70 text-xs">5x price (5,000 VBMS) for significantly better drop rates.</p>
+                <h4 className="font-bold text-blue-400 mb-1">Arbitrum Mode</h4>
+                <p className="text-vintage-ice/70 text-xs">Connect on Arbitrum to triple your daily free packs (3/day instead of 1/day).</p>
               </div>
 
               <div>
@@ -570,7 +392,7 @@ export function ShopView({ address }: ShopViewProps) {
       {revealedCards.length > 0 && (
         <PackOpeningAnimation
           cards={revealedCards}
-          packType={luckBoost ? 'Lucky Pack' : 'Basic Pack'}
+          packType="Daily Pack"
           onClose={() => setRevealedCards([])}
         />
       )}
@@ -588,28 +410,20 @@ export function ShopView({ address }: ShopViewProps) {
               {playerPacks.map((pack: any) => {
                 const packName = pack.packInfo?.name || pack.packType;
                 const currentQty = openQuantities[pack._id] || 1;
-                const borderClass = pack.packType === 'boosted'
-                  ? 'border-yellow-500/30'
-                  : pack.packType === 'premium'
-                    ? 'border-purple-500/30'
-                    : 'border-vintage-gold/30';
 
                 return (
-                  <div key={pack._id} className={`bg-vintage-black/30 border ${borderClass} rounded-lg p-3`}>
+                  <div key={pack._id} className="bg-vintage-black/30 border border-vintage-gold/30 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className="w-10 h-10 object-contain" />
                         <div>
-                          <p className={`font-bold text-sm ${pack.packType === 'boosted' ? 'text-yellow-400' : 'text-vintage-gold'}`}>
-                            {packName}
-                          </p>
+                          <p className="font-bold text-sm text-vintage-gold">{packName}</p>
                           <p className="text-vintage-ice/50 text-xs">{pack.unopened} available</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {/* Quantity selector */}
                       <div className="flex items-center gap-1 flex-1">
                         <button
                           onClick={(e) => {
@@ -658,7 +472,6 @@ export function ShopView({ address }: ShopViewProps) {
                         </button>
                       </div>
 
-                      {/* Open button */}
                       <button
                         onClick={async (e) => {
                           e.stopPropagation();
@@ -667,7 +480,6 @@ export function ShopView({ address }: ShopViewProps) {
                           try {
                             const qty = openQuantities[pack._id] || 1;
                             if (qty >= pack.unopened) {
-                              // Open all
                               const result = await openAllPacks({ address: address!, packId: pack._id });
                               setRevealedCards(result.cards);
                               setNotification({
@@ -675,11 +487,9 @@ export function ShopView({ address }: ShopViewProps) {
                                 message: `Opened ${result.packsOpened} packs! Got ${result.cards.length} cards!`
                               });
                             } else if (qty === 1) {
-                              // Open single
                               const result = await openPack({ address: address!, packId: pack._id });
                               setRevealedCards(result.cards);
                             } else {
-                              // Open multiple (one by one)
                               const allCards: any[] = [];
                               for (let i = 0; i < qty; i++) {
                                 const result = await openPack({ address: address!, packId: pack._id });
@@ -701,11 +511,7 @@ export function ShopView({ address }: ShopViewProps) {
                           }
                         }}
                         disabled={openingPack}
-                        className={`px-4 h-8 rounded-lg font-display font-bold text-sm transition-all ${
-                          pack.packType === 'boosted'
-                            ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-black'
-                            : 'bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold text-black'
-                        }`}
+                        className="px-4 h-8 rounded-lg font-display font-bold text-sm bg-gradient-to-r from-vintage-gold to-vintage-burnt-gold text-black transition-all"
                       >
                         {openingPack ? '...' : 'OPEN'}
                       </button>
@@ -718,7 +524,7 @@ export function ShopView({ address }: ShopViewProps) {
             {playerPacks.length === 0 && (
               <div className="text-center py-8 text-vintage-ice/40">
                 <p>No packs to open</p>
-                <p className="text-sm mt-1">Buy packs above!</p>
+                <p className="text-sm mt-1">Claim your daily free pack!</p>
               </div>
             )}
           </div>

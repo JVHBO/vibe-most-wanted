@@ -530,6 +530,23 @@ export const buyPackWithVBMS = mutation({
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
 
+    // 🚫 BLACKLIST CHECK
+    if (isBlacklisted(address)) {
+      throw new Error("Account banned");
+    }
+
+    // 🔒 SECURITY: Validate txHash format (must be 0x + 64 hex chars = real on-chain tx)
+    // Prevents fake txHash abuse where anyone could call this mutation directly
+    const TX_HASH_REGEX = /^0x[0-9a-fA-F]{64}$/;
+    if (!TX_HASH_REGEX.test(args.txHash)) {
+      throw new Error("Invalid transaction hash format");
+    }
+
+    // 🔒 SECURITY: Cap quantity per call (matches API route limit)
+    if (args.quantity > 10 || args.quantity < 1) {
+      throw new Error("Quantity must be between 1 and 10");
+    }
+
     // Use pack type directly - "boosted" now has its own definition with 1 card + elite odds
     const actualPackType = args.packType;
 
@@ -594,6 +611,19 @@ export const buyPackWithVBMS = mutation({
       balanceAfter: 0,
       txHash: args.txHash,
     });
+
+    // 🔒 SECURITY AUDIT: Log pack purchase for tracing
+    await createAuditLog(
+      ctx,
+      address,
+      "spend",
+      vbmsSpent,
+      0,
+      0,
+      "buy_pack_vbms",
+      args.txHash,
+      { reason: `Bought ${args.quantity}x ${actualPackType} pack (on-chain tx)`, txHash: args.txHash }
+    );
 
     console.log(`💎 VBMS Purchase: ${address} bought ${args.quantity}x ${args.packType} (stored as ${actualPackType}) packs (tx: ${args.txHash.slice(0, 10)}...)`);
 
@@ -674,6 +704,22 @@ export const openPack = mutation({
     await ctx.db.patch(args.packId, {
       unopened: pack.unopened - 1,
     });
+
+    // 📊 AUDIT: Log pack opening for tracing
+    const rarityCount: Record<string, number> = {};
+    revealedCards.forEach(c => { rarityCount[c.rarity] = (rarityCount[c.rarity] || 0) + 1; });
+    const rarityStr = Object.entries(rarityCount).map(([r, n]) => `${n}x ${r}`).join(", ");
+    await createAuditLog(
+      ctx,
+      address,
+      "earn",
+      0,
+      0,
+      0,
+      "open_pack",
+      args.packId.toString(),
+      { reason: `Opened ${pack.packType} pack: ${rarityStr}` }
+    );
 
     return {
       success: true,
@@ -758,6 +804,22 @@ export const openAllPacks = mutation({
     await ctx.db.patch(args.packId, {
       unopened: 0,
     });
+
+    // 📊 AUDIT: Log batch pack opening for tracing
+    const allRarityCount: Record<string, number> = {};
+    allRevealedCards.forEach(c => { allRarityCount[c.rarity] = (allRarityCount[c.rarity] || 0) + 1; });
+    const allRarityStr = Object.entries(allRarityCount).map(([r, n]) => `${n}x ${r}`).join(", ");
+    await createAuditLog(
+      ctx,
+      address,
+      "earn",
+      0,
+      0,
+      0,
+      "open_all_packs",
+      args.packId.toString(),
+      { reason: `Opened ${totalPacks}x ${pack.packType} packs: ${allRarityStr}` }
+    );
 
     return {
       success: true,
@@ -1364,6 +1426,11 @@ export const buyPackWithLuckBoost = mutation({
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
 
+    // 🚫 BLACKLIST CHECK
+    if (isBlacklisted(address)) {
+      throw new Error("Account banned");
+    }
+
     // Prices and odds
     const normalPrice = 1000;
     const boostedPrice = 5000; // 5x price for elite odds
@@ -1489,6 +1556,11 @@ export const claimDailyFreePack = mutation({
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
 
+    // 🚫 BLACKLIST CHECK
+    if (isBlacklisted(address)) {
+      throw new Error("Account banned");
+    }
+
     // Check if can claim
     const lastClaim = await ctx.db
       .query("dailyFreeClaims")
@@ -1502,8 +1574,8 @@ export const claimDailyFreePack = mutation({
       throw new Error("Already claimed today! Come back tomorrow.");
     }
 
-    // 🔗 Arbitrum bonus: +1 extra pack
-    const packsToGive = args.chain === "arbitrum" ? 2 : 1;
+    // 🔗 Arbitrum bonus: 3 packs total (vs 1 normal)
+    const packsToGive = args.chain === "arbitrum" ? 3 : 1;
 
     // Give pack to player (uses basic pack type for opening)
     // 🚀 PERF: Use compound index

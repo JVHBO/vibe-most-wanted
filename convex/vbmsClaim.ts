@@ -572,6 +572,13 @@ export const getFullTransactionHistory = query({
       .order("desc")
       .take(limit);
 
+    // Get coin transactions (pack purchases, shop activity)
+    const coinTxs = await ctx.db
+      .query("coinTransactions")
+      .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+      .order("desc")
+      .take(limit);
+
     // Combine and sort by timestamp
     const allTransactions = [
       ...claimHistory.map(c => ({
@@ -599,6 +606,17 @@ export const getFullTransactionHistory = query({
         timestamp: a.timestamp,
         inboxTotal: a.inboxTotal,
       })),
+      ...coinTxs.map(t => ({
+        source: "coinTransactions",
+        type: t.type,
+        amount: t.amount,
+        timestamp: t.timestamp,
+        description: t.description,
+        txHash: t.txHash,
+        sourceFunction: t.source,
+        balanceBefore: t.balanceBefore,
+        balanceAfter: t.balanceAfter,
+      })),
     ].sort((a, b) => b.timestamp - a.timestamp);
 
     return {
@@ -608,6 +626,7 @@ export const getFullTransactionHistory = query({
         claimHistoryCount: claimHistory.length,
         auditLogCount: auditLog.length,
         analyticsCount: analytics.length,
+        coinTransactionsCount: coinTxs.length,
       },
     };
   },
