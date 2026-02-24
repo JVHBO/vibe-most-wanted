@@ -547,7 +547,7 @@ export function SettingsModal({
   // SSR check
   if (typeof window === 'undefined') return null;
 
-  return createPortal(
+  return (
     <div
       className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-2 sm:p-4"
       onClick={onClose}
@@ -1369,8 +1369,7 @@ export function SettingsModal({
           </button>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
 
