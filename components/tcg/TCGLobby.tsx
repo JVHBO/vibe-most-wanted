@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { AudioManager } from "@/lib/audio-manager";
 import { useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useWriteContract } from "wagmi";
@@ -270,10 +271,12 @@ export function TCGLobby({
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           {/* Left: Back button */}
           <button
-            onClick={onGoHome}
-            className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+            onClick={() => { AudioManager.buttonNav(); onGoHome(); }}
+            onMouseEnter={() => AudioManager.buttonHover()}
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white border-2 border-black rounded text-xs font-bold uppercase tracking-wider transition"
+            style={{ boxShadow: "2px 2px 0px #000" }}
           >
-            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">&larr;</span> {t('tcgBack')}
+            ← BACK
           </button>
 
           {/* Center: Title */}
@@ -283,7 +286,8 @@ export function TCGLobby({
 
           {/* Right: Deck Builder Button */}
           <button
-            onClick={() => onNavigate("deck-builder")}
+            onClick={() => { AudioManager.buttonNav(); onNavigate("deck-builder"); }}
+            onMouseEnter={() => AudioManager.buttonHover()}
             className="px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
           >
             {hasDeck ? t('tcgEdit') : t('tcgBuildDeck')}
@@ -403,7 +407,8 @@ export function TCGLobby({
                     <div className="p-4 space-y-3">
                       {/* PvE Button */}
                       <button
-                        onClick={onStartPvE}
+                        onClick={() => { AudioManager.buttonClick(); onStartPvE(); }}
+                        onMouseEnter={() => AudioManager.buttonHover()}
                         className="tcg-btn-cpu w-full px-4 py-3 bg-green-500/20 hover:bg-green-500/30 rounded-lg text-green-400 font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
                       >
                         {t('tcgBattleCpu')} {dailyBattles < REWARDED_BATTLES_PER_DAY ? `(+${BATTLE_AURA_REWARD} AURA)` : ""}
@@ -432,7 +437,8 @@ export function TCGLobby({
                           </div>
                         ) : (
                           <button
-                            onClick={handleFindMatch}
+                            onClick={() => { AudioManager.buttonClick(); handleFindMatch(); }}
+                            onMouseEnter={() => AudioManager.buttonHover()}
                             disabled={!hasDeck}
                             className="tcg-btn-findmatch w-full px-4 py-3 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg text-amber-400 font-bold text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-2"
                           >
@@ -443,7 +449,8 @@ export function TCGLobby({
                         {/* Create / Join Room */}
                         <div className="space-y-2">
                           <button
-                            onClick={handleCreateMatch}
+                            onClick={() => { AudioManager.buttonClick(); handleCreateMatch(); }}
+                            onMouseEnter={() => AudioManager.buttonHover()}
                             disabled={!hasDeck}
                             className="tcg-btn-createroom w-full px-3 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                           >
@@ -460,7 +467,8 @@ export function TCGLobby({
                               className="flex-1 bg-black/50 border border-vintage-gold/20 rounded-lg px-2 py-2 text-vintage-gold font-mono text-center uppercase tracking-wider focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-xs disabled:opacity-40"
                             />
                             <button
-                              onClick={() => roomIdInput.length >= 4 && handleJoinMatch(roomIdInput)}
+                              onClick={() => { if (roomIdInput.length >= 4) { AudioManager.buttonClick(); handleJoinMatch(roomIdInput); } }}
+                              onMouseEnter={() => AudioManager.buttonHover()}
                               disabled={!hasDeck || roomIdInput.length < 4}
                               className="tcg-btn-join px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             >

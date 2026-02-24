@@ -930,9 +930,11 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Ref so click handler always has latest crossfade without stale closure
-  const crossfadeRef = useRef(crossfade);
-  useEffect(() => { crossfadeRef.current = crossfade; }, [crossfade]);
+  // Refs so click handler always has latest values without stale closure
+  const loadAndFadeInRef = useRef(loadAndFadeIn);
+  useEffect(() => { loadAndFadeInRef.current = loadAndFadeIn; }, [loadAndFadeIn]);
+  const volumeRef = useRef(volume);
+  useEffect(() => { volumeRef.current = volume; }, [volume]);
 
   /**
    * Resume music on user interaction (fixes browser autoplay block)
@@ -942,9 +944,10 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     const handleClick = () => {
       if (!isMusicEnabled || isPaused) return;
 
-      // Audio lost (e.g. returned from miniapp) — restart it on first gesture
+      // Audio lost (e.g. returned from miniapp) — restart using loadAndFadeIn
+      // (avoids crossfade's same-track early-return guard)
       if (!audioRef.current && currentTrackRef.current) {
-        crossfadeRef.current(currentTrackRef.current);
+        loadAndFadeInRef.current(currentTrackRef.current, volumeRef.current);
         return;
       }
 

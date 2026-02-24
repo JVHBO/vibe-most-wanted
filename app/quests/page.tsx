@@ -370,18 +370,20 @@ export default function QuestsPage() {
             className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white border-2 border-black rounded text-xs font-bold uppercase tracking-wider"
             style={{ boxShadow: "2px 2px 0px #000" }}
           >
-            ← {t('questsHome')}
+            ← BACK
           </button>
           <h1 className="text-xl font-display font-bold text-vintage-gold tracking-wider">{t('questsTitle')}</h1>
           {arbSupported ? (
-            <div className="flex gap-1 text-xs">
+            <div className="flex gap-1 bg-black/60 p-1 rounded-lg">
               <button
-                onClick={() => handleSwitchChain('base')}
-                className={`px-2 py-1 rounded font-bold border transition ${effectiveChain === 'base' ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black border-vintage-gold' : 'text-vintage-gold/60 border-vintage-gold/20 hover:text-vintage-gold'}`}
+                onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
+                onMouseEnter={() => AudioManager.buttonHover()}
+                className={`px-3 py-1 rounded font-bold text-xs transition ${effectiveChain === 'base' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
               >BASE</button>
               <button
-                onClick={() => handleSwitchChain('arbitrum')}
-                className={`px-2 py-1 rounded font-bold border transition ${effectiveChain === 'arbitrum' ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black border-vintage-gold' : 'text-vintage-gold/60 border-vintage-gold/20 hover:text-vintage-gold'}`}
+                onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
+                onMouseEnter={() => AudioManager.buttonHover()}
+                className={`px-3 py-1 rounded font-bold text-xs transition ${effectiveChain === 'arbitrum' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
               >ARB</button>
             </div>
           ) : <div className="w-20" />}
@@ -456,19 +458,22 @@ export default function QuestsPage() {
                               <span className="text-green-400 text-[10px]">{t('questsDone')}</span>
                             ) : status === "completed" ? (
                               <button
-                                onClick={() => handleClaimSocial(quest)}
+                                onClick={() => { AudioManager.buttonClick(); handleClaimSocial(quest); }}
+                                onMouseEnter={() => AudioManager.buttonHover()}
                                 disabled={isClaimingSocial}
-                                className="px-2 py-1 rounded bg-vintage-gold text-black font-bold text-[10px]"
+                                className="px-2 py-1 rounded border-2 border-black bg-vintage-gold text-black font-bold text-[10px]"
+                                style={{ boxShadow: "2px 2px 0px #000" }}
                               >
                                 {isClaimingSocial ? "..." : t('questsClaim')}
                               </button>
                             ) : (
                               <button
-                                onClick={() => verifyQuest(quest)}
+                                onClick={() => { AudioManager.buttonClick(); verifyQuest(quest); }}
+                                onMouseEnter={() => AudioManager.buttonHover()}
                                 disabled={isVerifying}
-                                className="px-3 py-1.5 rounded-lg bg-vintage-gold text-vintage-black font-bold text-[10px] hover:bg-vintage-gold/90 transition-all"
+                                className="px-2.5 py-1 rounded border-2 border-vintage-gold/50 bg-vintage-charcoal text-vintage-gold font-bold text-[10px] hover:border-vintage-gold transition-all"
                               >
-                                {isVerifying ? "..." : quest.type === 'notification' ? '🔔 Ativar' : '⭐ Adicionar'}
+                                {isVerifying ? "..." : quest.type === 'notification' ? 'Ativar' : 'Adicionar'}
                               </button>
                             )}
                           </div>
@@ -556,6 +561,7 @@ export default function QuestsPage() {
                             {mission.completed && !isPlaceholder ? (
                               <button
                                 onClick={async () => {
+                                  AudioManager.buttonClick();
                                   if (!address) return;
                                   setClaimingMission(mission._id);
                                   try {
@@ -567,6 +573,7 @@ export default function QuestsPage() {
                                       await claimMission({ playerAddress: address.toLowerCase(), missionId: mission._id, chain });
                                       if (chain === "arbitrum" && mission.reward > 0) await validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
                                     }
+                                    AudioManager.buttonSuccess();
                                     await refreshMissions();
                                   } catch (e) { console.error(e); }
                                   finally { setClaimingMission(null); }
@@ -669,14 +676,15 @@ export default function QuestsPage() {
                             {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
                           </span>
                           {status === "completed" ? (
-                            <button onClick={() => handleClaimSocial(quest)} disabled={isClaimingSocial}
+                            <button onClick={() => { AudioManager.buttonClick(); handleClaimSocial(quest); }} onMouseEnter={() => AudioManager.buttonHover()} disabled={isClaimingSocial}
                               className="px-2.5 py-1 bg-vintage-gold text-black font-bold text-xs rounded border-2 border-black"
                               style={{ boxShadow: "2px 2px 0px #000" }}>
                               {isClaimingSocial ? "..." : t('questsClaim')}
                             </button>
                           ) : (
-                            <button onClick={() => verifyQuest(quest)} disabled={isVerifying}
-                              className="px-2.5 py-1 bg-vintage-charcoal border border-vintage-gold/50 text-vintage-gold font-bold text-xs rounded">
+                            <button onClick={() => { AudioManager.buttonClick(); verifyQuest(quest); }} onMouseEnter={() => AudioManager.buttonHover()} disabled={isVerifying}
+                              className="px-2.5 py-1 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold font-bold text-xs rounded hover:border-vintage-gold transition-all"
+                              style={{ boxShadow: "none" }}>
                               {isVerifying ? "..." : visitedQuests.has(quest.id) ? t('questsVerify') : t('questsGo')}
                             </button>
                           )}

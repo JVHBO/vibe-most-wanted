@@ -832,14 +832,14 @@ export function Roulette({ onClose }: RouletteProps) {
         <h2 className="text-vintage-gold font-bold text-xl">{t.title}</h2>
         <div className="flex items-center gap-2">
           {arbSupported && (
-            <div className="flex gap-1 text-xs">
+            <div className="flex gap-1 bg-black/60 p-1 rounded-lg">
               <button
                 onClick={() => handleSwitchChain('base')}
-                className={`px-2 py-1 rounded font-bold border transition ${currentChain === 'base' ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black border-vintage-gold' : 'text-vintage-gold/60 border-vintage-gold/20 hover:text-vintage-gold'}`}
+                className={`px-3 py-1 rounded font-bold text-xs transition ${currentChain === 'base' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
               >BASE</button>
               <button
                 onClick={() => handleSwitchChain('arbitrum')}
-                className={`px-2 py-1 rounded font-bold border transition ${currentChain === 'arbitrum' ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black border-vintage-gold' : 'text-vintage-gold/60 border-vintage-gold/20 hover:text-vintage-gold'}`}
+                className={`px-3 py-1 rounded font-bold text-xs transition ${currentChain === 'arbitrum' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
               >ARB</button>
             </div>
           )}
@@ -1032,10 +1032,6 @@ export function Roulette({ onClose }: RouletteProps) {
             </div>
           )}
 
-          {/* Info */}
-          <p className="text-center text-vintage-ice/50 text-xs mt-3">
-            1 free spin per day
-          </p>
         </>
       )}
     </div>

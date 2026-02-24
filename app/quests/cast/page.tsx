@@ -9,6 +9,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { FeaturedCastAuctions } from "@/components/FeaturedCastAuctions";
 import type { NeynarCast } from "@/lib/neynar";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { AudioManager } from "@/lib/audio-manager";
 
 export default function CastQuestsPage() {
   const router = useRouter();
@@ -157,7 +158,7 @@ export default function CastQuestsPage() {
             className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white border-2 border-black rounded text-xs font-bold uppercase tracking-wider"
             style={{ boxShadow: "2px 2px 0px #000" }}
           >
-            ← {t('questsHome')}
+            ← BACK
           </button>
           <h1 className="text-xl font-display font-bold text-vintage-gold tracking-wider">{t('questsTitle')}</h1>
           <div className="w-20" />
@@ -183,73 +184,103 @@ export default function CastQuestsPage() {
 
           {/* Featured Cast Card */}
           {featuredCasts && featuredCasts.length > 0 && currentCast && (
-            <div className="bg-vintage-charcoal/80 border-2 border-vintage-gold/40 rounded-xl overflow-hidden"
-              style={{ boxShadow: "3px 3px 0px rgba(0,0,0,0.5)" }}>
+            <div className="bg-[#1e1e1e] border border-zinc-700 rounded-xl overflow-hidden">
 
-              {/* Cast header */}
-              <div className="flex items-center gap-3 px-3 pt-3 pb-2 border-b border-vintage-gold/20">
-                {currentCastData?.author.pfp_url && (
-                  <img src={currentCastData.author.pfp_url} alt="" className="w-9 h-9 rounded-full border-2 border-vintage-gold/50 flex-shrink-0" />
-                )}
+              {/* Post header */}
+              <div className="flex items-start gap-3 px-4 pt-4 pb-2">
+                {currentCastData?.author.pfp_url
+                  ? <img src={currentCastData.author.pfp_url} alt="" className="w-10 h-10 rounded-full flex-shrink-0" />
+                  : <div className="w-10 h-10 rounded-full bg-zinc-700 flex-shrink-0" />
+                }
                 <div className="flex-1 min-w-0">
-                  <p className="text-vintage-ice font-bold text-sm truncate">
-                    {currentCastData?.author.display_name || currentCastData?.author.username || "Loading..."}
-                  </p>
-                  {currentCastData && (
-                    <div className="flex items-center gap-3 text-[10px] text-vintage-ice/50 mt-0.5">
-                      <span className="flex items-center gap-1">
-                        <svg className="w-3 h-3 text-pink-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                        {currentCastData.reactions?.likes_count || 0}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-white font-bold text-sm truncate">
+                        {currentCastData?.author.display_name || currentCastData?.author.username || "..."}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <svg className="w-3 h-3 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                        {currentCastData.reactions?.recasts_count || 0}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <svg className="w-3 h-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                        {currentCastData.replies?.count || 0}
+                      <span className="text-zinc-500 text-xs flex-shrink-0">
+                        @{currentCastData?.author.username}
                       </span>
                     </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  {featuredCasts.length > 1 && (
-                    <div className="flex gap-1">
-                      {featuredCasts.map((_: any, idx: number) => (
-                        <button key={idx} onClick={() => setCurrentCastIndex(idx)}
-                          className={`w-1.5 h-1.5 rounded-full transition-all ${idx === currentCastIndex ? "bg-vintage-gold" : "bg-vintage-gold/30"}`}
-                        />
-                      ))}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {currentCastData?.timestamp && (
+                        <span className="text-zinc-500 text-xs">
+                          {(() => {
+                            const s = Math.floor((Date.now() - new Date(currentCastData.timestamp).getTime()) / 1000);
+                            if (s < 60) return `${s}s`;
+                            if (s < 3600) return `${Math.floor(s/60)}m`;
+                            if (s < 86400) return `${Math.floor(s/3600)}h`;
+                            return `${Math.floor(s/86400)}d`;
+                          })()}
+                        </span>
+                      )}
+                      {featuredCasts.length > 1 && (
+                        <>
+                          <button onClick={() => { AudioManager.buttonClick(); setCurrentCastIndex((currentCastIndex - 1 + featuredCasts.length) % featuredCasts.length); }} className="text-zinc-400 hover:text-white text-xs px-1">←</button>
+                          <span className="text-zinc-600 text-[10px]">{currentCastIndex + 1}/{featuredCasts.length}</span>
+                          <button onClick={() => { AudioManager.buttonClick(); setCurrentCastIndex((currentCastIndex + 1) % featuredCasts.length); }} className="text-zinc-400 hover:text-white text-xs px-1">→</button>
+                        </>
+                      )}
                     </div>
-                  )}
-                  <a href={currentCast.warpcastUrl} target="_blank" rel="noopener noreferrer"
-                    className="px-2 py-1 bg-blue-600/20 border border-blue-500/40 text-blue-400 text-[10px] font-bold rounded hover:bg-blue-600/30 transition-colors">
-                    {t('questsView')}
-                  </a>
+                  </div>
                 </div>
               </div>
 
-              {/* Cast text */}
+              {/* Post text */}
               {currentCastData && (
-                <p className="text-vintage-ice/80 text-xs px-3 py-2 border-b border-vintage-gold/10 line-clamp-3">
+                <p className="text-zinc-200 text-sm px-4 pb-3 leading-relaxed">
                   {currentCastData.text}
                 </p>
               )}
 
+              {/* Embed image */}
+              {currentCastData?.embeds?.[0] && (() => {
+                const embed = currentCastData.embeds[0];
+                const imgUrl = embed.metadata?.image?.url || (embed.url?.match(/\.(jpg|jpeg|png|gif|webp)/i) ? embed.url : null);
+                return imgUrl ? (
+                  <div className="px-4 pb-3">
+                    <img src={imgUrl} alt="" className="w-full rounded-xl max-h-52 object-cover border border-zinc-700" />
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Stats row */}
+              {currentCastData && (
+                <div className="flex items-center gap-4 px-4 py-2 border-t border-zinc-800">
+                  <span className="flex items-center gap-1 text-xs text-zinc-500">
+                    <svg className="w-3.5 h-3.5 text-pink-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    {currentCastData.reactions?.likes_count || 0}
+                  </span>
+                  <span className="flex items-center gap-1 text-xs text-zinc-500">
+                    <svg className="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    {currentCastData.reactions?.recasts_count || 0}
+                  </span>
+                  <span className="flex items-center gap-1 text-xs text-zinc-500">
+                    <svg className="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    {currentCastData.replies?.count || 0}
+                  </span>
+                  <a href={currentCast.warpcastUrl} target="_blank" rel="noopener noreferrer"
+                    onClick={() => AudioManager.buttonClick()}
+                    className="ml-auto text-zinc-500 hover:text-white text-xs transition-colors">
+                    {t('questsView')} →
+                  </a>
+                </div>
+              )}
+
               {/* Interaction buttons */}
               {userFid ? (
-                <div className="grid grid-cols-3 divide-x divide-vintage-gold/20">
+                <div className="grid grid-cols-3 divide-x-2 divide-black border-t-2 border-black">
                   {[
                     { type: "like" as const, label: "Like", icon: (
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    ), color: "text-pink-400", bg: "hover:bg-pink-500/10" },
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    ), color: "text-pink-400", activeBg: "bg-pink-900/40", hoverBg: "hover:bg-pink-500/20" },
                     { type: "recast" as const, label: "Recast", icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                    ), color: "text-green-400", bg: "hover:bg-green-500/10" },
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    ), color: "text-green-400", activeBg: "bg-green-900/40", hoverBg: "hover:bg-green-500/20" },
                     { type: "reply" as const, label: "Reply", icon: (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                    ), color: "text-blue-400", bg: "hover:bg-blue-500/10" },
-                  ].map(({ type, label, icon, color, bg }) => {
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    ), color: "text-blue-400", activeBg: "bg-blue-900/40", hoverBg: "hover:bg-blue-500/20" },
+                  ].map(({ type, label, icon, color, activeBg, hoverBg }) => {
                     const progress = castInteractionProgress[currentCast.castHash];
                     const claimed = progress?.[type === "like" ? "liked" : type === "recast" ? "recasted" : "replied"];
                     const isVerifyingThis = verifyingInteraction === `${type}-${currentCast.castHash}`;
@@ -258,12 +289,13 @@ export default function CastQuestsPage() {
                     return (
                       <button
                         key={type}
-                        onClick={() => handleCastInteraction(type)}
+                        onClick={() => { AudioManager.buttonClick(); handleCastInteraction(type); }}
+                        onMouseEnter={() => AudioManager.buttonHover()}
                         disabled={claimed || isVerifyingThis || isClaimingThis}
-                        className={`flex flex-col items-center justify-center py-3 gap-1 transition-colors disabled:cursor-not-allowed ${claimed ? "bg-green-900/20" : bg}`}
+                        className={`flex flex-col items-center justify-center py-3.5 gap-1.5 transition-colors disabled:cursor-not-allowed ${claimed ? activeBg : hoverBg}`}
                       >
                         <span className={claimed ? "text-green-400" : color}>{icon}</span>
-                        <span className={`text-[10px] font-bold ${claimed ? "text-green-400" : "text-vintage-ice/70"}`}>
+                        <span className={`text-[11px] font-bold ${claimed ? "text-green-400" : "text-vintage-gold"}`}>
                           {isVerifyingThis || isClaimingThis ? "..." : claimed ? t('questsDone') : `+${castInteractionReward}`}
                         </span>
                       </button>

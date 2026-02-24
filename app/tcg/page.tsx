@@ -4187,11 +4187,8 @@ export default function TCGPage() {
                   setPveGameState(null);
                   setView("lobby");
                 }}
-                className="bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] hover:from-[#2a2a2a] hover:to-[#3a3a3a] text-[#B8860B] hover:text-[#FFD700] font-bold py-2 px-4 rounded-lg text-sm shadow-lg transition-all"
-                style={{
-                  border: "2px solid",
-                  borderImage: "linear-gradient(135deg, #8B6914, #B8860B, #8B6914) 1"
-                }}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white border-2 border-black rounded text-xs font-bold uppercase tracking-wider transition"
+                style={{ boxShadow: "2px 2px 0px #000" }}
               >
                 ← BACK
               </button>
@@ -5120,11 +5117,8 @@ export default function TCGPage() {
               {/* Back Button */}
               <button
                 onClick={() => setView("lobby")}
-                className="bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] hover:from-[#2a2a2a] hover:to-[#3a3a3a] text-[#B8860B] hover:text-[#FFD700] font-bold py-2 px-4 rounded-lg text-sm shadow-lg transition-all"
-                style={{
-                  border: "2px solid",
-                  borderImage: "linear-gradient(135deg, #8B6914, #B8860B, #8B6914) 1"
-                }}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white border-2 border-black rounded text-xs font-bold uppercase tracking-wider transition"
+                style={{ boxShadow: "2px 2px 0px #000" }}
               >
                 ← BACK
               </button>

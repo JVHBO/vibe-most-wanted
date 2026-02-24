@@ -9,6 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "next/navigation";
 import { getAssetUrl } from "@/lib/ipfs-assets";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
+import { AudioManager } from "@/lib/audio-manager";
 
 interface ShopViewProps {
   address: string | undefined;
@@ -131,10 +132,12 @@ export function ShopView({ address }: ShopViewProps) {
       <div className="absolute top-0 left-0 right-0 z-10 p-3">
         <div className="relative flex items-center justify-between">
           <button
-            onClick={() => router.push("/")}
-            className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+            onClick={() => { AudioManager.buttonNav(); router.push("/"); }}
+            onMouseEnter={() => AudioManager.buttonHover()}
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white border-2 border-black rounded text-xs font-bold uppercase tracking-wider transition"
+            style={{ boxShadow: "2px 2px 0px #000" }}
           >
-            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> BACK
+            ← BACK
           </button>
 
           <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider whitespace-nowrap">{t('shopTitle')}</h1>
@@ -206,14 +209,16 @@ export function ShopView({ address }: ShopViewProps) {
                     </p>
                     <p className="text-vintage-ice/50 text-xs">{t('shopArbModeDesc' as any)}</p>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 bg-black/60 p-1 rounded-lg">
                     <button
-                      onClick={() => handleSwitchChain('base')}
-                      className={`px-2 py-1 rounded font-bold text-xs border transition ${!isArb ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black border-vintage-gold' : 'text-vintage-gold/60 border-vintage-gold/20 hover:text-vintage-gold'}`}
+                      onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
+                      onMouseEnter={() => AudioManager.buttonHover()}
+                      className={`px-3 py-1 rounded font-bold text-xs transition ${!isArb ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
                     >BASE</button>
                     <button
-                      onClick={() => handleSwitchChain('arbitrum')}
-                      className={`px-2 py-1 rounded font-bold text-xs border transition ${isArb ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black border-vintage-gold' : 'text-vintage-gold/60 border-vintage-gold/20 hover:text-vintage-gold'}`}
+                      onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
+                      onMouseEnter={() => AudioManager.buttonHover()}
+                      className={`px-3 py-1 rounded font-bold text-xs transition ${isArb ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
                     >ARB</button>
                   </div>
                 </div>
@@ -223,7 +228,8 @@ export function ShopView({ address }: ShopViewProps) {
               <div>
                 {dailyFreeStatus?.canClaim ? (
                   <button
-                    onClick={handleClaimDailyFree}
+                    onClick={() => { AudioManager.buttonClick(); handleClaimDailyFree(); }}
+                    onMouseEnter={() => AudioManager.buttonHover()}
                     disabled={claimingDaily}
                     className={`w-full h-11 font-display font-bold rounded-lg transition-all disabled:opacity-50 text-white ${isArb ? 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400' : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400'}`}
                   >
@@ -247,7 +253,9 @@ export function ShopView({ address }: ShopViewProps) {
           <div className="max-w-sm mx-auto grid grid-cols-2 gap-3 mb-4">
             {/* Your Packs Button */}
             <button
+              onMouseEnter={() => AudioManager.buttonHover()}
               onClick={() => {
+                AudioManager.buttonClick();
                 if (playerPacks && playerPacks.length > 0) {
                   const initialQuantities: Record<string, number> = {};
                   playerPacks.forEach((pack: any) => {
@@ -276,7 +284,8 @@ export function ShopView({ address }: ShopViewProps) {
 
             {/* Burn Cards Button */}
             <button
-              onClick={() => router.push('/shop/burn')}
+              onMouseEnter={() => AudioManager.buttonHover()}
+              onClick={() => { AudioManager.buttonClick(); router.push('/shop/burn'); }}
               disabled={!playerCards || playerCards.length === 0}
               className={`py-3 px-4 rounded-xl font-display font-bold transition-all flex items-center justify-center gap-2 ${
                 playerCards && playerCards.length > 0
