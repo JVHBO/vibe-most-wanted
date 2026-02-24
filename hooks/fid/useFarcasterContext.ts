@@ -25,64 +25,68 @@ export interface FarcasterContext {
 /**
  * Hook to get Farcaster context from miniapp SDK
  */
+const SESSION_KEY = 'vmw_fc_ctx';
+
+function getCachedContext(): FarcasterContext | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
+function setCachedContext(ctx: FarcasterContext) {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(ctx));
+  } catch {}
+}
+
 export function useFarcasterContext(): FarcasterContext {
-  const [context, setContext] = useState<FarcasterContext>({
-    isReady: false,
-    isInMiniapp: false,
-    user: null,
-    error: null,
-  });
+  const cached = typeof window !== 'undefined' ? getCachedContext() : null;
+
+  const [context, setContext] = useState<FarcasterContext>(
+    cached ?? { isReady: false, isInMiniapp: false, user: null, error: null }
+  );
 
   useEffect(() => {
-    // Only run in browser
-    if (typeof window === 'undefined') {
+    if (typeof window === 'undefined') return;
+
+    // Already have a valid cached context with user — no need to re-init
+    const existing = getCachedContext();
+    if (existing?.isReady) {
+      setContext(existing);
       return;
     }
 
     const initializeSdk = async () => {
       try {
-        // Check if SDK is available
         if (!sdk || typeof sdk.wallet === 'undefined') {
-          // Not in miniapp context
-          setContext({
-            isReady: true,
-            isInMiniapp: false,
-            user: null,
-            error: null,
-          });
+          const ctx = { isReady: true, isInMiniapp: false, user: null, error: null };
+          setContext(ctx);
+          setCachedContext(ctx);
           return;
         }
 
-        // Wait for SDK context to be ready with timeout
         let sdkContext;
         try {
-          const contextPromise = sdk.context;
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('SDK context timeout')), 5000)
-          );
-          sdkContext = await Promise.race([contextPromise, timeoutPromise]) as any;
-        } catch (contextError) {
-          console.log('[useFarcasterContext] Failed to get SDK context:', contextError);
-          setContext({
-            isReady: true,
-            isInMiniapp: false,
-            user: null,
-            error: 'Failed to get SDK context',
-          });
+          sdkContext = await Promise.race([
+            sdk.context,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+          ]) as any;
+        } catch {
+          const ctx = { isReady: true, isInMiniapp: false, user: null, error: 'SDK timeout' };
+          setContext(ctx);
+          setCachedContext(ctx);
           return;
         }
 
         if (!sdkContext?.user) {
-          setContext({
-            isReady: true,
-            isInMiniapp: true,
-            user: null,
-            error: 'No user context available',
-          });
+          const ctx = { isReady: true, isInMiniapp: true, user: null, error: 'No user' };
+          setContext(ctx);
+          setCachedContext(ctx);
           return;
         }
 
-        // Extract user data
         const user: FarcasterUser = {
           fid: sdkContext.user.fid,
           username: sdkContext.user.username || undefined,
@@ -90,22 +94,13 @@ export function useFarcasterContext(): FarcasterContext {
           pfpUrl: sdkContext.user.pfpUrl || undefined,
         };
 
-        setContext({
-          isReady: true,
-          isInMiniapp: true,
-          user,
-          error: null,
-        });
-
-        console.log('[useFarcasterContext] Initialized with user:', user);
+        const ctx = { isReady: true, isInMiniapp: true, user, error: null };
+        setContext(ctx);
+        setCachedContext(ctx);
       } catch (err) {
-        console.error('[useFarcasterContext] Error initializing:', err);
-        setContext({
-          isReady: true,
-          isInMiniapp: false,
-          user: null,
-          error: err instanceof Error ? err.message : 'Unknown error',
-        });
+        const ctx = { isReady: true, isInMiniapp: false, user: null, error: String(err) };
+        setContext(ctx);
+        setCachedContext(ctx);
       }
     };
 
