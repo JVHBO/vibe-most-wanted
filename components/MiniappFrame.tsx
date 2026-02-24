@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, createContext, useContext } from "react";
+import { usePathname } from "next/navigation";
 import { isMiniappMode } from "@/lib/utils/miniapp";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelect } from "@/components/SettingsModal";
@@ -61,6 +62,8 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   const [showFrame, setShowFrame] = useState(false);
   const { lang } = useLanguage();
   const { isMusicEnabled, setIsMusicEnabled } = useMusic();
+  const pathname = usePathname();
+  const showFloating = pathname === "/" || pathname === "";
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifStatus, setNotifStatus] = useState<"default" | "granted" | "denied">("default");
@@ -127,7 +130,7 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
       justifyContent: "center",
       padding: "16px 0 24px",
     }}>
-      <HomeFloatingBackground />
+      {showFloating && <HomeFloatingBackground />}
       {/* Phone shell */}
       <div style={{
         borderRadius: "44px",
