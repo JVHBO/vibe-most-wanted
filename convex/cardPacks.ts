@@ -441,6 +441,9 @@ export const buyPack = mutation({
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
 
+    // 🔒 SECURITY: Shop purchases disabled
+    throw new Error("Shop purchases are currently disabled");
+
     // Get pack info
     const packInfo = PACK_TYPES[args.packType];
     if (!packInfo || packInfo.price === 0) {
@@ -530,13 +533,20 @@ export const buyPackWithVBMS = mutation({
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
 
+    // 🔒 SECURITY: Shop purchases disabled — only daily free pack is available.
+    // This mutation is kept for future re-enablement but must NOT be callable directly.
+    // To re-enable: set SHOP_PURCHASES_ENABLED = true AND verify API route is the only caller.
+    const SHOP_PURCHASES_ENABLED = false;
+    if (!SHOP_PURCHASES_ENABLED) {
+      throw new Error("Shop purchases are currently disabled");
+    }
+
     // 🚫 BLACKLIST CHECK
     if (isBlacklisted(address)) {
       throw new Error("Account banned");
     }
 
     // 🔒 SECURITY: Validate txHash format (must be 0x + 64 hex chars = real on-chain tx)
-    // Prevents fake txHash abuse where anyone could call this mutation directly
     const TX_HASH_REGEX = /^0x[0-9a-fA-F]{64}$/;
     if (!TX_HASH_REGEX.test(args.txHash)) {
       throw new Error("Invalid transaction hash format");
@@ -646,6 +656,11 @@ export const openPack = mutation({
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
 
+    // 🚫 BLACKLIST CHECK
+    if (isBlacklisted(address)) {
+      throw new Error("Account banned");
+    }
+
     // Get pack
     const pack = await ctx.db.get(args.packId);
     if (!pack) {
@@ -740,6 +755,11 @@ export const openAllPacks = mutation({
   },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
+
+    // 🚫 BLACKLIST CHECK
+    if (isBlacklisted(address)) {
+      throw new Error("Account banned");
+    }
 
     // Get pack
     const pack = await ctx.db.get(args.packId);
@@ -1728,6 +1748,14 @@ export const giftPack = mutation({
   handler: async (ctx, args) => {
     const senderAddress = args.senderAddress.toLowerCase();
     const recipientAddress = args.recipientAddress.toLowerCase();
+
+    // 🚫 BLACKLIST CHECK - both sender and recipient
+    if (isBlacklisted(senderAddress)) {
+      throw new Error("Account banned");
+    }
+    if (isBlacklisted(recipientAddress)) {
+      throw new Error("Recipient account is banned");
+    }
 
     // Can't gift to yourself
     if (senderAddress === recipientAddress) {
