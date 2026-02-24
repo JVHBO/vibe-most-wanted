@@ -5,15 +5,85 @@ import { useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 
-interface CardItem {
+interface FloatItem {
   id: string;
-  imageUrl: string;
   href: string;
-  isCard: boolean;
+  type: "vibecard" | "castcard";
+  // vibecard
+  imageUrl?: string;
+  // castcard
+  pfp?: string;
+  username?: string;
+  text?: string;
+  likes?: number;
+  recasts?: number;
+  replies?: number;
 }
 
-const CACHE_KEY = "vmw_hfb_v5";
-const CACHE_DATE_KEY = "vmw_hfb_date_v5";
+const CACHE_KEY = "vmw_hfb_v6";
+const CACHE_DATE_KEY = "vmw_hfb_date_v6";
+
+function makeCastEl(item: FloatItem): HTMLDivElement {
+  const card = document.createElement("div");
+  card.style.cssText = `
+    width:220px;
+    background:#111;
+    border:1px solid rgba(201,168,76,0.25);
+    border-radius:10px;
+    padding:10px;
+    box-sizing:border-box;
+    font-family:sans-serif;
+    overflow:hidden;
+  `;
+
+  // Header
+  const header = document.createElement("div");
+  header.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:6px;";
+
+  if (item.pfp) {
+    const pfpImg = document.createElement("img");
+    pfpImg.src = item.pfp;
+    pfpImg.style.cssText = "width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;";
+    pfpImg.onerror = () => { pfpImg.style.display = "none"; };
+    header.appendChild(pfpImg);
+  }
+
+  const nameDiv = document.createElement("div");
+  nameDiv.style.cssText = "display:flex;flex-direction:column;min-width:0;";
+  const displayName = document.createElement("span");
+  displayName.style.cssText = "color:#c9a84c;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
+  displayName.textContent = item.username ? `@${item.username}` : "@unknown";
+  nameDiv.appendChild(displayName);
+  header.appendChild(nameDiv);
+  card.appendChild(header);
+
+  // Text
+  if (item.text) {
+    const textEl = document.createElement("p");
+    textEl.style.cssText = "color:#ccc;font-size:10px;line-height:1.4;margin:0 0 8px 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;";
+    textEl.textContent = item.text;
+    card.appendChild(textEl);
+  }
+
+  // Stats
+  const stats = document.createElement("div");
+  stats.style.cssText = "display:flex;gap:12px;";
+
+  const statItems = [
+    { icon: "♥", val: item.likes ?? 0, color: "#f472b6" },
+    { icon: "↺", val: item.recasts ?? 0, color: "#4ade80" },
+    { icon: "◯", val: item.replies ?? 0, color: "#60a5fa" },
+  ];
+  statItems.forEach(s => {
+    const span = document.createElement("span");
+    span.style.cssText = `color:${s.color};font-size:10px;display:flex;align-items:center;gap:2px;`;
+    span.textContent = `${s.icon} ${s.val}`;
+    stats.appendChild(span);
+  });
+  card.appendChild(stats);
+
+  return card;
+}
 
 export function HomeFloatingBackground() {
   const convex = useConvex();
@@ -31,7 +101,7 @@ export function HomeFloatingBackground() {
     async function load() {
       try {
         const today = new Date().toISOString().split("T")[0];
-        let items: CardItem[] | null = null;
+        let items: FloatItem[] | null = null;
 
         if (localStorage.getItem(CACHE_DATE_KEY) === today) {
           const raw = localStorage.getItem(CACHE_KEY);
@@ -41,32 +111,41 @@ export function HomeFloatingBackground() {
         if (!items) {
           const cards = await convex.query(
             (api as any).farcasterCards.getHighRarityCards,
-            { limit: 16 }
+            { limit: 12 }
           ) as Array<{ _id: string; fid: number; cardImageUrl: string }>;
 
           const history = await convex.query(
             (api as any).castAuctions.getAuctionHistory,
             { limit: 20 }
-          ) as Array<{ _id: string; castAuthorPfp?: string; warpcastUrl?: string; winnerAddress?: string }>;
+          ) as Array<{
+            _id: string;
+            castAuthorPfp?: string;
+            castAuthorUsername?: string;
+            castText?: string;
+            warpcastUrl?: string;
+          }>;
 
-          items = cards.filter(c => c.cardImageUrl).map(c => ({
-            id: c._id,
-            imageUrl: c.cardImageUrl,
-            href: `/fid/${c.fid}`,
-            isCard: true,
-          }));
-
-          // Use pfps already stored in auction records — no extra API calls
-          for (const auction of history) {
-            if (auction.castAuthorPfp && auction.warpcastUrl) {
-              items!.push({
-                id: auction._id + "_p",
-                imageUrl: auction.castAuthorPfp,
-                href: auction.warpcastUrl,
-                isCard: false,
-              });
-            }
-          }
+          items = [
+            ...cards.filter(c => c.cardImageUrl).map(c => ({
+              id: c._id,
+              href: `/fid/${c.fid}`,
+              type: "vibecard" as const,
+              imageUrl: c.cardImageUrl,
+            })),
+            ...history
+              .filter(a => a.warpcastUrl)
+              .map(a => ({
+                id: a._id,
+                href: a.warpcastUrl!,
+                type: "castcard" as const,
+                pfp: a.castAuthorPfp,
+                username: a.castAuthorUsername,
+                text: a.castText,
+                likes: 0,
+                recasts: 0,
+                replies: 0,
+              })),
+          ];
 
           localStorage.setItem(CACHE_KEY, JSON.stringify(items));
           localStorage.setItem(CACHE_DATE_KEY, today);
@@ -80,7 +159,6 @@ export function HomeFloatingBackground() {
         const H = window.innerHeight;
         container.innerHTML = "";
 
-        // Per-item state for rAF
         const particles: Array<{
           el: HTMLDivElement;
           x: number;
@@ -89,17 +167,17 @@ export function HomeFloatingBackground() {
           rise: number;
           drift: number;
           dur: number;
-          phase: number; // 0-1, starting offset
+          phase: number;
         }> = [];
 
         items.forEach((item) => {
-          const isCard = item.isCard;
-          const w = isCard ? 80 : 52;
-          const h = isCard ? 112 : 52;
+          const isCast = item.type === "castcard";
+          const w = isCast ? 220 : 80;
+          const h = isCast ? 110 : 112;
           const x = 20 + Math.random() * (W - w - 40);
-          const drift = (Math.random() - 0.5) * 100;
-          const dur = (8 + Math.random() * 7) * 1000; // ms
-          const phase = Math.random(); // start at random point in cycle
+          const drift = (Math.random() - 0.5) * 80;
+          const dur = (9 + Math.random() * 8) * 1000;
+          const phase = Math.random();
 
           const el = document.createElement("div");
           el.style.cssText = `
@@ -108,7 +186,7 @@ export function HomeFloatingBackground() {
             top:0px;
             width:${w}px;
             height:${h}px;
-            border-radius:${isCard ? "8px" : "50%"};
+            border-radius:${isCast ? "10px" : "8px"};
             overflow:hidden;
             opacity:0;
             will-change:transform,opacity;
@@ -116,7 +194,7 @@ export function HomeFloatingBackground() {
             pointer-events:none;
           `;
 
-          el.addEventListener("mouseenter", () => { el.style.filter = "brightness(2) saturate(1.3)"; });
+          el.addEventListener("mouseenter", () => { el.style.filter = "brightness(1.6)"; });
           el.addEventListener("mouseleave", () => { el.style.filter = ""; });
           el.addEventListener("click", (e) => {
             e.preventDefault();
@@ -124,46 +202,40 @@ export function HomeFloatingBackground() {
             else routerRef.current?.push(item.href);
           });
 
-          const img = document.createElement("img");
-          img.src = item.imageUrl;
-          img.alt = "";
-          img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;";
-          img.onload = () => { el.style.pointerEvents = "auto"; };
-          img.onerror = () => { el.style.display = "none"; };
+          if (isCast) {
+            const castEl = makeCastEl(item);
+            el.appendChild(castEl);
+            el.style.pointerEvents = "auto";
+          } else {
+            const img = document.createElement("img");
+            img.src = item.imageUrl!;
+            img.alt = "";
+            img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;";
+            img.onload = () => { el.style.pointerEvents = "auto"; };
+            img.onerror = () => { el.style.display = "none"; };
+            el.appendChild(img);
+          }
 
-          el.appendChild(img);
           container.appendChild(el);
-
           particles.push({ el, x, w, h, rise: H + h + 20, drift, dur, phase });
         });
 
         let startTime: number | null = null;
-
         function frame(now: number) {
           if (!mountedRef.current) return;
           if (!startTime) startTime = now;
-
           for (const p of particles) {
-            const t = ((now - startTime) / p.dur + p.phase) % 1; // 0 → 1 cycle
-
-            // Y: from bottom (H+h) rising to top (-h)
-            const y = H + p.h - t * (p.rise);
-
-            // Horizontal drift: sinusoidal
+            const t = ((now - startTime) / p.dur + p.phase) % 1;
+            const y = H + p.h - t * p.rise;
             const dx = Math.sin(t * Math.PI * 2) * p.drift * 0.5 + t * p.drift * 0.5;
-
-            // Opacity: fade in first 8%, full in middle, fade out last 8%
-            const opacity = t < 0.08 ? t / 0.08 * 0.22
-                          : t > 0.92 ? (1 - t) / 0.08 * 0.22
-                          : 0.22;
-
-            p.el.style.transform = `translateY(${y}px) translateX(${dx.toFixed(1)}px)`;
+            const opacity = t < 0.08 ? t / 0.08 * 0.25
+                          : t > 0.92 ? (1 - t) / 0.08 * 0.25
+                          : 0.25;
+            p.el.style.transform = `translateY(${y.toFixed(1)}px) translateX(${dx.toFixed(1)}px)`;
             p.el.style.opacity = opacity.toFixed(3);
           }
-
           rafRef.current = requestAnimationFrame(frame);
         }
-
         rafRef.current = requestAnimationFrame(frame);
 
       } catch (e) {
@@ -172,7 +244,6 @@ export function HomeFloatingBackground() {
     }
 
     load();
-
     return () => {
       mountedRef.current = false;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -182,13 +253,7 @@ export function HomeFloatingBackground() {
   return (
     <div
       ref={containerRef}
-      style={{
-        position: "fixed",
-        inset: 0,
-        pointerEvents: "none",
-        overflow: "hidden",
-        zIndex: 0,
-      }}
+      style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}
     />
   );
 }
