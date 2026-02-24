@@ -199,9 +199,9 @@ export function ShopView({ address }: ShopViewProps) {
 
               {/* ARB Mode Toggle */}
               {arbSupported && (
-                <div className={`flex items-center justify-between rounded-lg px-3 py-2 mb-3 border transition-all ${isArb ? 'bg-vintage-gold/10 border-vintage-gold/40' : 'bg-vintage-black/30 border-vintage-gold/20'}`}>
+                <div className="flex items-center justify-between rounded-lg px-3 py-2 mb-3 border bg-vintage-black/30 border-vintage-gold/20">
                   <div>
-                    <p className={`font-bold text-sm ${isArb ? 'text-vintage-gold' : 'text-vintage-ice/70'}`}>
+                    <p className="font-bold text-sm text-vintage-ice/70">
                       {t('shopArbMode' as any)}
                     </p>
                     <p className="text-vintage-ice/50 text-xs">{t('shopArbModeDesc' as any)}</p>
