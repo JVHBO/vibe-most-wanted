@@ -12,8 +12,8 @@ interface CardItem {
   isCard: boolean;
 }
 
-const CACHE_KEY = "vmw_hfb_v4";
-const CACHE_DATE_KEY = "vmw_hfb_date_v4";
+const CACHE_KEY = "vmw_hfb_v5";
+const CACHE_DATE_KEY = "vmw_hfb_date_v5";
 
 export function HomeFloatingBackground() {
   const convex = useConvex();
@@ -44,10 +44,10 @@ export function HomeFloatingBackground() {
             { limit: 16 }
           ) as Array<{ _id: string; fid: number; cardImageUrl: string }>;
 
-          const casts = await convex.query(
-            (api as any).featuredCasts.getActiveCasts,
-            {}
-          ) as Array<{ _id: string; warpcastUrl: string }>;
+          const history = await convex.query(
+            (api as any).castAuctions.getAuctionHistory,
+            { limit: 20 }
+          ) as Array<{ _id: string; castAuthorPfp?: string; warpcastUrl?: string; winnerAddress?: string }>;
 
           items = cards.filter(c => c.cardImageUrl).map(c => ({
             id: c._id,
@@ -56,16 +56,16 @@ export function HomeFloatingBackground() {
             isCard: true,
           }));
 
-          for (const cast of casts.slice(0, 6)) {
-            try {
-              const res = await fetch(`/api/cast-by-url?url=${encodeURIComponent(cast.warpcastUrl)}`);
-              if (!res.ok) continue;
-              const data = await res.json();
-              const embedImg = data.cast?.embeds?.[0]?.metadata?.image?.url
-                || data.cast?.embeds?.find((e: any) => /\.(jpg|jpeg|png|gif|webp)/i.test(e.url || ""))?.url;
-              if (embedImg) items!.push({ id: cast._id + "_e", imageUrl: embedImg, href: cast.warpcastUrl, isCard: false });
-              if (data.cast?.author?.pfp_url) items!.push({ id: cast._id + "_p", imageUrl: data.cast.author.pfp_url, href: cast.warpcastUrl, isCard: false });
-            } catch {}
+          // Use pfps already stored in auction records — no extra API calls
+          for (const auction of history) {
+            if (auction.castAuthorPfp && auction.warpcastUrl) {
+              items!.push({
+                id: auction._id + "_p",
+                imageUrl: auction.castAuthorPfp,
+                href: auction.warpcastUrl,
+                isCard: false,
+              });
+            }
           }
 
           localStorage.setItem(CACHE_KEY, JSON.stringify(items));
