@@ -159,12 +159,12 @@ export function ShopView({ address }: ShopViewProps) {
                 <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className="w-16 h-16 object-contain drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]" />
                 <div className="flex-1">
                   <h3 className="text-xl font-display font-bold text-vintage-gold">
-                    Daily Free Pack
+                    {t('shopDailyFreePack' as any)}
                   </h3>
-                  <p className="text-vintage-ice/60 text-xs">1 Nothing card per pack</p>
+                  <p className="text-vintage-ice/60 text-xs">{t('shopNothingCardPerPack' as any)}</p>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-xs font-bold ${isArb ? 'bg-blue-500 text-white' : 'bg-green-500/20 text-green-400'}`}>
-                  {isArb ? `3/day ARB` : `1/day`}
+                <div className={`px-3 py-1 rounded-full text-xs font-bold ${isArb ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black' : 'bg-vintage-gold/20 text-vintage-gold'}`}>
+                  {isArb ? t('shopDayArb' as any) : t('shopDayBase' as any)}
                 </div>
               </div>
 
@@ -199,12 +199,12 @@ export function ShopView({ address }: ShopViewProps) {
 
               {/* ARB Mode Toggle */}
               {arbSupported && (
-                <div className={`flex items-center justify-between rounded-lg px-3 py-2 mb-3 border transition-all ${isArb ? 'bg-blue-500/10 border-blue-400/40' : 'bg-vintage-black/30 border-vintage-gold/20'}`}>
+                <div className={`flex items-center justify-between rounded-lg px-3 py-2 mb-3 border transition-all ${isArb ? 'bg-vintage-gold/10 border-vintage-gold/40' : 'bg-vintage-black/30 border-vintage-gold/20'}`}>
                   <div>
-                    <p className={`font-bold text-sm ${isArb ? 'text-blue-400' : 'text-vintage-ice/70'}`}>
-                      Arbitrum Mode
+                    <p className={`font-bold text-sm ${isArb ? 'text-vintage-gold' : 'text-vintage-ice/70'}`}>
+                      {t('shopArbMode' as any)}
                     </p>
-                    <p className="text-vintage-ice/50 text-xs">3 packs/day instead of 1</p>
+                    <p className="text-vintage-ice/50 text-xs">{t('shopArbModeDesc' as any)}</p>
                   </div>
                   <div className="flex gap-1">
                     <button
@@ -227,7 +227,7 @@ export function ShopView({ address }: ShopViewProps) {
                     disabled={claimingDaily}
                     className={`w-full h-11 font-display font-bold rounded-lg transition-all disabled:opacity-50 text-white ${isArb ? 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400' : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400'}`}
                   >
-                    {claimingDaily ? "..." : isArb ? `Claim 3 Free Packs (ARB)` : `Claim 1 Free Pack`}
+                    {claimingDaily ? "..." : isArb ? t('shopClaimFreePackArb' as any) : t('shopClaimFreePack' as any)}
                   </button>
                 ) : (
                   <button
@@ -235,8 +235,8 @@ export function ShopView({ address }: ShopViewProps) {
                     className="w-full h-11 bg-vintage-charcoal/50 border border-vintage-gold/20 text-vintage-ice/40 font-display font-bold rounded-lg cursor-not-allowed"
                   >
                     {dailyFreeStatus?.timeRemaining
-                      ? `Next pack in ${formatTimeRemaining(dailyFreeStatus.timeRemaining)}`
-                      : "Already claimed today"}
+                      ? `${t('shopNextPackIn' as any)} ${formatTimeRemaining(dailyFreeStatus.timeRemaining)}`
+                      : t('shopAlreadyClaimed' as any)}
                   </button>
                 )}
               </div>
