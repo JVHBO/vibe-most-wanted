@@ -4,6 +4,9 @@ import { useEffect, useState, useRef, createContext, useContext } from "react";
 import { isMiniappMode } from "@/lib/utils/miniapp";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelect } from "@/components/SettingsModal";
+import { useMusic } from "@/contexts/MusicContext";
+import { AudioManager } from "@/lib/audio-manager";
+import { HomeFloatingBackground } from "@/components/HomeFloatingBackground";
 
 // Farcaster notice text in all 10 supported languages
 const FARCASTER_NOTICE: Record<string, string> = {
@@ -57,6 +60,7 @@ export function useMiniappFrameContext() {
 export function MiniappFrame({ children }: { children: React.ReactNode }) {
   const [showFrame, setShowFrame] = useState(false);
   const { lang } = useLanguage();
+  const { isMusicEnabled, setIsMusicEnabled } = useMusic();
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifStatus, setNotifStatus] = useState<"default" | "granted" | "denied">("default");
@@ -123,6 +127,7 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
       justifyContent: "center",
       padding: "16px 0 24px",
     }}>
+      <HomeFloatingBackground />
       {/* Phone shell */}
       <div style={{
         borderRadius: "44px",
@@ -188,8 +193,20 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
                   disabled={notifStatus === "denied"}
                   style={{ ...itemStyle, opacity: notifStatus === "denied" ? 0.4 : 1, cursor: notifStatus === "denied" ? "not-allowed" : "pointer" }}
                 >
-                  <span>{notifStatus === "granted" ? "🔔" : notifStatus === "denied" ? "🔕" : "🔔"}</span>
+                  <span>{notifStatus === "granted" ? "◆" : notifStatus === "denied" ? "◇" : "◇"}</span>
                   <span>{notifStatus === "granted" ? "Notifications on" : notifStatus === "denied" ? "Notifications blocked" : "Enable notifications"}</span>
+                </button>
+                <button
+                  onClick={() => { setIsMusicEnabled(!isMusicEnabled); }}
+                  style={itemStyle}
+                >
+                  <span>{isMusicEnabled ? "♪" : "♪"}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: "8px", width: "100%" }}>
+                    <span>{isMusicEnabled ? "Music on" : "Music off"}</span>
+                    <span style={{ marginLeft: "auto", width: "32px", height: "16px", borderRadius: "8px", background: isMusicEnabled ? "#c9a84c" : "rgba(255,255,255,0.15)", position: "relative", flexShrink: 0, transition: "background 0.2s" }}>
+                      <span style={{ position: "absolute", top: "2px", left: isMusicEnabled ? "18px" : "2px", width: "12px", height: "12px", borderRadius: "50%", background: "#fff", transition: "left 0.2s" }} />
+                    </span>
+                  </span>
                 </button>
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0 12px" }} />
                 <button onClick={() => { setMenuOpen(false); navigator.clipboard?.writeText("https://vibemostwanted.xyz"); }} style={itemStyle}>
@@ -201,7 +218,7 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
 
           {/* ↓ collapse */}
           <button
-            onClick={() => setCollapsed(v => !v)}
+            onClick={() => { AudioManager.buttonFlap(); setCollapsed(v => !v); }}
             style={{ width: "30px", height: "30px", borderRadius: "8px", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.65)", fontSize: "17px", transition: "transform 0.3s", transform: collapsed ? "rotate(180deg)" : "none" }}
             title={collapsed ? "Expand" : "Collapse"}
           >↓</button>
