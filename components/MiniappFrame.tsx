@@ -287,6 +287,8 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
         justifyContent: "space-between",
         marginTop: "12px",
         padding: "0 4px",
+        position: "relative",
+        zIndex: 1,
       }}>
         {/* Social links */}
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -322,6 +324,8 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
         textAlign: "center",
         marginTop: "8px",
         padding: "0 4px",
+        position: "relative",
+        zIndex: 1,
       }}>
         <a
           href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
