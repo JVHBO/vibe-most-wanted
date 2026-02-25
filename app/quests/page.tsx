@@ -13,6 +13,7 @@ import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
+import { ChainToggle } from "@/components/ChainToggle";
 
 export default function QuestsPage() {
   const router = useRouter();
@@ -374,18 +375,10 @@ export default function QuestsPage() {
           </button>
           <h1 className="text-xl font-display font-bold text-vintage-gold tracking-wider">{t('questsTitle')}</h1>
           {arbSupported ? (
-            <div className="flex gap-1 bg-black/60 p-1 rounded-lg">
-              <button
-                onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
-                onMouseEnter={() => AudioManager.buttonHover()}
-                className={`px-3 py-1 rounded font-bold text-xs transition ${effectiveChain === 'base' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
-              >BASE</button>
-              <button
-                onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
-                onMouseEnter={() => AudioManager.buttonHover()}
-                className={`px-3 py-1 rounded font-bold text-xs transition ${effectiveChain === 'arbitrum' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
-              >ARB</button>
-            </div>
+            <ChainToggle
+              chain={effectiveChain as "base" | "arbitrum"}
+              onChange={(c) => handleSwitchChain(c)}
+            />
           ) : <div className="w-20" />}
         </div>
 

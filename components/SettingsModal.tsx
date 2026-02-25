@@ -15,6 +15,7 @@ import { api } from '@/convex/_generated/api';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useFarcasterContext } from '@/lib/hooks/useFarcasterContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { ChainToggle } from '@/components/ChainToggle';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -1013,29 +1014,10 @@ export function SettingsModal({
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    const next = preferredChain === "arbitrum" ? "base" : "arbitrum";
-                    onChainChange(next);
-                    if (soundEnabled) AudioManager.buttonClick();
-                  }}
-                  className={`relative w-16 h-8 rounded-full transition-all border-2 ${
-                    preferredChain === "arbitrum"
-                      ? 'bg-blue-600 border-blue-400'
-                      : 'bg-vintage-black border-vintage-gold/50'
-                  }`}
-                >
-                  <div
-                    className={`absolute top-1 left-1 w-6 h-6 ${
-                      preferredChain === "arbitrum" ? 'bg-white' : 'bg-vintage-gold'
-                    } rounded-full transition-transform ${
-                      preferredChain === "arbitrum" ? 'translate-x-7' : 'translate-x-0'
-                    }`}
-                  />
-                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white pointer-events-none">
-                    {preferredChain === "arbitrum" ? "ARB" : "BASE"}
-                  </span>
-                </button>
+                <ChainToggle
+                  chain={(preferredChain as "base" | "arbitrum") || "base"}
+                  onChange={(c) => onChainChange(c)}
+                />
               </div>
             </div>
           )}

@@ -15,6 +15,7 @@ import { encodeBuilderCodeSuffix, BUILDER_CODE } from '@/lib/builder-code';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
 import { isMiniappMode, isWarpcastClient } from '@/lib/utils/miniapp';
+import { ChainToggle } from '@/components/ChainToggle';
 
 // Roulette translations
 const rouletteTranslations = {
@@ -832,16 +833,10 @@ export function Roulette({ onClose }: RouletteProps) {
         <h2 className="text-vintage-gold font-bold text-xl">{t.title}</h2>
         <div className="flex items-center gap-2">
           {arbSupported && (
-            <div className="flex gap-1 bg-black/60 p-1 rounded-lg">
-              <button
-                onClick={() => handleSwitchChain('base')}
-                className={`px-3 py-1 rounded font-bold text-xs transition ${currentChain === 'base' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
-              >BASE</button>
-              <button
-                onClick={() => handleSwitchChain('arbitrum')}
-                className={`px-3 py-1 rounded font-bold text-xs transition ${currentChain === 'arbitrum' ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
-              >ARB</button>
-            </div>
+            <ChainToggle
+              chain={currentChain as "base" | "arbitrum"}
+              onChange={(c) => handleSwitchChain(c)}
+            />
           )}
           {onClose && (
             <button

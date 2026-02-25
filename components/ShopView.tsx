@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { getAssetUrl } from "@/lib/ipfs-assets";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
 import { AudioManager } from "@/lib/audio-manager";
+import { ChainToggle } from "@/components/ChainToggle";
 
 interface ShopViewProps {
   address: string | undefined;
@@ -209,18 +210,10 @@ export function ShopView({ address }: ShopViewProps) {
                     </p>
                     <p className="text-vintage-ice/50 text-xs">{t('shopArbModeDesc' as any)}</p>
                   </div>
-                  <div className="flex gap-1 bg-black/60 p-1 rounded-lg">
-                    <button
-                      onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
-                      onMouseEnter={() => AudioManager.buttonHover()}
-                      className={`px-3 py-1 rounded font-bold text-xs transition ${!isArb ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
-                    >BASE</button>
-                    <button
-                      onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
-                      onMouseEnter={() => AudioManager.buttonHover()}
-                      className={`px-3 py-1 rounded font-bold text-xs transition ${isArb ? 'bg-amber-500 text-black' : 'text-zinc-400 hover:text-zinc-200'}`}
-                    >ARB</button>
-                  </div>
+                  <ChainToggle
+                    chain={effectiveChain as "base" | "arbitrum"}
+                    onChange={(c) => handleSwitchChain(c)}
+                  />
                 </div>
               )}
 
