@@ -19,8 +19,8 @@ interface FloatItem {
   totalInteractions?: number;
 }
 
-const CACHE_KEY = "vmw_hfb_v10";
-const CACHE_DATE_KEY = "vmw_hfb_date_v10";
+const CACHE_KEY = "vmw_hfb_v11";
+const CACHE_DATE_KEY = "vmw_hfb_date_v11";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
 // Local VBMS card images — always available, no API call needed
@@ -63,17 +63,21 @@ async function fetchEngagement(warpcastUrl: string): Promise<{ likes: number; re
   }
 }
 
-// Batch fetch with max concurrency to avoid rate limits
+// Batch fetch with max concurrency + pause between batches to avoid rate limits
 async function batchFetch<T>(
   items: T[],
   fn: (item: T) => Promise<unknown>,
-  concurrency = 6
+  concurrency = 4
 ): Promise<unknown[]> {
   const results: unknown[] = [];
   for (let i = 0; i < items.length; i += concurrency) {
     const batch = items.slice(i, i + concurrency);
     const batchResults = await Promise.allSettled(batch.map(fn));
     batchResults.forEach(r => results.push(r.status === "fulfilled" ? r.value : null));
+    // Small pause between batches to avoid Neynar rate limits
+    if (i + concurrency < items.length) {
+      await new Promise(res => setTimeout(res, 200));
+    }
   }
   return results;
 }
@@ -124,20 +128,23 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
     card.appendChild(textEl);
   }
 
-  const stats = document.createElement("div");
-  stats.style.cssText = "display:flex;gap:12px;";
-  const statItems = [
-    { icon: "♥", val: item.likes ?? 0, color: "#f472b6" },
-    { icon: "↺", val: item.recasts ?? 0, color: "#4ade80" },
-    { icon: "◯", val: item.replies ?? 0, color: "#60a5fa" },
-  ];
-  statItems.forEach(s => {
-    const span = document.createElement("span");
-    span.style.cssText = `color:${s.color};font-size:10px;display:flex;align-items:center;gap:2px;`;
-    span.textContent = `${s.icon} ${s.val}`;
-    stats.appendChild(span);
-  });
-  card.appendChild(stats);
+  const totalStats = (item.likes || 0) + (item.recasts || 0) + (item.replies || 0);
+  if (totalStats > 0) {
+    const stats = document.createElement("div");
+    stats.style.cssText = "display:flex;gap:12px;";
+    const statItems = [
+      { icon: "♥", val: item.likes ?? 0, color: "#f472b6" },
+      { icon: "↺", val: item.recasts ?? 0, color: "#4ade80" },
+      { icon: "◯", val: item.replies ?? 0, color: "#60a5fa" },
+    ];
+    statItems.forEach(s => {
+      const span = document.createElement("span");
+      span.style.cssText = `color:${s.color};font-size:10px;display:flex;align-items:center;gap:2px;`;
+      span.textContent = `${s.icon} ${s.val}`;
+      stats.appendChild(span);
+    });
+    card.appendChild(stats);
+  }
 
   return card;
 }
