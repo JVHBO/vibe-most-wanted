@@ -167,39 +167,91 @@ export const getWinningCasts = query({
 });
 
 /**
+ * TEMP DEBUG: Get all auctions and bids
+ */
+export const debugAllData = query({
+  args: {},
+  handler: async (ctx) => {
+    const allAuctions = await ctx.db.query("castAuctions").order("desc").take(100);
+    const allBids = await ctx.db.query("castAuctionBids").order("desc").take(100);
+    return {
+      auctions: allAuctions.map(a => ({
+        id: a._id,
+        status: a.status,
+        slotNumber: a.slotNumber,
+        currentBid: a.currentBid,
+        winnerAddress: a.winnerAddress,
+        winnerUsername: a.winnerUsername,
+        winningBid: a.winningBid,
+        castHash: a.castHash,
+        castAuthorUsername: a.castAuthorUsername,
+        warpcastUrl: a.warpcastUrl,
+      })),
+      bids: allBids.map(b => ({
+        id: b._id,
+        status: b.status,
+        bidderUsername: b.bidderUsername,
+        bidAmount: b.bidAmount,
+        castHash: b.castHash,
+        castAuthorUsername: b.castAuthorUsername,
+      })),
+    };
+  },
+});
+
+/**
  * Get auction history (completed auctions for history page)
  */
 export const getAuctionHistory = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit = 50 }) => {
-    // Get completed auctions
-    const completed = await ctx.db
-      .query("castAuctions")
-      .withIndex("by_status", (q) => q.eq("status", "completed"))
+    // PRIMARY SOURCE: castAuctionBids with status="won" — always has full winner data
+    // This is more reliable than castAuctions which may have stale/missing winner fields
+    const wonBids = await ctx.db
+      .query("castAuctionBids")
+      .withIndex("by_status", (q) => q.eq("status", "won"))
       .order("desc")
       .take(limit);
 
-    // Get active auctions (being featured right now)
-    const active = await ctx.db
-      .query("castAuctions")
-      .withIndex("by_status", (q) => q.eq("status", "active"))
-      .order("desc")
-      .take(limit);
+    if (wonBids.length > 0) {
+      // Enrich each won bid with auction data (cast text, author pfp, feature dates)
+      const enriched = await Promise.all(wonBids.map(async (bid) => {
+        const auction = await ctx.db.get(bid.auctionId);
+        return {
+          _id: bid._id,
+          _creationTime: bid._creationTime,
+          // Winner info from bid
+          winnerAddress: bid.bidderAddress,
+          winnerUsername: bid.bidderUsername,
+          winningBid: bid.bidAmount,
+          // Cast info from bid
+          castHash: bid.castHash,
+          warpcastUrl: bid.warpcastUrl,
+          castAuthorUsername: bid.castAuthorUsername || auction?.castAuthorUsername,
+          castAuthorPfp: auction?.castAuthorPfp,
+          castText: auction?.castText,
+          // Dates from auction
+          featureStartsAt: auction?.featureStartsAt,
+          featureEndsAt: auction?.featureEndsAt,
+          status: auction?.status ?? "completed",
+          slotNumber: bid.slotNumber,
+        };
+      }));
 
-    // Get pending_feature auctions (won but not yet featured)
-    const pending = await ctx.db
-      .query("castAuctions")
-      .withIndex("by_status", (q) => q.eq("status", "pending_feature"))
-      .order("desc")
-      .take(limit);
+      return enriched.sort((a, b) => (b.featureStartsAt || b._creationTime) - (a.featureStartsAt || a._creationTime));
+    }
 
-    // Combine all statuses that have winners
-    const allAuctions = [...active, ...pending, ...completed]
+    // FALLBACK: castAuctions table (older records or if bids table is empty)
+    const [completed, active, pending] = await Promise.all([
+      ctx.db.query("castAuctions").withIndex("by_status", (q) => q.eq("status", "completed")).order("desc").take(limit),
+      ctx.db.query("castAuctions").withIndex("by_status", (q) => q.eq("status", "active")).order("desc").take(10),
+      ctx.db.query("castAuctions").withIndex("by_status", (q) => q.eq("status", "pending_feature")).order("desc").take(10),
+    ]);
+
+    return [...active, ...pending, ...completed]
       .filter((a) => a.winnerAddress && a.winningBid)
       .sort((a, b) => (b.featureStartsAt || b._creationTime) - (a.featureStartsAt || a._creationTime))
       .slice(0, limit);
-
-    return allAuctions;
   },
 });
 
