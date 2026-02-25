@@ -102,13 +102,14 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
   return card;
 }
 
+const MAX_PARTICLES = 14;
+
 export function HomeFloatingBackground() {
   const convex = useConvex();
   const containerRef = useRef<HTMLDivElement>(null);
   const routerRef = useRef<ReturnType<typeof useRouter> | null>(null);
   const mountedRef = useRef(true);
   const router = useRouter();
-  const rafRef = useRef<number>(0);
 
   useEffect(() => { routerRef.current = router; }, [router]);
 
@@ -186,8 +187,8 @@ export function HomeFloatingBackground() {
 
         if (!mountedRef.current) return;
 
-        const items: FloatItem[] = [...(apiItems ?? []), ...LOCAL_VBMS_CARDS];
-        if (!items.length) return;
+        const allItems: FloatItem[] = [...(apiItems ?? []), ...LOCAL_VBMS_CARDS];
+        if (!allItems.length) return;
 
         const container = containerRef.current;
         if (!container) return;
@@ -196,46 +197,31 @@ export function HomeFloatingBackground() {
         const H = window.innerHeight;
         container.innerHTML = "";
 
-        const loadedFlags: boolean[] = [];
+        // Shuffle and limit particles for performance
+        const items = [...allItems].sort(() => Math.random() - 0.5).slice(0, MAX_PARTICLES);
 
-        const particles: Array<{
-          el: HTMLDivElement;
-          x: number;
-          w: number;
-          h: number;
-          rise: number;
-          drift: number;
-          dur: number;
-          phase: number;
-          maxOpacity: number;
-          idx: number;
-        }> = [];
-
-        items.forEach((item, idx) => {
+        items.forEach((item) => {
           const isCast = item.type === "castcard";
-          const w = isCast ? 220 : 80;
-          const h = isCast ? 110 : 112;
-          const x = 20 + Math.random() * (W - w - 40);
-          const drift = (Math.random() - 0.5) * 80;
-          const dur = (9 + Math.random() * 8) * 1000;
-          const phase = Math.random();
+          const w = isCast ? 200 : 80;
+          const h = isCast ? 100 : 112;
+          const x = 20 + Math.random() * Math.max(0, W - w - 40);
+          const driftX = Math.round((Math.random() - 0.5) * 60);
+          const dur = Math.round(12000 + Math.random() * 8000);
+          const delay = -Math.round(Math.random() * dur);
+          const maxOp = isCast ? 0.65 : 0.22;
 
-          loadedFlags[idx] = isCast;
+          const Y0 = H + h + 20;
+          const Y100 = -(h + 20);
+          const totalY = Y0 - Y100;
+          const Y8  = Math.round(Y0 - 0.08 * totalY);
+          const Y92 = Math.round(Y0 - 0.92 * totalY);
+          const X8  = Math.round(driftX * 0.08);
+          const X92 = Math.round(driftX * 0.92);
 
           const el = document.createElement("div");
-          el.style.cssText = `
-            position:absolute;
-            left:${x}px;
-            top:0px;
-            width:${w}px;
-            height:${h}px;
-            border-radius:${isCast ? "10px" : "8px"};
-            overflow:hidden;
-            opacity:0;
-            will-change:transform,opacity;
-            cursor:pointer;
-            pointer-events:none;
-          `;
+          el.style.cssText = `position:absolute;left:${x}px;top:0;width:${w}px;height:${h}px;` +
+            `border-radius:${isCast ? "10px" : "8px"};overflow:hidden;` +
+            `will-change:transform,opacity;cursor:pointer;pointer-events:${isCast ? "auto" : "none"};`;
 
           el.addEventListener("mouseenter", () => { el.style.filter = "brightness(1.6)"; });
           el.addEventListener("mouseleave", () => { el.style.filter = ""; });
@@ -247,51 +233,29 @@ export function HomeFloatingBackground() {
 
           if (isCast) {
             el.appendChild(makeCastEl(item));
-            el.style.pointerEvents = "auto";
           } else {
             const img = document.createElement("img");
             img.src = item.imageUrl!;
             img.alt = "";
             img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;";
-            img.onload = () => {
-              loadedFlags[idx] = true;
-              el.style.pointerEvents = "auto";
-            };
+            img.onload = () => { el.style.pointerEvents = "auto"; };
             img.onerror = () => { el.style.display = "none"; };
             el.appendChild(img);
           }
 
           container.appendChild(el);
-          particles.push({ el, x, w, h, rise: H + h + 20, drift, dur, phase, maxOpacity: isCast ? 0.7 : 0.25, idx });
+
+          // Web Animations API — GPU composited, no style injection needed
+          el.animate(
+            [
+              { transform: `translateY(${Y0}px) translateX(0px)`, opacity: 0, offset: 0 },
+              { transform: `translateY(${Y8}px) translateX(${X8}px)`, opacity: maxOp, offset: 0.08 },
+              { transform: `translateY(${Y92}px) translateX(${X92}px)`, opacity: maxOp, offset: 0.92 },
+              { transform: `translateY(${Y100}px) translateX(${driftX}px)`, opacity: 0, offset: 1 },
+            ],
+            { duration: dur, delay, iterations: Infinity, easing: "linear" }
+          );
         });
-
-        let startTime: number | null = null;
-
-        function frame(now: number) {
-          if (!mountedRef.current) return;
-          if (!startTime) startTime = now;
-
-          for (const p of particles) {
-            const t = ((now - startTime) / p.dur + p.phase) % 1;
-            const y = H + p.h - t * p.rise;
-            const dx = Math.sin(t * Math.PI * 2) * p.drift * 0.5 + t * p.drift * 0.5;
-
-            p.el.style.transform = `translateY(${y.toFixed(1)}px) translateX(${dx.toFixed(1)}px)`;
-
-            if (!loadedFlags[p.idx]) {
-              p.el.style.opacity = "0";
-            } else {
-              const opacity = t < 0.08 ? (t / 0.08) * p.maxOpacity
-                            : t > 0.92 ? ((1 - t) / 0.08) * p.maxOpacity
-                            : p.maxOpacity;
-              p.el.style.opacity = opacity.toFixed(3);
-            }
-          }
-
-          rafRef.current = requestAnimationFrame(frame);
-        }
-
-        rafRef.current = requestAnimationFrame(frame);
 
       } catch (e) {
         console.warn("HomeFloatingBackground:", e);
@@ -301,7 +265,6 @@ export function HomeFloatingBackground() {
     load();
     return () => {
       mountedRef.current = false;
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [convex]);
 

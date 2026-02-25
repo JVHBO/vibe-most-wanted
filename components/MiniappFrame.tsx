@@ -69,16 +69,50 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   const [notifStatus, setNotifStatus] = useState<"default" | "granted" | "denied">("default");
   const [seenMenu, setSeenMenu] = useState(true); // true = no dot; set false if first visit
   const menuRef = useRef<HTMLDivElement>(null);
+  const [frameX, setFrameX] = useState<number | null>(null);
+  const [frameY, setFrameY] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragging = useRef(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+
+  const handleChromeMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    dragging.current = true;
+    setIsDragging(true);
+    dragOffset.current = { x: e.clientX - (frameX ?? 0), y: e.clientY - (frameY ?? 0) };
+    e.preventDefault();
+  };
 
   useEffect(() => {
     const isDesktop = window.innerWidth >= 480;
     setShowFrame(isDesktop && !isMiniappMode());
+    if (isDesktop && !isMiniappMode()) {
+      setFrameX(Math.round((window.innerWidth - 410) / 2));
+      setFrameY(Math.max(16, Math.round((window.innerHeight - 660) / 2)));
+    }
     if ("Notification" in window) {
       setNotifStatus(Notification.permission as "default" | "granted" | "denied");
     }
     if (!localStorage.getItem("vbms_seen_menu")) {
       setSeenMenu(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      setFrameX(e.clientX - dragOffset.current.x);
+      setFrameY(Math.max(0, e.clientY - dragOffset.current.y));
+    };
+    const onUp = () => {
+      if (dragging.current) { dragging.current = false; setIsDragging(false); }
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    return () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
   }, []);
 
   useEffect(() => {
@@ -121,33 +155,38 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
 
   return (
     <MiniappFrameContext.Provider value={true}>
+    {/* Background */}
     <div style={{
-      minHeight: "100dvh",
+      position: "fixed", inset: 0,
       background: "radial-gradient(ellipse at 50% 30%, #1a1520 0%, #0a0a0a 70%)",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "16px 0 24px",
     }}>
       {showFloating && <HomeFloatingBackground />}
-      {/* Phone shell */}
+    </div>
+    {/* Draggable phone shell */}
+    {frameX !== null && (
       <div style={{
+        position: "fixed",
+        left: `${frameX}px`,
+        top: `${frameY ?? 0}px`,
         borderRadius: "44px",
         border: "1px solid rgba(255,255,255,0.08)",
         boxShadow: "0 40px 80px rgba(0,0,0,0.9)",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",
+        userSelect: "none",
+        zIndex: 10,
       }}>
 
         {/* ── CHROME BAR (outside transform div, no z-index conflict) ── */}
         <div
           ref={menuRef}
+          onMouseDown={handleChromeMouseDown}
           style={{
             width: `${FRAME_W}px`,
             height: `${CHROME_H}px`,
             flexShrink: 0,
+            cursor: isDragging ? "grabbing" : "grab",
             background: "#111",
             borderBottom: "1px solid rgba(255,255,255,0.07)",
             display: "flex",
@@ -278,17 +317,20 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
           </div>
         )}
       </div>
+    )}
 
       {/* ── BELOW FRAME: social links + language toggle ── */}
       <div style={{
+        position: "fixed",
+        bottom: "32px",
+        left: "50%",
+        transform: "translateX(-50%)",
         width: `${FRAME_W}px`,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        marginTop: "12px",
         padding: "0 4px",
-        position: "relative",
-        zIndex: 1,
+        zIndex: 2,
       }}>
         {/* Social links */}
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -320,12 +362,14 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
 
       {/* ── FARCASTER NOTICE ── */}
       <div style={{
+        position: "fixed",
+        bottom: "12px",
+        left: "50%",
+        transform: "translateX(-50%)",
         width: `${FRAME_W}px`,
         textAlign: "center",
-        marginTop: "8px",
         padding: "0 4px",
-        position: "relative",
-        zIndex: 1,
+        zIndex: 2,
       }}>
         <a
           href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
@@ -346,7 +390,6 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
         </a>
       </div>
 
-    </div>
     </MiniappFrameContext.Provider>
   );
 }
