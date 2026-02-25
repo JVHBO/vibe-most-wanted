@@ -942,7 +942,7 @@ export default function DexPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-vintage-deep-black text-vintage-ice overflow-hidden">
+    <div className="h-full flex flex-col bg-vintage-deep-black text-vintage-ice overflow-hidden" style={{ minHeight: "100%" }}>
       {/* Header */}
       <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-orange/20 border-b-2 border-vintage-gold/50 p-4 flex-shrink-0">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
@@ -1181,7 +1181,7 @@ export default function DexPage() {
 
       {/* Bonding Info Modal */}
       {showBondingInfo && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
           <div className="bg-vintage-deep-black border-2 border-vintage-gold/50 rounded-2xl max-w-md w-full p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-center gap-2 mb-3">
@@ -1294,7 +1294,7 @@ export default function DexPage() {
 
       {/* Buy Warning Modal */}
       {showBuyWarning && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
           <div className="bg-vintage-deep-black border-2 border-yellow-500/50 rounded-2xl max-w-md w-full p-6 shadow-2xl">
             {/* Warning Icon */}
             <div className="flex justify-center mb-4">

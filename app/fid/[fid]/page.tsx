@@ -925,7 +925,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
       {/* Neynar Score Modal */}
       {showScoreModal && neynarScoreData && (
-          <div className="fixed inset-0 bg-black/80 flex items-start justify-center z-50 p-4 pt-16 pb-20 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/80 flex items-start justify-center z-[10000] p-4 pt-16 pb-20 overflow-y-auto">
             <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 p-4 max-w-md w-full">
               <h2 className="text-xl font-bold text-vintage-gold mb-3 text-center">
                 {t.neynarScoreTitle}
@@ -1034,7 +1034,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
         {/* Evolution Animation Modal */}
         {showEvolutionModal && card && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[10000] p-2 sm:p-4 overflow-y-auto">
             <div className="max-w-sm w-full text-center my-auto">
               {/* Card with Animation */}
               <div className={`relative mb-4 sm:mb-8 transition-all duration-500 ${
@@ -1162,7 +1162,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
         {/* Share with Language Modal */}
         {showShareModal && card && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
             <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 p-6 max-w-sm w-full">
               <h2 className="text-xl font-bold text-vintage-gold mb-4 text-center">
                 {t.shareToFarcaster || 'Share to Farcaster'}

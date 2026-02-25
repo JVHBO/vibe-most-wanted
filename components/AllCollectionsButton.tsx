@@ -79,7 +79,7 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
 
       {/* Main Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-4">
           <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-4 w-full max-w-md max-h-[80vh] flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-vintage-gold font-display font-bold text-lg">

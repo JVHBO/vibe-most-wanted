@@ -27,8 +27,8 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
   const card = document.createElement("div");
   card.style.cssText = `
     width:220px;
-    background:#111;
-    border:1px solid rgba(201,168,76,0.25);
+    background:#1e1e1e;
+    border:1px solid rgba(201,168,76,0.5);
     border-radius:10px;
     padding:10px;
     box-sizing:border-box;
@@ -168,6 +168,7 @@ export function HomeFloatingBackground() {
           drift: number;
           dur: number;
           phase: number;
+          maxOpacity: number;
         }> = [];
 
         items.forEach((item) => {
@@ -217,7 +218,7 @@ export function HomeFloatingBackground() {
           }
 
           container.appendChild(el);
-          particles.push({ el, x, w, h, rise: H + h + 20, drift, dur, phase });
+          particles.push({ el, x, w, h, rise: H + h + 20, drift, dur, phase, maxOpacity: isCast ? 0.65 : 0.25 });
         });
 
         let startTime: number | null = null;
@@ -228,9 +229,9 @@ export function HomeFloatingBackground() {
             const t = ((now - startTime) / p.dur + p.phase) % 1;
             const y = H + p.h - t * p.rise;
             const dx = Math.sin(t * Math.PI * 2) * p.drift * 0.5 + t * p.drift * 0.5;
-            const opacity = t < 0.08 ? t / 0.08 * 0.25
-                          : t > 0.92 ? (1 - t) / 0.08 * 0.25
-                          : 0.25;
+            const opacity = t < 0.08 ? t / 0.08 * p.maxOpacity
+                          : t > 0.92 ? (1 - t) / 0.08 * p.maxOpacity
+                          : p.maxOpacity;
             p.el.style.transform = `translateY(${y.toFixed(1)}px) translateX(${dx.toFixed(1)}px)`;
             p.el.style.opacity = opacity.toFixed(3);
           }
