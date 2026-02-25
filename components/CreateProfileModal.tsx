@@ -191,195 +191,126 @@ export function CreateProfileModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4"
+      className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-2"
       onClick={onClose}
     >
       <div
-        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-vintage-gold max-w-md w-full p-6 overflow-y-auto max-h-[90vh]"
+        className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold shadow-gold w-full max-w-sm p-3"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-3xl font-bold text-center mb-2 text-vintage-gold font-display">
+        <h2 className="text-base font-bold text-center mb-2 text-vintage-gold font-display">
           {t('createProfile')}
         </h2>
 
         {/* 🔒 Show Farcaster requirement OR link code option */}
         {!hasFarcaster ? (
           showLinkCode ? (
-            /* 🔗 Link Code Display (INVERTED: non-FID generates code) */
-            <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-6">
-              <p className="text-center text-blue-400 text-sm font-semibold mb-3">
+            <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-3 mb-2">
+              <p className="text-center text-blue-400 text-xs font-semibold mb-2">
                 🔗 {t('linkToExisting')}
               </p>
-
-              {/* Success state */}
               {linkSuccess ? (
-                <div className="text-center">
-                  <p className="text-green-400 text-sm">{linkSuccess}</p>
-                </div>
+                <p className="text-green-400 text-xs text-center">{linkSuccess}</p>
               ) : generatedCode ? (
-                /* Show generated code */
                 <div>
-                  <p className="text-center text-blue-300 text-xs mb-3">
-                    {t('enterCodeInFarcaster')}
-                  </p>
-                  <p className="text-4xl font-mono font-bold text-center text-vintage-gold tracking-[0.3em] my-4">
+                  <p className="text-center text-blue-300 text-xs mb-1">{t('enterCodeInFarcaster')}</p>
+                  <p className="text-3xl font-mono font-bold text-center text-vintage-gold tracking-[0.3em] my-2">
                     {generatedCode}
                   </p>
-                  <p className="text-vintage-burnt-gold text-xs text-center mb-3">
+                  <p className="text-vintage-burnt-gold text-xs text-center mb-2">
                     {t('codeValidFor')}: {getCodeTimeRemaining() || '...'}
                   </p>
-
-                  {/* Error */}
-                  {linkError && (
-                    <p className="text-red-400 text-xs text-center mt-2">{linkError}</p>
-                  )}
-
-                  {/* Buttons */}
-                  <div className="flex gap-2 mt-4">
+                  {linkError && <p className="text-red-400 text-xs text-center">{linkError}</p>}
+                  <div className="flex gap-2 mt-2">
                     <button
-                      onClick={() => {
-                        setShowLinkCode(false);
-                        setGeneratedCode(null);
-                        setCodeExpiresAt(null);
-                        setLinkError(null);
-                      }}
-                      className="flex-1 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-burnt-gold rounded-lg text-sm"
-                    >
-                      {t('back')}
-                    </button>
+                      onClick={() => { setShowLinkCode(false); setGeneratedCode(null); setCodeExpiresAt(null); setLinkError(null); }}
+                      className="flex-1 px-3 py-1.5 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-burnt-gold rounded-lg text-xs"
+                    >{t('back')}</button>
                     <button
                       onClick={checkLinkStatus}
-                      className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold text-sm"
-                    >
-                      {t('verifyLink')}
-                    </button>
+                      className="flex-1 px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold text-xs"
+                    >{t('verifyLink')}</button>
                   </div>
                 </div>
               ) : (
-                /* Generate code button */
                 <div>
-                  <p className="text-center text-blue-300 text-xs mb-4">
-                    {t('generateCodeToLink')}
-                  </p>
+                  <p className="text-center text-blue-300 text-xs mb-2">{t('generateCodeToLink')}</p>
                   <button
                     onClick={handleGenerateLinkCode}
                     disabled={isGenerating}
-                    className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold text-xs disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {isGenerating ? (
-                      <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                    ) : (
-                      '🔗'
-                    )}
+                    {isGenerating ? <div className="animate-spin w-3 h-3 border-2 border-white border-t-transparent rounded-full" /> : '🔗'}
                     {t('generateCode')}
                   </button>
-                  {linkError && (
-                    <p className="text-red-400 text-xs text-center mt-2">{linkError}</p>
-                  )}
+                  {linkError && <p className="text-red-400 text-xs text-center mt-1">{linkError}</p>}
                   <button
-                    onClick={() => {
-                      setShowLinkCode(false);
-                      setLinkError(null);
-                    }}
-                    className="w-full mt-2 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-burnt-gold rounded-lg text-sm"
-                  >
-                    {t('back')}
-                  </button>
+                    onClick={() => { setShowLinkCode(false); setLinkError(null); }}
+                    className="w-full mt-1.5 px-3 py-1.5 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-burnt-gold rounded-lg text-xs"
+                  >{t('back')}</button>
                 </div>
               )}
             </div>
           ) : (
-            /* 🔒 No Farcaster - Show options */
-            <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4 mb-6">
-              <p className="text-center text-red-400 text-sm font-semibold">
-                🔒 Farcaster Required
-              </p>
-              <p className="text-center text-red-300 text-xs mt-2 mb-4">
-                {t('createOrLink')}
-              </p>
-
-              {/* Option 1: Open Farcaster */}
+            <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-3 mb-2">
+              <p className="text-center text-red-400 text-xs font-semibold">🔒 Farcaster Required</p>
+              <p className="text-center text-red-300 text-xs mt-1 mb-3">{t('createOrLink')}</p>
               <a
                 href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full px-4 py-3 bg-purple-600 hover:bg-purple-500 text-white text-center rounded-lg font-semibold text-sm transition-all mb-2"
+                className="block w-full px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-center rounded-lg font-semibold text-xs transition-all mb-1.5"
               >
                 📱 {t('createAccountFarcaster')}
               </a>
-
-              {/* Option 2: Link to existing (INVERTED: generate code here) */}
               <button
-                onClick={() => {
-                  setShowLinkCode(true);
-                  if (soundEnabled) AudioManager.buttonNav();
-                }}
-                className="block w-full px-4 py-3 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/50 text-blue-400 text-center rounded-lg font-semibold text-sm transition-all"
+                onClick={() => { setShowLinkCode(true); if (soundEnabled) AudioManager.buttonNav(); }}
+                className="block w-full px-3 py-2 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/50 text-blue-400 text-center rounded-lg font-semibold text-xs transition-all"
               >
                 🔗 {t('linkExistingAccount')}
               </button>
-
-              <p className="text-vintage-burnt-gold/60 text-xs text-center mt-3">
-                {t('linkExistingAccountDesc')}
-              </p>
+              <p className="text-vintage-burnt-gold/60 text-xs text-center mt-2">{t('linkExistingAccountDesc')}</p>
             </div>
           )
         ) : (
-          <p className="text-center text-vintage-burnt-gold mb-6 text-sm">
+          <p className="text-center text-vintage-burnt-gold mb-2 text-xs">
             Welcome, @{farcasterUser.username}!
           </p>
         )}
 
-        <div className="space-y-4">
-          {/* 🔒 Show Farcaster profile instead of input */}
+        <div className="space-y-2">
           {hasFarcaster ? (
-            <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-xl p-4">
-              <div className="flex items-center gap-4">
+            <div className="bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-2">
+              <div className="flex items-center gap-2">
                 {farcasterUser.pfpUrl && (
-                  <img
-                    src={farcasterUser.pfpUrl}
-                    alt="Profile"
-                    className="w-16 h-16 rounded-full border-2 border-vintage-gold"
-                  />
+                  <img src={farcasterUser.pfpUrl} alt="Profile" className="w-10 h-10 rounded-full border-2 border-vintage-gold flex-shrink-0" />
                 )}
-                <div>
-                  <p className="text-vintage-gold font-bold text-lg">
-                    {farcasterUser.displayName || farcasterUser.username}
-                  </p>
-                  <p className="text-gray-400 text-sm">@{farcasterUser.username}</p>
-                  <p className="text-gray-500 text-xs">FID: {farcasterUser.fid}</p>
+                <div className="min-w-0">
+                  <p className="text-vintage-gold font-bold text-sm truncate">{farcasterUser.displayName || farcasterUser.username}</p>
+                  <p className="text-gray-400 text-xs">@{farcasterUser.username} · FID {farcasterUser.fid}</p>
                 </div>
               </div>
-              <p className="text-xs text-green-400 mt-3 text-center">
-                {t('profileFarcasterAccount')}
-              </p>
+              <p className="text-xs text-green-400 mt-1.5 text-center">{t('profileFarcasterAccount')}</p>
             </div>
           ) : null}
 
-          {/* Language Selector */}
+          {/* Language Selector — 5 cols, flag + short code only */}
           <div>
-            <label className="block text-sm font-semibold text-gray-300 mb-2">
-              {t('language')}
-            </label>
-            <div className="grid grid-cols-3 gap-2">
+            <label className="block text-xs font-semibold text-gray-300 mb-1">{t('language')}</label>
+            <div className="grid grid-cols-5 gap-1">
               {LANGUAGE_OPTIONS.map((option) => (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => {
-                    setLang(option.value);
-                    if (soundEnabled) AudioManager.buttonNav();
-                  }}
-                  className={`
-                    flex flex-col items-center justify-center p-2 rounded-lg border-2 transition-all
-                    ${lang === option.value
+                  onClick={() => { setLang(option.value); if (soundEnabled) AudioManager.buttonNav(); }}
+                  className={`flex flex-col items-center justify-center py-1.5 rounded-lg border-2 transition-all ${
+                    lang === option.value
                       ? 'border-vintage-gold bg-vintage-gold/20 text-vintage-gold'
-                      : 'border-vintage-gold/30 bg-vintage-charcoal text-gray-400 hover:border-vintage-gold/50 hover:text-gray-300'
-                    }
-                  `}
+                      : 'border-vintage-gold/30 bg-vintage-charcoal text-gray-400 hover:border-vintage-gold/50'
+                  }`}
                 >
-                  <span className="text-xl mb-1">{option.flag}</span>
-                  <span className="text-xs font-modern">{option.label}</span>
+                  <span className="text-base leading-none">{option.flag}</span>
+                  <span className="text-[9px] mt-0.5 font-bold uppercase">{option.value === 'pt-BR' ? 'BR' : option.value === 'zh-CN' ? 'CN' : option.value.toUpperCase()}</span>
                 </button>
               ))}
             </div>
@@ -388,14 +319,14 @@ export function CreateProfileModal({
           <button
             onClick={handleCreateProfile}
             disabled={isCreatingProfile || !hasFarcaster}
-            className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark shadow-gold text-white rounded-xl font-semibold shadow-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-white rounded-lg font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isCreatingProfile ? '... Creating' : hasFarcaster ? t('save') : '🔒 Farcaster Required'}
+            {isCreatingProfile ? '...' : hasFarcaster ? t('save') : '🔒 Farcaster Required'}
           </button>
 
           <button
             onClick={handleCancel}
-            className="w-full px-6 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-xl font-semibold transition"
+            className="w-full px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-semibold text-sm transition"
           >
             {t('cancel')}
           </button>
