@@ -16,14 +16,14 @@ interface FloatItem {
   likes?: number;
   recasts?: number;
   replies?: number;
+  totalInteractions?: number;
 }
 
-const CACHE_KEY = "vmw_hfb_v9";
-const CACHE_DATE_KEY = "vmw_hfb_date_v9";
+const CACHE_KEY = "vmw_hfb_v10";
+const CACHE_DATE_KEY = "vmw_hfb_date_v10";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
 // Local VBMS card images — always available, no API call needed
-// Clicking opens Vibemarket with referral link
 const VIBEMARKET_URL = "https://vibechain.com/market?ref=XCLR1DJ6LQTT";
 const LOCAL_VBMS_CARDS: FloatItem[] = [
   { id: "local-leg-1", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-39.png" },
@@ -43,11 +43,46 @@ const LOCAL_VBMS_CARDS: FloatItem[] = [
   { id: "local-rar-4", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-42.png" },
 ];
 
+// Fetch engagement for a cast URL, returns null on failure
+async function fetchEngagement(warpcastUrl: string): Promise<{ likes: number; recasts: number; replies: number; pfp: string; username: string; text: string } | null> {
+  try {
+    const res = await fetch(`/api/cast-by-url?url=${encodeURIComponent(warpcastUrl)}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data.cast) return null;
+    return {
+      pfp: data.cast.author?.pfp_url || "",
+      username: data.cast.author?.username || "",
+      text: data.cast.text || "",
+      likes: data.cast.reactions?.likes_count || 0,
+      recasts: data.cast.reactions?.recasts_count || 0,
+      replies: data.cast.replies?.count || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Batch fetch with max concurrency to avoid rate limits
+async function batchFetch<T>(
+  items: T[],
+  fn: (item: T) => Promise<unknown>,
+  concurrency = 6
+): Promise<unknown[]> {
+  const results: unknown[] = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency);
+    const batchResults = await Promise.allSettled(batch.map(fn));
+    batchResults.forEach(r => results.push(r.status === "fulfilled" ? r.value : null));
+  }
+  return results;
+}
+
 function makeCastEl(item: FloatItem): HTMLDivElement {
   const card = document.createElement("div");
   card.style.cssText = `
     width:220px;
-    background:#1e1e1e;
+    background:#1a1a1a;
     border:1px solid rgba(201,168,76,0.5);
     border-radius:10px;
     padding:10px;
@@ -72,14 +107,20 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
   const displayName = document.createElement("span");
   displayName.style.cssText = "color:#c9a84c;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
   displayName.textContent = item.username ? `@${item.username}` : "@unknown";
+
+  const wantedBadge = document.createElement("span");
+  wantedBadge.style.cssText = "color:#ef4444;font-size:8px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;";
+  wantedBadge.textContent = "WANTED CAST";
+
   nameDiv.appendChild(displayName);
+  nameDiv.appendChild(wantedBadge);
   header.appendChild(nameDiv);
   card.appendChild(header);
 
   if (item.text) {
     const textEl = document.createElement("p");
-    textEl.style.cssText = "color:#ccc;font-size:10px;line-height:1.4;margin:0 0 8px 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;";
-    textEl.textContent = item.text;
+    textEl.style.cssText = "color:#ccc;font-size:10px;line-height:1.4;margin:0 0 8px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;";
+    textEl.textContent = `"${item.text}"`;
     card.appendChild(textEl);
   }
 
@@ -125,7 +166,7 @@ export function HomeFloatingBackground() {
         }
 
         if (!apiItems) {
-          // Fetch VibeFID cards (high rarity)
+          // Fetch VibeFID high-rarity cards
           let cards: Array<{ _id: string; fid: number; cardImageUrl: string }> = [];
           try {
             const res = await fetch(`${VIBEFID_CONVEX}/api/query`, {
@@ -143,36 +184,55 @@ export function HomeFloatingBackground() {
             }
           } catch {}
 
-          // Fetch featured casts
-          const featuredCasts = await convex.query(
-            (api as any).featuredCasts.getAllCasts,
-            {}
-          ) as Array<{ _id: string; warpcastUrl: string; castHash: string }>;
+          // Fetch auction history winners (up to 50)
+          let winners: Array<{ _id: string; warpcastUrl?: string; castAuthorPfp?: string; castAuthorUsername?: string; castText?: string }> = [];
+          try {
+            winners = (await convex.query(api.castAuctions.getAuctionHistory, { limit: 50 })) as typeof winners;
+          } catch {}
 
+          // Fetch engagement for winners that have a warpcastUrl
+          const winnersWithUrl = winners.filter(w => w.warpcastUrl);
+
+          // Batch fetch with concurrency 6
+          const engagementResults = await batchFetch(
+            winnersWithUrl,
+            (w) => fetchEngagement(w.warpcastUrl!),
+            6
+          );
+
+          // Build cast items with engagement data
           const castItems: FloatItem[] = [];
-          await Promise.all(featuredCasts.map(async (fc) => {
-            try {
-              const res = await fetch(`/api/cast-by-url?url=${encodeURIComponent(fc.warpcastUrl)}`);
-              if (res.ok) {
-                const data = await res.json();
-                if (data.cast) {
-                  castItems.push({
-                    id: fc._id,
-                    href: fc.warpcastUrl,
-                    type: "castcard" as const,
-                    pfp: data.cast.author?.pfp_url,
-                    username: data.cast.author?.username,
-                    text: data.cast.text,
-                    likes: data.cast.reactions?.likes_count || 0,
-                    recasts: data.cast.reactions?.recasts_count || 0,
-                    replies: data.cast.replies?.count || 0,
-                  });
-                }
-              }
-            } catch {}
-          }));
+          winnersWithUrl.forEach((w, i) => {
+            const eng = engagementResults[i] as Awaited<ReturnType<typeof fetchEngagement>>;
+            // Use engagement data if available, fallback to stored cast data
+            const pfp = eng?.pfp || w.castAuthorPfp || "";
+            const username = eng?.username || w.castAuthorUsername || "";
+            const text = eng?.text || w.castText || "";
+            const likes = eng?.likes ?? 0;
+            const recasts = eng?.recasts ?? 0;
+            const replies = eng?.replies ?? 0;
+            const totalInteractions = likes + recasts + replies;
 
-          castItems.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+            // Only include casts with author info
+            if (!pfp && !username) return;
+
+            castItems.push({
+              id: w._id,
+              href: w.warpcastUrl!,
+              type: "castcard",
+              pfp,
+              username,
+              text,
+              likes,
+              recasts,
+              replies,
+              totalInteractions,
+            });
+          });
+
+          // Sort by most interactions, take top 30
+          castItems.sort((a, b) => (b.totalInteractions || 0) - (a.totalInteractions || 0));
+          const topCasts = castItems.slice(0, 30);
 
           apiItems = [
             ...cards.filter(c => c.cardImageUrl).map(c => ({
@@ -181,7 +241,7 @@ export function HomeFloatingBackground() {
               type: "vibecard" as const,
               imageUrl: c.cardImageUrl,
             })),
-            ...castItems,
+            ...topCasts,
           ];
 
           localStorage.setItem(CACHE_KEY, JSON.stringify(apiItems));
@@ -190,7 +250,6 @@ export function HomeFloatingBackground() {
 
         if (!mountedRef.current) return;
 
-        // Merge API items with always-available local VBMS cards
         const items: FloatItem[] = [...(apiItems ?? []), ...LOCAL_VBMS_CARDS];
         if (!items.length) return;
 
@@ -201,8 +260,6 @@ export function HomeFloatingBackground() {
         const H = window.innerHeight;
         container.innerHTML = "";
 
-        // loaded[] tracks per-index whether the image has loaded
-        // (cast cards are always considered loaded immediately)
         const loadedFlags: boolean[] = [];
 
         const particles: Array<{
@@ -221,13 +278,12 @@ export function HomeFloatingBackground() {
         items.forEach((item, idx) => {
           const isCast = item.type === "castcard";
           const w = isCast ? 220 : 80;
-          const h = isCast ? 110 : 112;
+          const h = isCast ? 120 : 112;
           const x = 20 + Math.random() * (W - w - 40);
           const drift = (Math.random() - 0.5) * 80;
           const dur = (9 + Math.random() * 8) * 1000;
           const phase = Math.random();
 
-          // Cast cards ready immediately; image cards wait for onload
           loadedFlags[idx] = isCast;
 
           const el = document.createElement("div");
@@ -270,7 +326,7 @@ export function HomeFloatingBackground() {
           }
 
           container.appendChild(el);
-          particles.push({ el, x, w, h, rise: H + h + 20, drift, dur, phase, maxOpacity: isCast ? 0.65 : 0.25, idx });
+          particles.push({ el, x, w, h, rise: H + h + 20, drift, dur, phase, maxOpacity: isCast ? 0.7 : 0.25, idx });
         });
 
         let startTime: number | null = null;
@@ -286,7 +342,6 @@ export function HomeFloatingBackground() {
 
             p.el.style.transform = `translateY(${y.toFixed(1)}px) translateX(${dx.toFixed(1)}px)`;
 
-            // Only show after image has loaded — no grey rectangles
             if (!loadedFlags[p.idx]) {
               p.el.style.opacity = "0";
             } else {

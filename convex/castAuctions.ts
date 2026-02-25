@@ -167,39 +167,6 @@ export const getWinningCasts = query({
 });
 
 /**
- * TEMP DEBUG: Get all auctions and bids
- */
-export const debugAllData = query({
-  args: {},
-  handler: async (ctx) => {
-    const allAuctions = await ctx.db.query("castAuctions").order("desc").take(100);
-    const allBids = await ctx.db.query("castAuctionBids").order("desc").take(100);
-    return {
-      auctions: allAuctions.map(a => ({
-        id: a._id,
-        status: a.status,
-        slotNumber: a.slotNumber,
-        currentBid: a.currentBid,
-        winnerAddress: a.winnerAddress,
-        winnerUsername: a.winnerUsername,
-        winningBid: a.winningBid,
-        castHash: a.castHash,
-        castAuthorUsername: a.castAuthorUsername,
-        warpcastUrl: a.warpcastUrl,
-      })),
-      bids: allBids.map(b => ({
-        id: b._id,
-        status: b.status,
-        bidderUsername: b.bidderUsername,
-        bidAmount: b.bidAmount,
-        castHash: b.castHash,
-        castAuthorUsername: b.castAuthorUsername,
-      })),
-    };
-  },
-});
-
-/**
  * Get auction history (completed auctions for history page)
  */
 export const getAuctionHistory = query({
