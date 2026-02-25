@@ -20,8 +20,8 @@ interface FloatItem {
   replies?: number;
 }
 
-const CACHE_KEY = "vmw_hfb_v7";
-const CACHE_DATE_KEY = "vmw_hfb_date_v7";
+const CACHE_KEY = "vmw_hfb_v8";
+const CACHE_DATE_KEY = "vmw_hfb_date_v8";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
 function makeCastEl(item: FloatItem): HTMLDivElement {
@@ -128,16 +128,35 @@ export function HomeFloatingBackground() {
             }
           } catch {}
 
-          const history = await convex.query(
-            (api as any).castAuctions.getAuctionHistory,
-            { limit: 20 }
-          ) as Array<{
-            _id: string;
-            castAuthorPfp?: string;
-            castAuthorUsername?: string;
-            castText?: string;
-            warpcastUrl?: string;
-          }>;
+          // Fetch featured casts from VMW Convex (featuredCasts table has actual data)
+          const featuredCasts = await convex.query(
+            (api as any).featuredCasts.getActiveCasts,
+            {}
+          ) as Array<{ _id: string; warpcastUrl: string; castHash: string }>;
+
+          // Enrich each featured cast with Neynar data (text, pfp, username, stats)
+          const castItems: FloatItem[] = [];
+          for (const fc of featuredCasts) {
+            try {
+              const res = await fetch(`/api/cast-by-url?url=${encodeURIComponent(fc.warpcastUrl)}`);
+              if (res.ok) {
+                const data = await res.json();
+                if (data.cast) {
+                  castItems.push({
+                    id: fc._id,
+                    href: fc.warpcastUrl,
+                    type: "castcard" as const,
+                    pfp: data.cast.author?.pfp_url,
+                    username: data.cast.author?.username,
+                    text: data.cast.text,
+                    likes: data.cast.reactions?.likes_count || 0,
+                    recasts: data.cast.reactions?.recasts_count || 0,
+                    replies: data.cast.replies?.count || 0,
+                  });
+                }
+              }
+            } catch {}
+          }
 
           items = [
             ...cards.filter(c => c.cardImageUrl).map(c => ({
@@ -146,19 +165,7 @@ export function HomeFloatingBackground() {
               type: "vibecard" as const,
               imageUrl: c.cardImageUrl,
             })),
-            ...history
-              .filter(a => a.warpcastUrl)
-              .map(a => ({
-                id: a._id,
-                href: a.warpcastUrl!,
-                type: "castcard" as const,
-                pfp: a.castAuthorPfp,
-                username: a.castAuthorUsername,
-                text: a.castText,
-                likes: 0,
-                recasts: 0,
-                replies: 0,
-              })),
+            ...castItems,
           ];
 
           localStorage.setItem(CACHE_KEY, JSON.stringify(items));
