@@ -176,6 +176,7 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
         overflow: "hidden",
         userSelect: "none",
         zIndex: 10,
+        background: "#0a0a0a",
       }}>
 
         {/* ── CHROME BAR (outside transform div, no z-index conflict) ── */}
