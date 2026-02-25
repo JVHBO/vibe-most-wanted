@@ -212,7 +212,8 @@ export function CpuArenaModal({
       onClick={onClose}
     >
       <div
-        className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-2xl border-2 border-vintage-gold/50 max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-2xl"
+        className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-2xl border-2 border-vintage-gold/50 max-w-lg w-full overflow-y-auto shadow-2xl"
+        style={{ maxHeight: "calc(100vh - 120px)" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ============ PASSWORD VIEW ============ */}
@@ -271,10 +272,10 @@ export function CpuArenaModal({
         {viewMode === "rooms" && (
           <>
             {/* Header */}
-            <div className="border-b border-vintage-gold/30 p-4">
+            <div className="border-b border-vintage-gold/30 px-4 py-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-xl font-display font-bold text-vintage-gold">
+                  <h1 className="text-lg font-display font-bold text-vintage-gold">
                     {t('mechaTitle')}
                   </h1>
                   <p className="text-xs text-vintage-burnt-gold">
@@ -283,7 +284,7 @@ export function CpuArenaModal({
                 </div>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 flex items-center justify-center text-vintage-gold hover:text-vintage-burnt-gold text-xl rounded-full hover:bg-vintage-gold/10"
+                  className="w-7 h-7 flex items-center justify-center text-vintage-gold hover:text-vintage-burnt-gold text-lg rounded-full hover:bg-vintage-gold/10"
                 >
                   X
                 </button>
@@ -291,8 +292,8 @@ export function CpuArenaModal({
             </div>
 
             {/* Available Rooms */}
-            <div className="p-4">
-              <div className="space-y-2">
+            <div className="px-3 py-2">
+              <div className="space-y-1.5">
                 {availableCollections?.map((collection: string) => {
                   const info = COLLECTION_INFO[collection] || { name: collection, emoji: "", color: "" };
                   const roomData = cpuRooms?.find((r: any) => r.collection === collection);
@@ -303,7 +304,7 @@ export function CpuArenaModal({
                     <button
                       key={collection}
                       onClick={() => handleSelectRoom(collection)}
-                      className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${
                         isBuffed
                           ? "bg-vintage-gold/10 border-vintage-gold/50 hover:bg-vintage-gold/20"
                           : "bg-vintage-black/30 border-vintage-gold/20 hover:border-vintage-gold/40 hover:bg-vintage-black/50"
@@ -315,7 +316,7 @@ export function CpuArenaModal({
                         </p>
                         {isBuffed && <span className="text-xs text-vintage-burnt-gold">+{BUFF_CONFIG.oddsBonus}x bonus</span>}
                       </div>
-                      <div className="flex items-center gap-3 text-vintage-ice/50 text-xs">
+                      <div className="flex items-center gap-2 text-vintage-ice/50 text-xs">
                         <span>{spectatorCount} watching</span>
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                       </div>
@@ -325,7 +326,7 @@ export function CpuArenaModal({
               </div>
 
               {/* Info */}
-              <div className="mt-4 pt-3 border-t border-vintage-gold/20">
+              <div className="mt-2 pt-2 border-t border-vintage-gold/20">
                 <p className="text-vintage-ice/40 text-xs text-center">
                   {t('mechaHowItWorks1')}
                 </p>
