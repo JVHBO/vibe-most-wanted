@@ -38,7 +38,7 @@ export function MyCardsModal({ isOpen, onClose, nfts, soundEnabled }: MyCardsMod
 
   return (
     <div
-      className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-2 pt-14 pb-20"
+      className="fixed inset-0 bg-black/95 flex items-center justify-center z-[10000] p-2 pt-14 pb-20"
       onClick={onClose}
     >
       <div

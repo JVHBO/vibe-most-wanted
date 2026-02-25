@@ -307,7 +307,7 @@ export default function RaidDeckPage() {
   }
 
   return (
-    <div className="h-screen bg-vintage-deep-black flex flex-col overflow-hidden">
+    <div className="h-full bg-vintage-deep-black flex flex-col overflow-hidden">
       <PriceTicker />
 
       {/* Header */}

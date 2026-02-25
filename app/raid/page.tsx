@@ -565,6 +565,17 @@ export default function RaidPage() {
         </div>
       )}
 
+      {/* Boss null state */}
+      {currentBoss === null && (
+        <div className="absolute inset-0 flex items-center justify-center z-[5]">
+          <div className="text-center">
+            <div className="text-6xl mb-4 animate-pulse">💀</div>
+            <p className="text-vintage-gold font-bold text-lg">Boss Defeated!</p>
+            <p className="text-vintage-burnt-gold text-sm mt-1">Next boss incoming...</p>
+          </div>
+        </div>
+      )}
+
       {/* Boss Background - Full Screen */}
       {currentBoss && (
         <div className={`absolute inset-0 flex items-center justify-center ${bossIsHit ? 'animate-boss-hit' : ''}`}>
@@ -833,8 +844,8 @@ export default function RaidPage() {
 
                         {/* No Energy Overlay */}
                         {!hasEnergy && (
-                          <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
-                            <span className="text-red-400 text-lg">⚡</span>
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="text-orange-400 text-xl drop-shadow-lg">⚡</span>
                           </div>
                         )}
                       </div>

@@ -617,7 +617,7 @@ function LeaderboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-vintage-deep-black flex flex-col">
+    <div className="h-full bg-vintage-deep-black flex flex-col overflow-hidden">
       <PriceTicker />
 
       {/* Header */}
