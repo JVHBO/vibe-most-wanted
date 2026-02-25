@@ -195,7 +195,7 @@ export function CreateProfileModal({
       onClick={onClose}
     >
       <div
-        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-vintage-gold max-w-md w-full p-8"
+        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-vintage-gold max-w-md w-full p-6 overflow-y-auto max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-3xl font-bold text-center mb-2 text-vintage-gold font-display">

@@ -4250,8 +4250,8 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
               <p className="text-vintage-burnt-gold mb-6">{t('connectDescription')}</p>
 
               <div className="flex justify-center">
-                {isInFarcaster ? (
-                  /* In Farcaster miniapp: Show custom Farcaster wallet button */
+                {isInFarcaster && !isFrameMode ? (
+                  /* In actual Farcaster miniapp: Show custom Farcaster wallet button */
                   <button
                     onClick={async () => {
                       try {

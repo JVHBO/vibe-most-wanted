@@ -9,9 +9,7 @@ interface FloatItem {
   id: string;
   href: string;
   type: "vibecard" | "castcard";
-  // vibecard
   imageUrl?: string;
-  // castcard
   pfp?: string;
   username?: string;
   text?: string;
@@ -20,9 +18,30 @@ interface FloatItem {
   replies?: number;
 }
 
-const CACHE_KEY = "vmw_hfb_v8";
-const CACHE_DATE_KEY = "vmw_hfb_date_v8";
+const CACHE_KEY = "vmw_hfb_v9";
+const CACHE_DATE_KEY = "vmw_hfb_date_v9";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
+
+// Local VBMS card images — always available, no API call needed
+// Clicking opens Vibemarket with referral link
+const VIBEMARKET_URL = "https://vibechain.com/market?ref=XCLR1DJ6LQTT";
+const LOCAL_VBMS_CARDS: FloatItem[] = [
+  { id: "local-leg-1", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-39.png" },
+  { id: "local-leg-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-50.png" },
+  { id: "local-leg-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-52.png" },
+  { id: "local-leg-4", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-55.png" },
+  { id: "local-leg-5", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-56.png" },
+  { id: "local-leg-6", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-57.png" },
+  { id: "local-epc-1", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-43.png" },
+  { id: "local-epc-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-44.png" },
+  { id: "local-epc-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-46.png" },
+  { id: "local-epc-4", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-47.png" },
+  { id: "local-epc-5", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-49.png" },
+  { id: "local-rar-1", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-37.png" },
+  { id: "local-rar-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-38.png" },
+  { id: "local-rar-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-40.png" },
+  { id: "local-rar-4", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-42.png" },
+];
 
 function makeCastEl(item: FloatItem): HTMLDivElement {
   const card = document.createElement("div");
@@ -37,7 +56,6 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
     overflow:hidden;
   `;
 
-  // Header
   const header = document.createElement("div");
   header.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:6px;";
 
@@ -58,7 +76,6 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
   header.appendChild(nameDiv);
   card.appendChild(header);
 
-  // Text
   if (item.text) {
     const textEl = document.createElement("p");
     textEl.style.cssText = "color:#ccc;font-size:10px;line-height:1.4;margin:0 0 8px 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;";
@@ -66,10 +83,8 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
     card.appendChild(textEl);
   }
 
-  // Stats
   const stats = document.createElement("div");
   stats.style.cssText = "display:flex;gap:12px;";
-
   const statItems = [
     { icon: "♥", val: item.likes ?? 0, color: "#f472b6" },
     { icon: "↺", val: item.recasts ?? 0, color: "#4ade80" },
@@ -102,15 +117,15 @@ export function HomeFloatingBackground() {
     async function load() {
       try {
         const today = new Date().toISOString().split("T")[0];
-        let items: FloatItem[] | null = null;
+        let apiItems: FloatItem[] | null = null;
 
         if (localStorage.getItem(CACHE_DATE_KEY) === today) {
           const raw = localStorage.getItem(CACHE_KEY);
-          if (raw) items = JSON.parse(raw);
+          if (raw) apiItems = JSON.parse(raw);
         }
 
-        if (!items) {
-          // Fetch VibeFID cards from VibeFID Convex (scintillating-mandrill-101)
+        if (!apiItems) {
+          // Fetch VibeFID cards (high rarity)
           let cards: Array<{ _id: string; fid: number; cardImageUrl: string }> = [];
           try {
             const res = await fetch(`${VIBEFID_CONVEX}/api/query`, {
@@ -118,7 +133,7 @@ export function HomeFloatingBackground() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 path: "farcasterCards:getHighRarityCards",
-                args: { limit: 12 },
+                args: { limit: 20 },
                 format: "json",
               }),
             });
@@ -128,13 +143,12 @@ export function HomeFloatingBackground() {
             }
           } catch {}
 
-          // Fetch all featured casts from VMW Convex (active + history)
+          // Fetch featured casts
           const featuredCasts = await convex.query(
             (api as any).featuredCasts.getAllCasts,
             {}
           ) as Array<{ _id: string; warpcastUrl: string; castHash: string }>;
 
-          // Enrich each featured cast with Neynar data (text, pfp, username, stats)
           const castItems: FloatItem[] = [];
           await Promise.all(featuredCasts.map(async (fc) => {
             try {
@@ -158,10 +172,9 @@ export function HomeFloatingBackground() {
             } catch {}
           }));
 
-          // Sort by most likes
           castItems.sort((a, b) => (b.likes || 0) - (a.likes || 0));
 
-          items = [
+          apiItems = [
             ...cards.filter(c => c.cardImageUrl).map(c => ({
               id: c._id,
               href: `/fid/${c.fid}`,
@@ -171,17 +184,26 @@ export function HomeFloatingBackground() {
             ...castItems,
           ];
 
-          localStorage.setItem(CACHE_KEY, JSON.stringify(items));
+          localStorage.setItem(CACHE_KEY, JSON.stringify(apiItems));
           localStorage.setItem(CACHE_DATE_KEY, today);
         }
 
-        if (!mountedRef.current || !items?.length) return;
+        if (!mountedRef.current) return;
+
+        // Merge API items with always-available local VBMS cards
+        const items: FloatItem[] = [...(apiItems ?? []), ...LOCAL_VBMS_CARDS];
+        if (!items.length) return;
+
         const container = containerRef.current;
         if (!container) return;
 
         const W = window.innerWidth;
         const H = window.innerHeight;
         container.innerHTML = "";
+
+        // loaded[] tracks per-index whether the image has loaded
+        // (cast cards are always considered loaded immediately)
+        const loadedFlags: boolean[] = [];
 
         const particles: Array<{
           el: HTMLDivElement;
@@ -193,9 +215,10 @@ export function HomeFloatingBackground() {
           dur: number;
           phase: number;
           maxOpacity: number;
+          idx: number;
         }> = [];
 
-        items.forEach((item) => {
+        items.forEach((item, idx) => {
           const isCast = item.type === "castcard";
           const w = isCast ? 220 : 80;
           const h = isCast ? 110 : 112;
@@ -203,6 +226,9 @@ export function HomeFloatingBackground() {
           const drift = (Math.random() - 0.5) * 80;
           const dur = (9 + Math.random() * 8) * 1000;
           const phase = Math.random();
+
+          // Cast cards ready immediately; image cards wait for onload
+          loadedFlags[idx] = isCast;
 
           const el = document.createElement("div");
           el.style.cssText = `
@@ -228,39 +254,52 @@ export function HomeFloatingBackground() {
           });
 
           if (isCast) {
-            const castEl = makeCastEl(item);
-            el.appendChild(castEl);
+            el.appendChild(makeCastEl(item));
             el.style.pointerEvents = "auto";
           } else {
             const img = document.createElement("img");
             img.src = item.imageUrl!;
             img.alt = "";
             img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;";
-            img.onload = () => { el.style.pointerEvents = "auto"; };
+            img.onload = () => {
+              loadedFlags[idx] = true;
+              el.style.pointerEvents = "auto";
+            };
             img.onerror = () => { el.style.display = "none"; };
             el.appendChild(img);
           }
 
           container.appendChild(el);
-          particles.push({ el, x, w, h, rise: H + h + 20, drift, dur, phase, maxOpacity: isCast ? 0.65 : 0.25 });
+          particles.push({ el, x, w, h, rise: H + h + 20, drift, dur, phase, maxOpacity: isCast ? 0.65 : 0.25, idx });
         });
 
         let startTime: number | null = null;
+
         function frame(now: number) {
           if (!mountedRef.current) return;
           if (!startTime) startTime = now;
+
           for (const p of particles) {
             const t = ((now - startTime) / p.dur + p.phase) % 1;
             const y = H + p.h - t * p.rise;
             const dx = Math.sin(t * Math.PI * 2) * p.drift * 0.5 + t * p.drift * 0.5;
-            const opacity = t < 0.08 ? t / 0.08 * p.maxOpacity
-                          : t > 0.92 ? (1 - t) / 0.08 * p.maxOpacity
-                          : p.maxOpacity;
+
             p.el.style.transform = `translateY(${y.toFixed(1)}px) translateX(${dx.toFixed(1)}px)`;
-            p.el.style.opacity = opacity.toFixed(3);
+
+            // Only show after image has loaded — no grey rectangles
+            if (!loadedFlags[p.idx]) {
+              p.el.style.opacity = "0";
+            } else {
+              const opacity = t < 0.08 ? (t / 0.08) * p.maxOpacity
+                            : t > 0.92 ? ((1 - t) / 0.08) * p.maxOpacity
+                            : p.maxOpacity;
+              p.el.style.opacity = opacity.toFixed(3);
+            }
           }
+
           rafRef.current = requestAnimationFrame(frame);
         }
+
         rafRef.current = requestAnimationFrame(frame);
 
       } catch (e) {
