@@ -167,13 +167,13 @@ export const getWinningCasts = query({
 });
 
 /**
- * Get auction history (completed auctions for history page)
+ * Get auction history (completed auctions for history page + background animation)
+ * Filters out hidden auctions.
  */
 export const getAuctionHistory = query({
   args: { limit: v.optional(v.number()) },
-  handler: async (ctx, { limit = 50 }) => {
+  handler: async (ctx, { limit = 100 }) => {
     // PRIMARY SOURCE: castAuctionBids with status="won" — always has full winner data
-    // This is more reliable than castAuctions which may have stale/missing winner fields
     const wonBids = await ctx.db
       .query("castAuctionBids")
       .withIndex("by_status", (q) => q.eq("status", "won"))
@@ -181,23 +181,21 @@ export const getAuctionHistory = query({
       .take(limit);
 
     if (wonBids.length > 0) {
-      // Enrich each won bid with auction data (cast text, author pfp, feature dates)
       const enriched = await Promise.all(wonBids.map(async (bid) => {
         const auction = await ctx.db.get(bid.auctionId);
+        // Skip if auction doesn't exist or is hidden
+        if (!auction || auction.hidden) return null;
         return {
           _id: bid._id,
           _creationTime: bid._creationTime,
-          // Winner info from bid
           winnerAddress: bid.bidderAddress,
           winnerUsername: bid.bidderUsername,
           winningBid: bid.bidAmount,
-          // Cast info from bid
           castHash: bid.castHash,
           warpcastUrl: bid.warpcastUrl,
           castAuthorUsername: bid.castAuthorUsername || auction?.castAuthorUsername,
           castAuthorPfp: auction?.castAuthorPfp,
           castText: auction?.castText,
-          // Dates from auction
           featureStartsAt: auction?.featureStartsAt,
           featureEndsAt: auction?.featureEndsAt,
           status: auction?.status ?? "completed",
@@ -205,10 +203,12 @@ export const getAuctionHistory = query({
         };
       }));
 
-      return enriched.sort((a, b) => (b.featureStartsAt || b._creationTime) - (a.featureStartsAt || a._creationTime));
+      return enriched
+        .filter(Boolean)
+        .sort((a, b) => (b!.featureStartsAt || b!._creationTime) - (a!.featureStartsAt || a!._creationTime));
     }
 
-    // FALLBACK: castAuctions table (older records or if bids table is empty)
+    // FALLBACK: castAuctions table
     const [completed, active, pending] = await Promise.all([
       ctx.db.query("castAuctions").withIndex("by_status", (q) => q.eq("status", "completed")).order("desc").take(limit),
       ctx.db.query("castAuctions").withIndex("by_status", (q) => q.eq("status", "active")).order("desc").take(10),
@@ -216,9 +216,67 @@ export const getAuctionHistory = query({
     ]);
 
     return [...active, ...pending, ...completed]
-      .filter((a) => a.winnerAddress && a.winningBid)
+      .filter((a) => !a.hidden && a.winnerAddress && a.winningBid)
       .sort((a, b) => (b.featureStartsAt || b._creationTime) - (a.featureStartsAt || a._creationTime))
       .slice(0, limit);
+  },
+});
+
+/**
+ * Admin: hide/unhide a cast from background and history by warpcastUrl or castHash
+ */
+export const hideAuctions = mutation({
+  args: { urls: v.array(v.string()), hidden: v.optional(v.boolean()) },
+  handler: async (ctx, { urls, hidden = true }) => {
+    const hiddenAuctionIds = new Set<string>();
+    let count = 0;
+
+    for (const url of urls) {
+      const slug = url
+        .replace("https://warpcast.com/", "")
+        .replace("https://farcaster.xyz/", "");
+
+      const variants = [
+        `https://warpcast.com/${slug}`,
+        `https://farcaster.xyz/${slug}`,
+      ];
+
+      // 1. Find via castAuctions.warpcastUrl
+      for (const variant of variants) {
+        const auctions = await ctx.db
+          .query("castAuctions")
+          .filter((q) => q.eq(q.field("warpcastUrl"), variant))
+          .collect();
+        for (const a of auctions) {
+          if (!hiddenAuctionIds.has(a._id)) {
+            hiddenAuctionIds.add(a._id);
+            await ctx.db.patch(a._id, { hidden });
+            count++;
+          }
+        }
+      }
+
+      // 2. Find via castAuctionBids.warpcastUrl → auctionId (catches bids where
+      //    the parent auction has a different or missing warpcastUrl)
+      for (const variant of variants) {
+        const bids = await ctx.db
+          .query("castAuctionBids")
+          .filter((q) => q.eq(q.field("warpcastUrl"), variant))
+          .collect();
+        for (const bid of bids) {
+          const aId = bid.auctionId as string;
+          if (!hiddenAuctionIds.has(aId)) {
+            hiddenAuctionIds.add(aId);
+            const auctionDoc = await ctx.db.get(bid.auctionId);
+            if (auctionDoc) {
+              await ctx.db.patch(bid.auctionId, { hidden });
+              count++;
+            }
+          }
+        }
+      }
+    }
+    return { hidden, count };
   },
 });
 

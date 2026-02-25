@@ -1406,6 +1406,9 @@ export default defineSchema({
     winnerUsername: v.optional(v.string()),
     winningBid: v.optional(v.number()),
 
+    // Admin: hide from background/history
+    hidden: v.optional(v.boolean()),
+
     // Timestamps
     createdAt: v.number(),
     lastBidAt: v.optional(v.number()),

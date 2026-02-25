@@ -13,14 +13,11 @@ interface FloatItem {
   pfp?: string;
   username?: string;
   text?: string;
-  likes?: number;
-  recasts?: number;
-  replies?: number;
-  totalInteractions?: number;
+  winnerNum?: number;
 }
 
-const CACHE_KEY = "vmw_hfb_v11";
-const CACHE_DATE_KEY = "vmw_hfb_date_v11";
+const CACHE_KEY = "vmw_hfb_v13";
+const CACHE_DATE_KEY = "vmw_hfb_date_v13";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
 // Local VBMS card images — always available, no API call needed
@@ -43,45 +40,6 @@ const LOCAL_VBMS_CARDS: FloatItem[] = [
   { id: "local-rar-4", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-42.png" },
 ];
 
-// Fetch engagement for a cast URL, returns null on failure
-async function fetchEngagement(warpcastUrl: string): Promise<{ likes: number; recasts: number; replies: number; pfp: string; username: string; text: string } | null> {
-  try {
-    const res = await fetch(`/api/cast-by-url?url=${encodeURIComponent(warpcastUrl)}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data.cast) return null;
-    return {
-      pfp: data.cast.author?.pfp_url || "",
-      username: data.cast.author?.username || "",
-      text: data.cast.text || "",
-      likes: data.cast.reactions?.likes_count || 0,
-      recasts: data.cast.reactions?.recasts_count || 0,
-      replies: data.cast.replies?.count || 0,
-    };
-  } catch {
-    return null;
-  }
-}
-
-// Batch fetch with max concurrency + pause between batches to avoid rate limits
-async function batchFetch<T>(
-  items: T[],
-  fn: (item: T) => Promise<unknown>,
-  concurrency = 4
-): Promise<unknown[]> {
-  const results: unknown[] = [];
-  for (let i = 0; i < items.length; i += concurrency) {
-    const batch = items.slice(i, i + concurrency);
-    const batchResults = await Promise.allSettled(batch.map(fn));
-    batchResults.forEach(r => results.push(r.status === "fulfilled" ? r.value : null));
-    // Small pause between batches to avoid Neynar rate limits
-    if (i + concurrency < items.length) {
-      await new Promise(res => setTimeout(res, 200));
-    }
-  }
-  return results;
-}
-
 function makeCastEl(item: FloatItem): HTMLDivElement {
   const card = document.createElement("div");
   card.style.cssText = `
@@ -95,6 +53,7 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
     overflow:hidden;
   `;
 
+  // Header: PFP + name + winner badge
   const header = document.createElement("div");
   header.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:6px;";
 
@@ -107,43 +66,37 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
   }
 
   const nameDiv = document.createElement("div");
-  nameDiv.style.cssText = "display:flex;flex-direction:column;min-width:0;";
+  nameDiv.style.cssText = "display:flex;flex-direction:column;min-width:0;flex:1;";
+
   const displayName = document.createElement("span");
   displayName.style.cssText = "color:#c9a84c;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
   displayName.textContent = item.username ? `@${item.username}` : "@unknown";
+  nameDiv.appendChild(displayName);
+
+  const badgeRow = document.createElement("div");
+  badgeRow.style.cssText = "display:flex;align-items:center;gap:4px;";
 
   const wantedBadge = document.createElement("span");
-  wantedBadge.style.cssText = "color:#ef4444;font-size:8px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;";
+  wantedBadge.style.cssText = "color:#ef4444;font-size:8px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;";
   wantedBadge.textContent = "WANTED CAST";
+  badgeRow.appendChild(wantedBadge);
 
-  nameDiv.appendChild(displayName);
-  nameDiv.appendChild(wantedBadge);
+  if (item.winnerNum !== undefined) {
+    const winnerBadge = document.createElement("span");
+    winnerBadge.style.cssText = "color:#888;font-size:8px;font-weight:600;";
+    winnerBadge.textContent = `· WINNER #${item.winnerNum}`;
+    badgeRow.appendChild(winnerBadge);
+  }
+
+  nameDiv.appendChild(badgeRow);
   header.appendChild(nameDiv);
   card.appendChild(header);
 
   if (item.text) {
     const textEl = document.createElement("p");
-    textEl.style.cssText = "color:#ccc;font-size:10px;line-height:1.4;margin:0 0 8px 0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;";
+    textEl.style.cssText = "color:#ccc;font-size:10px;line-height:1.4;margin:0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;";
     textEl.textContent = `"${item.text}"`;
     card.appendChild(textEl);
-  }
-
-  const totalStats = (item.likes || 0) + (item.recasts || 0) + (item.replies || 0);
-  if (totalStats > 0) {
-    const stats = document.createElement("div");
-    stats.style.cssText = "display:flex;gap:12px;";
-    const statItems = [
-      { icon: "♥", val: item.likes ?? 0, color: "#f472b6" },
-      { icon: "↺", val: item.recasts ?? 0, color: "#4ade80" },
-      { icon: "◯", val: item.replies ?? 0, color: "#60a5fa" },
-    ];
-    statItems.forEach(s => {
-      const span = document.createElement("span");
-      span.style.cssText = `color:${s.color};font-size:10px;display:flex;align-items:center;gap:2px;`;
-      span.textContent = `${s.icon} ${s.val}`;
-      stats.appendChild(span);
-    });
-    card.appendChild(stats);
   }
 
   return card;
@@ -191,55 +144,31 @@ export function HomeFloatingBackground() {
             }
           } catch {}
 
-          // Fetch auction history winners (up to 50)
-          let winners: Array<{ _id: string; warpcastUrl?: string; castAuthorPfp?: string; castAuthorUsername?: string; castText?: string }> = [];
+          // Fetch auction winners directly from Convex — no external API calls needed
+          type HistoryItem = {
+            _id: string;
+            warpcastUrl?: string;
+            castAuthorPfp?: string;
+            castAuthorUsername?: string;
+            castText?: string;
+          };
+          let winners: HistoryItem[] = [];
           try {
-            winners = (await convex.query(api.castAuctions.getAuctionHistory, { limit: 50 })) as typeof winners;
+            winners = (await convex.query(api.castAuctions.getAuctionHistory, { limit: 100 })) as HistoryItem[];
           } catch {}
 
-          // Fetch engagement for winners that have a warpcastUrl
-          const winnersWithUrl = winners.filter(w => w.warpcastUrl);
-
-          // Batch fetch with concurrency 6
-          const engagementResults = await batchFetch(
-            winnersWithUrl,
-            (w) => fetchEngagement(w.warpcastUrl!),
-            6
-          );
-
-          // Build cast items with engagement data
-          const castItems: FloatItem[] = [];
-          winnersWithUrl.forEach((w, i) => {
-            const eng = engagementResults[i] as Awaited<ReturnType<typeof fetchEngagement>>;
-            // Use engagement data if available, fallback to stored cast data
-            const pfp = eng?.pfp || w.castAuthorPfp || "";
-            const username = eng?.username || w.castAuthorUsername || "";
-            const text = eng?.text || w.castText || "";
-            const likes = eng?.likes ?? 0;
-            const recasts = eng?.recasts ?? 0;
-            const replies = eng?.replies ?? 0;
-            const totalInteractions = likes + recasts + replies;
-
-            // Only include casts with author info
-            if (!pfp && !username) return;
-
-            castItems.push({
-              id: w._id,
-              href: w.warpcastUrl!,
-              type: "castcard",
-              pfp,
-              username,
-              text,
-              likes,
-              recasts,
-              replies,
-              totalInteractions,
-            });
-          });
-
-          // Sort by most interactions, take top 30
-          castItems.sort((a, b) => (b.totalInteractions || 0) - (a.totalInteractions || 0));
-          const topCasts = castItems.slice(0, 30);
+          // Build cast float items — use data already stored in Convex, no API calls
+          // Reverse so oldest winner = #1, newest = #N
+          const validWinners = winners.filter(w => w.warpcastUrl && (w.castAuthorPfp || w.castAuthorUsername));
+          const castItems: FloatItem[] = [...validWinners].reverse().map((w, idx) => ({
+            id: w._id,
+            href: w.warpcastUrl!,
+            type: "castcard" as const,
+            pfp: w.castAuthorPfp,
+            username: w.castAuthorUsername,
+            text: w.castText,
+            winnerNum: idx + 1,
+          }));
 
           apiItems = [
             ...cards.filter(c => c.cardImageUrl).map(c => ({
@@ -248,7 +177,7 @@ export function HomeFloatingBackground() {
               type: "vibecard" as const,
               imageUrl: c.cardImageUrl,
             })),
-            ...topCasts,
+            ...castItems,
           ];
 
           localStorage.setItem(CACHE_KEY, JSON.stringify(apiItems));
@@ -285,7 +214,7 @@ export function HomeFloatingBackground() {
         items.forEach((item, idx) => {
           const isCast = item.type === "castcard";
           const w = isCast ? 220 : 80;
-          const h = isCast ? 120 : 112;
+          const h = isCast ? 110 : 112;
           const x = 20 + Math.random() * (W - w - 40);
           const drift = (Math.random() - 0.5) * 80;
           const dur = (9 + Math.random() * 8) * 1000;
