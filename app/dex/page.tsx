@@ -957,7 +957,7 @@ export default function DexPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto">
-      <div className="max-w-lg mx-auto p-4 h-full flex flex-col">
+      <div className="max-w-lg mx-auto p-4 flex flex-col">
         {/* Bonding Progress Bar - Compact */}
         <div className="mb-3">
           <div className="flex items-center justify-between text-xs mb-1">
@@ -984,7 +984,7 @@ export default function DexPage() {
         </button>
 
         {/* Swap Card */}
-        <div className="flex-1 flex flex-col bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold overflow-hidden">
+        <div className="flex flex-col bg-vintage-charcoal/80 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/30 shadow-gold overflow-hidden">
           {/* Mode Toggle */}
           <div className="flex border-b border-vintage-gold/30">
             <button
@@ -1013,7 +1013,7 @@ export default function DexPage() {
             </button>
           </div>
 
-          <div className="flex-1 flex flex-col p-4 space-y-4">
+          <div className="flex flex-col p-4 space-y-4">
             {mode === "buy" ? (
               <>
                 {/* Pack counter row */}
@@ -1126,8 +1126,6 @@ export default function DexPage() {
                 <span className="text-red-400 text-sm">{currentError}</span>
               </div>
             )}
-
-            <div className="flex-1" />
 
             {/* Swap Button */}
             {!isConnected ? (
