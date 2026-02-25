@@ -411,7 +411,6 @@ const itemStyle: React.CSSProperties = {
   gap: "10px",
   background: "transparent",
   border: "none",
-  cursor: "pointer",
   color: "rgba(255,255,255,0.85)",
   fontSize: "13px",
   fontFamily: "system-ui, sans-serif",
