@@ -10,7 +10,7 @@ import { useClaimVBMS } from "@/hooks/fid/useVBMSContracts";
 import { VibeMailInboxWithClaim } from "@/components/fid/VibeMail";
 import { fidTranslations } from "@/lib/fid/fidTranslations";
 import { sdk } from '@farcaster/miniapp-sdk';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function VibeMailPage() {
@@ -18,6 +18,7 @@ export default function VibeMailPage() {
   const t = fidTranslations[lang];
   const farcasterContext = useFarcasterContext();
   const { address } = useAccount();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   // Support testFid for development
@@ -144,8 +145,7 @@ export default function VibeMailPage() {
       username={myCard?.username}
       userPfpUrl={myCard?.pfpUrl}
       onClose={() => {
-        // Navigate back to home
-        window.location.href = '/fid';
+        router.push('/fid');
       }}
       pendingVbms={vibeRewards?.pendingVbms || 0}
       address={address}

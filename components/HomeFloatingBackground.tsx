@@ -20,8 +20,9 @@ interface FloatItem {
   replies?: number;
 }
 
-const CACHE_KEY = "vmw_hfb_v6";
-const CACHE_DATE_KEY = "vmw_hfb_date_v6";
+const CACHE_KEY = "vmw_hfb_v7";
+const CACHE_DATE_KEY = "vmw_hfb_date_v7";
+const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
 function makeCastEl(item: FloatItem): HTMLDivElement {
   const card = document.createElement("div");
@@ -109,10 +110,23 @@ export function HomeFloatingBackground() {
         }
 
         if (!items) {
-          const cards = await convex.query(
-            (api as any).farcasterCards.getHighRarityCards,
-            { limit: 12 }
-          ) as Array<{ _id: string; fid: number; cardImageUrl: string }>;
+          // Fetch VibeFID cards from VibeFID Convex (scintillating-mandrill-101)
+          let cards: Array<{ _id: string; fid: number; cardImageUrl: string }> = [];
+          try {
+            const res = await fetch(`${VIBEFID_CONVEX}/api/query`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                path: "farcasterCards:getHighRarityCards",
+                args: { limit: 12 },
+                format: "json",
+              }),
+            });
+            if (res.ok) {
+              const data = await res.json();
+              cards = Array.isArray(data.value) ? data.value : [];
+            }
+          } catch {}
 
           const history = await convex.query(
             (api as any).castAuctions.getAuctionHistory,
