@@ -179,15 +179,22 @@ export const getAuctionHistory = query({
       .order("desc")
       .take(limit);
 
-    // Get active auctions (already have winners, still being featured)
+    // Get active auctions (being featured right now)
     const active = await ctx.db
       .query("castAuctions")
       .withIndex("by_status", (q) => q.eq("status", "active"))
       .order("desc")
       .take(limit);
 
-    // Combine and filter for those with winners
-    const allAuctions = [...active, ...completed]
+    // Get pending_feature auctions (won but not yet featured)
+    const pending = await ctx.db
+      .query("castAuctions")
+      .withIndex("by_status", (q) => q.eq("status", "pending_feature"))
+      .order("desc")
+      .take(limit);
+
+    // Combine all statuses that have winners
+    const allAuctions = [...active, ...pending, ...completed]
       .filter((a) => a.winnerAddress && a.winningBid)
       .sort((a, b) => (b.featureStartsAt || b._creationTime) - (a.featureStartsAt || a._creationTime))
       .slice(0, limit);
