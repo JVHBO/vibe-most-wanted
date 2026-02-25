@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -38,9 +40,6 @@ p, h1, h2, h3, h4, h5, h6, li, blockquote, td, th, dt, dd, figcaption, .cursor-t
 .cursor-not-allowed, :disabled, [disabled] {
   cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%232D2233' stroke='%23B8860B' stroke-width='2'/%3E%3Cpath stroke='%23DC2626' stroke-width='3' stroke-linecap='round' d='M7 7l10 10M17 7L7 17'/%3E%3C/svg%3E") 12 12, not-allowed;
 }
-
-/* Western title font */
-@import url('https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap');
 
 /* Prevent horizontal overflow for Farcaster miniapp */
 html, body {
