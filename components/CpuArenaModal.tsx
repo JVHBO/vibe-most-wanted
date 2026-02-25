@@ -213,7 +213,7 @@ export function CpuArenaModal({
     >
       <div
         className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-2xl border-2 border-vintage-gold/50 max-w-lg w-full overflow-y-auto shadow-2xl"
-        style={{ maxHeight: "calc(100vh - 120px)" }}
+        style={{ maxHeight: "min(520px, calc(100vh - 220px))" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ============ PASSWORD VIEW ============ */}
