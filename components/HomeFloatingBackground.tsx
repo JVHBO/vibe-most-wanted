@@ -228,6 +228,7 @@ export function HomeFloatingBackground() {
           loadedFlags[idx] = isCast;
 
           const el = document.createElement("div");
+          el.className = "cursor-pointer";
           el.style.cssText = `
             position:absolute;
             left:${x}px;
@@ -238,7 +239,6 @@ export function HomeFloatingBackground() {
             overflow:hidden;
             opacity:0;
             will-change:transform,opacity;
-            cursor:pointer;
             pointer-events:none;
           `;
 
