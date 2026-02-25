@@ -3501,7 +3501,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   }
 
   return (
-    <div className="min-h-screen game-background text-vintage-ice p-4 lg:p-6 overflow-x-hidden relative">
+    <div id="app-root" className="min-h-screen game-background text-vintage-ice p-4 lg:p-6 overflow-x-hidden relative">
       {/* 🔒 Session Lock Modal - blocks everything when another device takes over */}
       {isSessionLocked && (
         <SessionLockedModal

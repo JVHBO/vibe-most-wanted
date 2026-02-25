@@ -6,7 +6,7 @@ import { getCardUniqueId } from '@/lib/collections/index';
 import { AudioManager } from '@/lib/audio-manager';
 import Link from 'next/link';
 
-const CARDS_PER_PAGE = 12;
+const CARDS_PER_PAGE = 6;
 
 interface CardNft {
   imageUrl?: string;
@@ -38,11 +38,12 @@ export function MyCardsModal({ isOpen, onClose, nfts, soundEnabled }: MyCardsMod
 
   return (
     <div
-      className="fixed inset-0 bg-black/95 flex items-center justify-center z-[10000] p-2 pt-14 pb-20"
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-2 pt-14 pb-20"
       onClick={onClose}
     >
       <div
-        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold/50 w-full max-h-full flex flex-col shadow-2xl"
+        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold/50 w-full flex flex-col shadow-2xl"
+        style={{ maxHeight: 'calc(100dvh - 140px)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -61,7 +62,7 @@ export function MyCardsModal({ isOpen, onClose, nfts, soundEnabled }: MyCardsMod
         </div>
 
         {/* Cards Grid */}
-        <div className="flex-1 overflow-y-auto p-3">
+        <div className="flex-1 min-h-0 overflow-y-auto p-3">
           {nfts.length > 0 ? (
             <div className="grid grid-cols-3 gap-2">
               {pageCards.map((nft) => (
@@ -106,31 +107,45 @@ export function MyCardsModal({ isOpen, onClose, nfts, soundEnabled }: MyCardsMod
             <button
               onClick={() => goTo(page - 1)}
               disabled={page === 0}
-              className="px-4 py-1.5 bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-bold disabled:opacity-30"
+              className="px-3 py-1.5 bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-bold disabled:opacity-30 flex-shrink-0"
             >
               ←
             </button>
 
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => goTo(i)}
-                  className={`w-7 h-7 rounded text-xs font-bold transition-all ${
-                    i === page
-                      ? 'bg-vintage-gold text-vintage-black'
-                      : 'bg-vintage-black text-vintage-gold border border-vintage-gold/30'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+            <div className="flex items-center gap-1 overflow-hidden">
+              {(() => {
+                const items: (number | 'dot')[] = [];
+                for (let i = 0; i < totalPages; i++) {
+                  if (i === 0 || i === totalPages - 1 || (i >= page - 1 && i <= page + 1)) {
+                    items.push(i);
+                  } else if (items[items.length - 1] !== 'dot') {
+                    items.push('dot');
+                  }
+                }
+                return items.map((item, idx) =>
+                  item === 'dot' ? (
+                    <span key={`dot-${idx}`} className="text-vintage-gold/50 text-xs px-0.5">…</span>
+                  ) : (
+                    <button
+                      key={item}
+                      onClick={() => goTo(item)}
+                      className={`w-7 h-7 rounded text-xs font-bold flex-shrink-0 transition-all ${
+                        item === page
+                          ? 'bg-vintage-gold text-vintage-black'
+                          : 'bg-vintage-black text-vintage-gold border border-vintage-gold/30'
+                      }`}
+                    >
+                      {item + 1}
+                    </button>
+                  )
+                );
+              })()}
             </div>
 
             <button
               onClick={() => goTo(page + 1)}
               disabled={page === totalPages - 1}
-              className="px-4 py-1.5 bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-bold disabled:opacity-30"
+              className="px-3 py-1.5 bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-bold disabled:opacity-30 flex-shrink-0"
             >
               →
             </button>

@@ -296,9 +296,9 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   // SSR check
   if (typeof window === 'undefined') return null;
 
-  return createPortal(
+  return (
     <div
-      className="fixed inset-0 flex items-center justify-center bg-black/90 backdrop-blur-md p-4"
+      className="fixed inset-0 flex items-center justify-center bg-black/80 p-4"
       style={{ zIndex: Z_INDEX.modal }}
       onClick={onClose}
     >
@@ -401,7 +401,6 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
         {/* Decorative bottom border */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-vintage-gold to-transparent" />
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }

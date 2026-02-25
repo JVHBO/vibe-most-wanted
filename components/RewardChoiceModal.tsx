@@ -111,9 +111,9 @@ export function RewardChoiceModal({
   // SSR check
   if (typeof window === 'undefined') return null;
 
-  return createPortal(
+  return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
       onClick={(e) => {
         console.log('[RewardChoiceModal] Backdrop clicked', e.target);
       }}
@@ -205,7 +205,6 @@ export function RewardChoiceModal({
           Decidir depois
         </button>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 }
