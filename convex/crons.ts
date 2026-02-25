@@ -63,11 +63,11 @@ crons.interval(
   internal.castAuctions.processAuctionLifecycle
 );
 
-// 🧹 Cleanup stale TCG matches (every 5 minutes)
-// Auto-forfeit disconnected players, cancel abandoned matches, free gameState
+// 🧹 Cleanup stale TCG matches (every 30 minutes)
+// 🚀 BANDWIDTH FIX: Changed from 5min to 30min - TCG has low traffic, saves ~600MB/month
 crons.interval(
   "cleanup stale tcg matches",
-  { minutes: 5 },
+  { minutes: 30 },
   internal.tcg.cleanupStaleMatches
 );
 

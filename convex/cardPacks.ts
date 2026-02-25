@@ -707,41 +707,75 @@ export const openAllPacks = mutation({
       throw new Error("Invalid pack type");
     }
 
+    // 🚀 BANDWIDTH FIX: Pre-fetch entire inventory ONCE, build Map for O(1) lookups
+    // Before: N queries per card (N = packs × cards × inventory_size reads)
+    // After:  1 query total, rest is in-memory Map lookups
+    const existingInventory = await ctx.db
+      .query("cardInventory")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .take(500);
+    // Map: cardId → {_id, quantity} for fast duplicate detection
+    const inventoryMap = new Map(existingInventory.map(c => [c.cardId, c]));
+    // Track quantity increments for existing cards (avoid redundant patches)
+    const pendingPatches = new Map<string, { id: any; newQty: number }>();
+
     // Open ALL packs at once
     const allRevealedCards = [];
     const totalPacks = pack.unopened;
-    
+
     for (let p = 0; p < totalPacks; p++) {
-      // Generate cards for this pack
       for (let i = 0; i < packInfo.cards; i++) {
         const rarity = rollRarity(packInfo.rarityOdds);
         const card = generateRandomCard(rarity, pack.packType);
 
-        // Check if player already has this card
-        const existingCard = await ctx.db
-          .query("cardInventory")
-          .withIndex("by_address", (q) => q.eq("address", address))
-          .filter((q) => q.eq(q.field("cardId"), card.cardId))
-          .first();
+        const existing = inventoryMap.get(card.cardId);
 
-        if (existingCard) {
-          // Increment quantity (duplicate)
-          await ctx.db.patch(existingCard._id, {
-            quantity: existingCard.quantity + 1,
-          });
-          // Show as individual card in animation (isDuplicate only affects "NEW!" badge)
+        if (existing) {
+          // Duplicate — accumulate quantity in memory
+          const pending = pendingPatches.get(card.cardId);
+          const currentQty = pending ? pending.newQty : existing.quantity;
+          pendingPatches.set(card.cardId, { id: existing._id, newQty: currentQty + 1 });
+          allRevealedCards.push({ ...card, isDuplicate: true, quantity: 1 });
+        } else if (pendingPatches.has(card.cardId)) {
+          // Already queued as a new insert this session — treat as duplicate
+          const pending = pendingPatches.get(card.cardId)!;
+          pendingPatches.set(card.cardId, { id: pending.id, newQty: pending.newQty + 1 });
           allRevealedCards.push({ ...card, isDuplicate: true, quantity: 1 });
         } else {
-          // Add new card to inventory
+          // New card — mark in map to prevent duplicate inserts within this batch
+          inventoryMap.set(card.cardId, { _id: null, quantity: 1 } as any);
+          pendingPatches.set(card.cardId, { id: null, newQty: 1 });
+          allRevealedCards.push({ ...card, isDuplicate: false, quantity: 1 });
+        }
+      }
+    }
+
+    // Apply all writes after generation — patches for duplicates, inserts for new
+    for (const [cardId, { id, newQty }] of pendingPatches) {
+      if (id !== null) {
+        // Existing card: update quantity
+        await ctx.db.patch(id, { quantity: newQty });
+      } else {
+        // New card: insert once
+        const card = allRevealedCards.find(c => c.cardId === cardId && !c.isDuplicate);
+        if (card) {
           await ctx.db.insert("cardInventory", {
             address,
-            ...card,
+            cardId: card.cardId,
+            suit: card.suit,
+            rank: card.rank,
+            variant: card.variant,
+            rarity: card.rarity,
+            imageUrl: card.imageUrl,
+            badgeType: card.badgeType,
+            foil: card.foil,
+            wear: card.wear,
+            power: card.power,
             quantity: 1,
             equipped: false,
             obtainedAt: Date.now(),
-            sourcePackType: pack.packType, // Track pack origin for burn value
+            sourcePackType: pack.packType,
           });
-          allRevealedCards.push({ ...card, isDuplicate: false, quantity: 1 });
         }
       }
     }
