@@ -63,11 +63,7 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   const { lang } = useLanguage();
   const { isMusicEnabled, setIsMusicEnabled } = useMusic();
   const pathname = usePathname();
-  const showFloating = !pathname.startsWith("/fid") &&
-    !pathname.startsWith("/raid/deck") &&
-    !pathname.startsWith("/raid/leaderboard") &&
-    !pathname.startsWith("/leaderboard") &&
-    !pathname.startsWith("/dex");
+  const showFloating = true;
   const [collapsed, setCollapsed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifStatus, setNotifStatus] = useState<"default" | "granted" | "denied">("default");
