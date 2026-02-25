@@ -15,7 +15,7 @@ import { api } from '@/convex/_generated/api';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useFarcasterContext } from '@/lib/hooks/useFarcasterContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ChainToggle } from '@/components/ChainToggle';
+
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -1014,10 +1014,16 @@ export function SettingsModal({
                     </p>
                   </div>
                 </div>
-                <ChainToggle
-                  chain={(preferredChain as "base" | "arbitrum") || "base"}
-                  onChange={(c) => onChainChange(c)}
-                />
+                <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
+                  <button
+                    onClick={() => { if (soundEnabled) AudioManager.buttonClick(); onChainChange("base"); }}
+                    style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: preferredChain !== "arbitrum" ? '#F59E0B' : '#3F3F46', color: preferredChain !== "arbitrum" ? '#000' : '#A1A1AA' }}
+                  >BASE</button>
+                  <button
+                    onClick={() => { if (soundEnabled) AudioManager.buttonClick(); onChainChange("arbitrum"); }}
+                    style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: preferredChain === "arbitrum" ? '#F59E0B' : '#3F3F46', color: preferredChain === "arbitrum" ? '#000' : '#A1A1AA' }}
+                  >ARB</button>
+                </div>
               </div>
             </div>
           )}

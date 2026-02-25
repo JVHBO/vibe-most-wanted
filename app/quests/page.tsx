@@ -13,7 +13,7 @@ import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
-import { ChainToggle } from "@/components/ChainToggle";
+
 
 export default function QuestsPage() {
   const router = useRouter();
@@ -42,7 +42,12 @@ export default function QuestsPage() {
   const userFid = profileDashboard?.fid;
   // Effective chain: use profile preference (safety net in useArbValidator
   // blocks ARB tx on unsupported clients like Base App)
-  const effectiveChain = (profileDashboard as any)?.preferredChain || "base";
+  const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('base');
+  useEffect(() => {
+    const c = (profileDashboard as any)?.preferredChain;
+    if (c) setLocalChain(c);
+  }, [(profileDashboard as any)?.preferredChain]);
+  const effectiveChain = localChain;
 
   // State
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -125,6 +130,7 @@ export default function QuestsPage() {
   }, []);
 
   const handleSwitchChain = async (chain: 'base' | 'arbitrum') => {
+    setLocalChain(chain);
     if (!address) return;
     try { await setPreferredChainMutation({ address, chain }); }
     catch (e) { console.error('Failed to switch chain:', e); }
@@ -375,10 +381,16 @@ export default function QuestsPage() {
           </button>
           <h1 className="text-xl font-display font-bold text-vintage-gold tracking-wider">{t('questsTitle')}</h1>
           {arbSupported ? (
-            <ChainToggle
-              chain={effectiveChain as "base" | "arbitrum"}
-              onChange={(c) => handleSwitchChain(c)}
-            />
+            <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
+              <button
+                onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
+                style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: effectiveChain === 'base' ? '#F59E0B' : '#3F3F46', color: effectiveChain === 'base' ? '#000' : '#A1A1AA' }}
+              >BASE</button>
+              <button
+                onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
+                style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: effectiveChain === 'arbitrum' ? '#F59E0B' : '#3F3F46', color: effectiveChain === 'arbitrum' ? '#000' : '#A1A1AA' }}
+              >ARB</button>
+            </div>
           ) : <div className="w-20" />}
         </div>
 

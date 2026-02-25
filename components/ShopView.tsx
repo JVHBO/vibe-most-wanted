@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { getAssetUrl } from "@/lib/ipfs-assets";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
 import { AudioManager } from "@/lib/audio-manager";
-import { ChainToggle } from "@/components/ChainToggle";
+
 
 interface ShopViewProps {
   address: string | undefined;
@@ -50,11 +50,17 @@ export function ShopView({ address }: ShopViewProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  const effectiveChain = (profileDashboard as any)?.preferredChain || "base";
+  const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('base');
+  useEffect(() => {
+    const c = (profileDashboard as any)?.preferredChain;
+    if (c) setLocalChain(c);
+  }, [(profileDashboard as any)?.preferredChain]);
+  const effectiveChain = localChain;
   const isArb = effectiveChain === "arbitrum";
   const packsPerDay = isArb ? 3 : 1;
 
   const handleSwitchChain = async (chain: 'base' | 'arbitrum') => {
+    setLocalChain(chain);
     if (!address) return;
     try { await setPreferredChainMutation({ address, chain }); }
     catch (e) { console.error('Failed to switch chain:', e); }
@@ -167,7 +173,7 @@ export function ShopView({ address }: ShopViewProps) {
                   </h3>
                   <p className="text-vintage-ice/60 text-xs">{t('shopNothingCardPerPack' as any)}</p>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-xs font-bold ${isArb ? 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black' : 'bg-vintage-gold/20 text-vintage-gold'}`}>
+                <div style={{ padding:"4px 12px", borderRadius:"999px", fontSize:"12px", fontWeight:700, background:"#F59E0B", color:"#000" }}>
                   {isArb ? t('shopDayArb' as any) : t('shopDayBase' as any)}
                 </div>
               </div>
@@ -210,10 +216,16 @@ export function ShopView({ address }: ShopViewProps) {
                     </p>
                     <p className="text-vintage-ice/50 text-xs">{t('shopArbModeDesc' as any)}</p>
                   </div>
-                  <ChainToggle
-                    chain={effectiveChain as "base" | "arbitrum"}
-                    onChange={(c) => handleSwitchChain(c)}
-                  />
+                  <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
+                    <button
+                      onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
+                      style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: effectiveChain === 'base' ? '#F59E0B' : '#3F3F46', color: effectiveChain === 'base' ? '#000' : '#A1A1AA' }}
+                    >BASE</button>
+                    <button
+                      onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
+                      style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: effectiveChain === 'arbitrum' ? '#F59E0B' : '#3F3F46', color: effectiveChain === 'arbitrum' ? '#000' : '#A1A1AA' }}
+                    >ARB</button>
+                  </div>
                 </div>
               )}
 

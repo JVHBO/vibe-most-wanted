@@ -208,11 +208,11 @@ export function CpuArenaModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-2 sm:p-4"
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-3"
       onClick={onClose}
     >
       <div
-        className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-2xl border-2 border-vintage-gold/50 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+        className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-2xl border-2 border-vintage-gold/50 max-w-lg w-full max-h-[80vh] overflow-y-auto shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ============ PASSWORD VIEW ============ */}

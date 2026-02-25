@@ -15,7 +15,7 @@ import { encodeBuilderCodeSuffix, BUILDER_CODE } from '@/lib/builder-code';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
 import { isMiniappMode, isWarpcastClient } from '@/lib/utils/miniapp';
-import { ChainToggle } from '@/components/ChainToggle';
+
 
 // Roulette translations
 const rouletteTranslations = {
@@ -318,7 +318,12 @@ export function Roulette({ onClose }: RouletteProps) {
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
   const [arbSupported, setArbSupported] = useState(false);
 
-  const currentChain = (profileDashboard as any)?.preferredChain || 'base';
+  const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('base');
+  useEffect(() => {
+    const c = (profileDashboard as any)?.preferredChain;
+    if (c) setLocalChain(c);
+  }, [(profileDashboard as any)?.preferredChain]);
+  const currentChain = localChain;
 
   useEffect(() => {
     if (!isMiniappMode()) { setArbSupported(true); return; }
@@ -333,6 +338,7 @@ export function Roulette({ onClose }: RouletteProps) {
   }, []);
 
   const handleSwitchChain = async (chain: 'base' | 'arbitrum') => {
+    setLocalChain(chain);
     if (!address) return;
     try { await setPreferredChainMutation({ address, chain }); }
     catch (e) { console.error('Failed to switch chain:', e); }
@@ -833,10 +839,16 @@ export function Roulette({ onClose }: RouletteProps) {
         <h2 className="text-vintage-gold font-bold text-xl">{t.title}</h2>
         <div className="flex items-center gap-2">
           {arbSupported && (
-            <ChainToggle
-              chain={currentChain as "base" | "arbitrum"}
-              onChange={(c) => handleSwitchChain(c)}
-            />
+            <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
+              <button
+                onClick={() => handleSwitchChain('base')}
+                style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: currentChain === 'base' ? '#F59E0B' : '#3F3F46', color: currentChain === 'base' ? '#000' : '#A1A1AA' }}
+              >BASE</button>
+              <button
+                onClick={() => handleSwitchChain('arbitrum')}
+                style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: currentChain === 'arbitrum' ? '#F59E0B' : '#3F3F46', color: currentChain === 'arbitrum' ? '#000' : '#A1A1AA' }}
+              >ARB</button>
+            </div>
           )}
           {onClose && (
             <button
