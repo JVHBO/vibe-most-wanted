@@ -16,8 +16,13 @@ interface FloatItem {
   winnerNum?: number;
 }
 
-const CACHE_KEY = "vmw_hfb_v13";
-const CACHE_DATE_KEY = "vmw_hfb_date_v13";
+const CACHE_KEY = "vmw_hfb_v14";
+const CACHE_DATE_KEY = "vmw_hfb_date_v14";
+
+// Casts to hide from the background animation
+const HIDDEN_CAST_URLS = new Set([
+  "https://farcaster.xyz/jvhbo/0x20586a19",
+]);
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
 // Local VBMS card images — always available, no API call needed
@@ -159,7 +164,7 @@ export function HomeFloatingBackground() {
 
           // Build cast float items — use data already stored in Convex, no API calls
           // Reverse so oldest winner = #1, newest = #N
-          const validWinners = winners.filter(w => w.warpcastUrl && (w.castAuthorPfp || w.castAuthorUsername));
+          const validWinners = winners.filter(w => w.warpcastUrl && !HIDDEN_CAST_URLS.has(w.warpcastUrl) && (w.castAuthorPfp || w.castAuthorUsername));
           const castItems: FloatItem[] = [...validWinners].reverse().map((w, idx) => ({
             id: w._id,
             href: w.warpcastUrl!,
