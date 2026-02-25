@@ -16,6 +16,18 @@ export const getActiveCasts = query({
 });
 
 
+// Get all featured casts (active + history) for floating background
+export const getAllCasts = query({
+  args: {},
+  handler: async (ctx) => {
+    const casts = await ctx.db
+      .query("featuredCasts")
+      .order("desc")
+      .take(50);
+    return casts;
+  },
+});
+
 // Set a featured cast (admin only)
 export const setFeaturedCast = internalMutation({
   args: {

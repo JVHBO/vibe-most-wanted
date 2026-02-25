@@ -128,15 +128,15 @@ export function HomeFloatingBackground() {
             }
           } catch {}
 
-          // Fetch featured casts from VMW Convex (featuredCasts table has actual data)
+          // Fetch all featured casts from VMW Convex (active + history)
           const featuredCasts = await convex.query(
-            (api as any).featuredCasts.getActiveCasts,
+            (api as any).featuredCasts.getAllCasts,
             {}
           ) as Array<{ _id: string; warpcastUrl: string; castHash: string }>;
 
           // Enrich each featured cast with Neynar data (text, pfp, username, stats)
           const castItems: FloatItem[] = [];
-          for (const fc of featuredCasts) {
+          await Promise.all(featuredCasts.map(async (fc) => {
             try {
               const res = await fetch(`/api/cast-by-url?url=${encodeURIComponent(fc.warpcastUrl)}`);
               if (res.ok) {
@@ -156,7 +156,10 @@ export function HomeFloatingBackground() {
                 }
               }
             } catch {}
-          }
+          }));
+
+          // Sort by most likes
+          castItems.sort((a, b) => (b.likes || 0) - (a.likes || 0));
 
           items = [
             ...cards.filter(c => c.cardImageUrl).map(c => ({
