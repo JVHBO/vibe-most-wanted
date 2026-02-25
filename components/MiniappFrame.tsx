@@ -183,11 +183,11 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
         <div
           ref={menuRef}
           onMouseDown={handleChromeMouseDown}
+          className={isDragging ? "cursor-grabbing" : "cursor-grab"}
           style={{
             width: `${FRAME_W}px`,
             height: `${CHROME_H}px`,
             flexShrink: 0,
-            cursor: isDragging ? "grabbing" : "grab",
             background: "#111",
             borderBottom: "1px solid rgba(255,255,255,0.07)",
             display: "flex",
