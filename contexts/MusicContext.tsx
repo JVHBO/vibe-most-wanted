@@ -341,6 +341,12 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
     isPlaylist: boolean = false,
     onTrackEnd?: () => void
   ) => {
+    // Guard: never pass youtube: scheme to HTML Audio
+    if (trackUrl.startsWith('youtube:')) {
+      console.warn('[MusicContext] loadAndFadeIn called with YouTube scheme, ignoring');
+      return;
+    }
+
     // FORCE STOP any previous audio to prevent dual playback bug
     if (audioRef.current) {
       try {
@@ -947,6 +953,13 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
       // Audio lost (e.g. returned from miniapp) — restart using loadAndFadeIn
       // (avoids crossfade's same-track early-return guard)
       if (!audioRef.current && currentTrackRef.current) {
+        // YouTube tracks use an iframe player, not HTML Audio — just resume the YT player
+        if (currentTrackRef.current.startsWith('youtube:')) {
+          if (youtubePlayerRef.current && typeof youtubePlayerRef.current.playVideo === 'function') {
+            try { youtubePlayerRef.current.playVideo(); } catch(e) {}
+          }
+          return;
+        }
         loadAndFadeInRef.current(currentTrackRef.current, volumeRef.current);
         return;
       }
