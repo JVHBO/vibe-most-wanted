@@ -1180,7 +1180,7 @@ export default function DexPage() {
       {/* Bonding Info Modal */}
       {showBondingInfo && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-start justify-center pt-2 pb-20 px-3 overflow-hidden">
-          <div className="bg-vintage-deep-black border-2 border-vintage-gold/50 rounded-2xl max-w-md w-full p-4 shadow-2xl max-h-[80vh] overflow-y-auto overflow-x-hidden">
+          <div className="bg-vintage-deep-black border-2 border-vintage-gold/50 rounded-2xl max-w-md w-full p-4 shadow-2xl max-h-[calc(100vh-100px)] overflow-y-auto overflow-x-hidden">
             {/* Header */}
             <div className="flex items-center justify-center gap-2 mb-3">
               <span className="text-2xl">💎</span>
