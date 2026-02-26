@@ -598,7 +598,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         </div>
           </div>
         </div>,
-        document.body
+        document.querySelector('[data-phone-body]') || document.body
       )}
 
       {/* Transaction History Modal - Separate Portal */}

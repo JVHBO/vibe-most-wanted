@@ -1179,66 +1179,43 @@ export default function DexPage() {
 
       {/* Bonding Info Modal */}
       {showBondingInfo && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-start justify-center pt-2 pb-24 px-3 overflow-hidden">
-          <div className="bg-vintage-deep-black border-2 border-vintage-gold/50 rounded-2xl max-w-md w-full p-4 shadow-2xl max-h-[65vh] overflow-y-auto overflow-x-hidden">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-center justify-center px-4 py-16 overflow-hidden">
+          <div className="bg-vintage-deep-black border border-vintage-gold/50 rounded-xl w-full max-w-sm p-4 shadow-2xl overflow-x-hidden">
             {/* Header */}
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <span className="text-2xl">💎</span>
-              <h3 className="text-lg font-bold text-vintage-gold">VBMS Token & Bonding Curve</h3>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span>💎</span>
+                <h3 className="text-sm font-bold text-vintage-gold">{t.bondingInfoTitle}</h3>
+              </div>
+              <button onClick={() => setShowBondingInfo(false)} className="text-vintage-ice/40 hover:text-vintage-ice text-xl leading-none">×</button>
             </div>
 
-            {/* Vibe Market Badge */}
-            <div className="bg-purple-500/20 border border-purple-500/40 rounded-lg p-2 mb-3 text-center">
-              <p className="text-purple-300 text-xs">Powered by <span className="font-bold">Vibe Market</span> Bonding Curve</p>
-              <p className="text-purple-300/60 text-[10px]">Created: Sep 29, 2025 at 14:16</p>
+            {/* Descriptions */}
+            <div className="bg-vintage-charcoal/40 rounded-lg p-2.5 mb-3 space-y-1.5">
+              <p className="text-xs text-vintage-ice/80">{t.bondingInfoDesc1}</p>
+              <p className="text-xs text-vintage-ice/80">{t.bondingInfoDesc2}</p>
             </div>
 
-            {/* What is VBMS */}
-            <div className="mb-3">
-              <h4 className="text-vintage-gold font-bold text-sm mb-1">🎴 What is VBMS?</h4>
-              <p className="text-vintage-ice/80 text-xs">VBMS is the native token of <span className="text-vintage-gold">Vibe Most Wanted</span>, a collectible card battle game on Base chain. Unopened packs contain 100,000 VBMS. Once opened, the amount depends on the card rarity.</p>
-            </div>
-
-            {/* What is Bonding Curve */}
-            <div className="mb-3">
-              <h4 className="text-vintage-gold font-bold text-sm mb-1">📈 What is a Bonding Curve?</h4>
-              <p className="text-vintage-ice/80 text-xs mb-2">A bonding curve is a smart contract on <span className="text-purple-400 font-bold">Vibe Market</span> that automatically sets token prices based on supply:</p>
-              <ul className="text-vintage-ice/70 text-xs space-y-1 ml-3">
-                <li>• <span className="text-green-400">Buy</span> → Price goes UP</li>
-                <li>• <span className="text-red-400">Sell</span> → Price goes DOWN</li>
-                <li>• No order books, instant trades</li>
-                <li>• Liquidity always available</li>
-              </ul>
-            </div>
-
-            {/* Market Phases */}
-            <div className="mb-3">
-              <h4 className="text-vintage-gold font-bold text-sm mb-2">🔄 Market Phases</h4>
-              <div className="space-y-2">
-                {/* Phase 1 */}
-                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-400 text-lg">●</span>
-                    <span className="text-green-400 font-bold text-xs">PHASE 1: Bonding Curve</span>
-                    <span className="text-green-400 text-[10px] ml-auto bg-green-500/20 px-1.5 py-0.5 rounded">ACTIVE</span>
-                  </div>
-                  <p className="text-vintage-ice/70 text-[11px] mt-1 ml-6">Trade directly on Vibe Market curve. Price adjusts with each trade.</p>
+            {/* Phases */}
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-green-400 font-bold text-[11px]">{t.bondingInfoPhase1}</span>
+                  <span className="text-green-400 text-[9px] bg-green-500/20 px-1 rounded">ACTIVE</span>
                 </div>
-
-                {/* Phase 2 */}
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-2 opacity-70">
-                  <div className="flex items-center gap-2">
-                    <span className="text-blue-400 text-lg">○</span>
-                    <span className="text-blue-400 font-bold text-xs">PHASE 2: Uniswap</span>
-                    <span className="text-blue-400/60 text-[10px] ml-auto bg-blue-500/20 px-1.5 py-0.5 rounded">NEXT</span>
-                  </div>
-                  <p className="text-vintage-ice/60 text-[11px] mt-1 ml-6">When 2.5 ETH collected, liquidity migrates to Uniswap V3.</p>
+                <p className="text-vintage-ice/60 text-[10px]">{t.bondingInfoPhase1Desc}</p>
+              </div>
+              <div className="bg-vintage-charcoal/30 border border-vintage-gold/10 rounded-lg p-2 opacity-60">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-vintage-ice/50 font-bold text-[11px]">{t.bondingInfoPhase2}</span>
+                  <span className="text-vintage-ice/30 text-[9px] px-1">NEXT</span>
                 </div>
+                <p className="text-vintage-ice/40 text-[10px]">{t.bondingInfoPhase2Desc}</p>
               </div>
             </div>
 
-            {/* Market Stats */}
-            <div className="bg-vintage-charcoal/50 rounded-lg p-3 mb-3 space-y-2">
+            {/* Stats */}
+            <div className="bg-vintage-charcoal/50 rounded-lg p-2.5 mb-3 space-y-1.5">
               <div className="flex justify-between text-xs">
                 <span className="text-vintage-burnt-gold">{t.marketCap}</span>
                 <span className="text-vintage-gold font-mono font-bold">{marketCap.isLoading ? "..." : marketCap.marketCapFormatted}</span>
@@ -1248,49 +1225,32 @@ export default function DexPage() {
                 <span className="text-vintage-gold font-mono font-bold">{bondingProgress.ethPrice ? "$" + bondingProgress.ethPrice.toLocaleString() : "..."}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-vintage-burnt-gold">Bonding Curve Balance</span>
+                <span className="text-vintage-burnt-gold">{t.bondingCurve}</span>
                 <span className="text-vintage-gold font-mono font-bold">{bondingProgress.ethBalance.toFixed(4)} ETH (~${bondingProgress.usdBalance.toFixed(0)})</span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-vintage-burnt-gold">{t.contract}</span>
-                <a href="https://basescan.org/token/0xb03439567cd22f278b21e1ffcdfb8e1696763827" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 font-mono underline">0xb034...3827</a>
+                <a href="https://basescan.org/token/0xb03439567cd22f278b21e1ffcdfb8e1696763827" target="_blank" rel="noopener noreferrer" className="text-vintage-burnt-gold hover:text-vintage-gold font-mono underline">0xb034...3827</a>
               </div>
             </div>
 
-            {/* Fee Breakdown */}
-            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-3 py-2 mb-3">
-              <p className="text-yellow-400 font-bold text-xs mb-1">Trading Fees</p>
-              <div className="flex justify-between text-xs">
+            {/* Fees + Close */}
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-yellow-500/10 border border-yellow-500/20 rounded-lg px-2 py-1.5 flex justify-between text-xs">
                 <span className="text-green-400">{t.buyFee}</span>
                 <span className="text-red-400">{t.sellFee}</span>
                 <span className="text-yellow-400 font-bold">{t.totalFee}</span>
               </div>
+              <button
+                onClick={() => setShowBondingInfo(false)}
+                className="px-4 py-1.5 rounded-lg bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-bold text-xs transition"
+              >{t.bondingInfoClose}</button>
             </div>
-
-            {/* Learn More Link */}
-            <a
-              href="https://docs.wield.xyz/docs/vibemarket#market-phases"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1 text-purple-400 hover:text-purple-300 text-xs mb-3"
-            >
-              <span>📚</span>
-              <span className="underline">Vibe Market Docs - Market Phases</span>
-              <span>→</span>
-            </a>
-
-            {/* Close Button */}
-            <button
-              onClick={() => setShowBondingInfo(false)}
-              className="w-full py-2.5 rounded-xl bg-vintage-gold hover:bg-yellow-500 text-vintage-black font-bold transition text-sm"
-            >
-              Got it! ✓
-            </button>
           </div>
         </div>
       )}
 
-      {/* Buy Warning Modal */}
+            {/* Buy Warning Modal */}
       {showBuyWarning && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[10000] flex items-start justify-center pt-2 pb-24 px-3 overflow-hidden">
           <div className="bg-vintage-deep-black border-2 border-yellow-500/50 rounded-2xl max-w-md w-full p-6 shadow-2xl">
