@@ -50,7 +50,6 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const [showHistory, setShowHistory] = useState(false);
   const [cooldown, setCooldown] = useState(inboxStatus.cooldownRemaining || 0);
   const [convertAmount, setConvertAmount] = useState("");
-  const [pendingConversion, setPendingConversion] = useState<{ amount: number; timestamp: number } | null>(null);
 
   // 🔒 Get Farcaster context for FID verification
   const farcasterContext = useFarcasterContext();
@@ -127,26 +126,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const claimInboxAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
-  const recoverFailedConversion = useAction(api.vbmsClaim.recoverFailedConversion);
-  const getPendingConversion = useAction(api.vbmsClaim.getPendingConversionInfo);
   const { claimVBMS } = useClaimVBMS();
-
-  // 🔄 Check for pending conversions on mount
-  useEffect(() => {
-    if (!address) return;
-    const checkPending = async () => {
-      try {
-        const pending = await getPendingConversion({ address });
-        if (pending && pending.amount > 0) {
-          setPendingConversion({ amount: pending.amount, timestamp: pending.timestamp });
-          console.log('[CoinsInboxModal] Found pending conversion:', pending);
-        }
-      } catch (error) {
-        console.log('[CoinsInboxModal] No pending conversion found');
-      }
-    };
-    checkPending();
-  }, [address, getPendingConversion]);
 
   // Get VBMS wallet balance from blockchain (using Farcaster-compatible hook for miniapp)
   const { balance: vbmsWalletBalance } = useFarcasterVBMSBalance(address);
@@ -445,100 +425,12 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
         toast.error(userMessage);
       }
-
-      // 🔄 Set pending conversion state for recovery UI
-      setPendingConversion({ amount: selectedAmount, timestamp: Date.now() });
-
-      // Show recovery instructions prominently - use translated text
-      toast.warning(`⚠️ ${t('convertPendingTitle')}. ${t('convertPendingWait')} 2 min.`, {
-        duration: 15000,
-      });
     } finally {
       // 🔒 ALWAYS reset processing state
       setIsProcessing(false);
     }
   };
 
-  // Handle recovery of failed conversion
-  const handleRecoverConversion = async () => {
-    if (!address) {
-      toast.error("Conecte sua carteira");
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      const result = await recoverFailedConversion({ address });
-      toast.success(`✅ Recuperados ${result.recoveredAmount.toLocaleString()} coins!`);
-      setPendingConversion(null); // Clear pending state
-
-      setTimeout(() => {
-        onClose();
-      }, 1500);
-    } catch (error: any) {
-      console.error('[CoinsInboxModal] Error recovering TESTVBMS:', error);
-
-      // Check if it's a claim error code that needs translation
-      if (isClaimErrorCode(error.message)) {
-        const { message: translatedMsg, showSupport } = translateClaimError(error.message, lang as SupportedLanguage);
-
-        // Special handling for "already claimed" - it's actually success
-        if (error.message.includes('BLOCKED_ALREADY_CLAIMED')) {
-          toast.success("✅ Sua conversão já foi processada com sucesso no blockchain!");
-          setPendingConversion(null);
-        } else if (showSupport) {
-          toast.error(
-            <div className="flex flex-col gap-1">
-              <span>{translatedMsg}</span>
-              <span className="text-sm opacity-80">{getSupportText(lang as SupportedLanguage)} <SupportLink /></span>
-            </div>,
-            { duration: 10000 }
-          );
-        } else {
-          // For cooldown/wait errors, use info instead of error
-          if (error.message.includes('WAIT_RECOVER') || error.message.includes('COOLDOWN')) {
-            toast.info(translatedMsg);
-          } else {
-            toast.error(translatedMsg);
-          }
-        }
-      } else {
-        // Legacy error handling
-        const errMsg = error.message?.toLowerCase() || '';
-        if (errMsg.includes('wait') || errMsg.includes('seconds')) {
-          toast.info(error.message);
-        } else if (errMsg.includes('blockchain') || errMsg.includes('already claimed')) {
-          toast.success("✅ Sua conversão já foi processada com sucesso no blockchain!");
-          setPendingConversion(null);
-        } else {
-          toast.error(error.message || "Erro ao recuperar coins");
-        }
-      }
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Calculate recovery time remaining
-  const [recoveryTimeRemaining, setRecoveryTimeRemaining] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!pendingConversion) {
-      setRecoveryTimeRemaining(null);
-      return;
-    }
-
-    const updateRemaining = () => {
-      const twoMinutesAfter = pendingConversion.timestamp + 2 * 60 * 1000;
-      const remaining = twoMinutesAfter - Date.now();
-      setRecoveryTimeRemaining(remaining <= 0 ? 0 : Math.ceil(remaining / 1000));
-    };
-
-    updateRemaining();
-    const timer = setInterval(updateRemaining, 1000);
-    return () => clearInterval(timer);
-  }, [pendingConversion]);
 
   // SSR check
   if (typeof window === 'undefined') return null;
@@ -701,48 +593,6 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             </div>
           )}
 
-          {/* Pending Conversion Alert */}
-          {pendingConversion && pendingConversion.amount > 0 && useFarcasterSDK && (
-            <div className="bg-[#2A1A00] border-3 border-[#FF9900] shadow-[3px_3px_0px_#000] p-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">⚠️</span>
-                <h4 className="text-[#FF9900] font-bold text-sm">{t('convertPendingTitle')}</h4>
-              </div>
-              <p className="text-[#FFCC66]/80 text-xs mb-2">
-                {t('convertPendingDesc').replace('{amount}', pendingConversion.amount.toLocaleString())}
-              </p>
-              {recoveryTimeRemaining !== null && recoveryTimeRemaining > 0 ? (
-                <div className="text-center">
-                  <span className="text-[#FF9900] text-xs font-bold font-mono">
-                    ⏳ {Math.floor(recoveryTimeRemaining / 60)}:{String(recoveryTimeRemaining % 60).padStart(2, '0')} {t('convertPendingToRecover')}
-                  </span>
-                </div>
-              ) : (
-                <button
-                  onClick={handleRecoverConversion}
-                  disabled={isProcessing}
-                  className="w-full py-2 bg-[#FF9900] border-2 border-black text-black font-bold text-xs shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all disabled:opacity-50 flex items-center justify-center gap-1"
-                >
-                  🔄 {t('convertRecoverNow').replace('{amount}', pendingConversion.amount.toLocaleString())}
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Recover Failed TX */}
-          {useFarcasterSDK && !pendingConversion && (
-            <button
-              onClick={handleRecoverConversion}
-              disabled={isProcessing}
-              className="w-full text-xs py-2 px-3 bg-[#1A0A00] border-2 border-[#FF6600]/60 text-[#FF9944] font-bold flex items-center justify-center gap-2 hover:bg-[#2A1500] transition-all disabled:opacity-50"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
-                <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
-              </svg>
-              {t('convertRecoverFailed')}
-            </button>
-          )}
 
           </div>
         </div>

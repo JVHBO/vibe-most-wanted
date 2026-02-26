@@ -43,9 +43,7 @@ function getTranslationKey(code: string): string {
     'CLAIM_INSUFFICIENT_BALANCE': 'claimErrorInsufficientBalance',
     'CLAIM_MINIMUM_REQUIRED': 'claimErrorMinimumRequired',
     'CLAIM_BLACKLISTED': 'claimErrorBlacklisted',
-    'CLAIM_SIGNATURE_FAILED_RESTORED': 'claimErrorSignatureFailed',
-    'CLAIM_SIGNATURE_FAILED_MANUAL': 'claimErrorSignatureFailedManual',
-    'CLAIM_NO_PENDING': 'claimErrorNoPending',
+    'CLAIM_SIGNATURE_FAILED': 'claimErrorSignatureFailed',
     'CLAIM_TX_RECORDED': 'claimErrorTxRecorded',
   };
   return codeToKey[code] || '';
@@ -58,7 +56,6 @@ const errorsWithSupport = [
   'CLAIM_FID_REQUIRED',
   'CLAIM_FID_MISMATCH',
   'CLAIM_BLACKLISTED',
-  'CLAIM_SIGNATURE_FAILED_MANUAL',
 ];
 
 /**
@@ -97,8 +94,6 @@ export function translateClaimError(
     if (message.includes('{balance}')) {
       message = message.replace('{balance}', params[1] || '?');
     }
-  } else if (code === 'CLAIM_SIGNATURE_FAILED_RESTORED') {
-    message = message.replace('{amount}', params[0] || '?');
   }
 
   const showSupport = errorsWithSupport.includes(code);
