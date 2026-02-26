@@ -284,7 +284,7 @@ const convex = useConvex();
     });
 
     // Button is already disabled for these cases, but double-check
-    if (!address || attacksRemaining <= 0 || !player.hasDefenseDeck || nfts.length === 0) {
+    if (!address || attacksRemaining <= 0 || nfts.length === 0) {
       console.log('[Leaderboard] Attack blocked - conditions not met');
       return;
     }
@@ -423,7 +423,7 @@ const convex = useConvex();
       <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
 
       {/* ===== TOP HUD ===== */}
-      <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black via-black/90 to-transparent backdrop-blur-sm">
+      <div className="absolute top-0 left-0 right-0 z-[250] p-3 bg-gradient-to-b from-black via-black/90 to-transparent backdrop-blur-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           {/* Left: Back button */}
           <Link
@@ -558,9 +558,9 @@ const convex = useConvex();
                       {!isCurrentUser(top3[1].address) && (
                         <button
                           onClick={() => handleAttackClick(top3[1])}
-                          disabled={attacksRemaining <= 0 || !top3[1].hasDefenseDeck || isLoadingCards || nfts.length === 0}
+                          disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
                           className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition ${
-                            attacksRemaining > 0 && top3[1].hasDefenseDeck && !isLoadingCards && nfts.length > 0
+                            attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
                               ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
                               : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
                           }`}
@@ -594,9 +594,9 @@ const convex = useConvex();
                       {!isCurrentUser(top3[0].address) && (
                         <button
                           onClick={() => handleAttackClick(top3[0])}
-                          disabled={attacksRemaining <= 0 || !top3[0].hasDefenseDeck || isLoadingCards || nfts.length === 0}
+                          disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
                           className={`px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wide transition ${
-                            attacksRemaining > 0 && top3[0].hasDefenseDeck && !isLoadingCards && nfts.length > 0
+                            attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
                               ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
                               : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
                           }`}
@@ -630,9 +630,9 @@ const convex = useConvex();
                       {!isCurrentUser(top3[2].address) && (
                         <button
                           onClick={() => handleAttackClick(top3[2])}
-                          disabled={attacksRemaining <= 0 || !top3[2].hasDefenseDeck || isLoadingCards || nfts.length === 0}
+                          disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
                           className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition ${
-                            attacksRemaining > 0 && top3[2].hasDefenseDeck && !isLoadingCards && nfts.length > 0
+                            attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
                               ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
                               : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
                           }`}
@@ -699,9 +699,9 @@ const convex = useConvex();
                             {!isYou && (
                               <button
                                 onClick={() => handleAttackClick(profile)}
-                                disabled={attacksRemaining <= 0 || !profile.hasDefenseDeck || isLoadingCards || nfts.length === 0}
+                                disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
                                 className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition ${
-                                  attacksRemaining > 0 && profile.hasDefenseDeck && !isLoadingCards && nfts.length > 0
+                                  attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
                                     ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
                                     : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
                                 }`}
@@ -750,7 +750,7 @@ const convex = useConvex();
       </div>
 
       {/* ===== BOTTOM STATS BAR ===== */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black via-black/90 to-transparent pt-6 pb-3 px-3">
+      <div className="absolute bottom-0 left-0 right-0 z-[250] bg-gradient-to-t from-black via-black/90 to-transparent pt-6 pb-3 px-3">
         <div className="max-w-4xl mx-auto">
           <div className="bg-black/60 backdrop-blur-sm rounded-lg border border-vintage-gold/20 px-4 py-2.5 flex items-center justify-between gap-4 text-xs">
             {/* Your Rank */}
