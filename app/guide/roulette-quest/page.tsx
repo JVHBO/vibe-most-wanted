@@ -7,7 +7,7 @@ export default function RouletteQuestGuidePage() {
 
   return (
     <div
-      className="flex flex-col h-screen text-vintage-ice"
+      className="flex flex-col h-full text-vintage-ice"
       style={{ background: 'linear-gradient(to bottom, #1A1A1A, #121212)' }}
     >
 
