@@ -1,136 +1,89 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function RouletteQuestGuidePage() {
+  const router = useRouter();
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black text-vintage-ice p-4 sm:p-6">
-      <div className="max-w-lg mx-auto">
+    <div className="flex flex-col h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black text-vintage-ice">
 
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-3">🎰</div>
-          <h1 className="text-2xl sm:text-3xl font-display font-bold text-vintage-gold tracking-wider uppercase">
-            Roulette Quest
-          </h1>
-          <p className="text-vintage-ice/60 text-sm mt-1">
-            Vibe Most Wanted — ARB Mode
-          </p>
-        </div>
-
-        {/* What is this */}
-        <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-4 mb-4">
-          <h2 className="text-vintage-gold font-bold text-sm uppercase tracking-wider mb-2">
-            What is this quest?
-          </h2>
-          <p className="text-vintage-ice/80 text-sm leading-relaxed">
-            Spin the roulette on <span className="text-vintage-gold font-bold">Vibe Most Wanted</span> and
-            claim your prize on-chain. The quest verifies your transaction on Base or Arbitrum automatically.
-          </p>
-        </div>
-
-        {/* Steps */}
-        <div className="space-y-3 mb-4">
-          <h2 className="text-vintage-gold font-bold text-sm uppercase tracking-wider">
-            How to complete
-          </h2>
-
-          {/* Step 1 */}
-          <div className="flex gap-3 bg-vintage-charcoal/40 border border-vintage-gold/20 rounded-xl p-3">
-            <div className="w-8 h-8 rounded-full bg-vintage-gold text-vintage-black font-bold text-sm flex items-center justify-center shrink-0">
-              1
-            </div>
-            <div>
-              <p className="text-vintage-ice font-bold text-sm">Open the miniapp</p>
-              <p className="text-vintage-ice/60 text-xs mt-0.5">
-                Go to <span className="text-vintage-gold">vibemostwanted.xyz</span> or open it inside Farcaster/Warpcast.
-              </p>
-            </div>
-          </div>
-
-          {/* Step 2 */}
-          <div className="flex gap-3 bg-vintage-charcoal/40 border border-vintage-gold/20 rounded-xl p-3">
-            <div className="w-8 h-8 rounded-full bg-vintage-gold text-vintage-black font-bold text-sm flex items-center justify-center shrink-0">
-              2
-            </div>
-            <div>
-              <p className="text-vintage-ice font-bold text-sm">Activate ARB Mode (optional but recommended)</p>
-              <p className="text-vintage-ice/60 text-xs mt-0.5">
-                Tap the <span className="text-amber-400 font-bold">ARB</span> toggle on the home screen or in Settings.
-                ARB mode gives you <span className="text-amber-400 font-bold">+1 extra free spin</span> and <span className="text-amber-400 font-bold">2x quest rewards</span>.
-              </p>
-            </div>
-          </div>
-
-          {/* Step 3 */}
-          <div className="flex gap-3 bg-vintage-charcoal/40 border border-vintage-gold/20 rounded-xl p-3">
-            <div className="w-8 h-8 rounded-full bg-vintage-gold text-vintage-black font-bold text-sm flex items-center justify-center shrink-0">
-              3
-            </div>
-            <div>
-              <p className="text-vintage-ice font-bold text-sm">Spin the roulette</p>
-              <p className="text-vintage-ice/60 text-xs mt-0.5">
-                Tap <span className="text-vintage-gold font-bold">SPIN</span> on the home screen. You get at least
-                1 free spin per day. VibeFID holders get up to 3 spins.
-              </p>
-            </div>
-          </div>
-
-          {/* Step 4 */}
-          <div className="flex gap-3 bg-vintage-charcoal/40 border border-vintage-gold/20 rounded-xl p-3">
-            <div className="w-8 h-8 rounded-full bg-vintage-gold text-vintage-black font-bold text-sm flex items-center justify-center shrink-0">
-              4
-            </div>
-            <div>
-              <p className="text-vintage-ice font-bold text-sm">Claim your prize on-chain</p>
-              <p className="text-vintage-ice/60 text-xs mt-0.5">
-                After spinning, tap <span className="text-vintage-gold font-bold">Claim</span> and confirm the transaction
-                in your wallet. This creates the on-chain TX that verifies the quest.
-              </p>
-            </div>
-          </div>
-
-          {/* Step 5 */}
-          <div className="flex gap-3 bg-green-500/10 border border-green-500/30 rounded-xl p-3">
-            <div className="w-8 h-8 rounded-full bg-green-500 text-black font-bold text-sm flex items-center justify-center shrink-0">
-              ✓
-            </div>
-            <div>
-              <p className="text-green-400 font-bold text-sm">Quest completes automatically</p>
-              <p className="text-vintage-ice/60 text-xs mt-0.5">
-                The platform verifies your wallet&apos;s on-chain roulette TX. No need to submit proof manually.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* ARB Bonus box */}
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-lg">🟠</span>
-            <h3 className="text-amber-400 font-bold text-sm uppercase tracking-wider">ARB Mode Bonuses</h3>
-          </div>
-          <ul className="space-y-1 text-xs text-vintage-ice/80">
-            <li>• <span className="text-amber-400 font-bold">+1 free roulette spin</span> per day</li>
-            <li>• <span className="text-amber-400 font-bold">2x coins</span> on all missions & quests</li>
-            <li>• <span className="text-amber-400 font-bold">+1 free pack</span> per day in the Shop</li>
-            <li>• Cheaper VibeFID mint on Arbitrum</li>
-          </ul>
-        </div>
-
-        {/* CTA */}
-        <Link
-          href="https://vibemostwanted.xyz"
-          target="_blank"
-          className="block w-full py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black font-display font-bold text-center rounded-xl transition-all shadow-[0_4px_0_rgba(0,0,0,0.4)] hover:shadow-[0_2px_0_rgba(0,0,0,0.4)] hover:translate-y-[2px] text-sm uppercase tracking-wider"
+      {/* Fixed Header */}
+      <div className="shrink-0 z-20 bg-vintage-charcoal/95 border-b border-vintage-gold/30 backdrop-blur-sm px-3 py-2.5 flex items-center justify-between">
+        <button
+          onClick={() => router.push('/')}
+          className="px-3 py-1.5 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all text-xs font-bold uppercase tracking-wider"
         >
-          🎰 Open Vibe Most Wanted
-        </Link>
-
-        <p className="text-center text-vintage-ice/30 text-xs mt-4">
-          vibemostwanted.xyz · Base & Arbitrum
-        </p>
+          ← Back
+        </button>
+        <h1 className="text-sm font-display font-bold text-vintage-gold tracking-widest uppercase">
+          🎰 Roulette Quest
+        </h1>
+        <div className="w-14" />
       </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5">
+
+        {/* ARB banner */}
+        <div className="bg-amber-500/10 border border-amber-500/40 rounded-lg p-3 flex items-center gap-2">
+          <span className="text-xl">🟠</span>
+          <div>
+            <p className="text-amber-400 font-bold text-xs">ARB Mode — Extra Bonuses</p>
+            <p className="text-vintage-ice/60 text-[11px]">+1 free spin · 2x quest rewards · +1 free pack/day</p>
+          </div>
+        </div>
+
+        {/* Steps compact */}
+        <div className="bg-vintage-charcoal/50 border border-vintage-gold/20 rounded-xl overflow-hidden divide-y divide-vintage-gold/10">
+
+          {[
+            { n: '1', title: 'Open the miniapp', desc: 'Open Vibe Most Wanted inside Warpcast or at vibemostwanted.xyz' },
+            { n: '2', title: 'Spin the roulette', desc: 'Tap SPIN on the home screen. 1–4 free spins/day depending on your cards.' },
+            { n: '3', title: 'Claim on-chain', desc: 'After spinning, tap Claim and confirm the TX in your wallet (Base or ARB).' },
+            { n: '✓', title: 'Quest verified', desc: 'The platform detects your on-chain TX automatically.', green: true },
+          ].map((step) => (
+            <div key={step.n} className={`flex gap-3 p-3 ${step.green ? 'bg-green-500/5' : ''}`}>
+              <div className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5 ${step.green ? 'bg-green-500 text-black' : 'bg-vintage-gold text-vintage-black'}`}>
+                {step.n}
+              </div>
+              <div>
+                <p className={`font-bold text-xs ${step.green ? 'text-green-400' : 'text-vintage-ice'}`}>{step.title}</p>
+                <p className="text-vintage-ice/55 text-[11px] mt-0.5">{step.desc}</p>
+              </div>
+            </div>
+          ))}
+
+        </div>
+
+        {/* FAQ compact */}
+        <div className="bg-vintage-charcoal/40 border border-vintage-gold/15 rounded-xl p-3 space-y-2">
+          <p className="text-vintage-gold font-bold text-[10px] uppercase tracking-wider">FAQ</p>
+          <div className="grid grid-cols-1 gap-2">
+            <div>
+              <p className="text-vintage-ice/80 text-[11px] font-bold">Which chain counts?</p>
+              <p className="text-vintage-ice/45 text-[11px]">Both Base and Arbitrum. ARB gives extra bonuses.</p>
+            </div>
+            <div>
+              <p className="text-vintage-ice/80 text-[11px] font-bold">Spun but didn't claim — does it count?</p>
+              <p className="text-vintage-ice/45 text-[11px]">No. You must confirm the on-chain claim TX.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Fixed bottom CTA */}
+      <div className="shrink-0 p-3 bg-vintage-deep-black/90 border-t border-vintage-gold/20">
+        <Link
+          href="/"
+          className="block w-full py-3 bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold text-vintage-black font-display font-bold text-center rounded-xl shadow-[0_4px_0_rgba(0,0,0,0.4)] hover:shadow-[0_2px_0_rgba(0,0,0,0.4)] hover:translate-y-[2px] transition-all text-sm uppercase tracking-wider"
+        >
+          🎰 Go Spin Now
+        </Link>
+      </div>
+
     </div>
   );
 }
