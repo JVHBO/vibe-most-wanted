@@ -44,6 +44,7 @@ import { AudioManager } from '@/lib/audio-manager';
 import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { HAND_SIZE, getMaxAttacks } from '@/lib/config';
 import type { Card, CardRarity, CardFoil, CardWear } from '@/lib/types/card';
+import { usePrimaryAddress } from '@/lib/hooks/usePrimaryAddress';
 
 /**
  * 🎴 FETCH NFTs - HYBRID: Wield API + Alchemy fallback
@@ -247,7 +248,9 @@ interface PlayerCardsContextType {
 const PlayerCardsContext = createContext<PlayerCardsContextType | null>(null);
 
 export function PlayerCardsProvider({ children }: { children: ReactNode }) {
-  const { address } = useAccount();
+  // 🔗 MULTI-WALLET: Use primary address (resolves linked wallet → primary)
+  // This ensures linked wallets see the same cards/profile as the primary account
+  const { primaryAddress: address, allAddresses: linkedAllAddresses, isLoading: isAddressLoading } = usePrimaryAddress();
   const convex = useConvex();
 
   // NFT state
@@ -349,36 +352,12 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
       setStatus('fetching');
       setErrorMsg(null);
 
-      // 🔗 MULTI-WALLET: Get all linked addresses
-      // 🚀 BANDWIDTH FIX: Cache linked addresses in sessionStorage (1 hour)
-      let allAddresses = [address.toLowerCase()];
-      try {
-        const cacheKey = `vbms_linked_${address.toLowerCase()}`;
-        const cached = sessionStorage.getItem(cacheKey);
-        let linkedData = null;
-
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Date.now() - parsed.timestamp < 60 * 60 * 1000) { // 1 hour cache
-            linkedData = parsed.data;
-          }
-        }
-
-        if (!linkedData) {
-          linkedData = await convex.query(api.profiles.getLinkedAddresses, { address });
-          sessionStorage.setItem(cacheKey, JSON.stringify({ data: linkedData, timestamp: Date.now() }));
-        }
-
-        if (linkedData?.primary) {
-          const primaryLower = linkedData.primary.toLowerCase();
-          const linkedLower = (linkedData.linked || []).map((a: string) => a.toLowerCase());
-          allAddresses = [primaryLower, ...linkedLower];
-          allAddresses = [...new Set([...allAddresses, address.toLowerCase()])];
-        }
-        devLog(`🔗 [Context] Fetching from ${allAddresses.length} wallet(s):`, allAddresses.map(a => a.slice(0,8)));
-      } catch (error) {
-        console.warn('⚠️ Failed to get linked addresses, using current only:', error);
-      }
+      // 🔗 MULTI-WALLET: Use allAddresses already resolved by usePrimaryAddress hook
+      // This avoids duplicate Convex calls and stale sessionStorage cache issues
+      const allAddresses = linkedAllAddresses.length > 0
+        ? [...new Set(linkedAllAddresses.map(a => a.toLowerCase()))]
+        : [address.toLowerCase()];
+      devLog(`🔗 [Context] Fetching from ${allAddresses.length} wallet(s):`, allAddresses.map(a => a.slice(0,8)));
 
       // 🎴 FETCH NFTs - SAME AS HOME PAGE!
       let raw: any[] = [];
@@ -555,7 +534,7 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
       setErrorMsg(error instanceof Error ? error.message : 'Failed to load cards');
       setStatus('error');
     }
-  }, [address, status, nfts.length, convex]);
+  }, [address, linkedAllAddresses, status, nfts.length, convex]);
 
   // Force reload (clears caches so new mints appear)
   const forceReloadNFTs = useCallback(async () => {
@@ -596,13 +575,13 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
 
     previousAddressRef.current = address;
 
-    // Auto-load when idle
-    devLog('[Context] Auto-load check:', { address: address?.slice(0,8), status });
-    if (address && status === 'idle') {
+    // Auto-load when idle — wait for primary address to resolve (avoid loading with wrong address)
+    devLog('[Context] Auto-load check:', { address: address?.slice(0,8), status, isAddressLoading });
+    if (address && status === 'idle' && !isAddressLoading) {
       devLog('[Context] Starting auto-load...');
       loadNFTs();
     }
-  }, [address, status, loadNFTs]);
+  }, [address, isAddressLoading, status, loadNFTs]);
 
   // Load user profile
   useEffect(() => {
