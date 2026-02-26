@@ -37,7 +37,6 @@ import { DailyLeader } from "@/components/fid/DailyLeader";
 import { useClaimVBMS } from "@/hooks/fid/useVBMSContracts";
 import { FloatingCardsBackground } from "@/components/fid/FloatingCardsBackground";
 import { shareToFarcaster } from "@/lib/fid/share-utils";
-import { LanguageSelectionModal } from "@/components/fid/LanguageSelectionModal";
 import { VibeMailInboxWithClaim } from "@/components/fid/VibeMail";
 
 
@@ -1482,9 +1481,6 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black p-2 sm:p-4 md:p-8 overflow-x-hidden relative">
-      {/* Language Selection Modal - shows once per player */}
-      <LanguageSelectionModal />
-
       {/* Floating Cards Background */}
       <FloatingCardsBackground />
 
