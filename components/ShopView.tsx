@@ -162,7 +162,7 @@ export function ShopView({ address }: ShopViewProps) {
 
           {/* Daily Free Pack Card */}
           <div className="max-w-sm mx-auto mb-4">
-            <div className={`bg-vintage-charcoal/50 border ${isArb ? 'border-blue-400/50' : 'border-vintage-gold/30'} rounded-xl p-4 transition-all`}>
+            <div className={`bg-vintage-charcoal/50 border ${isArb ? 'border-amber-400/50' : 'border-vintage-gold/30'} rounded-xl p-4 transition-all`}>
 
               {/* Pack Header */}
               <div className="flex items-center gap-4 mb-3">
@@ -236,7 +236,7 @@ export function ShopView({ address }: ShopViewProps) {
                     onClick={() => { AudioManager.buttonClick(); handleClaimDailyFree(); }}
                     onMouseEnter={() => AudioManager.buttonHover()}
                     disabled={claimingDaily}
-                    className={`w-full h-11 font-display font-bold rounded-lg transition-all disabled:opacity-50 text-white ${isArb ? 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-400 hover:to-cyan-400' : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400'}`}
+                    className={`w-full h-11 font-display font-bold rounded-lg transition-all disabled:opacity-50 text-vintage-black shadow-[0_4px_0_rgba(0,0,0,0.5)] hover:shadow-[0_2px_0_rgba(0,0,0,0.5)] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] ${isArb ? 'bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500' : 'bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500'}`}
                   >
                     {claimingDaily ? "..." : isArb ? t('shopClaimFreePackArb' as any) : t('shopClaimFreePack' as any)}
                   </button>
