@@ -841,8 +841,8 @@ export const linkWallet = mutation({
  * 🔗 Get all linked addresses for a profile
  */
 export const getLinkedAddresses = query({
-  args: { address: v.string() },
-  handler: async (ctx, { address }) => {
+  args: { address: v.string(), fid: v.optional(v.number()) },
+  handler: async (ctx, { address, fid }) => {
     if (!address || !isValidAddress(address)) {
       return { primary: null, linked: [] };
     }
@@ -877,14 +877,81 @@ export const getLinkedAddresses = query({
       .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
       .first();
 
-    if (!profile) {
-      return { primary: null, linked: [] };
+    if (profile) {
+      return {
+        primary: profile.address,
+        linked: profile.linkedAddresses || [],
+      };
     }
 
-    return {
-      primary: profile.address,
-      linked: profile.linkedAddresses || [],
-    };
+    // 🔗 FID FALLBACK: No profile/link by address — try resolving via Farcaster FID
+    // Handles Farcaster custody wallets that were never explicitly linked
+    if (fid && fid > 0) {
+      const profileByFid = await ctx.db
+        .query("profiles")
+        .withIndex("by_fid", (q) => q.eq("farcasterFid", fid))
+        .first();
+
+      if (profileByFid) {
+        return {
+          primary: profileByFid.address,
+          linked: profileByFid.linkedAddresses || [],
+        };
+      }
+    }
+
+    return { primary: null, linked: [] };
+  },
+});
+
+/**
+ * 🔗 Auto-link a Farcaster custody wallet to the existing profile for a FID
+ * Called on first open when custody address has no profile but FID resolves to one
+ */
+export const autoLinkByFid = mutation({
+  args: { address: v.string(), fid: v.number() },
+  handler: async (ctx, { address, fid }) => {
+    if (!fid || fid <= 0 || !isValidAddress(address)) return;
+
+    const normalizedAddress = normalizeAddress(address);
+
+    // Find existing profile for this FID
+    const profileByFid = await ctx.db
+      .query("profiles")
+      .withIndex("by_fid", (q) => q.eq("farcasterFid", fid))
+      .first();
+
+    if (!profileByFid || profileByFid.address === normalizedAddress) return;
+
+    // Don't link if this address already has its own profile with a different FID
+    const existingProfile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (existingProfile && existingProfile.farcasterFid && existingProfile.farcasterFid !== fid) return;
+
+    // Don't create duplicate link
+    const existingLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (existingLink) return;
+
+    const now = Date.now();
+    await ctx.db.insert("addressLinks", {
+      address: normalizedAddress,
+      primaryAddress: profileByFid.address,
+      linkedAt: now,
+    });
+
+    const currentLinked = profileByFid.linkedAddresses || [];
+    if (!currentLinked.includes(normalizedAddress)) {
+      await ctx.db.patch(profileByFid._id, {
+        linkedAddresses: [...currentLinked, normalizedAddress],
+      });
+    }
   },
 });
 

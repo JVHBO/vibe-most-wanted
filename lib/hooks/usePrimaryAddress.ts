@@ -4,6 +4,7 @@ import { useAccount } from "wagmi";
 import { useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useMemo, useState, useEffect, useRef } from "react";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 /**
  * 🔗 MULTI-WALLET HOOK
@@ -36,6 +37,7 @@ export function usePrimaryAddress() {
   // 🚀 BANDWIDTH FIX: Use state instead of useQuery subscription
   const [linkedData, setLinkedData] = useState<{ primary: string; linked: string[] } | null | undefined>(undefined);
   const loadedRef = useRef<string | null>(null);
+  const autoLinkedRef = useRef<string | null>(null);
 
   // 🚀 BANDWIDTH FIX: Manual query with sessionStorage cache
   useEffect(() => {
@@ -68,9 +70,19 @@ export function usePrimaryAddress() {
         // Ignore cache errors
       }
 
-      // Fetch from Convex
+      // 🔗 FID FALLBACK: Get FID from Farcaster SDK for custody wallet resolution
+      let fid: number | undefined;
       try {
-        const result = await convex.query(api.profiles.getLinkedAddresses, { address: connectedAddress });
+        const ctx = await sdk?.context;
+        if (ctx?.user?.fid) fid = ctx.user.fid;
+      } catch (_) {}
+
+      // Fetch from Convex (pass FID for custody wallet fallback)
+      try {
+        const result = await convex.query(api.profiles.getLinkedAddresses, {
+          address: connectedAddress,
+          fid,
+        });
         setLinkedData(result);
         loadedRef.current = connectedAddress.toLowerCase();
 
@@ -79,6 +91,21 @@ export function usePrimaryAddress() {
           sessionStorage.setItem(cacheKey, JSON.stringify({ data: result, timestamp: Date.now() }));
         } catch (e) {
           // Ignore cache write errors
+        }
+
+        // 🔗 AUTO-LINK: If FID resolved a primary different from connected address,
+        // permanently create the addressLinks entry so future loads work without FID
+        if (fid && result?.primary && result.primary.toLowerCase() !== connectedAddress.toLowerCase()) {
+          const autoLinkKey = `vbms_autolinked_${connectedAddress.toLowerCase()}`;
+          const alreadyAutoLinked = sessionStorage.getItem(autoLinkKey);
+          if (!alreadyAutoLinked) {
+            convex.mutation(api.profiles.autoLinkByFid, {
+              address: connectedAddress,
+              fid,
+            }).then(() => {
+              sessionStorage.setItem(autoLinkKey, '1');
+            }).catch(() => {});
+          }
         }
       } catch (e) {
         console.error("Error fetching linked addresses:", e);
