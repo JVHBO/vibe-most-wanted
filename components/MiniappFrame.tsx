@@ -163,41 +163,6 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
       {showFloating && <HomeFloatingBackground />}
     </div>
 
-    {/* VIBE MOST WANTED title */}
-    <div style={{
-      position: "fixed",
-      top: "18px",
-      left: 0,
-      right: 0,
-      textAlign: "center",
-      pointerEvents: "none",
-      zIndex: 1,
-      userSelect: "none",
-    }}>
-      <div style={{
-        fontFamily: "'Alfa Slab One', serif",
-        fontSize: "clamp(28px, 5.5vw, 82px)",
-        textTransform: "uppercase",
-        letterSpacing: "3px",
-        lineHeight: "0.88",
-        background: "linear-gradient(180deg, #FFF0A0 0%, #FFD84A 18%, #DAA520 42%, #C8960C 62%, #9A6E08 82%, #6B4A10 100%)",
-        WebkitBackgroundClip: "text",
-        WebkitTextFillColor: "transparent",
-        backgroundClip: "text",
-        textShadow: `
-          1px 1px 0 #8B5A1A,
-          2px 2px 0 #7A4E16,
-          3px 3px 0 #6A4212,
-          4px 4px 0 #5A360E,
-          5px 5px 0 #4A2A0A,
-          6px 6px 0 #3A1E06,
-          7px 7px 10px rgba(0,0,0,0.7)
-        `,
-        opacity: 0.82,
-      }}>
-        VIBE MOST<br />WANTED
-      </div>
-    </div>
     {/* Draggable phone shell */}
     {frameX !== null && (
       <div style={{

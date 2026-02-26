@@ -19,6 +19,7 @@ import { parseEther } from "viem";
 import FoilCardEffect from "@/components/fid/FoilCardEffect";
 import { CardMedia } from "@/components/fid/CardMedia";
 import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import haptics from "@/lib/fid/haptics";
 import { useMusic } from "@/contexts/MusicContext";
@@ -66,6 +67,19 @@ export default function FidPage() {
   const { connect, connectors } = useConnect();
   const { switchChainAsync } = useSwitchChain();
   const farcasterContext = useFarcasterContext();
+  const { userProfile } = useProfile();
+
+  // 🔗 LINKED WALLET FALLBACK: when SDK not available, use FID stored in primary profile
+  // This allows linked wallets to access VibeFID features without Farcaster SDK context
+  const effectiveFarcasterUser = farcasterContext.user ?? (
+    userProfile?.farcasterFid ? {
+      fid: userProfile.farcasterFid as number,
+      username: userProfile.username || undefined,
+      displayName: userProfile.username || undefined,
+      pfpUrl: (userProfile as any).farcasterPfpUrl || undefined,
+    } : null
+  );
+
   const { lang, setLang } = useLanguage();
   const [mintChain, setMintChain] = useState<VibeFIDChain>("base");
 
@@ -237,7 +251,7 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
 
   // LocalStorage key for generated card
   const getStorageKey = () => {
-    const fid = farcasterContext.user?.fid;
+    const fid = effectiveFarcasterUser?.fid;
     return fid ? `vibefid_generated_${fid}` : null;
   };
 
@@ -283,7 +297,7 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
 
   // Load saved card on mount (when user is ready)
   useEffect(() => {
-    if (farcasterContext.isReady && farcasterContext.user) {
+    if (farcasterContext.isReady && effectiveFarcasterUser) {
       const saved = loadGeneratedCard();
       if (saved) {
         setUserData(saved.userData);
@@ -293,7 +307,7 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
         // Don't auto-open modal - let user click "Generate" button to see it
       }
     }
-  }, [farcasterContext.isReady, farcasterContext.user]);
+  }, [farcasterContext.isReady, effectiveFarcasterUser]);
 
   // REMOVED: Duplicate sdk.actions.ready() call - already called at line ~75
 
@@ -306,12 +320,8 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
     AudioManager.buttonClick();
 
     // Check if user is connected (skip in test mode)
-    if (!farcasterContext.user && !isTestMode) {
-      // User is connected with a linked/external wallet but no Farcaster SDK context
-      setError(address
-        ? "This is a linked wallet. Open VibeFID inside Farcaster with your main account to mint."
-        : "Connect your Farcaster account to mint your VibeFID card."
-      );
+    if (!effectiveFarcasterUser && !isTestMode) {
+      setError("Connect your Farcaster account to mint your VibeFID card.");
       return;
     }
 
@@ -328,7 +338,7 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
     }
 
     // Use logged-in user's FID or test FID
-    const fid = isTestMode ? parseInt(testFid!) : farcasterContext.user!.fid;
+    const fid = isTestMode ? parseInt(testFid!) : effectiveFarcasterUser!.fid;
 
     setLoading(true);
     setError(null);
@@ -455,12 +465,12 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
     AudioManager.buttonClick();
 
     // Check if user is connected (skip in test mode)
-    if (!farcasterContext.user && !isTestMode) {
+    if (!effectiveFarcasterUser && !isTestMode) {
       setError("Please connect your Farcaster account first");
       return;
     }
 
-    const fid = isTestMode ? parseInt(testFid!) : farcasterContext.user!.fid;
+    const fid = isTestMode ? parseInt(testFid!) : effectiveFarcasterUser!.fid;
 
     setLoading(true);
     setError(null);
@@ -534,12 +544,12 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
   const completePendingMint = useMutation(api.pendingMints.completePendingMint);
 
   // Score history query - use user's fid if available
-  const scoreHistory = useQuery(api.neynarScore.getScoreHistory, farcasterContext.user?.fid ? { fid: farcasterContext.user.fid } : "skip");
+  const scoreHistory = useQuery(api.neynarScore.getScoreHistory, effectiveFarcasterUser?.fid ? { fid: effectiveFarcasterUser.fid } : "skip");
 
   // Query for pendingMints (backup recovery)
   const pendingMintFromConvex = useQuery(
     api.pendingMints.getPendingMint,
-    farcasterContext.user?.fid ? { fid: farcasterContext.user.fid } : "skip"
+    effectiveFarcasterUser?.fid ? { fid: effectiveFarcasterUser.fid } : "skip"
   );
 
   // 🔒 FIX: Check for pending mint data on page load and try to save
@@ -862,7 +872,7 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
   });
 
   // Query to get current user's minted card (if exists)
-  const userFid = farcasterContext.user?.fid;
+  const userFid = effectiveFarcasterUser?.fid;
 
   // Vibe Rewards claim
   const vibeRewards = useQuery(api.vibeRewards.getRewards, userFid ? { fid: userFid } : "skip");
@@ -1483,31 +1493,27 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           {/* Left: User Info */}
           <div className="flex items-center gap-2">
-            {farcasterContext.user ? (
+            {effectiveFarcasterUser ? (
               <Link
                 href={myCard ? `/fid/${myCard.fid}` : '#'}
                 onClick={() => AudioManager.buttonClick()}
                 className="flex items-center gap-2 px-2 py-1 border-2 border-black shadow-[3px_3px_0px_#000] bg-[#1a1a1a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
               >
                 <img
-                  src={farcasterContext.user.pfpUrl || '/images/default-avatar.png'}
+                  src={effectiveFarcasterUser.pfpUrl || '/images/default-avatar.png'}
                   alt="Profile"
                   className="w-8 h-8 rounded-full border-2 border-vintage-gold"
                 />
                 <div className="text-left">
                   <p className="text-vintage-gold font-bold text-sm leading-tight">
-                    @{farcasterContext.user.username}
+                    @{effectiveFarcasterUser.username}
                   </p>
                   <p className="text-vintage-ice/60 text-xs">
-                    FID #{farcasterContext.user.fid}
+                    FID #{effectiveFarcasterUser.fid}
+                    {!farcasterContext.user && <span className="ml-1 text-vintage-gold/50">(linked)</span>}
                   </p>
                 </div>
               </Link>
-            ) : address ? (
-              <span className="text-vintage-ice/70 text-sm flex items-center gap-1.5">
-                <span className="font-mono">{address.slice(0,6)}...{address.slice(-4)}</span>
-                <span className="text-xs px-1.5 py-0.5 bg-vintage-gold/10 border border-vintage-gold/30 rounded text-vintage-gold/60">linked wallet</span>
-              </span>
             ) : (
               <span className="text-vintage-ice/50 text-sm">Not connected</span>
             )}
@@ -1579,12 +1585,12 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
               disabled={loading}
               className="px-10 py-4 bg-vintage-gold text-vintage-black font-bold text-xl rounded-xl transition-all hover:scale-105 hover:bg-vintage-burnt-gold disabled:opacity-50 shadow-[0_0_30px_rgba(255,215,0,0.3)]"
             >
-              {loading ? t.generating : farcasterContext.user ? t.mintMyCard : t.connectFarcasterToMint}
+              {loading ? t.generating : effectiveFarcasterUser ? t.mintMyCard : t.connectFarcasterToMint}
             </button>
           )}
 
           {/* Check score link - subtle */}
-          {farcasterContext.user && (
+          {effectiveFarcasterUser && (
             <button
               onClick={handleCheckNeynarScore}
               disabled={loading}
