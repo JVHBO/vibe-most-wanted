@@ -17,10 +17,10 @@ const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { address: string } }
+  { params }: { params: Promise<{ address: string }> }
 ) {
   try {
-    const raw = params.address;
+    const { address: raw } = await params;
     if (!raw || !/^0x[0-9a-fA-F]{40}$/.test(raw)) {
       return NextResponse.json(
         { verified: false, reason: 'Invalid address' },
