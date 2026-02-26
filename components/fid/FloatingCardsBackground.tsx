@@ -9,15 +9,15 @@ const CARD_H = 140;
 const SPEED = 1.2; // px per frame at 60fps
 
 const RARITY_BORDER: Record<string, string> = {
-  Mythic: "3px solid #a855f7",
+  Mythic: "3px solid #FFD700",
   Legendary: "3px solid #FFD700",
-  Epic: "3px solid #ec4899",
+  Epic: "2px solid #B8922A",
 };
 
 const RARITY_SHADOW: Record<string, string> = {
-  Mythic: "0 0 12px rgba(168,85,247,0.6)",
+  Mythic: "0 0 14px rgba(255,215,0,0.7)",
   Legendary: "0 0 12px rgba(255,215,0,0.5)",
-  Epic: "0 0 12px rgba(236,72,153,0.5)",
+  Epic: "0 0 8px rgba(184,146,42,0.5)",
 };
 
 interface CardData {

@@ -374,8 +374,7 @@ export default function QuestsPage() {
         <div className="flex items-center justify-between px-3 py-2.5">
           <button
             onClick={() => router.push("/")}
-            className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white border-2 border-black rounded text-xs font-bold uppercase tracking-wider"
-            style={{ boxShadow: "2px 2px 0px #000" }}
+            className="px-3 py-1.5 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
           >
             ← BACK
           </button>

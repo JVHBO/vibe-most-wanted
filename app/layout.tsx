@@ -84,6 +84,7 @@ export const metadata: Metadata = {
   other: {
     // Base.dev App ID (REQUIRED FOR ANALYTICS)
     "base:app_id": "6912770b47fdf84bd17202bc",
+    "talentapp:project_verification": "5b696287433e72cbb5c551e18e2a464ef5d757a0c20076431c4334b927a6f3a426c8a7aaa5e2bd36e58e9c40d90e806b3fdfc5b5b1a1ba2f718315b9d2aa0662",
     // Farcaster Mini App Meta Tag (REQUIRED FOR DISCOVERY)
     // v=4 cache bust - more cards, removed coquettish/viberuto/baseball
     "fc:miniapp": JSON.stringify({

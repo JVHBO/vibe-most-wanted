@@ -1737,7 +1737,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                       AudioManager.buttonClick();
                       setShowShareModal(true);
                     }}
-                    className="flex-1 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-center text-sm"
+                    className="flex-1 px-3 py-2 bg-vintage-gold hover:bg-vintage-burnt-gold text-black font-bold rounded-lg transition-colors text-center text-sm"
                   >
                     Share
                   </button>
@@ -1861,7 +1861,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                 )}
                 {evolutionPhase === 'regenerating' && (
                   <div className="space-y-2">
-                    <p className="text-lg sm:text-2xl font-bold text-cyan-400 animate-pulse">🎬 {t.regenerating}</p>
+                    <p className="text-lg sm:text-2xl font-bold text-vintage-gold animate-pulse">🎬 {t.regenerating}</p>
                     {regenerationStatus && (
                       <p className="text-vintage-ice text-xs sm:text-xs">{regenerationStatus}</p>
                     )}
@@ -1905,7 +1905,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                           const castText = `My VibeFID just EVOLVED!\n\n${evolutionData.oldRarity} → ${evolutionData.newRarity}\nPower: ${evolutionData.oldPower} → ${evolutionData.newPower}\nNeynar Score: ${diffSign}${scoreDiff.toFixed(4)}\nBounty: ${evolutionData.newBounty.toLocaleString()}\n\n@jvhbo`;
                           await shareToFarcaster(castText, shareUrl);
                         }}
-                        className="flex-1 px-3 py-3 sm:px-4 sm:py-4 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-center text-xs sm:text-base"
+                        className="flex-1 px-3 py-3 sm:px-4 sm:py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-black font-bold rounded-lg transition-colors text-center text-xs sm:text-base"
                       >
                         Share
                       </button>
@@ -1984,18 +1984,18 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                 </p>
 
                 {/* FID & Neynar Score */}
-                <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 rounded-lg border-2 border-blue-500/50 p-4">
-                  <h3 className="text-lg sm:text-xl font-bold text-blue-300 mb-3 flex items-center gap-2">
+                <div className="bg-vintage-charcoal/40 rounded-lg border border-vintage-gold/30 p-4">
+                  <h3 className="text-lg sm:text-xl font-bold text-vintage-gold mb-3 flex items-center gap-2">
                     <span>🆔</span> FID & Neynar Score
                   </h3>
                   <div className="space-y-3 text-vintage-ice/80 text-sm">
                     <p>
-                      <span className="font-bold text-blue-300">FID (Farcaster ID):</span> Your unique Farcaster identifier. It determines your <span className="font-bold">Suit</span> (♠ ♥ ♦ ♣), <span className="font-bold">Foil</span>, and <span className="font-bold">Wear</span> traits through deterministic algorithms - the same FID always gets the same traits!
+                      <span className="font-bold text-vintage-gold">FID (Farcaster ID):</span> Your unique Farcaster identifier. It determines your <span className="font-bold">Suit</span> (♠ ♥ ♦ ♣), <span className="font-bold">Foil</span>, and <span className="font-bold">Wear</span> traits through deterministic algorithms - the same FID always gets the same traits!
                     </p>
                     <p>
-                      <span className="font-bold text-purple-300">Neynar Score:</span> Measures your Farcaster engagement and reputation (followers, casts, reactions, etc.). Higher scores = <span className="font-bold text-vintage-gold">rarer cards</span> with more base power!
+                      <span className="font-bold text-vintage-burnt-gold">Neynar Score:</span> Measures your Farcaster engagement and reputation (followers, casts, reactions, etc.). Higher scores = <span className="font-bold text-vintage-gold">rarer cards</span> with more base power!
                     </p>
-                    <div className="mt-2 p-3 bg-vintage-black/40 rounded border border-blue-500/30 text-xs">
+                    <div className="mt-2 p-3 bg-vintage-black/40 rounded border border-vintage-gold/20 text-xs">
                       💡 <span className="font-bold">Pro tip:</span> Engage more on Farcaster to increase your Neynar Score and get better cards!
                     </div>
                   </div>
