@@ -401,7 +401,7 @@ export default function QuestsPage() {
           </button>
           <button
             onClick={() => router.push("/quests/cast")}
-            className="flex-1 py-2.5 text-sm font-bold text-vintage-ice/60 hover:text-vintage-ice transition-colors"
+            className="flex-1 py-2.5 text-sm font-bold text-white/70 hover:text-white transition-colors"
           >
             {t('questsWantedCasts')}
           </button>
