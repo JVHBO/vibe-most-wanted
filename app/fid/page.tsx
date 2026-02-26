@@ -307,11 +307,11 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
 
     // Check if user is connected (skip in test mode)
     if (!farcasterContext.user && !isTestMode) {
-      // Redirect to main page to connect
-      setError("Opening VibeFID miniapp in Farcaster...");
-      setTimeout(() => {
-        router.push('/fid');
-      }, 1000);
+      // User is connected with a linked/external wallet but no Farcaster SDK context
+      setError(address
+        ? "This is a linked wallet. Open VibeFID inside Farcaster with your main account to mint."
+        : "Connect your Farcaster account to mint your VibeFID card."
+      );
       return;
     }
 
@@ -1503,6 +1503,11 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                   </p>
                 </div>
               </Link>
+            ) : address ? (
+              <span className="text-vintage-ice/70 text-sm flex items-center gap-1.5">
+                <span className="font-mono">{address.slice(0,6)}...{address.slice(-4)}</span>
+                <span className="text-xs px-1.5 py-0.5 bg-vintage-gold/10 border border-vintage-gold/30 rounded text-vintage-gold/60">linked wallet</span>
+              </span>
             ) : (
               <span className="text-vintage-ice/50 text-sm">Not connected</span>
             )}

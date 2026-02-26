@@ -187,6 +187,11 @@ export function SettingsModal({
             setIsLinkingWallet(false);
             setLinkingFromAddress(null);
             if (soundEnabled) AudioManager.buttonSuccess();
+            // Invalidate sessionStorage cache so linked addresses refresh immediately
+            try {
+              sessionStorage.removeItem(`vbms_linked_${newAddr}`);
+              sessionStorage.removeItem(`vbms_linked_${oldAddr}`);
+            } catch (_) {}
           })
           .catch((err) => {
             devError('Failed to link wallet:', err);
@@ -296,6 +301,11 @@ export function SettingsModal({
       });
       if (soundEnabled) AudioManager.buttonSuccess();
       devLog('🔗 Unlinked wallet:', addressToUnlink);
+      // Invalidate sessionStorage cache so linked addresses refresh immediately
+      try {
+        sessionStorage.removeItem(`vbms_linked_${addressToUnlink.toLowerCase()}`);
+        sessionStorage.removeItem(`vbms_linked_${primaryAddr.toLowerCase()}`);
+      } catch (_) {}
     } catch (error: any) {
       if (soundEnabled) AudioManager.buttonError();
       devError('Failed to unlink wallet:', error);
