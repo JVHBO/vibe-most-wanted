@@ -19,6 +19,11 @@ module.exports = {
         destination: 'https://vibemostwanted.xyz/:path*',
         permanent: true,
       },
+      {
+        source: '/=',
+        destination: '/',
+        permanent: false,
+      },
     ];
   },
   async headers() {
