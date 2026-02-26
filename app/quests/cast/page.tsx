@@ -167,7 +167,7 @@ export default function CastQuestsPage() {
         <div className="flex border-t border-vintage-gold/20">
           <button
             onClick={() => router.push("/quests")}
-            className="flex-1 py-2.5 text-sm font-bold text-white/70 hover:text-white transition-colors border-r border-vintage-gold/30"
+            className="flex-1 py-2.5 text-sm font-bold text-vintage-ice/80 hover:text-vintage-gold bg-vintage-charcoal/60 hover:bg-vintage-gold/5 transition-colors border-r border-vintage-gold/30"
           >
             {t('questsMissions')}
           </button>
@@ -247,15 +247,15 @@ export default function CastQuestsPage() {
               {currentCastData && (
                 <div className="flex items-center gap-4 px-4 py-2 border-t border-zinc-800">
                   <span className="flex items-center gap-1 text-xs text-zinc-500">
-                    <svg className="w-3.5 h-3.5 text-vintage-burnt-gold" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    <svg className="w-3.5 h-3.5 text-rose-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                     {currentCastData.reactions?.likes_count || 0}
                   </span>
                   <span className="flex items-center gap-1 text-xs text-zinc-500">
-                    <svg className="w-3.5 h-3.5 text-vintage-burnt-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    <svg className="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                     {currentCastData.reactions?.recasts_count || 0}
                   </span>
                   <span className="flex items-center gap-1 text-xs text-zinc-500">
-                    <svg className="w-3.5 h-3.5 text-vintage-burnt-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    <svg className="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                     {currentCastData.replies?.count || 0}
                   </span>
                   <a href={currentCast.warpcastUrl} target="_blank" rel="noopener noreferrer"
@@ -272,13 +272,13 @@ export default function CastQuestsPage() {
                   {[
                     { type: "like" as const, label: "Like", icon: (
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                    ), color: "text-vintage-burnt-gold", activeBg: "bg-vintage-gold/10", hoverBg: "hover:bg-vintage-gold/10" },
+                    ), color: "text-rose-400", activeBg: "bg-rose-900/30", hoverBg: "hover:bg-rose-900/20" },
                     { type: "recast" as const, label: "Recast", icon: (
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                    ), color: "text-vintage-burnt-gold", activeBg: "bg-vintage-gold/10", hoverBg: "hover:bg-vintage-gold/10" },
+                    ), color: "text-emerald-400", activeBg: "bg-emerald-900/30", hoverBg: "hover:bg-emerald-900/20" },
                     { type: "reply" as const, label: "Reply", icon: (
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                    ), color: "text-vintage-burnt-gold", activeBg: "bg-vintage-gold/10", hoverBg: "hover:bg-vintage-gold/10" },
+                    ), color: "text-sky-400", activeBg: "bg-sky-900/30", hoverBg: "hover:bg-sky-900/20" },
                   ].map(({ type, label, icon, color, activeBg, hoverBg }) => {
                     const progress = castInteractionProgress[currentCast.castHash];
                     const claimed = progress?.[type === "like" ? "liked" : type === "recast" ? "recasted" : "replied"];
@@ -293,8 +293,8 @@ export default function CastQuestsPage() {
                         disabled={claimed || isVerifyingThis || isClaimingThis}
                         className={`flex flex-col items-center justify-center py-3.5 gap-1.5 transition-colors disabled:cursor-not-allowed ${claimed ? activeBg : hoverBg}`}
                       >
-                        <span className={claimed ? "text-vintage-gold" : color}>{icon}</span>
-                        <span className={`text-[11px] font-bold ${claimed ? "text-vintage-gold" : "text-vintage-gold"}`}>
+                        <span className={color}>{icon}</span>
+                        <span className={`text-[11px] font-bold text-vintage-gold`}>
                           {isVerifyingThis || isClaimingThis ? "..." : claimed ? t('questsDone') : `+${castInteractionReward}`}
                         </span>
                       </button>

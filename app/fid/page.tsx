@@ -1493,7 +1493,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
               <Link
                 href={myCard ? `/fid/${myCard.fid}` : '#'}
                 onClick={() => AudioManager.buttonClick()}
-                className="flex items-center gap-2 px-2 py-1 border-2 border-black shadow-[3px_3px_0px_#000] bg-[#1a1a1a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+                className="flex items-center gap-2 px-2 py-1 bg-black/50 border border-vintage-gold/30 rounded hover:bg-vintage-gold/10 hover:border-vintage-gold/60 transition-all"
               >
                 <img
                   src={effectiveFarcasterUser.pfpUrl || '/images/default-avatar.png'}
