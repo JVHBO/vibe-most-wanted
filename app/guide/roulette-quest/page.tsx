@@ -73,10 +73,10 @@ export default function RouletteQuestGuidePage() {
       </div>
 
       {/* Fixed bottom CTA */}
-      <div className="shrink-0 p-3 border-t border-vintage-gold/20" style={{ background: '#0c0c0c' }}>
+      <div className="shrink-0 px-3 py-4 border-t border-vintage-gold/20" style={{ background: '#0c0c0c' }}>
         <Link
           href="/"
-          className="block w-full py-4 bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold text-vintage-black font-display font-bold text-center rounded-xl shadow-[0_4px_0_rgba(0,0,0,0.4)] hover:shadow-[0_2px_0_rgba(0,0,0,0.4)] hover:translate-y-[2px] transition-all text-lg uppercase tracking-widest"
+          className="block w-full py-6 bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold text-vintage-black font-display font-black text-center rounded-2xl shadow-[0_6px_0_rgba(0,0,0,0.5)] hover:shadow-[0_2px_0_rgba(0,0,0,0.5)] hover:translate-y-[4px] transition-all text-3xl uppercase tracking-widest"
         >
           🎰 SPIN
         </Link>
