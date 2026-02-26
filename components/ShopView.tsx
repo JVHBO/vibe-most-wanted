@@ -50,7 +50,7 @@ export function ShopView({ address }: ShopViewProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('base');
+  const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('arbitrum');
   useEffect(() => {
     const c = (profileDashboard as any)?.preferredChain;
     if (c) setLocalChain(c);

@@ -844,7 +844,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   // Frame mode = desktop browser, always ARB supported
   const arbSupported = isFrameMode || !isInFarcaster || isWarpcastClient(farcasterClientFid);
   // Effective chain: force "base" when ARB not supported (e.g. Base App)
-  const effectiveChain = !arbSupported ? "base" : ((userProfile as any)?.preferredChain || "base");
+  const effectiveChain = !arbSupported ? "base" : ((userProfile as any)?.preferredChain || "arbitrum");
   // Arb Mode announcement disabled - no longer needed
   const [pendingClaimAction, setPendingClaimAction] = useState<(() => void) | null>(null);
   const [showCpuArena, setShowCpuArena] = useState<boolean>(false);

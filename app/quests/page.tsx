@@ -42,7 +42,7 @@ export default function QuestsPage() {
   const userFid = profileDashboard?.fid;
   // Effective chain: use profile preference (safety net in useArbValidator
   // blocks ARB tx on unsupported clients like Base App)
-  const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('base');
+  const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('arbitrum');
   useEffect(() => {
     const c = (profileDashboard as any)?.preferredChain;
     if (c) setLocalChain(c);

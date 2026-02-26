@@ -328,7 +328,7 @@ export const getProfileDashboard = query({
       isLinkedWallet,
 
       // 🔗 Chain preference
-      preferredChain: profile.preferredChain || "base",
+      preferredChain: profile.preferredChain || "arbitrum",
       chainModalSeen: profile.chainModalSeen || false,
     };
   },

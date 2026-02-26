@@ -116,7 +116,7 @@ export const canSpin = query({
 
     const isVibeFidHolder = !!vibeFidCard;
     // 🔗 Arbitrum bonus: +1 spin (read from profile.preferredChain)
-    const chain = (profile as any)?.preferredChain || "base";
+    const chain = (profile as any)?.preferredChain || "arbitrum";
     const arbBonus = chain === "arbitrum" ? 1 : 0;
     const maxSpins = (isVibeFidHolder ? 3 : 1) + arbBonus;
 

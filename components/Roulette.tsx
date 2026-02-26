@@ -318,7 +318,7 @@ export function Roulette({ onClose }: RouletteProps) {
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
   const [arbSupported, setArbSupported] = useState(false);
 
-  const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('base');
+  const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('arbitrum');
   useEffect(() => {
     const c = (profileDashboard as any)?.preferredChain;
     if (c) setLocalChain(c);
@@ -484,7 +484,7 @@ export function Roulette({ onClose }: RouletteProps) {
     lastTickSegment.current = -1;
 
     try {
-      const chain = (profileDashboard as any)?.preferredChain || "base";
+      const chain = (profileDashboard as any)?.preferredChain || "arbitrum";
       // Arb validation tx BEFORE spin (safety net in useArbValidator blocks unsupported clients)
       if (chain === "arbitrum") {
         await validateOnArb(0, ARB_CLAIM_TYPE.ROULETTE_SPIN);
