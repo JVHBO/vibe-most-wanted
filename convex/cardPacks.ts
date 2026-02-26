@@ -15,6 +15,16 @@ import { logTransaction } from "./coinsInbox";
 import { createAuditLog } from "./coinAudit";
 import { isBlacklisted } from "./blacklist";
 
+// 🔒 SECURITY FIX: Resolve linked wallet to primary address
+// Prevents multi-wallet exploit (each linked wallet claiming separately)
+async function resolveToPrimary(ctx: any, normalizedAddress: string): Promise<string> {
+  const link = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+  return link?.primaryAddress || normalizedAddress;
+}
+
 /**
  * 🔒 SECURITY FIX: Crypto-secure random functions
  * Math.random() is predictable and can be exploited
@@ -1499,11 +1509,13 @@ export const canClaimDailyFree = query({
   args: { address: v.string() },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
+    // 🔒 SECURITY FIX: Use primary address so linked wallets share the same daily limit
+    const effectiveAddress = await resolveToPrimary(ctx, address);
 
-    // Get last claim record
+    // Get last claim record (under primary address)
     const lastClaim = await ctx.db
       .query("dailyFreeClaims")
-      .withIndex("by_address", (q) => q.eq("address", address))
+      .withIndex("by_address", (q) => q.eq("address", effectiveAddress))
       .first();
 
     if (!lastClaim) {
@@ -1535,16 +1547,18 @@ export const claimDailyFreePack = mutation({
   args: { address: v.string(), chain: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const address = args.address.toLowerCase();
+    // 🔒 SECURITY FIX: Use primary address so linked wallets share the same daily limit
+    const effectiveAddress = await resolveToPrimary(ctx, address);
 
-    // 🚫 BLACKLIST CHECK
-    if (isBlacklisted(address)) {
+    // 🚫 BLACKLIST CHECK (check both connected and primary)
+    if (isBlacklisted(address) || isBlacklisted(effectiveAddress)) {
       throw new Error("Account banned");
     }
 
-    // Check if can claim
+    // Check if can claim (under primary address)
     const lastClaim = await ctx.db
       .query("dailyFreeClaims")
-      .withIndex("by_address", (q) => q.eq("address", address))
+      .withIndex("by_address", (q) => q.eq("address", effectiveAddress))
       .first();
 
     const now = Date.now();
@@ -1557,11 +1571,10 @@ export const claimDailyFreePack = mutation({
     // 🔗 Arbitrum bonus: 3 packs total (vs 1 normal)
     const packsToGive = args.chain === "arbitrum" ? 3 : 1;
 
-    // Give pack to player (uses basic pack type for opening)
-    // 🚀 PERF: Use compound index
+    // Give pack to primary address (all linked wallets share card inventory through primary)
     const existingPack = await ctx.db
       .query("cardPacks")
-      .withIndex("by_address_packType", (q) => q.eq("address", address).eq("packType", "basic"))
+      .withIndex("by_address_packType", (q) => q.eq("address", effectiveAddress).eq("packType", "basic"))
       .first();
 
     if (existingPack) {
@@ -1570,7 +1583,7 @@ export const claimDailyFreePack = mutation({
       });
     } else {
       await ctx.db.insert("cardPacks", {
-        address,
+        address: effectiveAddress,
         packType: "basic",
         unopened: packsToGive,
         sourceId: "daily_free",
@@ -1578,7 +1591,7 @@ export const claimDailyFreePack = mutation({
       });
     }
 
-    // Update or create claim record
+    // Update or create claim record under primary address
     if (lastClaim) {
       await ctx.db.patch(lastClaim._id, {
         claimedAt: now,
@@ -1586,13 +1599,13 @@ export const claimDailyFreePack = mutation({
       });
     } else {
       await ctx.db.insert("dailyFreeClaims", {
-        address,
+        address: effectiveAddress,
         claimedAt: now,
         totalClaims: 1,
       });
     }
 
-    console.log(`🎁 Daily Free: ${address} claimed ${packsToGive} pack(s)!${args.chain === "arbitrum" ? " (Arbitrum bonus)" : ""}`);
+    console.log(`🎁 Daily Free: ${effectiveAddress} (connected: ${address}) claimed ${packsToGive} pack(s)!${args.chain === "arbitrum" ? " (Arbitrum bonus)" : ""}`);
 
     return {
       success: true,

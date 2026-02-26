@@ -58,6 +58,16 @@ async function findProfileByAddress(ctx: any, normalizedAddress: string) {
   return profile;
 }
 
+// 🔒 SECURITY FIX: Resolve linked wallet to primary address
+// Prevents multi-wallet exploit (each linked wallet spinning independently)
+async function resolveToPrimary(ctx: any, normalizedAddress: string): Promise<string> {
+  const link = await ctx.db
+    .query("addressLinks")
+    .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+    .first();
+  return link?.primaryAddress || normalizedAddress;
+}
+
 // Helper to find VibeFID card by address (including linked addresses)
 async function findVibeFidByAddress(ctx: any, normalizedAddress: string) {
   let vibeFidCard = await ctx.db.query("farcasterCards").withIndex("by_address", (q: any) => q.eq("address", normalizedAddress)).first();
@@ -83,9 +93,11 @@ export const canSpin = query({
   handler: async (ctx, { address }) => {
     const today = getTodayKey();
     const normalizedAddress = address.toLowerCase();
+    // 🔒 SECURITY FIX: Use primary address so linked wallets share the same spin limit
+    const effectiveAddress = await resolveToPrimary(ctx, normalizedAddress);
 
     // Check for profile (including linked addresses)
-    const profile = await findProfileByAddress(ctx, normalizedAddress);
+    const profile = await findProfileByAddress(ctx, effectiveAddress);
 
     const isTestMode = profile?.rouletteTestMode === true;
 
@@ -100,7 +112,7 @@ export const canSpin = query({
     }
 
     // Check if user has VibeFID card (including linked addresses)
-    const vibeFidCard = await findVibeFidByAddress(ctx, normalizedAddress);
+    const vibeFidCard = await findVibeFidByAddress(ctx, effectiveAddress);
 
     const isVibeFidHolder = !!vibeFidCard;
     // 🔗 Arbitrum bonus: +1 spin (read from profile.preferredChain)
@@ -109,11 +121,11 @@ export const canSpin = query({
     const maxSpins = (isVibeFidHolder ? 3 : 1) + arbBonus;
 
     // 🚀 BANDWIDTH FIX: Use .take(maxSpins) instead of .collect()
-    // Since max is 4 (3 VibeFID + 1 ARB), we never need to fetch more than 4 spins
+    // 🔒 SECURITY FIX: Query spins under effectiveAddress (primary)
     const spins = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
-        q.eq("address", normalizedAddress).eq("date", today)
+        q.eq("address", effectiveAddress).eq("date", today)
       )
       .order("desc") // Get most recent first for lastSpinDate
       .take(maxSpins);
@@ -142,27 +154,29 @@ export const spin = mutation({
   handler: async (ctx, { address, chain }) => {
     const today = getTodayKey();
     const normalizedAddress = address.toLowerCase();
+    // 🔒 SECURITY FIX: Use primary address so all linked wallets share the same daily limit
+    const effectiveAddress = await resolveToPrimary(ctx, normalizedAddress);
 
     // Check for profile (including linked addresses)
-    const profile = await findProfileByAddress(ctx, normalizedAddress);
+    const profile = await findProfileByAddress(ctx, effectiveAddress);
 
     const isTestMode = profile?.rouletteTestMode === true;
 
     // Check spin limit (VibeFID = 3, regular = 1)
     if (!isTestMode) {
       // Check VibeFID (including linked addresses)
-      const vibeFidCard = await findVibeFidByAddress(ctx, normalizedAddress);
+      const vibeFidCard = await findVibeFidByAddress(ctx, effectiveAddress);
 
       const isVibeFidHolder = !!vibeFidCard;
       // 🔗 Arbitrum bonus: +1 spin
       const arbBonus = chain === "arbitrum" ? 1 : 0;
       const maxSpins = (isVibeFidHolder ? 3 : 1) + arbBonus;
 
-      // 🚀 BANDWIDTH FIX: Use .take(maxSpins) instead of .collect()
+      // 🔒 SECURITY FIX: Check spins under effectiveAddress (primary)
       const existingSpins = await ctx.db
         .query("rouletteSpins")
         .withIndex("by_address_date", (q) =>
-          q.eq("address", normalizedAddress).eq("date", today)
+          q.eq("address", effectiveAddress).eq("date", today)
         )
         .take(maxSpins);
 
@@ -189,17 +203,17 @@ export const spin = mutation({
       };
     }
 
-    // Record spin (NOT adding to inbox - user must claim)
+    // 🔒 SECURITY FIX: Record spin under effectiveAddress (primary) - prevents multi-wallet exploit
     await ctx.db.insert("rouletteSpins", {
-      address: normalizedAddress,
+      address: effectiveAddress,
       date: today,
       prizeAmount: amount,
       prizeIndex: index,
       spunAt: Date.now(),
-      claimed: false, // Track if claimed
+      claimed: false,
     });
 
-    console.log(`🎰 Roulette: ${normalizedAddress} won ${amount} VBMS (awaiting claim)`);
+    console.log(`🎰 Roulette: ${effectiveAddress} (connected: ${normalizedAddress}) won ${amount} VBMS (awaiting claim)`);
 
     return {
       success: true,
@@ -217,10 +231,11 @@ export const getSpinHistory = query({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
+    const effectiveAddress = await resolveToPrimary(ctx, normalizedAddress);
 
     const spins = await ctx.db
       .query("rouletteSpins")
-      .withIndex("by_address_date", (q) => q.eq("address", normalizedAddress))
+      .withIndex("by_address_date", (q) => q.eq("address", effectiveAddress))
       .order("desc")
       .take(10);
 
@@ -343,13 +358,15 @@ export const claimSmallPrize = mutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
+    // 🔒 SECURITY FIX: Resolve to primary so linked wallets claim from same pool
+    const effectiveAddress = await resolveToPrimary(ctx, normalizedAddress);
     const today = getTodayKey();
 
-    // Find unclaimed spin
+    // Find unclaimed spin (stored under effectiveAddress after fix)
     const spin = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
-        q.eq("address", normalizedAddress).eq("date", today)
+        q.eq("address", effectiveAddress).eq("date", today)
       )
       .first();
 
@@ -359,11 +376,8 @@ export const claimSmallPrize = mutation({
 
     // All prizes go to inbox now (Arb validation replaces Base TX)
 
-    // Get profile
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    // Get profile (supports linked wallets)
+    const profile = await findProfileByAddress(ctx, effectiveAddress);
 
     if (!profile) {
       throw new Error("Profile not found");
@@ -384,7 +398,7 @@ export const claimSmallPrize = mutation({
     // 🔒 SECURITY: Add audit log for small prize claims
     await createAuditLog(
       ctx,
-      normalizedAddress,
+      effectiveAddress,
       "earn",
       spin.prizeAmount,
       profile.coinsInbox || 0,
@@ -394,7 +408,7 @@ export const claimSmallPrize = mutation({
       { spinId: spin._id, prizeIndex: spin.prizeIndex }
     );
 
-    console.log(`🎰 Roulette small prize: ${normalizedAddress} received ${spin.prizeAmount} VBMS to inbox`);
+    console.log(`🎰 Roulette small prize: ${effectiveAddress} received ${spin.prizeAmount} VBMS to inbox`);
 
     return {
       success: true,
@@ -412,13 +426,15 @@ export const getUnclaimedSpin = internalQuery({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
+    // 🔒 SECURITY FIX: Resolve to primary so linked wallets find spins stored under primary
+    const effectiveAddress = await resolveToPrimary(ctx, normalizedAddress);
     const today = getTodayKey();
 
     // Get ALL spins for today and find the most recent unclaimed one
     const spins = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
-        q.eq("address", normalizedAddress).eq("date", today)
+        q.eq("address", effectiveAddress).eq("date", today)
       )
       .collect();
 
@@ -479,13 +495,15 @@ export const recordRouletteClaim = mutation({
   },
   handler: async (ctx, { address, amount, txHash }) => {
     const normalizedAddress = address.toLowerCase();
+    // 🔒 SECURITY FIX: Resolve to primary so linked wallets find their spins
+    const effectiveAddress = await resolveToPrimary(ctx, normalizedAddress);
     const today = getTodayKey();
 
-    // Find all spins for today
+    // Find all spins for today (stored under primary address)
     const spins = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
-        q.eq("address", normalizedAddress).eq("date", today)
+        q.eq("address", effectiveAddress).eq("date", today)
       )
       .collect();
 
@@ -509,9 +527,9 @@ export const recordRouletteClaim = mutation({
         claimedAt: Date.now(),
         txHash,
       });
-      console.log(`🎰 Roulette claimed (fallback): ${normalizedAddress} received ${amount} VBMS (tx: ${txHash})`);
+      console.log(`🎰 Roulette claimed (fallback): ${effectiveAddress} received ${amount} VBMS (tx: ${txHash})`);
       await ctx.db.insert("claimHistory", {
-        playerAddress: normalizedAddress,
+        playerAddress: effectiveAddress,
         amount,
         txHash,
         timestamp: Date.now(),
@@ -519,15 +537,12 @@ export const recordRouletteClaim = mutation({
       });
 
       // 🔒 SECURITY: Add audit log for fallback claims
-      const profileFallback = await ctx.db
-        .query("profiles")
-        .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-        .first();
+      const profileFallback = await findProfileByAddress(ctx, effectiveAddress);
 
       if (profileFallback) {
         await createAuditLog(
           ctx,
-          normalizedAddress,
+          effectiveAddress,
           "earn",
           amount,
           profileFallback.coins || 0,
@@ -550,7 +565,7 @@ export const recordRouletteClaim = mutation({
 
     // Save to claim history
     await ctx.db.insert("claimHistory", {
-      playerAddress: normalizedAddress,
+      playerAddress: effectiveAddress,
       amount,
       txHash,
       timestamp: Date.now(),
@@ -558,15 +573,12 @@ export const recordRouletteClaim = mutation({
     });
 
     // 🔒 SECURITY: Add audit log for roulette claims
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
-      .first();
+    const profile = await findProfileByAddress(ctx, effectiveAddress);
 
     if (profile) {
       await createAuditLog(
         ctx,
-        normalizedAddress,
+        effectiveAddress,
         "earn",
         amount,
         profile.coins || 0,
@@ -647,13 +659,14 @@ export const canBuyPaidSpin = query({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
+    // 🔒 SECURITY FIX: Use primary address so linked wallets share paid spin limit
+    const effectiveAddress = await resolveToPrimary(ctx, normalizedAddress);
     const today = getTodayKey();
 
-    // 🚀 BANDWIDTH FIX: Use filter in query instead of collect + manual filter
     const paidSpins = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
-        q.eq("address", normalizedAddress).eq("date", today)
+        q.eq("address", effectiveAddress).eq("date", today)
       )
       .filter((q) => q.eq(q.field("isPaidSpin"), true))
       .collect();
@@ -682,14 +695,15 @@ export const recordPaidSpin = mutation({
   },
   handler: async (ctx, { address, txHash }) => {
     const normalizedAddress = address.toLowerCase();
+    // 🔒 SECURITY FIX: Use primary address so linked wallets share paid spin limit
+    const effectiveAddress = await resolveToPrimary(ctx, normalizedAddress);
     const today = getTodayKey();
 
-    // 🚀 BANDWIDTH FIX: Use filter in query instead of collect + manual filter
-    // Check daily limit for paid spins
+    // Check daily limit for paid spins (under primary address)
     const paidSpins = await ctx.db
       .query("rouletteSpins")
       .withIndex("by_address_date", (q) =>
-        q.eq("address", normalizedAddress).eq("date", today)
+        q.eq("address", effectiveAddress).eq("date", today)
       )
       .filter((q) => q.eq(q.field("isPaidSpin"), true))
       .collect();
@@ -717,9 +731,9 @@ export const recordPaidSpin = mutation({
     // Determine prize
     const { amount, index } = determinePrize();
 
-    // Record paid spin
+    // 🔒 SECURITY FIX: Record paid spin under primary address
     await ctx.db.insert("rouletteSpins", {
-      address: normalizedAddress,
+      address: effectiveAddress,
       date: today,
       prizeAmount: amount,
       prizeIndex: index,
@@ -729,7 +743,7 @@ export const recordPaidSpin = mutation({
       paidTxHash: txHash,
     });
 
-    console.log(`🎰 Paid Spin (TX): ${normalizedAddress} paid 500 VBMS, won ${amount} VBMS (tx: ${txHash})`);
+    console.log(`🎰 Paid Spin (TX): ${effectiveAddress} (connected: ${normalizedAddress}) paid 500 VBMS, won ${amount} VBMS (tx: ${txHash})`);
 
     return {
       success: true,
