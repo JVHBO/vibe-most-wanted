@@ -17,7 +17,7 @@ export default function RouletteQuestGuidePage() {
         style={{ background: '#1a1a1a' }}
       >
         <h1 className="text-sm font-display font-bold text-vintage-ice tracking-widest uppercase">
-          🎰 Roulette Quest
+          Roulette Quest
         </h1>
         <LanguageSelect />
       </div>
@@ -27,7 +27,7 @@ export default function RouletteQuestGuidePage() {
 
         {/* ARB banner */}
         <div className="bg-amber-500/10 border border-amber-500/40 rounded-lg p-3 flex items-center gap-2">
-          <span className="text-xl">🟠</span>
+          <span className="w-3 h-3 rounded-full bg-amber-500 shrink-0" />
           <div>
             <p className="text-amber-400 font-bold text-xs">ARB Mode — Extra Bonuses</p>
             <p className="text-vintage-ice/60 text-[11px]">+1 free spin · 2x quest rewards · +1 free pack/day</p>
@@ -78,7 +78,7 @@ export default function RouletteQuestGuidePage() {
           href="/"
           className="block w-full py-6 bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold text-vintage-black font-display font-black text-center rounded-2xl shadow-[0_6px_0_rgba(0,0,0,0.5)] hover:shadow-[0_2px_0_rgba(0,0,0,0.5)] hover:translate-y-[4px] transition-all text-3xl uppercase tracking-widest"
         >
-          🎰 SPIN
+          SPIN
         </Link>
       </div>
 
