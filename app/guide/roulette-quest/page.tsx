@@ -1,26 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { LanguageSelect } from '@/components/SettingsModal';
 
 export default function RouletteQuestGuidePage() {
-  const router = useRouter();
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black text-vintage-ice">
+    <div
+      className="flex flex-col h-screen text-vintage-ice"
+      style={{ background: 'linear-gradient(to bottom, #1A1A1A, #121212)' }}
+    >
 
       {/* Fixed Header */}
-      <div className="shrink-0 z-20 bg-vintage-charcoal/95 border-b border-vintage-gold/30 backdrop-blur-sm px-3 py-2.5 flex items-center justify-between">
-        <button
-          onClick={() => router.push('/')}
-          className="px-3 py-1.5 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all text-xs font-bold uppercase tracking-wider"
-        >
-          ← Back
-        </button>
-        <h1 className="text-sm font-display font-bold text-vintage-gold tracking-widest uppercase">
+      <div
+        className="shrink-0 z-20 border-b border-vintage-gold/30 px-3 py-2.5 flex items-center justify-between"
+        style={{ background: '#1a1a1a' }}
+      >
+        <h1 className="text-sm font-display font-bold text-vintage-ice tracking-widest uppercase">
           🎰 Roulette Quest
         </h1>
-        <div className="w-14" />
+        <LanguageSelect />
       </div>
 
       {/* Scrollable content */}
@@ -39,9 +38,8 @@ export default function RouletteQuestGuidePage() {
         <div className="bg-vintage-charcoal/50 border border-vintage-gold/20 rounded-xl overflow-hidden divide-y divide-vintage-gold/10">
 
           {[
-            { n: '1', title: 'Open the miniapp', desc: 'Open Vibe Most Wanted inside Warpcast or at vibemostwanted.xyz' },
-            { n: '2', title: 'Spin the roulette', desc: 'Tap SPIN on the home screen. 1–4 free spins/day depending on your cards.' },
-            { n: '3', title: 'Claim on-chain', desc: 'After spinning, tap Claim and confirm the TX in your wallet (Base or ARB).' },
+            { n: '1', title: 'Spin the roulette', desc: 'Tap SPIN on the home screen. 1–4 free spins/day depending on your cards.' },
+            { n: '2', title: 'Claim on-chain', desc: 'After spinning, tap Claim and confirm the TX in your wallet (Base or ARB).' },
             { n: '✓', title: 'Quest verified', desc: 'The platform detects your on-chain TX automatically.', green: true },
           ].map((step) => (
             <div key={step.n} className={`flex gap-3 p-3 ${step.green ? 'bg-green-500/5' : ''}`}>
@@ -75,12 +73,12 @@ export default function RouletteQuestGuidePage() {
       </div>
 
       {/* Fixed bottom CTA */}
-      <div className="shrink-0 p-3 bg-vintage-deep-black/90 border-t border-vintage-gold/20">
+      <div className="shrink-0 p-3 border-t border-vintage-gold/20" style={{ background: '#0c0c0c' }}>
         <Link
           href="/"
-          className="block w-full py-3 bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold text-vintage-black font-display font-bold text-center rounded-xl shadow-[0_4px_0_rgba(0,0,0,0.4)] hover:shadow-[0_2px_0_rgba(0,0,0,0.4)] hover:translate-y-[2px] transition-all text-sm uppercase tracking-wider"
+          className="block w-full py-4 bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold text-vintage-black font-display font-bold text-center rounded-xl shadow-[0_4px_0_rgba(0,0,0,0.4)] hover:shadow-[0_2px_0_rgba(0,0,0,0.4)] hover:translate-y-[2px] transition-all text-lg uppercase tracking-widest"
         >
-          🎰 Go Spin Now
+          🎰 SPIN
         </Link>
       </div>
 
