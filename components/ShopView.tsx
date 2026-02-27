@@ -270,12 +270,8 @@ export function ShopView({ address }: ShopViewProps) {
                   setShowPacksModal(true);
                 }
               }}
-              disabled={!playerPacks || totalUnopenedPacks === 0 || openingPack}
-              className={`py-3 px-4 rounded-xl font-display font-bold transition-all flex items-center justify-center gap-2 ${
-                totalUnopenedPacks > 0
-                  ? 'bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/30'
-                  : 'bg-vintage-charcoal/30 border border-vintage-gold/20 text-vintage-ice/30 cursor-not-allowed'
-              }`}
+              disabled={openingPack}
+              className="py-3 px-4 rounded-xl font-display font-bold transition-all flex items-center justify-center gap-2 bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/30"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 12v10H4V12" />
@@ -291,12 +287,7 @@ export function ShopView({ address }: ShopViewProps) {
             <button
               onMouseEnter={() => AudioManager.buttonHover()}
               onClick={() => { AudioManager.buttonClick(); router.push('/shop/burn'); }}
-              disabled={!playerCards || playerCards.length === 0}
-              className={`py-3 px-4 rounded-xl font-display font-bold transition-all flex items-center justify-center gap-2 ${
-                playerCards && playerCards.length > 0
-                  ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
-                  : 'bg-vintage-charcoal/30 border border-vintage-gold/20 text-vintage-ice/30 cursor-not-allowed'
-              }`}
+              className="py-3 px-4 rounded-xl font-display font-bold transition-all flex items-center justify-center gap-2 bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 6h18" />
