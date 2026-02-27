@@ -449,7 +449,8 @@ export const getUnclaimedSpin = internalQuery({
     const unclaimedSpins = spins.filter(s =>
       !s.claimed && (
         !s.claimPending ||
-        (s.claimPendingAt && now - s.claimPendingAt > PENDING_TIMEOUT_MS)
+        !s.claimPendingAt || // sem timestamp = spin antigo travado, tratar como expirado
+        (now - s.claimPendingAt > PENDING_TIMEOUT_MS)
       )
     );
     if (unclaimedSpins.length === 0) {
@@ -483,8 +484,10 @@ export const markSpinAsPending = internalMutation({
     }
 
     const PENDING_TIMEOUT_MS = 5 * 60 * 1000;
-    const isExpiredPending = spin.claimPending &&
-      spin.claimPendingAt && Date.now() - spin.claimPendingAt > PENDING_TIMEOUT_MS;
+    const isExpiredPending = spin.claimPending && (
+      !spin.claimPendingAt || // sem timestamp = spin antigo travado
+      Date.now() - spin.claimPendingAt > PENDING_TIMEOUT_MS
+    );
     if (spin.claimPending && !isExpiredPending) {
       throw new Error("Claim already in progress");
     }
