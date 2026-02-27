@@ -127,9 +127,13 @@ export const signClaimMessage = internalAction({
     console.log(`[VBMS Sign Claim] Request: address=${address}, amount=${amount}, nonce=${nonce}`);
 
     try {
+      const internalSecret = process.env.CONVEX_INTERNAL_SECRET;
       const response = await fetch(`${apiUrl}/api/vbms/sign-claim`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-secret': internalSecret || '',
+        },
         body: JSON.stringify({ address, amount, nonce }),
       });
 
