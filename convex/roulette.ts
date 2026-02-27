@@ -352,7 +352,7 @@ export const prepareRouletteClaim = action({
 
     // Get signature from roulette-specific signing endpoint (no minimum)
     const apiUrl = 'https://vibemostwanted.xyz';
-    const internalSecret = process.env.CONVEX_INTERNAL_SECRET;
+    const internalSecret = process.env.VMW_INTERNAL_SECRET;
     const response = await fetch(`${apiUrl}/api/vbms/sign-roulette`, {
       method: 'POST',
       headers: {

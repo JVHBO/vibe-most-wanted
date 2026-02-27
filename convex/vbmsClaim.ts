@@ -128,7 +128,7 @@ export const signClaimMessage = internalAction({
     console.log(`[VBMS Sign Claim] Request: address=${address}, amount=${amount}, nonce=${nonce}`);
 
     try {
-      const internalSecret = process.env.CONVEX_INTERNAL_SECRET;
+      const internalSecret = process.env.VMW_INTERNAL_SECRET;
       const response = await fetch(`${apiUrl}/api/vbms/sign-claim`, {
         method: 'POST',
         headers: {
@@ -1261,7 +1261,7 @@ export const signArbValidation = action({
       throw new Error(`Invalid amount: ${amount}`);
     }
 
-    const internalSecret = process.env.CONVEX_INTERNAL_SECRET;
+    const internalSecret = process.env.VMW_INTERNAL_SECRET;
     const response = await fetch('https://vibemostwanted.xyz/api/arb/sign-validation', {
       method: 'POST',
       headers: {
