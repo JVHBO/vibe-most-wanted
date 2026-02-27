@@ -56,11 +56,12 @@ export function usePrimaryAddress() {
       const cacheKey = `vbms_linked_${connectedAddress.toLowerCase()}`;
 
       // Check sessionStorage cache (1 hour TTL)
+      // Only use cache if it has a valid primary — skip null results so FID fallback can retry
       try {
         const cached = sessionStorage.getItem(cacheKey);
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (Date.now() - parsed.timestamp < 60 * 60 * 1000) {
+          if (Date.now() - parsed.timestamp < 60 * 60 * 1000 && parsed.data?.primary) {
             setLinkedData(parsed.data);
             loadedRef.current = connectedAddress.toLowerCase();
             return;
