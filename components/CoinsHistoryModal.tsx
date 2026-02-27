@@ -42,7 +42,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
     if (source === 'pvp_entry') return '🎲';
     if (source === 'leaderboard') return '🏆';
     if (source === 'blockchain') return '⛓️';
-    if (source === 'mecha_arena') return '🤖';
+    if (source === 'mecha_arena' || source === 'betting_credits') return '🎰';
 
     // Type-based fallbacks
     switch (type) {
@@ -103,7 +103,8 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
       'buy_pack_elite': 'Shop',
       'poker_cpu': 'Poker',
       'pvp_entry': 'PvP',
-      'mecha_arena': 'Mecha Arena',
+      'mecha_arena': 'Betting',
+      'betting_credits': 'Betting',
     };
     return labels[source] || source;
   };

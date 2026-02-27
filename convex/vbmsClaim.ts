@@ -9,6 +9,7 @@
  */
 
 import { v } from "convex/values";
+import { ConvexError } from "convex/values";
 import { mutation, query, action, internalMutation, internalAction, internalQuery } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
@@ -930,7 +931,8 @@ export const convertTESTVBMStoVBMS = action({
       } catch (restoreError: any) {
         console.error(`[VBMS] ❌ Failed to restore coins for ${address}:`, restoreError);
       }
-      throw new Error("[CLAIM_SIGNATURE_FAILED]");
+      // Use ConvexError so actual error message is visible to client (for debugging)
+      throw new ConvexError(`[CLAIM_SIGNATURE_FAILED] ${signError.message}`);
     }
 
     console.log(`💱 ${address} (FID: ${fid}) converting ${result.claimAmount} TESTVBMS → VBMS (nonce: ${nonce})`);

@@ -267,7 +267,7 @@ export const getTransactionHistory = query({
         address: tx.address,
         type,
         amount: Math.abs(amount),
-        source: "mecha_arena",
+        source: "betting_credits",
         description,
         balanceBefore: 0, // Not tracked for betting
         balanceAfter: 0, // Not tracked for betting
