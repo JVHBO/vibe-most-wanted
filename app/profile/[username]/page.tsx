@@ -94,6 +94,7 @@ export default function ProfilePage() {
   const isNftsLoading = isOwnProfile ? contextLoading : loadingNFTs;
 
   const [activeTab, setActiveTab] = useState<'vibefid' | 'album' | 'stats'>('vibefid');
+  const [vibeFidCardExists, setVibeFidCardExists] = useState<boolean | null>(null);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [currentNFTPage, setCurrentNFTPage] = useState(1);
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
@@ -550,7 +551,7 @@ export default function ProfilePage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl md:text-2xl font-display font-bold text-vintage-gold uppercase tracking-wide drop-shadow-[2px_2px_0px_#000] truncate">{profile.username}</h1>
-                <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999, profile.hasVibeBadge)} size="sm" />
+                <BadgeList badges={getUserBadges(profile.address, profile.userIndex ?? 9999, vibeFidCardExists === true)} size="sm" />
               </div>
               <div className="flex items-center gap-2 mt-1 flex-wrap text-xs">
                 <button onClick={copyAddress} className="text-vintage-burnt-gold hover:text-vintage-gold font-mono">
@@ -654,6 +655,7 @@ export default function ProfilePage() {
               isOwnProfile={!!isOwnProfile}
               address={currentUserAddress || undefined}
               hasVibeBadge={!!profile.hasVibeBadge}
+              onCardStatus={setVibeFidCardExists}
             />
           </VibeFIDConvexProvider>
         </div>

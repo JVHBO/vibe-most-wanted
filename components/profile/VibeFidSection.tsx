@@ -34,9 +34,10 @@ interface VibeFidSectionProps {
   isOwnProfile: boolean;
   address?: string;
   hasVibeBadge?: boolean;
+  onCardStatus?: (exists: boolean) => void;
 }
 
-export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge }: VibeFidSectionProps) {
+export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCardStatus }: VibeFidSectionProps) {
   const { lang } = useLanguage();
   const t = fidTranslations[lang] || fidTranslations['en'];
   const farcasterContext = useFarcasterContext();
@@ -266,6 +267,12 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge }: Vib
     }
     setIsUpgrading(false);
   };
+
+  // Report card status to parent for badge display
+  useEffect(() => {
+    if (fidCards === undefined) return;
+    onCardStatus?.(fidCards.length > 0);
+  }, [fidCards?.length]);
 
   // Loading state
   if (fidCards === undefined) {
