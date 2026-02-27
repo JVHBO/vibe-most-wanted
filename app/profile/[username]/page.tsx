@@ -136,7 +136,7 @@ export default function ProfilePage() {
   const claimShareBonus = useMutation(api.economy.claimShareBonus);
   const [showShareReward, setShowShareReward] = useState(false);
   const [albumPage, setAlbumPage] = useState(0);
-  const ALBUM_PER_PAGE = 60;
+  const ALBUM_PER_PAGE = 18;
 
   // Album card modal state
   const [selectedAlbumCard, setSelectedAlbumCard] = useState<{
