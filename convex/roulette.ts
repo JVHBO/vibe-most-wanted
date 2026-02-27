@@ -482,7 +482,10 @@ export const markSpinAsPending = internalMutation({
       throw new Error("Spin already claimed");
     }
 
-    if (spin.claimPending) {
+    const PENDING_TIMEOUT_MS = 5 * 60 * 1000;
+    const isExpiredPending = spin.claimPending &&
+      spin.claimPendingAt && Date.now() - spin.claimPendingAt > PENDING_TIMEOUT_MS;
+    if (spin.claimPending && !isExpiredPending) {
       throw new Error("Claim already in progress");
     }
 
