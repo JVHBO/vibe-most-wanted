@@ -1,11 +1,6 @@
 import { action } from './_generated/server';
 import { v } from 'convex/values';
 
-/**
- * Proxy for ARB validation signing.
- * Called from client → Convex → sign-validation API (with internal secret).
- * This ensures only authenticated Convex flows can get signatures.
- */
 export const signArbValidation = action({
   args: {
     address: v.string(),
