@@ -688,7 +688,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
             {/* Body */}
             <div className="p-5">
               <p className="text-white font-modern text-base mb-1">Login bonus available:</p>
-              <p className="text-[#FFD400] font-black font-display text-3xl uppercase tracking-wider mb-5">+{effectiveChain === 'arbitrum' ? 100 : 50} VBMS</p>
+              <p className="text-[#FFD400] font-black font-display text-3xl uppercase tracking-wider mb-5">+{effectiveChain === 'arbitrum' ? 100 : 50} COINS</p>
 
               <div className="flex gap-3">
                 <button
