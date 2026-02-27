@@ -19,9 +19,7 @@ export async function GET(
     }
 
     // Fetch from local API route (same server, no external dependency)
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vibemostwanted.xyz';
     const metadataUrl = `${baseUrl}/api/fid/metadata/fid/${tokenId}`;
     const res = await fetch(metadataUrl, {
       headers: {
