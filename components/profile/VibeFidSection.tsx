@@ -33,9 +33,10 @@ interface VibeFidSectionProps {
   fid: number;
   isOwnProfile: boolean;
   address?: string;
+  hasVibeBadge?: boolean;
 }
 
-export function VibeFidSection({ fid, isOwnProfile, address }: VibeFidSectionProps) {
+export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge }: VibeFidSectionProps) {
   const { lang } = useLanguage();
   const t = fidTranslations[lang] || fidTranslations['en'];
   const farcasterContext = useFarcasterContext();
@@ -281,14 +282,28 @@ export function VibeFidSection({ fid, isOwnProfile, address }: VibeFidSectionPro
   if (fidCards.length === 0) {
     return (
       <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/50 p-6 text-center">
-        <p className="text-vintage-gold font-bold text-base mb-1">No VibeFID Card</p>
-        <p className="text-vintage-ice/60 text-sm mb-4">This player hasn&apos;t minted their VibeFID card yet.</p>
+        {hasVibeBadge ? (
+          <>
+            <p className="text-yellow-400 font-bold text-base mb-1">VibeFID NFT detected</p>
+            <p className="text-vintage-ice/60 text-sm mb-2">
+              This player owns a VibeFID NFT on-chain, but the card was received via transfer — no Convex record exists for FID #{fid}.
+            </p>
+            <p className="text-vintage-ice/40 text-xs">
+              The card data is only created when minted through the app.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-vintage-gold font-bold text-base mb-1">No VibeFID Card</p>
+            <p className="text-vintage-ice/60 text-sm mb-4">This player hasn&apos;t minted their VibeFID card yet.</p>
+          </>
+        )}
         {isOwnProfile && (
           <Link
             href="/fid"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-vintage-gold text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all text-sm"
+            className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-vintage-gold text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all text-sm"
           >
-            Mint Now
+            {hasVibeBadge ? 'Sync Card' : 'Mint Now'}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>

@@ -653,6 +653,7 @@ export default function ProfilePage() {
               fid={parseInt(profile.fid)}
               isOwnProfile={!!isOwnProfile}
               address={currentUserAddress || undefined}
+              hasVibeBadge={!!profile.hasVibeBadge}
             />
           </VibeFIDConvexProvider>
         </div>
