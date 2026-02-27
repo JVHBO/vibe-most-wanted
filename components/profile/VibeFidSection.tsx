@@ -446,14 +446,6 @@ export function VibeFidSection({ fid, isOwnProfile, address }: VibeFidSectionPro
               >
                 {loading ? '...' : 'Score'}
               </button>
-              {backstory && (
-                <button
-                  onClick={() => { AudioManager.buttonClick(); setShowBackstoryModal(true); }}
-                  className="flex-1 px-2 py-1.5 bg-vintage-black border border-purple-500/40 text-purple-400 font-bold rounded text-xs hover:bg-purple-500/10 transition-colors"
-                >
-                  Lore
-                </button>
-              )}
             </div>
           </div>
         </div>
