@@ -443,7 +443,15 @@ export const getUnclaimedSpin = internalQuery({
       .collect();
 
     // 🔒 SECURITY: Filter out claimed AND pending spins (prevents infinite claim exploit)
-    const unclaimedSpins = spins.filter(s => !s.claimed && !s.claimPending);
+    // Pending spins expire after 5 minutes (handles failed TX / signing errors)
+    const PENDING_TIMEOUT_MS = 5 * 60 * 1000;
+    const now = Date.now();
+    const unclaimedSpins = spins.filter(s =>
+      !s.claimed && (
+        !s.claimPending ||
+        (s.claimPendingAt && now - s.claimPendingAt > PENDING_TIMEOUT_MS)
+      )
+    );
     if (unclaimedSpins.length === 0) {
       return null;
     }
@@ -478,7 +486,7 @@ export const markSpinAsPending = internalMutation({
       throw new Error("Claim already in progress");
     }
 
-    // Mark as pending with timestamp
+    // Mark as pending with fresh timestamp (resets expiry window)
     await ctx.db.patch(spin._id, {
       claimPending: true,
       claimPendingAt: Date.now(),
