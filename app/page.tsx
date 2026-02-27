@@ -1384,7 +1384,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   // ARB: validateClaim on VBMSValidator (no tokens, just proof)
   // Base: transfer 0 VBMS to pool (no tokens moved, just on-chain marker)
   const sendMissionTx = async (reward: number, claimType: typeof ARB_CLAIM_TYPE[keyof typeof ARB_CLAIM_TYPE]) => {
-    if (!address) return;
+    if (!address || reward <= 0) return;
     try {
       if (effectiveChain === 'arbitrum') {
         await validateOnArb(reward, claimType);
@@ -1438,16 +1438,17 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
       if (claimResult && claimResult.claimed > 0) {
         devLog(`Claimed ${claimResult.claimed} missions (+${claimResult.totalReward} coins)`);
         if (soundEnabled) AudioManager.buttonSuccess();
+        // Update UI immediately, fire TX in background
+        setLoginBonusClaimed(true);
+        setShowDailyClaimPopup(false);
         await refreshProfile();
-        // Send on-chain TX
-        await sendMissionTx(claimResult.totalReward, ARB_CLAIM_TYPE.DAILY_LOGIN);
+        sendMissionTx(claimResult.totalReward, ARB_CLAIM_TYPE.DAILY_LOGIN); // fire-and-forget
       } else {
         devLog('No unclaimed missions found');
         if (soundEnabled) AudioManager.buttonError();
+        setLoginBonusClaimed(true);
+        setShowDailyClaimPopup(false);
       }
-
-      setLoginBonusClaimed(true);
-      setShowDailyClaimPopup(false);
     } catch (error) {
       devError('Error claiming daily bonus:', error);
       if (soundEnabled) AudioManager.buttonError();
@@ -3147,9 +3148,9 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
       if (soundEnabled) AudioManager.buttonSuccess();
       devLog('✅ Mission claimed:', result);
 
-      // Send on-chain TX
+      // Fire TX in background, don't block UI
       if (result?.reward > 0) {
-        await sendMissionTx(result.reward, ARB_CLAIM_TYPE.MISSION);
+        sendMissionTx(result.reward, ARB_CLAIM_TYPE.MISSION); // fire-and-forget
       }
 
       // Reload missions and profile to update UI
@@ -3180,8 +3181,8 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
         if (soundEnabled) AudioManager.buttonSuccess();
         devLog(`✅ Claimed ${result.claimed} missions (+${result.totalReward} coins)`);
 
-        // Send on-chain TX
-        await sendMissionTx(result.totalReward, ARB_CLAIM_TYPE.MISSION);
+        // Fire TX in background, don't block UI
+        sendMissionTx(result.totalReward, ARB_CLAIM_TYPE.MISSION); // fire-and-forget
 
         // Reload missions and profile
         await loadMissions();

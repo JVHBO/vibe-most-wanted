@@ -51,9 +51,11 @@ export async function POST(request: NextRequest) {
     }
 
     const amountNum = Number(amount);
-    if (isNaN(amountNum) || amountNum < 0) {
+    // Max = vibefid_minted (5000) × 2x ARB × ~1.2 language boost ≈ 12000
+    const MAX_MISSION_AMOUNT = 12000;
+    if (isNaN(amountNum) || amountNum < 0 || amountNum > MAX_MISSION_AMOUNT) {
       return NextResponse.json(
-        { error: 'Invalid amount' },
+        { error: `Invalid amount (max ${MAX_MISSION_AMOUNT})` },
         { status: 400 }
       );
     }
