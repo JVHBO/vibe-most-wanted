@@ -317,18 +317,6 @@ export function VibeFidSection({ fid, isOwnProfile, address }: VibeFidSectionPro
         <div className="flex gap-4">
           {/* Left: Card */}
           <div className="relative w-36 flex-shrink-0">
-            {/* Lore button */}
-            {backstory && (
-              <button
-                onClick={() => { AudioManager.buttonClick(); setShowBackstoryModal(true); }}
-                className="absolute -top-2 -left-2 z-20 w-7 h-7 rounded-full flex items-center justify-center transition-all"
-                style={{ background: '#7C3AED', border: '2px solid #000', boxShadow: '2px 2px 0px #000', color: '#fff' }}
-                title="View Lore"
-              >
-                <span className="text-xs font-bold">L</span>
-              </button>
-            )}
-
             {/* Card image */}
             <FoilCardEffect
               foilType={currentTraits?.foil === 'None' ? null : (currentTraits?.foil as 'Standard' | 'Prize' | null)}
