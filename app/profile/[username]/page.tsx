@@ -708,6 +708,28 @@ export default function ProfilePage() {
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-vintage-gold font-semibold">{t('profileVmwAlbum')}</span>
+                {/* Paginação inline */}
+                {Math.ceil(((nfts || []).filter((c: any) => c.collection === "vibe").length) / ALBUM_PER_PAGE) > 1 && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setAlbumPage(p => Math.max(0, p - 1))}
+                      disabled={albumPage === 0}
+                      className="w-6 h-6 flex items-center justify-center bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded text-xs font-bold disabled:opacity-30"
+                    >
+                      ←
+                    </button>
+                    <span className="text-vintage-burnt-gold text-xs font-bold px-1">
+                      {albumPage + 1}/{Math.ceil(((nfts || []).filter((c: any) => c.collection === "vibe").length) / ALBUM_PER_PAGE)}
+                    </span>
+                    <button
+                      onClick={() => setAlbumPage(p => Math.min(Math.ceil(((nfts || []).filter((c: any) => c.collection === "vibe").length) / ALBUM_PER_PAGE) - 1, p + 1))}
+                      disabled={albumPage === Math.ceil(((nfts || []).filter((c: any) => c.collection === "vibe").length) / ALBUM_PER_PAGE) - 1}
+                      className="w-6 h-6 flex items-center justify-center bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded text-xs font-bold disabled:opacity-30"
+                    >
+                      →
+                    </button>
+                  </div>
+                )}
               </div>
               {(() => {
                 const playerVbmsCards = (nfts || []).filter((card: any) => card.collection === "vibe");
@@ -919,40 +941,6 @@ export default function ProfilePage() {
                     })}
                   </div>
 
-                  {/* Paginação */}
-                  {albumTotalPages > 1 && (
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-vintage-gold/20">
-                      <button
-                        onClick={() => setAlbumPage(p => Math.max(0, p - 1))}
-                        disabled={albumPage === 0}
-                        className="px-4 py-1.5 bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-bold disabled:opacity-30"
-                      >
-                        ←
-                      </button>
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: albumTotalPages }).map((_, i) => (
-                          <button
-                            key={i}
-                            onClick={() => setAlbumPage(i)}
-                            className={`w-7 h-7 rounded text-xs font-bold transition-all ${
-                              i === albumPage
-                                ? 'bg-vintage-gold text-vintage-black'
-                                : 'bg-vintage-black text-vintage-gold border border-vintage-gold/30'
-                            }`}
-                          >
-                            {i + 1}
-                          </button>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => setAlbumPage(p => Math.min(albumTotalPages - 1, p + 1))}
-                        disabled={albumPage === albumTotalPages - 1}
-                        className="px-4 py-1.5 bg-vintage-black border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-bold disabled:opacity-30"
-                      >
-                        →
-                      </button>
-                    </div>
-                  )}
 
                 </>
               );
