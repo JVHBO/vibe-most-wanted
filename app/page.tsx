@@ -1376,44 +1376,34 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
 
   // 💎 Handler to claim daily bonus with blockchain TX
   const handleDailyClaimNow = async () => {
-    if (!address || loginBonusClaimed) return;
+    if (!address || isClaimingBonus) return;
 
     try {
-      devLog('💎 Daily claim - creating and claiming mission...');
+      setIsClaimingBonus(true);
+      devLog('Daily claim - claiming all unclaimed missions...');
 
-      // Step 1: Create the daily login mission
-      const result = await claimLoginBonus({ address });
+      const claimResult = await convex.mutation(api.missions.claimAllMissions, {
+        playerAddress: address,
+        language: lang,
+        chain: effectiveChain,
+      });
 
-      if (result.reason?.includes('Mission created')) {
-        devLog('✓ Daily mission created');
-
-        // Step 2: Immediately claim all unclaimed missions (including the one just created)
-        const claimResult = await convex.mutation(api.missions.claimAllMissions, {
-          playerAddress: address,
-          language: lang,
-        });
-
-        if (claimResult && claimResult.claimed > 0) {
-          devLog(`✅ Claimed ${claimResult.claimed} missions (+${claimResult.totalReward} TESTVBMS)`);
-          if (soundEnabled) AudioManager.buttonSuccess();
-
-          // Refresh profile to show new balance
-          await refreshProfile();
-        }
-
-        setLoginBonusClaimed(true);
-      } else if (result.awarded > 0) {
-        // Old flow - already paid
-        devLog(`✓ Login bonus claimed: +${result.awarded} $TESTVBMS`);
-        setLoginBonusClaimed(true);
-        if (soundEnabled) AudioManager.buttonClick();
+      if (claimResult && claimResult.claimed > 0) {
+        devLog(`Claimed ${claimResult.claimed} missions (+${claimResult.totalReward} coins)`);
+        if (soundEnabled) AudioManager.buttonSuccess();
+        await refreshProfile();
       } else {
-        devLog(`! ${result.reason}`);
+        devLog('No unclaimed missions found');
         if (soundEnabled) AudioManager.buttonError();
       }
+
+      setLoginBonusClaimed(true);
+      setShowDailyClaimPopup(false);
     } catch (error) {
-      devError('✗ Error claiming daily bonus:', error);
+      devError('Error claiming daily bonus:', error);
       if (soundEnabled) AudioManager.buttonError();
+    } finally {
+      setIsClaimingBonus(false);
     }
   };
 
@@ -3033,6 +3023,12 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
 
       setMissions(completeMissionsList);
       devLog('📋 Loaded missions:', completeMissionsList);
+
+      // Show daily claim popup if daily_login mission is unclaimed
+      const dailyLoginMission = completeMissionsList.find((m: any) => m.missionType === 'daily_login');
+      if (dailyLoginMission?.completed && !dailyLoginMission?.claimed) {
+        setShowDailyClaimPopup(true);
+      }
     } catch (error) {
       devError('Error loading missions:', error);
 
