@@ -159,11 +159,6 @@ export function VibeFidSection({ fid, isOwnProfile, address }: VibeFidSectionPro
 
   const handleCheckNeynarScore = async () => {
     AudioManager.buttonClick();
-    if (!farcasterContext.user) {
-      setError('Connect your Farcaster account first');
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
