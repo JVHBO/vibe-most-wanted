@@ -20,9 +20,8 @@ import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { AudioManager } from '@/lib/audio-manager';
 import { openMarketplace } from '@/lib/marketplace-utils';
-import { VibeFIDConvexProvider, vibefidConvex } from '@/contexts/VibeFIDConvexProvider';
+import { VibeFIDConvexProvider } from '@/contexts/VibeFIDConvexProvider';
 import { VibeFidSection } from '@/components/profile/VibeFidSection';
-import { api as fidApi } from '@/lib/fid/convex-generated/api';
 import { isUnrevealed as isUnrevealedShared, findAttr, calcPower } from '@/lib/nft/attributes';
 import { isSameCard, findCard, getCardKey } from '@/lib/nft';
 import { usePlayerCards } from '@/contexts/PlayerCardsContext';
@@ -406,16 +405,11 @@ export default function ProfilePage() {
     };
   }, []);
 
-  // Set default tab + check VibeFID card existence on mount
+  // Set default tab based on profile data
   useEffect(() => {
     if (!profile) return;
-    const fidNum = profile.fid ? parseInt(profile.fid) : NaN;
-    if (!isNaN(fidNum)) {
+    if (profile.fid && !isNaN(parseInt(profile.fid))) {
       setActiveTab('vibefid');
-      // Query VibeFID Convex directly (fire-and-forget) to set badge
-      vibefidConvex.query(fidApi.farcasterCards.getFarcasterCardsByFid, { fid: fidNum })
-        .then(cards => setVibeFidCardExists(Array.isArray(cards) && cards.length > 0))
-        .catch(() => setVibeFidCardExists(false));
     } else if (isOwnProfile) {
       setActiveTab('album');
     } else {
@@ -652,15 +646,16 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* VibeFID Card Section */}
-      {activeTab === 'vibefid' && profile?.fid && !isNaN(parseInt(profile.fid)) && (
-        <div className="max-w-6xl mx-auto mb-4 px-4">
+      {/* VibeFID Card Section — always mounted so onCardStatus fires on load */}
+      {profile?.fid && !isNaN(parseInt(profile.fid)) && (
+        <div className={`max-w-6xl mx-auto mb-4 px-4 ${activeTab !== 'vibefid' ? 'hidden' : ''}`}>
           <VibeFIDConvexProvider>
             <VibeFidSection
               fid={parseInt(profile.fid)}
               isOwnProfile={!!isOwnProfile}
               address={currentUserAddress || undefined}
               hasVibeBadge={!!profile.hasVibeBadge}
+              onCardStatus={setVibeFidCardExists}
             />
           </VibeFIDConvexProvider>
         </div>
