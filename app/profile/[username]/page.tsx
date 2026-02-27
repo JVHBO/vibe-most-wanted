@@ -20,8 +20,9 @@ import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { AudioManager } from '@/lib/audio-manager';
 import { openMarketplace } from '@/lib/marketplace-utils';
-import { VibeFIDConvexProvider } from '@/contexts/VibeFIDConvexProvider';
+import { VibeFIDConvexProvider, vibefidConvex } from '@/contexts/VibeFIDConvexProvider';
 import { VibeFidSection } from '@/components/profile/VibeFidSection';
+import { api as fidApi } from '@/lib/fid/convex-generated/api';
 import { isUnrevealed as isUnrevealedShared, findAttr, calcPower } from '@/lib/nft/attributes';
 import { isSameCard, findCard, getCardKey } from '@/lib/nft';
 import { usePlayerCards } from '@/contexts/PlayerCardsContext';
@@ -94,7 +95,7 @@ export default function ProfilePage() {
   const isNftsLoading = isOwnProfile ? contextLoading : loadingNFTs;
 
   const [activeTab, setActiveTab] = useState<'vibefid' | 'album' | 'stats'>('vibefid');
-  const [vibeFidCardExists, setVibeFidCardExists] = useState<boolean | null>(null);
+  const [vibeFidCardExists, setVibeFidCardExists] = useState<boolean>(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [currentNFTPage, setCurrentNFTPage] = useState(1);
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
@@ -405,11 +406,16 @@ export default function ProfilePage() {
     };
   }, []);
 
-  // Set default tab based on profile data
+  // Set default tab + check VibeFID card existence on mount
   useEffect(() => {
     if (!profile) return;
-    if (profile.fid && !isNaN(parseInt(profile.fid))) {
+    const fidNum = profile.fid ? parseInt(profile.fid) : NaN;
+    if (!isNaN(fidNum)) {
       setActiveTab('vibefid');
+      // Query VibeFID Convex directly (fire-and-forget) to set badge
+      vibefidConvex.query(fidApi.farcasterCards.getFarcasterCardsByFid, { fid: fidNum })
+        .then(cards => setVibeFidCardExists(Array.isArray(cards) && cards.length > 0))
+        .catch(() => setVibeFidCardExists(false));
     } else if (isOwnProfile) {
       setActiveTab('album');
     } else {
@@ -655,7 +661,6 @@ export default function ProfilePage() {
               isOwnProfile={!!isOwnProfile}
               address={currentUserAddress || undefined}
               hasVibeBadge={!!profile.hasVibeBadge}
-              onCardStatus={setVibeFidCardExists}
             />
           </VibeFIDConvexProvider>
         </div>
