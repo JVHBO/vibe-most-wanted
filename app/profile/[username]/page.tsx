@@ -79,8 +79,13 @@ export default function ProfilePage() {
   // 🎴 Use cards from context (already loaded on home page)
   const { nfts: contextNfts, isLoading: contextLoading, status: contextStatus } = usePlayerCards();
 
-  // 🔗 Determine if viewing own profile
-  const isOwnProfile = profile && currentUserAddress && profile.address.toLowerCase() === currentUserAddress.toLowerCase();
+  // 🔗 Determine if viewing own profile (primary OR linked wallet)
+  const isOwnProfile = profile && currentUserAddress && (() => {
+    const addr = currentUserAddress.toLowerCase();
+    if (profile.address.toLowerCase() === addr) return true;
+    if (profile.linkedAddresses?.some((a: string) => a.toLowerCase() === addr)) return true;
+    return false;
+  })();
 
   // 🎴 Use context cards for own profile, localNfts for others
   const nfts = isOwnProfile ? contextNfts : localNfts;
@@ -290,7 +295,12 @@ export default function ProfilePage() {
 
         // 🎴 Only fetch NFTs for OTHER users' profiles
         // Own profile uses PlayerCardsContext (already loaded on home page)
-        const viewingOwnProfile = currentUserAddress && currentUserAddress.toLowerCase() === address.toLowerCase();
+        // Check primary address AND linked wallets
+        const addr = currentUserAddress?.toLowerCase();
+        const viewingOwnProfile = addr && (
+          address.toLowerCase() === addr ||
+          (profileData.linkedAddresses || []).some((a: string) => a.toLowerCase() === addr)
+        );
 
         if (!viewingOwnProfile) {
           setLoadingNFTs(true);

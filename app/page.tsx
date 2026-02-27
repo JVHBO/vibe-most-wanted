@@ -2905,12 +2905,13 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
 
   // Profile loading moved to ProfileContext - no local useEffect needed
 
-  // Load missions when address changes
+  // Load missions when address changes or profile becomes available
+  // profileDashboard?._id ensures we wait for account creation before loading
   useEffect(() => {
-    if (address) {
+    if (address && profileDashboard) {
       loadMissions();
     }
-  }, [address]);
+  }, [address, profileDashboard?._id]);
 
   // Helper function to get mission info
   const getMissionInfo = (missionType: string) => {

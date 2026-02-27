@@ -115,6 +115,12 @@ export const markDailyLogin = mutation({
     const today = new Date().toISOString().split('T')[0];
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
+    // No profile = player hasn't created account yet, skip
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
+    if (!profile) {
+      return { success: false, noProfile: true };
+    }
+
     // 🚀 BANDWIDTH FIX: Use compound index instead of filter post-query
     const existing = await ctx.db
       .query("personalMissions")
