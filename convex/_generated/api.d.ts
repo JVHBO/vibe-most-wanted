@@ -11,6 +11,7 @@
 import type * as accessAnalytics from "../accessAnalytics.js";
 import type * as admin from "../admin.js";
 import type * as apiStats from "../apiStats.js";
+import type * as arbValidator from "../arbValidator.js";
 import type * as arenaCardsData from "../arenaCardsData.js";
 import type * as auth from "../auth.js";
 import type * as baccarat from "../baccarat.js";
@@ -79,6 +80,7 @@ declare const fullApi: ApiFromModules<{
   accessAnalytics: typeof accessAnalytics;
   admin: typeof admin;
   apiStats: typeof apiStats;
+  arbValidator: typeof arbValidator;
   arenaCardsData: typeof arenaCardsData;
   auth: typeof auth;
   baccarat: typeof baccarat;

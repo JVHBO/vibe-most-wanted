@@ -244,6 +244,35 @@ export const getSpinHistory = query({
 });
 
 /**
+ * Admin: Clear pending state on stuck spins (without deleting them)
+ * Use when a spin is stuck in claimPending but hasn't expired yet
+ */
+export const adminClearPendingSpin = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+    const today = new Date().toISOString().split('T')[0];
+
+    const spin = await ctx.db
+      .query("rouletteSpins")
+      .withIndex("by_address_date", (q) => q.eq("address", normalizedAddress).eq("date", today))
+      .first();
+
+    if (!spin) {
+      return { message: "No spin found for today" };
+    }
+
+    if (!spin.claimPending) {
+      return { message: "Spin is not pending, no action needed" };
+    }
+
+    await ctx.db.patch(spin._id, { claimPending: false, claimPendingAt: undefined });
+    console.log(`🎰 Admin: Cleared pending state for ${normalizedAddress}`);
+    return { message: "Pending state cleared", prizeAmount: spin.prizeAmount };
+  },
+});
+
+/**
  * Admin: Reset spins for testing
  * 🔒 SECURITY FIX: Changed from mutation to internalMutation
  */
