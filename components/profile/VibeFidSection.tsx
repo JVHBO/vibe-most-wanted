@@ -324,7 +324,7 @@ export function VibeFidSection({ fid, isOwnProfile, address }: VibeFidSectionPro
             <div className="absolute -bottom-2 -left-2 z-20">
               <button
                 onClick={() => { AudioManager.buttonClick(); setShowTraitsPopup(v => !v); }}
-                className="w-7 h-7 rounded-full flex items-center justify-center transition-all"
+                className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
                 style={{ background: '#059669', border: '2px solid #000', boxShadow: '2px 2px 0px #000', color: '#fff' }}
                 title="Card Traits"
               >
@@ -373,7 +373,7 @@ export function VibeFidSection({ fid, isOwnProfile, address }: VibeFidSectionPro
                 setShowPaidVoteModal(true);
               }}
               disabled={isVoting}
-              className="absolute -bottom-2 -right-2 z-20 w-9 h-9 rounded-xl flex items-center justify-center transition-all disabled:opacity-70"
+              className="absolute -bottom-2 -right-2 z-20 w-8 h-8 rounded-xl flex items-center justify-center transition-all disabled:opacity-70"
               style={{ background: '#BE185D', border: '2px solid #000', boxShadow: '2px 2px 0px #000', color: '#fff' }}
               title={isOwnCard ? `VibeMail inbox` : `Send VibeMail`}
             >
@@ -428,6 +428,17 @@ export function VibeFidSection({ fid, isOwnProfile, address }: VibeFidSectionPro
                 className="flex-1 px-2 py-1.5 bg-vintage-black border border-vintage-gold/40 text-vintage-gold font-bold rounded text-xs hover:bg-vintage-gold/10 transition-colors disabled:opacity-50"
               >
                 {loading ? '...' : 'Score'}
+              </button>
+              <button
+                onClick={() => {
+                  if (!card) return;
+                  const chainSlug = (card as any).chain === 'arbitrum' ? 'arbitrum' : 'base';
+                  const contract = (card as any).contractAddress || '0x60274A138d026E3cB337B40567100FdEC3127565';
+                  window.open(`https://opensea.io/assets/${chainSlug}/${contract}/${card.fid}`, '_blank');
+                }}
+                className="flex-1 px-2 py-1.5 bg-vintage-black border border-vintage-gold/40 text-vintage-gold font-bold rounded text-xs hover:bg-vintage-gold/10 transition-colors"
+              >
+                OpenSea
               </button>
             </div>
           </div>
