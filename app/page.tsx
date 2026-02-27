@@ -3537,6 +3537,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
         isClaimingBonus={isClaimingBonus}
         handleClaimLoginBonus={handleClaimLoginBonus}
         onDailyClaimNow={handleDailyClaimNow}
+        effectiveChain={effectiveChain}
         t={t}
       />
 

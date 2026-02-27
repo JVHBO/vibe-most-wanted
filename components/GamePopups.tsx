@@ -105,6 +105,7 @@ interface GamePopupsProps {
   isClaimingBonus: boolean;
   handleClaimLoginBonus: () => void;
   onDailyClaimNow?: () => void; // Trigger reward choice modal for blockchain TX
+  effectiveChain?: string; // "base" | "arbitrum" — for reward display
 
   // Translation
   t: any;
@@ -136,6 +137,7 @@ export function GamePopups({
   isClaimingBonus,
   handleClaimLoginBonus,
   onDailyClaimNow,
+  effectiveChain,
   t,
 }: GamePopupsProps) {
   // Music control - pause when showing result popups
@@ -660,40 +662,49 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
       {/* Daily Claim Popup - Shows on login */}
       {showDailyClaimPopup && !loginBonusClaimed && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[300] p-4" onClick={() => setShowDailyClaimPopup(false)}>
-          <div className="bg-vintage-charcoal rounded-2xl border-4 border-green-500 max-w-md w-full p-6 shadow-2xl shadow-green-500/50" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center shrink-0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-black">
-                  <polyline points="20 12 20 22 4 22 4 12"/>
-                  <rect x="2" y="7" width="20" height="5"/>
-                  <line x1="12" y1="22" x2="12" y2="7"/>
-                  <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
-                  <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
-                </svg>
+          <div className="bg-[#1E1E1E] border-4 border-black shadow-[6px_6px_0px_#000] max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="bg-[#22C55E] border-b-4 border-black px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-black flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 12 20 22 4 22 4 12"/>
+                    <rect x="2" y="7" width="20" height="5"/>
+                    <line x1="12" y1="22" x2="12" y2="7"/>
+                    <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/>
+                    <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+                  </svg>
+                </div>
+                <span className="font-display font-black text-black text-lg uppercase tracking-wider">Daily Bonus</span>
               </div>
-              <h2 className="text-2xl font-display font-bold text-green-400">Daily Bonus Available</h2>
-            </div>
-            <p className="text-vintage-ice mb-6 font-modern text-lg">
-              Claim your daily bonus: <span className="text-vintage-gold font-bold">+50 VBMS</span>
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  if (onDailyClaimNow) {
-                    onDailyClaimNow();
-                  }
-                }}
-                disabled={isClaimingBonus}
-                className="flex-1 px-6 py-3 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black rounded-xl font-semibold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-vintage-gold/30"
-              >
-                {isClaimingBonus ? 'Claiming...' : 'Claim Now'}
-              </button>
               <button
                 onClick={() => setShowDailyClaimPopup(false)}
-                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition-all hover:scale-105"
+                className="w-8 h-8 bg-black text-[#22C55E] border-2 border-black flex items-center justify-center font-bold text-lg hover:bg-[#333] transition leading-none"
               >
-                Later
+                ×
               </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5">
+              <p className="text-white font-modern text-base mb-1">Login bonus available:</p>
+              <p className="text-[#FFD400] font-black font-display text-3xl uppercase tracking-wider mb-5">+{effectiveChain === 'arbitrum' ? 100 : 50} VBMS</p>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { if (onDailyClaimNow) onDailyClaimNow(); }}
+                  disabled={isClaimingBonus}
+                  className="flex-1 py-3 bg-[#FFD400] border-2 border-black text-black font-black uppercase tracking-wide shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[4px_4px_0px_#000]"
+                >
+                  {isClaimingBonus ? 'Claiming...' : 'Claim Now'}
+                </button>
+                <button
+                  onClick={() => setShowDailyClaimPopup(false)}
+                  className="px-5 py-3 bg-[#333] border-2 border-[#555] text-white font-bold uppercase tracking-wide hover:bg-[#444] transition-all"
+                >
+                  Later
+                </button>
+              </div>
             </div>
           </div>
         </div>
