@@ -20,6 +20,8 @@ import { useQuery, useMutation, useConvex } from "convex/react";
 import { toast } from "sonner";
 import { isMiniappMode } from "@/lib/utils/miniapp";
 import { isWarpcastClient } from "@/lib/utils/miniapp";
+import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
+import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
 import { useMiniappFrameContext } from "@/components/MiniappFrame";
 
 import { api } from "@/convex/_generated/api";
@@ -845,6 +847,9 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const arbSupported = isFrameMode || !isInFarcaster || isWarpcastClient(farcasterClientFid);
   // Effective chain: force "base" when ARB not supported (e.g. Base App)
   const effectiveChain = !arbSupported ? "base" : ((userProfile as any)?.preferredChain || "arbitrum");
+  // On-chain TX hooks for mission claims
+  const { validateOnArb } = useArbValidator();
+  const { claimVBMS } = useClaimVBMS();
   // Arb Mode announcement disabled - no longer needed
   const [pendingClaimAction, setPendingClaimAction] = useState<(() => void) | null>(null);
   const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
@@ -1375,6 +1380,31 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   };
 
   // 💎 Handler to claim daily bonus with blockchain TX
+  // Send on-chain TX after Convex mission claim (non-blocking)
+  const sendMissionTx = async (reward: number, claimType: typeof ARB_CLAIM_TYPE[keyof typeof ARB_CLAIM_TYPE]) => {
+    if (!address || reward <= 0) return;
+    try {
+      if (effectiveChain === 'arbitrum') {
+        await validateOnArb(reward, claimType);
+      } else {
+        // Base: get signature + call VBMSPoolTroll.claimVBMS
+        const nonce = ('0x' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
+          .map(b => b.toString(16).padStart(2, '0')).join('')) as `0x${string}`;
+        const res = await fetch('/api/vbms/sign-roulette', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address, amount: reward, nonce }),
+        });
+        if (res.ok) {
+          const { signature } = await res.json();
+          await claimVBMS(reward.toString(), nonce, signature);
+        }
+      }
+    } catch (err: any) {
+      devError('Mission TX (non-blocking):', err);
+    }
+  };
+
   const handleDailyClaimNow = async () => {
     if (!address || isClaimingBonus) return;
 
@@ -1392,6 +1422,8 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
         devLog(`Claimed ${claimResult.claimed} missions (+${claimResult.totalReward} coins)`);
         if (soundEnabled) AudioManager.buttonSuccess();
         await refreshProfile();
+        // Send on-chain TX
+        await sendMissionTx(claimResult.totalReward, ARB_CLAIM_TYPE.DAILY_LOGIN);
       } else {
         devLog('No unclaimed missions found');
         if (soundEnabled) AudioManager.buttonError();
@@ -3092,11 +3124,16 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
         playerAddress: address,
         missionId: missionId as any,
         language: lang,
-        skipCoins: false, // Send to inbox
+        chain: effectiveChain,
       });
 
       if (soundEnabled) AudioManager.buttonSuccess();
       devLog('✅ Mission claimed:', result);
+
+      // Send on-chain TX
+      if (result?.reward > 0) {
+        await sendMissionTx(result.reward, ARB_CLAIM_TYPE.MISSION);
+      }
 
       // Reload missions and profile to update UI
       await loadMissions();
@@ -3119,11 +3156,15 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
       const result = await convex.mutation(api.missions.claimAllMissions, {
         playerAddress: address,
         language: lang,
+        chain: effectiveChain,
       });
 
       if (result && result.claimed > 0) {
         if (soundEnabled) AudioManager.buttonSuccess();
         devLog(`✅ Claimed ${result.claimed} missions (+${result.totalReward} coins)`);
+
+        // Send on-chain TX
+        await sendMissionTx(result.totalReward, ARB_CLAIM_TYPE.MISSION);
 
         // Reload missions and profile
         await loadMissions();
