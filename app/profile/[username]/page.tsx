@@ -20,6 +20,8 @@ import { CardMedia } from '@/components/CardMedia';
 import { convertIpfsUrl } from '@/lib/ipfs-url-converter';
 import { AudioManager } from '@/lib/audio-manager';
 import { openMarketplace } from '@/lib/marketplace-utils';
+import { VibeFIDConvexProvider } from '@/contexts/VibeFIDConvexProvider';
+import { VibeFidSection } from '@/components/profile/VibeFidSection';
 import { isUnrevealed as isUnrevealedShared, findAttr, calcPower } from '@/lib/nft/attributes';
 import { isSameCard, findCard, getCardKey } from '@/lib/nft';
 import { usePlayerCards } from '@/contexts/PlayerCardsContext';
@@ -91,6 +93,7 @@ export default function ProfilePage() {
   const nfts = isOwnProfile ? contextNfts : localNfts;
   const isNftsLoading = isOwnProfile ? contextLoading : loadingNFTs;
 
+  const [activeTab, setActiveTab] = useState<'vibefid' | 'album' | 'stats'>('vibefid');
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [currentNFTPage, setCurrentNFTPage] = useState(1);
   const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
@@ -401,6 +404,18 @@ export default function ProfilePage() {
     };
   }, []);
 
+  // Set default tab based on profile data
+  useEffect(() => {
+    if (!profile) return;
+    if (profile.fid && !isNaN(parseInt(profile.fid))) {
+      setActiveTab('vibefid');
+    } else if (isOwnProfile) {
+      setActiveTab('album');
+    } else {
+      setActiveTab('stats');
+    }
+  }, [profile?.fid, !!isOwnProfile]);
+
   // 🔧 FIX: Filtrar NFTs ANTES dos early returns para seguir as regras dos hooks
   // Filtrar NFTs com useMemo para evitar recalcular em todo render
   // Also includes deduplication to prevent duplicate cards
@@ -590,8 +605,103 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Tab Navigation */}
+      <div className="max-w-6xl mx-auto px-4 mb-3">
+        <div className="flex gap-2">
+          {profile?.fid && !isNaN(parseInt(profile.fid)) && (
+            <button
+              onClick={() => setActiveTab('vibefid')}
+              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_#000] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
+                activeTab === 'vibefid'
+                  ? 'bg-vintage-gold text-black'
+                  : 'bg-vintage-charcoal text-vintage-gold hover:bg-vintage-gold/10'
+              }`}
+            >
+              VibeFID
+            </button>
+          )}
+          {isOwnProfile && (
+            <button
+              onClick={() => setActiveTab('album')}
+              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_#000] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
+                activeTab === 'album'
+                  ? 'bg-vintage-gold text-black'
+                  : 'bg-vintage-charcoal text-vintage-gold hover:bg-vintage-gold/10'
+              }`}
+            >
+              Album
+            </button>
+          )}
+          <button
+            onClick={() => setActiveTab('stats')}
+            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider border-2 border-black shadow-[3px_3px_0px_#000] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
+              activeTab === 'stats'
+                ? 'bg-vintage-gold text-black'
+                : 'bg-vintage-charcoal text-vintage-gold hover:bg-vintage-gold/10'
+            }`}
+          >
+            Stats
+          </button>
+        </div>
+      </div>
+
+      {/* VibeFID Card Section */}
+      {activeTab === 'vibefid' && profile?.fid && !isNaN(parseInt(profile.fid)) && (
+        <div className="max-w-6xl mx-auto mb-4 px-4">
+          <VibeFIDConvexProvider>
+            <VibeFidSection
+              fid={parseInt(profile.fid)}
+              isOwnProfile={!!isOwnProfile}
+              address={currentUserAddress || undefined}
+            />
+          </VibeFIDConvexProvider>
+        </div>
+      )}
+
+      {/* No VibeFID tab for profiles without FID — redirect to Album if active */}
+      {activeTab === 'vibefid' && (!profile?.fid || isNaN(parseInt(profile.fid || ''))) && (
+        <div className="max-w-6xl mx-auto px-4 mb-4">
+          <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/50 p-6 text-center">
+            <p className="text-vintage-ice/50 text-sm">This player has no VibeFID card.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Stats Tab */}
+      {activeTab === 'stats' && (
+        <div className="max-w-6xl mx-auto px-4 mb-4">
+          <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/50 p-4">
+            <p className="text-vintage-gold font-bold text-sm uppercase tracking-wider mb-3">Battle Stats</p>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="bg-vintage-black/40 rounded border border-vintage-gold/20 py-3">
+                <p className="text-green-400 font-bold text-lg">{totalWins}</p>
+                <p className="text-vintage-burnt-gold text-[10px] uppercase">Wins</p>
+              </div>
+              <div className="bg-vintage-black/40 rounded border border-vintage-gold/20 py-3">
+                <p className="text-red-400 font-bold text-lg">{totalLosses}</p>
+                <p className="text-vintage-burnt-gold text-[10px] uppercase">Losses</p>
+              </div>
+              <div className="bg-vintage-black/40 rounded border border-vintage-gold/20 py-3">
+                <p className="text-vintage-gold font-bold text-lg">{winRate}%</p>
+                <p className="text-vintage-burnt-gold text-[10px] uppercase">Win Rate</p>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+              <div className="bg-vintage-black/40 rounded border border-vintage-gold/20 py-2">
+                <p className="text-vintage-gold font-bold">{profile.stats.pveWins || 0} / {profile.stats.pveLosses || 0}</p>
+                <p className="text-vintage-burnt-gold text-[10px] uppercase">PvE W/L</p>
+              </div>
+              <div className="bg-vintage-black/40 rounded border border-vintage-gold/20 py-2">
+                <p className="text-vintage-gold font-bold">{profile.stats.pvpWins || 0} / {profile.stats.pvpLosses || 0}</p>
+                <p className="text-vintage-burnt-gold text-[10px] uppercase">PvP W/L</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* VMW Album - Card Collection Tracker */}
-      {isOwnProfile && (
+      {activeTab === 'album' && isOwnProfile && (
         <div className="max-w-6xl mx-auto mb-4">
           <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/50 p-4">
             {/* Album Header */}
