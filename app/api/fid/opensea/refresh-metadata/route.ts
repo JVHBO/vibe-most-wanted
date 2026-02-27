@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
-const OPENSEA_API_KEY = process.env.OPENSEA_API_KEY || '7805aa61f1a04c90ab1e4a274af51617';
+const OPENSEA_API_KEY = process.env.OPENSEA_API_KEY || '';
 const VIBEFID_CONTRACT = '0x60274A138d026E3cB337B40567100FdEC3127565';
 const VIBEFID_ARB_CONTRACT = '0xC39DDd9E2798D5612C700B899d0c80707c542dB0';
 

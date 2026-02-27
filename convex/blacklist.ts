@@ -655,3 +655,80 @@ export const adminAnalyzeRecentClaimers = query({
       .slice(0, 50);
   },
 });
+
+// ========== ADMIN: Zero coins + cards for a specific address ==========
+
+export const adminZeroAddress = mutation({
+  args: {
+    address: v.string(),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, { address, reason }) => {
+    const normalized = address.toLowerCase();
+    const result: Record<string, any> = { address: normalized, actions: [] };
+
+    // 1. Zero coins in profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", normalized))
+      .first();
+    if (profile) {
+      const oldCoins = profile.coins || 0;
+      const oldInbox = profile.coinsInbox || 0;
+      await ctx.db.patch(profile._id, { coins: 0, coinsInbox: 0, pendingConversion: 0 });
+      result.actions.push(`zeroed coins: ${oldCoins} + inbox: ${oldInbox}`);
+    }
+
+    // 2. Zero betting credits
+    const credits = await ctx.db
+      .query("bettingCredits")
+      .withIndex("by_address", (q: any) => q.eq("address", normalized))
+      .first();
+    if (credits && (credits.balance || 0) > 0) {
+      await ctx.db.patch(credits._id, { balance: 0 });
+      result.actions.push(`zeroed bettingCredits: ${credits.balance}`);
+    }
+
+    // 3. Delete card packs
+    const packs = await ctx.db
+      .query("cardPacks")
+      .withIndex("by_address", (q: any) => q.eq("address", normalized))
+      .collect();
+    for (const pack of packs) {
+      await ctx.db.delete(pack._id);
+    }
+    if (packs.length > 0) result.actions.push(`deleted ${packs.length} card packs`);
+
+    // 4. Add to dynamic blacklist if not already
+    const existing = await ctx.db
+      .query("dynamicBlacklist")
+      .withIndex("by_address", (q: any) => q.eq("address", normalized))
+      .first();
+    if (!existing) {
+      await ctx.db.insert("dynamicBlacklist", {
+        address: normalized,
+        reason: reason || "exploit: coin farming",
+        addedAt: Date.now(),
+        addedBy: "admin",
+      });
+      result.actions.push("added to blacklist");
+    }
+
+    // 5. Audit log entry
+    const coinsBefore = profile?.coins || 0;
+    if (coinsBefore > 0) {
+      await ctx.db.insert("coinAuditLog", {
+        playerAddress: normalized,
+        type: "spend",
+        amount: -coinsBefore,
+        balanceBefore: coinsBefore,
+        balanceAfter: 0,
+        source: "adminZeroAddress",
+        sourceId: reason || "exploit: coin farming — admin zero",
+        timestamp: Date.now(),
+      });
+    }
+
+    return result;
+  },
+});

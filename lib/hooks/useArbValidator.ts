@@ -14,6 +14,8 @@ import { parseEther, encodeFunctionData } from 'viem';
 import { CONTRACTS, VALIDATOR_ABI } from '../contracts';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { isMiniappMode, isWarpcastClient } from '@/lib/utils/miniapp';
+import { useConvex } from 'convex/react';
+import { api } from '@/convex/_generated/api';
 
 // ClaimType enum matching contract
 export const ARB_CLAIM_TYPE = {
@@ -37,6 +39,7 @@ export type ArbClaimType = typeof ARB_CLAIM_TYPE[keyof typeof ARB_CLAIM_TYPE];
  */
 export function useArbValidator() {
   const { address } = useAccount();
+  const convex = useConvex();
 
   const validateOnArb = async (amount: number, claimType: ArbClaimType): Promise<string | null> => {
     if (!address) return null;
@@ -60,20 +63,12 @@ export function useArbValidator() {
       const nonce = '0x' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
         .map(b => b.toString(16).padStart(2, '0')).join('') as `0x${string}`;
 
-      // Get signature from backend
-      const res = await fetch('/api/arb/sign-validation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, amount, nonce }),
+      // Get signature via Convex (which adds internal secret to the API call)
+      const { signature } = await convex.action(api.arbValidator.signArbValidation, {
+        address,
+        amount,
+        nonce,
       });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-        console.warn('[ArbValidator] Sign failed:', err.error);
-        return null;
-      }
-
-      const { signature } = await res.json();
 
       // Encode the contract call
       const callData = encodeFunctionData({

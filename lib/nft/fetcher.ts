@@ -44,7 +44,7 @@ const BASESCAN_API_KEY = process.env.NEXT_PUBLIC_BASESCAN_API_KEY || '1ZFQ27H4QD
 // WIELD API CONFIGURATION (Jan 2026)
 // More reliable than Alchemy for Vibechain collections
 // ============================================
-const WIELD_API_KEY = 'YUEPI-G3KJ7-5FCXV-ANSPV-BZ3DA';
+const WIELD_API_KEY = process.env.WIELD_API_KEY || 'YUEPI-G3KJ7-5FCXV-ANSPV-BZ3DA';
 const WIELD_BASE_URL = 'https://build.wield.xyz/vibe/boosterbox';
 
 // Mapping of contract addresses to Wield slugs

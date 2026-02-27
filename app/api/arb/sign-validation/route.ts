@@ -34,6 +34,14 @@ function checkRateLimit(address: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Only Convex backend can call this endpoint
+    const internalSecret = request.headers.get('x-internal-secret');
+    const expectedSecret = process.env.CONVEX_INTERNAL_SECRET;
+    if (!expectedSecret || internalSecret !== expectedSecret) {
+      console.warn('⚠️ Unauthorized sign-validation attempt');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { address, amount, nonce } = await request.json();
 
     if (!address || amount === undefined || !nonce) {

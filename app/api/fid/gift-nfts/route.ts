@@ -25,7 +25,7 @@ const GIFTABLE_COLLECTIONS = [
 ];
 
 // OpenSea API key
-const OPENSEA_API_KEY = process.env.OPENSEA_API_KEY || '7805aa61f1a04c90ab1e4a274af51617';
+const OPENSEA_API_KEY = process.env.OPENSEA_API_KEY || '';
 
 // Use OpenSea API (free tier)
 async function fetchNFTsFromOpenSea(ownerAddress: string, contractAddress: string, collectionId: string) {

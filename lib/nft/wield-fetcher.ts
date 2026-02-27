@@ -8,7 +8,7 @@
  * 4. Fallback to Alchemy if Wield fails
  */
 
-const WIELD_API_KEY = 'YUEPI-G3KJ7-5FCXV-ANSPV-BZ3DA';
+const WIELD_API_KEY = process.env.WIELD_API_KEY || 'YUEPI-G3KJ7-5FCXV-ANSPV-BZ3DA';
 const WIELD_BASE_URL = 'https://build.wield.xyz/vibe/boosterbox';
 
 // Collections that work with Wield API (ONLY ENABLED ONES!)
