@@ -91,8 +91,6 @@ import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, us
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
 import { useBondingProgress } from "@/lib/hooks/useBondingProgress";
 
-import { CONTRACTS } from "@/lib/contracts";
-
 import { filterCardsByCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, type CollectionId } from "@/lib/collections/index"; // getEnabledCollections removed - now only used by Context
 import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
 import { isSameCard, findCard, getCardKey } from "@/lib/nft";
