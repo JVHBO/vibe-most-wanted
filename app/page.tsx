@@ -21,7 +21,8 @@ import { toast } from "sonner";
 import { isMiniappMode } from "@/lib/utils/miniapp";
 import { isWarpcastClient } from "@/lib/utils/miniapp";
 import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
-import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
+import { CONTRACTS, ERC20_ABI } from "@/lib/contracts";
+import { encodeFunctionData } from "viem";
 import { useMiniappFrameContext } from "@/components/MiniappFrame";
 
 import { api } from "@/convex/_generated/api";
@@ -849,7 +850,6 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const effectiveChain = !arbSupported ? "base" : ((userProfile as any)?.preferredChain || "arbitrum");
   // On-chain TX hooks for mission claims
   const { validateOnArb } = useArbValidator();
-  const { claimVBMS } = useClaimVBMS();
   // Arb Mode announcement disabled - no longer needed
   const [pendingClaimAction, setPendingClaimAction] = useState<(() => void) | null>(null);
   const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
@@ -1381,24 +1381,41 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
 
   // 💎 Handler to claim daily bonus with blockchain TX
   // Send on-chain TX after Convex mission claim (non-blocking)
+  // ARB: validateClaim on VBMSValidator (no tokens, just proof)
+  // Base: transfer 0 VBMS to pool (no tokens moved, just on-chain marker)
   const sendMissionTx = async (reward: number, claimType: typeof ARB_CLAIM_TYPE[keyof typeof ARB_CLAIM_TYPE]) => {
-    if (!address || reward <= 0) return;
+    if (!address) return;
     try {
       if (effectiveChain === 'arbitrum') {
         await validateOnArb(reward, claimType);
       } else {
-        // Base: get signature + call VBMSPoolTroll.claimVBMS
-        const nonce = ('0x' + Array.from(crypto.getRandomValues(new Uint8Array(32)))
-          .map(b => b.toString(16).padStart(2, '0')).join('')) as `0x${string}`;
-        const res = await fetch('/api/vbms/sign-roulette', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address, amount: reward, nonce }),
+        // Base: send 0 VBMS to pool — on-chain proof, no actual transfer
+        const data = encodeFunctionData({
+          abi: ERC20_ABI,
+          functionName: 'transfer',
+          args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, BigInt(0)],
         });
-        if (res.ok) {
-          const { signature } = await res.json();
-          await claimVBMS(reward.toString(), nonce, signature);
-        }
+
+        try {
+          // Farcaster SDK first
+          const provider = await sdk.wallet.getEthereumProvider();
+          if (provider) {
+            await provider.request({
+              method: 'eth_sendTransaction',
+              params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken as `0x${string}`, data }],
+            });
+            return;
+          }
+        } catch {}
+
+        // Fallback: wagmi
+        const { sendTransaction } = await import('wagmi/actions');
+        const { config } = await import('@/lib/wagmi');
+        await sendTransaction(config, {
+          to: CONTRACTS.VBMSToken as `0x${string}`,
+          data,
+          chainId: CONTRACTS.CHAIN_ID,
+        });
       }
     } catch (err: any) {
       devError('Mission TX (non-blocking):', err);
