@@ -12,6 +12,7 @@ import { fidTranslations } from "@/lib/fid/fidTranslations";
 import { sdk } from '@farcaster/miniapp-sdk';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useProfile } from '@/contexts/ProfileContext';
 
 export default function VibeMailPage() {
   const { lang } = useLanguage();
@@ -21,11 +22,22 @@ export default function VibeMailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const { userProfile, isLoadingProfile } = useProfile();
+
   // Support testFid for development
   const testFid = searchParams.get('testFid');
 
-  // Get user FID (from Farcaster context or testFid param)
-  const userFid = testFid ? parseInt(testFid) : farcasterContext?.user?.fid;
+  // Same pattern as fid/page.tsx: fall back to farcasterFid from VMW profile
+  const effectiveFarcasterUser = farcasterContext.user ?? (
+    userProfile?.farcasterFid ? {
+      fid: userProfile.farcasterFid as number,
+      username: userProfile.username || undefined,
+      pfpUrl: (userProfile as any).farcasterPfpUrl || undefined,
+    } : null
+  );
+
+  // Get user FID (from Farcaster context, testFid param, or linked wallet profile)
+  const userFid = testFid ? parseInt(testFid) : (effectiveFarcasterUser?.fid ?? undefined);
 
   // Get card data
   const myCard = useQuery(
@@ -63,8 +75,8 @@ export default function VibeMailPage() {
   // Debug log
   console.log('[VibeMail Page] userFid:', userFid, 'testFid:', testFid, 'context:', farcasterContext);
 
-  // Loading state - waiting for Farcaster context
-  if (!userFid && !farcasterContext?.isReady) {
+  // Loading state - waiting for Farcaster context OR profile to load
+  if (!userFid && (!farcasterContext?.isReady || isLoadingProfile)) {
     return (
       <div className="min-h-screen bg-vintage-dark flex items-center justify-center">
         <div className="text-center">
@@ -83,7 +95,9 @@ export default function VibeMailPage() {
           <div className="text-6xl mb-4">📧</div>
           <h1 className="text-vintage-gold font-bold text-xl mb-2">VibeMail</h1>
           <p className="text-vintage-ice/70 mb-4">
-            Abra no miniapp do Farcaster ou use ?testFid=SEU_FID
+            {address
+              ? 'No FID linked to this wallet. Link your Farcaster in your profile.'
+              : 'Connect your wallet or open in Farcaster miniapp.'}
           </p>
           <Link href="/fid" className="text-vintage-gold hover:text-vintage-gold/80">
             ← Voltar
