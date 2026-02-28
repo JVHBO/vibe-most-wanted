@@ -267,8 +267,17 @@ export const adminClearPendingSpin = mutation({
       return { message: "Spin is not pending, no action needed" };
     }
 
+    // 🔒 SECURITY: Only allow clearing if pending for >15 minutes
+    // Prevents using this function to bypass the pending lock and get a second signature
+    const CLEAR_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
+    const pendingAge = spin.claimPendingAt ? Date.now() - spin.claimPendingAt : CLEAR_TIMEOUT_MS + 1;
+    if (pendingAge < CLEAR_TIMEOUT_MS) {
+      const waitMinutes = Math.ceil((CLEAR_TIMEOUT_MS - pendingAge) / 60000);
+      return { message: `Claim still in progress. Try again in ${waitMinutes} minute(s).` };
+    }
+
     await ctx.db.patch(spin._id, { claimPending: false, claimPendingAt: undefined });
-    console.log(`🎰 Admin: Cleared pending state for ${normalizedAddress}`);
+    console.log(`Roulette: Cleared stale pending state for ${normalizedAddress} (was pending ${Math.round(pendingAge / 60000)}min)`);
     return { message: "Pending state cleared", prizeAmount: spin.prizeAmount };
   },
 });

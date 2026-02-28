@@ -139,6 +139,8 @@ export const EXPLOITER_BLACKLIST: Record<string, { username: string; fid: number
   "0x247116c752420ec7fe870d1549a1c2e8d44675c6": { username: "unknown", fid: 0, amountStolen: 0, claims: 0 },
   // ===== EXPLOIT #3b: Multi-account farming (Feb 23, 2026) =====
   "0x8215db2678e8482dd6051b6847e148ce058ec3b6": { username: "hancox", fid: 1134926, amountStolen: 1510500, claims: 0 },
+  // ===== EXPLOIT #4: Multiple signatures via public recovery functions (Feb 27, 2026) =====
+  "0x3c21f515b3709348e3e3d7c9446d1972d3393dc4": { username: "unknown", fid: 0, amountStolen: 30000, claims: 6 },
 };
 
 // ========== CHECK BLACKLIST ==========
@@ -160,6 +162,7 @@ export function isBlacklisted(address: string): boolean {
   const lower = address.toLowerCase();
   return lower in EXPLOITER_BLACKLIST || EXPLOIT3_BANNED.has(lower);
 }
+
 
 export function getBlacklistInfo(address: string) {
   return EXPLOITER_BLACKLIST[address.toLowerCase()] || null;
