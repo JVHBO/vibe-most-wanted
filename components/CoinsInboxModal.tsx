@@ -523,8 +523,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
           {/* Action Buttons */}
           <div className="space-y-2">
-          {true ? (
-            testvbmsBalance >= 100 ? (
+          {testvbmsBalance >= 100 ? (
               <>
                 {/* Amount Input */}
                 <div className="space-y-1.5">
@@ -571,7 +570,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
                 <p className="text-[#aaa] text-xs font-bold">{t('convertMinRequired')}</p>
               </div>
             )
-          )}
+          }
 
 
           </div>
