@@ -523,7 +523,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
           {/* Action Buttons */}
           <div className="space-y-2">
-          {useFarcasterSDK ? (
+          {true ? (
             testvbmsBalance >= 100 ? (
               <>
                 {/* Amount Input */}
@@ -571,26 +571,6 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
                 <p className="text-[#aaa] text-xs font-bold">{t('convertMinRequired')}</p>
               </div>
             )
-          ) : (
-            <div className="bg-[#1A1A2E] border-3 border-[#9B5CFF] shadow-[3px_3px_0px_#000] p-5 text-center">
-              <div className="text-4xl mb-2">📱</div>
-              <h3 className="text-[#BB77FF] font-bold text-base mb-1">{t('convertUseMiniapp')}</h3>
-              <p className="text-[#9B5CFF]/70 text-xs mb-3">{t('convertMiniappOnly')}</p>
-              <a
-                href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block bg-[#9B5CFF] border-3 border-black text-black font-bold px-4 py-2 shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] transition-all"
-              >
-                {t('convertOpenMiniapp')}
-              </a>
-              {testvbmsBalance > 0 && (
-                <div className="mt-3 bg-[#252525] border-2 border-[#444] p-2">
-                  <p className="text-[#aaa] text-xs font-bold uppercase">Your COINS</p>
-                  <p className="text-[#FFD400] font-bold text-xl font-mono">{testvbmsBalance.toLocaleString()}</p>
-                </div>
-              )}
-            </div>
           )}
 
 

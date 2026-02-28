@@ -155,7 +155,8 @@ export default function CastQuestsPage() {
         <div className="flex items-center justify-between px-3 py-2.5">
           <button
             onClick={() => router.push("/")}
-            className="px-3 py-1.5 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white font-bold border-2 border-black text-xs uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px]"
+            style={{ boxShadow: "3px 3px 0px #000" }}
           >
             ← BACK
           </button>
