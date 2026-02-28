@@ -69,6 +69,7 @@ const MISSION_REWARDS = {
   tcg_pvp_match: { type: "coins", amount: 50 },    // First VibeClash PvP match
   tcg_play_3: { type: "coins", amount: 75 },        // Play 3 VibeClash matches
   tcg_win_streak_3: { type: "coins", amount: 150 }, // Win 3 in a row in VibeClash
+  first_baccarat_win: { type: "coins", amount: 100 }, // First Baccarat win
 };
 
 /**
@@ -813,5 +814,37 @@ export const markChainModalSeen = mutation({
     if (!profile) throw new Error("Profile not found");
     await ctx.db.patch(profile._id, { chainModalSeen: true });
     return { success: true };
+  },
+});
+
+/**
+ * Mark first Baccarat win mission as completed
+ */
+export const markBaccaratWin = mutation({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }) => {
+    const today = new Date().toISOString().split('T')[0];
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
+
+    const existing = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", today)
+          .eq("missionType", "first_baccarat_win")
+      )
+      .first();
+
+    if (!existing) {
+      await ctx.db.insert("personalMissions", {
+        playerAddress: normalizedAddress,
+        date: today,
+        missionType: "first_baccarat_win",
+        completed: true,
+        claimed: false,
+        reward: MISSION_REWARDS.first_baccarat_win.amount,
+        completedAt: Date.now(),
+      });
+    }
   },
 });

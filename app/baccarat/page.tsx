@@ -476,6 +476,7 @@ export default function BaccaratPage() {
 
   // Mutations
   const playPvE = useMutation(api.baccarat.playPvE);
+  const markBaccaratWin = useMutation(api.missions.markBaccaratWin);
 
   // Claim VBMS hook for cashout
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
@@ -703,7 +704,8 @@ export default function BaccaratPage() {
 
       // Select random victory/loss/tie media and play matching audio
       if (profit > 0) {
-        // Win
+        // Win - mark baccarat mission (fire-and-forget)
+        if (address) markBaccaratWin({ playerAddress: address.toLowerCase() }).catch(() => {});
         const selected = VICTORY_CONFIGS[Math.floor(Math.random() * VICTORY_CONFIGS.length)];
         setVictoryConfig(selected);
         if (soundEnabled) {

@@ -138,19 +138,16 @@ export default function QuestsPage() {
 
   // All mission types (matching backend) - using translation keys
   const ALL_MISSION_TYPES = [
-    { type: 'daily_login', reward: 100, date: 'today', titleKey: 'mission_daily_login', descKey: 'mission_daily_login_desc' },
-    { type: 'first_pve_win', reward: 50, date: 'today', titleKey: 'mission_first_pve_win', descKey: 'mission_first_pve_win_desc' },
-    { type: 'first_pvp_match', reward: 100, date: 'today', titleKey: 'mission_first_pvp_match', descKey: 'mission_first_pvp_match_desc' },
-    { type: 'streak_3', reward: 150, date: 'today', titleKey: 'mission_streak_3', descKey: 'mission_streak_3_desc' },
-    { type: 'streak_5', reward: 300, date: 'today', titleKey: 'mission_streak_5', descKey: 'mission_streak_5_desc' },
-    { type: 'streak_10', reward: 750, date: 'today', titleKey: 'mission_streak_10', descKey: 'mission_streak_10_desc' },
-    { type: 'welcome_gift', reward: 500, date: 'once', titleKey: 'mission_welcome_gift', descKey: 'mission_welcome_gift_desc' },
+    { type: 'daily_login', reward: 50, date: 'today', titleKey: 'mission_daily_login', descKey: 'mission_daily_login_desc' },
+    { type: 'first_pve_win', reward: 25, date: 'today', titleKey: 'mission_first_pve_win', descKey: 'mission_first_pve_win_desc' },
+    { type: 'first_pvp_match', reward: 50, date: 'today', titleKey: 'mission_first_pvp_match', descKey: 'mission_first_pvp_match_desc' },
+    { type: 'first_baccarat_win', reward: 100, date: 'today', titleKey: 'mission_first_baccarat_win', descKey: 'mission_first_baccarat_win_desc' },
+    { type: 'streak_3', reward: 75, date: 'today', titleKey: 'mission_streak_3', descKey: 'mission_streak_3_desc' },
+    { type: 'streak_5', reward: 150, date: 'today', titleKey: 'mission_streak_5', descKey: 'mission_streak_5_desc' },
+    { type: 'tcg_win_streak_3', reward: 150, date: 'today', titleKey: 'mission_tcg_win_streak_3', descKey: 'mission_tcg_win_streak_3_desc' },
+    { type: 'welcome_gift', reward: 250, date: 'once', titleKey: 'mission_welcome_gift', descKey: 'mission_welcome_gift_desc' },
     { type: 'vibefid_minted', reward: 5000, date: 'once', titleKey: 'mission_vibefid_minted', descKey: 'mission_vibefid_minted_desc' },
     { type: 'claim_vibe_badge', reward: 0, date: 'once', titleKey: 'mission_vibe_badge', descKey: 'mission_vibe_badge_desc' },
-    { type: 'tcg_pve_win', reward: 25, date: 'today', titleKey: 'mission_tcg_pve_win', descKey: 'mission_tcg_pve_win_desc' },
-    { type: 'tcg_pvp_match', reward: 50, date: 'today', titleKey: 'mission_tcg_pvp_match', descKey: 'mission_tcg_pvp_match_desc' },
-    { type: 'tcg_play_3', reward: 75, date: 'today', titleKey: 'mission_tcg_play_3', descKey: 'mission_tcg_play_3_desc' },
-    { type: 'tcg_win_streak_3', reward: 150, date: 'today', titleKey: 'mission_tcg_win_streak_3', descKey: 'mission_tcg_win_streak_3_desc' },
   ];
 
   // Initialize missions on mount
@@ -557,10 +554,13 @@ export default function QuestsPage() {
                           </div>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {mission.reward > 0 && (
-                              <span className="text-vintage-gold font-bold text-xs">
-                                +{effectiveChain === "arbitrum" ? mission.reward * 2 : mission.reward}
-                                {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
-                              </span>
+                              <div className="flex flex-col items-end">
+                                <span className="text-vintage-gold font-bold text-xs">
+                                  +{effectiveChain === "arbitrum" ? mission.reward * 2 : mission.reward}
+                                  {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
+                                </span>
+                                <span className="text-purple-400 text-[9px] font-bold">+1 aura</span>
+                              </div>
                             )}
                             {mission.completed && !isPlaceholder ? (
                               <button

@@ -585,13 +585,13 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
                   className={`w-full text-left p-3 rounded-lg border transition-all ${
                     msg.isRead
                       ? 'bg-vintage-black/30 border-vintage-gold/20 hover:border-vintage-gold/40'
-                      : 'bg-vintage-gold/10 border-vintage-gold/50 hover:bg-vintage-gold/20'
+                      : 'bg-vintage-black/60 border-vintage-gold/60 hover:bg-vintage-black/80'
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${msg.isRead ? 'bg-vintage-ice/30' : 'bg-vintage-gold animate-pulse'}`} />
+                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${msg.isRead ? 'bg-vintage-ice/30' : 'bg-vintage-gold animate-pulse'}`} />
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm truncate ${msg.isRead ? 'text-vintage-ice/70' : 'text-vintage-gold font-bold'}`}>
+                      <p className={`text-sm truncate ${msg.isRead ? 'text-vintage-ice/70' : 'text-white font-bold'}`}>
                         {msg.message?.slice(0, 50)}...
                       </p>
                       <div className="flex items-center gap-2 mt-1">

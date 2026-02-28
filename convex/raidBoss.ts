@@ -1430,3 +1430,54 @@ export const adminForceKillBoss = mutation({
     };
   },
 });
+
+const REFUEL_COINS_COST = 500; // 500 coins to refuel the whole team
+
+/**
+ * Refuel entire raid team using coins (no VBMS required)
+ */
+export const refuelAllWithCoins = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, args) => {
+    const address = await resolvePrimaryAddress(ctx, args.address);
+
+    const raidDeck = await ctx.db
+      .query("raidAttacks")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (!raidDeck) throw new Error("No raid deck found");
+
+    const profile = await getProfileByAddress(ctx, address);
+    if (!profile) throw new Error("Profile not found");
+
+    if ((profile.coins || 0) < REFUEL_COINS_COST) {
+      throw new Error(`Need ${REFUEL_COINS_COST} coins to refuel team`);
+    }
+
+    const now = Date.now();
+
+    const updatedCardEnergy = raidDeck.cardEnergy.map((cardEnergy: any) => {
+      const deckCard = raidDeck.deck.find((c: any) => c.tokenId === cardEnergy.tokenId);
+      if (!deckCard) return cardEnergy;
+      const rarity = deckCard.rarity.toLowerCase();
+      const duration = ENERGY_DURATION_BY_RARITY[rarity] || ENERGY_DURATION_BY_RARITY.common;
+      return {
+        ...cardEnergy,
+        energyExpiresAt: duration === 0 ? 0 : now + duration,
+        nextAttackAt: now,
+      };
+    });
+
+    await ctx.db.patch(profile._id, {
+      coins: (profile.coins || 0) - REFUEL_COINS_COST,
+    });
+
+    await ctx.db.patch(raidDeck._id, {
+      cardEnergy: updatedCardEnergy,
+      lastUpdated: now,
+    });
+
+    return { success: true, costPaid: REFUEL_COINS_COST };
+  },
+});

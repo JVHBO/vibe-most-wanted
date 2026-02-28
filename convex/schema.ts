@@ -464,7 +464,8 @@ export default defineSchema({
       v.literal("tcg_pve_win"), // First VibeClash PvE win (daily)
       v.literal("tcg_pvp_match"), // First VibeClash PvP match (daily)
       v.literal("tcg_play_3"), // Play 3 VibeClash matches (daily)
-      v.literal("tcg_win_streak_3") // Win 3 VibeClash matches in a row (daily)
+      v.literal("tcg_win_streak_3"), // Win 3 VibeClash matches in a row (daily)
+      v.literal("first_baccarat_win") // First Baccarat win (daily)
     ),
     completed: v.boolean(), // Mission requirement completed
     claimed: v.boolean(), // Reward claimed by player
