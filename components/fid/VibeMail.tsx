@@ -650,7 +650,11 @@ export function VibeMailInboxWithClaim({
   const { lang } = useLanguage();
   const t = fidTranslations[lang];
   const { isMusicEnabled, setIsMusicEnabled } = useMusic();
-  const [activeTab, setActiveTab] = useState<'inbox' | 'sent'>('inbox');
+  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'quests'>('inbox');
+  const [activeQuests, setActiveQuests] = useState<any[]>([]);
+  const [questsLoading, setQuestsLoading] = useState(false);
+  const [claimingQuestId, setClaimingQuestId] = useState<string | null>(null);
+  const [questClaimResult, setQuestClaimResult] = useState<{ questId: string; success: boolean; error?: string } | null>(null);
   const messages = useQuery(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 });
   const sentMessages = useQuery(
     api.cardVotes.getSentMessages,
@@ -829,6 +833,47 @@ export function VibeMailInboxWithClaim({
     };
   }, []);
 
+  // Fetch active quests when Quests tab is opened
+  useEffect(() => {
+    if (activeTab !== 'quests' || !myFid) return;
+    setQuestsLoading(true);
+    fetch(`/api/fid/quests?fid=${myFid}`)
+      .then((r) => r.json())
+      .then((data) => { setActiveQuests(data.quests || []); })
+      .catch(() => { setActiveQuests([]); })
+      .finally(() => setQuestsLoading(false));
+  }, [activeTab, myFid]);
+
+  const handleClaimQuest = async (quest: any) => {
+    if (!myFid || !myAddress) return;
+    setClaimingQuestId(quest._id);
+    setQuestClaimResult(null);
+    try {
+      const resp = await fetch('/api/fid/quest-claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          questId: quest._id,
+          completerAddress: myAddress,
+          completerFid: myFid,
+          questType: quest.questType,
+          targetUrl: quest.targetUrl,
+        }),
+      });
+      const data = await resp.json();
+      if (data.success) {
+        setQuestClaimResult({ questId: quest._id, success: true });
+        setActiveQuests((prev) => prev.filter((q) => q._id !== quest._id));
+      } else {
+        setQuestClaimResult({ questId: quest._id, success: false, error: data.error || 'Verification failed' });
+      }
+    } catch {
+      setQuestClaimResult({ questId: quest._id, success: false, error: 'Network error' });
+    } finally {
+      setClaimingQuestId(null);
+    }
+  };
+
   return (
     <div className={asPage
       ? "min-h-screen bg-vintage-dark"
@@ -993,6 +1038,19 @@ export function VibeMailInboxWithClaim({
               <span className="flex items-center justify-center gap-1">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 {t.sentTab} ({sentMessages?.length || 0})
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('quests')}
+              className={`flex-1 py-2 text-sm font-bold border-2 border-black transition-all ${
+                activeTab === 'quests'
+                  ? 'bg-[#22C55E] text-black shadow-[2px_2px_0px_#000]'
+                  : 'bg-vintage-black/50 text-vintage-ice/70 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
+              }`}
+            >
+              <span className="flex items-center justify-center gap-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                Quests
               </span>
             </button>
           </div>
@@ -1829,6 +1887,85 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
+            {/* Quests Tab Content */}
+            {activeTab === 'quests' && (
+              <div className="flex-1 overflow-y-auto space-y-2">
+                {questsLoading ? (
+                  <div className="text-center py-8">
+                    <p className="text-vintage-ice/50 text-sm animate-pulse">Loading quests...</p>
+                  </div>
+                ) : activeQuests.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-vintage-ice/50 text-sm">No active quests</p>
+                    <p className="text-vintage-ice/30 text-xs mt-1">Check back later or create your own!</p>
+                  </div>
+                ) : (
+                  activeQuests.map((quest: any) => {
+                    const QUEST_ICONS: Record<string, string> = {
+                      follow_me: '👤', join_channel: '📢', rt_cast: '🔁', use_miniapp: '🎮',
+                    };
+                    const QUEST_LABELS: Record<string, string> = {
+                      follow_me: 'Follow', join_channel: 'Join Channel', rt_cast: 'Recast', use_miniapp: 'Use App',
+                    };
+                    const isClaiming = claimingQuestId === quest._id;
+                    const claimResult = questClaimResult?.questId === quest._id ? questClaimResult : null;
+                    const slotsLeft = quest.maxCompleters - quest.completedCount;
+                    const hoursLeft = Math.max(0, Math.floor((quest.expiresAt - Date.now()) / 3600000));
+                    return (
+                      <div key={quest._id} className="bg-vintage-black/40 border-2 border-black shadow-[2px_2px_0px_#000] p-3">
+                        <div className="flex items-start gap-2 mb-2">
+                          <span className="text-xl">{QUEST_ICONS[quest.questType] || '?'}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-vintage-gold font-bold text-xs uppercase">{QUEST_LABELS[quest.questType]}</p>
+                            <p className="text-white/70 text-xs truncate">by @{quest.creatorUsername}</p>
+                            <p className="text-white/50 text-[10px] truncate">{quest.targetDisplay}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-[#FFD400] font-black text-sm">+{quest.rewardPerCompleter.toLocaleString()}</p>
+                            <p className="text-white/30 text-[10px]">coins</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-white/30 mb-2">
+                          <span>{slotsLeft}/{quest.maxCompleters} slots left</span>
+                          <span>{hoursLeft}h left</span>
+                        </div>
+                        {claimResult && (
+                          <div className={`text-xs text-center py-1 mb-2 border ${claimResult.success ? 'text-green-400 border-green-500/50 bg-green-900/20' : 'text-red-400 border-red-500/50 bg-red-900/20'}`}>
+                            {claimResult.success ? `Claimed! +${quest.rewardPerCompleter.toLocaleString()} coins` : claimResult.error}
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={async () => {
+                              AudioManager.buttonClick();
+                              try {
+                                if (sdk?.actions?.openMiniApp) {
+                                  await sdk.actions.openMiniApp({ url: quest.targetUrl });
+                                } else {
+                                  window.open(quest.targetUrl, '_blank');
+                                }
+                              } catch { window.open(quest.targetUrl, '_blank'); }
+                            }}
+                            className="flex-1 py-1.5 bg-vintage-black border-2 border-black text-vintage-gold font-bold text-xs hover:translate-x-[1px] hover:translate-y-[1px] transition-all shadow-[2px_2px_0px_#000] hover:shadow-[1px_1px_0px_#000]"
+                          >
+                            Do it
+                          </button>
+                          <button
+                            onClick={() => { AudioManager.buttonClick(); handleClaimQuest(quest); }}
+                            disabled={isClaiming || !!claimResult?.success}
+                            className="flex-1 py-1.5 bg-[#22C55E] border-2 border-black text-black font-black text-xs hover:translate-x-[1px] hover:translate-y-[1px] transition-all shadow-[2px_2px_0px_#000] hover:shadow-[1px_1px_0px_#000] disabled:opacity-50"
+                          >
+                            {isClaiming ? '...' : claimResult?.success ? 'Done' : 'Claim'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+
+            {activeTab !== 'quests' && (
             <div className="flex-1 overflow-y-auto space-y-2">
             {!currentMessages || currentMessages.length === 0 ? (
               <div className="text-center py-8">
@@ -1903,6 +2040,7 @@ export function VibeMailInboxWithClaim({
               ))
             )}
             </div>
+            )}
           </div>
         )}
 

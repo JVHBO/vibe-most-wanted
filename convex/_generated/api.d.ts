@@ -47,6 +47,7 @@ import type * as nftGifts from "../nftGifts.js";
 import type * as notifications from "../notifications.js";
 import type * as notificationsHelpers from "../notificationsHelpers.js";
 import type * as playerHistory from "../playerHistory.js";
+import type * as playerQuests from "../playerQuests.js";
 import type * as pokerBattle from "../pokerBattle.js";
 import type * as pokerChat from "../pokerChat.js";
 import type * as pokerCpu from "../pokerCpu.js";
@@ -116,6 +117,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   notificationsHelpers: typeof notificationsHelpers;
   playerHistory: typeof playerHistory;
+  playerQuests: typeof playerQuests;
   pokerBattle: typeof pokerBattle;
   pokerChat: typeof pokerChat;
   pokerCpu: typeof pokerCpu;

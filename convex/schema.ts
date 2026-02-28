@@ -2090,4 +2090,47 @@ export default defineSchema({
     addedBy: v.optional(v.string()),
   })
     .index("by_address", ["address"]),
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // PLAYER QUESTS — Social quests created by players via VibeMail
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  playerQuests: defineTable({
+    creatorAddress: v.string(),
+    creatorFid: v.number(),
+    creatorUsername: v.string(),
+    questType: v.union(
+      v.literal("follow_me"),
+      v.literal("join_channel"),
+      v.literal("rt_cast"),
+      v.literal("use_miniapp")
+    ),
+    targetUrl: v.string(), // cast URL, @username, or channel slug
+    targetDisplay: v.string(), // human-readable label
+    rewardPerCompleter: v.number(), // coins paid per completer
+    maxCompleters: v.number(), // 1-20
+    completedCount: v.number(),
+    totalCostLocked: v.number(), // reward * maxCompleters (deducted upfront)
+    status: v.union(
+      v.literal("active"),
+      v.literal("completed"),
+      v.literal("cancelled")
+    ),
+    createdAt: v.number(),
+    expiresAt: v.number(), // 48h from creation
+  })
+    .index("by_status", ["status"])
+    .index("by_creator", ["creatorAddress"])
+    .index("by_status_created", ["status", "createdAt"]),
+
+  playerQuestCompletions: defineTable({
+    questId: v.id("playerQuests"),
+    completerAddress: v.string(),
+    completerFid: v.number(),
+    completedAt: v.number(),
+    rewardPaid: v.number(),
+  })
+    .index("by_quest", ["questId"])
+    .index("by_completer", ["completerFid"])
+    .index("by_completer_quest", ["completerFid", "questId"]),
 });

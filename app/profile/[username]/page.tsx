@@ -656,6 +656,7 @@ export default function ProfilePage() {
               address={currentUserAddress || undefined}
               hasVibeBadge={!!profile.hasVibeBadge}
               onCardStatus={setVibeFidCardExists}
+              vmwCoinsBalance={isOwnProfile ? (profile.coins || 0) : undefined}
             />
           </VibeFIDConvexProvider>
         </div>

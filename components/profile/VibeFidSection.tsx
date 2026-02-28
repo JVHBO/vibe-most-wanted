@@ -20,6 +20,7 @@ import { generateFarcasterCardImage } from '@/lib/fid/generateFarcasterCard';
 import { generateCardVideo } from '@/lib/fid/generateCardVideo';
 import { shareToFarcaster } from '@/lib/fid/share-utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { CreateQuestModal } from '@/components/fid/CreateQuestModal';
 
 const getRarityFromScore = (score: number) => {
   if (score >= 0.99) return 'Mythic';
@@ -35,9 +36,10 @@ interface VibeFidSectionProps {
   address?: string;
   hasVibeBadge?: boolean;
   onCardStatus?: (exists: boolean) => void;
+  vmwCoinsBalance?: number; // Optional: VMW coins for quest creation
 }
 
-export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCardStatus }: VibeFidSectionProps) {
+export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCardStatus, vmwCoinsBalance }: VibeFidSectionProps) {
   const { lang } = useLanguage();
   const t = fidTranslations[lang] || fidTranslations['en'];
   const farcasterContext = useFarcasterContext();
@@ -98,6 +100,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
   const [showPaidVoteModal, setShowPaidVoteModal] = useState(false);
   const [showEvolutionModal, setShowEvolutionModal] = useState(false);
   const [showTraitsPopup, setShowTraitsPopup] = useState(false);
+  const [showCreateQuestModal, setShowCreateQuestModal] = useState(false);
 
   // VibeMail state
   const [vibeMailTab, setVibeMailTab] = useState<'free' | 'paid'>('free');
@@ -274,6 +277,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
     onCardStatus?.(fidCards.length > 0);
   }, [fidCards?.length]);
 
+
   // Loading state
   if (fidCards === undefined) {
     return (
@@ -443,7 +447,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
             </div>
 
             {/* Action buttons */}
-            <div className="flex gap-1.5 mt-auto">
+            <div className="flex gap-1.5 mt-auto flex-wrap">
               <button
                 onClick={handleCheckNeynarScore}
                 disabled={loading}
@@ -462,6 +466,15 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
               >
                 OpenSea
               </button>
+              {isOwnCard && (
+                <button
+                  onClick={() => { AudioManager.buttonClick(); setShowCreateQuestModal(true); }}
+                  className="w-full px-2 py-1.5 bg-[#22C55E] border border-black text-black font-bold rounded text-xs hover:bg-[#16A34A] transition-colors"
+                  title="Create a social quest and pay players to complete it"
+                >
+                  + Create Quest
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -762,6 +775,18 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
       {/* VibeMail Inbox */}
       {showVibeMailInbox && isOwnCard && (
         <VibeMailInbox cardFid={fid} onClose={() => setShowVibeMailInbox(false)} />
+      )}
+
+      {/* Create Quest Modal */}
+      {showCreateQuestModal && isOwnCard && effectiveUser && (
+        <CreateQuestModal
+          address={viewerAddress}
+          fid={fid}
+          username={card?.username || effectiveUser.username || ''}
+          coins={vmwCoinsBalance ?? 0}
+          onClose={() => setShowCreateQuestModal(false)}
+          onCreated={() => {}}
+        />
       )}
     </div>
   );
