@@ -9,8 +9,8 @@
  */
 
 import { v } from "convex/values";
-import { ConvexError } from "convex/values";
 import { mutation, query, action, internalMutation, internalAction, internalQuery } from "./_generated/server";
+import { ethers } from "ethers";
 import { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { createAuditLog } from "./coinAudit";
@@ -122,52 +122,22 @@ export const signClaimMessage = internalAction({
   },
   handler: async (ctx, args): Promise<string> => {
     const { address, amount, nonce } = args;
-    const apiUrl = 'https://vibemostwanted.xyz';
 
-    console.log(`[VBMS Sign Claim] Calling API at: ${apiUrl}/api/vbms/sign-claim`);
-    console.log(`[VBMS Sign Claim] Request: address=${address}, amount=${amount}, nonce=${nonce}`);
-
-    try {
-      const internalSecret = process.env.VMW_INTERNAL_SECRET;
-      const response = await fetch(`${apiUrl}/api/vbms/sign-claim`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-internal-secret': internalSecret || '',
-        },
-        body: JSON.stringify({ address, amount, nonce }),
-      });
-
-      console.log(`[VBMS Sign Claim] Response status: ${response.status} ${response.statusText}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[VBMS Sign Claim] Error response body: ${errorText}`);
-
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = { error: errorText || 'Unknown error' };
-        }
-
-        throw new Error(`Failed to sign claim (${response.status}): ${errorData.error || response.statusText}`);
-      }
-
-      const data = await response.json();
-
-      console.log(`[VBMS Signature] Address: ${address}, Amount: ${amount} VBMS, Nonce: ${nonce}`);
-      console.log(`[VBMS Signature] Signature received: ${data.signature?.slice(0, 20)}...`);
-
-      if (!data.signature) {
-        throw new Error('No signature in response');
-      }
-
-      return data.signature;
-    } catch (error: any) {
-      console.error(`[VBMS Signature Error] ${error.message}`, error);
-      throw new Error(`Failed to sign claim message: ${error.message}`);
+    const privateKey = process.env.VBMS_SIGNER_PRIVATE_KEY;
+    if (!privateKey) {
+      throw new Error('VBMS_SIGNER_PRIVATE_KEY not configured in Convex environment');
     }
+
+    const wallet = new ethers.Wallet(privateKey);
+    const amountInWei = ethers.parseEther(amount.toString());
+    const messageHash = ethers.solidityPackedKeccak256(
+      ['address', 'uint256', 'bytes32'],
+      [address, amountInWei, nonce]
+    );
+    const signature = await wallet.signMessage(ethers.getBytes(messageHash));
+
+    console.log(`[VBMS Signature] Address: ${address}, Amount: ${amount} VBMS signed`);
+    return signature;
   }
 });
 

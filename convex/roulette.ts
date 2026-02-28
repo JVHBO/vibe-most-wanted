@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { createAuditLog } from "./coinAudit";
+import { ethers } from "ethers";
 
 // Generate secure nonce for blockchain transactions
 function generateNonce(): string {
@@ -350,28 +351,19 @@ export const prepareRouletteClaim = action({
     // Generate nonce for blockchain TX
     const nonce = generateNonce();
 
-    // Get signature from roulette-specific signing endpoint (no minimum)
-    const apiUrl = 'https://vibemostwanted.xyz';
-    const internalSecret = process.env.VMW_INTERNAL_SECRET;
-    const response = await fetch(`${apiUrl}/api/vbms/sign-roulette`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-internal-secret': internalSecret || '',
-      },
-      body: JSON.stringify({
-        address: normalizedAddress,
-        amount: unclaimed.prizeAmount,
-        nonce
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-      throw new Error(`Failed to sign: ${errorData.error}`);
+    // Sign directly using ethers (no HTTP round-trip)
+    const privateKey = process.env.VBMS_SIGNER_PRIVATE_KEY;
+    if (!privateKey) {
+      throw new Error('VBMS_SIGNER_PRIVATE_KEY not configured in Convex environment');
     }
 
-    const { signature } = await response.json();
+    const wallet = new ethers.Wallet(privateKey);
+    const amountInWei = ethers.parseEther(unclaimed.prizeAmount.toString());
+    const messageHash = ethers.solidityPackedKeccak256(
+      ['address', 'uint256', 'bytes32'],
+      [normalizedAddress, amountInWei, nonce]
+    );
+    const signature = await wallet.signMessage(ethers.getBytes(messageHash));
 
     console.log(`🎰 Roulette claim prepared: ${normalizedAddress} claiming ${unclaimed.prizeAmount} VBMS`);
 
