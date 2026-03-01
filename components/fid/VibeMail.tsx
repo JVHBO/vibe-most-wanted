@@ -20,7 +20,6 @@ import { useMusic } from '@/contexts/MusicContext';
 import { openMarketplace } from "@/lib/fid/marketplace-utils";
 import { VibeDexModal } from './VibeDexModal';
 import { CastPreview } from './CastPreview';
-import { WantedCastsTab } from './WantedCastsTab';
 
 
 const VIBEMAIL_COST_VBMS = "100"; // Cost for paid VibeMail
@@ -658,7 +657,7 @@ export function VibeMailInboxWithClaim({
   const { lang } = useLanguage();
   const t = fidTranslations[lang];
   const { isMusicEnabled, setIsMusicEnabled } = useMusic();
-  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'quests' | 'wanted'>('inbox');
+  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'quests'>('inbox');
   const [activeQuests, setActiveQuests] = useState<any[]>([]);
   const [questsLoading, setQuestsLoading] = useState(false);
   const [claimingQuestId, setClaimingQuestId] = useState<string | null>(null);
@@ -1062,19 +1061,6 @@ export function VibeMailInboxWithClaim({
               <span className="flex items-center justify-center gap-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 Quests
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('wanted')}
-              className={`flex-1 py-2 text-xs font-bold border-2 border-black transition-all ${
-                activeTab === 'wanted'
-                  ? 'bg-[#9945FF] text-white shadow-[2px_2px_0px_#000]'
-                  : 'bg-vintage-black/50 text-vintage-ice/70 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
-              }`}
-            >
-              <span className="flex items-center justify-center gap-1">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-                Casts
               </span>
             </button>
           </div>
@@ -2026,19 +2012,7 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
-            {/* Wanted Casts Tab Content */}
-            {activeTab === 'wanted' && (
-              <div className="flex-1 overflow-y-auto">
-                <WantedCastsTab
-                  myFid={myFid}
-                  myAddress={myAddress}
-                  hasVibeBadge={undefined}
-                  soundEnabled={true}
-                />
-              </div>
-            )}
-
-            {activeTab !== 'quests' && activeTab !== 'wanted' && (
+            {activeTab !== 'quests' && (
             <div className="flex-1 overflow-y-auto space-y-2">
             {!currentMessages || currentMessages.length === 0 ? (
               <div className="text-center py-8">

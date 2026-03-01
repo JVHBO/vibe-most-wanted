@@ -4648,7 +4648,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                 )}
               </Link>
               <Link
-                href="/quests/cast"
+                href="/quests"
                 onClick={() => {
                   if (soundEnabled) AudioManager.buttonClick();
                 }}
