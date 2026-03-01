@@ -178,7 +178,7 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
   // Not supported
   if (!isSupported) {
     return (
-      <div className="text-vintage-ice/50 text-xs text-center py-2">
+      <div className="text-white/40 text-xs text-center py-2">
         {t.notSupported}
       </div>
     );
@@ -196,7 +196,7 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
   // Already has custom audio selected (from previous upload)
   if (isCustomAudio && !hasRecordedAudio) {
     return (
-      <div className="flex items-center gap-2 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-2">
+      <div className="flex items-center gap-2 bg-[#111] border border-[#FFD400]/30 rounded-lg p-2">
         <div className="w-8 h-8 rounded-full bg-vintage-gold flex items-center justify-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
         </div>
@@ -249,7 +249,7 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
 
       {/* Preview state - has recorded audio */}
       {hasRecordedAudio && !isRecording && (
-        <div className="flex items-center gap-2 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-2">
+        <div className="flex items-center gap-2 bg-[#111] border border-[#FFD400]/30 rounded-lg p-2">
           <button
             onClick={handlePlayPause}
             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-colors ${
@@ -264,7 +264,7 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
             <p className="text-vintage-gold font-bold text-xs">
               {isPlaying ? t.preview : t.recorded}
             </p>
-            <p className="text-vintage-ice/50 text-[10px]">
+            <p className="text-white/40 text-[10px]">
               {recordingTime}s
             </p>
           </div>
@@ -282,7 +282,7 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
                 setIsPlaying(false);
               }}
               disabled={isUploading || disabled}
-              className="px-2 py-1 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-ice text-xs rounded hover:bg-vintage-gold/10 disabled:opacity-50"
+              className="px-2 py-1 bg-[#1a1a1a] border border-[#444] text-white text-xs rounded hover:bg-[#222] disabled:opacity-50"
             >
               {t.reRecord}
             </button>
@@ -295,11 +295,11 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
         <button
           onClick={startRecording}
           disabled={disabled}
-          className="w-full flex items-center justify-center gap-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-ice py-2 px-3 rounded-lg text-sm hover:bg-vintage-gold/10 hover:border-vintage-gold/50 transition-colors disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 bg-[#111] border border-[#FFD400]/30 text-white py-2 px-3 rounded-lg text-xs hover:bg-[#1a1a1a] hover:border-[#FFD400]/60 transition-colors disabled:opacity-50"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
           <span>{t.record}</span>
-          <span className="text-vintage-ice/50 text-xs">({t.maxTime})</span>
+          <span className="text-white/40 text-[10px]">({t.maxTime})</span>
         </button>
       )}
 

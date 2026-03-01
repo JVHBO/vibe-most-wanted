@@ -52,6 +52,8 @@ interface NFTGiftModalProps {
   recipientUsername: string;
   senderFid: number;
   senderAddress: string;
+  senderUsername?: string;
+  senderPfpUrl?: string;
   // VibeMail data
   message: string;
   audioId?: string;
@@ -72,6 +74,8 @@ export function NFTGiftModal({
   recipientUsername,
   senderFid,
   senderAddress,
+  senderUsername,
+  senderPfpUrl,
   message,
   audioId,
   imageId,
@@ -259,6 +263,8 @@ export function NFTGiftModal({
           originalMessageId: replyToMessageId,
           senderFid,
           senderAddress,
+          senderUsername: senderUsername || undefined,
+          senderPfpUrl: senderPfpUrl || undefined,
           message,
           audioId: audioId || undefined,
           imageId: imageId || undefined,
@@ -273,6 +279,8 @@ export function NFTGiftModal({
           recipientFid,
           senderFid,
           senderAddress,
+          senderUsername: senderUsername || undefined,
+          senderPfpUrl: senderPfpUrl || undefined,
           message,
           audioId: audioId || undefined,
           imageId: imageId || undefined,

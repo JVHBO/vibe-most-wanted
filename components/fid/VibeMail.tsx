@@ -363,6 +363,8 @@ interface VibeMailMessage {
   voteCount: number;
   isPaid: boolean;
   voterFid?: number;
+  voterUsername?: string;
+  voterPfpUrl?: string;
   isSent?: boolean;
   recipientFid?: number;
   recipientUsername?: string;
@@ -693,6 +695,9 @@ export function VibeMailInboxWithClaim({
   const [composerCastUrl, setComposerCastUrl] = useState<string | null>(null);
   const [showCastInput, setShowCastInput] = useState(false);
   const [castInputValue, setCastInputValue] = useState('');
+  const [composerMiniappUrl, setComposerMiniappUrl] = useState<string | null>(null);
+  const [showMiniappInput, setShowMiniappInput] = useState(false);
+  const [miniappInputValue, setMiniappInputValue] = useState('');
   const composerAudioRef = useRef<HTMLAudioElement | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const sendDirectMutation = useMutation(api.cardVotes.sendDirectVibeMail);
@@ -1115,10 +1120,10 @@ export function VibeMailInboxWithClaim({
 
         {/* VibeMail Composer Modal - FULL SCREEN OVERLAY */}
         {showComposer && myFid && myAddress && (
-          <div className="fixed inset-0 z-[500] bg-vintage-dark overflow-y-auto" style={{ colorScheme: 'dark' }}>
-            <div className="bg-vintage-charcoal min-h-full p-4 flex flex-col">
+          <div className="fixed inset-0 z-[500] bg-[#0a0a0a] overflow-y-auto" style={{ colorScheme: 'dark', color: 'white' }}>
+            <div className="bg-[#111] min-h-full p-3 flex flex-col">
             {/* HEADER */}
-            <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-black">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b-2 border-black">
               <button
                 onClick={() => {
                   setShowComposer(false);
@@ -1136,6 +1141,9 @@ export function VibeMailInboxWithClaim({
                   setComposerCastUrl(null);
                   setShowCastInput(false);
                   setCastInputValue('');
+                  setComposerMiniappUrl(null);
+                  setShowMiniappInput(false);
+                  setMiniappInputValue('');
                   if (composerAudioRef.current) {
                     composerAudioRef.current.pause();
                   }
@@ -1149,32 +1157,32 @@ export function VibeMailInboxWithClaim({
             </div>
 
             {/* VBMS Balance */}
-            <div className="bg-[#111] border-2 border-black shadow-[2px_2px_0px_#000] p-3 mb-3">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-white/60 text-xs">{(t as any).yourVbmsBalance || 'Your VBMS Balance'}</p>
-                <button
-                  onClick={() => { AudioManager.buttonClick(); setShowDexModal(true); }}
-                  className="text-vintage-burnt-gold text-xs hover:text-vintage-gold transition-colors flex items-center gap-1"
-                >
-                  Need more $VBMS?
-                </button>
+            <div className="bg-[#0a0a0a] border-2 border-black shadow-[2px_2px_0px_#000] p-2 mb-2 flex items-center justify-between">
+              <div>
+                <p className="text-white/50 text-[10px]">{(t as any).yourVbmsBalance || 'VBMS Balance'}</p>
+                <p className="text-[#FFD400] font-bold text-sm">
+                  {vbmsBalance ? parseFloat(vbmsBalance).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'} VBMS
+                </p>
               </div>
-              <p className="text-vintage-gold font-bold text-lg">
-                {vbmsBalance ? parseFloat(vbmsBalance).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'} VBMS
-              </p>
+              <button
+                onClick={() => { AudioManager.buttonClick(); setShowDexModal(true); }}
+                className="text-[#FFD400]/70 text-[10px] hover:text-[#FFD400] transition-colors border border-[#FFD400]/30 px-2 py-1"
+              >
+                Get VBMS
+              </button>
             </div>
 
             {/* Reply indicator */}
             {replyToMessageId && (
-              <div className="mb-3 bg-vintage-gold/10 border-2 border-black p-2 flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-                <p className="text-white/70 text-sm">Replying anonymously to sender</p>
+              <div className="mb-2 bg-[#0a0a0a] border-2 border-black p-2 flex items-center gap-2">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                <p className="text-white/70 text-xs">Replying to message</p>
               </div>
             )}
 
             {/* Mode Selector (only for new message, not reply) */}
             {!replyToMessageId && (
-              <div className="mb-3 flex gap-2">
+              <div className="mb-2 flex gap-1">
                 <button
                   onClick={() => { setSendMode('single'); setRecipientFid(null); setRecipientUsername(''); setBroadcastRecipients([]); }}
                   className={`flex-1 py-2 px-2 border-2 border-black text-xs font-bold transition-all flex items-center justify-center gap-1 ${
@@ -1215,14 +1223,14 @@ export function VibeMailInboxWithClaim({
             {composerQuestType && (() => {
               const purpose = QUEST_PURPOSES.find(p => p.questType === composerQuestType);
               return purpose ? (
-                <div className="mb-3 p-3 bg-[#FFD400]/10 border-2 border-[#FFD400] flex items-start gap-2">
-                  <span className="text-xl flex-shrink-0">{purpose.icon}</span>
+                <div className="mb-2 p-2 bg-[#0a0a0a] border-2 border-[#FFD400] flex items-start gap-2">
+                  <span className="text-base flex-shrink-0">{purpose.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[#FFD400] font-black text-xs uppercase tracking-wide">{purpose.label}</p>
-                    <p className="text-white/70 text-[10px] mt-1 leading-relaxed">{purpose.hint}</p>
+                    <p className="text-[#FFD400] font-black text-[10px] uppercase tracking-wide">{purpose.label}</p>
+                    <p className="text-white/60 text-[10px] mt-0.5 leading-relaxed">{purpose.hint}</p>
                   </div>
-                  <button onClick={() => setComposerQuestType(null)} className="text-white/30 hover:text-white/60 flex-shrink-0">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <button onClick={() => setComposerQuestType(null)} className="text-white/40 hover:text-white flex-shrink-0">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
                 </div>
               ) : null;
@@ -1471,13 +1479,13 @@ export function VibeMailInboxWithClaim({
             <textarea
               value={composerMessage}
               onChange={(e) => setComposerMessage(e.target.value.slice(0, 200))}
-              placeholder="Write your anonymous message..."
-              className="w-full bg-[#111] border-2 border-[#444] px-3 py-2 text-white text-sm placeholder:text-white/40 focus:outline-none resize-none h-28 min-h-[112px]"
-              style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
+              placeholder="Write your message..."
+              className="w-full bg-[#0a0a0a] border-2 border-[#444] px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none resize-none h-20 min-h-[80px]"
+              style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
             />
-            <div className="flex justify-between items-center">
-              <p className="text-vintage-gold/60 text-xs">{t.vibeImageTip}</p>
-              <p className="text-white/40 text-xs">{composerMessage.length}/200</p>
+            <div className="flex justify-between items-center mb-1">
+              <p className="text-[#FFD400]/50 text-[10px]">{t.vibeImageTip}</p>
+              <p className="text-white/30 text-[10px]">{composerMessage.length}/200</p>
             </div>
 
             {/* Voice Recorder - only show if no meme sound selected */}
@@ -1588,13 +1596,13 @@ export function VibeMailInboxWithClaim({
             {/* Cast URL Embed */}
             <button
               onClick={() => { setShowCastInput(!showCastInput); if (showCastInput) { setComposerCastUrl(null); setCastInputValue(''); } }}
-              className={`mt-2 w-full py-2 border-2 shadow-[2px_2px_0px_#000] text-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3 ${composerCastUrl ? 'bg-[#9945FF]/20 border-[#9945FF] text-[#c87eff]' : 'bg-[#1a1a1a] border-[#444] text-white'}`}
+              className={`mt-1 w-full py-1.5 border-2 shadow-[2px_2px_0px_#000] text-xs hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3 ${composerCastUrl ? 'bg-[#9945FF]/20 border-[#9945FF] text-[#c87eff]' : 'bg-[#1a1a1a] border-[#444] text-white'}`}
             >
               <span className="flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                {composerCastUrl ? 'Cast embedded' : 'Embed a cast (optional)'}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                {composerCastUrl ? 'Cast embedded' : 'Embed a Warpcast link (optional)'}
               </span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points={showCastInput ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}/></svg>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points={showCastInput ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}/></svg>
             </button>
             {showCastInput && (
               <div className="mt-1">
@@ -1611,8 +1619,8 @@ export function VibeMailInboxWithClaim({
                     }
                   }}
                   placeholder="https://warpcast.com/..."
-                  className="w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#9945FF]"
-                  style={{ colorScheme: 'dark', WebkitTextFillColor: 'inherit' }}
+                  className="w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-[#9945FF]"
+                  style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
                 />
                 {composerCastUrl && (
                   <CastPreview castUrl={composerCastUrl} compact />
@@ -1620,19 +1628,51 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
-            {/* Free VibeMail limit display */}
-            <div className="text-center text-xs mb-2">
-              {hasFreeVotes ? (
-                <span className="text-green-400 flex items-center justify-center gap-1">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                  {t.freeVotesRemaining}: {freeVotesRemaining?.remaining ?? 0}
-                </span>
-              ) : (
-                <span className="text-vintage-gold flex items-center justify-center gap-1">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3" strokeLinecap="round"/></svg>
-                  {t.costPerVote}: {VIBEMAIL_COST_VBMS} VBMS
-                </span>
-              )}
+            {/* Miniapp URL Embed */}
+            <button
+              onClick={() => { setShowMiniappInput(!showMiniappInput); if (showMiniappInput) { setComposerMiniappUrl(null); setMiniappInputValue(''); } }}
+              className={`mt-1 w-full py-1.5 border-2 shadow-[2px_2px_0px_#000] text-xs hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3 ${composerMiniappUrl ? 'bg-[#22C55E]/20 border-[#22C55E] text-[#4ade80]' : 'bg-[#1a1a1a] border-[#444] text-white'}`}
+            >
+              <span className="flex items-center gap-2">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                {composerMiniappUrl ? 'Miniapp link embedded' : 'Embed miniapp link (optional)'}
+              </span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points={showMiniappInput ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}/></svg>
+            </button>
+            {showMiniappInput && (
+              <div className="mt-1">
+                <p className="text-white/40 text-[10px] mb-1">Paste any miniapp URL so the recipient can open it directly</p>
+                <input
+                  type="text"
+                  value={miniappInputValue}
+                  onChange={(e) => {
+                    setMiniappInputValue(e.target.value);
+                    const val = e.target.value.trim();
+                    if (val.startsWith('https://')) {
+                      setComposerMiniappUrl(val);
+                    } else {
+                      setComposerMiniappUrl(null);
+                    }
+                  }}
+                  placeholder="https://..."
+                  className="w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-[#22C55E]"
+                  style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
+                />
+                {composerMiniappUrl && (
+                  <div className="mt-1 bg-[#22C55E]/10 border border-[#22C55E]/50 p-2 flex items-center gap-2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                    <span className="text-[#4ade80] text-[10px] truncate">{composerMiniappUrl}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cost display */}
+            <div className="text-center text-[10px] my-1">
+              <span className="text-[#FFD400]/60 flex items-center justify-center gap-1">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3" strokeLinecap="round"/></svg>
+                {hasFreeVotes ? `${freeVotesRemaining?.remaining ?? 0} free sends remaining` : `${VIBEMAIL_COST_VBMS} VBMS per message`}
+              </span>
             </div>
 
             {/* Preview button */}
@@ -1658,12 +1698,13 @@ export function VibeMailInboxWithClaim({
                 <div className="bg-[#FFD400]/15 border-2 border-black p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-2 h-2 rounded-full bg-[#FFD400] animate-pulse flex-shrink-0" />
-                    <p className="text-white font-bold text-xs truncate">Anonymous VibeMail</p>
+                    <p className="text-white font-bold text-xs truncate">@{username || 'you'}</p>
                     <span className="ml-auto text-white/40 text-[10px]">Just now</span>
                   </div>
-                  <p className="text-white/90 text-sm whitespace-pre-wrap leading-relaxed">{composerMessage || '(no text)'}</p>
-                  {composerCastUrl && <p className="text-[#9945FF] text-xs mt-1 truncate">Cast: {composerCastUrl}</p>}
-                  {composerImageId && <p className="text-[#FFD400]/70 text-xs mt-1">Image attached</p>}
+                  <p className="text-white/90 text-xs whitespace-pre-wrap leading-relaxed">{composerMessage || '(no text)'}</p>
+                  {composerCastUrl && <p className="text-[#9945FF] text-[10px] mt-1 truncate">Cast: {composerCastUrl}</p>}
+                  {composerMiniappUrl && <p className="text-[#22C55E] text-[10px] mt-1 truncate">Miniapp: {composerMiniappUrl}</p>}
+                  {composerImageId && <p className="text-[#FFD400]/70 text-[10px] mt-1">Image attached</p>}
                   <div className="mt-2 text-right">
                     <span className="text-[#FFD400] text-xs font-bold">+{hasFreeVotes ? 0 : 100} VBMS</span>
                   </div>
@@ -1842,12 +1883,26 @@ export function VibeMailInboxWithClaim({
             </div>
 
             {/* Message Content */}
-            <div className="bg-vintage-black/60 border-2 border-black p-3 flex-1 overflow-y-auto">
+            <div className="bg-[#0a0a0a] border-2 border-black p-3 flex-1 overflow-y-auto">
+              {/* Sender info */}
+              {(selectedMessage.voterUsername || selectedMessage.voterFid) && !selectedMessage.isSent && (
+                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
+                  <div className="w-6 h-6 rounded-full bg-[#FFD400] flex items-center justify-center text-[10px] font-black text-black flex-shrink-0">
+                    {selectedMessage.voterUsername ? selectedMessage.voterUsername[0].toUpperCase() : '?'}
+                  </div>
+                  <div>
+                    <p className="text-[#FFD400] font-bold text-xs">
+                      {selectedMessage.voterUsername ? `@${selectedMessage.voterUsername}` : `FID #${selectedMessage.voterFid}`}
+                    </p>
+                    <p className="text-white/30 text-[9px]">{new Date(selectedMessage.createdAt).toLocaleString()}</p>
+                  </div>
+                </div>
+              )}
               <div className="text-white text-sm leading-relaxed mb-3">
                 {selectedMessage.imageId ? (
                   renderMessageWithMedia(selectedMessage.message || "", selectedMessage.imageId, lang, username)
                 ) : (
-                  <>"{renderFormattedMessage(selectedMessage.message || "", lang, username)}"</>
+                  <>{renderFormattedMessage(selectedMessage.message || "", lang, username)}</>
                 )}
               </div>
 
@@ -1944,7 +1999,7 @@ export function VibeMailInboxWithClaim({
                 className="mt-3 w-full py-2 bg-vintage-gold text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-                {t.replyAnonymously}
+                Reply
               </button>
             )}
 
@@ -2238,12 +2293,20 @@ export function VibeMailInboxWithClaim({
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${msg.isRead ? 'bg-vintage-ice/30' : 'bg-vintage-gold animate-pulse'}`} />
                     <div className="flex-1 min-w-0">
-                      {/* Show recipient for sent messages */}
-                      {msg.isSent && msg.recipientUsername && (
-                        <p className="text-vintage-gold/70 text-xs mb-1">
-                          {t.sentTo}: {msg.recipientUsername}
+                      {/* Show sender/recipient */}
+                      {msg.isSent && msg.recipientUsername ? (
+                        <p className="text-[#FFD400]/70 text-[10px] mb-0.5">
+                          To: @{msg.recipientUsername}
                         </p>
-                      )}
+                      ) : msg.voterUsername ? (
+                        <p className="text-[#FFD400]/70 text-[10px] mb-0.5">
+                          From: @{msg.voterUsername}
+                        </p>
+                      ) : msg.voterFid ? (
+                        <p className="text-white/40 text-[10px] mb-0.5">
+                          FID #{msg.voterFid}
+                        </p>
+                      ) : null}
                       <p className={`text-sm truncate ${msg.isRead ? 'text-vintage-ice/70' : 'text-vintage-gold font-bold'}`}>
                         {msg.message?.slice(0, 50)}...
                       </p>
@@ -2358,6 +2421,8 @@ export function VibeMailInboxWithClaim({
           recipientUsername={giftRecipientUsername}
           senderFid={myFid}
           senderAddress={myAddress}
+          senderUsername={username || undefined}
+          senderPfpUrl={userPfpUrl || undefined}
           message={composerMessage}
           audioId={composerAudioId || undefined}
           imageId={composerImageId || undefined}
