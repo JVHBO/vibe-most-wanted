@@ -1297,7 +1297,7 @@ export const getRecentTokens = internalQuery({
 /**
  * Fix missing VibeFID tokens in ownedTokenIds
  */
-export const addVibeFIDToOwnedTokens = mutation({
+export const addVibeFIDToOwnedTokens = internalMutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
@@ -1348,7 +1348,7 @@ export const addVibeFIDToOwnedTokens = mutation({
  * Add arbitrary tokens to ownedTokenIds
  * Used for manually syncing NFT tokens that weren't picked up
  */
-export const addTokensToProfile = mutation({
+export const addTokensToProfile = internalMutation({
   args: {
     address: v.string(),
     tokenIds: v.array(v.string())
@@ -1387,7 +1387,7 @@ export const addTokensToProfile = mutation({
  * Sync defenseDeck tokens to ownedTokenIds
  * Fixes profiles where defenseDeck has cards not in ownedTokenIds
  */
-export const syncDefenseDeckToOwned = mutation({
+export const syncDefenseDeckToOwned = internalMutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
