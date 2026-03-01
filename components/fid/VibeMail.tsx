@@ -882,10 +882,13 @@ export function VibeMailInboxWithClaim({
     }>
       <audio ref={audioRef} onEnded={() => setPlayingAudio(null)} />
 
-      <div className={asPage
-        ? "bg-vintage-charcoal h-screen w-full flex flex-col"
-        : "bg-vintage-charcoal border-2 border-black shadow-[4px_4px_0px_#000] p-4 w-full max-w-md max-h-[calc(100vh-120px)] overflow-hidden flex flex-col"
-      }>
+      <div
+        style={{ colorScheme: 'dark' }}
+        className={asPage
+          ? "bg-vintage-charcoal h-screen w-full flex flex-col"
+          : "bg-vintage-charcoal border-2 border-black shadow-[4px_4px_0px_#000] p-4 w-full max-w-md max-h-[calc(100vh-120px)] overflow-hidden flex flex-col"
+        }
+      >
         {/* Success Feedback Toast */}
         {sendSuccess && (
           <div className="mb-3 p-3 bg-green-500/20 border border-green-500/50 rounded-lg flex items-center gap-2 animate-pulse">
@@ -1041,14 +1044,8 @@ export function VibeMailInboxWithClaim({
 
         {/* VibeMail Composer Modal - FULL SCREEN OVERLAY */}
         {showComposer && myFid && myAddress && (
-          <div className={asPage
-            ? "fixed inset-0 z-[500] bg-vintage-dark"
-            : "fixed inset-0 z-[500] bg-black/95 flex items-center justify-center p-4"
-          }>
-            <div className={asPage
-              ? "bg-vintage-charcoal h-full w-full p-4 overflow-y-auto flex flex-col"
-              : "bg-vintage-charcoal border-2 border-black shadow-[4px_4px_0px_#000] p-4 w-full max-w-md max-h-[90vh] overflow-y-auto flex flex-col"
-            }>
+          <div className="fixed inset-0 z-[500] bg-vintage-dark overflow-y-auto" style={{ colorScheme: 'dark' }}>
+            <div className="bg-vintage-charcoal min-h-full p-4 flex flex-col">
             {/* HEADER */}
             <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-black">
               <button
@@ -1283,6 +1280,7 @@ export function VibeMailInboxWithClaim({
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder={t.vibemailSearchPlayers || "Search to add recipients..."}
                       className="w-full bg-vintage-black/50 border border-vintage-gold/30 rounded-lg px-3 py-2 text-vintage-ice text-sm placeholder:text-vintage-ice/40 focus:outline-none focus:border-vintage-gold"
+                      style={{ colorScheme: 'dark', WebkitTextFillColor: 'inherit' }}
                     />
                     {searchResults && searchResults.length > 0 && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-vintage-charcoal border border-vintage-gold/50 rounded-lg overflow-hidden z-30 max-h-40 overflow-y-auto">
@@ -1354,6 +1352,7 @@ export function VibeMailInboxWithClaim({
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search by username or FID..."
                       className="w-full bg-vintage-black/50 border-2 border-black px-3 py-2 text-vintage-ice text-sm placeholder:text-vintage-ice/40 focus:outline-none focus:border-vintage-gold"
+                      style={{ colorScheme: 'dark', WebkitTextFillColor: 'inherit' }}
                     />
                     {searchResults && searchResults.length > 0 && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-vintage-charcoal border border-vintage-gold/50 rounded-lg overflow-hidden z-30 max-h-40 overflow-y-auto">
@@ -1384,6 +1383,7 @@ export function VibeMailInboxWithClaim({
               onChange={(e) => setComposerMessage(e.target.value.slice(0, 200))}
               placeholder="Write your anonymous message..."
               className="w-full bg-vintage-black/50 border-2 border-black px-3 py-2 text-vintage-ice text-sm placeholder:text-vintage-ice/40 focus:outline-none resize-none h-28 min-h-[112px]"
+              style={{ colorScheme: 'dark', WebkitTextFillColor: 'inherit' }}
             />
             <div className="flex justify-between items-center">
               <p className="text-vintage-gold/60 text-xs">{t.vibeImageTip}</p>
@@ -1522,6 +1522,7 @@ export function VibeMailInboxWithClaim({
                   }}
                   placeholder="https://warpcast.com/..."
                   className="w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#9945FF]"
+                  style={{ colorScheme: 'dark', WebkitTextFillColor: 'inherit' }}
                 />
                 {composerCastUrl && (
                   <CastPreview castUrl={composerCastUrl} compact />
