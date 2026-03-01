@@ -44,12 +44,14 @@ const QUEST_PURPOSES = [
 
 // Slash commands available in the composer (Discord-like)
 const SLASH_COMMANDS = [
-  { cmd: '/vibe', icon: '🖼️', label: 'Insert image here' },
   { cmd: '/b', icon: 'B', label: 'Bold text' },
+  { cmd: '/i', icon: 'I', label: 'Italic text' },
+  { cmd: '/link', icon: '🔗', label: 'Insert link' },
   { cmd: '/img', icon: '📷', label: 'Attach image' },
   { cmd: '/sound', icon: '🔊', label: 'Attach sound' },
   { cmd: '/cast', icon: '💬', label: 'Embed cast' },
   { cmd: '/app', icon: '🎮', label: 'Link miniapp' },
+  { cmd: '/clear', icon: '🗑️', label: 'Clear message' },
 ] as const;
 
 
@@ -1035,13 +1037,21 @@ export function VibeMailInboxWithClaim({
     const before = composerMessage.slice(0, slashStart);
     const after = composerMessage.slice(cursorPos);
     switch (cmd) {
-      case '/vibe':
-        setComposerMessage((before + '/vibe ' + after).slice(0, 200));
-        setTimeout(() => { if (textareaRef.current) { const p = slashStart + 6; textareaRef.current.focus(); textareaRef.current.setSelectionRange(p, p); } }, 10);
-        break;
       case '/b':
         setComposerMessage((before + '**text**' + after).slice(0, 200));
         setTimeout(() => { if (textareaRef.current) { textareaRef.current.focus(); textareaRef.current.setSelectionRange(slashStart + 2, slashStart + 6); } }, 10);
+        break;
+      case '/i':
+        setComposerMessage((before + '*text*' + after).slice(0, 200));
+        setTimeout(() => { if (textareaRef.current) { textareaRef.current.focus(); textareaRef.current.setSelectionRange(slashStart + 1, slashStart + 5); } }, 10);
+        break;
+      case '/link':
+        setComposerMessage((before + '[text](url)' + after).slice(0, 200));
+        setTimeout(() => { if (textareaRef.current) { textareaRef.current.focus(); textareaRef.current.setSelectionRange(slashStart + 1, slashStart + 5); } }, 10);
+        break;
+      case '/clear':
+        setComposerMessage('');
+        setTimeout(() => { if (textareaRef.current) { textareaRef.current.focus(); } }, 10);
         break;
       case '/img':
         setComposerMessage((before + after).slice(0, 200));
@@ -1743,10 +1753,10 @@ export function VibeMailInboxWithClaim({
                         }
                         setComposerAudioId(composerAudioId === sound.id ? null : sound.id);
                       }}
-                      className={`p-2 border text-xs transition-all flex items-center gap-2 ${
+                      className={`p-2 border-2 text-xs transition-all flex items-center gap-2 font-bold ${
                         composerAudioId === sound.id
-                          ? 'bg-vintage-gold/30 border-vintage-gold text-vintage-gold'
-                          : 'bg-[#111] border-[#444] text-white hover:border-[#FFD400]/50 hover:bg-[#FFD400]/10'
+                          ? 'bg-[#FFD400]/20 border-[#FFD400] text-[#FFD400] shadow-[0_0_8px_rgba(255,212,0,0.2)]'
+                          : 'bg-[#1a1200] border-[#FFD400]/50 text-[#FFD400]/80 hover:border-[#FFD400] hover:text-[#FFD400] hover:bg-[#FFD400]/10'
                       }`}
                     >
                       <span>{previewSound === sound.id ? '⏹' : '▶'}</span>
@@ -1759,26 +1769,6 @@ export function VibeMailInboxWithClaim({
 
             {showImagePicker && (
               <div className="mt-2 bg-[#1a1a1a] border border-[#FFD400]/20 p-2">
-                {/* Place image at cursor position tip */}
-                {composerImageId && (
-                  <button
-                    onClick={() => {
-                      const textarea = textareaRef.current;
-                      if (!textarea) return;
-                      const pos = textarea.selectionStart;
-                      const before = composerMessage.slice(0, pos);
-                      const after = composerMessage.slice(pos);
-                      setComposerMessage((before + '/vibe ' + after).slice(0, 200));
-                      setShowImagePicker(false);
-                      setTimeout(() => { if (textareaRef.current) { const p = pos + 6; textareaRef.current.focus(); textareaRef.current.setSelectionRange(p, p); } }, 10);
-                    }}
-                    className="w-full mb-2 py-1.5 bg-[#0d1f0d] border border-[#22C55E]/50 text-[#22C55E] text-xs flex items-center justify-center gap-1 hover:bg-[#22C55E]/10 transition-colors"
-                    style={{ WebkitTextFillColor: 'currentColor' }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-                    Insert /vibe at cursor (place image here)
-                  </button>
-                )}
                 {/* Custom image upload */}
                 <input
                   type="file"
@@ -1890,21 +1880,25 @@ export function VibeMailInboxWithClaim({
 
             {/* Bottom toolbar */}
             <div className="flex items-center gap-1 border-t-2 border-[#333] pt-2 mt-2">
-              {/* Format Aa button */}
+              {/* Format Aa button - indigo */}
               <button
                 onClick={handleFormatBold}
-                className="w-9 h-9 flex items-center justify-center border-2 border-[#333] text-white/50 hover:text-white hover:border-[#555] transition-all font-bold text-sm"
+                className="w-9 h-9 flex items-center justify-center border-2 border-[#818CF8] bg-[#818CF8]/10 text-[#818CF8] hover:bg-[#818CF8]/20 transition-all font-bold text-sm"
                 style={{ WebkitTextFillColor: 'currentColor' }}
                 title="Bold (select text first)"
               >
                 Aa
               </button>
 
-              {/* Sound icon button - only if no custom audio */}
+              {/* Sound icon button - orange - only if no custom audio */}
               {!isCustomAudio(composerAudioId || undefined) && (
                 <button
                   onClick={() => { setShowSoundPicker(!showSoundPicker); setShowImagePicker(false); setShowCastInput(false); setShowMiniappInput(false); }}
-                  className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${composerAudioId && !isCustomAudio(composerAudioId) ? 'border-[#FFD400] bg-[#FFD400]/10 text-[#FFD400]' : showSoundPicker ? 'border-[#FFD400] bg-[#FFD400]/10 text-[#FFD400]' : 'border-[#333] text-white/50 hover:text-white hover:border-[#555]'}`}
+                  className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
+                    (composerAudioId && !isCustomAudio(composerAudioId)) || showSoundPicker
+                      ? 'border-[#FB923C] bg-[#FB923C]/30 text-[#FB923C]'
+                      : 'border-[#FB923C] bg-[#FB923C]/10 text-[#FB923C] hover:bg-[#FB923C]/20'
+                  }`}
                   style={{ WebkitTextFillColor: 'currentColor' }}
                   title="Sound"
                 >
@@ -1912,21 +1906,29 @@ export function VibeMailInboxWithClaim({
                 </button>
               )}
 
-              {/* Image icon button */}
+              {/* Image icon button - purple */}
               <button
                 onClick={() => { setShowImagePicker(!showImagePicker); setShowSoundPicker(false); setShowCastInput(false); setShowMiniappInput(false); }}
-                className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${composerImageId ? 'border-[#FFD400] bg-[#FFD400]/10 text-[#FFD400]' : showImagePicker ? 'border-[#FFD400] bg-[#FFD400]/10 text-[#FFD400]' : 'border-[#333] text-white/50 hover:text-white hover:border-[#555]'}`}
+                className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
+                  composerImageId || showImagePicker
+                    ? 'border-[#C084FC] bg-[#C084FC]/30 text-[#C084FC]'
+                    : 'border-[#C084FC] bg-[#C084FC]/10 text-[#C084FC] hover:bg-[#C084FC]/20'
+                }`}
                 style={{ WebkitTextFillColor: 'currentColor' }}
                 title="Image"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </button>
 
-              {/* Cast icon button - hidden for miniapp quest */}
+              {/* Cast icon button - blue - hidden for miniapp quest */}
               {composerQuestType !== 'miniapp' && (
                 <button
                   onClick={() => { setShowCastInput(!showCastInput); if (showCastInput) { setComposerCastUrl(null); setCastInputValue(''); } setShowSoundPicker(false); setShowImagePicker(false); setShowMiniappInput(false); }}
-                  className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${composerCastUrl ? 'border-[#9945FF] bg-[#9945FF]/10 text-[#9945FF]' : showCastInput ? 'border-[#9945FF] bg-[#9945FF]/10 text-[#9945FF]' : 'border-[#333] text-white/50 hover:text-white hover:border-[#555]'}`}
+                  className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
+                    composerCastUrl || showCastInput
+                      ? 'border-[#60A5FA] bg-[#60A5FA]/30 text-[#60A5FA]'
+                      : 'border-[#60A5FA] bg-[#60A5FA]/10 text-[#60A5FA] hover:bg-[#60A5FA]/20'
+                  }`}
                   style={{ WebkitTextFillColor: 'currentColor' }}
                   title="Farcaster cast"
                 >
@@ -1934,21 +1936,25 @@ export function VibeMailInboxWithClaim({
                 </button>
               )}
 
-              {/* Miniapp icon button */}
+              {/* Miniapp icon button - green */}
               <button
                 onClick={() => { setShowMiniappInput(!showMiniappInput); if (showMiniappInput) { setComposerMiniappUrl(null); setMiniappInputValue(''); } setShowSoundPicker(false); setShowImagePicker(false); setShowCastInput(false); }}
-                className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${composerMiniappUrl ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#22C55E]' : showMiniappInput ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#22C55E]' : 'border-[#333] text-white/50 hover:text-white hover:border-[#555]'}`}
+                className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
+                  composerMiniappUrl || showMiniappInput
+                    ? 'border-[#4ADE80] bg-[#4ADE80]/30 text-[#4ADE80]'
+                    : 'border-[#4ADE80] bg-[#4ADE80]/10 text-[#4ADE80] hover:bg-[#4ADE80]/20'
+                }`}
                 style={{ WebkitTextFillColor: 'currentColor' }}
                 title="Miniapp link"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
               </button>
 
-              {/* Eye / Preview icon */}
+              {/* Eye / Preview icon - gold */}
               {(composerMessage.trim() || composerImageId) && (
                 <button
                   onClick={() => setShowPreview(true)}
-                  className="w-9 h-9 flex items-center justify-center border-2 border-[#333] text-white/50 hover:text-white hover:border-[#555] transition-all"
+                  className="w-9 h-9 flex items-center justify-center border-2 border-[#FFD400] bg-[#FFD400]/10 text-[#FFD400] hover:bg-[#FFD400]/20 transition-all"
                   style={{ WebkitTextFillColor: 'currentColor' }}
                   title="Preview"
                 >
