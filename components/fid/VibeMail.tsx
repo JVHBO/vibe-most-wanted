@@ -42,6 +42,16 @@ const QUEST_PURPOSES = [
     hint: 'Set your miniapp URL when creating the quest in the Quests tab.' },
 ];
 
+// Slash commands available in the composer (Discord-like)
+const SLASH_COMMANDS = [
+  { cmd: '/vibe', icon: '🖼️', label: 'Insert image here' },
+  { cmd: '/b', icon: 'B', label: 'Bold text' },
+  { cmd: '/img', icon: '📷', label: 'Attach image' },
+  { cmd: '/sound', icon: '🔊', label: 'Attach sound' },
+  { cmd: '/cast', icon: '💬', label: 'Embed cast' },
+  { cmd: '/app', icon: '🎮', label: 'Link miniapp' },
+] as const;
+
 
 
 // Check if message is a welcome message and return translated version
@@ -825,6 +835,11 @@ export function VibeMailInboxWithClaim({
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [composerCustomImagePreview, setComposerCustomImagePreview] = useState<string | null>(null);
 
+  // Slash command picker state
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const [slashMenuOpen, setSlashMenuOpen] = useState(false);
+  const [slashFilter, setSlashFilter] = useState('');
+
   // Generate upload URL for custom images (same storage as AudioRecorder)
   const generateUploadUrl = useMutation(api.audioStorage.generateUploadUrl);
 
@@ -992,6 +1007,80 @@ export function VibeMailInboxWithClaim({
     } finally {
       setIsSending(false);
     }
+  };
+
+  // Handle textarea change with slash command detection
+  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value.slice(0, 200);
+    setComposerMessage(val);
+    const cursorPos = e.target.selectionStart ?? val.length;
+    const textBeforeCursor = val.slice(0, cursorPos);
+    const slashMatch = textBeforeCursor.match(/\/(\w*)$/);
+    if (slashMatch !== null) {
+      setSlashMenuOpen(true);
+      setSlashFilter(slashMatch[1].toLowerCase());
+    } else {
+      setSlashMenuOpen(false);
+    }
+  };
+
+  // Execute a slash command
+  const handleSlashSelect = (cmd: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) { setSlashMenuOpen(false); return; }
+    const cursorPos = textarea.selectionStart;
+    const textBeforeCursor = composerMessage.slice(0, cursorPos);
+    const slashStart = textBeforeCursor.search(/\/\w*$/);
+    if (slashStart === -1) { setSlashMenuOpen(false); return; }
+    const before = composerMessage.slice(0, slashStart);
+    const after = composerMessage.slice(cursorPos);
+    switch (cmd) {
+      case '/vibe':
+        setComposerMessage((before + '/vibe ' + after).slice(0, 200));
+        setTimeout(() => { if (textareaRef.current) { const p = slashStart + 6; textareaRef.current.focus(); textareaRef.current.setSelectionRange(p, p); } }, 10);
+        break;
+      case '/b':
+        setComposerMessage((before + '**text**' + after).slice(0, 200));
+        setTimeout(() => { if (textareaRef.current) { textareaRef.current.focus(); textareaRef.current.setSelectionRange(slashStart + 2, slashStart + 6); } }, 10);
+        break;
+      case '/img':
+        setComposerMessage((before + after).slice(0, 200));
+        setShowImagePicker(true); setShowSoundPicker(false); setShowCastInput(false); setShowMiniappInput(false);
+        break;
+      case '/sound':
+        setComposerMessage((before + after).slice(0, 200));
+        setShowSoundPicker(true); setShowImagePicker(false); setShowCastInput(false); setShowMiniappInput(false);
+        break;
+      case '/cast':
+        setComposerMessage((before + after).slice(0, 200));
+        setShowCastInput(true); setShowSoundPicker(false); setShowImagePicker(false); setShowMiniappInput(false);
+        break;
+      case '/app':
+        setComposerMessage((before + after).slice(0, 200));
+        setShowMiniappInput(true); setShowSoundPicker(false); setShowImagePicker(false); setShowCastInput(false);
+        break;
+    }
+    setSlashMenuOpen(false);
+  };
+
+  // Format selected text as bold
+  const handleFormatBold = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = composerMessage.slice(start, end);
+    let newMsg: string;
+    let newStart: number, newEnd: number;
+    if (selected) {
+      newMsg = composerMessage.slice(0, start) + '**' + selected + '**' + composerMessage.slice(end);
+      newStart = start + 2; newEnd = end + 2;
+    } else {
+      newMsg = composerMessage.slice(0, start) + '**bold**' + composerMessage.slice(start);
+      newStart = start + 2; newEnd = start + 6;
+    }
+    setComposerMessage(newMsg.slice(0, 200));
+    setTimeout(() => { if (textareaRef.current) { textareaRef.current.focus(); textareaRef.current.setSelectionRange(newStart, newEnd); } }, 10);
   };
 
   return (
@@ -1572,13 +1661,42 @@ export function VibeMailInboxWithClaim({
             )}
 
             {/* Message Input */}
-            <textarea
-              value={composerMessage}
-              onChange={(e) => setComposerMessage(e.target.value.slice(0, 200))}
-              placeholder="Write your message..."
-              className="w-full bg-[#0a0a0a] border-2 border-[#444] px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none resize-none h-20 min-h-[80px]"
-              style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
-            />
+            <div className="relative">
+              {/* Slash command picker - Discord-like */}
+              {slashMenuOpen && (() => {
+                const filtered = SLASH_COMMANDS.filter(c =>
+                  c.cmd.slice(1).startsWith(slashFilter) || c.label.toLowerCase().includes(slashFilter)
+                );
+                return filtered.length > 0 ? (
+                  <div className="absolute bottom-full left-0 right-0 mb-1 bg-[#1a1a1a] border-2 border-[#FFD400]/60 z-50 shadow-[4px_4px_0px_#000]">
+                    <div className="px-2 py-1 border-b border-[#333] flex items-center gap-1">
+                      <span className="text-[#FFD400] text-[10px] font-bold uppercase tracking-wider">Commands</span>
+                    </div>
+                    {filtered.map((cmd) => (
+                      <button
+                        key={cmd.cmd}
+                        onMouseDown={(e) => { e.preventDefault(); handleSlashSelect(cmd.cmd); }}
+                        className="w-full text-left px-3 py-2 flex items-center gap-2 hover:bg-[#FFD400]/10 border-b border-[#333] last:border-0 transition-colors"
+                        style={{ WebkitTextFillColor: 'white', color: 'white' }}
+                      >
+                        <span className="w-5 text-center text-sm">{cmd.icon}</span>
+                        <span className="text-[#FFD400] text-sm font-mono font-bold">{cmd.cmd}</span>
+                        <span className="text-white/50 text-xs">{cmd.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
+              <textarea
+                ref={textareaRef}
+                value={composerMessage}
+                onChange={handleMessageChange}
+                onKeyDown={(e) => { if (e.key === 'Escape') setSlashMenuOpen(false); }}
+                placeholder="Write your message... (type / for commands)"
+                className="w-full bg-[#0a0a0a] border-2 border-[#444] px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none resize-none h-20 min-h-[80px]"
+                style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
+              />
+            </div>
             <p className="text-[#FFD400]/50 text-[10px] mb-1">{t.vibeImageTip}</p>
 
             {/* Voice Recorder - only show if no meme sound selected */}
@@ -1641,6 +1759,26 @@ export function VibeMailInboxWithClaim({
 
             {showImagePicker && (
               <div className="mt-2 bg-[#1a1a1a] border border-[#FFD400]/20 p-2">
+                {/* Place image at cursor position tip */}
+                {composerImageId && (
+                  <button
+                    onClick={() => {
+                      const textarea = textareaRef.current;
+                      if (!textarea) return;
+                      const pos = textarea.selectionStart;
+                      const before = composerMessage.slice(0, pos);
+                      const after = composerMessage.slice(pos);
+                      setComposerMessage((before + '/vibe ' + after).slice(0, 200));
+                      setShowImagePicker(false);
+                      setTimeout(() => { if (textareaRef.current) { const p = pos + 6; textareaRef.current.focus(); textareaRef.current.setSelectionRange(p, p); } }, 10);
+                    }}
+                    className="w-full mb-2 py-1.5 bg-[#0d1f0d] border border-[#22C55E]/50 text-[#22C55E] text-xs flex items-center justify-center gap-1 hover:bg-[#22C55E]/10 transition-colors"
+                    style={{ WebkitTextFillColor: 'currentColor' }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+                    Insert /vibe at cursor (place image here)
+                  </button>
+                )}
                 {/* Custom image upload */}
                 <input
                   type="file"
@@ -1752,6 +1890,16 @@ export function VibeMailInboxWithClaim({
 
             {/* Bottom toolbar */}
             <div className="flex items-center gap-1 border-t-2 border-[#333] pt-2 mt-2">
+              {/* Format Aa button */}
+              <button
+                onClick={handleFormatBold}
+                className="w-9 h-9 flex items-center justify-center border-2 border-[#333] text-white/50 hover:text-white hover:border-[#555] transition-all font-bold text-sm"
+                style={{ WebkitTextFillColor: 'currentColor' }}
+                title="Bold (select text first)"
+              >
+                Aa
+              </button>
+
               {/* Sound icon button - only if no custom audio */}
               {!isCustomAudio(composerAudioId || undefined) && (
                 <button
