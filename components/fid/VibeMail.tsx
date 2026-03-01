@@ -13,7 +13,6 @@ import { useTransferVBMS, useVBMSBalance } from "@/hooks/fid/useVBMSContracts";
 import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
 import { CONTRACTS } from "@/lib/fid/contracts";
 import { parseEther } from 'viem';
-import { NFTGiftModal } from './NFTGiftModal';
 import haptics from "@/lib/fid/haptics";
 import { AudioRecorder } from './AudioRecorder';
 import { useMusic } from '@/contexts/MusicContext';
@@ -74,6 +73,9 @@ function isWelcomeMessage(message: string): boolean {
   return message?.startsWith('🎉') && message?.includes('VibeFID');
 }
 
+// Storage URL for custom uploaded images (VibeFID Convex storage)
+const VIBEFID_STORAGE_URL_INLINE = 'https://scintillating-mandrill-101.convex.cloud/api/storage';
+
 // Render message with media (image/video) support using /vibe command
 function renderMessageWithMedia(
   message: string,
@@ -83,7 +85,10 @@ function renderMessageWithMedia(
 ): React.ReactNode {
   if (!message && !imageId) return null;
 
-  const imageData = imageId ? getImageFile(imageId) : null;
+  // Handle custom uploaded images
+  const isCustomImage = imageId?.startsWith('img:');
+  const customImageUrl = isCustomImage ? `${VIBEFID_STORAGE_URL_INLINE}/${imageId!.slice(4)}` : null;
+  const imageData = imageId && !isCustomImage ? getImageFile(imageId) : null;
 
   // Check if message contains /vibe command
   const vibeMatch = message?.match(/\/vibe/i);
@@ -94,6 +99,15 @@ function renderMessageWithMedia(
 
   // Render the media element - compact size
   const renderMedia = () => {
+    if (customImageUrl) {
+      return (
+        <img
+          src={customImageUrl}
+          alt="VibeMail"
+          className="max-w-[150px] max-h-[150px] object-cover rounded-lg my-2 border border-vintage-gold/30"
+        />
+      );
+    }
     if (!imageData) return null;
     return imageData.isVideo ? (
       <video
@@ -113,7 +127,7 @@ function renderMessageWithMedia(
     );
   };
 
-  if (hasVibeCommand && imageData) {
+  if (hasVibeCommand && (imageData || customImageUrl)) {
     // Split message at /vibe position and put media in the middle
     const parts = message.split(/\/vibe/i);
     const beforeVibe = parts[0]?.trim() || '';
@@ -351,6 +365,15 @@ export function getSoundFile(audioId: string): string | null {
 export function getImageFile(imageId: string): { file: string; isVideo: boolean } | null {
   const image = VIBEMAIL_IMAGES.find(i => i.id === imageId);
   return image ? { file: image.file, isVideo: image.isVideo } : null;
+}
+
+// Get image URL for display - handles both meme images and custom uploaded images
+const VIBEFID_STORAGE_URL = 'https://scintillating-mandrill-101.convex.cloud/api/storage';
+export function getImageUrl(imageId: string | undefined): string | null {
+  if (!imageId) return null;
+  if (imageId.startsWith('img:')) return `${VIBEFID_STORAGE_URL}/${imageId.slice(4)}`;
+  const img = VIBEMAIL_IMAGES.find(i => i.id === imageId);
+  return img ? img.file : null;
 }
 
 interface VibeMailMessage {
@@ -791,13 +814,21 @@ export function VibeMailInboxWithClaim({
     }
   };
 
-  // NFT Gift modal state
+  // NFT Gift modal state (kept for TypeScript compat, no longer used in send flow)
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [giftRecipientFid, setGiftRecipientFid] = useState<number | null>(null);
   const [giftRecipientAddress, setGiftRecipientAddress] = useState<string>('');
   const [giftRecipientUsername, setGiftRecipientUsername] = useState<string>('');
 
-  // Query to get recipient address for NFT gift (for new message OR reply)
+  // Custom image upload state
+  const imageUploadRef = useRef<HTMLInputElement | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [composerCustomImagePreview, setComposerCustomImagePreview] = useState<string | null>(null);
+
+  // Generate upload URL for custom images (same storage as AudioRecorder)
+  const generateUploadUrl = useMutation(api.audioStorage.generateUploadUrl);
+
+  // Query to get recipient address (kept for compat)
   const targetFidForGift = recipientFid || replyToFid;
   const recipientCard = useQuery(
     api.farcasterCards.getFarcasterCardByFid,
@@ -900,6 +931,66 @@ export function VibeMailInboxWithClaim({
       setQuestClaimResult({ questId: quest._id, success: false, error: 'Network error' });
     } finally {
       setClaimingQuestId(null);
+    }
+  };
+
+  const handleDirectSend = async (recipFid: number, recipUsername: string, isReply: boolean, origMsgId?: any) => {
+    if (!myFid || !myAddress) return;
+    setIsSending(true);
+    try {
+      const cost = hasFreeVotes ? BigInt(0) : parseEther(VIBEMAIL_COST_VBMS);
+      await transferVBMS(CONTRACTS.VBMSPoolTroll as `0x${string}`, cost);
+      if (isReply && origMsgId) {
+        await replyMutation({
+          originalMessageId: origMsgId,
+          senderFid: myFid,
+          senderAddress: myAddress,
+          senderUsername: username || undefined,
+          senderPfpUrl: userPfpUrl || undefined,
+          message: composerMessage,
+          audioId: composerAudioId || undefined,
+          imageId: composerImageId || undefined,
+          miniappUrl: composerMiniappUrl || undefined,
+        });
+      } else {
+        await sendDirectMutation({
+          recipientFid: recipFid,
+          senderFid: myFid,
+          senderAddress: myAddress,
+          senderUsername: username || undefined,
+          senderPfpUrl: userPfpUrl || undefined,
+          message: composerMessage,
+          audioId: composerAudioId || undefined,
+          imageId: composerImageId || undefined,
+          castUrl: composerCastUrl || undefined,
+          miniappUrl: composerMiniappUrl || undefined,
+        });
+      }
+      haptics.send();
+      setSendSuccess({ recipient: recipUsername, timestamp: Date.now() });
+      setTimeout(() => setSendSuccess(null), 3000);
+      setShowComposer(false);
+      setComposerMessage('');
+      setComposerAudioId(null);
+      setComposerImageId(null);
+      setComposerCustomImagePreview(null);
+      setComposerCastUrl(null);
+      setComposerMiniappUrl(null);
+      setCastInputValue('');
+      setMiniappInputValue('');
+      setShowSoundPicker(false);
+      setShowImagePicker(false);
+      setShowCastInput(false);
+      setShowMiniappInput(false);
+      setRecipientFid(null);
+      setRecipientUsername('');
+      setSearchQuery('');
+      setReplyToMessageId(null);
+      setReplyToFid(null);
+    } catch (err: any) {
+      console.error('Send failed:', err);
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -1488,10 +1579,7 @@ export function VibeMailInboxWithClaim({
               className="w-full bg-[#0a0a0a] border-2 border-[#444] px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none resize-none h-20 min-h-[80px]"
               style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
             />
-            <div className="flex justify-between items-center mb-1">
-              <p className="text-[#FFD400]/50 text-[10px]">{t.vibeImageTip}</p>
-              <p className="text-white/30 text-[10px]">{composerMessage.length}/200</p>
-            </div>
+            <p className="text-[#FFD400]/50 text-[10px] mb-1">{t.vibeImageTip}</p>
 
             {/* Voice Recorder - only show if no meme sound selected */}
             {!composerAudioId || isCustomAudio(composerAudioId || undefined) ? (
@@ -1505,9 +1593,9 @@ export function VibeMailInboxWithClaim({
             ) : (
               <div className="mt-2 p-2 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg flex items-center justify-between">
                 <span className="text-white text-sm flex items-center gap-1">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                Meme sound selected
-              </span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  Meme sound selected
+                </span>
                 <button
                   onClick={() => setComposerAudioId(null)}
                   className="text-red-400 text-xs hover:text-red-300"
@@ -1515,30 +1603,16 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
-            {/* Meme Sound Picker - only show if no custom audio */}
+            {/* Attachment panels - shown above toolbar when active */}
             <audio ref={composerAudioRef} onEnded={() => setPreviewSound(null)} />
-            {!isCustomAudio(composerAudioId || undefined) && (
-            <button
-              onClick={() => setShowSoundPicker(!showSoundPicker)}
-              className="mt-2 w-full py-2 bg-[#1a1a1a] border-2 border-[#444] shadow-[2px_2px_0px_#000] text-white text-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3"
-              style={{ WebkitTextFillColor: 'white' }}
-            >
-              <span className="flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                {composerAudioId ? VIBEMAIL_SOUNDS.find(s => s.id === composerAudioId)?.name : 'Add meme sound (optional)'}
-              </span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points={showSoundPicker ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}/></svg>
-            </button>
-            )}
 
-            {showSoundPicker && (
-              <div className="mt-2 bg-[#1a1a1a] p-2 rounded-lg border border-[#FFD400]/20">
+            {showSoundPicker && !isCustomAudio(composerAudioId || undefined) && (
+              <div className="mt-2 bg-[#1a1a1a] border border-[#FFD400]/20 p-2">
                 <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
                   {VIBEMAIL_SOUNDS.map((sound) => (
                     <button
                       key={sound.id}
                       onClick={() => {
-                        // Play preview
                         if (composerAudioRef.current) {
                           if (previewSound === sound.id) {
                             composerAudioRef.current.pause();
@@ -1551,13 +1625,13 @@ export function VibeMailInboxWithClaim({
                         }
                         setComposerAudioId(composerAudioId === sound.id ? null : sound.id);
                       }}
-                      className={`p-2 rounded-lg border text-xs transition-all flex items-center gap-2 ${
+                      className={`p-2 border text-xs transition-all flex items-center gap-2 ${
                         composerAudioId === sound.id
                           ? 'bg-vintage-gold/30 border-vintage-gold text-vintage-gold'
-                          : 'bg-[#1a1a1a] border-[#444] text-white hover:border-[#FFD400]/50 hover:bg-[#FFD400]/10'
+                          : 'bg-[#111] border-[#444] text-white hover:border-[#FFD400]/50 hover:bg-[#FFD400]/10'
                       }`}
                     >
-                      <span>{previewSound === sound.id ? '⏹' : '▶️'}</span>
+                      <span>{previewSound === sound.id ? '⏹' : '▶'}</span>
                       <span className="truncate">{sound.name}</span>
                     </button>
                   ))}
@@ -1565,56 +1639,69 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
-            {/* Image Selector */}
-            <button
-              onClick={() => setShowImagePicker(!showImagePicker)}
-              className="mt-2 w-full py-2 bg-[#1a1a1a] border-2 border-[#444] shadow-[2px_2px_0px_#000] text-white text-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3"
-              style={{ WebkitTextFillColor: 'white' }}
-            >
-              <span className="flex items-center gap-2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                {composerImageId ? VIBEMAIL_IMAGES.find(i => i.id === composerImageId)?.name : 'Add meme image (optional)'}
-              </span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points={showImagePicker ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}/></svg>
-            </button>
-
             {showImagePicker && (
-              <div className="mt-2 grid grid-cols-4 gap-2">
-                {VIBEMAIL_IMAGES.map((img) => (
-                  <button
-                    key={img.id}
-                    onClick={() => setComposerImageId(composerImageId === img.id ? null : img.id)}
-                    className={`p-1 rounded-lg border transition-all ${
-                      composerImageId === img.id
-                        ? 'border-vintage-gold bg-vintage-gold/20'
-                        : 'border-vintage-gold/20 hover:border-vintage-gold/50'
-                    }`}
-                  >
-                    {img.isVideo ? (
-                      <video src={img.file} className="w-full h-10 object-cover rounded" muted loop autoPlay playsInline />
-                    ) : (
-                      <img src={img.file} alt={img.name} className="w-full h-10 object-cover rounded" />
-                    )}
-                  </button>
-                ))}
+              <div className="mt-2 bg-[#1a1a1a] border border-[#FFD400]/20 p-2">
+                {/* Custom image upload */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={imageUploadRef}
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setIsUploadingImage(true);
+                    try {
+                      const uploadUrl = await generateUploadUrl();
+                      const res = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': file.type }, body: file });
+                      if (!res.ok) throw new Error('Upload failed');
+                      const { storageId } = await res.json();
+                      setComposerImageId(`img:${storageId}`);
+                      setComposerCustomImagePreview(URL.createObjectURL(file));
+                      setShowImagePicker(false);
+                    } catch (err) { console.error('Image upload error:', err); }
+                    finally { setIsUploadingImage(false); e.target.value = ''; }
+                  }}
+                />
+                <button
+                  onClick={() => imageUploadRef.current?.click()}
+                  disabled={isUploadingImage}
+                  className="w-full mb-2 py-1.5 bg-[#1a1a1a] border border-[#FFD400]/30 text-white text-xs flex items-center justify-center gap-2 hover:border-[#FFD400]/60 disabled:opacity-50"
+                  style={{ WebkitTextFillColor: 'white' }}
+                >
+                  {isUploadingImage ? (
+                    <span>Uploading...</span>
+                  ) : (
+                    <>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                      Upload image
+                    </>
+                  )}
+                </button>
+                <div className="grid grid-cols-4 gap-2">
+                  {VIBEMAIL_IMAGES.map((img) => (
+                    <button
+                      key={img.id}
+                      onClick={() => { setComposerImageId(composerImageId === img.id ? null : img.id); setComposerCustomImagePreview(null); }}
+                      className={`p-1 border transition-all ${
+                        composerImageId === img.id
+                          ? 'border-vintage-gold bg-vintage-gold/20'
+                          : 'border-vintage-gold/20 hover:border-vintage-gold/50'
+                      }`}
+                    >
+                      {img.isVideo ? (
+                        <video src={img.file} className="w-full h-10 object-cover" muted loop autoPlay playsInline />
+                      ) : (
+                        <img src={img.file} alt={img.name} className="w-full h-10 object-cover" />
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
-            {/* Cast URL Embed - hidden when miniapp quest selected */}
-            {composerQuestType !== 'miniapp' && (<>
-            <button
-              onClick={() => { setShowCastInput(!showCastInput); if (showCastInput) { setComposerCastUrl(null); setCastInputValue(''); } }}
-              className={`mt-1 w-full py-1.5 border-2 shadow-[2px_2px_0px_#000] text-xs hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3 ${composerCastUrl ? 'bg-[#9945FF]/20 border-[#9945FF] text-[#c87eff]' : 'bg-[#1a1a1a] border-[#444] text-white'}`}
-              style={{ WebkitTextFillColor: 'currentColor' }}
-            >
-              <span className="flex items-center gap-2">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                {composerCastUrl ? 'Farcaster cast embedded' : 'Embed a Farcaster cast (optional)'}
-              </span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points={showCastInput ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}/></svg>
-            </button>
-            {showCastInput && (
-              <div className="mt-1">
+            {showCastInput && composerQuestType !== 'miniapp' && (
+              <div className="mt-2 bg-[#1a1a1a] border border-[#FFD400]/20 p-2">
                 <input
                   type="text"
                   value={castInputValue}
@@ -1631,28 +1718,13 @@ export function VibeMailInboxWithClaim({
                   className="w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-[#9945FF]"
                   style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
                 />
-                {composerCastUrl && (
-                  <CastPreview castUrl={composerCastUrl} compact />
-                )}
+                {composerCastUrl && <CastPreview castUrl={composerCastUrl} compact />}
               </div>
             )}
-            </>)}
 
-            {/* Miniapp URL Embed */}
-            <button
-              onClick={() => { setShowMiniappInput(!showMiniappInput); if (showMiniappInput) { setComposerMiniappUrl(null); setMiniappInputValue(''); } }}
-              className={`mt-1 w-full py-1.5 border-2 shadow-[2px_2px_0px_#000] text-xs hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3 ${composerMiniappUrl ? 'bg-[#22C55E]/20 border-[#22C55E] text-[#4ade80]' : 'bg-[#1a1a1a] border-[#444] text-white'}`}
-              style={{ WebkitTextFillColor: 'currentColor' }}
-            >
-              <span className="flex items-center gap-2">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
-                {composerMiniappUrl ? 'Miniapp link embedded' : 'Embed miniapp link (optional)'}
-              </span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points={showMiniappInput ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}/></svg>
-            </button>
             {showMiniappInput && (
-              <div className="mt-1">
-                <p className="text-white/40 text-[10px] mb-1">Paste any miniapp URL so the recipient can open it directly</p>
+              <div className="mt-2 bg-[#1a1a1a] border border-[#FFD400]/20 p-2">
+                <p className="text-white/40 text-[10px] mb-1">Paste miniapp URL</p>
                 <input
                   type="text"
                   value={miniappInputValue}
@@ -1678,45 +1750,133 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
+            {/* Bottom toolbar */}
+            <div className="flex items-center gap-1 border-t-2 border-[#333] pt-2 mt-2">
+              {/* Sound icon button - only if no custom audio */}
+              {!isCustomAudio(composerAudioId || undefined) && (
+                <button
+                  onClick={() => { setShowSoundPicker(!showSoundPicker); setShowImagePicker(false); setShowCastInput(false); setShowMiniappInput(false); }}
+                  className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${composerAudioId && !isCustomAudio(composerAudioId) ? 'border-[#FFD400] bg-[#FFD400]/10 text-[#FFD400]' : showSoundPicker ? 'border-[#FFD400] bg-[#FFD400]/10 text-[#FFD400]' : 'border-[#333] text-white/50 hover:text-white hover:border-[#555]'}`}
+                  style={{ WebkitTextFillColor: 'currentColor' }}
+                  title="Sound"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                </button>
+              )}
 
-            {/* Preview button */}
-            {(composerMessage.trim() || composerImageId) && !showPreview && (
+              {/* Image icon button */}
               <button
-                type="button"
-                onClick={() => setShowPreview(true)}
-                className="mb-2 w-full py-2 bg-[#1a1a1a] border-2 border-[#444] text-white/70 text-sm font-bold shadow-[2px_2px_0px_#000] hover:border-white/40 hover:text-white flex items-center justify-center gap-2 transition-all"
+                onClick={() => { setShowImagePicker(!showImagePicker); setShowSoundPicker(false); setShowCastInput(false); setShowMiniappInput(false); }}
+                className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${composerImageId ? 'border-[#FFD400] bg-[#FFD400]/10 text-[#FFD400]' : showImagePicker ? 'border-[#FFD400] bg-[#FFD400]/10 text-[#FFD400]' : 'border-[#333] text-white/50 hover:text-white hover:border-[#555]'}`}
+                style={{ WebkitTextFillColor: 'currentColor' }}
+                title="Image"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                Preview
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </button>
-            )}
-            {/* Preview panel */}
+
+              {/* Cast icon button - hidden for miniapp quest */}
+              {composerQuestType !== 'miniapp' && (
+                <button
+                  onClick={() => { setShowCastInput(!showCastInput); if (showCastInput) { setComposerCastUrl(null); setCastInputValue(''); } setShowSoundPicker(false); setShowImagePicker(false); setShowMiniappInput(false); }}
+                  className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${composerCastUrl ? 'border-[#9945FF] bg-[#9945FF]/10 text-[#9945FF]' : showCastInput ? 'border-[#9945FF] bg-[#9945FF]/10 text-[#9945FF]' : 'border-[#333] text-white/50 hover:text-white hover:border-[#555]'}`}
+                  style={{ WebkitTextFillColor: 'currentColor' }}
+                  title="Farcaster cast"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                </button>
+              )}
+
+              {/* Miniapp icon button */}
+              <button
+                onClick={() => { setShowMiniappInput(!showMiniappInput); if (showMiniappInput) { setComposerMiniappUrl(null); setMiniappInputValue(''); } setShowSoundPicker(false); setShowImagePicker(false); setShowCastInput(false); }}
+                className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${composerMiniappUrl ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#22C55E]' : showMiniappInput ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#22C55E]' : 'border-[#333] text-white/50 hover:text-white hover:border-[#555]'}`}
+                style={{ WebkitTextFillColor: 'currentColor' }}
+                title="Miniapp link"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+              </button>
+
+              {/* Eye / Preview icon */}
+              {(composerMessage.trim() || composerImageId) && (
+                <button
+                  onClick={() => setShowPreview(true)}
+                  className="w-9 h-9 flex items-center justify-center border-2 border-[#333] text-white/50 hover:text-white hover:border-[#555] transition-all"
+                  style={{ WebkitTextFillColor: 'currentColor' }}
+                  title="Preview"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              )}
+
+              {/* Spacer */}
+              <div className="flex-1" />
+
+              {/* Character count */}
+              <span className="text-white/30 text-[10px] mr-1">{composerMessage.length}/200</span>
+            </div>
+
+
+            {/* Preview - full-screen overlay */}
             {showPreview && (
-              <div className="mb-2 bg-[#0a0a0a] border-2 border-[#FFD400] p-3 relative">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-[#FFD400] text-xs font-black uppercase tracking-wide">Preview</p>
-                  <button onClick={() => setShowPreview(false)} className="text-white/40 hover:text-white">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <div className="fixed inset-0 z-[600] bg-[#0a0a0a] flex flex-col" style={{ colorScheme: 'dark', color: 'white' }}>
+                {/* Header */}
+                <div className="flex items-center justify-between p-3 border-b-2 border-[#FFD400]">
+                  <p className="text-[#FFD400] font-black text-sm uppercase tracking-widest">Preview</p>
+                  <button onClick={() => setShowPreview(false)} className="text-white/60 hover:text-white text-xs border border-[#444] px-2 py-1">
+                    Edit
                   </button>
                 </div>
-                <div className="bg-[#FFD400]/15 border-2 border-black p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 rounded-full bg-[#FFD400] animate-pulse flex-shrink-0" />
-                    <p className="text-white font-bold text-xs truncate">@{username || 'you'}</p>
-                    <span className="ml-auto text-white/40 text-[10px]">Just now</span>
-                  </div>
-                  <p className="text-white/90 text-xs whitespace-pre-wrap leading-relaxed">{composerMessage || '(no text)'}</p>
-                  {composerCastUrl && <p className="text-[#9945FF] text-[10px] mt-1 truncate">Cast: {composerCastUrl}</p>}
-                  {composerMiniappUrl && (
-                    <div className="mt-1 bg-[#0d1f0d] border border-[#22C55E]/50 rounded px-2 py-1 flex items-center gap-1.5">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
-                      <span className="text-[#22C55E] text-[10px] truncate">{composerMiniappUrl}</span>
+                {/* Content - scrollable */}
+                <div className="flex-1 overflow-y-auto p-3">
+                  <div className="bg-[#FFD400]/15 border-2 border-black p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="w-2 h-2 rounded-full bg-[#FFD400] animate-pulse flex-shrink-0" />
+                      <p className="text-white font-bold text-sm truncate">@{username || 'you'}</p>
+                      <span className="ml-auto text-white/40 text-xs">Just now</span>
                     </div>
-                  )}
-                  {composerImageId && <p className="text-[#FFD400]/70 text-[10px] mt-1">Image attached</p>}
-                  <div className="mt-2 text-right">
-                    <span className="text-[#FFD400] text-xs font-bold">+{hasFreeVotes ? 0 : 100} VBMS</span>
+                    <p className="text-white/90 text-sm whitespace-pre-wrap leading-relaxed">{composerMessage || '(no text)'}</p>
+                    {composerCastUrl && <p className="text-[#9945FF] text-xs mt-2 truncate">Cast: {composerCastUrl}</p>}
+                    {composerMiniappUrl && (
+                      <div className="mt-2 bg-[#0d1f0d] border border-[#22C55E]/50 rounded px-2 py-1.5 flex items-center gap-1.5">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                        <span className="text-[#22C55E] text-xs truncate">{composerMiniappUrl}</span>
+                      </div>
+                    )}
+                    {composerImageId && (
+                      <div className="mt-2">
+                        {composerImageId.startsWith('img:') ? (
+                          composerCustomImagePreview ? (
+                            <img src={composerCustomImagePreview} alt="Custom" className="max-w-full max-h-48 object-contain border border-[#FFD400]/30" />
+                          ) : (
+                            <p className="text-[#FFD400]/70 text-xs">Custom image attached</p>
+                          )
+                        ) : (() => {
+                          const imgData = getImageFile(composerImageId);
+                          return imgData ? (
+                            imgData.isVideo ? (
+                              <video src={imgData.file} className="max-w-full max-h-48 object-contain border border-[#FFD400]/30" autoPlay loop muted playsInline />
+                            ) : (
+                              <img src={imgData.file} alt="Attachment" className="max-w-full max-h-48 object-contain border border-[#FFD400]/30" />
+                            )
+                          ) : (
+                            <p className="text-[#FFD400]/70 text-xs">Image attached</p>
+                          );
+                        })()}
+                      </div>
+                    )}
+                    <div className="mt-3 text-right">
+                      <span className="text-[#FFD400] text-sm font-bold">+{hasFreeVotes ? 0 : 100} VBMS</span>
+                    </div>
                   </div>
+                </div>
+                {/* Bottom */}
+                <div className="p-3 border-t-2 border-[#333]">
+                  <button
+                    onClick={() => setShowPreview(false)}
+                    className="w-full py-3 bg-[#1a1a1a] border-2 border-[#444] text-white font-bold text-sm hover:border-[#FFD400] transition-all"
+                  >
+                    Back to Edit
+                  </button>
                 </div>
               </div>
             )}
@@ -1728,12 +1888,9 @@ export function VibeMailInboxWithClaim({
                 if (!composerMessage.trim() && !composerImageId) return;
                 if (!myAddress || !myFid) return;
 
-                // For replies - also show gift modal if we have the recipient address
-                if (replyToMessageId && replyToFid && recipientCard?.address) {
-                  setGiftRecipientFid(replyToFid);
-                  setGiftRecipientAddress(recipientCard.address);
-                  setGiftRecipientUsername('sender'); // Anonymous reply
-                  setShowGiftModal(true);
+                // For replies - send directly
+                if (replyToMessageId && replyToFid) {
+                  await handleDirectSend(replyToFid, 'sender', true, replyToMessageId);
                   return;
                 }
 
@@ -1822,22 +1979,15 @@ export function VibeMailInboxWithClaim({
                   return;
                 }
 
-                // RANDOM MODE - show gift modal like single mode
-                if (sendMode === 'random' && randomCard && randomCard.address) {
-                  setGiftRecipientFid(randomCard.fid);
-                  setGiftRecipientAddress(randomCard.address);
-                  setGiftRecipientUsername(randomCard.username);
-                  setShowGiftModal(true);
+                // RANDOM MODE - send directly to single random card
+                if (sendMode === 'random' && randomCard) {
+                  await handleDirectSend(randomCard.fid, randomCard.username, false);
                   return;
                 }
 
-                // SINGLE MODE - For direct messages, show gift modal first
-                if (sendMode === 'single' && recipientFid && recipientCard?.address) {
-                  setGiftRecipientFid(recipientFid);
-                  setGiftRecipientAddress(recipientCard.address);
-                  setGiftRecipientUsername(recipientUsername);
-                  setShowGiftModal(true);
-                  // Don't close composer yet - will close after gift modal
+                // SINGLE MODE - send directly
+                if (sendMode === 'single' && recipientFid) {
+                  await handleDirectSend(recipientFid, recipientUsername, false);
                 }
               }}
               disabled={isSending || isTransferPending || (!composerMessage.trim() && !composerImageId) || (!replyToMessageId && sendMode === 'single' && !recipientFid) || (sendMode === 'broadcast' && broadcastRecipients.length === 0) || (sendMode === 'random' && !randomCard && randomList.length === 0)}
@@ -1867,8 +2017,8 @@ export function VibeMailInboxWithClaim({
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                  {t.vibemailNextGift}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Send
                 </span>
               )}
             </button>
@@ -2407,57 +2557,6 @@ export function VibeMailInboxWithClaim({
           </div>
         )}
       </div>
-
-      {/* NFT Gift Modal - handles everything: gift selection + VibeMail sending */}
-      {showGiftModal && giftRecipientFid && giftRecipientAddress && myFid && myAddress && (
-        <NFTGiftModal
-          onClose={() => {
-            setShowGiftModal(false);
-            setGiftRecipientFid(null);
-            setGiftRecipientAddress('');
-            setGiftRecipientUsername('');
-          }}
-          onComplete={() => {
-            // Show success feedback
-            const recipientName = giftRecipientUsername || 'sender';
-            haptics.send(); // Haptic on send
-                  setSendSuccess({ recipient: recipientName, timestamp: Date.now() });
-            // Auto-hide after 3 seconds
-            setTimeout(() => setSendSuccess(null), 3000);
-            // Reset everything after complete
-            setShowGiftModal(false);
-            setShowComposer(false);
-            setGiftRecipientFid(null);
-            setGiftRecipientAddress('');
-            setGiftRecipientUsername('');
-            setRecipientFid(null);
-            setRecipientUsername('');
-            setReplyToMessageId(null);
-            setReplyToFid(null);
-            setComposerMessage('');
-            setComposerAudioId(null);
-            setComposerImageId(null);
-            setComposerCastUrl(null);
-            setShowCastInput(false);
-            setCastInputValue('');
-            setSearchQuery('');
-          }}
-          recipientFid={giftRecipientFid}
-          recipientAddress={giftRecipientAddress}
-          recipientUsername={giftRecipientUsername}
-          senderFid={myFid}
-          senderAddress={myAddress}
-          senderUsername={username || undefined}
-          senderPfpUrl={userPfpUrl || undefined}
-          message={composerMessage}
-          audioId={composerAudioId || undefined}
-          imageId={composerImageId || undefined}
-          castUrl={composerCastUrl || undefined}
-          miniappUrl={composerMiniappUrl || undefined}
-          isPaidVibeMail={!hasFreeVotes}
-          replyToMessageId={replyToMessageId || undefined}
-        />
-      )}
 
       {showDexModal && (
         <VibeDexModal onClose={() => setShowDexModal(false)} />

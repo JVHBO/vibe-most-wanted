@@ -138,15 +138,10 @@ export function NFTGiftModal({
     { id: 'viberotbangers', name: 'Vibe Rot Bangers', count: 0 },
   ];
 
-  // Show collections immediately on mount
+  // Skip gift selection - go straight to confirm
   useEffect(() => {
-    if (!address) {
-      setStep('confirm');
-      return;
-    }
-    setCollections(GIFTABLE_COLLECTIONS);
-    setStep('collections');
-  }, [address]);
+    setStep('confirm');
+  }, []);
 
   // Fetch NFTs only when a collection is selected
   const fetchCollectionNFTs = async (collectionId: string) => {
