@@ -19,6 +19,8 @@ import { AudioRecorder } from './AudioRecorder';
 import { useMusic } from '@/contexts/MusicContext';
 import { openMarketplace } from "@/lib/fid/marketplace-utils";
 import { VibeDexModal } from './VibeDexModal';
+import { CastPreview } from './CastPreview';
+import { WantedCastsTab } from './WantedCastsTab';
 
 
 const VIBEMAIL_COST_VBMS = "100"; // Cost for paid VibeMail
@@ -338,6 +340,7 @@ interface VibeMailMessage {
   message?: string;
   audioId?: string;
   imageId?: string;
+  castUrl?: string;
   isRead?: boolean;
   createdAt: number;
   voteCount: number;
@@ -517,6 +520,11 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
                 </div>
               )}
 
+              {/* Cast Embed */}
+              {selectedMessage.castUrl && (
+                <CastPreview castUrl={selectedMessage.castUrl} />
+              )}
+
               {/* NFT Gift Display */}
               {selectedMessage.giftNftImageUrl && (
                 <div
@@ -650,7 +658,7 @@ export function VibeMailInboxWithClaim({
   const { lang } = useLanguage();
   const t = fidTranslations[lang];
   const { isMusicEnabled, setIsMusicEnabled } = useMusic();
-  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'quests'>('inbox');
+  const [activeTab, setActiveTab] = useState<'inbox' | 'sent' | 'quests' | 'wanted'>('inbox');
   const [activeQuests, setActiveQuests] = useState<any[]>([]);
   const [questsLoading, setQuestsLoading] = useState(false);
   const [claimingQuestId, setClaimingQuestId] = useState<string | null>(null);
@@ -679,6 +687,9 @@ export function VibeMailInboxWithClaim({
   const [previewSound, setPreviewSound] = useState<string | null>(null);
   const [composerImageId, setComposerImageId] = useState<string | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
+  const [composerCastUrl, setComposerCastUrl] = useState<string | null>(null);
+  const [showCastInput, setShowCastInput] = useState(false);
+  const [castInputValue, setCastInputValue] = useState('');
   const composerAudioRef = useRef<HTMLAudioElement | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const sendDirectMutation = useMutation(api.cardVotes.sendDirectVibeMail);
@@ -942,7 +953,7 @@ export function VibeMailInboxWithClaim({
               className="w-12 h-12 rounded-full border-2 border-black shadow-[2px_2px_0px_#000]"
             />
               <div>
-              <h3 className="text-vintage-gold font-bold text-lg uppercase tracking-wide">{t.vibeMailTitle}</h3>
+              <h3 className="text-vintage-gold font-bold text-lg uppercase tracking-wide">VibeQuest</h3>
               <p className="text-vintage-ice/60 text-xs">
                 {messages?.length || 0} {t.messagesCount}
               </p>
@@ -1011,46 +1022,59 @@ export function VibeMailInboxWithClaim({
           </div>
         </div>
 
-        {/* Tabs - Inbox/Sent */}
+        {/* Tabs - Msgs/Sent/Quests/Wanted */}
         {myFid && !selectedMessage && !showComposer && (
-          <div className="flex gap-2 mb-3">
+          <div className="flex gap-1 mb-3">
             <button
               onClick={() => setActiveTab('inbox')}
-              className={`flex-1 py-2 text-sm font-bold border-2 border-black transition-all ${
+              className={`flex-1 py-2 text-xs font-bold border-2 border-black transition-all ${
                 activeTab === 'inbox'
                   ? 'bg-vintage-gold text-black shadow-[2px_2px_0px_#000]'
                   : 'bg-vintage-black/50 text-vintage-ice/70 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
               }`}
             >
               <span className="flex items-center justify-center gap-1">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-                {t.inboxTab} ({messages?.length || 0})
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+                Msgs
               </span>
             </button>
             <button
               onClick={() => setActiveTab('sent')}
-              className={`flex-1 py-2 text-sm font-bold border-2 border-black transition-all ${
+              className={`flex-1 py-2 text-xs font-bold border-2 border-black transition-all ${
                 activeTab === 'sent'
                   ? 'bg-vintage-gold text-black shadow-[2px_2px_0px_#000]'
                   : 'bg-vintage-black/50 text-vintage-ice/70 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
               }`}
             >
               <span className="flex items-center justify-center gap-1">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                {t.sentTab} ({sentMessages?.length || 0})
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Sent
               </span>
             </button>
             <button
               onClick={() => setActiveTab('quests')}
-              className={`flex-1 py-2 text-sm font-bold border-2 border-black transition-all ${
+              className={`flex-1 py-2 text-xs font-bold border-2 border-black transition-all ${
                 activeTab === 'quests'
                   ? 'bg-[#22C55E] text-black shadow-[2px_2px_0px_#000]'
                   : 'bg-vintage-black/50 text-vintage-ice/70 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
               }`}
             >
               <span className="flex items-center justify-center gap-1">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 Quests
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('wanted')}
+              className={`flex-1 py-2 text-xs font-bold border-2 border-black transition-all ${
+                activeTab === 'wanted'
+                  ? 'bg-[#9945FF] text-white shadow-[2px_2px_0px_#000]'
+                  : 'bg-vintage-black/50 text-vintage-ice/70 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
+              }`}
+            >
+              <span className="flex items-center justify-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                Casts
               </span>
             </button>
           </div>
@@ -1082,6 +1106,9 @@ export function VibeMailInboxWithClaim({
                   setPreviewSound(null);
                   setComposerImageId(null);
                   setShowImagePicker(false);
+                  setComposerCastUrl(null);
+                  setShowCastInput(false);
+                  setCastInputValue('');
                   if (composerAudioRef.current) {
                     composerAudioRef.current.pause();
                   }
@@ -1089,7 +1116,7 @@ export function VibeMailInboxWithClaim({
                 className="w-8 h-8 bg-vintage-black border-2 border-black shadow-[2px_2px_0px_#000] text-vintage-gold font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
               >X</button>
               <h3 className="text-vintage-gold font-bold text-lg uppercase tracking-wide">
-                {replyToMessageId ? 'Reply' : 'New VibeMail'}
+                {replyToMessageId ? 'Reply' : 'New Message'}
               </h3>
               <div className="w-10" />
             </div>
@@ -1509,6 +1536,40 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
+            {/* Cast URL Embed */}
+            <button
+              onClick={() => { setShowCastInput(!showCastInput); if (showCastInput) { setComposerCastUrl(null); setCastInputValue(''); } }}
+              className={`mt-2 w-full py-2 border-2 border-black shadow-[2px_2px_0px_#000] text-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3 ${composerCastUrl ? 'bg-[#9945FF]/20 text-[#c87eff]' : 'bg-vintage-black/50 text-vintage-ice'}`}
+            >
+              <span className="flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                {composerCastUrl ? 'Cast embedded' : 'Embed a cast (optional)'}
+              </span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points={showCastInput ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}/></svg>
+            </button>
+            {showCastInput && (
+              <div className="mt-1">
+                <input
+                  type="text"
+                  value={castInputValue}
+                  onChange={(e) => {
+                    setCastInputValue(e.target.value);
+                    const val = e.target.value.trim();
+                    if (val.startsWith('https://warpcast.com/') || val.startsWith('https://www.warpcast.com/')) {
+                      setComposerCastUrl(val);
+                    } else {
+                      setComposerCastUrl(null);
+                    }
+                  }}
+                  placeholder="https://warpcast.com/..."
+                  className="w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#9945FF]"
+                />
+                {composerCastUrl && (
+                  <CastPreview castUrl={composerCastUrl} compact />
+                )}
+              </div>
+            )}
+
             {/* Free VibeMail limit display */}
             <div className="text-center text-xs mb-2">
               {hasFreeVotes ? (
@@ -1902,10 +1963,10 @@ export function VibeMailInboxWithClaim({
                 ) : (
                   activeQuests.map((quest: any) => {
                     const QUEST_ICONS: Record<string, string> = {
-                      follow_me: '👤', join_channel: '📢', rt_cast: '🔁', use_miniapp: '🎮',
+                      follow_me: '👤', join_channel: '📢', rt_cast: '🔁', use_miniapp: '🎮', like_cast: '❤️',
                     };
                     const QUEST_LABELS: Record<string, string> = {
-                      follow_me: 'Follow', join_channel: 'Join Channel', rt_cast: 'Recast', use_miniapp: 'Use App',
+                      follow_me: 'Follow', join_channel: 'Join Channel', rt_cast: 'Recast', use_miniapp: 'Use App', like_cast: 'Like Cast',
                     };
                     const isClaiming = claimingQuestId === quest._id;
                     const claimResult = questClaimResult?.questId === quest._id ? questClaimResult : null;
@@ -1965,7 +2026,19 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
-            {activeTab !== 'quests' && (
+            {/* Wanted Casts Tab Content */}
+            {activeTab === 'wanted' && (
+              <div className="flex-1 overflow-y-auto">
+                <WantedCastsTab
+                  myFid={myFid}
+                  myAddress={myAddress}
+                  hasVibeBadge={undefined}
+                  soundEnabled={true}
+                />
+              </div>
+            )}
+
+            {activeTab !== 'quests' && activeTab !== 'wanted' && (
             <div className="flex-1 overflow-y-auto space-y-2">
             {!currentMessages || currentMessages.length === 0 ? (
               <div className="text-center py-8">
@@ -2025,6 +2098,9 @@ export function VibeMailInboxWithClaim({
                         )}
                         {msg.imageId && (
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C8962E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        )}
+                        {msg.castUrl && (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9945ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                         )}
                         <span className="text-xs text-vintage-ice/40">
                           {new Date(msg.createdAt).toLocaleDateString()}
@@ -2097,6 +2173,9 @@ export function VibeMailInboxWithClaim({
             setComposerMessage('');
             setComposerAudioId(null);
             setComposerImageId(null);
+            setComposerCastUrl(null);
+            setShowCastInput(false);
+            setCastInputValue('');
             setSearchQuery('');
           }}
           recipientFid={giftRecipientFid}
@@ -2107,6 +2186,7 @@ export function VibeMailInboxWithClaim({
           message={composerMessage}
           audioId={composerAudioId || undefined}
           imageId={composerImageId || undefined}
+          castUrl={composerCastUrl || undefined}
           isPaidVibeMail={!hasFreeVotes}
           replyToMessageId={replyToMessageId || undefined}
         />

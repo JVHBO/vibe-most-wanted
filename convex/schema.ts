@@ -2104,7 +2104,8 @@ export default defineSchema({
       v.literal("follow_me"),
       v.literal("join_channel"),
       v.literal("rt_cast"),
-      v.literal("use_miniapp")
+      v.literal("use_miniapp"),
+      v.literal("like_cast")
     ),
     targetUrl: v.string(), // cast URL, @username, or channel slug
     targetDisplay: v.string(), // human-readable label

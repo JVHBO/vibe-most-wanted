@@ -12,7 +12,7 @@ interface CreateQuestModalProps {
   onCreated: () => void;
 }
 
-type QuestType = 'follow_me' | 'join_channel' | 'rt_cast' | 'use_miniapp';
+type QuestType = 'follow_me' | 'join_channel' | 'rt_cast' | 'use_miniapp' | 'like_cast';
 
 const QUEST_TYPE_INFO: Record<QuestType, { label: string; placeholder: string; hint: string; icon: string }> = {
   follow_me: {
@@ -38,6 +38,12 @@ const QUEST_TYPE_INFO: Record<QuestType, { label: string; placeholder: string; h
     placeholder: 'vibemostwanted.xyz',
     hint: 'Players need recent activity in Vibe Most Wanted (last 7 days).',
     icon: '🎮',
+  },
+  like_cast: {
+    label: 'Like Cast',
+    placeholder: 'https://warpcast.com/...',
+    hint: 'Players will be asked to like a specific cast.',
+    icon: '❤️',
   },
 };
 
@@ -65,6 +71,8 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
     if (questType === 'use_miniapp') return 'vibemostwanted.xyz';
     return targetUrl.trim();
   };
+
+  const noTargetNeeded = questType === 'follow_me' || questType === 'use_miniapp';
 
   const getEffectiveDisplay = () => {
     if (questType === 'follow_me') return `@${username}`;
@@ -158,7 +166,7 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
           </div>
 
           {/* Target Input (hidden for follow_me and use_miniapp) */}
-          {questType !== 'follow_me' && questType !== 'use_miniapp' && (
+          {!noTargetNeeded && (
             <div>
               <p className="text-[#FFD400] font-bold text-xs uppercase tracking-wide mb-2">Target</p>
               <input

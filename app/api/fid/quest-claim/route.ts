@@ -46,6 +46,19 @@ async function verifyRtCast(castUrl: string, completerFid: number): Promise<bool
   return data.cast?.viewer_context?.recasted === true;
 }
 
+async function verifyLikeCast(castUrl: string, completerFid: number): Promise<boolean> {
+  const isUrl = castUrl.startsWith("http");
+  const identifierType = isUrl ? "url" : "hash";
+  const encoded = isUrl ? encodeURIComponent(castUrl) : castUrl;
+  const resp = await fetch(
+    `${NEYNAR_BASE}/farcaster/cast?identifier=${encoded}&type=${identifierType}&viewer_fid=${completerFid}`,
+    { headers: { accept: "application/json", api_key: NEYNAR_API_KEY } }
+  );
+  if (!resp.ok) return false;
+  const data = await resp.json();
+  return data.cast?.viewer_context?.liked === true;
+}
+
 async function verifyUseMiniapp(completerAddress: string): Promise<boolean> {
   // Check if completer has recent activity (last 7 days) in VMW
   const profile = await convex.query(api.profiles.getProfile, { address: completerAddress });
@@ -113,6 +126,11 @@ export async function POST(request: NextRequest) {
         case "use_miniapp": {
           verified = await verifyUseMiniapp(completerAddress);
           if (!verified) verificationError = "No recent activity in the miniapp (last 7 days)";
+          break;
+        }
+        case "like_cast": {
+          verified = await verifyLikeCast(targetUrl, completerFid);
+          if (!verified) verificationError = "You haven't liked this cast yet";
           break;
         }
         default:

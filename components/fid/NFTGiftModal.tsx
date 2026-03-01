@@ -56,6 +56,7 @@ interface NFTGiftModalProps {
   message: string;
   audioId?: string;
   imageId?: string;
+  castUrl?: string;
   isPaidVibeMail: boolean;
   // Reply support
   replyToMessageId?: Id<'cardVotes'>; // If provided, this is a reply
@@ -74,6 +75,7 @@ export function NFTGiftModal({
   message,
   audioId,
   imageId,
+  castUrl,
   isPaidVibeMail,
   replyToMessageId,
 }: NFTGiftModalProps) {
@@ -274,6 +276,7 @@ export function NFTGiftModal({
           message,
           audioId: audioId || undefined,
           imageId: imageId || undefined,
+          castUrl: castUrl || undefined,
           // NFT Gift fields (separate from message)
           giftNftName: selectedNft?.name,
           giftNftImageUrl: selectedNft?.imageUrl,
