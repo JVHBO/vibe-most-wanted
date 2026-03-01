@@ -24,6 +24,24 @@ import { CastPreview } from './CastPreview';
 
 const VIBEMAIL_COST_VBMS = "100"; // Cost for paid VibeMail
 
+const QUEST_PURPOSES = [
+  { id: 'follow', icon: '👤', label: 'Follow Quest', shortDesc: 'Ask to follow your profile', questType: 'follow_me', needsCast: false,
+    template: 'Follow my Farcaster profile and earn coins! 👤\n\n✅ How to claim:\n1. Follow @[your-username] on Farcaster\n2. Come back to the Quests tab → Claim\n\n⏰ Limited slots!',
+    hint: 'Replace @[your-username] with yours. Create the quest first in the Quests tab to set the reward.' },
+  { id: 'channel', icon: '📢', label: 'Channel Quest', shortDesc: 'Ask to join your channel', questType: 'join_channel', needsCast: false,
+    template: 'Join my Farcaster channel and earn coins! 📢\n\n✅ How to claim:\n1. Search and join /[channel-name]\n2. Come back to Quests tab → Claim\n\n⏰ Limited slots!',
+    hint: 'Replace /[channel-name] with your channel. Create the quest in the Quests tab first.' },
+  { id: 'recast', icon: '🔁', label: 'Recast Quest', shortDesc: 'Ask to recast your cast', questType: 'rt_cast', needsCast: true,
+    template: 'Recast my post and earn coins! 🔁\n\n✅ How to claim:\n1. Open the cast below 👇\n2. Recast it\n3. Come back to Quests tab → Claim',
+    hint: 'Paste your Warpcast cast URL in the "Embed cast" field so recipients can find it easily.' },
+  { id: 'like', icon: '❤️', label: 'Like Quest', shortDesc: 'Ask to like your cast', questType: 'like_cast', needsCast: true,
+    template: 'Like my cast and earn coins! ❤️\n\n✅ How to claim:\n1. Open the cast below 👇\n2. Like it ❤️\n3. Come back to Quests tab → Claim',
+    hint: 'The cast URL is REQUIRED for like verification. Paste it in the "Embed cast" field below.' },
+  { id: 'miniapp', icon: '🎮', label: 'Miniapp Quest', shortDesc: 'Ask to use your miniapp', questType: 'use_miniapp', needsCast: false,
+    template: 'Try my miniapp and earn coins! 🎮\n\n✅ How to claim:\n1. Open the Quests tab\n2. Find this quest → tap "Do it"\n3. Use the miniapp for a moment\n4. Tap "Claim" — done!',
+    hint: 'Set your miniapp URL when creating the quest in the Quests tab.' },
+];
+
 
 
 // Check if message is a welcome message and return translated version
@@ -645,6 +663,9 @@ export function VibeMailInboxWithClaim({
   const [claimingQuestId, setClaimingQuestId] = useState<string | null>(null);
   const [questClaimResult, setQuestClaimResult] = useState<{ questId: string; success: boolean; error?: string } | null>(null);
   const [msgPage, setMsgPage] = useState(0);
+  const [showPurposeModal, setShowPurposeModal] = useState(false);
+  const [composerQuestType, setComposerQuestType] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   const messages = useQuery(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 });
   const sentMessages = useQuery(
     api.cardVotes.getSentMessages,
@@ -972,7 +993,7 @@ export function VibeMailInboxWithClaim({
               <button
                 onClick={() => {
                   AudioManager.buttonClick();
-                  setShowComposer(true);
+                  setShowPurposeModal(true);
                   setReplyToMessageId(null);
                 }}
                 className="w-8 h-8 bg-vintage-gold text-black border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
@@ -1039,6 +1060,56 @@ export function VibeMailInboxWithClaim({
                 Quests
               </span>
             </button>
+          </div>
+        )}
+
+        {/* Purpose Chooser Modal */}
+        {showPurposeModal && !showComposer && myFid && myAddress && (
+          <div className="fixed inset-0 z-[500] bg-[#0a0a0a] flex flex-col" style={{ colorScheme: 'dark' }}>
+            <div className="p-4 border-b-2 border-[#FFD400] flex items-center justify-between flex-shrink-0">
+              <button onClick={() => setShowPurposeModal(false)} className="w-8 h-8 bg-[#1a1a1a] border-2 border-[#444] text-white font-black shadow-[2px_2px_0px_#000] flex items-center justify-center">X</button>
+              <h3 className="text-[#FFD400] font-black text-sm uppercase tracking-widest">What's your goal?</h3>
+              <div className="w-8" />
+            </div>
+            <div className="flex-1 overflow-y-auto p-3">
+              <p className="text-white/40 text-[10px] text-center mb-3">Choose the type of message to send</p>
+              {/* Just a Message */}
+              <button
+                onClick={() => { AudioManager.buttonClick(); setComposerMessage(''); setComposerQuestType(null); setShowPurposeModal(false); setShowComposer(true); }}
+                className="w-full p-4 bg-[#1a1a1a] border-2 border-[#444] flex items-center gap-3 hover:border-[#FFD400] hover:bg-[#222] transition-all shadow-[3px_3px_0px_#000] text-left mb-3"
+              >
+                <span className="text-3xl">📨</span>
+                <div className="flex-1">
+                  <p className="text-white font-black text-sm">Just a Message</p>
+                  <p className="text-white/50 text-xs">Free-form, no quest attached</p>
+                </div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD400" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+              {/* Divider */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex-1 h-px bg-[#333]" />
+                <span className="text-white/30 text-[10px] font-bold uppercase tracking-widest">Message + Quest</span>
+                <div className="flex-1 h-px bg-[#333]" />
+              </div>
+              {/* Quest type options */}
+              <div className="space-y-2">
+                {QUEST_PURPOSES.map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => { AudioManager.buttonClick(); setComposerMessage(opt.template); setComposerQuestType(opt.questType); setShowPurposeModal(false); setShowComposer(true); }}
+                    className="w-full p-3 bg-[#1a1a1a] border-2 border-[#333] flex items-center gap-3 hover:border-[#FFD400] hover:bg-[#222] transition-all shadow-[2px_2px_0px_#000] text-left"
+                  >
+                    <span className="text-2xl w-8 text-center flex-shrink-0">{opt.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-bold text-sm">{opt.label}</p>
+                      <p className="text-white/50 text-xs">{opt.shortDesc}</p>
+                    </div>
+                    <svg className="flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD400" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                ))}
+              </div>
+              <p className="text-white/20 text-[10px] text-center pt-4">Create the quest in Quests tab first, then send this message to promote it</p>
+            </div>
           </div>
         )}
 
@@ -1139,6 +1210,23 @@ export function VibeMailInboxWithClaim({
                 </button>
               </div>
             )}
+
+            {/* Quest type badge + hint */}
+            {composerQuestType && (() => {
+              const purpose = QUEST_PURPOSES.find(p => p.questType === composerQuestType);
+              return purpose ? (
+                <div className="mb-3 p-3 bg-[#FFD400]/10 border-2 border-[#FFD400] flex items-start gap-2">
+                  <span className="text-xl flex-shrink-0">{purpose.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[#FFD400] font-black text-xs uppercase tracking-wide">{purpose.label}</p>
+                    <p className="text-white/70 text-[10px] mt-1 leading-relaxed">{purpose.hint}</p>
+                  </div>
+                  <button onClick={() => setComposerQuestType(null)} className="text-white/30 hover:text-white/60 flex-shrink-0">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              ) : null;
+            })()}
 
             {/* Random Recipient Display */}
             {sendMode === 'random' && !replyToMessageId && (
@@ -1546,6 +1634,42 @@ export function VibeMailInboxWithClaim({
                 </span>
               )}
             </div>
+
+            {/* Preview button */}
+            {(composerMessage.trim() || composerImageId) && !showPreview && (
+              <button
+                type="button"
+                onClick={() => setShowPreview(true)}
+                className="mb-2 w-full py-2 bg-[#1a1a1a] border-2 border-[#444] text-white/70 text-sm font-bold shadow-[2px_2px_0px_#000] hover:border-white/40 hover:text-white flex items-center justify-center gap-2 transition-all"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                Preview
+              </button>
+            )}
+            {/* Preview panel */}
+            {showPreview && (
+              <div className="mb-2 bg-[#0a0a0a] border-2 border-[#FFD400] p-3 relative">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-[#FFD400] text-xs font-black uppercase tracking-wide">Preview</p>
+                  <button onClick={() => setShowPreview(false)} className="text-white/40 hover:text-white">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+                <div className="bg-[#FFD400]/15 border-2 border-black p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-[#FFD400] animate-pulse flex-shrink-0" />
+                    <p className="text-white font-bold text-xs truncate">Anonymous VibeMail</p>
+                    <span className="ml-auto text-white/40 text-[10px]">Just now</span>
+                  </div>
+                  <p className="text-white/90 text-sm whitespace-pre-wrap leading-relaxed">{composerMessage || '(no text)'}</p>
+                  {composerCastUrl && <p className="text-[#9945FF] text-xs mt-1 truncate">Cast: {composerCastUrl}</p>}
+                  {composerImageId && <p className="text-[#FFD400]/70 text-xs mt-1">Image attached</p>}
+                  <div className="mt-2 text-right">
+                    <span className="text-[#FFD400] text-xs font-bold">+{hasFreeVotes ? 0 : 100} VBMS</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Next Button - Opens gift modal first, then sends everything */}
             <button
@@ -1988,7 +2112,88 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
-            {activeTab !== 'quests' && (
+            {activeTab === 'sent' && (
+            <div className="space-y-3">
+              {/* Sent Analytics Panel */}
+              {!sentMessages || sentMessages.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-white/60 text-sm">No messages sent yet</p>
+                  <p className="text-white/40 text-xs mt-1">Your sent messages will appear here</p>
+                </div>
+              ) : (() => {
+                const total = sentMessages.length;
+                const opened = sentMessages.filter((m: VibeMailMessage) => m.isRead).length;
+                const withMedia = sentMessages.filter((m: VibeMailMessage) => m.imageId || m.audioId || m.castUrl).length;
+                const openRate = total > 0 ? Math.round((opened / total) * 100) : 0;
+                return (
+                  <>
+                    {/* Stats cards */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-[#111] border-2 border-black shadow-[2px_2px_0px_#000] p-2 text-center">
+                        <p className="text-[#FFD400] font-black text-xl">{total}</p>
+                        <p className="text-white/50 text-[10px] uppercase font-bold">Sent</p>
+                      </div>
+                      <div className="bg-[#111] border-2 border-black shadow-[2px_2px_0px_#000] p-2 text-center">
+                        <p className="text-[#22C55E] font-black text-xl">{opened}</p>
+                        <p className="text-white/50 text-[10px] uppercase font-bold">Opened</p>
+                      </div>
+                      <div className="bg-[#111] border-2 border-black shadow-[2px_2px_0px_#000] p-2 text-center">
+                        <p className={`font-black text-xl ${openRate >= 50 ? 'text-[#22C55E]' : openRate >= 20 ? 'text-[#FFD400]' : 'text-white/50'}`}>{openRate}%</p>
+                        <p className="text-white/50 text-[10px] uppercase font-bold">Open Rate</p>
+                      </div>
+                    </div>
+                    {/* Open rate bar */}
+                    <div className="bg-[#111] border-2 border-black p-2">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-white/60 text-[10px] uppercase font-bold">Engagement</span>
+                        <span className="text-white/40 text-[10px]">{withMedia} with media</span>
+                      </div>
+                      <div className="h-2 bg-[#222] border border-black">
+                        <div className="h-full bg-[#FFD400] transition-all" style={{ width: `${openRate}%` }} />
+                      </div>
+                    </div>
+                    {/* Per-message list */}
+                    <div className="space-y-1">
+                      <p className="text-white/40 text-[10px] uppercase font-bold px-1">Recent Messages</p>
+                      {pagedMessages.map((msg: VibeMailMessage) => (
+                        <div key={msg._id} className="bg-[#111] border-2 border-black p-2 flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${msg.isRead ? 'bg-[#22C55E]' : 'bg-white/20'}`} />
+                          <div className="flex-1 min-w-0">
+                            {msg.recipientUsername && (
+                              <p className="text-[#FFD400] text-[10px] font-bold truncate">@{msg.recipientUsername}</p>
+                            )}
+                            <p className="text-white/70 text-xs truncate">{(msg.message || '').slice(0, 40)}{(msg.message || '').length > 40 ? '...' : ''}</p>
+                          </div>
+                          <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                            <span className={`text-[10px] font-bold px-1 border ${msg.isRead ? 'text-[#22C55E] border-[#22C55E]/40 bg-[#22C55E]/10' : 'text-white/30 border-white/10 bg-transparent'}`}>
+                              {msg.isRead ? 'OPENED' : 'SENT'}
+                            </span>
+                            <span className="text-white/30 text-[9px]">{new Date(msg.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                );
+              })()}
+              {/* Pagination for sent */}
+              {totalMsgPages > 1 && (
+                <div className="flex items-center justify-between pt-2 mt-2 border-t border-vintage-gold/30">
+                  <button onClick={() => setMsgPage(p => Math.max(0, p - 1))} disabled={msgPage === 0}
+                    className="px-4 py-1.5 bg-vintage-gold text-black border-2 border-black font-black text-sm disabled:opacity-30 disabled:bg-vintage-gold/30 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all">
+                    &lt;
+                  </button>
+                  <span className="text-vintage-gold font-bold text-sm">{msgPage + 1} / {totalMsgPages}</span>
+                  <button onClick={() => setMsgPage(p => Math.min(totalMsgPages - 1, p + 1))} disabled={msgPage >= totalMsgPages - 1}
+                    className="px-4 py-1.5 bg-vintage-gold text-black border-2 border-black font-black text-sm disabled:opacity-30 disabled:bg-vintage-gold/30 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all">
+                    &gt;
+                  </button>
+                </div>
+              )}
+            </div>
+            )}
+
+            {activeTab === 'inbox' && (
             <div className="space-y-2">
             {!currentMessages || currentMessages.length === 0 ? (
               <div className="text-center py-8">
