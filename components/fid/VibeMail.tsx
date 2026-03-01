@@ -1178,25 +1178,26 @@ export function VibeMailInboxWithClaim({
 
                 {/* Random List - Cards already added */}
                 {randomList.length > 0 && (
-                  <div className="mb-2 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg p-2">
-                    <div className="flex justify-between items-center mb-1">
-                      <p className="text-vintage-gold text-xs font-bold">
-                        <span className="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> {(t.vibemailRandomListCount || '{count} in list').replace('{count}', String(randomList.length))}</span>
+                  <div className="mb-2 bg-[#111] border-2 border-black shadow-[2px_2px_0px_#000] p-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-white font-bold text-xs flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        {(t.vibemailRandomListCount || '{count} in list').replace('{count}', String(randomList.length))}
                       </p>
                       <button
                         onClick={() => setRandomList([])}
-                        className="text-red-400 text-xs hover:text-red-300"
+                        className="text-xs bg-red-600 text-white font-bold px-2 py-0.5 border border-black hover:bg-red-700"
                       >
-                        {t.vibemailClearList || 'Clear'}
+                        {t.vibemailClearList || 'Clear List'}
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
                       {randomList.map(r => (
-                        <span key={r.fid} className="inline-flex items-center gap-1 bg-purple-500/20 border border-purple-500/50 rounded-full px-2 py-0.5 text-xs text-vintage-ice">
+                        <span key={r.fid} className="inline-flex items-center gap-1 bg-[#FFD400] border border-black px-2 py-0.5 text-xs text-black font-bold">
                           @{r.username}
                           <button
                             onClick={() => setRandomList(prev => prev.filter(p => p.fid !== r.fid))}
-                            className="text-red-400 hover:text-red-300"
+                            className="text-black/70 hover:text-black font-black"
                           >×</button>
                         </span>
                       ))}
@@ -1250,11 +1251,11 @@ export function VibeMailInboxWithClaim({
               <div className="mb-3">
                 <div className="flex flex-wrap gap-1 mb-2 max-h-24 overflow-y-auto">
                   {broadcastRecipients.map(r => (
-                    <span key={r.fid} className="inline-flex items-center gap-1 bg-vintage-gold/20 border border-vintage-gold/50 rounded-full px-2 py-1 text-xs text-vintage-gold">
+                    <span key={r.fid} className="inline-flex items-center gap-1 bg-[#FFD400] border border-black px-2 py-1 text-xs text-black font-bold">
                       @{r.username}
                       <button
                         onClick={() => setBroadcastRecipients(prev => prev.filter(p => p.fid !== r.fid))}
-                        className="text-red-400 hover:text-red-300"
+                        className="text-black/70 hover:text-black font-black"
                       >×</button>
                     </span>
                   ))}
