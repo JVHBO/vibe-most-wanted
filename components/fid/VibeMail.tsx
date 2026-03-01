@@ -2064,19 +2064,19 @@ export function VibeMailInboxWithClaim({
             )}
             {/* Pagination controls */}
             {totalMsgPages > 1 && (
-              <div className="flex items-center justify-between pt-2 border-t-2 border-black mt-2">
+              <div className="flex items-center justify-between pt-2 mt-2 border-t border-vintage-gold/30">
                 <button
                   onClick={() => setMsgPage(p => Math.max(0, p - 1))}
                   disabled={msgPage === 0}
-                  className="px-3 py-1 bg-vintage-black border-2 border-black text-vintage-gold font-black text-sm disabled:opacity-30 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
+                  className="px-4 py-1.5 bg-vintage-gold text-black border-2 border-black font-black text-sm disabled:opacity-30 disabled:bg-vintage-gold/30 disabled:text-black/40 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
                 >
                   &lt;
                 </button>
-                <span className="text-vintage-ice/60 text-xs font-bold">{msgPage + 1} / {totalMsgPages}</span>
+                <span className="text-vintage-gold font-bold text-sm">{msgPage + 1} / {totalMsgPages}</span>
                 <button
                   onClick={() => setMsgPage(p => Math.min(totalMsgPages - 1, p + 1))}
                   disabled={msgPage >= totalMsgPages - 1}
-                  className="px-3 py-1 bg-vintage-black border-2 border-black text-vintage-gold font-black text-sm disabled:opacity-30 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
+                  className="px-4 py-1.5 bg-vintage-gold text-black border-2 border-black font-black text-sm disabled:opacity-30 disabled:bg-vintage-gold/30 disabled:text-black/40 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
                 >
                   &gt;
                 </button>
