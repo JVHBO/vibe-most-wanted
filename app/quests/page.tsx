@@ -43,7 +43,8 @@ export default function QuestsPage() {
     api.profiles.getProfileDashboard,
     address ? { address: address.toLowerCase() } : "skip"
   );
-  const userFid = profileDashboard?.fid;
+  // fid is stored as string in VMW, farcasterFid is the numeric version
+  const userFid = profileDashboard?.farcasterFid || (profileDashboard?.fid ? parseInt(profileDashboard.fid as string) : undefined);
   // Effective chain: use profile preference (safety net in useArbValidator
   // blocks ARB tx on unsupported clients like Base App)
   const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('arbitrum');
