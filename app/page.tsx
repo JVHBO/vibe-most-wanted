@@ -4704,8 +4704,8 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
           {currentView === 'game' && (
           <>
           {/* GAME BUTTONS - EXACT CENTER */}
-          <div className={`flex flex-col items-center ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto' : 'px-2'}`}>
-            <div className="tour-game-grid w-full max-w-xs">
+          <div className={`flex flex-col items-center ${isInFarcaster ? 'px-2 w-full' : 'px-2'}`}>
+            <div className="tour-game-grid w-full">
               <GameGrid
                 soundEnabled={soundEnabled}
                 disabled={!userProfile || (status !== 'loaded' && status !== 'failed' && (isInFarcaster ? contextStatus !== 'loaded' : true))}
@@ -4714,7 +4714,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                 onSpin={() => setShowRoulette(true)}
               />
             </div>
-            <div className="tour-cards-section w-full max-w-xs mt-2">
+            <div className="tour-cards-section w-full mt-2">
               <CardsPreview
                 cards={nfts}
                 soundEnabled={soundEnabled}

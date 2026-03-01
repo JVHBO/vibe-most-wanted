@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Cinzel_Decorative, Playfair_Display_SC, Rajdhani } from "next/font/google";
 import "./globals.css";
 import "./neobrutalism.css";
@@ -43,6 +43,13 @@ const rajdhani = Rajdhani({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   title: "$VBMS - Meme Card Game",
