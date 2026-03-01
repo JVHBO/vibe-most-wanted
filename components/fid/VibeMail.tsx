@@ -359,6 +359,7 @@ interface VibeMailMessage {
   audioId?: string;
   imageId?: string;
   castUrl?: string;
+  miniappUrl?: string;
   isRead?: boolean;
   createdAt: number;
   voteCount: number;
@@ -1191,6 +1192,7 @@ export function VibeMailInboxWithClaim({
                       ? 'bg-vintage-gold text-black shadow-[2px_2px_0px_#000]'
                       : 'bg-[#1a1a1a] text-white shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
                   }`}
+                  style={{ WebkitTextFillColor: 'currentColor' }}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                   {t.vibemailModeSingle}
@@ -1202,6 +1204,7 @@ export function VibeMailInboxWithClaim({
                       ? 'bg-vintage-gold text-black shadow-[2px_2px_0px_#000]'
                       : 'bg-[#1a1a1a] text-white shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
                   }`}
+                  style={{ WebkitTextFillColor: 'currentColor' }}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.42 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.82a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                   {t.vibemailModeBroadcast}
@@ -1213,6 +1216,7 @@ export function VibeMailInboxWithClaim({
                       ? 'bg-vintage-gold text-black shadow-[2px_2px_0px_#000]'
                       : 'bg-[#1a1a1a] text-white shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
                   }`}
+                  style={{ WebkitTextFillColor: 'currentColor' }}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
                   {t.vibemailModeRandom}
@@ -1517,6 +1521,7 @@ export function VibeMailInboxWithClaim({
             <button
               onClick={() => setShowSoundPicker(!showSoundPicker)}
               className="mt-2 w-full py-2 bg-[#1a1a1a] border-2 border-[#444] shadow-[2px_2px_0px_#000] text-white text-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3"
+              style={{ WebkitTextFillColor: 'white' }}
             >
               <span className="flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -1527,7 +1532,7 @@ export function VibeMailInboxWithClaim({
             )}
 
             {showSoundPicker && (
-              <div className="mt-2 bg-vintage-charcoal/50 p-2 rounded-lg border border-vintage-gold/20">
+              <div className="mt-2 bg-[#1a1a1a] p-2 rounded-lg border border-[#FFD400]/20">
                 <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
                   {VIBEMAIL_SOUNDS.map((sound) => (
                     <button
@@ -1564,6 +1569,7 @@ export function VibeMailInboxWithClaim({
             <button
               onClick={() => setShowImagePicker(!showImagePicker)}
               className="mt-2 w-full py-2 bg-[#1a1a1a] border-2 border-[#444] shadow-[2px_2px_0px_#000] text-white text-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3"
+              style={{ WebkitTextFillColor: 'white' }}
             >
               <span className="flex items-center gap-2">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -1599,6 +1605,7 @@ export function VibeMailInboxWithClaim({
             <button
               onClick={() => { setShowCastInput(!showCastInput); if (showCastInput) { setComposerCastUrl(null); setCastInputValue(''); } }}
               className={`mt-1 w-full py-1.5 border-2 shadow-[2px_2px_0px_#000] text-xs hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3 ${composerCastUrl ? 'bg-[#9945FF]/20 border-[#9945FF] text-[#c87eff]' : 'bg-[#1a1a1a] border-[#444] text-white'}`}
+              style={{ WebkitTextFillColor: 'currentColor' }}
             >
               <span className="flex items-center gap-2">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -1635,6 +1642,7 @@ export function VibeMailInboxWithClaim({
             <button
               onClick={() => { setShowMiniappInput(!showMiniappInput); if (showMiniappInput) { setComposerMiniappUrl(null); setMiniappInputValue(''); } }}
               className={`mt-1 w-full py-1.5 border-2 shadow-[2px_2px_0px_#000] text-xs hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3 ${composerMiniappUrl ? 'bg-[#22C55E]/20 border-[#22C55E] text-[#4ade80]' : 'bg-[#1a1a1a] border-[#444] text-white'}`}
+              style={{ WebkitTextFillColor: 'currentColor' }}
             >
               <span className="flex items-center gap-2">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
@@ -1699,7 +1707,12 @@ export function VibeMailInboxWithClaim({
                   </div>
                   <p className="text-white/90 text-xs whitespace-pre-wrap leading-relaxed">{composerMessage || '(no text)'}</p>
                   {composerCastUrl && <p className="text-[#9945FF] text-[10px] mt-1 truncate">Cast: {composerCastUrl}</p>}
-                  {composerMiniappUrl && <p className="text-[#22C55E] text-[10px] mt-1 truncate">Miniapp: {composerMiniappUrl}</p>}
+                  {composerMiniappUrl && (
+                    <div className="mt-1 bg-[#0d1f0d] border border-[#22C55E]/50 rounded px-2 py-1 flex items-center gap-1.5">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                      <span className="text-[#22C55E] text-[10px] truncate">{composerMiniappUrl}</span>
+                    </div>
+                  )}
                   {composerImageId && <p className="text-[#FFD400]/70 text-[10px] mt-1">Image attached</p>}
                   <div className="mt-2 text-right">
                     <span className="text-[#FFD400] text-xs font-bold">+{hasFreeVotes ? 0 : 100} VBMS</span>
@@ -1938,6 +1951,23 @@ export function VibeMailInboxWithClaim({
                     </p>
                   </div>
                 </div>
+              )}
+
+              {/* Miniapp Link Card */}
+              {selectedMessage.miniappUrl && (
+                <button
+                  onClick={() => sdk.actions.openUrl(selectedMessage.miniappUrl!)}
+                  className="w-full mt-1 bg-[#0d1f0d] border-2 border-[#22C55E] shadow-[2px_2px_0px_#000] p-2 flex items-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all text-left"
+                >
+                  <div className="w-8 h-8 bg-[#22C55E] flex items-center justify-center flex-shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[#22C55E] font-bold text-xs">Open Miniapp</p>
+                    <p className="text-white/50 text-[10px] truncate">{selectedMessage.miniappUrl}</p>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </button>
               )}
 
               {/* NFT Gift Display */}
@@ -2423,6 +2453,7 @@ export function VibeMailInboxWithClaim({
           audioId={composerAudioId || undefined}
           imageId={composerImageId || undefined}
           castUrl={composerCastUrl || undefined}
+          miniappUrl={composerMiniappUrl || undefined}
           isPaidVibeMail={!hasFreeVotes}
           replyToMessageId={replyToMessageId || undefined}
         />
