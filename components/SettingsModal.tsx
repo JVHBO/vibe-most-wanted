@@ -981,12 +981,26 @@ export function SettingsModal({
                 <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
                   <button
                     onClick={() => { if (soundEnabled) AudioManager.buttonClick(); onChainChange("base"); }}
-                    style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: preferredChain !== "arbitrum" ? '#F59E0B' : '#3F3F46', color: preferredChain !== "arbitrum" ? '#000' : '#A1A1AA' }}
-                  >BASE</button>
+                    style={{ display:"flex", alignItems:"center", gap:"5px", padding:"4px 10px", borderRadius:"4px", fontWeight:700, fontSize:"11px", cursor:"pointer", border: preferredChain !== "arbitrum" ? "2px solid #000" : "2px solid #374151", background: preferredChain !== "arbitrum" ? '#0052FF' : '#1f2937', color: preferredChain !== "arbitrum" ? '#fff' : '#6b7280', boxShadow: preferredChain !== "arbitrum" ? '2px 2px 0px #000' : 'none', transition:"all 0.1s" }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 111 111" fill="none">
+                      <circle cx="55.5" cy="55.5" r="55.5" fill={preferredChain !== "arbitrum" ? 'white' : '#6b7280'}/>
+                      <path d="M55.4999 11.5C31.0225 11.5 11 31.5225 11 55.9999C11 80.4773 31.0225 100.5 55.4999 100.5C79.9773 100.5 99.9998 80.4773 99.9998 55.9999C99.9998 31.5225 79.9773 11.5 55.4999 11.5Z" fill={preferredChain !== "arbitrum" ? '#0052FF' : 'none'}/>
+                    </svg>
+                    BASE
+                  </button>
                   <button
                     onClick={() => { if (soundEnabled) AudioManager.buttonClick(); onChainChange("arbitrum"); }}
-                    style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: preferredChain === "arbitrum" ? '#F59E0B' : '#3F3F46', color: preferredChain === "arbitrum" ? '#000' : '#A1A1AA' }}
-                  >ARB</button>
+                    style={{ display:"flex", alignItems:"center", gap:"5px", padding:"4px 10px", borderRadius:"4px", fontWeight:700, fontSize:"11px", cursor:"pointer", border: preferredChain === "arbitrum" ? "2px solid #000" : "2px solid #374151", background: preferredChain === "arbitrum" ? '#12AAFF' : '#1f2937', color: preferredChain === "arbitrum" ? '#000' : '#6b7280', boxShadow: preferredChain === "arbitrum" ? '2px 2px 0px #000' : 'none', transition:"all 0.1s" }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 50 50" fill="none">
+                      <circle cx="25" cy="25" r="25" fill={preferredChain === "arbitrum" ? '#12AAFF' : '#6b7280'}/>
+                      <path d="M25 8L11 17V33L25 42L39 33V17L25 8Z" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1.5"/>
+                      <path d="M19 31L25 20L31 31" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M21.5 27H28.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    ARB
+                  </button>
                 </div>
               </div>
             </div>

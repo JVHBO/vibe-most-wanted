@@ -396,12 +396,12 @@ export default function QuestsPage() {
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-black text-[11px] uppercase tracking-wide transition-all border-2 ${
                   effectiveChain === 'base'
                     ? 'bg-[#0052FF] text-white border-black shadow-[2px_2px_0px_#000]'
-                    : 'bg-transparent text-white/50 border-transparent hover:text-white/80'
+                    : 'bg-gray-800 text-gray-500 border-gray-700 hover:bg-gray-700 hover:text-gray-400'
                 }`}
               >
                 {/* Base logo */}
                 <svg width="14" height="14" viewBox="0 0 111 111" fill="none">
-                  <circle cx="55.5" cy="55.5" r="55.5" fill={effectiveChain === 'base' ? 'white' : '#0052FF'} fillOpacity={effectiveChain === 'base' ? 1 : 0.6}/>
+                  <circle cx="55.5" cy="55.5" r="55.5" fill={effectiveChain === 'base' ? 'white' : '#6b7280'} fillOpacity="1"/>
                   <path d="M55.4999 11.5C31.0225 11.5 11 31.5225 11 55.9999C11 80.4773 31.0225 100.5 55.4999 100.5C79.9773 100.5 99.9998 80.4773 99.9998 55.9999C99.9998 31.5225 79.9773 11.5 55.4999 11.5Z" fill={effectiveChain === 'base' ? '#0052FF' : 'none'}/>
                 </svg>
                 BASE
@@ -412,12 +412,12 @@ export default function QuestsPage() {
                 className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-black text-[11px] uppercase tracking-wide transition-all border-2 ${
                   effectiveChain === 'arbitrum'
                     ? 'bg-[#12AAFF] text-black border-black shadow-[2px_2px_0px_#000]'
-                    : 'bg-transparent text-white/50 border-transparent hover:text-white/80'
+                    : 'bg-gray-800 text-gray-500 border-gray-700 hover:bg-gray-700 hover:text-gray-400'
                 }`}
               >
                 {/* Arbitrum logo */}
                 <svg width="14" height="14" viewBox="0 0 50 50" fill="none">
-                  <circle cx="25" cy="25" r="25" fill={effectiveChain === 'arbitrum' ? '#12AAFF' : '#12AAFF'} fillOpacity={effectiveChain === 'arbitrum' ? 1 : 0.5}/>
+                  <circle cx="25" cy="25" r="25" fill={effectiveChain === 'arbitrum' ? '#12AAFF' : '#6b7280'} fillOpacity="1"/>
                   <path d="M25 8L11 17V33L25 42L39 33V17L25 8Z" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1.5"/>
                   <path d="M19 31L25 20L31 31" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M21.5 27H28.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>

@@ -644,6 +644,7 @@ export function VibeMailInboxWithClaim({
   const [questsLoading, setQuestsLoading] = useState(false);
   const [claimingQuestId, setClaimingQuestId] = useState<string | null>(null);
   const [questClaimResult, setQuestClaimResult] = useState<{ questId: string; success: boolean; error?: string } | null>(null);
+  const [msgPage, setMsgPage] = useState(0);
   const messages = useQuery(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 });
   const sentMessages = useQuery(
     api.cardVotes.getSentMessages,
@@ -792,6 +793,14 @@ export function VibeMailInboxWithClaim({
 
   // Get current messages based on active tab
   const currentMessages = activeTab === 'inbox' ? messages : sentMessages;
+
+  // Pagination
+  const MSG_PAGE_SIZE = 5;
+  const totalMsgPages = currentMessages ? Math.ceil(currentMessages.length / MSG_PAGE_SIZE) : 0;
+  const pagedMessages = currentMessages ? currentMessages.slice(msgPage * MSG_PAGE_SIZE, (msgPage + 1) * MSG_PAGE_SIZE) : [];
+
+  // Reset page when switching tabs
+  useEffect(() => { setMsgPage(0); }, [activeTab]);
 
   // Get secretary for selected message
   const secretary = selectedMessage ? getSecretaryForMessage(selectedMessage._id) : VIBEMAIL_SECRETARIES[0];
@@ -1900,7 +1909,7 @@ export function VibeMailInboxWithClaim({
 
             {/* Quests Tab Content */}
             {activeTab === 'quests' && (
-              <div className="flex-1 overflow-y-auto space-y-2">
+              <div className="max-h-[320px] overflow-y-auto space-y-2">
                 {questsLoading ? (
                   <div className="text-center py-8">
                     <p className="text-vintage-ice/50 text-sm animate-pulse">Loading quests...</p>
@@ -1977,7 +1986,7 @@ export function VibeMailInboxWithClaim({
             )}
 
             {activeTab !== 'quests' && (
-            <div className="flex-1 overflow-y-auto space-y-2">
+            <div className="space-y-2">
             {!currentMessages || currentMessages.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-vintage-ice/50 text-sm">{t.noMessagesYet}</p>
@@ -1986,7 +1995,7 @@ export function VibeMailInboxWithClaim({
                 </p>
               </div>
             ) : (
-              currentMessages.map((msg: VibeMailMessage) => (
+              pagedMessages.map((msg: VibeMailMessage) => (
                 <div key={msg._id} className="flex items-center gap-2">
                   {/* Checkbox for delete mode */}
                   {deleteMode && activeTab === 'inbox' && (
@@ -2052,6 +2061,26 @@ export function VibeMailInboxWithClaim({
                 </button>
                 </div>
               ))
+            )}
+            {/* Pagination controls */}
+            {totalMsgPages > 1 && (
+              <div className="flex items-center justify-between pt-2 border-t-2 border-black mt-2">
+                <button
+                  onClick={() => setMsgPage(p => Math.max(0, p - 1))}
+                  disabled={msgPage === 0}
+                  className="px-3 py-1 bg-vintage-black border-2 border-black text-vintage-gold font-black text-sm disabled:opacity-30 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
+                >
+                  &lt;
+                </button>
+                <span className="text-vintage-ice/60 text-xs font-bold">{msgPage + 1} / {totalMsgPages}</span>
+                <button
+                  onClick={() => setMsgPage(p => Math.min(totalMsgPages - 1, p + 1))}
+                  disabled={msgPage >= totalMsgPages - 1}
+                  className="px-3 py-1 bg-vintage-black border-2 border-black text-vintage-gold font-black text-sm disabled:opacity-30 shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
+                >
+                  &gt;
+                </button>
+              </div>
             )}
             </div>
             )}
