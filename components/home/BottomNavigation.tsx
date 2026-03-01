@@ -128,7 +128,7 @@ export function BottomNavigation({
 
         {/* VibeQuest */}
         <Link
-          href="/vibequest"
+          href="/quests"
           onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
           onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
           className={`relative ${baseButtonClass} ${activeTab === 'quests' ? activeClass : inactiveClass}`}
@@ -139,12 +139,12 @@ export function BottomNavigation({
           {isInFarcaster ? (
             <>
               <span className="text-xl leading-none">★</span>
-              <span className="text-[9px] font-bold">QUESTS</span>
+              <span className="text-[9px] font-bold">{t('navWanted')}</span>
             </>
           ) : (
             <>
               <span className="text-lg">★</span>
-              <span className="hidden sm:inline">QUESTS</span>
+              <span className="hidden sm:inline">{t('navWanted')}</span>
             </>
           )}
         </Link>

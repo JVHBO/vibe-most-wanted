@@ -13,6 +13,9 @@ import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
+import { WantedCastsTab } from "@/components/fid/WantedCastsTab";
+import { VibeMailInboxWithClaim } from "@/components/fid/VibeMail";
+import { VibeFIDConvexProvider } from "@/contexts/VibeFIDConvexProvider";
 
 
 export default function QuestsPage() {
@@ -22,6 +25,7 @@ export default function QuestsPage() {
   const { t } = useLanguage();
   const { refreshProfile } = useProfile();
   const { validateOnArb } = useArbValidator();
+  const [activeTab, setActiveTab] = useState<'missions' | 'wanted' | 'messages'>('missions');
 
   // Social Quests
   const socialQuestProgress = useQuery(
@@ -397,22 +401,44 @@ export default function QuestsPage() {
           ) : <div className="w-20" />}
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-t border-vintage-gold/20">
-          <button className="flex-1 py-2.5 text-sm font-bold text-vintage-gold border-b-2 border-vintage-gold bg-vintage-gold/10 border-r border-r-vintage-gold/20">
+        {/* Tabs - 3 tabs with neo-brutalism style */}
+        <div className="flex gap-1 px-2 pb-2 pt-1">
+          <button
+            onClick={() => { AudioManager.buttonClick(); setActiveTab('missions'); }}
+            className={`flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 border-black transition-all ${
+              activeTab === 'missions'
+                ? 'bg-[#FFD400] text-black shadow-[2px_2px_0px_#000] translate-x-0 translate-y-0'
+                : 'bg-[#2A2A2A] text-white/70 shadow-[2px_2px_0px_#000] hover:bg-[#333] hover:text-white'
+            }`}
+          >
             {t('questsMissions')}
           </button>
           <button
-            onClick={() => router.push("/quests/cast")}
-            className="flex-1 py-2.5 text-sm font-bold text-vintage-ice/80 hover:text-vintage-gold bg-vintage-charcoal/60 hover:bg-vintage-gold/5 transition-colors"
+            onClick={() => { AudioManager.buttonClick(); setActiveTab('wanted'); }}
+            className={`flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 border-black transition-all ${
+              activeTab === 'wanted'
+                ? 'bg-[#22C55E] text-black shadow-[2px_2px_0px_#000]'
+                : 'bg-[#2A2A2A] text-white/70 shadow-[2px_2px_0px_#000] hover:bg-[#333] hover:text-white'
+            }`}
           >
             {t('questsWantedCasts')}
+          </button>
+          <button
+            onClick={() => { AudioManager.buttonClick(); setActiveTab('messages'); }}
+            className={`flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 border-black transition-all ${
+              activeTab === 'messages'
+                ? 'bg-[#9945FF] text-white shadow-[2px_2px_0px_#000]'
+                : 'bg-[#2A2A2A] text-white/70 shadow-[2px_2px_0px_#000] hover:bg-[#333] hover:text-white'
+            }`}
+          >
+            Messages
           </button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="absolute inset-0 pt-24 pb-4 overflow-y-auto">
+        {activeTab === 'missions' && (
         <div className="relative z-10 px-3 py-2 max-w-md mx-auto space-y-3">
 
           {/* Missions */}
@@ -711,7 +737,43 @@ export default function QuestsPage() {
             </div>
 
         </div>
+        )} {/* end activeTab === 'missions' */}
+
+        {activeTab === 'wanted' && (
+          <WantedCastsTab
+            myFid={userFid}
+            myAddress={address}
+            hasVibeBadge={profileDashboard?.hasVibeBadge || vibeBadgeEligibility?.hasVibeFIDCards || false}
+            soundEnabled={true}
+          />
+        )}
       </div>
+
+      {/* Messages Tab - VibeFID modal overlay */}
+      {activeTab === 'messages' && (
+        <VibeFIDConvexProvider>
+          {userFid ? (
+            <VibeMailInboxWithClaim
+              cardFid={userFid}
+              onClose={() => setActiveTab('missions')}
+              pendingVbms={0}
+              address={address}
+              myFid={userFid}
+              myAddress={address}
+              isClaimingRewards={false}
+              isClaimTxPending={false}
+              onClaim={async () => {}}
+            />
+          ) : (
+            <div className="fixed inset-0 z-[350] flex items-center justify-center bg-black/90 p-4">
+              <div className="text-center">
+                <p className="text-vintage-ice/70 mb-4">Connect Farcaster to view messages</p>
+                <button onClick={() => setActiveTab('missions')} className="text-vintage-gold hover:underline text-sm">← Back</button>
+              </div>
+            </div>
+          )}
+        </VibeFIDConvexProvider>
+      )}
     </div>
   );
 }

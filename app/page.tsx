@@ -4704,7 +4704,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
           {currentView === 'game' && (
           <>
           {/* GAME BUTTONS - EXACT CENTER */}
-          <div className={`flex flex-col items-center ${isInFarcaster ? 'px-2 w-full' : 'px-2'}`}>
+          <div className={`flex flex-col items-center ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto' : 'px-2'}`}>
             <div className="tour-game-grid w-full">
               <GameGrid
                 soundEnabled={soundEnabled}
