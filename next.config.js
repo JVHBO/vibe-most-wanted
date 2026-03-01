@@ -29,12 +29,24 @@ module.exports = {
   async headers() {
     return [
       {
-        // Global headers for all routes - enable microphone/camera permissions
+        // Global headers for all routes
         source: '/:path*',
         headers: [
           {
             key: 'Permissions-Policy',
             value: 'microphone=*, camera=*, geolocation=()',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
           },
         ],
       },
@@ -85,12 +97,12 @@ module.exports = {
         ],
       },
       {
-        // CORS headers for all API routes (handle www vs non-www)
+        // CORS headers for API routes - same-origin only (server-to-server calls ignore CORS)
         source: '/api/:path*',
         headers: [
           {
             key: 'Access-Control-Allow-Origin',
-            value: '*',
+            value: 'https://vibemostwanted.xyz',
           },
           {
             key: 'Access-Control-Allow-Methods',
@@ -98,7 +110,7 @@ module.exports = {
           },
           {
             key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization',
+            value: 'Content-Type, Authorization, x-internal-secret',
           },
         ],
       },

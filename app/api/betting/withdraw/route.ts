@@ -23,11 +23,11 @@ const MIN_WITHDRAW = 100;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { address } = body;
+    const { address, ownershipProof, timestamp } = body;
 
-    if (!address) {
+    if (!address || !ownershipProof || timestamp === undefined) {
       return NextResponse.json(
-        { error: 'Missing address' },
+        { error: 'Missing required fields' },
         { status: 400 }
       );
     }
@@ -37,6 +37,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid address format' },
         { status: 400 }
+      );
+    }
+
+    // Verify ownership: timestamp must be within 5 minutes
+    const nowMinute = Math.floor(Date.now() / 60000);
+    if (Math.abs(nowMinute - timestamp) > 5) {
+      return NextResponse.json(
+        { error: 'Request expired, please try again' },
+        { status: 401 }
+      );
+    }
+
+    // Verify the signed message proves wallet ownership
+    const ownershipMessage = `VMW Cashout - ${address} - ${timestamp}`;
+    const recoveredAddress = ethers.verifyMessage(ownershipMessage, ownershipProof);
+    if (recoveredAddress.toLowerCase() !== address.toLowerCase()) {
+      console.warn('⚠️ Ownership proof mismatch:', { address, recovered: recoveredAddress });
+      return NextResponse.json(
+        { error: 'Invalid ownership proof' },
+        { status: 401 }
       );
     }
 
