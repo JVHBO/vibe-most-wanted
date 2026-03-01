@@ -22,7 +22,8 @@ import { VibeDexModal } from './VibeDexModal';
 import { CastPreview } from './CastPreview';
 
 
-const VIBEMAIL_COST_VBMS = "100"; // Cost for paid VibeMail
+const VIBEMAIL_COST_VBMS = "1000"; // Cost for paid VibeMail
+const VIBEMAIL_RECIPIENT_VBMS = 500; // VBMS recipient earns per message
 
 const QUEST_PURPOSES = [
   { id: 'follow', icon: '👤', label: 'Follow Quest', shortDesc: 'Ask to follow your profile', questType: 'follow_me', needsCast: false,
@@ -1269,7 +1270,7 @@ export function VibeMailInboxWithClaim({
                     </button>
                   </div>
                   <p className="text-white/60 text-[10px] mt-1 text-center">
-                    {randomQuantity * 100} VBMS ({randomQuantity} × 100)
+                    {randomQuantity * 1000} VBMS ({randomQuantity} × 1000)
                   </p>
                 </div>
 
@@ -1337,7 +1338,7 @@ export function VibeMailInboxWithClaim({
 
                 {randomList.length > 0 && (
                   <p className="text-green-400 text-xs mt-2 text-center font-bold">
-                    <span className="flex items-center justify-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> {((t as any).vibemailReadyToSend || 'Ready to send to {count} people').replace('{count}', String(randomList.length))} = {randomList.length * 100} VBMS</span>
+                    <span className="flex items-center justify-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> {((t as any).vibemailReadyToSend || 'Ready to send to {count} people').replace('{count}', String(randomList.length))} = {randomList.length * 1000} VBMS</span>
                   </p>
                 )}
               </div>
@@ -1593,14 +1594,15 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
-            {/* Cast URL Embed */}
+            {/* Cast URL Embed - hidden when miniapp quest selected */}
+            {composerQuestType !== 'miniapp' && (<>
             <button
               onClick={() => { setShowCastInput(!showCastInput); if (showCastInput) { setComposerCastUrl(null); setCastInputValue(''); } }}
               className={`mt-1 w-full py-1.5 border-2 shadow-[2px_2px_0px_#000] text-xs hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all flex items-center justify-between px-3 ${composerCastUrl ? 'bg-[#9945FF]/20 border-[#9945FF] text-[#c87eff]' : 'bg-[#1a1a1a] border-[#444] text-white'}`}
             >
               <span className="flex items-center gap-2">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                {composerCastUrl ? 'Cast embedded' : 'Embed a Warpcast link (optional)'}
+                {composerCastUrl ? 'Farcaster cast embedded' : 'Embed a Farcaster cast (optional)'}
               </span>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points={showCastInput ? "18 15 12 9 6 15" : "6 9 12 15 18 9"}/></svg>
             </button>
@@ -1627,6 +1629,7 @@ export function VibeMailInboxWithClaim({
                 )}
               </div>
             )}
+            </>)}
 
             {/* Miniapp URL Embed */}
             <button
@@ -1667,13 +1670,6 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
-            {/* Cost display */}
-            <div className="text-center text-[10px] my-1">
-              <span className="text-[#FFD400]/60 flex items-center justify-center gap-1">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3" strokeLinecap="round"/></svg>
-                {hasFreeVotes ? `${freeVotesRemaining?.remaining ?? 0} free sends remaining` : `${VIBEMAIL_COST_VBMS} VBMS per message`}
-              </span>
-            </div>
 
             {/* Preview button */}
             {(composerMessage.trim() || composerImageId) && !showPreview && (
@@ -1847,13 +1843,13 @@ export function VibeMailInboxWithClaim({
               ) : sendMode === 'broadcast' ? (
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  {t.vibemailSendTo.replace('{count}', String(broadcastRecipients.length)).replace('{cost}', String(broadcastRecipients.length * 100))}
+                  {t.vibemailSendTo.replace('{count}', String(broadcastRecipients.length)).replace('{cost}', String(broadcastRecipients.length * 1000))}
                 </span>
               ) : sendMode === 'random' ? (
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
                   {randomList.length > 0
-                    ? `${(t.vibemailSendToList || 'Send to List ({count})').replace('{count}', String(randomList.length))} (${randomList.length * 100} VBMS)`
+                    ? `${(t.vibemailSendToList || 'Send to List ({count})').replace('{count}', String(randomList.length))} (${randomList.length * 1000} VBMS)`
                     : t.vibemailRandomCost}
                 </span>
               ) : (

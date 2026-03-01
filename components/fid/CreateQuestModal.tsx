@@ -56,7 +56,7 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
   const [questType, setQuestType] = useState<QuestType>('follow_me');
   const [targetUrl, setTargetUrl] = useState('');
   const [targetDisplay, setTargetDisplay] = useState('');
-  const [rewardPerCompleter, setRewardPerCompleter] = useState(100);
+  const [rewardPerCompleter, setRewardPerCompleter] = useState(500);
   const [maxCompleters, setMaxCompleters] = useState(5);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

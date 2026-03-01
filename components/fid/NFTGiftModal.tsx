@@ -64,7 +64,7 @@ interface NFTGiftModalProps {
   replyToMessageId?: Id<'cardVotes'>; // If provided, this is a reply
 }
 
-const VIBEMAIL_COST_VBMS = "100";
+const VIBEMAIL_COST_VBMS = "1000";
 
 export function NFTGiftModal({
   onClose,
