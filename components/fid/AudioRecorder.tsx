@@ -13,6 +13,8 @@ interface AudioRecorderProps {
   disabled?: boolean;
 }
 
+const AUDIO_ACCEPT = 'audio/mp3,audio/mpeg,audio/ogg,audio/wav,audio/m4a,audio/aac,audio/*';
+
 const MAX_DURATION = 15;
 
 export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled }: AudioRecorderProps) {
@@ -35,8 +37,32 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const generateUploadUrl = useMutation(api.audioStorage.generateUploadUrl);
+
+  // Upload a file directly (for both recorded blobs and file uploads)
+  const uploadAudioFile = async (blob: Blob, mimeType: string) => {
+    setIsUploading(true);
+    setUploadError(null);
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': mimeType },
+        body: blob,
+      });
+      if (!response.ok) throw new Error('Upload failed');
+      const { storageId } = await response.json();
+      onAudioReady(`custom:${storageId}`);
+      clearRecording();
+    } catch (err) {
+      console.error('Upload error:', err);
+      setUploadError('Failed to upload audio');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // Check if current audio is a custom recording
   const isCustomAudio = currentAudioId?.startsWith('custom:');
@@ -108,41 +134,14 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
 
   const handleUploadAndSend = async () => {
     if (!audioBlob) return;
+    await uploadAudioFile(audioBlob, audioBlob.type);
+  };
 
-    setIsUploading(true);
-    setUploadError(null);
-
-    try {
-      // Get upload URL from Convex
-      const uploadUrl = await generateUploadUrl();
-
-      // Upload the audio blob
-      const response = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': audioBlob.type,
-        },
-        body: audioBlob,
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const { storageId } = await response.json();
-
-      // Create custom audio ID with prefix
-      const customAudioId = `custom:${storageId}`;
-      onAudioReady(customAudioId);
-
-      // Clear local recording state
-      clearRecording();
-    } catch (err) {
-      console.error('Upload error:', err);
-      setUploadError('Failed to upload audio');
-    } finally {
-      setIsUploading(false);
-    }
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadAudioFile(file, file.type);
+    e.target.value = '';
   };
 
   const handlePlayPause = () => {
@@ -175,11 +174,25 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
     return () => audio.removeEventListener('ended', handleEnded);
   }, []);
 
-  // Not supported
+  // Not supported - show only upload
   if (!isSupported) {
     return (
-      <div className="text-white/40 text-xs text-center py-2">
-        {t.notSupported}
+      <div className="space-y-2">
+        <input ref={fileInputRef} type="file" accept={AUDIO_ACCEPT} className="hidden" onChange={handleFileUpload} />
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled || isUploading}
+          className="w-full flex items-center justify-center gap-2 bg-[#0a0f1a] border-2 border-[#60A5FA]/60 text-[#60A5FA] py-2 px-3 text-xs hover:border-[#60A5FA] hover:bg-[#60A5FA]/10 transition-colors disabled:opacity-50"
+          style={{ WebkitTextFillColor: 'currentColor' }}
+        >
+          {isUploading ? <span>{t.uploading}</span> : (
+            <>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Upload audio file (MP3, WAV, M4A...)</span>
+            </>
+          )}
+        </button>
+        {(uploadError) && <p className="text-red-400 text-xs text-center">{uploadError}</p>}
       </div>
     );
   }
@@ -217,6 +230,14 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
   return (
     <div className="space-y-2">
       <audio ref={audioRef} />
+      {/* Hidden file input for audio upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={AUDIO_ACCEPT}
+        className="hidden"
+        onChange={handleFileUpload}
+      />
 
       {/* Recording state */}
       {isRecording && (
@@ -290,17 +311,38 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
         </div>
       )}
 
-      {/* Idle state - ready to record */}
+      {/* Idle state - record OR upload */}
       {!isRecording && !hasRecordedAudio && !isCustomAudio && (
-        <button
-          onClick={startRecording}
-          disabled={disabled}
-          className="w-full flex items-center justify-center gap-2 bg-[#111] border border-[#FFD400]/30 text-white py-2 px-3 rounded-lg text-xs hover:bg-[#1a1a1a] hover:border-[#FFD400]/60 transition-colors disabled:opacity-50"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-          <span>{t.record}</span>
-          <span className="text-white/40 text-[10px]">({t.maxTime})</span>
-        </button>
+        <div className="flex gap-2">
+          {/* Record button - only show if supported */}
+          {isSupported && (
+            <button
+              onClick={startRecording}
+              disabled={disabled || isUploading}
+              className="flex-1 flex items-center justify-center gap-2 bg-[#1a0a0a] border-2 border-[#FB923C]/60 text-[#FB923C] py-2 px-3 text-xs hover:border-[#FB923C] hover:bg-[#FB923C]/10 transition-colors disabled:opacity-50"
+              style={{ WebkitTextFillColor: 'currentColor' }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+              <span>{t.record}</span>
+            </button>
+          )}
+          {/* Upload audio file button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={disabled || isUploading}
+            className="flex-1 flex items-center justify-center gap-2 bg-[#0a0f1a] border-2 border-[#60A5FA]/60 text-[#60A5FA] py-2 px-3 text-xs hover:border-[#60A5FA] hover:bg-[#60A5FA]/10 transition-colors disabled:opacity-50"
+            style={{ WebkitTextFillColor: 'currentColor' }}
+          >
+            {isUploading ? (
+              <span>{t.uploading}</span>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>Upload audio</span>
+              </>
+            )}
+          </button>
+        </div>
       )}
 
       {/* Error display */}
