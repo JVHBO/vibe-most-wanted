@@ -14,6 +14,7 @@ import { parseEther, encodeFunctionData } from 'viem';
 import { CONTRACTS, VALIDATOR_ABI } from '../contracts';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { isMiniappMode, isWarpcastClient } from '@/lib/utils/miniapp';
+import { toast } from 'sonner';
 
 // ClaimType enum matching contract
 export const ARB_CLAIM_TYPE = {
@@ -124,6 +125,13 @@ export function useArbValidator() {
         return txHash;
       } catch (wagmiErr: any) {
         console.warn('[ArbValidator] wagmi fallback failed:', wagmiErr.message);
+        if (wagmiErr?.code === 4001 || wagmiErr?.message?.includes('rejected') || wagmiErr?.message?.includes('denied')) {
+          toast.error('Transaction rejected by wallet.');
+        } else if (wagmiErr?.message?.includes('wallet') || wagmiErr?.message?.includes('connect')) {
+          toast.error('Wallet not connected. Please connect your wallet and try again.');
+        } else if (wagmiErr?.message) {
+          toast.error('Transaction failed. Please check your wallet and try again.');
+        }
         return null;
       }
     } catch (err: any) {

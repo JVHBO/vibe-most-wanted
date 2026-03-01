@@ -1,6 +1,7 @@
 ﻿"use client";
 // Updated: Removed warning banners
 import React, { useEffect, useState, useCallback, useMemo, memo, useRef } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import NextImage from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -27,29 +28,15 @@ import { useMiniappFrameContext } from "@/components/MiniappFrame";
 
 import { api } from "@/convex/_generated/api";
 import FoilCardEffect from "@/components/FoilCardEffect";
-import DifficultyModal from "@/components/DifficultyModal";
 import { ProgressBar } from "@/components/ProgressBar";
 // Shop moved to /shop page
 import { CreateProfileModal } from "@/components/CreateProfileModal";
-import { TutorialModal } from "@/components/TutorialModal";
-// WelcomeOnboarding removed - now using only GuidedTour for onboarding
-import { GuidedTour, DEFAULT_TOUR_STEPS, type TourStep } from "@/components/GuidedTour";
-import { SettingsModal } from "@/components/SettingsModal";
-// REMOVED: Referrals system disabled
-import { CpuArenaModal } from "@/components/CpuArenaModal";
-import { BaccaratModal } from "@/components/BaccaratModal";
+import { DEFAULT_TOUR_STEPS, type TourStep } from "@/components/GuidedTour";
 import { InboxDisplay } from "@/components/InboxDisplay";
 import { CoinsInboxDisplay } from "@/components/CoinsInboxDisplay";
-import { CoinsInboxModal } from "@/components/CoinsInboxModal";
 import { CardMedia } from "@/components/CardMedia";
-import { PveCardSelectionModal } from "@/components/PveCardSelectionModal";
 import { NotEnoughCardsGuide } from "@/components/NotEnoughCardsGuide";
-import { EliminationOrderingModal } from "@/components/EliminationOrderingModal";
-import { PvPMenuModals } from "@/components/PvPMenuModals";
-import { PvPEntryFeeModal } from "@/components/PvPEntryFeeModal";
 import { GamePopups } from "@/components/GamePopups";
-import { PvPInRoomModal } from "@/components/PvPInRoomModal";
-import { AttackCardSelectionModal } from "@/components/AttackCardSelectionModal";
 // RaidBossModal moved to /raid page
 import { PriceTicker } from "@/components/PriceTicker";
 import { AllCollectionsButton } from "@/components/AllCollectionsButton";
@@ -66,10 +53,6 @@ import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_
 import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
 import { usePowerCalculation } from "@/app/(game)/hooks/battle/usePowerCalculation";
 import { BattleArena } from "@/app/(game)/components/battle/BattleArena";
-import { LeaderboardRewardsModal } from "@/app/(game)/components/modals/LeaderboardRewardsModal";
-import { MyCardsModal } from "@/app/(game)/components/modals/MyCardsModal";
-import { ChainSelectionModal } from "@/app/(game)/components/modals/ChainSelectionModal";
-import { DefenseDeckModal } from "@/app/(game)/components/modals/DefenseDeckModal";
 import { MissionsView } from "@/app/(game)/components/views/MissionsView";
 // 🚀 BANDWIDTH FIX: Cached hooks for infrequent data
 import { useCachedDailyQuest } from "@/lib/convex-cache";
@@ -80,7 +63,6 @@ import { openMarketplace } from "@/lib/marketplace-utils";
 import { getCardDisplayPower, calculateTotalPower } from "@/lib/power-utils";
 // 🔒 Session Lock (prevents multi-device exploit)
 import { useSessionLock } from "@/lib/hooks/useSessionLock";
-import { SessionLockedModal } from "@/components/SessionLockedModal";
 // 🔊 Audio Manager
 import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
@@ -98,6 +80,26 @@ import { getImage, fetchNFTs, clearAllNftCache } from "@/lib/nft/fetcher"; // ch
 import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 import type { Card } from "@/lib/types/card";
 // RunawayEasterEgg removed
+
+// 🚀 Dynamic imports — modals loaded on demand, not in initial bundle
+const DifficultyModal = dynamic(() => import("@/components/DifficultyModal"), { ssr: false });
+const TutorialModal = dynamic(() => import("@/components/TutorialModal").then(m => m.TutorialModal), { ssr: false });
+const GuidedTour = dynamic(() => import("@/components/GuidedTour").then(m => m.GuidedTour), { ssr: false });
+const SettingsModal = dynamic(() => import("@/components/SettingsModal").then(m => m.SettingsModal), { ssr: false });
+const CpuArenaModal = dynamic(() => import("@/components/CpuArenaModal").then(m => m.CpuArenaModal), { ssr: false });
+const BaccaratModal = dynamic(() => import("@/components/BaccaratModal").then(m => m.BaccaratModal), { ssr: false });
+const CoinsInboxModal = dynamic(() => import("@/components/CoinsInboxModal").then(m => m.CoinsInboxModal), { ssr: false });
+const PveCardSelectionModal = dynamic(() => import("@/components/PveCardSelectionModal").then(m => m.PveCardSelectionModal), { ssr: false });
+const EliminationOrderingModal = dynamic(() => import("@/components/EliminationOrderingModal").then(m => m.EliminationOrderingModal), { ssr: false });
+const PvPMenuModals = dynamic(() => import("@/components/PvPMenuModals").then(m => m.PvPMenuModals), { ssr: false });
+const PvPEntryFeeModal = dynamic(() => import("@/components/PvPEntryFeeModal").then(m => m.PvPEntryFeeModal), { ssr: false });
+const PvPInRoomModal = dynamic(() => import("@/components/PvPInRoomModal").then(m => m.PvPInRoomModal), { ssr: false });
+const AttackCardSelectionModal = dynamic(() => import("@/components/AttackCardSelectionModal").then(m => m.AttackCardSelectionModal), { ssr: false });
+const SessionLockedModal = dynamic(() => import("@/components/SessionLockedModal").then(m => m.SessionLockedModal), { ssr: false });
+const LeaderboardRewardsModal = dynamic(() => import("@/app/(game)/components/modals/LeaderboardRewardsModal").then(m => m.LeaderboardRewardsModal), { ssr: false });
+const MyCardsModal = dynamic(() => import("@/app/(game)/components/modals/MyCardsModal").then(m => m.MyCardsModal), { ssr: false });
+const ChainSelectionModal = dynamic(() => import("@/app/(game)/components/modals/ChainSelectionModal").then(m => m.ChainSelectionModal), { ssr: false });
+const DefenseDeckModal = dynamic(() => import("@/app/(game)/components/modals/DefenseDeckModal").then(m => m.DefenseDeckModal), { ssr: false });
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
@@ -395,6 +397,15 @@ export default function TCGPage() {
   const [playerMissions, setPlayerMissions] = useState<any[]>([]);
   const [banCheck, setBanCheck] = useState<any>(null);
   const questsLoadedRef = useRef(false);
+
+  // Reset when wallet changes so the next wallet loads fresh data
+  useEffect(() => {
+    questsLoadedRef.current = false;
+    setQuestProgress(null);
+    setWeeklyProgress(null);
+    setPlayerMissions([]);
+    setBanCheck(null);
+  }, [address]);
 
   useEffect(() => {
     if (!address || questsLoadedRef.current) return;
@@ -1163,7 +1174,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
             console.error('[Farcaster] Available connector IDs:', connectors.map(c => c.id));
 
             // Show user-friendly error
-            alert('⚠️ Erro: Connector Farcaster não encontrado. Por favor, recarregue a página.');
+            toast.error('Connector Farcaster não encontrado. Por favor, recarregue a página.');
             setIsCheckingFarcaster(false);
             return;
           }
@@ -1417,6 +1428,12 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
       }
     } catch (err: any) {
       devError('Mission TX (non-blocking):', err);
+      // Show visible error only for user rejections (not silent chain/wallet issues)
+      if (err?.message?.includes('rejected') || err?.message?.includes('denied') || err?.code === 4001) {
+        toast.error('Transaction rejected by wallet.');
+      } else if (err?.message && !err.message.includes('connector not found')) {
+        toast.error('Transaction failed. Please check your wallet and try again.');
+      }
     }
   };
 
@@ -1477,7 +1494,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
       if (soundEnabled) AudioManager.buttonClick();
     } catch (error: any) {
       devError('✗ Error claiming quest reward:', error);
-      alert(error.message || 'Failed to claim quest reward');
+      toast.error(error.message || 'Failed to claim quest reward');
       if (soundEnabled) AudioManager.buttonError();
     } finally {
       setIsClaimingQuest(false);
@@ -1499,7 +1516,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
 
     } catch (error: any) {
       devError('✗ Error claiming weekly reward:', error);
-      alert(error.message || 'Failed to claim weekly reward');
+      toast.error(error.message || 'Failed to claim weekly reward');
       if (soundEnabled) AudioManager.buttonError();
     } finally {
       setIsClaimingWeeklyReward(false);
@@ -1600,56 +1617,6 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
     }
   }, [playerEconomy, address, userProfile]);
 
-  // Check for Twitter OAuth success
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const twitterConnected = urlParams.get('twitter_connected');
-    const error = urlParams.get('error');
-
-    if (twitterConnected) {
-      // Check if this is a popup window
-      if (window.opener) {
-        // This is the popup - send message to parent and close
-        window.opener.postMessage({ type: 'twitter_connected', username: twitterConnected }, window.location.origin);
-        window.close();
-      } else if (userProfile) {
-        // This is the main window - update profile
-        setUserProfile({ ...userProfile, twitter: twitterConnected });
-        // Clean up URL
-        window.history.replaceState({}, '', '/');
-        // Show success message
-        alert(`✓ Twitter connected: @${twitterConnected}`);
-      }
-    } else if (error === 'twitter_auth_failed') {
-      if (window.opener) {
-        // This is the popup - notify parent and close
-        window.opener.postMessage({ type: 'twitter_error' }, window.location.origin);
-        window.close();
-      } else {
-        alert('✗ Failed to connect Twitter. Please try again.');
-        window.history.replaceState({}, '', '/');
-      }
-    }
-
-    // Listen for messages from OAuth popup
-    const handleMessage = (event: MessageEvent) => {
-      // Verify origin for security
-      if (event.origin !== window.location.origin) return;
-
-      if (event.data.type === 'twitter_connected') {
-        devLog('✓ Twitter connected via popup:', event.data.username);
-        if (address) {
-          // Reload profile from Convex to get the updated Twitter handle
-          refreshProfile();
-        }
-      } else if (event.data.type === 'twitter_error') {
-        alert('✗ Failed to connect Twitter. Please try again.');
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [userProfile, address]);
 
   // Check for attack parameter (from rematch button)
   useEffect(() => {
@@ -1899,7 +1866,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const generateAIHand = useCallback((difficulty: 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad') => {
     const available = jcNfts;
     if (available.length < HAND_SIZE) {
-      alert('AI deck not ready yet...');
+      toast.error('AI deck not ready yet...');
       return [];
     }
 
@@ -2021,7 +1988,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
 
       setIsBattling(false);
       setShowBattleScreen(false);
-      alert('Loading AI deck... Please try again in a moment.');
+      toast.error('Loading AI deck... Please try again in a moment.');
       return;
     }
 
@@ -2432,7 +2399,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
 
       if (invalidCards.length > 0) {
         devError('✗ Invalid cards detected:', invalidCards);
-        alert(`Error: ${invalidCards.length} card(s) have invalid data (missing image or power). Please refresh the page and try again.`);
+        toast.error(`${invalidCards.length} card(s) have invalid data (missing image or power). Please refresh and try again.`);
         return;
       }
 
@@ -2507,11 +2474,11 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
       // More helpful error message
       const errorMsg = error?.message || String(error);
       if (errorMsg.includes('Server Error') || errorMsg.includes('Request ID')) {
-        alert('Error: Convex server error. This might be temporary. Please wait a few seconds and try again.');
+        toast.error('Convex server error. This might be temporary. Please wait a few seconds and try again.');
       } else if (errorMsg.includes('Profile not found')) {
-        alert('Error: Your profile was not found. Please refresh the page and try again.');
+        toast.error('Your profile was not found. Please refresh the page and try again.');
       } else {
-        alert(`Error saving defense deck: ${errorMsg}\n\nPlease try again or refresh the page.`);
+        toast.error(`Error saving defense deck: ${errorMsg}. Please try again or refresh the page.`);
       }
     }
   }, [address, userProfile, selectedCards, soundEnabled]);
@@ -3121,7 +3088,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
       } catch (error: any) {
         devError('Error claiming VIBE badge:', error);
         if (soundEnabled) AudioManager.buttonError();
-        alert(error.message || 'Failed to claim VIBE badge');
+        toast.error(error.message || 'Failed to claim VIBE badge');
       } finally {
         setIsClaimingMission(null);
       }
@@ -3158,7 +3125,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
       } catch (error: any) {
       devError('Error claiming mission:', error);
       if (soundEnabled) AudioManager.buttonError();
-      alert(error.message || 'Failed to claim mission');
+      toast.error(error.message || 'Failed to claim mission');
     } finally {
       setIsClaimingMission(null);
     }
@@ -3188,12 +3155,12 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
         await refreshProfile();
       } else {
         if (soundEnabled) AudioManager.buttonClick();
-        alert('No missions to claim!');
+        toast.error('No missions to claim!');
       }
     } catch (error: any) {
       devError('Error claiming all missions:', error);
       if (soundEnabled) AudioManager.buttonError();
-      alert(error.message || 'Failed to claim missions');
+      toast.error(error.message || 'Failed to claim missions');
     } finally {
       setIsClaimingAll(false);
     }
@@ -4338,9 +4305,9 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
 
                         // Show user-friendly error message
                         if (err?.message?.includes('not been authorized')) {
-                          alert('Por favor, autorize o acesso à carteira nas configurações do Farcaster');
+                          toast.error('Por favor, autorize o acesso à carteira nas configurações do Farcaster');
                         } else {
-                          alert('Failed to connect Farcaster wallet. Please try again.');
+                          toast.error('Failed to connect Farcaster wallet. Please try again.');
                         }
                       } finally {
                         setIsCheckingFarcaster(false);
@@ -5350,7 +5317,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
               }
             } catch (error) {
               console.error('❌ Failed to consume PvE attempt:', error);
-              alert(error instanceof Error ? error.message : 'Failed to start battle. Please try again.');
+              toast.error(error instanceof Error ? error.message : 'Failed to start battle. Please try again.');
               return; // Don't start battle if attempt consumption failed
             }
 

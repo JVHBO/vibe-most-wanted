@@ -7,6 +7,7 @@
 import { ConvexProfileService, type UserProfile } from '@/lib/convex-profile';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
+import { toast } from 'sonner';
 import { createPortal } from "react-dom";
 import { useState, useEffect, useRef } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
@@ -498,60 +499,13 @@ export function SettingsModal({
       setNewUsername('');
 
       if (soundEnabled) AudioManager.buttonSuccess();
-      alert(`Username successfully changed to @${newUsername}!`);
+      toast.success(`Username successfully changed to @${newUsername}!`);
     } catch (err: any) {
       devError('Error changing username:', err);
       if (soundEnabled) AudioManager.buttonError();
-      alert(`Error: ${err.message || 'Failed to change username'}`);
+      toast.error(err.message || 'Failed to change username');
     } finally {
       setIsChangingUsername(false);
-    }
-  };
-
-  const handleTwitterConnect = async () => {
-    if (soundEnabled) AudioManager.buttonClick();
-
-    if (!address) {
-      alert('Please connect your wallet first');
-      return;
-    }
-
-    try {
-      devLog('🔵 Calling Twitter OAuth API...');
-
-      // Call our API to get Twitter OAuth URL
-      const response = await fetch(`/api/auth/twitter?address=${address}`);
-      devLog('📡 Response status:', response.status);
-
-      const data = await response.json();
-      devLog('📦 Response data:', data);
-
-      if (data.url) {
-        devLog('✓ Got OAuth URL, opening popup...');
-        devLog('🔗 URL:', data.url);
-
-        // Open Twitter OAuth in a popup
-        const width = 600;
-        const height = 700;
-        const left = (window.screen.width - width) / 2;
-        const top = (window.screen.height - height) / 2;
-
-        const popup = window.open(
-          data.url,
-          'Twitter OAuth',
-          `width=${width},height=${height},left=${left},top=${top}`
-        );
-
-        if (!popup) {
-          setErrorMessage('Popup blocked! Please allow popups for this site.');
-        }
-      } else {
-        devError('✗ No URL in response');
-        throw new Error('Failed to get OAuth URL');
-      }
-    } catch (error) {
-      devError('✗ Twitter OAuth error:', error);
-      alert('Failed to connect Twitter. Check console for details.');
     }
   };
 

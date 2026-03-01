@@ -61,7 +61,13 @@ export default function QuestsPage() {
   const [personalMissions, setPersonalMissions] = useState<any[] | undefined>(undefined);
   const missionsLoadedRef = useRef(false);
 
-  // Load missions once on mount
+  // Reset ref and state when wallet changes
+  useEffect(() => {
+    missionsLoadedRef.current = false;
+    setPersonalMissions(undefined);
+  }, [address]);
+
+  // Load missions once per address
   useEffect(() => {
     if (!address || missionsLoadedRef.current) return;
     missionsLoadedRef.current = true;
