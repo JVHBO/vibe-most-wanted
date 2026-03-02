@@ -182,8 +182,8 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || isUploading}
-          className="w-full flex items-center justify-center gap-2 bg-[#0a0f1a] border-2 border-[#60A5FA]/60 text-[#60A5FA] py-2 px-3 text-xs hover:border-[#60A5FA] hover:bg-[#60A5FA]/10 transition-colors disabled:opacity-50"
-          style={{ WebkitTextFillColor: 'currentColor' }}
+          className="w-full flex items-center justify-center gap-2 bg-[#2563EB] border-2 border-[#1D4ED8] text-white py-2 px-3 text-xs hover:bg-[#1D4ED8] transition-colors disabled:opacity-50"
+          style={{ WebkitTextFillColor: 'white' }}
         >
           {isUploading ? <span>{t.uploading}</span> : (
             <>
@@ -319,8 +319,8 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
             <button
               onClick={startRecording}
               disabled={disabled || isUploading}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#1a0a0a] border-2 border-[#FB923C]/60 text-[#FB923C] py-2 px-3 text-xs hover:border-[#FB923C] hover:bg-[#FB923C]/10 transition-colors disabled:opacity-50"
-              style={{ WebkitTextFillColor: 'currentColor' }}
+              className="flex-1 flex items-center justify-center gap-2 bg-[#EA580C] border-2 border-[#C2410C] text-white py-2 px-3 text-xs hover:bg-[#C2410C] transition-colors disabled:opacity-50"
+              style={{ WebkitTextFillColor: 'white' }}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
               <span>{t.record}</span>
@@ -330,8 +330,8 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || isUploading}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#0a0f1a] border-2 border-[#60A5FA]/60 text-[#60A5FA] py-2 px-3 text-xs hover:border-[#60A5FA] hover:bg-[#60A5FA]/10 transition-colors disabled:opacity-50"
-            style={{ WebkitTextFillColor: 'currentColor' }}
+            className="flex-1 flex items-center justify-center gap-2 bg-[#2563EB] border-2 border-[#1D4ED8] text-white py-2 px-3 text-xs hover:bg-[#1D4ED8] transition-colors disabled:opacity-50"
+            style={{ WebkitTextFillColor: 'white' }}
           >
             {isUploading ? (
               <span>{t.uploading}</span>

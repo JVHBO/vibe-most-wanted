@@ -1208,7 +1208,7 @@ export function VibeMailInboxWithClaim({
                 stopAudio();
                 onClose();
               }}
-              className="w-8 h-8 bg-vintage-black border-2 border-black shadow-[2px_2px_0px_#000] text-vintage-gold font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
+              className="w-8 h-8 bg-[#DC2626] border-2 border-black shadow-[2px_2px_0px_#000] text-white font-bold hover:bg-[#B91C1C] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
             >
               X
             </button>
@@ -1340,7 +1340,7 @@ export function VibeMailInboxWithClaim({
                     composerAudioRef.current.pause();
                   }
                 }}
-                className="w-8 h-8 bg-vintage-black border-2 border-black shadow-[2px_2px_0px_#000] text-vintage-gold font-bold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
+                className="w-8 h-8 bg-[#DC2626] border-2 border-black shadow-[2px_2px_0px_#000] text-white font-bold hover:bg-[#B91C1C] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
               >X</button>
               <h3 className="text-vintage-gold font-bold text-lg uppercase tracking-wide">
                 {replyToMessageId ? 'Reply' : 'New Message'}
@@ -1880,24 +1880,24 @@ export function VibeMailInboxWithClaim({
 
             {/* Bottom toolbar */}
             <div className="flex items-center gap-1 border-t-2 border-[#333] pt-2 mt-2">
-              {/* Format Aa - indigo sólido */}
+              {/* Aa - VERMELHO */}
               <button
                 onClick={handleFormatBold}
-                className="w-9 h-9 flex items-center justify-center border-2 border-[#818CF8] bg-[#818CF8] text-white hover:bg-[#6366F1] transition-all font-black text-sm"
+                className="w-9 h-9 flex items-center justify-center border-2 border-[#DC2626] bg-[#DC2626] text-white hover:bg-[#B91C1C] transition-all font-black text-sm"
                 style={{ WebkitTextFillColor: 'white' }}
                 title="Bold"
               >
                 Aa
               </button>
 
-              {/* Som - laranja sólido */}
+              {/* Som - LARANJA */}
               {!isCustomAudio(composerAudioId || undefined) && (
                 <button
                   onClick={() => { setShowSoundPicker(!showSoundPicker); setShowImagePicker(false); setShowCastInput(false); setShowMiniappInput(false); }}
                   className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
                     (composerAudioId && !isCustomAudio(composerAudioId)) || showSoundPicker
-                      ? 'border-[#EA580C] bg-[#EA580C] text-white'
-                      : 'border-[#FB923C] bg-[#FB923C] text-white hover:bg-[#EA580C]'
+                      ? 'border-[#C2410C] bg-[#C2410C] text-white'
+                      : 'border-[#EA580C] bg-[#EA580C] text-white hover:bg-[#C2410C]'
                   }`}
                   style={{ WebkitTextFillColor: 'white' }}
                   title="Sound"
@@ -1906,13 +1906,13 @@ export function VibeMailInboxWithClaim({
                 </button>
               )}
 
-              {/* Imagem - roxo sólido */}
+              {/* Imagem - VIOLETA escuro */}
               <button
                 onClick={() => { setShowImagePicker(!showImagePicker); setShowSoundPicker(false); setShowCastInput(false); setShowMiniappInput(false); }}
                 className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
                   composerImageId || showImagePicker
-                    ? 'border-[#9333EA] bg-[#9333EA] text-white'
-                    : 'border-[#C084FC] bg-[#C084FC] text-white hover:bg-[#9333EA]'
+                    ? 'border-[#5B21B6] bg-[#5B21B6] text-white'
+                    : 'border-[#7C3AED] bg-[#7C3AED] text-white hover:bg-[#5B21B6]'
                 }`}
                 style={{ WebkitTextFillColor: 'white' }}
                 title="Image"
@@ -1920,14 +1920,14 @@ export function VibeMailInboxWithClaim({
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </button>
 
-              {/* Cast - azul sólido */}
+              {/* Cast - AZUL */}
               {composerQuestType !== 'miniapp' && (
                 <button
                   onClick={() => { setShowCastInput(!showCastInput); if (showCastInput) { setComposerCastUrl(null); setCastInputValue(''); } setShowSoundPicker(false); setShowImagePicker(false); setShowMiniappInput(false); }}
                   className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
                     composerCastUrl || showCastInput
                       ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
-                      : 'border-[#60A5FA] bg-[#60A5FA] text-white hover:bg-[#3B82F6]'
+                      : 'border-[#2563EB] bg-[#2563EB] text-white hover:bg-[#1D4ED8]'
                   }`}
                   style={{ WebkitTextFillColor: 'white' }}
                   title="Farcaster cast"
@@ -1936,13 +1936,13 @@ export function VibeMailInboxWithClaim({
                 </button>
               )}
 
-              {/* Miniapp - verde sólido */}
+              {/* Miniapp - VERDE */}
               <button
                 onClick={() => { setShowMiniappInput(!showMiniappInput); if (showMiniappInput) { setComposerMiniappUrl(null); setMiniappInputValue(''); } setShowSoundPicker(false); setShowImagePicker(false); setShowCastInput(false); }}
                 className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
                   composerMiniappUrl || showMiniappInput
-                    ? 'border-[#16A34A] bg-[#16A34A] text-white'
-                    : 'border-[#4ADE80] bg-[#22C55E] text-white hover:bg-[#16A34A]'
+                    ? 'border-[#15803D] bg-[#15803D] text-white'
+                    : 'border-[#16A34A] bg-[#16A34A] text-white hover:bg-[#15803D]'
                 }`}
                 style={{ WebkitTextFillColor: 'white' }}
                 title="Miniapp link"
@@ -1950,12 +1950,12 @@ export function VibeMailInboxWithClaim({
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
               </button>
 
-              {/* Preview - dourado sólido */}
+              {/* Preview - ROSA/PINK */}
               {(composerMessage.trim() || composerImageId) && (
                 <button
                   onClick={() => setShowPreview(true)}
-                  className="w-9 h-9 flex items-center justify-center border-2 border-[#FFD400] bg-[#FFD400] text-black hover:bg-[#F59E0B] transition-all"
-                  style={{ WebkitTextFillColor: 'black' }}
+                  className="w-9 h-9 flex items-center justify-center border-2 border-[#DB2777] bg-[#DB2777] text-white hover:bg-[#BE185D] transition-all"
+                  style={{ WebkitTextFillColor: 'white' }}
                   title="Preview"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
