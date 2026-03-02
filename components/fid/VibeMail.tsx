@@ -704,6 +704,7 @@ export function VibeMailInboxWithClaim({
   const [msgPage, setMsgPage] = useState(0);
   const [showPurposeModal, setShowPurposeModal] = useState(false);
   const [composerQuestType, setComposerQuestType] = useState<string | null>(null);
+  const [composerFollowTarget, setComposerFollowTarget] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const messages = useQuery(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 });
   const sentMessages = useQuery(
@@ -1000,6 +1001,7 @@ export function VibeMailInboxWithClaim({
       setShowImagePicker(false);
       setShowCastInput(false);
       setShowMiniappInput(false);
+      setComposerFollowTarget('');
       setRecipientFid(null);
       setRecipientUsername('');
       setSearchQuery('');
@@ -1299,7 +1301,18 @@ export function VibeMailInboxWithClaim({
                 {QUEST_PURPOSES.map(opt => (
                   <button
                     key={opt.id}
-                    onClick={() => { AudioManager.buttonClick(); setComposerMessage(opt.template); setComposerQuestType(opt.questType); setShowPurposeModal(false); setShowComposer(true); }}
+                    onClick={() => {
+                      AudioManager.buttonClick();
+                      const target = username || '';
+                      const filledTemplate = opt.questType === 'follow_me' && target
+                        ? opt.template.replace(/@\[your-username\]/g, `@${target}`)
+                        : opt.template;
+                      setComposerMessage(filledTemplate);
+                      setComposerQuestType(opt.questType);
+                      if (opt.questType === 'follow_me') setComposerFollowTarget(target);
+                      setShowPurposeModal(false);
+                      setShowComposer(true);
+                    }}
                     className="w-full p-3 bg-[#1a1a1a] border-2 border-[#333] flex items-center gap-3 hover:border-[#FFD400] hover:bg-[#222] transition-all shadow-[2px_2px_0px_#000] text-left"
                   >
                     <span className="text-2xl w-8 text-center flex-shrink-0">{opt.id === 'cast_engage' ? '🔁❤️' : opt.icon}</span>
@@ -1436,6 +1449,28 @@ export function VibeMailInboxWithClaim({
                 </div>
               ) : null;
             })()}
+
+            {/* Follow target input — shown only for follow_me quest */}
+            {composerQuestType === 'follow_me' && (
+              <div className="mb-2 flex items-center gap-2 bg-[#0a0a0a] border-2 border-[#444] px-3 py-2 focus-within:border-[#FFD400]">
+                <span className="text-white/40 text-xs flex-shrink-0">Follow target:</span>
+                <span className="text-[#FFD400] text-xs font-bold flex-shrink-0">@</span>
+                <input
+                  type="text"
+                  value={composerFollowTarget}
+                  onChange={(e) => {
+                    const newTarget = e.target.value.replace(/^@/, '');
+                    setComposerMessage(prev =>
+                      prev.replace(new RegExp(`@${composerFollowTarget.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`, 'g'), `@${newTarget}`)
+                    );
+                    setComposerFollowTarget(newTarget);
+                  }}
+                  placeholder={username || 'username'}
+                  className="flex-1 bg-transparent text-white text-xs focus:outline-none min-w-0"
+                  style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
+                />
+              </div>
+            )}
 
             {/* Random Recipient Display */}
             {sendMode === 'random' && !replyToMessageId && (
