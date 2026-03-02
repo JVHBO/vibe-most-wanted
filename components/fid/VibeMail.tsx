@@ -960,8 +960,9 @@ export function VibeMailInboxWithClaim({
     if (!myFid || !myAddress) return;
     setIsSending(true);
     try {
-      const cost = hasFreeVotes ? BigInt(0) : parseEther(VIBEMAIL_COST_VBMS);
-      await transferVBMS(CONTRACTS.VBMSPoolTroll as `0x${string}`, cost);
+      if (!hasFreeVotes) {
+        await transferVBMS(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(VIBEMAIL_COST_VBMS));
+      }
       if (isReply && origMsgId) {
         await replyMutation({
           originalMessageId: origMsgId,

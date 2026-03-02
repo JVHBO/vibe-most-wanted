@@ -451,7 +451,8 @@ export default function QuestsPage() {
             {t('questsWantedCasts')}
           </button>
           {(() => {
-            const canAccessMessages = profileDashboard?.username?.toLowerCase() === 'jvhbo';
+            const u = profileDashboard?.username?.toLowerCase();
+            const canAccessMessages = u === 'jvhbo' || u === 'vibefid';
             return (
               <button
                 onClick={() => { if (!canAccessMessages) return; AudioManager.buttonClick(); setActiveTab('messages'); }}
