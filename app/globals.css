@@ -537,26 +537,8 @@ body > * {
   }
 }
 
-/* ===== QUEST + VIBEMAIL TAB COLORS - Neo-brutalism bright palette ===== */
-.qt-missions-active   { background: #FF3B3B !important; color: #000 !important; border-color: #000 !important; }
-.qt-missions-inactive { background: #EF4444 !important; color: #fff !important; border-color: #000 !important; }
-.qt-wanted-active     { background: #00E676 !important; color: #000 !important; border-color: #000 !important; }
-.qt-wanted-inactive   { background: #22C55E !important; color: #000 !important; border-color: #000 !important; }
-.qt-messages-active   { background: #BF5AF2 !important; color: #000 !important; border-color: #000 !important; }
-.qt-messages-inactive { background: #A855F7 !important; color: #fff !important; border-color: #000 !important; }
-.qt-messages-locked   { background: #333 !important; color: rgba(255,255,255,0.3) !important; opacity: 0.5 !important; cursor: not-allowed !important; border-color: #555 !important; }
-.vmt-inbox-active     { background: #007AFF !important; color: #fff !important; border-color: #000 !important; }
-.vmt-inbox-inactive   { background: #3B82F6 !important; color: #fff !important; border-color: #000 !important; }
-.vmt-sent-active      { background: #FF9F0A !important; color: #000 !important; border-color: #000 !important; }
-.vmt-sent-inactive    { background: #F97316 !important; color: #000 !important; border-color: #000 !important; }
-.vmt-quests-active    { background: #00E676 !important; color: #000 !important; border-color: #000 !important; }
-.vmt-quests-inactive  { background: #22C55E !important; color: #000 !important; border-color: #000 !important; }
-
-/* CHAIN TOGGLE BUTTONS (BASE/ARB) - ct-* classes */
-.ct-base-active   { background: #0052FF !important; color: #fff !important; border: 2px solid #000 !important; box-shadow: 2px 2px 0px #000 !important; }
-.ct-base-inactive { background: #1f2937 !important; color: #6b7280 !important; border: 2px solid #374151 !important; box-shadow: none !important; }
-.ct-arb-active    { background: #12AAFF !important; color: #000 !important; border: 2px solid #000 !important; box-shadow: 2px 2px 0px #000 !important; }
-.ct-arb-inactive  { background: #1f2937 !important; color: #6b7280 !important; border: 2px solid #374151 !important; box-shadow: none !important; }
+/* qt-*, vmt-*, ct-* rules moved to app/neobrutalism.css (final do arquivo)
+   para garantir que sobrescrevam quaisquer regras do neobrutalism via especificidade + ordem */
 
 /* RESPONSIVE CONTAINER: Mobile-first approach for miniapp */
 .responsive-container {
