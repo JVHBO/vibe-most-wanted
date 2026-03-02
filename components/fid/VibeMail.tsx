@@ -1230,8 +1230,8 @@ export function VibeMailInboxWithClaim({
               onClick={() => setActiveTab('inbox')}
               className={`flex-1 py-2 text-xs font-bold border-2 border-black transition-all ${
                 activeTab === 'inbox'
-                  ? 'bg-vintage-gold text-black shadow-[2px_2px_0px_#000]'
-                  : 'bg-[#1a1a1a] text-white shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
+                  ? 'bg-[#2563EB] text-white shadow-[2px_2px_0px_#000]'
+                  : 'bg-[#0a0a1a] text-blue-400/80 border-[#101030] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
               }`}
             >
               <span className="flex items-center justify-center gap-1">
@@ -1243,8 +1243,8 @@ export function VibeMailInboxWithClaim({
               onClick={() => setActiveTab('sent')}
               className={`flex-1 py-2 text-xs font-bold border-2 border-black transition-all ${
                 activeTab === 'sent'
-                  ? 'bg-vintage-gold text-black shadow-[2px_2px_0px_#000]'
-                  : 'bg-[#1a1a1a] text-white shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
+                  ? 'bg-[#EA580C] text-white shadow-[2px_2px_0px_#000]'
+                  : 'bg-[#1a0a00] text-orange-400/80 border-[#301500] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
               }`}
             >
               <span className="flex items-center justify-center gap-1">
@@ -1257,7 +1257,7 @@ export function VibeMailInboxWithClaim({
               className={`flex-1 py-2 text-xs font-bold border-2 border-black transition-all ${
                 activeTab === 'quests'
                   ? 'bg-[#22C55E] text-black shadow-[2px_2px_0px_#000]'
-                  : 'bg-[#1a1a1a] text-white shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
+                  : 'bg-[#0a1a0a] text-green-400/80 border-[#103010] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
               }`}
             >
               <span className="flex items-center justify-center gap-1">

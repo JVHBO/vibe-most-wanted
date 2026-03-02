@@ -434,8 +434,8 @@ export default function QuestsPage() {
             onClick={() => { AudioManager.buttonClick(); setActiveTab('missions'); }}
             className={`flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 border-black transition-all ${
               activeTab === 'missions'
-                ? 'bg-[#FFD400] text-black shadow-[2px_2px_0px_#000] translate-x-0 translate-y-0'
-                : 'bg-[#2A2A2A] text-white/70 shadow-[2px_2px_0px_#000] hover:bg-[#333] hover:text-white'
+                ? 'bg-[#DC2626] text-white shadow-[2px_2px_0px_#000]'
+                : 'bg-[#2a0a0a] text-red-400/80 border-[#3a1010] shadow-[2px_2px_0px_#000] hover:bg-[#3a0a0a] hover:text-red-300'
             }`}
           >
             {t('questsMissions')}
@@ -444,8 +444,8 @@ export default function QuestsPage() {
             onClick={() => { AudioManager.buttonClick(); setActiveTab('wanted'); }}
             className={`flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 border-black transition-all ${
               activeTab === 'wanted'
-                ? 'bg-[#22C55E] text-black shadow-[2px_2px_0px_#000]'
-                : 'bg-[#2A2A2A] text-white/70 shadow-[2px_2px_0px_#000] hover:bg-[#333] hover:text-white'
+                ? 'bg-[#16A34A] text-white shadow-[2px_2px_0px_#000]'
+                : 'bg-[#0a2a0a] text-green-400/80 border-[#103a10] shadow-[2px_2px_0px_#000] hover:bg-[#0a3a0a] hover:text-green-300'
             }`}
           >
             {t('questsWantedCasts')}
@@ -461,8 +461,8 @@ export default function QuestsPage() {
                   !canAccessMessages
                     ? 'bg-[#1a1a1a] text-white/20 shadow-[2px_2px_0px_#000] cursor-not-allowed opacity-40'
                     : activeTab === 'messages'
-                      ? 'bg-[#9945FF] text-white shadow-[2px_2px_0px_#000]'
-                      : 'bg-[#2A2A2A] text-white/70 shadow-[2px_2px_0px_#000] hover:bg-[#333] hover:text-white'
+                      ? 'bg-[#7C3AED] text-white shadow-[2px_2px_0px_#000]'
+                      : 'bg-[#1a0a2a] text-purple-400/80 border-[#2a1040] shadow-[2px_2px_0px_#000] hover:bg-[#220a38] hover:text-purple-300'
                 }`}
               >
                 Messages
