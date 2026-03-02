@@ -28,6 +28,7 @@ import type { Card } from '@/lib/types/card';
 import { useFarcasterTransferVBMS } from '@/lib/hooks/useFarcasterVBMS';
 import { CONTRACTS } from '@/lib/contracts';
 import { parseEther } from 'viem';
+import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
 import {
   getBossCard,
   BOSS_ROTATION_ORDER,
@@ -85,6 +86,7 @@ export default function RaidPage() {
   // Convex
   const refuelCardsMutation = useMutation(api.raidBoss.refuelCards);
   const refuelAllWithCoinsMutation = useMutation(api.raidBoss.refuelAllWithCoins);
+  const { validateOnArb } = useArbValidator();
   const replaceCardMutation = useMutation(api.raidBoss.replaceCard);
   const initializeBossMutation = useMutation(api.raidBoss.initializeRaidBoss);
   const claimRewardsMutation = useMutation(api.raidBoss.claimRaidRewards);
@@ -459,11 +461,13 @@ export default function RaidPage() {
     setIsRefueling(true);
     setRefuelError(null);
     try {
+      // ARB TX to validator contract (free, no VBMS transfer)
+      await validateOnArb(0, ARB_CLAIM_TYPE.MISSION);
       await refuelAllWithCoinsMutation({ address: address.toLowerCase() });
       if (soundEnabled) AudioManager.refuelCard();
     } catch (error: any) {
-      console.error('Error refueling with coins:', error);
-      setRefuelError(error?.message || 'Failed to refuel team');
+      console.error('Error refueling:', error);
+      setRefuelError(error?.data || error?.message || 'Failed to refuel team');
       if (soundEnabled) AudioManager.hapticFeedback('heavy');
     } finally {
       setIsRefueling(false);
@@ -781,9 +785,8 @@ export default function RaidPage() {
                     onClick={handleRefuelWithCoins}
                     disabled={isRefueling}
                     className="raid-btn-refuel px-3 py-1.5 bg-black/60 hover:bg-green-900/30 text-green-400 border border-green-500/50 rounded font-bold text-xs transition disabled:opacity-50 uppercase tracking-wide"
-                    title="Refuel team with 500 coins"
                   >
-                    {isRefueling ? '...' : 'Refuel (500)'}
+                    {isRefueling ? '...' : 'FREE REFUEL'}
                   </button>
                   <button
                     onClick={() => router.push('/raid/deck')}

@@ -1452,10 +1452,6 @@ export const refuelAllWithCoins = mutation({
       const profile = await getProfileByAddress(ctx, address);
       if (!profile) throw new ConvexError("Profile not found");
 
-      if ((profile.coins || 0) < REFUEL_COINS_COST) {
-        throw new ConvexError(`Need ${REFUEL_COINS_COST} coins (you have ${profile.coins || 0})`);
-      }
-
       const now = Date.now();
 
       // Rebuild cardEnergy from deck — always use clean schema-valid objects
@@ -1474,10 +1470,6 @@ export const refuelAllWithCoins = mutation({
           nextAttackAt: now,
           ...(existing?.lastAttackAt != null ? { lastAttackAt: existing.lastAttackAt } : {}),
         };
-      });
-
-      await ctx.db.patch(profile._id, {
-        coins: (profile.coins || 0) - REFUEL_COINS_COST,
       });
 
       await ctx.db.patch(raidDeck._id, {
