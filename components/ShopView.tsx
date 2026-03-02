@@ -243,7 +243,7 @@ export function ShopView({ address }: ShopViewProps) {
                 ) : (
                   <button
                     disabled
-                    className="w-full h-11 bg-vintage-charcoal/50 border border-vintage-gold/20 text-vintage-ice/40 font-display font-bold rounded-lg cursor-not-allowed"
+                    className="w-full h-11 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold/70 font-display font-bold rounded-lg cursor-not-allowed"
                   >
                     {dailyFreeStatus?.timeRemaining
                       ? `${t('shopNextPackIn' as any)} ${formatTimeRemaining(dailyFreeStatus.timeRemaining)}`
