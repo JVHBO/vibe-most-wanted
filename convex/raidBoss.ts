@@ -1439,55 +1439,56 @@ const REFUEL_COINS_COST = 500; // 500 coins to refuel the whole team
 export const refuelAllWithCoins = mutation({
   args: { address: v.string() },
   handler: async (ctx, args) => {
-    const address = await resolvePrimaryAddress(ctx, args.address);
+    try {
+      const address = await resolvePrimaryAddress(ctx, args.address);
 
-    const raidDeck = await ctx.db
-      .query("raidAttacks")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .first();
+      const raidDeck = await ctx.db
+        .query("raidAttacks")
+        .withIndex("by_address", (q) => q.eq("address", address))
+        .first();
 
-    if (!raidDeck) throw new ConvexError("No raid deck found");
+      if (!raidDeck) throw new ConvexError("No raid deck found");
 
-    const profile = await getProfileByAddress(ctx, address);
-    if (!profile) throw new ConvexError("Profile not found");
+      const profile = await getProfileByAddress(ctx, address);
+      if (!profile) throw new ConvexError("Profile not found");
 
-    if ((profile.coins || 0) < REFUEL_COINS_COST) {
-      throw new ConvexError(`Need ${REFUEL_COINS_COST} coins to refuel (you have ${profile.coins || 0})`);
+      if ((profile.coins || 0) < REFUEL_COINS_COST) {
+        throw new ConvexError(`Need ${REFUEL_COINS_COST} coins (you have ${profile.coins || 0})`);
+      }
+
+      const now = Date.now();
+
+      // Rebuild cardEnergy from deck — always use clean schema-valid objects
+      const rawEnergy: any[] = Array.isArray((raidDeck as any).cardEnergy)
+        ? (raidDeck as any).cardEnergy
+        : [];
+
+      const updatedCardEnergy = raidDeck.deck.map((card: any) => {
+        const existing = rawEnergy.find((e: any) => e.tokenId === card.tokenId);
+        const rarity = (card.rarity || "common").toLowerCase();
+        const duration = ENERGY_DURATION_BY_RARITY[rarity] || ENERGY_DURATION_BY_RARITY.common;
+        // If already has valid energy and not expired, still refuel
+        return {
+          tokenId: card.tokenId,
+          energyExpiresAt: duration === 0 ? 0 : now + duration,
+          nextAttackAt: now,
+          ...(existing?.lastAttackAt != null ? { lastAttackAt: existing.lastAttackAt } : {}),
+        };
+      });
+
+      await ctx.db.patch(profile._id, {
+        coins: (profile.coins || 0) - REFUEL_COINS_COST,
+      });
+
+      await ctx.db.patch(raidDeck._id, {
+        cardEnergy: updatedCardEnergy,
+        lastUpdated: now,
+      });
+
+      return { success: true, costPaid: REFUEL_COINS_COST };
+    } catch (err: any) {
+      if (err instanceof ConvexError) throw err;
+      throw new ConvexError(`Refuel failed: ${err?.message || String(err)}`);
     }
-
-    const now = Date.now();
-
-    // Handle old records that might not have cardEnergy initialized
-    const currentEnergy: Array<{ tokenId: string; energyExpiresAt: number; nextAttackAt?: number }> =
-      raidDeck.cardEnergy?.length
-        ? raidDeck.cardEnergy
-        : raidDeck.deck.map((card: any) => ({
-            tokenId: card.tokenId,
-            energyExpiresAt: 0,
-            nextAttackAt: now,
-          }));
-
-    const updatedCardEnergy = currentEnergy.map((cardEnergy: any) => {
-      const deckCard = raidDeck.deck.find((c: any) => c.tokenId === cardEnergy.tokenId);
-      if (!deckCard) return cardEnergy;
-      const rarity = deckCard.rarity.toLowerCase();
-      const duration = ENERGY_DURATION_BY_RARITY[rarity] || ENERGY_DURATION_BY_RARITY.common;
-      return {
-        ...cardEnergy,
-        energyExpiresAt: duration === 0 ? 0 : now + duration,
-        nextAttackAt: now,
-      };
-    });
-
-    await ctx.db.patch(profile._id, {
-      coins: (profile.coins || 0) - REFUEL_COINS_COST,
-    });
-
-    await ctx.db.patch(raidDeck._id, {
-      cardEnergy: updatedCardEnergy,
-      lastUpdated: now,
-    });
-
-    return { success: true, costPaid: REFUEL_COINS_COST };
   },
 });

@@ -339,22 +339,10 @@ body.neobrutalism [class*="fixed inset-0"] button[class*="from-vintage-gold"] * 
   color: #000 !important;
 }
 
-/* --- Animations --- */
-body.neobrutalism [class*="animate-pulse"],
+/* --- Animations: only kill decorative shimmers, keep functional animations --- */
 body.neobrutalism [class*="animate-glow"],
 body.neobrutalism [class*="animate-shimmer"] {
   animation: none !important;
-}
-/* Kill ALL transitions - neo is instant snap (except ticker animation) */
-body.neobrutalism *:not(.animate-ticker),
-body.neobrutalism *::before,
-body.neobrutalism *::after {
-  transition-property: none !important;
-  transition-duration: 0s !important;
-  transition-delay: 0s !important;
-}
-body.neobrutalism *:not(.animate-ticker):not(.animate-spin):not(.animate-boss-hit):not(.animate-card-attack):not(.animate-damage-float) {
-  animation-duration: 0s !important;
 }
 
 /* ===================================================
