@@ -1221,7 +1221,7 @@ export function VibeMailInboxWithClaim({
               onClick={() => setActiveTab('inbox')}
               className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
               style={{
-                background: activeTab === 'inbox' ? '#2563EB' : '#0f204a',
+                background: activeTab === 'inbox' ? '#2563EB' : '#1e3a8a',
                 color: '#fff',
               }}
             >
@@ -1234,7 +1234,7 @@ export function VibeMailInboxWithClaim({
               onClick={() => setActiveTab('sent')}
               className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
               style={{
-                background: activeTab === 'sent' ? '#EA580C' : '#4a2000',
+                background: activeTab === 'sent' ? '#EA580C' : '#7c2d12',
                 color: '#fff',
               }}
             >
@@ -1247,7 +1247,7 @@ export function VibeMailInboxWithClaim({
               onClick={() => setActiveTab('quests')}
               className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
               style={{
-                background: activeTab === 'quests' ? '#16A34A' : '#0f3a1a',
+                background: activeTab === 'quests' ? '#16A34A' : '#166534',
                 color: activeTab === 'quests' ? '#000' : '#fff',
               }}
             >
