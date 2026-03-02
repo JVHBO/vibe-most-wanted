@@ -450,16 +450,24 @@ export default function QuestsPage() {
           >
             {t('questsWantedCasts')}
           </button>
-          <button
-            onClick={() => { AudioManager.buttonClick(); setActiveTab('messages'); }}
-            className={`flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 border-black transition-all ${
-              activeTab === 'messages'
-                ? 'bg-[#9945FF] text-white shadow-[2px_2px_0px_#000]'
-                : 'bg-[#2A2A2A] text-white/70 shadow-[2px_2px_0px_#000] hover:bg-[#333] hover:text-white'
-            }`}
-          >
-            Messages
-          </button>
+          {(() => {
+            const canAccessMessages = profileDashboard?.username?.toLowerCase() === 'jvhbo';
+            return (
+              <button
+                onClick={() => { if (!canAccessMessages) return; AudioManager.buttonClick(); setActiveTab('messages'); }}
+                disabled={!canAccessMessages}
+                className={`flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 border-black transition-all ${
+                  !canAccessMessages
+                    ? 'bg-[#1a1a1a] text-white/20 shadow-[2px_2px_0px_#000] cursor-not-allowed opacity-40'
+                    : activeTab === 'messages'
+                      ? 'bg-[#9945FF] text-white shadow-[2px_2px_0px_#000]'
+                      : 'bg-[#2A2A2A] text-white/70 shadow-[2px_2px_0px_#000] hover:bg-[#333] hover:text-white'
+                }`}
+              >
+                Messages
+              </button>
+            );
+          })()}
         </div>
       </div>
 
@@ -619,7 +627,10 @@ export default function QuestsPage() {
                                   +{effectiveChain === "arbitrum" ? mission.reward * 2 : mission.reward}
                                   {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
                                 </span>
-                                <span className="text-purple-400 text-[9px] font-bold">+1 aura</span>
+                                <span className="text-purple-400 text-[9px] font-bold">
+                                  +{5 * (vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1)} aura
+                                  {(vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge) && <span className="text-blue-400 text-[8px] ml-0.5">×2</span>}
+                                </span>
                               </div>
                             )}
                             {mission.completed && !isPlaceholder ? (

@@ -366,14 +366,17 @@ export const claimMission = mutation({
       const newLifetimeEarned = (profile.lifetimeEarned || 0) + boostedReward;
 
       const currentAura = profile.stats?.aura ?? 500;
-      const auraReward = 1; // +1 aura for completing missions (nerfed from +3, Vibe Clash is main mode)
+      // Base +5 aura, 2x for VibeFID holders, 2x for ARB mode (stackable)
+      const auraVibeFIDMultiplier = profile.hasVibeBadge === true ? 2 : 1;
+      const auraArbMultiplier = chain === "arbitrum" ? 2 : 1;
+      const auraReward = 5 * auraVibeFIDMultiplier * auraArbMultiplier;
 
       await ctx.db.patch(profile._id, {
         coins: newBalance,
         lifetimeEarned: newLifetimeEarned,
         stats: {
           ...profile.stats,
-          aura: currentAura + auraReward, // Award aura for mission completion
+          aura: currentAura + auraReward,
         },
       });
 
@@ -487,9 +490,18 @@ export const claimAllMissions = mutation({
     const newBalance = currentBalance + totalReward;
     const newLifetimeEarned = (profile.lifetimeEarned || 0) + totalReward;
 
+    // Aura: +5 base per mission, 2x VibeFID, 2x ARB
+    const auraVibeFIDMultiplier = profile.hasVibeBadge === true ? 2 : 1;
+    const totalAuraReward = missions.length * 5 * auraVibeFIDMultiplier * arbMultiplier;
+    const currentAura = profile.stats?.aura ?? 500;
+
     await ctx.db.patch(profile._id, {
       coins: newBalance,
       lifetimeEarned: newLifetimeEarned,
+      stats: {
+        ...profile.stats,
+        aura: currentAura + totalAuraReward,
+      },
     });
 
     // 📊 Log transaction

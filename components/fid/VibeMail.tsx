@@ -19,6 +19,7 @@ import { useMusic } from '@/contexts/MusicContext';
 import { openMarketplace } from "@/lib/fid/marketplace-utils";
 import { VibeDexModal } from './VibeDexModal';
 import { CastPreview } from './CastPreview';
+import { MiniappPreview } from './MiniappPreview';
 
 
 const VIBEMAIL_COST_VBMS = "1000"; // Cost for paid VibeMail
@@ -1870,10 +1871,7 @@ export function VibeMailInboxWithClaim({
                   style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
                 />
                 {composerMiniappUrl && (
-                  <div className="mt-1 bg-[#22C55E]/10 border border-[#22C55E]/50 p-2 flex items-center gap-2">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
-                    <span className="text-[#4ade80] text-[10px] truncate">{composerMiniappUrl}</span>
-                  </div>
+                  <MiniappPreview url={composerMiniappUrl} />
                 )}
               </div>
             )}
@@ -2257,21 +2255,9 @@ export function VibeMailInboxWithClaim({
                 </div>
               )}
 
-              {/* Miniapp Link Card */}
+              {/* Miniapp Rich Preview */}
               {selectedMessage.miniappUrl && (
-                <button
-                  onClick={() => sdk.actions.openUrl(selectedMessage.miniappUrl!)}
-                  className="w-full mt-1 bg-[#0d1f0d] border-2 border-[#22C55E] shadow-[2px_2px_0px_#000] p-2 flex items-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all text-left"
-                >
-                  <div className="w-8 h-8 bg-[#22C55E] flex items-center justify-center flex-shrink-0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[#22C55E] font-bold text-xs">Open Miniapp</p>
-                    <p className="text-white/50 text-[10px] truncate">{selectedMessage.miniappUrl}</p>
-                  </div>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                </button>
+                <MiniappPreview url={selectedMessage.miniappUrl} />
               )}
 
               {/* NFT Gift Display */}
