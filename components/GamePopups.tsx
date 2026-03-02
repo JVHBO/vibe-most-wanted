@@ -688,13 +688,13 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
             {/* Body */}
             <div className="p-5">
               <p className="text-white font-modern text-base mb-1">Login bonus available:</p>
-              <p className="text-[#FFD400] font-black font-display text-3xl uppercase tracking-wider mb-5">+{effectiveChain === 'arbitrum' ? 100 : 50} COINS</p>
+              <p className="text-[#FFD700] font-black font-display text-3xl uppercase tracking-wider mb-5">+{effectiveChain === 'arbitrum' ? 100 : 50} COINS</p>
 
               <div className="flex gap-3">
                 <button
                   onClick={() => { if (onDailyClaimNow) onDailyClaimNow(); }}
                   disabled={isClaimingBonus}
-                  className="flex-1 py-3 bg-[#FFD400] border-2 border-black text-black font-black uppercase tracking-wide shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[4px_4px_0px_#000]"
+                  className="flex-1 py-3 bg-[#FFD700] border-2 border-black text-black font-black uppercase tracking-wide shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[4px_4px_0px_#000]"
                 >
                   {isClaimingBonus ? 'Claiming...' : 'Claim Now'}
                 </button>

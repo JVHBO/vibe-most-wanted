@@ -125,8 +125,8 @@ export function BossLeaderboardModal({
               </h2>
               <div className="flex items-center gap-2 mb-2">
                 <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                  bossHistory.rarity === 'Mythic' ? 'bg-purple-600 text-white' :
-                  bossHistory.rarity === 'Legendary' ? 'bg-orange-600 text-white' :
+                  bossHistory.rarity === 'Mythic' ? 'bg-fuchsia-600 text-white' :
+                  bossHistory.rarity === 'Legendary' ? 'bg-orange-500 text-black' :
                   bossHistory.rarity === 'Epic' ? 'bg-purple-500 text-white' :
                   bossHistory.rarity === 'Rare' ? 'bg-blue-500 text-white' :
                   'bg-gray-500 text-white'

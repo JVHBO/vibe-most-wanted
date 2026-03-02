@@ -144,7 +144,7 @@ export function SpectatorBetFeedback({
             style={{ borderBottom: '1px solid #444' }}
           >
             <span style={{ color: '#fff', fontWeight: 700 }}>Bets</span>
-            <span style={{ color: '#FFD400', fontWeight: 700 }}>{credits?.balance || 0}c</span>
+            <span style={{ color: '#FFD700', fontWeight: 700 }}>{credits?.balance || 0}c</span>
           </div>
 
           {/* Compact Stats Row */}

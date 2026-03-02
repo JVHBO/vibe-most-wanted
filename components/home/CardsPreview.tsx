@@ -12,7 +12,7 @@ interface CardsPreviewProps {
 }
 
 const RARITY_BORDERS: Record<CardRarity, string> = {
-  Mythic: 'border-pink-400',
+  Mythic: 'border-fuchsia-300',    // iridescente — distinto do roxo Epic
   Legendary: 'border-yellow-400',
   Epic: 'border-purple-400',
   Rare: 'border-blue-400',

@@ -44,7 +44,7 @@ function StatusBar({ step, error }: { step: string; error?: string | null }) {
     error: error || 'Transaction failed',
   };
   return (
-    <div className={`p-2 border-2 border-black text-xs font-bold text-center rounded-sm ${isOk ? 'bg-green-500/20 text-green-400' : isErr ? 'bg-red-500/20 text-red-400' : 'bg-[#2C2C2C] text-[#FFD400] animate-pulse'}`}>
+    <div className={`p-2 border-2 border-black text-xs font-bold text-center rounded-sm ${isOk ? 'bg-green-500/20 text-green-400' : isErr ? 'bg-red-500/20 text-red-400' : 'bg-[#2C2C2C] text-[#FFD700] animate-pulse'}`}>
       {msg[step] || step}
     </div>
   );
@@ -99,7 +99,7 @@ export function VibeDexModal({ onClose }: VibeDexModalProps) {
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b-4 border-black bg-[#FFD400]">
+        <div className="flex items-center justify-between px-4 py-3 border-b-4 border-black bg-[#FFD700]">
           <div className="flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
@@ -117,7 +117,7 @@ export function VibeDexModal({ onClose }: VibeDexModalProps) {
         {/* Balance row */}
         <div className="flex items-center justify-between px-4 py-2 bg-[#2A2A2A] border-b-2 border-black text-xs">
           <span className="text-gray-400">ETH: <span className="text-white font-bold">{parseFloat(ethBalance?.formatted || '0').toFixed(4)}</span></span>
-          <span className="text-gray-400">VBMS: <span className="text-[#FFD400] font-bold">{parseFloat(vbmsBalance || '0').toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
+          <span className="text-gray-400">VBMS: <span className="text-[#FFD700] font-bold">{parseFloat(vbmsBalance || '0').toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></span>
         </div>
 
         {/* Mode tabs */}
@@ -161,7 +161,7 @@ export function VibeDexModal({ onClose }: VibeDexModalProps) {
                     <button
                       key={n}
                       onClick={() => setPackCount(n)}
-                      className={`flex-1 py-1.5 text-xs font-black border-2 border-black rounded-sm transition-none ${packCount === n ? 'bg-[#FFD400] text-black' : 'bg-[#2C2C2C] text-white shadow-[2px_2px_0px_#000]'}`}
+                      className={`flex-1 py-1.5 text-xs font-black border-2 border-black rounded-sm transition-none ${packCount === n ? 'bg-[#FFD700] text-black' : 'bg-[#2C2C2C] text-white shadow-[2px_2px_0px_#000]'}`}
                     >{n}x</button>
                   ))}
                 </div>
@@ -176,7 +176,7 @@ export function VibeDexModal({ onClose }: VibeDexModalProps) {
                 <div className="h-px bg-black" />
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">You receive</span>
-                  <span className="text-[#FFD400] font-bold">~{estimatedVBMS.toLocaleString()} VBMS</span>
+                  <span className="text-[#FFD700] font-bold">~{estimatedVBMS.toLocaleString()} VBMS</span>
                 </div>
                 {!hasEnoughEth && isConnected && (
                   <p className="text-red-400 text-xs pt-0.5">Insufficient ETH balance</p>
@@ -191,7 +191,7 @@ export function VibeDexModal({ onClose }: VibeDexModalProps) {
                 <button
                   onClick={handleBuy}
                   disabled={isLoading || !priceWei || !hasEnoughEth || currentStep === 'complete'}
-                  className="w-full py-3 bg-[#FFD400] text-black font-black text-sm uppercase tracking-widest border-4 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none rounded-sm transition-none"
+                  className="w-full py-3 bg-[#FFD700] text-black font-black text-sm uppercase tracking-widest border-4 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none rounded-sm transition-none"
                 >
                   {isLoading ? 'Processing...' : currentStep === 'complete' ? 'Done!' : `Buy ${estimatedVBMS.toLocaleString()} VBMS`}
                 </button>
@@ -205,7 +205,7 @@ export function VibeDexModal({ onClose }: VibeDexModalProps) {
                   <p className="text-gray-400 text-[10px] uppercase tracking-widest">VBMS to sell</p>
                   <button
                     onClick={() => setSellAmount(Math.floor(parseFloat(vbmsBalance || '0')).toString())}
-                    className="text-[#FFD400] text-xs font-bold hover:underline"
+                    className="text-[#FFD700] text-xs font-bold hover:underline"
                   >MAX</button>
                 </div>
                 <input
@@ -214,7 +214,7 @@ export function VibeDexModal({ onClose }: VibeDexModalProps) {
                   onChange={e => setSellAmount(e.target.value)}
                   placeholder="0"
                   disabled={isLoading}
-                  className="w-full bg-[#2C2C2C] border-2 border-black text-white font-bold text-xl p-2.5 outline-none focus:border-[#FFD400] rounded-sm"
+                  className="w-full bg-[#2C2C2C] border-2 border-black text-white font-bold text-xl p-2.5 outline-none focus:border-[#FFD700] rounded-sm"
                 />
                 <div className="flex gap-1.5 mt-2">
                   {QUICK_SELL.map(({ label, value }) => (

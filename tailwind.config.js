@@ -2,6 +2,7 @@ module.exports = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./lib/**/*.{js,ts,tsx}",
   ],
   theme: {
     extend: {
@@ -21,7 +22,11 @@ module.exports = {
           purple: '#2d1b4e',
           'burnt-gold': '#8B7355',
           ice: '#F5F5F5',
-        }
+        },
+        // Semantic tokens — alterar aqui propaga por todo o app
+        'neo-profile': '#1D4ED8',  // botao de perfil (HomeHeader)
+        'neo-win':     '#22C55E',  // estado de vitória
+        'neo-attack':  '#DC2626',  // botoes de ataque/marketplace vermelho
       },
       fontFamily: {
         'vintage': ['"Cinzel Decorative"', 'serif'],

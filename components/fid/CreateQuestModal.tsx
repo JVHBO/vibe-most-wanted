@@ -129,11 +129,11 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80 p-4 pt-12 pb-24 overflow-y-auto">
       <div className="bg-[#1A1A1A] border-4 border-black shadow-[6px_6px_0px_#000] w-full max-w-sm">
         {/* Header */}
-        <div className="bg-[#FFD400] border-b-4 border-black px-4 py-3 flex items-center justify-between">
+        <div className="bg-[#FFD700] border-b-4 border-black px-4 py-3 flex items-center justify-between">
           <h3 className="text-black font-black text-lg uppercase tracking-wide">Create Quest</h3>
           <button
             onClick={() => { AudioManager.buttonClick(); onClose(); }}
-            className="w-8 h-8 bg-black text-[#FFD400] font-black flex items-center justify-center hover:bg-[#333] transition-colors"
+            className="w-8 h-8 bg-black text-[#FFD700] font-black flex items-center justify-center hover:bg-[#333] transition-colors"
           >
             X
           </button>
@@ -142,7 +142,7 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
         <div className="p-4 space-y-4">
           {/* Quest Type */}
           <div>
-            <p className="text-[#FFD400] font-bold text-xs uppercase tracking-wide mb-2">Quest Type</p>
+            <p className="text-[#FFD700] font-bold text-xs uppercase tracking-wide mb-2">Quest Type</p>
             <div className="grid grid-cols-2 gap-2">
               {(Object.keys(QUEST_TYPE_INFO) as QuestType[]).map((type) => {
                 const info = QUEST_TYPE_INFO[type];
@@ -152,7 +152,7 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
                     onClick={() => { AudioManager.buttonClick(); setQuestType(type); setTargetUrl(''); setTargetDisplay(''); }}
                     className={`px-3 py-2 border-2 border-black font-bold text-xs transition-all text-left ${
                       questType === type
-                        ? 'bg-[#FFD400] text-black shadow-[2px_2px_0px_#000]'
+                        ? 'bg-[#FFD700] text-black shadow-[2px_2px_0px_#000]'
                         : 'bg-[#2A2A2A] text-white hover:bg-[#333]'
                     }`}
                   >
@@ -168,13 +168,13 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
           {/* Target Input (hidden for follow_me and use_miniapp) */}
           {!noTargetNeeded && (
             <div>
-              <p className="text-[#FFD400] font-bold text-xs uppercase tracking-wide mb-2">Target</p>
+              <p className="text-[#FFD700] font-bold text-xs uppercase tracking-wide mb-2">Target</p>
               <input
                 type="text"
                 value={targetUrl}
                 onChange={(e) => setTargetUrl(e.target.value)}
                 placeholder={QUEST_TYPE_INFO[questType].placeholder}
-                className="w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#FFD400]"
+                className="w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-2 text-sm font-mono focus:outline-none focus:border-[#FFD700]"
               />
               {questType === 'join_channel' && (
                 <input
@@ -182,7 +182,7 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
                   value={targetDisplay}
                   onChange={(e) => setTargetDisplay(e.target.value)}
                   placeholder="Display name (e.g. Vibe Most Wanted)"
-                  className="w-full bg-[#0A0A0A] border-2 border-[#444] border-t-0 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#FFD400]"
+                  className="w-full bg-[#0A0A0A] border-2 border-[#444] border-t-0 text-white px-3 py-2 text-sm focus:outline-none focus:border-[#FFD700]"
                 />
               )}
             </div>
@@ -190,7 +190,7 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
 
           {/* Reward per completer */}
           <div>
-            <p className="text-[#FFD400] font-bold text-xs uppercase tracking-wide mb-2">
+            <p className="text-[#FFD700] font-bold text-xs uppercase tracking-wide mb-2">
               Reward per Completer
             </p>
             <div className="flex items-center gap-2">
@@ -204,7 +204,7 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
                 type="number"
                 value={rewardPerCompleter}
                 onChange={(e) => setRewardPerCompleter(Math.min(MAX_REWARD, Math.max(MIN_REWARD, parseInt(e.target.value) || MIN_REWARD)))}
-                className="flex-1 h-10 bg-[#0A0A0A] border-2 border-[#444] text-white text-center font-bold focus:outline-none focus:border-[#FFD400]"
+                className="flex-1 h-10 bg-[#0A0A0A] border-2 border-[#444] text-white text-center font-bold focus:outline-none focus:border-[#FFD700]"
                 min={MIN_REWARD}
                 max={MAX_REWARD}
                 step={50}
@@ -221,7 +221,7 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
 
           {/* Max completers */}
           <div>
-            <p className="text-[#FFD400] font-bold text-xs uppercase tracking-wide mb-2">
+            <p className="text-[#FFD700] font-bold text-xs uppercase tracking-wide mb-2">
               Max Completers
             </p>
             <div className="flex items-center gap-2">
@@ -235,7 +235,7 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
                 type="number"
                 value={maxCompleters}
                 onChange={(e) => setMaxCompleters(Math.min(MAX_COMPLETERS, Math.max(1, parseInt(e.target.value) || 1)))}
-                className="flex-1 h-10 bg-[#0A0A0A] border-2 border-[#444] text-white text-center font-bold focus:outline-none focus:border-[#FFD400]"
+                className="flex-1 h-10 bg-[#0A0A0A] border-2 border-[#444] text-white text-center font-bold focus:outline-none focus:border-[#FFD700]"
                 min={1}
                 max={MAX_COMPLETERS}
               />
@@ -260,8 +260,8 @@ export function CreateQuestModal({ address, fid, username, coins, onClose, onCre
               <span className="text-white/60">{fee.toLocaleString()} coins</span>
             </div>
             <div className="flex justify-between text-xs pt-1.5 border-t border-[#333]">
-              <span className="text-[#FFD400] font-black">Total cost</span>
-              <span className={`font-black ${canAfford ? 'text-[#FFD400]' : 'text-red-400'}`}>
+              <span className="text-[#FFD700] font-black">Total cost</span>
+              <span className={`font-black ${canAfford ? 'text-[#FFD700]' : 'text-red-400'}`}>
                 {totalCost.toLocaleString()} coins
               </span>
             </div>

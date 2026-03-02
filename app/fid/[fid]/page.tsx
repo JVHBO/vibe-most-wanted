@@ -793,7 +793,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                     )}
                     <div className="flex justify-between mb-1.5">
                       <span className="text-gray-400">Power</span>
-                      <span className="text-[#FFD400] font-black">⚡ {correctPower}</span>
+                      <span className="text-[#FFD700] font-black">⚡ {correctPower}</span>
                     </div>
                     <div className="flex justify-between mb-1.5">
                       <span className="text-gray-400">Neynar</span>

@@ -448,7 +448,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             onClick={(e) => e.stopPropagation()}
           >
         {/* Header bar - gold strip */}
-        <div className="bg-[#FFD400] border-b-4 border-black px-4 py-3 flex items-center justify-between">
+        <div className="bg-[#FFD700] border-b-4 border-black px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-black flex items-center justify-center border-2 border-black">
               <NextImage src="/images/icons/convert.svg" alt="Convert" width={20} height={20} className="w-5 h-5" style={{ filter: 'brightness(0) saturate(100%) invert(91%) sepia(50%) saturate(800%) hue-rotate(5deg)' }} />
@@ -462,7 +462,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             {/* History button */}
             <button
               onClick={() => setShowHistory(true)}
-              className="w-9 h-9 bg-black text-[#FFD400] border-2 border-black flex items-center justify-center hover:bg-[#333] transition shadow-[2px_2px_0px_rgba(0,0,0,0.4)]"
+              className="w-9 h-9 bg-black text-[#FFD700] border-2 border-black flex items-center justify-center hover:bg-[#333] transition shadow-[2px_2px_0px_rgba(0,0,0,0.4)]"
               title="Histórico"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -536,11 +536,11 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
                       placeholder="Enter amount..."
                       min="100"
                       max={Math.min(testvbmsBalance, dailyRemainingNum)}
-                      className="flex-1 px-3 py-2 bg-[#2C2C2C] border-2 border-[#555] text-white text-sm focus:border-[#FFD400] focus:outline-none font-mono"
+                      className="flex-1 px-3 py-2 bg-[#2C2C2C] border-2 border-[#555] text-white text-sm focus:border-[#FFD700] focus:outline-none font-mono"
                     />
                     <button
                       onClick={() => setConvertAmount(Math.min(testvbmsBalance, dailyRemainingNum).toString())}
-                      className="px-3 py-2 bg-[#FFD400] border-2 border-black text-black text-xs font-bold shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
+                      className="px-3 py-2 bg-[#FFD700] border-2 border-black text-black text-xs font-bold shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all"
                     >
                       {t('convertMax')}
                     </button>
@@ -554,7 +554,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
                   disabled={!canConvertTESTVBMS || isProcessing}
                   className={`w-full py-3 px-4 font-bold text-sm flex items-center justify-between transition-all ${
                     canConvertTESTVBMS
-                      ? 'bg-[#FFD400] border-3 border-black text-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000]'
+                      ? 'bg-[#FFD700] border-3 border-black text-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000]'
                       : 'bg-[#333] border-2 border-[#555] text-[#666] cursor-not-allowed'
                   }`}
                 >
@@ -562,7 +562,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
                     <NextImage src="/images/icons/convert.svg" alt="" width={16} height={16} className="w-4 h-4" style={{ filter: 'brightness(0)' }} />
                     {t('convertButton')} {selectedAmount > 0 ? selectedAmount.toLocaleString() : '0'} → VBMS
                   </span>
-                  <span className="text-[10px] bg-black text-[#FFD400] border border-[#FFD400] px-2 py-0.5 font-mono font-bold">Gas</span>
+                  <span className="text-[10px] bg-black text-[#FFD700] border border-[#FFD700] px-2 py-0.5 font-mono font-bold">Gas</span>
                 </button>
               </>
             ) : (

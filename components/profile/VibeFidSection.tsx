@@ -370,7 +370,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
                   )}
                   <div className="flex justify-between mb-1.5">
                     <span className="text-gray-400">Power</span>
-                    <span className="text-[#FFD400] font-black">⚡ {correctPower}</span>
+                    <span className="text-[#FFD700] font-black">⚡ {correctPower}</span>
                   </div>
                   <div className="flex justify-between mb-1.5">
                     <span className="text-gray-400">Neynar</span>
@@ -428,7 +428,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
             <div>
               <p className="text-vintage-gold font-bold text-sm truncate">@{card.username}</p>
               <p className="text-vintage-ice/70 text-xs">{card.rarity} {currentTraits?.foil !== 'None' && currentTraits?.foil ? `• ${currentTraits.foil} Foil` : ''}</p>
-              <p className="text-[#FFD400] text-xs font-bold mt-0.5">⚡ {correctPower} Power</p>
+              <p className="text-[#FFD700] text-xs font-bold mt-0.5">⚡ {correctPower} Power</p>
             </div>
 
             {/* Score */}

@@ -9,15 +9,15 @@ const CARD_H = 140;
 const SPEED = 1.2; // px per frame at 60fps
 
 const RARITY_BORDER: Record<string, string> = {
-  Mythic: "3px solid #FFD700",
+  Mythic: "3px solid #F0ABFC",    // fuchsia-300 — iridescente, distinto do ouro Legendary
   Legendary: "3px solid #FFD700",
-  Epic: "2px solid #B8922A",
+  Epic: "2px solid #A855F7",      // purple-500
 };
 
 const RARITY_SHADOW: Record<string, string> = {
-  Mythic: "0 0 14px rgba(255,215,0,0.7)",
+  Mythic: "0 0 14px rgba(232,121,249,0.8), 0 0 28px rgba(168,85,247,0.4)", // dual-layer fuchsia+purple
   Legendary: "0 0 12px rgba(255,215,0,0.5)",
-  Epic: "0 0 8px rgba(184,146,42,0.5)",
+  Epic: "0 0 8px rgba(168,85,247,0.5)",
 };
 
 interface CardData {

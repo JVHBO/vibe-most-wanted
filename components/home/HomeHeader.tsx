@@ -80,8 +80,7 @@ export function HomeHeader({
                     if (soundEnabled) AudioManager.buttonClick();
                     setShowDropdown(prev => !prev);
                   }}
-                  className="tour-profile-btn flex items-center gap-1.5 text-white rounded-lg px-1 py-2 transition"
-                  style={{ background: '#1D4ED8', border: '3px solid #000', boxShadow: '3px 3px 0px #000' }}
+                  className="tour-profile-btn flex items-center gap-1.5 text-white rounded-lg px-1 py-2 transition bg-neo-profile border-[3px] border-black shadow-[3px_3px_0px_#000]"
                 >
                   {userProfile.twitter ? (
                     <img

@@ -101,6 +101,9 @@ const MyCardsModal = dynamic(() => import("@/app/(game)/components/modals/MyCard
 const ChainSelectionModal = dynamic(() => import("@/app/(game)/components/modals/ChainSelectionModal").then(m => m.ChainSelectionModal), { ssr: false });
 const DefenseDeckModal = dynamic(() => import("@/app/(game)/components/modals/DefenseDeckModal").then(m => m.DefenseDeckModal), { ssr: false });
 
+// Shared style para botoes de marketplace/ataque vermelhos
+const STYLE_ATTACK_RED = { background: 'linear-gradient(145deg, #DC2626, #991B1B)' } as const;
+
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
 const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDRESS; // JC can have different contract
@@ -4827,7 +4830,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                         await openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isInFarcaster);
                       }}
                       className="inline-block px-6 py-3 border-2 border-red-600 text-white font-modern font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer text-lg"
-                      style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                      style={STYLE_ATTACK_RED}
                     >
                       <div className="flex items-center justify-center gap-1">
                         <span className="text-xl">◆</span>
@@ -4861,7 +4864,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                             await openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isInFarcaster);
                           }}
                           className="px-4 py-2 border-2 border-red-600 text-white font-modern font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 cursor-pointer text-sm"
-                          style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                          style={STYLE_ATTACK_RED}
                         >
                           <div className="flex items-center gap-2">
                             <span>◆</span>
@@ -4890,7 +4893,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                           if (soundEnabled) AudioManager.buttonClick();
                         }}
                         className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer"
-                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                        style={STYLE_ATTACK_RED}
                       >
                         <div className="flex items-center justify-center gap-1">
                           <span className="text-base md:text-lg">◆</span>
@@ -4901,7 +4904,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                       <Link
                         href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
                         className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
-                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                        style={STYLE_ATTACK_RED}
                       >
                         <div className="flex items-center justify-center gap-1">
                           <span className="text-base md:text-lg">◆</span>
@@ -4915,7 +4918,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                           await openMarketplace(COLLECTIONS[selectedCollections[0]].marketplaceUrl!, sdk, isInFarcaster);
                         }}
                         className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer"
-                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                        style={STYLE_ATTACK_RED}
                       >
                         <div className="flex items-center justify-center gap-1">
                           <span className="text-base md:text-lg">◆</span>
@@ -4957,7 +4960,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                           if (soundEnabled) AudioManager.buttonClick();
                         }}
                         className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4 cursor-pointer"
-                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                        style={STYLE_ATTACK_RED}
                       >
                         <div className="flex flex-col items-center justify-center gap-2 text-center">
                           <span className="text-2xl md:text-3xl">◆</span>
@@ -4970,7 +4973,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                       <Link
                         href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
                         className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
-                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                        style={STYLE_ATTACK_RED}
                       >
                         <div className="flex flex-col items-center justify-center gap-2 text-center">
                           <span className="text-2xl md:text-3xl">◆</span>
@@ -4986,7 +4989,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                           await openMarketplace(COLLECTIONS[selectedCollections[0]].marketplaceUrl!, sdk, isInFarcaster);
                         }}
                         className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4 cursor-pointer"
-                        style={{background: 'linear-gradient(145deg, #DC2626, #991B1B)'}}
+                        style={STYLE_ATTACK_RED}
                       >
                         <div className="flex flex-col items-center justify-center gap-2 text-center">
                           <span className="text-2xl md:text-3xl">◆</span>
