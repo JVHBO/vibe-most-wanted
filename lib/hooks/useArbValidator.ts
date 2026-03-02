@@ -95,18 +95,13 @@ export function useArbValidator() {
       try {
         const provider = await sdk.wallet.getEthereumProvider();
         if (provider) {
-          // Switch to Arbitrum first — sending with chainId param alone doesn't trigger chain switch
-          await provider.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: `0x${CONTRACTS.ARBITRUM_CHAIN_ID.toString(16)}` }],
-          });
-
           txHash = await provider.request({
             method: 'eth_sendTransaction',
             params: [{
               from: address as `0x${string}`,
               to: CONTRACTS.VBMSValidator as `0x${string}`,
               data: callData,
+              chainId: `0x${CONTRACTS.ARBITRUM_CHAIN_ID.toString(16)}`,
             }],
           }) as string;
 
