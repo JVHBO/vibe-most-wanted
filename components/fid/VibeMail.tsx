@@ -1211,15 +1211,6 @@ export function VibeMailInboxWithClaim({
                 </svg>
               </button>
             )}
-            <button
-              onClick={() => {
-                stopAudio();
-                onClose();
-              }}
-              className="w-8 h-8 bg-[#DC2626] border-2 border-black shadow-[2px_2px_0px_#000] text-white font-bold hover:bg-[#B91C1C] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
-            >
-              X
-            </button>
           </div>
         </div>
 
@@ -1228,11 +1219,11 @@ export function VibeMailInboxWithClaim({
           <div className="flex gap-1 mb-3">
             <button
               onClick={() => setActiveTab('inbox')}
-              className={`flex-1 py-2 text-xs font-bold border-2 border-black transition-all ${
-                activeTab === 'inbox'
-                  ? 'bg-[#2563EB] text-white shadow-[2px_2px_0px_#000]'
-                  : 'bg-[#0a0a1a] text-blue-400/80 border-[#101030] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
-              }`}
+              className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
+              style={{
+                background: activeTab === 'inbox' ? '#2563EB' : '#0a0f1a',
+                color: activeTab === 'inbox' ? '#fff' : '#60a5fa',
+              }}
             >
               <span className="flex items-center justify-center gap-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
@@ -1241,11 +1232,11 @@ export function VibeMailInboxWithClaim({
             </button>
             <button
               onClick={() => setActiveTab('sent')}
-              className={`flex-1 py-2 text-xs font-bold border-2 border-black transition-all ${
-                activeTab === 'sent'
-                  ? 'bg-[#EA580C] text-white shadow-[2px_2px_0px_#000]'
-                  : 'bg-[#1a0a00] text-orange-400/80 border-[#301500] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
-              }`}
+              className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
+              style={{
+                background: activeTab === 'sent' ? '#EA580C' : '#1a0d00',
+                color: activeTab === 'sent' ? '#fff' : '#fb923c',
+              }}
             >
               <span className="flex items-center justify-center gap-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -1254,11 +1245,11 @@ export function VibeMailInboxWithClaim({
             </button>
             <button
               onClick={() => setActiveTab('quests')}
-              className={`flex-1 py-2 text-xs font-bold border-2 border-black transition-all ${
-                activeTab === 'quests'
-                  ? 'bg-[#22C55E] text-black shadow-[2px_2px_0px_#000]'
-                  : 'bg-[#0a1a0a] text-green-400/80 border-[#103010] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
-              }`}
+              className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
+              style={{
+                background: activeTab === 'quests' ? '#16A34A' : '#0a1a0d',
+                color: activeTab === 'quests' ? '#000' : '#4ade80',
+              }}
             >
               <span className="flex items-center justify-center gap-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
