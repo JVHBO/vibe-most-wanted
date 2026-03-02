@@ -485,9 +485,27 @@ export function Roulette({ onClose }: RouletteProps) {
 
     try {
       const chain = (profileDashboard as any)?.preferredChain || "arbitrum";
-      // Arb validation tx BEFORE spin (safety net in useArbValidator blocks unsupported clients)
       if (chain === "arbitrum") {
+        // Arb: validation TX before spin
         await validateOnArb(0, ARB_CLAIM_TYPE.ROULETTE_SPIN);
+      } else {
+        // Base: fire-and-forget 0 VBMS transfer to pool for on-chain attribution
+        (async () => {
+          try {
+            const data = encodeFunctionData({
+              abi: erc20Abi,
+              functionName: 'transfer',
+              args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, BigInt(0)],
+            });
+            const provider = await sdk.wallet.getEthereumProvider();
+            if (provider) {
+              await provider.request({
+                method: 'eth_sendTransaction',
+                params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken as `0x${string}`, data }],
+              });
+            }
+          } catch {}
+        })();
       }
       const response = await spinMutation({ address, chain });
 

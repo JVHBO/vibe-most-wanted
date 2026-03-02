@@ -4,7 +4,7 @@
  * Backend logic for the global cooperative Raid Boss mode
  */
 
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { createAuditLog } from "./coinAudit";
 import { mutation, query, internalMutation, internalQuery, QueryCtx, MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
@@ -1446,18 +1446,28 @@ export const refuelAllWithCoins = mutation({
       .withIndex("by_address", (q) => q.eq("address", address))
       .first();
 
-    if (!raidDeck) throw new Error("No raid deck found");
+    if (!raidDeck) throw new ConvexError("No raid deck found");
 
     const profile = await getProfileByAddress(ctx, address);
-    if (!profile) throw new Error("Profile not found");
+    if (!profile) throw new ConvexError("Profile not found");
 
     if ((profile.coins || 0) < REFUEL_COINS_COST) {
-      throw new Error(`Need ${REFUEL_COINS_COST} coins to refuel team`);
+      throw new ConvexError(`Need ${REFUEL_COINS_COST} coins to refuel (you have ${profile.coins || 0})`);
     }
 
     const now = Date.now();
 
-    const updatedCardEnergy = raidDeck.cardEnergy.map((cardEnergy: any) => {
+    // Handle old records that might not have cardEnergy initialized
+    const currentEnergy: Array<{ tokenId: string; energyExpiresAt: number; nextAttackAt?: number }> =
+      raidDeck.cardEnergy?.length
+        ? raidDeck.cardEnergy
+        : raidDeck.deck.map((card: any) => ({
+            tokenId: card.tokenId,
+            energyExpiresAt: 0,
+            nextAttackAt: now,
+          }));
+
+    const updatedCardEnergy = currentEnergy.map((cardEnergy: any) => {
       const deckCard = raidDeck.deck.find((c: any) => c.tokenId === cardEnergy.tokenId);
       if (!deckCard) return cardEnergy;
       const rarity = deckCard.rarity.toLowerCase();
