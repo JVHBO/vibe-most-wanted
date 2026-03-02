@@ -1107,7 +1107,7 @@ export function VibeMailInboxWithClaim({
       <div
         style={{ colorScheme: 'dark' }}
         className={
-          inline ? "bg-[#111] w-full flex flex-col p-3 min-h-[70vh]"
+          inline ? "bg-[#111] w-full flex flex-col p-3 min-h-[calc(100dvh-110px)]"
           : asPage ? "bg-vintage-charcoal h-screen w-full flex flex-col"
           : "bg-vintage-charcoal border-2 border-black shadow-[4px_4px_0px_#000] p-4 w-full max-w-md max-h-[calc(100vh-120px)] overflow-hidden flex flex-col"
         }
@@ -1310,6 +1310,7 @@ export function VibeMailInboxWithClaim({
                       setComposerMessage(filledTemplate);
                       setComposerQuestType(opt.questType);
                       if (opt.questType === 'follow_me') setComposerFollowTarget(target);
+                      if (opt.questType === 'rt_cast') { setShowCastInput(true); setCastInputValue(''); setComposerCastUrl(null); }
                       setShowPurposeModal(false);
                       setShowComposer(true);
                     }}
