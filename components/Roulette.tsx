@@ -842,7 +842,7 @@ export function Roulette({ onClose }: RouletteProps) {
             <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
               <button
                 onClick={() => handleSwitchChain('base')}
-                style={{ display:"flex", alignItems:"center", gap:"5px", padding:"4px 10px", borderRadius:"4px", fontWeight:700, fontSize:"11px", cursor:"pointer", border: currentChain === 'base' ? "2px solid #000" : "2px solid #374151", background: currentChain === 'base' ? '#0052FF' : '#1f2937', color: currentChain === 'base' ? '#fff' : '#6b7280', boxShadow: currentChain === 'base' ? '2px 2px 0px #000' : 'none', transition:"all 0.1s" }}
+                className={`flex items-center gap-1 px-2.5 py-1 font-bold text-[11px] uppercase cursor-pointer rounded ${currentChain === 'base' ? 'ct-base-active' : 'ct-base-inactive'}`}
               >
                 <svg width="12" height="12" viewBox="0 0 111 111" fill="none">
                   <circle cx="55.5" cy="55.5" r="55.5" fill={currentChain === 'base' ? 'white' : '#6b7280'}/>
@@ -852,7 +852,7 @@ export function Roulette({ onClose }: RouletteProps) {
               </button>
               <button
                 onClick={() => handleSwitchChain('arbitrum')}
-                style={{ display:"flex", alignItems:"center", gap:"5px", padding:"4px 10px", borderRadius:"4px", fontWeight:700, fontSize:"11px", cursor:"pointer", border: currentChain === 'arbitrum' ? "2px solid #000" : "2px solid #374151", background: currentChain === 'arbitrum' ? '#12AAFF' : '#1f2937', color: currentChain === 'arbitrum' ? '#000' : '#6b7280', boxShadow: currentChain === 'arbitrum' ? '2px 2px 0px #000' : 'none', transition:"all 0.1s" }}
+                className={`flex items-center gap-1 px-2.5 py-1 font-bold text-[11px] uppercase cursor-pointer rounded ${currentChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive'}`}
               >
                 <svg width="12" height="12" viewBox="0 0 50 50" fill="none">
                   <circle cx="25" cy="25" r="25" fill={currentChain === 'arbitrum' ? '#12AAFF' : '#6b7280'}/>

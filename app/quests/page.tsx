@@ -393,11 +393,7 @@ export default function QuestsPage() {
               {/* Base button */}
               <button
                 onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-black text-[11px] uppercase tracking-wide transition-all border-2 ${
-                  effectiveChain === 'base'
-                    ? 'bg-[#0052FF] text-white border-black shadow-[2px_2px_0px_#000]'
-                    : 'bg-gray-800 text-gray-500 border-gray-700 hover:bg-gray-700 hover:text-gray-400'
-                }`}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-black text-[11px] uppercase tracking-wide ${effectiveChain === 'base' ? 'ct-base-active' : 'ct-base-inactive'}`}
               >
                 {/* Base logo */}
                 <svg width="14" height="14" viewBox="0 0 111 111" fill="none">
@@ -409,11 +405,7 @@ export default function QuestsPage() {
               {/* Arbitrum button */}
               <button
                 onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-black text-[11px] uppercase tracking-wide transition-all border-2 ${
-                  effectiveChain === 'arbitrum'
-                    ? 'bg-[#12AAFF] text-black border-black shadow-[2px_2px_0px_#000]'
-                    : 'bg-gray-800 text-gray-500 border-gray-700 hover:bg-gray-700 hover:text-gray-400'
-                }`}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-black text-[11px] uppercase tracking-wide ${effectiveChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive'}`}
               >
                 {/* Arbitrum logo */}
                 <svg width="14" height="14" viewBox="0 0 50 50" fill="none">

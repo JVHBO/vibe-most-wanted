@@ -1807,15 +1807,15 @@ body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] img
 }
 
 /* Quantity buttons: - = red, + and MAX = gold, borda nos 4 lados */
-/* :not([class*="qt-"]):not([class*="vmt-"]) evita que tabs de quest/vibemail sejam afetados */
-body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="gap-1"] button:nth-of-type(1):not([class*="qt-"]):not([class*="vmt-"]) {
+/* :not([class*="qt-"]):not([class*="vmt-"]):not([class*="ct-"]) evita tabs e chain toggles */
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="gap-1"] button:nth-of-type(1):not([class*="qt-"]):not([class*="vmt-"]):not([class*="ct-"]) {
   background-color: #CC2222 !important;
   color: #FFF !important;
   box-shadow: 0 0 0 3px #000, 3px 3px 0px #000 !important;
   border-radius: 4px !important;
 }
-body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="gap-1"] button:nth-of-type(2):not([class*="qt-"]):not([class*="vmt-"]),
-body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="gap-1"] button:nth-of-type(3):not([class*="qt-"]):not([class*="vmt-"]) {
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="gap-1"] button:nth-of-type(2):not([class*="qt-"]):not([class*="vmt-"]):not([class*="ct-"]),
+body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] [class*="gap-1"] button:nth-of-type(3):not([class*="qt-"]):not([class*="vmt-"]):not([class*="ct-"]) {
   background-color: #FFD400 !important;
   color: #000 !important;
   box-shadow: 0 0 0 3px #000, 3px 3px 0px #000 !important;

@@ -219,11 +219,11 @@ export function ShopView({ address }: ShopViewProps) {
                   <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
                     <button
                       onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
-                      style={{ display:"flex", alignItems:"center", gap:"5px", padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", cursor:"pointer", border: effectiveChain === 'base' ? "2px solid #000" : "2px solid #374151", background: effectiveChain === 'base' ? '#0052FF' : '#1f2937', color: effectiveChain === 'base' ? '#fff' : '#6b7280', boxShadow: effectiveChain === 'base' ? '2px 2px 0px #000' : 'none' }}
+                      className={`px-3 py-1 font-bold text-xs uppercase cursor-pointer rounded ${effectiveChain === 'base' ? 'ct-base-active' : 'ct-base-inactive'}`}
                     >BASE</button>
                     <button
                       onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
-                      style={{ display:"flex", alignItems:"center", gap:"5px", padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", cursor:"pointer", border: effectiveChain === 'arbitrum' ? "2px solid #000" : "2px solid #374151", background: effectiveChain === 'arbitrum' ? '#12AAFF' : '#1f2937', color: effectiveChain === 'arbitrum' ? '#000' : '#6b7280', boxShadow: effectiveChain === 'arbitrum' ? '2px 2px 0px #000' : 'none' }}
+                      className={`px-3 py-1 font-bold text-xs uppercase cursor-pointer rounded ${effectiveChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive'}`}
                     >ARB</button>
                   </div>
                 </div>

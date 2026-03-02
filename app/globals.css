@@ -552,6 +552,12 @@ body > * {
 .vmt-quests-active    { background: #00E676 !important; color: #000 !important; border-color: #000 !important; }
 .vmt-quests-inactive  { background: #22C55E !important; color: #000 !important; border-color: #000 !important; }
 
+/* CHAIN TOGGLE BUTTONS (BASE/ARB) - ct-* classes */
+.ct-base-active   { background: #0052FF !important; color: #fff !important; border: 2px solid #000 !important; box-shadow: 2px 2px 0px #000 !important; }
+.ct-base-inactive { background: #1f2937 !important; color: #6b7280 !important; border: 2px solid #374151 !important; box-shadow: none !important; }
+.ct-arb-active    { background: #12AAFF !important; color: #000 !important; border: 2px solid #000 !important; box-shadow: 2px 2px 0px #000 !important; }
+.ct-arb-inactive  { background: #1f2937 !important; color: #6b7280 !important; border: 2px solid #374151 !important; box-shadow: none !important; }
+
 /* RESPONSIVE CONTAINER: Mobile-first approach for miniapp */
 .responsive-container {
   max-width: 100%;
