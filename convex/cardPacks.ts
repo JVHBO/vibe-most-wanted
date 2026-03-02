@@ -1572,11 +1572,9 @@ export const claimDailyFreePack = mutation({
     const packsToGive = args.chain === "arbitrum" ? 3 : 1;
 
     // Give pack to primary address (all linked wallets share card inventory through primary)
-    // 🔒 SECURITY FIX: Use "dailyFree" packType so cards get sourcePackType="dailyFree" (price=0),
-    // preventing free pack cards from burning for DEFAULT_PACK_PRICE (1000) burn value.
     const existingPack = await ctx.db
       .query("cardPacks")
-      .withIndex("by_address_packType", (q) => q.eq("address", effectiveAddress).eq("packType", "dailyFree"))
+      .withIndex("by_address_packType", (q) => q.eq("address", effectiveAddress).eq("packType", "basic"))
       .first();
 
     if (existingPack) {
@@ -1586,7 +1584,7 @@ export const claimDailyFreePack = mutation({
     } else {
       await ctx.db.insert("cardPacks", {
         address: effectiveAddress,
-        packType: "dailyFree",
+        packType: "basic",
         unopened: packsToGive,
         sourceId: "daily_free",
         earnedAt: now,
