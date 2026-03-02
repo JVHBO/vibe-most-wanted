@@ -1707,7 +1707,7 @@ export function VibeMailInboxWithClaim({
                 style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
               />
             </div>
-            <p className="text-[#FFD400]/50 text-[10px] mb-1">{t.vibeImageTip}</p>
+            <p className="text-[#FFD400]/50 text-[10px] mb-1">Type / for commands · **bold** · *italic* · [text](url)</p>
 
             {/* Voice Recorder - only show if no meme sound selected */}
             {!composerAudioId || isCustomAudio(composerAudioId || undefined) ? (
@@ -1880,85 +1880,85 @@ export function VibeMailInboxWithClaim({
 
             {/* Bottom toolbar */}
             <div className="flex items-center gap-1 border-t-2 border-[#333] pt-2 mt-2">
-              {/* Format Aa button - indigo */}
+              {/* Format Aa - indigo sólido */}
               <button
                 onClick={handleFormatBold}
-                className="w-9 h-9 flex items-center justify-center border-2 border-[#818CF8] bg-[#818CF8]/10 text-[#818CF8] hover:bg-[#818CF8]/20 transition-all font-bold text-sm"
-                style={{ WebkitTextFillColor: 'currentColor' }}
-                title="Bold (select text first)"
+                className="w-9 h-9 flex items-center justify-center border-2 border-[#818CF8] bg-[#818CF8] text-white hover:bg-[#6366F1] transition-all font-black text-sm"
+                style={{ WebkitTextFillColor: 'white' }}
+                title="Bold"
               >
                 Aa
               </button>
 
-              {/* Sound icon button - orange - only if no custom audio */}
+              {/* Som - laranja sólido */}
               {!isCustomAudio(composerAudioId || undefined) && (
                 <button
                   onClick={() => { setShowSoundPicker(!showSoundPicker); setShowImagePicker(false); setShowCastInput(false); setShowMiniappInput(false); }}
                   className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
                     (composerAudioId && !isCustomAudio(composerAudioId)) || showSoundPicker
-                      ? 'border-[#FB923C] bg-[#FB923C]/30 text-[#FB923C]'
-                      : 'border-[#FB923C] bg-[#FB923C]/10 text-[#FB923C] hover:bg-[#FB923C]/20'
+                      ? 'border-[#EA580C] bg-[#EA580C] text-white'
+                      : 'border-[#FB923C] bg-[#FB923C] text-white hover:bg-[#EA580C]'
                   }`}
-                  style={{ WebkitTextFillColor: 'currentColor' }}
+                  style={{ WebkitTextFillColor: 'white' }}
                   title="Sound"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                 </button>
               )}
 
-              {/* Image icon button - purple */}
+              {/* Imagem - roxo sólido */}
               <button
                 onClick={() => { setShowImagePicker(!showImagePicker); setShowSoundPicker(false); setShowCastInput(false); setShowMiniappInput(false); }}
                 className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
                   composerImageId || showImagePicker
-                    ? 'border-[#C084FC] bg-[#C084FC]/30 text-[#C084FC]'
-                    : 'border-[#C084FC] bg-[#C084FC]/10 text-[#C084FC] hover:bg-[#C084FC]/20'
+                    ? 'border-[#9333EA] bg-[#9333EA] text-white'
+                    : 'border-[#C084FC] bg-[#C084FC] text-white hover:bg-[#9333EA]'
                 }`}
-                style={{ WebkitTextFillColor: 'currentColor' }}
+                style={{ WebkitTextFillColor: 'white' }}
                 title="Image"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </button>
 
-              {/* Cast icon button - blue - hidden for miniapp quest */}
+              {/* Cast - azul sólido */}
               {composerQuestType !== 'miniapp' && (
                 <button
                   onClick={() => { setShowCastInput(!showCastInput); if (showCastInput) { setComposerCastUrl(null); setCastInputValue(''); } setShowSoundPicker(false); setShowImagePicker(false); setShowMiniappInput(false); }}
                   className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
                     composerCastUrl || showCastInput
-                      ? 'border-[#60A5FA] bg-[#60A5FA]/30 text-[#60A5FA]'
-                      : 'border-[#60A5FA] bg-[#60A5FA]/10 text-[#60A5FA] hover:bg-[#60A5FA]/20'
+                      ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
+                      : 'border-[#60A5FA] bg-[#60A5FA] text-white hover:bg-[#3B82F6]'
                   }`}
-                  style={{ WebkitTextFillColor: 'currentColor' }}
+                  style={{ WebkitTextFillColor: 'white' }}
                   title="Farcaster cast"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 </button>
               )}
 
-              {/* Miniapp icon button - green */}
+              {/* Miniapp - verde sólido */}
               <button
                 onClick={() => { setShowMiniappInput(!showMiniappInput); if (showMiniappInput) { setComposerMiniappUrl(null); setMiniappInputValue(''); } setShowSoundPicker(false); setShowImagePicker(false); setShowCastInput(false); }}
                 className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
                   composerMiniappUrl || showMiniappInput
-                    ? 'border-[#4ADE80] bg-[#4ADE80]/30 text-[#4ADE80]'
-                    : 'border-[#4ADE80] bg-[#4ADE80]/10 text-[#4ADE80] hover:bg-[#4ADE80]/20'
+                    ? 'border-[#16A34A] bg-[#16A34A] text-white'
+                    : 'border-[#4ADE80] bg-[#22C55E] text-white hover:bg-[#16A34A]'
                 }`}
-                style={{ WebkitTextFillColor: 'currentColor' }}
+                style={{ WebkitTextFillColor: 'white' }}
                 title="Miniapp link"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
               </button>
 
-              {/* Eye / Preview icon - gold */}
+              {/* Preview - dourado sólido */}
               {(composerMessage.trim() || composerImageId) && (
                 <button
                   onClick={() => setShowPreview(true)}
-                  className="w-9 h-9 flex items-center justify-center border-2 border-[#FFD400] bg-[#FFD400]/10 text-[#FFD400] hover:bg-[#FFD400]/20 transition-all"
-                  style={{ WebkitTextFillColor: 'currentColor' }}
+                  className="w-9 h-9 flex items-center justify-center border-2 border-[#FFD400] bg-[#FFD400] text-black hover:bg-[#F59E0B] transition-all"
+                  style={{ WebkitTextFillColor: 'black' }}
                   title="Preview"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
               )}
 
