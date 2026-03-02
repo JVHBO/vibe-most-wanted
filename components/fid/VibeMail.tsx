@@ -681,7 +681,8 @@ interface VibeMailInboxWithClaimProps {
   onClaim: () => Promise<void>;
   myFid?: number;
   myAddress?: string;
-  asPage?: boolean; // Render as full page instead of modal
+  asPage?: boolean;
+  inline?: boolean; // Render inline inside page (no modal/overlay)
 }
 
 export function VibeMailInboxWithClaim({
@@ -697,6 +698,7 @@ export function VibeMailInboxWithClaim({
   myFid,
   myAddress,
   asPage = false,
+  inline = false,
 }: VibeMailInboxWithClaimProps) {
   const { lang } = useLanguage();
   const t = fidTranslations[lang];
@@ -1100,16 +1102,18 @@ export function VibeMailInboxWithClaim({
   };
 
   return (
-    <div className={asPage
-      ? "min-h-screen bg-vintage-dark"
+    <div className={
+      inline ? "w-full"
+      : asPage ? "min-h-screen bg-vintage-dark"
       : "fixed inset-0 z-[350] flex items-center justify-center bg-black/90 p-4"
     }>
       <audio ref={audioRef} onEnded={() => setPlayingAudio(null)} />
 
       <div
         style={{ colorScheme: 'dark' }}
-        className={asPage
-          ? "bg-vintage-charcoal h-screen w-full flex flex-col"
+        className={
+          inline ? "bg-[#111] w-full flex flex-col p-3 min-h-[70vh]"
+          : asPage ? "bg-vintage-charcoal h-screen w-full flex flex-col"
           : "bg-vintage-charcoal border-2 border-black shadow-[4px_4px_0px_#000] p-4 w-full max-w-md max-h-[calc(100vh-120px)] overflow-hidden flex flex-col"
         }
       >
@@ -1170,8 +1174,11 @@ export function VibeMailInboxWithClaim({
               className="w-12 h-12 rounded-full border-2 border-black shadow-[2px_2px_0px_#000]"
             />
               <div>
-              <h3 className="text-vintage-gold font-bold text-lg uppercase tracking-wide">VibeQuest</h3>
-              <p className="text-vintage-ice/60 text-xs">
+              <h3 className="text-white font-black text-base">
+                {username ? `@${username}` : 'Messages'}
+              </h3>
+              <p className="text-[#9945FF] text-[10px] font-bold uppercase tracking-widest">VibeMail</p>
+              <p className="text-white/40 text-[10px]">
                 {messages?.length || 0} {t.messagesCount}
               </p>
               {/* VibeMail Stats - Always show sent/received */}
@@ -2632,22 +2639,22 @@ export function VibeMailInboxWithClaim({
                 <button
                   onClick={() => !deleteMode && handleOpenMessage(msg)}
                   disabled={deleteMode}
-                  className={`flex-1 text-left p-3 border-2 border-black shadow-[2px_2px_0px_#000] transition-all ${
+                  className={`flex-1 text-left p-3 border-2 shadow-[2px_2px_0px_#000] transition-all ${
                     msg.isRead
-                      ? 'bg-vintage-black/40 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
-                      : 'bg-vintage-gold/15 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
+                      ? 'bg-[#161616] border-[#2a2a2a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
+                      : 'bg-[#1a1030] border-[#5b21b6]/60 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
                   } ${deleteMode ? 'opacity-80' : ''}`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${msg.isRead ? 'bg-vintage-ice/30' : 'bg-vintage-gold animate-pulse'}`} />
+                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${msg.isRead ? 'bg-white/20' : 'bg-[#818CF8] animate-pulse'}`} />
                     <div className="flex-1 min-w-0">
                       {/* Show sender/recipient */}
                       {msg.isSent && msg.recipientUsername ? (
-                        <p className="text-[#FFD400]/70 text-[10px] mb-0.5">
+                        <p className="text-white/40 text-[10px] mb-0.5">
                           To: @{msg.recipientUsername}
                         </p>
                       ) : msg.voterUsername ? (
-                        <p className="text-[#FFD400]/70 text-[10px] mb-0.5">
+                        <p className="text-white/50 text-[10px] mb-0.5">
                           From: @{msg.voterUsername}
                         </p>
                       ) : msg.voterFid ? (
@@ -2655,7 +2662,7 @@ export function VibeMailInboxWithClaim({
                           FID #{msg.voterFid}
                         </p>
                       ) : null}
-                      <p className={`text-sm truncate ${msg.isRead ? 'text-vintage-ice/70' : 'text-vintage-gold font-bold'}`}>
+                      <p className={`text-sm truncate ${msg.isRead ? 'text-white/50' : 'text-white font-bold'}`}>
                         {msg.message?.slice(0, 50)}...
                       </p>
                       <div className="flex items-center gap-2 mt-1">

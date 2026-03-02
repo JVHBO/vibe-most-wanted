@@ -786,33 +786,32 @@ export default function QuestsPage() {
             soundEnabled={true}
           />
         )}
-      </div>
 
-      {/* Messages Tab - VibeFID modal overlay */}
-      {activeTab === 'messages' && (
-        <VibeFIDConvexProvider>
-          {userFid ? (
-            <VibeMailInboxWithClaim
-              cardFid={userFid}
-              onClose={() => setActiveTab('missions')}
-              pendingVbms={0}
-              address={address}
-              myFid={userFid}
-              myAddress={address}
-              isClaimingRewards={false}
-              isClaimTxPending={false}
-              onClaim={async () => {}}
-            />
-          ) : (
-            <div className="fixed inset-0 z-[350] flex items-center justify-center bg-black/90 p-4">
-              <div className="text-center">
-                <p className="text-vintage-ice/70 mb-4">Connect Farcaster to view messages</p>
-                <button onClick={() => setActiveTab('missions')} className="text-vintage-gold hover:underline text-sm">← Back</button>
+        {/* Messages Tab - inline, no modal */}
+        {activeTab === 'messages' && (
+          <VibeFIDConvexProvider>
+            {userFid ? (
+              <VibeMailInboxWithClaim
+                cardFid={userFid}
+                onClose={() => setActiveTab('missions')}
+                pendingVbms={0}
+                address={address}
+                myFid={userFid}
+                myAddress={address}
+                isClaimingRewards={false}
+                isClaimTxPending={false}
+                onClaim={async () => {}}
+                inline={true}
+              />
+            ) : (
+              <div className="px-4 py-8 text-center">
+                <p className="text-white/50 mb-4">Connect Farcaster to view messages</p>
+                <button onClick={() => setActiveTab('missions')} className="text-white/50 text-sm">← Back</button>
               </div>
-            </div>
-          )}
-        </VibeFIDConvexProvider>
-      )}
+            )}
+          </VibeFIDConvexProvider>
+        )}
+      </div>
     </div>
   );
 }
