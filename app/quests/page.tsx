@@ -434,8 +434,8 @@ export default function QuestsPage() {
             onClick={() => { AudioManager.buttonClick(); setActiveTab('missions'); }}
             className="flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
             style={{
-              background: activeTab === 'missions' ? '#DC2626' : '#2a0a0a',
-              color: activeTab === 'missions' ? '#fff' : '#f87171',
+              background: activeTab === 'missions' ? '#DC2626' : '#4a1010',
+              color: '#fff',
             }}
           >
             {t('questsMissions')}
@@ -444,8 +444,8 @@ export default function QuestsPage() {
             onClick={() => { AudioManager.buttonClick(); setActiveTab('wanted'); }}
             className="flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
             style={{
-              background: activeTab === 'wanted' ? '#16A34A' : '#0a2a0a',
-              color: activeTab === 'wanted' ? '#fff' : '#4ade80',
+              background: activeTab === 'wanted' ? '#16A34A' : '#0f4a1a',
+              color: '#fff',
             }}
           >
             {t('questsWantedCasts')}
@@ -459,8 +459,8 @@ export default function QuestsPage() {
                 disabled={!canAccessMessages}
                 className="flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
                 style={!canAccessMessages ? { background: '#1a1a1a', color: 'rgba(255,255,255,0.2)', opacity: 0.4, cursor: 'not-allowed' } : {
-                  background: activeTab === 'messages' ? '#7C3AED' : '#1a0a2a',
-                  color: activeTab === 'messages' ? '#fff' : '#c084fc',
+                  background: activeTab === 'messages' ? '#7C3AED' : '#2d0f5a',
+                  color: '#fff',
                 }}
               >
                 Messages

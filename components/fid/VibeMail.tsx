@@ -1221,8 +1221,8 @@ export function VibeMailInboxWithClaim({
               onClick={() => setActiveTab('inbox')}
               className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
               style={{
-                background: activeTab === 'inbox' ? '#2563EB' : '#0a0f1a',
-                color: activeTab === 'inbox' ? '#fff' : '#60a5fa',
+                background: activeTab === 'inbox' ? '#2563EB' : '#0f204a',
+                color: '#fff',
               }}
             >
               <span className="flex items-center justify-center gap-1">
@@ -1234,8 +1234,8 @@ export function VibeMailInboxWithClaim({
               onClick={() => setActiveTab('sent')}
               className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
               style={{
-                background: activeTab === 'sent' ? '#EA580C' : '#1a0d00',
-                color: activeTab === 'sent' ? '#fff' : '#fb923c',
+                background: activeTab === 'sent' ? '#EA580C' : '#4a2000',
+                color: '#fff',
               }}
             >
               <span className="flex items-center justify-center gap-1">
@@ -1247,8 +1247,8 @@ export function VibeMailInboxWithClaim({
               onClick={() => setActiveTab('quests')}
               className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
               style={{
-                background: activeTab === 'quests' ? '#16A34A' : '#0a1a0d',
-                color: activeTab === 'quests' ? '#000' : '#4ade80',
+                background: activeTab === 'quests' ? '#16A34A' : '#0f3a1a',
+                color: activeTab === 'quests' ? '#000' : '#fff',
               }}
             >
               <span className="flex items-center justify-center gap-1">
