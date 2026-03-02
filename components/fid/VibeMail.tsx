@@ -1219,11 +1219,7 @@ export function VibeMailInboxWithClaim({
           <div className="flex gap-1 mb-3">
             <button
               onClick={() => setActiveTab('inbox')}
-              className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
-              style={{
-                background: activeTab === 'inbox' ? '#2563EB' : '#1e3a8a',
-                color: '#fff',
-              }}
+              className={`flex-1 py-2 text-xs font-bold border-2 shadow-[2px_2px_0px_#000] ${activeTab === 'inbox' ? 'vmt-inbox-active' : 'vmt-inbox-inactive'}`}
             >
               <span className="flex items-center justify-center gap-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
@@ -1232,11 +1228,7 @@ export function VibeMailInboxWithClaim({
             </button>
             <button
               onClick={() => setActiveTab('sent')}
-              className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
-              style={{
-                background: activeTab === 'sent' ? '#EA580C' : '#7c2d12',
-                color: '#fff',
-              }}
+              className={`flex-1 py-2 text-xs font-bold border-2 shadow-[2px_2px_0px_#000] ${activeTab === 'sent' ? 'vmt-sent-active' : 'vmt-sent-inactive'}`}
             >
               <span className="flex items-center justify-center gap-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -1245,11 +1237,7 @@ export function VibeMailInboxWithClaim({
             </button>
             <button
               onClick={() => setActiveTab('quests')}
-              className="flex-1 py-2 text-xs font-bold border-2 border-black transition-all shadow-[2px_2px_0px_#000]"
-              style={{
-                background: activeTab === 'quests' ? '#16A34A' : '#166534',
-                color: activeTab === 'quests' ? '#000' : '#fff',
-              }}
+              className={`flex-1 py-2 text-xs font-bold border-2 shadow-[2px_2px_0px_#000] ${activeTab === 'quests' ? 'vmt-quests-active' : 'vmt-quests-inactive'}`}
             >
               <span className="flex items-center justify-center gap-1">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>

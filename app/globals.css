@@ -537,6 +537,21 @@ body > * {
   }
 }
 
+/* ===== QUEST + VIBEMAIL TAB COLORS (forced with !important to override any conflicting rules) ===== */
+.qt-missions-active   { background: #DC2626 !important; color: #fff !important; border-color: #000 !important; }
+.qt-missions-inactive { background: #991b1b !important; color: #fff !important; border-color: #7f1d1d !important; }
+.qt-wanted-active     { background: #16A34A !important; color: #fff !important; border-color: #000 !important; }
+.qt-wanted-inactive   { background: #166534 !important; color: #fff !important; border-color: #14532d !important; }
+.qt-messages-active   { background: #7C3AED !important; color: #fff !important; border-color: #000 !important; }
+.qt-messages-inactive { background: #4c1d95 !important; color: #fff !important; border-color: #3b0764 !important; }
+.qt-messages-locked   { background: #1a1a1a !important; color: rgba(255,255,255,0.2) !important; opacity: 0.4 !important; cursor: not-allowed !important; }
+.vmt-inbox-active     { background: #2563EB !important; color: #fff !important; }
+.vmt-inbox-inactive   { background: #1e3a8a !important; color: #fff !important; }
+.vmt-sent-active      { background: #EA580C !important; color: #fff !important; }
+.vmt-sent-inactive    { background: #7c2d12 !important; color: #fff !important; }
+.vmt-quests-active    { background: #16A34A !important; color: #000 !important; }
+.vmt-quests-inactive  { background: #166534 !important; color: #fff !important; }
+
 /* RESPONSIVE CONTAINER: Mobile-first approach for miniapp */
 .responsive-container {
   max-width: 100%;
