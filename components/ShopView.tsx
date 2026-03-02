@@ -219,11 +219,11 @@ export function ShopView({ address }: ShopViewProps) {
                   <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
                     <button
                       onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
-                      style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: effectiveChain === 'base' ? '#F59E0B' : '#3F3F46', color: effectiveChain === 'base' ? '#000' : '#A1A1AA' }}
+                      style={{ display:"flex", alignItems:"center", gap:"5px", padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", cursor:"pointer", border: effectiveChain === 'base' ? "2px solid #000" : "2px solid #374151", background: effectiveChain === 'base' ? '#0052FF' : '#1f2937', color: effectiveChain === 'base' ? '#fff' : '#6b7280', boxShadow: effectiveChain === 'base' ? '2px 2px 0px #000' : 'none' }}
                     >BASE</button>
                     <button
                       onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
-                      style={{ padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", border:"none", cursor:"pointer", background: effectiveChain === 'arbitrum' ? '#F59E0B' : '#3F3F46', color: effectiveChain === 'arbitrum' ? '#000' : '#A1A1AA' }}
+                      style={{ display:"flex", alignItems:"center", gap:"5px", padding:"4px 12px", borderRadius:"4px", fontWeight:700, fontSize:"12px", cursor:"pointer", border: effectiveChain === 'arbitrum' ? "2px solid #000" : "2px solid #374151", background: effectiveChain === 'arbitrum' ? '#12AAFF' : '#1f2937', color: effectiveChain === 'arbitrum' ? '#000' : '#6b7280', boxShadow: effectiveChain === 'arbitrum' ? '2px 2px 0px #000' : 'none' }}
                     >ARB</button>
                   </div>
                 </div>
