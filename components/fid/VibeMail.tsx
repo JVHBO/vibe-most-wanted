@@ -32,16 +32,9 @@ const QUEST_PURPOSES = [
   { id: 'channel', icon: '📢', label: 'Channel Quest', shortDesc: 'Ask to join your channel', questType: 'join_channel', needsCast: false,
     template: 'Join my Farcaster channel and earn coins! 📢\n\n✅ How to claim:\n1. Search and join /[channel-name]\n2. Come back to Quests tab → Claim\n\n⏰ Limited slots!',
     hint: 'Replace /[channel-name] with your channel. Create the quest in the Quests tab first.' },
-  { id: 'cast_engage', icon: '🔁', label: 'Cast Quest', shortDesc: 'Recast or like your cast', questType: 'rt_cast', needsCast: true,
-    template: '',
-    hint: 'Paste your Warpcast cast URL in the "Embed cast" field so recipients can find it easily.',
-    subTypes: [
-      { icon: '🔁', label: 'Recast', questType: 'rt_cast',
-        template: 'Recast my post and earn coins! 🔁\n\n✅ How to claim:\n1. Open the cast below 👇\n2. Recast it\n3. Come back to Quests tab → Claim' },
-      { icon: '❤️', label: 'Like', questType: 'like_cast',
-        template: 'Like my cast and earn coins! ❤️\n\n✅ How to claim:\n1. Open the cast below 👇\n2. Like it ❤️\n3. Come back to Quests tab → Claim' },
-    ],
-  },
+  { id: 'cast_engage', icon: '🔁', label: 'Cast Quest', shortDesc: 'Recast + like your cast', questType: 'rt_cast', needsCast: true,
+    template: 'Recast and Like my cast to earn coins! 🔁❤️\n\n✅ How to claim:\n1. Open the cast below 👇\n2. Recast it 🔁\n3. Like it ❤️\n4. Come back to Quests tab → Claim\n\n⏰ Limited slots!',
+    hint: 'Paste your Warpcast cast URL in the "Embed cast" field so recipients can find it easily.' },
   { id: 'miniapp', icon: '🎮', label: 'Miniapp Quest', shortDesc: 'Ask to use your miniapp', questType: 'use_miniapp', needsCast: false,
     template: 'Try my miniapp and earn coins! 🎮\n\n✅ How to claim:\n1. Open the Quests tab\n2. Find this quest → tap "Do it"\n3. Use the miniapp for a moment\n4. Tap "Claim" — done!',
     hint: 'Set your miniapp URL when creating the quest in the Quests tab.' },
@@ -1303,47 +1296,20 @@ export function VibeMailInboxWithClaim({
               </div>
               {/* Quest type options */}
               <div className="space-y-2">
-                {QUEST_PURPOSES.map(opt => {
-                  if ('subTypes' in opt && opt.subTypes) {
-                    return (
-                      <div key={opt.id} className="w-full bg-[#1a1a1a] border-2 border-[#333] shadow-[2px_2px_0px_#000] overflow-hidden">
-                        <div className="flex items-center gap-3 px-3 pt-3 pb-2">
-                          <span className="text-xl flex-shrink-0">🔁❤️</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white font-bold text-sm">{opt.label}</p>
-                            <p className="text-white/50 text-xs">{opt.shortDesc}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2 px-3 pb-3">
-                          {opt.subTypes.map(sub => (
-                            <button
-                              key={sub.questType}
-                              onClick={() => { AudioManager.buttonClick(); setComposerMessage(sub.template); setComposerQuestType(sub.questType); setShowPurposeModal(false); setShowComposer(true); }}
-                              className="flex-1 py-2 bg-[#252525] border-2 border-[#444] text-white text-xs font-bold flex items-center justify-center gap-1.5 hover:border-[#FFD400] hover:bg-[#2a2a2a] transition-all"
-                            >
-                              <span>{sub.icon}</span>
-                              <span>{sub.label}</span>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  }
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => { AudioManager.buttonClick(); setComposerMessage(opt.template); setComposerQuestType(opt.questType); setShowPurposeModal(false); setShowComposer(true); }}
-                      className="w-full p-3 bg-[#1a1a1a] border-2 border-[#333] flex items-center gap-3 hover:border-[#FFD400] hover:bg-[#222] transition-all shadow-[2px_2px_0px_#000] text-left"
-                    >
-                      <span className="text-2xl w-8 text-center flex-shrink-0">{opt.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white font-bold text-sm">{opt.label}</p>
-                        <p className="text-white/50 text-xs">{opt.shortDesc}</p>
-                      </div>
-                      <svg className="flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD400" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                    </button>
-                  );
-                })}
+                {QUEST_PURPOSES.map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => { AudioManager.buttonClick(); setComposerMessage(opt.template); setComposerQuestType(opt.questType); setShowPurposeModal(false); setShowComposer(true); }}
+                    className="w-full p-3 bg-[#1a1a1a] border-2 border-[#333] flex items-center gap-3 hover:border-[#FFD400] hover:bg-[#222] transition-all shadow-[2px_2px_0px_#000] text-left"
+                  >
+                    <span className="text-2xl w-8 text-center flex-shrink-0">{opt.id === 'cast_engage' ? '🔁❤️' : opt.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-bold text-sm">{opt.label}</p>
+                      <p className="text-white/50 text-xs">{opt.shortDesc}</p>
+                    </div>
+                    <svg className="flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD400" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
+                ))}
               </div>
               <p className="text-white/20 text-[10px] text-center pt-4">Create the quest in Quests tab first, then send this message to promote it</p>
             </div>
