@@ -33,7 +33,7 @@ export function ShopView({ address }: ShopViewProps) {
   const openPack = useMutation(api.cardPacks.openPack);
   const openAllPacks = useMutation(api.cardPacks.openAllPacks);
   const claimDailyFree = useMutation(api.cardPacks.claimDailyFreePack);
-  const setPreferredChainMutation = useMutation(api.profiles.setPreferredChain);
+  const setPreferredChainMutation = useMutation(api.missions.setPreferredChain);
 
   // ARB mode detection (same pattern as quests/roulette)
   const [arbSupported, setArbSupported] = useState(false);
