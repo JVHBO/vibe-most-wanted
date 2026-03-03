@@ -1431,25 +1431,28 @@ body.neobrutalism [class*="via-vintage-deep-black"] {
   background: #181818 !important;
 }
 
-/* Header bar */
-body.neobrutalism [class*="via-vintage-deep-black"] > [class*="bg-vintage-charcoal/90"] {
+/* Header bar — sem > (filho direto quebra dentro do MiniappFrame wrapper) */
+body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-vintage-charcoal/90"][class*="border-b-2"] {
   background: #FFD400 !important;
+  background-color: #FFD400 !important;
   border-bottom: 4px solid #000 !important;
 }
 
 /* Header: back button, title, credits text */
-body.neobrutalism [class*="via-vintage-deep-black"] > [class*="bg-vintage-charcoal/90"] button,
-body.neobrutalism [class*="via-vintage-deep-black"] > [class*="bg-vintage-charcoal/90"] h1,
-body.neobrutalism [class*="via-vintage-deep-black"] > [class*="bg-vintage-charcoal/90"] span {
+body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-vintage-charcoal/90"][class*="border-b-2"] button,
+body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-vintage-charcoal/90"][class*="border-b-2"] h1,
+body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-vintage-charcoal/90"][class*="border-b-2"] span {
   color: #000 !important;
   text-shadow: none !important;
 }
 
-/* Header: ? rules button → black circle with gold text */
-body.neobrutalism [class*="via-vintage-deep-black"] [class*="rounded-full"][class*="bg-vintage-gold/20"] {
-  background: #000 !important;
-  border: 2px solid #000 !important;
+/* Header: ? rules button → dark circle com borda gold e texto gold, mantém redondo */
+body.neobrutalism [class*="via-vintage-deep-black"] button[class*="rounded-full"][class*="bg-vintage-gold/20"] {
+  background: #1a1a1a !important;
+  border: 2px solid #FFD400 !important;
+  border-radius: 50% !important;
   color: #FFD400 !important;
+  box-shadow: none !important;
 }
 
 /* Table (green felt) — remove arch, flat rectangle */
@@ -1670,6 +1673,19 @@ body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-black/95"][class
 
 /* Texto TIE (text-vintage-gold dentro do result box) */
 body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-black/95"][class*="border-vintage-gold/30"] span[class*="text-vintage-gold"] {
+  color: #FFD400 !important;
+}
+
+/* --- HISTÓRICO DE RESULTADOS (T/B/P circles) ---
+   Círculos T (Tie): border-vintage-gold/40 forçava border-width:4px
+   tornando o círculo um quadrado preto sólido.
+   Fix: restaurar border fino dourado + bg visível + manter redondo */
+body.neobrutalism [class*="bg-vintage-black/90"][class*="gap-2"] [class*="w-6"][class*="h-6"][class*="border-vintage-gold"] {
+  background: rgba(255, 212, 0, 0.3) !important;
+  border-color: #FFD400 !important;
+  border-width: 2px !important;
+  box-sizing: content-box !important;
+  border-radius: 50% !important;
   color: #FFD400 !important;
 }
 
