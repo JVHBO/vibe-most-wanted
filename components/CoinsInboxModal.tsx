@@ -43,7 +43,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
   // 🔄 Get refresh functions from both contexts
   const { refreshUserProfile } = usePlayerCards();
-  const { refreshProfile } = useProfile();
+  const { refreshProfile, userProfile } = useProfile();
   const { t, lang } = useLanguage();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
@@ -52,8 +52,11 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const [convertAmount, setConvertAmount] = useState("");
 
   // 🔒 Get Farcaster context for FID verification
+  // Fallback to profile FID for browser/web users (not in miniapp)
   const farcasterContext = useFarcasterContext();
-  const userFid = farcasterContext.user?.fid;
+  const userFid = farcasterContext.user?.fid
+    || userProfile?.farcasterFid
+    || (userProfile?.fid ? parseInt(userProfile.fid) : undefined);
 
   // Cooldown countdown timer
   useEffect(() => {

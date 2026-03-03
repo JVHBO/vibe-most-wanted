@@ -1654,6 +1654,25 @@ body.neobrutalism [class*="bg-vintage-gold/20"][class*="border-vintage-gold/50"]
   font-weight: 900 !important;
 }
 
+/* --- RESULT OVERLAY BOXES (TIE/BANKER/PLAYER result display) ---
+   Problema: bg-black/95 vira #252525 (cinza) pela regra global bg-black/
+             border-vintage-gold/30 da TIE box vira 4px borda preta pelo
+             global border-vintage-gold/ → caixinha minúscula vira "quadrado preto"
+   Fix: maior especificidade sobrescreve ambas as regras globais */
+
+/* Todas as caixinhas de resultado (py-0.5 é único nesse contexto) */
+body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-black/95"][class*="py-0.5"] {
+  background-color: #181818 !important;
+  border-color: #444 !important;
+  border-width: 1px !important;
+  box-sizing: content-box !important;
+}
+
+/* Texto TIE (text-vintage-gold dentro do result box) */
+body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-black/95"][class*="border-vintage-gold/30"] span[class*="text-vintage-gold"] {
+  color: #FFD400 !important;
+}
+
 /* ===== ROULETTE WHEEL ===== */
 
 /* Roulette outer gold ring — restore gold color, remove black shadow */
