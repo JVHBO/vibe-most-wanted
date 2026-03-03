@@ -646,12 +646,8 @@ export const awardPvECoins = mutation({
       const today = new Date().toISOString().split('T')[0];
       const existingMission = await ctx.db
         .query("personalMissions")
-        .withIndex("by_player_date", (q) => q.eq("playerAddress", address.toLowerCase()))
-        .filter((q) =>
-          q.and(
-            q.eq(q.field("date"), today),
-            q.eq(q.field("missionType"), "first_pve_win")
-          )
+        .withIndex("by_player_date_type", (q) =>
+          q.eq("playerAddress", address.toLowerCase()).eq("date", today).eq("missionType", "first_pve_win")
         )
         .first();
 
@@ -861,8 +857,9 @@ export const awardPvPCoins = mutation({
         const today = new Date().toISOString().split('T')[0];
         const existing = await ctx.db
           .query("personalMissions")
-          .withIndex("by_player_date", (q) => q.eq("playerAddress", address.toLowerCase()))
-          .filter((q) => q.and(q.eq(q.field("date"), today), q.eq(q.field("missionType"), "first_pvp_match")))
+          .withIndex("by_player_date_type", (q) =>
+            q.eq("playerAddress", address.toLowerCase()).eq("date", today).eq("missionType", "first_pvp_match")
+          )
           .first();
 
         if (!existing) {
@@ -887,8 +884,9 @@ export const awardPvPCoins = mutation({
 
         const existing = await ctx.db
           .query("personalMissions")
-          .withIndex("by_player_date", (q) => q.eq("playerAddress", address.toLowerCase()))
-          .filter((q) => q.and(q.eq(q.field("date"), today), q.eq(q.field("missionType"), missionType)))
+          .withIndex("by_player_date_type", (q) =>
+            q.eq("playerAddress", address.toLowerCase()).eq("date", today).eq("missionType", missionType)
+          )
           .first();
 
         if (!existing) {
@@ -1152,8 +1150,9 @@ export const claimLoginBonus = mutation({
     const today = new Date().toISOString().split('T')[0];
     const existing = await ctx.db
       .query("personalMissions")
-      .withIndex("by_player_date", (q) => q.eq("playerAddress", address.toLowerCase()))
-      .filter((q) => q.and(q.eq(q.field("date"), today), q.eq(q.field("missionType"), "daily_login")))
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", address.toLowerCase()).eq("date", today).eq("missionType", "daily_login")
+      )
       .first();
 
     if (!existing) {
@@ -1599,8 +1598,9 @@ export const recordAttackResult = mutation({
         const today = new Date().toISOString().split('T')[0];
         const existing = await ctx.db
           .query("personalMissions")
-          .withIndex("by_player_date", (q) => q.eq("playerAddress", args.playerAddress.toLowerCase()))
-          .filter((q) => q.and(q.eq(q.field("date"), today), q.eq(q.field("missionType"), "first_pvp_match")))
+          .withIndex("by_player_date_type", (q) =>
+            q.eq("playerAddress", args.playerAddress.toLowerCase()).eq("date", today).eq("missionType", "first_pvp_match")
+          )
           .first();
 
         if (!existing) {
@@ -1625,8 +1625,9 @@ export const recordAttackResult = mutation({
 
         const existing = await ctx.db
           .query("personalMissions")
-          .withIndex("by_player_date", (q) => q.eq("playerAddress", args.playerAddress.toLowerCase()))
-          .filter((q) => q.and(q.eq(q.field("date"), today), q.eq(q.field("missionType"), missionType)))
+          .withIndex("by_player_date_type", (q) =>
+            q.eq("playerAddress", args.playerAddress.toLowerCase()).eq("date", today).eq("missionType", missionType)
+          )
           .first();
 
         if (!existing) {

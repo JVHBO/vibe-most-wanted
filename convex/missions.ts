@@ -82,17 +82,18 @@ export const getPlayerMissions = query({
     const today = new Date().toISOString().split('T')[0];
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
-    // Get today's missions + one-time missions
-    const missions = await ctx.db
-      .query("personalMissions")
-      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
-      .filter((q) =>
-        q.or(
-          q.eq(q.field("date"), today),
-          q.eq(q.field("date"), "once")
-        )
-      )
-      .collect();
+    // Get today's missions + one-time missions (two indexed queries avoids full player scan)
+    const [todayMissions, onceMissions] = await Promise.all([
+      ctx.db
+        .query("personalMissions")
+        .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress).eq("date", today))
+        .collect(),
+      ctx.db
+        .query("personalMissions")
+        .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress).eq("date", "once"))
+        .collect(),
+    ]);
+    const missions = [...todayMissions, ...onceMissions];
 
     // Return only essential fields to reduce bandwidth
     return missions.map(m => ({
@@ -447,21 +448,20 @@ export const claimAllMissions = mutation({
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
     const today = new Date().toISOString().split('T')[0];
 
-    // Get all unclaimed but completed missions
-    const missions = await ctx.db
-      .query("personalMissions")
-      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("completed"), true),
-          q.eq(q.field("claimed"), false),
-          q.or(
-            q.eq(q.field("date"), today),
-            q.eq(q.field("date"), "once")
-          )
-        )
-      )
-      .collect();
+    // Get all unclaimed but completed missions (two indexed queries avoids full player scan)
+    const [todayRaw, onceRaw] = await Promise.all([
+      ctx.db
+        .query("personalMissions")
+        .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress).eq("date", today))
+        .collect(),
+      ctx.db
+        .query("personalMissions")
+        .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress).eq("date", "once"))
+        .collect(),
+    ]);
+    const missions = [...todayRaw, ...onceRaw].filter(
+      (m) => m.completed === true && m.claimed === false
+    );
 
     if (missions.length === 0) {
       return {

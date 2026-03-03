@@ -215,10 +215,10 @@ export const getTransactionHistory = query({
   handler: async (ctx, { address, limit = 50 }) => {
     const normalizedAddress = address.toLowerCase();
 
-    // Get coin transactions
+    // Get coin transactions (use by_address_timestamp for proper timestamp ordering)
     const coinTxs = await ctx.db
       .query("coinTransactions")
-      .withIndex("by_address", (q) => q.eq("address", normalizedAddress))
+      .withIndex("by_address_timestamp", (q) => q.eq("address", normalizedAddress))
       .order("desc")
       .take(limit);
 

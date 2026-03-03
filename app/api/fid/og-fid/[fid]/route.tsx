@@ -11,8 +11,8 @@ export async function GET(
     const { fid } = await params;
     const fidNumber = parseInt(fid);
 
-    // Fetch card data from Convex
-    const convexUrl = "https://agile-orca-761.convex.cloud";
+    // Fetch card data from VibeFID Convex (scintillating-mandrill, NOT VMW agile-orca)
+    const convexUrl = process.env.NEXT_PUBLIC_VIBEFID_CONVEX_URL || "https://scintillating-mandrill-101.convex.cloud";
     let card: any = null;
 
     try {
