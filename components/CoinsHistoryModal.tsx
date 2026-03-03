@@ -6,6 +6,7 @@ import { api } from '@/convex/_generated/api';
 import { X, Filter } from 'lucide-react';
 import { Z_INDEX } from '@/lib/z-index';
 import { createPortal } from 'react-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CoinsHistoryModalProps {
   isOpen: boolean;
@@ -16,6 +17,8 @@ interface CoinsHistoryModalProps {
 type FilterType = 'all' | 'earn' | 'convert' | 'spend' | 'bonus';
 
 export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHistoryModalProps) {
+  const { t } = useLanguage();
+  const T = t as (k: string) => string;
   const [filter, setFilter] = useState<FilterType>('all');
 
   const transactions = useQuery(
@@ -117,7 +120,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'Now';
+    if (diffMins < 1) return T('txHistoryNow');
     if (diffMins < 60) return `${diffMins}m`;
     if (diffHours < 24) return `${diffHours}h`;
     if (diffDays < 7) return `${diffDays}d`;
@@ -157,7 +160,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-vintage-gold/30">
           <h2 className="text-lg font-bold text-vintage-gold">
-            📊 Transaction History
+            📊 {T('txHistoryTitle')}
           </h2>
           <button
             onClick={onClose}
@@ -170,10 +173,10 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
         {/* Filter Tabs - Fixed width buttons */}
         <div className="grid grid-cols-4 gap-1.5 p-2 border-b border-vintage-gold/20">
           {([
-            { key: 'all', label: 'All', color: 'bg-vintage-gold' },
-            { key: 'earn', label: 'Earned', color: 'bg-green-500' },
-            { key: 'convert', label: 'Converted', color: 'bg-purple-500' },
-            { key: 'spend', label: 'Spent', color: 'bg-red-500' },
+            { key: 'all', label: T('txHistoryAll'), color: 'bg-vintage-gold' },
+            { key: 'earn', label: T('txHistoryEarned'), color: 'bg-green-500' },
+            { key: 'convert', label: T('txHistoryConverted'), color: 'bg-purple-500' },
+            { key: 'spend', label: T('txHistorySpent'), color: 'bg-red-500' },
           ] as const).map((f) => (
             <button
               key={f.key}
@@ -194,15 +197,15 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
         {stats && (
           <div className="grid grid-cols-3 gap-2 p-2 bg-vintage-black/30 text-center text-xs">
             <div>
-              <span className="text-vintage-ice/50">Earned</span>
+              <span className="text-vintage-ice/50">{T('txHistoryEarned')}</span>
               <p className="font-bold text-green-400">+{stats.totalEarned.toLocaleString()}</p>
             </div>
             <div>
-              <span className="text-vintage-ice/50">Converted</span>
+              <span className="text-vintage-ice/50">{T('txHistoryConverted')}</span>
               <p className="font-bold text-purple-400">{stats.totalConverted.toLocaleString()}</p>
             </div>
             <div>
-              <span className="text-vintage-ice/50">Spent</span>
+              <span className="text-vintage-ice/50">{T('txHistorySpent')}</span>
               <p className="font-bold text-red-400">{stats.totalSpent.toLocaleString()}</p>
             </div>
           </div>
@@ -212,12 +215,12 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
         <div className="flex-1 overflow-y-auto p-2">
           {!transactions ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-vintage-ice/50 text-sm">Loading history...</div>
+              <div className="text-vintage-ice/50 text-sm">{T('txHistoryLoading')}</div>
             </div>
           ) : filteredTransactions?.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8">
               <div className="text-4xl mb-2">📭</div>
-              <p className="text-vintage-ice/60 text-sm">No transactions</p>
+              <p className="text-vintage-ice/60 text-sm">{T('txHistoryEmpty')}</p>
             </div>
           ) : (
             <div className="space-y-1.5">
@@ -273,7 +276,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
         {/* Footer */}
         <div className="p-2 border-t border-vintage-gold/20 text-center">
           <p className="text-xs text-vintage-ice/40">
-            Showing {filteredTransactions?.length || 0} of {transactions?.length || 0} transactions
+            {T('txHistoryShowing').replace('{shown}', String(filteredTransactions?.length || 0)).replace('{total}', String(transactions?.length || 0))}
           </p>
         </div>
       </div>

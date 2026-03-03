@@ -18,6 +18,7 @@ import {
 import { useFarcasterVBMSBalance, useFarcasterVBMSAllowance } from "@/lib/hooks/useFarcasterVBMS";
 import { CONTRACTS } from "@/lib/contracts";
 import { parseEther } from "viem";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PokerMatchmakingProps {
   onClose: () => void;
@@ -32,6 +33,8 @@ export function PokerMatchmaking({
   playerAddress,
   playerUsername,
 }: PokerMatchmakingProps) {
+  const { t } = useLanguage();
+  const T = t as (k: string) => string;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedAnte, setSelectedAnte] = useState(10);
   const [isCreating, setIsCreating] = useState(false);
@@ -718,10 +721,10 @@ export function PokerMatchmaking({
   };
 
   const anteOptions = [
-    { value: 10, label: "Low", color: "from-green-600 to-green-700" },
-    { value: 50, label: "Mid", color: "from-yellow-600 to-yellow-700" },
-    { value: 200, label: "High", color: "from-red-600 to-red-700" },
-    { value: 2000, label: "Extreme", color: "from-purple-600 to-pink-700" },
+    { value: 10, label: T('pokerBetLow'), color: "from-green-600 to-green-700" },
+    { value: 50, label: T('pokerBetMid'), color: "from-yellow-600 to-yellow-700" },
+    { value: 200, label: T('pokerBetHigh'), color: "from-red-600 to-red-700" },
+    { value: 2000, label: T('pokerBetExtreme'), color: "from-purple-600 to-pink-700" },
   ];
 
   return (
