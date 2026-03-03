@@ -1431,17 +1431,22 @@ body.neobrutalism [class*="via-vintage-deep-black"] {
   background: #181818 !important;
 }
 
-/* Header bar — usa classe .bacc-header adicionada direto no JSX */
-body.neobrutalism .bacc-header {
+/* Header bar — especificidade extra (0,3,1) para ganhar do global bg-vintage-charcoal (0,2,1) */
+body.neobrutalism .bacc-header[class*="border-b-2"] {
   background: #FFD400 !important;
   background-color: #FFD400 !important;
   border-bottom: 4px solid #000 !important;
 }
 
-/* Header: back button, title, credits text */
-body.neobrutalism .bacc-header button,
-body.neobrutalism .bacc-header h1,
-body.neobrutalism .bacc-header span {
+/* Header: textos viram pretos APENAS quando fundo é dourado */
+body.neobrutalism .bacc-header[class*="border-b-2"] h1 {
+  color: #000 !important;
+  text-shadow: none !important;
+}
+body.neobrutalism .bacc-header[class*="border-b-2"] > div button:not([class*="rounded-full"]) {
+  color: #000 !important;
+}
+body.neobrutalism .bacc-header[class*="border-b-2"] span {
   color: #000 !important;
   text-shadow: none !important;
 }
