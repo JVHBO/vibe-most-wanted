@@ -144,13 +144,13 @@ export function ShopView({ address }: ShopViewProps) {
             className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white border-2 border-black rounded text-xs font-bold uppercase tracking-wider transition"
             style={{ boxShadow: "2px 2px 0px #000" }}
           >
-            ← BACK
+            {(t as (k: string) => string)('raidBossBack')}
           </button>
 
           <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider whitespace-nowrap">{t('shopTitle')}</h1>
 
           <div className="text-right">
-            <p className="text-[10px] text-vintage-ice/50 uppercase tracking-wider">Your Cards</p>
+            <p className="text-[10px] text-vintage-ice/50 uppercase tracking-wider">{(t as (k: string) => string)('shopYourCards')}</p>
             <p className="text-sm font-bold text-vintage-gold leading-tight">{playerCards?.length || 0}</p>
           </div>
         </div>

@@ -559,7 +559,7 @@ export default function RaidPage() {
       {showClearConfirm && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-vintage-charcoal border-2 border-red-500/50 rounded-lg p-6 max-w-sm w-full">
-            <h3 className="text-xl font-bold text-red-400 mb-3">Clear Raid Deck?</h3>
+            <h3 className="text-xl font-bold text-red-400 mb-3">{(t as (k: string) => string)('raidBossClearTitle')}</h3>
             <p className="text-vintage-burnt-gold text-sm mb-4">
               This will remove all cards from your raid deck. Your damage stats and boss kills will be preserved.
             </p>
@@ -572,14 +572,14 @@ export default function RaidPage() {
                 disabled={isClearingDeck}
                 className="flex-1 px-4 py-2 bg-vintage-gold/20 hover:bg-vintage-gold/30 text-vintage-gold border border-vintage-gold/50 rounded font-bold transition disabled:opacity-50"
               >
-                Cancel
+                {(t as (k: string) => string)('cancel')}
               </button>
               <button
                 onClick={handleClearDeck}
                 disabled={isClearingDeck}
                 className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-bold transition disabled:opacity-50"
               >
-                {isClearingDeck ? 'Clearing...' : 'Clear Deck'}
+                {isClearingDeck ? (t as (k: string) => string)('raidBossClearing') : (t as (k: string) => string)('raidBossClearConfirm')}
               </button>
             </div>
           </div>
@@ -631,7 +631,7 @@ export default function RaidPage() {
             className="raid-btn-back shrink-0 px-3 py-2 bg-red-600 hover:bg-red-500 text-white font-bold border-2 border-black text-xs uppercase tracking-wide transition-all active:translate-x-[2px] active:translate-y-[2px]"
             style={{ boxShadow: "3px 3px 0px #000" }}
           >
-            ← BACK
+            {(t as (k: string) => string)('raidBossBack')}
           </button>
 
           {/* Center - Boss Name + Description */}
@@ -661,7 +661,7 @@ export default function RaidPage() {
                 onClick={handleClaimRewards}
                 className="px-3 py-1.5 bg-green-600/80 hover:bg-green-600 text-white border border-green-500/50 rounded font-bold text-xs transition uppercase tracking-wide animate-pulse relative"
               >
-                Claim
+                {(t as (k: string) => string)('navClaim')}
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                   {unclaimedRewards.count}
                 </span>
@@ -671,7 +671,7 @@ export default function RaidPage() {
               onClick={() => router.push('/raid/leaderboard?boss=current')}
               className="raid-btn-rank px-3 py-1.5 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/30 rounded font-bold text-xs transition uppercase tracking-wide"
             >
-              Rank
+              {(t as (k: string) => string)('raidBossRank')}
             </button>
             <button
               onClick={() => setShowHelp(true)}
@@ -786,25 +786,25 @@ export default function RaidPage() {
                     disabled={isRefueling}
                     className="raid-btn-refuel px-3 py-1.5 bg-black/60 hover:bg-green-900/30 text-green-400 border border-green-500/50 rounded font-bold text-xs transition disabled:opacity-50 uppercase tracking-wide"
                   >
-                    {isRefueling ? '...' : 'FREE REFUEL'}
+                    {isRefueling ? '...' : (t as (k: string) => string)('raidBossFreeRefuel')}
                   </button>
                   <button
                     onClick={() => router.push('/raid/deck')}
                     className="raid-btn-edit px-3 py-1.5 bg-black/60 hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition uppercase tracking-wide"
                   >
-                    Edit Deck
+                    {(t as (k: string) => string)('raidBossEditDeck')}
                   </button>
                   <button
                     onClick={handleShare}
                     className="raid-btn-share px-3 py-1.5 bg-black/60 hover:bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50 rounded font-bold text-xs transition uppercase tracking-wide"
                   >
-                    Share
+                    {(t as (k: string) => string)('raidBossShare')}
                   </button>
                   <button
                     onClick={() => setShowClearConfirm(true)}
                     className="raid-btn-clear px-3 py-1.5 bg-black/60 hover:bg-red-900/50 text-red-400 border border-red-500/50 rounded font-bold text-xs transition uppercase tracking-wide"
                   >
-                    Clear
+                    {(t as (k: string) => string)('raidBossClearBtn')}
                   </button>
                 </div>
               </div>

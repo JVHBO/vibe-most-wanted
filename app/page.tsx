@@ -4576,7 +4576,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                 )}
                 {isInFarcaster ? (
                   <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">Claim</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap">{(t as (k: string) => string)('navClaim')}</span>
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="10" width="18" height="12" rx="2" />
                       <path d="M12 10V4" />
@@ -4596,7 +4596,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                       <line x1="12" y1="10" x2="12" y2="22" />
                       <line x1="3" y1="15" x2="21" y2="15" />
                     </svg>
-                    <span className="hidden sm:inline">Claim</span>
+                    <span className="hidden sm:inline">{(t as (k: string) => string)('navClaim')}</span>
                   </>
                 )}
               </button>
@@ -4668,7 +4668,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
               >
                 {isInFarcaster ? (
                   <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">Wanted</span>
+                    <span className="text-[10px] font-bold whitespace-nowrap">{(t as (k: string) => string)('navWanted')}</span>
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="10" />
                       <circle cx="12" cy="12" r="6" />
@@ -4682,7 +4682,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                       <circle cx="12" cy="12" r="6" />
                       <circle cx="12" cy="12" r="2" />
                     </svg>
-                    <span className="hidden sm:inline">Wanted</span>
+                    <span className="hidden sm:inline">{(t as (k: string) => string)('navWanted')}</span>
                   </>
                 )}
                 {hasClaimableMissions && (
