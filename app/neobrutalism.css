@@ -1431,31 +1431,28 @@ body.neobrutalism [class*="via-vintage-deep-black"] {
   background: #181818 !important;
 }
 
-/* Header bar — especificidade extra (0,3,1) para ganhar do global bg-vintage-charcoal (0,2,1) */
-body.neobrutalism .bacc-header[class*="border-b-2"] {
+/* Header bar — inline style no JSX garante #FFD400, CSS aqui reforça */
+body.neobrutalism .bacc-header {
   background: #FFD400 !important;
   background-color: #FFD400 !important;
   border-bottom: 4px solid #000 !important;
 }
-
-/* Header: textos viram pretos APENAS quando fundo é dourado */
-body.neobrutalism .bacc-header[class*="border-b-2"] h1 {
+body.neobrutalism .bacc-header * {
   color: #000 !important;
   text-shadow: none !important;
 }
-body.neobrutalism .bacc-header[class*="border-b-2"] > div button:not([class*="rounded-full"]) {
-  color: #000 !important;
+/* Back button — vermelho neobrutalism */
+body.neobrutalism .bacc-header button:first-child {
+  background: #CC2222 !important;
+  color: #fff !important;
+  border: 2px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 0 !important;
 }
-body.neobrutalism .bacc-header[class*="border-b-2"] span {
-  color: #000 !important;
-  text-shadow: none !important;
-}
-
-/* Header: ? rules button → dark circle com borda gold e texto gold, mantém redondo */
-body.neobrutalism .bacc-header button[class*="rounded-full"] {
+/* ? button — círculo escuro com borda gold */
+body.neobrutalism .bacc-header button:last-of-type {
   background: #1a1a1a !important;
   border: 2px solid #FFD400 !important;
-  border-radius: 50% !important;
   color: #FFD400 !important;
   box-shadow: none !important;
 }

@@ -801,23 +801,28 @@ export default function BaccaratPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-vintage-black flex flex-col">
       {/* Header */}
-      <div className="bacc-header bg-vintage-charcoal/90 border-b-2 border-vintage-gold/30 px-4 py-2">
+      <div className="bacc-header border-b-4 border-black px-4 py-2" style={{ background: '#FFD400' }}>
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <button onClick={() => router.push('/')} className="text-vintage-burnt-gold hover:text-vintage-gold text-sm font-modern">
-            {t('baccaratBack')}
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-1 px-3 py-1.5 text-white text-sm font-bold border-2 border-black"
+            style={{ background: '#CC2222', boxShadow: '3px 3px 0px #000' }}
+          >
+            ← {t('baccaratBack')}
           </button>
-          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider" style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.5)" }}>
+          <h1 className="text-2xl font-display font-bold tracking-wider" style={{ color: '#000', textShadow: 'none' }}>
             {t('baccaratTitle')}
           </h1>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowRulesModal(true)}
-              className="w-7 h-7 rounded-full bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold/50 flex items-center justify-center text-vintage-gold font-bold text-sm transition-all"
+              className="w-7 h-7 flex items-center justify-center font-bold text-sm border-2 border-black"
+              style={{ background: '#1a1a1a', color: '#FFD400', borderRadius: '50%', boxShadow: 'none' }}
             >
               ?
             </button>
-            <span className="text-vintage-gold font-bold">{credits}</span>
-            <span className="text-vintage-burnt-gold text-xs">{t('baccaratCredits')}</span>
+            <span className="font-bold" style={{ color: '#000' }}>{credits}</span>
+            <span className="text-xs" style={{ color: '#333' }}>{t('baccaratCredits')}</span>
           </div>
         </div>
       </div>
