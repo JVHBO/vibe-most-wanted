@@ -801,7 +801,7 @@ export default function BaccaratPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-vintage-black flex flex-col">
       {/* Header */}
-      <div className="bg-vintage-charcoal/90 border-b-2 border-vintage-gold/30 px-4 py-2">
+      <div className="bacc-header bg-vintage-charcoal/90 border-b-2 border-vintage-gold/30 px-4 py-2">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <button onClick={() => router.push('/')} className="text-vintage-burnt-gold hover:text-vintage-gold text-sm font-modern">
             {t('baccaratBack')}

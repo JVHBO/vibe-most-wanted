@@ -1431,23 +1431,23 @@ body.neobrutalism [class*="via-vintage-deep-black"] {
   background: #181818 !important;
 }
 
-/* Header bar — sem > (filho direto quebra dentro do MiniappFrame wrapper) */
-body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-vintage-charcoal/90"][class*="border-b-2"] {
+/* Header bar — usa classe .bacc-header adicionada direto no JSX */
+body.neobrutalism .bacc-header {
   background: #FFD400 !important;
   background-color: #FFD400 !important;
   border-bottom: 4px solid #000 !important;
 }
 
 /* Header: back button, title, credits text */
-body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-vintage-charcoal/90"][class*="border-b-2"] button,
-body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-vintage-charcoal/90"][class*="border-b-2"] h1,
-body.neobrutalism [class*="via-vintage-deep-black"] [class*="bg-vintage-charcoal/90"][class*="border-b-2"] span {
+body.neobrutalism .bacc-header button,
+body.neobrutalism .bacc-header h1,
+body.neobrutalism .bacc-header span {
   color: #000 !important;
   text-shadow: none !important;
 }
 
 /* Header: ? rules button → dark circle com borda gold e texto gold, mantém redondo */
-body.neobrutalism [class*="via-vintage-deep-black"] button[class*="rounded-full"][class*="bg-vintage-gold/20"] {
+body.neobrutalism .bacc-header button[class*="rounded-full"] {
   background: #1a1a1a !important;
   border: 2px solid #FFD400 !important;
   border-radius: 50% !important;
