@@ -16,7 +16,6 @@ import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexPvPService } from '@/lib/convex-pvp';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 interface UnlockedDifficulties {
   has: (difficulty: string) => boolean;
@@ -84,7 +83,6 @@ export function PvPMenuModals({
   setShowEntryFeeModal,
   t,
 }: PvPMenuModalsProps) {
-  const { t } = useLanguage();
   const T = t as (k: string) => string;
   // Check if player has a valid entry fee
   const entryFeeCheck = useQuery(

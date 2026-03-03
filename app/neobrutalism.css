@@ -473,10 +473,14 @@ body.neobrutalism [class*="bg-vintage-deep-black/50"] [class*="animate-pulse"] {
 }
 body.neobrutalism [class*="bg-vintage-deep-black"][class*="animate-ticker"] *,
 body.neobrutalism [class*="bg-vintage-deep-black"] .animate-ticker *,
-body.neobrutalism [class*="bg-vintage-deep-black"] button:not([class*="raid-btn-"]) {
+body.neobrutalism [class*="bg-vintage-deep-black"] button:not([class*="raid-btn-"]):not([class*="tcg-db-"]) {
   color: #000 !important;
   border: none !important;
   box-shadow: none !important;
+}
+/* TCG DeckBuilder buttons: keep neobrutalism style */
+body.neobrutalism [class*="bg-vintage-deep-black"] button[class*="tcg-db-"] {
+  color: #000 !important;
 }
 /* Keep green/red for price direction arrows */
 body.neobrutalism [class*="bg-vintage-deep-black"] [class*="text-green-4"] {

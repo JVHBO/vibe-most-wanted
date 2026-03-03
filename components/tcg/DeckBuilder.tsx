@@ -418,27 +418,27 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
         <div className="flex items-center gap-2 mb-3 text-[10px]">
           <button
             onClick={() => { setDeckSortBy("power"); setDeckSortDesc(!deckSortDesc); }}
-            className={`px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "power" ? "bg-vintage-gold text-black" : "bg-black/60 text-vintage-gold border-vintage-gold/50 shadow-[2px_2px_0px_rgba(0,0,0,0.5)]"}`}
+            className={`tcg-db-sort px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "power" ? "bg-vintage-gold text-black" : "bg-gray-800 text-vintage-gold"}`}
           >
             ⚡ Power {deckSortBy === "power" && (deckSortDesc ? "↓" : "↑")}
           </button>
           <button
             onClick={() => { setDeckSortBy("rarity"); setDeckSortDesc(!deckSortDesc); }}
-            className={`px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "rarity" ? "bg-purple-500 text-white" : "bg-black/60 text-purple-400 border-purple-500/50 shadow-[2px_2px_0px_rgba(0,0,0,0.5)]"}`}
+            className={`tcg-db-sort px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "rarity" ? "bg-purple-500 text-white" : "bg-gray-800 text-purple-400"}`}
           >
             💎 Rarity {deckSortBy === "rarity" && (deckSortDesc ? "↓" : "↑")}
           </button>
           <div className="flex-1"></div>
             <button
               onClick={handleAutoBuildCombo}
-              className="px-2 py-1 bg-yellow-500 text-black border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all font-bold"
+              className="tcg-db-auto px-2 py-1 bg-yellow-400 text-black border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all font-bold"
               title="Auto-build deck - every card in a combo!"
             >
               🎯 COMBO
             </button>
             <button
               onClick={handleAutoBuildPower}
-              className="px-2 py-1 bg-orange-500 text-black border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all font-bold"
+              className="tcg-db-auto px-2 py-1 bg-orange-400 text-black border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all font-bold"
               title="Auto-build deck with highest power cards"
             >
               ⚡ POWER
