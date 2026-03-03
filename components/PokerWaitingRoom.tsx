@@ -211,7 +211,7 @@ export function PokerWaitingRoom({
                 <div className="flex items-center gap-3">
                   <div className="text-3xl">👑</div>
                   <div>
-                    <div className="text-sm text-vintage-burnt-gold">HOST</div>
+                    <div className="text-sm text-vintage-burnt-gold">{t('pvpHost')}</div>
                     <div className="text-lg font-bold text-vintage-gold">
                       {room?.hostUsername || playerUsername}
                     </div>
@@ -235,7 +235,7 @@ export function PokerWaitingRoom({
                     {hasOpponent ? "⚔️" : "⏳"}
                   </div>
                   <div>
-                    <div className="text-sm text-vintage-burnt-gold">GUEST</div>
+                    <div className="text-sm text-vintage-burnt-gold">{t('pvpGuest')}</div>
                     <div className="text-lg font-bold text-vintage-gold">
                       {opponentUsername || "Waiting..."}
                     </div>
@@ -263,7 +263,7 @@ export function PokerWaitingRoom({
                 Select your deck while you wait!
               </p>
               <div className="inline-block px-4 py-2 bg-vintage-black/50 border border-vintage-gold/30 rounded-lg">
-                <div className="text-xs text-vintage-burnt-gold mb-1">Room ID</div>
+                <div className="text-xs text-vintage-burnt-gold mb-1">{t('pvpRoomId')}</div>
                 <div className="text-sm font-mono font-bold text-vintage-gold">
                   {roomId}
                 </div>

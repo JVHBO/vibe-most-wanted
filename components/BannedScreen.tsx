@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/contexts/LanguageContext";
+
 interface BannedScreenProps {
   username: string;
   amountStolen: number;
@@ -10,6 +12,8 @@ interface BannedScreenProps {
 const MUSHU_DISHONOR_GIF = "https://media1.tenor.com/m/2GeIejx2hbYAAAAC/mushu-mulan.gif";
 
 export default function BannedScreen({ username, amountStolen, reason }: BannedScreenProps) {
+  const { t } = useLanguage();
+  const T = t as (k: string) => string;
   return (
     <div className="fixed inset-0 bg-black z-[9999] flex items-center justify-center p-4">
       <div className="max-w-lg w-full text-center">
@@ -46,7 +50,7 @@ export default function BannedScreen({ username, amountStolen, reason }: BannedS
 
         {/* Amount Stolen */}
         <div className="bg-red-900/30 rounded-lg p-4 mb-6">
-          <p className="text-red-500 text-sm mb-2">Amount Exploited:</p>
+          <p className="text-red-500 text-sm mb-2">{T("bannedAmountExploited")}</p>
           <p className="text-red-400 text-3xl font-bold">
             {amountStolen.toLocaleString()} VBMS
           </p>

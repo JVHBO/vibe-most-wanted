@@ -10,6 +10,7 @@ import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { BUILDER_CODE, dataSuffix } from "@/lib/hooks/useWriteContractWithAttribution";
 import Image from "next/image";
 import { useBodyScrollLock, useEscapeKey } from "@/hooks";
@@ -29,6 +30,8 @@ interface InboxModalProps {
 }
 
 export function InboxModal({ economy, onClose }: InboxModalProps) {
+  const { t } = useLanguage();
+  const T = t as (k: string) => string;
   const { address } = useAccount();
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
@@ -366,9 +369,9 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
                 <div className="relative flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     <NextImage src="/images/icons/convert.svg" alt="Convert" width={20} height={20} className="w-5 h-5" />
-                    <span>Convert {testvbmsBalance.toLocaleString()} → VBMS</span>
+                    <span>{T("inboxConvertBtn").replace("{amount}", testvbmsBalance.toLocaleString())}</span>
                   </span>
-                  <span className="text-xs opacity-80 bg-black/20 px-2 py-1 rounded">Pay Gas</span>
+                  <span className="text-xs opacity-80 bg-black/20 px-2 py-1 rounded">{T('inboxPayGas')}</span>
                 </div>
               </button>
             ) : (

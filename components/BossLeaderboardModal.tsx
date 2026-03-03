@@ -48,7 +48,7 @@ export function BossLeaderboardModal({
         <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold max-w-md w-full p-6">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-vintage-gold border-t-transparent mx-auto mb-4"></div>
-            <p className="text-vintage-gold">Loading leaderboard...</p>
+            <p className="text-vintage-gold">{t('cardsPreviewLoading')}</p>
           </div>
         </div>
       </div>
@@ -61,7 +61,7 @@ export function BossLeaderboardModal({
       <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4" style={{ zIndex: Z_INDEX.modal }}>
         <div className="bg-vintage-charcoal rounded-xl border-2 border-red-600 max-w-md w-full p-6">
           <h2 className="text-xl font-display font-bold text-red-400 mb-4 text-center">
-            No Leaderboard Found
+            {t('raidBossDamageRanking')}
           </h2>
           <p className="text-vintage-ice/70 text-center mb-4">
             This boss hasn't been defeated yet.
@@ -139,25 +139,25 @@ export function BossLeaderboardModal({
               </div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-vintage-ice/70">HP:</span>
+                  <span className="text-vintage-ice/70">{t('leaderboardHp')}:</span>
                   <span className="text-red-400 font-bold ml-1">
                     {bossHistory.maxHp.toLocaleString()}
                   </span>
                 </div>
                 <div>
-                  <span className="text-vintage-ice/70">Duration:</span>
+                  <span className="text-vintage-ice/70">{t('leaderboardDuration')}:</span>
                   <span className="text-vintage-neon-blue font-bold ml-1">
                     {formatDuration(bossHistory.duration)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-vintage-ice/70">Players:</span>
+                  <span className="text-vintage-ice/70">{t('leaderboardPlayers')}:</span>
                   <span className="text-vintage-gold font-bold ml-1">
                     {bossHistory.totalPlayers}
                   </span>
                 </div>
                 <div>
-                  <span className="text-vintage-ice/70">Attacks:</span>
+                  <span className="text-vintage-ice/70">{t('leaderboardAttacks')}:</span>
                   <span className="text-green-400 font-bold ml-1">
                     {bossHistory.totalAttacks.toLocaleString()}
                   </span>

@@ -53,11 +53,11 @@ export function PlayerRaidDeckModal({
         {playerDeck === undefined ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent mx-auto mb-2"></div>
-            <p className="text-vintage-burnt-gold">Loading deck...</p>
+            <p className="text-vintage-burnt-gold">{t('cardsPreviewLoading')}</p>
           </div>
         ) : playerDeck === null ? (
           <div className="text-center py-8">
-            <p className="text-vintage-burnt-gold text-lg">No raid deck set</p>
+            <p className="text-vintage-burnt-gold text-lg">{t('raidDeckEmpty')}</p>
             <p className="text-vintage-burnt-gold/70 text-sm mt-2">
               This player hasn't configured their raid team yet.
             </p>
@@ -67,19 +67,19 @@ export function PlayerRaidDeckModal({
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3 mb-4">
               <div className="bg-purple-600/20 border border-purple-600/50 rounded-lg p-3 text-center">
-                <p className="text-purple-400 text-xs font-bold">Deck Power</p>
+                <p className="text-purple-400 text-xs font-bold">{t('raidDeckPower')}</p>
                 <p className="text-vintage-burnt-gold font-bold text-lg">
                   {playerDeck.deckPower?.toLocaleString() || 0}
                 </p>
               </div>
               <div className="bg-red-600/20 border border-red-600/50 rounded-lg p-3 text-center">
-                <p className="text-red-400 text-xs font-bold">Total Damage</p>
+                <p className="text-red-400 text-xs font-bold">{t('raidDeckTotalDmg')}</p>
                 <p className="text-vintage-burnt-gold font-bold text-lg">
                   {playerDeck.totalDamageDealt?.toLocaleString() || 0}
                 </p>
               </div>
               <div className="bg-yellow-600/20 border border-yellow-600/50 rounded-lg p-3 text-center">
-                <p className="text-yellow-400 text-xs font-bold">Bosses Killed</p>
+                <p className="text-yellow-400 text-xs font-bold">{t('raidDeckBossKills')}</p>
                 <p className="text-vintage-burnt-gold font-bold text-lg">
                   {playerDeck.bossesKilled || 0}
                 </p>

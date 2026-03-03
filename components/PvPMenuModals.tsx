@@ -16,6 +16,7 @@ import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
 import { ConvexPvPService } from '@/lib/convex-pvp';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface UnlockedDifficulties {
   has: (difficulty: string) => boolean;
@@ -83,6 +84,8 @@ export function PvPMenuModals({
   setShowEntryFeeModal,
   t,
 }: PvPMenuModalsProps) {
+  const { t } = useLanguage();
+  const T = t as (k: string) => string;
   // Check if player has a valid entry fee
   const entryFeeCheck = useQuery(
     api.pvp.checkEntryFee,
@@ -168,7 +171,7 @@ export function PvPMenuModals({
             >
               <div className="flex items-center justify-between">
                 <span>＋ {t('createRoom')}</span>
-                <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">Free / Ranked</span>
+                <span className="text-sm font-modern bg-vintage-black/30 px-2 py-1 rounded">{T('pvpFreeRanked')}</span>
               </div>
             </button>
 
@@ -238,7 +241,7 @@ export function PvPMenuModals({
               <div className="flex flex-col items-start">
                 <div className="flex items-center justify-between w-full mb-2">
                   <span>🎮 CASUAL</span>
-                  <span className="text-sm font-modern bg-green-500/30 px-3 py-1 rounded">FREE</span>
+                  <span className="text-sm font-modern bg-green-500/30 px-3 py-1 rounded">{T('pvpFree')}</span>
                 </div>
                 <p className="text-xs text-left text-vintage-black/70 font-modern">
                   Just for fun • No coins required • No rewards

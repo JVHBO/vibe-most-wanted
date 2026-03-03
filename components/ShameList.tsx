@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
@@ -22,6 +23,8 @@ interface ShameListProps {
 }
 
 export default function ShameList({ playerAddress, soundEnabled = true }: ShameListProps) {
+  const { t } = useLanguage();
+  const T = t as (k: string) => string;
   const shameData = useQuery(api.blacklist.getShameList);
   const shameCounts = useQuery(api.blacklist.getExploiterShameCounts);
   const shameStatus = useQuery(
@@ -162,10 +165,10 @@ export default function ShameList({ playerAddress, soundEnabled = true }: ShameL
             <thead className="bg-red-900/30 sticky top-0">
               <tr className="text-red-400/80 text-xs">
                 <th className="px-2 py-2 text-left">#</th>
-                <th className="px-2 py-2 text-left">Username</th>
-                <th className="px-2 py-2 text-right">Stolen</th>
-                <th className="px-2 py-2 text-center">Shames</th>
-                <th className="px-2 py-2 text-center">Action</th>
+                <th className="px-2 py-2 text-left">{T("shameUsername")}</th>
+                <th className="px-2 py-2 text-right">{T("shameStolen")}</th>
+                <th className="px-2 py-2 text-center">{T("shameShames")}</th>
+                <th className="px-2 py-2 text-center">{T("shameAction")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-red-800/30">
@@ -236,7 +239,7 @@ export default function ShameList({ playerAddress, soundEnabled = true }: ShameL
         {/* Footer */}
         <div className="bg-red-900/30 px-4 py-2 border-t border-red-800/50">
           <p className="text-red-500/80 text-xs">
-            <span className="font-bold">Exploit:</span>{" "}
+            <span className="font-bold">{T("shameExploit") || "Exploit:"}</span>{" "}
             {shameData.summary.exploitType}
           </p>
           <p className="text-yellow-500/80 text-xs mt-1">

@@ -11,6 +11,7 @@ import { ConvexPvPService, type GameRoom } from '@/lib/convex-pvp';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { CardMedia } from '@/components/CardMedia';
 import { getCardUniqueId, isSameCard } from '@/lib/collections/index';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Card {
   tokenId: string;
@@ -61,6 +62,8 @@ export function PvPInRoomModal({
   isCardLocked,
   t,
 }: PvPInRoomModalProps) {
+  const { t } = useLanguage();
+  const T = t as (k: string) => string;
   const [sortByPower, setSortByPower] = useState<boolean>(false);
 
   // Sort cards by power if enabled
@@ -107,7 +110,7 @@ export function PvPInRoomModal({
           <div className="space-y-4">
             {/* Host */}
             <div className="bg-vintage-charcoal rounded-xl p-4 border-2 border-vintage-neon-blue/50">
-              <p className="text-vintage-neon-blue font-bold mb-2 font-modern">Host</p>
+              <p className="text-vintage-neon-blue font-bold mb-2 font-modern">{T('pvpHost')}</p>
               <p className="text-white text-sm font-mono truncate max-w-[150px]">{currentRoom.hostUsername || `${currentRoom.hostAddress.slice(0, 10)}...`}</p>
               <p className="text-vintage-burnt-gold text-sm">
                 {(currentRoom.hostCards && currentRoom.hostCards.length > 0) ? '✓ Ready' : '... Selecting cards'}
