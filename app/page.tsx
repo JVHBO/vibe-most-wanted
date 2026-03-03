@@ -4409,23 +4409,28 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                       </button>
                       {showProfileDropdown && (
                         <div
-                          className="absolute top-full left-0 mt-1 bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-lg overflow-hidden min-w-[150px] shadow-xl"
-                          style={{ zIndex: 9999 }}
+                          className="absolute top-full left-0 mt-1 overflow-hidden min-w-[150px]"
+                          style={{ zIndex: 9999, background: '#1D4ED8', border: '4px solid #000', boxShadow: '6px 6px 0px #000', borderRadius: '4px' }}
                           onMouseEnter={() => { if (profileDropdownTimeout.current) clearTimeout(profileDropdownTimeout.current); }}
                           onMouseLeave={() => setShowProfileDropdown(false)}
                         >
                           <Link
                             href={`/profile/${userProfile.username}`}
                             onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); }}
-                            className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
+                            className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold w-full transition"
+                            style={{ color: '#FFD400', borderBottom: '2px solid rgba(0,0,0,0.3)' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = '#FFD400', e.currentTarget.style.color = '#000')}
+                            onMouseLeave={e => (e.currentTarget.style.background = '', e.currentTarget.style.color = '#FFD400')}
                           >
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                             Profile
                           </Link>
                           <button
                             onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); setShowSettings(true); }}
-                            className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold w-full text-left border-none shadow-none"
-                            style={{ border: 'none', boxShadow: 'none' }}
+                            className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold w-full text-left transition"
+                            style={{ color: '#FFD400', border: 'none', boxShadow: 'none', borderBottom: '2px solid rgba(0,0,0,0.3)' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = '#FFD400', e.currentTarget.style.color = '#000')}
+                            onMouseLeave={e => (e.currentTarget.style.background = '', e.currentTarget.style.color = '#FFD400')}
                           >
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.38.64 1 1.07 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
                             Settings
@@ -4433,7 +4438,10 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                           <Link
                             href="/docs"
                             onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); }}
-                            className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
+                            className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold w-full transition"
+                            style={{ color: '#FFD400' }}
+                            onMouseEnter={e => (e.currentTarget.style.background = '#FFD400', e.currentTarget.style.color = '#000')}
+                            onMouseLeave={e => (e.currentTarget.style.background = '', e.currentTarget.style.color = '#FFD400')}
                           >
                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
                             Docs
