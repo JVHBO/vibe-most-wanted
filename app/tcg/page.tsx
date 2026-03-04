@@ -3398,7 +3398,7 @@ export default function TCGPage() {
         <div className="relative flex flex-col h-full z-10">
 
           {/* Top Bar - Player Avatars & Turn Indicator */}
-          <div className="flex items-center justify-between px-4 py-2">
+          <div className="flex items-center justify-between px-4 py-1">
             {/* Player Avatar (left) - Royal style with dropdown */}
             <div className="relative flex items-center gap-2">
               <div
@@ -3505,7 +3505,7 @@ export default function TCGPage() {
             className="flex-1 flex items-stretch justify-center px-2 gap-2 min-h-0"
             style={{
               perspective: "1000px",
-              perspectiveOrigin: "50% 80%"
+              perspectiveOrigin: "50% 30%"
             }}
             onDragOver={(e) => e.preventDefault()}
           >
@@ -3513,8 +3513,8 @@ export default function TCGPage() {
               className="flex-1 flex items-stretch justify-center gap-2"
               style={{
                 transformStyle: "preserve-3d",
-                transform: "rotateX(15deg)",
-                transformOrigin: "50% 100%"
+                transform: "rotateX(6deg)",
+                transformOrigin: "50% 50%"
               }}
               onDragOver={(e) => e.preventDefault()}
             >
@@ -3994,7 +3994,7 @@ export default function TCGPage() {
 
           {/* Hand - Bottom Bar (Royal style) */}
           <div
-            className="relative pt-4 pb-2 px-3 tcg-royal-hand"
+            className="relative pt-1 pb-1 px-3 tcg-royal-hand"
             style={{
               background: "linear-gradient(180deg, rgba(20,20,20,0.95) 0%, rgba(10,10,10,1) 100%)",
               borderTop: dragOverHand ? "3px solid #22c55e" : "3px solid",
@@ -4388,7 +4388,7 @@ export default function TCGPage() {
         <div className="relative flex flex-col h-full z-10">
 
           {/* Top Bar - Player Avatars & Turn Indicator */}
-          <div className="flex items-center justify-between px-4 py-2">
+          <div className="flex items-center justify-between px-4 py-1">
             {/* Player Avatar (left) - Royal style with dropdown */}
             <div className="relative flex items-center gap-2">
               <div
@@ -4548,11 +4548,11 @@ export default function TCGPage() {
           {/* Battle Arena - 3 Lanes (Royal Card Table style with 3D depth) */}
           <div
             className="flex-1 flex items-stretch justify-center px-2 gap-2 min-h-0"
-            style={{ perspective: "1000px", perspectiveOrigin: "50% 80%" }}
+            style={{ perspective: "1000px", perspectiveOrigin: "50% 30%" }}
           >
             <div
               className="flex-1 flex items-stretch justify-center gap-2"
-              style={{ transformStyle: "preserve-3d", transform: "rotateX(15deg)", transformOrigin: "50% 100%" }}
+              style={{ transformStyle: "preserve-3d", transform: "rotateX(6deg)", transformOrigin: "50% 50%" }}
             >
             {gs.lanes.map((lane: any, laneIndex: number) => {
               const status = getLaneStatus(lane);
@@ -4915,7 +4915,7 @@ export default function TCGPage() {
 
           {/* Hand - Bottom Bar (Royal style) */}
           <div
-            className="relative pt-4 pb-2 px-3 tcg-royal-hand"
+            className="relative pt-1 pb-1 px-3 tcg-royal-hand"
             style={{
               background: "linear-gradient(180deg, rgba(20,20,20,0.95) 0%, rgba(10,10,10,1) 100%)",
               borderTop: "3px solid",
