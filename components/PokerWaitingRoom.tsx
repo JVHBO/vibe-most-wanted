@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Card {
   tokenId: string;
@@ -39,6 +40,7 @@ export function PokerWaitingRoom({
   onGameStart,
   onLeave,
 }: PokerWaitingRoomProps) {
+  const { t } = useLanguage();
   const [selectedDeck, setSelectedDeck] = useState<Card[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [isReady, setIsReady] = useState(false);
