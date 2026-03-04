@@ -169,11 +169,8 @@ export function PvPResultView({ currentMatch, address, showDefeatBait, onBackToL
         <div className="flex gap-3 justify-center">
           <button
             onClick={onBackToLobby}
-            className={`font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 ${
-              isWinner
-                ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black shadow-lg shadow-yellow-500/30"
-                : "bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white"
-            }`}
+            className="px-8 py-3 bg-red-700 hover:bg-red-600 text-white border-2 border-black font-bold text-sm uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+            style={{ boxShadow: '3px 3px 0px #000' }}
           >
             {t('tcgBackToLobby')}
           </button>

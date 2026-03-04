@@ -167,7 +167,8 @@ export function PvEResultView({ pveGameState, showDefeatBait, onPlayAgain, onBac
           </button>
           <button
             onClick={onBackToLobby}
-            className="bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white font-bold py-3 px-6 rounded-xl transition-all transform hover:scale-105"
+            className="px-6 py-3 bg-red-700 hover:bg-red-600 text-white border-2 border-black font-bold text-sm uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+            style={{ boxShadow: '3px 3px 0px #000' }}
           >
             {t('tcgBackToLobby')}
           </button>

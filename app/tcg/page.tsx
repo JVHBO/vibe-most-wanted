@@ -4231,7 +4231,8 @@ export default function TCGPage() {
                   setPveGameState(null);
                   setView("lobby");
                 }}
-                className="px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+                className="px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white border-2 border-black text-[11px] font-bold uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+                style={{ boxShadow: '3px 3px 0px #000' }}
               >
                 ← BACK
               </button>
@@ -5160,7 +5161,8 @@ export default function TCGPage() {
               {/* Back Button */}
               <button
                 onClick={() => setView("lobby")}
-                className="px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+                className="px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white border-2 border-black text-[11px] font-bold uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+                style={{ boxShadow: '3px 3px 0px #000' }}
               >
                 ← BACK
               </button>
