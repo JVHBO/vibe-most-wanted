@@ -3065,3 +3065,12 @@ body.neobrutalism button[class*="ct-base-active"],  button[class*="ct-base-activ
 body.neobrutalism button[class*="ct-base-inactive"],button[class*="ct-base-inactive"] { background: #1f2937 !important; background-color: #1f2937 !important; color: #6b7280 !important; border: 2px solid #374151 !important; box-shadow: none !important; }
 body.neobrutalism button[class*="ct-arb-active"],   button[class*="ct-arb-active"]   { background: #12AAFF !important; background-color: #12AAFF !important; color: #000 !important; border: 2px solid #000 !important; box-shadow: 2px 2px 0px #000 !important; }
 body.neobrutalism button[class*="ct-arb-inactive"], button[class*="ct-arb-inactive"] { background: #1f2937 !important; background-color: #1f2937 !important; color: #6b7280 !important; border: 2px solid #374151 !important; box-shadow: none !important; }
+
+/* ============================================================
+   GLOBAL NEOBRUTALISM BUTTON SHADOW
+   Auto-applies to all buttons with border-black across ALL pages
+   Specificity (0,1,1) — overridden by Tailwind active:shadow-none (0,2,0)
+   ============================================================ */
+button.border-black {
+  box-shadow: 3px 3px 0px #000;
+}

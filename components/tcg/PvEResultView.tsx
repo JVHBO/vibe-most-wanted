@@ -44,16 +44,8 @@ export function PvEResultView({ pveGameState, showDefeatBait, onPlayAgain, onBac
               autoPlay
               loop
               playsInline
+              muted
               className="w-48 h-48 mx-auto mb-4 rounded-xl object-cover"
-              ref={(el) => {
-                if (el) {
-                  el.volume = 0.7;
-                  el.play().catch(() => {
-                    el.muted = true;
-                    el.play().catch(() => {});
-                  });
-                }
-              }}
             >
               <source src="/sounds/defeat-bait.mp4" type="video/mp4" />
             </video>
