@@ -288,7 +288,8 @@ export function TCGLobby({
           <button
             onClick={() => { AudioManager.buttonNav(); onNavigate("deck-builder"); }}
             onMouseEnter={() => AudioManager.buttonHover()}
-            className="px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+            className="px-3 py-1.5 bg-gray-900 hover:bg-vintage-gold/10 text-vintage-gold border-2 border-vintage-gold/50 hover:border-vintage-gold rounded text-xs font-bold uppercase tracking-wider transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+          style={{ boxShadow: '2px 2px 0px rgba(0,0,0,0.7)' }}
           >
             {hasDeck ? t('tcgEdit') : t('tcgBuildDeck')}
           </button>
@@ -308,34 +309,37 @@ export function TCGLobby({
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-4 bg-black/30 p-1 rounded-lg border border-vintage-gold/10">
+        <div className="flex gap-1 mb-4">
           <button
             onClick={() => setLobbyTab("play")}
-            className={`flex-1 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded transition-all ${
+            className={`flex-1 py-2.5 px-3 font-black text-xs uppercase tracking-wider border-2 border-black transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none ${
               lobbyTab === "play"
-                ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30"
-                : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold hover:bg-black/20"
+                ? "bg-vintage-gold text-black"
+                : "bg-gray-800 text-vintage-gold"
             }`}
+            style={{ boxShadow: lobbyTab === "play" ? '3px 3px 0px #000' : '2px 2px 0px #000' }}
           >
             {t('tcgPlay')}
           </button>
           <button
             onClick={() => setLobbyTab("leaderboard")}
-            className={`flex-1 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded transition-all ${
+            className={`flex-1 py-2.5 px-3 font-black text-xs uppercase tracking-wider border-2 border-black transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none ${
               lobbyTab === "leaderboard"
-                ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30"
-                : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold hover:bg-black/20"
+                ? "bg-vintage-gold text-black"
+                : "bg-gray-800 text-vintage-gold"
             }`}
+            style={{ boxShadow: lobbyTab === "leaderboard" ? '3px 3px 0px #000' : '2px 2px 0px #000' }}
           >
             Leaderboard
           </button>
           <button
             onClick={() => setLobbyTab("rules")}
-            className={`flex-1 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded transition-all ${
+            className={`flex-1 py-2.5 px-3 font-black text-xs uppercase tracking-wider border-2 border-black transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none ${
               lobbyTab === "rules"
-                ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/30"
-                : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold hover:bg-black/20"
+                ? "bg-vintage-gold text-black"
+                : "bg-gray-800 text-vintage-gold"
             }`}
+            style={{ boxShadow: lobbyTab === "rules" ? '3px 3px 0px #000' : '2px 2px 0px #000' }}
           >
             {t('tcgRules')}
           </button>
@@ -346,7 +350,7 @@ export function TCGLobby({
           <div className="space-y-4">
             {/* Active Deck Info */}
             {hasDeck && (
-              <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 overflow-hidden">
+              <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border-2 border-vintage-gold/40 overflow-hidden" style={{ boxShadow: '3px 3px 0px rgba(0,0,0,0.6)' }}>
                 <div className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -375,7 +379,7 @@ export function TCGLobby({
             {/* Play Buttons */}
             <div className="space-y-4">
               {!hasDeck ? (
-                <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 p-6 text-center">
+                <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border-2 border-vintage-gold/40 p-6 text-center" style={{ boxShadow: '3px 3px 0px rgba(0,0,0,0.6)' }}>
                   <div className="w-16 h-16 rounded-full bg-vintage-gold/10 border border-vintage-gold/30 flex items-center justify-center mx-auto mb-4">
                     <span className="text-vintage-gold text-2xl">🃏</span>
                   </div>
@@ -383,7 +387,8 @@ export function TCGLobby({
                   <p className="text-vintage-burnt-gold text-sm mb-4">Create your first deck to start battling!</p>
                   <button
                     onClick={() => onNavigate("deck-builder")}
-                    className="px-6 py-3 bg-vintage-gold/20 hover:bg-vintage-gold/30 border border-vintage-gold/50 hover:border-vintage-gold text-vintage-gold font-bold rounded-lg text-sm uppercase tracking-wide transition-all"
+                    className="px-6 py-3 bg-vintage-gold hover:bg-yellow-300 text-black font-black border-2 border-black text-sm uppercase tracking-wide transition-all active:translate-y-[2px] active:shadow-none"
+                    style={{ boxShadow: '3px 3px 0px #000' }}
                   >
                     {t('tcgBuildDeck')}
                   </button>
@@ -391,7 +396,7 @@ export function TCGLobby({
               ) : (
                 <>
                   {/* Battle Mode Selection */}
-                  <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 overflow-hidden">
+                  <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border-2 border-vintage-gold/40 overflow-hidden" style={{ boxShadow: '3px 3px 0px rgba(0,0,0,0.6)' }}>
                     <div className="p-3 border-b border-vintage-gold/20 flex items-center justify-between">
                       <h3 className="text-sm font-bold text-vintage-gold uppercase tracking-wide">Battle Mode</h3>
                       <div className="flex items-center gap-2 text-xs">
@@ -409,7 +414,8 @@ export function TCGLobby({
                       <button
                         onClick={() => { AudioManager.buttonClick(); onStartPvE(); }}
                         onMouseEnter={() => AudioManager.buttonHover()}
-                        className="tcg-btn-cpu w-full px-4 py-3 bg-green-500/20 hover:bg-green-500/30 rounded-lg text-green-400 font-bold text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-2"
+                        className="tcg-btn-cpu w-full px-4 py-3 bg-green-600 hover:bg-green-500 text-black font-black text-sm uppercase tracking-wide border-2 border-black transition-all active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2"
+                        style={{ boxShadow: '3px 3px 0px #000' }}
                       >
                         {t('tcgBattleCpu')} {dailyBattles < REWARDED_BATTLES_PER_DAY ? `(+${BATTLE_AURA_REWARD} AURA)` : ""}
                       </button>
@@ -440,7 +446,8 @@ export function TCGLobby({
                             onClick={() => { AudioManager.buttonClick(); handleFindMatch(); }}
                             onMouseEnter={() => AudioManager.buttonHover()}
                             disabled={!hasDeck}
-                            className="tcg-btn-findmatch w-full px-4 py-3 bg-amber-500/20 hover:bg-amber-500/30 rounded-lg text-amber-400 font-bold text-sm uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 mb-2"
+                            className="tcg-btn-findmatch w-full px-4 py-3 bg-amber-500 hover:bg-amber-400 text-black font-black text-sm uppercase tracking-wide border-2 border-black transition-all disabled:opacity-40 disabled:cursor-not-allowed active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 mb-2"
+                            style={{ boxShadow: '3px 3px 0px #000' }}
                           >
                             Find Match
                           </button>
@@ -452,7 +459,8 @@ export function TCGLobby({
                             onClick={() => { AudioManager.buttonClick(); handleCreateMatch(); }}
                             onMouseEnter={() => AudioManager.buttonHover()}
                             disabled={!hasDeck}
-                            className="tcg-btn-createroom w-full px-3 py-2.5 bg-purple-500/20 hover:bg-purple-500/30 rounded-lg text-purple-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="tcg-btn-createroom w-full px-3 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-black text-xs uppercase tracking-wide border-2 border-black transition-all disabled:opacity-40 disabled:cursor-not-allowed active:translate-y-[1px] active:shadow-none"
+                            style={{ boxShadow: '2px 2px 0px #000' }}
                           >
                             Create Room
                           </button>
@@ -464,13 +472,14 @@ export function TCGLobby({
                               placeholder="ROOM CODE"
                               maxLength={6}
                               disabled={!hasDeck}
-                              className="flex-1 bg-black/50 border border-vintage-gold/20 rounded-lg px-2 py-2 text-vintage-gold font-mono text-center uppercase tracking-wider focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-xs disabled:opacity-40"
+                              className="flex-1 bg-black/70 border-2 border-vintage-gold/40 px-2 py-2 text-vintage-gold font-mono text-center uppercase tracking-wider focus:outline-none focus:border-vintage-gold/70 placeholder:text-vintage-burnt-gold/30 text-xs disabled:opacity-40"
                             />
                             <button
                               onClick={() => { if (roomIdInput.length >= 4) { AudioManager.buttonClick(); handleJoinMatch(roomIdInput); } }}
                               onMouseEnter={() => AudioManager.buttonHover()}
                               disabled={!hasDeck || roomIdInput.length < 4}
-                              className="tcg-btn-join px-4 py-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg text-red-400 font-bold text-xs uppercase tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                              className="tcg-btn-join px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wide border-2 border-black transition-all disabled:opacity-40 disabled:cursor-not-allowed active:translate-y-[1px] active:shadow-none"
+                              style={{ boxShadow: '2px 2px 0px #000' }}
                             >
                               Join
                             </button>
@@ -653,7 +662,7 @@ export function TCGLobby({
         {/* Leaderboard Tab */}
         {lobbyTab === "leaderboard" && (
           <div className="space-y-3">
-            <div className="bg-gradient-to-b from-vintage-charcoal/60 to-vintage-charcoal/30 border border-vintage-gold/15 rounded-lg p-3">
+            <div className="bg-gradient-to-b from-vintage-charcoal/60 to-vintage-charcoal/30 border-2 border-vintage-gold/30 rounded-lg p-3" style={{ boxShadow: '3px 3px 0px rgba(0,0,0,0.6)' }}>
               <h3 className="text-xs font-bold text-vintage-gold uppercase tracking-[0.2em] mb-3 text-center">Defense Leaderboard</h3>
 
               {/* My Pool Status */}
@@ -715,7 +724,8 @@ export function TCGLobby({
                                 });
                               }}
                               disabled={poolTxStep === "transferring"}
-                              className="px-2 py-1.5 bg-orange-600/30 hover:bg-orange-600/50 text-orange-400 border border-orange-500/40 rounded text-[8px] font-bold uppercase tracking-wider transition-all whitespace-nowrap disabled:opacity-40"
+                              className="px-2 py-1.5 bg-orange-600 hover:bg-orange-500 text-white border-2 border-black text-[8px] font-black uppercase tracking-wider transition-all whitespace-nowrap disabled:opacity-40 active:translate-y-[1px] active:shadow-none"
+                              style={{ boxShadow: '2px 2px 0px #000' }}
                             >
                               {poolTxStep === "transferring" ? "..." : "Fight"}
                             </button>
@@ -735,7 +745,7 @@ export function TCGLobby({
         {/* Defense Pool Modal */}
         {showPoolModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setShowPoolModal(false)}>
-            <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black border border-vintage-gold/30 rounded-xl p-4 max-w-sm mx-4 w-full" onClick={e => e.stopPropagation()}>
+            <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black border-2 border-vintage-gold/50 rounded-xl p-4 max-w-sm mx-4 w-full" style={{ boxShadow: '4px 4px 0px rgba(0,0,0,0.8)' }} onClick={e => e.stopPropagation()}>
               <h3 className="text-sm font-bold text-vintage-gold uppercase tracking-[0.2em] mb-3 text-center">Defense Pool</h3>
 
               {myDefensePool?.isActive ? (
@@ -764,11 +774,12 @@ export function TCGLobby({
                         <button
                           key={tier}
                           onClick={() => setSelectedPoolTier(tier)}
-                          className={`px-3 py-1.5 rounded text-[10px] font-bold transition-all ${
+                          className={`px-3 py-1.5 text-[10px] font-black transition-all border-2 border-black active:translate-y-[1px] active:shadow-none ${
                             selectedPoolTier === tier
-                              ? "bg-vintage-gold/20 text-vintage-gold border border-vintage-gold/50"
-                              : "bg-black/40 text-vintage-burnt-gold/60 border border-vintage-gold/10 hover:border-vintage-gold/30"
+                              ? "bg-vintage-gold text-black"
+                              : "bg-gray-800 text-vintage-gold"
                           }`}
+                          style={{ boxShadow: selectedPoolTier === tier ? '2px 2px 0px #000' : '1px 1px 0px #000' }}
                         >
                           {(tier / 1000).toFixed(0)}k
                         </button>
@@ -806,7 +817,8 @@ export function TCGLobby({
                   <button
                     onClick={handleActivatePool}
                     disabled={!activeDeck?._id || poolTxStep === "transferring" || Number(vbmsBalance || 0) < selectedPoolTier}
-                    className="w-full py-2.5 bg-gradient-to-r from-green-700 to-emerald-600 hover:from-green-600 hover:to-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded transition-all disabled:opacity-40"
+                    className="w-full py-2.5 bg-green-600 hover:bg-green-500 text-black font-black text-xs uppercase tracking-wider border-2 border-black transition-all disabled:opacity-40 active:translate-y-[1px] active:shadow-none"
+                    style={{ boxShadow: '2px 2px 0px #000' }}
                   >
                     {poolTxStep === "transferring" ? "Sending VBMS..." : "Activate Defense Pool"}
                   </button>
@@ -827,7 +839,7 @@ export function TCGLobby({
         {/* Attack Confirmation Modal */}
         {attackConfirmTarget && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80" onClick={() => setAttackConfirmTarget(null)}>
-            <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black border border-orange-500/30 rounded-xl p-4 max-w-sm mx-4 w-full" onClick={e => e.stopPropagation()}>
+            <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black border-2 border-orange-500/60 rounded-xl p-4 max-w-sm mx-4 w-full" style={{ boxShadow: '4px 4px 0px rgba(0,0,0,0.8)' }} onClick={e => e.stopPropagation()}>
               <h3 className="text-sm font-bold text-orange-400 uppercase tracking-[0.2em] mb-3 text-center">Confirm Attack</h3>
 
               <div className="bg-black/30 border border-orange-500/20 rounded-lg p-3 mb-3 space-y-2">
@@ -863,7 +875,8 @@ export function TCGLobby({
                 <button
                   onClick={handleAttack}
                   disabled={poolTxStep === "transferring"}
-                  className="flex-1 py-2 bg-gradient-to-r from-orange-700 to-red-600 hover:from-orange-600 hover:to-red-500 text-white font-bold text-xs uppercase tracking-wider rounded transition-all disabled:opacity-40"
+                  className="flex-1 py-2 bg-orange-600 hover:bg-orange-500 text-white font-black text-xs uppercase tracking-wider border-2 border-black transition-all disabled:opacity-40 active:translate-y-[1px] active:shadow-none"
+                  style={{ boxShadow: '2px 2px 0px #000' }}
                 >
                   {poolTxStep === "transferring" ? "..." : "Attack!"}
                 </button>

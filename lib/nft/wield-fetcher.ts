@@ -172,7 +172,7 @@ async function fetchTokenMetadata(
     foil: findAttr('Foil') || 'None',
     wear: findAttr('Wear') || 'Lightly Played',
     wearValue: parseFloat(findAttr('Wear Value')) || 0.5,
-    name: findAttr('name') || findAttr('Name') || '',
+    name: findAttr('name') || findAttr('Name') || findAttr('Character') || '',
     imageUrl: data.imageUrl || data.image || '',
   };
 }

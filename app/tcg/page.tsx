@@ -154,9 +154,18 @@ export default function TCGPage() {
   const [battleLog, setBattleLog] = useState<BattleLogEntry[]>([]);
   const [showBattleLog, setShowBattleLog] = useState(false);
 
-  // TCG match count for missions
-  const [tcgMatchCount, setTcgMatchCount] = useState(0);
-  const [tcgWinStreak, setTcgWinStreak] = useState(0);
+  // TCG match count for missions (persists across page refreshes via sessionStorage)
+  const today = new Date().toISOString().split('T')[0];
+  const [tcgMatchCount, setTcgMatchCount] = useState<number>(() => {
+    if (typeof window === 'undefined') return 0;
+    const stored = sessionStorage.getItem(`tcg_match_count_${today}`);
+    return stored ? parseInt(stored, 10) : 0;
+  });
+  const [tcgWinStreak, setTcgWinStreak] = useState<number>(() => {
+    if (typeof window === 'undefined') return 0;
+    const stored = sessionStorage.getItem(`tcg_win_streak_${today}`);
+    return stored ? parseInt(stored, 10) : 0;
+  });
 
   // Turn timer state
   const [turnTimeRemaining, setTurnTimeRemaining] = useState<number>(TCG_CONFIG.TURN_TIME_SECONDS);
@@ -2670,14 +2679,17 @@ export default function TCGPage() {
 
       // TCG Missions
       if (address) {
+        const todayStr = new Date().toISOString().split('T')[0];
         const newMatchCount = tcgMatchCount + 1;
         setTcgMatchCount(newMatchCount);
+        sessionStorage.setItem(`tcg_match_count_${todayStr}`, String(newMatchCount));
 
         // First PvE win
         if (winner === "player") {
           markTcgMission({ playerAddress: address, missionType: "tcg_pve_win" }).catch(() => {});
           setTcgWinStreak(prev => {
             const newStreak = prev + 1;
+            sessionStorage.setItem(`tcg_win_streak_${todayStr}`, String(newStreak));
             if (newStreak >= 3) {
               markTcgMission({ playerAddress: address, missionType: "tcg_win_streak_3" }).catch(() => {});
             }
@@ -2685,9 +2697,10 @@ export default function TCGPage() {
           });
         } else {
           setTcgWinStreak(0);
+          sessionStorage.setItem(`tcg_win_streak_${todayStr}`, '0');
         }
 
-        // Play 3 matches
+        // Play 3 matches (PvE or PvP combined)
         if (newMatchCount >= 3) {
           markTcgMission({ playerAddress: address, missionType: "tcg_play_3" }).catch(() => {});
         }
@@ -2862,6 +2875,37 @@ export default function TCGPage() {
       // Delay to show final round resolution before switching to result
       const isWinner = currentMatch.winnerId === address?.toLowerCase();
       const isDraw = !currentMatch.winnerId || currentMatch.winnerId === "tie";
+
+      // TCG Missions for PvP
+      if (address) {
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        // First PvP match (always, regardless of win/loss)
+        markTcgMission({ playerAddress: address, missionType: "tcg_pvp_match" }).catch(() => {});
+
+        // Update PvP match count and win streak for play_3 and win_streak_3 missions
+        const newMatchCount = tcgMatchCount + 1;
+        setTcgMatchCount(newMatchCount);
+        sessionStorage.setItem(`tcg_match_count_${todayStr}`, String(newMatchCount));
+
+        if (isWinner) {
+          setTcgWinStreak(prev => {
+            const newStreak = prev + 1;
+            sessionStorage.setItem(`tcg_win_streak_${todayStr}`, String(newStreak));
+            if (newStreak >= 3) {
+              markTcgMission({ playerAddress: address, missionType: "tcg_win_streak_3" }).catch(() => {});
+            }
+            return newStreak;
+          });
+        } else if (!isDraw) {
+          setTcgWinStreak(0);
+          sessionStorage.setItem(`tcg_win_streak_${todayStr}`, '0');
+        }
+
+        if (newMatchCount >= 3) {
+          markTcgMission({ playerAddress: address, missionType: "tcg_play_3" }).catch(() => {});
+        }
+      }
 
       // Show final lanes for 3 seconds before going to result
       setTimeout(() => {

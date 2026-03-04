@@ -52,11 +52,14 @@ export const imageIdToCharacter: Record<string, string> = {
   "6a90c3a0-3827-4e1d-e812-871f9f6afb00": "nicogay"
 };
 
-// Extract image ID from imagedelivery.net URL
+// Extract image ID from imagedelivery.net URL or wieldcd.net/cdn-cgi/imagedelivery/ URL
 export function extractImageId(imageUrl: string | undefined): string | null {
   if (!imageUrl) return null;
   const decoded = decodeURIComponent(imageUrl);
-  const match = decoded.match(/imagedelivery\.net\/[^/]+\/([^/]+)/);
+  // Matches both:
+  // - imagedelivery.net/ACCOUNT/UUID/variant
+  // - wieldcd.net/cdn-cgi/imagedelivery/ACCOUNT/UUID/variant
+  const match = decoded.match(/imagedelivery(?:\.net)?\/[^/]+\/([^/?]+)/);
   return match ? match[1] : null;
 }
 

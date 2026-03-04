@@ -69,10 +69,40 @@ export const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
   return `/images/baccarat/${encodeURIComponent(`${rankName} ${cardData.suit}, ${baccaratName}.png`)}`;
 };
 
+// Build baccarat image URL for VBMS cards by on-chain tokenId
+// More reliable than name-based lookup since tokenId is directly from Wield API
+export const getVbmsBaccaratImageUrlByTokenId = (tokenId: string | number): string | null => {
+  const id = Number(tokenId);
+  if (!id) return null;
+  const allCards = tcgCardsData.cards || [];
+  const aliases = (tcgCardsData as any).aliases || {};
+
+  const cardData = allCards.find((c: any) => c.tokenId === id);
+  if (!cardData || !cardData.suit || !cardData.rank) return null;
+
+  const baccaratName = aliases[cardData.onChainName] || cardData.baccarat?.toLowerCase() || cardData.onChainName?.toLowerCase();
+
+  if (cardData.rank?.includes("?")) {
+    if (baccaratName === "clawdmoltopenbot") return "https://ipfs.filebase.io/ipfs/QmUsuM3CEHM6FXBzqHiC8XvZfZeDPy6zuEFmorYX9saBqv";
+    return `/images/baccarat/${encodeURIComponent(`joker, ${baccaratName}.png`)}`;
+  }
+
+  const rankMap: Record<string, string> = {
+    'A': 'ace', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
+    '7': '7', '8': '8', '9': '9', '10': '10', 'J': 'jack', 'Q': 'queen', 'K': 'king'
+  };
+  const rankName = rankMap[cardData.rank] || cardData.rank;
+
+  return `/images/baccarat/${encodeURIComponent(`${rankName} ${cardData.suit}, ${baccaratName}.png`)}`;
+};
+
 // Get the correct display image URL for any card
 export const getCardDisplayImageUrl = (card: DeckCard): string => {
-  if (card.type === "vbms" && card.name) {
-    return getVbmsBaccaratImageUrl(card.name) || card.imageUrl || "/images/card-back.png";
+  if (card.type === "vbms") {
+    return getVbmsBaccaratImageUrlByTokenId(card.cardId)
+      || (card.name ? getVbmsBaccaratImageUrl(card.name) : null)
+      || card.imageUrl
+      || "/images/card-back.png";
   }
   return card.imageUrl || "/images/card-back.png";
 };

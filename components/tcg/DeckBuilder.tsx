@@ -3,10 +3,10 @@ import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { TCG_CONFIG, CARD_NAME_ALIASES, CARD_COMBOS, type DeckCard } from "@/lib/tcgRules";
 import { getCharacterFromImage } from "@/lib/vmw-image-mapping";
-import { CardMedia } from "@/components/CardMedia";
 import { CardDetailModal } from "@/components/tcg/CardDetailModal";
+import { CardMedia } from "@/components/CardMedia";
 import { getCardAbility } from "@/lib/tcg/abilities";
-import { getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
+import { getVbmsBaccaratImageUrl, getVbmsBaccaratImageUrlByTokenId } from "@/lib/tcg/images";
 import { detectCombos } from "@/lib/tcg/combos";
 import type { SupportedLanguage } from "@/lib/translations";
 
@@ -109,8 +109,11 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
     const cardName = card.character || characterFromImage || card.name || (isVibeFID ? card.displayName || card.username : undefined);
 
     let imageUrl: string;
-    if (isVbms && cardName) {
-      imageUrl = getVbmsBaccaratImageUrl(cardName) || card.imageUrl || card.image || "/images/card-back.png";
+    if (isVbms) {
+      // Try tokenId lookup first (most reliable), then name, then CDN URL
+      imageUrl = getVbmsBaccaratImageUrlByTokenId(card.tokenId)
+        || (cardName ? getVbmsBaccaratImageUrl(cardName) : null)
+        || card.imageUrl || card.image || "/images/card-back.png";
     } else {
       imageUrl = card.imageUrl || card.image || "/images/card-back.png";
     }
@@ -347,16 +350,17 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <button
             onClick={onBack}
-            className="group flex items-center gap-1.5 px-3 py-1.5 text-vintage-burnt-gold/70 hover:text-vintage-gold transition-colors text-[11px] font-medium uppercase tracking-[0.15em]"
+            className="tcg-db-sort flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-vintage-gold border-2 border-black text-[11px] font-bold uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+            style={{ boxShadow: '3px 3px 0px #000' }}
           >
-            <span className="group-hover:-translate-x-0.5 inline-block transition-transform text-vintage-gold/50 group-hover:text-vintage-gold">&larr;</span>
-            {t('tcgBack')}
+            &larr; {t('tcgBack')}
           </button>
-          <p className="text-[10px] text-vintage-burnt-gold/50 uppercase tracking-[0.2em]">Select 12 cards</p>
+          <p className="text-[10px] text-vintage-gold/70 font-bold uppercase tracking-[0.2em]">Select 12 cards</p>
           <button
             onClick={handleSaveDeck}
             disabled={!canSave}
-            className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${canSave ? 'bg-vintage-gold text-black hover:bg-yellow-400' : 'bg-black/30 text-vintage-burnt-gold/40 cursor-not-allowed'} transition-colors`}
+            className={`tcg-db-sort px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border-2 border-black active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${canSave ? 'bg-vintage-gold text-black hover:bg-yellow-300' : 'bg-gray-800 text-gray-600 cursor-not-allowed'}`}
+            style={{ boxShadow: canSave ? '3px 3px 0px #000' : 'none' }}
           >
             {t('tcgSaveDeck')}
           </button>
@@ -395,20 +399,20 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
           type="text"
           value={deckName}
           onChange={(e) => setDeckName(e.target.value)}
-          className="w-full bg-black/40 border border-vintage-gold/20 rounded px-3 py-2 text-vintage-gold font-bold tracking-wide focus:outline-none focus:border-vintage-gold/50 placeholder:text-vintage-burnt-gold/30 text-sm mb-3"
+          className="w-full bg-black/40 border-2 border-vintage-gold/40 rounded px-3 py-2 text-vintage-gold font-bold tracking-wide focus:outline-none focus:border-vintage-gold/70 placeholder:text-vintage-burnt-gold/30 text-sm mb-3"
           placeholder={t('tcgDeckName')}
         />
 
         {/* Stats Row */}
         <div className="flex items-center justify-between gap-2 mb-3 text-[10px]">
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-1 rounded ${selectedCards.length === TCG_CONFIG.DECK_SIZE ? "bg-green-900/40 text-green-400" : "bg-black/40 text-vintage-burnt-gold"}`}>
+            <span className={`px-2 py-1 border-2 border-black font-bold ${selectedCards.length === TCG_CONFIG.DECK_SIZE ? "bg-green-500 text-black" : "bg-gray-800 text-vintage-burnt-gold"}`} style={{ boxShadow: '2px 2px 0px #000' }}>
               {selectedCards.length}/{TCG_CONFIG.DECK_SIZE}
             </span>
-            <span className={`px-2 py-1 rounded ${selectedVbmsOrVibefid >= TCG_CONFIG.MIN_VBMS_OR_VIBEFID ? "bg-green-900/40 text-green-400" : "bg-red-900/40 text-red-400"}`}>
+            <span className={`px-2 py-1 border-2 border-black font-bold ${selectedVbmsOrVibefid >= TCG_CONFIG.MIN_VBMS_OR_VIBEFID ? "bg-green-500 text-black" : "bg-red-700 text-white"}`} style={{ boxShadow: '2px 2px 0px #000' }}>
               {selectedVbmsOrVibefid}/{TCG_CONFIG.MIN_VBMS_OR_VIBEFID} VBMS
             </span>
-            <span className="px-2 py-1 rounded bg-vintage-gold/20 text-vintage-gold font-bold">
+            <span className="px-2 py-1 border-2 border-black bg-vintage-gold text-black font-bold" style={{ boxShadow: '2px 2px 0px #000' }}>
               {totalPower} PWR
             </span>
           </div>
@@ -418,36 +422,40 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
         <div className="flex items-center gap-2 mb-3 text-[10px]">
           <button
             onClick={() => { setDeckSortBy("power"); setDeckSortDesc(!deckSortDesc); }}
-            className={`tcg-db-sort px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "power" ? "bg-vintage-gold text-black" : "bg-gray-800 text-vintage-gold"}`}
+            className={`tcg-db-sort px-3 py-1.5 border-2 border-black font-bold text-[11px] uppercase tracking-wide active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "power" ? "bg-vintage-gold text-black" : "bg-gray-800 text-vintage-gold"}`}
+            style={{ boxShadow: deckSortBy === "power" ? '3px 3px 0px #000' : '2px 2px 0px #000' }}
           >
-            ⚡ Power {deckSortBy === "power" && (deckSortDesc ? "↓" : "↑")}
+            Power {deckSortBy === "power" && (deckSortDesc ? "↓" : "↑")}
           </button>
           <button
             onClick={() => { setDeckSortBy("rarity"); setDeckSortDesc(!deckSortDesc); }}
-            className={`tcg-db-sort px-3 py-1.5 border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "rarity" ? "bg-purple-500 text-white" : "bg-gray-800 text-purple-400"}`}
+            className={`tcg-db-sort px-3 py-1.5 border-2 border-black font-bold text-[11px] uppercase tracking-wide active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "rarity" ? "bg-purple-500 text-white" : "bg-gray-800 text-purple-400"}`}
+            style={{ boxShadow: deckSortBy === "rarity" ? '3px 3px 0px #000' : '2px 2px 0px #000' }}
           >
-            💎 Rarity {deckSortBy === "rarity" && (deckSortDesc ? "↓" : "↑")}
+            Rarity {deckSortBy === "rarity" && (deckSortDesc ? "↓" : "↑")}
           </button>
           <div className="flex-1"></div>
             <button
               onClick={handleAutoBuildCombo}
-              className="tcg-db-auto px-2 py-1 bg-yellow-400 text-black border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all font-bold"
+              className="tcg-db-auto px-2.5 py-1.5 bg-yellow-400 text-black border-2 border-black active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all font-black text-[11px] uppercase tracking-wide"
+              style={{ boxShadow: '3px 3px 0px #000' }}
               title="Auto-build deck - every card in a combo!"
             >
-              🎯 COMBO
+              COMBO
             </button>
             <button
               onClick={handleAutoBuildPower}
-              className="tcg-db-auto px-2 py-1 bg-orange-400 text-black border-2 border-black shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all font-bold"
+              className="tcg-db-auto px-2.5 py-1.5 bg-orange-500 text-black border-2 border-black active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all font-black text-[11px] uppercase tracking-wide"
+              style={{ boxShadow: '3px 3px 0px #000' }}
               title="Auto-build deck with highest power cards"
             >
-              ⚡ POWER
+              POWER
             </button>
         </div>
 
         {/* Combo Preview */}
         {selectedCards.length >= 2 && (
-          <div className="bg-gradient-to-r from-yellow-900/20 to-amber-900/20 border border-yellow-500/20 rounded-lg p-2 mb-3">
+          <div className="bg-gradient-to-r from-yellow-900/20 to-amber-900/20 border-2 border-yellow-500/40 rounded-lg p-2 mb-3" style={{ boxShadow: '3px 3px 0px rgba(0,0,0,0.6)' }}>
             <h3 className="text-[9px] font-bold text-yellow-400 mb-1.5 uppercase tracking-[0.2em]">🎯 Combos {selectedVibefid > 0 && <span className="text-cyan-400">(VibeFID = Wildcard!)</span>}</h3>
             {(() => {
               const deckCombos = detectCombos(selectedCards);
@@ -475,7 +483,7 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
         )}
 
         {/* Selected Cards */}
-        <div className="bg-gradient-to-b from-vintage-charcoal/40 to-black/30 border border-vintage-gold/20 rounded-lg p-3 mb-3">
+        <div className="bg-gradient-to-b from-vintage-charcoal/40 to-black/30 border-2 border-vintage-gold/40 rounded-lg p-3 mb-3" style={{ boxShadow: '3px 3px 0px rgba(0,0,0,0.6)' }}>
           <h3 className="text-[9px] font-bold text-vintage-gold mb-2 uppercase tracking-[0.2em]">{t('tcgCurrentDeck')} <span className="text-vintage-burnt-gold/60">({selectedCards.length})</span></h3>
           <div className="flex flex-wrap gap-1.5 min-h-[70px]">
             {selectedCards.map((card: DeckCard) => {
@@ -486,11 +494,7 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
                   className={`relative w-12 h-[68px] rounded border-2 cursor-pointer transition-all hover:scale-105 overflow-hidden ${RARITY_COLORS[card.rarity] || "border-gray-500"}`}
                   title={`${card.name} (${card.rarity}) - ${card.power} power`}
                 >
-                  <CardMedia
-                    src={card.imageUrl}
-                    alt={card.name}
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
+                  <CardMedia src={card.imageUrl} alt={card.name} loading="eager" className="absolute inset-0 w-full h-full object-cover" />
                   <button
                     onClick={(e) => { e.stopPropagation(); setDetailCard(card); }}
                     className="absolute top-0 right-0 w-3.5 h-3.5 bg-blue-600 hover:bg-blue-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center z-10"
@@ -499,7 +503,7 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
                   </button>
                   <div
                     onClick={() => handleCardSelect(card)}
-                    className="absolute inset-0 bg-black/40 rounded-lg flex flex-col items-center justify-end p-0.5"
+                    className="absolute inset-0 bg-[rgba(0,0,0,0.4)] rounded-lg flex flex-col items-center justify-end p-0.5"
                   >
                     <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
                     <span className="text-[9px] text-yellow-400 font-bold">{card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power}</span>
@@ -519,7 +523,7 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
         {/* Available Cards */}
         <div className="grid md:grid-cols-2 gap-3">
           {/* VBMS Cards */}
-          <div className="bg-gradient-to-b from-vintage-charcoal/40 to-black/30 border border-vintage-gold/20 rounded-lg p-3">
+          <div className="bg-gradient-to-b from-vintage-charcoal/40 to-black/30 border-2 border-vintage-gold/40 rounded-lg p-3" style={{ boxShadow: '3px 3px 0px rgba(0,0,0,0.6)' }}>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[9px] font-bold text-vintage-gold uppercase tracking-[0.2em]">VBMS <span className="text-vintage-burnt-gold/60">({vbmsCards.length})</span></h3>
               {vbmsCards.length > CARDS_PER_PAGE && (
@@ -558,9 +562,9 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
                     }`}
                     title={`${card.name} (${card.rarity}) - ${card.power} power`}
                   >
-                    <CardMedia src={card.imageUrl} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
+                    <CardMedia src={card.imageUrl} alt={card.name} loading="eager" className="absolute inset-0 w-full h-full object-cover" />
                     <button onClick={(e) => { e.stopPropagation(); setDetailCard(card); }} className="absolute top-0 right-0 w-3.5 h-3.5 bg-blue-600 hover:bg-blue-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center z-10">i</button>
-                    <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-black/40 rounded flex flex-col items-center justify-end p-0.5">
+                    <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-[rgba(0,0,0,0.4)] rounded flex flex-col items-center justify-end p-0.5">
                       <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
                       <span className="text-[10px] text-yellow-400 font-bold">{card.power}</span>
                       {ability && <span className="text-[5px] text-purple-400">⚡</span>}
@@ -574,7 +578,7 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
 
           {/* VibeFID Cards */}
           {vibefidCards.length > 0 && (
-            <div className="bg-gradient-to-b from-cyan-950/40 to-black/30 border border-cyan-500/30 rounded-lg p-3">
+            <div className="bg-gradient-to-b from-cyan-950/40 to-black/30 border-2 border-cyan-500/50 rounded-lg p-3" style={{ boxShadow: '3px 3px 0px rgba(0,0,0,0.6)' }}>
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-[9px] font-bold text-cyan-400 uppercase tracking-[0.2em]">VibeFID <span className="text-cyan-400/60">({vibefidCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">5x</span></h3>
                 {vibefidCards.length > CARDS_PER_PAGE && (
@@ -611,9 +615,9 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
                       }`}
                       title={`${card.name} (${card.rarity}) - ${card.power} power`}
                     >
-                      <CardMedia src={card.imageUrl} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
+                      <CardMedia src={card.imageUrl} alt={card.name} loading="eager" className="absolute inset-0 w-full h-full object-cover" />
                       <button onClick={(e) => { e.stopPropagation(); setDetailCard(card); }} className="absolute top-0 right-0 w-3.5 h-3.5 bg-cyan-600 hover:bg-cyan-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center z-10">i</button>
-                      <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-black/40 rounded flex flex-col items-center justify-end p-0.5">
+                      <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-[rgba(0,0,0,0.4)] rounded flex flex-col items-center justify-end p-0.5">
                         <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
                         <span className="text-[10px] text-cyan-400 font-bold">{card.power}</span>
                         {ability && <span className="text-[5px] text-purple-400">⚡</span>}
@@ -626,7 +630,7 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
           )}
 
           {/* Nothing Cards */}
-          <div className="bg-gradient-to-b from-purple-950/40 to-black/30 border border-purple-500/30 rounded-lg p-3">
+          <div className="bg-gradient-to-b from-purple-950/40 to-black/30 border-2 border-purple-500/50 rounded-lg p-3" style={{ boxShadow: '3px 3px 0px rgba(0,0,0,0.6)' }}>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-[9px] font-bold text-purple-400 uppercase tracking-[0.2em]">Others <span className="text-purple-400/60">({nothingCards.length})</span> <span className="text-vintage-burnt-gold/50 normal-case tracking-normal">50% power</span></h3>
               {nothingCards.length > CARDS_PER_PAGE && (
@@ -662,9 +666,9 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
                     }`}
                     title={`${card.name} (${card.rarity}) - ${Math.floor(card.power * 0.5)} effective power`}
                   >
-                    <CardMedia src={card.imageUrl} alt={card.name} className="absolute inset-0 w-full h-full object-cover" />
+                    <CardMedia src={card.imageUrl} alt={card.name} loading="eager" className="absolute inset-0 w-full h-full object-cover" />
                     <button onClick={(e) => { e.stopPropagation(); setDetailCard(card); }} className="absolute top-0 right-0 w-3.5 h-3.5 bg-purple-600 hover:bg-purple-500 rounded-full text-[7px] text-white font-bold flex items-center justify-center z-10">i</button>
-                    <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-black/40 rounded flex flex-col items-center justify-end p-0.5">
+                    <div onClick={() => handleCardSelect(card)} className="absolute inset-0 bg-[rgba(0,0,0,0.4)] rounded flex flex-col items-center justify-end p-0.5">
                       <span className="text-[7px] text-white truncate w-full text-center">{card.name}</span>
                       <span className="text-[10px] text-purple-400 font-bold">{Math.floor(card.power * 0.5)}</span>
                     </div>
