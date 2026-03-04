@@ -29,14 +29,14 @@ export function PvPResultView({ currentMatch, address, showDefeatBait, onBackToL
   ).length || 0;
 
   return (
-    <div className={`h-screen overflow-y-auto p-4 ${
+    <div className={`h-screen overflow-y-auto pb-20 ${
       isDraw
         ? "bg-gradient-to-b from-gray-900 via-gray-800 to-black"
         : isWinner
           ? "bg-gradient-to-b from-yellow-900/30 via-gray-900 to-black"
           : "bg-gradient-to-b from-red-900/30 via-gray-900 to-black"
     }`}>
-      <div className="text-center max-w-md w-full mx-auto py-4">
+      <div className="text-center max-w-md w-full mx-auto p-4">
         {/* PvP Badge */}
         <span className="text-xs text-purple-400 bg-purple-900/50 px-3 py-1 rounded-full mb-4 inline-flex items-center gap-1">
           <span className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></span>
@@ -165,16 +165,17 @@ export function PvPResultView({ currentMatch, address, showDefeatBait, onBackToL
           </div>
         )}
 
-        {/* Buttons */}
-        <div className="flex gap-3 justify-center">
-          <button
-            onClick={onBackToLobby}
-            className="px-8 py-3 bg-red-700 hover:bg-red-600 text-white border-2 border-black font-bold text-sm uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-            style={{ boxShadow: '3px 3px 0px #000' }}
-          >
-            {t('tcgBackToLobby')}
-          </button>
-        </div>
+      </div>
+
+      {/* Fixed bottom button - always visible */}
+      <div className="fixed bottom-0 left-0 right-0 flex justify-center p-3 bg-gray-950/95 border-t-2 border-gray-800 z-50">
+        <button
+          onClick={onBackToLobby}
+          className="px-8 py-3 bg-[#CC2222] text-white border-2 border-black font-bold text-sm uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+          style={{ boxShadow: '3px 3px 0px #000' }}
+        >
+          {t('tcgBackToLobby')}
+        </button>
       </div>
     </div>
   );

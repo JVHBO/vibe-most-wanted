@@ -23,14 +23,14 @@ export function PvEResultView({ pveGameState, showDefeatBait, onPlayAgain, onBac
   const lanesTied = pveGameState.lanes.filter((lane: any) => lane.playerPower === lane.cpuPower).length;
 
   return (
-    <div className={`h-screen overflow-y-auto p-4 ${
+    <div className={`h-screen overflow-y-auto pb-20 ${
       isDraw
         ? "bg-gradient-to-b from-gray-900 via-gray-800 to-black"
         : isWinner
           ? "bg-gradient-to-b from-yellow-900/30 via-gray-900 to-black"
           : "bg-gradient-to-b from-red-900/30 via-gray-900 to-black"
     }`}>
-      <div className="text-center max-w-md w-full mx-auto py-4">
+      <div className="text-center max-w-md w-full mx-auto p-4">
         {/* PvE Badge */}
         <span className="text-xs text-green-400 bg-green-900/50 px-3 py-1 rounded-full mb-4 inline-flex items-center gap-1">
           <span className="w-2 h-2 bg-green-400 rounded-full"></span>
@@ -153,26 +153,28 @@ export function PvEResultView({ pveGameState, showDefeatBait, onPlayAgain, onBac
           </div>
         )}
 
-        {/* Buttons */}
-        <div className="flex gap-3 justify-center">
-          <button
-            onClick={onPlayAgain}
-            className={`font-bold py-3 px-8 rounded-xl transition-all transform hover:scale-105 ${
-              isWinner
-                ? "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white shadow-lg shadow-green-500/30"
-                : "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black shadow-lg shadow-yellow-500/30"
-            }`}
-          >
-            {t('tcgPlayAgain')}
-          </button>
-          <button
-            onClick={onBackToLobby}
-            className="px-6 py-3 bg-red-700 hover:bg-red-600 text-white border-2 border-black font-bold text-sm uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-            style={{ boxShadow: '3px 3px 0px #000' }}
-          >
-            {t('tcgBackToLobby')}
-          </button>
-        </div>
+      </div>
+
+      {/* Fixed bottom buttons - always visible */}
+      <div className="fixed bottom-0 left-0 right-0 flex gap-3 justify-center p-3 bg-gray-950/95 border-t-2 border-gray-800 z-50">
+        <button
+          onClick={onPlayAgain}
+          className={`font-bold py-3 px-6 border-2 border-black transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${
+            isWinner
+              ? "bg-[#22C55E] text-white"
+              : "bg-[#FFD400] text-black"
+          }`}
+          style={{ boxShadow: '3px 3px 0px #000' }}
+        >
+          {t('tcgPlayAgain')}
+        </button>
+        <button
+          onClick={onBackToLobby}
+          className="px-6 py-3 bg-[#CC2222] text-white border-2 border-black font-bold text-sm uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+          style={{ boxShadow: '3px 3px 0px #000' }}
+        >
+          {t('tcgBackToLobby')}
+        </button>
       </div>
     </div>
   );
