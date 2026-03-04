@@ -350,7 +350,7 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <button
             onClick={onBack}
-            className="tcg-db-sort flex items-center gap-1.5 px-3 py-1.5 bg-gray-900 text-vintage-gold border-2 border-black text-[11px] font-bold uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+            className="tcg-db-sort flex items-center gap-1.5 px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white border-2 border-black text-[11px] font-bold uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
             style={{ boxShadow: '3px 3px 0px #000' }}
           >
             &larr; {t('tcgBack')}
@@ -359,8 +359,8 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
           <button
             onClick={handleSaveDeck}
             disabled={!canSave}
-            className={`tcg-db-sort px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border-2 border-black active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${canSave ? 'bg-vintage-gold text-black hover:bg-yellow-300' : 'bg-gray-800 text-gray-600 cursor-not-allowed'}`}
-            style={{ boxShadow: canSave ? '3px 3px 0px #000' : 'none' }}
+            className={`tcg-db-sort px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider border-2 border-black active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${canSave ? 'bg-vintage-gold text-black hover:bg-yellow-300' : 'bg-gray-500 text-gray-200 cursor-not-allowed'}`}
+            style={{ boxShadow: canSave ? '3px 3px 0px #000' : '2px 2px 0px #000' }}
           >
             {t('tcgSaveDeck')}
           </button>
@@ -406,7 +406,7 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
         {/* Stats Row */}
         <div className="flex items-center justify-between gap-2 mb-3 text-[10px]">
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-1 border-2 border-black font-bold ${selectedCards.length === TCG_CONFIG.DECK_SIZE ? "bg-green-500 text-black" : "bg-gray-800 text-vintage-burnt-gold"}`} style={{ boxShadow: '2px 2px 0px #000' }}>
+            <span className={`px-2 py-1 border-2 border-black font-bold ${selectedCards.length === TCG_CONFIG.DECK_SIZE ? "bg-green-500 text-black" : "bg-gray-600 text-white"}`} style={{ boxShadow: '2px 2px 0px #000' }}>
               {selectedCards.length}/{TCG_CONFIG.DECK_SIZE}
             </span>
             <span className={`px-2 py-1 border-2 border-black font-bold ${selectedVbmsOrVibefid >= TCG_CONFIG.MIN_VBMS_OR_VIBEFID ? "bg-green-500 text-black" : "bg-red-700 text-white"}`} style={{ boxShadow: '2px 2px 0px #000' }}>
@@ -422,14 +422,14 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
         <div className="flex items-center gap-2 mb-3 text-[10px]">
           <button
             onClick={() => { setDeckSortBy("power"); setDeckSortDesc(!deckSortDesc); }}
-            className={`tcg-db-sort px-3 py-1.5 border-2 border-black font-bold text-[11px] uppercase tracking-wide active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "power" ? "bg-vintage-gold text-black" : "bg-gray-800 text-vintage-gold"}`}
+            className={`tcg-db-sort px-3 py-1.5 border-2 border-black font-bold text-[11px] uppercase tracking-wide active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "power" ? "bg-vintage-gold text-black" : "bg-gray-600 text-white"}`}
             style={{ boxShadow: deckSortBy === "power" ? '3px 3px 0px #000' : '2px 2px 0px #000' }}
           >
             Power {deckSortBy === "power" && (deckSortDesc ? "↓" : "↑")}
           </button>
           <button
             onClick={() => { setDeckSortBy("rarity"); setDeckSortDesc(!deckSortDesc); }}
-            className={`tcg-db-sort px-3 py-1.5 border-2 border-black font-bold text-[11px] uppercase tracking-wide active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "rarity" ? "bg-purple-500 text-white" : "bg-gray-800 text-purple-400"}`}
+            className={`tcg-db-sort px-3 py-1.5 border-2 border-black font-bold text-[11px] uppercase tracking-wide active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all ${deckSortBy === "rarity" ? "bg-purple-500 text-white" : "bg-gray-600 text-purple-200"}`}
             style={{ boxShadow: deckSortBy === "rarity" ? '3px 3px 0px #000' : '2px 2px 0px #000' }}
           >
             Rarity {deckSortBy === "rarity" && (deckSortDesc ? "↓" : "↑")}
@@ -531,17 +531,19 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
                   <button
                     onClick={() => setVbmsPage(p => Math.max(0, p - 1))}
                     disabled={vbmsPage === 0}
-                    className="w-5 h-5 flex items-center justify-center text-[10px] bg-vintage-gold/20 hover:bg-vintage-gold/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                    className="w-5 h-5 flex items-center justify-center text-[10px] font-bold border border-black rounded transition-colors disabled:cursor-not-allowed"
+                    style={{ backgroundColor: vbmsPage === 0 ? '#4B5563' : '#FFD400', color: vbmsPage === 0 ? '#9CA3AF' : '#000' }}
                   >
                     &larr;
                   </button>
-                  <span className="text-[8px] text-vintage-burnt-gold/60 min-w-[40px] text-center">
+                  <span className="text-[8px] text-vintage-gold font-bold min-w-[40px] text-center">
                     {vbmsPage + 1}/{Math.ceil(vbmsCards.length / CARDS_PER_PAGE)}
                   </span>
                   <button
                     onClick={() => setVbmsPage(p => Math.min(Math.ceil(vbmsCards.length / CARDS_PER_PAGE) - 1, p + 1))}
                     disabled={vbmsPage >= Math.ceil(vbmsCards.length / CARDS_PER_PAGE) - 1}
-                    className="w-5 h-5 flex items-center justify-center text-[10px] bg-vintage-gold/20 hover:bg-vintage-gold/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                    className="w-5 h-5 flex items-center justify-center text-[10px] font-bold border border-black rounded transition-colors disabled:cursor-not-allowed"
+                    style={{ backgroundColor: vbmsPage >= Math.ceil(vbmsCards.length / CARDS_PER_PAGE) - 1 ? '#4B5563' : '#FFD400', color: vbmsPage >= Math.ceil(vbmsCards.length / CARDS_PER_PAGE) - 1 ? '#9CA3AF' : '#000' }}
                   >
                     &rarr;
                   </button>
@@ -586,17 +588,19 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
                     <button
                       onClick={() => setVibefidPage(p => Math.max(0, p - 1))}
                       disabled={vibefidPage === 0}
-                      className="w-5 h-5 flex items-center justify-center text-[10px] bg-cyan-500/20 hover:bg-cyan-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                      className="w-5 h-5 flex items-center justify-center text-[10px] font-bold border border-black rounded transition-colors disabled:cursor-not-allowed"
+                      style={{ backgroundColor: vibefidPage === 0 ? '#4B5563' : '#06B6D4', color: vibefidPage === 0 ? '#9CA3AF' : '#000' }}
                     >
                       &larr;
                     </button>
-                    <span className="text-[8px] text-cyan-400/60 min-w-[40px] text-center">
+                    <span className="text-[8px] text-cyan-300 font-bold min-w-[40px] text-center">
                       {vibefidPage + 1}/{Math.ceil(vibefidCards.length / CARDS_PER_PAGE)}
                     </span>
                     <button
                       onClick={() => setVibefidPage(p => Math.min(Math.ceil(vibefidCards.length / CARDS_PER_PAGE) - 1, p + 1))}
                       disabled={vibefidPage >= Math.ceil(vibefidCards.length / CARDS_PER_PAGE) - 1}
-                      className="w-5 h-5 flex items-center justify-center text-[10px] bg-cyan-500/20 hover:bg-cyan-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                      className="w-5 h-5 flex items-center justify-center text-[10px] font-bold border border-black rounded transition-colors disabled:cursor-not-allowed"
+                      style={{ backgroundColor: vibefidPage >= Math.ceil(vibefidCards.length / CARDS_PER_PAGE) - 1 ? '#4B5563' : '#06B6D4', color: vibefidPage >= Math.ceil(vibefidCards.length / CARDS_PER_PAGE) - 1 ? '#9CA3AF' : '#000' }}
                     >
                       &rarr;
                     </button>
@@ -638,17 +642,19 @@ export function DeckBuilder({ nfts, cardsLoading, status, address, onBack, t, la
                   <button
                     onClick={() => setOthersPage(p => Math.max(0, p - 1))}
                     disabled={othersPage === 0}
-                    className="w-5 h-5 flex items-center justify-center text-[10px] bg-purple-500/20 hover:bg-purple-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                    className="w-5 h-5 flex items-center justify-center text-[10px] font-bold border border-black rounded transition-colors disabled:cursor-not-allowed"
+                    style={{ backgroundColor: othersPage === 0 ? '#4B5563' : '#A855F7', color: othersPage === 0 ? '#9CA3AF' : '#fff' }}
                   >
                     &larr;
                   </button>
-                  <span className="text-[8px] text-purple-400/60 min-w-[40px] text-center">
+                  <span className="text-[8px] text-purple-300 font-bold min-w-[40px] text-center">
                     {othersPage + 1}/{Math.ceil(nothingCards.length / CARDS_PER_PAGE)}
                   </span>
                   <button
                     onClick={() => setOthersPage(p => Math.min(Math.ceil(nothingCards.length / CARDS_PER_PAGE) - 1, p + 1))}
                     disabled={othersPage >= Math.ceil(nothingCards.length / CARDS_PER_PAGE) - 1}
-                    className="w-5 h-5 flex items-center justify-center text-[10px] bg-purple-500/20 hover:bg-purple-500/40 disabled:opacity-30 disabled:cursor-not-allowed rounded transition-colors"
+                    className="w-5 h-5 flex items-center justify-center text-[10px] font-bold border border-black rounded transition-colors disabled:cursor-not-allowed"
+                    style={{ backgroundColor: othersPage >= Math.ceil(nothingCards.length / CARDS_PER_PAGE) - 1 ? '#4B5563' : '#A855F7', color: othersPage >= Math.ceil(nothingCards.length / CARDS_PER_PAGE) - 1 ? '#9CA3AF' : '#fff' }}
                   >
                     &rarr;
                   </button>
