@@ -288,8 +288,8 @@ export function TCGLobby({
           <button
             onClick={() => { AudioManager.buttonNav(); onNavigate("deck-builder"); }}
             onMouseEnter={() => AudioManager.buttonHover()}
-            className="px-3 py-1.5 bg-gray-900 hover:bg-vintage-gold/10 text-vintage-gold border-2 border-vintage-gold/50 hover:border-vintage-gold rounded text-xs font-bold uppercase tracking-wider transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-          style={{ boxShadow: '2px 2px 0px rgba(0,0,0,0.7)' }}
+            className="px-3 py-1.5 bg-[#FFD400] text-black border-2 border-black text-xs font-bold uppercase tracking-wider transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+          style={{ boxShadow: '3px 3px 0px #000' }}
           >
             {hasDeck ? t('tcgEdit') : t('tcgBuildDeck')}
           </button>
