@@ -23,14 +23,14 @@ export function PvEResultView({ pveGameState, showDefeatBait, onPlayAgain, onBac
   const lanesTied = pveGameState.lanes.filter((lane: any) => lane.playerPower === lane.cpuPower).length;
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-4 ${
+    <div className={`h-screen overflow-y-auto p-4 ${
       isDraw
         ? "bg-gradient-to-b from-gray-900 via-gray-800 to-black"
         : isWinner
           ? "bg-gradient-to-b from-yellow-900/30 via-gray-900 to-black"
           : "bg-gradient-to-b from-red-900/30 via-gray-900 to-black"
     }`}>
-      <div className="text-center max-w-md w-full">
+      <div className="text-center max-w-md w-full mx-auto py-4">
         {/* PvE Badge */}
         <span className="text-xs text-green-400 bg-green-900/50 px-3 py-1 rounded-full mb-4 inline-flex items-center gap-1">
           <span className="w-2 h-2 bg-green-400 rounded-full"></span>

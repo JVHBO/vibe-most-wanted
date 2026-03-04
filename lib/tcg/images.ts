@@ -4,6 +4,7 @@
 
 import type { DeckCard } from "@/lib/tcgRules";
 import tcgCardsData from "@/data/vmw-tcg-cards.json";
+import { getCharacterFromImage } from "@/lib/vmw-image-mapping";
 
 // Collection cover images - same as Mecha Arena (PokerBattleTable)
 export const COLLECTION_COVERS: Record<string, string> = {
@@ -55,7 +56,7 @@ export const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
 
   // Special case for joker cards (rank "???")
   if (cardData.rank?.includes("?")) {
-    if (baccaratName === "clawdmoltopenbot") return "https://ipfs.filebase.io/ipfs/QmUsuM3CEHM6FXBzqHiC8XvZfZeDPy6zuEFmorYX9saBqv";
+    if (baccaratName === "clawdmoltopenbot") return "https://ipfs.io/ipfs/QmUsuM3CEHM6FXBzqHiC8XvZfZeDPy6zuEFmorYX9saBqv";
     return `/images/baccarat/${encodeURIComponent(`joker, ${baccaratName}.png`)}`;
   }
 
@@ -83,7 +84,7 @@ export const getVbmsBaccaratImageUrlByTokenId = (tokenId: string | number): stri
   const baccaratName = aliases[cardData.onChainName] || cardData.baccarat?.toLowerCase() || cardData.onChainName?.toLowerCase();
 
   if (cardData.rank?.includes("?")) {
-    if (baccaratName === "clawdmoltopenbot") return "https://ipfs.filebase.io/ipfs/QmUsuM3CEHM6FXBzqHiC8XvZfZeDPy6zuEFmorYX9saBqv";
+    if (baccaratName === "clawdmoltopenbot") return "https://ipfs.io/ipfs/QmUsuM3CEHM6FXBzqHiC8XvZfZeDPy6zuEFmorYX9saBqv";
     return `/images/baccarat/${encodeURIComponent(`joker, ${baccaratName}.png`)}`;
   }
 
@@ -99,10 +100,23 @@ export const getVbmsBaccaratImageUrlByTokenId = (tokenId: string | number): stri
 // Get the correct display image URL for any card
 export const getCardDisplayImageUrl = (card: DeckCard): string => {
   if (card.type === "vbms") {
-    return getVbmsBaccaratImageUrlByTokenId(card.cardId)
-      || (card.name ? getVbmsBaccaratImageUrl(card.name) : null)
-      || card.imageUrl
-      || "/images/card-back.png";
+    // 1. By tokenId (most reliable when tokenId is in JSON)
+    const byTokenId = getVbmsBaccaratImageUrlByTokenId(card.cardId);
+    if (byTokenId) return byTokenId;
+    // 2. By stored name
+    if (card.name) {
+      const byName = getVbmsBaccaratImageUrl(card.name);
+      if (byName) return byName;
+    }
+    // 3. Extract character from CDN imageUrl → baccarat URL (fallback for old decks)
+    if (card.imageUrl) {
+      const charFromUrl = getCharacterFromImage(card.imageUrl);
+      if (charFromUrl) {
+        const byChar = getVbmsBaccaratImageUrl(charFromUrl);
+        if (byChar) return byChar;
+      }
+    }
+    return card.imageUrl || "/images/card-back.png";
   }
   return card.imageUrl || "/images/card-back.png";
 };

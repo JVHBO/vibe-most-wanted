@@ -48,7 +48,7 @@ export const generateCpuDeck = (playerDeck: DeckCard[]): DeckCard[] => {
 
     if (card.rank?.includes("?") || card.suit?.includes("?")) {
       imageUrl = baccarat === "clawdmoltopenbot"
-        ? "https://ipfs.filebase.io/ipfs/QmUsuM3CEHM6FXBzqHiC8XvZfZeDPy6zuEFmorYX9saBqv"
+        ? "https://ipfs.io/ipfs/QmUsuM3CEHM6FXBzqHiC8XvZfZeDPy6zuEFmorYX9saBqv"
         : `/images/baccarat/joker, ${baccarat}.png`;
     } else if (card.suit && card.rank) {
       const rankName = rankMap[card.rank] || card.rank;
