@@ -595,38 +595,19 @@ export function SettingsModal({
             <select
               onChange={(e) => setLang(e.target.value as any)}
               value={lang}
-              className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-ice [&>option]:py-2"
+              className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold"
+              style={{ backgroundColor: '#1A1A1A', color: '#FFD400' }}
             >
-              <option value="en" className="bg-vintage-charcoal text-vintage-ice">
-                🇺🇸 English
-              </option>
-              <option value="pt-BR" className="bg-vintage-charcoal text-vintage-ice">
-                🇧🇷 Português
-              </option>
-              <option value="es" className="bg-vintage-charcoal text-vintage-ice">
-                🇪🇸 Español
-              </option>
-              <option value="hi" className="bg-vintage-charcoal text-vintage-ice">
-                🇮🇳 हिन्दी
-              </option>
-              <option value="ru" className="bg-vintage-charcoal text-vintage-ice">
-                🇷🇺 Русский
-              </option>
-              <option value="zh-CN" className="bg-vintage-charcoal text-vintage-ice">
-                🇨🇳 简体中文
-              </option>
-              <option value="id" className="bg-vintage-charcoal text-vintage-ice">
-                🇮🇩 Bahasa
-              </option>
-              <option value="fr" className="bg-vintage-charcoal text-vintage-ice">
-                🇫🇷 Français
-              </option>
-              <option value="ja" className="bg-vintage-charcoal text-vintage-ice">
-                🇯🇵 日本語
-              </option>
-              <option value="it" className="bg-vintage-charcoal text-vintage-ice">
-                🇮🇹 Italiano
-              </option>
+              <option value="en" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇺🇸 English</option>
+              <option value="pt-BR" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇧🇷 Português</option>
+              <option value="es" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇪🇸 Español</option>
+              <option value="hi" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇮🇳 हिन्दी</option>
+              <option value="ru" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇷🇺 Русский</option>
+              <option value="zh-CN" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇨🇳 简体中文</option>
+              <option value="id" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇮🇩 Bahasa</option>
+              <option value="fr" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇫🇷 Français</option>
+              <option value="ja" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇯🇵 日本語</option>
+              <option value="it" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇮🇹 Italiano</option>
             </select>
             {/* 🇨🇳 Chinese Language Boost Warning */}
             {lang === 'zh-CN' && (
@@ -652,20 +633,13 @@ export function SettingsModal({
                 setMusicMode(mode as any);
               }}
               value={musicMode}
-              className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-ice [&>option]:py-2"
+              className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold"
+              style={{ backgroundColor: '#1A1A1A', color: '#FFD400' }}
             >
-              <option value="default" className="bg-vintage-charcoal text-vintage-ice">
-                {t('musicModeDefault')}
-              </option>
-              <option value="language" className="bg-vintage-charcoal text-vintage-ice">
-                {t('musicModeLanguage')}
-              </option>
-              <option value="custom" className="bg-vintage-charcoal text-vintage-ice">
-                {t('musicModeCustom')}
-              </option>
-              <option value="playlist" className="bg-vintage-charcoal text-vintage-ice">
-                {t('musicModePlaylist')}
-              </option>
+              <option value="default" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>{t('musicModeDefault')}</option>
+              <option value="language" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>{t('musicModeLanguage')}</option>
+              <option value="custom" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>{t('musicModeCustom')}</option>
+              <option value="playlist" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>{t('musicModePlaylist')}</option>
             </select>
             <p className="text-xs text-vintage-burnt-gold mt-2 font-modern">
               {musicMode === 'default'
