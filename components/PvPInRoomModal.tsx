@@ -11,7 +11,6 @@ import { ConvexPvPService, type GameRoom } from '@/lib/convex-pvp';
 import LoadingSpinner from '@/components/LoadingSpinner';
 import { CardMedia } from '@/components/CardMedia';
 import { getCardUniqueId, isSameCard } from '@/lib/collections/index';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 interface Card {
   tokenId: string;
@@ -62,7 +61,6 @@ export function PvPInRoomModal({
   isCardLocked,
   t,
 }: PvPInRoomModalProps) {
-  const { t } = useLanguage();
   const T = t as (k: string) => string;
   const [sortByPower, setSortByPower] = useState<boolean>(false);
 
