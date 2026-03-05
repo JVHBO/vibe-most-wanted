@@ -1,6 +1,6 @@
 'use client';
 
-import { http, createConfig } from 'wagmi';
+import { http, createConfig, createStorage } from 'wagmi';
 import { base, arbitrum } from 'wagmi/chains';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import {
@@ -33,6 +33,13 @@ const connectors = connectorsForWallets(
 // Add Farcaster miniapp connector
 const allConnectors = [...connectors, farcasterMiniApp()];
 
+// Use sessionStorage so wallet connections don't persist across new tabs/sessions.
+// The user must explicitly connect on each new browser session.
+// Farcaster miniapp is unaffected — it auto-connects via SDK regardless of storage.
+const sessionStorageAdapter = createStorage({
+  storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
+});
+
 export const config = createConfig({
   chains: [base, arbitrum],
   transports: {
@@ -41,4 +48,5 @@ export const config = createConfig({
   },
   connectors: allConnectors,
   ssr: true,
+  storage: sessionStorageAdapter,
 });

@@ -1413,10 +1413,17 @@ export const getPlayerDecks = query({
 export const getActiveDeck = query({
   args: { address: v.string() },
   handler: async (ctx, args) => {
+    const normalizedAddress = args.address.toLowerCase();
+    const addressLink = await ctx.db
+      .query("addressLinks")
+      .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+      .first();
+    const lookupAddress = addressLink ? addressLink.primaryAddress : normalizedAddress;
+
     const deck = await ctx.db
       .query("tcgDecks")
       .withIndex("by_address_active", (q: any) =>
-        q.eq("address", args.address.toLowerCase()).eq("isActive", true)
+        q.eq("address", lookupAddress).eq("isActive", true)
       )
       .first();
 
