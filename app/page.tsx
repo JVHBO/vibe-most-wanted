@@ -45,6 +45,7 @@ import BannedScreen from "@/components/BannedScreen";
 import { SocialQuestsPanel } from "@/components/SocialQuestsPanel";
 // New Home Components
 import { HomeHeader, BottomNavigation, GameGrid, CardsPreview, WantedCast } from "@/components/home";
+import { VibeFidMailModal } from "@/components/fid/VibeFidMailModal";
 import { Roulette } from "@/components/Roulette";
 // TEMPORARILY DISABLED - Causing performance issues
 // import { MobileDebugConsole } from "@/components/MobileDebugConsole";
@@ -570,6 +571,7 @@ export default function TCGPage() {
   const [showLossPopup, setShowLossPopup] = useState<boolean>(false);
   const [showWinPopup, setShowWinPopup] = useState<boolean>(false);
   const [showRoulette, setShowRoulette] = useState<boolean>(false);
+  const [showFidMailModal, setShowFidMailModal] = useState<boolean>(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState<boolean>(false);
   const profileDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
   const [showDexDropdown, setShowDexDropdown] = useState<boolean>(false);
@@ -3719,6 +3721,15 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
         </div>
       )}
 
+      {/* VibeFID + Mail Split Modal */}
+      {showFidMailModal && farcasterFidState && (
+        <VibeFidMailModal
+          fid={farcasterFidState}
+          username={userProfile?.username}
+          onClose={() => setShowFidMailModal(false)}
+        />
+      )}
+
       {/* Game Mode Selection - Now handled directly by GameGrid */}
 
       {/* REMOVED: Referrals Modal - System disabled */}
@@ -4226,7 +4237,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
             <button
               onClick={async () => {
                 if (soundEnabled) AudioManager.buttonClick();
-                router.push('/fid');
+                setShowFidMailModal(true);
               }}
               onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
               className="tour-vibefid-btn relative px-8 md:px-12 py-2 md:py-2 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"

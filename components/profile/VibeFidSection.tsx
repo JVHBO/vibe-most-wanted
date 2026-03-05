@@ -7,7 +7,8 @@ import Link from 'next/link';
 import { CardMedia } from '@/components/fid/CardMedia';
 import FoilCardEffect from '@/components/fid/FoilCardEffect';
 import CriminalBackstoryCard from '@/components/fid/CriminalBackstoryCard';
-import { VibeMailInbox, VibeMailComposer } from '@/components/fid/VibeMail';
+import { VibeMailComposer } from '@/components/fid/VibeMail';
+import { VibeFidMailModal } from '@/components/fid/VibeFidMailModal';
 import { useFarcasterContext } from '@/hooks/fid/useFarcasterContext';
 import { useVibeVote } from '@/hooks/fid/useVibeVote';
 import { useVBMSBalance } from '@/hooks/fid/useVBMSContracts';
@@ -772,9 +773,9 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
         </div>
       )}
 
-      {/* VibeMail Inbox */}
+      {/* VibeMail + Card Split Modal */}
       {showVibeMailInbox && isOwnCard && (
-        <VibeMailInbox cardFid={fid} onClose={() => setShowVibeMailInbox(false)} />
+        <VibeFidMailModal fid={fid} username={card?.username} onClose={() => setShowVibeMailInbox(false)} />
       )}
 
       {/* Create Quest Modal */}
