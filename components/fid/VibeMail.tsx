@@ -2408,8 +2408,8 @@ export function VibeMailInboxWithClaim({
               {/* Cast - AZUL */}
               {composerQuestType !== 'miniapp' && (
                 <button
-                  onClick={() => insertCommand('/cast', 'https://warpcast.com/...')}
-                  className="w-9 h-9 flex items-center justify-center border-2 border-[#2563EB] bg-[#2563EB] text-white hover:bg-[#1D4ED8] transition-all"
+                  onClick={() => { setShowCastInput(true); setShowSoundPicker(false); setShowImagePicker(false); setShowMiniappInput(false); }}
+                  className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${showCastInput ? 'border-[#1D4ED8] bg-[#1D4ED8]' : 'border-[#2563EB] bg-[#2563EB] hover:bg-[#1D4ED8]'} text-white`}
                   style={{ WebkitTextFillColor: 'white' }}
                   title="/cast"
                 >
