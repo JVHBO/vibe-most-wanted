@@ -378,7 +378,7 @@ const QUEST_CONFIG: Record<string, { type: string; targetFid?: number }> = {
   follow_bradenwolf: { type: "follow", targetFid: 1012281 },
   follow_degencummunist: { type: "follow", targetFid: 17355 },
   // Follows - ARB Creators (auto-verify after visiting link)
-  follow_paul2: { type: "follow", targetFid: 262857 },
+  follow_paul2: { type: "channel" },
   follow_0xanas: { type: "channel" },
   follow_aylaaa: { type: "channel" },
   follow_dylantale: { type: "channel" },

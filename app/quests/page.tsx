@@ -492,7 +492,7 @@ export default function QuestsPage() {
       {/* Main Content */}
       <div className={`absolute inset-0 pt-[84px] ${activeTab === 'messages' ? 'flex flex-col overflow-hidden' : 'pb-4 overflow-y-auto'}`}>
         {activeTab === 'missions' && (
-        <div className="relative z-10 px-3 py-2 max-w-md mx-auto space-y-3">
+        <div className="relative z-10 px-3 py-2 max-w-md mx-auto space-y-3 overflow-x-hidden">
 
           {/* Chain toggle + 2x bonus row */}
           <div className="flex items-center gap-2 mt-2">
@@ -801,7 +801,7 @@ export default function QuestsPage() {
                       const slideDir = socialSlideDir[groupId] ?? 'right';
 
                       return (
-                        <div key={groupId} className="border-4 overflow-hidden" style={{ borderColor: groupColor, boxShadow: `4px 4px 0px ${groupColor}` }}>
+                        <div key={groupId} className="border-4 overflow-hidden" style={{ borderColor: groupColor, boxShadow: `3px 3px 0px ${groupColor}80` }}>
                           {/* Group header — fixed, never slides */}
                           <div className="px-3 py-1.5 bg-[#111] border-b-2 flex items-center justify-between" style={{ borderColor: groupColor }}>
                             <div className="flex items-center gap-1.5">
