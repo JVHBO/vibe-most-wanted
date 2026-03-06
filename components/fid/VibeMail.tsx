@@ -20,6 +20,7 @@ import { openMarketplace } from "@/lib/fid/marketplace-utils";
 import { VibeDexModal } from './VibeDexModal';
 import { CastPreview } from './CastPreview';
 import { MiniappPreview } from './MiniappPreview';
+import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
 
 
 const VIBEMAIL_COST_VBMS = "1000"; // Cost for paid VibeMail
@@ -42,6 +43,7 @@ const QUEST_PURPOSES = [
 
 // Slash commands available in the composer (Discord-like)
 const SLASH_COMMANDS = [
+  { cmd: '/quest', icon: '★', label: 'Insert quest banner' },
   { cmd: '/b', icon: 'B', label: 'Bold text' },
   { cmd: '/i', icon: 'I', label: 'Italic text' },
   { cmd: '/link', icon: '🔗', label: 'Insert link' },
@@ -51,6 +53,15 @@ const SLASH_COMMANDS = [
   { cmd: '/app', icon: '🎮', label: 'Link miniapp' },
   { cmd: '/clear', icon: '🗑️', label: 'Clear message' },
 ] as const;
+
+// Parse quest banner marker from message text
+function parseQuestBanner(message: string): { questData: any; cleanMessage: string } | null {
+  const match = message.match(/\[VQUEST:(\{.*?\})\]/s);
+  if (!match) return null;
+  try {
+    return { questData: JSON.parse(match[1]), cleanMessage: message.replace(match[0], '').trim() };
+  } catch { return null; }
+}
 
 
 
@@ -415,10 +426,13 @@ interface VibeMailInboxProps {
   username?: string;
   onClose: () => void;
   asPage?: boolean;
+  hideClose?: boolean;
 }
 
 // VibeMail Inbox Component - Shows all messages for a card
-export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailInboxProps) {
+const INBOX_PAGE_SIZE = 8;
+
+export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = false }: VibeMailInboxProps) {
   const { lang } = useLanguage();
   const t = fidTranslations[lang];
   const { isMusicEnabled, setIsMusicEnabled } = useMusic();
@@ -428,6 +442,9 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const convex = useConvex();
+  const [inboxPage, setInboxPage] = useState(0);
+  const [translatedContent, setTranslatedContent] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   // Get secretary for selected message
   const secretary = selectedMessage ? getSecretaryForMessage(selectedMessage._id) : VIBEMAIL_SECRETARIES[0];
@@ -435,6 +452,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
   const handleOpenMessage = async (msg: VibeMailMessage) => {
     AudioManager.buttonClick();
     setSelectedMessage(msg);
+    setTranslatedContent(null);
 
     // Mark as read if not already
     if (!msg.isRead) {
@@ -444,6 +462,21 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
     // Auto-play audio if exists (both predefined and custom)
     if (msg.audioId) {
       playAudioById(msg.audioId, audioRef, convex, setPlayingAudio);
+    }
+  };
+
+  const handleTranslate = async () => {
+    if (translatedContent) { setTranslatedContent(null); return; }
+    if (!selectedMessage?.message) return;
+    setIsTranslating(true);
+    try {
+      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(selectedMessage.message)}&langpair=autodetect|${lang}`);
+      const data = await res.json();
+      if (data.responseStatus === 200 && data.responseData?.translatedText) {
+        setTranslatedContent(data.responseData.translatedText);
+      }
+    } catch { /* non-critical */ } finally {
+      setIsTranslating(false);
     }
   };
 
@@ -475,31 +508,14 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
         ? "bg-vintage-charcoal p-4 w-full h-full flex flex-col"
         : "bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-4 w-full max-w-md max-h-[calc(100vh-120px)] overflow-hidden flex flex-col"
       }>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <img
-              src={secretary.image}
-              alt={secretary.name}
-              className="w-12 h-12 rounded-full border-2 border-vintage-gold"
-            />
-              <div>
-              <h3 className="text-vintage-gold font-bold text-lg">{t.vibeMailTitle}</h3>
-              <p className="text-vintage-ice/60 text-xs">
-                {messages?.length || 0} {t.messagesCount}
-              </p>
-            </div>
+        {!hideClose && (
+          <div className="flex justify-end mb-2">
+            <button
+              onClick={() => { stopAudio(); onClose(); }}
+              className="w-8 h-8 bg-vintage-black/50 border border-vintage-gold/30 rounded-full text-vintage-gold hover:bg-vintage-gold/20 transition-all"
+            >X</button>
           </div>
-          <button
-            onClick={() => {
-              stopAudio();
-              onClose();
-            }}
-            className="w-8 h-8 bg-vintage-black/50 border border-vintage-gold/30 rounded-full text-vintage-gold hover:bg-vintage-gold/20 transition-all"
-          >
-            X
-          </button>
-        </div>
+        )}
 
         {/* Selected Message View */}
         {selectedMessage ? (
@@ -518,11 +534,25 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
 
             {/* Message Content */}
             <div className="bg-gradient-to-b from-vintage-black/80 to-vintage-charcoal rounded-lg p-3 flex-1">
-              <div className="text-white text-sm leading-relaxed mb-3">
-                {selectedMessage.imageId ? (
-                  renderMessageWithMedia(selectedMessage.message || "", selectedMessage.imageId, lang, username)
-                ) : (
-                  <>"{renderFormattedMessage(selectedMessage.message || "", lang, username)}"</>
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <div className="text-white text-sm leading-relaxed flex-1">
+                  {selectedMessage.imageId ? (
+                    renderMessageWithMedia(selectedMessage.message || "", selectedMessage.imageId, lang, username)
+                  ) : translatedContent ? (
+                    <span>"{translatedContent}"</span>
+                  ) : (
+                    <span>"{renderFormattedMessage(selectedMessage.message || "", lang, username)}"</span>
+                  )}
+                </div>
+                {selectedMessage.message && (
+                  <button
+                    onClick={handleTranslate}
+                    disabled={isTranslating}
+                    className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${translatedContent ? 'bg-blue-600 border-blue-400 text-white' : 'bg-vintage-black/50 border-vintage-gold/30 text-vintage-gold/70 hover:text-vintage-gold hover:border-vintage-gold/60'}`}
+                    title={translatedContent ? 'Show original' : 'Translate to English'}
+                  >
+                    {isTranslating ? '...' : translatedContent ? 'EN' : 'TR'}
+                  </button>
                 )}
               </div>
 
@@ -589,15 +619,6 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
                 </div>
               )}
 
-              {/* Vote Info */}
-              <div className="mt-4 pt-3 border-t border-vintage-gold/20 flex items-center justify-between text-xs">
-                <span className="text-white/60">
-                  {new Date(selectedMessage.createdAt).toLocaleDateString()}
-                </span>
-                <span className={`font-bold ${selectedMessage.isPaid ? 'text-yellow-400' : 'text-vintage-gold'}`}>
-                  +{selectedMessage.voteCount} {selectedMessage.isPaid ? t.paidVote : t.freeVote}
-                </span>
-              </div>
             </div>
 
             {/* Back Button */}
@@ -613,7 +634,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
           </div>
         ) : (
           /* Message List */
-          <div className="flex-1 overflow-y-auto space-y-2">
+          <div className="flex-1 flex flex-col overflow-hidden">
             {!messages || messages.length === 0 ? (
               <div className="text-center py-10">
                 <p className="text-white/60 text-sm">{t.noMessagesYet}</p>
@@ -622,37 +643,66 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage }: VibeMailIn
                 </p>
               </div>
             ) : (
-              messages.map((msg: VibeMailMessage) => (
-                <button
-                  key={msg._id}
-                  onClick={() => handleOpenMessage(msg)}
-                  className={`w-full text-left p-3 rounded-lg border transition-all ${
-                    msg.isRead
-                      ? 'bg-[#1a1a1a] border-[#333] hover:border-[#555]'
-                      : 'bg-vintage-black/60 border-vintage-gold/60 hover:bg-vintage-black/80'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${msg.isRead ? 'bg-vintage-ice/30' : 'bg-vintage-gold animate-pulse'}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm truncate ${msg.isRead ? 'text-white/60' : 'text-white font-bold'}`}>
-                        {msg.message?.slice(0, 50)}...
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {msg.audioId && (
-                          <span className="text-xs text-vintage-burnt-gold">{t.hasAudio}</span>
+              <>
+                <div className="flex-1 overflow-y-auto space-y-2">
+                  {messages.slice(inboxPage * INBOX_PAGE_SIZE, (inboxPage + 1) * INBOX_PAGE_SIZE).map((msg: VibeMailMessage) => (
+                    <button
+                      key={msg._id}
+                      onClick={() => handleOpenMessage(msg)}
+                      className={`w-full text-left px-3 py-2 rounded-lg border transition-all ${
+                        msg.isRead
+                          ? 'bg-[#141414] border-[#2a2a2a] hover:border-[#444]'
+                          : 'bg-[#1a1400] border-vintage-gold/50 hover:bg-[#211900]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {/* Avatar */}
+                        {msg.voterPfpUrl ? (
+                          <img src={msg.voterPfpUrl} alt={msg.voterUsername || ''} className="w-8 h-8 rounded-full flex-shrink-0 object-cover border border-white/10" />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full flex-shrink-0 bg-vintage-gold/20 border border-vintage-gold/30 flex items-center justify-center">
+                            <span className="text-vintage-gold text-xs font-bold">{(msg.voterUsername || '?')[0].toUpperCase()}</span>
+                          </div>
                         )}
-                        <span className="text-xs text-white/40">
-                          {new Date(msg.createdAt).toLocaleDateString()}
-                        </span>
+                        {/* Content */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className={`text-xs font-bold truncate ${msg.isRead ? 'text-white/50' : 'text-vintage-gold'}`}>
+                              {msg.voterUsername ? `@${msg.voterUsername}` : 'Anonymous'}
+                            </span>
+                            {!msg.isRead && <span className="w-1.5 h-1.5 rounded-full bg-vintage-gold flex-shrink-0" />}
+                            {msg.isPaid && <span className="text-[9px] text-yellow-400 font-bold flex-shrink-0">PAID</span>}
+                            {msg.audioId && <span className="text-[9px] text-vintage-burnt-gold flex-shrink-0">♪</span>}
+                            {msg.giftNftImageUrl && <span className="text-[9px] text-purple-400 flex-shrink-0">NFT</span>}
+                          </div>
+                          <p className={`text-xs truncate leading-tight ${msg.isRead ? 'text-white/40' : 'text-white/80'}`}>
+                            {msg.message?.slice(0, 60) || (msg.audioId ? 'Voice message' : msg.giftNftName || '...')}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <span className={`text-xs font-bold ${msg.isPaid ? 'text-yellow-400' : 'text-white/50'}`}>
-                      +{msg.voteCount}
+                    </button>
+                  ))}
+                </div>
+                {/* Pagination */}
+                {messages.length > INBOX_PAGE_SIZE && (
+                  <div className="flex items-center justify-between pt-2 mt-2 border-t border-vintage-gold/20 flex-shrink-0">
+                    <button
+                      onClick={() => setInboxPage(p => Math.max(0, p - 1))}
+                      disabled={inboxPage === 0}
+                      className="px-3 py-1 text-xs font-bold border border-vintage-gold/30 text-vintage-gold/70 rounded disabled:opacity-30 hover:bg-vintage-gold/10 transition-colors"
+                    >← Prev</button>
+                    <span className="text-[10px] text-vintage-ice/40">
+                      {inboxPage + 1} / {Math.ceil(messages.length / INBOX_PAGE_SIZE)}
+                      <span className="ml-1 text-vintage-ice/25">({messages.length} total)</span>
                     </span>
+                    <button
+                      onClick={() => setInboxPage(p => Math.min(Math.ceil(messages.length / INBOX_PAGE_SIZE) - 1, p + 1))}
+                      disabled={(inboxPage + 1) * INBOX_PAGE_SIZE >= messages.length}
+                      className="px-3 py-1 text-xs font-bold border border-vintage-gold/30 text-vintage-gold/70 rounded disabled:opacity-30 hover:bg-vintage-gold/10 transition-colors"
+                    >Next →</button>
                   </div>
-                </button>
-              ))
+                )}
+              </>
             )}
           </div>
         )}
@@ -754,6 +804,7 @@ export function VibeMailInboxWithClaim({
 
   // VBMS Balance for Need More button
   const { balance: vbmsBalance } = useVBMSBalance(myAddress as `0x${string}` | undefined);
+  const { validateOnArb } = useArbValidator();
   const farcasterContext = useFarcasterContext();
 
   // Success feedback state
@@ -769,6 +820,95 @@ export function VibeMailInboxWithClaim({
   // Delete mode state
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedForDelete, setSelectedForDelete] = useState<Set<string>>(new Set());
+
+  // Quest VibeMail settings state
+  const [settingsFarcaster, setSettingsFarcaster] = useState('');
+  const [settingsFarcasterFid, setSettingsFarcasterFid] = useState<number | null>(null);
+  const [settingsFarcasterPfp, setSettingsFarcasterPfp] = useState('');
+  const [settingsMiniapp, setSettingsMiniapp] = useState('');
+  const [settingsMiniappName, setSettingsMiniappName] = useState('');
+  const [settingsMiniappIcon, setSettingsMiniappIcon] = useState('');
+  const [settingsTwitter, setSettingsTwitter] = useState('');
+  const [settingsChannel, setSettingsChannel] = useState('');
+  const [settingsChannelName, setSettingsChannelName] = useState('');
+  const [settingsChannelImg, setSettingsChannelImg] = useState('');
+  const [settingsSaved, setSettingsSaved] = useState(false);
+  // Neynar search state
+  const [fcSearchQ, setFcSearchQ] = useState('');
+  const [fcSearchResults, setFcSearchResults] = useState<any[]>([]);
+  const [fcSearching, setFcSearching] = useState(false);
+  const [chSearchQ, setChSearchQ] = useState('');
+  const [chSearchResults, setChSearchResults] = useState<any[]>([]);
+  const [chSearching, setChSearching] = useState(false);
+  const [maSearchQ, setMaSearchQ] = useState('');
+  const [maSearchResults, setMaSearchResults] = useState<any[]>([]);
+  const [maSearching, setMaSearching] = useState(false);
+
+  // Load saved settings + auto-fill Farcaster from profile
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const key = `vm_settings_${cardFid}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        const p = JSON.parse(saved);
+        if (p.farcaster) { setSettingsFarcaster(p.farcaster); setFcSearchQ(p.farcaster); }
+        if (p.farcasterFid) setSettingsFarcasterFid(p.farcasterFid);
+        if (p.farcasterPfp) setSettingsFarcasterPfp(p.farcasterPfp);
+        if (p.miniapp) { setSettingsMiniapp(p.miniapp); setMaSearchQ(p.miniappName || p.miniapp); }
+        if (p.miniappName) setSettingsMiniappName(p.miniappName);
+        if (p.miniappIcon) setSettingsMiniappIcon(p.miniappIcon);
+        if (p.twitter) setSettingsTwitter(p.twitter);
+        if (p.channel) { setSettingsChannel(p.channel); setChSearchQ(p.channelName || p.channel); }
+        if (p.channelName) setSettingsChannelName(p.channelName);
+        if (p.channelImg) setSettingsChannelImg(p.channelImg);
+        return;
+      } catch {}
+    }
+    if (username) { setSettingsFarcaster(username); setFcSearchQ(username); }
+  }, [cardFid, username]);
+
+  // Neynar user search debounce
+  useEffect(() => {
+    if (!fcSearchQ || fcSearchQ.length < 2 || fcSearchQ === settingsFarcaster) { setFcSearchResults([]); return; }
+    const t = setTimeout(async () => {
+      setFcSearching(true);
+      try {
+        const r = await fetch(`/api/fid/neynar-user-search?q=${encodeURIComponent(fcSearchQ)}`);
+        const d = await r.json();
+        setFcSearchResults(d.users || []);
+      } catch {} finally { setFcSearching(false); }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [fcSearchQ]);
+
+  // Neynar channel search debounce
+  useEffect(() => {
+    if (!chSearchQ || chSearchQ.length < 2 || chSearchQ === settingsChannelName) { setChSearchResults([]); return; }
+    const t = setTimeout(async () => {
+      setChSearching(true);
+      try {
+        const r = await fetch(`/api/fid/neynar-channel-search?q=${encodeURIComponent(chSearchQ)}`);
+        const d = await r.json();
+        setChSearchResults(d.channels || []);
+      } catch {} finally { setChSearching(false); }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [chSearchQ]);
+
+  // Neynar miniapp search debounce
+  useEffect(() => {
+    if (!maSearchQ || maSearchQ.length < 2 || maSearchQ === settingsMiniappName) { setMaSearchResults([]); return; }
+    const t = setTimeout(async () => {
+      setMaSearching(true);
+      try {
+        const r = await fetch(`/api/fid/neynar-miniapp-search?q=${encodeURIComponent(maSearchQ)}`);
+        const d = await r.json();
+        setMaSearchResults(d.miniapps || []);
+      } catch {} finally { setMaSearching(false); }
+    }, 400);
+    return () => clearTimeout(t);
+  }, [maSearchQ]);
 
   // LIMIT: max 100 recipients for broadcast
   const MAX_BROADCAST_RECIPIENTS = 100;
@@ -956,6 +1096,9 @@ export function VibeMailInboxWithClaim({
     if (!myFid || !myAddress) return;
     setIsSending(true);
     try {
+      // On-chain confirmation via ARB validator (generates TX proof)
+      await validateOnArb(100, ARB_CLAIM_TYPE.VIBEMAIL);
+
       if (!hasFreeVotes) {
         await transferVBMS(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(VIBEMAIL_COST_VBMS));
       }
@@ -1040,6 +1183,22 @@ export function VibeMailInboxWithClaim({
     const before = composerMessage.slice(0, slashStart);
     const after = composerMessage.slice(cursorPos);
     switch (cmd) {
+      case '/quest': {
+        // Build quest banner from saved settings
+        const key = `vm_settings_${cardFid}`;
+        let settings: any = {};
+        try { settings = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
+        const quests = [];
+        if (settings.farcaster && settings.farcasterFid) quests.push({ type: 'follow_farcaster', username: settings.farcaster, fid: settings.farcasterFid, pfp: settings.farcasterPfp });
+        if (settings.channel && settings.channelName) quests.push({ type: 'join_channel', channelId: settings.channel, channelName: settings.channelName, channelImg: settings.channelImg });
+        if (settings.miniapp && settings.miniappName) quests.push({ type: 'use_miniapp', url: settings.miniapp, name: settings.miniappName, icon: settings.miniappIcon });
+        if (quests.length === 0) { alert('Configure seus dados na aba Settings antes de usar /quest'); setSlashMenuOpen(false); return; }
+        const banner = `[VQUEST:${JSON.stringify({ quests })}]`;
+        const msg = (before + banner + '\n' + after).slice(0, 1000);
+        setComposerMessage(msg);
+        setTimeout(() => { if (textareaRef.current) textareaRef.current.focus(); }, 10);
+        break;
+      }
       case '/b':
         setComposerMessage((before + '**text**' + after).slice(0, 200));
         setTimeout(() => { if (textareaRef.current) { textareaRef.current.focus(); textareaRef.current.setSelectionRange(slashStart + 2, slashStart + 6); } }, 10);
@@ -1098,7 +1257,7 @@ export function VibeMailInboxWithClaim({
 
   return (
     <div className={
-      inline ? "w-full"
+      inline ? "flex-1 flex flex-col overflow-hidden bg-[#111]"
       : asPage ? "min-h-screen bg-vintage-dark"
       : "fixed inset-0 z-[350] flex items-center justify-center bg-black/90 p-4"
     }>
@@ -1107,7 +1266,7 @@ export function VibeMailInboxWithClaim({
       <div
         style={{ colorScheme: 'dark' }}
         className={
-          inline ? "bg-[#111] w-full flex flex-col p-3 min-h-[calc(100dvh-110px)]"
+          inline ? "bg-[#111] flex-1 flex flex-col p-2 overflow-hidden"
           : asPage ? "bg-vintage-charcoal h-screen w-full flex flex-col"
           : "bg-vintage-charcoal border-2 border-black shadow-[4px_4px_0px_#000] p-4 w-full max-w-md max-h-[calc(100vh-120px)] overflow-hidden flex flex-col"
         }
@@ -1160,151 +1319,106 @@ export function VibeMailInboxWithClaim({
           </div>
         )}
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <img
-              src={userPfpUrl || farcasterContext?.user?.pfpUrl || secretary.image}
-              alt={username || 'User'}
-              className="w-12 h-12 rounded-full border-2 border-black shadow-[2px_2px_0px_#000]"
-            />
-              <div>
-              <h3 className="text-white font-black text-base">
-                {username ? `@${username}` : 'Messages'}
-              </h3>
-              <p className="text-[#9945FF] text-[10px] font-bold uppercase tracking-widest">VibeMail</p>
-              <p className="text-white/40 text-[10px]">
-                {messages?.length || 0} {t.messagesCount}
-              </p>
-              {/* VibeMail Stats - Always show sent/received */}
-              <div className="flex gap-3 text-[10px] mt-1">
-                <span className="text-green-400 flex items-center gap-1">
-                  <span>↓</span> {vibeMailStats?.totalVbmsReceived || 0} VBMS
-                </span>
-                <span className="text-red-400 flex items-center gap-1">
-                  <span>↑</span> {vibeMailStats?.totalVbmsSent || 0} VBMS
-                </span>
-                {pendingVbms > 0 && (
-                  <span className="text-vintage-gold flex items-center gap-1">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke="#1a1a1a" strokeWidth="2" fill="none" strokeLinecap="round"/></svg>
-                    {pendingVbms}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {myFid && myAddress && (
-              <button
-                onClick={() => {
-                  AudioManager.buttonClick();
-                  setShowPurposeModal(true);
-                  setReplyToMessageId(null);
-                }}
-                className="w-8 h-8 bg-vintage-gold text-black border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
-                title="New VibeMail"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                  <line x1="12" y1="13" x2="12" y2="6"/>
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
 
-        {/* Tabs - Msgs/Sent/Quests/Wanted */}
-        {myFid && !selectedMessage && !showComposer && (
-          <div className="flex gap-1 mb-3">
-            <button
-              onClick={() => setActiveTab('inbox')}
-              className={`flex-1 py-2 text-xs font-bold border-2 shadow-[2px_2px_0px_#000] ${activeTab === 'inbox' ? 'vmt-inbox-active' : 'vmt-inbox-inactive'}`}
-            >
-              <span className="flex items-center justify-center gap-1">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-                Msgs
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('sent')}
-              className={`flex-1 py-2 text-xs font-bold border-2 shadow-[2px_2px_0px_#000] ${activeTab === 'sent' ? 'vmt-sent-active' : 'vmt-sent-inactive'}`}
-            >
-              <span className="flex items-center justify-center gap-1">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                Sent
-              </span>
-            </button>
-            <button
-              onClick={() => setActiveTab('quests')}
-              className={`flex-1 py-2 text-xs font-bold border-2 shadow-[2px_2px_0px_#000] ${activeTab === 'quests' ? 'vmt-quests-active' : 'vmt-quests-inactive'}`}
-            >
-              <span className="flex items-center justify-center gap-1">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                Quests
-              </span>
-            </button>
-          </div>
-        )}
 
         {/* Purpose Chooser Modal */}
         {showPurposeModal && !showComposer && myFid && myAddress && (
           <div className="fixed inset-0 z-[500] bg-[#0a0a0a] flex flex-col" style={{ colorScheme: 'dark' }}>
-            <div className="p-4 border-b-2 border-[#FFD700] flex items-center justify-between flex-shrink-0">
-              <button onClick={() => setShowPurposeModal(false)} className="w-8 h-8 bg-[#1a1a1a] border-2 border-[#444] text-white font-black shadow-[2px_2px_0px_#000] flex items-center justify-center">X</button>
-              <h3 className="text-[#FFD700] font-black text-sm uppercase tracking-widest">What's your goal?</h3>
+            {/* Header */}
+            <div className="px-4 py-3 border-b-2 border-black flex items-center justify-between flex-shrink-0 bg-[#111]">
+              <button onClick={() => setShowPurposeModal(false)} className="w-8 h-8 bg-[#DC2626] border-2 border-black shadow-[2px_2px_0px_#000] text-white font-black flex items-center justify-center">X</button>
+              <h3 className="text-[#FFD700] font-black text-sm uppercase tracking-widest">New VibeMail</h3>
               <div className="w-8" />
             </div>
-            <div className="flex-1 overflow-y-auto p-3">
-              <p className="text-white/40 text-[10px] text-center mb-3">Choose the type of message to send</p>
-              {/* Just a Message */}
+            <div className="flex-1 flex flex-col gap-3 p-4">
+              <p className="text-white/30 text-[10px] text-center uppercase tracking-widest">Choose the type of message</p>
+
+              {/* Option 1: Just a Message */}
               <button
-                onClick={() => { AudioManager.buttonClick(); setComposerMessage(''); setComposerQuestType(null); setShowPurposeModal(false); setShowComposer(true); }}
-                className="w-full p-4 bg-[#1a1a1a] border-2 border-[#444] flex items-center gap-3 hover:border-[#FFD700] hover:bg-[#222] transition-all shadow-[3px_3px_0px_#000] text-left mb-3"
+                onClick={() => {
+                  AudioManager.buttonClick();
+                  setComposerMessage('');
+                  setComposerQuestType(null);
+                  setShowPurposeModal(false);
+                  setShowComposer(true);
+                }}
+                className="flex-1 p-4 bg-[#111] border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-left flex flex-col justify-between"
               >
-                <span className="text-3xl">📨</span>
-                <div className="flex-1">
-                  <p className="text-white font-black text-sm">Just a Message</p>
-                  <p className="text-white/50 text-xs">Free-form, no quest attached</p>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#8B5CF6] border-2 border-black flex items-center justify-center flex-shrink-0">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white font-black text-base">Just a Message</p>
+                    <p className="text-white/50 text-xs mt-0.5">Free-form, no quest attached</p>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                 </div>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="px-2 py-0.5 bg-[#22C55E]/20 border border-[#22C55E]/50 text-[#22C55E] font-black text-[9px] uppercase tracking-wide">FREE</span>
+                  <span className="text-white/30 text-[9px]">Limit: 1 per recipient per day</span>
+                </div>
               </button>
-              {/* Divider */}
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex-1 h-px bg-[#333]" />
-                <span className="text-white/30 text-[10px] font-bold uppercase tracking-widest">Message + Quest</span>
-                <div className="flex-1 h-px bg-[#333]" />
-              </div>
-              {/* Quest type options */}
-              <div className="space-y-2">
-                {QUEST_PURPOSES.map(opt => (
-                  <button
-                    key={opt.id}
-                    onClick={() => {
-                      AudioManager.buttonClick();
-                      const target = username || '';
-                      const filledTemplate = opt.questType === 'follow_me' && target
-                        ? opt.template.replace(/@\[your-username\]/g, `@${target}`)
-                        : opt.template;
-                      setComposerMessage(filledTemplate);
-                      setComposerQuestType(opt.questType);
-                      if (opt.questType === 'follow_me') setComposerFollowTarget(target);
-                      if (opt.questType === 'rt_cast') { setShowCastInput(true); setCastInputValue(''); setComposerCastUrl(null); }
-                      setShowPurposeModal(false);
-                      setShowComposer(true);
-                    }}
-                    className="w-full p-3 bg-[#1a1a1a] border-2 border-[#333] flex items-center gap-3 hover:border-[#FFD700] hover:bg-[#222] transition-all shadow-[2px_2px_0px_#000] text-left"
-                  >
-                    <span className="text-2xl w-8 text-center flex-shrink-0">{opt.id === 'cast_engage' ? '🔁❤️' : opt.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-bold text-sm">{opt.label}</p>
-                      <p className="text-white/50 text-xs">{opt.shortDesc}</p>
+
+              {/* Option 2: With Social Quest */}
+              <button
+                onClick={() => {
+                  AudioManager.buttonClick();
+                  // Read saved settings from localStorage
+                  const key = `vm_settings_${cardFid}`;
+                  let settings: any = {};
+                  try { settings = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
+                  const quests: any[] = [];
+                  if (settings.farcaster && settings.farcasterFid) quests.push({ type: 'follow_farcaster', username: settings.farcaster, fid: settings.farcasterFid, pfp: settings.farcasterPfp || '' });
+                  if (settings.miniapp && settings.miniappName) quests.push({ type: 'use_miniapp', url: settings.miniapp, name: settings.miniappName, icon: settings.miniappIcon || '' });
+                  if (settings.channel && settings.channelName) quests.push({ type: 'join_channel', channelId: settings.channelName, channelName: settings.channelName, channelUrl: settings.channel });
+                  if (quests.length === 0) {
+                    // No settings yet — open composer with hint
+                    setComposerMessage('');
+                    setComposerQuestType('social_quest');
+                    setShowPurposeModal(false);
+                    setShowComposer(true);
+                    return;
+                  }
+                  const banner = `[VQUEST:${JSON.stringify({ quests })}]`;
+                  setComposerMessage(banner + '\n');
+                  setComposerQuestType('social_quest');
+                  setShowPurposeModal(false);
+                  setShowComposer(true);
+                }}
+                className="flex-1 p-4 bg-[#111] border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-left flex flex-col justify-between"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-[#FFD700] border-2 border-black flex items-center justify-center flex-shrink-0">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#000" stroke="#000" strokeWidth="0"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white font-black text-base">With Social Quest</p>
+                    <p className="text-white/50 text-xs mt-0.5">Follow · Miniapp · Channel — from your settings</p>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+                {/* Preview configured quests */}
+                {(() => {
+                  const key = `vm_settings_${cardFid}`;
+                  let s: any = {};
+                  try { s = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
+                  const configured = [
+                    s.farcaster && `@${s.farcaster}`,
+                    s.miniappName,
+                    s.channelName,
+                  ].filter(Boolean);
+                  return configured.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-1">
+                      {configured.map((label, i) => (
+                        <span key={i} className="px-2 py-0.5 bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FFD700] font-bold text-[9px]">{label}</span>
+                      ))}
                     </div>
-                    <svg className="flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                  </button>
-                ))}
-              </div>
-              <p className="text-white/20 text-[10px] text-center pt-4">Create the quest in Quests tab first, then send this message to promote it</p>
+                  ) : (
+                    <p className="mt-3 text-white/20 text-[9px]">Configure na aba Settings antes de usar</p>
+                  );
+                })()}
+              </button>
             </div>
           </div>
         )}
@@ -2072,6 +2186,8 @@ export function VibeMailInboxWithClaim({
                   setIsSending(true);
                   setBroadcastResult(null);
                   try {
+                    // On-chain confirmation via ARB validator
+                    await validateOnArb(100, ARB_CLAIM_TYPE.VIBEMAIL);
                     // Transfer VBMS to contract (payment for broadcast)
                     const txHash = await transferVBMS(CONTRACTS.VBMSPoolTroll, totalCost);
                     if (!txHash) {
@@ -2229,12 +2345,96 @@ export function VibeMailInboxWithClaim({
                   </div>
                 </div>
               )}
+              {/* Quest Banner */}
+              {(() => {
+                const parsed = parseQuestBanner(selectedMessage.message || '');
+                if (!parsed) return null;
+                const { questData } = parsed;
+                return (
+                  <div className="mb-3 border-2 border-black shadow-[4px_4px_0px_#000] overflow-hidden">
+                    {/* Header */}
+                    <div className="bg-[#FFD700] px-3 py-2 flex items-center gap-2 border-b-2 border-black">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="#000" strokeWidth="0"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      <span className="font-black text-black text-xs uppercase tracking-widest flex-1">Quest VibeMail</span>
+                      <span className="text-black/50 text-[9px] font-bold">{(questData.quests || []).length} quest{(questData.quests || []).length !== 1 ? 's' : ''}</span>
+                    </div>
+                    {/* Quest items */}
+                    <div className="bg-[#0d0d0d] flex flex-col divide-y-2 divide-black">
+                      {(questData.quests || []).map((q: any, i: number) => (
+                        <div key={i}>
+                          {q.type === 'follow_farcaster' && (
+                            <div className="flex items-center gap-3 px-3 py-3">
+                              <div className="relative flex-shrink-0">
+                                {q.pfp
+                                  ? <img src={q.pfp} className="w-10 h-10 rounded-full border-2 border-[#8B5CF6]" alt="" />
+                                  : <div className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20 flex items-center justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                                }
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#8B5CF6] border border-black rounded-full flex items-center justify-center">
+                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[#8B5CF6] font-black text-[10px] uppercase tracking-widest">Follow on Farcaster</p>
+                                <p className="text-white font-bold text-sm truncate">@{q.username}</p>
+                              </div>
+                              <button onClick={async () => { try { await sdk.actions?.openUrl?.(`https://warpcast.com/${q.username}`); } catch { window.open(`https://warpcast.com/${q.username}`, '_blank'); } }}
+                                className="px-3 py-2 bg-[#8B5CF6] border-2 border-black text-white font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all flex-shrink-0 uppercase tracking-wide">
+                                Follow
+                              </button>
+                            </div>
+                          )}
+                          {q.type === 'join_channel' && (
+                            <div className="flex items-center gap-3 px-3 py-3">
+                              <div className="relative flex-shrink-0">
+                                <div className="w-10 h-10 border-2 border-[#FF9F0A] bg-[#FF9F0A]/20 flex items-center justify-center">
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9F0A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                </div>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[#FF9F0A] font-black text-[10px] uppercase tracking-widest">Join Channel</p>
+                                <p className="text-white font-bold text-sm truncate">{q.channelName || q.channelId}</p>
+                              </div>
+                              <button onClick={async () => {
+                                const url = q.channelUrl || `https://warpcast.com/~/channel/${q.channelId}`;
+                                try { await sdk.actions?.openUrl?.(url); } catch { window.open(url, '_blank'); }
+                              }}
+                                className="px-3 py-2 bg-[#FF9F0A] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all flex-shrink-0 uppercase tracking-wide">
+                                Join
+                              </button>
+                            </div>
+                          )}
+                          {q.type === 'use_miniapp' && (
+                            <div className="flex items-center gap-3 px-3 py-3">
+                              <div className="relative flex-shrink-0">
+                                {q.icon
+                                  ? <img src={q.icon} className="w-10 h-10 rounded border-2 border-[#22C55E] object-cover" alt="" onError={(e: any) => e.target.style.display='none'} />
+                                  : <div className="w-10 h-10 border-2 border-[#22C55E] bg-[#22C55E]/20 flex items-center justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>
+                                }
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[#22C55E] font-black text-[10px] uppercase tracking-widest">Use Miniapp</p>
+                                <p className="text-white font-bold text-sm truncate">{q.name}</p>
+                              </div>
+                              <button onClick={async () => { try { await sdk.actions?.openMiniApp?.({ url: q.url }); } catch { window.open(q.url, '_blank'); } }}
+                                className="px-3 py-2 bg-[#22C55E] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all flex-shrink-0 uppercase tracking-wide">
+                                Open
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
               <div className="text-white text-sm leading-relaxed mb-3">
-                {selectedMessage.imageId ? (
-                  renderMessageWithMedia(selectedMessage.message || "", selectedMessage.imageId, lang, username)
-                ) : (
-                  <>{renderFormattedMessage(selectedMessage.message || "", lang, username)}</>
-                )}
+                {(() => {
+                  const parsed = parseQuestBanner(selectedMessage.message || '');
+                  const msg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
+                  return selectedMessage.imageId
+                    ? renderMessageWithMedia(msg, selectedMessage.imageId, lang, username)
+                    : <>{renderFormattedMessage(msg, lang, username)}</>;
+                })()}
               </div>
 
               {selectedMessage.audioId && (
@@ -2273,6 +2473,11 @@ export function VibeMailInboxWithClaim({
                     </p>
                   </div>
                 </div>
+              )}
+
+              {/* Cast Embed */}
+              {selectedMessage.castUrl && (
+                <CastPreview castUrl={selectedMessage.castUrl} />
               )}
 
               {/* Miniapp Rich Preview */}
@@ -2351,7 +2556,7 @@ export function VibeMailInboxWithClaim({
           </div>
         ) : (
           /* Message List */
-          <div className="flex-1 overflow-hidden flex flex-col mb-4">
+          <div className="flex-1 overflow-hidden flex flex-col">
             {/* Delete Mode Controls */}
             {activeTab === 'inbox' && currentMessages && currentMessages.length > 0 && (
               <div className="flex items-center justify-between mb-2 pb-2 border-b border-vintage-gold/20">
@@ -2425,81 +2630,235 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
-            {/* Quests Tab Content */}
+            {/* Quest VibeMail Builder Tab */}
             {activeTab === 'quests' && (
-              <div className="max-h-[320px] overflow-y-auto space-y-2">
-                {questsLoading ? (
-                  <div className="text-center py-8">
-                    <p className="text-vintage-ice/50 text-sm animate-pulse">Loading quests...</p>
+              <div className="flex-1 flex flex-col gap-2 p-2 min-h-0 overflow-visible">
+
+                {/* Follow Farcaster card */}
+                <div className="border-2 border-black shadow-[3px_3px_0px_#000] bg-[#0d0d0d] flex flex-col flex-1 min-h-[110px]">
+                  {/* Card header */}
+                  <div className="bg-[#8B5CF6] px-3 py-1.5 flex items-center justify-between border-b-2 border-black">
+                    <span className="font-black text-[10px] uppercase tracking-widest text-black flex items-center gap-1.5">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      Follow Farcaster
+                    </span>
+                    {settingsFarcaster && settingsFarcasterFid && (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    )}
                   </div>
-                ) : activeQuests.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-white/60 text-sm">No active quests</p>
-                    <p className="text-white/40 text-xs mt-1">Check back later or create your own!</p>
-                  </div>
-                ) : (
-                  activeQuests.map((quest: any) => {
-                    const QUEST_ICONS: Record<string, string> = {
-                      follow_me: '👤', join_channel: '📢', rt_cast: '🔁', use_miniapp: '🎮', like_cast: '❤️',
-                    };
-                    const QUEST_LABELS: Record<string, string> = {
-                      follow_me: 'Follow', join_channel: 'Join Channel', rt_cast: 'Recast', use_miniapp: 'Use App', like_cast: 'Like Cast',
-                    };
-                    const isClaiming = claimingQuestId === quest._id;
-                    const claimResult = questClaimResult?.questId === quest._id ? questClaimResult : null;
-                    const slotsLeft = quest.maxCompleters - quest.completedCount;
-                    const hoursLeft = Math.max(0, Math.floor((quest.expiresAt - Date.now()) / 3600000));
-                    return (
-                      <div key={quest._id} className="bg-vintage-black/40 border-2 border-black shadow-[2px_2px_0px_#000] p-3">
-                        <div className="flex items-start gap-2 mb-2">
-                          <span className="text-xl">{QUEST_ICONS[quest.questType] || '?'}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-vintage-gold font-bold text-xs uppercase">{QUEST_LABELS[quest.questType]}</p>
-                            <p className="text-white/70 text-xs truncate">by @{quest.creatorUsername}</p>
-                            <p className="text-white/50 text-[10px] truncate">{quest.targetDisplay}</p>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-[#FFD700] font-black text-sm">+{quest.rewardPerCompleter.toLocaleString()}</p>
-                            <p className="text-white/30 text-[10px]">coins</p>
-                          </div>
+                  {/* Card body */}
+                  <div className="p-2 flex-1 flex flex-col justify-center">
+                    {settingsFarcaster && settingsFarcasterFid ? (
+                      <div className="flex items-center gap-2 bg-[#8B5CF6]/10 border border-[#8B5CF6]/40 px-2 py-2">
+                        {settingsFarcasterPfp && <img src={settingsFarcasterPfp} className="w-8 h-8 rounded-full border-2 border-[#8B5CF6]/60 flex-shrink-0" alt="" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-bold text-xs truncate">@{settingsFarcaster}</p>
+                          <p className="text-white/40 text-[9px]">FID: {settingsFarcasterFid}</p>
                         </div>
-                        <div className="flex items-center justify-between text-[10px] text-white/30 mb-2">
-                          <span>{slotsLeft}/{quest.maxCompleters} slots left</span>
-                          <span>{hoursLeft}h left</span>
+                        <button onClick={() => { setSettingsFarcaster(''); setSettingsFarcasterFid(null); setSettingsFarcasterPfp(''); setFcSearchQ(''); }} className="text-white/30 hover:text-red-400 flex-shrink-0">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <div className="flex items-center border-2 border-[#2a2a2a] focus-within:border-[#8B5CF6] bg-[#0a0a0a]">
+                          <span className="pl-2 pr-1 text-[#8B5CF6] font-black text-sm select-none">@</span>
+                          <input
+                            type="text"
+                            value={fcSearchQ}
+                            onChange={e => setFcSearchQ(e.target.value.replace(/^@/, ''))}
+                            placeholder="buscar usuário Farcaster..."
+                            className="flex-1 bg-transparent text-white text-xs py-2 pl-2 focus:outline-none placeholder:text-white/20"
+                            style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
+                          />
+                          {fcSearching && <svg className="animate-spin mr-2 w-3 h-3 text-[#8B5CF6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>}
                         </div>
-                        {claimResult && (
-                          <div className={`text-xs text-center py-1 mb-2 border ${claimResult.success ? 'text-green-400 border-green-500/50 bg-green-900/20' : 'text-red-400 border-red-500/50 bg-red-900/20'}`}>
-                            {claimResult.success ? `Claimed! +${quest.rewardPerCompleter.toLocaleString()} coins` : claimResult.error}
+                        {fcSearchResults.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 z-[100] bg-[#111] border-2 border-black shadow-[6px_6px_0px_#000] max-h-44 overflow-y-auto mt-0.5">
+                            <div className="h-0.5 bg-[#8B5CF6]" />
+                            {fcSearchResults.map(u => (
+                              <button key={u.fid} onClick={() => { setSettingsFarcaster(u.username); setSettingsFarcasterFid(u.fid); setSettingsFarcasterPfp(u.pfp_url || ''); setFcSearchQ(u.username); setFcSearchResults([]); }}
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#8B5CF6]/15 border-b border-white/5 last:border-0 text-left">
+                                {u.pfp_url && <img src={u.pfp_url} className="w-7 h-7 rounded-full flex-shrink-0 border border-white/20" alt="" />}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-white text-xs font-bold truncate">@{u.username}</p>
+                                  <p className="text-white/40 text-[9px]">FID {u.fid} · {(u.follower_count||0).toLocaleString()} followers</p>
+                                </div>
+                              </button>
+                            ))}
                           </div>
                         )}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={async () => {
-                              AudioManager.buttonClick();
-                              try {
-                                if (sdk?.actions?.openMiniApp) {
-                                  await sdk.actions.openMiniApp({ url: quest.targetUrl });
-                                } else {
-                                  window.open(quest.targetUrl, '_blank');
-                                }
-                              } catch { window.open(quest.targetUrl, '_blank'); }
-                            }}
-                            className="flex-1 py-1.5 bg-vintage-black border-2 border-black text-vintage-gold font-bold text-xs hover:translate-x-[1px] hover:translate-y-[1px] transition-all shadow-[2px_2px_0px_#000] hover:shadow-[1px_1px_0px_#000]"
-                          >
-                            Do it
-                          </button>
-                          <button
-                            onClick={() => { AudioManager.buttonClick(); handleClaimQuest(quest); }}
-                            disabled={isClaiming || !!claimResult?.success}
-                            className="flex-1 py-1.5 bg-[#22C55E] border-2 border-black text-black font-black text-xs hover:translate-x-[1px] hover:translate-y-[1px] transition-all shadow-[2px_2px_0px_#000] hover:shadow-[1px_1px_0px_#000] disabled:opacity-50"
-                          >
-                            {isClaiming ? '...' : claimResult?.success ? 'Done' : 'Claim'}
-                          </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Miniapp card */}
+                <div className="border-2 border-black shadow-[3px_3px_0px_#000] bg-[#0d0d0d] flex flex-col flex-1 min-h-[110px]">
+                  <div className="bg-[#22C55E] px-3 py-1.5 flex items-center justify-between border-b-2 border-black">
+                    <span className="font-black text-[10px] uppercase tracking-widest text-black flex items-center gap-1.5">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                      Miniapp
+                    </span>
+                    {settingsMiniapp && (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    )}
+                  </div>
+                  <div className="p-2 flex-1 flex flex-col justify-center">
+                    {settingsMiniapp ? (
+                      <div className="flex items-center gap-2 bg-[#22C55E]/10 border border-[#22C55E]/40 px-2 py-2">
+                        {settingsMiniappIcon && <img src={settingsMiniappIcon} className="w-8 h-8 rounded border-2 border-[#22C55E]/60 object-cover flex-shrink-0" alt="" />}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-bold text-xs truncate">{settingsMiniappName || settingsMiniapp}</p>
+                          <p className="text-white/40 text-[9px] truncate">{settingsMiniapp}</p>
+                        </div>
+                        <button onClick={() => { setSettingsMiniapp(''); setSettingsMiniappName(''); setSettingsMiniappIcon(''); setMaSearchQ(''); }} className="text-white/30 hover:text-red-400 flex-shrink-0">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1.5">
+                        {/* Quick select: VBMS */}
+                        <button
+                          onClick={() => { setSettingsMiniapp('https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast'); setSettingsMiniappName('VBMS - Game and Wanted Cast'); setSettingsMiniappIcon('/apple-touch-icon.png'); setMaSearchQ(''); setMaSearchResults([]); }}
+                          className="flex items-center gap-2 px-2 py-1.5 bg-[#FFD700]/10 border border-[#FFD700]/40 hover:bg-[#FFD700]/20 text-left transition-colors"
+                        >
+                          <img src="/apple-touch-icon.png" className="w-7 h-7 rounded border border-[#FFD700]/50 flex-shrink-0" alt="" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[#FFD700] font-black text-[10px] uppercase tracking-wide">VBMS — Game &amp; Wanted Cast</p>
+                            <p className="text-white/30 text-[9px]">vibemostwanted.xyz</p>
+                          </div>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                        {/* Search input */}
+                        <div className="relative">
+                          <div className="flex items-center border-2 border-[#2a2a2a] focus-within:border-[#22C55E] bg-[#0a0a0a]">
+                            <span className="pl-2 pr-1 text-[#22C55E] font-black text-[10px] select-none">app</span>
+                            <input
+                              type="text"
+                              value={maSearchQ}
+                              onChange={e => setMaSearchQ(e.target.value)}
+                              placeholder="buscar ou colar URL..."
+                              className="flex-1 bg-transparent text-white text-xs py-2 pl-2 focus:outline-none placeholder:text-white/20"
+                              style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
+                              onBlur={e => {
+                                const v = e.target.value.trim();
+                                if (!v.startsWith('http')) return;
+                                const fcMatch = v.match(/farcaster\.xyz\/miniapps\/[^/]+\/([^/?]+)/);
+                                const name = fcMatch
+                                  ? fcMatch[1].replace(/-+/g, ' ').trim().replace(/\b\w/g, c => c.toUpperCase())
+                                  : v;
+                                setSettingsMiniapp(v);
+                                setSettingsMiniappName(name);
+                                setMaSearchResults([]);
+                              }}
+                            />
+                            {maSearching && <svg className="animate-spin mr-2 w-3 h-3 text-[#22C55E]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>}
+                          </div>
+                          {maSearchResults.length > 0 && (
+                            <div className="absolute top-full left-0 right-0 z-[100] bg-[#111] border-2 border-black shadow-[6px_6px_0px_#000] max-h-44 overflow-y-auto mt-0.5">
+                              <div className="h-0.5 bg-[#22C55E]" />
+                              {maSearchResults.map(m => (
+                                <button key={m.url} onClick={() => { setSettingsMiniapp(m.url); setSettingsMiniappName(m.name); setSettingsMiniappIcon(m.icon_url || ''); setMaSearchQ(m.name); setMaSearchResults([]); }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#22C55E]/15 border-b border-white/5 last:border-0 text-left">
+                                  {m.icon_url && <img src={m.icon_url} className="w-7 h-7 rounded flex-shrink-0 object-cover border border-white/20" alt="" onError={(e: any) => e.target.style.display='none'} />}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-white text-xs font-bold truncate">{m.name}</p>
+                                    <p className="text-white/40 text-[9px] truncate">{m.domain}</p>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {maSearchQ.length >= 2 && !maSearching && maSearchResults.length === 0 && (
+                            <p className="text-white/20 text-[9px] mt-1 px-1">Sem resultados — cole a URL do farcaster.xyz/miniapps/...</p>
+                          )}
                         </div>
                       </div>
-                    );
-                  })
-                )}
+                    )}
+                  </div>
+                </div>
+
+                {/* Join Channel card */}
+                <div className="border-2 border-black shadow-[3px_3px_0px_#000] bg-[#0d0d0d] flex flex-col flex-1 min-h-[110px]">
+                  <div className="bg-[#FF9F0A] px-3 py-1.5 flex items-center justify-between border-b-2 border-black">
+                    <span className="font-black text-[10px] uppercase tracking-widest text-black flex items-center gap-1.5">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                      Join Channel
+                    </span>
+                    {settingsChannel && (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    )}
+                  </div>
+                  <div className="p-2 flex-1 flex flex-col justify-center gap-2">
+                    {settingsChannel ? (
+                      <div className="flex items-center gap-2 bg-[#FF9F0A]/10 border border-[#FF9F0A]/40 px-2 py-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-white font-bold text-xs truncate">{settingsChannelName || settingsChannel}</p>
+                          <p className="text-white/40 text-[9px] truncate">{settingsChannel}</p>
+                        </div>
+                        <button onClick={() => { setSettingsChannel(''); setSettingsChannelName(''); setSettingsChannelImg(''); setChSearchQ(''); }} className="text-white/30 hover:text-red-400 flex-shrink-0">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="flex items-center border-2 border-[#2a2a2a] focus-within:border-[#FF9F0A] bg-[#0a0a0a]">
+                          <input
+                            type="text"
+                            value={chSearchQ}
+                            onChange={e => setChSearchQ(e.target.value)}
+                            placeholder="https://farcaster.xyz/~/channel/..."
+                            className="flex-1 bg-transparent text-white text-xs py-2 px-3 focus:outline-none placeholder:text-white/20"
+                            style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
+                            onBlur={e => {
+                              const v = e.target.value.trim();
+                              if (!v) return;
+                              const match = v.match(/\/channel\/([^/?]+)/);
+                              const channelId = match ? match[1] : v;
+                              setSettingsChannel(v);
+                              setSettingsChannelName(channelId);
+                            }}
+                          />
+                        </div>
+                        <p className="text-white/20 text-[9px] mt-1 px-1">Cole o link de convite do channel</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Save button */}
+                <button
+                  onClick={() => {
+                    AudioManager.buttonClick();
+                    const key = `vm_settings_${cardFid}`;
+                    localStorage.setItem(key, JSON.stringify({
+                      farcaster: settingsFarcaster, farcasterFid: settingsFarcasterFid, farcasterPfp: settingsFarcasterPfp,
+                      miniapp: settingsMiniapp, miniappName: settingsMiniappName, miniappIcon: settingsMiniappIcon,
+                      twitter: settingsTwitter,
+                      channel: settingsChannel, channelName: settingsChannelName, channelImg: settingsChannelImg,
+                    }));
+                    setSettingsSaved(true);
+                    setTimeout(() => setSettingsSaved(false), 2000);
+                  }}
+                  className={`w-full py-2.5 font-black text-sm uppercase tracking-widest border-2 border-black transition-all flex-shrink-0 ${
+                    settingsSaved
+                      ? 'bg-[#22C55E] text-black shadow-none translate-x-[3px] translate-y-[3px]'
+                      : 'bg-[#FFD700] text-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none'
+                  }`}
+                >
+                  {settingsSaved ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      Salvo!
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                      Salvar
+                    </span>
+                  )}
+                </button>
               </div>
             )}
 
@@ -2585,7 +2944,7 @@ export function VibeMailInboxWithClaim({
             )}
 
             {activeTab === 'inbox' && (
-            <div className="space-y-2">
+            <div className="flex-1 overflow-y-auto min-h-0 space-y-2">
             {!currentMessages || currentMessages.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-white/60 text-sm">{t.noMessagesYet}</p>
@@ -2594,7 +2953,7 @@ export function VibeMailInboxWithClaim({
                 </p>
               </div>
             ) : (
-              pagedMessages.map((msg: VibeMailMessage) => (
+              pagedMessages.map((msg: VibeMailMessage, idx: number) => (
                 <div key={msg._id} className="flex items-center gap-2">
                   {/* Checkbox for delete mode */}
                   {deleteMode && activeTab === 'inbox' && (
@@ -2620,50 +2979,78 @@ export function VibeMailInboxWithClaim({
                 <button
                   onClick={() => !deleteMode && handleOpenMessage(msg)}
                   disabled={deleteMode}
-                  className={`flex-1 text-left p-3 border-2 shadow-[2px_2px_0px_#000] transition-all ${
+                  className={`flex-1 text-left px-3 py-2 border-2 shadow-[2px_2px_0px_#000] transition-all ${
                     msg.isRead
-                      ? 'bg-[#161616] border-[#2a2a2a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
-                      : 'bg-[#1a1030] border-[#5b21b6]/60 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
+                      ? `${idx % 2 === 0 ? 'bg-[#141414]' : 'bg-[#1a1a1a]'} border-[#2a2a2a] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]`
+                      : 'bg-[#1a1400] border-vintage-gold/50 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'
                   } ${deleteMode ? 'opacity-80' : ''}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full flex-shrink-0 ${msg.isRead ? 'bg-white/20' : 'bg-[#818CF8] animate-pulse'}`} />
-                    <div className="flex-1 min-w-0">
-                      {/* Show sender/recipient */}
-                      {msg.isSent && msg.recipientUsername ? (
-                        <p className="text-white/40 text-[10px] mb-0.5">
-                          To: @{msg.recipientUsername}
-                        </p>
-                      ) : msg.voterUsername ? (
-                        <p className="text-white/50 text-[10px] mb-0.5">
-                          From: @{msg.voterUsername}
-                        </p>
-                      ) : msg.voterFid ? (
-                        <p className="text-white/40 text-[10px] mb-0.5">
-                          FID #{msg.voterFid}
-                        </p>
-                      ) : null}
-                      <p className={`text-sm truncate ${msg.isRead ? 'text-white/50' : 'text-white font-bold'}`}>
-                        {msg.message?.slice(0, 50)}...
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {msg.audioId && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C8962E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                        )}
-                        {msg.imageId && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C8962E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                        )}
-                        {msg.castUrl && (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#9945ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        )}
-                        <span className="text-xs text-white/40">
-                          {new Date(msg.createdAt).toLocaleDateString()}
-                        </span>
+                  <div className="flex items-center gap-2">
+                    {/* Avatar */}
+                    {msg.voterPfpUrl ? (
+                      <img src={msg.voterPfpUrl} alt={msg.voterUsername || ''} className="w-8 h-8 rounded-full flex-shrink-0 object-cover border border-white/10" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full flex-shrink-0 bg-vintage-gold/20 border border-vintage-gold/30 flex items-center justify-center">
+                        <span className="text-vintage-gold text-xs font-bold">{(msg.voterUsername || '?')[0].toUpperCase()}</span>
                       </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className={`text-xs font-bold truncate ${msg.isRead ? 'text-white/50' : 'text-vintage-gold'}`}>
+                          {msg.voterUsername ? `@${msg.voterUsername}` : `FID #${msg.voterFid || '?'}`}
+                        </span>
+                        {!msg.isRead && <span className="w-1.5 h-1.5 rounded-full bg-vintage-gold flex-shrink-0" />}
+                        {msg.isPaid && <span className="text-[9px] text-yellow-400 font-bold flex-shrink-0">PAID</span>}
+                      </div>
+                      {/* Message preview text */}
+                      <p className={`text-xs truncate leading-tight ${msg.isRead ? 'text-white/40' : 'text-white/80'}`}>
+                        {(() => {
+                          const raw = msg.message || '';
+                          const clean = raw.replace(/\[VQUEST:\{.*?\}\]/s, '').trim();
+                          return clean.slice(0, 60) || (msg.audioId ? '' : msg.giftNftName || '...');
+                        })()}
+                      </p>
+                      {/* Attachment / quest chips */}
+                      {(msg.imageId || msg.audioId || msg.castUrl || msg.giftNftImageUrl || msg.miniappUrl || parseQuestBanner(msg.message || '')) && (
+                        <div className="flex items-center gap-1 mt-1 flex-wrap">
+                          {parseQuestBanner(msg.message || '') && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FFD700] font-black text-[9px] uppercase tracking-wide">
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                              Quest
+                            </span>
+                          )}
+                          {msg.imageId && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-500/15 border border-blue-500/40 text-blue-400 font-bold text-[9px]">
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                              Image
+                            </span>
+                          )}
+                          {msg.audioId && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-500/15 border border-orange-500/40 text-orange-400 font-bold text-[9px]">
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                              {isCustomAudio(msg.audioId) ? 'Voice' : 'Sound'}
+                            </span>
+                          )}
+                          {msg.castUrl && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-purple-500/15 border border-purple-500/40 text-purple-400 font-bold text-[9px]">
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                              Cast
+                            </span>
+                          )}
+                          {msg.miniappUrl && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-green-500/15 border border-green-500/40 text-green-400 font-bold text-[9px]">
+                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                              Miniapp
+                            </span>
+                          )}
+                          {msg.giftNftImageUrl && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-pink-500/15 border border-pink-500/40 text-pink-400 font-bold text-[9px]">
+                              NFT
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <span className={`text-xs font-bold ${msg.isPaid ? 'text-yellow-400' : 'text-white/50'}`}>
-                      +{msg.voteCount}
-                    </span>
                   </div>
                 </button>
                 </div>
@@ -2717,6 +3104,39 @@ export function VibeMailInboxWithClaim({
           </div>
         )}
       </div>
+
+      {/* Bottom bar — home nav style */}
+      {myFid && !showComposer && !selectedMessage && (
+        <div className="mt-2 flex-shrink-0">
+          {/* Send button — only on inbox/sent tabs */}
+          {myAddress && activeTab !== 'quests' && (
+            <button
+              onClick={() => { AudioManager.buttonClick(); setShowPurposeModal(true); setReplyToMessageId(null); }}
+              className="w-full py-2.5 mb-1.5 bg-vintage-gold text-vintage-black font-modern font-semibold text-sm rounded-lg border border-vintage-gold/30 flex items-center justify-center gap-2 transition-all hover:brightness-110 active:brightness-90"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+              New VibeMail
+            </button>
+          )}
+          {/* Tabs */}
+          <div className="bg-[#0a0a0a] border-2 border-black p-1 flex gap-1">
+            <button onClick={() => setActiveTab('inbox')} className={`flex-1 min-w-0 font-black uppercase transition-all px-1 py-2 flex flex-col items-center justify-center gap-0.5 text-[10px] leading-tight border-2 border-black ${activeTab === 'inbox' ? 'vmt-inbox-active shadow-none translate-x-[2px] translate-y-[2px]' : 'vmt-inbox-inactive shadow-[3px_3px_0px_#000]'}`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+              <span>Msgs</span>
+            </button>
+            <button onClick={() => setActiveTab('sent')} className={`flex-1 min-w-0 font-black uppercase transition-all px-1 py-2 flex flex-col items-center justify-center gap-0.5 text-[10px] leading-tight border-2 border-black ${activeTab === 'sent' ? 'vmt-sent-active shadow-none translate-x-[2px] translate-y-[2px]' : 'vmt-sent-inactive shadow-[3px_3px_0px_#000]'}`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              <span>Sent</span>
+            </button>
+            <button onClick={() => setActiveTab('quests')} className={`flex-1 min-w-0 font-black uppercase transition-all px-1 py-2 flex flex-col items-center justify-center gap-0.5 text-[10px] leading-tight border-2 border-black ${activeTab === 'quests' ? 'vmt-quests-active shadow-none translate-x-[2px] translate-y-[2px]' : 'vmt-quests-inactive shadow-[3px_3px_0px_#000]'}`}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+              <span>Settings</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {showDexModal && (
         <VibeDexModal onClose={() => setShowDexModal(false)} />

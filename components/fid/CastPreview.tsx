@@ -28,13 +28,25 @@ export function CastPreview({ castUrl, compact = false }: CastPreviewProps) {
 
   useEffect(() => {
     if (!castUrl) return;
+    // Check sessionStorage cache first
+    const cacheKey = `cast_preview_${castUrl}`;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        setCast(JSON.parse(cached));
+        setLoading(false);
+        return;
+      }
+    } catch {}
     setLoading(true);
     setError(false);
     fetch(`/api/cast-by-url?url=${encodeURIComponent(castUrl)}`)
       .then(r => r.json())
       .then(d => {
-        if (d.cast) setCast(d.cast);
-        else setError(true);
+        if (d.cast) {
+          setCast(d.cast);
+          try { sessionStorage.setItem(cacheKey, JSON.stringify(d.cast)); } catch {}
+        } else setError(true);
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));

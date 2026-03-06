@@ -22,11 +22,23 @@ export function MiniappPreview({ url }: MiniappPreviewProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const cacheKey = `miniapp_preview_${url}`;
+    try {
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached) {
+        setMeta(JSON.parse(cached));
+        setLoading(false);
+        return;
+      }
+    } catch {}
     fetch(`/api/fid/miniapp-preview?url=${encodeURIComponent(url)}`)
       .then(r => r.json())
       .then(data => {
         const app = data?.mini_app ?? data?.miniApp ?? null;
-        if (app?.name) setMeta(app);
+        if (app?.name) {
+          setMeta(app);
+          try { sessionStorage.setItem(cacheKey, JSON.stringify(app)); } catch {}
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));

@@ -66,13 +66,23 @@ export function SocialQuestsPanel({
       const newCastData: Record<string, NeynarCast> = {};
 
       for (const fc of featuredCasts) {
-        if (castData[fc.warpcastUrl]) continue; // Already fetched
+        if (castData[fc.warpcastUrl]) continue; // Already fetched in state
+        // Check sessionStorage cache
+        const cacheKey = `cast_preview_${fc.warpcastUrl}`;
+        try {
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) {
+            newCastData[fc.warpcastUrl] = JSON.parse(cached);
+            continue;
+          }
+        } catch {}
         try {
           const response = await fetch(`/api/cast-by-url?url=${encodeURIComponent(fc.warpcastUrl)}`);
           if (response.ok) {
             const data = await response.json();
             if (data.cast) {
               newCastData[fc.warpcastUrl] = data.cast;
+              try { sessionStorage.setItem(cacheKey, JSON.stringify(data.cast)); } catch {}
             }
           }
         } catch (error) {

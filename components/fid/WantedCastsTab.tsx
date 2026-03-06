@@ -33,11 +33,19 @@ export function WantedCastsTab({ myFid, myAddress, hasVibeBadge, soundEnabled }:
       const newCastData: Record<string, NeynarCast> = {};
       for (const fc of featuredCasts) {
         if (castData[fc.warpcastUrl]) continue;
+        const cacheKey = `cast_preview_${fc.warpcastUrl}`;
+        try {
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) { newCastData[fc.warpcastUrl] = JSON.parse(cached); continue; }
+        } catch {}
         try {
           const response = await fetch(`/api/cast-by-url?url=${encodeURIComponent(fc.warpcastUrl)}`);
           if (response.ok) {
             const data = await response.json();
-            if (data.cast) newCastData[fc.warpcastUrl] = data.cast;
+            if (data.cast) {
+              newCastData[fc.warpcastUrl] = data.cast;
+              try { sessionStorage.setItem(cacheKey, JSON.stringify(data.cast)); } catch {}
+            }
           }
         } catch (err) {
           console.error('Error fetching cast:', err);

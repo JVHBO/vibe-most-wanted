@@ -32,8 +32,8 @@ async function verifyJoinChannel(channelId: string, completerFid: number): Promi
   return Array.isArray(data.members) && data.members.length > 0;
 }
 
-async function verifyRtCast(castUrl: string, completerFid: number): Promise<boolean> {
-  // Check if completer recasted the cast
+// Fetch cast once and return viewer_context (recasted + liked in one call)
+async function fetchCastViewerContext(castUrl: string, completerFid: number): Promise<{ recasted: boolean; liked: boolean } | null> {
   const isUrl = castUrl.startsWith("http");
   const identifierType = isUrl ? "url" : "hash";
   const encoded = isUrl ? encodeURIComponent(castUrl) : castUrl;
@@ -41,22 +41,22 @@ async function verifyRtCast(castUrl: string, completerFid: number): Promise<bool
     `${NEYNAR_BASE}/farcaster/cast?identifier=${encoded}&type=${identifierType}&viewer_fid=${completerFid}`,
     { headers: { accept: "application/json", api_key: NEYNAR_API_KEY } }
   );
-  if (!resp.ok) return false;
+  if (!resp.ok) return null;
   const data = await resp.json();
-  return data.cast?.viewer_context?.recasted === true;
+  return {
+    recasted: data.cast?.viewer_context?.recasted === true,
+    liked: data.cast?.viewer_context?.liked === true,
+  };
+}
+
+async function verifyRtCast(castUrl: string, completerFid: number): Promise<boolean> {
+  const ctx = await fetchCastViewerContext(castUrl, completerFid);
+  return ctx?.recasted === true;
 }
 
 async function verifyLikeCast(castUrl: string, completerFid: number): Promise<boolean> {
-  const isUrl = castUrl.startsWith("http");
-  const identifierType = isUrl ? "url" : "hash";
-  const encoded = isUrl ? encodeURIComponent(castUrl) : castUrl;
-  const resp = await fetch(
-    `${NEYNAR_BASE}/farcaster/cast?identifier=${encoded}&type=${identifierType}&viewer_fid=${completerFid}`,
-    { headers: { accept: "application/json", api_key: NEYNAR_API_KEY } }
-  );
-  if (!resp.ok) return false;
-  const data = await resp.json();
-  return data.cast?.viewer_context?.liked === true;
+  const ctx = await fetchCastViewerContext(castUrl, completerFid);
+  return ctx?.liked === true;
 }
 
 async function verifyUseMiniapp(completerAddress: string): Promise<boolean> {
