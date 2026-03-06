@@ -502,21 +502,21 @@ export default function QuestsPage() {
               const _src = profileDashboard?.hasVibeBadge ? "VIBE Badge" : vibeBadgeEligibility?.hasVibeFIDCards ? "VibeFID" : "";
               return _has2x ? (
                 <div className="flex-1 px-2 py-1 bg-vintage-gold/15 border border-vintage-gold/50 flex items-center gap-1.5">
-                  <span className="text-vintage-gold font-bold text-[10px]">{_src} 2x Active</span>
+                  <span className="text-vintage-gold font-bold text-[10px]">{_src} {t('questsBonus2xActive')}</span>
                   {effectiveChain === "arbitrum" && (
                     <span className="ml-auto px-1.5 py-0.5 bg-blue-900/40 border border-blue-500/50 text-blue-400 font-bold text-[9px]">ARB 2x</span>
                   )}
                 </div>
               ) : (
                 <div className="flex-1 px-2 py-1 bg-vintage-gold/10 border border-vintage-gold/30 flex items-center justify-between gap-1">
-                  <span className="text-vintage-ice/70 text-[10px]">Get 2x rewards!</span>
+                  <span className="text-vintage-ice/70 text-[10px]">{t('questsGet2x')}</span>
                   <div className="flex items-center gap-1">
                     {effectiveChain === "arbitrum" && (
                       <span className="px-1.5 py-0.5 bg-blue-900/40 border border-blue-500/50 text-blue-400 font-bold text-[9px]">ARB 2x</span>
                     )}
                     <button onClick={() => router.push('/fid')}
                       className="px-2 py-0.5 bg-vintage-gold text-black font-bold text-[9px] animate-pulse border border-black">
-                      Mint VibeFID
+                      {t('questsMintVibeFID')}
                     </button>
                   </div>
                 </div>
@@ -672,7 +672,7 @@ export default function QuestsPage() {
                       if (b.completed && !a.completed) return 1;
                       return 0;
                     });
-                  if (missionList.length === 0) return <p className="text-vintage-ice/40 text-xs text-center py-4">All missions claimed!</p>;
+                  if (missionList.length === 0) return <p className="text-vintage-ice/40 text-xs text-center py-4">{t('questsAllClaimed')}</p>;
                   const mIdx = Math.min(missionCarouselIdx, missionList.length - 1);
                   const mission = missionList[mIdx];
                   const isClaiming = claimingMission === mission._id;
@@ -764,8 +764,8 @@ export default function QuestsPage() {
               {(() => {
                 const isAdmin = profileDashboard?.username?.toLowerCase() === 'jvhbo';
                 const GROUPS = [
-                  { id: 'vbms', label: 'Vibe Creators' },
-                  { id: 'arb_creators', label: 'ARB Creators' },
+                  { id: 'vbms', label: t('questsVibeCreators') },
+                  { id: 'arb_creators', label: t('questsArbCreators') },
                 ];
                 return (
                   <div className="space-y-3">
@@ -902,24 +902,27 @@ export default function QuestsPage() {
                                   </button>
                                 </>
                               )}
-                              {/* Two-step action: FOLLOW then VERIFY+CLAIM */}
-                              {status === "claimed" ? (
-                                <span className="text-green-400 text-[10px] font-bold">Done</span>
-                              ) : (
-                                <>
-                                  {/* Step 1: FOLLOW */}
-                                  <button
-                                    onClick={() => { AudioManager.buttonClick(); handleFollowQuest(quest); }}
-                                    onMouseEnter={() => AudioManager.buttonHover()}
-                                    className="px-2 py-1.5 bg-[#111] border-2 font-black text-[10px] transition-all"
-                                    style={{
-                                      borderColor: visitedQuests.has(quest.id) ? `${groupColor}40` : groupColor,
-                                      color: visitedQuests.has(quest.id) ? `${groupColor}60` : groupColor,
-                                      boxShadow: visitedQuests.has(quest.id) ? 'none' : `2px 2px 0px #000`,
-                                    }}>
-                                    Follow
+                              {/* Two-step: FOLLOW (always works) + VERIFY/DONE */}
+                              <>
+                                {/* Step 1: FOLLOW — always functional, even after claimed */}
+                                <button
+                                  onClick={() => { AudioManager.buttonClick(); handleFollowQuest(quest); }}
+                                  onMouseEnter={() => AudioManager.buttonHover()}
+                                  className="px-2 py-1.5 bg-[#111] border-2 font-black text-[10px] transition-all"
+                                  style={{
+                                    borderColor: (visitedQuests.has(quest.id) || status === 'claimed') ? `${groupColor}40` : groupColor,
+                                    color: (visitedQuests.has(quest.id) || status === 'claimed') ? `${groupColor}60` : groupColor,
+                                    boxShadow: (visitedQuests.has(quest.id) || status === 'claimed') ? 'none' : `2px 2px 0px #000`,
+                                  }}>
+                                  {t('questsFollow')}
+                                </button>
+                                {/* Step 2: VERIFY (unlocks after follow) or DONE (after claimed) */}
+                                {status === 'claimed' ? (
+                                  <button disabled
+                                    className="px-2 py-1.5 font-black text-[10px] border-2 border-green-700/50 bg-green-900/30 text-green-400 opacity-70">
+                                    {t('questsDone')}
                                   </button>
-                                  {/* Step 2: VERIFY + auto-claim (unlocks after follow) */}
+                                ) : (
                                   <button
                                     onClick={() => { AudioManager.buttonClick(); handleVerifyAndClaim(quest); }}
                                     onMouseEnter={() => AudioManager.buttonHover()}
@@ -930,10 +933,10 @@ export default function QuestsPage() {
                                       color: visitedQuests.has(quest.id) ? '#000' : '#666',
                                       boxShadow: visitedQuests.has(quest.id) ? '2px 2px 0px #000' : 'none',
                                     }}>
-                                    {(isVerifying || isClaimingSocial) ? "..." : "Verify"}
+                                    {(isVerifying || isClaimingSocial) ? "..." : t('questsVerify')}
                                   </button>
-                                </>
-                              )}
+                                )}
+                              </>
                             </div>
                           </div>
 
