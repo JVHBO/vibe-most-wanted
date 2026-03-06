@@ -698,13 +698,6 @@ export default function QuestsPage() {
                           <span className="text-white/30 text-[9px]">{mIdx + 1}/{missionList.length}</span>
                         </div>
                       </div>
-                      {/* Dot indicators */}
-                      <div className="flex justify-center gap-1 pt-2">
-                        {missionList.map((_: any, i: number) => (
-                          <button key={i} onClick={() => setMissionCarouselIdx(i)}
-                            className={`w-1.5 h-1.5 rounded-full transition-all ${i === mIdx ? 'bg-[#FFD700]' : 'bg-white/50'}`} />
-                        ))}
-                      </div>
                     </div>
                   );
                 })()}
@@ -863,16 +856,6 @@ export default function QuestsPage() {
                             </div>
                           </div>
 
-                          {/* Dot indicators */}
-                          {groupQuests.length > 1 && (
-                            <div className="flex justify-center gap-1 pb-2 bg-[#111]">
-                              {groupQuests.map((_, i) => (
-                                <button key={i} onClick={() => goToIdx(i)}
-                                  className="w-1.5 h-1.5 rounded-full transition-all"
-                                  style={{ backgroundColor: i === idx ? groupColor : `${groupColor}40` }} />
-                              ))}
-                            </div>
-                          )}
 
                           </div>{/* end sliding content */}
                         </div>
