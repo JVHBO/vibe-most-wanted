@@ -41,9 +41,8 @@ const QUEST_PURPOSES = [
     hint: 'Set your miniapp URL when creating the quest in the Quests tab.' },
 ];
 
-// Slash commands available in the composer (Discord-like)
+// Slash commands for the general composer (media + formatting only)
 const SLASH_COMMANDS = [
-  { cmd: '/quest', icon: '★', label: 'Insert quest banner' },
   { cmd: '/b', icon: 'B', label: 'Bold text' },
   { cmd: '/i', icon: 'I', label: 'Italic text' },
   { cmd: '/link', icon: '🔗', label: 'Insert link' },
@@ -1190,22 +1189,6 @@ export function VibeMailInboxWithClaim({
     const before = composerMessage.slice(0, slashStart);
     const after = composerMessage.slice(cursorPos);
     switch (cmd) {
-      case '/quest': {
-        // Build quest banner from saved settings
-        const key = `vm_settings_${cardFid}`;
-        let settings: any = {};
-        try { settings = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
-        const quests = [];
-        if (settings.farcaster && settings.farcasterFid) quests.push({ type: 'follow_farcaster', username: settings.farcaster, fid: settings.farcasterFid, pfp: settings.farcasterPfp });
-        if (settings.channel && settings.channelName) quests.push({ type: 'join_channel', channelId: settings.channel, channelName: settings.channelName, channelImg: settings.channelImg });
-        if (settings.miniapp && settings.miniappName) quests.push({ type: 'use_miniapp', url: settings.miniapp, name: settings.miniappName, icon: settings.miniappIcon });
-        if (quests.length === 0) { alert('Configure seus dados na aba Settings antes de usar /quest'); setSlashMenuOpen(false); return; }
-        const banner = `[VQUEST:${JSON.stringify({ quests })}]`;
-        const msg = (before + banner + '\n' + after).slice(0, 1000);
-        setComposerMessage(msg);
-        setTimeout(() => { if (textareaRef.current) textareaRef.current.focus(); }, 10);
-        break;
-      }
       case '/b':
         setComposerMessage((before + '**text**' + after).slice(0, 200));
         setTimeout(() => { if (textareaRef.current) { textareaRef.current.focus(); textareaRef.current.setSelectionRange(slashStart + 2, slashStart + 6); } }, 10);
