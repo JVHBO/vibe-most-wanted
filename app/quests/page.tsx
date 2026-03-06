@@ -58,6 +58,7 @@ export default function QuestsPage() {
   const [verifying, setVerifying] = useState<string | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(new Set());
+  const [localClaimed, setLocalClaimed] = useState<Set<string>>(new Set());
   const [visitedQuests, setVisitedQuests] = useState<Set<string>>(new Set());
   const [claimFeedback, setClaimFeedback] = useState<Record<string, number>>({});
   const [socialCarouselIndices, setSocialCarouselIndices] = useState<Record<string, number>>({});
@@ -408,6 +409,7 @@ export default function QuestsPage() {
       // Auto-claim immediately after verification
       setClaiming(quest.id);
       await claimSocialReward({ address: address.toLowerCase(), questId: quest.id });
+      setLocalClaimed(prev => new Set([...prev, quest.id]));
       // Show brief coin feedback
       setClaimFeedback(prev => ({ ...prev, [quest.id]: quest.reward }));
       setTimeout(() => setClaimFeedback(prev => { const n = { ...prev }; delete n[quest.id]; return n; }), 3000);
@@ -422,7 +424,7 @@ export default function QuestsPage() {
 
   const getQuestStatus = (quest: SocialQuest) => {
     const progress = socialQuestProgress?.[quest.id];
-    if (progress?.claimed) return "claimed";
+    if (progress?.claimed || localClaimed.has(quest.id)) return "claimed";
     if (progress?.completed || localCompleted.has(quest.id)) return "completed";
     return "pending";
   };
@@ -916,9 +918,9 @@ export default function QuestsPage() {
                                   onMouseEnter={() => AudioManager.buttonHover()}
                                   className="px-2 py-1.5 bg-[#111] border-2 font-black text-[10px] transition-all"
                                   style={{
-                                    borderColor: (visitedQuests.has(quest.id) || status === 'claimed') ? `${groupColor}40` : groupColor,
-                                    color: (visitedQuests.has(quest.id) || status === 'claimed') ? `${groupColor}60` : groupColor,
-                                    boxShadow: (visitedQuests.has(quest.id) || status === 'claimed') ? 'none' : `2px 2px 0px #000`,
+                                    borderColor: groupColor,
+                                    color: groupColor,
+                                    boxShadow: `2px 2px 0px #000`,
                                   }}>
                                   {t('questsFollow')}
                                 </button>
