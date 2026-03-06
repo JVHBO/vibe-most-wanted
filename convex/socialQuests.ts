@@ -367,14 +367,14 @@ const QUEST_CONFIG: Record<string, { type: string; targetFid?: number }> = {
   follow_zazza: { type: "follow", targetFid: 16851 },
   follow_bradenwolf: { type: "follow", targetFid: 1012281 },
   follow_degencummunist: { type: "follow", targetFid: 17355 },
-  // Follows - ARB Creators
-  follow_0xanas: { type: "follow", targetFid: 249702 },
-  follow_aylaaa: { type: "follow", targetFid: 947631 },
-  follow_dylantale: { type: "follow", targetFid: 816137 },
-  follow_kenny: { type: "follow", targetFid: 2210 },
-  follow_nezzar: { type: "follow", targetFid: 1733 },
-  follow_0xhohenheim: { type: "follow", targetFid: 1127682 },
-  follow_atown: { type: "follow", targetFid: 191042 },
+  // Follows - ARB Creators (auto-verify after visiting link)
+  follow_0xanas: { type: "channel" },
+  follow_aylaaa: { type: "channel" },
+  follow_dylantale: { type: "channel" },
+  follow_kenny: { type: "channel" },
+  follow_nezzar: { type: "channel" },
+  follow_0xhohenheim: { type: "channel" },
+  follow_atown: { type: "channel" },
 };
 
 /**
