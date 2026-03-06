@@ -2522,8 +2522,8 @@ export function VibeMailInboxWithClaim({
                             if (q.type === 'use_miniapp') return (
                               <div>
                                 {splashImg ? (
-                                  <div className="relative overflow-hidden">
-                                    <img src={splashImg} alt="" className="w-full object-cover max-h-40" />
+                                  <div className="relative h-28 overflow-hidden">
+                                    <img src={splashImg} alt="" className="w-full h-full object-cover" />
                                     <div className="absolute top-1.5 right-2 px-1.5 py-0.5 bg-[#22C55E] border border-black/50"><span className="text-black font-black text-[8px] uppercase tracking-widest">Miniapp</span></div>
                                   </div>
                                 ) : (
