@@ -59,6 +59,7 @@ export default function QuestsPage() {
   const [claiming, setClaiming] = useState<string | null>(null);
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(new Set());
   const [visitedQuests, setVisitedQuests] = useState<Set<string>>(new Set());
+  const [claimFeedback, setClaimFeedback] = useState<Record<string, number>>({});
   const [socialCarouselIndices, setSocialCarouselIndices] = useState<Record<string, number>>({});
   const [socialSlideDir, setSocialSlideDir] = useState<Record<string, 'left' | 'right'>>({});
   const [missionCarouselIdx, setMissionCarouselIdx] = useState(0);
@@ -406,11 +407,10 @@ export default function QuestsPage() {
       setLocalCompleted(prev => new Set([...prev, quest.id]));
       // Auto-claim immediately after verification
       setClaiming(quest.id);
-      // Fire-and-forget ARB validation — never block claim on TX errors
-      if (effectiveChain === "arbitrum") {
-        validateOnArb(quest.reward, ARB_CLAIM_TYPE.MISSION).catch(() => {});
-      }
       await claimSocialReward({ address: address.toLowerCase(), questId: quest.id });
+      // Show brief coin feedback
+      setClaimFeedback(prev => ({ ...prev, [quest.id]: quest.reward }));
+      setTimeout(() => setClaimFeedback(prev => { const n = { ...prev }; delete n[quest.id]; return n; }), 3000);
       AudioManager.buttonSuccess();
     } catch (error) {
       console.error("Error verifying/claiming:", error);
@@ -634,32 +634,37 @@ export default function QuestsPage() {
               <div className="bg-vintage-charcoal/80 border-2 border-vintage-gold/40 rounded-xl overflow-hidden" style={{ boxShadow: "3px 3px 0px rgba(0,0,0,0.5)" }}>
                 <div className="flex items-center justify-between px-3 py-2 border-b border-vintage-gold/20">
                   <p className="text-vintage-gold text-sm font-bold">{t('questsPersonalMissions')}</p>
-                  {missions.some(m => m.completed && !m.claimed) && (
-                    <button
-                      onClick={async () => {
-                        if (!address) return;
-                        setIsClaimingAll(true);
-                        try {
-                          const chain = effectiveChain;
-                          const result = await claimAllMissions({ playerAddress: address.toLowerCase(), chain });
-                          if (chain === "arbitrum" && result?.totalReward > 0) {
-                            await validateOnArb(result.totalReward, ARB_CLAIM_TYPE.MISSION);
+                  {(() => {
+                    const hasClaimable = missions.some(m => m.completed && !m.claimed);
+                    return (
+                      <button
+                        onClick={async () => {
+                          if (!address || !hasClaimable) return;
+                          setIsClaimingAll(true);
+                          try {
+                            const chain = effectiveChain;
+                            await claimAllMissions({ playerAddress: address.toLowerCase(), chain });
+                            await refreshMissions();
+                          } catch (e) {
+                            console.error(e);
+                          } finally {
+                            setIsClaimingAll(false);
                           }
-                          await refreshMissions();
-                        } catch (e) {
-                          console.error(e);
-                        } finally {
-                          setIsClaimingAll(false);
-                        }
-                      }}
-                      disabled={isClaimingAll}
-                      className="relative px-3 py-1 bg-vintage-gold text-black font-bold text-xs rounded border-2 border-black"
-                      style={{ boxShadow: "2px 2px 0px #000" }}
-                    >
-                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
-                      {isClaimingAll ? "..." : t('mission_claim_all')}
-                    </button>
-                  )}
+                        }}
+                        disabled={isClaimingAll || !hasClaimable}
+                        className="relative px-3 py-1 font-bold text-xs rounded border-2 border-black transition-all"
+                        style={{
+                          backgroundColor: hasClaimable ? '#FFD700' : '#333',
+                          color: hasClaimable ? '#000' : '#666',
+                          boxShadow: hasClaimable ? '2px 2px 0px #000' : 'none',
+                          borderColor: hasClaimable ? '#000' : '#555',
+                        }}
+                      >
+                        {hasClaimable && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />}
+                        {isClaimingAll ? "..." : t('mission_claim_all')}
+                      </button>
+                    );
+                  })()}
                 </div>
                 {isLoadingMissions ? (
                   <div className="flex items-center justify-center py-6">
@@ -921,7 +926,7 @@ export default function QuestsPage() {
                                 {status === 'claimed' ? (
                                   <button disabled
                                     className="px-2 py-1.5 font-black text-[10px] border-2 border-green-700/50 bg-green-900/30 text-green-400 opacity-70">
-                                    {t('questsDone')}
+                                    {claimFeedback[quest.id] ? `+${claimFeedback[quest.id]} COINS` : t('questsDone')}
                                   </button>
                                 ) : (
                                   <button
