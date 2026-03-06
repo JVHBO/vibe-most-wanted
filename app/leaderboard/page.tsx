@@ -439,6 +439,7 @@ const convex = useConvex();
             <h1 className="text-base md:text-xl font-display font-bold text-vintage-gold uppercase tracking-widest">
               Leaderboard
             </h1>
+            <span className="text-purple-400 text-[10px] font-bold uppercase tracking-wider bg-purple-400/10 border border-purple-400/30 px-1.5 py-0.5 rounded">Aura Ranking</span>
             <button
               onClick={() => setShowLeaderboardRewardsModal(true)}
               className="w-5 h-5 rounded-full bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50 text-xs font-bold flex items-center justify-center transition-all"
@@ -553,7 +554,7 @@ const convex = useConvex();
                       <Link href={`/profile/${top3[1].username}`} className="text-xs font-bold text-gray-300 hover:text-white truncate max-w-full mb-1">
                         {top3[1].username}
                       </Link>
-                      <p className="text-sm font-bold text-purple-400">{(top3[1].stats?.aura ?? 500).toLocaleString()}</p>
+                      <p className="text-sm font-bold text-purple-400">{(top3[1].stats?.aura ?? 500).toLocaleString()} <span className="text-[9px] text-purple-300/70">AURA</span></p>
                       <p className="text-[10px] text-vintage-burnt-gold mb-2">{(top3[1].stats?.totalPower || 0).toLocaleString()} PWR</p>
                       {!isCurrentUser(top3[1].address) && (
                         <button
@@ -589,7 +590,7 @@ const convex = useConvex();
                       <Link href={`/profile/${top3[0].username}`} className="text-sm md:text-base font-bold text-vintage-gold hover:text-yellow-300 truncate max-w-full mb-1">
                         {top3[0].username}
                       </Link>
-                      <p className="text-lg md:text-xl font-bold text-purple-400">{(top3[0].stats?.aura ?? 500).toLocaleString()}</p>
+                      <p className="text-lg md:text-xl font-bold text-purple-400">{(top3[0].stats?.aura ?? 500).toLocaleString()} <span className="text-[10px] text-purple-300/70">AURA</span></p>
                       <p className="text-xs text-vintage-burnt-gold mb-2">{(top3[0].stats?.totalPower || 0).toLocaleString()} PWR</p>
                       {!isCurrentUser(top3[0].address) && (
                         <button
@@ -625,7 +626,7 @@ const convex = useConvex();
                       <Link href={`/profile/${top3[2].username}`} className="text-xs font-bold text-orange-400 hover:text-orange-300 truncate max-w-full mb-1">
                         {top3[2].username}
                       </Link>
-                      <p className="text-sm font-bold text-purple-400">{(top3[2].stats?.aura ?? 500).toLocaleString()}</p>
+                      <p className="text-sm font-bold text-purple-400">{(top3[2].stats?.aura ?? 500).toLocaleString()} <span className="text-[9px] text-purple-300/70">AURA</span></p>
                       <p className="text-[10px] text-vintage-burnt-gold mb-2">{(top3[2].stats?.totalPower || 0).toLocaleString()} PWR</p>
                       {!isCurrentUser(top3[2].address) && (
                         <button
@@ -648,8 +649,9 @@ const convex = useConvex();
               {/* ===== RANKINGS LIST (#4+) ===== */}
               {rankings4Plus.length > 0 && (
                 <div className="bg-vintage-charcoal/50 backdrop-blur-sm rounded-xl border border-vintage-gold/20 overflow-hidden">
-                  <div className="p-3 border-b border-vintage-gold/20">
+                  <div className="p-3 border-b border-vintage-gold/20 flex items-center justify-between">
                     <h3 className="text-sm font-bold text-vintage-gold uppercase tracking-wide">Rankings</h3>
+                    <span className="text-purple-400 text-[10px] font-bold uppercase tracking-wider">Sorted by Aura</span>
                   </div>
                   <div className="divide-y divide-vintage-gold/10">
                     {rankings4Plus
@@ -691,7 +693,7 @@ const convex = useConvex();
 
                             {/* Aura */}
                             <div className="text-right min-w-[60px]">
-                              <p className="text-purple-400 font-bold text-sm">{(profile.stats?.aura ?? 500).toLocaleString()}</p>
+                              <p className="text-purple-400 font-bold text-sm">{(profile.stats?.aura ?? 500).toLocaleString()} <span className="text-[9px] text-purple-300/70">AURA</span></p>
                               <p className="text-[10px] text-vintage-burnt-gold">{(profile.stats?.totalPower || 0).toLocaleString()} PWR</p>
                             </div>
 
@@ -1233,7 +1235,7 @@ const convex = useConvex();
       {/* Leaderboard Rewards Modal */}
       {showLeaderboardRewardsModal && (
         <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4"
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4"
           onClick={() => setShowLeaderboardRewardsModal(false)}
         >
           <div
