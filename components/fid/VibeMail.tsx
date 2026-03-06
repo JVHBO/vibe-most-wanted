@@ -180,7 +180,20 @@ function renderFormattedMessage(message: string, lang: string = "en", username?:
 
   // Handle both real newlines and literal backslash-n (escaped in JSON)
   const normalizedMessage = translatedMessage.replace(/\\n/g, '\n');
-  const lines = normalizedMessage.split('\n');
+
+  // Pre-process: strip slash media commands that were stored as raw text
+  // These are displayed as separate media elements; don't show raw command text
+  const strippedMessage = normalizedMessage
+    .split('\n')
+    .filter(line => {
+      const t = line.trim();
+      // Skip lines that are slash commands for media/navigation (not text formatting)
+      return !/^\/(app|cast|sound|img|follow|miniapp|channel|clear)\s*/i.test(t);
+    })
+    .join('\n')
+    .trim();
+
+  const lines = strippedMessage.split('\n');
 
   // Check if this is a welcome message - we'll insert image in the middle
   const isWelcome = isWelcomeMessage(message);
@@ -750,6 +763,7 @@ export function VibeMailInboxWithClaim({
   const [questsLoading, setQuestsLoading] = useState(false);
   const [claimingQuestId, setClaimingQuestId] = useState<string | null>(null);
   const [questClaimResult, setQuestClaimResult] = useState<{ questId: string; success: boolean; error?: string } | null>(null);
+  const [claimedQuestItems, setClaimedQuestItems] = useState<Set<string>>(new Set());
   const [msgPage, setMsgPage] = useState(0);
   const [showPurposeModal, setShowPurposeModal] = useState(false);
   const [composerQuestType, setComposerQuestType] = useState<string | null>(null);
@@ -836,10 +850,8 @@ export function VibeMailInboxWithClaim({
   const [settingsChannelName, setSettingsChannelName] = useState('');
   const [settingsChannelImg, setSettingsChannelImg] = useState('');
   const [settingsSaved, setSettingsSaved] = useState(false);
-  // Neynar search state
+  // Holder search state (replaces Neynar - searches VibeFID holders only)
   const [fcSearchQ, setFcSearchQ] = useState('');
-  const [fcSearchResults, setFcSearchResults] = useState<any[]>([]);
-  const [fcSearching, setFcSearching] = useState(false);
   const [chSearchQ, setChSearchQ] = useState('');
   const [chSearchResults, setChSearchResults] = useState<any[]>([]);
   const [chSearching, setChSearching] = useState(false);
@@ -871,19 +883,6 @@ export function VibeMailInboxWithClaim({
     if (username) { setSettingsFarcaster(username); setFcSearchQ(username); }
   }, [cardFid, username]);
 
-  // Neynar user search debounce
-  useEffect(() => {
-    if (!fcSearchQ || fcSearchQ.length < 2 || fcSearchQ === settingsFarcaster) { setFcSearchResults([]); return; }
-    const t = setTimeout(async () => {
-      setFcSearching(true);
-      try {
-        const r = await fetch(`/api/fid/neynar-user-search?q=${encodeURIComponent(fcSearchQ)}`);
-        const d = await r.json();
-        setFcSearchResults(d.users || []);
-      } catch {} finally { setFcSearching(false); }
-    }, 400);
-    return () => clearTimeout(t);
-  }, [fcSearchQ]);
 
   // Neynar channel search debounce
   useEffect(() => {
@@ -1010,6 +1009,12 @@ export function VibeMailInboxWithClaim({
   const searchResults = useQuery(
     api.cardVotes.searchCardsForVibeMail,
     searchQuery.length >= 2 ? { searchTerm: searchQuery, limit: 5 } : 'skip'
+  );
+
+  // Search VibeFID holders for quest settings (replaces Neynar user search)
+  const fcHolderSearchResults = useQuery(
+    api.cardVotes.searchCardsForVibeMail,
+    fcSearchQ.length >= 2 && fcSearchQ !== settingsFarcaster ? { searchTerm: fcSearchQ, limit: 5 } : 'skip'
   );
 
   // Get current messages based on active tab
@@ -2592,71 +2597,134 @@ export function VibeMailInboxWithClaim({
                       <span className="font-black text-black text-xs uppercase tracking-widest flex-1">Quest VibeMail</span>
                       <span className="text-black/50 text-[9px] font-bold">{(questData.quests || []).length} quest{(questData.quests || []).length !== 1 ? 's' : ''}</span>
                     </div>
-                    {/* Quest items */}
+                    {/* Quest items - full banner cards */}
                     <div className="bg-[#0d0d0d] flex flex-col divide-y-2 divide-black">
-                      {(questData.quests || []).map((q: any, i: number) => (
-                        <div key={i}>
-                          {q.type === 'follow_farcaster' && (
-                            <div className="flex items-center gap-3 px-3 py-3">
-                              <div className="relative flex-shrink-0">
-                                {q.pfp
-                                  ? <img src={q.pfp} className="w-10 h-10 rounded-full border-2 border-[#8B5CF6]" alt="" />
-                                  : <div className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20 flex items-center justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                                }
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#8B5CF6] border border-black rounded-full flex items-center justify-center">
-                                  <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                      {(questData.quests || []).map((q: any, i: number) => {
+                        const claimKey = `${selectedMessage._id}_${i}`;
+                        const isClaimed = claimedQuestItems.has(claimKey);
+                        const markClaimed = () => setClaimedQuestItems(prev => new Set([...prev, claimKey]));
+
+                        if (q.type === 'follow_farcaster') {
+                          const profileUrl = `https://warpcast.com/${q.username}`;
+                          return (
+                            <div key={i} className="overflow-hidden">
+                              {/* Banner bg */}
+                              <div className="relative h-20 overflow-hidden bg-[#1a0a2e]">
+                                {q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover scale-110 opacity-25 blur-sm" alt="" />}
+                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
+                                {/* Avatar */}
+                                <div className="absolute bottom-0 left-4 translate-y-1/2 z-10">
+                                  {q.pfp
+                                    ? <img src={q.pfp} className="w-14 h-14 rounded-full border-[3px] border-[#8B5CF6] shadow-lg" alt="" />
+                                    : <div className="w-14 h-14 rounded-full border-[3px] border-[#8B5CF6] bg-[#8B5CF6]/20 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                                  }
+                                </div>
+                                {/* Label badge */}
+                                <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#8B5CF6] border border-black/50">
+                                  <span className="text-white font-black text-[9px] uppercase tracking-widest">Follow</span>
                                 </div>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[#8B5CF6] font-black text-[10px] uppercase tracking-widest">Follow on Farcaster</p>
-                                <p className="text-white font-bold text-sm truncate">@{q.username}</p>
-                              </div>
-                              <button onClick={async () => { try { await sdk.actions?.openUrl?.(`https://warpcast.com/${q.username}`); } catch { window.open(`https://warpcast.com/${q.username}`, '_blank'); } }}
-                                className="px-3 py-2 bg-[#8B5CF6] border-2 border-black text-white font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all flex-shrink-0 uppercase tracking-wide">
-                                Follow
-                              </button>
-                            </div>
-                          )}
-                          {q.type === 'join_channel' && (
-                            <div className="flex items-center gap-3 px-3 py-3">
-                              <div className="relative flex-shrink-0">
-                                <div className="w-10 h-10 border-2 border-[#FF9F0A] bg-[#FF9F0A]/20 flex items-center justify-center">
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9F0A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                              {/* Info + buttons */}
+                              <div className="pt-9 px-4 pb-3">
+                                <p className="text-white font-black text-sm">@{q.username}</p>
+                                <p className="text-[#8B5CF6] text-[10px] uppercase tracking-widest">VibeFID Holder · Farcaster</p>
+                                <div className="flex gap-2 mt-2.5">
+                                  <button
+                                    onClick={async () => { try { await sdk.actions?.openUrl?.(profileUrl); } catch { window.open(profileUrl, '_blank'); } }}
+                                    className="flex-1 py-2 bg-[#8B5CF6] border-2 border-black text-white font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">
+                                    Go to Profile
+                                  </button>
+                                  <button
+                                    onClick={markClaimed}
+                                    disabled={isClaimed}
+                                    className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
+                                    {isClaimed ? 'Done!' : 'Claim'}
+                                  </button>
                                 </div>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[#FF9F0A] font-black text-[10px] uppercase tracking-widest">Join Channel</p>
-                                <p className="text-white font-bold text-sm truncate">{q.channelName || q.channelId}</p>
-                              </div>
-                              <button onClick={async () => {
-                                const url = q.channelUrl || `https://warpcast.com/~/channel/${q.channelId}`;
-                                try { await sdk.actions?.openUrl?.(url); } catch { window.open(url, '_blank'); }
-                              }}
-                                className="px-3 py-2 bg-[#FF9F0A] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all flex-shrink-0 uppercase tracking-wide">
-                                Join
-                              </button>
                             </div>
-                          )}
-                          {q.type === 'use_miniapp' && (
-                            <div className="flex items-center gap-3 px-3 py-3">
-                              <div className="relative flex-shrink-0">
-                                {q.icon
-                                  ? <img src={q.icon} className="w-10 h-10 rounded border-2 border-[#22C55E] object-cover" alt="" onError={(e: any) => e.target.style.display='none'} />
-                                  : <div className="w-10 h-10 border-2 border-[#22C55E] bg-[#22C55E]/20 flex items-center justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>
-                                }
+                          );
+                        }
+
+                        if (q.type === 'use_miniapp') {
+                          return (
+                            <div key={i} className="overflow-hidden">
+                              {/* Banner bg */}
+                              <div className="relative h-20 overflow-hidden bg-[#0a1a0a]">
+                                {q.icon && <img src={q.icon} className="absolute inset-0 w-full h-full object-cover scale-110 opacity-20 blur-sm" alt="" />}
+                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
+                                {/* App icon */}
+                                <div className="absolute bottom-0 left-4 translate-y-1/2 z-10">
+                                  {q.icon
+                                    ? <img src={q.icon} className="w-14 h-14 rounded-xl border-[3px] border-[#22C55E] object-cover shadow-lg" alt="" onError={(e: any) => e.target.style.display='none'} />
+                                    : <div className="w-14 h-14 rounded-xl border-[3px] border-[#22C55E] bg-[#22C55E]/20 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>
+                                  }
+                                </div>
+                                <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#22C55E] border border-black/50">
+                                  <span className="text-black font-black text-[9px] uppercase tracking-widest">Miniapp</span>
+                                </div>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[#22C55E] font-black text-[10px] uppercase tracking-widest">Use Miniapp</p>
-                                <p className="text-white font-bold text-sm truncate">{q.name}</p>
+                              <div className="pt-9 px-4 pb-3">
+                                <p className="text-white font-black text-sm truncate">{q.name}</p>
+                                <p className="text-[#22C55E] text-[10px] uppercase tracking-widest">Farcaster Miniapp</p>
+                                <div className="flex gap-2 mt-2.5">
+                                  <button
+                                    onClick={async () => { try { await sdk.actions?.openMiniApp?.({ url: q.url }); } catch { window.open(q.url, '_blank'); } }}
+                                    className="flex-1 py-2 bg-[#22C55E] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">
+                                    Open App
+                                  </button>
+                                  <button
+                                    onClick={markClaimed}
+                                    disabled={isClaimed}
+                                    className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
+                                    {isClaimed ? 'Done!' : 'Claim'}
+                                  </button>
+                                </div>
                               </div>
-                              <button onClick={async () => { try { await sdk.actions?.openMiniApp?.({ url: q.url }); } catch { window.open(q.url, '_blank'); } }}
-                                className="px-3 py-2 bg-[#22C55E] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all flex-shrink-0 uppercase tracking-wide">
-                                Open
-                              </button>
                             </div>
-                          )}
-                        </div>
-                      ))}
+                          );
+                        }
+
+                        if (q.type === 'join_channel') {
+                          const channelUrl = q.channelUrl || `https://warpcast.com/~/channel/${q.channelId}`;
+                          return (
+                            <div key={i} className="overflow-hidden">
+                              {/* Banner bg */}
+                              <div className="relative h-20 overflow-hidden bg-[#1a0e00]">
+                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
+                                {/* Channel icon */}
+                                <div className="absolute bottom-0 left-4 translate-y-1/2 z-10">
+                                  <div className="w-14 h-14 border-[3px] border-[#FF9F0A] bg-[#FF9F0A]/20 flex items-center justify-center shadow-lg">
+                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF9F0A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                  </div>
+                                </div>
+                                <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#FF9F0A] border border-black/50">
+                                  <span className="text-black font-black text-[9px] uppercase tracking-widest">Channel</span>
+                                </div>
+                              </div>
+                              <div className="pt-9 px-4 pb-3">
+                                <p className="text-white font-black text-sm truncate">/{q.channelName || q.channelId}</p>
+                                <p className="text-[#FF9F0A] text-[10px] uppercase tracking-widest">Farcaster Channel</p>
+                                <div className="flex gap-2 mt-2.5">
+                                  <button
+                                    onClick={async () => { try { await sdk.actions?.openUrl?.(channelUrl); } catch { window.open(channelUrl, '_blank'); } }}
+                                    className="flex-1 py-2 bg-[#FF9F0A] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">
+                                    Join Channel
+                                  </button>
+                                  <button
+                                    onClick={markClaimed}
+                                    disabled={isClaimed}
+                                    className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
+                                    {isClaimed ? 'Done!' : 'Claim'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return null;
+                      })}
                     </div>
                   </div>
                 );
@@ -2905,18 +2973,18 @@ export function VibeMailInboxWithClaim({
                             className="flex-1 bg-transparent text-white text-xs py-2 pl-2 focus:outline-none placeholder:text-white/20"
                             style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
                           />
-                          {fcSearching && <svg className="animate-spin mr-2 w-3 h-3 text-[#8B5CF6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>}
+                          {fcHolderSearchResults === undefined && fcSearchQ.length >= 2 && <svg className="animate-spin mr-2 w-3 h-3 text-[#8B5CF6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>}
                         </div>
-                        {fcSearchResults.length > 0 && (
+                        {(fcHolderSearchResults?.length ?? 0) > 0 && (
                           <div className="absolute top-full left-0 right-0 z-[100] bg-[#111] border-2 border-black shadow-[6px_6px_0px_#000] max-h-44 overflow-y-auto mt-0.5">
                             <div className="h-0.5 bg-[#8B5CF6]" />
-                            {fcSearchResults.map(u => (
-                              <button key={u.fid} onClick={() => { setSettingsFarcaster(u.username); setSettingsFarcasterFid(u.fid); setSettingsFarcasterPfp(u.pfp_url || ''); setFcSearchQ(u.username); setFcSearchResults([]); }}
+                            {fcHolderSearchResults!.map((u: { fid: number; username: string; pfpUrl: string }) => (
+                              <button key={u.fid} onClick={() => { setSettingsFarcaster(u.username); setSettingsFarcasterFid(u.fid); setSettingsFarcasterPfp(u.pfpUrl || ''); setFcSearchQ(u.username); }}
                                 className="w-full flex items-center gap-2 px-3 py-2 hover:bg-[#8B5CF6]/15 border-b border-white/5 last:border-0 text-left">
-                                {u.pfp_url && <img src={u.pfp_url} className="w-7 h-7 rounded-full flex-shrink-0 border border-white/20" alt="" />}
+                                {u.pfpUrl && <img src={u.pfpUrl} className="w-7 h-7 rounded-full flex-shrink-0 border border-white/20" alt="" />}
                                 <div className="flex-1 min-w-0">
                                   <p className="text-white text-xs font-bold truncate">@{u.username}</p>
-                                  <p className="text-white/40 text-[9px]">FID {u.fid} · {(u.follower_count||0).toLocaleString()} followers</p>
+                                  <p className="text-white/40 text-[9px]">FID {u.fid} · VibeFID holder</p>
                                 </div>
                               </button>
                             ))}
