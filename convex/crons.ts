@@ -63,11 +63,11 @@ crons.interval(
   internal.castAuctions.processAuctionLifecycle
 );
 
-// 🧹 Cleanup stale TCG matches (every 30 minutes)
-// 🚀 BANDWIDTH FIX: Changed from 5min to 30min - TCG has low traffic, saves ~600MB/month
+// 🧹 Cleanup stale TCG matches (every 4 hours)
+// 🚀 BANDWIDTH FIX: Changed from 30min to 4h - TCG PvP has very low traffic
 crons.interval(
   "cleanup stale tcg matches",
-  { minutes: 30 },
+  { hours: 4 },
   internal.tcg.cleanupStaleMatches
 );
 

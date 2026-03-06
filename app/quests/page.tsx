@@ -141,6 +141,7 @@ export default function QuestsPage() {
   }, []);
 
   const handleSwitchChain = async (chain: 'base' | 'arbitrum') => {
+    if (chain === effectiveChain) return;
     setLocalChain(chain);
     if (!address) return;
     try { await setPreferredChainMutation({ address, chain }); }
@@ -377,26 +378,25 @@ export default function QuestsPage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
+    <div className="fixed inset-0 bg-[#1a1a1a] overflow-hidden">
 
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 bg-vintage-charcoal/90 border-b-2 border-vintage-gold/40 backdrop-blur-sm">
-        <div className="flex items-center justify-between px-3 py-2.5">
+      <div className={`absolute top-0 left-0 right-0 z-20 ${activeTab === 'messages' ? 'bg-[#111]' : 'bg-[#1a1a1a]'} border-b-4 border-black`}>
+        <div className="flex items-center justify-between px-3 py-1.5">
           <button
             onClick={() => router.push("/")}
-            className="px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white border-2 border-black text-[11px] font-bold uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-            style={{ boxShadow: '3px 3px 0px #000' }}
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+            style={{ boxShadow: '4px 4px 0px #000' }}
           >
             ← BACK
           </button>
-          <h1 className="text-xl font-display font-bold text-vintage-gold tracking-wider">{t('questsTitle')}</h1>
+          <h1 className="text-sm font-black text-white uppercase tracking-widest">{t('questsTitle')}</h1>
           {arbSupported ? (
-            <div className="flex gap-1 p-1 bg-black/60 border border-white/10 rounded-lg">
+            <div className="flex gap-1">
               {/* Base button */}
               <button
                 onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-black text-[11px] uppercase tracking-wide ${effectiveChain === 'base' ? 'ct-base-active' : 'ct-base-inactive'}`}
+                className={`flex items-center gap-1.5 px-2 py-1 font-black text-[11px] uppercase tracking-wide border-2 border-black transition-all ${effectiveChain === 'base' ? 'ct-base-active' : 'ct-base-inactive'}`}
               >
                 {/* Base logo */}
                 <svg width="14" height="14" viewBox="0 0 111 111" fill="none">
@@ -408,7 +408,7 @@ export default function QuestsPage() {
               {/* Arbitrum button */}
               <button
                 onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md font-black text-[11px] uppercase tracking-wide ${effectiveChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive'}`}
+                className={`flex items-center gap-1.5 px-2 py-1 font-black text-[11px] uppercase tracking-wide border-2 border-black transition-all ${effectiveChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive'}`}
               >
                 {/* Arbitrum logo */}
                 <svg width="14" height="14" viewBox="0 0 50 50" fill="none">
@@ -423,38 +423,32 @@ export default function QuestsPage() {
           ) : <div className="w-20" />}
         </div>
 
-        {/* Tabs - 3 tabs with neo-brutalism style */}
-        <div className="flex gap-1 px-2 pb-2 pt-1">
-          <button
-            onClick={() => { AudioManager.buttonClick(); setActiveTab('missions'); }}
-            className={`flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 shadow-[2px_2px_0px_#000] ${activeTab === 'missions' ? 'qt-missions-active' : 'qt-missions-inactive'}`}
-          >
-            {t('questsMissions')}
-          </button>
-          <button
-            onClick={() => { AudioManager.buttonClick(); setActiveTab('wanted'); }}
-            className={`flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 shadow-[2px_2px_0px_#000] ${activeTab === 'wanted' ? 'qt-wanted-active' : 'qt-wanted-inactive'}`}
-          >
-            {t('questsWantedCasts')}
-          </button>
-          {(() => {
+        {/* Tabs */}
+        <div className="flex px-2 pb-1.5 pt-1 gap-1">
+          {[
+            { key: 'missions' as const, label: t('questsMissions'), activeClass: 'qt-missions-active', inactiveClass: 'qt-missions-inactive' },
+            { key: 'wanted' as const, label: t('questsWantedCasts'), activeClass: 'qt-wanted-active', inactiveClass: 'qt-wanted-inactive' },
+            { key: 'messages' as const, label: 'VibeMail', activeClass: 'qt-messages-active', inactiveClass: 'qt-messages-inactive' },
+          ].map(({ key, label, activeClass, inactiveClass }) => {
             const u = profileDashboard?.username?.toLowerCase();
-            const canAccessMessages = u === 'jvhbo' || u === 'vibefid';
+            const locked = key === 'messages' && u !== 'jvhbo' && u !== 'vibefid';
             return (
               <button
-                onClick={() => { if (!canAccessMessages) return; AudioManager.buttonClick(); setActiveTab('messages'); }}
-                disabled={!canAccessMessages}
-                className={`flex-1 py-2 text-xs font-black uppercase tracking-wide border-2 shadow-[2px_2px_0px_#000] ${!canAccessMessages ? 'qt-messages-locked' : activeTab === 'messages' ? 'qt-messages-active' : 'qt-messages-inactive'}`}
+                key={key}
+                onClick={() => { if (locked) return; AudioManager.buttonClick(); setActiveTab(key); }}
+                disabled={locked}
+                className={`flex-1 py-1.5 font-black uppercase border-4 border-black transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${locked ? 'qt-messages-locked opacity-40 cursor-not-allowed' : activeTab === key ? `${activeClass} shadow-none` : `${inactiveClass} shadow-[3px_3px_0px_#000]`}`}
+                style={{ fontSize: 'clamp(8px, 2.8vw, 11px)', lineHeight: 1.2 }}
               >
-                Messages
+                {label}
               </button>
             );
-          })()}
+          })}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="absolute inset-0 pt-24 pb-4 overflow-y-auto">
+      <div className={`absolute inset-0 pt-[84px] ${activeTab === 'messages' ? 'flex flex-col overflow-hidden' : 'pb-4 overflow-y-auto'}`}>
         {activeTab === 'missions' && (
         <div className="relative z-10 px-3 py-2 max-w-md mx-auto space-y-3">
 
@@ -771,9 +765,11 @@ export default function QuestsPage() {
         {/* Messages Tab - inline, no modal */}
         {activeTab === 'messages' && (
           <VibeFIDConvexProvider>
+            <div className="flex-1 flex flex-col overflow-hidden">
             {userFid ? (
               <VibeMailInboxWithClaim
                 cardFid={userFid}
+                username={profileDashboard?.username}
                 onClose={() => setActiveTab('missions')}
                 pendingVbms={0}
                 address={address}
@@ -790,6 +786,7 @@ export default function QuestsPage() {
                 <button onClick={() => setActiveTab('missions')} className="text-white/50 text-sm">← Back</button>
               </div>
             )}
+            </div>
           </VibeFIDConvexProvider>
         )}
       </div>

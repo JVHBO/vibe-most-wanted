@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { isMiniappMode } from "@/lib/utils/miniapp";
 import { isWarpcastClient } from "@/lib/utils/miniapp";
 import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
+import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 import { CONTRACTS, ERC20_ABI } from "@/lib/contracts";
 import { encodeFunctionData } from "viem";
 import { useMiniappFrameContext } from "@/components/MiniappFrame";
@@ -349,11 +350,14 @@ export default function TCGPage() {
   const [farcasterClientFid, setFarcasterClientFid] = useState<number | undefined>(undefined);
   const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(true); // Start true to wait for Farcaster check
 
+  // Resolve primary address (handles linked/secondary wallets on website)
+  const { primaryAddress } = usePrimaryAddress();
+
   // 🔧 DEV MODE: Force admin wallet for testing
   const DEV_WALLET_BYPASS = false; // DISABLED: Only for localhost testing
   const address = DEV_WALLET_BYPASS
     ? '0xbb4c7d8b2e32c7c99d358be999377c208cce53c2'
-    : wagmiAddress;
+    : (primaryAddress || wagmiAddress);
 
   // Debug bypass (removed console.log for production)
 
@@ -3663,6 +3667,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
         canChangeChain={arbSupported}
         onChainChange={async (chain: string) => {
           if (!address) return;
+          if (chain === effectiveChain) return;
           try {
             await setPreferredChainMutation({ address, chain });
             // Refresh profile
@@ -3722,9 +3727,9 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
       )}
 
       {/* VibeFID + Mail Split Modal */}
-      {showFidMailModal && farcasterFidState && (
+      {showFidMailModal && userFidForVibemail && (
         <VibeFidMailModal
-          fid={farcasterFidState}
+          fid={userFidForVibemail}
           username={userProfile?.username}
           onClose={() => setShowFidMailModal(false)}
         />
@@ -4232,8 +4237,8 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
         )}
 
         <div className="flex items-center justify-center gap-2">
-          {/* VibeFID Button - Opens VibeFID miniapp */}
-          {isInFarcaster && (
+          {/* VibeFID Button - Opens VibeFID + Mail modal */}
+          {!!userFidForVibemail && (
             <button
               onClick={async () => {
                 if (soundEnabled) AudioManager.buttonClick();
@@ -4242,7 +4247,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
               onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
               className="tour-vibefid-btn relative px-8 md:px-12 py-2 md:py-2 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
             >
-              {/* 📬 Red notification dot when there are unread VibeMails */}
+              {/* notification dot when there are unread VibeMails */}
               {typeof unreadVibeMailCount === 'number' && unreadVibeMailCount > 0 && (
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
               )}

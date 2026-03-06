@@ -20,11 +20,11 @@ export interface BossCard extends Card {
 
 // HP Scaling by Rarity - REDUCED Jan 14 2026 (was 10x too high)
 export const BOSS_HP_BY_RARITY: Record<Lowercase<CardRarity>, number> = {
-  common: 1_000_000,        // 1M HP
-  rare: 5_000_000,          // 5M HP
-  epic: 25_000_000,         // 25M HP
-  legendary: 50_000_000,    // 50M HP
-  mythic: 100_000_000,      // 100M HP
+  common: 100_000,          // 100k HP
+  rare: 500_000,            // 500k HP
+  epic: 2_500_000,          // 2.5M HP
+  legendary: 5_000_000,     // 5M HP
+  mythic: 10_000_000,       // 10M HP
 };
 
 // Reward Pool by Rarity - REDUCED Jan 14 2026
