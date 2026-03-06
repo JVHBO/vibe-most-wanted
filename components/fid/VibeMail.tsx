@@ -2192,29 +2192,14 @@ export function VibeMailInboxWithClaim({
               )}
               {/* Syntax-highlighted textarea — overlay + transparent input */}
               <div className="relative border-2 border-[#444] bg-[#0a0a0a] focus-within:border-[#666] h-36 min-h-[144px]">
-                {/* Colored overlay (non-interactive) */}
-                <div
-                  ref={composerOverlayRef}
-                  aria-hidden="true"
-                  className="absolute inset-0 px-3 py-2 text-xs whitespace-pre-wrap break-words overflow-hidden pointer-events-none select-none text-white leading-relaxed"
-                  style={{ fontFamily: 'inherit', wordBreak: 'break-word' }}
-                >
-                  {composerMessage ? renderColoredComposer(composerMessage) : <span className="text-white/30">Write your message... (type / for commands)</span>}
-                </div>
-                {/* Actual textarea — transparent text, captures input */}
                 <textarea
                   ref={textareaRef}
                   value={composerMessage}
                   onChange={handleMessageChange}
                   onKeyDown={(e) => { if (e.key === 'Escape') setSlashMenuOpen(false); }}
-                  onScroll={() => {
-                    if (composerOverlayRef.current && textareaRef.current) {
-                      composerOverlayRef.current.scrollTop = textareaRef.current.scrollTop;
-                    }
-                  }}
-                  placeholder=""
-                  className="vibemail-input absolute inset-0 w-full h-full px-3 py-2 text-xs bg-transparent focus:outline-none resize-none leading-relaxed"
-                  style={{ colorScheme: 'dark', color: 'transparent', caretColor: 'white', WebkitTextFillColor: 'transparent' }}
+                  placeholder="Write your message... (type / for commands)"
+                  className="vibemail-input absolute inset-0 w-full h-full px-3 py-2 text-xs bg-transparent focus:outline-none resize-none leading-relaxed text-white placeholder:text-white/30"
+                  style={{ colorScheme: 'dark' }}
                 />
               </div>
             </div>
@@ -2503,17 +2488,18 @@ export function VibeMailInboxWithClaim({
                             const splashImg = miniappPreviewCache[q.url]?.splash_image_url || miniappPreviewCache[q.url]?.screenshot_urls?.[0] || '';
                             if (q.type === 'follow_farcaster') return (
                               <div>
-                                <div className="relative h-28 bg-[#1a0a2e] overflow-hidden">
+                                <div className="relative h-28 bg-[#1a0a2e] overflow-hidden flex items-center justify-center">
                                   {(q.banner || settingsFarcasterBanner) && <img src={q.banner || settingsFarcasterBanner} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />}
-                                  {!q.banner && !settingsFarcasterBanner && q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
+                                  {!q.banner && !settingsFarcasterBanner && q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-20" alt="" />}
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                                  {q.pfp ? <img src={q.pfp} className="w-14 h-14 rounded-full border-2 border-[#8B5CF6] object-cover z-10 relative" alt="" /> : <div className="w-14 h-14 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20 z-10 relative" />}
                                   <div className="absolute top-1.5 right-2 px-1.5 py-0.5 bg-[#8B5CF6] border border-black/50"><span className="text-white font-black text-[8px] uppercase tracking-widest">Follow</span></div>
-                                  <div className="absolute bottom-2 left-3 flex items-center gap-2">
-                                    {q.pfp ? <img src={q.pfp} className="w-9 h-9 rounded-full border-2 border-[#8B5CF6]" alt="" /> : <div className="w-9 h-9 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20" />}
-                                    <div><p className="text-white font-black text-xs drop-shadow">@{q.username}</p><p className="text-[#8B5CF6] text-[8px] uppercase tracking-widest">VibeFID Holder</p></div>
-                                  </div>
                                 </div>
-                                <div className="flex gap-1.5 p-2">
+                                <div className="flex items-center gap-2 px-3 pt-2 pb-1">
+                                  {q.pfp && <img src={q.pfp} className="w-7 h-7 rounded-full border border-[#8B5CF6] object-cover flex-shrink-0" alt="" />}
+                                  <div className="flex-1 min-w-0"><p className="text-white font-black text-sm truncate">@{q.username}</p><p className="text-[#8B5CF6] text-[8px] uppercase tracking-widest">VibeFID Holder</p></div>
+                                </div>
+                                <div className="flex gap-1.5 px-2 pb-2">
                                   <button onClick={() => { try { sdk.actions?.openUrl?.(`https://warpcast.com/${q.username}`); } catch { window.open(`https://warpcast.com/${q.username}`, '_blank'); } }} className="flex-1 py-1.5 bg-[#8B5CF6] border-2 border-black text-white font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">Go to Profile</button>
                                   <div className="flex-1 py-1.5 bg-[#444] border-2 border-black text-white/60 font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Claim</div>
                                 </div>
