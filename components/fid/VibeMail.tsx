@@ -754,6 +754,8 @@ export function VibeMailInboxWithClaim({
   const [showPurposeModal, setShowPurposeModal] = useState(false);
   const [composerQuestType, setComposerQuestType] = useState<string | null>(null);
   const [composerQuestData, setComposerQuestData] = useState<{ quests: any[] } | null>(null); // quest banner stored separately
+  const [showQuestEditModal, setShowQuestEditModal] = useState(false);
+  const [questEditText, setQuestEditText] = useState('');
   const [composerFollowTarget, setComposerFollowTarget] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const messages = useQuery(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 });
@@ -1850,7 +1852,17 @@ export function VibeMailInboxWithClaim({
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="#000"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     <span className="font-black text-black text-[10px] uppercase tracking-widest flex-1">Quest VibeMail · {composerQuestData.quests.length} quest{composerQuestData.quests.length > 1 ? 's' : ''}</span>
                     <button
-                      onClick={() => { setShowComposer(false); setActiveTab('quests'); }}
+                      onClick={() => {
+                        // Serialize quest data → command text
+                        const lines = (composerQuestData?.quests || []).map((q: any) => {
+                          if (q.type === 'follow_farcaster') return `/follow farcaster.xyz/${q.username}`;
+                          if (q.type === 'use_miniapp') return `/miniapp ${q.url}`;
+                          if (q.type === 'join_channel') return `/channel ${q.channelUrl || `farcaster.xyz/~/channel/${q.channelId}`}`;
+                          return '';
+                        }).filter(Boolean);
+                        setQuestEditText(lines.join('\n'));
+                        setShowQuestEditModal(true);
+                      }}
                       className="text-black font-black text-[9px] uppercase tracking-wide border border-black/30 px-2 py-0.5 hover:bg-black/10 transition-colors mr-1"
                     >Edit</button>
                     <button onClick={() => { setComposerQuestData(null); setComposerQuestType(null); }} className="text-black/60 hover:text-black text-xs font-bold">✕</button>
@@ -1865,6 +1877,79 @@ export function VibeMailInboxWithClaim({
                         {q.type === 'follow_farcaster' ? `@${q.username}` : q.type === 'use_miniapp' ? q.name : q.channelName}
                       </span>
                     ))}
+                  </div>
+                </div>
+              )}
+              {/* Quest Edit Modal */}
+              {showQuestEditModal && (
+                <div className="fixed inset-0 z-[700] flex items-center justify-center bg-black/80 p-4">
+                  <div className="bg-[#0d0d0d] border-2 border-black shadow-[6px_6px_0px_#000] w-full max-w-sm flex flex-col">
+                    {/* Header */}
+                    <div className="bg-[#FFD700] px-3 py-2 flex items-center gap-2 border-b-2 border-black">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#000"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      <span className="font-black text-black text-xs uppercase tracking-widest flex-1">Edit Quests</span>
+                      <button onClick={() => setShowQuestEditModal(false)} className="text-black/60 hover:text-black font-bold text-sm">✕</button>
+                    </div>
+                    {/* Help */}
+                    <div className="px-3 py-2 border-b border-[#222] bg-[#111]">
+                      <p className="text-white/40 text-[10px] leading-relaxed font-mono">
+                        /follow farcaster.xyz/username<br/>
+                        /miniapp https://farcaster.xyz/miniapps/...<br/>
+                        /channel farcaster.xyz/~/channel/name
+                      </p>
+                    </div>
+                    {/* Textarea */}
+                    <textarea
+                      value={questEditText}
+                      onChange={e => setQuestEditText(e.target.value)}
+                      className="w-full bg-[#0a0a0a] px-3 py-3 text-white text-sm font-mono placeholder:text-white/20 focus:outline-none resize-none h-32"
+                      style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
+                      placeholder={'/follow farcaster.xyz/yourname\n/miniapp https://...\n/channel farcaster.xyz/~/channel/...'}
+                      spellCheck={false}
+                    />
+                    {/* Actions */}
+                    <div className="flex gap-2 p-3 border-t-2 border-black">
+                      <button
+                        onClick={() => setShowQuestEditModal(false)}
+                        className="flex-1 py-2 bg-[#1a1a1a] border-2 border-black text-white/60 font-bold text-xs hover:text-white transition-colors"
+                      >Cancel</button>
+                      <button
+                        onClick={() => {
+                          // Parse command text → quest data
+                          const quests: any[] = [];
+                          questEditText.split('\n').forEach(line => {
+                            const l = line.trim();
+                            if (!l) return;
+                            if (l.startsWith('/follow ')) {
+                              const raw = l.slice(8).trim().replace(/^farcaster\.xyz\//, '').replace(/^@/, '');
+                              const username = raw.split('/').pop() || raw;
+                              // Keep existing fid/pfp if username unchanged
+                              const existing = composerQuestData?.quests.find((q: any) => q.type === 'follow_farcaster' && q.username === username);
+                              quests.push({ type: 'follow_farcaster', username, fid: existing?.fid || 0, pfp: existing?.pfp || '' });
+                            } else if (l.startsWith('/miniapp ')) {
+                              const url = l.slice(9).trim();
+                              const existing = composerQuestData?.quests.find((q: any) => q.type === 'use_miniapp' && q.url === url);
+                              const domain = url.replace(/^https?:\/\//, '').split('/')[0];
+                              quests.push({ type: 'use_miniapp', url, name: existing?.name || domain, icon: existing?.icon || '' });
+                            } else if (l.startsWith('/channel ')) {
+                              const raw = l.slice(9).trim().replace(/^farcaster\.xyz/, 'https://farcaster.xyz');
+                              const channelId = raw.match(/\/channel\/([^/?]+)/)?.[1] || raw.split('/').pop() || raw;
+                              const existing = composerQuestData?.quests.find((q: any) => q.type === 'join_channel' && q.channelId === channelId);
+                              quests.push({ type: 'join_channel', channelId, channelName: existing?.channelName || channelId, channelUrl: raw });
+                            }
+                          });
+                          if (quests.length > 0) {
+                            setComposerQuestData({ quests });
+                            setComposerQuestType('social_quest');
+                          } else {
+                            setComposerQuestData(null);
+                            setComposerQuestType(null);
+                          }
+                          setShowQuestEditModal(false);
+                        }}
+                        className="flex-1 py-2 bg-[#FFD700] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] transition-all"
+                      >Save</button>
+                    </div>
                   </div>
                 </div>
               )}
