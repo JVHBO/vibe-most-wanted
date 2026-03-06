@@ -783,7 +783,7 @@ export function VibeMailInboxWithClaim({
   useEffect(() => {
     const count = composerQuestData?.quests?.length ?? 0;
     if (!showPreview || count < 2) return;
-    const t = setInterval(() => setPreviewQuestIdx(p => (p + 1) % count), 3000);
+    const t = setInterval(() => setPreviewQuestIdx(p => (p + 1) % count), 6000);
     return () => clearInterval(t);
   }, [showPreview, composerQuestData?.quests?.length]);
   const messages = useQuery(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 });
