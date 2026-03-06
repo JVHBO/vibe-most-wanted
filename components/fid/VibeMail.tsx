@@ -982,6 +982,7 @@ export function VibeMailInboxWithClaim({
 
   // Slash command picker state
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const composerOverlayRef = useRef<HTMLDivElement | null>(null);
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
   const [slashFilter, setSlashFilter] = useState('');
 
@@ -1245,6 +1246,49 @@ export function VibeMailInboxWithClaim({
         textareaRef.current.setSelectionRange(newCursor, newCursor + placeholder.length);
       }
     }, 10);
+  };
+
+  // Validate a slash command's argument
+  const validateCmd = (cmd: string, rest: string): boolean => {
+    const r = rest.trim();
+    switch (cmd) {
+      case '/b': case '/i': case '/clear': return true;
+      case '/link': return r.length > 3 && r.includes('(') && r.includes(')');
+      case '/img': return r.length > 0;
+      case '/sound': return r.length > 0;
+      case '/cast': return r.startsWith('http');
+      case '/app': return r.startsWith('http') || r.startsWith('farcaster');
+      case '/follow': return r.length > 0;
+      case '/miniapp': return r.startsWith('http') || r.startsWith('farcaster');
+      case '/channel': return r.length > 0;
+      default: return false;
+    }
+  };
+
+  // Render syntax-highlighted composer text (for overlay)
+  const renderColoredComposer = (text: string): React.ReactNode => {
+    const KNOWN = new Set(['/b','/i','/link','/img','/sound','/cast','/app','/clear','/follow','/miniapp','/channel']);
+    const lines = text.split('\n');
+    return lines.map((line, idx) => {
+      const isLast = idx === lines.length - 1;
+      const m = line.match(/^(\/[a-zA-Z]+)([ \t]+)?(.*)?$/);
+      if (m) {
+        const [, cmd, space = '', rest = ''] = m;
+        const known = KNOWN.has(cmd);
+        const valid = known && validateCmd(cmd, rest);
+        const cmdColor = valid ? '#22C55E' : '#EF4444';
+        const restColor = valid ? '#86efac' : '#fca5a5';
+        return (
+          <span key={idx}>
+            <span style={{ color: cmdColor, fontWeight: 700 }}>{cmd}</span>
+            {space && <span style={{ color: '#fff' }}>{space}</span>}
+            {rest && <span style={{ color: restColor }}>{rest}</span>}
+            {!isLast && '\n'}
+          </span>
+        );
+      }
+      return <span key={idx}>{line}{!isLast && '\n'}</span>;
+    });
   };
 
   // Format selected text as bold
@@ -1953,15 +1997,33 @@ export function VibeMailInboxWithClaim({
                   </div>
                 </div>
               )}
-              <textarea
-                ref={textareaRef}
-                value={composerMessage}
-                onChange={handleMessageChange}
-                onKeyDown={(e) => { if (e.key === 'Escape') setSlashMenuOpen(false); }}
-                placeholder="Write your message... (type / for commands)"
-                className="w-full bg-[#0a0a0a] border-2 border-[#444] px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none resize-y h-36 min-h-[144px]"
-                style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
-              />
+              {/* Syntax-highlighted textarea — overlay + transparent input */}
+              <div className="relative border-2 border-[#444] bg-[#0a0a0a] focus-within:border-[#666] h-36 min-h-[144px]">
+                {/* Colored overlay (non-interactive) */}
+                <div
+                  ref={composerOverlayRef}
+                  aria-hidden="true"
+                  className="absolute inset-0 px-3 py-2 text-xs whitespace-pre-wrap break-words overflow-hidden pointer-events-none select-none text-white leading-relaxed"
+                  style={{ fontFamily: 'inherit', wordBreak: 'break-word' }}
+                >
+                  {composerMessage ? renderColoredComposer(composerMessage) : <span className="text-white/30">Write your message... (type / for commands)</span>}
+                </div>
+                {/* Actual textarea — transparent text, captures input */}
+                <textarea
+                  ref={textareaRef}
+                  value={composerMessage}
+                  onChange={handleMessageChange}
+                  onKeyDown={(e) => { if (e.key === 'Escape') setSlashMenuOpen(false); }}
+                  onScroll={() => {
+                    if (composerOverlayRef.current && textareaRef.current) {
+                      composerOverlayRef.current.scrollTop = textareaRef.current.scrollTop;
+                    }
+                  }}
+                  placeholder=""
+                  className="absolute inset-0 w-full h-full px-3 py-2 text-xs bg-transparent focus:outline-none resize-none leading-relaxed"
+                  style={{ colorScheme: 'dark', color: 'transparent', caretColor: 'white', WebkitTextFillColor: 'transparent' }}
+                />
+              </div>
             </div>
             <p className="text-[#FFD700]/50 text-[10px] mb-1">Type / for commands · **bold** · *italic* · [text](url)</p>
 
