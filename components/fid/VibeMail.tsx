@@ -764,6 +764,8 @@ export function VibeMailInboxWithClaim({
   const [claimingQuestId, setClaimingQuestId] = useState<string | null>(null);
   const [questClaimResult, setQuestClaimResult] = useState<{ questId: string; success: boolean; error?: string } | null>(null);
   const [claimedQuestItems, setClaimedQuestItems] = useState<Set<string>>(new Set());
+  const [openAppConfirm, setOpenAppConfirm] = useState<{ url: string; name: string } | null>(null);
+  const [miniappPreviewCache, setMiniappPreviewCache] = useState<Record<string, any>>({});
   const [msgPage, setMsgPage] = useState(0);
   const [showPurposeModal, setShowPurposeModal] = useState(false);
   const [composerQuestType, setComposerQuestType] = useState<string | null>(null);
@@ -883,6 +885,38 @@ export function VibeMailInboxWithClaim({
     if (username) { setSettingsFarcaster(username); setFcSearchQ(username); }
   }, [cardFid, username]);
 
+
+  // Fetch miniapp previews for quest banners (moved out of render)
+  useEffect(() => {
+    const msgs = [...(messages || []), ...(sentMessages || [])];
+    for (const msg of msgs) {
+      const parsed = parseQuestBanner(msg.message || '');
+      if (!parsed) continue;
+      for (const q of parsed.questData.quests || []) {
+        if (q.type === 'use_miniapp' && q.url && !miniappPreviewCache[q.url]) {
+          const cacheKey = `miniapp_preview_${q.url}`;
+          try {
+            const cached = sessionStorage.getItem(cacheKey);
+            if (cached) {
+              const d = JSON.parse(cached);
+              setMiniappPreviewCache(prev => ({ ...prev, [q.url]: d }));
+              continue;
+            }
+          } catch {}
+          fetch(`/api/fid/miniapp-preview?url=${encodeURIComponent(q.url)}`)
+            .then(r => r.json())
+            .then(data => {
+              const app = data?.mini_app ?? data?.miniApp ?? null;
+              if (app) {
+                setMiniappPreviewCache(prev => ({ ...prev, [q.url]: app }));
+                try { sessionStorage.setItem(cacheKey, JSON.stringify(app)); } catch {}
+              }
+            }).catch(() => {});
+        }
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, sentMessages]);
 
   // Neynar channel search debounce
   useEffect(() => {
@@ -1433,7 +1467,7 @@ export function VibeMailInboxWithClaim({
                   const quests: any[] = [];
                   if (settings.farcaster && settings.farcasterFid) quests.push({ type: 'follow_farcaster', username: settings.farcaster, fid: settings.farcasterFid, pfp: settings.farcasterPfp || '' });
                   if (settings.miniapp && settings.miniappName) quests.push({ type: 'use_miniapp', url: settings.miniapp, name: settings.miniappName, icon: settings.miniappIcon || '' });
-                  if (settings.channel && settings.channelName) quests.push({ type: 'join_channel', channelId: settings.channelName, channelName: settings.channelName, channelUrl: settings.channel });
+                  if (settings.channel && settings.channelName) quests.push({ type: 'join_channel', channelId: settings.channelName, channelName: settings.channelName, channelUrl: settings.channel, channelImg: settings.channelImg || '' });
                   if (quests.length === 0) {
                     // No settings yet — open composer with hint
                     setComposerMessage('');
@@ -1971,6 +2005,38 @@ export function VibeMailInboxWithClaim({
                   </div>
                 </div>
               )}
+              {/* Open App Confirmation Modal */}
+              {openAppConfirm && (
+                <div className="fixed inset-0 z-[800] flex items-center justify-center bg-black/80 p-4">
+                  <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-4 w-full max-w-sm">
+                    <h3 className="text-vintage-gold font-display font-bold text-lg mb-3 text-center">
+                      Open {openAppConfirm.name}?
+                    </h3>
+                    <p className="text-vintage-ice/80 text-sm text-center mb-4">
+                      You will leave VibeMail and open this miniapp.
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setOpenAppConfirm(null)}
+                        className="flex-1 py-2 bg-vintage-burnt-gold/30 hover:bg-vintage-burnt-gold/50 text-vintage-gold font-display font-bold rounded-xl transition-all"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const { url } = openAppConfirm;
+                          setOpenAppConfirm(null);
+                          try { await sdk.actions?.openMiniApp?.({ url }); } catch { window.open(url, '_blank'); }
+                        }}
+                        className="flex-1 py-2 bg-vintage-gold hover:bg-yellow-500 text-vintage-black font-display font-bold rounded-xl transition-all"
+                      >
+                        Open
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Quest Edit Modal */}
               {showQuestEditModal && (
                 <div className="fixed inset-0 z-[700] flex items-center justify-center bg-black/80 p-4">
@@ -2067,7 +2133,7 @@ export function VibeMailInboxWithClaim({
                     }
                   }}
                   placeholder=""
-                  className="absolute inset-0 w-full h-full px-3 py-2 text-xs bg-transparent focus:outline-none resize-none leading-relaxed"
+                  className="vibemail-input absolute inset-0 w-full h-full px-3 py-2 text-xs bg-transparent focus:outline-none resize-none leading-relaxed"
                   style={{ colorScheme: 'dark', color: 'transparent', caretColor: 'white', WebkitTextFillColor: 'transparent' }}
                 />
               </div>
@@ -2208,7 +2274,7 @@ export function VibeMailInboxWithClaim({
                     }
                   }}
                   placeholder="https://warpcast.com/..."
-                  className="w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-[#9945FF]"
+                  className="vibemail-input w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-[#9945FF]"
                   style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
                 />
                 {composerCastUrl && <CastPreview castUrl={composerCastUrl} compact />}
@@ -2231,7 +2297,7 @@ export function VibeMailInboxWithClaim({
                     }
                   }}
                   placeholder="https://..."
-                  className="w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-[#22C55E]"
+                  className="vibemail-input w-full bg-[#0A0A0A] border-2 border-[#444] text-white px-3 py-1.5 text-xs font-mono focus:outline-none focus:border-[#22C55E]"
                   style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
                 />
                 {composerMiniappUrl && (
@@ -2297,14 +2363,14 @@ export function VibeMailInboxWithClaim({
               </button>
 
               {/* Preview - ROSA/PINK */}
-              {(composerMessage.trim() || composerImageId) && (
+              {(composerMessage.trim() || composerImageId || composerQuestData) && (
                 <button
                   onClick={() => setShowPreview(true)}
-                  className="w-9 h-9 flex items-center justify-center border-2 border-[#DB2777] bg-[#DB2777] text-white hover:bg-[#BE185D] transition-all"
+                  className="h-9 px-3 flex items-center gap-1.5 border-2 border-[#DB2777] bg-[#DB2777] text-white hover:bg-[#BE185D] transition-all"
                   style={{ WebkitTextFillColor: 'white' }}
-                  title="Preview"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <span className="font-black text-xs uppercase tracking-wide">Preview</span>
                 </button>
               )}
 
@@ -2661,78 +2727,105 @@ export function VibeMailInboxWithClaim({
                           const profileUrl = `https://warpcast.com/${q.username}`;
                           return (
                             <div key={i} className="overflow-hidden">
-                              {/* Banner bg */}
-                              <div className="relative h-20 overflow-hidden bg-[#1a0a2e]">
-                                {q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover scale-110 opacity-25 blur-sm" alt="" />}
-                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
-                                {/* Avatar */}
-                                <div className="absolute bottom-0 left-4 translate-y-1/2 z-10">
-                                  {q.pfp
-                                    ? <img src={q.pfp} className="w-14 h-14 rounded-full border-[3px] border-[#8B5CF6] shadow-lg" alt="" />
-                                    : <div className="w-14 h-14 rounded-full border-[3px] border-[#8B5CF6] bg-[#8B5CF6]/20 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                                  }
+                              {/* Full-bleed pfp banner */}
+                              <div className="relative h-36 overflow-hidden bg-[#1a0a2e]">
+                                {q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                                <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#8B5CF6] border border-black/50">
+                                  <span className="text-white font-black text-[8px] uppercase tracking-widest">Follow</span>
                                 </div>
-                                {/* Label badge */}
-                                <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#8B5CF6] border border-black/50">
-                                  <span className="text-white font-black text-[9px] uppercase tracking-widest">Follow</span>
+                                {/* Avatar + text pinned to bottom */}
+                                <div className="absolute bottom-2 left-3 flex items-center gap-2">
+                                  {q.pfp
+                                    ? <img src={q.pfp} className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] shadow-lg flex-shrink-0" alt="" />
+                                    : <div className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20 flex items-center justify-center flex-shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                                  }
+                                  <div>
+                                    <p className="text-white font-black text-sm drop-shadow">@{q.username}</p>
+                                    <p className="text-[#8B5CF6] text-[9px] uppercase tracking-widest font-bold">VibeFID Holder</p>
+                                  </div>
                                 </div>
                               </div>
-                              {/* Info + buttons */}
-                              <div className="pt-9 px-4 pb-3">
-                                <p className="text-white font-black text-sm">@{q.username}</p>
-                                <p className="text-[#8B5CF6] text-[10px] uppercase tracking-widest">VibeFID Holder · Farcaster</p>
-                                <div className="flex gap-2 mt-2.5">
-                                  <button
-                                    onClick={async () => { try { await sdk.actions?.openUrl?.(profileUrl); } catch { window.open(profileUrl, '_blank'); } }}
-                                    className="flex-1 py-2 bg-[#8B5CF6] border-2 border-black text-white font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">
-                                    Go to Profile
-                                  </button>
-                                  <button
-                                    onClick={markClaimed}
-                                    disabled={isClaimed}
-                                    className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
-                                    {isClaimed ? 'Done!' : 'Claim'}
-                                  </button>
-                                </div>
+                              <div className="flex gap-1.5 p-2">
+                                <button onClick={async () => { try { await sdk.actions?.openUrl?.(profileUrl); } catch { window.open(profileUrl, '_blank'); } }}
+                                  className="flex-1 py-1.5 bg-[#8B5CF6] border-2 border-black text-white font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide">
+                                  Go to Profile
+                                </button>
+                                <button onClick={markClaimed} disabled={isClaimed}
+                                  className={`flex-1 py-1.5 border-2 border-black font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
+                                  {isClaimed ? 'Done!' : 'Claim'}
+                                </button>
                               </div>
                             </div>
                           );
                         }
 
                         if (q.type === 'use_miniapp') {
+                          const previewData = miniappPreviewCache[q.url];
+                          const splashImg = previewData?.splash_image_url || previewData?.screenshot_urls?.[0] || '';
+                          const appDesc = previewData?.description || '';
+                          // Fetch preview if not cached
+                          if (!previewData && q.url) {
+                            const cacheKey = `miniapp_preview_${q.url}`;
+                            try {
+                              const cached = sessionStorage.getItem(cacheKey);
+                              if (cached) {
+                                const d = JSON.parse(cached);
+                                setMiniappPreviewCache(prev => ({ ...prev, [q.url]: d }));
+                              } else {
+                                fetch(`/api/fid/miniapp-preview?url=${encodeURIComponent(q.url)}`)
+                                  .then(r => r.json())
+                                  .then(data => {
+                                    const app = data?.mini_app ?? data?.miniApp ?? null;
+                                    if (app) {
+                                      setMiniappPreviewCache(prev => ({ ...prev, [q.url]: app }));
+                                      try { sessionStorage.setItem(cacheKey, JSON.stringify(app)); } catch {}
+                                    }
+                                  }).catch(() => {});
+                              }
+                            } catch {}
+                          }
                           return (
                             <div key={i} className="overflow-hidden">
-                              {/* Banner bg */}
-                              <div className="relative h-20 overflow-hidden bg-[#0a1a0a]">
-                                {q.icon && <img src={q.icon} className="absolute inset-0 w-full h-full object-cover scale-110 opacity-20 blur-sm" alt="" />}
-                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
-                                {/* App icon */}
-                                <div className="absolute bottom-0 left-4 translate-y-1/2 z-10">
-                                  {q.icon
-                                    ? <img src={q.icon} className="w-14 h-14 rounded-xl border-[3px] border-[#22C55E] object-cover shadow-lg" alt="" onError={(e: any) => e.target.style.display='none'} />
-                                    : <div className="w-14 h-14 rounded-xl border-[3px] border-[#22C55E] bg-[#22C55E]/20 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>
-                                  }
+                              {/* App header row */}
+                              <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+                                {q.icon
+                                  ? <img src={q.icon} className="w-10 h-10 rounded-xl border-2 border-[#22C55E] object-cover flex-shrink-0" alt="" onError={(e: any) => e.target.style.display='none'} />
+                                  : <div className="w-10 h-10 rounded-xl border-2 border-[#22C55E] bg-[#22C55E]/20 flex items-center justify-center flex-shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>
+                                }
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-white font-black text-sm truncate">{q.name}</p>
+                                  <p className="text-[#22C55E] text-[9px] uppercase tracking-widest font-bold">Mini App</p>
                                 </div>
-                                <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#22C55E] border border-black/50">
+                                <div className="px-2 py-0.5 bg-[#22C55E] border border-black/50 flex-shrink-0">
                                   <span className="text-black font-black text-[9px] uppercase tracking-widest">Miniapp</span>
                                 </div>
                               </div>
-                              <div className="pt-9 px-4 pb-3">
-                                <p className="text-white font-black text-sm truncate">{q.name}</p>
-                                <p className="text-[#22C55E] text-[10px] uppercase tracking-widest">Farcaster Miniapp</p>
-                                <div className="flex gap-2 mt-2.5">
-                                  <button
-                                    onClick={async () => { try { await sdk.actions?.openMiniApp?.({ url: q.url }); } catch { window.open(q.url, '_blank'); } }}
-                                    className="flex-1 py-2 bg-[#22C55E] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">
-                                    Open App
-                                  </button>
-                                  <button
-                                    onClick={markClaimed}
-                                    disabled={isClaimed}
-                                    className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
-                                    {isClaimed ? 'Done!' : 'Claim'}
-                                  </button>
+                              {/* Description */}
+                              {appDesc ? (
+                                <p className="text-white/60 text-[10px] px-3 pb-2 line-clamp-2">{appDesc}</p>
+                              ) : null}
+                              {/* Screenshot / splash image */}
+                              {splashImg ? (
+                                <div className="mx-3 mb-3 border-2 border-[#22C55E]/40 overflow-hidden">
+                                  <img src={splashImg} alt="" className="w-full object-cover max-h-48" />
                                 </div>
+                              ) : (
+                                <div className="h-1 bg-[#22C55E]/20 mx-3 mb-3" />
+                              )}
+                              {/* Buttons */}
+                              <div className="flex gap-2 px-3 pb-3">
+                                <button
+                                  onClick={() => setOpenAppConfirm({ url: q.url, name: q.name })}
+                                  className="flex-1 py-2 bg-[#22C55E] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">
+                                  Open App
+                                </button>
+                                <button
+                                  onClick={markClaimed}
+                                  disabled={isClaimed}
+                                  className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
+                                  {isClaimed ? 'Done!' : 'Claim'}
+                                </button>
                               </div>
                             </div>
                           );
@@ -3075,7 +3168,7 @@ export function VibeMailInboxWithClaim({
                       <div className="flex flex-col gap-1.5">
                         {/* Quick select: VBMS */}
                         <button
-                          onClick={() => { setSettingsMiniapp('https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast'); setSettingsMiniappName('VBMS - Game and Wanted Cast'); setSettingsMiniappIcon('https://vibemostwanted.xyz/icon.gif'); setMaSearchQ(''); setMaSearchResults([]); }}
+                          onClick={() => { setSettingsMiniapp('https://vibemostwanted.xyz'); setSettingsMiniappName('VBMS - Game and Wanted Cast'); setSettingsMiniappIcon('https://vibemostwanted.xyz/icon.gif'); setMaSearchQ(''); setMaSearchResults([]); }}
                           className="flex items-center gap-2 px-2 py-1.5 bg-[#FFD700]/10 border border-[#FFD700]/40 hover:bg-[#FFD700]/20 text-left transition-colors"
                         >
                           <img src="https://vibemostwanted.xyz/icon.gif" className="w-7 h-7 rounded border border-[#FFD700]/50 flex-shrink-0" alt="" />

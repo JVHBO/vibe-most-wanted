@@ -900,6 +900,17 @@ body.neobrutalism ::selection {
   color: #000 !important;
 }
 
+/* VibeMail composer: keep selection readable (blue bg, white text) */
+body.neobrutalism .vibemail-input::selection,
+body.neobrutalism .vibemail-input *::selection {
+  background: #2563eb !important;
+  color: #fff !important;
+}
+body.neobrutalism .vibemail-overlay::selection,
+body.neobrutalism .vibemail-overlay *::selection {
+  background: transparent !important;
+}
+
 
 /* ===================================================
    5. LATE OVERRIDES (high specificity, end of file)
@@ -3045,16 +3056,16 @@ body.neobrutalism div.arena-bets-panel > div:first-child span { color: #FFD400 !
 
 /* QUEST TABS (qt-*) */
 body.neobrutalism button[class*="qt-missions-active"],  button[class*="qt-missions-active"]  { background: #FF3B3B !important; color: #000 !important; border-color: #000 !important; }
-body.neobrutalism button[class*="qt-missions-inactive"],button[class*="qt-missions-inactive"] { background: #EF4444 !important; color: #fff !important; border-color: #000 !important; }
+body.neobrutalism button[class*="qt-missions-inactive"],button[class*="qt-missions-inactive"] { background: #EF4444 !important; color: #000 !important; border-color: #000 !important; }
 body.neobrutalism button[class*="qt-wanted-active"],    button[class*="qt-wanted-active"]    { background: #00E676 !important; color: #000 !important; border-color: #000 !important; }
 body.neobrutalism button[class*="qt-wanted-inactive"],  button[class*="qt-wanted-inactive"]  { background: #22C55E !important; color: #000 !important; border-color: #000 !important; }
 body.neobrutalism button[class*="qt-messages-active"],  button[class*="qt-messages-active"]  { background: #BF5AF2 !important; color: #000 !important; border-color: #000 !important; }
-body.neobrutalism button[class*="qt-messages-inactive"],button[class*="qt-messages-inactive"] { background: #A855F7 !important; color: #fff !important; border-color: #000 !important; }
+body.neobrutalism button[class*="qt-messages-inactive"],button[class*="qt-messages-inactive"] { background: #A855F7 !important; color: #000 !important; border-color: #000 !important; }
 body.neobrutalism button[class*="qt-messages-locked"],  button[class*="qt-messages-locked"]  { background: #333    !important; color: rgba(255,255,255,0.3) !important; opacity: 0.5 !important; cursor: not-allowed !important; border-color: #555 !important; }
 
 /* VIBEMAIL TABS (vmt-*) */
-body.neobrutalism button[class*="vmt-inbox-active"],    button[class*="vmt-inbox-active"]    { background: #007AFF !important; color: #fff !important; border-color: #000 !important; }
-body.neobrutalism button[class*="vmt-inbox-inactive"],  button[class*="vmt-inbox-inactive"]  { background: #3B82F6 !important; color: #fff !important; border-color: #000 !important; }
+body.neobrutalism button[class*="vmt-inbox-active"],    button[class*="vmt-inbox-active"]    { background: #007AFF !important; color: #000 !important; border-color: #000 !important; }
+body.neobrutalism button[class*="vmt-inbox-inactive"],  button[class*="vmt-inbox-inactive"]  { background: #3B82F6 !important; color: #000 !important; border-color: #000 !important; }
 body.neobrutalism button[class*="vmt-sent-active"],     button[class*="vmt-sent-active"]     { background: #FF9F0A !important; color: #000 !important; border-color: #000 !important; }
 body.neobrutalism button[class*="vmt-sent-inactive"],   button[class*="vmt-sent-inactive"]   { background: #F97316 !important; color: #000 !important; border-color: #000 !important; }
 body.neobrutalism button[class*="vmt-quests-active"],   button[class*="vmt-quests-active"]   { background: #00E676 !important; color: #000 !important; border-color: #000 !important; }
