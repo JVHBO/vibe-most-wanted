@@ -78,12 +78,12 @@ export default function QuestsPage() {
       });
     };
 
-    const vbmsInterval = setInterval(() => rotateGroup('vbms'), 5000);
+    const vbmsInterval = setInterval(() => rotateGroup('vbms'), 10000);
 
     const arbTimeout = setTimeout(() => {
       rotateGroup('arb_creators');
-      arbCarouselIntervalRef.current = setInterval(() => rotateGroup('arb_creators'), 5000);
-    }, 2500);
+      arbCarouselIntervalRef.current = setInterval(() => rotateGroup('arb_creators'), 10000);
+    }, 5000);
 
     return () => {
       clearInterval(vbmsInterval);
@@ -695,7 +695,15 @@ export default function QuestsPage() {
                           ) : (
                             <span className="text-vintage-ice/20 text-[10px]">{t('mission_locked')}</span>
                           )}
+                          <button onClick={() => setMissionCarouselIdx(i => Math.max(0, i - 1))} disabled={mIdx === 0}
+                            className="w-6 h-6 bg-black border border-[#FFD700]/50 flex items-center justify-center disabled:opacity-20">
+                            <span className="text-[#FFD700] font-black text-xs leading-none">‹</span>
+                          </button>
                           <span className="text-white/30 text-[9px]">{mIdx + 1}/{missionList.length}</span>
+                          <button onClick={() => setMissionCarouselIdx(i => Math.min(missionList.length - 1, i + 1))} disabled={mIdx >= missionList.length - 1}
+                            className="w-6 h-6 bg-black border border-[#FFD700]/50 flex items-center justify-center disabled:opacity-20">
+                            <span className="text-[#FFD700] font-black text-xs leading-none">›</span>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -835,6 +843,21 @@ export default function QuestsPage() {
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
+                              {/* Carousel nav */}
+                              {groupQuests.length > 1 && (
+                                <>
+                                  <button onClick={() => goToIdx(idx - 1)} disabled={idx === 0}
+                                    className="w-7 h-7 bg-black border-2 flex items-center justify-center disabled:opacity-30"
+                                    style={{ borderColor: `${groupColor}80` }}>
+                                    <span className="font-black text-sm leading-none" style={{ color: groupColor }}>‹</span>
+                                  </button>
+                                  <button onClick={() => goToIdx(idx + 1)} disabled={idx >= groupQuests.length - 1}
+                                    className="w-7 h-7 bg-black border-2 flex items-center justify-center disabled:opacity-30"
+                                    style={{ borderColor: `${groupColor}80` }}>
+                                    <span className="font-black text-sm leading-none" style={{ color: groupColor }}>›</span>
+                                  </button>
+                                </>
+                              )}
                               {/* Action button */}
                               {status === "claimed" ? (
                                 <span className="text-green-400 text-[10px] font-bold">Done</span>
