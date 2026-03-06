@@ -373,11 +373,48 @@ export default function QuestsPage() {
       if (chain === "arbitrum") {
         await validateOnArb(quest.reward, ARB_CLAIM_TYPE.MISSION);
       }
-      const result = await claimSocialReward({ address: address.toLowerCase(), questId: quest.id });
-      // Sound removed - was repetitive
+      await claimSocialReward({ address: address.toLowerCase(), questId: quest.id });
     } catch (error) {
       console.error("Error claiming:", error);
     } finally {
+      setClaiming(null);
+    }
+  };
+
+  // Follow button: opens URL and marks as visited
+  const handleFollowQuest = (quest: SocialQuest) => {
+    window.open(quest.url, "_blank");
+    setVisitedQuests(prev => new Set([...prev, quest.id]));
+    AudioManager.buttonClick();
+  };
+
+  // Verify button: verifies follow then auto-claims reward
+  const handleVerifyAndClaim = async (quest: SocialQuest) => {
+    if (!userFid || !address) return;
+    setVerifying(quest.id);
+    try {
+      const result = await verifyAndCompleteQuest({
+        address: address.toLowerCase(),
+        questId: quest.id,
+        userFid: parseInt(userFid as string) || 0,
+      });
+      if (!result.completed) {
+        // Not followed yet — reopen link
+        window.open(quest.url, "_blank");
+        return;
+      }
+      setLocalCompleted(prev => new Set([...prev, quest.id]));
+      // Auto-claim immediately after verification
+      setClaiming(quest.id);
+      if (effectiveChain === "arbitrum") {
+        await validateOnArb(quest.reward, ARB_CLAIM_TYPE.MISSION);
+      }
+      await claimSocialReward({ address: address.toLowerCase(), questId: quest.id });
+      AudioManager.buttonSuccess();
+    } catch (error) {
+      console.error("Error verifying/claiming:", error);
+    } finally {
+      setVerifying(null);
       setClaiming(null);
     }
   };
@@ -743,11 +780,10 @@ export default function QuestsPage() {
                       // Update ref for auto-rotate
                       socialQuestCountsRef.current[groupId] = groupQuests.length;
 
-                      const isFeatured = quest.featured === true;
-                      const groupColor = isFeatured ? '#FFD700' : groupId === 'arb_creators' ? '#12AAFF' : '#FFD700';
-
                       const idx = socialCarouselIndices[groupId] ?? 0;
                       const quest = groupQuests[Math.min(idx, groupQuests.length - 1)];
+                      const isFeatured = quest.featured === true;
+                      const groupColor = isFeatured ? '#FFD700' : groupId === 'arb_creators' ? '#12AAFF' : '#FFD700';
                       const status = getQuestStatus(quest);
                       const isVerifying = verifying === quest.id;
                       const isClaimingSocial = claiming === quest.id;
@@ -866,23 +902,37 @@ export default function QuestsPage() {
                                   </button>
                                 </>
                               )}
-                              {/* Action button */}
+                              {/* Two-step action: FOLLOW then VERIFY+CLAIM */}
                               {status === "claimed" ? (
                                 <span className="text-green-400 text-[10px] font-bold">Done</span>
-                              ) : status === "completed" ? (
-                                <button onClick={() => { AudioManager.buttonClick(); handleClaimSocial(quest); }}
-                                  onMouseEnter={() => AudioManager.buttonHover()} disabled={isClaimingSocial}
-                                  className="px-3 py-1.5 bg-[#FFD700] text-black font-black text-xs border-2 border-black"
-                                  style={{ boxShadow: "2px 2px 0px #000" }}>
-                                  {isClaimingSocial ? "..." : t('questsClaim')}
-                                </button>
                               ) : (
-                                <button onClick={() => { AudioManager.buttonClick(); verifyQuest(quest); }}
-                                  onMouseEnter={() => AudioManager.buttonHover()} disabled={isVerifying}
-                                  className="px-3 py-1.5 bg-[#111] border-2 border-[#FFD700]/60 text-[#FFD700] font-black text-xs hover:border-[#FFD700] transition-all"
-                                  style={{ boxShadow: "2px 2px 0px #000" }}>
-                                  {isVerifying ? "..." : visitedQuests.has(quest.id) ? t('questsVerify') : t('questsGo')}
-                                </button>
+                                <>
+                                  {/* Step 1: FOLLOW */}
+                                  <button
+                                    onClick={() => { AudioManager.buttonClick(); handleFollowQuest(quest); }}
+                                    onMouseEnter={() => AudioManager.buttonHover()}
+                                    className="px-2 py-1.5 bg-[#111] border-2 font-black text-[10px] transition-all"
+                                    style={{
+                                      borderColor: visitedQuests.has(quest.id) ? `${groupColor}40` : groupColor,
+                                      color: visitedQuests.has(quest.id) ? `${groupColor}60` : groupColor,
+                                      boxShadow: visitedQuests.has(quest.id) ? 'none' : `2px 2px 0px #000`,
+                                    }}>
+                                    Follow
+                                  </button>
+                                  {/* Step 2: VERIFY + auto-claim (unlocks after follow) */}
+                                  <button
+                                    onClick={() => { AudioManager.buttonClick(); handleVerifyAndClaim(quest); }}
+                                    onMouseEnter={() => AudioManager.buttonHover()}
+                                    disabled={!visitedQuests.has(quest.id) || isVerifying || isClaimingSocial || !userFid}
+                                    className="px-2 py-1.5 font-black text-[10px] border-2 border-black transition-all disabled:opacity-30"
+                                    style={{
+                                      backgroundColor: visitedQuests.has(quest.id) ? '#FFD700' : '#222',
+                                      color: visitedQuests.has(quest.id) ? '#000' : '#666',
+                                      boxShadow: visitedQuests.has(quest.id) ? '2px 2px 0px #000' : 'none',
+                                    }}>
+                                    {(isVerifying || isClaimingSocial) ? "..." : "Verify"}
+                                  </button>
+                                </>
                               )}
                             </div>
                           </div>
