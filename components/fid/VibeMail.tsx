@@ -2492,9 +2492,9 @@ export function VibeMailInboxWithClaim({
                           <span className="font-black text-black text-xs uppercase tracking-widest flex-1">Quest VibeMail</span>
                           {quests.length > 1 && (
                             <div className="flex items-center gap-1">
-                              <button onClick={() => setPreviewQuestIdx(p => (p - 1 + quests.length) % quests.length)} className="w-5 h-5 bg-white/80 border border-black flex items-center justify-center font-black text-black text-xs hover:bg-white transition-colors">‹</button>
+                              <button onClick={() => setPreviewQuestIdx(p => (p - 1 + quests.length) % quests.length)} className="w-5 h-5 bg-black border border-black flex items-center justify-center font-black text-[#FFD700] text-xs hover:bg-[#111] transition-colors">‹</button>
                               <span className="text-black font-black text-[9px]">{idx + 1}/{quests.length}</span>
-                              <button onClick={() => setPreviewQuestIdx(p => (p + 1) % quests.length)} className="w-5 h-5 bg-white/80 border border-black flex items-center justify-center font-black text-black text-xs hover:bg-white transition-colors">›</button>
+                              <button onClick={() => setPreviewQuestIdx(p => (p + 1) % quests.length)} className="w-5 h-5 bg-black border border-black flex items-center justify-center font-black text-[#FFD700] text-xs hover:bg-[#111] transition-colors">›</button>
                             </div>
                           )}
                         </div>
@@ -2823,7 +2823,7 @@ export function VibeMailInboxWithClaim({
                           return (
                             <div key={i} className="overflow-hidden">
                               {/* Full-bleed banner */}
-                              <div className="relative h-36 overflow-hidden bg-[#1a0a2e]">
+                              <div className="relative h-28 overflow-hidden bg-[#1a0a2e]">
                                 {q.banner && <img src={q.banner} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />}
                                 {!q.banner && q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
@@ -2903,8 +2903,8 @@ export function VibeMailInboxWithClaim({
                               ) : null}
                               {/* Screenshot / splash image */}
                               {splashImg ? (
-                                <div className="mx-3 mb-3 border-2 border-[#22C55E]/40 overflow-hidden">
-                                  <img src={splashImg} alt="" className="w-full object-cover max-h-48" />
+                                <div className="overflow-hidden h-28">
+                                  <img src={splashImg} alt="" className="w-full h-full object-cover" />
                                 </div>
                               ) : (
                                 <div className="h-1 bg-[#22C55E]/20 mx-3 mb-3" />
@@ -2932,7 +2932,7 @@ export function VibeMailInboxWithClaim({
                           return (
                             <div key={i} className="overflow-hidden">
                               {/* Banner bg */}
-                              <div className="relative h-20 overflow-hidden bg-[#1a0e00]">
+                              <div className="relative h-28 overflow-hidden bg-[#1a0e00]">
                                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
                                 {/* Channel icon */}
                                 <div className="absolute bottom-0 left-4 translate-y-1/2 z-10">
