@@ -406,8 +406,9 @@ export default function QuestsPage() {
       setLocalCompleted(prev => new Set([...prev, quest.id]));
       // Auto-claim immediately after verification
       setClaiming(quest.id);
+      // Fire-and-forget ARB validation — never block claim on TX errors
       if (effectiveChain === "arbitrum") {
-        await validateOnArb(quest.reward, ARB_CLAIM_TYPE.MISSION);
+        validateOnArb(quest.reward, ARB_CLAIM_TYPE.MISSION).catch(() => {});
       }
       await claimSocialReward({ address: address.toLowerCase(), questId: quest.id });
       AudioManager.buttonSuccess();
