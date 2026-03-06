@@ -1897,7 +1897,6 @@ export function VibeMailInboxWithClaim({
                     <span className="font-black text-black text-[10px] uppercase tracking-widest flex-1">Quest VibeMail · {composerQuestData.quests.length} quest{composerQuestData.quests.length > 1 ? 's' : ''}</span>
                     <button
                       onClick={() => {
-                        // Serialize quest data → command text
                         const lines = (composerQuestData?.quests || []).map((q: any) => {
                           if (q.type === 'follow_farcaster') return `/follow farcaster.xyz/${q.username}`;
                           if (q.type === 'use_miniapp') return `/miniapp ${q.url}`;
@@ -1907,9 +1906,8 @@ export function VibeMailInboxWithClaim({
                         setQuestEditText(lines.join('\n'));
                         setShowQuestEditModal(true);
                       }}
-                      className="text-black font-black text-[9px] uppercase tracking-wide border border-black/30 px-2 py-0.5 hover:bg-black/10 transition-colors mr-1"
+                      className="bg-black text-[#FFD700] font-black text-[9px] uppercase tracking-wide px-2 py-0.5 border border-black hover:bg-[#111] transition-colors"
                     >Edit</button>
-                    <button onClick={() => { setComposerQuestData(null); setComposerQuestType(null); }} className="text-black/60 hover:text-black text-xs font-bold">✕</button>
                   </div>
                   <div className="px-3 py-2 flex flex-wrap gap-2">
                     {composerQuestData.quests.map((q: any, i: number) => (
