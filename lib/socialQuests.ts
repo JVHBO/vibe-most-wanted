@@ -322,6 +322,20 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     pfpUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/f56caf58-c69f-4cea-2b1a-93173ffa6100/original',
     bannerUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/aa07f81e-603d-4bf8-bb41-990c92e63700/original',
   },
+  {
+    id: 'follow_flowstatecoop',
+    type: 'follow',
+    target: 'flowstatecoop',
+    targetFid: 868887,
+    displayName: 'Follow @flowstatecoop',
+    description: 'Follow Flow State creator',
+    reward: 50,
+    icon: '',
+    url: 'https://farcaster.xyz/flowstatecoop',
+    group: 'arb_creators',
+    featured: true,
+    pfpUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/488a215f-ffcc-47d1-8dca-847a2079c900/original',
+  },
 ];
 // Get quests by type
 export function getFollowQuests(): SocialQuest[] {
