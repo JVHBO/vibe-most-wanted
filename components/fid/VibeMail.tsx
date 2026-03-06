@@ -1838,7 +1838,7 @@ export function VibeMailInboxWithClaim({
                 onChange={handleMessageChange}
                 onKeyDown={(e) => { if (e.key === 'Escape') setSlashMenuOpen(false); }}
                 placeholder="Write your message... (type / for commands)"
-                className="w-full bg-[#0a0a0a] border-2 border-[#444] px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none resize-none h-20 min-h-[80px]"
+                className="w-full bg-[#0a0a0a] border-2 border-[#444] px-3 py-2 text-white text-xs placeholder:text-white/30 focus:outline-none resize-y h-36 min-h-[144px]"
                 style={{ colorScheme: 'dark', WebkitTextFillColor: 'white', color: 'white' }}
               />
             </div>
