@@ -764,6 +764,8 @@ export function VibeMailInboxWithClaim({
   const [claimingQuestId, setClaimingQuestId] = useState<string | null>(null);
   const [questClaimResult, setQuestClaimResult] = useState<{ questId: string; success: boolean; error?: string } | null>(null);
   const [claimedQuestItems, setClaimedQuestItems] = useState<Set<string>>(new Set());
+  const [claimedMailVbms, setClaimedMailVbms] = useState<Set<string>>(new Set());
+  const [claimingMailId, setClaimingMailId] = useState<string | null>(null);
   const [openAppConfirm, setOpenAppConfirm] = useState<{ url: string; name: string } | null>(null);
   const [miniappPreviewCache, setMiniappPreviewCache] = useState<Record<string, any>>({});
   const [msgPage, setMsgPage] = useState(0);
@@ -775,6 +777,15 @@ export function VibeMailInboxWithClaim({
   const [questEditText, setQuestEditText] = useState('');
   const [composerFollowTarget, setComposerFollowTarget] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
+  const [previewQuestIdx, setPreviewQuestIdx] = useState(0);
+
+  // Auto-advance carousel every 3s when preview is open and has multiple quests
+  useEffect(() => {
+    const count = composerQuestData?.quests?.length ?? 0;
+    if (!showPreview || count < 2) return;
+    const t = setInterval(() => setPreviewQuestIdx(p => (p + 1) % count), 3000);
+    return () => clearInterval(t);
+  }, [showPreview, composerQuestData?.quests?.length]);
   const messages = useQuery(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 });
   const sentMessages = useQuery(
     api.cardVotes.getSentMessages,
@@ -844,6 +855,7 @@ export function VibeMailInboxWithClaim({
   const [settingsFarcaster, setSettingsFarcaster] = useState('');
   const [settingsFarcasterFid, setSettingsFarcasterFid] = useState<number | null>(null);
   const [settingsFarcasterPfp, setSettingsFarcasterPfp] = useState('');
+  const [settingsFarcasterBanner, setSettingsFarcasterBanner] = useState('');
   const [settingsMiniapp, setSettingsMiniapp] = useState('');
   const [settingsMiniappName, setSettingsMiniappName] = useState('');
   const [settingsMiniappIcon, setSettingsMiniappIcon] = useState('');
@@ -872,6 +884,7 @@ export function VibeMailInboxWithClaim({
         if (p.farcaster) { setSettingsFarcaster(p.farcaster); setFcSearchQ(p.farcaster); }
         if (p.farcasterFid) setSettingsFarcasterFid(p.farcasterFid);
         if (p.farcasterPfp) setSettingsFarcasterPfp(p.farcasterPfp);
+        if (p.farcasterBanner) setSettingsFarcasterBanner(p.farcasterBanner);
         if (p.miniapp) { setSettingsMiniapp(p.miniapp); setMaSearchQ(p.miniappName || p.miniapp); }
         if (p.miniappName) setSettingsMiniappName(p.miniappName);
         if (p.miniappIcon) setSettingsMiniappIcon(p.miniappIcon);
@@ -885,6 +898,25 @@ export function VibeMailInboxWithClaim({
     if (username) { setSettingsFarcaster(username); setFcSearchQ(username); }
   }, [cardFid, username]);
 
+
+  // Fetch Farcaster profile banner for follow quest settings
+  useEffect(() => {
+    if (!settingsFarcasterFid || settingsFarcasterBanner) return;
+    fetch(`/api/fid/user-profile?fid=${settingsFarcasterFid}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.banner_url) {
+          setSettingsFarcasterBanner(d.banner_url);
+          // Persist to localStorage
+          try {
+            const key = `vm_settings_${cardFid}`;
+            const saved = JSON.parse(localStorage.getItem(key) || '{}');
+            localStorage.setItem(key, JSON.stringify({ ...saved, farcasterBanner: d.banner_url }));
+          } catch {}
+        }
+      })
+      .catch(() => {});
+  }, [settingsFarcasterFid]);
 
   // Fetch miniapp previews for quest banners (moved out of render)
   useEffect(() => {
@@ -918,6 +950,30 @@ export function VibeMailInboxWithClaim({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, sentMessages]);
 
+  // Fetch miniapp previews for composer quest banners when preview opens
+  useEffect(() => {
+    if (!showPreview || !composerQuestData?.quests?.length) return;
+    for (const q of composerQuestData.quests) {
+      if (q.type === 'use_miniapp' && q.url && !miniappPreviewCache[q.url]) {
+        const cacheKey = `miniapp_preview_${q.url}`;
+        try {
+          const cached = sessionStorage.getItem(cacheKey);
+          if (cached) { setMiniappPreviewCache(prev => ({ ...prev, [q.url]: JSON.parse(cached) })); continue; }
+        } catch {}
+        fetch(`/api/fid/miniapp-preview?url=${encodeURIComponent(q.url)}`)
+          .then(r => r.json())
+          .then(data => {
+            const app = data?.mini_app ?? data?.miniApp ?? null;
+            if (app) {
+              setMiniappPreviewCache(prev => ({ ...prev, [q.url]: app }));
+              try { sessionStorage.setItem(cacheKey, JSON.stringify(app)); } catch {}
+            }
+          }).catch(() => {});
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPreview, composerQuestData]);
+
   // Neynar channel search debounce
   useEffect(() => {
     if (!chSearchQ || chSearchQ.length < 2 || chSearchQ === settingsChannelName) { setChSearchResults([]); return; }
@@ -931,6 +987,30 @@ export function VibeMailInboxWithClaim({
     }, 400);
     return () => clearTimeout(t);
   }, [chSearchQ]);
+
+  // Fetch channel image when channelName changes and no image yet
+  useEffect(() => {
+    if (!settingsChannelName || settingsChannelImg) return;
+    fetch(`/api/fid/neynar-channel-search?q=${encodeURIComponent(settingsChannelName)}`)
+      .then(r => r.json())
+      .then(d => {
+        const ch = (d.channels || []).find((c: any) => c.id === settingsChannelName || c.name?.toLowerCase() === settingsChannelName.toLowerCase());
+        if (ch?.image_url) setSettingsChannelImg(ch.image_url);
+      }).catch(() => {});
+  }, [settingsChannelName]);
+
+  // Patch channelImg into composerQuestData when settingsChannelImg loads late
+  useEffect(() => {
+    if (!settingsChannelImg || !composerQuestData?.quests?.length) return;
+    const needs = composerQuestData.quests.some((q: any) => q.type === 'join_channel' && !q.channelImg);
+    if (!needs) return;
+    setComposerQuestData((prev: any) => ({
+      ...prev,
+      quests: prev.quests.map((q: any) =>
+        q.type === 'join_channel' && !q.channelImg ? { ...q, channelImg: settingsChannelImg } : q
+      ),
+    }));
+  }, [settingsChannelImg]);
 
   // Neynar miniapp search debounce
   useEffect(() => {
@@ -1465,7 +1545,7 @@ export function VibeMailInboxWithClaim({
                   let settings: any = {};
                   try { settings = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
                   const quests: any[] = [];
-                  if (settings.farcaster && settings.farcasterFid) quests.push({ type: 'follow_farcaster', username: settings.farcaster, fid: settings.farcasterFid, pfp: settings.farcasterPfp || '' });
+                  if (settings.farcaster && settings.farcasterFid) quests.push({ type: 'follow_farcaster', username: settings.farcaster, fid: settings.farcasterFid, pfp: settings.farcasterPfp || '', banner: settings.farcasterBanner || '' });
                   if (settings.miniapp && settings.miniappName) quests.push({ type: 'use_miniapp', url: settings.miniapp, name: settings.miniappName, icon: settings.miniappIcon || '' });
                   if (settings.channel && settings.channelName) quests.push({ type: 'join_channel', channelId: settings.channelName, channelName: settings.channelName, channelUrl: settings.channel, channelImg: settings.channelImg || '' });
                   if (quests.length === 0) {
@@ -2082,7 +2162,7 @@ export function VibeMailInboxWithClaim({
                               const username = raw.split('/').pop() || raw;
                               // Keep existing fid/pfp if username unchanged
                               const existing = composerQuestData?.quests.find((q: any) => q.type === 'follow_farcaster' && q.username === username);
-                              quests.push({ type: 'follow_farcaster', username, fid: existing?.fid || 0, pfp: existing?.pfp || '' });
+                              quests.push({ type: 'follow_farcaster', username, fid: existing?.fid || 0, pfp: existing?.pfp || '', banner: existing?.banner || settingsFarcasterBanner || '' });
                             } else if (l.startsWith('/miniapp ')) {
                               const url = l.slice(9).trim();
                               const existing = composerQuestData?.quests.find((q: any) => q.type === 'use_miniapp' && q.url === url);
@@ -2092,7 +2172,7 @@ export function VibeMailInboxWithClaim({
                               const raw = l.slice(9).trim().replace(/^farcaster\.xyz/, 'https://farcaster.xyz');
                               const channelId = raw.match(/\/channel\/([^/?]+)/)?.[1] || raw.split('/').pop() || raw;
                               const existing = composerQuestData?.quests.find((q: any) => q.type === 'join_channel' && q.channelId === channelId);
-                              quests.push({ type: 'join_channel', channelId, channelName: existing?.channelName || channelId, channelUrl: raw });
+                              quests.push({ type: 'join_channel', channelId, channelName: existing?.channelName || channelId, channelUrl: raw, channelImg: existing?.channelImg || settingsChannelImg || '' });
                             }
                           });
                           if (quests.length > 0) {
@@ -2400,80 +2480,95 @@ export function VibeMailInboxWithClaim({
                       <p className="text-white font-bold text-sm truncate">@{username || 'you'}</p>
                       <span className="ml-auto text-white/40 text-xs">Just now</span>
                     </div>
-                    {/* Quest banner card in preview */}
-                    {composerQuestData && composerQuestData.quests.length > 0 && (
+                    {/* Quest banner card in preview - carousel */}
+                    {composerQuestData && composerQuestData.quests.length > 0 && (() => {
+                      const quests = composerQuestData.quests;
+                      const idx = Math.min(previewQuestIdx, quests.length - 1);
+                      const q = quests[idx];
+                      return (
                       <div className="mb-3 border-2 border-black shadow-[4px_4px_0px_#000] overflow-hidden">
                         <div className="bg-[#FFD700] px-3 py-2 flex items-center gap-2 border-b-2 border-black">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="#000"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                           <span className="font-black text-black text-xs uppercase tracking-widest flex-1">Quest VibeMail</span>
-                          <span className="text-black/50 text-[9px] font-bold">{composerQuestData.quests.length} quest{composerQuestData.quests.length !== 1 ? 's' : ''}</span>
+                          {quests.length > 1 && (
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => setPreviewQuestIdx(p => (p - 1 + quests.length) % quests.length)} className="w-5 h-5 bg-white/80 border border-black flex items-center justify-center font-black text-black text-xs hover:bg-white transition-colors">‹</button>
+                              <span className="text-black font-black text-[9px]">{idx + 1}/{quests.length}</span>
+                              <button onClick={() => setPreviewQuestIdx(p => (p + 1) % quests.length)} className="w-5 h-5 bg-white/80 border border-black flex items-center justify-center font-black text-black text-xs hover:bg-white transition-colors">›</button>
+                            </div>
+                          )}
                         </div>
-                        <div className="bg-[#0d0d0d] flex flex-col divide-y-2 divide-black">
-                          {composerQuestData.quests.map((q: any, i: number) => {
+                        <div className="bg-[#0d0d0d]">
+                          {(() => {
+                            const splashImg = miniappPreviewCache[q.url]?.splash_image_url || miniappPreviewCache[q.url]?.screenshot_urls?.[0] || '';
                             if (q.type === 'follow_farcaster') return (
-                              <div key={i} className="overflow-hidden">
-                                <div className="relative h-16 overflow-hidden bg-[#1a0a2e]">
-                                  {q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover scale-110 opacity-25 blur-sm" alt="" />}
-                                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
-                                  <div className="absolute bottom-0 left-3 translate-y-1/2 z-10">
-                                    {q.pfp ? <img src={q.pfp} className="w-11 h-11 rounded-full border-2 border-[#8B5CF6]" alt="" /> : <div className="w-11 h-11 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20" />}
-                                  </div>
+                              <div>
+                                <div className="relative h-28 bg-[#1a0a2e] overflow-hidden">
+                                  {(q.banner || settingsFarcasterBanner) && <img src={q.banner || settingsFarcasterBanner} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />}
+                                  {!q.banner && !settingsFarcasterBanner && q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                                   <div className="absolute top-1.5 right-2 px-1.5 py-0.5 bg-[#8B5CF6] border border-black/50"><span className="text-white font-black text-[8px] uppercase tracking-widest">Follow</span></div>
-                                </div>
-                                <div className="pt-7 px-3 pb-2.5">
-                                  <p className="text-white font-black text-sm">@{q.username}</p>
-                                  <p className="text-[#8B5CF6] text-[9px] uppercase tracking-widest">VibeFID Holder</p>
-                                  <div className="flex gap-1.5 mt-2">
-                                    <div className="flex-1 py-1.5 bg-[#8B5CF6] border-2 border-black text-white font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Go to Profile</div>
-                                    <div className="flex-1 py-1.5 bg-[#FFD700] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Claim</div>
+                                  <div className="absolute bottom-2 left-3 flex items-center gap-2">
+                                    {q.pfp ? <img src={q.pfp} className="w-9 h-9 rounded-full border-2 border-[#8B5CF6]" alt="" /> : <div className="w-9 h-9 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20" />}
+                                    <div><p className="text-white font-black text-xs drop-shadow">@{q.username}</p><p className="text-[#8B5CF6] text-[8px] uppercase tracking-widest">VibeFID Holder</p></div>
                                   </div>
+                                </div>
+                                <div className="flex gap-1.5 p-2">
+                                  <button onClick={() => { try { sdk.actions?.openUrl?.(`https://warpcast.com/${q.username}`); } catch { window.open(`https://warpcast.com/${q.username}`, '_blank'); } }} className="flex-1 py-1.5 bg-[#8B5CF6] border-2 border-black text-white font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">Go to Profile</button>
+                                  <div className="flex-1 py-1.5 bg-[#444] border-2 border-black text-white/60 font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Claim</div>
                                 </div>
                               </div>
                             );
                             if (q.type === 'use_miniapp') return (
-                              <div key={i} className="overflow-hidden">
-                                <div className="relative h-16 overflow-hidden bg-[#0a1a0a]">
-                                  {q.icon && <img src={q.icon} className="absolute inset-0 w-full h-full object-cover scale-110 opacity-20 blur-sm" alt="" />}
-                                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
-                                  <div className="absolute bottom-0 left-3 translate-y-1/2 z-10">
-                                    {q.icon ? <img src={q.icon} className="w-11 h-11 rounded-xl border-2 border-[#22C55E] object-cover" alt="" onError={(e: any) => e.target.style.display='none'} /> : <div className="w-11 h-11 rounded-xl border-2 border-[#22C55E] bg-[#22C55E]/20" />}
+                              <div>
+                                {splashImg ? (
+                                  <div className="relative overflow-hidden">
+                                    <img src={splashImg} alt="" className="w-full object-cover max-h-40" />
+                                    <div className="absolute top-1.5 right-2 px-1.5 py-0.5 bg-[#22C55E] border border-black/50"><span className="text-black font-black text-[8px] uppercase tracking-widest">Miniapp</span></div>
                                   </div>
-                                  <div className="absolute top-1.5 right-2 px-1.5 py-0.5 bg-[#22C55E] border border-black/50"><span className="text-black font-black text-[8px] uppercase tracking-widest">Miniapp</span></div>
+                                ) : (
+                                  <div className="relative h-28 bg-[#0a1a0a] overflow-hidden flex items-center justify-center">
+                                    {q.icon && <img src={q.icon} className="absolute inset-0 w-full h-full object-cover opacity-20" alt="" />}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                                    {q.icon ? <img src={q.icon} className="w-14 h-14 rounded-xl border-2 border-[#22C55E] object-cover z-10 relative" alt="" /> : <div className="w-14 h-14 rounded-xl border-2 border-[#22C55E] bg-[#22C55E]/20" />}
+                                    <div className="absolute top-1.5 right-2 px-1.5 py-0.5 bg-[#22C55E] border border-black/50"><span className="text-black font-black text-[8px] uppercase tracking-widest">Miniapp</span></div>
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-2 px-3 pt-2 pb-1">
+                                  {q.icon && <img src={q.icon} className="w-7 h-7 rounded-lg border border-[#22C55E] object-cover flex-shrink-0" alt="" />}
+                                  <div className="flex-1 min-w-0"><p className="text-white font-black text-sm truncate">{q.name}</p><p className="text-[#22C55E] text-[8px] uppercase tracking-widest">Farcaster Miniapp</p></div>
                                 </div>
-                                <div className="pt-7 px-3 pb-2.5">
-                                  <p className="text-white font-black text-sm truncate">{q.name}</p>
-                                  <p className="text-[#22C55E] text-[9px] uppercase tracking-widest">Farcaster Miniapp</p>
-                                  <div className="flex gap-1.5 mt-2">
-                                    <div className="flex-1 py-1.5 bg-[#22C55E] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Open App</div>
-                                    <div className="flex-1 py-1.5 bg-[#FFD700] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Claim</div>
-                                  </div>
+                                <div className="flex gap-1.5 px-2 pb-2">
+                                  <button onClick={() => { try { sdk.actions?.openMiniApp?.({ url: q.url }); } catch { window.open(q.url, '_blank'); } }} className="flex-1 py-1.5 bg-[#22C55E] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">Open App &amp; Add</button>
+                                  <div className="flex-1 py-1.5 bg-[#444] border-2 border-black text-white/60 font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Claim</div>
                                 </div>
                               </div>
                             );
                             if (q.type === 'join_channel') return (
-                              <div key={i} className="overflow-hidden">
-                                <div className="relative h-16 overflow-hidden bg-[#1a0e00]">
-                                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
-                                  <div className="absolute bottom-0 left-3 translate-y-1/2 z-10">
-                                    <div className="w-11 h-11 border-2 border-[#FF9F0A] bg-[#FF9F0A]/20 flex items-center justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9F0A" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
-                                  </div>
+                              <div>
+                                {(() => { const chImg = q.channelImg || settingsChannelImg; return (
+                                <div className="relative h-28 bg-[#1a0e00] overflow-hidden flex items-center justify-center">
+                                  {chImg && <img src={chImg} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                                  {chImg
+                                    ? <img src={chImg} className="w-14 h-14 rounded-xl border-2 border-[#FF9F0A] object-cover z-10 relative" alt="" />
+                                    : <div className="w-14 h-14 border-2 border-[#FF9F0A] bg-[#FF9F0A]/20 flex items-center justify-center z-10 relative"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FF9F0A" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                                  }
                                   <div className="absolute top-1.5 right-2 px-1.5 py-0.5 bg-[#FF9F0A] border border-black/50"><span className="text-black font-black text-[8px] uppercase tracking-widest">Channel</span></div>
                                 </div>
-                                <div className="pt-7 px-3 pb-2.5">
-                                  <p className="text-white font-black text-sm truncate">/{q.channelName || q.channelId}</p>
-                                  <p className="text-[#FF9F0A] text-[9px] uppercase tracking-widest">Farcaster Channel</p>
-                                  <div className="flex gap-1.5 mt-2">
-                                    <div className="flex-1 py-1.5 bg-[#FF9F0A] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Join Channel</div>
-                                    <div className="flex-1 py-1.5 bg-[#FFD700] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Claim</div>
-                                  </div>
+                                ); })()}
+                                <div className="px-3 pt-2 pb-1"><p className="text-white font-black text-sm truncate">/{q.channelName || q.channelId}</p><p className="text-[#FF9F0A] text-[8px] uppercase tracking-widest">Farcaster Channel</p></div>
+                                <div className="flex gap-1.5 px-2 pb-2">
+                                  <button onClick={() => { const url = q.channelUrl || `https://warpcast.com/~/channel/${q.channelId}`; try { sdk.actions?.openUrl?.(url); } catch { window.open(url, '_blank'); } }} className="flex-1 py-1.5 bg-[#FF9F0A] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none">Join Channel</button>
+                                  <div className="flex-1 py-1.5 bg-[#444] border-2 border-black text-white/60 font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Claim</div>
                                 </div>
                               </div>
                             );
                             return null;
-                          })}
+                          })()}
                         </div>
                       </div>
-                    )}
+                    ); })()}
                     <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#e5e7eb' }}>{composerMessage || <span style={{ color: 'rgba(255,255,255,0.3)' }}>(no text)</span>}</p>
                     {composerCastUrl && <p className="text-[#9945FF] text-xs mt-2 truncate">Cast: {composerCastUrl}</p>}
                     {composerMiniappUrl && (
@@ -2727,9 +2822,10 @@ export function VibeMailInboxWithClaim({
                           const profileUrl = `https://warpcast.com/${q.username}`;
                           return (
                             <div key={i} className="overflow-hidden">
-                              {/* Full-bleed pfp banner */}
+                              {/* Full-bleed banner */}
                               <div className="relative h-36 overflow-hidden bg-[#1a0a2e]">
-                                {q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
+                                {q.banner && <img src={q.banner} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />}
+                                {!q.banner && q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                                 <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#8B5CF6] border border-black/50">
                                   <span className="text-white font-black text-[8px] uppercase tracking-widest">Follow</span>
@@ -2872,6 +2968,48 @@ export function VibeMailInboxWithClaim({
                         return null;
                       })}
                     </div>
+                    {/* Claim 100 VBMS reward */}
+                    {(() => {
+                      const mailId = String(selectedMessage._id);
+                      const isClaimed = claimedMailVbms.has(mailId);
+                      const isClaiming = claimingMailId === mailId;
+                      return (
+                        <div className="border-t-2 border-black p-3 bg-[#111] flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-[#FFD700] font-black text-xs uppercase tracking-wide">Reward</p>
+                            <p className="text-white/60 text-[10px]">100 VBMS for receiving this Quest</p>
+                          </div>
+                          <button
+                            onClick={async () => {
+                              if (!myAddress || isClaimed || isClaiming) return;
+                              setClaimingMailId(mailId);
+                              try {
+                                const res = await fetch('/api/fid/claim-quest-coins', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ address: myAddress, vibemailId: mailId }),
+                                });
+                                const data = await res.json();
+                                if (data.success || data.reason === 'already_claimed') {
+                                  setClaimedMailVbms(prev => new Set([...prev, mailId]));
+                                }
+                              } catch {}
+                              setClaimingMailId(null);
+                            }}
+                            disabled={isClaimed || isClaiming || !myAddress}
+                            className={`px-4 py-2 border-2 border-black font-black text-xs uppercase tracking-wide shadow-[3px_3px_0px_#000] flex-shrink-0 transition-all ${
+                              isClaimed
+                                ? 'bg-[#222] text-[#22C55E] shadow-none cursor-default'
+                                : isClaiming
+                                ? 'bg-[#FFD700]/50 text-black cursor-wait'
+                                : 'bg-[#FFD700] text-black hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                            }`}
+                          >
+                            {isClaimed ? 'Claimed!' : isClaiming ? '...' : 'Claim 100 VBMS'}
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 );
               })()}
@@ -3281,7 +3419,7 @@ export function VibeMailInboxWithClaim({
                     AudioManager.buttonClick();
                     const key = `vm_settings_${cardFid}`;
                     localStorage.setItem(key, JSON.stringify({
-                      farcaster: settingsFarcaster, farcasterFid: settingsFarcasterFid, farcasterPfp: settingsFarcasterPfp,
+                      farcaster: settingsFarcaster, farcasterFid: settingsFarcasterFid, farcasterPfp: settingsFarcasterPfp, farcasterBanner: settingsFarcasterBanner,
                       miniapp: settingsMiniapp, miniappName: settingsMiniappName, miniappIcon: settingsMiniappIcon,
                       twitter: settingsTwitter,
                       channel: settingsChannel, channelName: settingsChannelName, channelImg: settingsChannelImg,

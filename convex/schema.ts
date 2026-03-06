@@ -1535,6 +1535,9 @@ export default defineSchema({
     giftNftName: v.optional(v.string()),
     giftNftImageUrl: v.optional(v.string()),
     giftNftCollection: v.optional(v.string()),
+    // VibeMail reward claim
+    vibeMailReward: v.optional(v.number()),   // VBMS amount recipient can claim
+    vibeMailClaimed: v.optional(v.boolean()), // whether recipient has already claimed
   })
     .index("by_card_date", ["cardFid", "date"])
     .index("by_voter_date", ["voterFid", "date"])
@@ -2135,4 +2138,13 @@ export default defineSchema({
     .index("by_quest", ["questId"])
     .index("by_completer", ["completerFid"])
     .index("by_completer_quest", ["completerFid", "questId"]),
+
+  // VibeMail Quest reward claims - track 100 coin claims per quest message
+  vibeMailQuestClaims: defineTable({
+    address: v.string(),
+    vibemailId: v.string(), // VibeFID cardVotes document _id as string
+    claimedAt: v.number(),
+  })
+    .index("by_address", ["address"])
+    .index("by_address_mailid", ["address", "vibemailId"]),
 });

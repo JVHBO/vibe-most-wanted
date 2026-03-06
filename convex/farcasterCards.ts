@@ -794,6 +794,47 @@ export const updateCardPfp = mutation({
 });
 
 /**
+ * Claim 100 coins reward for receiving a Quest VibeMail.
+ * Tracked per (address, vibemailId) to prevent double-claim.
+ */
+export const claimVibeMailQuestCoins = mutation({
+  args: {
+    address: v.string(),
+    vibemailId: v.string(),
+  },
+  handler: async (ctx, { address, vibemailId }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    // Check already claimed
+    const existing = await ctx.db
+      .query("vibeMailQuestClaims")
+      .withIndex("by_address_mailid", q => q.eq("address", normalizedAddress).eq("vibemailId", vibemailId))
+      .first();
+    if (existing) return { success: false, reason: "already_claimed" };
+
+    // Get profile
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", q => q.eq("address", normalizedAddress))
+      .first();
+    if (!profile) return { success: false, reason: "profile_not_found" };
+
+    const REWARD = 100;
+    const currentCoins = profile.coins || 0;
+    const newCoins = currentCoins + REWARD;
+
+    await ctx.db.patch(profile._id, { coins: newCoins });
+    await ctx.db.insert("vibeMailQuestClaims", {
+      address: normalizedAddress,
+      vibemailId,
+      claimedAt: Date.now(),
+    });
+
+    return { success: true, coinsAwarded: REWARD };
+  },
+});
+
+/**
  * Admin: fix card field (suitSymbol, etc.)
  */
 export const adminPatchCard = mutation({
