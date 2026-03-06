@@ -29,6 +29,7 @@ const QUEST_REWARDS: Record<string, number> = {
   follow_zazza: 50,           // was 100
   follow_bradenwolf: 50,      // was 100
   follow_viberotbangers_creator: 50, // was 100
+  follow_paul2: 50,
 };
 
 // ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
@@ -368,6 +369,7 @@ const QUEST_CONFIG: Record<string, { type: string; targetFid?: number }> = {
   follow_bradenwolf: { type: "follow", targetFid: 1012281 },
   follow_degencummunist: { type: "follow", targetFid: 17355 },
   // Follows - ARB Creators (auto-verify after visiting link)
+  follow_paul2: { type: "follow", targetFid: 262857 },
   follow_0xanas: { type: "channel" },
   follow_aylaaa: { type: "channel" },
   follow_dylantale: { type: "channel" },

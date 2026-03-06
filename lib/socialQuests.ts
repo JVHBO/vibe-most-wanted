@@ -19,6 +19,7 @@ export interface SocialQuest {
   group?: string; // Category group for carousel display
   pfpUrl?: string; // Hardcoded pfp URL (avoids Neynar API call)
   bannerUrl?: string; // Hardcoded banner URL (avoids Neynar API call)
+  featured?: boolean; // Highlighted quest with gold border
 }
 
 // Channel IDs from Farcaster
@@ -210,6 +211,20 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
   },
 
   // --- ARB Creators ---
+  {
+    id: 'follow_paul2',
+    type: 'follow',
+    target: 'paul2',
+    targetFid: 262857,
+    displayName: 'Follow @paul2',
+    description: 'Follow ARB Kink creator',
+    reward: 50,
+    icon: '',
+    url: 'https://farcaster.xyz/paul2',
+    group: 'arb_creators',
+    featured: true,
+    pfpUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/ce1a837d-6048-472b-2d4f-a4819ebc9a00/rectcrop3',
+  },
   {
     id: 'follow_0xanas',
     type: 'follow',

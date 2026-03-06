@@ -743,7 +743,8 @@ export default function QuestsPage() {
                       // Update ref for auto-rotate
                       socialQuestCountsRef.current[groupId] = groupQuests.length;
 
-                      const groupColor = groupId === 'arb_creators' ? '#12AAFF' : '#FFD700';
+                      const isFeatured = quest.featured === true;
+                      const groupColor = isFeatured ? '#FFD700' : groupId === 'arb_creators' ? '#12AAFF' : '#FFD700';
 
                       const idx = socialCarouselIndices[groupId] ?? 0;
                       const quest = groupQuests[Math.min(idx, groupQuests.length - 1)];
@@ -767,7 +768,14 @@ export default function QuestsPage() {
                         <div key={groupId} className="border-4 overflow-hidden" style={{ borderColor: groupColor, boxShadow: `4px 4px 0px ${groupColor}` }}>
                           {/* Group header — fixed, never slides */}
                           <div className="px-3 py-1.5 bg-[#111] border-b-2 flex items-center justify-between" style={{ borderColor: groupColor }}>
-                            <p className="text-xs font-black uppercase tracking-widest" style={{ color: groupColor }}>{groupLabel}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-xs font-black uppercase tracking-widest" style={{ color: groupColor }}>{groupLabel}</p>
+                              {isFeatured && (
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="#FFD700">
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                </svg>
+                              )}
+                            </div>
                             <div className="flex items-center gap-1.5">
                               {groupId === 'vbms' && effectiveChain === 'arbitrum' && (
                                 <span className="px-1.5 py-0.5 bg-blue-900/60 border border-blue-500/60 text-[#12AAFF] font-black text-[9px] uppercase tracking-wider">ARB 2x</span>
