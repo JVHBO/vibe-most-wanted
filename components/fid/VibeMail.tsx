@@ -1878,7 +1878,7 @@ export function VibeMailInboxWithClaim({
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={t.vibemailSearchPlayers || "Search to add recipients..."}
+                      placeholder="Search VibeFID holders..."
                       className="w-full bg-[#111] border-2 border-[#444] px-3 py-2 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#FFD700]"
                       style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
                     />
@@ -1950,7 +1950,7 @@ export function VibeMailInboxWithClaim({
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search by username or FID..."
+                      placeholder="Search VibeFID holders..."
                       className="flex-1 bg-[#111] border-2 border-[#444] px-3 py-2 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#FFD700]"
                       style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
                     />

@@ -358,7 +358,7 @@ const QUEST_CONFIG: Record<string, { type: string; targetFid?: number }> = {
   // Channels (auto-verified - Neynar API requires paid plan)
   join_vibe_most_wanted: { type: "channel" },
   join_fidmfers: { type: "channel" },
-  // Follows
+  // Follows - VBMS Creators
   follow_jvhbo: { type: "follow", targetFid: 214746 },
   follow_betobutter: { type: "follow", targetFid: 1009776 },
   follow_jayabs: { type: "follow", targetFid: 274150 },
@@ -366,7 +366,15 @@ const QUEST_CONFIG: Record<string, { type: string; targetFid?: number }> = {
   follow_denkurhq: { type: "follow", targetFid: 439094 },
   follow_zazza: { type: "follow", targetFid: 16851 },
   follow_bradenwolf: { type: "follow", targetFid: 1012281 },
-  follow_viberotbangers_creator: { type: "follow", targetFid: 1009776 },
+  follow_viberotbangers_creator: { type: "follow", targetFid: 1101604 },
+  // Follows - ARB Creators
+  follow_0xanas: { type: "follow", targetFid: 249702 },
+  follow_aylaaa: { type: "follow", targetFid: 947631 },
+  follow_dylantale: { type: "follow", targetFid: 816137 },
+  follow_kenny: { type: "follow", targetFid: 2210 },
+  follow_nezzar: { type: "follow", targetFid: 1733 },
+  follow_0xhohenheim: { type: "follow", targetFid: 1127682 },
+  follow_atown: { type: "follow", targetFid: 191042 },
 };
 
 /**

@@ -59,6 +59,8 @@ export default function QuestsPage() {
   const [claiming, setClaiming] = useState<string | null>(null);
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(new Set());
   const [visitedQuests, setVisitedQuests] = useState<Set<string>>(new Set());
+  const [socialCarouselIndices, setSocialCarouselIndices] = useState<Record<string, number>>({});
+  const [missionCarouselIdx, setMissionCarouselIdx] = useState(0);
 
   // Personal Missions (Welcome, VibeFID, Daily Login, etc)
   // 🚀 BANDWIDTH FIX: Converted from useQuery to manual query to avoid WebSocket subscription
@@ -147,6 +149,8 @@ export default function QuestsPage() {
     try { await setPreferredChainMutation({ address, chain }); }
     catch (e) { console.error('Failed to switch chain:', e); }
   };
+
+  // No API call needed - pfp/banner URLs are hardcoded in socialQuests.ts
 
   // All mission types (matching backend) - using translation keys
   const ALL_MISSION_TYPES = [
@@ -564,189 +568,278 @@ export default function QuestsPage() {
                   <div className="flex items-center justify-center py-6">
                     <div className="animate-spin w-5 h-5 border-2 border-vintage-gold border-t-transparent rounded-full" />
                   </div>
-                ) : (
-                  <div className="divide-y divide-vintage-gold/10">
-                    {missions
+                ) : (() => {
+                  const missionList = missions
                     .filter((m: any) => !m.claimed)
                     .sort((a: any, b: any) => {
                       if (a.completed && !b.completed) return -1;
                       if (b.completed && !a.completed) return 1;
                       return 0;
-                    })
-                    .map((mission: any) => {
-                      const isClaiming = claimingMission === mission._id;
-                      const isPlaceholder = mission._id.startsWith('placeholder_');
-                      const isVibeBadge = mission.missionType === 'claim_vibe_badge';
-
-                      return (
-                        <div
-                          key={mission._id}
-                          className={`flex items-center gap-3 px-3 py-2.5 transition-all ${
-                            mission.completed ? "bg-yellow-400/5" : "opacity-50"
-                          }`}
-                        >
-                          {/* State indicator */}
-                          <div className={`w-1 self-stretch flex-shrink-0 ${
-                            mission.completed ? "bg-yellow-400" : "bg-white/10"
-                          }`} />
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-xs font-bold truncate ${mission.completed ? "text-vintage-ice" : "text-vintage-ice/50"}`}>
-                              {t(mission.titleKey)}
-                            </p>
-                            <p className="text-[10px] text-vintage-ice/40 truncate">{t(mission.descKey)}</p>
-                          </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {mission.reward > 0 && (
-                              <div className="flex flex-col items-end">
-                                <span className="text-vintage-gold font-bold text-xs">
-                                  +{effectiveChain === "arbitrum" ? mission.reward * 2 : mission.reward}
-                                  {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
-                                </span>
-                                <span className="text-purple-400 text-[9px] font-bold">
-                                  +{5 * (vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1)} aura
-                                  {(vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge) && <span className="text-blue-400 text-[8px] ml-0.5">×2</span>}
-                                </span>
-                              </div>
-                            )}
-                            {mission.completed && !isPlaceholder ? (
-                              <button
-                                onClick={async () => {
-                                  AudioManager.buttonClick();
-                                  if (!address) return;
-                                  setClaimingMission(mission._id);
-                                  try {
-                                    if (isVibeBadge) {
-                                      await claimVibeBadge({ playerAddress: address.toLowerCase() });
-                                      await refreshProfile();
-                                    } else {
-                                      const chain = effectiveChain;
-                                      await claimMission({ playerAddress: address.toLowerCase(), missionId: mission._id, chain });
-                                      if (chain === "arbitrum" && mission.reward > 0) await validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
-                                    }
-                                    AudioManager.buttonSuccess();
-                                    await refreshMissions();
-                                  } catch (e) { console.error(e); }
-                                  finally { setClaimingMission(null); }
-                                }}
-                                disabled={isClaiming}
-                                className={`relative px-2.5 py-1 rounded border-2 border-black font-bold text-xs ${isVibeBadge ? "bg-purple-500 text-white" : "bg-vintage-gold text-black"}`}
-                                style={{ boxShadow: "2px 2px 0px #000" }}
-                              >
-                                <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                                {isClaiming ? "..." : t('mission_claim')}
-                              </button>
-                            ) : (
-                              <span className="text-vintage-ice/20 text-[10px]">{t('mission_locked')}</span>
-                            )}
-                          </div>
+                    });
+                  if (missionList.length === 0) return <p className="text-vintage-ice/40 text-xs text-center py-4">All missions claimed!</p>;
+                  const mIdx = Math.min(missionCarouselIdx, missionList.length - 1);
+                  const mission = missionList[mIdx];
+                  const isClaiming = claimingMission === mission._id;
+                  const isPlaceholder = mission._id.startsWith('placeholder_');
+                  const isVibeBadge = mission.missionType === 'claim_vibe_badge';
+                  const mAura = 5 * (vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1);
+                  return (
+                    <div className="px-3 py-2">
+                      {/* Compact carousel card */}
+                      <div className={`flex items-center gap-3 p-2.5 border-2 transition-all ${mission.completed ? "border-yellow-400/30 bg-yellow-400/5" : "border-white/10 opacity-60"}`}>
+                        <div className={`w-1 self-stretch flex-shrink-0 ${mission.completed ? "bg-yellow-400" : "bg-white/10"}`} />
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-xs font-bold truncate ${mission.completed ? "text-vintage-ice" : "text-vintage-ice/50"}`}>
+                            {t(mission.titleKey)}
+                          </p>
+                          <p className="text-[10px] text-vintage-ice/40 truncate">{t(mission.descKey)}</p>
+                          {mission.reward > 0 && (
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-vintage-gold font-bold text-[10px]">
+                                +{effectiveChain === "arbitrum" ? mission.reward * 2 : mission.reward} VBMS
+                                {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
+                              </span>
+                              <span className="text-purple-400 text-[9px] font-bold">
+                                +{mAura} aura
+                              </span>
+                            </div>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {mission.completed && !isPlaceholder ? (
+                            <button
+                              onClick={async () => {
+                                AudioManager.buttonClick();
+                                if (!address) return;
+                                setClaimingMission(mission._id);
+                                try {
+                                  if (isVibeBadge) {
+                                    await claimVibeBadge({ playerAddress: address.toLowerCase() });
+                                    await refreshProfile();
+                                  } else {
+                                    const chain = effectiveChain;
+                                    await claimMission({ playerAddress: address.toLowerCase(), missionId: mission._id, chain });
+                                    if (chain === "arbitrum" && mission.reward > 0) await validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
+                                  }
+                                  AudioManager.buttonSuccess();
+                                  await refreshMissions();
+                                } catch (e) { console.error(e); }
+                                finally { setClaimingMission(null); }
+                              }}
+                              disabled={isClaiming}
+                              className={`relative px-2 py-1 border-2 border-black font-bold text-xs ${isVibeBadge ? "bg-purple-500 text-white" : "bg-vintage-gold text-black"}`}
+                              style={{ boxShadow: "2px 2px 0px #000" }}
+                            >
+                              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                              {isClaiming ? "..." : t('mission_claim')}
+                            </button>
+                          ) : (
+                            <span className="text-vintage-ice/20 text-[10px]">{t('mission_locked')}</span>
+                          )}
+                          {/* Nav */}
+                          <button onClick={() => setMissionCarouselIdx(i => Math.max(0, i - 1))} disabled={mIdx === 0}
+                            className="w-6 h-6 bg-black border border-[#FFD700]/40 flex items-center justify-center disabled:opacity-20">
+                            <span className="text-[#FFD700] font-black text-xs leading-none">‹</span>
+                          </button>
+                          <span className="text-white/30 text-[9px]">{mIdx + 1}/{missionList.length}</span>
+                          <button onClick={() => setMissionCarouselIdx(i => Math.min(missionList.length - 1, i + 1))} disabled={mIdx >= missionList.length - 1}
+                            className="w-6 h-6 bg-black border border-[#FFD700]/40 flex items-center justify-center disabled:opacity-20">
+                            <span className="text-[#FFD700] font-black text-xs leading-none">›</span>
+                          </button>
+                        </div>
+                      </div>
+                      {/* Dot indicators */}
+                      <div className="flex justify-center gap-1 pt-2">
+                        {missionList.map((_: any, i: number) => (
+                          <button key={i} onClick={() => setMissionCarouselIdx(i)}
+                            className={`w-1.5 h-1.5 rounded-full transition-all ${i === mIdx ? 'bg-[#FFD700]' : 'bg-white/20'}`} />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
-              {/* Social Quests (Follow & Join) */}
-              <div className="bg-vintage-charcoal/80 border-2 border-vintage-gold/40 rounded-xl overflow-hidden" style={{ boxShadow: "3px 3px 0px rgba(0,0,0,0.5)" }}>
-                <div className="px-3 py-2 border-b border-vintage-gold/20">
-                  <p className="text-vintage-gold text-sm font-bold">{t('questsSocialQuests')}</p>
-                </div>
+              {/* Social Quests - Carousel by group */}
+              {(() => {
+                const isAdmin = profileDashboard?.username?.toLowerCase() === 'jvhbo';
+                const GROUPS = [
+                  { id: 'vbms', label: 'Vibe Creators' },
+                  { id: 'arb_creators', label: 'ARB Creators' },
+                ];
+                const hasVibeFID = vibeBadgeEligibility?.hasVibeFIDCards || false;
+                const hasVibeBadge = profileDashboard?.hasVibeBadge;
+                const has2xBonus = hasVibeFID || hasVibeBadge;
+                const bonusSource = hasVibeBadge ? "VIBE Badge" : hasVibeFID ? "VibeFID" : "";
 
-                {/* 2x Bonus Banners */}
-                {(() => {
-                  // 🐛 FIX: Check actual VibeFID NFT ownership, not just Farcaster FID
-                  const hasVibeFID = vibeBadgeEligibility?.hasVibeFIDCards || false;
-                  const hasVibeBadge = profileDashboard?.hasVibeBadge;
-                  const has2xBonus = hasVibeFID || hasVibeBadge;
-                  const bonusSource = hasVibeBadge ? "VIBE Badge" : hasVibeFID ? "VibeFID" : "";
-                  const isArb = effectiveChain === "arbitrum";
-
-                  return (
-                    <>
+                return (
+                  <div className="space-y-3">
+                    {/* 2x bonus info */}
+                    <div className="flex gap-2">
                       {has2xBonus ? (
-                        <div className="p-2 mb-1 bg-vintage-gold/15 border border-vintage-gold/50 rounded-lg flex items-center gap-2">
-                          <span className="text-vintage-gold">🎖️</span>
-                          <span className="text-vintage-gold font-bold text-xs">{bonusSource} Active</span>
-                          <span className="text-vintage-ice text-[10px]">2x coins!</span>
+                        <div className="flex-1 px-2 py-1.5 bg-vintage-gold/15 border border-vintage-gold/50 rounded flex items-center gap-2">
+                          <span className="text-vintage-gold font-bold text-[10px]">{bonusSource} 2x Active</span>
                         </div>
                       ) : (
-                        <div className="p-2 mb-1 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span>✨</span>
-                            <span className="text-vintage-ice text-xs">Get 2x rewards!</span>
-                          </div>
-                          <button
-                            onClick={() => router.push('/fid')}
-                            className="px-2 py-1 rounded bg-vintage-gold text-black font-bold text-[10px] animate-pulse"
-                          >
+                        <div className="flex-1 px-2 py-1.5 bg-vintage-gold/10 border border-vintage-gold/30 rounded flex items-center justify-between">
+                          <span className="text-vintage-ice text-[10px]">Get 2x rewards!</span>
+                          <button onClick={() => router.push('/fid')}
+                            className="px-2 py-0.5 rounded bg-vintage-gold text-black font-bold text-[10px] animate-pulse">
                             Mint VibeFID
                           </button>
                         </div>
                       )}
-                      {isArb && (
-                        <div className="p-2 mb-2 bg-blue-900/20 border border-blue-500/40 rounded-lg flex items-center gap-2">
-                          <span className="text-blue-400">◆</span>
-                          <span className="text-blue-400 font-bold text-xs">Arbitrum 2x</span>
-                          <span className="text-vintage-ice text-[10px]">Quest rewards doubled!</span>
+                      {effectiveChain === "arbitrum" && (
+                        <div className="px-2 py-1.5 bg-blue-900/20 border border-blue-500/40 rounded flex items-center gap-1">
+                          <span className="text-blue-400 font-bold text-[10px]">ARB 2x</span>
                         </div>
                       )}
-                    </>
-                  );
-                })()}
-                <div className="divide-y divide-vintage-gold/10">
-                  {SOCIAL_QUESTS
-                  .filter(q => q.type !== 'notification' && q.type !== 'miniapp' && getQuestStatus(q) !== 'claimed')
-                  .sort((a, b) => {
-                    const statusA = getQuestStatus(a);
-                    const statusB = getQuestStatus(b);
-                    if (statusA === 'completed' && statusB !== 'completed') return -1;
-                    if (statusB === 'completed' && statusA !== 'completed') return 1;
-                    return 0;
-                  })
-                  .map((quest) => {
-                    const status = getQuestStatus(quest);
-                    const isVerifying = verifying === quest.id;
-                    const isClaimingSocial = claiming === quest.id;
+                    </div>
 
-                    return (
-                      <div key={quest.id} className={`flex items-center gap-3 px-3 py-2.5 transition-all ${status === "completed" ? "bg-yellow-400/5" : ""}`}>
-                        <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
-                          quest.type === "channel"
-                            ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
-                            : "bg-blue-500/20 text-blue-400 border border-blue-500/40"
-                        }`}>
-                          {quest.type === "channel" ? "#" : "@"}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-vintage-ice font-bold text-xs truncate">{quest.displayName}</p>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-vintage-gold font-bold text-xs">
-                            +{effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward}
-                            {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
-                          </span>
-                          {status === "completed" ? (
-                            <button onClick={() => { AudioManager.buttonClick(); handleClaimSocial(quest); }} onMouseEnter={() => AudioManager.buttonHover()} disabled={isClaimingSocial}
-                              className="px-2.5 py-1 bg-vintage-gold text-black font-bold text-xs rounded border-2 border-black"
-                              style={{ boxShadow: "2px 2px 0px #000" }}>
-                              {isClaimingSocial ? "..." : t('questsClaim')}
-                            </button>
-                          ) : (
-                            <button onClick={() => { AudioManager.buttonClick(); verifyQuest(quest); }} onMouseEnter={() => AudioManager.buttonHover()} disabled={isVerifying}
-                              className="px-2.5 py-1 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold font-bold text-xs rounded hover:border-vintage-gold transition-all"
-                              style={{ boxShadow: "none" }}>
-                              {isVerifying ? "..." : visitedQuests.has(quest.id) ? t('questsVerify') : t('questsGo')}
-                            </button>
+                    {GROUPS.map(({ id: groupId, label: groupLabel }) => {
+                      const groupQuests = SOCIAL_QUESTS.filter(q =>
+                        q.type !== 'notification' && q.type !== 'miniapp' &&
+                        q.group === groupId &&
+                        (isAdmin || getQuestStatus(q) !== 'claimed')
+                      );
+                      if (groupQuests.length === 0) return null;
+
+                      const idx = socialCarouselIndices[groupId] ?? 0;
+                      const quest = groupQuests[Math.min(idx, groupQuests.length - 1)];
+                      const status = getQuestStatus(quest);
+                      const isVerifying = verifying === quest.id;
+                      const isClaimingSocial = claiming === quest.id;
+                      const pfp = quest.pfpUrl;
+                      const banner = quest.bannerUrl;
+                      const displayReward = effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward;
+                      const hasVibeFID2x = vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge;
+                      const auraReward = 5 * (hasVibeFID2x ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1);
+
+                      const goToIdx = (newIdx: number) => {
+                        const clamped = Math.max(0, Math.min(groupQuests.length - 1, newIdx));
+                        setSocialCarouselIndices(prev => ({ ...prev, [groupId]: clamped }));
+                      };
+
+                      return (
+                        <div key={groupId} className="border-4 border-black overflow-hidden" style={{ boxShadow: '4px 4px 0px #000' }}>
+                          {/* Group header */}
+                          <div className="px-3 py-1.5 bg-[#111] border-b-2 border-black flex items-center justify-between">
+                            <p className="text-[#FFD700] text-xs font-black uppercase tracking-widest">{groupLabel}</p>
+                            <p className="text-white/40 text-[10px]">{idx + 1}/{groupQuests.length}</p>
+                          </div>
+
+                          {/* Banner image area */}
+                          <div className="relative h-28 bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
+                            {/* Background: banner image if available, else blurred pfp */}
+                            {banner ? (
+                              <div className="absolute inset-0 bg-cover bg-center opacity-60"
+                                style={{ backgroundImage: `url(${banner})` }} />
+                            ) : pfp ? (
+                              <div className="absolute inset-0 bg-cover bg-center opacity-20 blur-sm scale-110"
+                                style={{ backgroundImage: `url(${pfp})` }} />
+                            ) : null}
+                            <div className="absolute inset-0 bg-black/40" />
+                            {/* Group type badge */}
+                            <span className={`absolute top-2 left-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${
+                              quest.type === 'channel'
+                                ? 'bg-purple-900/80 text-purple-300 border-purple-500/60'
+                                : groupId === 'arb_creators'
+                                ? 'bg-blue-900/80 text-[#12AAFF] border-blue-500/60'
+                                : 'bg-black/80 text-[#FFD700] border-[#FFD700]/40'
+                            }`}>
+                              {quest.type === 'channel' ? '#CHANNEL' : groupId === 'arb_creators' ? 'ARB' : '@FOLLOW'}
+                            </span>
+                            {/* Claimed overlay */}
+                            {status === 'claimed' && (
+                              <div className="absolute inset-0 bg-green-900/60 flex items-center justify-center z-10">
+                                <span className="text-green-400 font-black text-lg">DONE</span>
+                              </div>
+                            )}
+                            {/* pfp */}
+                            {pfp ? (
+                              <img src={pfp} alt={quest.displayName}
+                                className="relative z-10 w-16 h-16 rounded-full object-cover border-4 border-[#FFD700] shadow-lg" />
+                            ) : (
+                              <div className="relative z-10 w-16 h-16 rounded-full bg-[#222] border-4 border-[#FFD700]/40 flex items-center justify-center">
+                                <span className="text-[#FFD700]/60 font-black text-xl">{quest.type === 'channel' ? '#' : '@'}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Info row */}
+                          <div className="px-3 pt-2 pb-1 bg-[#111]">
+                            <p className="text-white font-black text-xs truncate">{quest.displayName}</p>
+                            <p className="text-white/50 text-[10px] truncate">{quest.description}</p>
+                          </div>
+
+                          {/* Buttons row */}
+                          <div className="px-3 pb-3 bg-[#111] flex items-center justify-between gap-2">
+                            <div className="flex flex-col">
+                              <span className="text-[#FFD700] font-bold text-xs">
+                                +{displayReward} VBMS
+                                {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
+                              </span>
+                              <span className="text-purple-400 text-[9px] font-bold">
+                                +{auraReward} aura
+                                {hasVibeFID2x && <span className="text-blue-400 text-[8px] ml-0.5">×2</span>}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {/* Carousel nav */}
+                              {groupQuests.length > 1 && (
+                                <>
+                                  <button onClick={() => goToIdx(idx - 1)} disabled={idx === 0}
+                                    className="w-7 h-7 bg-black border-2 border-[#FFD700]/50 flex items-center justify-center disabled:opacity-30"
+                                    style={{ boxShadow: '2px 2px 0px #000' }}>
+                                    <span className="text-[#FFD700] font-black text-sm leading-none">‹</span>
+                                  </button>
+                                  <button onClick={() => goToIdx(idx + 1)} disabled={idx >= groupQuests.length - 1}
+                                    className="w-7 h-7 bg-black border-2 border-[#FFD700]/50 flex items-center justify-center disabled:opacity-30"
+                                    style={{ boxShadow: '2px 2px 0px #000' }}>
+                                    <span className="text-[#FFD700] font-black text-sm leading-none">›</span>
+                                  </button>
+                                </>
+                              )}
+                              {/* Action button */}
+                              {status === "claimed" ? (
+                                <span className="text-green-400 text-[10px] font-bold">Done</span>
+                              ) : status === "completed" ? (
+                                <button onClick={() => { AudioManager.buttonClick(); handleClaimSocial(quest); }}
+                                  onMouseEnter={() => AudioManager.buttonHover()} disabled={isClaimingSocial}
+                                  className="px-3 py-1.5 bg-[#FFD700] text-black font-black text-xs border-2 border-black"
+                                  style={{ boxShadow: "2px 2px 0px #000" }}>
+                                  {isClaimingSocial ? "..." : t('questsClaim')}
+                                </button>
+                              ) : (
+                                <button onClick={() => { AudioManager.buttonClick(); verifyQuest(quest); }}
+                                  onMouseEnter={() => AudioManager.buttonHover()} disabled={isVerifying}
+                                  className="px-3 py-1.5 bg-[#111] border-2 border-[#FFD700]/60 text-[#FFD700] font-black text-xs hover:border-[#FFD700] transition-all"
+                                  style={{ boxShadow: "2px 2px 0px #000" }}>
+                                  {isVerifying ? "..." : visitedQuests.has(quest.id) ? t('questsVerify') : t('questsGo')}
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Dot indicators */}
+                          {groupQuests.length > 1 && (
+                            <div className="flex justify-center gap-1 pb-2 bg-[#111]">
+                              {groupQuests.map((_, i) => (
+                                <button key={i} onClick={() => goToIdx(i)}
+                                  className={`w-1.5 h-1.5 rounded-full transition-all ${i === idx ? 'bg-[#FFD700]' : 'bg-white/20'}`} />
+                              ))}
+                            </div>
                           )}
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {!userFid && (
-                  <p className="text-vintage-ice/50 text-[10px] text-center px-3 py-2">{t('questsConnectFarcaster')}</p>
-                )}
-              </div>
+                      );
+                    })}
+
+                    {!userFid && (
+                      <p className="text-vintage-ice/50 text-[10px] text-center">{t('questsConnectFarcaster')}</p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
         </div>
