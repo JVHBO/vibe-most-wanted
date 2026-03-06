@@ -1288,7 +1288,7 @@ export function VibeMailInboxWithClaim({
           </span>
         );
       }
-      return <span key={idx}>{line}{!isLast && '\n'}</span>;
+      return <span key={idx} style={{ color: '#e5e7eb' }}>{line}{!isLast && '\n'}</span>;
     });
   };
 
@@ -1853,29 +1853,32 @@ export function VibeMailInboxWithClaim({
                           <button onClick={() => setShowCostInfo(false)} className="text-black/60 hover:text-black font-bold text-xs">✕</button>
                         </div>
                         <div className="divide-y divide-[#1a1a1a]">
-                          <div className="px-3 py-2 flex items-start gap-2">
-                            <span className="text-[#22C55E] font-black text-xs w-14 flex-shrink-0">FREE</span>
-                            <div>
-                              <p className="text-white text-xs font-bold">Just a Message</p>
-                              <p className="text-white/40 text-[10px]">1 por destinatario por dia</p>
+                          {/* Free Mail */}
+                          <div className="px-3 py-2">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="bg-[#22C55E] text-black font-black text-[9px] px-1.5 py-0.5 uppercase tracking-wide">FREE MAIL</span>
+                              <span className="text-[#22C55E] font-black text-xs">0 VBMS</span>
                             </div>
+                            <p className="text-white text-xs font-bold">Just a Message</p>
+                            <p className="text-white/40 text-[10px]">Sem quest · limite 1 por destinatario por dia</p>
                           </div>
-                          <div className="px-3 py-2 flex items-start gap-2">
-                            <span className="text-[#FFD700] font-black text-xs w-14 flex-shrink-0">1.000</span>
-                            <div>
-                              <p className="text-white text-xs font-bold">With Social Quest</p>
-                              <p className="text-white/40 text-[10px]">VBMS por destinatario · recipiente ganha ao completar</p>
+                          {/* Quest VibeMail */}
+                          <div className="px-3 py-2">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="bg-[#FFD700] text-black font-black text-[9px] px-1.5 py-0.5 uppercase tracking-wide">QUEST MAIL</span>
+                              <span className="text-[#FFD700] font-black text-xs">1.000 VBMS</span>
                             </div>
+                            <p className="text-white text-xs font-bold">With Social Quest</p>
+                            <p className="text-white/40 text-[10px]">Por destinatario · recipiente ganha VBMS ao completar as quests</p>
                           </div>
-                          <div className="px-3 py-2 flex items-start gap-2">
-                            <span className="text-[#FFD700] font-black text-xs w-14 flex-shrink-0">×N</span>
-                            <div>
-                              <p className="text-white text-xs font-bold">Broadcast / Aleatorio</p>
-                              <p className="text-white/40 text-[10px]">1.000 VBMS × numero de destinatarios</p>
+                          {/* Broadcast */}
+                          <div className="px-3 py-2">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="bg-[#2563EB] text-white font-black text-[9px] px-1.5 py-0.5 uppercase tracking-wide">BROADCAST</span>
+                              <span className="text-[#60a5fa] font-black text-xs">1.000 × N VBMS</span>
                             </div>
-                          </div>
-                          <div className="px-3 py-2 bg-[#111]">
-                            <p className="text-white/30 text-[9px] leading-relaxed">Recipiente ganha +100 VBMS free ao receber. Completa quests para ganhar ate +400 extras.</p>
+                            <p className="text-white text-xs font-bold">Transmissao / Aleatorio</p>
+                            <p className="text-white/40 text-[10px]">1.000 VBMS multiplicado pelo numero de destinatarios</p>
                           </div>
                         </div>
                       </div>
