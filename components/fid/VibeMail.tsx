@@ -997,7 +997,7 @@ export function VibeMailInboxWithClaim({
     targetFidForGift ? { fid: targetFidForGift } : 'skip'
   );
 
-  // TX hook for VibeMail (free vote = 0 VBMS but requires TX signature)
+  // TX hook for VibeMail (free mail = 0 VBMS, no quest, 1 per day limit)
   const { transfer: transferVBMS, isPending: isTransferPending } = useTransferVBMS();
 
   // Free VibeMail limit (uses same system as voting)
@@ -1005,7 +1005,7 @@ export function VibeMailInboxWithClaim({
     api.cardVotes.getUserFreeVotesRemaining,
     myFid ? { voterFid: myFid } : 'skip'
   );
-  const hasFreeVotes = (freeVotesRemaining?.remaining ?? 0) > 0;
+  const hasFreemail = (freeVotesRemaining?.remaining ?? 0) > 0 && !composerQuestData;
 
   const searchResults = useQuery(
     api.cardVotes.searchCardsForVibeMail,
@@ -1107,7 +1107,7 @@ export function VibeMailInboxWithClaim({
       // On-chain confirmation via ARB validator (generates TX proof)
       await validateOnArb(100, ARB_CLAIM_TYPE.VIBEMAIL);
 
-      if (!hasFreeVotes) {
+      if (!hasFreemail) {
         await transferVBMS(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(VIBEMAIL_COST_VBMS));
       }
       if (isReply && origMsgId) {
@@ -2378,7 +2378,7 @@ export function VibeMailInboxWithClaim({
                       </div>
                     )}
                     <div className="mt-3 text-right">
-                      <span className="text-[#FFD700] text-sm font-bold">+{hasFreeVotes ? 0 : 100} VBMS</span>
+                      <span className="text-[#FFD700] text-sm font-bold">+{hasFreemail ? 0 : 100} VBMS</span>
                     </div>
                   </div>
                 </div>
@@ -2537,7 +2537,7 @@ export function VibeMailInboxWithClaim({
               ) : (
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  {(!hasFreeVotes || composerQuestData) ? `Send · ${Number(VIBEMAIL_COST_VBMS).toLocaleString()} VBMS` : 'Send · Free'}
+                  {hasFreemail ? 'Send · Free' : `Send · ${Number(VIBEMAIL_COST_VBMS).toLocaleString()} VBMS`}
                 </span>
               )}
             </button>
