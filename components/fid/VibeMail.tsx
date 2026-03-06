@@ -1866,6 +1866,10 @@ export function VibeMailInboxWithClaim({
                   <div className="bg-[#FFD700] px-3 py-1.5 flex items-center gap-2">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="#000"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     <span className="font-black text-black text-[10px] uppercase tracking-widest flex-1">Quest VibeMail · {composerQuestData.quests.length} quest{composerQuestData.quests.length > 1 ? 's' : ''}</span>
+                    <button
+                      onClick={() => { setShowComposer(false); setActiveTab('quests'); }}
+                      className="text-black font-black text-[9px] uppercase tracking-wide border border-black/30 px-2 py-0.5 hover:bg-black/10 transition-colors mr-1"
+                    >Edit</button>
                     <button onClick={() => { setComposerQuestData(null); setComposerQuestType(null); }} className="text-black/60 hover:text-black text-xs font-bold">✕</button>
                   </div>
                   <div className="px-3 py-2 flex flex-wrap gap-2">
