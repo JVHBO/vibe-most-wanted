@@ -364,20 +364,18 @@ export const getClaimableSocialRewards = query({
 });
 
 // Quest configuration for verification
-const QUEST_CONFIG: Record<string, { type: string; targetFid?: number }> = {
-  // Channels (auto-verified - Neynar API requires paid plan)
+// All quests use auto-verify (type: "channel") — Neynar viewer_context unreliable
+const QUEST_CONFIG: Record<string, { type: string }> = {
   join_vibe_most_wanted: { type: "channel" },
   join_fidmfers: { type: "channel" },
-  // Follows - VBMS Creators
-  follow_jvhbo: { type: "follow", targetFid: 214746 },
-  follow_betobutter: { type: "follow", targetFid: 1009776 },
-  follow_jayabs: { type: "follow", targetFid: 274150 },
-  follow_smolemaru: { type: "follow", targetFid: 1076846 },
-  follow_denkurhq: { type: "follow", targetFid: 439094 },
-  follow_zazza: { type: "follow", targetFid: 16851 },
-  follow_bradenwolf: { type: "follow", targetFid: 1012281 },
-  follow_degencummunist: { type: "follow", targetFid: 17355 },
-  // Follows - ARB Creators (auto-verify after visiting link)
+  follow_jvhbo: { type: "channel" },
+  follow_betobutter: { type: "channel" },
+  follow_jayabs: { type: "channel" },
+  follow_smolemaru: { type: "channel" },
+  follow_denkurhq: { type: "channel" },
+  follow_zazza: { type: "channel" },
+  follow_bradenwolf: { type: "channel" },
+  follow_degencummunist: { type: "channel" },
   follow_paul2: { type: "channel" },
   follow_0xanas: { type: "channel" },
   follow_aylaaa: { type: "channel" },
