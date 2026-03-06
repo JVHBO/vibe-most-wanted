@@ -2328,7 +2328,7 @@ export function VibeMailInboxWithClaim({
                 </div>
                 {/* Content - scrollable */}
                 <div className="flex-1 overflow-y-auto p-3">
-                  <div className="bg-[#FFD700]/15 border-2 border-black p-4">
+                  <div className="bg-[#111] border-2 border-[#FFD700]/40 p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-pulse flex-shrink-0" />
                       <p className="text-white font-bold text-sm truncate">@{username || 'you'}</p>
@@ -2336,26 +2336,79 @@ export function VibeMailInboxWithClaim({
                     </div>
                     {/* Quest banner card in preview */}
                     {composerQuestData && composerQuestData.quests.length > 0 && (
-                      <div className="mb-3 border-2 border-[#FFD700] overflow-hidden">
-                        <div className="bg-[#FFD700] px-3 py-1.5 flex items-center gap-2">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                          <span className="font-black text-black text-[10px] uppercase tracking-widest">Quest VibeMail</span>
+                      <div className="mb-3 border-2 border-black shadow-[4px_4px_0px_#000] overflow-hidden">
+                        <div className="bg-[#FFD700] px-3 py-2 flex items-center gap-2 border-b-2 border-black">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="#000"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                          <span className="font-black text-black text-xs uppercase tracking-widest flex-1">Quest VibeMail</span>
+                          <span className="text-black/50 text-[9px] font-bold">{composerQuestData.quests.length} quest{composerQuestData.quests.length !== 1 ? 's' : ''}</span>
                         </div>
-                        <div className="bg-[#0d0d0d] divide-y divide-black/40">
-                          {composerQuestData.quests.map((q: any, i: number) => (
-                            <div key={i} className="flex items-center gap-2 px-3 py-2">
-                              <span className={`text-[10px] font-bold ${q.type === 'follow_farcaster' ? 'text-[#8B5CF6]' : q.type === 'use_miniapp' ? 'text-[#22C55E]' : 'text-[#FF9F0A]'}`}>
-                                {q.type === 'follow_farcaster' ? 'Follow' : q.type === 'use_miniapp' ? 'Miniapp' : 'Channel'}
-                              </span>
-                              <span className="text-white text-xs font-bold truncate">
-                                {q.type === 'follow_farcaster' ? `@${q.username}` : q.type === 'use_miniapp' ? q.name : q.channelName}
-                              </span>
-                            </div>
-                          ))}
+                        <div className="bg-[#0d0d0d] flex flex-col divide-y-2 divide-black">
+                          {composerQuestData.quests.map((q: any, i: number) => {
+                            if (q.type === 'follow_farcaster') return (
+                              <div key={i} className="overflow-hidden">
+                                <div className="relative h-16 overflow-hidden bg-[#1a0a2e]">
+                                  {q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover scale-110 opacity-25 blur-sm" alt="" />}
+                                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
+                                  <div className="absolute bottom-0 left-3 translate-y-1/2 z-10">
+                                    {q.pfp ? <img src={q.pfp} className="w-11 h-11 rounded-full border-2 border-[#8B5CF6]" alt="" /> : <div className="w-11 h-11 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20" />}
+                                  </div>
+                                  <div className="absolute top-1.5 right-2 px-1.5 py-0.5 bg-[#8B5CF6] border border-black/50"><span className="text-white font-black text-[8px] uppercase tracking-widest">Follow</span></div>
+                                </div>
+                                <div className="pt-7 px-3 pb-2.5">
+                                  <p className="text-white font-black text-sm">@{q.username}</p>
+                                  <p className="text-[#8B5CF6] text-[9px] uppercase tracking-widest">VibeFID Holder</p>
+                                  <div className="flex gap-1.5 mt-2">
+                                    <div className="flex-1 py-1.5 bg-[#8B5CF6] border-2 border-black text-white font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Go to Profile</div>
+                                    <div className="flex-1 py-1.5 bg-[#FFD700] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Claim</div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                            if (q.type === 'use_miniapp') return (
+                              <div key={i} className="overflow-hidden">
+                                <div className="relative h-16 overflow-hidden bg-[#0a1a0a]">
+                                  {q.icon && <img src={q.icon} className="absolute inset-0 w-full h-full object-cover scale-110 opacity-20 blur-sm" alt="" />}
+                                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
+                                  <div className="absolute bottom-0 left-3 translate-y-1/2 z-10">
+                                    {q.icon ? <img src={q.icon} className="w-11 h-11 rounded-xl border-2 border-[#22C55E] object-cover" alt="" onError={(e: any) => e.target.style.display='none'} /> : <div className="w-11 h-11 rounded-xl border-2 border-[#22C55E] bg-[#22C55E]/20" />}
+                                  </div>
+                                  <div className="absolute top-1.5 right-2 px-1.5 py-0.5 bg-[#22C55E] border border-black/50"><span className="text-black font-black text-[8px] uppercase tracking-widest">Miniapp</span></div>
+                                </div>
+                                <div className="pt-7 px-3 pb-2.5">
+                                  <p className="text-white font-black text-sm truncate">{q.name}</p>
+                                  <p className="text-[#22C55E] text-[9px] uppercase tracking-widest">Farcaster Miniapp</p>
+                                  <div className="flex gap-1.5 mt-2">
+                                    <div className="flex-1 py-1.5 bg-[#22C55E] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Open App</div>
+                                    <div className="flex-1 py-1.5 bg-[#FFD700] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Claim</div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                            if (q.type === 'join_channel') return (
+                              <div key={i} className="overflow-hidden">
+                                <div className="relative h-16 overflow-hidden bg-[#1a0e00]">
+                                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
+                                  <div className="absolute bottom-0 left-3 translate-y-1/2 z-10">
+                                    <div className="w-11 h-11 border-2 border-[#FF9F0A] bg-[#FF9F0A]/20 flex items-center justify-center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9F0A" strokeWidth="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+                                  </div>
+                                  <div className="absolute top-1.5 right-2 px-1.5 py-0.5 bg-[#FF9F0A] border border-black/50"><span className="text-black font-black text-[8px] uppercase tracking-widest">Channel</span></div>
+                                </div>
+                                <div className="pt-7 px-3 pb-2.5">
+                                  <p className="text-white font-black text-sm truncate">/{q.channelName || q.channelId}</p>
+                                  <p className="text-[#FF9F0A] text-[9px] uppercase tracking-widest">Farcaster Channel</p>
+                                  <div className="flex gap-1.5 mt-2">
+                                    <div className="flex-1 py-1.5 bg-[#FF9F0A] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Join Channel</div>
+                                    <div className="flex-1 py-1.5 bg-[#FFD700] border-2 border-black text-black font-black text-[10px] text-center uppercase tracking-wide shadow-[2px_2px_0px_#000]">Claim</div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                            return null;
+                          })}
                         </div>
                       </div>
                     )}
-                    <p className="text-white/90 text-sm whitespace-pre-wrap leading-relaxed">{composerMessage || '(no text)'}</p>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#e5e7eb' }}>{composerMessage || <span style={{ color: 'rgba(255,255,255,0.3)' }}>(no text)</span>}</p>
                     {composerCastUrl && <p className="text-[#9945FF] text-xs mt-2 truncate">Cast: {composerCastUrl}</p>}
                     {composerMiniappUrl && (
                       <div className="mt-2 bg-[#0d1f0d] border border-[#22C55E]/50 rounded px-2 py-1.5 flex items-center gap-1.5">
