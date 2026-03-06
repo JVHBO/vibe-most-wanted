@@ -406,40 +406,8 @@ export const verifyAndCompleteQuest = action({
       throw new Error("Invalid quest ID for verification");
     }
 
-    let completed = false;
-
-    if (config.type === "follow" && config.targetFid) {
-      // Verify follow via Neynar
-      const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
-      if (!NEYNAR_API_KEY) {
-        throw new Error("NEYNAR_API_KEY not configured");
-      }
-
-      try {
-        const response = await fetch(
-          `https://api.neynar.com/v2/farcaster/user/bulk?fids=${config.targetFid}&viewer_fid=${userFid}`,
-          {
-            headers: {
-              accept: "application/json",
-              api_key: NEYNAR_API_KEY,
-            },
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.users && data.users.length > 0) {
-            completed = data.users[0].viewer_context?.following === true;
-          }
-        }
-      } catch (error) {
-        console.error("Neynar verification failed:", error);
-        throw new Error("Failed to verify quest. Please try again.");
-      }
-    } else if (config.type === "channel") {
-      // Auto-verify channel quests (Neynar API requires paid plan)
-      completed = true;
-    }
+    // All quests use auto-verify (Neynar viewer_context unreliable)
+    const completed = true;
 
     if (!completed) {
       return { completed: false, message: "Quest not completed yet" };
