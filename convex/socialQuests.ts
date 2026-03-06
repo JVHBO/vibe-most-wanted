@@ -13,23 +13,32 @@ import { createAuditLog } from "./coinAudit";
 
 // Social Quest Rewards (halved - Vibe Clash is main mode)
 // Must match lib/socialQuests.ts
+// Must match lib/socialQuests.ts reward values
 const QUEST_REWARDS: Record<string, number> = {
-  // SDK Actions (notifications & miniapp)
-  enable_notifications: 250,  // was 500
-  add_miniapp: 250,           // was 500
+  // SDK Actions
+  enable_notifications: 250,
+  add_miniapp: 250,
   // Channels
-  join_vibe_most_wanted: 100, // was 200
-  join_fidmfers: 100,         // was 200
-  // Follows
-  follow_jvhbo: 50,           // was 100
-  follow_betobutter: 50,      // was 100
-  follow_jayabs: 50,          // was 100
-  follow_smolemaru: 50,       // was 100
-  follow_denkurhq: 50,        // was 100
-  follow_zazza: 50,           // was 100
-  follow_bradenwolf: 50,      // was 100
-  follow_viberotbangers_creator: 50, // was 100
+  join_vibe_most_wanted: 50,
+  join_fidmfers: 50,
+  // VBMS Follows
+  follow_jvhbo: 50,
+  follow_betobutter: 50,
+  follow_jayabs: 50,
+  follow_smolemaru: 50,
+  follow_denkurhq: 50,
+  follow_zazza: 50,
+  follow_bradenwolf: 50,
+  follow_degencummunist: 50,
+  // ARB Creator Follows
   follow_paul2: 50,
+  follow_0xanas: 50,
+  follow_aylaaa: 50,
+  follow_dylantale: 50,
+  follow_kenny: 50,
+  follow_nezzar: 50,
+  follow_0xhohenheim: 50,
+  follow_atown: 50,
 };
 
 // ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
