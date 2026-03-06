@@ -26,6 +26,7 @@ export const ARB_CLAIM_TYPE = {
   QUEST: 5,
   SHARE: 6,
   LEADERBOARD: 7,
+  VIBEMAIL: 8,
 } as const;
 
 export type ArbClaimType = typeof ARB_CLAIM_TYPE[keyof typeof ARB_CLAIM_TYPE];

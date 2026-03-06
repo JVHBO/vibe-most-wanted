@@ -754,6 +754,7 @@ export function VibeMailInboxWithClaim({
   const [msgPage, setMsgPage] = useState(0);
   const [showPurposeModal, setShowPurposeModal] = useState(false);
   const [composerQuestType, setComposerQuestType] = useState<string | null>(null);
+  const [composerQuestData, setComposerQuestData] = useState<{ quests: any[] } | null>(null); // quest banner stored separately
   const [composerFollowTarget, setComposerFollowTarget] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const messages = useQuery(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 });
@@ -1095,6 +1096,10 @@ export function VibeMailInboxWithClaim({
   const handleDirectSend = async (recipFid: number, recipUsername: string, isReply: boolean, origMsgId?: any) => {
     if (!myFid || !myAddress) return;
     setIsSending(true);
+    // Build final message: prepend quest banner if set
+    const finalMessage = composerQuestData
+      ? `[VQUEST:${JSON.stringify(composerQuestData)}]\n${composerMessage}`
+      : composerMessage;
     try {
       // On-chain confirmation via ARB validator (generates TX proof)
       await validateOnArb(100, ARB_CLAIM_TYPE.VIBEMAIL);
@@ -1109,7 +1114,7 @@ export function VibeMailInboxWithClaim({
           senderAddress: myAddress,
           senderUsername: username || undefined,
           senderPfpUrl: userPfpUrl || undefined,
-          message: composerMessage,
+          message: finalMessage,
           audioId: composerAudioId || undefined,
           imageId: composerImageId || undefined,
           miniappUrl: composerMiniappUrl || undefined,
@@ -1121,7 +1126,7 @@ export function VibeMailInboxWithClaim({
           senderAddress: myAddress,
           senderUsername: username || undefined,
           senderPfpUrl: userPfpUrl || undefined,
-          message: composerMessage,
+          message: finalMessage,
           audioId: composerAudioId || undefined,
           imageId: composerImageId || undefined,
           castUrl: composerCastUrl || undefined,
@@ -1133,6 +1138,8 @@ export function VibeMailInboxWithClaim({
       setTimeout(() => setSendSuccess(null), 3000);
       setShowComposer(false);
       setComposerMessage('');
+      setComposerQuestData(null);
+      setComposerQuestType(null);
       setComposerAudioId(null);
       setComposerImageId(null);
       setComposerCustomImagePreview(null);
@@ -1233,6 +1240,26 @@ export function VibeMailInboxWithClaim({
         break;
     }
     setSlashMenuOpen(false);
+  };
+
+  // Insert a slash command at cursor position, placing cursor after the prefix so user can complete it
+  const insertCommand = (cmd: string, placeholder: string) => {
+    const textarea = textareaRef.current;
+    const pos = textarea ? textarea.selectionStart : composerMessage.length;
+    // Add newline before command if not at start of line
+    const before = composerMessage.slice(0, pos);
+    const after = composerMessage.slice(pos);
+    const needsNewline = before.length > 0 && !before.endsWith('\n');
+    const prefix = needsNewline ? '\n' + cmd + ' ' : cmd + ' ';
+    const newMsg = (before + prefix + placeholder + after).slice(0, 500);
+    setComposerMessage(newMsg);
+    const newCursor = before.length + prefix.length;
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newCursor, newCursor + placeholder.length);
+      }
+    }, 10);
   };
 
   // Format selected text as bold
@@ -1375,13 +1402,14 @@ export function VibeMailInboxWithClaim({
                   if (quests.length === 0) {
                     // No settings yet — open composer with hint
                     setComposerMessage('');
+                    setComposerQuestData(null);
                     setComposerQuestType('social_quest');
                     setShowPurposeModal(false);
                     setShowComposer(true);
                     return;
                   }
-                  const banner = `[VQUEST:${JSON.stringify({ quests })}]`;
-                  setComposerMessage(banner + '\n');
+                  setComposerMessage('');
+                  setComposerQuestData({ quests });
                   setComposerQuestType('social_quest');
                   setShowPurposeModal(false);
                   setShowComposer(true);
@@ -1832,6 +1860,27 @@ export function VibeMailInboxWithClaim({
                   </div>
                 ) : null;
               })()}
+              {/* Quest banner card chip - shown separately from textarea */}
+              {composerQuestData && composerQuestData.quests.length > 0 && (
+                <div className="mb-2 border-2 border-[#FFD700] bg-[#0d0d0d] shadow-[3px_3px_0px_#000]">
+                  <div className="bg-[#FFD700] px-3 py-1.5 flex items-center gap-2">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#000"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <span className="font-black text-black text-[10px] uppercase tracking-widest flex-1">Quest VibeMail · {composerQuestData.quests.length} quest{composerQuestData.quests.length > 1 ? 's' : ''}</span>
+                    <button onClick={() => { setComposerQuestData(null); setComposerQuestType(null); }} className="text-black/60 hover:text-black text-xs font-bold">✕</button>
+                  </div>
+                  <div className="px-3 py-2 flex flex-wrap gap-2">
+                    {composerQuestData.quests.map((q: any, i: number) => (
+                      <span key={i} className={`text-[10px] font-bold px-2 py-0.5 border border-black ${
+                        q.type === 'follow_farcaster' ? 'bg-[#8B5CF6]/20 text-[#8B5CF6] border-[#8B5CF6]/40' :
+                        q.type === 'use_miniapp' ? 'bg-[#22C55E]/20 text-[#22C55E] border-[#22C55E]/40' :
+                        'bg-[#FF9F0A]/20 text-[#FF9F0A] border-[#FF9F0A]/40'
+                      }`}>
+                        {q.type === 'follow_farcaster' ? `@${q.username}` : q.type === 'use_miniapp' ? q.name : q.channelName}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <textarea
                 ref={textareaRef}
                 value={composerMessage}
@@ -2025,14 +2074,10 @@ export function VibeMailInboxWithClaim({
               {/* Som - LARANJA */}
               {!isCustomAudio(composerAudioId || undefined) && (
                 <button
-                  onClick={() => { setShowSoundPicker(!showSoundPicker); setShowImagePicker(false); setShowCastInput(false); setShowMiniappInput(false); }}
-                  className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
-                    (composerAudioId && !isCustomAudio(composerAudioId)) || showSoundPicker
-                      ? 'border-[#C2410C] bg-[#C2410C] text-white'
-                      : 'border-[#EA580C] bg-[#EA580C] text-white hover:bg-[#C2410C]'
-                  }`}
+                  onClick={() => insertCommand('/sound', 'nome-do-som')}
+                  className="w-9 h-9 flex items-center justify-center border-2 border-[#EA580C] bg-[#EA580C] text-white hover:bg-[#C2410C] transition-all"
                   style={{ WebkitTextFillColor: 'white' }}
-                  title="Sound"
+                  title="/sound"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                 </button>
@@ -2040,14 +2085,10 @@ export function VibeMailInboxWithClaim({
 
               {/* Imagem - VIOLETA escuro */}
               <button
-                onClick={() => { setShowImagePicker(!showImagePicker); setShowSoundPicker(false); setShowCastInput(false); setShowMiniappInput(false); }}
-                className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
-                  composerImageId || showImagePicker
-                    ? 'border-[#5B21B6] bg-[#5B21B6] text-white'
-                    : 'border-[#7C3AED] bg-[#7C3AED] text-white hover:bg-[#5B21B6]'
-                }`}
+                onClick={() => insertCommand('/img', 'url-da-imagem')}
+                className="w-9 h-9 flex items-center justify-center border-2 border-[#7C3AED] bg-[#7C3AED] text-white hover:bg-[#5B21B6] transition-all"
                 style={{ WebkitTextFillColor: 'white' }}
-                title="Image"
+                title="/img"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </button>
@@ -2055,14 +2096,10 @@ export function VibeMailInboxWithClaim({
               {/* Cast - AZUL */}
               {composerQuestType !== 'miniapp' && (
                 <button
-                  onClick={() => { setShowCastInput(!showCastInput); if (showCastInput) { setComposerCastUrl(null); setCastInputValue(''); } setShowSoundPicker(false); setShowImagePicker(false); setShowMiniappInput(false); }}
-                  className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
-                    composerCastUrl || showCastInput
-                      ? 'border-[#1D4ED8] bg-[#1D4ED8] text-white'
-                      : 'border-[#2563EB] bg-[#2563EB] text-white hover:bg-[#1D4ED8]'
-                  }`}
+                  onClick={() => insertCommand('/cast', 'https://warpcast.com/...')}
+                  className="w-9 h-9 flex items-center justify-center border-2 border-[#2563EB] bg-[#2563EB] text-white hover:bg-[#1D4ED8] transition-all"
                   style={{ WebkitTextFillColor: 'white' }}
-                  title="Farcaster cast"
+                  title="/cast"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                 </button>
@@ -2070,14 +2107,10 @@ export function VibeMailInboxWithClaim({
 
               {/* Miniapp - VERDE */}
               <button
-                onClick={() => { setShowMiniappInput(!showMiniappInput); if (showMiniappInput) { setComposerMiniappUrl(null); setMiniappInputValue(''); } setShowSoundPicker(false); setShowImagePicker(false); setShowCastInput(false); }}
-                className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${
-                  composerMiniappUrl || showMiniappInput
-                    ? 'border-[#15803D] bg-[#15803D] text-white'
-                    : 'border-[#16A34A] bg-[#16A34A] text-white hover:bg-[#15803D]'
-                }`}
+                onClick={() => insertCommand('/app', 'https://farcaster.xyz/miniapps/...')}
+                className="w-9 h-9 flex items-center justify-center border-2 border-[#16A34A] bg-[#16A34A] text-white hover:bg-[#15803D] transition-all"
                 style={{ WebkitTextFillColor: 'white' }}
-                title="Miniapp link"
+                title="/app"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
               </button>
@@ -2120,6 +2153,27 @@ export function VibeMailInboxWithClaim({
                       <p className="text-white font-bold text-sm truncate">@{username || 'you'}</p>
                       <span className="ml-auto text-white/40 text-xs">Just now</span>
                     </div>
+                    {/* Quest banner card in preview */}
+                    {composerQuestData && composerQuestData.quests.length > 0 && (
+                      <div className="mb-3 border-2 border-[#FFD700] overflow-hidden">
+                        <div className="bg-[#FFD700] px-3 py-1.5 flex items-center gap-2">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                          <span className="font-black text-black text-[10px] uppercase tracking-widest">Quest VibeMail</span>
+                        </div>
+                        <div className="bg-[#0d0d0d] divide-y divide-black/40">
+                          {composerQuestData.quests.map((q: any, i: number) => (
+                            <div key={i} className="flex items-center gap-2 px-3 py-2">
+                              <span className={`text-[10px] font-bold ${q.type === 'follow_farcaster' ? 'text-[#8B5CF6]' : q.type === 'use_miniapp' ? 'text-[#22C55E]' : 'text-[#FF9F0A]'}`}>
+                                {q.type === 'follow_farcaster' ? 'Follow' : q.type === 'use_miniapp' ? 'Miniapp' : 'Channel'}
+                              </span>
+                              <span className="text-white text-xs font-bold truncate">
+                                {q.type === 'follow_farcaster' ? `@${q.username}` : q.type === 'use_miniapp' ? q.name : q.channelName}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <p className="text-white/90 text-sm whitespace-pre-wrap leading-relaxed">{composerMessage || '(no text)'}</p>
                     {composerCastUrl && <p className="text-[#9945FF] text-xs mt-2 truncate">Cast: {composerCastUrl}</p>}
                     {composerMiniappUrl && (
@@ -2198,10 +2252,14 @@ export function VibeMailInboxWithClaim({
                     }
                     console.log('Broadcast payment TX:', txHash);
 
+                    // Build final message with quest banner
+                    const broadcastMessage = composerQuestData
+                      ? `[VQUEST:${JSON.stringify(composerQuestData)}]\n${composerMessage}`
+                      : composerMessage;
                     // Send broadcast after payment
                     const result = await broadcastMutation({
                       recipientFids: broadcastRecipients.map(r => r.fid),
-                      message: composerMessage,
+                      message: broadcastMessage,
                       audioId: composerAudioId || undefined,
                       imageId: composerImageId || undefined,
                       senderAddress: myAddress,
@@ -2278,7 +2336,7 @@ export function VibeMailInboxWithClaim({
                   await handleDirectSend(recipientFid, recipientUsername, false);
                 }
               }}
-              disabled={isSending || isTransferPending || (!composerMessage.trim() && !composerImageId) || (!replyToMessageId && sendMode === 'single' && !recipientFid) || (sendMode === 'broadcast' && broadcastRecipients.length === 0) || (sendMode === 'random' && !randomCard && randomList.length === 0)}
+              disabled={isSending || isTransferPending || (!composerMessage.trim() && !composerImageId && !composerQuestData) || (!replyToMessageId && sendMode === 'single' && !recipientFid) || (sendMode === 'broadcast' && broadcastRecipients.length === 0) || (sendMode === 'random' && !randomCard && randomList.length === 0)}
               className="mt-3 w-full py-3 bg-vintage-gold text-black font-bold border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[4px_4px_0px_#000] flex items-center justify-center gap-2"
             >
               {isSending || isTransferPending ? (
@@ -2306,7 +2364,7 @@ export function VibeMailInboxWithClaim({
               ) : (
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  Send
+                  {hasFreeVotes ? 'Send · Free' : `Send · ${Number(VIBEMAIL_COST_VBMS).toLocaleString()} VBMS`}
                 </span>
               )}
             </button>
