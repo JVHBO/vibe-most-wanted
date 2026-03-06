@@ -60,7 +60,37 @@ export default function QuestsPage() {
   const [localCompleted, setLocalCompleted] = useState<Set<string>>(new Set());
   const [visitedQuests, setVisitedQuests] = useState<Set<string>>(new Set());
   const [socialCarouselIndices, setSocialCarouselIndices] = useState<Record<string, number>>({});
+  const [socialSlideDir, setSocialSlideDir] = useState<Record<string, 'left' | 'right'>>({});
   const [missionCarouselIdx, setMissionCarouselIdx] = useState(0);
+
+  // Auto-rotate social quest carousels — vbms at 0s, arb_creators offset by 2.5s
+  const socialQuestCountsRef = useRef<Record<string, number>>({});
+  const arbCarouselIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const rotateGroup = (groupId: string) => {
+      setSocialSlideDir(prev => ({ ...prev, [groupId]: 'right' }));
+      setSocialCarouselIndices(prev => {
+        const count = socialQuestCountsRef.current[groupId] ?? 0;
+        if (count <= 1) return prev;
+        const cur = prev[groupId] ?? 0;
+        return { ...prev, [groupId]: (cur + 1) % count };
+      });
+    };
+
+    const vbmsInterval = setInterval(() => rotateGroup('vbms'), 5000);
+
+    const arbTimeout = setTimeout(() => {
+      rotateGroup('arb_creators');
+      arbCarouselIntervalRef.current = setInterval(() => rotateGroup('arb_creators'), 5000);
+    }, 2500);
+
+    return () => {
+      clearInterval(vbmsInterval);
+      clearTimeout(arbTimeout);
+      if (arbCarouselIntervalRef.current) clearInterval(arbCarouselIntervalRef.current);
+    };
+  }, []);
 
   // Personal Missions (Welcome, VibeFID, Daily Login, etc)
   // 🚀 BANDWIDTH FIX: Converted from useQuery to manual query to avoid WebSocket subscription
@@ -427,33 +457,62 @@ export default function QuestsPage() {
         {activeTab === 'missions' && (
         <div className="relative z-10 px-3 py-2 max-w-md mx-auto space-y-3">
 
-          {/* Chain toggle sub-tabs */}
-          {arbSupported && (
-            <div className="flex gap-1 ml-auto w-fit mt-2">
-              <button
-                onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
-                className={`flex items-center gap-1 px-3 py-0.5 font-bold text-[10px] uppercase tracking-wide border border-black/60 transition-all ${effectiveChain === 'base' ? 'ct-base-active' : 'ct-base-inactive opacity-50'}`}
-              >
-                <svg width="10" height="10" viewBox="0 0 111 111" fill="none">
-                  <circle cx="55.5" cy="55.5" r="55.5" fill={effectiveChain === 'base' ? 'white' : '#6b7280'}/>
-                  <path d="M55.4999 11.5C31.0225 11.5 11 31.5225 11 55.9999C11 80.4773 31.0225 100.5 55.4999 100.5C79.9773 100.5 99.9998 80.4773 99.9998 55.9999C99.9998 31.5225 79.9773 11.5 55.4999 11.5Z" fill={effectiveChain === 'base' ? '#0052FF' : 'none'}/>
-                </svg>
-                BASE
-              </button>
-              <button
-                onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
-                className={`flex items-center gap-1 px-3 py-0.5 font-bold text-[10px] uppercase tracking-wide border border-black/60 transition-all ${effectiveChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive opacity-50'}`}
-              >
-                <svg width="10" height="10" viewBox="0 0 50 50" fill="none">
-                  <circle cx="25" cy="25" r="25" fill={effectiveChain === 'arbitrum' ? '#12AAFF' : '#6b7280'}/>
-                  <path d="M25 8L11 17V33L25 42L39 33V17L25 8Z" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1.5"/>
-                  <path d="M19 31L25 20L31 31" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M21.5 27H28.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-                ARB
-              </button>
-            </div>
-          )}
+          {/* Chain toggle + 2x bonus row */}
+          <div className="flex items-center gap-2 mt-2">
+            {/* 2x bonus indicator */}
+            {(() => {
+              const _has2x = vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge;
+              const _src = profileDashboard?.hasVibeBadge ? "VIBE Badge" : vibeBadgeEligibility?.hasVibeFIDCards ? "VibeFID" : "";
+              return _has2x ? (
+                <div className="flex-1 px-2 py-1 bg-vintage-gold/15 border border-vintage-gold/50 flex items-center gap-1.5">
+                  <span className="text-vintage-gold font-bold text-[10px]">{_src} 2x Active</span>
+                  {effectiveChain === "arbitrum" && (
+                    <span className="ml-auto px-1.5 py-0.5 bg-blue-900/40 border border-blue-500/50 text-blue-400 font-bold text-[9px]">ARB 2x</span>
+                  )}
+                </div>
+              ) : (
+                <div className="flex-1 px-2 py-1 bg-vintage-gold/10 border border-vintage-gold/30 flex items-center justify-between gap-1">
+                  <span className="text-vintage-ice/70 text-[10px]">Get 2x rewards!</span>
+                  <div className="flex items-center gap-1">
+                    {effectiveChain === "arbitrum" && (
+                      <span className="px-1.5 py-0.5 bg-blue-900/40 border border-blue-500/50 text-blue-400 font-bold text-[9px]">ARB 2x</span>
+                    )}
+                    <button onClick={() => router.push('/fid')}
+                      className="px-2 py-0.5 bg-vintage-gold text-black font-bold text-[9px] animate-pulse border border-black">
+                      Mint VibeFID
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+            {/* Chain toggle */}
+            {arbSupported && (
+              <div className="flex gap-1 shrink-0">
+                <button
+                  onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
+                  className={`flex items-center gap-1 px-3 py-0.5 font-bold text-[10px] uppercase tracking-wide border border-black/60 transition-all ${effectiveChain === 'base' ? 'ct-base-active' : 'ct-base-inactive opacity-50'}`}
+                >
+                  <svg width="10" height="10" viewBox="0 0 111 111" fill="none">
+                    <circle cx="55.5" cy="55.5" r="55.5" fill={effectiveChain === 'base' ? 'white' : '#6b7280'}/>
+                    <path d="M55.4999 11.5C31.0225 11.5 11 31.5225 11 55.9999C11 80.4773 31.0225 100.5 55.4999 100.5C79.9773 100.5 99.9998 80.4773 99.9998 55.9999C99.9998 31.5225 79.9773 11.5 55.4999 11.5Z" fill={effectiveChain === 'base' ? '#0052FF' : 'none'}/>
+                  </svg>
+                  BASE
+                </button>
+                <button
+                  onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
+                  className={`flex items-center gap-1 px-3 py-0.5 font-bold text-[10px] uppercase tracking-wide border border-black/60 transition-all ${effectiveChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive opacity-50'}`}
+                >
+                  <svg width="10" height="10" viewBox="0 0 50 50" fill="none">
+                    <circle cx="25" cy="25" r="25" fill={effectiveChain === 'arbitrum' ? '#12AAFF' : '#6b7280'}/>
+                    <path d="M25 8L11 17V33L25 42L39 33V17L25 8Z" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1.5"/>
+                    <path d="M19 31L25 20L31 31" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M21.5 27H28.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                  ARB
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Missions */}
           <div className="space-y-3">
@@ -636,16 +695,7 @@ export default function QuestsPage() {
                           ) : (
                             <span className="text-vintage-ice/20 text-[10px]">{t('mission_locked')}</span>
                           )}
-                          {/* Nav */}
-                          <button onClick={() => setMissionCarouselIdx(i => Math.max(0, i - 1))} disabled={mIdx === 0}
-                            className="w-6 h-6 bg-black border border-[#FFD700]/40 flex items-center justify-center disabled:opacity-20">
-                            <span className="text-[#FFD700] font-black text-xs leading-none">‹</span>
-                          </button>
                           <span className="text-white/30 text-[9px]">{mIdx + 1}/{missionList.length}</span>
-                          <button onClick={() => setMissionCarouselIdx(i => Math.min(missionList.length - 1, i + 1))} disabled={mIdx >= missionList.length - 1}
-                            className="w-6 h-6 bg-black border border-[#FFD700]/40 flex items-center justify-center disabled:opacity-20">
-                            <span className="text-[#FFD700] font-black text-xs leading-none">›</span>
-                          </button>
                         </div>
                       </div>
                       {/* Dot indicators */}
@@ -660,6 +710,18 @@ export default function QuestsPage() {
                 })()}
               </div>
 
+              {/* Keyframes for carousel slide animation */}
+              <style>{`
+                @keyframes carouselSlideRight {
+                  from { transform: translateX(48px); opacity: 0; }
+                  to   { transform: translateX(0);    opacity: 1; }
+                }
+                @keyframes carouselSlideLeft {
+                  from { transform: translateX(-48px); opacity: 0; }
+                  to   { transform: translateX(0);     opacity: 1; }
+                }
+              `}</style>
+
               {/* Social Quests - Carousel by group */}
               {(() => {
                 const isAdmin = profileDashboard?.username?.toLowerCase() === 'jvhbo';
@@ -667,35 +729,8 @@ export default function QuestsPage() {
                   { id: 'vbms', label: 'Vibe Creators' },
                   { id: 'arb_creators', label: 'ARB Creators' },
                 ];
-                const hasVibeFID = vibeBadgeEligibility?.hasVibeFIDCards || false;
-                const hasVibeBadge = profileDashboard?.hasVibeBadge;
-                const has2xBonus = hasVibeFID || hasVibeBadge;
-                const bonusSource = hasVibeBadge ? "VIBE Badge" : hasVibeFID ? "VibeFID" : "";
-
                 return (
                   <div className="space-y-3">
-                    {/* 2x bonus info */}
-                    <div className="flex gap-2">
-                      {has2xBonus ? (
-                        <div className="flex-1 px-2 py-1.5 bg-vintage-gold/15 border border-vintage-gold/50 rounded flex items-center gap-2">
-                          <span className="text-vintage-gold font-bold text-[10px]">{bonusSource} 2x Active</span>
-                        </div>
-                      ) : (
-                        <div className="flex-1 px-2 py-1.5 bg-vintage-gold/10 border border-vintage-gold/30 rounded flex items-center justify-between">
-                          <span className="text-vintage-ice text-[10px]">Get 2x rewards!</span>
-                          <button onClick={() => router.push('/fid')}
-                            className="px-2 py-0.5 rounded bg-vintage-gold text-black font-bold text-[10px] animate-pulse">
-                            Mint VibeFID
-                          </button>
-                        </div>
-                      )}
-                      {effectiveChain === "arbitrum" && (
-                        <div className="px-2 py-1.5 bg-blue-900/20 border border-blue-500/40 rounded flex items-center gap-1">
-                          <span className="text-blue-400 font-bold text-[10px]">ARB 2x</span>
-                        </div>
-                      )}
-                    </div>
-
                     {GROUPS.map(({ id: groupId, label: groupLabel }) => {
                       const groupQuests = SOCIAL_QUESTS.filter(q =>
                         q.type !== 'notification' && q.type !== 'miniapp' &&
@@ -703,6 +738,11 @@ export default function QuestsPage() {
                         (isAdmin || getQuestStatus(q) !== 'claimed')
                       );
                       if (groupQuests.length === 0) return null;
+
+                      // Update ref for auto-rotate
+                      socialQuestCountsRef.current[groupId] = groupQuests.length;
+
+                      const groupColor = groupId === 'arb_creators' ? '#12AAFF' : '#FFD700';
 
                       const idx = socialCarouselIndices[groupId] ?? 0;
                       const quest = groupQuests[Math.min(idx, groupQuests.length - 1)];
@@ -717,28 +757,43 @@ export default function QuestsPage() {
 
                       const goToIdx = (newIdx: number) => {
                         const clamped = Math.max(0, Math.min(groupQuests.length - 1, newIdx));
+                        setSocialSlideDir(prev => ({ ...prev, [groupId]: clamped > idx ? 'right' : 'left' }));
                         setSocialCarouselIndices(prev => ({ ...prev, [groupId]: clamped }));
                       };
+                      const slideDir = socialSlideDir[groupId] ?? 'right';
 
                       return (
-                        <div key={groupId} className="border-4 border-black overflow-hidden" style={{ boxShadow: '4px 4px 0px #000' }}>
-                          {/* Group header */}
-                          <div className="px-3 py-1.5 bg-[#111] border-b-2 border-black flex items-center justify-between">
-                            <p className="text-[#FFD700] text-xs font-black uppercase tracking-widest">{groupLabel}</p>
-                            <p className="text-white/40 text-[10px]">{idx + 1}/{groupQuests.length}</p>
+                        <div key={groupId} className="border-4 overflow-hidden" style={{ borderColor: groupColor, boxShadow: `4px 4px 0px ${groupColor}` }}>
+                          {/* Group header — fixed, never slides */}
+                          <div className="px-3 py-1.5 bg-[#111] border-b-2 flex items-center justify-between" style={{ borderColor: groupColor }}>
+                            <p className="text-xs font-black uppercase tracking-widest" style={{ color: groupColor }}>{groupLabel}</p>
+                            <div className="flex items-center gap-1.5">
+                              {groupId === 'vbms' && effectiveChain === 'arbitrum' && (
+                                <span className="px-1.5 py-0.5 bg-blue-900/60 border border-blue-500/60 text-[#12AAFF] font-black text-[9px] uppercase tracking-wider">ARB 2x</span>
+                              )}
+                              <p className="text-white/40 text-[10px]">{idx + 1}/{groupQuests.length}</p>
+                            </div>
                           </div>
+
+                          {/* Sliding content — key forces re-mount on quest change */}
+                          <div key={quest.id} style={{
+                            animation: `carouselSlide${slideDir === 'right' ? 'Right' : 'Left'} 0.32s ease-out`,
+                          }}>
 
                           {/* Banner image area */}
                           <div className="relative h-28 bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
-                            {/* Background: banner image if available, else blurred pfp */}
+                            {/* Background: banner fills entire area, pfp blurred fallback */}
                             {banner ? (
-                              <div className="absolute inset-0 bg-cover bg-center opacity-60"
+                              <div className="absolute inset-0 bg-cover bg-center"
                                 style={{ backgroundImage: `url(${banner})` }} />
                             ) : pfp ? (
-                              <div className="absolute inset-0 bg-cover bg-center opacity-20 blur-sm scale-110"
+                              <div className="absolute inset-0 bg-cover bg-center blur-sm scale-110 opacity-30"
                                 style={{ backgroundImage: `url(${pfp})` }} />
                             ) : null}
-                            <div className="absolute inset-0 bg-black/40" />
+                            {/* Only darken when no banner */}
+                            {!banner && <div className="absolute inset-0 bg-black/40" />}
+                            {/* Gradient at bottom to make info readable */}
+                            {banner && <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />}
                             {/* Group type badge */}
                             <span className={`absolute top-2 left-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${
                               quest.type === 'channel'
@@ -758,10 +813,12 @@ export default function QuestsPage() {
                             {/* pfp */}
                             {pfp ? (
                               <img src={pfp} alt={quest.displayName}
-                                className="relative z-10 w-16 h-16 rounded-full object-cover border-4 border-[#FFD700] shadow-lg" />
+                                className="relative z-10 w-16 h-16 rounded-full object-cover border-4 shadow-lg"
+                                style={{ borderColor: groupColor }} />
                             ) : (
-                              <div className="relative z-10 w-16 h-16 rounded-full bg-[#222] border-4 border-[#FFD700]/40 flex items-center justify-center">
-                                <span className="text-[#FFD700]/60 font-black text-xl">{quest.type === 'channel' ? '#' : '@'}</span>
+                              <div className="relative z-10 w-16 h-16 rounded-full bg-[#222] border-4 flex items-center justify-center"
+                                style={{ borderColor: `${groupColor}40` }}>
+                                <span className="font-black text-xl" style={{ color: `${groupColor}99` }}>{quest.type === 'channel' ? '#' : '@'}</span>
                               </div>
                             )}
                           </div>
@@ -785,21 +842,6 @@ export default function QuestsPage() {
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              {/* Carousel nav */}
-                              {groupQuests.length > 1 && (
-                                <>
-                                  <button onClick={() => goToIdx(idx - 1)} disabled={idx === 0}
-                                    className="w-7 h-7 bg-black border-2 border-[#FFD700]/50 flex items-center justify-center disabled:opacity-30"
-                                    style={{ boxShadow: '2px 2px 0px #000' }}>
-                                    <span className="text-[#FFD700] font-black text-sm leading-none">‹</span>
-                                  </button>
-                                  <button onClick={() => goToIdx(idx + 1)} disabled={idx >= groupQuests.length - 1}
-                                    className="w-7 h-7 bg-black border-2 border-[#FFD700]/50 flex items-center justify-center disabled:opacity-30"
-                                    style={{ boxShadow: '2px 2px 0px #000' }}>
-                                    <span className="text-[#FFD700] font-black text-sm leading-none">›</span>
-                                  </button>
-                                </>
-                              )}
                               {/* Action button */}
                               {status === "claimed" ? (
                                 <span className="text-green-400 text-[10px] font-bold">Done</span>
@@ -826,10 +868,13 @@ export default function QuestsPage() {
                             <div className="flex justify-center gap-1 pb-2 bg-[#111]">
                               {groupQuests.map((_, i) => (
                                 <button key={i} onClick={() => goToIdx(i)}
-                                  className={`w-1.5 h-1.5 rounded-full transition-all ${i === idx ? 'bg-[#FFD700]' : 'bg-white/50'}`} />
+                                  className="w-1.5 h-1.5 rounded-full transition-all"
+                                  style={{ backgroundColor: i === idx ? groupColor : `${groupColor}40` }} />
                               ))}
                             </div>
                           )}
+
+                          </div>{/* end sliding content */}
                         </div>
                       );
                     })}
