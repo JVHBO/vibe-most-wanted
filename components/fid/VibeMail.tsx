@@ -3075,10 +3075,10 @@ export function VibeMailInboxWithClaim({
                       <div className="flex flex-col gap-1.5">
                         {/* Quick select: VBMS */}
                         <button
-                          onClick={() => { setSettingsMiniapp('https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast'); setSettingsMiniappName('VBMS - Game and Wanted Cast'); setSettingsMiniappIcon('/apple-touch-icon.png'); setMaSearchQ(''); setMaSearchResults([]); }}
+                          onClick={() => { setSettingsMiniapp('https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast'); setSettingsMiniappName('VBMS - Game and Wanted Cast'); setSettingsMiniappIcon('https://vibemostwanted.xyz/icon.gif'); setMaSearchQ(''); setMaSearchResults([]); }}
                           className="flex items-center gap-2 px-2 py-1.5 bg-[#FFD700]/10 border border-[#FFD700]/40 hover:bg-[#FFD700]/20 text-left transition-colors"
                         >
-                          <img src="/apple-touch-icon.png" className="w-7 h-7 rounded border border-[#FFD700]/50 flex-shrink-0" alt="" />
+                          <img src="https://vibemostwanted.xyz/icon.gif" className="w-7 h-7 rounded border border-[#FFD700]/50 flex-shrink-0" alt="" />
                           <div className="flex-1 min-w-0">
                             <p className="text-[#FFD700] font-black text-[10px] uppercase tracking-wide">VBMS — Game &amp; Wanted Cast</p>
                             <p className="text-white/30 text-[9px]">vibemostwanted.xyz</p>
