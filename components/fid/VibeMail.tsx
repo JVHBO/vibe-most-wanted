@@ -755,6 +755,7 @@ export function VibeMailInboxWithClaim({
   const [composerQuestType, setComposerQuestType] = useState<string | null>(null);
   const [composerQuestData, setComposerQuestData] = useState<{ quests: any[] } | null>(null); // quest banner stored separately
   const [showQuestEditModal, setShowQuestEditModal] = useState(false);
+  const [showCostInfo, setShowCostInfo] = useState(false);
   const [questEditText, setQuestEditText] = useState('');
   const [composerFollowTarget, setComposerFollowTarget] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
@@ -1811,7 +1812,7 @@ export function VibeMailInboxWithClaim({
 
             {/* Recipient Search (only for new message, not reply - SINGLE MODE) */}
             {sendMode === 'single' && !replyToMessageId && (
-              <div className="mb-3">
+              <div className="mb-3 relative">
                 {recipientFid ? (
                   <div className="flex items-center justify-between bg-vintage-gold/20 border border-vintage-gold/50 rounded-lg p-2">
                     <span className="text-vintage-gold text-sm flex items-center gap-1">
@@ -1830,15 +1831,55 @@ export function VibeMailInboxWithClaim({
                     </button>
                   </div>
                 ) : (
-                  <div className="relative">
+                  <div className="relative flex items-center gap-2">
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search by username or FID..."
-                      className="w-full bg-[#111] border-2 border-[#444] px-3 py-2 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#FFD700]"
+                      className="flex-1 bg-[#111] border-2 border-[#444] px-3 py-2 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-[#FFD700]"
                       style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
                     />
+                    {/* Cost info button */}
+                    <button
+                      onClick={() => setShowCostInfo(v => !v)}
+                      className="w-7 h-7 flex-shrink-0 flex items-center justify-center border-2 border-[#444] bg-[#111] text-white/50 hover:border-[#FFD700] hover:text-[#FFD700] font-black text-xs transition-all"
+                    >?</button>
+                    {/* Cost info popover */}
+                    {showCostInfo && (
+                      <div className="absolute top-full right-0 mt-1 w-64 bg-[#0d0d0d] border-2 border-black shadow-[6px_6px_0px_#000] z-50">
+                        <div className="bg-[#FFD700] px-3 py-1.5 flex items-center justify-between border-b-2 border-black">
+                          <span className="font-black text-black text-[10px] uppercase tracking-widest">VibeMail Costs</span>
+                          <button onClick={() => setShowCostInfo(false)} className="text-black/60 hover:text-black font-bold text-xs">✕</button>
+                        </div>
+                        <div className="divide-y divide-[#1a1a1a]">
+                          <div className="px-3 py-2 flex items-start gap-2">
+                            <span className="text-[#22C55E] font-black text-xs w-14 flex-shrink-0">FREE</span>
+                            <div>
+                              <p className="text-white text-xs font-bold">Just a Message</p>
+                              <p className="text-white/40 text-[10px]">1 por destinatario por dia</p>
+                            </div>
+                          </div>
+                          <div className="px-3 py-2 flex items-start gap-2">
+                            <span className="text-[#FFD700] font-black text-xs w-14 flex-shrink-0">1.000</span>
+                            <div>
+                              <p className="text-white text-xs font-bold">With Social Quest</p>
+                              <p className="text-white/40 text-[10px]">VBMS por destinatario · recipiente ganha ao completar</p>
+                            </div>
+                          </div>
+                          <div className="px-3 py-2 flex items-start gap-2">
+                            <span className="text-[#FFD700] font-black text-xs w-14 flex-shrink-0">×N</span>
+                            <div>
+                              <p className="text-white text-xs font-bold">Broadcast / Aleatorio</p>
+                              <p className="text-white/40 text-[10px]">1.000 VBMS × numero de destinatarios</p>
+                            </div>
+                          </div>
+                          <div className="px-3 py-2 bg-[#111]">
+                            <p className="text-white/30 text-[9px] leading-relaxed">Recipiente ganha +100 VBMS free ao receber. Completa quests para ganhar ate +400 extras.</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {searchResults && searchResults.length > 0 && (
                       <div className="absolute top-full left-0 right-0 mt-1 bg-vintage-charcoal border border-vintage-gold/50 rounded-lg overflow-hidden z-30 max-h-40 overflow-y-auto">
                         {searchResults.map((card: { fid: number; username: string }) => (
