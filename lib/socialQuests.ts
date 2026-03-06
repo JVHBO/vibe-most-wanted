@@ -217,7 +217,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     target: 'paul2',
     targetFid: 262857,
     displayName: 'Follow @paul2',
-    description: 'Follow ARB Kink creator',
+    description: 'Follow ARB King creator',
     reward: 50,
     icon: '',
     url: 'https://farcaster.xyz/paul2',
