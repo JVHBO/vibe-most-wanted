@@ -1965,14 +1965,14 @@ body.neobrutalism button[class*="bg-red-500/20"][class*="border-b-2"][class*="bo
   border-bottom: 4px solid #CC2222 !important;
   color: #CC2222 !important;
 }
-/* Buy VBMS Packs button (has inline gradient + shadow-gold) */
-body.neobrutalism button[class*="border-vintage-gold"][class*="shadow-gold"] {
+/* Buy VBMS Packs button */
+body.neobrutalism button.dex-buy-packs-btn {
   background: #FFD400 !important;
   background-image: none !important;
   color: #000 !important;
-  border: 3px solid #000 !important;
+  border: 2px solid #000 !important;
   border-radius: 4px !important;
-  box-shadow: 4px 4px 0px #000 !important;
+  box-shadow: 2px 2px 0px #000 !important;
 }
 /* - button → red */
 body.neobrutalism [class*="rounded-xl"][class*="p-4"] button[class*="w-12"]:first-of-type {
@@ -2020,19 +2020,20 @@ body.neobrutalism button[class*="from-red-5"][class*="to-red-6"] {
   color: #FFF !important;
 }
 /* QuickButton active (gold) */
-body.neobrutalism button[class*="bg-vintage-gold/30"][class*="border-vintage-gold/60"] {
+body.neobrutalism button[class*="bg-vintage-gold"][class*="border-black"][class*="shadow-[2px_2px_0px_#000]"] {
   background-color: #FFD400 !important;
   color: #000 !important;
-  border: 3px solid #000 !important;
+  border: 2px solid #000 !important;
   border-radius: 4px !important;
   box-shadow: 2px 2px 0px #000 !important;
 }
 /* QuickButton inactive */
-body.neobrutalism button[class*="bg-vintage-gold/10"][class*="border-vintage-gold/20"] {
-  background-color: #2C2C2C !important;
+body.neobrutalism button[class*="bg-transparent"][class*="border-yellow-700"] {
+  background-color: #1a1500 !important;
   color: #FFD400 !important;
-  border: 2px solid #555 !important;
+  border: 2px solid #7a6000 !important;
   border-radius: 4px !important;
+  box-shadow: 2px 2px 0px #92400e !important;
 }
 /* Fee breakdown */
 body.neobrutalism [class*="bg-yellow-500/10"][class*="rounded-lg"][class*="border-yellow-500/30"] {

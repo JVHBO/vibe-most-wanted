@@ -816,7 +816,7 @@ export default function DexPage() {
   // Swap state
   const [mode, setMode] = useState<SwapMode>("sell");
   const [packCount, setPackCount] = useState(1);
-  const [sellAmount, setSellAmount] = useState("");
+  const [sellAmount, setSellAmount] = useState("100000");
 
   // Language dropdown state
   const [showLangDropdown, setShowLangDropdown] = useState(false);
@@ -961,7 +961,7 @@ export default function DexPage() {
         {/* Bonding Progress Bar - Compact */}
         <div className="mb-3">
           <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-vintage-burnt-gold">{t.bondingCurve}</span>
+            <span className="text-vintage-gold/70">{t.bondingCurve}</span>
             <div className="flex items-center gap-1">
               <span className="text-vintage-gold font-mono font-bold">{bondingProgress.ethBalance.toFixed(4)}</span>
               <span className="text-vintage-ice/50">{t.ethTarget}</span>
@@ -978,7 +978,7 @@ export default function DexPage() {
         </div>
 
         {/* Buy VBMS Packs Link - Compact */}
-        <button onClick={() => openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isMiniappMode())} className="mb-3 w-full flex items-center justify-center gap-2 px-3 py-2 border-2 border-vintage-gold text-vintage-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-gold hover:shadow-gold-lg tracking-wider cursor-pointer text-sm" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}>
+        <button onClick={() => openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isMiniappMode())} className="dex-buy-packs-btn mb-3 w-full flex items-center justify-center gap-2 px-3 py-2 border-2 border-black text-black font-modern font-semibold rounded-lg transition-all duration-300 shadow-[2px_2px_0px_#000] hover:brightness-110 active:translate-y-[2px] active:shadow-none tracking-wider cursor-pointer text-sm" style={{background: 'linear-gradient(145deg, #FFD700, #C9A227)'}}>
           <span>◆</span>
           <span>{t.buyPacks}</span>
         </button>
@@ -992,7 +992,7 @@ export default function DexPage() {
               className={`flex-1 py-4 font-modern font-bold transition-all ${
                 mode === "buy"
                   ? "bg-green-500/20 text-green-400 border-b-2 border-green-400"
-                  : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold"
+                  : "text-vintage-gold/50 hover:text-vintage-gold"
               }`}
             >
               {t.buyVbms}
@@ -1006,7 +1006,7 @@ export default function DexPage() {
               className={`flex-1 py-4 font-modern font-bold transition-all ${
                 mode === "sell"
                   ? "bg-red-500/20 text-red-400 border-b-2 border-red-400"
-                  : "text-vintage-burnt-gold/60 hover:text-vintage-burnt-gold"
+                  : "text-vintage-gold/50 hover:text-vintage-gold"
               }`}
             >
               {t.sellVbms}
@@ -1021,7 +1021,7 @@ export default function DexPage() {
                   <button
                     onClick={() => setPackCount(Math.max(1, packCount - 1))}
                     disabled={isLoading || packCount <= 1}
-                    className="w-10 h-10 rounded-lg bg-vintage-gold/20 text-vintage-gold text-2xl font-bold hover:bg-vintage-gold/30 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
+                    className="w-10 h-10 rounded-lg bg-vintage-gold text-black text-2xl font-bold border-2 border-black shadow-[2px_2px_0px_#000] hover:bg-yellow-300 active:translate-y-[1px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
                   >-</button>
                   <div className="flex-1 text-center">
                     <span className="text-3xl text-vintage-ice font-mono font-bold">{packCount}</span>
@@ -1030,7 +1030,7 @@ export default function DexPage() {
                   <button
                     onClick={() => setPackCount(packCount + 1)}
                     disabled={isLoading}
-                    className="w-10 h-10 rounded-lg bg-vintage-gold/20 text-vintage-gold text-2xl font-bold hover:bg-vintage-gold/30 disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
+                    className="w-10 h-10 rounded-lg bg-vintage-gold text-black text-2xl font-bold border-2 border-black shadow-[2px_2px_0px_#000] hover:bg-yellow-300 active:translate-y-[1px] active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed transition flex-shrink-0"
                   >+</button>
                 </div>
 
@@ -1051,7 +1051,7 @@ export default function DexPage() {
 
                 {/* Receive row */}
                 <div className="flex items-center justify-between bg-vintage-deep-black/50 rounded-xl px-4 py-3 border border-vintage-gold/10">
-                  <span className="text-vintage-burnt-gold text-sm">{t.youReceive}</span>
+                  <span className="text-vintage-gold/70 text-sm">{t.youReceive}</span>
                   <span className="text-vintage-gold text-xl font-mono font-bold">~{estimatedVBMS.toLocaleString()} VBMS</span>
                 </div>
               </>
@@ -1074,10 +1074,10 @@ export default function DexPage() {
 
                 {/* Quick amounts + balance */}
                 <div className="flex items-center gap-2">
-                  <QuickButton label="100k" onClick={() => setSellAmount("100000")} />
-                  <QuickButton label="500k" onClick={() => setSellAmount("500000")} />
-                  <QuickButton label="1M" onClick={() => setSellAmount("1000000")} />
-                  <QuickButton label="MAX" onClick={() => setSellAmount(vbmsBalance)} />
+                  <QuickButton label="100k" onClick={() => setSellAmount("100000")} active={sellAmount === "100000"} />
+                  <QuickButton label="500k" onClick={() => setSellAmount("500000")} active={sellAmount === "500000"} />
+                  <QuickButton label="1M" onClick={() => setSellAmount("1000000")} active={sellAmount === "1000000"} />
+                  <QuickButton label="MAX" onClick={() => setSellAmount(vbmsBalance)} active={sellAmount === vbmsBalance && sellAmount !== ""} />
                   <div className="flex-1 text-right">
                     <span className="text-vintage-gold/60 text-xs">{fmtVBMS(vbmsBalance)} VBMS</span>
                   </div>
@@ -1085,7 +1085,7 @@ export default function DexPage() {
 
                 {/* Receive row */}
                 <div className="flex items-center justify-between bg-vintage-deep-black/50 rounded-xl px-4 py-3 border border-vintage-gold/10">
-                  <span className="text-vintage-burnt-gold text-sm">{t.youReceive}</span>
+                  <span className="text-vintage-gold/70 text-sm">{t.youReceive}</span>
                   <span className="text-vintage-gold text-xl font-mono font-bold">
                     {parseFloat(sellQuote.estimatedEth) > 0
                       ? `~${parseFloat(sellQuote.estimatedEth).toFixed(6)}`
@@ -1131,7 +1131,7 @@ export default function DexPage() {
             {!isConnected ? (
               <button
                 disabled
-                className="w-full py-4 rounded-xl font-modern font-bold text-lg bg-vintage-charcoal text-vintage-burnt-gold cursor-not-allowed"
+                className="w-full py-4 rounded-xl font-modern font-bold text-lg bg-vintage-charcoal text-vintage-gold/50 cursor-not-allowed"
               >
                 {t.connectWallet}
               </button>
@@ -1145,11 +1145,11 @@ export default function DexPage() {
                 }
                 className={`w-full py-4 rounded-xl font-modern font-bold text-lg transition-all ${
                   isLoading
-                    ? "bg-vintage-charcoal text-vintage-burnt-gold cursor-wait"
+                    ? "bg-vintage-charcoal text-vintage-gold/50 cursor-wait"
                     : mode === "buy"
-                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-400 hover:to-green-500 hover:scale-[1.02]"
-                    : "bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-400 hover:to-red-500 hover:scale-[1.02]"
-                } disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
+                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white border-2 border-black shadow-[2px_2px_0px_#000] hover:from-green-400 hover:to-green-500 active:translate-y-[2px] active:shadow-none"
+                    : "bg-gradient-to-r from-red-500 to-red-600 text-white border-2 border-black shadow-[2px_2px_0px_#000] hover:from-red-400 hover:to-red-500 active:translate-y-[2px] active:shadow-none"
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {isLoading
                   ? t.processing
@@ -1217,20 +1217,20 @@ export default function DexPage() {
             {/* Stats */}
             <div className="bg-vintage-charcoal/50 rounded-lg p-2.5 mb-3 space-y-1.5">
               <div className="flex justify-between text-xs">
-                <span className="text-vintage-burnt-gold">{t.marketCap}</span>
+                <span className="text-vintage-gold/70">{t.marketCap}</span>
                 <span className="text-vintage-gold font-mono font-bold">{marketCap.isLoading ? "..." : marketCap.marketCapFormatted}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-vintage-burnt-gold">{t.ethPrice}</span>
+                <span className="text-vintage-gold/70">{t.ethPrice}</span>
                 <span className="text-vintage-gold font-mono font-bold">{bondingProgress.ethPrice ? "$" + bondingProgress.ethPrice.toLocaleString() : "..."}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-vintage-burnt-gold">{t.bondingCurve}</span>
+                <span className="text-vintage-gold/70">{t.bondingCurve}</span>
                 <span className="text-vintage-gold font-mono font-bold">{bondingProgress.ethBalance.toFixed(4)} ETH (~${bondingProgress.usdBalance.toFixed(0)})</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-vintage-burnt-gold">{t.contract}</span>
-                <a href="https://basescan.org/token/0xb03439567cd22f278b21e1ffcdfb8e1696763827" target="_blank" rel="noopener noreferrer" className="text-vintage-burnt-gold hover:text-vintage-gold font-mono underline">0xb034...3827</a>
+                <span className="text-vintage-gold/70">{t.contract}</span>
+                <a href="https://basescan.org/token/0xb03439567cd22f278b21e1ffcdfb8e1696763827" target="_blank" rel="noopener noreferrer" className="text-vintage-gold/70 hover:text-vintage-gold font-mono underline">0xb034...3827</a>
               </div>
             </div>
 
@@ -1336,10 +1336,10 @@ function QuickButton({
   return (
     <button
       onClick={onClick}
-      className={`flex-1 text-xs py-1.5 px-2 rounded border transition ${
+      className={`flex-1 text-xs font-bold py-1.5 px-2 rounded border-2 transition-all active:translate-y-[2px] active:shadow-none ${
         active
-          ? "bg-vintage-gold/30 text-vintage-gold border-vintage-gold/60"
-          : "bg-vintage-gold/10 text-vintage-gold border-vintage-gold/20 hover:border-vintage-gold/50 hover:bg-vintage-gold/20"
+          ? "bg-vintage-gold text-black border-black shadow-[2px_2px_0px_#000]"
+          : "bg-[#1a1500] text-yellow-400 border-yellow-700/60 shadow-[2px_2px_0px_#92400e] hover:bg-[#2a2200] hover:border-yellow-500"
       }`}
     >
       {label}
