@@ -10,7 +10,8 @@
  */
 
 import { v } from "convex/values";
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation, internalMutation, action } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { api } from "./_generated/api";
 import { normalizeAddress } from "./utils";
 import { logTransaction } from "./coinsInbox";
@@ -547,10 +548,10 @@ const WEEKLY_QUESTS = {
 
 // 🏅 Weekly Leaderboard Rewards (4x - Vibe Clash is main competitive mode)
 export const WEEKLY_LEADERBOARD_REWARDS = {
-  rank1: 2000,    // Top 1 aura
-  rank2: 1500,    // Top 2 aura
-  rank3: 1000,    // Top 3 aura
-  rank4to10: 600, // Top 4-10 aura
+  rank1: 10000,   // Top 1 aura
+  rank2: 7000,    // Top 2 aura
+  rank3: 5000,    // Top 3 aura
+  rank4to10: 3000, // Top 4-10 aura
 } as const;
 
 /**
@@ -1062,6 +1063,99 @@ export const claimWeeklyLeaderboardReward = mutation({
       rewardName: `Leaderboard Rank #${rank}`,
       nextResetDate: getNextSunday(),
     };
+  },
+});
+
+/**
+ * 🎁 Prepare weekly leaderboard VBMS claim (returns signature for onchain TX)
+ * Player calls this, gets signature, sends TX to VBMSPoolTroll, then calls recordWeeklyLeaderboardClaim
+ */
+export const prepareWeeklyLeaderboardVBMSClaim = action({
+  args: { address: v.string() },
+  handler: async (ctx, { address }): Promise<{
+    amount: number;
+    nonce: string;
+    signature: string;
+    rank: number;
+  }> => {
+    const normalizedAddress = normalizeAddress(address);
+
+    // Check eligibility and generate nonce atomically
+    const result = await ctx.runMutation(internal.quests.prepareWeeklyClaimInternal, { address: normalizedAddress });
+
+    // Sign the claim
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
+      address: normalizedAddress,
+      amount: result.amount,
+      nonce: result.nonce,
+    });
+
+    return { amount: result.amount, nonce: result.nonce, signature, rank: result.rank };
+  },
+});
+
+export const prepareWeeklyClaimInternal = internalMutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const currentWeek = getLastSunday();
+
+    // Check already claimed
+    const existingClaim = await ctx.db
+      .query("weeklyRewards")
+      .withIndex("by_player_week", (q) => q.eq("playerAddress", address).eq("weekStart", currentWeek))
+      .first();
+    if (existingClaim) throw new Error("Already claimed reward for this week");
+
+    // Get top 10
+    const topPlayers = await ctx.db.query("profiles").withIndex("by_total_power").order("desc").take(10);
+    const playerIndex = topPlayers.findIndex((p) => normalizeAddress(p.address) === address);
+    if (playerIndex === -1) throw new Error("Not eligible: Must be in TOP 10 leaderboard");
+
+    const rank = playerIndex + 1;
+    let amount = 0;
+    if (rank === 1) amount = WEEKLY_LEADERBOARD_REWARDS.rank1;
+    else if (rank === 2) amount = WEEKLY_LEADERBOARD_REWARDS.rank2;
+    else if (rank === 3) amount = WEEKLY_LEADERBOARD_REWARDS.rank3;
+    else amount = WEEKLY_LEADERBOARD_REWARDS.rank4to10;
+
+    // Generate nonce (random bytes32)
+    const nonce = `0x${Array.from({ length: 32 }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('')}`;
+
+    // Pre-record claim with pending status
+    await ctx.db.insert("weeklyRewards", {
+      playerAddress: address,
+      username: topPlayers[playerIndex].username,
+      weekStart: currentWeek,
+      rank,
+      reward: amount,
+      claimedAt: Date.now(),
+      method: "vbms_onchain",
+    });
+
+    return { amount, nonce, rank };
+  },
+});
+
+/**
+ * 🎁 Record weekly leaderboard claim after onchain TX confirmed
+ */
+export const recordWeeklyLeaderboardClaim = mutation({
+  args: { address: v.string(), txHash: v.string() },
+  handler: async (ctx, { address, txHash }) => {
+    const normalizedAddress = normalizeAddress(address);
+    const currentWeek = getLastSunday();
+
+    // Update the pending claim record with txHash
+    const claim = await ctx.db
+      .query("weeklyRewards")
+      .withIndex("by_player_week", (q) => q.eq("playerAddress", normalizedAddress).eq("weekStart", currentWeek))
+      .first();
+
+    if (claim) {
+      await ctx.db.patch(claim._id, { txHash, method: "vbms_onchain" } as any);
+    }
+
+    return { success: true };
   },
 });
 

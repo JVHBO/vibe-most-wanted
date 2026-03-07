@@ -104,8 +104,16 @@ interface GamePopupsProps {
   loginBonusClaimed: boolean;
   isClaimingBonus: boolean;
   handleClaimLoginBonus: () => void;
-  onDailyClaimNow?: () => void; // Trigger reward choice modal for blockchain TX
-  effectiveChain?: string; // "base" | "arbitrum" — for reward display
+  onDailyClaimNow?: () => void;
+  effectiveChain?: string;
+
+  // Weekly leaderboard popup
+  showWeeklyLeaderboardPopup: boolean;
+  setShowWeeklyLeaderboardPopup: (show: boolean) => void;
+  weeklyLeaderboardRank?: number;
+  weeklyLeaderboardReward?: number;
+  isClaimingWeeklyReward: boolean;
+  onWeeklyLeaderboardClaimNow: () => void;
 
   // Translation
   t: any;
@@ -138,6 +146,12 @@ export function GamePopups({
   handleClaimLoginBonus,
   onDailyClaimNow,
   effectiveChain,
+  showWeeklyLeaderboardPopup,
+  setShowWeeklyLeaderboardPopup,
+  weeklyLeaderboardRank,
+  weeklyLeaderboardReward,
+  isClaimingWeeklyReward,
+  onWeeklyLeaderboardClaimNow,
   t,
 }: GamePopupsProps) {
   // Music control - pause when showing result popups
@@ -284,7 +298,7 @@ export function GamePopups({
 
       {/* Victory Popup */}
       {showWinPopup && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseVictoryScreen}>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[400]" onClick={handleCloseVictoryScreen}>
           {/* Victory audio is now played via useEffect for Farcaster compatibility */}
 
           {/* 🌈 GAY VIBES - Floating hearts effect for victory-2 (reduced from 20 to 8 for performance) */}
@@ -493,7 +507,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
 
       {/* Loss Popup */}
       {showLossPopup && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={handleCloseDefeatScreen}>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[400]" onClick={handleCloseDefeatScreen}>
           {/* Loss audio is now played via useEffect for Farcaster compatibility */}
           <div className="relative flex flex-col items-center gap-2">
             {/* Loss screen - Video or Image */}
@@ -593,7 +607,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
 
       {/* Tie Popup */}
       {showTiePopup && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={() => setShowTiePopup(false)}>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[400]" onClick={() => setShowTiePopup(false)}>
           <div className="relative flex flex-col items-center gap-2">
             <video
               src={getAssetUrl("/tie.mp4")}
@@ -619,7 +633,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
 
       {/* Error Popup - Custom alert replacement (hidden in Farcaster) */}
       {errorMessage && !isInFarcaster && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[300] p-4" onClick={() => setErrorMessage(null)}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[300] p-4" onClick={() => setErrorMessage(null)}>
           <div className="bg-vintage-charcoal rounded-2xl border-4 border-red-500 max-w-md w-full p-6 shadow-2xl shadow-red-500/50" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
               <div className="text-4xl">⚠️</div>
@@ -640,7 +654,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
 
       {/* Success Toast - Achievement rewards (hidden in Farcaster) */}
       {successMessage && !isInFarcaster && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[300] p-4" onClick={() => setSuccessMessage(null)}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[300] p-4" onClick={() => setSuccessMessage(null)}>
           <div className="bg-vintage-charcoal rounded-2xl border-4 border-vintage-gold max-w-md w-full p-6 shadow-2xl shadow-vintage-gold/50 animate-[fadeIn_0.3s_ease-out]" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-3 mb-4">
               <div className="text-4xl">🎉</div>
@@ -660,8 +674,59 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
       )}
 
       {/* Daily Claim Popup - Shows on login */}
+      {/* Weekly Leaderboard Reward Popup */}
+      {showWeeklyLeaderboardPopup && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[300] p-4" onClick={() => setShowWeeklyLeaderboardPopup(false)}>
+          <div className="bg-[#1E1E1E] border-4 border-black shadow-[6px_6px_0px_#000] max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="bg-[#7C3AED] border-b-4 border-black px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-black flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+                    <path d="M4 22h16"/>
+                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+                  </svg>
+                </div>
+                <span className="font-display font-black text-white text-lg uppercase tracking-wider">Weekly Reward</span>
+              </div>
+              <button
+                onClick={() => setShowWeeklyLeaderboardPopup(false)}
+                className="w-8 h-8 bg-black text-[#7C3AED] border-2 border-black flex items-center justify-center font-bold text-lg hover:bg-[#333] transition leading-none"
+              >×</button>
+            </div>
+            {/* Body */}
+            <div className="p-5">
+              <p className="text-white font-modern text-base mb-1">
+                Leaderboard Rank <span className="text-[#7C3AED] font-black">#{weeklyLeaderboardRank}</span> reward:
+              </p>
+              <p className="text-[#FFD700] font-black font-display text-3xl uppercase tracking-wider mb-2">
+                +{weeklyLeaderboardReward?.toLocaleString()} VBMS
+              </p>
+              <p className="text-white/50 text-xs mb-5">Sent directly to your wallet on Base</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={onWeeklyLeaderboardClaimNow}
+                  disabled={isClaimingWeeklyReward}
+                  className="flex-1 py-3 bg-[#FFD700] border-2 border-black text-black font-black uppercase tracking-wide shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[4px_4px_0px_#000]"
+                >
+                  {isClaimingWeeklyReward ? 'Claiming...' : 'Claim VBMS'}
+                </button>
+                <button
+                  onClick={() => setShowWeeklyLeaderboardPopup(false)}
+                  className="px-5 py-3 bg-[#333] border-2 border-[#555] text-white font-bold uppercase tracking-wide hover:bg-[#444] transition-all"
+                >Later</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showDailyClaimPopup && !loginBonusClaimed && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[300] p-4" onClick={() => setShowDailyClaimPopup(false)}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[300] p-4" onClick={() => setShowDailyClaimPopup(false)}>
           <div className="bg-[#1E1E1E] border-4 border-black shadow-[6px_6px_0px_#000] max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="bg-[#22C55E] border-b-4 border-black px-4 py-3 flex items-center justify-between">

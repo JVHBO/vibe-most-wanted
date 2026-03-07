@@ -680,10 +680,18 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   // 🏅 Weekly Leaderboard Rewards (skip in miniapp for performance)
   const weeklyRewardEligibility = useQuery(
     api.quests.checkWeeklyRewardEligibility,
-    (address && !isMiniappMode()) ? { address } : "skip"
+    address ? { address } : "skip"
   );
-  const claimWeeklyLeaderboardReward = useMutation(api.quests.claimWeeklyLeaderboardReward);
+  const prepareWeeklyLeaderboardVBMSClaim = useAction(api.quests.prepareWeeklyLeaderboardVBMSClaim);
+  const recordWeeklyLeaderboardClaim = useMutation(api.quests.recordWeeklyLeaderboardClaim);
   const [isClaimingWeeklyReward, setIsClaimingWeeklyReward] = useState<boolean>(false);
+
+  // Show weekly leaderboard popup when eligible
+  useEffect(() => {
+    if (weeklyRewardEligibility?.eligible && address) {
+      setShowWeeklyLeaderboardPopup(true);
+    }
+  }, [weeklyRewardEligibility?.eligible, address]);
 
   // 💰 Coins Inbox Status
   // 🚀 BANDWIDTH FIX: Use profileDashboard instead of separate query
@@ -977,6 +985,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showDailyClaimPopup, setShowDailyClaimPopup] = useState(false);
+  const [showWeeklyLeaderboardPopup, setShowWeeklyLeaderboardPopup] = useState(false);
 
   // Reward Choice Modal State
   // Share incentives
@@ -1513,14 +1522,38 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   // 🏅 Handler to claim weekly leaderboard reward
   const handleClaimWeeklyLeaderboardReward = async () => {
     if (!address || isClaimingWeeklyReward) return;
+    setIsClaimingWeeklyReward(true);
 
     try {
-      setIsClaimingWeeklyReward(true);
-      devLog('🏅 Claiming weekly leaderboard reward...');
+      devLog('🏅 Preparing weekly leaderboard VBMS claim...');
+      const result = await prepareWeeklyLeaderboardVBMSClaim({ address });
 
-      const result = await claimWeeklyLeaderboardReward({ address });
+      toast.info('🔐 Sign transaction to receive VBMS...');
 
-      devLog(`✓ Weekly reward claimed: Rank #${result.rank} → +${result.reward} $TESTVBMS`);
+      // Force Base chain and send TX
+      const provider = await sdk.wallet.getEthereumProvider();
+      if (!provider) throw new Error('Wallet not available');
+
+      try {
+        await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
+      } catch {}
+
+      const { encodeFunctionData, parseEther } = await import('viem');
+      const { POOL_ABI } = await import('@/lib/contracts');
+      const data = encodeFunctionData({
+        abi: POOL_ABI,
+        functionName: 'claimVBMS',
+        args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
+      });
+
+      const txHash = await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{ from: address as `0x${string}`, to: '0x062b914668f3fd35c3ae02e699cb82e1cf4be18b', data }],
+      }) as string;
+
+      await recordWeeklyLeaderboardClaim({ address, txHash });
+      setShowWeeklyLeaderboardPopup(false);
+      toast.success(`✅ ${result.amount.toLocaleString()} VBMS claimed! Rank #${result.rank}`);
       if (soundEnabled) AudioManager.buttonClick();
 
     } catch (error: any) {
@@ -3572,6 +3605,12 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
         handleClaimLoginBonus={handleClaimLoginBonus}
         onDailyClaimNow={handleDailyClaimNow}
         effectiveChain={effectiveChain}
+        showWeeklyLeaderboardPopup={showWeeklyLeaderboardPopup}
+        setShowWeeklyLeaderboardPopup={setShowWeeklyLeaderboardPopup}
+        weeklyLeaderboardRank={weeklyRewardEligibility?.rank ?? undefined}
+        weeklyLeaderboardReward={weeklyRewardEligibility?.reward ?? undefined}
+        isClaimingWeeklyReward={isClaimingWeeklyReward}
+        onWeeklyLeaderboardClaimNow={handleClaimWeeklyLeaderboardReward}
         t={t}
       />
 

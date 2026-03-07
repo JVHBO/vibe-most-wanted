@@ -449,17 +449,6 @@ const convex = useConvex();
 
           {/* Right: Action Buttons */}
           <div className="flex items-center gap-2">
-            {/* Weekly Reward Claim Button */}
-            {weeklyRewardEligibility?.eligible && (
-              <button
-                onClick={handleClaimWeeklyLeaderboardReward}
-                disabled={isClaimingWeeklyReward}
-                className="px-3 py-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 hover:border-green-400 rounded text-green-400 text-xs font-bold uppercase tracking-wide transition-all"
-              >
-                {isClaimingWeeklyReward ? '...' : 'Claim Reward'}
-              </button>
-            )}
-
             {/* Defense Deck Button */}
             {userProfile && (
               <button
