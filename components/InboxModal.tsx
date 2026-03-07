@@ -96,6 +96,18 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
     console.log('[InboxModal] Encoded data with builder code:', dataWithBuilderCode, 'Builder:', BUILDER_CODE);
 
     try {
+      // Force Base chain — claim contract is on Base only
+      const BASE_CHAIN_ID_HEX = '0x2105'; // 8453
+      try {
+        await provider.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: BASE_CHAIN_ID_HEX }],
+        });
+        console.log('[InboxModal] Switched to Base chain for claim');
+      } catch (switchError: any) {
+        console.warn('[InboxModal] Could not switch chain:', switchError?.message);
+      }
+
       // Send transaction via Farcaster SDK with builder code
       const txHash = await provider.request({
         method: 'eth_sendTransaction',

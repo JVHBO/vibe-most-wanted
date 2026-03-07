@@ -371,6 +371,17 @@ export function Roulette({ onClose }: RouletteProps) {
     const dataSuffix = encodeBuilderCodeSuffix(BUILDER_CODE);
     const dataWithBuilderCode = (data + dataSuffix.slice(2)) as `0x${string}`;
 
+    // Force Base chain — claim contract is on Base only
+    const BASE_CHAIN_ID_HEX = '0x2105'; // 8453
+    try {
+      await provider.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: BASE_CHAIN_ID_HEX }],
+      });
+    } catch (switchError: any) {
+      console.warn('[Roulette] Could not switch chain:', switchError?.message);
+    }
+
     const txHash = await provider.request({
       method: 'eth_sendTransaction',
       params: [{
@@ -600,6 +611,16 @@ export function Roulette({ onClose }: RouletteProps) {
       if (useFarcasterSDK) {
         const provider = await sdk.wallet.getEthereumProvider();
         if (!provider) throw new Error("Farcaster wallet not available");
+
+        // Force Base chain — VBMS token and pool are on Base only
+        try {
+          await provider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x2105' }], // Base = 8453
+          });
+        } catch (switchError: any) {
+          console.warn('[Roulette] Could not switch chain:', switchError?.message);
+        }
 
         txHash = await provider.request({
           method: 'eth_sendTransaction',
