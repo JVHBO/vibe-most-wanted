@@ -1203,6 +1203,10 @@ const convex = useConvex();
         isClaimingBonus={isClaimingBonus}
         handleClaimLoginBonus={() => {}}
         onDailyClaimNow={() => {}}
+        showWeeklyLeaderboardPopup={false}
+        setShowWeeklyLeaderboardPopup={() => {}}
+        isClaimingWeeklyReward={false}
+        onWeeklyLeaderboardClaimNow={() => {}}
         t={t}
       />
 
