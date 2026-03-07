@@ -524,6 +524,23 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             )}
           </div>
 
+          {/* DEX Info Banner */}
+          <div className="bg-[#0A1628] border-2 border-[#12AAFF]/40 p-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 min-w-0">
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-[#12AAFF] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+              </svg>
+              <span className="text-[11px] font-bold text-[#12AAFF]/80">{(t as (k: string) => string)('convertDexInfo')}</span>
+            </div>
+            <a
+              href="/dex"
+              onClick={onClose}
+              className="shrink-0 px-3 py-1.5 bg-[#12AAFF] border-2 border-black text-black font-black text-[10px] uppercase tracking-wider shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all whitespace-nowrap"
+            >
+              {(t as (k: string) => string)('convertDexButton')} →
+            </a>
+          </div>
+
           {/* Action Buttons */}
           <div className="space-y-2">
           {testvbmsBalance >= 100 ? (
