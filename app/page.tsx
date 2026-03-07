@@ -17,7 +17,7 @@ import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useAccount, useDisconnect, useConnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useQuery, useMutation, useConvex } from "convex/react";
+import { useQuery, useMutation, useAction, useConvex } from "convex/react";
 import { toast } from "sonner";
 import { isMiniappMode } from "@/lib/utils/miniapp";
 import { isWarpcastClient } from "@/lib/utils/miniapp";
