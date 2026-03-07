@@ -437,9 +437,8 @@ const convex = useConvex();
           {/* Center: Title */}
           <div className="flex items-center gap-2">
             <h1 className="text-base md:text-xl font-display font-bold text-vintage-gold uppercase tracking-widest">
-              Leaderboard
+              Aura Ranking
             </h1>
-            <span className="text-purple-400 text-[10px] font-bold uppercase tracking-wider bg-purple-400/10 border border-purple-400/30 px-1.5 py-0.5 rounded">Aura Ranking</span>
             <button
               onClick={() => setShowLeaderboardRewardsModal(true)}
               className="w-5 h-5 rounded-full bg-vintage-gold/10 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50 text-xs font-bold flex items-center justify-center transition-all"
