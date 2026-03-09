@@ -53,6 +53,7 @@ import { Roulette } from "@/components/Roulette";
 import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
+import { usePopupStates } from "@/hooks/usePopupStates";
 import { usePowerCalculation } from "@/app/(game)/hooks/battle/usePowerCalculation";
 import { BattleArena } from "@/app/(game)/components/battle/BattleArena";
 import { MissionsView } from "@/app/(game)/components/views/MissionsView";
@@ -515,11 +516,42 @@ export default function TCGPage() {
     initFarcasterSDK();
   }, [sdkReadyCalled]);
 
+  const {
+    showTutorial, setShowTutorial,
+    showGuidedTour, setShowGuidedTour,
+    showBattleScreen, setShowBattleScreen,
+    showWinPopup, setShowWinPopup,
+    showLossPopup, setShowLossPopup,
+    showTiePopup, setShowTiePopup,
+    showRoulette, setShowRoulette,
+    showCpuArena, setShowCpuArena,
+    showBaccarat, setShowBaccarat,
+    isDifficultyModalOpen, setIsDifficultyModalOpen,
+    showDefenseDeckModal, setShowDefenseDeckModal,
+    showDefenseDeckWarning, setShowDefenseDeckWarning,
+    showDefenseDeckSaved, setShowDefenseDeckSaved,
+    showPveCardSelection, setShowPveCardSelection,
+    showAttackCardSelection, setShowAttackCardSelection,
+    showPvPEntryFeeModal, setShowPvPEntryFeeModal,
+    showPvPPreview, setShowPvPPreview,
+    showLeaderboardRewardsModal, setShowLeaderboardRewardsModal,
+    showMyCardsModal, setShowMyCardsModal,
+    showProfileDropdown, setShowProfileDropdown,
+    showDexDropdown, setShowDexDropdown,
+    modeMenuOpen, setModeMenuOpen,
+    showSettings, setShowSettings,
+    showCreateProfile, setShowCreateProfile,
+    showChangeUsername, setShowChangeUsername,
+    showChainModal, setShowChainModal,
+    showArbAnnounce, setShowArbAnnounce,
+    showFidMailModal, setShowFidMailModal,
+    showDailyClaimPopup, setShowDailyClaimPopup,
+    showWeeklyLeaderboardPopup, setShowWeeklyLeaderboardPopup,
+  } = usePopupStates();
+
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
-  const [showTutorial, setShowTutorial] = useState<boolean>(false);
-  const [showGuidedTour, setShowGuidedTour] = useState<boolean>(false);
   const [sortByPower, setSortByPower] = useState<boolean>(false);
   const [sortAttackByPower, setSortAttackByPower] = useState<boolean>(false);
   const [cardTypeFilter, setCardTypeFilter] = useState<'all' | 'free' | 'nft'>('all');
@@ -566,19 +598,12 @@ export default function TCGPage() {
   const [result, setResult] = useState<string>('');
   const [isBattling, setIsBattling] = useState<boolean>(false);
   const [dealerCards, setDealerCards] = useState<any[]>([]);
-  const [showBattleScreen, setShowBattleScreen] = useState<boolean>(false);
   const [battlePhase, setBattlePhase] = useState<string>('cards');
   const [battleOpponentName, setBattleOpponentName] = useState<string>('Dealer');
   const [battlePlayerName, setBattlePlayerName] = useState<string>('You');
   const [battlePlayerPfp, setBattlePlayerPfp] = useState<string | null>(null);
   const [battleOpponentPfp, setBattleOpponentPfp] = useState<string | null>(null);
-  const [showLossPopup, setShowLossPopup] = useState<boolean>(false);
-  const [showWinPopup, setShowWinPopup] = useState<boolean>(false);
-  const [showRoulette, setShowRoulette] = useState<boolean>(false);
-  const [showFidMailModal, setShowFidMailModal] = useState<boolean>(false);
-  const [showProfileDropdown, setShowProfileDropdown] = useState<boolean>(false);
   const profileDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
-  const [showDexDropdown, setShowDexDropdown] = useState<boolean>(false);
   const dexDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   // Miniapp: 12 cards (1.5 rows), Website: 24 cards (3 full rows of 8)
@@ -599,7 +624,6 @@ export default function TCGPage() {
   // PvP States
   const [gameMode, setGameMode] = useState<'ai' | 'pvp' | null>(null);
   const [pvpMode, setPvpMode] = useState<'menu' | 'pvpMenu' | 'autoMatch' | 'selectMode' | 'createRoom' | 'joinRoom' | 'inRoom' | null>(null);
-  const [modeMenuOpen, setModeMenuOpen] = useState<'battle' | 'boss' | null>(null);
   const [roomCode, setRoomCode] = useState<string>('');
   const [currentRoom, setCurrentRoom] = useState<any>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -755,14 +779,12 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const cleanConflictingDefense = useMutation(api.profiles.cleanConflictingDefenseCards);
 
   // 🛡️ Defense Deck Warning - Show popup if player has no defense deck
-  const [showDefenseDeckWarning, setShowDefenseDeckWarning] = useState<boolean>(false);
   const [defenseDeckWarningDismissed, setDefenseDeckWarningDismissed] = useState<boolean>(false);
 
   const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
   const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
 const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const [unlockedDifficulties, setUnlockedDifficulties] = useState<Set<string>>(new Set(['gey']));
-  const [isDifficultyModalOpen, setIsDifficultyModalOpen] = useState(false);
   const [tempSelectedDifficulty, setTempSelectedDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad' | null>(null);
 
   // Elimination Mode States
@@ -807,7 +829,6 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   // 📬 VibeMail unread count for notification dot on VibeFID button
   const userFidForVibemail = farcasterFidState || userProfile?.farcasterFid || (userProfile?.fid ? parseInt(userProfile.fid) : undefined);
   const unreadVibeMailCount = useQuery(api.cardVotes.getUnreadMessageCount, userFidForVibemail ? { cardFid: userFidForVibemail } : "skip");
-  const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
   const [profileUsername, setProfileUsername] = useState<string>('');
   const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
   // REMOVED: Referral system disabled
@@ -865,9 +886,6 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
 
     autoCreateOrUpdateProfile();
   }, [address, isInFarcaster, farcasterFidState, isCheckingFarcaster, userProfile, isLoadingProfile, upsertProfileFromFarcaster, refreshProfile]);
-  const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [showChainModal, setShowChainModal] = useState(false);
-  const [showArbAnnounce, setShowArbAnnounce] = useState(false);
   // ARB supported only on Warpcast (clientFid 9152), not Base App or other clients
   // For non-miniapp (browser), isInFarcaster=false so arbSupported=true
   // Frame mode = desktop browser, always ARB supported
@@ -878,10 +896,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const { validateOnArb } = useArbValidator();
   // Arb Mode announcement disabled - no longer needed
   const [pendingClaimAction, setPendingClaimAction] = useState<(() => void) | null>(null);
-  const [showCpuArena, setShowCpuArena] = useState<boolean>(false);
-  const [showBaccarat, setShowBaccarat] = useState<boolean>(false);
   // REMOVED: showReferrals - Referral system disabled
-  const [showChangeUsername, setShowChangeUsername] = useState<boolean>(false);
 
   // Missions States
   const [missions, setMissions] = useState<any[]>([]);
@@ -916,28 +931,15 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   }, [questProgress, loginBonusClaimed, address, userProfile, playerMissions]);
 
   // Defense Deck States
-  const [showDefenseDeckSaved, setShowDefenseDeckSaved] = useState<boolean>(false);
   const [defenseDeckSaveStatus, setDefenseDeckSaveStatus] = useState<string>(''); // For retry feedback
-  const [showDefenseDeckModal, setShowDefenseDeckModal] = useState<boolean>(false);
   const [defenseDeckSortByPower, setDefenseDeckSortByPower] = useState<boolean>(true); // Default to sorted by power
   const [defenseDeckCollection, setDefenseDeckCollection] = useState<CollectionId | 'all'>('all');
-  const [showPveCardSelection, setShowPveCardSelection] = useState<boolean>(false);
   const [pveSelectedCards, setPveSelectedCards] = useState<any[]>([]);
   const [pveSortByPower, setPveSortByPower] = useState<boolean>(false);
   const [newUsername, setNewUsername] = useState<string>('');
   const [isChangingUsername, setIsChangingUsername] = useState<boolean>(false);
 
-  // PvP Entry Fee Modal
-  const [showPvPEntryFeeModal, setShowPvPEntryFeeModal] = useState<boolean>(false);
-
-  // Leaderboard Rewards Info Modal
-  const [showLeaderboardRewardsModal, setShowLeaderboardRewardsModal] = useState<boolean>(false);
-
-  // My Cards Modal (for miniapp)
-  const [showMyCardsModal, setShowMyCardsModal] = useState<boolean>(false);
-
   // Attack States
-  const [showAttackCardSelection, setShowAttackCardSelection] = useState<boolean>(false);
   const [attackSelectedCards, setAttackSelectedCards] = useState<any[]>([]);
   const [targetPlayer, setTargetPlayer] = useState<UserProfile | null>(null);
   const [attacksRemaining, setAttacksRemaining] = useState<number>(getMaxAttacks(null));
@@ -954,7 +956,6 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const { totalPower: dealerCardsPower } = usePowerCalculation(dealerCards, true);
 
   // ✅ PvP Preview States
-  const [showPvPPreview, setShowPvPPreview] = useState<boolean>(false);
   const [pvpPreviewData, setPvpPreviewData] = useState<any>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
 
@@ -980,12 +981,9 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
     playerPfpUrl?: string;
     opponentPfpUrl?: string;
   } | null>(null);
-  const [showTiePopup, setShowTiePopup] = useState(false);
   const [tieGifLoaded, setTieGifLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [showDailyClaimPopup, setShowDailyClaimPopup] = useState(false);
-  const [showWeeklyLeaderboardPopup, setShowWeeklyLeaderboardPopup] = useState(false);
 
   // Reward Choice Modal State
   // Share incentives
