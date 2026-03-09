@@ -1643,7 +1643,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
         {/* Neynar Score Modal - EXACT COPY FROM CARD PAGE */}
         {showScoreModal && neynarScoreData && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[8000] p-4" style={{ paddingTop: '64px', paddingBottom: '72px' }}>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[8000] p-4" style={{ paddingTop: '64px', paddingBottom: '72px' }}>
             <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 p-4 max-w-md w-full">
               <h2 className="text-xl font-bold text-vintage-gold mb-3 text-center">
                 {t.neynarScoreTitle}
@@ -1749,7 +1749,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
         {/* Language Selection Modal for Share */}
         {showShareModal && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[10000] p-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[10000] p-4">
             <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 p-6 max-w-sm w-full">
               <h2 className="text-xl font-bold text-vintage-gold mb-4 text-center">
                 {t.shareToFarcaster || 'Share to Farcaster'}
@@ -1803,7 +1803,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
         {/* Evolution Animation Modal */}
         {showEvolutionModal && myCard && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[10000] p-2 sm:p-4 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[10000] p-2 sm:p-4 overflow-y-auto">
             <div className="max-w-sm w-full text-center my-auto">
               {/* Card with Animation */}
               <div className={`relative mb-4 sm:mb-8 transition-all duration-500 ${
@@ -1937,7 +1937,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
         {/* OLD MODAL REMOVED - replaced with FidAboutTraitsModal component */}
         {false && showAboutModal && (
-          <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-50 overflow-y-auto hidden">
+          <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto hidden">
             <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold max-w-3xl w-full max-h-[90vh] overflow-y-auto">
               {/* Header */}
               <div className="sticky top-0 bg-vintage-charcoal border-b-2 border-vintage-gold/30 p-4 sm:p-6">

@@ -209,7 +209,7 @@ export default function FidAboutTraitsModal({ isOpen, onClose }: FidAboutTraitsM
   };
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 z-[10000]">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-[10000]">
       <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold max-w-2xl w-full max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="border-b-2 border-vintage-gold/30 p-4 sm:p-6 flex items-center justify-between">

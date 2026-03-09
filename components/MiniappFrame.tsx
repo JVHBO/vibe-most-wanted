@@ -8,6 +8,7 @@ import { LanguageSelect } from "@/components/SettingsModal";
 import { useMusic } from "@/contexts/MusicContext";
 import { AudioManager } from "@/lib/audio-manager";
 import { HomeFloatingBackground } from "@/components/HomeFloatingBackground";
+import { useDisconnect, useAccount } from "wagmi";
 
 // Farcaster notice text in all 10 supported languages
 const FARCASTER_NOTICE: Record<string, string> = {
@@ -62,6 +63,8 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   const [showFrame, setShowFrame] = useState(false);
   const { lang } = useLanguage();
   const { isMusicEnabled, setIsMusicEnabled } = useMusic();
+  const { disconnect } = useDisconnect();
+  const { isConnected } = useAccount();
   const pathname = usePathname();
   const showFloating = true;
   const [collapsed, setCollapsed] = useState(false);
@@ -88,7 +91,7 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
     setShowFrame(isDesktop && !isMiniappMode());
     if (isDesktop && !isMiniappMode()) {
       setFrameX(Math.round((window.innerWidth - 410) / 2));
-      setFrameY(Math.max(16, Math.round((window.innerHeight - 660) / 2)));
+      setFrameY(80);
     }
     if ("Notification" in window) {
       setNotifStatus(Notification.permission as "default" | "granted" | "denied");
@@ -104,8 +107,14 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
       setFrameX(e.clientX - dragOffset.current.x);
       setFrameY(Math.max(0, e.clientY - dragOffset.current.y));
     };
-    const onUp = () => {
-      if (dragging.current) { dragging.current = false; setIsDragging(false); }
+    const onUp = (e: MouseEvent) => {
+      if (dragging.current) {
+        dragging.current = false;
+        setIsDragging(false);
+        const x = e.clientX - dragOffset.current.x;
+        const y = Math.max(0, e.clientY - dragOffset.current.y);
+        localStorage.setItem("vbms_frame_pos", JSON.stringify({ x, y }));
+      }
     };
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
@@ -256,6 +265,14 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
                 <button onClick={() => { setMenuOpen(false); navigator.clipboard?.writeText("https://vibemostwanted.xyz"); }} style={itemStyle}>
                   <span>⎘</span><span>Copy link</span>
                 </button>
+                {isConnected && (
+                  <>
+                    <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0 12px" }} />
+                    <button onClick={() => { setMenuOpen(false); disconnect(); }} style={{ ...itemStyle, color: "#f87171" }}>
+                      <span>⏻</span><span>Disconnect wallet</span>
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>

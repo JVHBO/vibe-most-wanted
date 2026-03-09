@@ -20,7 +20,7 @@ function useForceTheme() {
 
 function MockSettingsModal({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-2" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-2" onClick={onClose}>
       <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-3 max-w-md w-full shadow-gold max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-display font-bold text-vintage-gold flex items-center gap-2"><span>§</span> Settings</h2>
@@ -67,7 +67,7 @@ function MockCardSelectionModal({ onClose }: { onClose: () => void }) {
   const RARITY_BORDERS: Record<string, string> = { Mythic: "border-pink-400", Legendary: "border-yellow-400", Epic: "border-purple-400", Rare: "border-blue-400", Common: "border-vintage-ice/50" };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-2" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-2" onClick={onClose}>
       <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-3 max-w-md w-full shadow-gold max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-3">
           <h2 className="text-lg font-display font-bold text-vintage-gold">Select Cards (5)</h2>
@@ -97,7 +97,7 @@ function MockCardSelectionModal({ onClose }: { onClose: () => void }) {
 
 function MockBattleResultModal({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-2" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-2" onClick={onClose}>
       <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-4 max-w-sm w-full shadow-gold text-center" onClick={(e) => e.stopPropagation()}>
         <div className="text-5xl mb-2">🏆</div>
         <h2 className="text-2xl font-display font-bold text-vintage-gold mb-1">VICTORY!</h2>
@@ -118,7 +118,7 @@ function MockBattleResultModal({ onClose }: { onClose: () => void }) {
 
 function MockClaimModal({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] p-2" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-2" onClick={onClose}>
       <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-3 max-w-md w-full shadow-gold max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-3">
           <h2 className="text-lg font-display font-bold text-vintage-gold flex items-center gap-2">

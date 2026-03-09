@@ -1226,7 +1226,7 @@ export default function BaccaratPage() {
 
       {/* Daily Limit Modal */}
       {showLimitModal && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4" onClick={() => setShowLimitModal(false)}>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowLimitModal(false)}>
           <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-2xl border-2 border-vintage-gold/40 max-w-sm w-full p-6 text-center" onClick={e => e.stopPropagation()}>
             <div className="text-5xl mb-4">🎰</div>
             <h3 className="text-vintage-gold font-display text-xl mb-3">Daily Limit Reached</h3>
@@ -1275,7 +1275,7 @@ export default function BaccaratPage() {
 
       {/* Rules Modal */}
       {showRulesModal && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4" onClick={() => setShowRulesModal(false)}>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setShowRulesModal(false)}>
           <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-2xl border-2 border-vintage-gold/40 max-w-sm w-full p-6" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-vintage-gold font-display text-xl">
@@ -1322,7 +1322,7 @@ export default function BaccaratPage() {
 
       {/* Cashout Modal - handles withdrawing, error, and result states */}
       {showCashoutModal && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[400]" onClick={cashoutStep === "done" ? handleCashoutClose : undefined}>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[400]" onClick={cashoutStep === "done" ? handleCashoutClose : undefined}>
           <div className="relative flex flex-col items-center gap-3 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
 
             {/* Withdrawing State */}

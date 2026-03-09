@@ -447,7 +447,7 @@ ${shareT.shareTextMintYours}`;
 
         {/* Share Language Selection Modal */}
         {showShareLangModal && onShare && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
             <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 p-4 max-w-sm w-full">
               <h2 className="text-lg font-bold text-vintage-gold mb-3 text-center">
                 {t.shareToFarcaster || 'Share to Farcaster'}

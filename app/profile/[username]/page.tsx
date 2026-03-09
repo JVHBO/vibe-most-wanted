@@ -955,7 +955,7 @@ export default function ProfilePage() {
 
       {/* Attack Card Selection Modal (Simplified for Profile) */}
       {showAttackCardSelection && targetOpponent && nfts.length > 0 && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[150] p-4 overflow-y-auto">
           <div className="bg-vintage-charcoal rounded-2xl border-2 border-red-600 max-w-4xl w-full p-4 shadow-lg shadow-red-600/50 my-4 max-h-[95vh] overflow-y-auto">
             <h2 className="text-3xl font-display font-bold text-center mb-2 text-red-500">
               {t('profileAttackTitle').replace('{username}', targetOpponent.username.toUpperCase())}
@@ -1063,7 +1063,7 @@ export default function ProfilePage() {
       {/* Album Card Modal */}
       {selectedAlbumCard && (
         <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[200] p-4"
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[200] p-4"
           onClick={() => setSelectedAlbumCard(null)}
         >
           <div
@@ -1197,7 +1197,7 @@ export default function ProfilePage() {
 
       {/* Share Reward Popup */}
       {showShareReward && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[9999] backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] backdrop-blur-sm">
           <div className="bg-vintage-charcoal border-4 border-vintage-gold rounded-2xl p-8 max-w-md mx-4 shadow-[0_0_50px_rgba(255,215,0,0.5)] animate-[scale-in_0.3s_ease-out]">
             <div className="text-center">
               <div className="text-6xl mb-4 animate-bounce">🎁</div>

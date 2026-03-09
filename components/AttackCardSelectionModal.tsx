@@ -430,7 +430,7 @@ export function AttackCardSelectionModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/90 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
       style={{ zIndex: Z_INDEX.modal }}
       onClick={handleCancel}
     >

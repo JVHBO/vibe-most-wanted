@@ -135,6 +135,8 @@ export default function TCGPage() {
   const [touchDragPos, setTouchDragPos] = useState<{ x: number; y: number } | null>(null);
   const [draggedLaneCard, setDraggedLaneCard] = useState<{ laneIndex: number; cardIndex: number } | null>(null);
   const [dragOverHand, setDragOverHand] = useState(false);
+  const [pveHandOffset, setPveHandOffset] = useState(0);
+  const [pvpHandOffset, setPvpHandOffset] = useState(0);
   const laneRefs = useRef<(HTMLDivElement | null)[]>([null, null, null]);
   const wasDraggingRef = useRef(false);
   const [showBattleIntro, setShowBattleIntro] = useState(false);
@@ -3398,7 +3400,7 @@ export default function TCGPage() {
         <div className="relative flex flex-col h-full z-10">
 
           {/* Top Bar - Player Avatars & Turn Indicator */}
-          <div className="flex items-center justify-between px-4 py-1">
+          <div className="flex items-center justify-between px-4 py-2">
             {/* Player Avatar (left) - Royal style with dropdown */}
             <div className="relative flex items-center gap-2">
               <div
@@ -3502,10 +3504,10 @@ export default function TCGPage() {
 
           {/* Battle Arena - 3 Lanes (Royal Card Table style with 3D depth) */}
           <div
-            className="flex-1 flex items-stretch justify-center px-2 gap-2 min-h-0"
+            className="flex-1 max-h-[56vh] flex items-stretch justify-center px-2 gap-2 min-h-0 overflow-hidden"
             style={{
               perspective: "1000px",
-              perspectiveOrigin: "50% 30%"
+              perspectiveOrigin: "50% 80%"
             }}
             onDragOver={(e) => e.preventDefault()}
           >
@@ -3513,8 +3515,8 @@ export default function TCGPage() {
               className="flex-1 flex items-stretch justify-center gap-2"
               style={{
                 transformStyle: "preserve-3d",
-                transform: "rotateX(6deg)",
-                transformOrigin: "50% 50%"
+                transform: "translateY(-80px) rotateX(22deg)",
+                transformOrigin: "50% 100%"
               }}
               onDragOver={(e) => e.preventDefault()}
             >
@@ -3994,9 +3996,8 @@ export default function TCGPage() {
 
           {/* Hand - Bottom Bar (Royal style) */}
           <div
-            className="relative pt-1 pb-1 px-3 tcg-royal-hand"
-            style={{
-              background: "linear-gradient(180deg, rgba(20,20,20,0.95) 0%, rgba(10,10,10,1) 100%)",
+            className="relative shrink-0 pt-2 pb-3 px-3 tcg-royal-hand z-20"
+            style={{ marginTop: "-80px", background: "linear-gradient(180deg, rgba(20,20,20,0.95) 0%, rgba(10,10,10,1) 100%)",
               borderTop: dragOverHand ? "3px solid #22c55e" : "3px solid",
               borderImage: dragOverHand ? "none" : "linear-gradient(90deg, transparent 5%, #B8860B 20%, #FFD700 50%, #B8860B 80%, transparent 95%) 1"
             }}
@@ -4034,21 +4035,34 @@ export default function TCGPage() {
                 <span className="text-green-400 text-xs font-bold bg-black/60 px-2 py-1 rounded">↩ Return to Hand</span>
               </div>
             )}
-            {/* Cards - scrollable when many cards, smaller cards if 7+ */}
-            <div className={`flex justify-center mb-3 overflow-x-auto max-w-full px-2 ${(gs.playerHand?.length || 0) > 6 ? "gap-0.5" : "gap-1"}`}
-                 style={{ scrollbarWidth: "thin" }}>
-              {gs.playerHand?.map((card: any, idx: number) => {
+            {/* Cards - paginated, 5 at a time */}
+            {(() => {
+              const handSize = gs.playerHand?.length || 0;
+              const CARDS_PER_PAGE = 4;
+              const showNav = handSize > CARDS_PER_PAGE;
+              const maxOffset = Math.max(0, handSize - CARDS_PER_PAGE);
+              const safeOffset = Math.min(pveHandOffset, maxOffset);
+              const visibleCards = (gs.playerHand || []).slice(safeOffset, safeOffset + CARDS_PER_PAGE);
+              const navBtn = (disabled: boolean, label: string, onClick: () => void) => (
+                <button onClick={onClick} disabled={disabled}
+                  className="flex-shrink-0 w-8 h-8 flex items-center justify-center font-black text-sm border-2 border-black transition-all active:translate-x-[1px] active:translate-y-[1px]"
+                  style={{ background: disabled ? '#374151' : '#FFD400', color: disabled ? '#6b7280' : '#000', boxShadow: disabled ? 'none' : '2px 2px 0px #000' }}
+                >{label}</button>
+              );
+              return (
+                <div className="flex items-center justify-center gap-1 mb-3 px-1">
+                  {showNav && navBtn(safeOffset === 0, '<', () => setPveHandOffset(Math.max(0, safeOffset - 1)))}
+                  <div className="flex justify-center gap-1">
+              {visibleCards.map((card: any, visibleIdx: number) => {
+                const idx = safeOffset + visibleIdx;
                 const ability = getCardAbility(card.name, card, t as (k: string) => string);
                 const foilEffect = getFoilEffect(card.foil);
                 const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
                 const energyCost = getEnergyCost(card);
                 const canAfford = energyCost <= (gs.energy || 1);
-                // Use actual card image (same as deck builder)
                 const battleHandImageUrl = getCardDisplayImageUrl(card);
-                // Smaller cards when hand is big
-                const handSize = gs.playerHand?.length || 0;
-                const cardWidth = handSize > 8 ? "w-[45px]" : handSize > 6 ? "w-[52px]" : "w-[60px]";
-                const cardHeight = handSize > 8 ? "h-[64px]" : handSize > 6 ? "h-[74px]" : "h-[85px]";
+                const cardWidth = "w-[72px]";
+                const cardHeight = "h-[102px]";
 
                 // Check if this card is part of any potential combo
                 // Use resolveCardName to handle aliases (e.g., "filthy" -> "don filthy")
@@ -4185,20 +4199,20 @@ export default function TCGPage() {
                     )}
                     {/* Energy Cost Badge (top-left) - Special for Foils */}
                     {foilEffect ? (
-                      <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 bg-gradient-to-br from-cyan-400 to-teal-500 border-cyan-200">
+                      <div className="absolute -top-1 -left-1 w-6 h-6 border-2 border-black flex items-center justify-center z-10 bg-[#22D3EE] font-black">
                         <span className="text-xs font-bold text-white">{energyCost}</span>
                       </div>
                     ) : (
                       <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 ${
                         canAfford
-                          ? "bg-gradient-to-br from-blue-400 to-blue-600 border-white"
-                          : "bg-gradient-to-br from-red-500 to-red-700 border-red-300"
+                          ? "bg-[#3B82F6]"
+                          : "bg-[#EF4444]"
                       }`}>
                         <span className="text-xs font-bold text-white">{energyCost}</span>
                       </div>
                     )}
                     {/* Power Badge (bottom-right) */}
-                    <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-2 border-yellow-200 flex items-center justify-center shadow-lg">
+                    <div className="absolute -bottom-1 -right-1 w-7 h-7 border-2 border-black flex items-center justify-center bg-[#FFD400]">
                       <span className="text-[10px] font-bold text-black">{displayPower}</span>
                     </div>
                     {/* Sacrifice Button for Nothing cards (bottom-left) */}
@@ -4220,7 +4234,11 @@ export default function TCGPage() {
               {(!gs.playerHand || gs.playerHand.length === 0) && (
                 <span className="text-gray-500 text-sm">{t('tcgNoCardsInHand')}</span>
               )}
-            </div>
+                  </div>
+                  {showNav && navBtn(safeOffset >= maxOffset, '>', () => setPveHandOffset(Math.min(maxOffset, safeOffset + 1)))}
+                </div>
+              );
+            })()}
 
             {/* Bottom Action Bar - Marvel Snap Style */}
             <div className="flex items-center justify-between">
@@ -4388,7 +4406,7 @@ export default function TCGPage() {
         <div className="relative flex flex-col h-full z-10">
 
           {/* Top Bar - Player Avatars & Turn Indicator */}
-          <div className="flex items-center justify-between px-4 py-1">
+          <div className="flex items-center justify-between px-4 py-2">
             {/* Player Avatar (left) - Royal style with dropdown */}
             <div className="relative flex items-center gap-2">
               <div
@@ -4547,12 +4565,12 @@ export default function TCGPage() {
 
           {/* Battle Arena - 3 Lanes (Royal Card Table style with 3D depth) */}
           <div
-            className="flex-1 flex items-stretch justify-center px-2 gap-2 min-h-0"
-            style={{ perspective: "1000px", perspectiveOrigin: "50% 30%" }}
+            className="flex-1 max-h-[56vh] flex items-stretch justify-center px-2 gap-2 min-h-0 overflow-hidden"
+            style={{ perspective: "1000px", perspectiveOrigin: "50% 80%" }}
           >
             <div
               className="flex-1 flex items-stretch justify-center gap-2"
-              style={{ transformStyle: "preserve-3d", transform: "rotateX(6deg)", transformOrigin: "50% 50%" }}
+              style={{ transformStyle: "preserve-3d", transform: "translateY(-80px) rotateX(22deg)", transformOrigin: "50% 100%" }}
             >
             {gs.lanes.map((lane: any, laneIndex: number) => {
               const status = getLaneStatus(lane);
@@ -4915,17 +4933,32 @@ export default function TCGPage() {
 
           {/* Hand - Bottom Bar (Royal style) */}
           <div
-            className="relative pt-1 pb-1 px-3 tcg-royal-hand"
-            style={{
-              background: "linear-gradient(180deg, rgba(20,20,20,0.95) 0%, rgba(10,10,10,1) 100%)",
+            className="relative shrink-0 pt-2 pb-3 px-3 tcg-royal-hand z-20"
+            style={{ marginTop: "-80px", background: "linear-gradient(180deg, rgba(20,20,20,0.95) 0%, rgba(10,10,10,1) 100%)",
               borderTop: "3px solid",
               borderImage: "linear-gradient(90deg, transparent 5%, #B8860B 20%, #FFD700 50%, #B8860B 80%, transparent 95%) 1"
             }}
           >
-            {/* Cards - scrollable when many cards, smaller cards if 7+ */}
-            <div className={`flex justify-center mb-3 overflow-x-auto max-w-full px-2 ${(myHand?.length || 0) > 6 ? "gap-0.5" : "gap-1"}`}
-                 style={{ scrollbarWidth: "thin" }}>
-              {myHand?.map((card: any, idx: number) => {
+            {/* Cards - paginated, 5 at a time */}
+            {(() => {
+              const handSize = myHand?.length || 0;
+              const CARDS_PER_PAGE = 4;
+              const showNav = handSize > CARDS_PER_PAGE;
+              const maxOffset = Math.max(0, handSize - CARDS_PER_PAGE);
+              const safeOffset = Math.min(pvpHandOffset, maxOffset);
+              const visibleCards = (myHand || []).slice(safeOffset, safeOffset + CARDS_PER_PAGE);
+              const navBtn = (disabled: boolean, label: string, onClick: () => void) => (
+                <button onClick={onClick} disabled={disabled}
+                  className="flex-shrink-0 w-8 h-8 flex items-center justify-center font-black text-sm border-2 border-black transition-all active:translate-x-[1px] active:translate-y-[1px]"
+                  style={{ background: disabled ? '#374151' : '#FFD400', color: disabled ? '#6b7280' : '#000', boxShadow: disabled ? 'none' : '2px 2px 0px #000' }}
+                >{label}</button>
+              );
+              return (
+                <div className="flex items-center justify-center gap-1 mb-3 px-1">
+                  {showNav && navBtn(safeOffset === 0, '<', () => setPvpHandOffset(Math.max(0, safeOffset - 1)))}
+                  <div className="flex justify-center gap-1">
+              {visibleCards.map((card: any, visibleIdx: number) => {
+                const idx = safeOffset + visibleIdx;
                 const ability = getCardAbility(card.name, card, t as (k: string) => string);
                 const foilEffect = getFoilEffect(card.foil);
                 const displayPower = card.type === "nothing" || card.type === "other" ? Math.floor(card.power * 0.5) : card.power;
@@ -4933,10 +4966,8 @@ export default function TCGPage() {
                 const canAfford = energyCost <= remainingEnergy;
                 const battleHandImageUrl = getCardDisplayImageUrl(card);
                 const isPending = pendingActions.some(a => a.cardIndex === idx);
-                // Smaller cards when hand is big
-                const handSize = myHand?.length || 0;
-                const cardWidth = handSize > 8 ? "w-[45px]" : handSize > 6 ? "w-[52px]" : "w-[60px]";
-                const cardHeight = handSize > 8 ? "h-[64px]" : handSize > 6 ? "h-[74px]" : "h-[85px]";
+                const cardWidth = "w-[72px]";
+                const cardHeight = "h-[102px]";
 
                 // Check combo partners
                 const cardNameResolved = resolveCardName(card.name || "");
@@ -5081,20 +5112,20 @@ export default function TCGPage() {
                     )}
                     {/* Energy Cost Badge */}
                     {foilEffect ? (
-                      <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 bg-gradient-to-br from-cyan-400 to-teal-500 border-cyan-200">
+                      <div className="absolute -top-1 -left-1 w-6 h-6 border-2 border-black flex items-center justify-center z-10 bg-[#22D3EE] font-black">
                         <span className="text-xs font-bold text-white">{energyCost}</span>
                       </div>
                     ) : (
                       <div className={`absolute -top-2 -left-2 w-6 h-6 rounded-full border-2 flex items-center justify-center shadow-lg z-10 ${
                         canAfford
-                          ? "bg-gradient-to-br from-blue-400 to-blue-600 border-white"
-                          : "bg-gradient-to-br from-red-500 to-red-700 border-red-300"
+                          ? "bg-[#3B82F6]"
+                          : "bg-[#EF4444]"
                       }`}>
                         <span className="text-xs font-bold text-white">{energyCost}</span>
                       </div>
                     )}
                     {/* Power Badge (bottom-right) */}
-                    <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 border-2 border-yellow-200 flex items-center justify-center shadow-lg">
+                    <div className="absolute -bottom-1 -right-1 w-7 h-7 border-2 border-black flex items-center justify-center bg-[#FFD400]">
                       <span className="text-[10px] font-bold text-black">{displayPower}</span>
                     </div>
                     {/* Combo Indicator */}
@@ -5154,7 +5185,11 @@ export default function TCGPage() {
               {(!myHand || myHand.length === 0) && (
                 <span className="text-gray-500 text-sm">{t('tcgNoCardsInHand')}</span>
               )}
-            </div>
+                  </div>
+                  {showNav && navBtn(safeOffset >= maxOffset, '>', () => setPvpHandOffset(Math.min(maxOffset, safeOffset + 1)))}
+                </div>
+              );
+            })()}
 
             {/* Bottom Action Bar */}
             <div className="flex items-center justify-between">

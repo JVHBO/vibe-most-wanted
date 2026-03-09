@@ -3520,7 +3520,7 @@ export function PokerBattleTable({
 
       {/* Incoming Voice Call Modal - "John Pork is calling" */}
       {showIncomingCall && !groupVoice.isInChannel && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[500] p-4">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[500] p-4">
           <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-black rounded-3xl border-2 border-vintage-gold/50 max-w-sm w-full p-6 shadow-2xl shadow-vintage-gold/20">
             {/* John Pork Profile Picture */}
             <div className="flex justify-center mb-4">
@@ -3753,6 +3753,10 @@ export function PokerBattleTable({
         loginBonusClaimed={false}
         isClaimingBonus={false}
         handleClaimLoginBonus={() => {}}
+        showWeeklyLeaderboardPopup={false}
+        setShowWeeklyLeaderboardPopup={() => {}}
+        isClaimingWeeklyReward={false}
+        onWeeklyLeaderboardClaimNow={() => {}}
         t={(key: string) => key} // Simple mock translation
       />
 

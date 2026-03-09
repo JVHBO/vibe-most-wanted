@@ -93,7 +93,7 @@ export function PvPMenuModals({
   // Modal de Seleção de Modo de Jogo (PvE vs PvP)
   if (pvpMode === 'menu') {
     return (
-      <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4" onClick={() => setPvpMode(null)}>
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[150] p-4" onClick={() => setPvpMode(null)}>
         <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-md w-full p-8 shadow-gold" onClick={(e) => e.stopPropagation()}>
           <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-gold">
             {t('selectMode') || 'SELECT MODE'}
@@ -148,7 +148,7 @@ export function PvPMenuModals({
   // Modal de Menu PvP
   if (pvpMode === 'pvpMenu') {
     return (
-      <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4" onClick={() => setPvpMode(null)}>
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[150] p-4" onClick={() => setPvpMode(null)}>
         <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-md w-full p-8 shadow-gold" onClick={(e) => e.stopPropagation()}>
           <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-gold">
             {t('pvp')}
@@ -207,7 +207,7 @@ export function PvPMenuModals({
   // Modal de Seleção de Modo (Casual vs Ranked)
   if (pvpMode === 'selectMode') {
     return (
-      <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4" onClick={() => setPvpMode('pvpMenu')}>
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[150] p-4" onClick={() => setPvpMode('pvpMenu')}>
         <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold max-w-md w-full p-8 shadow-gold" onClick={(e) => e.stopPropagation()}>
           <h2 className="text-3xl font-display font-bold text-center mb-2 text-vintage-gold">
             {t('createRoom')}
@@ -306,7 +306,7 @@ export function PvPMenuModals({
   // Modal de Criar Sala
   if (pvpMode === 'createRoom' && roomCode) {
     return (
-      <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[150] p-4">
         <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-vintage-neon-blue max-w-md w-full p-8">
           <h2 className="text-2xl font-bold text-center text-blue-400 mb-2">
             {t('roomCreated')}
@@ -361,7 +361,7 @@ export function PvPMenuModals({
   // Modal de Entrar na Sala
   if (pvpMode === 'joinRoom') {
     return (
-      <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[150] p-4">
         <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-vintage-gold max-w-md w-full p-8">
           <h2 className="text-2xl font-bold text-center text-vintage-gold mb-2">
             {t('joinRoom')}

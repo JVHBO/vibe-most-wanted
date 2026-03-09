@@ -51,7 +51,7 @@ export function LanguageSelectionModal() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[9999] p-4">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
       <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold/50 p-6 max-w-sm w-full shadow-[0_0_60px_rgba(255,215,0,0.15)]">
         {/* Header */}
         <div className="text-center mb-6">

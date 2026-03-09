@@ -73,7 +73,7 @@ export function PvPInRoomModal({
   if (pvpMode !== 'inRoom' || !roomCode) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[150] p-4">
       <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold shadow-gold border-yellow-500 max-w-2xl w-full p-8">
         <div className="flex justify-between items-center mb-6">
           <div>

@@ -119,7 +119,7 @@ export function PveCardSelectionModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-4"
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[150] p-4"
       onClick={onClose}
     >
       <div

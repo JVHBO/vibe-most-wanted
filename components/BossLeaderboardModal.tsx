@@ -44,7 +44,7 @@ export function BossLeaderboardModal({
   // Loading state
   if (bossHistory === undefined) {
     return (
-      <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4" style={{ zIndex: Z_INDEX.modal }}>
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: Z_INDEX.modal }}>
         <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold max-w-md w-full p-6">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-4 border-vintage-gold border-t-transparent mx-auto mb-4"></div>
@@ -58,7 +58,7 @@ export function BossLeaderboardModal({
   // No history found
   if (!bossHistory) {
     return (
-      <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4" style={{ zIndex: Z_INDEX.modal }}>
+      <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" style={{ zIndex: Z_INDEX.modal }}>
         <div className="bg-vintage-charcoal rounded-xl border-2 border-red-600 max-w-md w-full p-6">
           <h2 className="text-xl font-display font-bold text-red-400 mb-4 text-center">
             {t('raidBossDamageRanking')}
@@ -98,7 +98,7 @@ export function BossLeaderboardModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/90 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
       style={{ zIndex: Z_INDEX.modal }}
       onClick={onClose}
     >

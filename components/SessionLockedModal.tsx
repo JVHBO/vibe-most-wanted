@@ -190,7 +190,7 @@ export function SessionLockedModal({
   };
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[99999] p-4">
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[99999] p-4">
       <div className="bg-vintage-charcoal rounded-2xl border-2 border-red-500/50 p-6 sm:p-8 max-w-md w-full shadow-2xl">
         {/* Warning Icon */}
         <div className="flex justify-center mb-4">

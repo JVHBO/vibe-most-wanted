@@ -191,7 +191,7 @@ export function CreateProfileModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/90 flex items-center justify-center z-[150] p-2"
+      className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[150] p-2"
       onClick={onClose}
     >
       <div

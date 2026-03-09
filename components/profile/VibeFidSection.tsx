@@ -492,7 +492,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
 
       {/* Neynar Score Modal */}
       {showScoreModal && neynarScoreData && (
-        <div className="fixed inset-0 bg-black/80 flex items-start justify-center z-[10000] p-4 pt-16 pb-20 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-start justify-center z-[10000] p-4 pt-16 pb-20 overflow-y-auto">
           <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 p-4 max-w-md w-full">
             <h2 className="text-xl font-bold text-vintage-gold mb-3 text-center">Neynar Score</h2>
             <div className="bg-vintage-black/50 rounded-lg border border-vintage-gold/30 p-4 mb-3">
@@ -569,7 +569,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
 
       {/* Evolution Modal */}
       {showEvolutionModal && card && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[10000] p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[10000] p-4 overflow-y-auto">
           <div className="max-w-sm w-full text-center my-auto">
             <div className={`relative mb-6 transition-all duration-500 ${evolutionPhase === 'shaking' ? 'animate-shake' : ''} ${evolutionPhase === 'glowing' ? 'animate-glow' : ''} ${evolutionPhase === 'transforming' ? 'animate-transform-card scale-105' : ''}`}>
               {(evolutionPhase === 'glowing' || evolutionPhase === 'transforming') && (
@@ -651,7 +651,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
 
       {/* Criminal Backstory Modal */}
       {showBackstoryModal && backstory && card && (
-        <div className="fixed inset-0 bg-black/80 flex items-start justify-center z-[10000] px-4 pt-16 pb-20 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-start justify-center z-[10000] px-4 pt-16 pb-20 overflow-y-auto">
           <div className="bg-vintage-charcoal rounded-xl border-2 border-vintage-gold/50 p-4 max-w-md w-full max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-vintage-gold">Lore Criminal Record</h2>
