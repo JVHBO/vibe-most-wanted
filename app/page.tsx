@@ -54,6 +54,7 @@ import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
 import { usePopupStates } from "@/hooks/usePopupStates";
+import { useBattleState, type BattleResult, VICTORY_IMAGES } from "@/hooks/useBattleState";
 import { usePowerCalculation } from "@/app/(game)/hooks/battle/usePowerCalculation";
 import { BattleArena } from "@/app/(game)/components/battle/BattleArena";
 import { MissionsView } from "@/app/(game)/components/views/MissionsView";
@@ -549,6 +550,36 @@ export default function TCGPage() {
     showWeeklyLeaderboardPopup, setShowWeeklyLeaderboardPopup,
   } = usePopupStates();
 
+  const {
+    result, setResult,
+    isBattling, setIsBattling,
+    dealerCards, setDealerCards,
+    battlePhase, setBattlePhase,
+    battleOpponentName, setBattleOpponentName,
+    battlePlayerName, setBattlePlayerName,
+    battlePlayerPfp, setBattlePlayerPfp,
+    battleOpponentPfp, setBattleOpponentPfp,
+    currentVictoryImage, setCurrentVictoryImage,
+    lastBattleResult, setLastBattleResult,
+    tieGifLoaded, setTieGifLoaded,
+    sharesRemaining, setSharesRemaining,
+    gameMode, setGameMode,
+    pvpMode, setPvpMode,
+    roomCode, setRoomCode,
+    currentRoom, setCurrentRoom,
+    eliminationDifficulty, setEliminationDifficulty,
+    battleMode, setBattleMode,
+    eliminationPhase, setEliminationPhase,
+    orderedPlayerCards, setOrderedPlayerCards,
+    orderedOpponentCards, setOrderedOpponentCards,
+    currentRound, setCurrentRound,
+    roundResults, setRoundResults,
+    eliminationPlayerScore, setEliminationPlayerScore,
+    eliminationOpponentScore, setEliminationOpponentScore,
+    pvpPreviewData, setPvpPreviewData,
+    isLoadingPreview, setIsLoadingPreview,
+  } = useBattleState();
+
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
@@ -595,43 +626,21 @@ export default function TCGPage() {
   const [selectedCards, setSelectedCards] = useState<any[]>([]);
   const [playerPower, setPlayerPower] = useState<number>(0);
   const [dealerPower, setDealerPower] = useState<number>(0);
-  const [result, setResult] = useState<string>('');
-  const [isBattling, setIsBattling] = useState<boolean>(false);
-  const [dealerCards, setDealerCards] = useState<any[]>([]);
-  const [battlePhase, setBattlePhase] = useState<string>('cards');
-  const [battleOpponentName, setBattleOpponentName] = useState<string>('Dealer');
-  const [battlePlayerName, setBattlePlayerName] = useState<string>('You');
-  const [battlePlayerPfp, setBattlePlayerPfp] = useState<string | null>(null);
-  const [battleOpponentPfp, setBattleOpponentPfp] = useState<string | null>(null);
   const profileDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
   const dexDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   // Miniapp: 12 cards (1.5 rows), Website: 24 cards (3 full rows of 8)
   const CARDS_PER_PAGE = isInFarcaster ? 12 : 24;
 
-  // 🎉 Victory Images - 5 screens!
-  const VICTORY_IMAGES = [
-    '/victory-1.jpg',   // Gigachad
-    '/victory-2.jpg',   // Hearts
-    '/victory-3.jpg',   // Sensual
-
-    '/bom.jpg',         // Bom
-  ];
-  const [currentVictoryImage, setCurrentVictoryImage] = useState<string>(VICTORY_IMAGES[0]);
   const victoryAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastVictoryIndexRef = useRef<number>(-1); // Track last victory screen to prevent consecutive duplicates
 
   // PvP States
-  const [gameMode, setGameMode] = useState<'ai' | 'pvp' | null>(null);
-  const [pvpMode, setPvpMode] = useState<'menu' | 'pvpMenu' | 'autoMatch' | 'selectMode' | 'createRoom' | 'joinRoom' | 'inRoom' | null>(null);
-  const [roomCode, setRoomCode] = useState<string>('');
-  const [currentRoom, setCurrentRoom] = useState<any>(null);
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [selectedRoomMode, setSelectedRoomMode] = useState<'ranked' | 'casual'>('ranked');
 
   // AI Difficulty (5 levels with progressive unlock)
   const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
-  const [eliminationDifficulty, setEliminationDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
 
   // Convex client for imperative queries (already declared above)
 
@@ -787,15 +796,6 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const [unlockedDifficulties, setUnlockedDifficulties] = useState<Set<string>>(new Set(['gey']));
   const [tempSelectedDifficulty, setTempSelectedDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad' | null>(null);
 
-  // Elimination Mode States
-  const [battleMode, setBattleMode] = useState<'normal' | 'elimination'>('normal');
-  const [eliminationPhase, setEliminationPhase] = useState<'ordering' | 'battle' | null>(null);
-  const [orderedPlayerCards, setOrderedPlayerCards] = useState<any[]>([]);
-  const [orderedOpponentCards, setOrderedOpponentCards] = useState<any[]>([]);
-  const [currentRound, setCurrentRound] = useState<number>(1);
-  const [roundResults, setRoundResults] = useState<('win' | 'loss' | 'tie')[]>([]);
-  const [eliminationPlayerScore, setEliminationPlayerScore] = useState<number>(0);
-  const [eliminationOpponentScore, setEliminationOpponentScore] = useState<number>(0);
   const pvpBattleStarted = useRef<boolean>(false); // PvP battle flag to prevent double-start (useRef for immediate sync access)
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
 
@@ -955,10 +955,6 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const { totalPower: attackSelectedCardsPower } = usePowerCalculation(attackSelectedCards, true);
   const { totalPower: dealerCardsPower } = usePowerCalculation(dealerCards, true);
 
-  // ✅ PvP Preview States
-  const [pvpPreviewData, setPvpPreviewData] = useState<any>(null);
-  const [isLoadingPreview, setIsLoadingPreview] = useState<boolean>(false);
-
   // Notifications States
   const [defensesReceived, setDefensesReceived] = useState<any[]>([]);
   const [unreadDefenses, setUnreadDefenses] = useState<number>(0);
@@ -969,25 +965,10 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   // Calculate max attacks for current user
   const maxAttacks = useMemo(() => getMaxAttacks(address), [address]);
 
-  // Battle Result States for sharing
-  const [lastBattleResult, setLastBattleResult] = useState<{
-    result: 'win' | 'loss' | 'tie';
-    playerPower: number;
-    opponentPower: number;
-    opponentName: string;
-    opponentTwitter?: string;
-    type: 'pve' | 'pvp' | 'attack' | 'defense';
-    coinsEarned?: number;
-    playerPfpUrl?: string;
-    opponentPfpUrl?: string;
-  } | null>(null);
-  const [tieGifLoaded, setTieGifLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Reward Choice Modal State
-  // Share incentives
-  const [sharesRemaining, setSharesRemaining] = useState<number | undefined>(undefined);
 
   // Update shares remaining when profile changes
   useEffect(() => {
