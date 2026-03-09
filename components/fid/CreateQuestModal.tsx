@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AudioManager } from '@/lib/fid/audio-manager';
+import { AudioManager } from '@/lib/audio-manager';
 
 interface CreateQuestModalProps {
   address: string;

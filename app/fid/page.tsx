@@ -31,7 +31,7 @@ import FidGenerationModal from "@/components/fid/FidGenerationModal";
 import FidAboutTraitsModal from "@/components/fid/FidAboutTraitsModal";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { AudioManager } from "@/lib/fid/audio-manager";
+import { AudioManager } from '@/lib/audio-manager';
 import { sdk } from "@farcaster/miniapp-sdk";
 import { DailyLeader } from "@/components/fid/DailyLeader";
 import { useClaimVBMS } from "@/hooks/fid/useVBMSContracts";

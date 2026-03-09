@@ -10,7 +10,7 @@ import { generateCriminalBackstory } from "@/lib/fid/generateCriminalBackstory";
 import type { CriminalBackstoryData } from "@/lib/fid/generateCriminalBackstory";
 import { fidTranslations } from "@/lib/fid/fidTranslations";
 import type { SupportedLanguage } from "@/lib/translations";
-import { AudioManager } from "@/lib/fid/audio-manager";
+import { AudioManager } from '@/lib/audio-manager';
 import type { VibeFIDChain } from "@/lib/fid/contracts/VibeFIDABI";
 import { MINT_PRICE, MINT_PRICE_ARB, VIBEFID_ARB_CONTRACT_ADDRESS } from "@/lib/fid/contracts/VibeFIDABI";
 

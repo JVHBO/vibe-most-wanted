@@ -15,7 +15,7 @@ import FoilCardEffect from '@/components/fid/FoilCardEffect';
 import { getFidTraits } from '@/lib/fid/fidTraits';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { getUserByFid, calculateRarityFromScore } from '@/lib/fid/neynar';
-import { AudioManager } from '@/lib/fid/audio-manager';
+import { AudioManager } from '@/lib/audio-manager';
 import { useFarcasterContext } from '@/hooks/fid/useFarcasterContext';
 import { fidTranslations } from '@/lib/fid/fidTranslations';
 import { generateFarcasterCardImage } from '@/lib/fid/generateFarcasterCard';

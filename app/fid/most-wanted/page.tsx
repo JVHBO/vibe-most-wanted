@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/lib/fid/convex-generated/api";
 import Link from "next/link";
-import { AudioManager } from "@/lib/fid/audio-manager";
+import { AudioManager } from '@/lib/audio-manager';
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fidTranslations } from "@/lib/fid/fidTranslations";
 import { sdk } from "@farcaster/miniapp-sdk";

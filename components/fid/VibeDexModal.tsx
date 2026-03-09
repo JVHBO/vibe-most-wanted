@@ -9,7 +9,7 @@ import {
   useQuoteSellVBMS,
   useVBMSBalance,
 } from '@/lib/hooks/useVBMSDex';
-import { AudioManager } from '@/lib/fid/audio-manager';
+import { AudioManager } from '@/lib/audio-manager';
 
 interface VibeDexModalProps {
   onClose: () => void;

@@ -15,7 +15,7 @@ import { useVBMSBalance } from '@/hooks/fid/useVBMSContracts';
 import { generateCriminalBackstory } from '@/lib/fid/generateCriminalBackstory';
 import { getFarcasterAccountCreationDate } from '@/lib/fid/farcasterRegistry';
 import { getUserByFid, calculateRarityFromScore } from '@/lib/fid/neynar';
-import { AudioManager } from '@/lib/fid/audio-manager';
+import { AudioManager } from '@/lib/audio-manager';
 import { fidTranslations } from '@/lib/fid/fidTranslations';
 import { generateFarcasterCardImage } from '@/lib/fid/generateFarcasterCard';
 import { generateCardVideo } from '@/lib/fid/generateCardVideo';

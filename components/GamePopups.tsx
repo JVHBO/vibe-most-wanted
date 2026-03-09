@@ -99,21 +99,21 @@ interface GamePopupsProps {
   setSuccessMessage: (msg: string | null) => void;
 
   // Daily claim popup
-  showDailyClaimPopup: boolean;
-  setShowDailyClaimPopup: (show: boolean) => void;
-  loginBonusClaimed: boolean;
-  isClaimingBonus: boolean;
-  handleClaimLoginBonus: () => void;
+  showDailyClaimPopup?: boolean;
+  setShowDailyClaimPopup?: (show: boolean) => void;
+  loginBonusClaimed?: boolean;
+  isClaimingBonus?: boolean;
+  handleClaimLoginBonus?: () => void;
   onDailyClaimNow?: () => void;
   effectiveChain?: string;
 
   // Weekly leaderboard popup
-  showWeeklyLeaderboardPopup: boolean;
-  setShowWeeklyLeaderboardPopup: (show: boolean) => void;
+  showWeeklyLeaderboardPopup?: boolean;
+  setShowWeeklyLeaderboardPopup?: (show: boolean) => void;
   weeklyLeaderboardRank?: number;
   weeklyLeaderboardReward?: number;
-  isClaimingWeeklyReward: boolean;
-  onWeeklyLeaderboardClaimNow: () => void;
+  isClaimingWeeklyReward?: boolean;
+  onWeeklyLeaderboardClaimNow?: () => void;
 
   // Translation
   t: any;
@@ -139,19 +139,19 @@ export function GamePopups({
   setErrorMessage,
   successMessage,
   setSuccessMessage,
-  showDailyClaimPopup,
-  setShowDailyClaimPopup,
-  loginBonusClaimed,
-  isClaimingBonus,
-  handleClaimLoginBonus,
+  showDailyClaimPopup = false,
+  setShowDailyClaimPopup = () => {},
+  loginBonusClaimed = false,
+  isClaimingBonus = false,
+  handleClaimLoginBonus = () => {},
   onDailyClaimNow,
   effectiveChain,
-  showWeeklyLeaderboardPopup,
-  setShowWeeklyLeaderboardPopup,
+  showWeeklyLeaderboardPopup = false,
+  setShowWeeklyLeaderboardPopup = () => {},
   weeklyLeaderboardRank,
   weeklyLeaderboardReward,
-  isClaimingWeeklyReward,
-  onWeeklyLeaderboardClaimNow,
+  isClaimingWeeklyReward = false,
+  onWeeklyLeaderboardClaimNow = () => {},
   t,
 }: GamePopupsProps) {
   // Music control - pause when showing result popups

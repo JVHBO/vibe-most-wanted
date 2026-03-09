@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { fidTranslations } from "@/lib/fid/fidTranslations";
-import { AudioManager } from "@/lib/fid/audio-manager";
+import { AudioManager } from '@/lib/audio-manager';
 
 interface FidAboutTraitsModalProps {
   isOpen: boolean;

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQuery, useConvex } from 'convex/react';
 import { api } from "@/lib/fid/convex-generated/api";
 import { Id } from "@/lib/fid/convex-generated/dataModel";
-import { AudioManager } from "@/lib/fid/audio-manager";
+import { AudioManager } from '@/lib/audio-manager';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { fidTranslations } from "@/lib/fid/fidTranslations";
 import { translations } from "@/lib/translations";
