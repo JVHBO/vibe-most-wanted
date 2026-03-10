@@ -76,6 +76,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
   const scoreHistory = useQuery(api.neynarScore.getScoreHistory, { fid });
   const saveScoreCheck = useMutation(api.neynarScore.saveScoreCheck);
   const upgradeCardRarity = useMutation(api.farcasterCards.upgradeCardRarity);
+  const refreshCardScore = useMutation(api.farcasterCards.refreshCardScore);
   const card = fidCards?.[0];
   const power = card ? calcPower(card.rarity, card.wear, card.foil) : 0;
 
@@ -119,6 +120,25 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
     if (!card || !scoreData) return false;
     const rarityOrder = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
     return rarityOrder.indexOf(scoreData.rarity) > rarityOrder.indexOf(card.rarity);
+  };
+
+  const canSync = () => {
+    if (!card || !scoreData) return false;
+    return !canUpgrade() && scoreData.score !== card.neynarScore;
+  };
+
+  const handleSync = async () => {
+    if (!card || !scoreData) return;
+    setIsUpgrading(true);
+    try {
+      await refreshCardScore({ fid: card.fid, newNeynarScore: scoreData.score });
+      setUpgradeSuccess(true);
+    } catch (err: any) {
+      setError(err.message || 'Sync failed');
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setIsUpgrading(false);
+    }
   };
 
   const handleUpgrade = async () => {
@@ -536,7 +556,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
               {/* Upgrade / success */}
               {upgradeSuccess ? (
                 <div className="bg-green-900/40 border border-green-500/50 rounded px-2 py-1.5 text-center text-[10px] text-green-400 font-bold">
-                  ★ Card upgraded to {scoreData.rarity}!
+                  {canUpgrade() ? `★ Card upgraded to ${scoreData.rarity}!` : '✓ Score synced!'}
                 </div>
               ) : isOwnCard && canUpgrade() && (
                 <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-400/60 rounded px-2 py-1.5 text-center text-[10px]">
@@ -608,6 +628,13 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
                   className="w-full py-2 text-black font-bold rounded text-xs disabled:opacity-50 uppercase tracking-widest"
                   style={{ background: 'linear-gradient(135deg, #FFD700, #FF8C00)', boxShadow: '0 0 16px rgba(255,215,0,0.5)', border: '2px solid rgba(255,215,0,0.8)', letterSpacing: '0.1em' }}>
                   {isUpgrading ? '...' : `⚡ UPGRADE CARD`}
+                </button>
+              )}
+              {isOwnCard && canSync() && !upgradeSuccess && (
+                <button onClick={handleSync} disabled={isUpgrading}
+                  className="w-full py-2 text-vintage-gold font-bold rounded text-xs disabled:opacity-50 uppercase tracking-widest border border-vintage-gold/50 bg-vintage-black/40 hover:bg-vintage-gold/10 transition-colors"
+                  style={{ letterSpacing: '0.1em' }}>
+                  {isUpgrading ? '...' : `↻ SYNC SCORE`}
                 </button>
               )}
             </div>

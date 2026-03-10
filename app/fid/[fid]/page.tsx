@@ -27,6 +27,7 @@ import { DailyLeader } from '@/components/fid/DailyLeader';
 import { useAccount } from 'wagmi';
 import { useVBMSBalance, useClaimVBMS } from '@/hooks/fid/useVBMSContracts';
 import { VibeMailInbox, VibeMailComposer } from '@/components/fid/VibeMail';
+import { VibeFidMailModal } from '@/components/fid/VibeFidMailModal';
 import { shareToFarcaster } from '@/lib/fid/share-utils';
 
 // Helper to calculate rarity from score for display
@@ -156,6 +157,7 @@ export default function FidCardPage() {
 
   // Paid vote modal state
   const [showPaidVoteModal, setShowPaidVoteModal] = useState(false);
+  const [showSendVibeModal, setShowSendVibeModal] = useState(false);
   const [vibeMailTab, setVibeMailTab] = useState<'free' | 'paid'>('free'); // 'free' or 'paid'
   const [showFreeVoteModal, setShowFreeVoteModal] = useState(false);
   const [freeVibeMailMessage, setFreeVibeMailMessage] = useState('');
@@ -823,16 +825,9 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                     setTimeout(() => setError(null), 3000);
                     return;
                   }
-                  // Show unified VibeMail modal
-                  if (true) {
-                    if (isWalletConnected) {
-                      setShowPaidVoteModal(true);
-                    } else {
-                      setError('Connect wallet for more vibes');
-                      setTimeout(() => setError(null), 3000);
-                    }
-                    return;
-                  }
+                  // Open VibeFidMailModal with this card as recipient
+                  setShowSendVibeModal(true);
+                  return;
                 }}
                 disabled={isVoting}
                 className="absolute -bottom-2 -right-2 z-20 w-10 h-10 rounded-xl flex items-center justify-center transition-all disabled:opacity-70"
@@ -895,12 +890,12 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       <div className="fixed bottom-0 left-0 right-0 z-[9999] safe-area-bottom">
         <div className="bg-vintage-charcoal/95 backdrop-blur-lg border-t-2 border-vintage-gold/30 p-1 flex gap-1">
           <Link
-            href="/fid"
+            href="/"
             onClick={() => AudioManager.buttonClick()}
             className="flex-1 min-w-0 px-1 py-2 flex flex-col items-center justify-center gap-0.5 rounded-lg font-semibold transition-all text-[10px] leading-tight bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30"
           >
-            <span className="text-[10px] font-bold whitespace-nowrap">Back</span>
-            <span className="text-xl leading-none">←</span>
+            <span className="text-[10px] font-bold whitespace-nowrap">Home</span>
+            <span className="text-xl leading-none">⌂</span>
           </Link>
         </div>
       </div>
@@ -1515,6 +1510,15 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
           <VibeMailInbox
             cardFid={fid}
             onClose={() => setShowVibeMailInbox(false)}
+          />
+        )}
+
+        {/* Send Vibe Modal - new VibeFidMailModal system */}
+        {showSendVibeModal && (
+          <VibeFidMailModal
+            fid={fid}
+            ownerFid={viewerFid ?? undefined}
+            onClose={() => setShowSendVibeModal(false)}
           />
         )}
 
