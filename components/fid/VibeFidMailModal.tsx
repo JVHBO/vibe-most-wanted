@@ -65,6 +65,8 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [upgradeSuccess, setUpgradeSuccess] = useState(false);
+  const [showUpgradeAnim, setShowUpgradeAnim] = useState(false);
+  const [upgradeAnimPhase, setUpgradeAnimPhase] = useState<'charging'|'burst'|'reveal'>('charging');
   const [backstory, setBackstory] = useState<any>(null);
   const router = useRouter();
   const fidCards = useQuery(api.farcasterCards.getFarcasterCardsByFid, { fid });
@@ -119,12 +121,22 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
 
   const handleUpgrade = async () => {
     if (!card || !scoreData || !canUpgrade()) return;
+    // Show animation first
+    setShowUpgradeAnim(true);
+    setUpgradeAnimPhase('charging');
+    setTimeout(() => setUpgradeAnimPhase('burst'), 900);
+    setTimeout(() => setUpgradeAnimPhase('reveal'), 1600);
+    // Do the upgrade in background during animation
     setIsUpgrading(true);
     try {
       await upgradeCardRarity({ fid: card.fid, newNeynarScore: scoreData.score, newRarity: scoreData.rarity });
       regenerateCardFull({ ...card, rarity: scoreData.rarity, power: calcPower(scoreData.rarity, card.wear, card.foil), neynarScore: scoreData.score }, scoreData.score);
-      setUpgradeSuccess(true);
+      setTimeout(() => {
+        setShowUpgradeAnim(false);
+        setUpgradeSuccess(true);
+      }, 2800);
     } catch (err: any) {
+      setShowUpgradeAnim(false);
       setError(err.message || 'Upgrade failed');
       setTimeout(() => setError(null), 3000);
     } finally {
@@ -174,17 +186,6 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
       const rarity = calculateRarityFromScore(score);
       await saveScoreCheck({ fid: user.fid, username: user.username, score, rarity });
       setScoreData({ score, rarity });
-
-      // Auto-upgrade if rarity improved
-      if (card) {
-        const rarityOrder = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
-        const rarityImproved = rarityOrder.indexOf(rarity) > rarityOrder.indexOf(card.rarity);
-        if (rarityImproved) {
-          await upgradeCardRarity({ fid: card.fid, newNeynarScore: score, newRarity: rarity });
-          regenerateCardFull({ ...card, rarity, power: calcPower(rarity, card.wear, card.foil), neynarScore: score }, score);
-        }
-      }
-
       setShowScoreModal(true);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch score');
@@ -472,6 +473,43 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
             )}
           </div>
 
+          {/* Upgrade Animation Overlay */}
+          {showUpgradeAnim && scoreData && card && (
+            <div className="absolute inset-0 z-40 rounded-xl overflow-hidden flex flex-col items-center justify-center"
+              style={{ background: 'rgba(0,0,0,0.92)' }}>
+              {/* Glow rings */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="rounded-full" style={{
+                  width: upgradeAnimPhase === 'charging' ? 60 : upgradeAnimPhase === 'burst' ? 260 : 180,
+                  height: upgradeAnimPhase === 'charging' ? 60 : upgradeAnimPhase === 'burst' ? 260 : 180,
+                  background: upgradeAnimPhase === 'burst' ? 'radial-gradient(circle, rgba(255,215,0,0.35) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(255,215,0,0.15) 0%, transparent 70%)',
+                  transition: 'all 0.7s ease-out',
+                  boxShadow: upgradeAnimPhase !== 'charging' ? '0 0 60px 20px rgba(255,215,0,0.3)' : '0 0 20px 5px rgba(255,215,0,0.15)',
+                }}/>
+              </div>
+              {upgradeAnimPhase === 'charging' && (
+                <div className="flex flex-col items-center gap-3 z-10">
+                  <div className="w-12 h-12 rounded-full border-4 border-yellow-400 border-t-transparent animate-spin"/>
+                  <p className="text-yellow-400 font-bold text-sm tracking-widest uppercase">Upgrading...</p>
+                </div>
+              )}
+              {upgradeAnimPhase === 'burst' && (
+                <div className="flex flex-col items-center gap-2 z-10" style={{ animation: 'none' }}>
+                  <div className="text-5xl" style={{ animation: 'none', filter: 'drop-shadow(0 0 20px gold)' }}>⚡</div>
+                  <p className="text-yellow-300 font-bold text-lg tracking-widest uppercase" style={{ textShadow: '0 0 20px gold' }}>UPGRADING!</p>
+                </div>
+              )}
+              {upgradeAnimPhase === 'reveal' && (
+                <div className="flex flex-col items-center gap-3 z-10">
+                  <div className="text-4xl" style={{ filter: 'drop-shadow(0 0 15px gold)' }}>★</div>
+                  <p className="text-yellow-400 font-bold text-xs uppercase tracking-widest">{card.rarity}</p>
+                  <p className="text-white font-bold text-2xl" style={{ textShadow: '0 0 20px gold' }}>→ {scoreData.rarity}</p>
+                  <p className="text-green-400 font-bold text-sm">Card Upgraded!</p>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Score Modal — inside card container, z-30 to cover corner buttons */}
           {showScoreModal && scoreData && card && (
             <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex flex-col z-30 rounded-xl p-3 gap-2">
@@ -496,12 +534,14 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
               {/* Upgrade / success */}
               {upgradeSuccess ? (
                 <div className="bg-green-900/40 border border-green-500/50 rounded px-2 py-1.5 text-center text-[10px] text-green-400 font-bold">
-                  Upgraded! Refresh to see changes.
+                  ★ Card upgraded to {scoreData.rarity}!
                 </div>
               ) : canUpgrade() && (
-                <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/50 rounded px-2 py-1.5 text-center text-[10px]">
-                  <span className="text-yellow-400 font-bold">Upgrade: </span>
-                  <span className="text-vintage-burnt-gold">{card.rarity}</span> → <span className="text-yellow-400">{scoreData.rarity}</span>
+                <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-400/60 rounded px-2 py-1.5 text-center text-[10px]">
+                  <span className="text-vintage-burnt-gold">{card.rarity}</span>
+                  <span className="text-yellow-400 font-bold mx-1">→</span>
+                  <span className="text-yellow-300 font-bold">{scoreData.rarity}</span>
+                  <span className="text-yellow-400 font-bold ml-1">eligible!</span>
                 </div>
               )}
               {/* Score history — sparkline chart */}
@@ -563,8 +603,9 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
               {/* Actions */}
               {canUpgrade() && !upgradeSuccess && (
                 <button onClick={handleUpgrade} disabled={isUpgrading}
-                  className="w-full py-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold rounded text-[10px] disabled:opacity-50">
-                  {isUpgrading ? '...' : 'Upgrade Rarity'}
+                  className="w-full py-2 text-black font-bold rounded text-xs disabled:opacity-50 uppercase tracking-widest"
+                  style={{ background: 'linear-gradient(135deg, #FFD700, #FF8C00)', boxShadow: '0 0 16px rgba(255,215,0,0.5)', border: '2px solid rgba(255,215,0,0.8)', letterSpacing: '0.1em' }}>
+                  {isUpgrading ? '...' : `⚡ UPGRADE CARD`}
                 </button>
               )}
             </div>
