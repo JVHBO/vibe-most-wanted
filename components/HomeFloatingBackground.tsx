@@ -22,7 +22,7 @@ interface FloatItem {
   bannerUrl?: string;
 }
 
-const CACHE_KEY = "vmw_hfb_v21";
+const CACHE_KEY = "vmw_hfb_v22";
 const CACHE_DATE_KEY = "vmw_hfb_date_v15";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
@@ -307,8 +307,6 @@ export function HomeFloatingBackground() {
           prevT?: number;
         }> = [];
 
-        // 3 follow slots evenly spaced, 15s each = 45s full cycle
-        const followDur = FOLLOW_SLOTS * 15000;
         let followSeenCount = 0;
 
         items.forEach((item, idx) => {
@@ -318,7 +316,7 @@ export function HomeFloatingBackground() {
           const h = isFollow ? 162 : isCast ? 110 : 112;
           const x = 20 + Math.random() * (W - w - 40);
           const drift = (Math.random() - 0.5) * 80;
-          const dur = isFollow ? followDur : (9 + Math.random() * 8) * 1000;
+          const dur = (11 + Math.random() * 5) * 1000; // same range for all elements
           // Follow slots evenly spaced; rest random
           const slotIdx = followSeenCount;
           const phase = isFollow ? (followSeenCount++ / FOLLOW_SLOTS) : Math.random();
