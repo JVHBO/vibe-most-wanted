@@ -22,7 +22,7 @@ interface FloatItem {
   bannerUrl?: string;
 }
 
-const CACHE_KEY = "vmw_hfb_v19";
+const CACHE_KEY = "vmw_hfb_v20";
 const CACHE_DATE_KEY = "vmw_hfb_date_v15";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
@@ -47,9 +47,9 @@ const LOCAL_VBMS_CARDS: FloatItem[] = [
   { id: "local-rar-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-38.png" },
 ];
 
-// All follow/channel quests from the source of truth — 19 total
+// Only follow quests (no channel/join quests)
 const ALL_FOLLOW_QUESTS: FloatItem[] = SOCIAL_QUESTS
-  .filter(q => (q.type === "follow" || q.type === "channel") && q.pfpUrl)
+  .filter(q => q.type === "follow" && q.pfpUrl)
   .map(q => ({
     id: q.id,
     href: q.url,
@@ -138,9 +138,9 @@ function makeFollowEl(item: FloatItem): HTMLDivElement {
     box-shadow:0 4px 20px rgba(201,168,76,0.2);
   `;
 
-  // Banner (wide, shorter for landscape feel)
+  // Banner
   const bannerWrap = document.createElement("div");
-  bannerWrap.style.cssText = "position:relative;width:100%;height:72px;overflow:hidden;";
+  bannerWrap.style.cssText = "position:relative;width:100%;height:80px;overflow:hidden;";
 
   if (item.bannerUrl) {
     const bannerImg = document.createElement("img");
@@ -315,7 +315,7 @@ export function HomeFloatingBackground() {
           const isFollow = item.type === "followcard";
           const isCast = item.type === "castcard";
           const w = isFollow ? 260 : isCast ? 220 : 80;
-          const h = isFollow ? 120 : isCast ? 110 : 112;
+          const h = isFollow ? 148 : isCast ? 110 : 112;
           const x = 20 + Math.random() * (W - w - 40);
           const drift = (Math.random() - 0.5) * 80;
           const dur = isFollow ? followDur : (9 + Math.random() * 8) * 1000;
