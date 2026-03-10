@@ -387,7 +387,6 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
 
   useEffect(() => {
     mountedRef.current = true;
-    const dragCleanup = { fn: undefined as (() => void) | undefined };
 
     async function load() {
       try {
@@ -482,7 +481,6 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           phase: number;
           maxOpacity: number;
           idx: number;
-          isDragging?: boolean;
           // follow cycling
           followCycleIdx?: number;
           prevT?: number;
@@ -573,76 +571,6 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           });
         });
 
-        // Right-click drag — move floating elements, snap to corner on release
-        type DragState = { p: typeof particles[0]; offX: number; offY: number; moved: boolean };
-        let drag: DragState | null = null;
-
-        particles.forEach(p => {
-          // Prevent context menu on right-click
-          p.el.addEventListener('contextmenu', (e) => { e.preventDefault(); });
-          p.el.addEventListener('mousedown', (e) => {
-            if (e.button !== 2) return; // right-click only
-            e.preventDefault();
-            e.stopPropagation();
-            const rect = p.el.getBoundingClientRect();
-            drag = { p, offX: e.clientX - rect.left, offY: e.clientY - rect.top, moved: false };
-            p.isDragging = true;
-            p.el.style.zIndex = '50';
-            p.el.style.opacity = '0.9';
-          });
-        });
-
-        const onDragMove = (e: MouseEvent) => {
-          if (!drag) return;
-          drag.moved = true;
-          const nx = e.clientX - drag.offX;
-          const ny = e.clientY - drag.offY;
-          drag.p.el.style.transform = `translateX(${nx}px) translateY(${ny}px)`;
-        };
-
-        const onDragUp = (e: MouseEvent) => {
-          if (!drag || e.button !== 2) return;
-          const { p, moved } = drag;
-          drag = null;
-
-          if (moved) {
-            // Snap to nearest corner
-            const rect = p.el.getBoundingClientRect();
-            const cx = rect.left + rect.width / 2;
-            const cy = rect.top + rect.height / 2;
-            const margin = 12;
-            const corners = [
-              { x: margin, y: margin },
-              { x: W - p.w - margin, y: margin },
-              { x: margin, y: H - p.h - margin },
-              { x: W - p.w - margin, y: H - p.h - margin },
-            ];
-            let nearest = corners[0];
-            let minDist = Infinity;
-            for (const c of corners) {
-              const d = Math.hypot(cx - (c.x + p.w / 2), cy - (c.y + p.h / 2));
-              if (d < minDist) { minDist = d; nearest = c; }
-            }
-            p.el.style.transform = `translateX(${nearest.x}px) translateY(${nearest.y}px)`;
-            p.el.style.zIndex = '5';
-            p.el.style.opacity = String(p.maxOpacity);
-            // keep isDragging = true so RAF doesn't override position
-          } else {
-            // no drag movement — resume animation
-            p.isDragging = false;
-            p.el.style.zIndex = '';
-          }
-        };
-
-        document.addEventListener('mousemove', onDragMove);
-        document.addEventListener('mouseup', onDragUp);
-
-        document.addEventListener('contextmenu', (e) => { if ((e.target as Element)?.closest('[data-href]')) e.preventDefault(); });
-        dragCleanup.fn = () => {
-          document.removeEventListener('mousemove', onDragMove);
-          document.removeEventListener('mouseup', onDragUp);
-        };
-
         let startTime: number | null = null;
 
         function frame(now: number) {
@@ -650,7 +578,6 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           if (!startTime) startTime = now;
 
           for (const p of particles) {
-            if (p.isDragging) continue;
             const t = ((now - startTime) / p.dur + p.phase) % 1;
             const y = H + p.h - t * p.rise;
             const dx = Math.sin(t * Math.PI * 2) * p.drift * 0.5 + t * p.drift * 0.5;
@@ -699,7 +626,6 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
     return () => {
       mountedRef.current = false;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      dragCleanup.fn?.();
     };
   }, [convex]);
 
