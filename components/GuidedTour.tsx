@@ -274,8 +274,9 @@ export function GuidedTour({
             {step.id === 'wantedcast' && '🎯'}
             {step.id === 'navbar' && '🧭'}
             {step.id === 'settings' && '⚙️'}
+            {step.id === 'drawing' && '🎨'}
             {step.id === 'ready' && '🚀'}
-            {!['welcome', 'games', 'cards', 'dex', 'vibefid', 'wantedcast', 'navbar', 'settings', 'ready'].includes(step.id) && '💡'}
+            {!['welcome', 'games', 'cards', 'dex', 'vibefid', 'wantedcast', 'navbar', 'settings', 'drawing', 'ready'].includes(step.id) && '💡'}
           </div>
 
           <h3 className="font-display text-xl text-vintage-gold mb-2">
@@ -402,6 +403,13 @@ export const DEFAULT_TOUR_STEPS: TourStep[] = [
     titleKey: 'tourSettingsTitle',
     descriptionKey: 'tourSettingsDesc',
     position: 'bottom',
+  },
+  {
+    id: 'drawing',
+    targetSelector: '.tour-drawing-canvas',
+    titleKey: 'tourDrawingTitle',
+    descriptionKey: 'tourDrawingDesc',
+    position: 'center',
   },
   {
     id: 'ready',

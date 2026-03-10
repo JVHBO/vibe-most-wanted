@@ -302,12 +302,13 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
       img.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;';
       floatEl.appendChild(img);
       container.appendChild(floatEl);
+      // Start from where it was drawn, rise upward
       floatEl.animate([
-        { opacity: 0, transform: `translateY(${H}px)` },
-        { opacity: 0.3, transform: `translateY(${H * 0.7}px)`, offset: 0.08 },
-        { opacity: 0.3, transform: `translateY(0px)`, offset: 0.5 },
-        { opacity: 0, transform: `translateY(-${H}px)` },
-      ], { duration: 22000, easing: 'linear', fill: 'forwards' });
+        { opacity: 0,   transform: 'translateY(0px)' },
+        { opacity: 0.3, transform: 'translateY(-40px)',  offset: 0.06 },
+        { opacity: 0.3, transform: `translateY(-${H * 0.5}px)`, offset: 0.6 },
+        { opacity: 0,   transform: `translateY(-${H}px)` },
+      ], { duration: 22000, easing: 'ease-in', fill: 'forwards' });
       setTimeout(() => { try { container.removeChild(floatEl); } catch {} }, 23000);
     };
 
@@ -710,6 +711,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
       />
       <canvas
         ref={canvasRef}
+        className="tour-drawing-canvas"
         style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 1 }}
       />
       <div
