@@ -9,6 +9,7 @@ import FoilCardEffect from '@/components/fid/FoilCardEffect';
 import { VibeMailInbox } from '@/components/fid/VibeMail';
 import { VibeFIDConvexProvider } from '@/contexts/VibeFIDConvexProvider';
 import { getUserByFid, calculateRarityFromScore } from '@/lib/fid/neynar';
+import { sdk } from '@farcaster/miniapp-sdk';
 import { shareToFarcaster } from '@/lib/fid/share-utils';
 import { generateCriminalBackstory } from '@/lib/fid/generateCriminalBackstory';
 import { getFarcasterAccountCreationDate } from '@/lib/fid/farcasterRegistry';
@@ -138,6 +139,21 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
       const rarity = calculateRarityFromScore(score);
       await saveScoreCheck({ fid: user.fid, username: user.username, score, rarity });
       setScoreData({ score, rarity });
+
+      // Auto-upgrade if rarity improved
+      if (card) {
+        const rarityOrder = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
+        const rarityImproved = rarityOrder.indexOf(rarity) > rarityOrder.indexOf(card.rarity);
+        if (rarityImproved) {
+          await upgradeCardRarity({ fid: card.fid, newNeynarScore: score, newRarity: rarity });
+          // Trigger OpenSea metadata refresh
+          fetch('/api/fid/opensea/refresh-metadata', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fid: card.fid }),
+          }).catch(() => {});
+        }
+      }
+
       setShowScoreModal(true);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch score');
@@ -411,7 +427,8 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
                       onClick={() => {
                         const chainSlug = (card as any).chain === 'arbitrum' ? 'arbitrum' : 'base';
                         const contract = (card as any).contractAddress || '0x60274A138d026E3cB337B40567100FdEC3127565';
-                        window.open(`https://opensea.io/assets/${chainSlug}/${contract}/${card.fid}`, '_blank');
+                        const url = `https://opensea.io/assets/${chainSlug}/${contract}/${card.fid}`;
+                        try { sdk.actions.openUrl(url); } catch { window.open(url, '_blank'); }
                       }}
                       className="px-2 py-1.5 bg-[#BE185D] border border-pink-400/50 text-white font-bold rounded hover:bg-[#9d174d] transition-colors"
                       style={{ fontSize: 'clamp(9px, 2.5vw, 12px)' }}
