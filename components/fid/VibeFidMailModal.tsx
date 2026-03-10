@@ -125,6 +125,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
 
   const canSync = () => {
     if (!card || !scoreData) return false;
+    if (typeof window !== 'undefined' && sessionStorage.getItem(`score_synced_${fid}`)) return false;
     return !canUpgrade() && scoreData.score !== card.neynarScore;
   };
 
@@ -133,6 +134,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
     setIsUpgrading(true);
     try {
       await refreshCardScore({ fid: card.fid, newNeynarScore: scoreData.score });
+      sessionStorage.setItem(`score_synced_${fid}`, '1');
       setUpgradeSuccess(true);
     } catch (err: any) {
       setError(err.message || 'Sync failed');
