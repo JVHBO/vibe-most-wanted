@@ -10,6 +10,8 @@ import { VibeMailInbox } from '@/components/fid/VibeMail';
 import { VibeFIDConvexProvider } from '@/contexts/VibeFIDConvexProvider';
 import { getUserByFid, calculateRarityFromScore } from '@/lib/fid/neynar';
 import { sdk } from '@farcaster/miniapp-sdk';
+import { generateFarcasterCardImage } from '@/lib/fid/generateFarcasterCard';
+import { generateCardVideo } from '@/lib/fid/generateCardVideo';
 import { shareToFarcaster } from '@/lib/fid/share-utils';
 import { generateCriminalBackstory } from '@/lib/fid/generateCriminalBackstory';
 import { getFarcasterAccountCreationDate } from '@/lib/fid/farcasterRegistry';
@@ -73,6 +75,42 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
   const card = fidCards?.[0];
   const power = card ? calcPower(card.rarity, card.wear, card.foil) : 0;
 
+  const updateCardImages = useMutation(api.farcasterCards.updateCardImages);
+
+  // Silent background regeneration: PNG + WebM + Filebase upload + OpenSea refresh
+  const regenerateCardFull = (cardData: typeof card, newScore: number) => {
+    if (!cardData) return;
+    (async () => {
+      try {
+        const cardImageDataUrl = await generateFarcasterCardImage({
+          pfpUrl: cardData.pfpUrl, displayName: cardData.displayName,
+          username: cardData.username, fid: cardData.fid, neynarScore: newScore,
+          rarity: cardData.rarity, suit: cardData.suit, rank: cardData.rank,
+          suitSymbol: cardData.suitSymbol, color: cardData.color,
+          bio: cardData.bio || '', bounty: cardData.power * 10,
+        });
+        const videoBlob = await generateCardVideo({
+          cardImageDataUrl, foilType: (cardData.foil as any) || 'None', duration: 3, fps: 30, pfpUrl: cardData.pfpUrl,
+        });
+        const videoForm = new FormData();
+        videoForm.append('video', videoBlob, 'card.webm');
+        const videoRes = await fetch('/api/fid/upload-nft-video', { method: 'POST', body: videoForm });
+        const pngBlob = await (await fetch(cardImageDataUrl)).blob();
+        const pngForm = new FormData();
+        pngForm.append('image', pngBlob, 'card.png');
+        const [videoResult, pngResult] = await Promise.all([
+          videoRes.json(),
+          fetch('/api/fid/upload-nft-image', { method: 'POST', body: pngForm }).then(r => r.json()),
+        ]);
+        await updateCardImages({ fid: cardData.fid, imageUrl: videoResult.ipfsUrl, cardImageUrl: pngResult.ipfsUrl });
+        fetch('/api/fid/opensea/refresh-metadata', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fid: cardData.fid }),
+        }).catch(() => {});
+      } catch { /* silent */ }
+    })();
+  };
+
   const canUpgrade = () => {
     if (!card || !scoreData) return false;
     const rarityOrder = ['Common', 'Rare', 'Epic', 'Legendary', 'Mythic'];
@@ -84,16 +122,7 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
     setIsUpgrading(true);
     try {
       await upgradeCardRarity({ fid: card.fid, newNeynarScore: scoreData.score, newRarity: scoreData.rarity });
-      // Regenerate card PNG on Filebase with new power/score, then refresh OpenSea
-      fetch('/api/fid/regenerate-card', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fid: card.fid }),
-      }).then(() => {
-        fetch('/api/fid/opensea/refresh-metadata', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fid: card.fid }),
-        }).catch(() => {});
-      }).catch(() => {});
+      regenerateCardFull({ ...card, rarity: scoreData.rarity, power: calcPower(scoreData.rarity, card.wear, card.foil), neynarScore: scoreData.score }, scoreData.score);
       setUpgradeSuccess(true);
     } catch (err: any) {
       setError(err.message || 'Upgrade failed');
@@ -152,16 +181,7 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
         const rarityImproved = rarityOrder.indexOf(rarity) > rarityOrder.indexOf(card.rarity);
         if (rarityImproved) {
           await upgradeCardRarity({ fid: card.fid, newNeynarScore: score, newRarity: rarity });
-          // Regenerate card PNG on Filebase with new power/score, then refresh OpenSea
-          fetch('/api/fid/regenerate-card', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fid: card.fid }),
-          }).then(() => {
-            fetch('/api/fid/opensea/refresh-metadata', {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ fid: card.fid }),
-            }).catch(() => {});
-          }).catch(() => {});
+          regenerateCardFull({ ...card, rarity, power: calcPower(rarity, card.wear, card.foil), neynarScore: score }, score);
         }
       }
 
