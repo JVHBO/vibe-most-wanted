@@ -21,7 +21,7 @@ interface FloatItem {
   bannerUrl?: string;
 }
 
-const CACHE_KEY = "vmw_hfb_v15";
+const CACHE_KEY = "vmw_hfb_v16";
 const CACHE_DATE_KEY = "vmw_hfb_date_v15";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
@@ -170,7 +170,7 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
 function makeFollowEl(item: FloatItem): HTMLDivElement {
   const card = document.createElement("div");
   card.style.cssText = `
-    width:240px;
+    width:220px;
     background:#111;
     border:2px solid #c9a84c;
     border-radius:10px;
@@ -179,9 +179,9 @@ function makeFollowEl(item: FloatItem): HTMLDivElement {
     box-shadow:0 4px 20px rgba(201,168,76,0.2);
   `;
 
-  // Banner section
+  // Banner (full width, taller to show more)
   const bannerWrap = document.createElement("div");
-  bannerWrap.style.cssText = "position:relative;width:100%;height:80px;overflow:hidden;";
+  bannerWrap.style.cssText = "position:relative;width:100%;height:90px;overflow:hidden;";
 
   if (item.bannerUrl) {
     const bannerImg = document.createElement("img");
@@ -193,56 +193,45 @@ function makeFollowEl(item: FloatItem): HTMLDivElement {
     bannerWrap.style.background = "#1a1a1a";
   }
 
-  // @FOLLOW badge
-  const followBadge = document.createElement("div");
-  followBadge.style.cssText = "position:absolute;top:6px;left:6px;background:#c9a84c;color:#000;font-size:9px;font-weight:900;padding:2px 6px;border-radius:4px;letter-spacing:0.06em;";
-  followBadge.textContent = "@FOLLOW";
-  bannerWrap.appendChild(followBadge);
+  card.appendChild(bannerWrap);
 
-  // PFP overlapping banner
+  // Body row: pfp + name/desc
+  const body = document.createElement("div");
+  body.style.cssText = "display:flex;align-items:center;gap:8px;padding:8px 10px 10px;";
+
+  // PFP (fully visible, below banner)
   if (item.pfp) {
     const pfpWrap = document.createElement("div");
-    pfpWrap.style.cssText = "position:absolute;bottom:-18px;left:10px;width:36px;height:36px;border-radius:50%;border:2px solid #c9a84c;overflow:hidden;background:#111;";
+    pfpWrap.style.cssText = "flex-shrink:0;width:44px;height:44px;border-radius:50%;border:2px solid #c9a84c;overflow:hidden;background:#222;";
     const pfpImg = document.createElement("img");
     pfpImg.src = item.pfp;
     pfpImg.style.cssText = "width:100%;height:100%;object-fit:cover;";
     pfpImg.onerror = () => { pfpWrap.style.background = "#333"; };
     pfpWrap.appendChild(pfpImg);
-    bannerWrap.appendChild(pfpWrap);
+    body.appendChild(pfpWrap);
   }
 
-  card.appendChild(bannerWrap);
-
-  // Body
-  const body = document.createElement("div");
-  body.style.cssText = "padding:24px 10px 10px;";
+  const info = document.createElement("div");
+  info.style.cssText = "flex:1;min-width:0;";
 
   const name = document.createElement("div");
-  name.style.cssText = "color:#fff;font-size:11px;font-weight:700;margin-bottom:2px;";
+  name.style.cssText = "color:#fff;font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;";
   name.textContent = item.displayName || "";
-  body.appendChild(name);
+  info.appendChild(name);
 
   if (item.description) {
     const desc = document.createElement("div");
-    desc.style.cssText = "color:#888;font-size:9px;margin-bottom:6px;";
+    desc.style.cssText = "color:#888;font-size:9px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;";
     desc.textContent = item.description;
-    body.appendChild(desc);
+    info.appendChild(desc);
   }
-
-  const rewardRow = document.createElement("div");
-  rewardRow.style.cssText = "display:flex;align-items:center;gap:4px;";
 
   const rewardBadge = document.createElement("span");
   rewardBadge.style.cssText = "color:#c9a84c;font-size:10px;font-weight:800;";
   rewardBadge.textContent = `+${item.reward ?? 50} VBMS`;
-  rewardRow.appendChild(rewardBadge);
+  info.appendChild(rewardBadge);
 
-  const questsLink = document.createElement("span");
-  questsLink.style.cssText = "color:#555;font-size:9px;margin-left:auto;";
-  questsLink.textContent = "→ Quests";
-  rewardRow.appendChild(questsLink);
-
-  body.appendChild(rewardRow);
+  body.appendChild(info);
   card.appendChild(body);
 
   return card;
