@@ -79,4 +79,26 @@ crons.weekly(
   internal.profiles.resetWeeklyAura
 );
 
+// 🧹 Daily storage cleanup (03:00 UTC) — keeps storage costs low
+crons.daily(
+  "cleanup old matches",
+  { hourUTC: 3, minuteUTC: 0 },
+  internal.admin.cleanupOldMatches,
+  { daysOld: 30 }
+);
+
+crons.daily(
+  "cleanup old coin transactions",
+  { hourUTC: 3, minuteUTC: 10 },
+  internal.admin.cleanupOldCoinTransactions,
+  { daysOld: 60 }
+);
+
+crons.daily(
+  "cleanup old coin audit log",
+  { hourUTC: 3, minuteUTC: 20 },
+  internal.admin.cleanupOldCoinAuditLog,
+  { daysOld: 90 }
+);
+
 export default crons;

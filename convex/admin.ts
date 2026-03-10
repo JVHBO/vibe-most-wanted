@@ -824,6 +824,64 @@ export const cleanupOldCoinTransactions = internalMutation({
 });
 
 /**
+ * Delete old coin audit log entries (batch of 100)
+ * INTERNAL ONLY - Keep 90 days by default
+ */
+export const cleanupOldCoinAuditLog = internalMutation({
+  args: { daysOld: v.optional(v.number()) },
+  handler: async (ctx, { daysOld = 90 }) => {
+    const cutoffTime = Date.now() - (daysOld * 24 * 60 * 60 * 1000);
+    const oldEntries = await ctx.db
+      .query("coinAuditLog")
+      .filter((q) => q.lt(q.field("timestamp"), cutoffTime))
+      .take(100);
+
+    if (oldEntries.length === 0) {
+      return { deleted: 0, hasMore: false };
+    }
+
+    for (const entry of oldEntries) {
+      await ctx.db.delete(entry._id);
+    }
+
+    console.log("Deleted " + oldEntries.length + " old coinAuditLog entries");
+    return { deleted: oldEntries.length, hasMore: oldEntries.length === 100 };
+  },
+});
+
+/**
+ * Strip card data from old matches (patch to minimal tokenId+power)
+ * One-time migration - processes 50 at a time
+ */
+export const stripOldMatchCards = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const matches = await ctx.db
+      .query("matches")
+      .filter((q) => q.neq(q.field("playerCards"), undefined))
+      .take(50);
+
+    let stripped = 0;
+    for (const match of matches) {
+      const pc = match.playerCards as any[];
+      const oc = match.opponentCards as any[];
+      // Skip if already minimal (only tokenId+power)
+      const alreadyStripped = pc.length === 0 || (Object.keys(pc[0]).length <= 2 && pc[0].tokenId && pc[0].power !== undefined);
+      if (alreadyStripped) continue;
+
+      await ctx.db.patch(match._id, {
+        playerCards: pc.map((c: any) => ({ tokenId: c.tokenId, power: c.power })),
+        opponentCards: oc.map((c: any) => ({ tokenId: c.tokenId, power: c.power })),
+      });
+      stripped++;
+    }
+
+    console.log(`Stripped cards from ${stripped} matches`);
+    return { stripped, hasMore: stripped > 0 };
+  },
+});
+
+/**
  * Remove FID from a profile (unlink Farcaster identity)
  * Used to fix duplicate FID issues
  * 🔒 INTERNAL ONLY

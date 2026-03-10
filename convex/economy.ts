@@ -1765,6 +1765,7 @@ export const recordAttackResult = mutation({
     }
 
     // ===== STEP 4: Record match history =====
+    const stripCards = (cards: any[]) => cards.map(c => ({ tokenId: c.tokenId, power: c.power }));
     const matchId = await ctx.db.insert("matches", {
       playerAddress: normalizedPlayerAddress,
       type: "attack",
@@ -1774,8 +1775,8 @@ export const recordAttackResult = mutation({
       opponentAddress: normalizedOpponentAddress,
       opponentUsername: args.opponentUsername,
       timestamp: Date.now(),
-      playerCards: args.playerCards,
-      opponentCards: args.opponentCards,
+      playerCards: stripCards(args.playerCards),
+      opponentCards: stripCards(args.opponentCards),
       coinsEarned: totalReward,
       entryFeePaid: args.entryFeePaid,
     });

@@ -109,6 +109,9 @@ export const recordMatch = mutation({
     const normalizedPlayerAddress = args.playerAddress.toLowerCase();
     const normalizedOpponentAddress = args.opponentAddress?.toLowerCase();
 
+    // Strip card objects to minimal data — only tokenId+power needed (saves ~95% storage)
+    const stripCards = (cards: any[]) => cards.map(c => ({ tokenId: c.tokenId, power: c.power }));
+
     // Insert match record
     const matchId = await ctx.db.insert("matches", {
       playerAddress: normalizedPlayerAddress,
@@ -119,8 +122,8 @@ export const recordMatch = mutation({
       opponentAddress: normalizedOpponentAddress,
       opponentUsername: args.opponentUsername,
       timestamp: Date.now(),
-      playerCards: args.playerCards,
-      opponentCards: args.opponentCards,
+      playerCards: stripCards(args.playerCards),
+      opponentCards: stripCards(args.opponentCards),
       coinsEarned: args.coinsEarned,
       entryFeePaid: args.entryFeePaid,
       difficulty: args.difficulty,
