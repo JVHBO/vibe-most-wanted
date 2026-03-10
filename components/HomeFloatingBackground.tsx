@@ -253,13 +253,10 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
     const isInteractive = (x: number, y: number) => {
       const el = document.elementFromPoint(x, y);
       if (!el) return false;
+      // Only block on actual interactive elements (buttons, links, inputs)
       if (el.closest('a, button, input, select, textarea, [role="button"]')) return true;
-      // Check up the tree for cursor-pointer (Tailwind floating items)
-      let cur: Element | null = el;
-      while (cur && cur !== document.body) {
-        if (cur.classList.contains('cursor-pointer')) return true;
-        cur = cur.parentElement;
-      }
+      // Block on floating background cards (cursor-pointer divs with pointer-events:auto)
+      if (el.closest('[data-href]')) return true;
       return false;
     };
 
@@ -329,6 +326,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
 
   useEffect(() => {
     mountedRef.current = true;
+    const dragCleanup = { fn: undefined as (() => void) | undefined };
 
     async function load() {
       try {
@@ -369,7 +367,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           };
           let winners: HistoryItem[] = [];
           try {
-            winners = (await convex.query(api.castAuctions.getAuctionHistory, { limit: 20 })) as HistoryItem[];
+            winners = (await convex.query(api.castAuctions.getAuctionHistory, { limit: 16 })) as HistoryItem[];
           } catch {}
 
           const validWinners = winners.filter(w => w.warpcastUrl && !HIDDEN_CAST_URLS.has(w.warpcastUrl) && (w.castAuthorPfp || w.castAuthorUsername));
@@ -423,6 +421,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           phase: number;
           maxOpacity: number;
           idx: number;
+          isDragging?: boolean;
           // follow cycling
           followCycleIdx?: number;
           prevT?: number;
@@ -457,6 +456,8 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
             opacity:0;
             will-change:transform,opacity;
             pointer-events:none;
+            user-select:none;
+            -webkit-user-select:none;
           `;
 
           el.dataset.href = item.href;
@@ -489,7 +490,8 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
             const img = document.createElement("img");
             img.src = item.imageUrl!;
             img.alt = "";
-            img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;";
+            img.draggable = false;
+            img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;user-select:none;-webkit-user-select:none;";
             img.onload = () => {
               loadedFlags[idx] = true;
               el.style.pointerEvents = "auto";
@@ -510,6 +512,49 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           });
         });
 
+        // Drag support — lets players move floating elements around
+        type DragState = { p: typeof particles[0]; offX: number; offY: number; moved: boolean };
+        let drag: DragState | null = null;
+
+        particles.forEach(p => {
+          p.el.addEventListener('mousedown', (e) => {
+            e.stopPropagation(); // prevent drawing from starting
+            const rect = p.el.getBoundingClientRect();
+            drag = { p, offX: e.clientX - rect.left, offY: e.clientY - rect.top, moved: false };
+            p.isDragging = true;
+            p.el.style.zIndex = '50';
+            p.el.style.opacity = '1';
+          });
+        });
+
+        const onDragMove = (e: MouseEvent) => {
+          if (!drag) return;
+          drag.moved = true;
+          const nx = e.clientX - drag.offX;
+          const ny = e.clientY - drag.offY;
+          drag.p.el.style.transform = `translateX(${nx}px) translateY(${ny}px)`;
+        };
+
+        const onDragUp = () => {
+          if (!drag) return;
+          const { p, moved } = drag;
+          drag = null;
+          p.isDragging = false;
+          p.el.style.zIndex = '';
+          if (moved) {
+            // suppress the click that fires after mouseup
+            p.el.addEventListener('click', (ev) => { ev.stopImmediatePropagation(); ev.preventDefault(); }, { capture: true, once: true });
+          }
+        };
+
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragUp);
+
+        dragCleanup.fn = () => {
+          document.removeEventListener('mousemove', onDragMove);
+          document.removeEventListener('mouseup', onDragUp);
+        };
+
         let startTime: number | null = null;
 
         function frame(now: number) {
@@ -517,6 +562,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           if (!startTime) startTime = now;
 
           for (const p of particles) {
+            if (p.isDragging) continue;
             const t = ((now - startTime) / p.dur + p.phase) % 1;
             const y = H + p.h - t * p.rise;
             const dx = Math.sin(t * Math.PI * 2) * p.drift * 0.5 + t * p.drift * 0.5;
@@ -565,6 +611,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
     return () => {
       mountedRef.current = false;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      dragCleanup.fn?.();
     };
   }, [convex]);
 
