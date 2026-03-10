@@ -38,6 +38,11 @@ import { CoinsInboxDisplay } from "@/components/CoinsInboxDisplay";
 import { CardMedia } from "@/components/CardMedia";
 import { NotEnoughCardsGuide } from "@/components/NotEnoughCardsGuide";
 import { GamePopups } from "@/components/GamePopups";
+import { PvPPreviewModal } from "@/components/PvPPreviewModal";
+import { GameNavBar } from "@/components/GameNavBar";
+import { ConnectScreen } from "@/components/ConnectScreen";
+import { GameHeader } from "@/components/GameHeader";
+import { NFTCard } from "@/components/NFTCard";
 // RaidBossModal moved to /raid page
 import { PriceTicker } from "@/components/PriceTicker";
 import { AllCollectionsButton } from "@/components/AllCollectionsButton";
@@ -45,7 +50,7 @@ import ShameList from "@/components/ShameList";
 import BannedScreen from "@/components/BannedScreen";
 import { SocialQuestsPanel } from "@/components/SocialQuestsPanel";
 // New Home Components
-import { HomeHeader, BottomNavigation, GameGrid, CardsPreview, WantedCast } from "@/components/home";
+import { GameGrid, CardsPreview } from "@/components/home";
 import { VibeFidMailModal } from "@/components/fid/VibeFidMailModal";
 import { Roulette } from "@/components/Roulette";
 // TEMPORARILY DISABLED - Causing performance issues
@@ -79,7 +84,6 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 // 💎 VBMS Blockchain Contracts
 import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
-import { useBondingProgress } from "@/lib/hooks/useBondingProgress";
 
 import { filterCardsByCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, type CollectionId } from "@/lib/collections/index"; // getEnabledCollections removed - now only used by Context
 import { findAttr, isUnrevealed, calcPower, normalizeUrl } from "@/lib/nft/attributes";
@@ -153,184 +157,6 @@ const getAvatarFallback = (): string => {
 // NFT fetching is now ONLY done by PlayerCardsContext.tsx
 // This eliminates duplicate Alchemy API calls!
 
-const NFTCard = memo(({ nft, selected, onSelect, locked = false, lockedReason }: { nft: any; selected: boolean; onSelect: (nft: any) => void; locked?: boolean; lockedReason?: string }) => {
-  const tid = nft.tokenId;
-  const [imgError, setImgError] = useState(0);
-
-  const getRarityColor = (rarity: string) => {
-    const r = (rarity || '').toLowerCase();
-    if (r.includes('legend')) return 'from-orange-500 to-yellow-400';
-    if (r.includes('epic')) return 'from-purple-500 to-pink-500';
-    if (r.includes('rare')) return 'from-blue-500 to-cyan-400';
-    return 'from-gray-600 to-gray-500';
-  };
-
-  const getRarityRing = (rarity: string) => {
-    const r = (rarity || '').toLowerCase();
-    if (r.includes('legend')) return 'ring-vintage-gold shadow-gold-lg';
-    if (r.includes('epic')) return 'ring-vintage-silver shadow-neon';
-    if (r.includes('rare')) return 'ring-vintage-burnt-gold shadow-gold';
-    return 'ring-vintage-charcoal shadow-lg';
-  };
-
-  const fallbacks = useMemo(() => {
-    const allUrls = [];
-    if (nft.imageUrl) allUrls.push(nft.imageUrl);
-    if (nft?.raw?.metadata?.image) allUrls.push(String(nft.raw.metadata.image));
-    [nft?.image?.cachedUrl, nft?.image?.thumbnailUrl, nft?.image?.pngUrl, nft?.image?.originalUrl].forEach((url) => {
-      if (url) allUrls.push(String(url));
-    });
-    if (nft?.metadata?.image) allUrls.push(String(nft.metadata.image));
-    allUrls.push(`https://via.placeholder.com/300x420/6366f1/ffffff?text=NFT+%23${tid}`);
-    // Allow both absolute URLs (http/https) and relative paths (for FREE cards)
-    // Convert IPFS URLs to Filebase gateway for better reliability (VibeFID fix)
-    return [...new Set(allUrls)]
-      .filter(url => url && !url.includes('undefined') && (url.startsWith('http') || url.startsWith('/')))
-      .map(url => convertIpfsUrl(url) || url);
-  }, [nft, tid]);
-
-  const currentSrc = fallbacks[imgError] || fallbacks[fallbacks.length - 1];
-  const foilValue = (nft.foil || '').trim();
-
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (locked) return; // Don't allow selection if locked
-    onSelect(nft);
-  }, [nft, onSelect, locked]);
-
-  return (
-    <>
-      <style>{`
-        @keyframes holographic {
-          0% {
-            background-position: 0% 50%;
-            filter: hue-rotate(0deg) brightness(1.2) saturate(1.5);
-          }
-          25% {
-            background-position: 50% 100%;
-            filter: hue-rotate(90deg) brightness(1.3) saturate(1.6);
-          }
-          50% {
-            background-position: 100% 50%;
-            filter: hue-rotate(180deg) brightness(1.4) saturate(1.7);
-          }
-          75% {
-            background-position: 50% 0%;
-            filter: hue-rotate(270deg) brightness(1.3) saturate(1.6);
-          }
-          100% {
-            background-position: 0% 50%;
-            filter: hue-rotate(360deg) brightness(1.2) saturate(1.5);
-          }
-        }
-
-        @keyframes prizePulse {
-          0%, 100% { opacity: 0.95; }
-          50% { opacity: 1; }
-        }
-
-        @keyframes prizeGlow {
-          0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 140, 0, 0.4), 0 0 60px rgba(255, 0, 255, 0.3); }
-          50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 140, 0, 0.6), 0 0 90px rgba(255, 0, 255, 0.5); }
-        }
-
-
-        @keyframes cardReflection {
-          0% {
-            transform: translateX(-200%) translateY(-200%) rotate(45deg);
-            opacity: 0;
-          }
-          50% {
-            opacity: 0.3;
-          }
-          100% {
-            transform: translateX(200%) translateY(200%) rotate(45deg);
-            opacity: 0;
-          }
-        }
-
-        @keyframes rainbowShine {
-          0% {
-            background-position: -200% center;
-          }
-          100% {
-            background-position: 200% center;
-          }
-        }
-
-        @keyframes shake {
-          0%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(-3deg); }
-          75% { transform: rotate(3deg); }
-        }
-
-        @keyframes rainbowShine {
-          0% {
-            background-position: -200% center;
-          }
-          100% {
-            background-position: 200% center;
-          }
-        }
-
-        .prize-card-ring {
-          animation: prizeGlow 2s ease-in-out infinite;
-        }
-      `}</style>
-      
-      <div
-        className={`relative group transition-all duration-300 ${locked ? 'opacity-50 cursor-not-allowed' : selected ? 'scale-95' : 'hover:scale-105'} ${locked ? '' : 'cursor-pointer'}`}
-        onClick={handleClick}
-        title={locked ? lockedReason : undefined}
-        style={{filter: 'drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6))'}}
-      >
-        {/* Ring wrapper OUTSIDE overflow-hidden */}
-        <div className={`rounded-lg ${
-          locked ? 'ring-2 ring-red-500/50' :
-          selected ? `ring-4 ${getRarityRing(nft.rarity || '')} shadow-xl` :
-          'ring-2 ring-vintage-deep-black/50 hover:ring-vintage-gold/50'
-        }`}>
-          <FoilCardEffect
-            foilType={(foilValue === 'Standard' || foilValue === 'Prize') ? foilValue as 'Standard' | 'Prize' : null}
-            className="relative rounded-lg"
-          >
-            <div style={{boxShadow: 'inset 0 0 10px rgba(255, 215, 0, 0.1)'}} className="rounded-lg overflow-hidden">
-            <CardMedia src={currentSrc} alt={`#${tid}`} className="w-full aspect-[2/3] object-cover bg-vintage-deep-black pointer-events-none" loading="lazy" />
-
-            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/90 to-transparent p-1.5 pointer-events-none z-20">
-              <div className="flex items-center justify-between">
-                <span className={`font-bold text-xs drop-shadow-lg bg-gradient-to-r ${getRarityColor(nft.rarity || '')} bg-clip-text text-transparent`}>{getCardDisplayPower(nft)}</span>
-                {selected && (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="drop-shadow-lg">
-                    <path d="M20 6L9 17L4 12" stroke="#D4AF37" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
-              </div>
-            </div>
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-1.5 pointer-events-none z-20">
-              {nft.rarity && (
-                <div className="text-[10px] font-bold uppercase tracking-wider text-white drop-shadow-lg">
-                  {nft.rarity}
-                </div>
-              )}
-            </div>
-            {/* Locked overlay for cards in raid deck */}
-            {locked && (
-              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center z-30 rounded-lg">
-                <div className="text-3xl mb-1">⚔️</div>
-                <div className="text-[10px] text-white font-bold bg-red-600/80 px-2 py-0.5 rounded">
-                  IN RAID
-                </div>
-              </div>
-            )}
-          </div>
-          </FoilCardEffect>
-        </div>
-      </div>
-    </>
-  );
-});
 
 // Match History Section Component - REMOVED from leaderboard (only in profile page now)
 
@@ -537,8 +363,6 @@ export default function TCGPage() {
     showPvPPreview, setShowPvPPreview,
     showLeaderboardRewardsModal, setShowLeaderboardRewardsModal,
     showMyCardsModal, setShowMyCardsModal,
-    showProfileDropdown, setShowProfileDropdown,
-    showDexDropdown, setShowDexDropdown,
     modeMenuOpen, setModeMenuOpen,
     showSettings, setShowSettings,
     showCreateProfile, setShowCreateProfile,
@@ -675,8 +499,6 @@ export default function TCGPage() {
   const [selectedCards, setSelectedCards] = useState<any[]>([]);
   const [playerPower, setPlayerPower] = useState<number>(0);
   const [dealerPower, setDealerPower] = useState<number>(0);
-  const profileDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
-  const dexDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
   // Miniapp: 12 cards (1.5 rows), Website: 24 cards (3 full rows of 8)
   const CARDS_PER_PAGE = isInFarcaster ? 12 : 24;
 
@@ -741,7 +563,6 @@ export default function TCGPage() {
 
   // 💎 VBMS Blockchain Contract Hooks (using Farcaster-compatible hook)
   const { balance: vbmsBlockchainBalance, refetch: refetchVBMSBalance } = useFarcasterVBMSBalance(address);
-  const bondingProgress = useBondingProgress();
 const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const { createBattle, isPending: isCreatingBattle } = useCreateBattle();
   const { joinBattle, isPending: isJoiningBattle } = useJoinBattle();
@@ -1339,6 +1160,161 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     }, 100);
   };
 
+  // ⚔️ Handler for confirming PvP attack from preview modal
+  const handleConfirmAttack = async () => {
+    setShowPvPPreview(false);
+    if (soundEnabled) AudioManager.buttonClick();
+    setIsAttacking(true);
+
+    try {
+      await payEntryFee({ address: address || '', mode: 'attack' });
+      devLog('Attack entry fee paid: 50 $TESTVBMS');
+
+      devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      devLog(`✦ ATTACKING: ${targetPlayer!.username}`);
+      devLog(`🛡️ Validating opponent's defense deck...`);
+
+      const validatedDeck = await ConvexProfileService.getValidatedDefenseDeck(targetPlayer!.address);
+
+      if (validatedDeck.removedCards.length > 0) {
+        devWarn(`⚠️ Removed ${validatedDeck.removedCards.length} invalid cards from ${targetPlayer!.username}'s defense deck (no longer owned)`);
+      }
+
+      if (!validatedDeck.isValid) {
+        devWarn(`⚠️ Could not validate ${targetPlayer!.username}'s defense deck - using as-is`);
+      }
+
+      const defenderCards = validatedDeck.defenseDeck.map((card) => ({
+        tokenId: card.tokenId,
+        power: card.power,
+        imageUrl: card.imageUrl,
+        name: card.name,
+        rarity: card.rarity,
+      }));
+
+      devLog(`✅ Defense deck validated: ${defenderCards.length} valid cards`);
+      devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+      setSelectedCards(attackSelectedCards);
+      setDealerCards(defenderCards);
+      setBattleOpponentName(targetPlayer!.username);
+      setBattlePlayerName(userProfile?.username || 'You');
+      setBattleOpponentPfp(getAvatarUrl(targetPlayer!.twitter));
+      setBattlePlayerPfp(getAvatarUrl(userProfile ? { twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl } : null));
+      setShowAttackCardSelection(false);
+      setIsBattling(true);
+      setShowBattleScreen(true);
+      setBattlePhase('cards');
+      setGameMode('pvp');
+
+      if (soundEnabled) AudioManager.playHand();
+
+      const playerTotal = calculateTotalPower(attackSelectedCards, true);
+      const dealerTotal = calculateTotalPower(defenderCards);
+
+      setTimeout(() => {
+        setBattlePhase('clash');
+        if (soundEnabled) AudioManager.cardBattle();
+      }, 2500);
+
+      setTimeout(() => {
+        setPlayerPower(playerTotal);
+        setDealerPower(dealerTotal);
+        setBattlePhase('result');
+      }, 3500);
+
+      setTimeout(async () => {
+        let matchResult: 'win' | 'loss' | 'tie';
+        if (playerTotal > dealerTotal) {
+          matchResult = 'win';
+        } else if (playerTotal < dealerTotal) {
+          matchResult = 'loss';
+        } else {
+          matchResult = 'tie';
+        }
+
+        let coinsEarned = 0;
+
+        if (userProfile && address) {
+          try {
+            const result = await recordAttackResult({
+              playerAddress: address,
+              playerPower: playerTotal,
+              playerCards: attackSelectedCards,
+              playerUsername: userProfile.username,
+              result: matchResult,
+              opponentAddress: targetPlayer!.address,
+              opponentUsername: targetPlayer!.username,
+              opponentPower: dealerTotal,
+              opponentCards: defenderCards,
+              entryFeePaid: 0,
+              language: lang,
+            });
+
+            coinsEarned = result.coinsAwarded || 0;
+
+            devLog(`⚛️ ATOMIC: Attack recorded successfully`);
+            devLog(`💰 Coins awarded: ${coinsEarned}`);
+            if (result.bonuses && result.bonuses.length > 0) {
+              devLog(`🎁 Bonuses: ${result.bonuses.join(', ')}`);
+            }
+
+            if (result.profile) {
+              setUserProfile(result.profile as any);
+              setAttacksRemaining(maxAttacks - ((result.profile as any).attacksToday || 0));
+            }
+          } catch (error: any) {
+            devError('⚛️ ATOMIC: Error recording attack:', error);
+          }
+        }
+
+        setLastBattleResult({
+          result: matchResult,
+          playerPower: playerTotal,
+          opponentPower: dealerTotal,
+          opponentName: targetPlayer!.username,
+          opponentTwitter: targetPlayer!.twitter,
+          type: 'attack',
+          coinsEarned,
+          playerPfpUrl: userProfile?.twitterProfileImageUrl,
+          opponentPfpUrl: targetPlayer!.twitterProfileImageUrl,
+        });
+
+        if (address && userProfile) {
+          fetch('/api/notifications/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'defense_attacked',
+              data: {
+                defenderAddress: targetPlayer!.address,
+                defenderUsername: targetPlayer!.username || 'Unknown',
+                attackerUsername: userProfile.username || 'Unknown',
+                result: matchResult === 'win' ? 'lose' : 'win',
+                coinsChange: coinsEarned,
+              },
+            }),
+          }).catch(err => devError('Error sending notification:', err));
+        }
+
+        setIsBattling(false);
+        setShowBattleScreen(false);
+        setBattlePhase('cards');
+        setIsAttacking(false);
+        setShowAttackCardSelection(false);
+        setTargetPlayer(null);
+        setAttackSelectedCards([]);
+
+        showBattleResultPopup(matchResult);
+      }, 4500);
+
+    } catch (error: any) {
+      setErrorMessage('Error: ' + error.message);
+      setIsAttacking(false);
+      if (soundEnabled) AudioManager.buttonError();
+    }
+  };
+
   // 🎵 Handler to close victory screen and stop audio
   const handleCloseVictoryScreen = () => {
     // Stop victory audio if playing
@@ -1697,16 +1673,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     setDealerCards([]);
     devLog('🔌 Desconectado');
   }, [soundEnabled, disconnect]);
-
-  // 🚀 BANDWIDTH FIX (Jan 2026): REMOVED 220 LINES OF DUPLICATE loadNFTs!
-  // NFT loading is now ONLY done by PlayerCardsContext.tsx
-  // This page syncs from context via useEffect above (line 612-633)
-  // This eliminates 26M+ duplicate Alchemy calls/month!
-
-  // 🚀 BANDWIDTH FIX (Jan 2026): Removed duplicate loadNFTs call
-  // Context already auto-loads NFTs when address is set (PlayerCardsContext.tsx line 536-540)
-  // Page just syncs from context via the useEffect above (line 612-621)
-  // This eliminates 26M+ duplicate Alchemy calls/month!
 
   const loadJCNFTs = useCallback(async () => {
     try {
@@ -3299,151 +3265,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
 
   // Leaderboard loading moved to /leaderboard page to reduce queries
 
-  // Cache for collection-based power calculations
-  const [collectionPowerCache, setCollectionPowerCache] = useState<Map<string, Map<string, number>>>(new Map());
-  const [isCalculatingCollectionPower, setIsCalculatingCollectionPower] = useState(false);
-
-  // Helper to calculate power from NFT attributes (matches nft-fetcher.ts logic)
-  const calculateCardPowerFromAttributes = useCallback((nft: any): number => {
-    const findAttr = (trait: string): string => {
-      const locs = [
-        nft?.raw?.metadata?.attributes,
-        nft?.metadata?.attributes,
-        nft?.metadata?.traits,
-        nft?.raw?.metadata?.traits
-      ];
-      for (const attrs of locs) {
-        if (!Array.isArray(attrs)) continue;
-        const found = attrs.find((a: any) => {
-          const traitType = String(a?.trait_type || a?.traitType || a?.name || '').toLowerCase().trim();
-          const searchTrait = trait.toLowerCase().trim();
-          return traitType === searchTrait || traitType.includes(searchTrait) || searchTrait.includes(traitType);
-        });
-        if (found) {
-          return String(found?.value || found?.trait_value || found?.displayType || '').trim();
-        }
-      }
-      return '';
-    };
-
-    // Check if this is a free card - exclude from power calculation
-    const badgeType = findAttr('badgetype') || findAttr('badge_type') || findAttr('badge');
-    if (badgeType.toLowerCase().includes('free')) {
-      return 0; // Free cards don't contribute to power
-    }
-
-    const foil = findAttr('foil') || 'None';
-    const rarity = findAttr('rarity') || 'Common';
-    const wear = findAttr('wear') || 'Lightly Played';
-
-    // Also check if rarity is explicitly "free"
-    if (rarity.toLowerCase().includes('free')) {
-      return 0;
-    }
-
-    // Base power by rarity
-    let base = 5;
-    const r = rarity.toLowerCase();
-    if (r.includes('mythic')) base = 800;
-    else if (r.includes('legend')) base = 240;
-    else if (r.includes('epic')) base = 80;
-    else if (r.includes('rare')) base = 20;
-    else if (r.includes('common')) base = 5;
-
-    // Wear multiplier
-    let wearMult = 1.0;
-    const w = wear.toLowerCase();
-    if (w.includes('pristine')) wearMult = 1.8;
-    else if (w.includes('mint')) wearMult = 1.4;
-
-    // Foil multiplier
-    let foilMult = 1.0;
-    const f = foil.toLowerCase();
-    if (f.includes('prize')) foilMult = 15.0;
-    else if (f.includes('standard')) foilMult = 2.5;
-
-    const power = base * wearMult * foilMult;
-    return Math.max(1, Math.round(power));
-  }, []);
-
-  // Calculate power for a specific collection (smart approach: use Alchemy API)
-  const calculateCollectionPower = useCallback(async (address: string, collectionId: CollectionId): Promise<number> => {
-    // TEMPORARILY DISABLED: Alchemy API calls causing infinite loading
-    // Update cache with 0 to prevent infinite calculation loop
-    setCollectionPowerCache(prev => {
-      const newCache = new Map(prev);
-      const addressCache = newCache.get(address) || new Map();
-      addressCache.set(collectionId, 0);
-      newCache.set(address, addressCache);
-      return newCache;
-    });
-
-    return 0;
-
-    /* DISABLED CODE - Uncomment when Alchemy API is fixed
-    // Check cache first
-    const addressCache = collectionPowerCache.get(address);
-    if (addressCache?.has(collectionId)) {
-      return addressCache.get(collectionId)!;
-    }
-
-    try {
-      // Get collection contract address from collections config
-      const contractAddress = getCollectionContract(collectionId);
-
-      if (!contractAddress) return 0;
-
-      // Fetch NFTs for this collection from Alchemy with retry logic
-      let response: Response;
-      let retries = 0;
-      const maxRetries = 3;
-
-      while (retries <= maxRetries) {
-        response = await fetch(
-          `https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/getNFTsForOwner?owner=${address}&contractAddresses[]=${contractAddress}&withMetadata=true`
-        );
-
-        if (response.status === 429 && retries < maxRetries) {
-          // Exponential backoff: 1s, 2s, 4s
-          const delay = Math.pow(2, retries) * 1000;
-          devLog(`⏳ [Leaderboard] Rate limited for ${address.substring(0, 8)}..., retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-          retries++;
-          continue;
-        }
-
-        break;
-      }
-
-      if (!response!.ok) throw new Error(`Alchemy API error: ${response!.status}`);
-
-      const data = await response!.json();
-      const nfts = data.ownedNfts || [];
-
-      // Calculate total power from attributes
-      let totalPower = 0;
-      for (const nft of nfts) {
-        const power = calculateCardPowerFromAttributes(nft);
-        totalPower += power;
-      }
-
-      // Update cache
-      setCollectionPowerCache(prev => {
-        const newCache = new Map(prev);
-        const addressCache = newCache.get(address) || new Map();
-        addressCache.set(collectionId, totalPower);
-        newCache.set(address, addressCache);
-        return newCache;
-      });
-
-      return totalPower;
-    } catch (error) {
-      devError('[Leaderboard] Error calculating collection power:', error);
-      return 0;
-    }
-    */
-  }, [collectionPowerCache]);
-
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
     // Run cleanup immediately on mount
@@ -3833,315 +3654,16 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
       />
 
       {/* ✅ PvP Preview Modal - Shows potential gains/losses before battle */}
-      {showPvPPreview && pvpPreviewData && targetPlayer && (
-        <div className="fixed inset-0 bg-black/95 flex items-center justify-center z-[300] p-2 sm:p-4 overflow-y-auto">
-          <div className="bg-gradient-to-br from-vintage-charcoal via-vintage-black to-vintage-charcoal rounded-xl sm:rounded-2xl border-2 border-vintage-gold max-w-2xl w-full p-4 sm:p-6 md:p-8 shadow-2xl shadow-vintage-gold/30 my-4">
-            {/* Header */}
-            <div className="text-center mb-4 sm:mb-6">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold text-vintage-gold mb-1 sm:mb-2">
-                ⚔️ BATTLE PREVIEW
-              </h2>
-              <p className="text-xs sm:text-sm text-vintage-burnt-gold font-modern">
-                Potential gains and losses for this battle
-              </p>
-            </div>
-
-            {/* Aura Comparison */}
-            <div className="flex justify-between items-center mb-3 sm:mb-4 md:mb-6 p-2 sm:p-3 md:p-4 bg-vintage-black/50 rounded-lg sm:rounded-xl border border-vintage-gold/30">
-              <div className="text-center flex-1">
-                <p className="text-[10px] sm:text-xs text-vintage-burnt-gold font-modern mb-0.5 sm:mb-1">YOUR AURA</p>
-                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-cyan-400">{pvpPreviewData.playerAura}</p>
-              </div>
-              <div className="text-vintage-gold text-lg sm:text-xl md:text-2xl">VS</div>
-              <div className="text-center flex-1">
-                <p className="text-[10px] sm:text-xs text-vintage-burnt-gold font-modern mb-0.5 sm:mb-1">OPPONENT AURA</p>
-                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-red-400">{pvpPreviewData.opponentAura}</p>
-              </div>
-            </div>
-
-            {/* Win/Loss Scenarios */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 md:gap-4 mb-3 sm:mb-4 md:mb-6">
-              {/* Win Scenario */}
-              <div className="bg-green-900/20 border-2 border-green-500/50 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                  <NextImage src="/images/icons/victory.svg" alt="Victory" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />
-                  <h3 className="text-sm sm:text-base md:text-xl font-bold text-green-400 font-display">IF YOU WIN</h3>
-                </div>
-
-                <div className="mb-2 sm:mb-3 md:mb-4">
-                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-green-300 mb-0.5 sm:mb-1">
-                    +{pvpPreviewData.win.totalReward}
-                  </p>
-                  <p className="text-xs sm:text-sm text-green-200/70">$TESTVBMS</p>
-                </div>
-
-                <div className="space-y-1 sm:space-y-1.5 md:space-y-2 text-xs sm:text-sm">
-                  <div className="flex justify-between text-green-100/80">
-                    <span>Base Reward:</span>
-                    <span className="font-mono">+{pvpPreviewData.win.baseReward}</span>
-                  </div>
-
-                  {pvpPreviewData.win.rankingBonus > 0 && (
-                    <div className="flex justify-between text-yellow-300 font-medium">
-                      <span>⭐ Ranking Bonus ({pvpPreviewData.win.rankingMultiplier.toFixed(1)}x):</span>
-                      <span className="font-mono">+{pvpPreviewData.win.rankingBonus}</span>
-                    </div>
-                  )}
-
-                  {pvpPreviewData.win.firstPvpBonus > 0 && (
-                    <div className="flex justify-between text-blue-300">
-                      <span>First PvP Today:</span>
-                      <span className="font-mono">+{pvpPreviewData.win.firstPvpBonus}</span>
-                    </div>
-                  )}
-
-                  {pvpPreviewData.win.streakBonus > 0 && (
-                    <div className="flex justify-between text-purple-300 font-medium">
-                      <span>🔥 {pvpPreviewData.win.streakMessage}:</span>
-                      <span className="font-mono">+{pvpPreviewData.win.streakBonus}</span>
-                    </div>
-                  )}
-                </div>
-
-                {pvpPreviewData.currentStreak > 0 && (
-                  <div className="mt-2 sm:mt-3 p-1.5 sm:p-2 bg-orange-500/20 rounded text-[10px] sm:text-xs text-orange-200 border border-orange-500/30">
-                    Current Streak: {pvpPreviewData.currentStreak} win{pvpPreviewData.currentStreak !== 1 ? 's' : ''}
-                  </div>
-                )}
-              </div>
-
-              {/* Loss Scenario */}
-              <div className="bg-red-900/20 border-2 border-red-500/50 rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-                  <NextImage src="/images/icons/defeat.svg" alt="Defeat" width={24} height={24} className="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8" />
-                  <h3 className="text-sm sm:text-base md:text-xl font-bold text-red-400 font-display">IF YOU LOSE</h3>
-                </div>
-
-                <div className="mb-2 sm:mb-3 md:mb-4">
-                  <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-red-300 mb-0.5 sm:mb-1">
-                    {pvpPreviewData.loss.totalPenalty}
-                  </p>
-                  <p className="text-xs sm:text-sm text-red-200/70">$TESTVBMS</p>
-                </div>
-
-                <div className="space-y-1 sm:space-y-1.5 md:space-y-2 text-xs sm:text-sm">
-                  <div className="flex justify-between text-red-100/80">
-                    <span>Base Penalty:</span>
-                    <span className="font-mono">{pvpPreviewData.loss.basePenalty}</span>
-                  </div>
-
-                  {pvpPreviewData.loss.penaltyReduction > 0 && (
-                    <div className="flex justify-between text-orange-300 font-medium">
-                      <span>🛡️ Penalty Reduced ({Math.round(pvpPreviewData.loss.rankingMultiplier * 100)}%):</span>
-                      <span className="font-mono">+{pvpPreviewData.loss.penaltyReduction}</span>
-                    </div>
-                  )}
-                </div>
-
-                {pvpPreviewData.loss.penaltyReduction > 0 && (
-                  <div className="mt-2 sm:mt-3 p-1.5 sm:p-2 bg-orange-500/20 rounded text-[10px] sm:text-xs text-orange-200 border border-orange-500/30">
-                    Fighting a high-ranked opponent reduces your loss!
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Current Balance */}
-            <div className="mb-3 sm:mb-4 md:mb-6 p-2 sm:p-3 bg-vintage-black/50 rounded-lg border border-vintage-gold/20 text-center">
-              <p className="text-[10px] sm:text-xs text-vintage-burnt-gold mb-0.5 sm:mb-1">YOUR CURRENT BALANCE</p>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-vintage-gold">{parseFloat(vbmsBlockchainBalance || '0').toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })} VBMS</p>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 sm:gap-3 md:gap-4">
-              <button
-                onClick={async () => {
-                  // Fechar modal e continuar com o ataque
-                  setShowPvPPreview(false);
-                  if (soundEnabled) AudioManager.buttonClick();
-
-                  // Agora sim, fazer o ataque
-                  setIsAttacking(true);
-
-                  try {
-                    // Pay entry fee
-                    await payEntryFee({ address: address || '', mode: 'attack' });
-                    devLog('Attack entry fee paid: 50 $TESTVBMS');
-
-                    // Setup battle (código original continua aqui...)
-                    devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-                    devLog(`✦ ATTACKING: ${targetPlayer.username}`);
-                    devLog(`🛡️ Validating opponent's defense deck...`);
-
-                    // ✅ SECURITY: Validate defense deck against owned NFTs
-                    const validatedDeck = await ConvexProfileService.getValidatedDefenseDeck(targetPlayer.address);
-
-                    if (validatedDeck.removedCards.length > 0) {
-                      devWarn(`⚠️ Removed ${validatedDeck.removedCards.length} invalid cards from ${targetPlayer.username}'s defense deck (no longer owned)`);
-                    }
-
-                    if (!validatedDeck.isValid) {
-                      devWarn(`⚠️ Could not validate ${targetPlayer.username}'s defense deck - using as-is`);
-                    }
-
-                    const defenderCards = validatedDeck.defenseDeck.map((card) => ({
-                      tokenId: card.tokenId,
-                      power: card.power,
-                      imageUrl: card.imageUrl,
-                      name: card.name,
-                      rarity: card.rarity,
-                    }));
-
-                    devLog(`✅ Defense deck validated: ${defenderCards.length} valid cards`);
-                    devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-                    setSelectedCards(attackSelectedCards);
-                    setDealerCards(defenderCards);
-                    setBattleOpponentName(targetPlayer.username);
-                    setBattlePlayerName(userProfile?.username || 'You');
-                    setBattleOpponentPfp(getAvatarUrl(targetPlayer.twitter));
-                    setBattlePlayerPfp(getAvatarUrl(userProfile ? { twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl } : null));
-                    setShowAttackCardSelection(false);
-                    setIsBattling(true);
-                    setShowBattleScreen(true);
-                    setBattlePhase('cards');
-                    setGameMode('pvp');
-
-                    if (soundEnabled) AudioManager.playHand();
-
-                    // Calculate power totals (one-time calculation per attack, no need for memoization)
-                    const playerTotal = calculateTotalPower(attackSelectedCards, true);
-                    const dealerTotal = calculateTotalPower(defenderCards);
-
-                    setTimeout(() => {
-                      setBattlePhase('clash');
-                      if (soundEnabled) AudioManager.cardBattle();
-                    }, 2500);
-
-                    setTimeout(() => {
-                      setPlayerPower(playerTotal);
-                      setDealerPower(dealerTotal);
-                      setBattlePhase('result');
-                    }, 3500);
-
-                    setTimeout(async () => {
-                      let matchResult: 'win' | 'loss' | 'tie';
-                      if (playerTotal > dealerTotal) {
-                        matchResult = 'win';
-                      } else if (playerTotal < dealerTotal) {
-                        matchResult = 'loss';
-                      } else {
-                        matchResult = 'tie';
-                      }
-
-                      let coinsEarned = 0;
-
-                      if (userProfile && address) {
-                        try {
-                          // ⚛️ ATOMIC: Single transaction for coins + match + profile update
-                          const result = await recordAttackResult({
-                            playerAddress: address,
-                            playerPower: playerTotal,
-                            playerCards: attackSelectedCards,
-                            playerUsername: userProfile.username,
-                            result: matchResult,
-                            opponentAddress: targetPlayer.address,
-                            opponentUsername: targetPlayer.username,
-                            opponentPower: dealerTotal,
-                            opponentCards: defenderCards,
-                            entryFeePaid: 0, // No entry fee for leaderboard attacks
-                            language: lang,
-                          });
-
-                          coinsEarned = result.coinsAwarded || 0;
-
-                          devLog(`⚛️ ATOMIC: Attack recorded successfully`);
-                          devLog(`💰 Coins awarded: ${coinsEarned}`);
-                          if (result.bonuses && result.bonuses.length > 0) {
-                            devLog(`🎁 Bonuses: ${result.bonuses.join(', ')}`);
-                          }
-
-                          // Update UI with returned profile (no separate getProfile call needed!)
-                          if (result.profile) {
-                            setUserProfile(result.profile);
-                            setAttacksRemaining(maxAttacks - (result.profile.attacksToday || 0));
-                          }
-                        } catch (error: any) {
-                          devError('⚛️ ATOMIC: Error recording attack:', error);
-                        }
-                      }
-
-                      setLastBattleResult({
-                        result: matchResult,
-                        playerPower: playerTotal,
-                        opponentPower: dealerTotal,
-                        opponentName: targetPlayer.username,
-                        opponentTwitter: targetPlayer.twitter,
-                        type: 'attack',
-                        coinsEarned,
-                        playerPfpUrl: userProfile?.twitterProfileImageUrl,
-                        opponentPfpUrl: targetPlayer.twitterProfileImageUrl,
-                      });
-
-                      // 🔔 Send notification (outside atomic transaction - non-critical)
-                      if (address && userProfile) {
-
-                        // 🔔 Send notification to defender with coins info
-                        fetch('/api/notifications/send', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            type: 'defense_attacked',
-                            data: {
-                              defenderAddress: targetPlayer.address,
-                              defenderUsername: targetPlayer.username || 'Unknown',
-                              attackerUsername: userProfile.username || 'Unknown',
-                              result: matchResult === 'win' ? 'lose' : 'win', // Inverted: attacker wins = defender loses
-                              coinsChange: coinsEarned, // Attacker's coin change
-                            },
-                          }),
-                        }).catch(err => devError('Error sending notification:', err));
-                      }
-
-                      // Close battle first
-                      setIsBattling(false);
-                      setShowBattleScreen(false);
-                      setBattlePhase('cards');
-                      setIsAttacking(false);
-                      setShowAttackCardSelection(false);
-                      setTargetPlayer(null);
-                      setAttackSelectedCards([]);
-
-                      // Show result popup after closing battle
-                      showBattleResultPopup(matchResult);
-                    }, 4500);
-
-                  } catch (error: any) {
-                    setErrorMessage('Error: ' + error.message);
-                    setIsAttacking(false);
-                    if (soundEnabled) AudioManager.buttonError();
-                  }
-                }}
-                disabled={isAttacking}
-                className="flex-1 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-600 text-white rounded-lg sm:rounded-xl font-display font-bold text-sm sm:text-base md:text-xl shadow-lg transition-all uppercase tracking-wider border-2 border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isAttacking ? 'ATTACKING...' : '⚔️ ATTACK'}
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowPvPPreview(false);
-                  if (soundEnabled) AudioManager.buttonClick();
-                }}
-                disabled={isAttacking}
-                className="px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 md:py-4 bg-vintage-black/50 border-2 border-vintage-burnt-gold text-vintage-burnt-gold rounded-lg sm:rounded-xl hover:bg-vintage-burnt-gold hover:text-vintage-black transition-all font-modern font-bold text-sm sm:text-base md:text-lg uppercase disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                CANCEL
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <PvPPreviewModal
+        showPvPPreview={showPvPPreview}
+        pvpPreviewData={pvpPreviewData}
+        targetPlayer={targetPlayer}
+        isAttacking={isAttacking}
+        vbmsBlockchainBalance={vbmsBlockchainBalance}
+        soundEnabled={soundEnabled}
+        onConfirmAttack={handleConfirmAttack}
+        onCancel={() => { setShowPvPPreview(false); if (soundEnabled) AudioManager.buttonClick(); }}
+      />
 
       {/* Attack Card Selection Modal */}
       <AttackCardSelectionModal
@@ -4269,8 +3791,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
               )}
               <div className="flex items-center justify-center gap-1">
-                {/* Lock icon — VibeMail temporarily restricted */}
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="opacity-80"><path d="M17 11V7A5 5 0 0 0 7 7v4H5v10h14V11h-2zm-5 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3-6H9V7a3 3 0 0 1 6 0v4z"/></svg>
                 <span className="text-sm font-bold">{t("vibefidMint")}</span>
               </div>
               <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('vibefidCheckScore')}</span>
@@ -4293,439 +3813,36 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
       </header>
 
       {!address ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          {/* Show loading ONLY while actively checking for Farcaster */}
-          {isCheckingFarcaster ? (
-            <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
-              <div className="text-6xl mb-4 text-vintage-gold font-display animate-pulse">♠</div>
-              <div className="w-full px-6 py-4 bg-vintage-gold/20 text-vintage-gold rounded-xl border-2 border-vintage-gold/50 font-display font-semibold">
-                {t('loading')}...
-              </div>
-            </div>
-          ) : (
-            /* Show connect modal - different for Farcaster miniapp vs regular web */
-            <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold max-w-md text-center">
-              <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
-              <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
-              <p className="text-vintage-burnt-gold mb-6">{t('connectDescription')}</p>
-
-              <div className="flex justify-center">
-                {isInFarcaster && !isFrameMode ? (
-                  /* In actual Farcaster miniapp: Show custom Farcaster wallet button */
-                  <button
-                    onClick={async () => {
-                      try {
-                        if (soundEnabled) AudioManager.buttonClick();
-                        setIsCheckingFarcaster(true);
-
-                        // Find and connect with Farcaster wagmi connector
-                        console.log('[Connect Button] 🔍 Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
-
-                        // Try multiple possible connector IDs (case variations)
-                        const farcasterConnector = connectors.find((c) =>
-                          c.id === 'farcasterMiniApp' ||
-                          c.id === 'farcaster' ||
-                          c.name?.toLowerCase().includes('farcaster')
-                        );
-
-                        if (!farcasterConnector) {
-                          console.error('[Connect Button] ❌ Available connector IDs:', connectors.map(c => c.id));
-                          throw new Error('Farcaster connector not found. Available: ' + connectors.map(c => c.id).join(', '));
-                        }
-
-                        console.log('[Connect Button] ✅ Found connector:', farcasterConnector.id);
-
-                        await connect({ connector: farcasterConnector });
-                        devLog('✓ Connected Farcaster wallet via wagmi');
-                      } catch (err: any) {
-                        devError('Failed to connect Farcaster wallet:', err);
-                        if (soundEnabled) AudioManager.buttonError();
-
-                        // Show user-friendly error message
-                        if (err?.message?.includes('not been authorized')) {
-                          toast.error('Por favor, autorize o acesso à carteira nas configurações do Farcaster');
-                        } else {
-                          toast.error('Failed to connect Farcaster wallet. Please try again.');
-                        }
-                      } finally {
-                        setIsCheckingFarcaster(false);
-                      }
-                    }}
-                    className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
-                  >
-                    Connect Farcaster Wallet
-                  </button>
-                ) : (
-                  /* Regular web: Show RainbowKit modal */
-                  <ConnectButton.Custom>
-                    {({
-                      account,
-                      chain,
-                      openAccountModal,
-                      openChainModal,
-                      openConnectModal,
-                      mounted,
-                    }) => {
-                      return (
-                        <div
-                          {...(!mounted && {
-                            'aria-hidden': true,
-                            'style': {
-                              opacity: 0,
-                              pointerEvents: 'none',
-                              userSelect: 'none',
-                            },
-                          })}
-                        >
-                          {(() => {
-                            if (!mounted || !account || !chain) {
-                              return (
-                                <button
-                                  onClick={openConnectModal}
-                                  className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
-                                >
-                                  {t('connectWallet')}
-                                </button>
-                              );
-                            }
-                            return null;
-                          })()}
-                        </div>
-                      );
-                    }}
-                  </ConnectButton.Custom>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+        <ConnectScreen
+          isCheckingFarcaster={isCheckingFarcaster}
+          setIsCheckingFarcaster={setIsCheckingFarcaster}
+          isInFarcaster={isInFarcaster}
+          isFrameMode={isFrameMode}
+          soundEnabled={soundEnabled}
+        />
       ) : (
         <>
-          <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`} style={{ overflow: 'visible' }}>
-            <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-1 md:p-3 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30`} style={{ overflow: 'visible' }}>
-              <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3" style={{ overflow: 'visible' }}>
-                {/* Left: Profile */}
-                <div className="flex items-center gap-2" style={{ overflow: 'visible' }}>
-                  { isLoadingProfile ? (
-                    <div className="px-4 py-2 bg-vintage-black/50 border border-vintage-gold/20 rounded-lg">
-                      <div className="w-20 h-4 bg-vintage-gold/20 rounded animate-pulse" />
-                    </div>
-                  ) : userProfile ? (
-                    <div className="tour-profile-dropdown relative" style={{ overflow: 'visible' }}>
-                      <button
-                        onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown((p: boolean) => !p); }}
-                        onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); setShowProfileDropdown(true); }}
-                        onMouseLeave={() => { profileDropdownTimeout.current = setTimeout(() => setShowProfileDropdown(false), 300); }}
-                        className="tour-settings-btn flex items-center gap-2 px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg transition cursor-pointer"
-                      >
-                        {userProfile.farcasterPfpUrl ? (
-                          <img
-                            src={userProfile.farcasterPfpUrl}
-                            alt={userProfile.username}
-                            className="w-6 h-6 rounded-full object-cover"
-                            onError={(e) => { (e.target as HTMLImageElement).src = getAvatarFallback(); }}
-                          />
-                        ) : userProfile.twitter ? (
-                          <img
-                            src={getAvatarUrl({ twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl }) || ''}
-                            alt={userProfile.username}
-                            className="w-6 h-6 rounded-full"
-                            onError={(e) => { (e.target as HTMLImageElement).src = getAvatarFallback(); }}
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold flex items-center justify-center text-xs font-bold text-vintage-black">
-                            {userProfile.username[0].toUpperCase()}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-vintage-gold">@{userProfile.username}</span>
-                          <BadgeList badges={getUserBadges(userProfile.address, userProfile.userIndex ?? 9999, userProfile.hasVibeBadge)} size="sm" />
-                        </div>
-                      </button>
-                      {showProfileDropdown && (
-                        <div
-                          className="absolute top-full left-0 mt-1 overflow-hidden min-w-[150px]"
-                          style={{ zIndex: 9999, background: '#1D4ED8', border: '4px solid #000', boxShadow: '6px 6px 0px #000', borderRadius: '4px' }}
-                          onMouseEnter={() => { if (profileDropdownTimeout.current) clearTimeout(profileDropdownTimeout.current); }}
-                          onMouseLeave={() => setShowProfileDropdown(false)}
-                        >
-                          <Link
-                            href={`/profile/${userProfile.username}`}
-                            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); }}
-                            className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold w-full transition"
-                            style={{ color: '#FFD400', borderBottom: '2px solid rgba(0,0,0,0.3)' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = '#FFD400', e.currentTarget.style.color = '#000')}
-                            onMouseLeave={e => (e.currentTarget.style.background = '', e.currentTarget.style.color = '#FFD400')}
-                          >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                            Profile
-                          </Link>
-                          <button
-                            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); setShowSettings(true); }}
-                            className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold w-full text-left transition"
-                            style={{ color: '#FFD400', border: 'none', boxShadow: 'none', borderBottom: '2px solid rgba(0,0,0,0.3)' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = '#FFD400', e.currentTarget.style.color = '#000')}
-                            onMouseLeave={e => (e.currentTarget.style.background = '', e.currentTarget.style.color = '#FFD400')}
-                          >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.38.64 1 1.07 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
-                            Settings
-                          </button>
-                          <Link
-                            href="/docs"
-                            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); }}
-                            className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold w-full transition"
-                            style={{ color: '#FFD400' }}
-                            onMouseEnter={e => (e.currentTarget.style.background = '#FFD400', e.currentTarget.style.color = '#000')}
-                            onMouseLeave={e => (e.currentTarget.style.background = '', e.currentTarget.style.color = '#FFD400')}
-                          >
-                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
-                            Docs
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        if (soundEnabled) AudioManager.buttonClick();
-                        setShowCreateProfile(true);
-                      }}
-                      className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold/80 text-vintage-black rounded-lg text-sm font-semibold"
-                    >
-                      {t('createProfile')}
-                    </button>
-                  )}
-                </div>
-
-                {/* Right: VBMS Balance */}
-                <div className="flex items-center gap-2">
-                  {address && userProfile && (
-                    <div className="tour-dex-dropdown relative" style={{ overflow: 'visible' }}>
-                      <button
-                        onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown((p: boolean) => !p); }}
-                        onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); setShowDexDropdown(true); }}
-                        onMouseLeave={() => { dexDropdownTimeout.current = setTimeout(() => setShowDexDropdown(false), 300); }}
-                        className="tour-dex-btn bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 px-4 py-2 rounded-lg flex flex-col items-center gap-1 transition cursor-pointer min-w-[120px]"
-                      >
-                        {(() => {
-                          const formatted = Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
-                          const fontSize = formatted.length <= 7 ? 'text-2xl' : formatted.length <= 9 ? 'text-xl' : 'text-base';
-                          return (
-                            <div className="flex items-baseline justify-center gap-0 w-full overflow-hidden">
-                              <span className={`text-vintage-gold ${fontSize} font-bold leading-none`}>$</span>
-                              <span className={`text-vintage-gold font-display font-bold ${fontSize} leading-none ml-0.5 truncate`}>
-                                {formatted}
-                              </span>
-                            </div>
-                          );
-                        })()}
-                        <div className="w-full h-1 bg-vintage-deep-black rounded-full overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-vintage-gold to-green-400 transition-all" style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }} />
-                        </div>
-                      </button>
-                      {showDexDropdown && (
-                        <div
-                          className="absolute top-full right-0 mt-1 bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-lg overflow-hidden min-w-[120px] shadow-xl"
-                          style={{ zIndex: 9999 }}
-                          onMouseEnter={() => { if (dexDropdownTimeout.current) clearTimeout(dexDropdownTimeout.current); }}
-                          onMouseLeave={() => setShowDexDropdown(false)}
-                        >
-                          <Link
-                            href="/dex?tab=buy"
-                            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown(false); }}
-                            onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
-                            className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
-                          >
-                            <span className="text-green-400 text-sm">▲</span> Buy
-                          </Link>
-                          <Link
-                            href="/dex?tab=sell"
-                            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown(false); }}
-                            onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
-                            className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
-                          >
-                            <span className="text-red-400 text-sm">▼</span> Sell
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {!isInFarcaster && (
-                    <div className="tour-price-ticker hidden md:block">
-                      <PriceTicker className="-mt-2" />
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <GameHeader
+            isInFarcaster={isInFarcaster}
+            soundEnabled={soundEnabled}
+            userProfile={userProfile}
+            isLoadingProfile={isLoadingProfile}
+            address={address}
+            vbmsBlockchainBalance={vbmsBlockchainBalance}
+            getAvatarUrl={getAvatarUrl}
+            onSettingsClick={() => setShowSettings(true)}
+            onCreateProfileClick={() => setShowCreateProfile(true)}
+          />
 
           {/* Navigation Tabs */}
-          <div className={isInFarcaster ? 'fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom' : 'mb-3 md:mb-6 relative z-40'}>
-            <div className={`tour-nav-bar bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/30 ${isInFarcaster ? 'p-1' : 'p-2'} flex gap-1`}>
-              <button
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
-                  setCurrentView('game');
-                }}
-                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
-                  currentView === 'game'
-                    ? 'bg-vintage-gold text-vintage-black'
-                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
-                }`}
-              >
-                {isInFarcaster ? (
-                  <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">{t('title')}</span>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                      <polyline points="9 22 9 12 15 12 15 22" />
-                    </svg>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                      <polyline points="9 22 9 12 15 12 15 22" />
-                    </svg>
-                    <span className="hidden sm:inline">{t('title')}</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
-                  setCurrentView('inbox');
-                }}
-                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-                className={`relative flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} ${
-                  currentView === 'inbox'
-                    ? 'bg-vintage-gold text-vintage-black'
-                    : 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30'
-                }`}
-              >
-                {/* Red dot if TESTVBMS available to convert */}
-                {inboxStatus && inboxStatus.coins >= 100 && (
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
-                )}
-                {isInFarcaster ? (
-                  <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">{(t as (k: string) => string)('navClaim')}</span>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="10" width="18" height="12" rx="2" />
-                      <path d="M12 10V4" />
-                      <path d="M12 4c-2 0-4 2-4 4h4" />
-                      <path d="M12 4c2 0 4 2 4 4h-4" />
-                      <line x1="12" y1="10" x2="12" y2="22" />
-                      <line x1="3" y1="15" x2="21" y2="15" />
-                    </svg>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="10" width="18" height="12" rx="2" />
-                      <path d="M12 10V4" />
-                      <path d="M12 4c-2 0-4 2-4 4h4" />
-                      <path d="M12 4c2 0 4 2 4 4h-4" />
-                      <line x1="12" y1="10" x2="12" y2="22" />
-                      <line x1="3" y1="15" x2="21" y2="15" />
-                    </svg>
-                    <span className="hidden sm:inline">{(t as (k: string) => string)('navClaim')}</span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
-                  router.push('/leaderboard');
-                }}
-                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30`}
-              >
-                {isInFarcaster ? (
-                  <>
-                    <span className="text-[9px] font-bold whitespace-nowrap">{t('leaderboard')}</span>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 9H3a1 1 0 0 0-1 1v2a4 4 0 0 0 4 4h1" />
-                      <path d="M18 9h3a1 1 0 0 1 1 1v2a4 4 0 0 1-4 4h-1" />
-                      <path d="M6 3h12v6a6 6 0 0 1-12 0V3z" />
-                      <path d="M9 19h6v3H9z" />
-                      <line x1="7" y1="22" x2="17" y2="22" />
-                    </svg>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 9H3a1 1 0 0 0-1 1v2a4 4 0 0 0 4 4h1" />
-                      <path d="M18 9h3a1 1 0 0 1 1 1v2a4 4 0 0 1-4 4h-1" />
-                      <path d="M6 3h12v6a6 6 0 0 1-12 0V3z" />
-                      <path d="M9 19h6v3H9z" />
-                      <line x1="7" y1="22" x2="17" y2="22" />
-                    </svg>
-                    <span className="hidden sm:inline">{t('leaderboard')}</span>
-                  </>
-                )}
-              </button>
-              <Link
-                href="/shop"
-                onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
-                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-                className={`flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30`}
-              >
-                {isInFarcaster ? (
-                  <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">{t('navShop')}</span>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                      <line x1="3" y1="6" x2="21" y2="6" />
-                      <path d="M16 10a4 4 0 0 1-8 0" />
-                    </svg>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                      <line x1="3" y1="6" x2="21" y2="6" />
-                      <path d="M16 10a4 4 0 0 1-8 0" />
-                    </svg>
-                    <span className="hidden sm:inline">{t('navShop')}</span>
-                  </>
-                )}
-              </Link>
-              <Link
-                href="/quests"
-                onClick={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
-                }}
-                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-                className={`tour-wanted-btn flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'} relative bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30`}
-              >
-                {isInFarcaster ? (
-                  <>
-                    <span className="text-[10px] font-bold whitespace-nowrap">{(t as (k: string) => string)('navWanted')}</span>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <circle cx="12" cy="12" r="6" />
-                      <circle cx="12" cy="12" r="2" />
-                    </svg>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <circle cx="12" cy="12" r="6" />
-                      <circle cx="12" cy="12" r="2" />
-                    </svg>
-                    <span className="hidden sm:inline">{(t as (k: string) => string)('navWanted')}</span>
-                  </>
-                )}
-                {hasClaimableMissions && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 rounded-full w-3 h-3 animate-pulse border border-vintage-gold" />
-                )}
-              </Link>
-            </div>
-          </div>
+          <GameNavBar
+            isInFarcaster={isInFarcaster}
+            soundEnabled={soundEnabled}
+            currentView={currentView}
+            setCurrentView={setCurrentView}
+            inboxStatus={inboxStatus}
+            hasClaimableMissions={hasClaimableMissions}
+          />
 
           {/* Content wrapper */}
           <div className={isInFarcaster ? 'pb-[60px]' : ''}>
@@ -4773,496 +3890,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
             </div>
           </div>
 
-          {/* LEGACY LAYOUT - HIDDEN (replaced by new compact layout above) */}
-          <div className="hidden">
-            <div className="lg:col-span-2 order-2 lg:order-1">
-              <div className="bg-vintage-charcoal/50 backdrop-blur-lg rounded-2xl border-2 border-vintage-gold/50 p-6">
-                <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-                  <h2 className="text-2xl font-display font-bold text-vintage-gold flex items-center gap-2">
-                    <span className="text-3xl">♦</span>
-                    {t('yourNfts')}
-                    {nfts.length > 0 && <span className="text-sm text-vintage-burnt-gold">({nfts.length})</span>}
-                  </h2>
-
-                  {nfts.length > 0 && (
-                    <div className="flex gap-2 flex-wrap">
-                      <button
-                        onClick={() => { clearAllNftCache(); contextForceReloadNFTs(); }}
-                        disabled={status === 'fetching' || contextStatus === 'fetching'}
-                        className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg text-sm font-modern font-semibold transition-all"
-                        title="Refresh cards and metadata"
-                      >
-                        ↻
-                      </button>
-                      <select
-                        value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
-                        onChange={(e) => {
-                          if (e.target.value === 'all') {
-                            setSelectedCollections([]);
-                          } else {
-                            setSelectedCollections([e.target.value as CollectionId]);
-                          }
-                        }}
-                        className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-modern font-medium transition-all bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
-                      >
-                        <option value="all" className="bg-vintage-charcoal text-vintage-gold">All</option>
-                        <option value="vibe" className="bg-vintage-charcoal text-vintage-gold">VBMS</option>
-                        <option value="viberotbangers" className="bg-vintage-charcoal text-vintage-gold">BANGER</option>
-                        <option value="cumioh" className="bg-vintage-charcoal text-vintage-gold">CUMIO</option>
-                        <option value="historyofcomputer" className="bg-vintage-charcoal text-vintage-gold">HSTR</option>
-                        <option value="vibefx" className="bg-vintage-charcoal text-vintage-gold">VBFX</option>
-                        <option value="baseballcabal" className="bg-vintage-charcoal text-vintage-gold">BBCL</option>
-                        <option value="tarot" className="bg-vintage-charcoal text-vintage-gold">TRT</option>
-                        <option value="teampothead" className="bg-vintage-charcoal text-vintage-gold">TMPT</option>
-                        <option value="poorlydrawnpepes" className="bg-vintage-charcoal text-vintage-gold">PDP</option>
-                        <option value="meowverse" className="bg-vintage-charcoal text-vintage-gold">MEOVV</option>
-                        <option value="viberuto" className="bg-vintage-charcoal text-vintage-gold">VBRTO</option>
-                        <option value="vibefid" className="bg-vintage-charcoal text-vintage-gold">VIBEFID</option>
-                        <option value="gmvbrs" className="bg-vintage-charcoal text-vintage-gold">VBRS</option>
-                        <option value="nothing" className="bg-vintage-charcoal text-vintage-gold">NOTHING</option>
-                      </select>
-                      <button
-                        onClick={() => setSortByPower(!sortByPower)}
-                        className={`px-4 py-2 rounded-lg text-sm font-modern font-medium transition-all ${
-                          sortByPower
-                            ? 'bg-vintage-gold text-vintage-black shadow-gold'
-                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                        }`}
-                      >
-                        {sortByPower ? '↓ ' + t('sortByPower') : '⇄ ' + t('sortDefault')}
-                      </button>
-                      <button
-                        onClick={() => setCardTypeFilter(cardTypeFilter === 'all' ? 'free' : cardTypeFilter === 'free' ? 'nft' : 'all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-modern font-medium transition-all ${
-                          cardTypeFilter !== 'all'
-                            ? 'bg-vintage-gold text-vintage-black shadow-gold'
-                            : 'bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10'
-                        }`}
-                      >
-                        {cardTypeFilter === 'all' ? '⊞ All Cards' : cardTypeFilter === 'free' ? '◈ FREE Only' : '🎴 NFT Only'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {status === 'fetching' && (
-                  <div className="flex items-center justify-center gap-3 text-vintage-neon-blue py-12">
-                    <LoadingSpinner size="md" variant="purple" />
-                    <p className="font-medium text-lg">{t('loading')}</p>
-                  </div>
-                )}
-
-                {nfts.length === 0 && (status === 'loaded' || status === 'failed') && (
-                  <div className="text-center py-12 px-4">
-                    <div className="text-6xl mb-4">🃏</div>
-                    <h3 className="text-xl font-bold text-vintage-gold mb-2">{t('noCardsTitle')}</h3>
-                    <p className="text-vintage-burnt-gold mb-6 max-w-md mx-auto">{t('noCardsExplain')}</p>
-
-                    <div className="bg-vintage-charcoal/50 rounded-xl p-4 mb-6 max-w-sm mx-auto text-left">
-                      <p className="text-vintage-gold font-bold mb-3">{t('howToGetPacks')}</p>
-                      <ul className="space-y-2 text-sm text-vintage-burnt-gold">
-                        <li>{t('howToGetPacksStep1')}</li>
-                        <li>{t('howToGetPacksStep2')}</li>
-                        <li>{t('howToGetPacksStep3')}</li>
-                      </ul>
-                    </div>
-
-                    <button
-                      onClick={async () => {
-                        if (soundEnabled) AudioManager.buttonClick();
-                        await openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isInFarcaster);
-                      }}
-                      className="inline-block px-6 py-3 border-2 border-red-600 text-white font-modern font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer text-lg"
-                      style={STYLE_ATTACK_RED}
-                    >
-                      <div className="flex items-center justify-center gap-1">
-                        <span className="text-xl">◆</span>
-                        <span>{t('buyPacksOnVibeMarket')}</span>
-                      </div>
-                    </button>
-                  </div>
-                )}
-
-                {/* Warning when player has 1-4 cards (not enough to play) */}
-                {nfts.length > 0 && nfts.length < HAND_SIZE && (status === 'loaded' || status === 'failed') && (
-                  <div className="mb-6 p-4 bg-amber-900/30 border border-amber-500/50 rounded-xl">
-                    <div className="flex items-start gap-3">
-                      <span className="text-3xl">⚠️</span>
-                      <div className="flex-1">
-                        <h4 className="text-amber-300 font-bold mb-1">{t('notEnoughCardsTitle')}</h4>
-                        <p className="text-amber-200/80 text-sm mb-3">
-                          {t('notEnoughCardsExplain').replace('{count}', String(nfts.length))}
-                        </p>
-                        <div className="bg-vintage-charcoal/50 rounded-lg p-3 mb-3">
-                          <p className="text-vintage-gold font-bold text-sm mb-2">{t('howToGetPacks')}</p>
-                          <ul className="space-y-1 text-xs text-vintage-burnt-gold">
-                            <li>{t('howToGetPacksStep1')}</li>
-                            <li>{t('howToGetPacksStep2')}</li>
-                            <li>{t('howToGetPacksStep3')}</li>
-                          </ul>
-                        </div>
-                        <button
-                          onClick={async () => {
-                            if (soundEnabled) AudioManager.buttonClick();
-                            await openMarketplace('https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT', sdk, isInFarcaster);
-                          }}
-                          className="px-4 py-2 border-2 border-red-600 text-white font-modern font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 cursor-pointer text-sm"
-                          style={STYLE_ATTACK_RED}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span>◆</span>
-                            <span>{t('buyPacksOnVibeMarket')}</span>
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Buy Collection Button - Show when filtered by collection with no NFTs */}
-                {selectedCollections.length > 0 &&
-                 filteredAndSortedNfts.length === 0 &&
-                 nfts.length > 0 &&
-                 (() => {
-                   const collection = COLLECTIONS[selectedCollections[0]];
-                   return collection?.marketplaceUrl;
-                 })() && (
-                  <div className="text-center py-8 mb-6">
-                    <p className="text-vintage-burnt-gold mb-4">You don't have any NFTs from this collection yet</p>
-                    {selectedCollections[0] === 'nothing' ? (
-                      <Link
-                        href="/shop"
-                        onClick={() => {
-                          if (soundEnabled) AudioManager.buttonClick();
-                        }}
-                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer"
-                        style={STYLE_ATTACK_RED}
-                      >
-                        <div className="flex items-center justify-center gap-1">
-                          <span className="text-base md:text-lg">◆</span>
-                          <span>{COLLECTIONS[selectedCollections[0]].buttonText || 'GET NOTHING CARDS'}</span>
-                        </div>
-                      </Link>
-                    ) : COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
-                      <Link
-                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
-                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider"
-                        style={STYLE_ATTACK_RED}
-                      >
-                        <div className="flex items-center justify-center gap-1">
-                          <span className="text-base md:text-lg">◆</span>
-                          <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
-                        </div>
-                      </Link>
-                    ) : (
-                      <button
-                        onClick={async () => {
-                          if (soundEnabled) AudioManager.buttonClick();
-                          await openMarketplace(COLLECTIONS[selectedCollections[0]].marketplaceUrl!, sdk, isInFarcaster);
-                        }}
-                        className="inline-block px-4 md:px-6 py-2.5 md:py-3 border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 tracking-wider cursor-pointer"
-                        style={STYLE_ATTACK_RED}
-                      >
-                        <div className="flex items-center justify-center gap-1">
-                          <span className="text-base md:text-lg">◆</span>
-                          <span>{COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}</span>
-                        </div>
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3">
-                  {displayNfts.map((nft) => {
-                    // Check if card is locked (in raid deck) - VibeFID cards are exempt
-                    // Use getCardKey for proper collection:tokenId comparison
-                    const isLockedInRaid = nft.collection !== 'vibefid' && defenseLockedTokenIds.has(getCardKey(nft));
-                    return (
-                    <NFTCard
-                      key={getCardUniqueId(nft)}
-                      nft={nft}
-                      selected={selectedCards.some(c => isSameCard(c, nft))}
-                      onSelect={handleSelectCard}
-                      locked={isLockedInRaid}
-                      lockedReason="This card is in your Raid Deck"
-                    />
-                    );
-                  })}
-
-                  {/* Buy Collection Button - Show as grid item when filtering by collection */}
-                  {selectedCollections.length > 0 &&
-                   displayNfts.length < CARDS_PER_PAGE &&
-                   (() => {
-                     const collection = COLLECTIONS[selectedCollections[0]];
-                     return collection?.marketplaceUrl;
-                   })() && (
-                    selectedCollections[0] === 'nothing' ? (
-                      <Link
-                        href="/shop"
-                        onClick={() => {
-                          if (soundEnabled) AudioManager.buttonClick();
-                        }}
-                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4 cursor-pointer"
-                        style={STYLE_ATTACK_RED}
-                      >
-                        <div className="flex flex-col items-center justify-center gap-2 text-center">
-                          <span className="text-2xl md:text-3xl">◆</span>
-                          <span className="text-xs md:text-sm leading-tight">
-                            {COLLECTIONS[selectedCollections[0]].buttonText || 'GET NOTHING CARDS'}
-                          </span>
-                        </div>
-                      </Link>
-                    ) : COLLECTIONS[selectedCollections[0]].marketplaceUrl?.startsWith('/') ? (
-                      <Link
-                        href={COLLECTIONS[selectedCollections[0]].marketplaceUrl!}
-                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4"
-                        style={STYLE_ATTACK_RED}
-                      >
-                        <div className="flex flex-col items-center justify-center gap-2 text-center">
-                          <span className="text-2xl md:text-3xl">◆</span>
-                          <span className="text-xs md:text-sm leading-tight">
-                            {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
-                          </span>
-                        </div>
-                      </Link>
-                    ) : (
-                      <button
-                        onClick={async () => {
-                          if (soundEnabled) AudioManager.buttonClick();
-                          await openMarketplace(COLLECTIONS[selectedCollections[0]].marketplaceUrl!, sdk, isInFarcaster);
-                        }}
-                        className="aspect-[2/3] flex flex-col items-center justify-center border-2 border-red-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-red-600/50 hover:scale-105 tracking-wider p-4 cursor-pointer"
-                        style={STYLE_ATTACK_RED}
-                      >
-                        <div className="flex flex-col items-center justify-center gap-2 text-center">
-                          <span className="text-2xl md:text-3xl">◆</span>
-                          <span className="text-xs md:text-sm leading-tight">
-                            {COLLECTIONS[selectedCollections[0]].buttonText || `BUY ${COLLECTIONS[selectedCollections[0]].displayName.toUpperCase()} PACKS`}
-                          </span>
-                        </div>
-                      </button>
-                    )
-                  )}
-                </div>
-
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-1 mt-6">
-                    <button
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg transition font-modern"
-                    >
-                      ←
-                    </button>
-                    <span className="text-sm text-vintage-burnt-gold">
-                      {currentPage} / {totalPages}
-                    </span>
-                    <button
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 bg-vintage-charcoal hover:bg-vintage-gold/20 disabled:bg-vintage-black disabled:text-vintage-burnt-gold border border-vintage-gold/50 text-vintage-gold rounded-lg transition font-modern"
-                    >
-                      →
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="order-1 lg:order-2">
-              <div className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-6 sticky top-6 shadow-gold" style={{boxShadow: '0 0 30px rgba(255, 215, 0, 0.3), inset 0 0 60px rgba(0, 0, 0, 0.5)'}}>
-                {/* 🤖 MECHA ARENA Button */}
-                <div className="mb-2">
-                  <button
-                    onClick={() => {
-                      if (soundEnabled) AudioManager.buttonClick();
-                      setShowCpuArena(true);
-                    }}
-                    disabled={!userProfile}
-                    className={`w-full px-4 py-2 rounded-xl font-display font-bold transition-all uppercase tracking-wide text-sm flex items-center justify-between ${
-                      userProfile
-                        ? 'bg-gradient-to-r from-pink-600 via-purple-600 to-pink-600 text-white hover:scale-105 shadow-lg shadow-pink-500/50 border-2 border-purple-400/50'
-                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="3" y="11" width="18" height="10" rx="2" />
-                        <circle cx="8.5" cy="16" r="1.5" />
-                        <circle cx="15.5" cy="16" r="1.5" />
-                        <path d="M12 11V7" />
-                        <circle cx="12" cy="5" r="2" />
-                      </svg>
-                      {t('homeMechaArena')}
-                    </span>
-                    <span className="text-lg">▶</span>
-                  </button>
-                </div>
-
-                {/* 🎰 BACCARAT CASINO Button */}
-                <div className="mb-2">
-                  <button
-                    onClick={() => {
-                      if (soundEnabled) AudioManager.buttonClick();
-                      setShowBaccarat(true);
-                    }}
-                    disabled={!userProfile}
-                    className={`w-full px-4 py-2 rounded-xl font-display font-bold transition-all uppercase tracking-wide text-sm flex items-center justify-between ${
-                      userProfile
-                        ? 'bg-gradient-to-r from-green-700 via-emerald-600 to-green-700 text-white hover:scale-105 shadow-lg shadow-green-500/50 border-2 border-green-400/50'
-                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="text-lg">🎰</span>
-                      BACCARAT
-                    </span>
-                    <span className="text-lg">▶</span>
-                  </button>
-                </div>
-
-                {/* ⚔️ BATTLE AUTO MODE Button */}
-                <div className="mb-2">
-                  <button
-                    onClick={() => {
-                      if (soundEnabled) AudioManager.buttonClick();
-                      setModeMenuOpen(modeMenuOpen === 'battle' ? null : 'battle');
-                    }}
-                    disabled={!userProfile}
-                    className={`w-full px-4 py-2 rounded-xl font-display font-bold transition-all uppercase tracking-wide text-sm flex items-center justify-between ${
-                      userProfile
-                        ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black shadow-gold hover:scale-105'
-                        : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
-                    }`}
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="text-lg">♦</span>
-                      {t('homeBattleAuto')}
-                    </span>
-                    <span className="text-lg">{modeMenuOpen === 'battle' ? '▼' : '▶'}</span>
-                  </button>
-
-                  {/* Battle Submenu */}
-                  {modeMenuOpen === 'battle' && (
-                    <div className="mt-2 ml-4 space-y-2 border-l-2 border-vintage-gold/30 pl-4">
-                      {/* Battle vs AI */}
-                      <button
-                        onClick={() => {
-                          if (soundEnabled) AudioManager.buttonClick();
-                          setShowPveCardSelection(true);
-                          setPveSelectedCards([]);
-                          setModeMenuOpen(null);
-                        }}
-                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-blue-600/20 hover:bg-blue-600/40 text-blue-300 border border-blue-500/30 hover:border-blue-500/60"
-                      >
-                        ♣ {t('homeVsAI')}
-                      </button>
-
-                      {/* Battle vs Player */}
-                      <button
-                        onClick={() => {
-                          if (soundEnabled) AudioManager.buttonClick();
-                          setGameMode('pvp');
-                          setPvpMode('pvpMenu');
-                          setModeMenuOpen(null);
-                        }}
-                        className="w-full px-4 py-2 rounded-lg font-modern font-semibold transition-all bg-red-600/20 hover:bg-red-600/40 text-red-300 border border-red-500/30 hover:border-red-500/60"
-                      >
-                        ♥ {t('homeVsPlayer')}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* 💀 BOSS RAID Button - Link to /raid page */}
-                <div className="mb-2">
-                  {userProfile ? (
-                    <Link
-                      href="/raid"
-                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
-                      className="w-full px-4 py-2 rounded-xl font-display font-bold transition-all uppercase tracking-wide text-sm flex items-center justify-between bg-gradient-to-r from-red-600 via-orange-600 to-red-600 text-white hover:scale-105 shadow-lg shadow-red-500/50 border-2 border-orange-400/50"
-                    >
-                      <span className="flex items-center gap-2">
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="8" r="5" />
-                          <path d="M9 8h.01M15 8h.01" strokeLinecap="round" />
-                          <path d="M9 11c1 1 5 1 6 0" />
-                          <path d="M12 13v4" />
-                          <path d="M8 21l4-4 4 4" />
-                        </svg>
-                        {t('homeBossRaid')}
-                        {hasExpiredRaidCards && (
-                          <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50" title="Cards need refuel!" />
-                        )}
-                      </span>
-                      <span className="text-lg">▶</span>
-                    </Link>
-                  ) : (
-                    <button
-                      disabled
-                      className="w-full px-4 py-2 rounded-xl font-display font-bold transition-all uppercase tracking-wide text-sm flex items-center justify-between bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20"
-                    >
-                      <span className="flex items-center gap-2">
-                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="8" r="5" />
-                          <path d="M9 8h.01M15 8h.01" strokeLinecap="round" />
-                          <path d="M9 11c1 1 5 1 6 0" />
-                          <path d="M12 13v4" />
-                          <path d="M8 21l4-4 4 4" />
-                        </svg>
-                        {t('homeBossRaid')}
-                      </span>
-                      <span className="text-xl">▶</span>
-                    </button>
-                  )}
-                </div>
-
-                <div ref={playButtonsRef} className="mt-6 space-y-4">
-                  {dealerCards.length > 0 && !showBattleScreen && (
-                    <div className="bg-gradient-to-br from-vintage-wine to-vintage-black backdrop-blur p-4 rounded-xl border-2 border-vintage-gold/50">
-                      <p className="text-xs font-modern font-semibold text-vintage-gold mb-3"><span className="text-lg">♦</span> {t('dealerCards').toUpperCase()}</p>
-                      <div className="grid grid-cols-5 gap-2 mb-3">
-                        {dealerCards.map((c, i) => (
-                          <FoilCardEffect key={i} foilType={(c.foil === 'Standard' || c.foil === 'Prize') ? c.foil : null} className="relative aspect-[2/3] rounded-lg overflow-hidden ring-2 ring-red-500 shadow-lg shadow-red-500/30">
-                            <CardMedia src={c.imageUrl} alt={`#${c.tokenId}`} className="w-full h-full object-cover" />
-                            <div className="absolute top-0 left-0 bg-red-500 text-white text-xs px-1 rounded-br">{getCardDisplayPower(c).toLocaleString()}</div>
-                            <div className="absolute bottom-0 right-0 bg-black/80 text-vintage-gold text-xs px-2 py-1 rounded-tl font-mono">#{c.tokenId}</div>
-                          </FoilCardEffect>
-                        ))}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-vintage-burnt-gold">{t('dealerTotalPower')}</p>
-                        {/* 🚀 Performance: Use memoized power total */}
-                        <p className="text-2xl font-bold text-red-400">{dealerCardsPower}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {playerPower > 0 && (
-                    <div className="bg-vintage-charcoal/80 backdrop-blur p-4 rounded-xl border-2 border-vintage-gold/30 space-y-3">
-                      <p className="text-xs font-semibold text-vintage-burnt-gold font-modern">§ {t('lastResult')}</p>
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-xs text-vintage-burnt-gold">{t('you')}</p>
-                          <p className="text-2xl font-bold text-blue-400">{playerPower}</p>
-                        </div>
-                        <div className="text-2xl">✦</div>
-                        <div className="text-right">
-                          <p className="text-xs text-vintage-burnt-gold">{t('dealer')}</p>
-                          <p className="text-2xl font-bold text-red-400">{dealerPower}</p>
-                        </div>
-                      </div>
-                      {result && (
-                        <div className="text-center pt-3 border-t border-vintage-gold/30">
-                          <p className="text-xl font-bold text-yellow-300 animate-pulse">{result}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
           </>
           )}
 

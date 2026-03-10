@@ -1,0 +1,196 @@
+"use client";
+
+import { useState, useRef } from "react";
+import Link from "next/link";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { AudioManager } from "@/lib/audio-manager";
+import { BadgeList } from "@/components/Badge";
+import { getUserBadges } from "@/lib/badges";
+import { PriceTicker } from "@/components/PriceTicker";
+import { useBondingProgress } from "@/lib/hooks/useBondingProgress";
+import type { UserProfile } from "@/lib/convex-profile";
+
+interface GameHeaderProps {
+  isInFarcaster: boolean;
+  soundEnabled: boolean;
+  userProfile: UserProfile | null;
+  isLoadingProfile: boolean;
+  address: string | undefined;
+  vbmsBlockchainBalance: string | null;
+  getAvatarUrl: (profile: { twitter?: string; twitterProfileImageUrl?: string } | null) => string | null;
+  onSettingsClick: () => void;
+  onCreateProfileClick: () => void;
+}
+
+const getAvatarFallback = () => '/images/default-avatar.png';
+
+export function GameHeader({
+  isInFarcaster,
+  soundEnabled,
+  userProfile,
+  isLoadingProfile,
+  address,
+  vbmsBlockchainBalance,
+  getAvatarUrl,
+  onSettingsClick,
+  onCreateProfileClick,
+}: GameHeaderProps) {
+  const { t } = useLanguage();
+  const bondingProgress = useBondingProgress();
+
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showDexDropdown, setShowDexDropdown] = useState(false);
+  const profileDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
+  const dexDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  return (
+    <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`} style={{ overflow: 'visible' }}>
+      <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-1 md:p-3 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30`} style={{ overflow: 'visible' }}>
+        <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3" style={{ overflow: 'visible' }}>
+
+          {/* Left: Profile */}
+          <div className="flex items-center gap-2" style={{ overflow: 'visible' }}>
+            {isLoadingProfile ? (
+              <div className="px-4 py-2 bg-vintage-black/50 border border-vintage-gold/20 rounded-lg">
+                <div className="w-20 h-4 bg-vintage-gold/20 rounded animate-pulse" />
+              </div>
+            ) : userProfile ? (
+              <div className="tour-profile-dropdown relative" style={{ overflow: 'visible' }}>
+                <button
+                  onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown((p) => !p); }}
+                  onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); setShowProfileDropdown(true); }}
+                  onPointerLeave={(e) => { if (e.pointerType !== 'mouse') return; profileDropdownTimeout.current = setTimeout(() => setShowProfileDropdown(false), 300); }}
+                  className="tour-settings-btn flex items-center gap-2 px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg transition cursor-pointer"
+                >
+                  {userProfile.farcasterPfpUrl ? (
+                    <img
+                      src={userProfile.farcasterPfpUrl}
+                      alt={userProfile.username}
+                      className="w-6 h-6 rounded-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).src = getAvatarFallback(); }}
+                    />
+                  ) : userProfile.twitter ? (
+                    <img
+                      src={getAvatarUrl({ twitter: userProfile.twitter, twitterProfileImageUrl: userProfile.twitterProfileImageUrl }) || ''}
+                      alt={userProfile.username}
+                      className="w-6 h-6 rounded-full"
+                      onError={(e) => { (e.target as HTMLImageElement).src = getAvatarFallback(); }}
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-vintage-gold to-vintage-burnt-gold flex items-center justify-center text-xs font-bold text-vintage-black">
+                      {userProfile.username[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-vintage-gold">@{userProfile.username}</span>
+                    <BadgeList badges={getUserBadges(userProfile.address, userProfile.userIndex ?? 9999, userProfile.hasVibeBadge)} size="sm" />
+                  </div>
+                </button>
+                {showProfileDropdown && (
+                  <div
+                    className="absolute top-full left-0 mt-1 bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-lg overflow-hidden min-w-[150px] shadow-xl"
+                    style={{ zIndex: 9999 }}
+                    onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (profileDropdownTimeout.current) clearTimeout(profileDropdownTimeout.current); }}
+                    onPointerLeave={(e) => { if (e.pointerType !== 'mouse') return; setShowProfileDropdown(false); }}
+                  >
+                    <Link
+                      href={`/profile/${userProfile.username}`}
+                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); }}
+                      className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold w-full"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                      Profile
+                    </Link>
+                    <button
+                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); onSettingsClick(); }}
+                      className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold w-full text-left"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.38.64 1 1.07 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+                      Settings
+                    </button>
+                    <Link
+                      href="/docs"
+                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); }}
+                      className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold w-full"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+                      Docs
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => { if (soundEnabled) AudioManager.buttonClick(); onCreateProfileClick(); }}
+                className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold/80 text-vintage-black rounded-lg text-sm font-semibold"
+              >
+                {t('createProfile')}
+              </button>
+            )}
+          </div>
+
+          {/* Right: VBMS Balance */}
+          <div className="flex items-center gap-2">
+            {address && userProfile && (
+              <div className="tour-dex-dropdown relative" style={{ overflow: 'visible' }}>
+                <button
+                  onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown((p) => !p); }}
+                  onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); setShowDexDropdown(true); }}
+                  onPointerLeave={(e) => { if (e.pointerType !== 'mouse') return; dexDropdownTimeout.current = setTimeout(() => setShowDexDropdown(false), 300); }}
+                  className="tour-dex-btn bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 px-4 py-2 rounded-lg flex flex-col items-center gap-1 transition cursor-pointer min-w-[120px]"
+                >
+                  {(() => {
+                    const formatted = Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+                    const fontSize = formatted.length <= 7 ? 'text-2xl' : formatted.length <= 9 ? 'text-xl' : 'text-base';
+                    return (
+                      <div className="flex items-baseline justify-center gap-0 w-full overflow-hidden">
+                        <span className={`text-vintage-gold ${fontSize} font-bold leading-none`}>$</span>
+                        <span className={`text-vintage-gold font-display font-bold ${fontSize} leading-none ml-0.5 truncate`}>
+                          {formatted}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                  <div className="w-full h-1 bg-vintage-deep-black rounded-full overflow-hidden">
+                    <div className="h-full bg-gradient-to-r from-vintage-gold to-green-400 transition-all" style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }} />
+                  </div>
+                </button>
+                {showDexDropdown && (
+                  <div
+                    className="absolute top-full right-0 mt-1 bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-lg overflow-hidden min-w-[120px] shadow-xl"
+                    style={{ zIndex: 9999 }}
+                    onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (dexDropdownTimeout.current) clearTimeout(dexDropdownTimeout.current); }}
+                    onPointerLeave={(e) => { if (e.pointerType !== 'mouse') return; setShowDexDropdown(false); }}
+                  >
+                    <Link
+                      href="/dex?tab=buy"
+                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown(false); }}
+                      onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
+                      className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
+                    >
+                      <span className="text-green-400 text-sm">▲</span> Buy
+                    </Link>
+                    <Link
+                      href="/dex?tab=sell"
+                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown(false); }}
+                      onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
+                      className="flex items-center gap-2 px-3 py-2.5 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
+                    >
+                      <span className="text-red-400 text-sm">▼</span> Sell
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+            {!isInFarcaster && (
+              <div className="tour-price-ticker hidden md:block">
+                <PriceTicker className="-mt-2" />
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -33,8 +33,6 @@ export function usePopupStates() {
   const [showMyCardsModal, setShowMyCardsModal] = useState<boolean>(false);
 
   // UI panels
-  const [showProfileDropdown, setShowProfileDropdown] = useState<boolean>(false);
-  const [showDexDropdown, setShowDexDropdown] = useState<boolean>(false);
   const [modeMenuOpen, setModeMenuOpen] = useState<'battle' | 'boss' | null>(null);
 
   // Settings & account
@@ -75,8 +73,6 @@ export function usePopupStates() {
     showLeaderboardRewardsModal, setShowLeaderboardRewardsModal,
     showMyCardsModal, setShowMyCardsModal,
     // UI panels
-    showProfileDropdown, setShowProfileDropdown,
-    showDexDropdown, setShowDexDropdown,
     modeMenuOpen, setModeMenuOpen,
     // Settings & account
     showSettings, setShowSettings,
