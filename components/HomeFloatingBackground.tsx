@@ -148,6 +148,15 @@ function makeFollowEl(item: FloatItem): HTMLDivElement {
     bannerImg.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
     bannerImg.onerror = () => { bannerWrap.style.background = "#222"; };
     bannerWrap.appendChild(bannerImg);
+  } else if (item.pfp) {
+    bannerWrap.style.background = "#1a1a1a";
+    const pfpBg = document.createElement("img");
+    pfpBg.src = item.pfp;
+    pfpBg.style.cssText = "position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.45;transform:scale(1.15);";
+    bannerWrap.appendChild(pfpBg);
+    const overlay = document.createElement("div");
+    overlay.style.cssText = "position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);";
+    bannerWrap.appendChild(overlay);
   } else {
     bannerWrap.style.background = "#1a1a1a";
   }
