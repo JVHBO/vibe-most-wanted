@@ -939,46 +939,6 @@ export function SettingsModal({
             )}
           </div>
 
-          {/* 🔗 Network Toggle - Base / Arbitrum */}
-          {walletAddress && onChainChange && canChangeChain && (
-            <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg text-vintage-gold">{preferredChain === "arbitrum" ? "◆" : "◇"}</span>
-                  <div>
-                    <p className="font-modern font-bold text-vintage-gold text-sm">Network</p>
-                    <p className="text-[10px] text-vintage-burnt-gold">
-                      {preferredChain === "arbitrum" ? "Arbitrum (2x quest, +1 spin, +1 pack)" : "Base (default)"}
-                    </p>
-                  </div>
-                </div>
-                <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
-                  <button
-                    onClick={() => { if (soundEnabled) AudioManager.buttonClick(); onChainChange("base"); }}
-                    style={{ display:"flex", alignItems:"center", gap:"5px", padding:"4px 10px", borderRadius:"4px", fontWeight:700, fontSize:"11px", cursor:"pointer", border: preferredChain !== "arbitrum" ? "2px solid #000" : "2px solid #374151", background: preferredChain !== "arbitrum" ? '#0052FF' : '#1f2937', color: preferredChain !== "arbitrum" ? '#fff' : '#6b7280', boxShadow: preferredChain !== "arbitrum" ? '2px 2px 0px #000' : 'none', transition:"all 0.1s" }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 111 111" fill="none">
-                      <circle cx="55.5" cy="55.5" r="55.5" fill={preferredChain !== "arbitrum" ? 'white' : '#6b7280'}/>
-                      <path d="M55.4999 11.5C31.0225 11.5 11 31.5225 11 55.9999C11 80.4773 31.0225 100.5 55.4999 100.5C79.9773 100.5 99.9998 80.4773 99.9998 55.9999C99.9998 31.5225 79.9773 11.5 55.4999 11.5Z" fill={preferredChain !== "arbitrum" ? '#0052FF' : 'none'}/>
-                    </svg>
-                    BASE
-                  </button>
-                  <button
-                    onClick={() => { if (soundEnabled) AudioManager.buttonClick(); onChainChange("arbitrum"); }}
-                    style={{ display:"flex", alignItems:"center", gap:"5px", padding:"4px 10px", borderRadius:"4px", fontWeight:700, fontSize:"11px", cursor:"pointer", border: preferredChain === "arbitrum" ? "2px solid #000" : "2px solid #374151", background: preferredChain === "arbitrum" ? '#12AAFF' : '#1f2937', color: preferredChain === "arbitrum" ? '#000' : '#6b7280', boxShadow: preferredChain === "arbitrum" ? '2px 2px 0px #000' : 'none', transition:"all 0.1s" }}
-                  >
-                    <svg width="12" height="12" viewBox="0 0 50 50" fill="none">
-                      <circle cx="25" cy="25" r="25" fill={preferredChain === "arbitrum" ? '#12AAFF' : '#6b7280'}/>
-                      <path d="M25 8L11 17V33L25 42L39 33V17L25 8Z" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1.5"/>
-                      <path d="M19 31L25 20L31 31" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M21.5 27H28.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                    ARB
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* 🔗 Linked Wallets Section - Always show if wallet connected */}
           {walletAddress && (
@@ -1084,50 +1044,6 @@ export function SettingsModal({
                     <p className="text-green-400 text-xs text-center mt-2">{codeSuccess}</p>
                   )}
 
-                  {/* 🔗 Generate Code Section */}
-                  <div className="mt-4 pt-4 border-t border-vintage-gold/20">
-                    <p className="text-vintage-burnt-gold text-xs mb-3">
-                      {t('generateCodeDesc') || 'Generate a code to link wallet from another device'}
-                    </p>
-
-                    {generatedFidCode ? (
-                      <div className="bg-green-900/30 border border-green-500/50 rounded-lg p-4">
-                        <p className="text-center text-green-300 text-xs mb-2">
-                          {t('enterCodeOnOtherDevice') || 'Enter this code on your other device:'}
-                        </p>
-                        <p className="text-3xl font-mono font-bold text-center text-green-400 tracking-[0.3em] my-3">
-                          {generatedFidCode}
-                        </p>
-                        <p className="text-vintage-burnt-gold text-xs text-center">
-                          {t('expiresIn') || 'Expires in'} {getFidCodeTimeRemaining() || '...'}
-                        </p>
-                        <button
-                          onClick={handleGenerateFidCode}
-                          disabled={isGeneratingFidCode}
-                          className="w-full mt-3 px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50"
-                        >
-                          {isGeneratingFidCode ? '...' : (t('generateNewCode') || 'Generate New Code')}
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={handleGenerateFidCode}
-                        disabled={isGeneratingFidCode}
-                        className="w-full px-4 py-3 bg-green-600/20 hover:bg-green-600/30 border border-green-500/50 text-green-400 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2"
-                      >
-                        {isGeneratingFidCode ? (
-                          <div className="animate-spin w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full" />
-                        ) : (
-                          '🔗'
-                        )}
-                        {t('generateLinkCode') || 'Generate Link Code'}
-                      </button>
-                    )}
-
-                    {fidCodeError && (
-                      <p className="text-red-400 text-xs text-center mt-2">{fidCodeError}</p>
-                    )}
-                  </div>
                 </div>
               )}
             </div>

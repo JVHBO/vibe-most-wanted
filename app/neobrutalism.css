@@ -3110,3 +3110,15 @@ body.neobrutalism .shop-back-btn {
   border-radius: 0 !important;
   font-weight: 900 !important;
 }
+
+/* Settings modal selects - force gold text on dark bg */
+body.neobrutalism .bg-vintage-charcoal select,
+body.neobrutalism .bg-vintage-black select {
+  color: #FFD400 !important;
+  background-color: #1A1A1A !important;
+}
+body.neobrutalism .bg-vintage-charcoal select option,
+body.neobrutalism .bg-vintage-black select option {
+  color: #F5F5F5 !important;
+  background-color: #1A1A1A !important;
+}
