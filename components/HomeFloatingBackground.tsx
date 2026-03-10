@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useConvex } from "convex/react";
+import { useConvex, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { SOCIAL_QUESTS } from "@/lib/socialQuests";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAccount } from "wagmi";
 
 const DRAWING_KEY = "vmw_drawing_v1";
 
@@ -244,6 +245,22 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
   useEffect(() => { routerRef.current = router; }, [router]);
   useEffect(() => { onOpenFidModalRef.current = onOpenFidModal; }, [onOpenFidModal]);
 
+  // Drawing upload mutations
+  const generateUploadUrl = useMutation(api.drawings.generateUploadUrl);
+  const saveDrawingMutation = useMutation(api.drawings.saveDrawing);
+  const generateUploadUrlRef = useRef(generateUploadUrl);
+  const saveDrawingRef = useRef(saveDrawingMutation);
+  useEffect(() => { generateUploadUrlRef.current = generateUploadUrl; }, [generateUploadUrl]);
+  useEffect(() => { saveDrawingRef.current = saveDrawingMutation; }, [saveDrawingMutation]);
+
+  // Get connected wallet address for drawing attribution
+  const { address: walletAddress } = useAccount();
+  const walletAddressRef = useRef(walletAddress);
+  useEffect(() => { walletAddressRef.current = walletAddress; }, [walletAddress]);
+
+  // Cache the fetched username so we don't re-query on every draw
+  const cachedUsernameRef = useRef<{ address: string; username: string } | null>(null);
+
   // Drawing canvas
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -310,6 +327,63 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
         { opacity: 0,   transform: `translateY(-${H}px)` },
       ], { duration: 22000, easing: 'ease-in', fill: 'forwards' });
       setTimeout(() => { try { container.removeChild(floatEl); } catch {} }, 23000);
+
+      // Upload drawing to share with all users
+      const address = walletAddressRef.current;
+      if (address) {
+        (async () => {
+          try {
+            // Resolve username (cache per address to avoid repeat queries)
+            let username: string | null = null;
+            if (cachedUsernameRef.current?.address === address) {
+              username = cachedUsernameRef.current.username;
+            } else {
+              try {
+                // Use the convex client directly (one-time query, not subscription)
+                const profile = await convex.query(api.profiles.getProfileLite, { address });
+                if (profile?.username) {
+                  username = profile.username;
+                  cachedUsernameRef.current = { address, username };
+                }
+              } catch {}
+            }
+            if (!username) return;
+
+            // Compress: draw dataUrl to a smaller JPEG canvas
+            const offscreen = document.createElement('canvas');
+            offscreen.width = 800;
+            offscreen.height = Math.round(800 * H / W);
+            const octx = offscreen.getContext('2d')!;
+            const srcImg = new Image();
+            await new Promise<void>((resolve) => {
+              srcImg.onload = () => { octx.drawImage(srcImg, 0, 0, offscreen.width, offscreen.height); resolve(); };
+              srcImg.src = dataUrl;
+            });
+
+            offscreen.toBlob(async (blob) => {
+              if (!blob) return;
+              try {
+                const uploadUrl = await generateUploadUrlRef.current({});
+                const result = await fetch(uploadUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'image/jpeg' },
+                  body: blob,
+                });
+                const { storageId } = await result.json();
+                await saveDrawingRef.current({
+                  storageId,
+                  authorAddress: address,
+                  authorUsername: username!,
+                });
+              } catch (e) {
+                console.warn('Drawing upload failed:', e);
+              }
+            }, 'image/jpeg', 0.4);
+          } catch (e) {
+            console.warn('Drawing share failed:', e);
+          }
+        })();
+      }
     };
 
     const onMouseMove = (e: MouseEvent) => {
@@ -455,6 +529,12 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           localStorage.setItem(CACHE_DATE_KEY, today);
         }
 
+        // Fetch shared drawings from Convex (one-time query, not subscription)
+        let sharedDrawings: Array<{ _id: string; authorUsername: string; url: string | null; createdAt: number }> = [];
+        try {
+          sharedDrawings = await convex.query(api.drawings.getRecentDrawings, {});
+        } catch {}
+
         if (!mountedRef.current) return;
 
         // Combine: api items + local cards (fewer) + follow banners
@@ -467,6 +547,45 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
         const W = window.innerWidth;
         const H = window.innerHeight;
         container.innerHTML = "";
+
+        // Display shared drawings in background with staggered delays
+        for (const drawing of sharedDrawings) {
+          if (!drawing.url) continue;
+          const drawEl = document.createElement('div');
+          drawEl.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;pointer-events:none;`;
+
+          const drawImg = document.createElement('img');
+          drawImg.src = drawing.url;
+          drawImg.draggable = false;
+          drawImg.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;';
+          drawEl.appendChild(drawImg);
+
+          const label = document.createElement('div');
+          label.style.cssText = `
+            position:absolute;
+            bottom:20px;
+            right:20px;
+            color:rgba(201,168,76,0.7);
+            font-size:11px;
+            font-family:monospace;
+            pointer-events:none;
+            text-shadow:0 1px 3px rgba(0,0,0,0.8);
+          `;
+          label.textContent = `@${drawing.authorUsername}`;
+          drawEl.appendChild(label);
+
+          container.appendChild(drawEl);
+
+          const delay = Math.random() * 30000; // 0-30s stagger
+          drawEl.animate([
+            { opacity: 0, transform: 'translateY(0px)' },
+            { opacity: 0.25, transform: 'translateY(-40px)', offset: 0.06 },
+            { opacity: 0.25, transform: `translateY(-${H * 0.5}px)`, offset: 0.6 },
+            { opacity: 0, transform: `translateY(-${H}px)` },
+          ], { duration: 25000, delay, easing: 'ease-in', fill: 'forwards' });
+
+          setTimeout(() => { try { container.removeChild(drawEl); } catch {} }, delay + 26000);
+        }
 
         const loadedFlags: boolean[] = [];
 

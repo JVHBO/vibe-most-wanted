@@ -2147,4 +2147,11 @@ export default defineSchema({
   })
     .index("by_address", ["address"])
     .index("by_address_mailid", ["address", "vibemailId"]),
+
+  drawings: defineTable({
+    storageId: v.id("_storage"),
+    authorAddress: v.string(),
+    authorUsername: v.string(),
+    createdAt: v.number(),
+  }).index("by_created", ["createdAt"]),
 });

@@ -28,6 +28,7 @@ import type * as coinAudit from "../coinAudit.js";
 import type * as coinsInbox from "../coinsInbox.js";
 import type * as crons from "../crons.js";
 import type * as cryptoActions from "../cryptoActions.js";
+import type * as drawings from "../drawings.js";
 import type * as economy from "../economy.js";
 import type * as economyVBMS from "../economyVBMS.js";
 import type * as emergencyRestore from "../emergencyRestore.js";
@@ -98,6 +99,7 @@ declare const fullApi: ApiFromModules<{
   coinsInbox: typeof coinsInbox;
   crons: typeof crons;
   cryptoActions: typeof cryptoActions;
+  drawings: typeof drawings;
   economy: typeof economy;
   economyVBMS: typeof economyVBMS;
   emergencyRestore: typeof emergencyRestore;
