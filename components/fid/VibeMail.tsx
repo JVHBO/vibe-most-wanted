@@ -322,6 +322,22 @@ export function isCustomAudio(audioId: string | undefined): boolean {
   return audioId?.startsWith('custom:') || false;
 }
 
+// Myinstants helpers — format: "mi:Name|https://..."
+export function isMiAudio(audioId: string | undefined): boolean {
+  return audioId?.startsWith('mi:') || false;
+}
+export function getMiUrl(audioId: string): string {
+  const rest = audioId.slice(3);
+  const pipe = rest.indexOf('|');
+  return pipe !== -1 ? rest.slice(pipe + 1) : rest;
+}
+export function getMiName(audioId: string): string {
+  const rest = audioId.slice(3);
+  const pipe = rest.indexOf('|');
+  if (pipe !== -1) return rest.slice(0, pipe);
+  return rest.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/-/g, ' ') || 'Sound';
+}
+
 // Get Vibe Market URL for a collection name
 const COLLECTION_MARKETPLACE_URLS: Record<string, string> = {
   'Vibe Most Wanted': 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
@@ -387,8 +403,8 @@ export async function playAudioById(
 
 // Get sound file from ID (only for predefined sounds)
 export function getSoundFile(audioId: string): string | null {
-  // Custom audio has no static file, needs to be fetched from Convex
   if (isCustomAudio(audioId)) return null;
+  if (isMiAudio(audioId)) return getMiUrl(audioId);
   const sound = VIBEMAIL_SOUNDS.find(s => s.id === audioId);
   return sound?.file || null;
 }
@@ -588,7 +604,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                   </button>
                   <div className="flex-1">
                     <p className="text-vintage-gold font-bold text-sm">
-                      {isCustomAudio(selectedMessage.audioId) ? <span className="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg> Voice message</span> : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound)}
+                      {isCustomAudio(selectedMessage.audioId) ? <span className="flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg> Voice message</span> : (isMiAudio(selectedMessage.audioId) ? getMiName(selectedMessage.audioId!) : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound))}
                     </p>
                     <p className="text-white/60 text-xs">
                       {playingAudio === selectedMessage.audioId ? t.playing : t.tapToPlay}
@@ -803,6 +819,10 @@ export function VibeMailInboxWithClaim({
   const [isSending, setIsSending] = useState(false);
   const [showSoundPicker, setShowSoundPicker] = useState(false);
   const [previewSound, setPreviewSound] = useState<string | null>(null);
+  const [miSearch, setMiSearch] = useState('');
+  const [miResults, setMiResults] = useState<{ name: string; url: string }[]>([]);
+  const [miLoading, setMiLoading] = useState(false);
+  const miSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [composerImageId, setComposerImageId] = useState<string | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [composerCastUrl, setComposerCastUrl] = useState<string | null>(null);
@@ -817,6 +837,28 @@ export function VibeMailInboxWithClaim({
   const replyMutation = useMutation(api.cardVotes.replyToMessage);
   const broadcastMutation = useMutation(api.cardVotes.broadcastVibeMail);
   const deleteMessagesMutation = useMutation(api.cardVotes.deleteMessages);
+
+  // Myinstants search (debounced)
+  useEffect(() => {
+    if (miSearchTimeout.current) clearTimeout(miSearchTimeout.current);
+    miSearchTimeout.current = setTimeout(async () => {
+      setMiLoading(true);
+      try {
+        const res = await fetch(`/api/myinstants?search=${encodeURIComponent(miSearch)}`);
+        const data = await res.json();
+        setMiResults(data.results ?? []);
+      } catch { setMiResults([]); }
+      finally { setMiLoading(false); }
+    }, miSearch ? 400 : 0);
+    return () => { if (miSearchTimeout.current) clearTimeout(miSearchTimeout.current); };
+  }, [miSearch]);
+
+  // Load featured sounds when picker opens
+  useEffect(() => {
+    if (showSoundPicker && miResults.length === 0 && !miLoading) {
+      setMiSearch('');
+    }
+  }, [showSoundPicker]);
 
   // VibeMail Stats
   const vibeMailStats = useQuery(
@@ -2229,34 +2271,54 @@ export function VibeMailInboxWithClaim({
             <audio ref={composerAudioRef} onEnded={() => setPreviewSound(null)} />
 
             {showSoundPicker && !isCustomAudio(composerAudioId || undefined) && (
-              <div className="mt-2 bg-[#1a1a1a] border border-[#FFD700]/20 p-2">
-                <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
-                  {VIBEMAIL_SOUNDS.map((sound) => (
-                    <button
-                      key={sound.id}
-                      onClick={() => {
-                        if (composerAudioRef.current) {
-                          if (previewSound === sound.id) {
-                            composerAudioRef.current.pause();
-                            setPreviewSound(null);
-                          } else {
-                            composerAudioRef.current.src = sound.file;
-                            composerAudioRef.current.play().catch(console.error);
-                            setPreviewSound(sound.id);
+              <div className="mt-2 bg-[#0d0d0d] border border-[#FFD700]/30 p-2">
+                {/* Search */}
+                <input
+                  type="text"
+                  value={miSearch}
+                  onChange={e => setMiSearch(e.target.value)}
+                  placeholder="Search myinstants..."
+                  className="w-full mb-2 px-2 py-1.5 bg-[#1a1a1a] border border-[#FFD700]/30 text-[#FFD700] text-xs placeholder-[#FFD700]/30 outline-none focus:border-[#FFD700]/60"
+                  style={{ colorScheme: 'dark' }}
+                />
+                {/* Results */}
+                <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
+                  {miLoading ? (
+                    <div className="col-span-2 text-center text-[#FFD700]/40 text-xs py-3">Loading...</div>
+                  ) : miResults.length === 0 ? (
+                    <div className="col-span-2 text-center text-[#FFD700]/30 text-xs py-3">No sounds found</div>
+                  ) : miResults.map((sound) => {
+                    const miId = `mi:${sound.name}|${sound.url}`;
+                    const isSelected = composerAudioId === miId;
+                    const isPreviewing = previewSound === miId;
+                    return (
+                      <button
+                        key={sound.url}
+                        onClick={() => {
+                          if (composerAudioRef.current) {
+                            if (isPreviewing) {
+                              composerAudioRef.current.pause();
+                              setPreviewSound(null);
+                            } else {
+                              composerAudioRef.current.src = sound.url;
+                              composerAudioRef.current.play().catch(console.error);
+                              setPreviewSound(miId);
+                            }
                           }
-                        }
-                        setComposerAudioId(composerAudioId === sound.id ? null : sound.id);
-                      }}
-                      className={`p-2 border-2 text-xs transition-all flex items-center gap-2 font-bold ${
-                        composerAudioId === sound.id
-                          ? 'bg-[#FFD700]/20 border-[#FFD700] text-[#FFD700] shadow-[0_0_8px_rgba(255,212,0,0.2)]'
-                          : 'bg-[#1a1200] border-[#FFD700]/50 text-[#FFD700]/80 hover:border-[#FFD700] hover:text-[#FFD700] hover:bg-[#FFD700]/10'
-                      }`}
-                    >
-                      <span>{previewSound === sound.id ? '⏹' : '▶'}</span>
-                      <span className="truncate">{sound.name}</span>
-                    </button>
-                  ))}
+                          setComposerAudioId(isSelected ? null : miId);
+                          if (!isSelected) setShowSoundPicker(false);
+                        }}
+                        className={`p-1.5 border text-[10px] transition-all flex items-center gap-1.5 font-bold truncate ${
+                          isSelected
+                            ? 'bg-[#FFD700]/20 border-[#FFD700] text-[#FFD700]'
+                            : 'bg-[#1a1200] border-[#FFD700]/30 text-[#FFD700]/70 hover:border-[#FFD700]/70 hover:text-[#FFD700]'
+                        }`}
+                      >
+                        <span className="flex-shrink-0">{isPreviewing ? '⏹' : '▶'}</span>
+                        <span className="truncate">{sound.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -3004,7 +3066,7 @@ export function VibeMailInboxWithClaim({
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
                           Voice message
                         </>
-                      ) : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound)}
+                      ) : (isMiAudio(selectedMessage.audioId) ? getMiName(selectedMessage.audioId!) : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound))}
                     </p>
                     <p className="text-white/60 text-[10px]">
                       {playingAudio === selectedMessage.audioId ? t.playing : t.tapToPlay}
@@ -3759,7 +3821,7 @@ export function VibeMailComposer({ message, setMessage, audioId, setAudioId, ima
           className="w-full flex items-center justify-between p-2 bg-[#1a1a1a] border-2 border-[#444] text-white text-sm hover:border-[#FFD700]/50"
         >
           <span>
-            {audioId ? `${t.soundLabel}: ${VIBEMAIL_SOUNDS.find(s => s.id === audioId)?.name}` : t.addMemeSound}
+            {audioId ? `${t.soundLabel}: ${isMiAudio(audioId) ? getMiName(audioId) : (VIBEMAIL_SOUNDS.find(s => s.id === audioId)?.name || audioId)}` : t.addMemeSound}
           </span>
           <span className="text-vintage-gold">{showSoundPicker ? '▲' : '▼'}</span>
         </button>
