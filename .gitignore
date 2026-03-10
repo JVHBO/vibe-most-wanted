@@ -98,6 +98,8 @@ nul
 !public/images/baccarat/*.png
 !public/images/angry-angry-kid.png
 !public/images/og-cards/*.png
+!public/fid-assets/images/splash-200.png
+!public/fid-assets/images/vibefid-icon.png
 *.webm
 *.html
 *.mp4
