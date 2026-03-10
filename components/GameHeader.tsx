@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AudioManager } from "@/lib/audio-manager";
@@ -42,8 +42,18 @@ export function GameHeader({
 
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showDexDropdown, setShowDexDropdown] = useState(false);
-  const profileDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
-  const dexDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const dexRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on click outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setShowProfileDropdown(false);
+      if (dexRef.current && !dexRef.current.contains(e.target as Node)) setShowDexDropdown(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   return (
     <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`} style={{ overflow: 'visible' }}>
@@ -57,11 +67,10 @@ export function GameHeader({
                 <div className="w-20 h-4 bg-vintage-gold/20 rounded animate-pulse" />
               </div>
             ) : userProfile ? (
-              <div className="tour-profile-dropdown relative" style={{ overflow: 'visible' }}>
+              <div ref={profileRef} className="tour-profile-dropdown relative" style={{ overflow: 'visible' }}>
                 <button
                   onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown((p) => !p); }}
                   onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); setShowProfileDropdown(true); }}
-                  onPointerLeave={(e) => { if (e.pointerType !== 'mouse') return; profileDropdownTimeout.current = setTimeout(() => setShowProfileDropdown(false), 300); }}
                   className="tour-settings-btn flex items-center gap-2 px-4 py-2 bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg transition cursor-pointer"
                 >
                   {userProfile.farcasterPfpUrl ? (
@@ -92,8 +101,6 @@ export function GameHeader({
                   <div
                     className="absolute top-full left-0 mt-1 bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-lg overflow-hidden min-w-[150px] shadow-xl"
                     style={{ zIndex: 9999 }}
-                    onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (profileDropdownTimeout.current) clearTimeout(profileDropdownTimeout.current); }}
-                    onPointerLeave={(e) => { if (e.pointerType !== 'mouse') return; setShowProfileDropdown(false); }}
                   >
                     <Link
                       href={`/profile/${userProfile.username}`}
@@ -134,11 +141,10 @@ export function GameHeader({
           {/* Right: VBMS Balance */}
           <div className="flex items-center gap-2">
             {address && userProfile && (
-              <div className="tour-dex-dropdown relative" style={{ overflow: 'visible' }}>
+              <div ref={dexRef} className="tour-dex-dropdown relative" style={{ overflow: 'visible' }}>
                 <button
                   onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown((p) => !p); }}
                   onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); setShowDexDropdown(true); }}
-                  onPointerLeave={(e) => { if (e.pointerType !== 'mouse') return; dexDropdownTimeout.current = setTimeout(() => setShowDexDropdown(false), 300); }}
                   className="tour-dex-btn bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 px-4 py-2 rounded-lg flex flex-col items-center gap-1 transition cursor-pointer min-w-[120px]"
                 >
                   {(() => {
@@ -161,8 +167,6 @@ export function GameHeader({
                   <div
                     className="absolute top-full right-0 mt-1 bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-lg overflow-hidden min-w-[120px] shadow-xl"
                     style={{ zIndex: 9999 }}
-                    onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (dexDropdownTimeout.current) clearTimeout(dexDropdownTimeout.current); }}
-                    onPointerLeave={(e) => { if (e.pointerType !== 'mouse') return; setShowDexDropdown(false); }}
                   >
                     <Link
                       href="/dex?tab=buy"
