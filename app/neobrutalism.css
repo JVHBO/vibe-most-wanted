@@ -397,23 +397,29 @@ body.neobrutalism button.tour-profile-btn:active {
   box-shadow: 0px 0px 0px #000 !important;
 }
 
-/* Profile dropdown → dark like DEX dropdown */
+/* Profile dropdown → identical to DEX dropdown */
+body.neobrutalism .tour-profile-dropdown {
+  overflow: visible !important;
+}
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] {
-  background: #111111 !important;
-  border: 2px solid rgba(212,175,55,0.3) !important;
-  box-shadow: 4px 4px 0px #000 !important;
-  border-radius: 8px !important;
+  background: #2C2C2C !important;
+  background-color: #2C2C2C !important;
+  border: 4px solid #000 !important;
+  box-shadow: 6px 6px 0px #000 !important;
+  border-radius: 4px !important;
 }
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a,
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] button {
+  color: #FFF !important;
+  background-color: transparent !important;
+  background-image: none !important;
   border: none !important;
   box-shadow: none !important;
-  border-radius: 0 !important;
-  color: #FFF !important;
+  font-weight: 800 !important;
+  transform: none !important;
   margin: 0 !important;
   padding: 8px 12px !important;
   width: 100% !important;
-  background: transparent !important;
 }
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a *,
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] button * {
@@ -422,20 +428,15 @@ body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] 
 }
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a:hover,
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] button:hover {
-  background: rgba(212,175,55,0.15) !important;
-  color: #FFF !important;
+  background-color: #FFD400 !important;
+  color: #000 !important;
   transform: none !important;
   box-shadow: none !important;
 }
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a:hover *,
 body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] button:hover * {
-  color: #FFF !important;
-  stroke: #FFF !important;
-}
-body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] a:active,
-body.neobrutalism .tour-profile-dropdown [class*="absolute"][class*="top-full"] button:active {
-  transform: none !important;
-  box-shadow: none !important;
+  color: #000 !important;
+  stroke: #000 !important;
 }
 
 /* Profile username chip → DARK with gold text */
