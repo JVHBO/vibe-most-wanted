@@ -532,9 +532,10 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
             </div>
           )}
 
-          {/* Score Modal — inside card container, z-30 to cover corner buttons */}
+          {/* Score Modal — fixed overlay so button is never cut off */}
           {showScoreModal && scoreData && card && (
-            <div className="absolute inset-0 bg-black/90 backdrop-blur-sm flex flex-col z-30 rounded-xl p-3 gap-2">
+            <div className="fixed inset-0 z-[10000] flex items-end justify-center p-4 pb-6" style={{ background: 'rgba(0,0,0,0.75)' }} onClick={() => { setShowScoreModal(false); setUpgradeSuccess(false); }}>
+            <div className="w-full max-w-sm rounded-xl bg-black/95 border border-vintage-gold/40 flex flex-col p-3 gap-2 overflow-y-auto" style={{ maxHeight: '85vh' }} onClick={e => e.stopPropagation()}>
               {/* Header */}
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-bold text-vintage-gold uppercase tracking-wide">Neynar Score</h2>
@@ -637,6 +638,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
                   {isUpgrading ? '...' : `↻ SYNC SCORE`}
                 </button>
               )}
+            </div>
             </div>
           )}
 
