@@ -107,7 +107,7 @@ export function HomeHeader({
                         if (soundEnabled) AudioManager.buttonClick();
                         setShowDropdown(false);
                       }}
-                      className="flex items-center gap-2 px-3 py-2 text-white hover:bg-vintage-gold/20 transition text-xs font-semibold"
+                      className="flex items-center gap-2 px-3 py-2 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -121,7 +121,7 @@ export function HomeHeader({
                         setShowDropdown(false);
                         onSettingsClick();
                       }}
-                      className="flex items-center gap-2 px-3 py-2 text-white hover:bg-vintage-gold/20 transition text-xs font-semibold w-full text-left"
+                      className="flex items-center gap-2 px-3 py-2 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold w-full text-left"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="3" />
@@ -135,7 +135,7 @@ export function HomeHeader({
                         if (soundEnabled) AudioManager.buttonClick();
                         setShowDropdown(false);
                       }}
-                      className="flex items-center gap-2 px-3 py-2 text-white hover:bg-vintage-gold/20 transition text-xs font-semibold"
+                      className="flex items-center gap-2 px-3 py-2 text-vintage-gold hover:bg-vintage-gold/20 transition text-xs font-semibold"
                     >
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
