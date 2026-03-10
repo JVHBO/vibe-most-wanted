@@ -205,15 +205,21 @@ function makeFollowEl(item: FloatItem): HTMLDivElement {
   return card;
 }
 
-export function HomeFloatingBackground() {
+interface HomeFloatingBackgroundProps {
+  onOpenFidModal?: (fid: number) => void;
+}
+
+export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroundProps = {}) {
   const convex = useConvex();
   const containerRef = useRef<HTMLDivElement>(null);
   const routerRef = useRef<ReturnType<typeof useRouter> | null>(null);
+  const onOpenFidModalRef = useRef(onOpenFidModal);
   const mountedRef = useRef(true);
   const router = useRouter();
   const rafRef = useRef<number>(0);
 
   useEffect(() => { routerRef.current = router; }, [router]);
+  useEffect(() => { onOpenFidModalRef.current = onOpenFidModal; }, [onOpenFidModal]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -353,6 +359,16 @@ export function HomeFloatingBackground() {
           el.addEventListener("click", (e) => {
             e.preventDefault();
             const href = el.dataset.href || item.href;
+            // vibecard /fid/N → open modal instead of navigating
+            if (item.type === "vibecard") {
+              const match = href.match(/\/fid\/(\d+)/);
+              if (match) {
+                const fidNum = parseInt(match[1]);
+                if (onOpenFidModalRef.current) { onOpenFidModalRef.current(fidNum); return; }
+                window.dispatchEvent(new CustomEvent('open-fid-modal', { detail: { fid: fidNum } }));
+                return;
+              }
+            }
             if (href.startsWith("http")) window.open(href, "_blank", "noopener");
             else routerRef.current?.push(href);
           });

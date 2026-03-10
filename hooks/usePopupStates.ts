@@ -44,6 +44,7 @@ export function usePopupStates() {
 
   // Feature modals
   const [showFidMailModal, setShowFidMailModal] = useState<boolean>(false);
+  const [fidModalTarget, setFidModalTarget] = useState<number | null>(null); // null = own card
 
   // Claim popups
   const [showDailyClaimPopup, setShowDailyClaimPopup] = useState<boolean>(false);
@@ -82,6 +83,7 @@ export function usePopupStates() {
     showArbAnnounce, setShowArbAnnounce,
     // Feature modals
     showFidMailModal, setShowFidMailModal,
+    fidModalTarget, setFidModalTarget,
     // Claim popups
     showDailyClaimPopup, setShowDailyClaimPopup,
     showWeeklyLeaderboardPopup, setShowWeeklyLeaderboardPopup,

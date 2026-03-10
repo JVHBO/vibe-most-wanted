@@ -370,6 +370,7 @@ export default function TCGPage() {
     showChainModal, setShowChainModal,
     showArbAnnounce, setShowArbAnnounce,
     showFidMailModal, setShowFidMailModal,
+    fidModalTarget, setFidModalTarget,
     showDailyClaimPopup, setShowDailyClaimPopup,
     showWeeklyLeaderboardPopup, setShowWeeklyLeaderboardPopup,
   } = usePopupStates();
@@ -680,6 +681,19 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   // 📬 VibeMail unread count for notification dot on VibeFID button
   const userFidForVibemail = farcasterFidState || userProfile?.farcasterFid || (userProfile?.fid ? parseInt(userProfile.fid) : undefined);
   const unreadVibeMailCount = useQuery(api.cardVotes.getUnreadMessageCount, userFidForVibemail ? { cardFid: userFidForVibemail } : "skip");
+
+  // Listen for floating background vibecard clicks → open FID modal
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const fid = (e as CustomEvent).detail?.fid;
+      if (!fid) return;
+      setFidModalTarget(fid);
+      setShowFidMailModal(true);
+    };
+    window.addEventListener('open-fid-modal', handler);
+    return () => window.removeEventListener('open-fid-modal', handler);
+  }, []);
+
   // REMOVED: Referral system disabled
   // Leaderboard moved to /leaderboard page
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
@@ -3565,11 +3579,12 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
       )}
 
       {/* VibeFID + Mail Split Modal */}
-      {showFidMailModal && userFidForVibemail && (
+      {showFidMailModal && (fidModalTarget || userFidForVibemail) && (
         <VibeFidMailModal
-          fid={userFidForVibemail}
-          username={userProfile?.username}
-          onClose={() => setShowFidMailModal(false)}
+          fid={(fidModalTarget || userFidForVibemail)!}
+          username={fidModalTarget && fidModalTarget !== userFidForVibemail ? undefined : userProfile?.username}
+          ownerFid={userFidForVibemail}
+          onClose={() => { setShowFidMailModal(false); setFidModalTarget(null); }}
         />
       )}
 

@@ -23,6 +23,7 @@ import { fidTranslations } from '@/lib/fid/fidTranslations';
 interface VibeFidMailModalProps {
   fid: number;
   username?: string;
+  ownerFid?: number; // logged-in user's FID — upgrade/mail only shown if fid === ownerFid
   onClose: () => void;
 }
 
@@ -50,7 +51,8 @@ function calcPower(rarity: string, wear: string, foil: string) {
   return Math.round((RARITY_BASE_POWER[rarity] || 5) * (WEAR_MULT[wear] || 1) * (FOIL_MULT[foil] || 1));
 }
 
-function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
+function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps) {
+  const isOwnCard = !ownerFid || ownerFid === fid;
   const { lang } = useLanguage();
   const t = fidTranslations[lang] ?? fidTranslations['en'];
   const [mobilePanel, setMobilePanel] = useState<'card' | 'mail'>('card');
@@ -401,8 +403,8 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
                       <CardMedia src={card.cardImageUrl || card.imageUrl || card.pfpUrl} alt={card.username} className="w-full h-full object-cover" />
                     </FoilCardEffect>
                   </div>
-                  {/* VibeMail button - bottom right */}
-                  <button
+                  {/* VibeMail button - bottom right (own card only) */}
+                  {isOwnCard && <button
                     onClick={() => setMobilePanel('mail')}
                     className="absolute -bottom-2 -right-2 z-20 w-7 h-7 rounded-xl flex items-center justify-center transition-all"
                     style={{ background: '#BE185D', border: '2px solid #000', boxShadow: '2px 2px 0px #000', color: '#fff' }}
@@ -411,7 +413,7 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                     </svg>
-                  </button>
+                  </button>}
                 </div>
                 {/* Right: Info */}
                 <div className="flex-1 flex flex-col gap-2 min-w-0">
@@ -536,7 +538,7 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
                 <div className="bg-green-900/40 border border-green-500/50 rounded px-2 py-1.5 text-center text-[10px] text-green-400 font-bold">
                   ★ Card upgraded to {scoreData.rarity}!
                 </div>
-              ) : canUpgrade() && (
+              ) : isOwnCard && canUpgrade() && (
                 <div className="bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-400/60 rounded px-2 py-1.5 text-center text-[10px]">
                   <span className="text-vintage-burnt-gold">{card.rarity}</span>
                   <span className="text-yellow-400 font-bold mx-1">→</span>
@@ -601,7 +603,7 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
                 );
               })()}
               {/* Actions */}
-              {canUpgrade() && !upgradeSuccess && (
+              {isOwnCard && canUpgrade() && !upgradeSuccess && (
                 <button onClick={handleUpgrade} disabled={isUpgrading}
                   className="w-full py-2 text-black font-bold rounded text-xs disabled:opacity-50 uppercase tracking-widest"
                   style={{ background: 'linear-gradient(135deg, #FFD700, #FF8C00)', boxShadow: '0 0 16px rgba(255,215,0,0.5)', border: '2px solid rgba(255,215,0,0.8)', letterSpacing: '0.1em' }}>
