@@ -8,41 +8,102 @@ import { useRouter } from "next/navigation";
 interface FloatItem {
   id: string;
   href: string;
-  type: "vibecard" | "castcard";
+  type: "vibecard" | "castcard" | "followcard";
   imageUrl?: string;
   pfp?: string;
   username?: string;
   text?: string;
   winnerNum?: number;
+  // follow card fields
+  displayName?: string;
+  description?: string;
+  reward?: number;
+  bannerUrl?: string;
 }
 
-const CACHE_KEY = "vmw_hfb_v14";
-const CACHE_DATE_KEY = "vmw_hfb_date_v14";
+const CACHE_KEY = "vmw_hfb_v15";
+const CACHE_DATE_KEY = "vmw_hfb_date_v15";
+const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
 // Casts to hide from the background animation
 const HIDDEN_CAST_URLS = new Set([
   "https://farcaster.xyz/jvhbo/0x20586a19",
 ]);
-const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
-// Local VBMS card images — always available, no API call needed
+// Reduced local VBMS cards — fewer elements
 const VIBEMARKET_URL = "https://vibechain.com/market?ref=XCLR1DJ6LQTT";
 const LOCAL_VBMS_CARDS: FloatItem[] = [
   { id: "local-leg-1", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-39.png" },
-  { id: "local-leg-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-50.png" },
-  { id: "local-leg-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-52.png" },
-  { id: "local-leg-4", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-55.png" },
-  { id: "local-leg-5", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-56.png" },
-  { id: "local-leg-6", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-57.png" },
+  { id: "local-leg-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-52.png" },
+  { id: "local-leg-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-57.png" },
   { id: "local-epc-1", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-43.png" },
-  { id: "local-epc-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-44.png" },
-  { id: "local-epc-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-46.png" },
-  { id: "local-epc-4", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-47.png" },
-  { id: "local-epc-5", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-49.png" },
+  { id: "local-epc-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-47.png" },
   { id: "local-rar-1", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-37.png" },
-  { id: "local-rar-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-38.png" },
-  { id: "local-rar-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-40.png" },
-  { id: "local-rar-4", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-42.png" },
+  { id: "local-rar-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-42.png" },
+];
+
+// Follow mission banners — shown in background
+const FOLLOW_BANNERS: FloatItem[] = [
+  {
+    id: "follow-jvhbo",
+    href: "https://warpcast.com/jvhbo",
+    type: "followcard",
+    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/3a7e672c-8ba9-496e-e651-4a27281a1500/original",
+    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/75f1b780-45f6-4d39-b0f7-eeecc34aed00/original",
+    displayName: "Follow @jvhbo",
+    description: "Follow $VBMS creator",
+    reward: 50,
+  },
+  {
+    id: "follow-smolemaru",
+    href: "https://warpcast.com/smolemaru",
+    type: "followcard",
+    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/e4678b3c-40b1-4e64-20c3-af626d792f00/original",
+    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/a9c9038f-4f3b-43cf-256a-7a4d4ef3b700/original",
+    displayName: "Follow @smolemaru",
+    description: "Follow Viberuto creator",
+    reward: 50,
+  },
+  {
+    id: "follow-zazza",
+    href: "https://warpcast.com/zazza",
+    type: "followcard",
+    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/92e7f5ba-a6d3-499a-47cc-b19bfd2bda00/original",
+    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/9c712f19-2051-4c23-0836-f4ca201acf00/original",
+    displayName: "Follow @zazza",
+    description: "Follow Poorly Drawn Pepes creator",
+    reward: 50,
+  },
+  {
+    id: "follow-degencummunist",
+    href: "https://warpcast.com/degencummunist.eth",
+    type: "followcard",
+    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/7a30028d-83f9-46d9-1cc8-43b857638d00/original",
+    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/63798561-7d8c-4e2c-5f28-8e4a9995c000/original",
+    displayName: "Follow @degencummunist",
+    description: "Follow Cumioh creator",
+    reward: 50,
+  },
+  {
+    id: "follow-kenny",
+    href: "https://warpcast.com/kenny",
+    type: "followcard",
+    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/e6f1d0c9-26ff-4701-4bc5-f748256ab900/rectcrop3",
+    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/1463afd7-1798-4c25-7e0c-7f0bcb45f500/original",
+    displayName: "Follow @kenny",
+    description: "Follow Poidh creator",
+    reward: 50,
+  },
+  {
+    id: "follow-nezzar",
+    href: "https://warpcast.com/nezzar",
+    type: "followcard",
+    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/80ade64b-8417-4c74-1df6-8198656dc800/original",
+    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/45f23684-d5d4-4ef1-60a7-c76440ff3c00/original",
+    displayName: "Follow @nezzar",
+    description: "Follow Astroblock creator",
+    reward: 50,
+  },
 ];
 
 function makeCastEl(item: FloatItem): HTMLDivElement {
@@ -58,7 +119,6 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
     overflow:hidden;
   `;
 
-  // Header: PFP + name + winner badge
   const header = document.createElement("div");
   header.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:6px;";
 
@@ -107,6 +167,87 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
   return card;
 }
 
+function makeFollowEl(item: FloatItem): HTMLDivElement {
+  const card = document.createElement("div");
+  card.style.cssText = `
+    width:240px;
+    background:#111;
+    border:2px solid #c9a84c;
+    border-radius:10px;
+    font-family:sans-serif;
+    overflow:hidden;
+    box-shadow:0 4px 20px rgba(201,168,76,0.2);
+  `;
+
+  // Banner section
+  const bannerWrap = document.createElement("div");
+  bannerWrap.style.cssText = "position:relative;width:100%;height:80px;overflow:hidden;";
+
+  if (item.bannerUrl) {
+    const bannerImg = document.createElement("img");
+    bannerImg.src = item.bannerUrl;
+    bannerImg.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+    bannerImg.onerror = () => { bannerWrap.style.background = "#222"; };
+    bannerWrap.appendChild(bannerImg);
+  } else {
+    bannerWrap.style.background = "#1a1a1a";
+  }
+
+  // @FOLLOW badge
+  const followBadge = document.createElement("div");
+  followBadge.style.cssText = "position:absolute;top:6px;left:6px;background:#c9a84c;color:#000;font-size:9px;font-weight:900;padding:2px 6px;border-radius:4px;letter-spacing:0.06em;";
+  followBadge.textContent = "@FOLLOW";
+  bannerWrap.appendChild(followBadge);
+
+  // PFP overlapping banner
+  if (item.pfp) {
+    const pfpWrap = document.createElement("div");
+    pfpWrap.style.cssText = "position:absolute;bottom:-18px;left:10px;width:36px;height:36px;border-radius:50%;border:2px solid #c9a84c;overflow:hidden;background:#111;";
+    const pfpImg = document.createElement("img");
+    pfpImg.src = item.pfp;
+    pfpImg.style.cssText = "width:100%;height:100%;object-fit:cover;";
+    pfpImg.onerror = () => { pfpWrap.style.background = "#333"; };
+    pfpWrap.appendChild(pfpImg);
+    bannerWrap.appendChild(pfpWrap);
+  }
+
+  card.appendChild(bannerWrap);
+
+  // Body
+  const body = document.createElement("div");
+  body.style.cssText = "padding:24px 10px 10px;";
+
+  const name = document.createElement("div");
+  name.style.cssText = "color:#fff;font-size:11px;font-weight:700;margin-bottom:2px;";
+  name.textContent = item.displayName || "";
+  body.appendChild(name);
+
+  if (item.description) {
+    const desc = document.createElement("div");
+    desc.style.cssText = "color:#888;font-size:9px;margin-bottom:6px;";
+    desc.textContent = item.description;
+    body.appendChild(desc);
+  }
+
+  const rewardRow = document.createElement("div");
+  rewardRow.style.cssText = "display:flex;align-items:center;gap:4px;";
+
+  const rewardBadge = document.createElement("span");
+  rewardBadge.style.cssText = "color:#c9a84c;font-size:10px;font-weight:800;";
+  rewardBadge.textContent = `+${item.reward ?? 50} VBMS`;
+  rewardRow.appendChild(rewardBadge);
+
+  const questsLink = document.createElement("span");
+  questsLink.style.cssText = "color:#555;font-size:9px;margin-left:auto;";
+  questsLink.textContent = "→ Quests";
+  rewardRow.appendChild(questsLink);
+
+  body.appendChild(rewardRow);
+  card.appendChild(body);
+
+  return card;
+}
+
 export function HomeFloatingBackground() {
   const convex = useConvex();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -131,7 +272,7 @@ export function HomeFloatingBackground() {
         }
 
         if (!apiItems) {
-          // Fetch VibeFID high-rarity cards
+          // Fetch VibeFID high-rarity cards — reduced to 6
           let cards: Array<{ _id: string; fid: number; cardImageUrl: string }> = [];
           try {
             const res = await fetch(`${VIBEFID_CONVEX}/api/query`, {
@@ -139,7 +280,7 @@ export function HomeFloatingBackground() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 path: "farcasterCards:getHighRarityCards",
-                args: { limit: 20 },
+                args: { limit: 6 },
                 format: "json",
               }),
             });
@@ -149,7 +290,7 @@ export function HomeFloatingBackground() {
             }
           } catch {}
 
-          // Fetch auction winners directly from Convex — no external API calls needed
+          // Fetch only 15 most recent auction winners
           type HistoryItem = {
             _id: string;
             warpcastUrl?: string;
@@ -159,11 +300,9 @@ export function HomeFloatingBackground() {
           };
           let winners: HistoryItem[] = [];
           try {
-            winners = (await convex.query(api.castAuctions.getAuctionHistory, { limit: 100 })) as HistoryItem[];
+            winners = (await convex.query(api.castAuctions.getAuctionHistory, { limit: 15 })) as HistoryItem[];
           } catch {}
 
-          // Build cast float items — use data already stored in Convex, no API calls
-          // Reverse so oldest winner = #1, newest = #N
           const validWinners = winners.filter(w => w.warpcastUrl && !HIDDEN_CAST_URLS.has(w.warpcastUrl) && (w.castAuthorPfp || w.castAuthorUsername));
           const castItems: FloatItem[] = [...validWinners].reverse().map((w, idx) => ({
             id: w._id,
@@ -191,7 +330,8 @@ export function HomeFloatingBackground() {
 
         if (!mountedRef.current) return;
 
-        const items: FloatItem[] = [...(apiItems ?? []), ...LOCAL_VBMS_CARDS];
+        // Combine: api items + local cards (fewer) + follow banners
+        const items: FloatItem[] = [...(apiItems ?? []), ...LOCAL_VBMS_CARDS, ...FOLLOW_BANNERS];
         if (!items.length) return;
 
         const container = containerRef.current;
@@ -217,15 +357,16 @@ export function HomeFloatingBackground() {
         }> = [];
 
         items.forEach((item, idx) => {
+          const isFollow = item.type === "followcard";
           const isCast = item.type === "castcard";
-          const w = isCast ? 220 : 80;
-          const h = isCast ? 110 : 112;
+          const w = isFollow ? 240 : isCast ? 220 : 80;
+          const h = isFollow ? 160 : isCast ? 110 : 112;
           const x = 20 + Math.random() * (W - w - 40);
           const drift = (Math.random() - 0.5) * 80;
           const dur = (9 + Math.random() * 8) * 1000;
           const phase = Math.random();
 
-          loadedFlags[idx] = isCast;
+          loadedFlags[idx] = isCast || isFollow;
 
           const el = document.createElement("div");
           el.className = "cursor-pointer";
@@ -235,7 +376,7 @@ export function HomeFloatingBackground() {
             top:0px;
             width:${w}px;
             height:${h}px;
-            border-radius:${isCast ? "10px" : "8px"};
+            border-radius:${isCast || isFollow ? "10px" : "8px"};
             overflow:hidden;
             opacity:0;
             will-change:transform,opacity;
@@ -250,7 +391,10 @@ export function HomeFloatingBackground() {
             else routerRef.current?.push(item.href);
           });
 
-          if (isCast) {
+          if (isFollow) {
+            el.appendChild(makeFollowEl(item));
+            el.style.pointerEvents = "auto";
+          } else if (isCast) {
             el.appendChild(makeCastEl(item));
             el.style.pointerEvents = "auto";
           } else {
@@ -267,7 +411,13 @@ export function HomeFloatingBackground() {
           }
 
           container.appendChild(el);
-          particles.push({ el, x, w, h, rise: H + h + 20, drift, dur, phase, maxOpacity: isCast ? 0.7 : 0.25, idx });
+          particles.push({
+            el, x, w, h,
+            rise: H + h + 20,
+            drift, dur, phase,
+            maxOpacity: isFollow ? 0.8 : isCast ? 0.7 : 0.25,
+            idx,
+          });
         });
 
         let startTime: number | null = null;
