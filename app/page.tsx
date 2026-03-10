@@ -55,6 +55,9 @@ import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_
 import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
 import { usePopupStates } from "@/hooks/usePopupStates";
 import { useBattleState, type BattleResult, VICTORY_IMAGES } from "@/hooks/useBattleState";
+import { useMissionState } from "@/hooks/useMissionState";
+import { useDefenseDeckState } from "@/hooks/useDefenseDeckState";
+import { useAttackState } from "@/hooks/useAttackState";
 import { usePowerCalculation } from "@/app/(game)/hooks/battle/usePowerCalculation";
 import { BattleArena } from "@/app/(game)/components/battle/BattleArena";
 import { MissionsView } from "@/app/(game)/components/views/MissionsView";
@@ -402,10 +405,6 @@ export default function TCGPage() {
   // 🚀 BANDWIDTH FIX: Use manual queries instead of useQuery subscriptions
   // This eliminates WebSocket subscription overhead (saves ~15MB/day)
   const convex = useConvex();
-  const [questProgress, setQuestProgress] = useState<any>(null);
-  const [weeklyProgress, setWeeklyProgress] = useState<any>(null);
-  const [playerMissions, setPlayerMissions] = useState<any[]>([]);
-  const [banCheck, setBanCheck] = useState<any>(null);
   const questsLoadedRef = useRef(false);
 
   // Reset when wallet changes so the next wallet loads fresh data
@@ -580,6 +579,49 @@ export default function TCGPage() {
     isLoadingPreview, setIsLoadingPreview,
   } = useBattleState();
 
+  const {
+    questProgress, setQuestProgress,
+    weeklyProgress, setWeeklyProgress,
+    playerMissions, setPlayerMissions,
+    banCheck, setBanCheck,
+    loginBonusClaimed, setLoginBonusClaimed,
+    isClaimingBonus, setIsClaimingBonus,
+    isClaimingQuest, setIsClaimingQuest,
+    isClaimingWeeklyReward, setIsClaimingWeeklyReward,
+    pendingClaimAction, setPendingClaimAction,
+    missions, setMissions,
+    isLoadingMissions, setIsLoadingMissions,
+    isClaimingMission, setIsClaimingMission,
+    isClaimingAll, setIsClaimingAll,
+    missionsSubView, setMissionsSubView,
+  } = useMissionState();
+
+  const {
+    defenseDeckWarningDismissed, setDefenseDeckWarningDismissed,
+    defenseDeckSaveStatus, setDefenseDeckSaveStatus,
+    defenseDeckSortByPower, setDefenseDeckSortByPower,
+    defenseDeckCollection, setDefenseDeckCollection,
+    pveSelectedCards, setPveSelectedCards,
+    pveSortByPower, setPveSortByPower,
+    aiDifficulty, setAiDifficulty,
+    unlockedDifficulties, setUnlockedDifficulties,
+    tempSelectedDifficulty, setTempSelectedDifficulty,
+  } = useDefenseDeckState();
+
+  const {
+    attackSelectedCards, setAttackSelectedCards,
+    targetPlayer, setTargetPlayer,
+    attacksRemaining, setAttacksRemaining,
+    isAttacking, setIsAttacking,
+    isConfirmingCards, setIsConfirmingCards,
+    defensesReceived, setDefensesReceived,
+    unreadDefenses, setUnreadDefenses,
+    profileUsername, setProfileUsername,
+    isCreatingProfile, setIsCreatingProfile,
+    newUsername, setNewUsername,
+    isChangingUsername, setIsChangingUsername,
+  } = useAttackState();
+
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
@@ -638,9 +680,6 @@ export default function TCGPage() {
   // PvP States
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [selectedRoomMode, setSelectedRoomMode] = useState<'ranked' | 'casual'>('ranked');
-
-  // AI Difficulty (5 levels with progressive unlock)
-  const [aiDifficulty, setAiDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad'>('gey');
 
   // Convex client for imperative queries (already declared above)
 
@@ -717,8 +756,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   );
   const prepareWeeklyLeaderboardVBMSClaim = useAction(api.quests.prepareWeeklyLeaderboardVBMSClaim);
   const recordWeeklyLeaderboardClaim = useMutation(api.quests.recordWeeklyLeaderboardClaim);
-  const [isClaimingWeeklyReward, setIsClaimingWeeklyReward] = useState<boolean>(false);
-
   // Show weekly leaderboard popup when eligible
   useEffect(() => {
     if (weeklyRewardEligibility?.eligible && address) {
@@ -787,15 +824,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   // Clean conflicting cards from defense deck on load
   const cleanConflictingDefense = useMutation(api.profiles.cleanConflictingDefenseCards);
 
-  // 🛡️ Defense Deck Warning - Show popup if player has no defense deck
-  const [defenseDeckWarningDismissed, setDefenseDeckWarningDismissed] = useState<boolean>(false);
-
-  const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
-  const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
-const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
-  const [unlockedDifficulties, setUnlockedDifficulties] = useState<Set<string>>(new Set(['gey']));
-  const [tempSelectedDifficulty, setTempSelectedDifficulty] = useState<'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad' | null>(null);
-
   const pvpBattleStarted = useRef<boolean>(false); // PvP battle flag to prevent double-start (useRef for immediate sync access)
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
 
@@ -829,8 +857,6 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   // 📬 VibeMail unread count for notification dot on VibeFID button
   const userFidForVibemail = farcasterFidState || userProfile?.farcasterFid || (userProfile?.fid ? parseInt(userProfile.fid) : undefined);
   const unreadVibeMailCount = useQuery(api.cardVotes.getUnreadMessageCount, userFidForVibemail ? { cardFid: userFidForVibemail } : "skip");
-  const [profileUsername, setProfileUsername] = useState<string>('');
-  const [isCreatingProfile, setIsCreatingProfile] = useState<boolean>(false);
   // REMOVED: Referral system disabled
   // Leaderboard moved to /leaderboard page
   const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
@@ -895,15 +921,7 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   // On-chain TX hooks for mission claims
   const { validateOnArb } = useArbValidator();
   // Arb Mode announcement disabled - no longer needed
-  const [pendingClaimAction, setPendingClaimAction] = useState<(() => void) | null>(null);
   // REMOVED: showReferrals - Referral system disabled
-
-  // Missions States
-  const [missions, setMissions] = useState<any[]>([]);
-  const [isLoadingMissions, setIsLoadingMissions] = useState<boolean>(false);
-  const [isClaimingMission, setIsClaimingMission] = useState<string | null>(null);
-  const [isClaimingAll, setIsClaimingAll] = useState<boolean>(false);
-  const [missionsSubView, setMissionsSubView] = useState<'missions' | 'social'>('social');
 
   // Check if any missions are claimable (for pulsing button)
   const hasClaimableMissions = useMemo(() => {
@@ -930,23 +948,6 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
     return dailyLoginClaimable || dailyQuestClaimable || personalMissionsClaimable;
   }, [questProgress, loginBonusClaimed, address, userProfile, playerMissions]);
 
-  // Defense Deck States
-  const [defenseDeckSaveStatus, setDefenseDeckSaveStatus] = useState<string>(''); // For retry feedback
-  const [defenseDeckSortByPower, setDefenseDeckSortByPower] = useState<boolean>(true); // Default to sorted by power
-  const [defenseDeckCollection, setDefenseDeckCollection] = useState<CollectionId | 'all'>('all');
-  const [pveSelectedCards, setPveSelectedCards] = useState<any[]>([]);
-  const [pveSortByPower, setPveSortByPower] = useState<boolean>(false);
-  const [newUsername, setNewUsername] = useState<string>('');
-  const [isChangingUsername, setIsChangingUsername] = useState<boolean>(false);
-
-  // Attack States
-  const [attackSelectedCards, setAttackSelectedCards] = useState<any[]>([]);
-  const [targetPlayer, setTargetPlayer] = useState<UserProfile | null>(null);
-  const [attacksRemaining, setAttacksRemaining] = useState<number>(getMaxAttacks(null));
-  const [isAttacking, setIsAttacking] = useState<boolean>(false);
-  const [isConfirmingCards, setIsConfirmingCards] = useState<boolean>(false);
-
-
   // Raid Boss States
   // Raid Boss moved to /raid page
 
@@ -954,10 +955,6 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
   const { totalPower: attackSelectedCardsPower } = usePowerCalculation(attackSelectedCards, true);
   const { totalPower: dealerCardsPower } = usePowerCalculation(dealerCards, true);
-
-  // Notifications States
-  const [defensesReceived, setDefensesReceived] = useState<any[]>([]);
-  const [unreadDefenses, setUnreadDefenses] = useState<number>(0);
 
   // Refs for preventing race conditions
   const updateStatsInProgress = useRef(false);
@@ -4270,6 +4267,8 @@ const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
               )}
               <div className="flex items-center justify-center gap-1">
+                {/* Lock icon — VibeMail temporarily restricted */}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" className="opacity-80"><path d="M17 11V7A5 5 0 0 0 7 7v4H5v10h14V11h-2zm-5 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3-6H9V7a3 3 0 0 1 6 0v4z"/></svg>
                 <span className="text-sm font-bold">{t("vibefidMint")}</span>
               </div>
               <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('vibefidCheckScore')}</span>
