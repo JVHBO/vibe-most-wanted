@@ -142,7 +142,7 @@ export async function GET(
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=3600, s-maxage=300, stale-while-revalidate=60',
+        'Cache-Control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=30',
       },
     });
 

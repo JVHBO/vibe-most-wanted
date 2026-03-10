@@ -84,9 +84,15 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
     setIsUpgrading(true);
     try {
       await upgradeCardRarity({ fid: card.fid, newNeynarScore: scoreData.score, newRarity: scoreData.rarity });
-      await fetch('/api/fid/opensea/refresh-metadata', {
+      // Regenerate card PNG on Filebase with new power/score, then refresh OpenSea
+      fetch('/api/fid/regenerate-card', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fid: card.fid }),
+      }).then(() => {
+        fetch('/api/fid/opensea/refresh-metadata', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fid: card.fid }),
+        }).catch(() => {});
       }).catch(() => {});
       setUpgradeSuccess(true);
     } catch (err: any) {
@@ -146,10 +152,15 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
         const rarityImproved = rarityOrder.indexOf(rarity) > rarityOrder.indexOf(card.rarity);
         if (rarityImproved) {
           await upgradeCardRarity({ fid: card.fid, newNeynarScore: score, newRarity: rarity });
-          // Trigger OpenSea metadata refresh
-          fetch('/api/fid/opensea/refresh-metadata', {
+          // Regenerate card PNG on Filebase with new power/score, then refresh OpenSea
+          fetch('/api/fid/regenerate-card', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ fid: card.fid }),
+          }).then(() => {
+            fetch('/api/fid/opensea/refresh-metadata', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ fid: card.fid }),
+            }).catch(() => {});
           }).catch(() => {});
         }
       }

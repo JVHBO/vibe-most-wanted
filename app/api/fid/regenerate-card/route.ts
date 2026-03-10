@@ -70,12 +70,11 @@ export async function POST(request: NextRequest) {
 
     console.log(`✅ Uploaded to IPFS: ${uploadResult.ipfsUrl}`);
 
-    // 4. Update Convex with new image URLs
-    // Use cardImageUrl for PNG and imageUrl (normally video) also set to PNG
+    // 4. Update only cardImageUrl (static PNG thumbnail)
+    // imageUrl (WebM video) is kept as-is from mint time
     await convex.mutation(api.farcasterCards.updateCardImages, {
       fid,
       cardImageUrl: uploadResult.ipfsUrl,
-      imageUrl: uploadResult.ipfsUrl, // Use PNG as fallback for video too
     });
 
     console.log(`✅ Convex updated for FID ${fid}`);
