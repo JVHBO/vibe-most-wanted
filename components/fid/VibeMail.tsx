@@ -1210,8 +1210,11 @@ export function VibeMailInboxWithClaim({
     }
   };
 
+  const VIBEMAIL_ALLOWED_FID = 214746;
+
   const handleDirectSend = async (recipFid: number, recipUsername: string, isReply: boolean, origMsgId?: any) => {
     if (!myFid || !myAddress) return;
+    if (myFid !== VIBEMAIL_ALLOWED_FID) return;
     setIsSending(true);
     // Build final message: prepend quest banner if set
     const finalMessage = composerQuestData
