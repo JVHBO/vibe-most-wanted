@@ -801,16 +801,16 @@ export default function BaccaratPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-vintage-black flex flex-col">
       {/* Header */}
-      <div className="bacc-header border-b-4 border-black px-4 py-2" style={{ background: '#FFD400' }}>
+      <div className="bacc-header border-b-4 border-black px-4 py-2 bg-[#1a1a1a]">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <button
             onClick={() => router.push('/')}
-            className="flex items-center gap-1 px-3 py-1.5 text-white text-sm font-bold border-2 border-black"
-            style={{ background: '#CC2222', boxShadow: '3px 3px 0px #000' }}
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+            style={{ boxShadow: '4px 4px 0px #000' }}
           >
             ← {t('baccaratBack')}
           </button>
-          <h1 className="text-2xl font-display font-bold tracking-wider" style={{ color: '#000', textShadow: 'none' }}>
+          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider whitespace-nowrap">
             {t('baccaratTitle')}
           </h1>
           <div className="flex items-center gap-2">
@@ -821,8 +821,8 @@ export default function BaccaratPage() {
             >
               ?
             </button>
-            <span className="font-bold" style={{ color: '#000' }}>{credits}</span>
-            <span className="text-xs" style={{ color: '#333' }}>{t('baccaratCredits')}</span>
+            <span className="font-bold text-vintage-gold">{credits}</span>
+            <span className="text-xs text-white/60">{t('baccaratCredits')}</span>
           </div>
         </div>
       </div>

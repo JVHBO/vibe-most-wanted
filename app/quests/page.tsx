@@ -464,7 +464,7 @@ export default function QuestsPage() {
           >
             ← BACK
           </button>
-          <h1 className="text-sm font-black text-white uppercase tracking-widest">{t('questsTitle')}</h1>
+          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider whitespace-nowrap">{t('questsTitle')}</h1>
           <div className="w-20" />
         </div>
 
