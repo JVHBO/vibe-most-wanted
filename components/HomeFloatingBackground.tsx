@@ -11,16 +11,16 @@ const DRAWING_KEY = "vmw_drawing_v1";
 
 type SupportedLang = 'pt-BR' | 'en' | 'es' | 'hi' | 'ru' | 'zh-CN' | 'id' | 'fr' | 'ja' | 'it';
 const DRAW_HINTS: Record<SupportedLang, { save: string; clear: string }> = {
-  'pt-BR': { save: 'CTRL+S salvar', clear: 'ESPAÇO limpar' },
-  'en':    { save: 'CTRL+S save',   clear: 'SPACE clear' },
-  'es':    { save: 'CTRL+S guardar', clear: 'ESPACIO borrar' },
-  'fr':    { save: 'CTRL+S enregistrer', clear: 'ESPACE effacer' },
-  'it':    { save: 'CTRL+S salva',  clear: 'SPAZIO cancella' },
-  'ru':    { save: 'CTRL+S сохранить', clear: 'ПРОБЕЛ очистить' },
-  'zh-CN': { save: 'CTRL+S 保存',   clear: '空格 清除' },
-  'ja':    { save: 'CTRL+S 保存',   clear: 'スペース 消去' },
-  'hi':    { save: 'CTRL+S सहेजें', clear: 'स्पेस मिटाएं' },
-  'id':    { save: 'CTRL+S simpan', clear: 'SPASI hapus' },
+  'pt-BR': { save: 'CTRL+ENTER salvar', clear: 'ESPAÇO limpar' },
+  'en':    { save: 'CTRL+ENTER save',   clear: 'SPACE clear' },
+  'es':    { save: 'CTRL+ENTER guardar', clear: 'ESPACIO borrar' },
+  'fr':    { save: 'CTRL+ENTER enregistrer', clear: 'ESPACE effacer' },
+  'it':    { save: 'CTRL+ENTER salva',  clear: 'SPAZIO cancella' },
+  'ru':    { save: 'CTRL+ENTER сохранить', clear: 'ПРОБЕЛ очистить' },
+  'zh-CN': { save: 'CTRL+ENTER 保存',   clear: '空格 清除' },
+  'ja':    { save: 'CTRL+ENTER 保存',   clear: 'スペース 消去' },
+  'hi':    { save: 'CTRL+ENTER सहेजें', clear: 'स्पेस मिटाएं' },
+  'id':    { save: 'CTRL+ENTER simpan', clear: 'SPASI hapus' },
 };
 
 interface FloatItem {
