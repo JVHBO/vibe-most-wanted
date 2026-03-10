@@ -21,7 +21,7 @@ interface FloatItem {
   bannerUrl?: string;
 }
 
-const CACHE_KEY = "vmw_hfb_v17";
+const CACHE_KEY = "vmw_hfb_v18";
 const CACHE_DATE_KEY = "vmw_hfb_date_v15";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
@@ -349,15 +349,21 @@ export function HomeFloatingBackground() {
           idx: number;
         }> = [];
 
+        // Follow banners: evenly spaced phases + same dur → clean rotation
+        const followTotal = items.filter(i => i.type === "followcard").length;
+        const followDur = followTotal > 0 ? followTotal * 12000 : 60000; // 12s per banner slot
+        let followSeenCount = 0;
+
         items.forEach((item, idx) => {
           const isFollow = item.type === "followcard";
           const isCast = item.type === "castcard";
-          const w = isFollow ? 240 : isCast ? 220 : 80;
+          const w = isFollow ? 220 : isCast ? 220 : 80;
           const h = isFollow ? 160 : isCast ? 110 : 112;
           const x = 20 + Math.random() * (W - w - 40);
           const drift = (Math.random() - 0.5) * 80;
-          const dur = (9 + Math.random() * 8) * 1000;
-          const phase = Math.random();
+          const dur = isFollow ? followDur : (9 + Math.random() * 8) * 1000;
+          // Follow banners evenly spaced; rest random
+          const phase = isFollow ? (followSeenCount++ / followTotal) : Math.random();
 
           loadedFlags[idx] = isCast || isFollow;
 
