@@ -13,7 +13,7 @@ interface AutoFitTextProps {
  * Use on any element where translated text might be longer than the default.
  */
 export function AutoFitText({ children, className = "", minSize = 9, as: Tag = "span" }: AutoFitTextProps) {
-  const wrapRef = useRef<HTMLElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
 
   useLayoutEffect(() => {
