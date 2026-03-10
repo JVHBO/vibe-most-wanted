@@ -3847,6 +3847,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
             getAvatarUrl={getAvatarUrl}
             onSettingsClick={() => setShowSettings(true)}
             onCreateProfileClick={() => setShowCreateProfile(true)}
+            onVibeFidClick={() => { setShowFidMailModal(true); }}
           />
 
           {/* Navigation Tabs */}
