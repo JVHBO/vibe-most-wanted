@@ -328,6 +328,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
     const onMouseDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
       if (isInteractive(e.clientX, e.clientY)) return;
+      e.preventDefault(); // prevent browser drag/text-selection capturing mousemove
       isDrawing = true;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -371,7 +372,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
     };
 
     document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousedown', onMouseDown, { passive: false });
     document.addEventListener('mouseup', onMouseUp);
     document.addEventListener('keydown', onKeyDown);
 
