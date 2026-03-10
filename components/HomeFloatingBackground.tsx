@@ -289,15 +289,6 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
       }
     };
 
-    const saved = localStorage.getItem(DRAWING_KEY);
-    if (saved) {
-      hasDrawing = true;
-      const img = new Image();
-      img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      img.src = saved;
-      updateHint(true);
-    }
-
     const isInteractive = (x: number, y: number) => {
       const el = document.elementFromPoint(x, y);
       if (!el) return false;
@@ -327,7 +318,31 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
         { opacity: 0,   transform: `translateY(-${H}px)` },
       ], { duration: 22000, easing: 'ease-in', fill: 'forwards' });
       setTimeout(() => { try { container.removeChild(floatEl); } catch {} }, 23000);
+    };
 
+    // Auto-launch saved drawing on page load
+    const saved = localStorage.getItem(DRAWING_KEY);
+    if (saved) {
+      hasDrawing = true;
+      updateHint(true);
+      const img = new Image();
+      img.onload = () => {
+        // Draw briefly on canvas so user sees it, then float it up after 1s
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        setTimeout(() => {
+          launchDrawing(saved);
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          hasDrawing = false;
+          localStorage.removeItem(DRAWING_KEY);
+          updateHint(false);
+        }, 1200);
+      };
+      img.src = saved;
+    }
+
+    // (upload closure continues below — only called from Ctrl+Enter)
+    const _launchWithUpload = (dataUrl: string) => {
+      launchDrawing(dataUrl);
       // Upload drawing to share with all users
       const address = walletAddressRef.current;
       if (address) {
@@ -343,7 +358,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
                 const profile = await convex.query(api.profiles.getProfileLite, { address });
                 if (profile?.username) {
                   username = profile.username;
-                  cachedUsernameRef.current = { address, username };
+                  cachedUsernameRef.current = { address, username: username! };
                 }
               } catch {}
             }
@@ -352,7 +367,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
             // Compress: draw dataUrl to a smaller JPEG canvas
             const offscreen = document.createElement('canvas');
             offscreen.width = 800;
-            offscreen.height = Math.round(800 * H / W);
+            offscreen.height = Math.round(800 * canvas.height / canvas.width);
             const octx = offscreen.getContext('2d')!;
             const srcImg = new Image();
             await new Promise<void>((resolve) => {
@@ -429,7 +444,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
         e.preventDefault();
         const dataUrl = canvas.toDataURL('image/png');
         try { localStorage.setItem(DRAWING_KEY, dataUrl); } catch {}
-        launchDrawing(dataUrl);
+        _launchWithUpload(dataUrl);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         hasDrawing = false;
         updateHint(false);
