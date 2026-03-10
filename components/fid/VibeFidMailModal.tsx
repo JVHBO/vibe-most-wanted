@@ -535,7 +535,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
 
           {/* Score Modal — rendered via portal to escape parent clipping */}
           {showScoreModal && scoreData && card && typeof document !== 'undefined' && createPortal(
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.80)' }} onClick={() => { setShowScoreModal(false); setUpgradeSuccess(false); }}>
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" onClick={() => { setShowScoreModal(false); setUpgradeSuccess(false); }}>
             <div className="w-full max-w-sm rounded-xl border border-vintage-gold/40 flex flex-col p-3 gap-2 overflow-y-auto" style={{ maxHeight: '85vh', background: '#0a0a0a' }} onClick={e => e.stopPropagation()}>
               {/* Header */}
               <div className="flex items-center justify-between">
