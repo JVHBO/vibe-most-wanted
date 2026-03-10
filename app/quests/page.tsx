@@ -16,6 +16,7 @@ import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
 import { WantedCastsTab } from "@/components/fid/WantedCastsTab";
 import { VibeMailInboxWithClaim } from "@/components/fid/VibeMail";
 import { VibeFIDConvexProvider } from "@/contexts/VibeFIDConvexProvider";
+import { AutoFitText } from "@/components/AutoFitText";
 
 
 export default function QuestsPage() {
@@ -464,7 +465,7 @@ export default function QuestsPage() {
           >
             ← BACK
           </button>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider whitespace-nowrap">SOCIAL QUESTS</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[55%]"><AutoFitText>SOCIAL QUESTS</AutoFitText></h1>
           <div className="w-20" />
         </div>
 

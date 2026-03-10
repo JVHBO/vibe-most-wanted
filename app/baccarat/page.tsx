@@ -15,6 +15,7 @@ import { useAccount, useSignMessage } from "wagmi";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { openMarketplace } from "@/lib/marketplace-utils";
 import { getAssetUrl } from "@/lib/ipfs-assets";
+import { AutoFitText } from "@/components/AutoFitText";
 
 type BetChoice = "player" | "banker" | "tie";
 type GamePhase = "betting" | "dealing" | "result";
@@ -810,8 +811,8 @@ export default function BaccaratPage() {
           >
             ← {t('baccaratBack')}
           </button>
-          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider whitespace-nowrap">
-            {t('baccaratTitle')}
+          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[50%]">
+            <AutoFitText>{t('baccaratTitle')}</AutoFitText>
           </h1>
           <div className="flex items-center gap-2">
             <button

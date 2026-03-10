@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { getAssetUrl } from "@/lib/ipfs-assets";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
 import { AudioManager } from "@/lib/audio-manager";
+import { AutoFitText } from "@/components/AutoFitText";
 
 
 interface ShopViewProps {
@@ -147,7 +148,7 @@ export function ShopView({ address }: ShopViewProps) {
             {(t as (k: string) => string)('raidBossBack')}
           </button>
 
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider whitespace-nowrap">{t('shopTitle')}</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[50%]"><AutoFitText>{t('shopTitle') as string}</AutoFitText></h1>
 
           <div className="text-right">
             <p className="text-[10px] text-vintage-ice/50 uppercase tracking-wider">{(t as (k: string) => string)('shopYourCards')}</p>
