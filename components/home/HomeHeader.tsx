@@ -100,7 +100,7 @@ export function HomeHeader({
 
                 {/* Dropdown menu */}
                 {showDropdown && (
-                  <div className="absolute top-full left-0 mt-1 bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-lg overflow-hidden z-[200] min-w-[140px] shadow-lg">
+                  <div className="absolute top-full left-0 mt-1 rounded-lg overflow-hidden z-[200] min-w-[140px] shadow-xl" style={{ background: '#1a1a1a', border: '2px solid rgba(212,175,55,0.3)' }}>
                     <Link
                       href={`/profile/${userProfile.username}`}
                       onClick={() => {
