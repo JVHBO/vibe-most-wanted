@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useQuery, useMutation } from 'convex/react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/fid/convex-generated/api';
@@ -532,10 +533,10 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
             </div>
           )}
 
-          {/* Score Modal — fixed overlay so button is never cut off */}
-          {showScoreModal && scoreData && card && (
-            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }} onClick={() => { setShowScoreModal(false); setUpgradeSuccess(false); }}>
-            <div className="w-full max-w-sm rounded-xl bg-black/95 border border-vintage-gold/40 flex flex-col p-3 gap-2 overflow-y-auto" style={{ maxHeight: '85vh' }} onClick={e => e.stopPropagation()}>
+          {/* Score Modal — rendered via portal to escape parent clipping */}
+          {showScoreModal && scoreData && card && typeof document !== 'undefined' && createPortal(
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.80)' }} onClick={() => { setShowScoreModal(false); setUpgradeSuccess(false); }}>
+            <div className="w-full max-w-sm rounded-xl border border-vintage-gold/40 flex flex-col p-3 gap-2 overflow-y-auto" style={{ maxHeight: '85vh', background: '#0a0a0a' }} onClick={e => e.stopPropagation()}>
               {/* Header */}
               <div className="flex items-center justify-between">
                 <h2 className="text-xs font-bold text-vintage-gold uppercase tracking-wide">Neynar Score</h2>
@@ -639,7 +640,8 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
                 </button>
               )}
             </div>
-            </div>
+            </div>,
+            document.body
           )}
 
           {/* Lore modal — z-30, compact inline render */}
