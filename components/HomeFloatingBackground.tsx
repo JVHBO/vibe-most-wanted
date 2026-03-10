@@ -5,9 +5,23 @@ import { useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { SOCIAL_QUESTS } from "@/lib/socialQuests";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const DRAWING_KEY = "vmw_drawing_v1";
-const BRUSH_CURSOR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M18 2l4 4-14 14H4v-4L18 2z' fill='%23c9a84c' stroke='%23000' stroke-width='1'/%3E%3Ccircle cx='4' cy='20' r='2' fill='%23c9a84c' opacity='0.7'/%3E%3C/svg%3E") 4 20, crosshair`;
+
+type SupportedLang = 'pt-BR' | 'en' | 'es' | 'hi' | 'ru' | 'zh-CN' | 'id' | 'fr' | 'ja' | 'it';
+const DRAW_HINTS: Record<SupportedLang, { save: string; clear: string }> = {
+  'pt-BR': { save: 'CTRL+S salvar', clear: 'ESPAÇO limpar' },
+  'en':    { save: 'CTRL+S save',   clear: 'SPACE clear' },
+  'es':    { save: 'CTRL+S guardar', clear: 'ESPACIO borrar' },
+  'fr':    { save: 'CTRL+S enregistrer', clear: 'ESPACE effacer' },
+  'it':    { save: 'CTRL+S salva',  clear: 'SPAZIO cancella' },
+  'ru':    { save: 'CTRL+S сохранить', clear: 'ПРОБЕЛ очистить' },
+  'zh-CN': { save: 'CTRL+S 保存',   clear: '空格 清除' },
+  'ja':    { save: 'CTRL+S 保存',   clear: 'スペース 消去' },
+  'hi':    { save: 'CTRL+S सहेजें', clear: 'स्पेस मिटाएं' },
+  'id':    { save: 'CTRL+S simpan', clear: 'SPASI hapus' },
+};
 
 interface FloatItem {
   id: string;
@@ -223,6 +237,10 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
   const router = useRouter();
   const rafRef = useRef<number>(0);
 
+  const { lang } = useLanguage();
+  const langRef = useRef(lang);
+  useEffect(() => { langRef.current = lang; }, [lang]);
+
   useEffect(() => { routerRef.current = router; }, [router]);
   useEffect(() => { onOpenFidModalRef.current = onOpenFidModal; }, [onOpenFidModal]);
 
@@ -241,27 +259,59 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
     let lastX = 0;
     let lastY = 0;
 
+    const getHints = () => DRAW_HINTS[langRef.current as SupportedLang] ?? DRAW_HINTS['en'];
+
+    const updateHint = (visible: boolean) => {
+      if (!hint) return;
+      if (visible) {
+        const h = getHints();
+        hint.textContent = `[ ${h.save} ]  [ ${h.clear} ]`;
+        hint.style.opacity = '1';
+      } else {
+        hint.style.opacity = '0';
+      }
+    };
+
     const saved = localStorage.getItem(DRAWING_KEY);
     if (saved) {
       hasDrawing = true;
       const img = new Image();
       img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       img.src = saved;
-      if (hint) { hint.style.opacity = '1'; }
+      updateHint(true);
     }
 
     const isInteractive = (x: number, y: number) => {
       const el = document.elementFromPoint(x, y);
       if (!el) return false;
-      // Only block on actual interactive elements (buttons, links, inputs)
       if (el.closest('a, button, input, select, textarea, [role="button"]')) return true;
-      // Block on floating background cards (cursor-pointer divs with pointer-events:auto)
       if (el.closest('[data-href]')) return true;
       return false;
     };
 
+    const launchDrawing = (dataUrl: string) => {
+      const container = containerRef.current;
+      if (!container) return;
+      const W = canvas.width;
+      const H = canvas.height;
+      const floatEl = document.createElement('div');
+      floatEl.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;pointer-events:none;opacity:0;`;
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.draggable = false;
+      img.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;';
+      floatEl.appendChild(img);
+      container.appendChild(floatEl);
+      floatEl.animate([
+        { opacity: 0, transform: `translateY(${H}px)` },
+        { opacity: 0.3, transform: `translateY(${H * 0.7}px)`, offset: 0.08 },
+        { opacity: 0.3, transform: `translateY(0px)`, offset: 0.5 },
+        { opacity: 0, transform: `translateY(-${H}px)` },
+      ], { duration: 22000, easing: 'linear', fill: 'forwards' });
+      setTimeout(() => { try { container.removeChild(floatEl); } catch {} }, 23000);
+    };
+
     const onMouseMove = (e: MouseEvent) => {
-      document.body.style.cursor = isInteractive(e.clientX, e.clientY) ? '' : BRUSH_CURSOR;
       if (!isDrawing) return;
       ctx.beginPath();
       ctx.moveTo(lastX, lastY);
@@ -276,6 +326,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
     };
 
     const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return;
       if (isInteractive(e.clientX, e.clientY)) return;
       isDrawing = true;
       lastX = e.clientX;
@@ -286,41 +337,49 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
       ctx.fill();
     };
 
-    const onMouseUp = () => {
-      if (!isDrawing) return;
+    const onMouseUp = (e: MouseEvent) => {
+      if (e.button !== 0 || !isDrawing) return;
       isDrawing = false;
       hasDrawing = true;
-      try { localStorage.setItem(DRAWING_KEY, canvas.toDataURL('image/png')); } catch {}
-      if (hint) { hint.style.opacity = '1'; }
+      updateHint(true);
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
+      const tag = (document.activeElement as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      // Ctrl+Enter: save drawing + launch as floating element
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && hasDrawing) {
+        e.preventDefault();
+        const dataUrl = canvas.toDataURL('image/png');
+        try { localStorage.setItem(DRAWING_KEY, dataUrl); } catch {}
+        launchDrawing(dataUrl);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hasDrawing = false;
+        updateHint(false);
+        return;
+      }
+
+      // Space: clear drawing
       if (e.code === 'Space' && hasDrawing) {
-        const tag = (document.activeElement as HTMLElement)?.tagName;
-        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
         e.preventDefault();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         localStorage.removeItem(DRAWING_KEY);
         hasDrawing = false;
-        if (hint) { hint.style.opacity = '0'; }
+        updateHint(false);
       }
     };
-
-    const onMouseLeave = () => { document.body.style.cursor = ''; };
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mousedown', onMouseDown);
     document.addEventListener('mouseup', onMouseUp);
     document.addEventListener('keydown', onKeyDown);
-    document.addEventListener('mouseleave', onMouseLeave);
 
     return () => {
-      document.body.style.cursor = '';
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mousedown', onMouseDown);
       document.removeEventListener('mouseup', onMouseUp);
       document.removeEventListener('keydown', onKeyDown);
-      document.removeEventListener('mouseleave', onMouseLeave);
     };
   }, []);
 
@@ -512,18 +571,22 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           });
         });
 
-        // Drag support — lets players move floating elements around
+        // Right-click drag — move floating elements, snap to corner on release
         type DragState = { p: typeof particles[0]; offX: number; offY: number; moved: boolean };
         let drag: DragState | null = null;
 
         particles.forEach(p => {
+          // Prevent context menu on right-click
+          p.el.addEventListener('contextmenu', (e) => { e.preventDefault(); });
           p.el.addEventListener('mousedown', (e) => {
-            e.stopPropagation(); // prevent drawing from starting
+            if (e.button !== 2) return; // right-click only
+            e.preventDefault();
+            e.stopPropagation();
             const rect = p.el.getBoundingClientRect();
             drag = { p, offX: e.clientX - rect.left, offY: e.clientY - rect.top, moved: false };
             p.isDragging = true;
             p.el.style.zIndex = '50';
-            p.el.style.opacity = '1';
+            p.el.style.opacity = '0.9';
           });
         });
 
@@ -535,21 +598,44 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           drag.p.el.style.transform = `translateX(${nx}px) translateY(${ny}px)`;
         };
 
-        const onDragUp = () => {
-          if (!drag) return;
+        const onDragUp = (e: MouseEvent) => {
+          if (!drag || e.button !== 2) return;
           const { p, moved } = drag;
           drag = null;
-          p.isDragging = false;
-          p.el.style.zIndex = '';
+
           if (moved) {
-            // suppress the click that fires after mouseup
-            p.el.addEventListener('click', (ev) => { ev.stopImmediatePropagation(); ev.preventDefault(); }, { capture: true, once: true });
+            // Snap to nearest corner
+            const rect = p.el.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const margin = 12;
+            const corners = [
+              { x: margin, y: margin },
+              { x: W - p.w - margin, y: margin },
+              { x: margin, y: H - p.h - margin },
+              { x: W - p.w - margin, y: H - p.h - margin },
+            ];
+            let nearest = corners[0];
+            let minDist = Infinity;
+            for (const c of corners) {
+              const d = Math.hypot(cx - (c.x + p.w / 2), cy - (c.y + p.h / 2));
+              if (d < minDist) { minDist = d; nearest = c; }
+            }
+            p.el.style.transform = `translateX(${nearest.x}px) translateY(${nearest.y}px)`;
+            p.el.style.zIndex = '5';
+            p.el.style.opacity = String(p.maxOpacity);
+            // keep isDragging = true so RAF doesn't override position
+          } else {
+            // no drag movement — resume animation
+            p.isDragging = false;
+            p.el.style.zIndex = '';
           }
         };
 
         document.addEventListener('mousemove', onDragMove);
         document.addEventListener('mouseup', onDragUp);
 
+        document.addEventListener('contextmenu', (e) => { if ((e.target as Element)?.closest('[data-href]')) e.preventDefault(); });
         dragCleanup.fn = () => {
           document.removeEventListener('mousemove', onDragMove);
           document.removeEventListener('mouseup', onDragUp);
