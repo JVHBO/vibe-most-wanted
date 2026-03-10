@@ -347,12 +347,14 @@ export function HomeFloatingBackground() {
             pointer-events:none;
           `;
 
+          el.dataset.href = item.href;
           el.addEventListener("mouseenter", () => { el.style.filter = "brightness(1.6)"; });
           el.addEventListener("mouseleave", () => { el.style.filter = ""; });
           el.addEventListener("click", (e) => {
             e.preventDefault();
-            if (item.href.startsWith("http")) window.open(item.href, "_blank", "noopener");
-            else routerRef.current?.push(item.href);
+            const href = el.dataset.href || item.href;
+            if (href.startsWith("http")) window.open(href, "_blank", "noopener");
+            else routerRef.current?.push(href);
           });
 
           if (isFollow) {
@@ -413,6 +415,7 @@ export function HomeFloatingBackground() {
               if (t < p.prevT - 0.5) {
                 const nextQuest = ALL_FOLLOW_QUESTS[p.followCycleIdx % ALL_FOLLOW_QUESTS.length];
                 p.followCycleIdx++;
+                p.el.dataset.href = nextQuest.href;
                 p.el.innerHTML = "";
                 const inner = makeFollowEl({
                   id: nextQuest.id, href: nextQuest.href, type: "followcard",
