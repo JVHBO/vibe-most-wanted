@@ -350,7 +350,7 @@ function ModalInner({ fid, username, onClose }: VibeFidMailModalProps) {
                       foilType={card.foil === 'None' ? null : (card.foil as 'Standard' | 'Prize' | null)}
                       className="w-full h-full"
                     >
-                      <CardMedia src={card.imageUrl || card.pfpUrl} alt={card.username} className="w-full h-full object-cover" />
+                      <CardMedia src={card.cardImageUrl || card.imageUrl || card.pfpUrl} alt={card.username} className="w-full h-full object-cover" />
                     </FoilCardEffect>
                   </div>
                   {/* VibeMail button - bottom right */}

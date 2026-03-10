@@ -28,9 +28,10 @@ function CardMediaComponent({ src, alt, className, loading = "lazy", onClick }: 
   const isDataUrl = src.startsWith('data:');
   const srcLower = src.toLowerCase();
   const hasVideoExtension = srcLower.includes('.mp4') || srcLower.includes('.webm') || srcLower.includes('.mov');
+  const hasImageExtension = srcLower.includes('.png') || srcLower.includes('.jpg') || srcLower.includes('.jpeg') || srcLower.includes('.gif') || srcLower.includes('.webp');
   const isIpfs = srcLower.includes('ipfs');
   const isVibeFID = srcLower.includes('filebase.io');
-  const shouldTryVideo = !isDataUrl && (hasVideoExtension || (isIpfs && !useImage));
+  const shouldTryVideo = !isDataUrl && (hasVideoExtension || (isIpfs && !useImage && !hasImageExtension));
 
   if (shouldTryVideo && !error) {
     return (
