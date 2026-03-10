@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
+import { SOCIAL_QUESTS } from "@/lib/socialQuests";
 
 interface FloatItem {
   id: string;
@@ -21,7 +22,7 @@ interface FloatItem {
   bannerUrl?: string;
 }
 
-const CACHE_KEY = "vmw_hfb_v18";
+const CACHE_KEY = "vmw_hfb_v19";
 const CACHE_DATE_KEY = "vmw_hfb_date_v15";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
@@ -46,69 +47,23 @@ const LOCAL_VBMS_CARDS: FloatItem[] = [
   { id: "local-rar-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-38.png" },
 ];
 
-// Follow mission banners — shown in background
-const FOLLOW_BANNERS: FloatItem[] = [
-  {
-    id: "follow-jvhbo",
-    href: "https://warpcast.com/jvhbo",
-    type: "followcard",
-    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/3a7e672c-8ba9-496e-e651-4a27281a1500/original",
-    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/75f1b780-45f6-4d39-b0f7-eeecc34aed00/original",
-    displayName: "Follow @jvhbo",
-    description: "Follow $VBMS creator",
-    reward: 50,
-  },
-  {
-    id: "follow-smolemaru",
-    href: "https://warpcast.com/smolemaru",
-    type: "followcard",
-    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/e4678b3c-40b1-4e64-20c3-af626d792f00/original",
-    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/a9c9038f-4f3b-43cf-256a-7a4d4ef3b700/original",
-    displayName: "Follow @smolemaru",
-    description: "Follow Viberuto creator",
-    reward: 50,
-  },
-  {
-    id: "follow-zazza",
-    href: "https://warpcast.com/zazza",
-    type: "followcard",
-    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/92e7f5ba-a6d3-499a-47cc-b19bfd2bda00/original",
-    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/9c712f19-2051-4c23-0836-f4ca201acf00/original",
-    displayName: "Follow @zazza",
-    description: "Follow Poorly Drawn Pepes creator",
-    reward: 50,
-  },
-  {
-    id: "follow-degencummunist",
-    href: "https://warpcast.com/degencummunist.eth",
-    type: "followcard",
-    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/7a30028d-83f9-46d9-1cc8-43b857638d00/original",
-    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/63798561-7d8c-4e2c-5f28-8e4a9995c000/original",
-    displayName: "Follow @degencummunist",
-    description: "Follow Cumioh creator",
-    reward: 50,
-  },
-  {
-    id: "follow-kenny",
-    href: "https://warpcast.com/kenny",
-    type: "followcard",
-    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/e6f1d0c9-26ff-4701-4bc5-f748256ab900/rectcrop3",
-    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/1463afd7-1798-4c25-7e0c-7f0bcb45f500/original",
-    displayName: "Follow @kenny",
-    description: "Follow Poidh creator",
-    reward: 50,
-  },
-  {
-    id: "follow-nezzar",
-    href: "https://warpcast.com/nezzar",
-    type: "followcard",
-    pfp: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/80ade64b-8417-4c74-1df6-8198656dc800/original",
-    bannerUrl: "https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/45f23684-d5d4-4ef1-60a7-c76440ff3c00/original",
-    displayName: "Follow @nezzar",
-    description: "Follow Astroblock creator",
-    reward: 50,
-  },
-];
+// All follow/channel quests from the source of truth — 19 total
+const ALL_FOLLOW_QUESTS: FloatItem[] = SOCIAL_QUESTS
+  .filter(q => (q.type === "follow" || q.type === "channel") && q.pfpUrl)
+  .map(q => ({
+    id: q.id,
+    href: q.url,
+    type: "followcard" as const,
+    pfp: q.pfpUrl,
+    bannerUrl: q.bannerUrl,
+    displayName: q.displayName,
+    description: q.description,
+    reward: q.reward,
+  }));
+
+// 3 rotating slots — each cycles through all quests independently
+const FOLLOW_SLOTS = 3;
+const FOLLOW_BANNERS: FloatItem[] = ALL_FOLLOW_QUESTS.slice(0, FOLLOW_SLOTS);
 
 function makeCastEl(item: FloatItem): HTMLDivElement {
   const card = document.createElement("div");
@@ -174,7 +129,7 @@ function makeCastEl(item: FloatItem): HTMLDivElement {
 function makeFollowEl(item: FloatItem): HTMLDivElement {
   const card = document.createElement("div");
   card.style.cssText = `
-    width:220px;
+    width:260px;
     background:#111;
     border:2px solid #c9a84c;
     border-radius:10px;
@@ -183,9 +138,9 @@ function makeFollowEl(item: FloatItem): HTMLDivElement {
     box-shadow:0 4px 20px rgba(201,168,76,0.2);
   `;
 
-  // Banner (full width, taller to show more)
+  // Banner (wide, shorter for landscape feel)
   const bannerWrap = document.createElement("div");
-  bannerWrap.style.cssText = "position:relative;width:100%;height:90px;overflow:hidden;";
+  bannerWrap.style.cssText = "position:relative;width:100%;height:72px;overflow:hidden;";
 
   if (item.bannerUrl) {
     const bannerImg = document.createElement("img");
@@ -206,7 +161,7 @@ function makeFollowEl(item: FloatItem): HTMLDivElement {
   // PFP (fully visible, below banner)
   if (item.pfp) {
     const pfpWrap = document.createElement("div");
-    pfpWrap.style.cssText = "flex-shrink:0;width:44px;height:44px;border-radius:50%;border:2px solid #c9a84c;overflow:hidden;background:#222;";
+    pfpWrap.style.cssText = "flex-shrink:0;width:40px;height:40px;border-radius:50%;border:2px solid #c9a84c;overflow:hidden;background:#222;";
     const pfpImg = document.createElement("img");
     pfpImg.src = item.pfp;
     pfpImg.style.cssText = "width:100%;height:100%;object-fit:cover;";
@@ -347,23 +302,26 @@ export function HomeFloatingBackground() {
           phase: number;
           maxOpacity: number;
           idx: number;
+          // follow cycling
+          followCycleIdx?: number;
+          prevT?: number;
         }> = [];
 
-        // Follow banners: evenly spaced phases + same dur → clean rotation
-        const followTotal = items.filter(i => i.type === "followcard").length;
-        const followDur = followTotal > 0 ? followTotal * 12000 : 60000; // 12s per banner slot
+        // 3 follow slots evenly spaced, 15s each = 45s full cycle
+        const followDur = FOLLOW_SLOTS * 15000;
         let followSeenCount = 0;
 
         items.forEach((item, idx) => {
           const isFollow = item.type === "followcard";
           const isCast = item.type === "castcard";
-          const w = isFollow ? 220 : isCast ? 220 : 80;
-          const h = isFollow ? 160 : isCast ? 110 : 112;
+          const w = isFollow ? 260 : isCast ? 220 : 80;
+          const h = isFollow ? 120 : isCast ? 110 : 112;
           const x = 20 + Math.random() * (W - w - 40);
           const drift = (Math.random() - 0.5) * 80;
           const dur = isFollow ? followDur : (9 + Math.random() * 8) * 1000;
-          // Follow banners evenly spaced; rest random
-          const phase = isFollow ? (followSeenCount++ / followTotal) : Math.random();
+          // Follow slots evenly spaced; rest random
+          const slotIdx = followSeenCount;
+          const phase = isFollow ? (followSeenCount++ / FOLLOW_SLOTS) : Math.random();
 
           loadedFlags[idx] = isCast || isFollow;
 
@@ -414,8 +372,10 @@ export function HomeFloatingBackground() {
             el, x, w, h,
             rise: H + h + 20,
             drift, dur, phase,
-            maxOpacity: isFollow ? 0.8 : isCast ? 0.7 : 0.25,
+            maxOpacity: isFollow ? 0.85 : isCast ? 0.7 : 0.25,
             idx,
+            // follow cycling: next quest = slotIdx + FOLLOW_SLOTS
+            ...(isFollow ? { followCycleIdx: slotIdx + FOLLOW_SLOTS, prevT: phase } : {}),
           });
         });
 
@@ -439,6 +399,23 @@ export function HomeFloatingBackground() {
                             : t > 0.92 ? ((1 - t) / 0.08) * p.maxOpacity
                             : p.maxOpacity;
               p.el.style.opacity = opacity.toFixed(3);
+            }
+
+            // Follow cycling: when t wraps, swap to next quest
+            if (p.followCycleIdx !== undefined && p.prevT !== undefined) {
+              if (t < p.prevT - 0.5) {
+                const nextQuest = ALL_FOLLOW_QUESTS[p.followCycleIdx % ALL_FOLLOW_QUESTS.length];
+                p.followCycleIdx++;
+                p.el.innerHTML = "";
+                const inner = makeFollowEl({
+                  id: nextQuest.id, href: nextQuest.href, type: "followcard",
+                  pfp: nextQuest.pfp, bannerUrl: nextQuest.bannerUrl,
+                  displayName: nextQuest.displayName, description: nextQuest.description,
+                  reward: nextQuest.reward,
+                });
+                p.el.appendChild(inner);
+              }
+              p.prevT = t;
             }
           }
 
