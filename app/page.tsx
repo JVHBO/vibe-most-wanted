@@ -58,6 +58,7 @@ import { useBattleState, type BattleResult, VICTORY_IMAGES } from "@/hooks/useBa
 import { useMissionState } from "@/hooks/useMissionState";
 import { useDefenseDeckState } from "@/hooks/useDefenseDeckState";
 import { useAttackState } from "@/hooks/useAttackState";
+import { useCardFilterState } from "@/hooks/useCardFilterState";
 import { usePowerCalculation } from "@/app/(game)/hooks/battle/usePowerCalculation";
 import { BattleArena } from "@/app/(game)/components/battle/BattleArena";
 import { MissionsView } from "@/app/(game)/components/views/MissionsView";
@@ -622,19 +623,25 @@ export default function TCGPage() {
     isChangingUsername, setIsChangingUsername,
   } = useAttackState();
 
+  const {
+    sortByPower, setSortByPower,
+    sortAttackByPower, setSortAttackByPower,
+    cardTypeFilter, setCardTypeFilter,
+    selectedCollections, setSelectedCollections,
+    currentPage, setCurrentPage,
+    filteredCount, setFilteredCount,
+    isSearching, setIsSearching,
+    selectedRoomMode, setSelectedRoomMode,
+  } = useCardFilterState();
+
   const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
   const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
   const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
-  const [sortByPower, setSortByPower] = useState<boolean>(false);
-  const [sortAttackByPower, setSortAttackByPower] = useState<boolean>(false);
-  const [cardTypeFilter, setCardTypeFilter] = useState<'all' | 'free' | 'nft'>('all');
   const [isMounted, setIsMounted] = useState<boolean>(false);
-  const [selectedCollections, setSelectedCollections] = useState<CollectionId[]>([]);
   const [nfts, setNfts] = useState<any[]>([]);
   const [jcNfts, setJcNfts] = useState<any[]>([]);
   const [jcNftsLoading, setJcNftsLoading] = useState<boolean>(true);
   const [jcLoadingProgress, setJcLoadingProgress] = useState<{page: number, cards: number} | null>(null);
-  const [filteredCount, setFilteredCount] = useState<number>(0);
   const [status, setStatus] = useState<string>("idle");
   const [skippedCardLoading, setSkippedCardLoading] = useState(false);
 
@@ -670,16 +677,11 @@ export default function TCGPage() {
   const [dealerPower, setDealerPower] = useState<number>(0);
   const profileDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
   const dexDropdownTimeout = useRef<NodeJS.Timeout | null>(null);
-  const [currentPage, setCurrentPage] = useState<number>(1);
   // Miniapp: 12 cards (1.5 rows), Website: 24 cards (3 full rows of 8)
   const CARDS_PER_PAGE = isInFarcaster ? 12 : 24;
 
   const victoryAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastVictoryIndexRef = useRef<number>(-1); // Track last victory screen to prevent consecutive duplicates
-
-  // PvP States
-  const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [selectedRoomMode, setSelectedRoomMode] = useState<'ranked' | 'casual'>('ranked');
 
   // Convex client for imperative queries (already declared above)
 

@@ -115,8 +115,9 @@ interface GamePopupsProps {
   isClaimingWeeklyReward?: boolean;
   onWeeklyLeaderboardClaimNow?: () => void;
 
-  // Translation
-  t: any;
+  // Translation — accepts the strict union key function or a simple (key: string) => string mock
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t: (...args: any[]) => string;
 }
 
 export function GamePopups({
