@@ -6,6 +6,9 @@ import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
 import { SOCIAL_QUESTS } from "@/lib/socialQuests";
 
+const DRAWING_KEY = "vmw_drawing_v1";
+const BRUSH_CURSOR = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M18 2l4 4-14 14H4v-4L18 2z' fill='%23c9a84c' stroke='%23000' stroke-width='1'/%3E%3Ccircle cx='4' cy='20' r='2' fill='%23c9a84c' opacity='0.7'/%3E%3C/svg%3E") 4 20, crosshair`;
+
 interface FloatItem {
   id: string;
   href: string;
@@ -212,6 +215,8 @@ interface HomeFloatingBackgroundProps {
 export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroundProps = {}) {
   const convex = useConvex();
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
   const routerRef = useRef<ReturnType<typeof useRouter> | null>(null);
   const onOpenFidModalRef = useRef(onOpenFidModal);
   const mountedRef = useRef(true);
@@ -220,6 +225,107 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
 
   useEffect(() => { routerRef.current = router; }, [router]);
   useEffect(() => { onOpenFidModalRef.current = onOpenFidModal; }, [onOpenFidModal]);
+
+  // Drawing canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const hint = hintRef.current;
+    if (!canvas) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext('2d')!;
+
+    let hasDrawing = false;
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    const saved = localStorage.getItem(DRAWING_KEY);
+    if (saved) {
+      hasDrawing = true;
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      img.src = saved;
+      if (hint) { hint.style.opacity = '1'; }
+    }
+
+    const isInteractive = (x: number, y: number) => {
+      const el = document.elementFromPoint(x, y);
+      if (!el) return false;
+      if (el.closest('a, button, input, select, textarea, [role="button"]')) return true;
+      // Check up the tree for cursor-pointer (Tailwind floating items)
+      let cur: Element | null = el;
+      while (cur && cur !== document.body) {
+        if (cur.classList.contains('cursor-pointer')) return true;
+        cur = cur.parentElement;
+      }
+      return false;
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      document.body.style.cursor = isInteractive(e.clientX, e.clientY) ? '' : BRUSH_CURSOR;
+      if (!isDrawing) return;
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(e.clientX, e.clientY);
+      ctx.strokeStyle = 'rgba(201,168,76,0.85)';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      lastX = e.clientX;
+      lastY = e.clientY;
+    };
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (isInteractive(e.clientX, e.clientY)) return;
+      isDrawing = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      ctx.beginPath();
+      ctx.arc(e.clientX, e.clientY, 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(201,168,76,0.85)';
+      ctx.fill();
+    };
+
+    const onMouseUp = () => {
+      if (!isDrawing) return;
+      isDrawing = false;
+      hasDrawing = true;
+      try { localStorage.setItem(DRAWING_KEY, canvas.toDataURL('image/png')); } catch {}
+      if (hint) { hint.style.opacity = '1'; }
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && hasDrawing) {
+        const tag = (document.activeElement as HTMLElement)?.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        e.preventDefault();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        localStorage.removeItem(DRAWING_KEY);
+        hasDrawing = false;
+        if (hint) { hint.style.opacity = '0'; }
+      }
+    };
+
+    const onMouseLeave = () => { document.body.style.cursor = ''; };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mouseup', onMouseUp);
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('mouseleave', onMouseLeave);
+
+    return () => {
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('mouseleave', onMouseLeave);
+    };
+  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -463,9 +569,34 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
   }, [convex]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}
-    />
+    <>
+      <div
+        ref={containerRef}
+        style={{ position: "fixed", inset: 0, pointerEvents: "none", overflow: "hidden", zIndex: 0 }}
+      />
+      <canvas
+        ref={canvasRef}
+        style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 1 }}
+      />
+      <div
+        ref={hintRef}
+        style={{
+          position: "fixed",
+          bottom: 16,
+          right: 16,
+          zIndex: 2,
+          opacity: 0,
+          transition: "opacity 0.6s",
+          color: "rgba(201,168,76,0.45)",
+          fontSize: "10px",
+          fontFamily: "monospace",
+          letterSpacing: "0.05em",
+          pointerEvents: "none",
+          userSelect: "none",
+        }}
+      >
+        [SPACE] limpar desenho
+      </div>
+    </>
   );
 }
