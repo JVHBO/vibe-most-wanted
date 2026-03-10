@@ -468,7 +468,7 @@ const convex = useConvex();
                     Loading...
                   </>
                 ) : (
-                  <>Defense {userProfile.hasDefenseDeck && <span className="text-green-400">✓</span>}</>
+                  <>DEF {userProfile.hasDefenseDeck && <span className="text-green-400">✓</span>}</>
                 )}
               </button>
             )}
@@ -1297,7 +1297,7 @@ const convex = useConvex();
       {/* Defense Deck Modal */}
       {showDefenseDeckModal && (
         <div
-          className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] p-4"
+          className="fixed inset-0 bg-black/95 flex items-center justify-center z-[400] p-4"
           onClick={() => setShowDefenseDeckModal(false)}
         >
           <div

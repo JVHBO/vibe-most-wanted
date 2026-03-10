@@ -236,7 +236,7 @@ export function ShopView({ address }: ShopViewProps) {
                     onClick={() => { AudioManager.buttonClick(); handleClaimDailyFree(); }}
                     onMouseEnter={() => AudioManager.buttonHover()}
                     disabled={claimingDaily}
-                    className={`w-full h-11 font-display font-bold rounded-lg transition-all disabled:opacity-50 text-vintage-black shadow-[0_4px_0_rgba(0,0,0,0.5)] hover:shadow-[0_2px_0_rgba(0,0,0,0.5)] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] ${isArb ? 'bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500' : 'bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500'}`}
+                    className={`w-full h-11 font-display font-bold rounded-lg transition-all disabled:opacity-50 text-vintage-black shadow-[0_4px_0_rgba(0,0,0,0.5)] hover:shadow-[0_2px_0_rgba(0,0,0,0.5)] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] ${isArb ? 'bg-amber-500 bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500' : 'bg-vintage-gold bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500'}`}
                   >
                     {claimingDaily ? "..." : isArb ? t('shopClaimFreePackArb' as any) : t('shopClaimFreePack' as any)}
                   </button>
