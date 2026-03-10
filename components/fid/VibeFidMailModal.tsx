@@ -534,7 +534,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
 
           {/* Score Modal — fixed overlay so button is never cut off */}
           {showScoreModal && scoreData && card && (
-            <div className="fixed inset-0 z-[10000] flex items-end justify-center p-4 pb-6" style={{ background: 'rgba(0,0,0,0.75)' }} onClick={() => { setShowScoreModal(false); setUpgradeSuccess(false); }}>
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.75)' }} onClick={() => { setShowScoreModal(false); setUpgradeSuccess(false); }}>
             <div className="w-full max-w-sm rounded-xl bg-black/95 border border-vintage-gold/40 flex flex-col p-3 gap-2 overflow-y-auto" style={{ maxHeight: '85vh' }} onClick={e => e.stopPropagation()}>
               {/* Header */}
               <div className="flex items-center justify-between">
@@ -633,8 +633,8 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
               )}
               {isOwnCard && canSync() && !upgradeSuccess && (
                 <button onClick={handleSync} disabled={isUpgrading}
-                  className="w-full py-2 text-vintage-gold font-bold rounded text-xs disabled:opacity-50 uppercase tracking-widest border border-vintage-gold/50 bg-vintage-black/40 hover:bg-vintage-gold/10 transition-colors"
-                  style={{ letterSpacing: '0.1em' }}>
+                  className="vmt-sync w-full py-2 font-bold rounded text-xs disabled:opacity-50 uppercase tracking-widest border transition-colors"
+                  style={{ letterSpacing: '0.1em', color: '#FFD700', background: 'rgba(17,17,17,0.8)', borderColor: 'rgba(255,215,0,0.4)' }}>
                   {isUpgrading ? '...' : `↻ SYNC SCORE`}
                 </button>
               )}
