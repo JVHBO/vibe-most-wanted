@@ -141,7 +141,7 @@ export function ShopView({ address }: ShopViewProps) {
           <button
             onClick={() => { AudioManager.buttonNav(); router.push("/"); }}
             onMouseEnter={() => AudioManager.buttonHover()}
-            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+            className="shop-back-btn px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
             style={{ boxShadow: '4px 4px 0px #000' }}
           >
             {(t as (k: string) => string)('raidBossBack')}

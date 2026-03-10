@@ -456,7 +456,7 @@ export default function QuestsPage() {
 
       {/* Header */}
       <div className={`absolute top-0 left-0 right-0 z-20 ${activeTab === 'messages' ? 'bg-[#111]' : 'bg-[#1a1a1a]'} border-b-4 border-black`}>
-        <div className="flex items-center justify-between px-3 py-1.5">
+        <div className="relative flex items-center justify-between px-3 py-1.5">
           <button
             onClick={() => router.push("/")}
             className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
@@ -464,7 +464,7 @@ export default function QuestsPage() {
           >
             ← BACK
           </button>
-          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider whitespace-nowrap">{t('questsTitle')}</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider whitespace-nowrap">SOCIAL QUESTS</h1>
           <div className="w-20" />
         </div>
 

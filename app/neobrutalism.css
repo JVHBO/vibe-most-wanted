@@ -1448,23 +1448,25 @@ body.neobrutalism [class*="via-vintage-deep-black"] {
 
 /* Header bar — inline style no JSX garante #FFD400, CSS aqui reforça */
 body.neobrutalism .bacc-header {
-  background: #FFD400 !important;
-  background-color: #FFD400 !important;
+  background: #1a1a1a !important;
+  background-color: #1a1a1a !important;
   border-bottom: 4px solid #000 !important;
 }
 body.neobrutalism .bacc-header * {
-  color: #000 !important;
   text-shadow: none !important;
 }
-/* Back button — vermelho neobrutalism */
+body.neobrutalism .bacc-header h1 {
+  color: #FFD400 !important;
+}
+/* Back button */
 body.neobrutalism .bacc-header button:first-child {
   background: #CC2222 !important;
   color: #fff !important;
-  border: 2px solid #000 !important;
-  box-shadow: 3px 3px 0px #000 !important;
+  border: 4px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
   border-radius: 0 !important;
 }
-/* ? button — círculo escuro com borda gold */
+/* ? button */
 body.neobrutalism .bacc-header button:last-of-type {
   background: #1a1a1a !important;
   border: 2px solid #FFD400 !important;
@@ -1839,6 +1841,15 @@ body.neobrutalism [class*="bg-vintage-deep-black"][class*="overflow-hidden"] but
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
   border-radius: 4px !important;
+}
+body.neobrutalism .shop-back-btn {
+  background-color: #CC2222 !important;
+  color: #FFF !important;
+  border: 4px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
+  border-radius: 0 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.1em !important;
 }
 
 /* Pack cover image shadow - outline nos 4 lados + offset */
