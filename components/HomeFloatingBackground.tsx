@@ -22,7 +22,7 @@ interface FloatItem {
   bannerUrl?: string;
 }
 
-const CACHE_KEY = "vmw_hfb_v20";
+const CACHE_KEY = "vmw_hfb_v21";
 const CACHE_DATE_KEY = "vmw_hfb_date_v15";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
@@ -315,7 +315,7 @@ export function HomeFloatingBackground() {
           const isFollow = item.type === "followcard";
           const isCast = item.type === "castcard";
           const w = isFollow ? 260 : isCast ? 220 : 80;
-          const h = isFollow ? 148 : isCast ? 110 : 112;
+          const h = isFollow ? 162 : isCast ? 110 : 112;
           const x = 20 + Math.random() * (W - w - 40);
           const drift = (Math.random() - 0.5) * 80;
           const dur = isFollow ? followDur : (9 + Math.random() * 8) * 1000;
@@ -334,7 +334,7 @@ export function HomeFloatingBackground() {
             width:${w}px;
             height:${h}px;
             border-radius:${isCast || isFollow ? "10px" : "8px"};
-            overflow:hidden;
+            ${isFollow ? "" : "overflow:hidden;"}
             opacity:0;
             will-change:transform,opacity;
             pointer-events:none;
