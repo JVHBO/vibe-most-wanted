@@ -21,7 +21,7 @@ interface FloatItem {
   bannerUrl?: string;
 }
 
-const CACHE_KEY = "vmw_hfb_v16";
+const CACHE_KEY = "vmw_hfb_v17";
 const CACHE_DATE_KEY = "vmw_hfb_date_v15";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
@@ -30,16 +30,20 @@ const HIDDEN_CAST_URLS = new Set([
   "https://farcaster.xyz/jvhbo/0x20586a19",
 ]);
 
-// Reduced local VBMS cards — fewer elements
 const VIBEMARKET_URL = "https://vibechain.com/market?ref=XCLR1DJ6LQTT";
 const LOCAL_VBMS_CARDS: FloatItem[] = [
   { id: "local-leg-1", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-39.png" },
   { id: "local-leg-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-52.png" },
   { id: "local-leg-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-57.png" },
+  { id: "local-leg-4", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-50.png" },
+  { id: "local-leg-5", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/legendary/item-55.png" },
   { id: "local-epc-1", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-43.png" },
   { id: "local-epc-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-47.png" },
+  { id: "local-epc-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-44.png" },
+  { id: "local-epc-4", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/epic/item-49.png" },
   { id: "local-rar-1", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-37.png" },
   { id: "local-rar-2", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-42.png" },
+  { id: "local-rar-3", href: VIBEMARKET_URL, type: "vibecard", imageUrl: "/cards/rare/item-38.png" },
 ];
 
 // Follow mission banners — shown in background
@@ -269,7 +273,7 @@ export function HomeFloatingBackground() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 path: "farcasterCards:getHighRarityCards",
-                args: { limit: 6 },
+                args: { limit: 10 },
                 format: "json",
               }),
             });
@@ -279,7 +283,7 @@ export function HomeFloatingBackground() {
             }
           } catch {}
 
-          // Fetch only 15 most recent auction winners
+          // Fetch 20 most recent auction winners
           type HistoryItem = {
             _id: string;
             warpcastUrl?: string;
@@ -289,7 +293,7 @@ export function HomeFloatingBackground() {
           };
           let winners: HistoryItem[] = [];
           try {
-            winners = (await convex.query(api.castAuctions.getAuctionHistory, { limit: 15 })) as HistoryItem[];
+            winners = (await convex.query(api.castAuctions.getAuctionHistory, { limit: 20 })) as HistoryItem[];
           } catch {}
 
           const validWinners = winners.filter(w => w.warpcastUrl && !HIDDEN_CAST_URLS.has(w.warpcastUrl) && (w.castAuthorPfp || w.castAuthorUsername));
