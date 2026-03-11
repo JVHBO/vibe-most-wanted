@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
       },
       cache: 'no-store',
     });
-    if (!res.ok) return NextResponse.json({ results: [] }, { status: 200 });
+    if (!res.ok) return NextResponse.json({ results: [], _debug: `status:${res.status}` }, { status: 200 });
     const data = await res.json();
     // Normalize: return [{name, url}]
     const results = (data.results ?? []).slice(0, 24).map((item: any) => ({
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       url: item.sound?.startsWith('http') ? item.sound : `${BASE}${item.sound}`,
     }));
     return NextResponse.json({ results });
-  } catch {
-    return NextResponse.json({ results: [] });
+  } catch (e: any) {
+    return NextResponse.json({ results: [], _debug: `err:${e?.message}` });
   }
 }
