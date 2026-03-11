@@ -19,14 +19,16 @@ export async function GET(req: NextRequest) {
       },
       cache: 'no-store',
     });
-    if (!res.ok) return NextResponse.json({ results: [], _debug: `status:${res.status}` }, { status: 200 });
-    const data = await res.json();
+    const raw = await res.text();
+    if (!res.ok) return NextResponse.json({ results: [], _debug: `status:${res.status} body:${raw.slice(0,100)}` }, { status: 200 });
+    let data: any;
+    try { data = JSON.parse(raw); } catch { return NextResponse.json({ results: [], _debug: `not_json:${raw.slice(0,100)}` }); }
     // Normalize: return [{name, url}]
     const results = (data.results ?? []).slice(0, 24).map((item: any) => ({
       name: item.name as string,
       url: item.sound?.startsWith('http') ? item.sound : `${BASE}${item.sound}`,
     }));
-    return NextResponse.json({ results });
+    return NextResponse.json({ results, _debug: `ok_count:${results.length}` });
   } catch (e: any) {
     return NextResponse.json({ results: [], _debug: `err:${e?.message}` });
   }
