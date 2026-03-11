@@ -312,7 +312,6 @@ export const VIBEMAIL_IMAGES = [
   { id: 'dan-buttero', name: 'Dan Buttero', file: '/vibemail/dan-buttero.png', isVideo: false },
   { id: 'lula', name: 'Lula', file: '/vibemail/lula.png', isVideo: false },
   { id: 'vegetan', name: 'Vegetan', file: '/vibemail/vegetan.jpg', isVideo: false },
-  { id: 'suck-jones', name: 'Suck Jones', file: '/vibemail/suck-jones.mp4', isVideo: true },
   { id: 'neymar', name: 'Neymar', file: '/vibemail/neymar.png', isVideo: false },
 ] as const;
 
