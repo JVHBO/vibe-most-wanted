@@ -2654,6 +2654,7 @@ export function VibeMailInboxWithClaim({
                   onChange={e => {
                     const val = e.target.value;
                     setMiSearch(val);
+                    if (val) setMiLoading(true);
                     if (miSearchTimeout.current) clearTimeout(miSearchTimeout.current);
                     miSearchTimeout.current = setTimeout(() => doFetchMi(val), val ? 500 : 0);
                   }}
@@ -2686,10 +2687,11 @@ export function VibeMailInboxWithClaim({
                   })}
 
                   {/* Myinstants results (from API) */}
+                  {miSearch && <div className="text-[#F97316]/40 text-[9px] uppercase tracking-widest pt-1 pb-0.5 border-t border-[#F97316]/10">Myinstants</div>}
                   {miLoading
                     ? <div className="text-center text-[#F97316]/40 text-xs py-3">Searching...</div>
                     : miResults.length === 0 && miSearch
-                    ? <div className="text-center text-white/30 text-xs py-2">No results on Myinstants</div>
+                    ? <div className="text-center text-white/30 text-xs py-2">No results</div>
                     : miResults.map(sound => {
                         const isSelected = composerMessage.includes(`/sound=${sound.url}`);
                         const isPreviewing = previewSound === sound.url;
