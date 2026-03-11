@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const TENOR_KEY = 'AIzaSyAyimkuYQYF_FXVALexPzpSGNLf-WwHbpo'; // public demo key
+const TENOR_KEY = process.env.TENOR_API_KEY || '';
 const BASE = 'https://tenor.googleapis.com/v2';
 
 export async function GET(req: NextRequest) {
