@@ -514,17 +514,19 @@ function renderRichMessageFn(
               } else if (audioRef.current) {
                 audioRef.current.src = url;
                 audioRef.current.volume = volume;
-                audioRef.current.play().catch(console.error);
+                audioRef.current.play().catch(() => setPlayingAudio(`err:${pid}`));
                 setPlayingAudio(pid);
               }
             }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${playingAudio === pid ? 'bg-red-500 text-white animate-pulse' : 'bg-[#F97316] text-black'}`}
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${playingAudio === `err:${pid}` ? 'bg-red-700 text-white' : playingAudio === pid ? 'bg-red-500 text-white animate-pulse' : 'bg-[#F97316] text-black'}`}
           >
-            {playingAudio === pid ? '■' : '▶'}
+            {playingAudio === `err:${pid}` ? '!' : playingAudio === pid ? '■' : '▶'}
           </button>
           <div className="flex-1 min-w-0">
             <p className="text-[#F97316] font-bold text-xs truncate">{name}</p>
-            <p className="text-white/40 text-[10px]">{playingAudio === pid ? 'Playing' : 'Tap to play'} · {Math.round(volume * 100)}% vol</p>
+            <p className={`text-[10px] ${playingAudio === `err:${pid}` ? 'text-red-400' : 'text-white/40'}`}>
+              {playingAudio === `err:${pid}` ? 'Audio unavailable — check URL' : playingAudio === pid ? 'Playing' : 'Tap to play'} {playingAudio !== `err:${pid}` ? `· ${Math.round(volume * 100)}% vol` : ''}
+            </p>
           </div>
         </div>
       );
@@ -537,9 +539,12 @@ function renderRichMessageFn(
       flushText();
       const url = imgM[1];
       const isVid = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+      const mediaKey = `img-${nodes.length}`;
       nodes.push(isVid
-        ? <video key={`vid-${nodes.length}`} src={url} className="max-w-full max-h-48 object-contain border border-[#FFD700]/30 my-1 rounded" autoPlay loop muted playsInline />
-        : <img key={`img-${nodes.length}`} src={url} alt="Media" className="max-w-full max-h-48 object-contain border border-[#FFD700]/30 my-1 rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        ? <video key={mediaKey} src={url} className="w-full max-h-72 object-contain border border-[#FFD700]/30 my-1 rounded" autoPlay loop muted playsInline
+            onError={(e) => { const el = e.currentTarget; el.style.display='none'; const err = document.createElement('div'); err.className='text-red-400 text-xs py-2 px-3 bg-red-900/30 border border-red-500/30 rounded my-1'; err.textContent='Video unavailable — check URL'; el.parentNode?.insertBefore(err, el.nextSibling); }} />
+        : <img key={mediaKey} src={url} alt="Media" className="w-full max-h-72 object-contain border border-[#FFD700]/30 my-1 rounded"
+            onError={(e) => { const el = e.currentTarget; el.style.display='none'; const err = document.createElement('div'); err.className='text-red-400 text-xs py-2 px-3 bg-red-900/30 border border-red-500/30 rounded my-1'; err.textContent='Image unavailable — check URL'; el.parentNode?.insertBefore(err, el.nextSibling); }} />
       );
       continue;
     }
@@ -971,6 +976,9 @@ export function VibeMailInboxWithClaim({
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [showImgInput, setShowImgInput] = useState(false);
   const [imgInputUrl, setImgInputUrl] = useState('');
+  const [soundUrlInput, setSoundUrlInput] = useState('');
+  const [soundUrlLoading, setSoundUrlLoading] = useState(false);
+  const [soundUrlError, setSoundUrlError] = useState('');
   const [composerCastUrl, setComposerCastUrl] = useState<string | null>(null);
   const [showCastInput, setShowCastInput] = useState(false);
   const [castInputValue, setCastInputValue] = useState('');
@@ -2601,6 +2609,44 @@ export function VibeMailInboxWithClaim({
                   <span className="text-[#F97316] text-[10px] font-black uppercase tracking-widest">Audios</span>
                   <button onClick={() => setShowSoundPicker(false)} className="text-white/30 hover:text-white text-xs">✕</button>
                 </div>
+                {/* Direct URL input */}
+                <div className="flex gap-1 mb-2">
+                  <input
+                    type="url"
+                    value={soundUrlInput}
+                    onChange={e => { setSoundUrlInput(e.target.value); setSoundUrlError(''); }}
+                    placeholder="Paste .mp3 URL or myinstants.com/instant/..."
+                    className="flex-1 px-2 py-1.5 bg-[#111] border border-[#F97316]/30 text-white text-xs placeholder-white/20 outline-none focus:border-[#F97316]/60 min-w-0"
+                    style={{ colorScheme: 'dark' }}
+                    onKeyDown={async e => {
+                      if (e.key !== 'Enter' || !soundUrlInput.trim()) return;
+                      setSoundUrlLoading(true); setSoundUrlError('');
+                      let finalUrl = soundUrlInput.trim();
+                      const miMatch = finalUrl.match(/myinstants\.com\/instant\/([^/?#]+)/i);
+                      if (miMatch) {
+                        try {
+                          const r = await fetch(`/api/myinstants?search=${encodeURIComponent(miMatch[1])}`);
+                          const d = await r.json();
+                          if (d.results?.[0]?.url) { finalUrl = d.results[0].url; }
+                          else { setSoundUrlError('Not found'); setSoundUrlLoading(false); return; }
+                        } catch { setSoundUrlError('Error'); setSoundUrlLoading(false); return; }
+                      }
+                      if (!finalUrl.match(/\.(mp3|ogg|wav|aac|m4a)(\?|$)/i) && !finalUrl.includes('myinstants.com/media/')) {
+                        setSoundUrlError('Need direct .mp3 URL');
+                        setSoundUrlLoading(false); return;
+                      }
+                      const soundLine = `/sound=${finalUrl} volume=0.2`;
+                      const cur = composerMessage.trim();
+                      setComposerMessage(cur ? cur + '\n' + soundLine : soundLine);
+                      setShowSoundPicker(false); setSoundUrlLoading(false); setSoundUrlInput(''); setSoundUrlError('');
+                    }}
+                  />
+                  {soundUrlLoading
+                    ? <span className="text-[#F97316]/60 text-xs flex items-center px-2">...</span>
+                    : soundUrlError
+                    ? <span className="text-red-400 text-[9px] flex items-center px-1 leading-tight max-w-[70px]">{soundUrlError}</span>
+                    : null}
+                </div>
                 {/* Search */}
                 <input
                   type="text"
@@ -2612,7 +2658,6 @@ export function VibeMailInboxWithClaim({
                     miSearchTimeout.current = setTimeout(() => doFetchMi(val), val ? 500 : 0);
                   }}
                   placeholder="Search myinstants..."
-                  autoFocus
                   className="w-full mb-2 px-2 py-1.5 bg-[#1a1a1a] border border-[#F97316]/30 text-[#F97316] text-xs placeholder-[#F97316]/30 outline-none focus:border-[#F97316]/60"
                   style={{ colorScheme: 'dark' }}
                 />
@@ -2643,6 +2688,8 @@ export function VibeMailInboxWithClaim({
                   {/* Myinstants results (from API) */}
                   {miLoading
                     ? <div className="text-center text-[#F97316]/40 text-xs py-3">Searching...</div>
+                    : miResults.length === 0 && miSearch
+                    ? <div className="text-center text-white/30 text-xs py-2">No results on Myinstants</div>
                     : miResults.map(sound => {
                         const isSelected = composerMessage.includes(`/sound=${sound.url}`);
                         const isPreviewing = previewSound === sound.url;
