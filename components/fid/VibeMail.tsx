@@ -3105,14 +3105,20 @@ export function VibeMailInboxWithClaim({
                           </div>
                         </div>
                       );
-                      // Scroll indicator arrow
+                      // Scroll indicator arrow — sticky so it floats at the bottom of the visible viewport
                       const scrollArrow = (
-                        <div style={{ position: 'absolute', bottom: 38, right: 8, zIndex: 200, pointerEvents: 'none' }}
-                          className="animate-bounce text-[#FFD700]/30 text-xs font-black select-none">↓</div>
+                        <div style={{ position: 'sticky', bottom: 52, display: 'flex', justifyContent: 'flex-end', paddingRight: 8, zIndex: 200, pointerEvents: 'none' }}>
+                          <div className="animate-bounce select-none" style={{ opacity: 0.55 }}>
+                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                              <circle cx="14" cy="14" r="13" fill="rgba(0,0,0,0.55)" stroke="#FFD700" strokeWidth="1.5"/>
+                              <polyline points="9,11 14,18 19,11" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                            </svg>
+                          </div>
+                        </div>
                       );
 
                       if (!hasDesign) return (
-                        <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, overflow: 'hidden' }}>
+                        <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, overflow: 'clip' }}>
                           <div className="p-1 pb-12">
                             <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb' }}>
                               {composerMessage ? renderRichMessage(composerMessage) : <span style={{ color: 'rgba(255,255,255,0.3)' }}>(no text)</span>}
@@ -3154,7 +3160,7 @@ export function VibeMailInboxWithClaim({
 
                       // Designed layout — elements at their custom absolute positions
                       return (
-                        <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, overflow: 'hidden' }}>
+                        <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, overflow: 'clip' }}>
                           {(() => {
                             type PvItem = { key: string; z: number; node: React.ReactNode };
                             const pvItems: PvItem[] = [];
@@ -3686,28 +3692,7 @@ export function VibeMailInboxWithClaim({
                             const ctx = off.getContext('2d');
                             if (!ctx) throw new Error('no ctx');
                             ctx.scale(dpr, dpr);
-                            // Step 1: draw existing GIF/image as background (bake it in so it's not lost)
-                            const existingImgSrc = composerImageId
-                              ? (composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''))
-                              : (composerMessage.match(/\/img=(\S+)/i)?.[1] ?? '');
-                            const existingImgPos = elementPositions['image'];
-                            if (existingImgSrc && existingImgPos) {
-                              await new Promise<void>(resolve => {
-                                const bgImg = new Image();
-                                bgImg.crossOrigin = 'anonymous';
-                                bgImg.onload = () => {
-                                  ctx.save();
-                                  ctx.translate(existingImgPos.x + existingImgPos.w / 2, existingImgPos.y + existingImgPos.h / 2);
-                                  ctx.rotate(((existingImgPos.r ?? 0) * Math.PI) / 180);
-                                  ctx.drawImage(bgImg, -existingImgPos.w / 2, -existingImgPos.h / 2, existingImgPos.w, existingImgPos.h);
-                                  ctx.restore();
-                                  resolve();
-                                };
-                                bgImg.onerror = () => resolve(); // skip if CORS fails
-                                bgImg.src = existingImgSrc;
-                              });
-                            }
-                            // Step 2: draw strokes sorted by z on top
+                            // Draw strokes only — transparent background, GIF stays as separate element
                             const sortedDrawIds = [...drawnIds].sort((a, b) => ((elementPositions[a]?.z ?? 0) - (elementPositions[b]?.z ?? 0)));
                             await Promise.all(sortedDrawIds.map(id => new Promise<void>(resolve => {
                               const src = drawingImages[id];
@@ -3727,34 +3712,36 @@ export function VibeMailInboxWithClaim({
                             })));
                             const blob = await new Promise<Blob | null>(res => off.toBlob(res, 'image/png'));
                             if (!blob) throw new Error('export failed');
-                            // Clear draws + existing image element (all baked into composite)
-                            setDrawnIds([]);
-                            setDrawingImages({});
-                            // Remove /img= from message if GIF was embedded there
-                            if (composerMessage.match(/\/img=(\S+)/i)) {
-                              setComposerMessage(composerMessage.replace(/\/img=\S+/gi, '').trim());
-                            }
-                            setElementPositions(p => {
-                              const next = { ...p };
-                              for (const k of Object.keys(next)) { if (k.startsWith('draw_')) delete next[k]; }
-                              // Place composite image at full canvas area
-                              next['image'] = { x: 0, y: 0, w: W, h: H, r: 0, z: next['image']?.z ?? 0 };
-                              return next;
-                            });
                             // Save locally first — instant preview
                             const localUrl = URL.createObjectURL(blob);
-                            setComposerCustomImagePreview(localUrl);
-                            setComposerImageId('img:local_drawing');
+                            const compositeId = 'draw_composite';
+                            // Replace all individual draws with one merged composite (transparent PNG, GIF stays untouched)
+                            setDrawingImages(prev => {
+                              const next: Record<string, string> = { [compositeId]: localUrl };
+                              // Revoke old blob URLs to avoid memory leaks
+                              for (const [k, v] of Object.entries(prev)) { if (v.startsWith('blob:')) URL.revokeObjectURL(v); }
+                              return next;
+                            });
+                            setDrawnIds([compositeId]);
+                            setElementPositions(p => {
+                              const next = { ...p };
+                              for (const k of Object.keys(next)) { if (k.startsWith('draw_') && k !== compositeId) delete next[k]; }
+                              // Composite covers the full canvas area, inherits highest draw z
+                              const maxZ = drawnIds.reduce((m, id) => Math.max(m, next[id]?.z ?? 0), next[compositeId]?.z ?? 0);
+                              next[compositeId] = { x: 0, y: 0, w: W, h: H, r: 0, z: maxZ };
+                              return next;
+                            });
                             setShowDesign(false);
                             setIsSavingDesign(false);
-                            // Upload to server in background
+                            // Upload to server in background, update preview when done
                             (async () => {
                               try {
                                 const uploadUrl = await generateUploadUrl();
                                 const res = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: blob });
                                 if (!res.ok) throw new Error('upload failed');
                                 const { storageId } = await res.json();
-                                setComposerImageId(`img:${storageId}`);
+                                const serverUrl = `${VIBEFID_STORAGE_URL}/${storageId}`;
+                                setDrawingImages(prev => ({ ...prev, [compositeId]: serverUrl }));
                               } catch (e) { console.error('Drawing upload error:', e); }
                             })();
                           } catch (e) {
