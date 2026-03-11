@@ -3818,7 +3818,8 @@ export function VibeMailInboxWithClaim({
                       senderAddress: myAddress,
                       senderFid: myFid,
                     });
-                    console.log('Broadcast result:', result);
+                    // Mark daily mission (fire-and-forget)
+                    if (myAddress) markVibemailSentMutation({ playerAddress: myAddress }).catch(() => {});
                     // Save result for feedback display
                     setBroadcastResult({
                       success: result.success,
@@ -3863,6 +3864,7 @@ export function VibeMailInboxWithClaim({
                       senderFid: myFid,
                     });
                     setBroadcastResult({ success: result.success, sent: result.sent, total: result.total, failed: result.failed });
+                    if (myAddress) markVibemailSentMutation({ playerAddress: myAddress }).catch(() => {});
                     setShowComposer(false);
                     setSendMode('single');
                     setRandomList([]);
@@ -3917,7 +3919,9 @@ export function VibeMailInboxWithClaim({
               ) : (
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  {hasFreemail ? 'Send · Free' : `Send · ${Number(VIBEMAIL_COST_VBMS).toLocaleString()} VBMS`}
+                  {hasFreemail
+                    ? `${t.vibemailSend || 'Send'} · ${t.vibemailFreeLabel || 'Free'} (${freeVotesRemaining?.remaining ?? 0}/${freeVotesRemaining?.max ?? 1})`
+                    : `${t.vibemailSend || 'Send'} · ${Number(VIBEMAIL_COST_VBMS).toLocaleString()} VBMS`}
                 </span>
               )}
             </button>
