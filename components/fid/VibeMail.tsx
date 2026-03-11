@@ -1414,6 +1414,13 @@ export function VibeMailInboxWithClaim({
   const imageUploadRef = useRef<HTMLInputElement | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [composerCustomImagePreview, setComposerCustomImagePreview] = useState<string | null>(null);
+  // Revoke blob URLs when preview changes to prevent memory leaks
+  const prevCustomPreviewRef = useRef<string | null>(null);
+  useEffect(() => {
+    const prev = prevCustomPreviewRef.current;
+    prevCustomPreviewRef.current = composerCustomImagePreview;
+    if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+  }, [composerCustomImagePreview]);
 
   // Slash command picker state
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -2142,7 +2149,7 @@ export function VibeMailInboxWithClaim({
               <div className="mb-3">
                 {/* Quick Select Quantity */}
                 <div className="mb-3 bg-[#1E1E1E] border-2 border-black shadow-[3px_3px_0px_#000] rounded-sm p-3">
-                  <p className="text-vintage-gold text-xs font-bold mb-2 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8" cy="8" r="1" fill="currentColor"/><circle cx="16" cy="8" r="1" fill="currentColor"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg> {(t as any).vibemailQuickRandom || 'Quick Random Select'}</p>
+                  <p className="text-vintage-gold text-xs font-bold mb-2 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8" cy="8" r="1" fill="currentColor"/><circle cx="16" cy="8" r="1" fill="currentColor"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg> {t.vibemailQuickRandom || 'Quick Random Select'}</p>
                   <div className="flex items-center gap-2">
                     <select
                       value={randomQuantity}
@@ -2150,13 +2157,13 @@ export function VibeMailInboxWithClaim({
                       className="flex-1 bg-[#111] border-2 border-[#444] px-2 py-2 text-white text-sm focus:outline-none focus:border-[#FFD700]"
                       style={{ colorScheme: 'dark' }}
                     >
-                      <option value={5}>5 {(t as any).vibemailPeople || 'people'}</option>
-                      <option value={10}>10 {(t as any).vibemailPeople || 'people'}</option>
-                      <option value={25}>25 {(t as any).vibemailPeople || 'people'}</option>
-                      <option value={50}>50 {(t as any).vibemailPeople || 'people'}</option>
-                      <option value={100}>100 {(t as any).vibemailPeople || 'people'}</option>
-                      <option value={250}>250 {(t as any).vibemailPeople || 'people'}</option>
-                      <option value={500}>500 {(t as any).vibemailPeople || 'people'}</option>
+                      <option value={5}>5 {t.vibemailPeople || 'people'}</option>
+                      <option value={10}>10 {t.vibemailPeople || 'people'}</option>
+                      <option value={25}>25 {t.vibemailPeople || 'people'}</option>
+                      <option value={50}>50 {t.vibemailPeople || 'people'}</option>
+                      <option value={100}>100 {t.vibemailPeople || 'people'}</option>
+                      <option value={250}>250 {t.vibemailPeople || 'people'}</option>
+                      <option value={500}>500 {t.vibemailPeople || 'people'}</option>
                     </select>
                     <button
                       onClick={autoFillRandomList}
@@ -2166,7 +2173,7 @@ export function VibeMailInboxWithClaim({
                       {isLoadingRandom
                         ? <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                         : <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="8" cy="8" r="1" fill="currentColor"/><circle cx="16" cy="8" r="1" fill="currentColor"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
-                      } {(t as any).vibemailAutoSelect || 'Select'}
+                      } {t.vibemailAutoSelect || 'Select'}
                     </button>
                   </div>
                   <p className="text-white/60 text-[10px] mt-1 text-center">
@@ -2205,7 +2212,7 @@ export function VibeMailInboxWithClaim({
 
                 {/* Manual Add - Current Random Card + Shuffle/Add buttons */}
                 <div className="bg-[#111] border border-[#333] p-2">
-                  <p className="text-white/60 text-[10px] mb-1">{(t as any).vibemailOrManual || 'Or add manually:'}</p>
+                  <p className="text-white/60 text-[10px] mb-1">{t.vibemailOrManual || 'Or add manually:'}</p>
                   {randomCard ? (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -2238,7 +2245,7 @@ export function VibeMailInboxWithClaim({
 
                 {randomList.length > 0 && (
                   <p className="text-green-400 text-xs mt-2 text-center font-bold">
-                    <span className="flex items-center justify-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> {((t as any).vibemailReadyToSend || 'Ready to send to {count} people').replace('{count}', String(randomList.length))} = {randomList.length * 1000} VBMS</span>
+                    <span className="flex items-center justify-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> {(t.vibemailReadyToSend || 'Ready to send to {count} people').replace('{count}', String(randomList.length))} = {randomList.length * 1000} VBMS</span>
                   </p>
                 )}
               </div>
@@ -4364,7 +4371,7 @@ export function VibeMailInboxWithClaim({
                             type="text"
                             value={fcSearchQ}
                             onChange={e => setFcSearchQ(e.target.value.replace(/^@/, ''))}
-                            placeholder="buscar usuário Farcaster..."
+                            placeholder={t.searchByUsernameOrFid || 'Search by username or FID...'}
                             className="flex-1 bg-transparent text-white text-xs py-2 pl-2 focus:outline-none placeholder:text-white/20"
                             style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
                           />
@@ -4435,7 +4442,7 @@ export function VibeMailInboxWithClaim({
                               type="text"
                               value={maSearchQ}
                               onChange={e => setMaSearchQ(e.target.value)}
-                              placeholder="buscar ou colar URL..."
+                              placeholder={t.vibemailSearchOrPasteUrl || 'Search or paste URL...'}
                               className="flex-1 bg-transparent text-white text-xs py-2 pl-2 focus:outline-none placeholder:text-white/20"
                               style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
                               onBlur={e => {
