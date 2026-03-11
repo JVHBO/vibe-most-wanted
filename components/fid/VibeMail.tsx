@@ -963,7 +963,7 @@ export function VibeMailInboxWithClaim({
   const [drawColor, setDrawColor] = useState('#FFD700');
   const [drawSize, setDrawSize] = useState(4);
   // elementPositions: x/y/w/h in px + optional rotation degrees
-  const [elementPositions, setElementPositions] = useState<Record<string, {x:number,y:number,w:number,h:number,r?:number}>>({});
+  const [elementPositions, setElementPositions] = useState<Record<string, {x:number,y:number,w:number,h:number,r?:number,z?:number}>>({});
   const [selectedEl, setSelectedEl] = useState<string | null>(null);
   // Drawing elements — each completed stroke becomes an image element
   const [drawingImages, setDrawingImages] = useState<Record<string, string>>({}); // id → dataUrl
@@ -971,7 +971,8 @@ export function VibeMailInboxWithClaim({
   const designAreaRef = useRef<HTMLDivElement | null>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement | null>(null);
   // Refs for hot-path — zero re-renders during drag / resize / draw
-  const dragRef = useRef<{id:string,origX:number,origY:number,startMX:number,startMY:number}|null>(null);
+  const dragRef = useRef<{id:string,origX:number,origY:number,startMX:number,startMY:number,groupOrigins?:Record<string,{x:number,y:number}>}|null>(null);
+  const [groupDraw, setGroupDraw] = useState(false);
   const resizeRef = useRef<{id:string,origW:number,origH:number,startMX:number,startMY:number}|null>(null);
   const isDrawingRef = useRef(false);
   const currentStrokeRef = useRef<{x:number,y:number}[]>([]);
@@ -3132,9 +3133,12 @@ export function VibeMailInboxWithClaim({
                           })()}
                           {pvImgSrc && elementPositions['image'] && (() => {
                             const pos = elementPositions['image'];
+                            const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(pvImgSrc);
                             return (
                               <div key="pvimg" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
-                                <img src={pvImgSrc} alt="Attachment" className="w-full h-full object-contain border border-[#FFD700]/30" />
+                                {isVid
+                                  ? <video src={pvImgSrc} className="w-full h-full object-contain" autoPlay loop muted playsInline />
+                                  : <img src={pvImgSrc} alt="Attachment" className="w-full h-full object-contain border border-[#FFD700]/30" />}
                               </div>
                             );
                           })()}
@@ -3194,7 +3198,7 @@ export function VibeMailInboxWithClaim({
               };
 
               // renderEl: plain function returning JSX (NOT a React component — avoids remount on state change)
-              type ElPos = {x:number,y:number,w:number,h:number,r?:number};
+              type ElPos = {x:number,y:number,w:number,h:number,r?:number,z?:number};
               const renderEl = (id: string, accentColor: string, content: React.ReactNode | ((pos: ElPos) => React.ReactNode)) => {
                 const pos = elementPositions[id] || getDefaultPos(id);
                 const isDrawEl = id.startsWith('draw_');
@@ -3210,37 +3214,58 @@ export function VibeMailInboxWithClaim({
                       transform: `rotate(${pos.r ?? 0}deg)`,
                       transformOrigin: 'center center',
                       touchAction: 'none', userSelect: 'none',
-                      cursor: 'grab', zIndex: isSel ? 15 : 10,
-                      outline: isSel ? `2px solid ${accentColor}` : '1px solid rgba(255,255,255,0.06)',
+                      cursor: 'grab',
+                      outline: isSel ? `2px solid ${accentColor}` : (groupDraw && isDrawEl ? '1px dashed rgba(167,139,250,0.5)' : '1px solid rgba(255,255,255,0.06)'),
                       boxSizing: 'border-box', overflow: 'visible',
+                      zIndex: isSel ? 50 : (pos.z ?? 0) + 1,
                     }}
                     onPointerDown={(e) => {
                       if ((e.target as HTMLElement).closest('[data-action]')) return;
                       e.stopPropagation();
                       setSelectedEl(id);
-                      dragRef.current = { id, origX: pos.x, origY: pos.y, startMX: e.clientX, startMY: e.clientY };
+                      const origins = groupDraw && isDrawEl
+                        ? Object.fromEntries(drawnIds.map(did => [did, { x: elementPositions[did]?.x ?? 0, y: elementPositions[did]?.y ?? 0 }]))
+                        : undefined;
+                      dragRef.current = { id, origX: pos.x, origY: pos.y, startMX: e.clientX, startMY: e.clientY, groupOrigins: origins };
                       e.currentTarget.setPointerCapture(e.pointerId);
                     }}
                     onPointerMove={(e) => {
                       const drag = dragRef.current;
                       if (!drag || drag.id !== id) return;
                       e.stopPropagation();
-                      const el = document.getElementById(`vmd-${id}`);
-                      if (el) {
-                        el.style.left = `${drag.origX + (e.clientX - drag.startMX)}px`;
-                        el.style.top = `${drag.origY + (e.clientY - drag.startMY)}px`;
+                      const dx = e.clientX - drag.startMX;
+                      const dy = e.clientY - drag.startMY;
+                      if (drag.groupOrigins) {
+                        Object.entries(drag.groupOrigins).forEach(([did, orig]) => {
+                          const el = document.getElementById(`vmd-${did}`);
+                          if (el) { el.style.left = `${orig.x + dx}px`; el.style.top = `${orig.y + dy}px`; }
+                        });
+                      } else {
+                        const el = document.getElementById(`vmd-${id}`);
+                        if (el) { el.style.left = `${drag.origX + dx}px`; el.style.top = `${drag.origY + dy}px`; }
                       }
                     }}
                     onPointerUp={(e) => {
                       const drag = dragRef.current;
                       if (!drag || drag.id !== id) return;
                       e.stopPropagation();
-                      const el = document.getElementById(`vmd-${id}`);
-                      if (el) {
-                        setElementPositions(p => ({
-                          ...p,
-                          [id]: { ...(p[id] || pos), x: parseFloat(el.style.left) || drag.origX, y: parseFloat(el.style.top) || drag.origY }
-                        }));
+                      if (drag.groupOrigins) {
+                        setElementPositions(p => {
+                          const n = { ...p };
+                          Object.keys(drag.groupOrigins!).forEach(did => {
+                            const el = document.getElementById(`vmd-${did}`);
+                            if (el) n[did] = { ...(p[did] || pos), x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0 };
+                          });
+                          return n;
+                        });
+                      } else {
+                        const el = document.getElementById(`vmd-${id}`);
+                        if (el) {
+                          setElementPositions(p => ({
+                            ...p,
+                            [id]: { ...(p[id] || pos), x: parseFloat(el.style.left) || drag.origX, y: parseFloat(el.style.top) || drag.origY }
+                          }));
+                        }
                       }
                       dragRef.current = null;
                       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -3264,6 +3289,10 @@ export function VibeMailInboxWithClaim({
                           onClick={() => setElementPositions(p => { const e = p[id] || pos; return { ...p, [id]: { ...e, w: Math.max(40, e.w * 0.82), h: Math.max(20, e.h * 0.82) } }; })}>−</button>
                         <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Bigger"
                           onClick={() => setElementPositions(p => { const e = p[id] || pos; return { ...p, [id]: { ...e, w: e.w * 1.18, h: e.h * 1.18 } }; })}>+</button>
+                        <button className="w-6 h-6 bg-[#1a1a1a] border border-[#334] text-blue-300 text-xs hover:bg-[#223] flex items-center justify-center" title="Layer up (bring forward)"
+                          onClick={() => setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), z: ((p[id]?.z ?? 0) + 1) } }))}>▲</button>
+                        <button className="w-6 h-6 bg-[#1a1a1a] border border-[#334] text-blue-300 text-xs hover:bg-[#223] flex items-center justify-center" title="Layer down (send back)"
+                          onClick={() => setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), z: Math.max(0, (p[id]?.z ?? 0) - 1) } }))}>▼</button>
                         <button className="w-6 h-6 bg-red-900 border border-red-700 text-red-400 text-xs hover:bg-red-800 flex items-center justify-center" title="Delete"
                           onClick={() => {
                             setElementPositions(p => { const n = { ...p }; delete n[id]; return n; });
@@ -3359,58 +3388,14 @@ export function VibeMailInboxWithClaim({
                       disabled={!drawnIds.length}
                       className="px-2 py-1 text-[10px] border border-[#444] text-white/50 hover:border-white/70 disabled:opacity-25 transition-all"
                     >↩ Undo</button>
-                    {/* Group all drawings into one moveable block */}
-                    <button
-                      disabled={drawnIds.length < 2}
-                      onClick={async () => {
-                        if (drawnIds.length < 2) return;
-                        const positions = drawnIds.map(id => elementPositions[id]).filter(Boolean);
-                        if (!positions.length) return;
-                        const minX = Math.min(...positions.map(p => p.x));
-                        const minY = Math.min(...positions.map(p => p.y));
-                        const maxX = Math.max(...positions.map(p => p.x + p.w));
-                        const maxY = Math.max(...positions.map(p => p.y + p.h));
-                        const W = Math.max(1, maxX - minX);
-                        const H = Math.max(1, maxY - minY);
-                        const off = document.createElement('canvas');
-                        off.width = W; off.height = H;
-                        const gctx = off.getContext('2d');
-                        if (!gctx) return;
-                        await Promise.all(drawnIds.map(id => new Promise<void>(resolve => {
-                          const src = drawingImages[id];
-                          const pos = elementPositions[id];
-                          if (!src || !pos) { resolve(); return; }
-                          const img = new Image();
-                          img.onload = () => {
-                            gctx.save();
-                            gctx.translate(pos.x - minX + pos.w / 2, pos.y - minY + pos.h / 2);
-                            gctx.rotate(((pos.r ?? 0) * Math.PI) / 180);
-                            gctx.drawImage(img, -pos.w / 2, -pos.h / 2, pos.w, pos.h);
-                            gctx.restore(); resolve();
-                          };
-                          img.onerror = () => resolve();
-                          img.src = src;
-                        })));
-                        const dataUrl = off.toDataURL('image/png');
-                        const newId = `draw_${drawingIdRef.current++}`;
-                        setElementPositions(p => {
-                          const n = { ...p };
-                          drawnIds.forEach(id => delete n[id]);
-                          n[newId] = { x: minX, y: minY, w: W, h: H, r: 0 };
-                          return n;
-                        });
-                        setDrawingImages(p => {
-                          const n: Record<string, string> = {};
-                          Object.entries(p).forEach(([k, v]) => { if (!drawnIds.includes(k)) n[k] = v; });
-                          n[newId] = dataUrl;
-                          return n;
-                        });
-                        setDrawnIds([newId]);
-                        setSelectedEl(newId);
-                      }}
-                      className="px-2 py-1 text-[10px] border border-[#555] text-white/40 hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-20 transition-all"
-                      title="Merge all drawing strokes into one moveable block"
-                    >⬜ Group</button>
+                    {/* Toggle: move all drawings together */}
+                    {drawnIds.length >= 2 && (
+                      <button
+                        onClick={() => { setGroupDraw(p => !p); setSelectedEl(null); }}
+                        className={`px-2 py-1 text-[10px] border-2 transition-all ${groupDraw ? 'border-[#A78BFA] bg-[#A78BFA]/20 text-[#A78BFA]' : 'border-[#555] text-white/40 hover:border-[#A78BFA] hover:text-[#A78BFA]'}`}
+                        title={groupDraw ? 'Click to deselect group — go back to individual elements' : 'Move all drawings together'}
+                      >{groupDraw ? '☑ Grouped' : '☐ Group'}</button>
+                    )}
                     {/* Reset layout */}
                     <button
                       onClick={() => {
@@ -3543,7 +3528,7 @@ export function VibeMailInboxWithClaim({
                         <div className="w-full h-full bg-[#111] border border-[#333] p-2 text-white/80 leading-relaxed overflow-hidden" style={{ fontSize: Math.max(8, Math.min(15, pos.h * 0.2)) }}>{textOnly}</div>
                       )}
                       {audioMatch && !hiddenElements.has('audio') && renderEl('audio', '#F97316',
-                        <div className="w-full h-full flex items-center gap-2.5 px-3" style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: '3px solid #F97316' }}>
+                        <div className="w-full h-full flex items-center gap-2.5 px-3" style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: '3px solid #F97316', pointerEvents: 'none' }}>
                           {/* Play button */}
                           <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: '#F97316', boxShadow: '0 0 10px rgba(249,115,22,0.45)' }}>
                             <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>
@@ -3562,9 +3547,12 @@ export function VibeMailInboxWithClaim({
                           <span className="text-[#F97316]/20 text-base flex-shrink-0">♪</span>
                         </div>
                       )}
-                      {imgSrc && !hiddenElements.has('image') && renderEl('image', '#22C55E',
-                        <img src={imgSrc} alt="" className="w-full h-full object-cover" draggable={false} style={{ pointerEvents: 'none', userSelect: 'none' }} />
-                      )}
+                      {imgSrc && !hiddenElements.has('image') && renderEl('image', '#22C55E', (() => {
+                        const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(imgSrc);
+                        return isVid
+                          ? <video src={imgSrc} className="w-full h-full object-cover" autoPlay loop muted playsInline style={{ pointerEvents: 'none' }} />
+                          : <img src={imgSrc} alt="" className="w-full h-full object-cover" draggable={false} style={{ pointerEvents: 'none', userSelect: 'none' }} />;
+                      })())}
                       {/* Drawing elements */}
                       {drawnIds.map(id => drawingImages[id] ? renderEl(id, '#A78BFA',
                         <img src={drawingImages[id]} alt="" className="w-full h-full object-contain pointer-events-none" style={{ imageRendering: 'pixelated' }} />
