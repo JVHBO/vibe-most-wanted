@@ -910,6 +910,10 @@ export function VibeMailInboxWithClaim({
   const [claimedQuestItems, setClaimedQuestItems] = useState<Set<string>>(new Set());
   const [claimedMailVbms, setClaimedMailVbms] = useState<Set<string>>(new Set());
   const [claimingMailId, setClaimingMailId] = useState<string | null>(null);
+  const contentScrollRef = useRef<HTMLDivElement | null>(null);
+  const [showScrollDown, setShowScrollDown] = useState(false);
+  const [translatedContent, setTranslatedContent] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
   const [openAppConfirm, setOpenAppConfirm] = useState<{ url: string; name: string } | null>(null);
   const [miniappPreviewCache, setMiniappPreviewCache] = useState<Record<string, any>>({});
   const [msgPage, setMsgPage] = useState(0);
@@ -965,6 +969,8 @@ export function VibeMailInboxWithClaim({
   const gifSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mediaUploadRef = useRef<HTMLInputElement | null>(null);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [showImgInput, setShowImgInput] = useState(false);
+  const [imgInputUrl, setImgInputUrl] = useState('');
   const [composerCastUrl, setComposerCastUrl] = useState<string | null>(null);
   const [showCastInput, setShowCastInput] = useState(false);
   const [castInputValue, setCastInputValue] = useState('');
@@ -991,7 +997,7 @@ export function VibeMailInboxWithClaim({
 
   // openSoundPicker: opens picker and loads sounds
   const openSoundPicker = (initialSearch = '') => {
-    setShowSoundPicker(true); setShowImagePicker(false); setShowGifPicker(false); setShowCastInput(false); setShowMiniappInput(false);
+    setShowSoundPicker(true); setShowImagePicker(false); setShowGifPicker(false); setShowCastInput(false); setShowMiniappInput(false); setShowImgInput(false);
     setMiSearch(initialSearch);
     doFetchMi(initialSearch);
   };
@@ -1008,7 +1014,7 @@ export function VibeMailInboxWithClaim({
   };
 
   const openGifPicker = () => {
-    setShowGifPicker(true); setShowSoundPicker(false); setShowImagePicker(false); setShowCastInput(false); setShowMiniappInput(false);
+    setShowGifPicker(true); setShowSoundPicker(false); setShowImagePicker(false); setShowCastInput(false); setShowMiniappInput(false); setShowImgInput(false);
     setGifSearch('');
     doFetchGifs('');
   };
@@ -1357,6 +1363,12 @@ export function VibeMailInboxWithClaim({
   const handleOpenMessage = async (msg: VibeMailMessage) => {
     AudioManager.buttonClick();
     setSelectedMessage(msg);
+    setTranslatedContent(null);
+    // Check scroll after content renders
+    setTimeout(() => {
+      const el = contentScrollRef.current;
+      if (el) setShowScrollDown(el.scrollHeight > el.clientHeight + 24);
+    }, 100);
 
     if (!msg.isRead) {
       await markAsRead({ messageId: msg._id });
@@ -1365,6 +1377,21 @@ export function VibeMailInboxWithClaim({
     if (msg.audioId) {
       playAudioById(msg.audioId, audioRef, convex, setPlayingAudio);
     }
+  };
+
+  const handleTranslate = async () => {
+    if (translatedContent) { setTranslatedContent(null); return; }
+    if (!selectedMessage?.message) return;
+    setIsTranslating(true);
+    try {
+      const parsed = parseQuestBanner(selectedMessage.message);
+      const msg = parsed ? parsed.cleanMessage : selectedMessage.message;
+      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(msg)}&langpair=autodetect|${lang}`);
+      const data = await res.json();
+      if (data.responseStatus === 200 && data.responseData?.translatedText) {
+        setTranslatedContent(data.responseData.translatedText);
+      }
+    } catch { /* non-critical */ } finally { setIsTranslating(false); }
   };
 
   const stopAudio = () => {
@@ -2464,7 +2491,50 @@ export function VibeMailInboxWithClaim({
                 />
               </div>
             </div>
-            <p className="text-[#FFD700]/50 text-[10px] mb-1">Type / for commands · **bold** · *italic* · [text](url)</p>
+            {/* IMG URL input panel */}
+            {showImgInput && (
+              <div className="mt-1 mb-1 bg-[#0a1a0a] border-2 border-[#059669] p-2 flex gap-2">
+                <input
+                  type="url"
+                  value={imgInputUrl}
+                  onChange={e => setImgInputUrl(e.target.value)}
+                  onPaste={e => {
+                    const pasted = e.clipboardData.getData('text').trim();
+                    if (pasted) { e.preventDefault(); setImgInputUrl(pasted); }
+                  }}
+                  placeholder="Paste image or video URL..."
+                  className="flex-1 bg-transparent text-white text-xs placeholder:text-white/30 focus:outline-none min-w-0"
+                  style={{ colorScheme: 'dark' }}
+                  autoFocus
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && imgInputUrl.trim()) {
+                      const line = `/img=${imgInputUrl.trim()}`;
+                      const cur = composerMessage.trim();
+                      setComposerMessage(cur ? cur + '\n' + line : line);
+                      setImgInputUrl('');
+                      setShowImgInput(false);
+                    }
+                    if (e.key === 'Escape') { setShowImgInput(false); setImgInputUrl(''); }
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    if (!imgInputUrl.trim()) return;
+                    const line = `/img=${imgInputUrl.trim()}`;
+                    const cur = composerMessage.trim();
+                    setComposerMessage(cur ? cur + '\n' + line : line);
+                    setImgInputUrl('');
+                    setShowImgInput(false);
+                  }}
+                  disabled={!imgInputUrl.trim()}
+                  className="px-3 py-1 bg-[#059669] border-2 border-black text-white font-black text-xs disabled:opacity-40 hover:bg-[#065F46] transition-all"
+                >
+                  Add
+                </button>
+              </div>
+            )}
+
+            <p className="text-[#FFD700]/50 text-[10px] mb-1">/img=URL · /sound=URL · Use PREVIEW to check before sending</p>
 
             {/* Inline /sound volume control — shown when message has /sound URL volume=X */}
             {(() => {
@@ -2726,31 +2796,23 @@ export function VibeMailInboxWithClaim({
                 onClick={openGifPicker}
                 className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${showGifPicker ? 'border-[#5B21B6] bg-[#5B21B6]' : 'border-[#7C3AED] bg-[#7C3AED] hover:bg-[#5B21B6]'} text-white`}
                 style={{ WebkitTextFillColor: 'white' }}
-                title="GIF / Image"
+                title="GIF search"
               >
                 <span className="font-black text-[10px] leading-none">GIF</span>
               </button>
 
-              {/* Media upload (audio/image/video/gif) */}
-              <input
-                ref={mediaUploadRef}
-                type="file"
-                accept="audio/*,image/*,video/mp4,video/webm,.gif"
-                className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f); e.target.value = ''; }}
-              />
+              {/* IMG - VERDE */}
               <button
-                onClick={() => mediaUploadRef.current?.click()}
-                disabled={isUploadingMedia}
-                title="Upload media"
-                className="w-9 h-9 flex items-center justify-center border-2 border-[#1D4ED8] bg-[#2563EB] text-white hover:bg-[#1D4ED8] transition-all disabled:opacity-50"
+                onClick={() => { setShowImgInput(v => !v); setShowGifPicker(false); setShowSoundPicker(false); }}
+                className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${showImgInput ? 'border-[#065F46] bg-[#065F46]' : 'border-[#059669] bg-[#059669] hover:bg-[#065F46]'} text-white`}
                 style={{ WebkitTextFillColor: 'white' }}
+                title="Insert image/video URL"
               >
-                {isUploadingMedia
-                  ? <span className="text-[9px] font-black">...</span>
-                  : <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                }
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
               </button>
+
+              {/* hidden input kept for handleMediaUpload (used by other paths) */}
+              <input ref={mediaUploadRef} type="file" accept="audio/*,image/*,video/mp4,video/webm,.gif" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f); e.target.value = ''; }} />
 
               {/* Voice recorder (mic only, no upload) */}
               <AudioRecorder
@@ -3091,34 +3153,55 @@ export function VibeMailInboxWithClaim({
         {/* Selected Message View */}
         {selectedMessage ? (
           <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Secretary Header - Compact */}
-            <div className="bg-vintage-black/50 border-2 border-black shadow-[2px_2px_0px_#000] p-2 mb-2 flex items-center gap-2">
-              <img
-                src={secretary.image}
-                alt={secretary.name}
-                className="w-10 h-10 rounded-full border-2 border-black shadow-[1px_1px_0px_#000]"
-              />
-              <p className="text-vintage-gold font-bold text-xs uppercase tracking-wide">
-                {secretary.name} {t.secretaryInterceptedMessage}
-              </p>
-            </div>
-
-            {/* Message Content */}
-            <div className="bg-[#0a0a0a] border-2 border-black p-3 flex-1 overflow-y-auto">
-              {/* Sender info */}
-              {(selectedMessage.voterUsername || selectedMessage.voterFid) && !selectedMessage.isSent && (
-                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-white/10">
-                  <div className="w-6 h-6 rounded-full bg-[#FFD700] flex items-center justify-center text-[10px] font-black text-black flex-shrink-0">
-                    {selectedMessage.voterUsername ? selectedMessage.voterUsername[0].toUpperCase() : '?'}
-                  </div>
-                  <div>
-                    <p className="text-[#FFD700] font-bold text-xs">
-                      {selectedMessage.voterUsername ? `@${selectedMessage.voterUsername}` : `FID #${selectedMessage.voterFid}`}
-                    </p>
-                    <p className="text-white/30 text-[9px]">{new Date(selectedMessage.createdAt).toLocaleString()}</p>
-                  </div>
+            {/* Twitter-style header */}
+            <div className="flex items-center gap-2 px-2 py-2 bg-[#111] border-b-2 border-black flex-shrink-0">
+              <button
+                onClick={() => { stopAudio(); setSelectedMessage(null); }}
+                className="w-8 h-8 flex items-center justify-center border-2 border-black bg-[#1a1a1a] text-white/60 hover:text-white hover:bg-[#222] transition-all flex-shrink-0"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              {selectedMessage.voterPfpUrl ? (
+                <img src={selectedMessage.voterPfpUrl} alt={selectedMessage.voterUsername || ''} className="w-10 h-10 rounded-full border-2 border-black flex-shrink-0 object-cover" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-[#FFD700]/20 border-2 border-[#FFD700]/40 flex items-center justify-center flex-shrink-0">
+                  <span className="text-[#FFD700] font-black text-sm">{(selectedMessage.voterUsername || '?')[0].toUpperCase()}</span>
                 </div>
               )}
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-bold text-sm truncate">
+                  {selectedMessage.voterUsername ? `@${selectedMessage.voterUsername}` : 'Anonymous'}
+                </p>
+                <p className="text-white/40 text-[10px]">{new Date(selectedMessage.createdAt).toLocaleString()}</p>
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {selectedMessage.message && (
+                  <button
+                    onClick={handleTranslate}
+                    disabled={isTranslating}
+                    className={`px-2 py-1 text-[10px] font-bold border-2 border-black transition-all ${translatedContent ? 'bg-blue-600 text-white' : 'bg-[#1a1a1a] text-white/50 hover:text-white'}`}
+                  >
+                    {isTranslating ? '...' : translatedContent ? 'EN' : 'TR'}
+                  </button>
+                )}
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 border border-black ${selectedMessage.isPaid ? 'bg-yellow-500/20 text-yellow-400' : 'bg-[#FFD700]/10 text-[#FFD700]/60'}`}>
+                  {selectedMessage.isPaid ? 'PAID' : 'FREE'}
+                </span>
+              </div>
+            </div>
+
+            {/* Scrollable content + scroll indicator */}
+            <div className="relative flex-1 overflow-hidden">
+              <div
+                ref={contentScrollRef}
+                className="h-full overflow-y-auto"
+                onScroll={() => {
+                  const el = contentScrollRef.current;
+                  if (!el) return;
+                  setShowScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 24);
+                }}
+              >
+            <div className="bg-[#0a0a0a] p-3 pb-6 space-y-3">
               {/* Quest Banner */}
               {(() => {
                 const parsed = parseQuestBanner(selectedMessage.message || '');
@@ -3334,128 +3417,111 @@ export function VibeMailInboxWithClaim({
                   </div>
                 );
               })()}
-              <div className="text-white text-sm leading-relaxed mb-3">
-                {(() => {
-                  const parsed = parseQuestBanner(selectedMessage.message || '');
-                  const msg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
-                  return selectedMessage.imageId
-                    ? renderMessageWithMedia(msg, selectedMessage.imageId, lang, username)
-                    : <>{renderFormattedMessage(msg, lang, username)}</>;
-                })()}
-              </div>
+              {/* Message text + inline media commands */}
+              {(() => {
+                const parsed = parseQuestBanner(selectedMessage.message || '');
+                const msg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
+                return msg ? (
+                  <div className="text-white text-sm leading-relaxed">
+                    {renderRichMessageFn(msg, playingAudio, audioRef, setPlayingAudio, lang, username)}
+                  </div>
+                ) : null;
+              })()}
 
+              {/* Legacy imageId attachment */}
+              {selectedMessage.imageId && (() => {
+                const isCustom = selectedMessage.imageId.startsWith('img:');
+                const customUrl = isCustom ? `${VIBEFID_STORAGE_URL_INLINE}/${selectedMessage.imageId.slice(4)}` : null;
+                const imgData = !isCustom ? getImageFile(selectedMessage.imageId) : null;
+                if (customUrl) return <img src={customUrl} alt="VibeMail" className="w-full rounded border-2 border-black" />;
+                if (!imgData) return null;
+                return imgData.isVideo
+                  ? <video src={imgData.file} className="w-full rounded border-2 border-black" autoPlay loop muted playsInline />
+                  : <img src={imgData.file} alt="VibeMail" className="w-full rounded border-2 border-black" />;
+              })()}
+
+              {/* Legacy audioId player */}
               {selectedMessage.audioId && (
-                <div className="border-2 border-black shadow-[2px_2px_0px_#000] p-2 flex items-center gap-2 bg-vintage-black/50">
+                <div className="border-2 border-black shadow-[2px_2px_0px_#000] p-3 flex items-center gap-3 bg-[#1a0e00]">
                   <button
                     onClick={() => {
-                      if (playingAudio === selectedMessage.audioId) {
-                        stopAudio();
-                      } else {
-                        playAudioById(selectedMessage.audioId!, audioRef, convex, setPlayingAudio);
-                      }
+                      if (playingAudio === selectedMessage.audioId) { stopAudio(); }
+                      else { playAudioById(selectedMessage.audioId!, audioRef, convex, setPlayingAudio); }
                     }}
-                    className={`w-8 h-8 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all ${
-                      playingAudio === selectedMessage.audioId
-                        ? 'bg-red-500 text-white'
-                        : 'bg-vintage-gold text-black'
-                    }`}
+                    className={`w-10 h-10 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center flex-shrink-0 transition-all ${playingAudio === selectedMessage.audioId ? 'bg-red-500 text-white animate-pulse' : 'bg-vintage-gold text-black hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'}`}
                   >
-                    {playingAudio === selectedMessage.audioId ? (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                    ) : (
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    )}
+                    {playingAudio === selectedMessage.audioId
+                      ? <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
                   </button>
-                  <div className="flex-1">
-                    <p className="text-vintage-gold font-bold text-xs flex items-center gap-1">
-                      {isCustomAudio(selectedMessage.audioId) ? (
-                        <>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-                          Voice message
-                        </>
-                      ) : (isMiAudio(selectedMessage.audioId) ? getMiName(selectedMessage.audioId!) : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound))}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[#F97316] font-bold text-sm truncate flex items-center gap-1">
+                      {isCustomAudio(selectedMessage.audioId) ? (<><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>Voice message</>) : (isMiAudio(selectedMessage.audioId) ? getMiName(selectedMessage.audioId!) : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound))}
                     </p>
-                    <p className="text-white/60 text-[10px]">
-                      {playingAudio === selectedMessage.audioId ? t.playing : t.tapToPlay}
-                    </p>
+                    <p className="text-white/50 text-xs">{playingAudio === selectedMessage.audioId ? t.playing : t.tapToPlay}</p>
                   </div>
                 </div>
               )}
 
+              {/* Miniapp preview */}
+              {selectedMessage.miniappUrl && <MiniappPreview url={selectedMessage.miniappUrl} />}
 
-              {/* Miniapp Rich Preview */}
-              {selectedMessage.miniappUrl && (
-                <MiniappPreview url={selectedMessage.miniappUrl} />
-              )}
-
-              {/* NFT Gift Display */}
+              {/* NFT Gift */}
               {selectedMessage.giftNftImageUrl && (
-                <div
-                  onClick={() => {
-                    const url = getMarketplaceUrl(selectedMessage.giftNftCollection);
-                    if (url) openMarketplace(url, sdk, true);
-                  }}
-                  className="mt-3 bg-[#111] border-2 border-black shadow-[2px_2px_0px_#000] p-2 flex items-center gap-3 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all cursor-pointer"
-                >
+                <div onClick={() => { const url = getMarketplaceUrl(selectedMessage.giftNftCollection); if (url) openMarketplace(url, sdk, true); }}
+                  className="bg-[#111] border-2 border-black shadow-[2px_2px_0px_#000] p-3 flex items-center gap-3 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all cursor-pointer">
                   <div className="relative flex-shrink-0">
-                    <img
-                      src={selectedMessage.giftNftImageUrl}
-                      alt={selectedMessage.giftNftName || 'NFT Gift'}
-                      className="w-12 h-12 object-cover border-2 border-black"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder.png';
-                      }}
-                    />
+                    <img src={selectedMessage.giftNftImageUrl} alt={selectedMessage.giftNftName || 'NFT Gift'} className="w-14 h-14 object-cover border-2 border-black" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }} />
                     <div className="absolute -top-1 -right-1 bg-vintage-gold border border-black w-4 h-4 flex items-center justify-center">
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-vintage-gold font-bold text-xs truncate">{selectedMessage.giftNftName}</p>
-                    <p className="text-white/60 text-[10px]">{selectedMessage.giftNftCollection}</p>
+                    <p className="text-vintage-gold font-bold text-sm truncate">{selectedMessage.giftNftName}</p>
+                    <p className="text-white/50 text-xs">{selectedMessage.giftNftCollection}</p>
                   </div>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
                 </div>
               )}
 
-              <div className="mt-2 pt-2 border-t-2 border-black/30 flex items-center justify-between text-[10px]">
-                <span className="text-white/60">
-                  {new Date(selectedMessage.createdAt).toLocaleDateString()}
-                </span>
-                <span className={`font-bold ${selectedMessage.isPaid ? 'text-yellow-400' : 'text-vintage-gold'}`}>
+              {/* Vote info footer */}
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
+                <span className="text-white/40">{new Date(selectedMessage.createdAt).toLocaleDateString()}</span>
+                <span className={`font-bold ${selectedMessage.isPaid ? 'text-yellow-400' : 'text-[#FFD700]/60'}`}>
                   +{selectedMessage.voteCount} {selectedMessage.isPaid ? t.paidVote : t.freeVote}
                 </span>
               </div>
-            </div>
+            </div>{/* end content padding */}
+            </div>{/* end scroll container */}
 
-            {/* Reply Button */}
+            {/* Scroll down indicator */}
+            {showScrollDown && (
+              <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-1 pointer-events-none">
+                <div className="bg-black/80 border border-white/20 rounded-full px-3 py-1 flex items-center gap-1 animate-bounce">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  <span className="text-white/60 text-[9px]">more</span>
+                </div>
+              </div>
+            )}
+            </div>{/* end relative scroll wrapper */}
+
+            {/* Reply button */}
             {myFid && myAddress && selectedMessage.voterFid && selectedMessage.voterFid !== myFid && (
               <button
                 onClick={() => {
                   AudioManager.buttonClick();
                   const msgId = selectedMessage._id;
                   const senderFid = selectedMessage.voterFid;
-                  setSelectedMessage(null); // Close message view first
+                  setSelectedMessage(null);
                   setReplyToMessageId(msgId);
-                  setReplyToFid(senderFid || null); // Store sender FID for gift modal
+                  setReplyToFid(senderFid || null);
                   setShowComposer(true);
                 }}
-                className="mt-3 w-full py-2 bg-vintage-gold text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2"
+                className="mt-2 w-full py-2 bg-vintage-gold text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
                 Reply
               </button>
             )}
-
-            <button
-              onClick={() => {
-                stopAudio();
-                setSelectedMessage(null);
-              }}
-              className="mt-3 w-full py-2 bg-vintage-black text-vintage-gold font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-            >
-              {t.back}
-            </button>
           </div>
         ) : (
           /* Message List */
