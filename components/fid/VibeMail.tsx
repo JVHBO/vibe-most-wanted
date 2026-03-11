@@ -3372,7 +3372,7 @@ export function VibeMailInboxWithClaim({
                         <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Bigger"
                           onClick={() => { pushDesignUndo(); setElementPositions(p => { const e = p[id] || pos; return { ...p, [id]: { ...e, w: e.w * 1.18, h: e.h * 1.18 } }; }); }}>+</button>
                         <button className="w-6 h-6 bg-[#1a1a1a] border border-[#334] text-blue-300 text-xs hover:bg-[#223] flex items-center justify-center" title="Layer up — bring forward"
-                          onClick={() => { pushDesignUndo(); setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), z: (p[id]?.z ?? 0) + 1 } })); }}>▲</button>
+                          onClick={() => { pushDesignUndo(); setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), z: Math.min(20, (p[id]?.z ?? 0) + 1) } })); }}>▲</button>
                         <button className="w-6 h-6 bg-[#1a1a1a] border border-[#334] text-blue-300 text-xs hover:bg-[#223] flex items-center justify-center" title="Layer down — send back"
                           onClick={() => { pushDesignUndo(); setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), z: Math.max(0, (p[id]?.z ?? 0) - 1) } })); }}>▼</button>
                         <button className="w-6 h-6 bg-red-900 border border-red-700 text-red-400 text-xs hover:bg-red-800 flex items-center justify-center" title="Delete (Ctrl+Z to undo)"
@@ -3679,7 +3679,6 @@ export function VibeMailInboxWithClaim({
                           if (!area) return;
                           setIsSavingDesign(true);
                           try {
-                            // Composite all drawing elements onto a single canvas (transparent background)
                             const dpr = window.devicePixelRatio || 1;
                             const W = area.offsetWidth, H = area.offsetHeight;
                             const off = document.createElement('canvas');
@@ -3687,8 +3686,28 @@ export function VibeMailInboxWithClaim({
                             const ctx = off.getContext('2d');
                             if (!ctx) throw new Error('no ctx');
                             ctx.scale(dpr, dpr);
-                            // NO fillRect — keeps transparent background
-                            // Sort draws by z before compositing
+                            // Step 1: draw existing GIF/image as background (bake it in so it's not lost)
+                            const existingImgSrc = composerImageId
+                              ? (composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''))
+                              : (composerMessage.match(/\/img=(\S+)/i)?.[1] ?? '');
+                            const existingImgPos = elementPositions['image'];
+                            if (existingImgSrc && existingImgPos) {
+                              await new Promise<void>(resolve => {
+                                const bgImg = new Image();
+                                bgImg.crossOrigin = 'anonymous';
+                                bgImg.onload = () => {
+                                  ctx.save();
+                                  ctx.translate(existingImgPos.x + existingImgPos.w / 2, existingImgPos.y + existingImgPos.h / 2);
+                                  ctx.rotate(((existingImgPos.r ?? 0) * Math.PI) / 180);
+                                  ctx.drawImage(bgImg, -existingImgPos.w / 2, -existingImgPos.h / 2, existingImgPos.w, existingImgPos.h);
+                                  ctx.restore();
+                                  resolve();
+                                };
+                                bgImg.onerror = () => resolve(); // skip if CORS fails
+                                bgImg.src = existingImgSrc;
+                              });
+                            }
+                            // Step 2: draw strokes sorted by z on top
                             const sortedDrawIds = [...drawnIds].sort((a, b) => ((elementPositions[a]?.z ?? 0) - (elementPositions[b]?.z ?? 0)));
                             await Promise.all(sortedDrawIds.map(id => new Promise<void>(resolve => {
                               const src = drawingImages[id];
@@ -3708,17 +3727,18 @@ export function VibeMailInboxWithClaim({
                             })));
                             const blob = await new Promise<Blob | null>(res => off.toBlob(res, 'image/png'));
                             if (!blob) throw new Error('export failed');
-                            // Clear individual draw elements — composite replaces them
+                            // Clear draws + existing image element (all baked into composite)
                             setDrawnIds([]);
                             setDrawingImages({});
+                            // Remove /img= from message if GIF was embedded there
+                            if (composerMessage.match(/\/img=(\S+)/i)) {
+                              setComposerMessage(composerMessage.replace(/\/img=\S+/gi, '').trim());
+                            }
                             setElementPositions(p => {
                               const next = { ...p };
-                              // Remove all draw_ positions
                               for (const k of Object.keys(next)) { if (k.startsWith('draw_')) delete next[k]; }
-                              // Only set image position if no existing image was already placed
-                              if (!next['image']) {
-                                next['image'] = { x: 0, y: 0, w: W, h: H, r: 0, z: 0 };
-                              }
+                              // Place composite image at full canvas area
+                              next['image'] = { x: 0, y: 0, w: W, h: H, r: 0, z: next['image']?.z ?? 0 };
                               return next;
                             });
                             // Save locally first — instant preview
