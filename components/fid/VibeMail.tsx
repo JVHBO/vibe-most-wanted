@@ -279,6 +279,9 @@ function renderFormattedMessage(message: string, lang: string = "en", username?:
   return <>{result}</>;
 }
 
+// VibeMail card body height — fixed for consistent look and future NFT generation
+export const VIBEMAIL_CARD_HEIGHT = 400;
+
 // Electronic Secretaries - intercept messages randomly
 export const VIBEMAIL_SECRETARIES = [
   { id: 'john-pork', name: 'John Pork', image: '/john-pork.jpg' },
@@ -3089,48 +3092,69 @@ export function VibeMailInboxWithClaim({
                         ? (composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''))
                         : (pvImgMsgMatch ? pvImgMsgMatch[1] : '');
 
-                      if (!hasDesign) return (
-                        <>
-                          <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb' }}>
-                            {composerMessage ? renderRichMessage(composerMessage) : <span style={{ color: 'rgba(255,255,255,0.3)' }}>(no text)</span>}
+                      // Both flow and designed layouts use the same fixed-height container
+                      const claimVbms = hasFreemail ? 0 : 100;
+                      const claimBtn = (
+                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 9999, pointerEvents: 'none' }}>
+                          <div className="flex items-center justify-between px-3 py-2 border-t border-[#FFD700]/30 bg-[#0a0a0a]/95">
+                            <span className="text-[#FFD700]/50 text-[9px] uppercase tracking-widest font-black">VibeMail</span>
+                            <div className="flex items-center gap-1.5 px-3 py-1 bg-[#FFD700] border border-black">
+                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                              <span className="text-black font-black text-[10px] uppercase tracking-widest">+{claimVbms} VBMS</span>
+                            </div>
                           </div>
-                          {composerCastUrl && <p className="text-[#9945FF] text-xs mt-2 truncate">Cast: {composerCastUrl}</p>}
-                          {composerMiniappUrl && (
-                            <div className="mt-2 bg-[#0d1f0d] border border-[#22C55E]/50 rounded px-2 py-1.5 flex items-center gap-1.5">
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
-                              <span className="text-[#22C55E] text-xs truncate">{composerMiniappUrl}</span>
-                            </div>
-                          )}
-                          {composerImageId && (
-                            <div className="mt-2">
-                              {composerImageId.startsWith('img:') ? (
-                                composerCustomImagePreview ? (
-                                  <img src={composerCustomImagePreview} alt="Custom" className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" />
-                                ) : (
-                                  <p className="text-[#FFD700]/70 text-xs">Custom image attached</p>
-                                )
-                              ) : (() => {
-                                const imgData = getImageFile(composerImageId);
-                                return imgData ? (
-                                  imgData.isVideo ? (
-                                    <video src={imgData.file} className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" autoPlay loop muted playsInline />
-                                  ) : (
-                                    <img src={imgData.file} alt="Attachment" className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" />
-                                  )
-                                ) : (
-                                  <p className="text-[#FFD700]/70 text-xs">Image attached</p>
-                                );
-                              })()}
-                            </div>
-                          )}
-                        </>
+                        </div>
+                      );
+                      // Scroll indicator arrow
+                      const scrollArrow = (
+                        <div style={{ position: 'absolute', bottom: 38, right: 8, zIndex: 200, pointerEvents: 'none' }}
+                          className="animate-bounce text-[#FFD700]/30 text-xs font-black select-none">↓</div>
                       );
 
-                      // Designed layout — elements at their custom positions
-                      const allPos = Object.values(elementPositions);
-                      const minH = allPos.length ? Math.max(120, ...allPos.map(p => p.y + p.h + 16)) : 120;
+                      if (!hasDesign) return (
+                        <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, overflow: 'hidden' }}>
+                          <div className="p-1 pb-12">
+                            <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb' }}>
+                              {composerMessage ? renderRichMessage(composerMessage) : <span style={{ color: 'rgba(255,255,255,0.3)' }}>(no text)</span>}
+                            </div>
+                            {composerCastUrl && <p className="text-[#9945FF] text-xs mt-2 truncate">Cast: {composerCastUrl}</p>}
+                            {composerMiniappUrl && (
+                              <div className="mt-2 bg-[#0d1f0d] border border-[#22C55E]/50 rounded px-2 py-1.5 flex items-center gap-1.5">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                                <span className="text-[#22C55E] text-xs truncate">{composerMiniappUrl}</span>
+                              </div>
+                            )}
+                            {composerImageId && (
+                              <div className="mt-2">
+                                {composerImageId.startsWith('img:') ? (
+                                  composerCustomImagePreview ? (
+                                    <img src={composerCustomImagePreview} alt="Custom" className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" />
+                                  ) : (
+                                    <p className="text-[#FFD700]/70 text-xs">Custom image attached</p>
+                                  )
+                                ) : (() => {
+                                  const imgData = getImageFile(composerImageId);
+                                  return imgData ? (
+                                    imgData.isVideo ? (
+                                      <video src={imgData.file} className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" autoPlay loop muted playsInline />
+                                    ) : (
+                                      <img src={imgData.file} alt="Attachment" className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" />
+                                    )
+                                  ) : (
+                                    <p className="text-[#FFD700]/70 text-xs">Image attached</p>
+                                  );
+                                })()}
+                              </div>
+                            )}
+                          </div>
+                          {scrollArrow}
+                          {claimBtn}
+                        </div>
+                      );
+
+                      // Designed layout — elements at their custom absolute positions
                       return (
-                        <div style={{ position: 'relative', minHeight: minH, overflowX: 'hidden' }}>
+                        <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, overflow: 'hidden' }}>
                           {(() => {
                             type PvItem = { key: string; z: number; node: React.ReactNode };
                             const pvItems: PvItem[] = [];
@@ -3209,12 +3233,11 @@ export function VibeMailInboxWithClaim({
                             pvItems.sort((a, b) => a.z - b.z);
                             return pvItems.map(item => item.node);
                           })()}
+                          {scrollArrow}
+                          {claimBtn}
                         </div>
                       );
                     })()}
-                    <div className="mt-3 text-right">
-                      <span className="text-[#FFD700] text-sm font-bold">+{hasFreemail ? 0 : 100} VBMS</span>
-                    </div>
                   </div>
                 </div>
                 {/* Bottom */}
@@ -3483,7 +3506,7 @@ export function VibeMailInboxWithClaim({
                   <div
                     ref={designAreaRef}
                     className="relative bg-[#111]"
-                    style={{ minHeight: 300, border: '2px solid rgba(255,215,0,0.3)', padding: '0 16px', overflowX: 'hidden' }}
+                    style={{ height: VIBEMAIL_CARD_HEIGHT, border: '2px solid rgba(255,215,0,0.3)', padding: '0 16px', overflow: 'hidden' }}
                     onClick={(e) => { if (e.target === e.currentTarget) setSelectedEl(null); }}
                   >
                     {/* Canvas — draw layer on top */}
@@ -3632,8 +3655,14 @@ export function VibeMailInboxWithClaim({
                     </div>
 
                     {/* Locked footer */}
-                    <div className="absolute bottom-0 left-0 right-0 h-8 z-5 flex items-center justify-end px-3 border-t border-[#FFD700]/10 bg-[#FFD700]/5 pointer-events-none">
-                      <span className="text-[#FFD700]/30 text-[9px] font-black">+100 VBMS (locked)</span>
+                    <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ zIndex: 99999 }}>
+                      <div className="flex items-center justify-between px-3 py-2 border-t border-[#FFD700]/30 bg-[#0a0a0a]/95">
+                        <span className="text-[#FFD700]/30 text-[9px] uppercase tracking-widest font-black">VibeMail · locked</span>
+                        <div className="flex items-center gap-1.5 px-3 py-1 bg-[#FFD700]/20 border border-[#FFD700]/30">
+                          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="3" opacity="0.4"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                          <span className="text-[#FFD700]/40 font-black text-[10px] uppercase tracking-widest">+100 VBMS</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   </div>{/* end mail-card wrapper */}
