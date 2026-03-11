@@ -1880,7 +1880,7 @@ export function VibeMailInboxWithClaim({
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-3 text-white/20 text-[9px]">Configure na aba Settings antes de usar</p>
+                    <p className="mt-3 text-white/20 text-[9px]">{(t as any).vibemailConfigureSettings || 'Configure in the Settings tab before using'}</p>
                   );
                 })()}
               </button>

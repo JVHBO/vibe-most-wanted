@@ -362,6 +362,7 @@ export const fidTranslations = {
     vibemailQuestMailDesc: 'Por destinatário · destinatário ganha VBMS ao completar as quests',
     vibemailBroadcastTitleFull: 'Broadcast / Aleatório',
     vibemailBroadcastDescCost: '1.000 VBMS multiplicado pelo número de destinatários',
+    vibemailConfigureSettings: 'Configure na aba Settings antes de usar',
 
     // Random mode with list
     vibemailRandomList: 'Lista Aleatória',
@@ -736,6 +737,7 @@ export const fidTranslations = {
     vibemailQuestMailDesc: 'Per recipient · recipient earns VBMS upon completing quests',
     vibemailBroadcastTitleFull: 'Broadcast / Random',
     vibemailBroadcastDescCost: '1,000 VBMS multiplied by number of recipients',
+    vibemailConfigureSettings: 'Configure in the Settings tab before using',
 
     // Random mode with list
     vibemailRandomList: 'Random List',
@@ -1103,6 +1105,7 @@ export const fidTranslations = {
     vibemailQuestMailDesc: 'Por destinatario · destinatario gana VBMS al completar quests',
     vibemailBroadcastTitleFull: 'Broadcast / Aleatorio',
     vibemailBroadcastDescCost: '1.000 VBMS multiplicado por el numero de destinatarios',
+    vibemailConfigureSettings: 'Configura en la pestaña Settings antes de usar',
 
     // Random mode with list
     vibemailRandomList: 'Lista Aleatoria',
@@ -1470,6 +1473,7 @@ export const fidTranslations = {
     vibemailQuestMailDesc: 'Per recipient · recipient earns VBMS upon completing quests',
     vibemailBroadcastTitleFull: 'Broadcast / Random',
     vibemailBroadcastDescCost: '1,000 VBMS multiplied by number of recipients',
+    vibemailConfigureSettings: 'Configure in the Settings tab before using',
     vibemailRandomList: 'Random List',
     vibemailAddToList: 'Add',
     vibemailRandomListCount: '{count} in list',
@@ -1833,6 +1837,7 @@ export const fidTranslations = {
     vibemailQuestMailDesc: 'Per recipient · recipient earns VBMS upon completing quests',
     vibemailBroadcastTitleFull: 'Broadcast / Random',
     vibemailBroadcastDescCost: '1,000 VBMS multiplied by number of recipients',
+    vibemailConfigureSettings: 'Configure in the Settings tab before using',
     vibemailRandomList: 'Случайный список',
     vibemailAddToList: 'Добавить',
     vibemailRandomListCount: '{count} в списке',
@@ -2196,6 +2201,7 @@ export const fidTranslations = {
     vibemailQuestMailDesc: 'Per recipient · recipient earns VBMS upon completing quests',
     vibemailBroadcastTitleFull: 'Broadcast / Random',
     vibemailBroadcastDescCost: '1,000 VBMS multiplied by number of recipients',
+    vibemailConfigureSettings: 'Configure in the Settings tab before using',
     vibemailRandomList: '随机列表',
     vibemailAddToList: '添加',
     vibemailRandomListCount: '列表中{count}人',
@@ -2528,6 +2534,7 @@ export const fidTranslations = {
     vibemailQuestMailDesc: 'Per recipient · recipient earns VBMS upon completing quests',
     vibemailBroadcastTitleFull: 'Broadcast / Random',
     vibemailBroadcastDescCost: '1,000 VBMS multiplied by number of recipients',
+    vibemailConfigureSettings: 'Configure in the Settings tab before using',
     vibemailRandomList: 'Daftar Acak',
     vibemailAddToList: 'Tambah',
     vibemailRandomListCount: '{count} di daftar',
@@ -2860,6 +2867,7 @@ export const fidTranslations = {
     vibemailQuestMailDesc: 'Per recipient · recipient earns VBMS upon completing quests',
     vibemailBroadcastTitleFull: 'Broadcast / Random',
     vibemailBroadcastDescCost: '1,000 VBMS multiplied by number of recipients',
+    vibemailConfigureSettings: 'Configure in the Settings tab before using',
     vibemailRandomList: 'Liste aléatoire',
     vibemailAddToList: 'Ajouter',
     vibemailRandomListCount: '{count} dans la liste',
@@ -3260,6 +3268,7 @@ export const fidTranslations = {
     vibemailQuestMailDesc: 'Per recipient · recipient earns VBMS upon completing quests',
     vibemailBroadcastTitleFull: 'Broadcast / Random',
     vibemailBroadcastDescCost: '1,000 VBMS multiplied by number of recipients',
+    vibemailConfigureSettings: 'Configure in the Settings tab before using',
     vibemailRandomList: 'ランダムリスト',
     vibemailAddToList: '追加',
     vibemailRandomListCount: 'リストに{count}人',
@@ -3622,6 +3631,7 @@ export const fidTranslations = {
     vibemailQuestMailDesc: 'Per recipient · recipient earns VBMS upon completing quests',
     vibemailBroadcastTitleFull: 'Broadcast / Random',
     vibemailBroadcastDescCost: '1,000 VBMS multiplied by number of recipients',
+    vibemailConfigureSettings: 'Configure in the Settings tab before using',
     vibemailRandomList: 'Lista casuale',
     vibemailAddToList: 'Aggiungi',
     vibemailRandomListCount: '{count} in lista',
