@@ -941,21 +941,23 @@ export function VibeMailInboxWithClaim({
   const [composerFollowTarget, setComposerFollowTarget] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const [previewQuestIdx, setPreviewQuestIdx] = useState(0);
-  // Design editor state
+  // Design editor state (only what needs to trigger re-renders)
   const [showDesign, setShowDesign] = useState(false);
   const [editTool, setEditTool] = useState<'select' | 'draw' | 'erase'>('select');
   const [drawColor, setDrawColor] = useState('#FFD700');
   const [drawSize, setDrawSize] = useState(4);
   const [drawStrokes, setDrawStrokes] = useState<Array<{points: {x:number,y:number}[], color: string, size: number, erase?: boolean}>>([]);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [currentStroke, setCurrentStroke] = useState<{x:number,y:number}[]>([]);
-  const [undoStack, setUndoStack] = useState<typeof drawStrokes[]>([]);
+  const [undoStack, setUndoStack] = useState<Array<Array<{points: {x:number,y:number}[], color: string, size: number, erase?: boolean}>>>([]);
   const [elementPositions, setElementPositions] = useState<Record<string, {x:number,y:number,w:number,h:number}>>({});
   const [selectedEl, setSelectedEl] = useState<string | null>(null);
-  const [draggingEl, setDraggingEl] = useState<{id:string,startMX:number,startMY:number,origX:number,origY:number}|null>(null);
-  const [resizingEl, setResizingEl] = useState<{id:string,startMX:number,startMY:number,startW:number,startH:number}|null>(null);
   const designAreaRef = useRef<HTMLDivElement | null>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  // Refs for hot-path — zero re-renders during drag / resize / draw
+  const dragRef = useRef<{id:string,origX:number,origY:number,startMX:number,startMY:number}|null>(null);
+  const resizeRef = useRef<{id:string,origW:number,origH:number,startMX:number,startMY:number}|null>(null);
+  const isDrawingRef = useRef(false);
+  const currentStrokeRef = useRef<{x:number,y:number}[]>([]);
+  const designInitRef = useRef(false);
 
   // Auto-advance carousel every 3s when preview is open and has multiple quests
   useEffect(() => {
@@ -964,6 +966,29 @@ export function VibeMailInboxWithClaim({
     const t = setInterval(() => setPreviewQuestIdx(p => (p + 1) % count), 6000);
     return () => clearInterval(t);
   }, [showPreview, composerQuestData?.quests?.length]);
+
+  // Init design editor: default element positions + canvas size
+  useEffect(() => {
+    if (!showDesign) { designInitRef.current = false; return; }
+    if (designInitRef.current) return;
+    designInitRef.current = true;
+    requestAnimationFrame(() => {
+      const area = designAreaRef.current;
+      const canvas = drawCanvasRef.current;
+      if (canvas && area) { canvas.width = area.offsetWidth; canvas.height = area.offsetHeight; }
+      const W = area ? Math.max(60, area.offsetWidth - 24) : 296;
+      setElementPositions(prev => {
+        const next = { ...prev };
+        let y = 8;
+        const textOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
+        if (textOnly && !prev['text']) { next['text'] = { x: 12, y, w: W, h: 64 }; y += 76; }
+        if (composerMessage.match(/\/sound=/i) && !prev['audio']) { next['audio'] = { x: 12, y, w: W, h: 56 }; y += 68; }
+        if (composerImageId && !prev['image']) { next['image'] = { x: 12, y, w: W, h: 150 }; }
+        return next;
+      });
+    });
+  }, [showDesign]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const messages = useQuery(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 });
   const sentMessages = useQuery(
     api.cardVotes.getSentMessages,
@@ -3066,83 +3091,136 @@ export function VibeMailInboxWithClaim({
 
             {/* Design Editor - full-screen canvas */}
             {showDesign && (() => {
-              // Helper: draggable element wrapper
-              const DraggableEl = ({ id, accentColor, children }: { id: string; accentColor: string; children: React.ReactNode }) => {
-                const pos = elementPositions[id] || { x: 0, y: 0, w: 100, h: 60 };
+              // renderEl: function (NOT component) — avoids React remount on every state change
+              const renderEl = (id: string, accentColor: string, content: React.ReactNode) => {
+                const pos = elementPositions[id];
+                if (!pos) return null;
                 const isSel = selectedEl === id;
                 return (
                   <div
+                    key={id}
+                    id={`vmd-${id}`}
                     style={{
-                      position: 'relative', marginBottom: 8,
-                      transform: `translate(${pos.x}px, ${pos.y}px)`,
-                      width: `${pos.w}%`,
-                      outline: isSel ? `2px solid ${accentColor}` : '2px solid transparent',
-                      cursor: draggingEl?.id === id ? 'grabbing' : 'grab',
-                      userSelect: 'none', touchAction: 'none',
+                      position: 'absolute',
+                      left: pos.x, top: pos.y,
+                      width: pos.w, height: pos.h,
+                      touchAction: 'none', userSelect: 'none',
+                      cursor: 'grab', zIndex: isSel ? 15 : 10,
+                      outline: isSel ? `2px solid ${accentColor}` : '1px solid rgba(255,255,255,0.08)',
+                      boxSizing: 'border-box', overflow: 'hidden',
                     }}
                     onPointerDown={(e) => {
+                      if ((e.target as HTMLElement).closest('[data-resize]')) return;
                       e.stopPropagation();
                       setSelectedEl(id);
-                      setDraggingEl({ id, startMX: e.clientX, startMY: e.clientY, origX: pos.x, origY: pos.y });
-                      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                      dragRef.current = { id, origX: pos.x, origY: pos.y, startMX: e.clientX, startMY: e.clientY };
+                      e.currentTarget.setPointerCapture(e.pointerId);
                     }}
                     onPointerMove={(e) => {
-                      if (!draggingEl || draggingEl.id !== id) return;
+                      const drag = dragRef.current;
+                      if (!drag || drag.id !== id) return;
                       e.stopPropagation();
-                      setElementPositions(p => ({ ...p, [id]: { x: draggingEl.origX + (e.clientX - draggingEl.startMX), y: draggingEl.origY + (e.clientY - draggingEl.startMY), w: (p[id] || pos).w, h: (p[id] || pos).h } }));
+                      const el = document.getElementById(`vmd-${id}`);
+                      if (el) {
+                        el.style.left = `${drag.origX + (e.clientX - drag.startMX)}px`;
+                        el.style.top = `${drag.origY + (e.clientY - drag.startMY)}px`;
+                      }
                     }}
-                    onPointerUp={(e) => { setDraggingEl(null); (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); }}
+                    onPointerUp={(e) => {
+                      const drag = dragRef.current;
+                      if (!drag || drag.id !== id) return;
+                      e.stopPropagation();
+                      const el = document.getElementById(`vmd-${id}`);
+                      if (el) {
+                        setElementPositions(p => ({
+                          ...p,
+                          [id]: { x: parseFloat(el.style.left) || drag.origX, y: parseFloat(el.style.top) || drag.origY, w: (p[id] || pos).w, h: (p[id] || pos).h }
+                        }));
+                      }
+                      dragRef.current = null;
+                      e.currentTarget.releasePointerCapture(e.pointerId);
+                    }}
                   >
-                    {isSel && <div className="absolute -top-4 left-0 z-30 px-1 text-[8px] font-black text-black" style={{ background: accentColor }}>{id.toUpperCase()} — drag to move</div>}
-                    {children}
-                    {/* Resize handle bottom-right */}
+                    {/* Label when selected */}
+                    {isSel && (
+                      <div className="absolute -top-5 left-0 px-1.5 py-0.5 text-[8px] font-black text-black z-20 pointer-events-none" style={{ background: accentColor }}>
+                        {id.toUpperCase()} — drag ↕↔ · resize ↘
+                      </div>
+                    )}
+                    {/* Content fills the box */}
+                    <div className="w-full h-full overflow-hidden">{content}</div>
+                    {/* Resize handle — bottom-right corner */}
                     {isSel && (
                       <div
-                        className="absolute bottom-0 right-0 w-5 h-5 z-30 flex items-center justify-center text-[9px] font-black"
+                        data-resize="true"
+                        className="absolute bottom-0 right-0 w-6 h-6 flex items-center justify-center text-[10px] font-black z-20"
                         style={{ background: accentColor, color: '#000', cursor: 'se-resize', touchAction: 'none' }}
                         onPointerDown={(e) => {
                           e.stopPropagation();
-                          setResizingEl({ id, startMX: e.clientX, startMY: e.clientY, startW: pos.w, startH: pos.h });
-                          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                          e.currentTarget.setPointerCapture(e.pointerId);
+                          resizeRef.current = { id, origW: pos.w, origH: pos.h, startMX: e.clientX, startMY: e.clientY };
                         }}
                         onPointerMove={(e) => {
-                          if (!resizingEl || resizingEl.id !== id) return;
+                          const resize = resizeRef.current;
+                          if (!resize || resize.id !== id) return;
                           e.stopPropagation();
-                          const area = designAreaRef.current;
-                          if (!area) return;
-                          const newW = Math.max(20, Math.min(100, resizingEl.startW + ((e.clientX - resizingEl.startMX) / area.offsetWidth) * 100));
-                          const newH = Math.max(30, resizingEl.startH + (e.clientY - resizingEl.startMY));
-                          setElementPositions(p => ({ ...p, [id]: { x: (p[id] || pos).x, y: (p[id] || pos).y, w: newW, h: newH } }));
+                          const el = document.getElementById(`vmd-${id}`);
+                          if (el) {
+                            el.style.width = `${Math.max(60, resize.origW + (e.clientX - resize.startMX))}px`;
+                            el.style.height = `${Math.max(28, resize.origH + (e.clientY - resize.startMY))}px`;
+                          }
                         }}
-                        onPointerUp={(e) => { setResizingEl(null); (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); }}
+                        onPointerUp={(e) => {
+                          const resize = resizeRef.current;
+                          if (!resize || resize.id !== id) return;
+                          e.stopPropagation();
+                          const el = document.getElementById(`vmd-${id}`);
+                          if (el) {
+                            setElementPositions(p => ({
+                              ...p,
+                              [id]: { x: (p[id] || pos).x, y: (p[id] || pos).y, w: parseFloat(el.style.width) || pos.w, h: parseFloat(el.style.height) || pos.h }
+                            }));
+                          }
+                          resizeRef.current = null;
+                          e.currentTarget.releasePointerCapture(e.pointerId);
+                        }}
                       >↘</div>
                     )}
                   </div>
                 );
               };
 
+              const textOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
+              const audioMatch = composerMessage.match(/\/sound=(\S+)/i);
+              const audioName = audioMatch ? audioMatch[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio' : 'Audio';
+              const imgSrc = composerImageId
+                ? (composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''))
+                : '';
+
               return (
                 <div className="fixed inset-0 z-[600] bg-[#0a0a0a] flex flex-col" style={{ colorScheme: 'dark', color: 'white' }}>
                   {/* Toolbar */}
-                  <div className="flex items-center gap-1.5 p-2 border-b-2 border-[#8B5CF6] bg-[#111] flex-wrap">
-                    <span className="text-[#8B5CF6] font-black text-xs uppercase tracking-wider mr-1">Edit</span>
-                    {(['select', 'draw', 'erase'] as const).map(tool => (
-                      <button
-                        key={tool}
-                        onClick={() => setEditTool(tool)}
-                        className={`px-2 py-1 text-[10px] font-bold border-2 uppercase transition-all ${editTool === tool ? 'border-[#FFD700] bg-[#FFD700] text-black' : 'border-[#444] text-white/60 hover:border-white/60'}`}
-                      >
-                        {tool === 'select' ? '↖ Move' : tool === 'draw' ? '✏ Draw' : '⌫ Erase'}
-                      </button>
-                    ))}
+                  <div className="flex items-center gap-1.5 px-2 py-2 border-b-2 border-[#8B5CF6] bg-[#111] flex-wrap">
+                    <span className="text-[#8B5CF6] font-black text-[10px] uppercase tracking-wider">Edit</span>
+                    <div className="flex gap-1">
+                      {(['select', 'draw', 'erase'] as const).map(tool => (
+                        <button
+                          key={tool}
+                          onClick={() => setEditTool(tool)}
+                          className={`px-2 py-1 text-[10px] font-bold border-2 uppercase transition-all ${editTool === tool ? 'border-[#FFD700] bg-[#FFD700] text-black' : 'border-[#444] text-white/50 hover:border-white/50'}`}
+                        >
+                          {tool === 'select' ? '↖ Move' : tool === 'draw' ? '✏ Draw' : '⌫ Erase'}
+                        </button>
+                      ))}
+                    </div>
                     {editTool !== 'select' && (
-                      <>
+                      <div className="flex items-center gap-1.5">
                         <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)}
-                          className="w-7 h-7 border-2 border-[#444] p-0 bg-transparent" title="Color" />
-                        <input type="range" min="1" max="20" value={drawSize} onChange={e => setDrawSize(parseInt(e.target.value))}
-                          className="w-16 accent-[#FFD700] h-1" />
-                        <span className="text-white/40 text-[10px] w-6">{drawSize}px</span>
-                      </>
+                          className="w-6 h-6 border border-[#444] p-0 bg-transparent cursor-pointer" />
+                        <input type="range" min="1" max="24" value={drawSize} onChange={e => setDrawSize(parseInt(e.target.value))}
+                          className="w-16 accent-[#FFD700]" style={{ height: 4 }} />
+                        <span className="text-white/30 text-[9px]">{drawSize}px</span>
+                      </div>
                     )}
                     <div className="flex-1" />
                     <button
@@ -3152,9 +3230,8 @@ export function VibeMailInboxWithClaim({
                         setDrawStrokes(prev);
                         setUndoStack(u => u.slice(0, -1));
                         const canvas = drawCanvasRef.current;
-                        if (!canvas) return;
-                        const ctx = canvas.getContext('2d');
-                        if (!ctx) return;
+                        const ctx = canvas?.getContext('2d');
+                        if (!ctx || !canvas) return;
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         prev.forEach(s => {
                           if (s.points.length < 2) return;
@@ -3168,7 +3245,7 @@ export function VibeMailInboxWithClaim({
                         });
                       }}
                       disabled={!undoStack.length}
-                      className="px-2 py-1 text-[10px] border-2 border-[#444] text-white/60 hover:border-white/60 disabled:opacity-30"
+                      className="px-2 py-1 text-[10px] border border-[#444] text-white/50 hover:border-white/70 disabled:opacity-25 transition-all"
                     >↩ Undo</button>
                     <button
                       onClick={() => {
@@ -3178,123 +3255,115 @@ export function VibeMailInboxWithClaim({
                         if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
                       }}
                       disabled={!drawStrokes.length}
-                      className="px-2 py-1 text-[10px] border-2 border-red-800 text-red-400 hover:border-red-500 disabled:opacity-30"
-                    >🗑 Clear</button>
+                      className="px-2 py-1 text-[10px] border border-red-900 text-red-500 hover:border-red-500 disabled:opacity-25 transition-all"
+                    >🗑</button>
                   </div>
 
-                  {/* Canvas area */}
-                  <div ref={designAreaRef} className="flex-1 relative overflow-hidden bg-[#0d0d0d]">
-                    {/* Drawing canvas */}
+                  {/* Design canvas + elements */}
+                  <div
+                    ref={designAreaRef}
+                    className="flex-1 relative bg-[#0d0d0d]"
+                    style={{ overflow: 'hidden' }}
+                    onClick={(e) => { if (e.target === e.currentTarget) setSelectedEl(null); }}
+                  >
+                    {/* Canvas — draw layer on top */}
                     <canvas
-                      ref={(el) => {
-                        drawCanvasRef.current = el;
-                        if (el) requestAnimationFrame(() => {
-                          const area = designAreaRef.current;
-                          if (area && (el.width !== area.offsetWidth || el.height !== area.offsetHeight)) {
-                            el.width = area.offsetWidth;
-                            el.height = area.offsetHeight;
-                          }
-                        });
+                      ref={el => { drawCanvasRef.current = el; }}
+                      className="absolute inset-0 z-30"
+                      style={{
+                        pointerEvents: editTool !== 'select' ? 'auto' : 'none',
+                        touchAction: 'none',
+                        cursor: editTool === 'erase' ? 'cell' : editTool === 'draw' ? 'crosshair' : 'default',
                       }}
-                      className="absolute inset-0 z-20"
-                      style={{ pointerEvents: editTool !== 'select' ? 'auto' : 'none', touchAction: 'none' }}
                       onPointerDown={(e) => {
                         if (editTool === 'select') return;
                         e.currentTarget.setPointerCapture(e.pointerId);
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setIsDrawing(true);
-                        setCurrentStroke([{ x: e.clientX - rect.left, y: e.clientY - rect.top }]);
+                        const canvas = e.currentTarget;
+                        const rect = canvas.getBoundingClientRect();
+                        const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+                        const x = (e.clientX - rect.left) * scaleX, y = (e.clientY - rect.top) * scaleY;
+                        currentStrokeRef.current = [{ x, y }];
+                        isDrawingRef.current = true;
+                        // Draw single dot
+                        const ctx = canvas.getContext('2d');
+                        if (ctx) {
+                          ctx.beginPath();
+                          if (editTool === 'erase') { ctx.globalCompositeOperation = 'destination-out'; ctx.arc(x, y, drawSize * 2.5, 0, Math.PI * 2); ctx.fill(); }
+                          else { ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = drawColor; ctx.arc(x, y, drawSize / 2, 0, Math.PI * 2); ctx.fill(); }
+                        }
                       }}
                       onPointerMove={(e) => {
-                        if (!isDrawing || editTool === 'select') return;
+                        if (!isDrawingRef.current) return;
                         const canvas = drawCanvasRef.current;
-                        if (!canvas) return;
-                        const ctx = canvas.getContext('2d');
-                        if (!ctx) return;
+                        const ctx = canvas?.getContext('2d');
+                        if (!ctx || !canvas) return;
                         const rect = canvas.getBoundingClientRect();
-                        const x = e.clientX - rect.left, y = e.clientY - rect.top;
-                        setCurrentStroke(pts => {
-                          const newPts = [...pts, { x, y }];
-                          if (newPts.length >= 2) {
-                            ctx.beginPath();
-                            if (editTool === 'erase') { ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; ctx.lineWidth = drawSize * 5; }
-                            else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = drawColor; ctx.lineWidth = drawSize; }
-                            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-                            ctx.moveTo(newPts[newPts.length - 2].x, newPts[newPts.length - 2].y);
-                            ctx.lineTo(x, y);
-                            ctx.stroke();
-                          }
-                          return newPts;
-                        });
+                        const scaleX = canvas.width / rect.width, scaleY = canvas.height / rect.height;
+                        const x = (e.clientX - rect.left) * scaleX, y = (e.clientY - rect.top) * scaleY;
+                        const pts = currentStrokeRef.current;
+                        if (pts.length > 0) {
+                          ctx.beginPath();
+                          if (editTool === 'erase') { ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; ctx.lineWidth = drawSize * 5; }
+                          else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = drawColor; ctx.lineWidth = drawSize; }
+                          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                          ctx.moveTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+                          ctx.lineTo(x, y);
+                          ctx.stroke();
+                        }
+                        currentStrokeRef.current = [...pts, { x, y }];
                       }}
                       onPointerUp={() => {
-                        if (!isDrawing) return;
-                        setUndoStack(p => [...p, drawStrokes]);
-                        setDrawStrokes(p => [...p, { points: currentStroke, color: drawColor, size: drawSize, erase: editTool === 'erase' }]);
-                        setCurrentStroke([]);
-                        setIsDrawing(false);
+                        if (!isDrawingRef.current) return;
+                        isDrawingRef.current = false;
+                        const pts = currentStrokeRef.current;
+                        if (pts.length > 0) {
+                          setUndoStack(p => [...p, drawStrokes]);
+                          setDrawStrokes(p => [...p, { points: pts, color: drawColor, size: drawSize, erase: editTool === 'erase' }]);
+                        }
+                        currentStrokeRef.current = [];
                       }}
                     />
 
-                    {/* Elements layer */}
-                    <div
-                      className="absolute inset-0 z-10 overflow-y-auto p-3"
-                      style={{ pointerEvents: editTool === 'select' ? 'auto' : 'none' }}
-                      onClick={() => setSelectedEl(null)}
-                    >
-                      {/* Header banner - locked */}
-                      <div className="mb-2 border-2 border-[#FFD700]/20 opacity-60 p-2 flex items-center gap-2">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="#FFD700"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                        <span className="text-[#FFD700]/60 text-[9px] font-black uppercase tracking-widest">Quest Banner — header (locked)</span>
+                    {/* Hint overlay when no elements */}
+                    {!textOnly && !audioMatch && !imgSrc && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-5">
+                        <p className="text-white/20 text-xs text-center">No content yet.<br/>Add text, sound or image in composer.</p>
                       </div>
+                    )}
 
-                      {/* Text block */}
-                      {composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim() && (
-                        <DraggableEl id="text" accentColor="#FFD700">
-                          <div className="bg-[#111] border border-[#333] p-2 text-xs text-white/80 leading-relaxed min-h-[40px]">
-                            {composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim() || '(text)'}
-                          </div>
-                        </DraggableEl>
+                    {/* Locked header banner */}
+                    <div className="absolute top-0 left-0 right-0 h-8 z-5 flex items-center px-3 gap-1.5 border-b border-[#FFD700]/10 bg-[#FFD700]/5 pointer-events-none">
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="#FFD700" opacity="0.4"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      <span className="text-[#FFD700]/30 text-[8px] font-black uppercase tracking-widest">Quest Banner (locked)</span>
+                    </div>
+
+                    {/* Draggable elements — absolutely positioned */}
+                    <div className="absolute inset-0 z-10" style={{ pointerEvents: editTool === 'select' ? 'auto' : 'none', marginTop: 32 }}>
+                      {textOnly && renderEl('text', '#FFD700',
+                        <div className="w-full h-full bg-[#111] border border-[#333] p-2 text-xs text-white/80 leading-relaxed overflow-hidden">{textOnly}</div>
                       )}
+                      {audioMatch && renderEl('audio', '#F97316',
+                        <div className="w-full h-full bg-[#1a0a00] border border-[#F97316]/30 flex items-center gap-2 px-2">
+                          <div className="w-7 h-7 rounded-full bg-[#F97316] flex items-center justify-center text-xs flex-shrink-0 font-black">▶</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[#F97316] font-bold text-[11px] truncate">{audioName}</p>
+                            <p className="text-white/30 text-[9px]">Tap to play</p>
+                          </div>
+                        </div>
+                      )}
+                      {imgSrc && renderEl('image', '#22C55E',
+                        <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+                      )}
+                    </div>
 
-                      {/* Audio player block */}
-                      {composerMessage.match(/\/sound=(\S+)/i) && (() => {
-                        const m = composerMessage.match(/\/sound=(\S+)/i);
-                        const rawName = m ? m[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio' : 'Audio';
-                        return (
-                          <DraggableEl id="audio" accentColor="#F97316">
-                            <div className="bg-[#1a0a00] border border-[#F97316]/40 p-2 flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-full bg-[#F97316] flex items-center justify-center text-sm flex-shrink-0">▶</div>
-                              <div>
-                                <p className="text-[#F97316] font-bold text-xs">{rawName}</p>
-                                <p className="text-white/40 text-[10px]">Tap to play</p>
-                              </div>
-                            </div>
-                          </DraggableEl>
-                        );
-                      })()}
-
-                      {/* Image block */}
-                      {composerImageId && (() => {
-                        const imgSrc = composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || '');
-                        if (!imgSrc) return null;
-                        const pos = elementPositions['image'] || { x: 0, y: 0, w: 100, h: 150 };
-                        return (
-                          <DraggableEl id="image" accentColor="#22C55E">
-                            <img src={imgSrc} alt="" className="w-full object-contain border border-[#22C55E]/30" style={{ height: pos.h }} />
-                          </DraggableEl>
-                        );
-                      })()}
-
-                      {/* Footer VBMS - locked */}
-                      <div className="mt-4 border border-[#FFD700]/20 opacity-60 p-2 flex justify-end">
-                        <span className="text-[#FFD700]/60 text-xs font-black">+100 VBMS — footer (locked)</span>
-                      </div>
+                    {/* Locked footer */}
+                    <div className="absolute bottom-0 left-0 right-0 h-8 z-5 flex items-center justify-end px-3 border-t border-[#FFD700]/10 bg-[#FFD700]/5 pointer-events-none">
+                      <span className="text-[#FFD700]/30 text-[9px] font-black">+100 VBMS (locked)</span>
                     </div>
                   </div>
 
                   {/* Footer buttons */}
-                  <div className="p-3 border-t-2 border-[#333] flex gap-2">
+                  <div className="p-2.5 border-t-2 border-[#333] flex gap-2">
                     <button
                       onClick={() => { setShowDesign(false); setShowPreview(true); }}
                       className="flex-1 py-2.5 bg-[#DB2777] border-2 border-[#DB2777] text-white font-bold text-xs uppercase tracking-wide hover:bg-[#BE185D] transition-all"
