@@ -980,6 +980,31 @@ export function VibeMailInboxWithClaim({
   const drawingIdRef = useRef(0);
   const [isSavingDesign, setIsSavingDesign] = useState(false);
   const [hiddenElements, setHiddenElements] = useState<Set<string>>(new Set());
+  const designUndoStack = useRef<Array<{
+    positions: Record<string, {x:number,y:number,w:number,h:number,r?:number,z?:number}>;
+    hidden: Set<string>;
+    drawIds: string[];
+    drawImgs: Record<string, string>;
+  }>>([]);
+  // Capture current design state onto undo stack (call BEFORE making changes)
+  const pushDesignUndo = () => {
+    designUndoStack.current = [...designUndoStack.current.slice(-29), {
+      positions: JSON.parse(JSON.stringify(elementPositions)),
+      hidden: new Set(hiddenElements),
+      drawIds: [...drawnIds],
+      drawImgs: { ...drawingImages },
+    }];
+  };
+  const popDesignUndo = () => {
+    const snap = designUndoStack.current.pop();
+    if (!snap) return;
+    setElementPositions(snap.positions);
+    setHiddenElements(snap.hidden);
+    setDrawnIds(snap.drawIds);
+    setDrawingImages(snap.drawImgs);
+    setSelectedEl(null);
+    designUndoStack.current = [...designUndoStack.current]; // trigger re-render check
+  };
 
   // Auto-advance carousel every 3s when preview is open and has multiple quests
   useEffect(() => {
@@ -3217,7 +3242,7 @@ export function VibeMailInboxWithClaim({
                       cursor: 'grab',
                       outline: isSel ? `2px solid ${accentColor}` : (groupDraw && isDrawEl ? '1px dashed rgba(167,139,250,0.5)' : '1px solid rgba(255,255,255,0.06)'),
                       boxSizing: 'border-box', overflow: 'visible',
-                      zIndex: isSel ? 50 : (pos.z ?? 0) + 1,
+                      zIndex: isSel ? 9999 : ((pos.z ?? 0) + 1) * 10,
                     }}
                     onPointerDown={(e) => {
                       if ((e.target as HTMLElement).closest('[data-action]')) return;
@@ -3267,6 +3292,7 @@ export function VibeMailInboxWithClaim({
                           }));
                         }
                       }
+                      pushDesignUndo();
                       dragRef.current = null;
                       e.currentTarget.releasePointerCapture(e.pointerId);
                     }}
@@ -3279,22 +3305,23 @@ export function VibeMailInboxWithClaim({
                         onClick={e => e.stopPropagation()}
                       >
                         <span className="px-1 py-0.5 text-[8px] font-black text-black" style={{ background: accentColor }}>
-                          {isDrawEl ? 'DRAW' : id.toUpperCase()}
+                          {isDrawEl ? 'DRAW' : id.toUpperCase()} {pos.z ? `L${pos.z}` : 'L0'}
                         </span>
                         <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Rotate CCW"
-                          onClick={() => setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), r: ((p[id]?.r ?? 0) - 15 + 360) % 360 } }))}>↺</button>
+                          onClick={() => { pushDesignUndo(); setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), r: ((p[id]?.r ?? 0) - 15 + 360) % 360 } })); }}>↺</button>
                         <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Rotate CW"
-                          onClick={() => setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), r: ((p[id]?.r ?? 0) + 15) % 360 } }))}>↻</button>
+                          onClick={() => { pushDesignUndo(); setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), r: ((p[id]?.r ?? 0) + 15) % 360 } })); }}>↻</button>
                         <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Smaller"
-                          onClick={() => setElementPositions(p => { const e = p[id] || pos; return { ...p, [id]: { ...e, w: Math.max(40, e.w * 0.82), h: Math.max(20, e.h * 0.82) } }; })}>−</button>
+                          onClick={() => { pushDesignUndo(); setElementPositions(p => { const e = p[id] || pos; return { ...p, [id]: { ...e, w: Math.max(40, e.w * 0.82), h: Math.max(20, e.h * 0.82) } }; }); }}>−</button>
                         <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Bigger"
-                          onClick={() => setElementPositions(p => { const e = p[id] || pos; return { ...p, [id]: { ...e, w: e.w * 1.18, h: e.h * 1.18 } }; })}>+</button>
-                        <button className="w-6 h-6 bg-[#1a1a1a] border border-[#334] text-blue-300 text-xs hover:bg-[#223] flex items-center justify-center" title="Layer up (bring forward)"
-                          onClick={() => setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), z: ((p[id]?.z ?? 0) + 1) } }))}>▲</button>
-                        <button className="w-6 h-6 bg-[#1a1a1a] border border-[#334] text-blue-300 text-xs hover:bg-[#223] flex items-center justify-center" title="Layer down (send back)"
-                          onClick={() => setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), z: Math.max(0, (p[id]?.z ?? 0) - 1) } }))}>▼</button>
-                        <button className="w-6 h-6 bg-red-900 border border-red-700 text-red-400 text-xs hover:bg-red-800 flex items-center justify-center" title="Delete"
+                          onClick={() => { pushDesignUndo(); setElementPositions(p => { const e = p[id] || pos; return { ...p, [id]: { ...e, w: e.w * 1.18, h: e.h * 1.18 } }; }); }}>+</button>
+                        <button className="w-6 h-6 bg-[#1a1a1a] border border-[#334] text-blue-300 text-xs hover:bg-[#223] flex items-center justify-center" title="Layer up — bring forward"
+                          onClick={() => { pushDesignUndo(); setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), z: (p[id]?.z ?? 0) + 1 } })); }}>▲</button>
+                        <button className="w-6 h-6 bg-[#1a1a1a] border border-[#334] text-blue-300 text-xs hover:bg-[#223] flex items-center justify-center" title="Layer down — send back"
+                          onClick={() => { pushDesignUndo(); setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), z: Math.max(0, (p[id]?.z ?? 0) - 1) } })); }}>▼</button>
+                        <button className="w-6 h-6 bg-red-900 border border-red-700 text-red-400 text-xs hover:bg-red-800 flex items-center justify-center" title="Delete (Ctrl+Z to undo)"
                           onClick={() => {
+                            pushDesignUndo();
                             setElementPositions(p => { const n = { ...p }; delete n[id]; return n; });
                             if (isDrawEl) {
                               setDrawingImages(p => { const n = { ...p }; delete n[id]; return n; });
@@ -3340,6 +3367,7 @@ export function VibeMailInboxWithClaim({
                               [id]: { ...(p[id] || pos), w: parseFloat(el.style.width) || pos.w, h: parseFloat(el.style.height) || pos.h }
                             }));
                           }
+                          pushDesignUndo();
                           resizeRef.current = null;
                           e.currentTarget.releasePointerCapture(e.pointerId);
                         }}
@@ -3375,30 +3403,25 @@ export function VibeMailInboxWithClaim({
                       </div>
                     )}
                     <div className="flex-1" />
-                    {/* Undo last drawn element */}
-                    <button
-                      onClick={() => {
-                        if (!drawnIds.length) return;
-                        const lastId = drawnIds[drawnIds.length - 1];
-                        setDrawnIds(p => p.slice(0, -1));
-                        setDrawingImages(p => { const n = { ...p }; delete n[lastId]; return n; });
-                        setElementPositions(p => { const n = { ...p }; delete n[lastId]; return n; });
-                        if (selectedEl === lastId) setSelectedEl(null);
-                      }}
-                      disabled={!drawnIds.length}
-                      className="px-2 py-1 text-[10px] border border-[#444] text-white/50 hover:border-white/70 disabled:opacity-25 transition-all"
-                    >↩ Undo</button>
-                    {/* Toggle: move all drawings together */}
-                    {drawnIds.length >= 2 && (
+                    {/* Draw-mode-only controls */}
+                    {editTool === 'draw' && drawnIds.length >= 2 && (
                       <button
                         onClick={() => { setGroupDraw(p => !p); setSelectedEl(null); }}
                         className={`px-2 py-1 text-[10px] border-2 transition-all ${groupDraw ? 'border-[#A78BFA] bg-[#A78BFA]/20 text-[#A78BFA]' : 'border-[#555] text-white/40 hover:border-[#A78BFA] hover:text-[#A78BFA]'}`}
-                        title={groupDraw ? 'Click to deselect group — go back to individual elements' : 'Move all drawings together'}
+                        title={groupDraw ? 'Deselect group — go back to individual strokes' : 'Select all strokes to move together'}
                       >{groupDraw ? '☑ Grouped' : '☐ Group'}</button>
                     )}
+                    {/* Undo — works for all actions */}
+                    <button
+                      onClick={popDesignUndo}
+                      disabled={designUndoStack.current.length === 0}
+                      className="px-2 py-1 text-[10px] border border-[#444] text-white/50 hover:border-white/70 disabled:opacity-25 transition-all"
+                      title="Undo last action"
+                    >↩ Undo</button>
                     {/* Reset layout */}
                     <button
                       onClick={() => {
+                        pushDesignUndo();
                         setElementPositions({});
                         setDrawingImages({});
                         setDrawnIds([]);
