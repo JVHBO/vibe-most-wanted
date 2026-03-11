@@ -3124,79 +3124,85 @@ export function VibeMailInboxWithClaim({
                       const allPos = Object.values(elementPositions);
                       const minH = allPos.length ? Math.max(120, ...allPos.map(p => p.y + p.h + 16)) : 120;
                       return (
-                        <div style={{ position: 'relative', minHeight: minH }}>
-                          {pvTextOnly && elementPositions['text'] && (() => {
-                            const pos = elementPositions['text'];
-                            return (
-                              <div key="pvtext" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', background:'#000', padding:'8px' }}>
-                                <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb', fontSize: Math.max(8, Math.min(15, pos.h * 0.2)) }}>{renderRichMessage(composerMessage)}</div>
-                              </div>
-                            );
+                        <div style={{ position: 'relative', minHeight: minH, overflowX: 'hidden' }}>
+                          {(() => {
+                            type PvItem = { key: string; z: number; node: React.ReactNode };
+                            const pvItems: PvItem[] = [];
+                            if (pvTextOnly && elementPositions['text']) {
+                              const pos = elementPositions['text'];
+                              pvItems.push({ key: 'pvtext', z: pos.z ?? 0, node: (
+                                <div key="pvtext" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', background:'#000', padding:'8px', zIndex: ((pos.z ?? 0) + 1) * 10 }}>
+                                  <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb', fontSize: Math.max(8, Math.min(15, pos.h * 0.2)) }}>{renderRichMessage(composerMessage)}</div>
+                                </div>
+                              )});
+                            }
+                            if (pvAudioMatch && elementPositions['audio']) {
+                              const pos = elementPositions['audio'];
+                              const rawUrl = pvAudioMatch[1];
+                              const audioUrl = proxyAudioUrl(rawUrl);
+                              const volMatch = composerMessage.match(/\/sound=\S+\s+volume=([\d.]+)/i);
+                              const vol = volMatch ? Math.min(1, Math.max(0, parseFloat(volMatch[1]))) : 0.2;
+                              const aName = rawUrl.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio';
+                              const pid = `preview:${audioUrl}`;
+                              const isPlaying = playingAudio === pid;
+                              pvItems.push({ key: 'pvaudio', z: pos.z ?? 0, node: (
+                                <div key="pvaudio" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex: ((pos.z ?? 0) + 1) * 10 }}>
+                                  <button
+                                    className="w-full h-full flex items-center gap-2.5 px-3 active:opacity-80 transition-opacity"
+                                    style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: `3px solid ${isPlaying ? '#ff6b00' : '#F97316'}` }}
+                                    onClick={() => {
+                                      if (isPlaying) { audioRef.current?.pause(); setPlayingAudio(null); }
+                                      else if (audioRef.current) {
+                                        audioRef.current.src = audioUrl; audioRef.current.volume = vol;
+                                        audioRef.current.play().catch(() => setPlayingAudio(null));
+                                        setPlayingAudio(pid);
+                                      }
+                                    }}
+                                  >
+                                    <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-all" style={{ background: '#F97316', boxShadow: isPlaying ? '0 0 16px rgba(249,115,22,0.7)' : '0 0 10px rgba(249,115,22,0.45)' }}>
+                                      {isPlaying
+                                        ? <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                        : <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                      }
+                                    </div>
+                                    <div className="flex items-center gap-px flex-shrink-0">
+                                      {[3,6,4,8,5,9,4,7,3,6,8,5].map((h, i) => (
+                                        <div key={i} style={{ width: 2, height: h * 2.2, background: isPlaying ? (i % 2 === 0 ? '#F97316' : 'rgba(249,115,22,0.5)') : (i < 5 ? '#F97316' : 'rgba(249,115,22,0.25)'), borderRadius: 1 }} />
+                                      ))}
+                                    </div>
+                                    <div className="flex-1 min-w-0 text-left">
+                                      <p className="text-white font-bold text-[11px] capitalize truncate leading-tight">{aName}</p>
+                                      <p className="text-[#F97316]/50 text-[8px] uppercase tracking-widest">{isPlaying ? 'Playing…' : 'Sound'}</p>
+                                    </div>
+                                    <span className="text-[#F97316]/15 text-base flex-shrink-0">♪</span>
+                                  </button>
+                                </div>
+                              )});
+                            }
+                            if (pvImgSrc && elementPositions['image']) {
+                              const pos = elementPositions['image'];
+                              const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(pvImgSrc);
+                              pvItems.push({ key: 'pvimg', z: pos.z ?? 0, node: (
+                                <div key="pvimg" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex: ((pos.z ?? 0) + 1) * 10 }}>
+                                  {isVid
+                                    ? <video src={pvImgSrc} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+                                    : <img src={pvImgSrc} alt="Attachment" className="w-full h-full object-cover" />}
+                                </div>
+                              )});
+                            }
+                            for (const id of drawnIds) {
+                              const src = drawingImages[id];
+                              const pos = elementPositions[id];
+                              if (!src || !pos) continue;
+                              pvItems.push({ key: id, z: pos.z ?? 0, node: (
+                                <div key={id} style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex: ((pos.z ?? 0) + 1) * 10 }}>
+                                  <img src={src} alt="" className="w-full h-full" />
+                                </div>
+                              )});
+                            }
+                            pvItems.sort((a, b) => a.z - b.z);
+                            return pvItems.map(item => item.node);
                           })()}
-                          {pvAudioMatch && elementPositions['audio'] && (() => {
-                            const pos = elementPositions['audio'];
-                            const rawUrl = pvAudioMatch[1];
-                            const audioUrl = proxyAudioUrl(rawUrl);
-                            const volMatch = composerMessage.match(/\/sound=\S+\s+volume=([\d.]+)/i);
-                            const vol = volMatch ? Math.min(1, Math.max(0, parseFloat(volMatch[1]))) : 0.2;
-                            const aName = rawUrl.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio';
-                            const pid = `preview:${audioUrl}`;
-                            const isPlaying = playingAudio === pid;
-                            return (
-                              <div key="pvaudio" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
-                                <button
-                                  className="w-full h-full flex items-center gap-2.5 px-3 active:opacity-80 transition-opacity"
-                                  style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: `3px solid ${isPlaying ? '#ff6b00' : '#F97316'}` }}
-                                  onClick={() => {
-                                    if (isPlaying) { audioRef.current?.pause(); setPlayingAudio(null); }
-                                    else if (audioRef.current) {
-                                      audioRef.current.src = audioUrl; audioRef.current.volume = vol;
-                                      audioRef.current.play().catch(() => setPlayingAudio(null));
-                                      setPlayingAudio(pid);
-                                    }
-                                  }}
-                                >
-                                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-all" style={{ background: '#F97316', boxShadow: isPlaying ? '0 0 16px rgba(249,115,22,0.7)' : '0 0 10px rgba(249,115,22,0.45)' }}>
-                                    {isPlaying
-                                      ? <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                                      : <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                                    }
-                                  </div>
-                                  <div className="flex items-center gap-px flex-shrink-0">
-                                    {[3,6,4,8,5,9,4,7,3,6,8,5].map((h, i) => (
-                                      <div key={i} style={{ width: 2, height: h * 2.2, background: isPlaying ? (i % 2 === 0 ? '#F97316' : 'rgba(249,115,22,0.5)') : (i < 5 ? '#F97316' : 'rgba(249,115,22,0.25)'), borderRadius: 1 }} />
-                                    ))}
-                                  </div>
-                                  <div className="flex-1 min-w-0 text-left">
-                                    <p className="text-white font-bold text-[11px] capitalize truncate leading-tight">{aName}</p>
-                                    <p className="text-[#F97316]/50 text-[8px] uppercase tracking-widest">{isPlaying ? 'Playing…' : 'Sound'}</p>
-                                  </div>
-                                  <span className="text-[#F97316]/15 text-base flex-shrink-0">♪</span>
-                                </button>
-                              </div>
-                            );
-                          })()}
-                          {pvImgSrc && elementPositions['image'] && (() => {
-                            const pos = elementPositions['image'];
-                            const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(pvImgSrc);
-                            return (
-                              <div key="pvimg" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
-                                {isVid
-                                  ? <video src={pvImgSrc} className="w-full h-full object-cover" autoPlay loop muted playsInline />
-                                  : <img src={pvImgSrc} alt="Attachment" className="w-full h-full object-cover" />}
-                              </div>
-                            );
-                          })()}
-                          {drawnIds.map(id => {
-                            const src = drawingImages[id];
-                            const pos = elementPositions[id];
-                            if (!src || !pos) return null;
-                            return (
-                              <div key={id} style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
-                                <img src={src} alt="" className="w-full h-full" />
-                              </div>
-                            );
-                          })}
                         </div>
                       );
                     })()}
@@ -3471,7 +3477,7 @@ export function VibeMailInboxWithClaim({
                   <div
                     ref={designAreaRef}
                     className="relative bg-[#111]"
-                    style={{ minHeight: 300, border: '2px solid rgba(255,215,0,0.3)', padding: '0 16px' }}
+                    style={{ minHeight: 300, border: '2px solid rgba(255,215,0,0.3)', padding: '0 16px', overflowX: 'hidden' }}
                     onClick={(e) => { if (e.target === e.currentTarget) setSelectedEl(null); }}
                   >
                     {/* Canvas — draw layer on top */}
@@ -3565,42 +3571,58 @@ export function VibeMailInboxWithClaim({
                       <span className="text-[#FFD700]/30 text-[8px] font-black uppercase tracking-widest">Quest Banner (locked)</span>
                     </div>
 
-                    {/* Draggable elements — absolutely positioned */}
+                    {/* Draggable elements — sorted by z-value so DOM order matches layer order */}
                     <div className="absolute inset-0 z-10" style={{ pointerEvents: editTool === 'select' ? 'auto' : 'none' }}
                       onClick={e => { if (e.target === e.currentTarget) setSelectedEl(null); }}>
-                      {textOnly && !hiddenElements.has('text') && renderEl('text', '#FFD700', (pos) =>
-                        <div className="w-full h-full p-2 text-white/90 leading-relaxed overflow-hidden" style={{ background: '#000', fontSize: Math.max(8, Math.min(15, pos.h * 0.2)) }}>{textOnly}</div>
-                      )}
-                      {audioMatch && !hiddenElements.has('audio') && renderEl('audio', '#F97316',
-                        <div className="w-full h-full flex items-center gap-2.5 px-3" style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: '3px solid #F97316', pointerEvents: 'none' }}>
-                          {/* Play button */}
-                          <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: '#F97316', boxShadow: '0 0 10px rgba(249,115,22,0.45)' }}>
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                          </div>
-                          {/* Mini waveform */}
-                          <div className="flex items-center gap-px flex-shrink-0">
-                            {[3,6,4,8,5,9,4,7,3,6,8,5].map((h, i) => (
-                              <div key={i} style={{ width: 2, height: h * 2.2, background: i < 5 ? '#F97316' : 'rgba(249,115,22,0.3)', borderRadius: 1 }} />
-                            ))}
-                          </div>
-                          {/* Label */}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white font-bold text-[11px] capitalize truncate leading-tight">{audioName}</p>
-                            <p className="text-[#F97316]/50 text-[8px] uppercase tracking-widest">Sound</p>
-                          </div>
-                          <span className="text-[#F97316]/20 text-base flex-shrink-0">♪</span>
-                        </div>
-                      )}
-                      {imgSrc && !hiddenElements.has('image') && renderEl('image', '#22C55E', (() => {
-                        const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(imgSrc);
-                        return isVid
-                          ? <video src={imgSrc} className="w-full h-full object-cover" autoPlay loop muted playsInline style={{ pointerEvents: 'none' }} />
-                          : <img src={imgSrc} alt="" className="w-full h-full object-cover" draggable={false} style={{ pointerEvents: 'none', userSelect: 'none' }} />;
-                      })())}
-                      {/* Drawing elements */}
-                      {drawnIds.map(id => drawingImages[id] ? renderEl(id, '#A78BFA',
-                        <img src={drawingImages[id]} alt="" className="w-full h-full object-contain pointer-events-none" style={{ imageRendering: 'pixelated' }} />
-                      ) : null)}
+                      {(() => {
+                        type EditItem = { id: string; z: number; node: React.ReactNode };
+                        const editItems: EditItem[] = [];
+                        if (textOnly && !hiddenElements.has('text')) {
+                          const p = elementPositions['text'] || getDefaultPos('text');
+                          editItems.push({ id: 'text', z: p.z ?? 0, node: renderEl('text', '#FFD700', (pos) =>
+                            <div className="w-full h-full p-2 text-white/90 leading-relaxed overflow-hidden" style={{ background: '#000', fontSize: Math.max(8, Math.min(15, pos.h * 0.2)) }}>{textOnly}</div>
+                          )});
+                        }
+                        if (audioMatch && !hiddenElements.has('audio')) {
+                          const p = elementPositions['audio'] || getDefaultPos('audio');
+                          editItems.push({ id: 'audio', z: p.z ?? 0, node: renderEl('audio', '#F97316',
+                            <div className="w-full h-full flex items-center gap-2.5 px-3" style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: '3px solid #F97316', pointerEvents: 'none' }}>
+                              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: '#F97316', boxShadow: '0 0 10px rgba(249,115,22,0.45)' }}>
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                              </div>
+                              <div className="flex items-center gap-px flex-shrink-0">
+                                {[3,6,4,8,5,9,4,7,3,6,8,5].map((h, i) => (
+                                  <div key={i} style={{ width: 2, height: h * 2.2, background: i < 5 ? '#F97316' : 'rgba(249,115,22,0.3)', borderRadius: 1 }} />
+                                ))}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white font-bold text-[11px] capitalize truncate leading-tight">{audioName}</p>
+                                <p className="text-[#F97316]/50 text-[8px] uppercase tracking-widest">Sound</p>
+                              </div>
+                              <span className="text-[#F97316]/20 text-base flex-shrink-0">♪</span>
+                            </div>
+                          )});
+                        }
+                        if (imgSrc && !hiddenElements.has('image')) {
+                          const p = elementPositions['image'] || getDefaultPos('image');
+                          const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(imgSrc);
+                          editItems.push({ id: 'image', z: p.z ?? 0, node: renderEl('image', '#22C55E',
+                            isVid
+                              ? <video src={imgSrc} className="w-full h-full object-cover" autoPlay loop muted playsInline style={{ pointerEvents: 'none' }} />
+                              : <img src={imgSrc} alt="" className="w-full h-full object-cover" draggable={false} style={{ pointerEvents: 'none', userSelect: 'none' }} />
+                          )});
+                        }
+                        for (const id of drawnIds) {
+                          if (drawingImages[id]) {
+                            const p = elementPositions[id] || getDefaultPos(id);
+                            editItems.push({ id, z: p.z ?? 0, node: renderEl(id, '#A78BFA',
+                              <img src={drawingImages[id]} alt="" className="w-full h-full object-contain pointer-events-none" style={{ imageRendering: 'pixelated' }} />
+                            )});
+                          }
+                        }
+                        editItems.sort((a, b) => a.z - b.z);
+                        return editItems.map(item => item.node);
+                      })()}
                     </div>
 
                     {/* Locked footer */}
@@ -3622,12 +3644,17 @@ export function VibeMailInboxWithClaim({
                           setIsSavingDesign(true);
                           try {
                             // Composite all drawing elements onto a single canvas (transparent background)
+                            const dpr = window.devicePixelRatio || 1;
+                            const W = area.offsetWidth, H = area.offsetHeight;
                             const off = document.createElement('canvas');
-                            off.width = area.offsetWidth; off.height = area.offsetHeight;
+                            off.width = W * dpr; off.height = H * dpr;
                             const ctx = off.getContext('2d');
                             if (!ctx) throw new Error('no ctx');
+                            ctx.scale(dpr, dpr);
                             // NO fillRect — keeps transparent background
-                            await Promise.all(drawnIds.map(id => new Promise<void>(resolve => {
+                            // Sort draws by z before compositing
+                            const sortedDrawIds = [...drawnIds].sort((a, b) => ((elementPositions[a]?.z ?? 0) - (elementPositions[b]?.z ?? 0)));
+                            await Promise.all(sortedDrawIds.map(id => new Promise<void>(resolve => {
                               const src = drawingImages[id];
                               const pos = elementPositions[id];
                               if (!src || !pos) { resolve(); return; }
@@ -3645,6 +3672,19 @@ export function VibeMailInboxWithClaim({
                             })));
                             const blob = await new Promise<Blob | null>(res => off.toBlob(res, 'image/png'));
                             if (!blob) throw new Error('export failed');
+                            // Clear individual draw elements — composite replaces them
+                            setDrawnIds([]);
+                            setDrawingImages({});
+                            setElementPositions(p => {
+                              const next = { ...p };
+                              // Remove all draw_ positions
+                              for (const k of Object.keys(next)) { if (k.startsWith('draw_')) delete next[k]; }
+                              // Only set image position if no existing image was already placed
+                              if (!next['image']) {
+                                next['image'] = { x: 0, y: 0, w: W, h: H, r: 0, z: 0 };
+                              }
+                              return next;
+                            });
                             // Save locally first — instant preview
                             const localUrl = URL.createObjectURL(blob);
                             setComposerCustomImagePreview(localUrl);
