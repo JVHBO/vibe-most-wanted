@@ -21,6 +21,7 @@ import { VibeDexModal } from './VibeDexModal';
 import { CastPreview } from './CastPreview';
 import { MiniappPreview } from './MiniappPreview';
 import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
+import { translateText } from '@/lib/fid/translateRotator';
 
 
 const VIBEMAIL_COST_VBMS = "1000"; // Cost for paid VibeMail
@@ -654,11 +655,8 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
     if (!selectedMessage?.message) return;
     setIsTranslating(true);
     try {
-      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(selectedMessage.message)}&langpair=autodetect|${lang}`);
-      const data = await res.json();
-      if (data.responseStatus === 200 && data.responseData?.translatedText) {
-        setTranslatedContent(data.responseData.translatedText);
-      }
+      const result = await translateText(selectedMessage.message, lang);
+      if (result) setTranslatedContent(result);
     } catch { /* non-critical */ } finally {
       setIsTranslating(false);
     }
@@ -1503,11 +1501,8 @@ export function VibeMailInboxWithClaim({
     try {
       const parsed = parseQuestBanner(selectedMessage.message);
       const msg = parsed ? parsed.cleanMessage : selectedMessage.message;
-      const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(msg)}&langpair=autodetect|${lang}`);
-      const data = await res.json();
-      if (data.responseStatus === 200 && data.responseData?.translatedText) {
-        setTranslatedContent(data.responseData.translatedText);
-      }
+      const result = await translateText(msg, lang);
+      if (result) setTranslatedContent(result);
     } catch { /* non-critical */ } finally { setIsTranslating(false); }
   };
 
