@@ -1004,7 +1004,8 @@ export function VibeMailInboxWithClaim({
         const textOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
         if (textOnly && !prev['text']) { next['text'] = { x: 12, y, w: W, h: 64 }; y += 76; }
         if (composerMessage.match(/\/sound=/i) && !prev['audio']) { next['audio'] = { x: 12, y, w: W, h: 56 }; y += 68; }
-        if (composerImageId && !prev['image']) { next['image'] = { x: 12, y, w: W, h: 150 }; }
+        const hasImg = composerImageId || composerMessage.match(/\/img=/i);
+        if (hasImg && !prev['image']) { next['image'] = { x: 12, y, w: W, h: 150 }; }
         return next;
       });
     });
@@ -3051,9 +3052,10 @@ export function VibeMailInboxWithClaim({
                       const hasDesign = Object.keys(elementPositions).length > 0 || drawnIds.length > 0;
                       const pvTextOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
                       const pvAudioMatch = composerMessage.match(/\/sound=(\S+)/i);
+                      const pvImgMsgMatch = composerMessage.match(/\/img=(\S+)/i);
                       const pvImgSrc = composerImageId
                         ? (composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''))
-                        : '';
+                        : (pvImgMsgMatch ? pvImgMsgMatch[1] : '');
 
                       if (!hasDesign) return (
                         <>
@@ -3176,9 +3178,10 @@ export function VibeMailInboxWithClaim({
               const textOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
               const audioMatch = composerMessage.match(/\/sound=(\S+)/i);
               const audioName = audioMatch ? audioMatch[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio' : 'Audio';
+              const imgMsgMatch = composerMessage.match(/\/img=(\S+)/i);
               const imgSrc = composerImageId
                 ? (composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''))
-                : '';
+                : (imgMsgMatch ? imgMsgMatch[1] : '');
 
               // Default position for each element (fallback when pos not yet set by useEffect)
               const getDefaultPos = (id: string) => {
