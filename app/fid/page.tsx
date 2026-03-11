@@ -37,7 +37,6 @@ import { DailyLeader } from "@/components/fid/DailyLeader";
 import { useClaimVBMS } from "@/hooks/fid/useVBMSContracts";
 import { FloatingCardsBackground } from "@/components/fid/FloatingCardsBackground";
 import { shareToFarcaster } from "@/lib/fid/share-utils";
-import { VibeMailInboxWithClaim } from "@/components/fid/VibeMail";
 
 
 
@@ -184,8 +183,6 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
   // VBMS modal
   const [showVBMSModal, setShowVBMSModal] = useState(false);
 
-  // VibeMail inbox state
-  const [showVibeMailInbox, setShowVibeMailInbox] = useState(false);
 
   // Upgrade states
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -2139,7 +2136,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
       
 {/* Floating VibeMail Envelope Button - hides when modal is open */}
-      {userFid && !showVibeMailInbox && !showScoreModal && !showModal && !showAboutModal && (
+      {userFid && !showScoreModal && !showModal && !showAboutModal && (
         <button
           onClick={() => {
             AudioManager.buttonClick();
@@ -2161,63 +2158,6 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
         </button>
       )}
 
-      {/* VibeMail Inbox Modal with Claim */}
-      {showVibeMailInbox && userFid && (
-        <VibeMailInboxWithClaim
-          cardFid={userFid}
-          username={myCard?.username || userData?.username}
-          userPfpUrl={myCard?.pfpUrl || userData?.pfp_url}
-          onClose={() => setShowVibeMailInbox(false)}
-          pendingVbms={vibeRewards?.pendingVbms || 0}
-          address={address}
-          myFid={userFid}
-          myAddress={address}
-          isClaimingRewards={isClaimingRewards}
-          isClaimTxPending={isClaimTxPending}
-          onClaim={async () => {
-            setIsClaimingRewards(true);
-            setError(null);
-            let claimResult: { success: boolean; amount?: number; nonce?: string; signature?: string; error?: string } | null = null;
-            try {
-              console.log('📝 Preparing claim via Convex action...');
-              claimResult = await prepareVibeRewardsClaim({
-                fid: userFid,
-                claimerAddress: address!,
-              });
-
-              if (!claimResult || !claimResult.success || !claimResult.nonce || !claimResult.signature || !claimResult.amount) {
-                throw new Error(claimResult?.error || 'Failed to prepare claim');
-              }
-
-              console.log('✅ Got nonce + signature from Convex');
-              console.log('🔗 Calling claimVBMS on contract...');
-
-              const txHash = await claimVBMS(
-                claimResult.amount.toString(),
-                claimResult.nonce as `0x${string}`,
-                claimResult.signature as `0x${string}`
-              );
-              console.log('✅ Claim TX:', txHash);
-              alert(`Claimed ${claimResult.amount} VBMS! TX: ${txHash}`);
-              setShowVibeMailInbox(false);
-            } catch (e: any) {
-              console.error('❌ Claim failed:', e);
-              if (claimResult?.amount) {
-                console.log('🔄 Restoring rewards after TX failure...');
-                try {
-                  await restoreClaimOnTxFailure({ fid: userFid, amount: claimResult.amount });
-                  console.log('✅ Rewards restored');
-                } catch (restoreErr) {
-                  console.error('Failed to restore rewards:', restoreErr);
-                }
-              }
-              setError(e.message || 'Claim failed');
-              setTimeout(() => setError(null), 5000);
-            }
-            setIsClaimingRewards(false);
-          }}
-        />
-      )}
 
       {/* Bottom Navigation Bar - Fixed at bottom (VBMS style) */}
       <div className="fixed bottom-0 left-0 right-0 z-[9999] safe-area-bottom">
