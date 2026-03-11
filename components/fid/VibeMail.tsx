@@ -337,6 +337,14 @@ export function getMiName(audioId: string): string {
   return rest.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/-/g, ' ') || 'Sound';
 }
 
+// Proxy myinstants audio through our API to bypass CORS restrictions
+export function proxyAudioUrl(url: string): string {
+  if (url.includes('myinstants.com')) {
+    return `/api/audio-proxy?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
 // Get Vibe Market URL for a collection name
 const COLLECTION_MARKETPLACE_URLS: Record<string, string> = {
   'Vibe Most Wanted': 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
@@ -403,7 +411,7 @@ export async function playAudioById(
 // Get sound file from ID (only for predefined sounds)
 export function getSoundFile(audioId: string): string | null {
   if (isCustomAudio(audioId)) return null;
-  if (isMiAudio(audioId)) return getMiUrl(audioId);
+  if (isMiAudio(audioId)) return proxyAudioUrl(getMiUrl(audioId));
   const sound = VIBEMAIL_SOUNDS.find(s => s.id === audioId);
   return sound?.file || null;
 }
@@ -500,7 +508,7 @@ function renderRichMessageFn(
     const soundM = trimmed.match(/^\/sound=(\S+?)(?:\s+volume=([\d.]+))?$/i);
     if (soundM) {
       flushText();
-      const url = soundM[1];
+      const url = proxyAudioUrl(soundM[1]);
       const volume = soundM[2] ? Math.min(1, Math.max(0, parseFloat(soundM[2]))) : 0.2;
       const name = url.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ') || 'Audio';
       const pid = `inline:${url}`;
@@ -2700,7 +2708,7 @@ export function VibeMailInboxWithClaim({
                             onPlay={() => {
                               if (composerAudioRef.current) {
                                 if (isPreviewing) { composerAudioRef.current.pause(); setPreviewSound(null); }
-                                else { composerAudioRef.current.src = sound.url; composerAudioRef.current.volume = 0.2; composerAudioRef.current.play().catch(console.error); setPreviewSound(sound.url); }
+                                else { composerAudioRef.current.src = proxyAudioUrl(sound.url); composerAudioRef.current.volume = 0.2; composerAudioRef.current.play().catch(console.error); setPreviewSound(sound.url); }
                               }
                             }}
                             onUse={() => {

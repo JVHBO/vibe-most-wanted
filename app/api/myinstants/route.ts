@@ -10,7 +10,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const res = await fetch(url, {
-      headers: { Accept: 'application/json' },
+      headers: {
+        'Accept': 'application/json, text/javascript, */*; q=0.01',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Referer': 'https://www.myinstants.com/',
+        'Origin': 'https://www.myinstants.com',
+      },
       cache: 'no-store',
     });
     if (!res.ok) return NextResponse.json({ results: [] }, { status: 200 });
