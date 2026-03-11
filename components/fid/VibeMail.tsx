@@ -2540,7 +2540,7 @@ export function VibeMailInboxWithClaim({
                         onUse={() => {
                           const replaced = composerMessage.replace(/^\/sound=\S*(?:\s+volume=[\d.]+)?/im, soundLine);
                           const newText = replaced !== composerMessage ? replaced : (composerMessage.trim() ? `${composerMessage.trim()}\n${soundLine}` : soundLine);
-                          setComposerMessage(newText.slice(0, 200)); setShowSoundPicker(false);
+                          setComposerMessage(newText); setShowSoundPicker(false);
                         }}
                       />
                     );
@@ -2564,7 +2564,7 @@ export function VibeMailInboxWithClaim({
                               const soundLine = `/sound=${sound.url} volume=0.2`;
                               const replaced = composerMessage.replace(/^\/sound=\S*(?:\s+volume=[\d.]+)?/im, soundLine);
                               const newText = replaced !== composerMessage ? replaced : (composerMessage.trim() ? `${composerMessage.trim()}\n${soundLine}` : soundLine);
-                              setComposerMessage(newText.slice(0, 200)); setShowSoundPicker(false);
+                              setComposerMessage(newText); setShowSoundPicker(false);
                             }}
                           />
                         );
@@ -2606,7 +2606,7 @@ export function VibeMailInboxWithClaim({
                           // Insert /img=URL command at cursor or end
                           const gifLine = `/img=${gif.url}`;
                           const current = composerMessage.trim();
-                          setComposerMessage((current ? current + '\n' + gifLine : gifLine).slice(0, 200));
+                          setComposerMessage(current ? current + '\n' + gifLine : gifLine);
                           setShowGifPicker(false);
                         }}
                         className="relative border border-[#7C3AED]/20 hover:border-[#7C3AED] transition-all overflow-hidden"
