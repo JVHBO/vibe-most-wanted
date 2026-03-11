@@ -1026,7 +1026,7 @@ export function VibeMailInboxWithClaim({
       const W = area ? Math.max(60, area.offsetWidth - 24) : 296;
       setElementPositions(prev => {
         const next = { ...prev };
-        let y = 8;
+        let y = 40;
         const textOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
         if (textOnly && !prev['text']) { next['text'] = { x: 12, y, w: W, h: 64 }; y += 76; }
         if (composerMessage.match(/\/sound=/i) && !prev['audio']) { next['audio'] = { x: 12, y, w: W, h: 56 }; y += 68; }
@@ -3454,7 +3454,7 @@ export function VibeMailInboxWithClaim({
                           const W = area ? Math.max(60, area.offsetWidth - 24) : 296;
                           setElementPositions(() => {
                             const next: Record<string, {x:number,y:number,w:number,h:number,r?:number}> = {};
-                            let y = 8;
+                            let y = 40;
                             if (textOnly) { next['text'] = { x: 12, y, w: W, h: 64 }; y += 76; }
                             if (audioMatch) { next['audio'] = { x: 12, y, w: W, h: 56 }; y += 68; }
                             if (imgSrc) { next['image'] = { x: 12, y, w: W, h: 150 }; }
