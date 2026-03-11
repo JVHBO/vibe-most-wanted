@@ -514,30 +514,46 @@ function renderRichMessageFn(
       const volume = soundM[2] ? Math.min(1, Math.max(0, parseFloat(soundM[2]))) : 0.2;
       const name = soundM[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').replace(/\s+/g, ' ').trim() || 'Audio';
       const pid = `inline:${url}`;
+      const isPlaying = playingAudio === pid;
+      const isErr = playingAudio === `err:${pid}`;
       nodes.push(
-        <div key={`snd-${nodes.length}`} className="bg-[#1a0a00] border border-[#F97316]/40 rounded-lg p-2 flex items-center gap-2 my-1">
+        <div key={`snd-${nodes.length}`} className="my-1.5 flex items-center gap-2.5 px-3 py-0" style={{ height: 52, background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: '3px solid #F97316', position: 'relative', overflow: 'hidden' }}>
+          {/* Glow behind play btn when playing */}
+          {isPlaying && <div style={{ position:'absolute', left:0, top:0, bottom:0, width:60, background:'radial-gradient(ellipse at 20% 50%, rgba(249,115,22,0.18) 0%, transparent 70%)', pointerEvents:'none' }} />}
+          {/* Play/Stop button */}
           <button
             onClick={() => {
-              if (playingAudio === pid) {
-                audioRef.current?.pause();
-                setPlayingAudio(null);
-              } else if (audioRef.current) {
-                audioRef.current.src = url;
-                audioRef.current.volume = volume;
+              if (isPlaying) { audioRef.current?.pause(); setPlayingAudio(null); }
+              else if (audioRef.current) {
+                audioRef.current.src = url; audioRef.current.volume = volume;
                 audioRef.current.play().catch(() => setPlayingAudio(`err:${pid}`));
                 setPlayingAudio(pid);
               }
             }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${playingAudio === `err:${pid}` ? 'bg-red-700 text-white' : playingAudio === pid ? 'bg-red-500 text-white animate-pulse' : 'bg-[#F97316] text-black'}`}
+            className="flex items-center justify-center flex-shrink-0 transition-transform active:scale-90"
+            style={{ width: 34, height: 34, background: isErr ? '#7f1d1d' : '#F97316', boxShadow: isPlaying ? '0 0 14px rgba(249,115,22,0.6)' : undefined, zIndex: 1 }}
           >
-            {playingAudio === `err:${pid}` ? '!' : playingAudio === pid ? '■' : '▶'}
+            {isErr
+              ? <span className="text-red-300 font-black text-sm">!</span>
+              : isPlaying
+                ? <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                : <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            }
           </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-[#F97316] font-bold text-xs truncate">{name}</p>
-            <p className={`text-[10px] ${playingAudio === `err:${pid}` ? 'text-red-400' : 'text-white/40'}`}>
-              {playingAudio === `err:${pid}` ? 'Audio unavailable — check URL' : playingAudio === pid ? 'Playing' : 'Tap to play'} {playingAudio !== `err:${pid}` ? `· ${Math.round(volume * 100)}% vol` : ''}
+          {/* Waveform bars */}
+          <div className="flex items-center gap-px flex-shrink-0" style={{ zIndex: 1 }}>
+            {[3,6,4,8,5,9,4,7,3,6,8,5].map((h, i) => (
+              <div key={i} style={{ width: 2, height: h * 2.2, background: isPlaying ? (i % 2 === 0 ? '#F97316' : 'rgba(249,115,22,0.5)') : (i < 5 ? '#F97316' : 'rgba(249,115,22,0.25)'), borderRadius: 1, transition: 'height 0.15s ease' }} />
+            ))}
+          </div>
+          {/* Label */}
+          <div className="flex-1 min-w-0" style={{ zIndex: 1 }}>
+            <p className="text-white font-bold text-xs capitalize truncate leading-tight">{name}</p>
+            <p className={`text-[9px] uppercase tracking-widest ${isErr ? 'text-red-400' : isPlaying ? 'text-[#F97316]' : 'text-white/30'}`}>
+              {isErr ? 'unavailable' : isPlaying ? 'Playing…' : `Sound · ${Math.round(volume * 100)}% vol`}
             </p>
           </div>
+          <span className="text-[#F97316]/15 text-xl flex-shrink-0" style={{ zIndex: 1 }}>♪</span>
         </div>
       );
       continue;
@@ -3093,9 +3109,20 @@ export function VibeMailInboxWithClaim({
                             const aName = pvAudioMatch[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio';
                             return (
                               <div key="pvaudio" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
-                                <div className="bg-[#1a1a1a] border border-[#FFD700]/40 px-3 py-2 flex items-center gap-2 h-full">
-                                  <span className="text-[#FFD700] text-base">♪</span>
-                                  <span className="text-white text-xs capitalize truncate">{aName}</span>
+                                <div className="w-full h-full flex items-center gap-2.5 px-3" style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: '3px solid #F97316' }}>
+                                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: '#F97316', boxShadow: '0 0 10px rgba(249,115,22,0.45)' }}>
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                  </div>
+                                  <div className="flex items-center gap-px flex-shrink-0">
+                                    {[3,6,4,8,5,9,4,7,3,6,8,5].map((h, i) => (
+                                      <div key={i} style={{ width: 2, height: h * 2.2, background: i < 5 ? '#F97316' : 'rgba(249,115,22,0.3)', borderRadius: 1 }} />
+                                    ))}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-white font-bold text-[11px] capitalize truncate leading-tight">{aName}</p>
+                                    <p className="text-[#F97316]/50 text-[8px] uppercase tracking-widest">Sound</p>
+                                  </div>
+                                  <span className="text-[#F97316]/20 text-base flex-shrink-0">♪</span>
                                 </div>
                               </div>
                             );
@@ -3163,7 +3190,8 @@ export function VibeMailInboxWithClaim({
               };
 
               // renderEl: plain function returning JSX (NOT a React component — avoids remount on state change)
-              const renderEl = (id: string, accentColor: string, content: React.ReactNode) => {
+              type ElPos = {x:number,y:number,w:number,h:number,r?:number};
+              const renderEl = (id: string, accentColor: string, content: React.ReactNode | ((pos: ElPos) => React.ReactNode)) => {
                 const pos = elementPositions[id] || getDefaultPos(id);
                 const isDrawEl = id.startsWith('draw_');
                 const isSel = selectedEl === id;
@@ -3244,7 +3272,7 @@ export function VibeMailInboxWithClaim({
                       </div>
                     )}
                     {/* Content fills the box */}
-                    <div className="w-full h-full overflow-hidden">{content}</div>
+                    <div className="w-full h-full overflow-hidden">{typeof content === 'function' ? content(pos) : content}</div>
                     {/* Resize handle — bottom-right corner */}
                     {isSel && (
                       <div
@@ -3504,20 +3532,31 @@ export function VibeMailInboxWithClaim({
                     {/* Draggable elements — absolutely positioned */}
                     <div className="absolute inset-0 z-10" style={{ pointerEvents: editTool === 'select' ? 'auto' : 'none' }}
                       onClick={e => { if (e.target === e.currentTarget) setSelectedEl(null); }}>
-                      {textOnly && renderEl('text', '#FFD700',
-                        <div className="w-full h-full bg-[#111] border border-[#333] p-2 text-xs text-white/80 leading-relaxed overflow-hidden">{textOnly}</div>
+                      {textOnly && renderEl('text', '#FFD700', (pos) =>
+                        <div className="w-full h-full bg-[#111] border border-[#333] p-2 text-white/80 leading-relaxed overflow-hidden" style={{ fontSize: Math.max(8, Math.min(15, pos.h * 0.2)) }}>{textOnly}</div>
                       )}
                       {audioMatch && renderEl('audio', '#F97316',
-                        <div className="w-full h-full bg-[#1a0a00] border border-[#F97316]/30 flex items-center gap-2 px-2">
-                          <div className="w-7 h-7 rounded-full bg-[#F97316] flex items-center justify-center text-xs flex-shrink-0 font-black">▶</div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[#F97316] font-bold text-[11px] truncate">{audioName}</p>
-                            <p className="text-white/30 text-[9px]">Tap to play</p>
+                        <div className="w-full h-full flex items-center gap-2.5 px-3" style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: '3px solid #F97316' }}>
+                          {/* Play button */}
+                          <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: '#F97316', boxShadow: '0 0 10px rgba(249,115,22,0.45)' }}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                           </div>
+                          {/* Mini waveform */}
+                          <div className="flex items-center gap-px flex-shrink-0">
+                            {[3,6,4,8,5,9,4,7,3,6,8,5].map((h, i) => (
+                              <div key={i} style={{ width: 2, height: h * 2.2, background: i < 5 ? '#F97316' : 'rgba(249,115,22,0.3)', borderRadius: 1 }} />
+                            ))}
+                          </div>
+                          {/* Label */}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white font-bold text-[11px] capitalize truncate leading-tight">{audioName}</p>
+                            <p className="text-[#F97316]/50 text-[8px] uppercase tracking-widest">Sound</p>
+                          </div>
+                          <span className="text-[#F97316]/20 text-base flex-shrink-0">♪</span>
                         </div>
                       )}
                       {imgSrc && renderEl('image', '#22C55E',
-                        <img src={imgSrc} alt="" className="w-full h-full object-cover" />
+                        <img src={imgSrc} alt="" className="w-full h-full object-cover" draggable={false} style={{ pointerEvents: 'none', userSelect: 'none' }} />
                       )}
                       {/* Drawing elements */}
                       {drawnIds.map(id => drawingImages[id] ? renderEl(id, '#A78BFA',
