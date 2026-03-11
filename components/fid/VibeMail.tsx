@@ -3128,8 +3128,8 @@ export function VibeMailInboxWithClaim({
                           {pvTextOnly && elementPositions['text'] && (() => {
                             const pos = elementPositions['text'];
                             return (
-                              <div key="pvtext" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
-                                <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb' }}>{renderRichMessage(composerMessage)}</div>
+                              <div key="pvtext" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', background:'#000', padding:'8px' }}>
+                                <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb', fontSize: Math.max(8, Math.min(15, pos.h * 0.2)) }}>{renderRichMessage(composerMessage)}</div>
                               </div>
                             );
                           })()}
@@ -3569,7 +3569,7 @@ export function VibeMailInboxWithClaim({
                     <div className="absolute inset-0 z-10" style={{ pointerEvents: editTool === 'select' ? 'auto' : 'none' }}
                       onClick={e => { if (e.target === e.currentTarget) setSelectedEl(null); }}>
                       {textOnly && !hiddenElements.has('text') && renderEl('text', '#FFD700', (pos) =>
-                        <div className="w-full h-full bg-[#111] border border-[#333] p-2 text-white/80 leading-relaxed overflow-hidden" style={{ fontSize: Math.max(8, Math.min(15, pos.h * 0.2)) }}>{textOnly}</div>
+                        <div className="w-full h-full p-2 text-white/90 leading-relaxed overflow-hidden" style={{ background: '#000', fontSize: Math.max(8, Math.min(15, pos.h * 0.2)) }}>{textOnly}</div>
                       )}
                       {audioMatch && !hiddenElements.has('audio') && renderEl('audio', '#F97316',
                         <div className="w-full h-full flex items-center gap-2.5 px-3" style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: '3px solid #F97316', pointerEvents: 'none' }}>
