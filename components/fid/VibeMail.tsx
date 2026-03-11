@@ -23,6 +23,13 @@ import { MiniappPreview } from './MiniappPreview';
 import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
 import { translateText } from '@/lib/fid/translateRotator';
 
+// Translation cache helpers (localStorage, keyed by messageId + lang)
+function getTranslationCache(msgId: string, targetLang: string): string | null {
+  try { return localStorage.getItem(`vm_tr_${msgId}_${targetLang}`) || null; } catch { return null; }
+}
+function setTranslationCache(msgId: string, targetLang: string, text: string): void {
+  try { localStorage.setItem(`vm_tr_${msgId}_${targetLang}`, text); } catch {}
+}
 
 const VIBEMAIL_COST_VBMS = "1000"; // Cost for paid VibeMail
 const VIBEMAIL_RECIPIENT_VBMS = 500; // VBMS recipient earns per message
@@ -650,17 +657,22 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
     }
   };
 
-  const handleTranslate = async () => {
-    if (translatedContent) { setTranslatedContent(null); return; }
-    if (!selectedMessage?.message) return;
+  // Auto-translate when lang changes or message opens
+  useEffect(() => {
+    if (!selectedMessage?.message) { setTranslatedContent(null); return; }
+    const msg = selectedMessage.message.trim();
+    if (!msg) return;
+    const cached = getTranslationCache(selectedMessage._id, lang);
+    if (cached) { setTranslatedContent(cached); return; }
     setIsTranslating(true);
-    try {
-      const result = await translateText(selectedMessage.message, lang);
-      if (result) setTranslatedContent(result);
-    } catch { /* non-critical */ } finally {
-      setIsTranslating(false);
-    }
-  };
+    translateText(msg, lang)
+      .then(result => {
+        if (result) { setTranslatedContent(result); setTranslationCache(selectedMessage._id, lang, result); }
+        else setTranslatedContent(null);
+      })
+      .catch(() => setTranslatedContent(null))
+      .finally(() => setIsTranslating(false));
+  }, [lang, selectedMessage?._id]);
 
   const stopAudio = () => {
     if (audioRef.current) {
@@ -716,10 +728,12 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
 
             {/* Message Content */}
             <div className="bg-gradient-to-b from-vintage-black/80 to-vintage-charcoal rounded-lg p-3 flex-1">
-              <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="mb-3">
                 <div className="text-white text-sm leading-relaxed flex-1">
                   {translatedContent ? (
-                    <span>"{translatedContent}"</span>
+                    <><span>{translatedContent}</span><span className="text-white/30 text-[10px] ml-1">(traduzido)</span></>
+                  ) : isTranslating ? (
+                    <span className="text-white/40 text-xs">...</span>
                   ) : (
                     renderRichMessageFn(selectedMessage.message || "", playingAudio, audioRef, setPlayingAudio, lang, username)
                   )}
@@ -734,16 +748,6 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                       : <img src={imgData.file} alt="VibeMail" className="max-w-[150px] max-h-[150px] object-cover rounded-lg mt-1 border border-vintage-gold/30" />;
                   })()}
                 </div>
-                {selectedMessage.message && (
-                  <button
-                    onClick={handleTranslate}
-                    disabled={isTranslating}
-                    className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${translatedContent ? 'bg-blue-600 border-blue-400 text-white' : 'bg-vintage-black/50 border-vintage-gold/30 text-vintage-gold/70 hover:text-vintage-gold hover:border-vintage-gold/60'}`}
-                    title={translatedContent ? 'Show original' : 'Translate to English'}
-                  >
-                    {isTranslating ? '...' : translatedContent ? 'EN' : 'TR'}
-                  </button>
-                )}
               </div>
 
               {/* Audio Player - Compact */}
@@ -1494,17 +1498,23 @@ export function VibeMailInboxWithClaim({
     }
   };
 
-  const handleTranslate = async () => {
-    if (translatedContent) { setTranslatedContent(null); return; }
-    if (!selectedMessage?.message) return;
+  // Auto-translate when lang changes or message opens
+  useEffect(() => {
+    if (!selectedMessage?.message) { setTranslatedContent(null); return; }
+    const parsed = parseQuestBanner(selectedMessage.message);
+    const msg = (parsed ? parsed.cleanMessage : selectedMessage.message).trim();
+    if (!msg) return;
+    const cached = getTranslationCache(selectedMessage._id, lang);
+    if (cached) { setTranslatedContent(cached); return; }
     setIsTranslating(true);
-    try {
-      const parsed = parseQuestBanner(selectedMessage.message);
-      const msg = parsed ? parsed.cleanMessage : selectedMessage.message;
-      const result = await translateText(msg, lang);
-      if (result) setTranslatedContent(result);
-    } catch { /* non-critical */ } finally { setIsTranslating(false); }
-  };
+    translateText(msg, lang)
+      .then(result => {
+        if (result) { setTranslatedContent(result); setTranslationCache(selectedMessage._id, lang, result); }
+        else setTranslatedContent(null);
+      })
+      .catch(() => setTranslatedContent(null))
+      .finally(() => setIsTranslating(false));
+  }, [lang, selectedMessage?._id]);
 
   const stopAudio = () => {
     if (audioRef.current) {
@@ -3949,15 +3959,7 @@ export function VibeMailInboxWithClaim({
                 <p className="text-white/40 text-[10px]">{new Date(selectedMessage.createdAt).toLocaleString()}</p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                {selectedMessage.message && (
-                  <button
-                    onClick={handleTranslate}
-                    disabled={isTranslating}
-                    className={`px-2 py-1 text-[10px] font-bold border-2 border-black transition-all ${translatedContent ? 'bg-blue-600 text-white' : 'bg-[#1a1a1a] text-white/50 hover:text-white'}`}
-                  >
-                    {isTranslating ? '...' : translatedContent ? 'EN' : 'TR'}
-                  </button>
-                )}
+                {isTranslating && <span className="text-white/30 text-[10px]">...</span>}
                 <span className={`text-[9px] font-bold px-1.5 py-0.5 border border-black ${selectedMessage.isPaid ? 'bg-yellow-500/20 text-yellow-400' : 'bg-[#FFD700]/10 text-[#FFD700]/60'}`}>
                   {selectedMessage.isPaid ? 'PAID' : 'FREE'}
                 </span>
@@ -4197,7 +4199,11 @@ export function VibeMailInboxWithClaim({
                 const msg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
                 return msg ? (
                   <div className="text-white text-sm leading-relaxed">
-                    {renderRichMessageFn(msg, playingAudio, audioRef, setPlayingAudio, lang, username)}
+                    {translatedContent ? (
+                      <><span>{translatedContent}</span><span className="text-white/30 text-[10px] ml-1">(traduzido)</span></>
+                    ) : (
+                      renderRichMessageFn(msg, playingAudio, audioRef, setPlayingAudio, lang, username)
+                    )}
                   </div>
                 ) : null;
               })()}
