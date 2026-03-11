@@ -1584,8 +1584,8 @@ export function VibeMailInboxWithClaim({
         setTimeout(() => { if (textareaRef.current) { textareaRef.current.focus(); } }, 10);
         break;
       case '/img':
-        setComposerMessage((before + after).slice(0, 200));
-        setShowImagePicker(true); setShowSoundPicker(false); setShowCastInput(false); setShowMiniappInput(false);
+        setComposerMessage((before + '/img=' + after));
+        setShowImgInput(true); setShowSoundPicker(false); setShowGifPicker(false); setShowCastInput(false); setShowMiniappInput(false);
         break;
       case '/sound':
         setComposerMessage((before + '/sound=' + after).slice(0, 200));
@@ -2491,46 +2491,70 @@ export function VibeMailInboxWithClaim({
                 />
               </div>
             </div>
-            {/* IMG URL input panel */}
+            {/* IMG panel */}
             {showImgInput && (
-              <div className="mt-1 mb-1 bg-[#0a1a0a] border-2 border-[#059669] p-2 flex gap-2">
-                <input
-                  type="url"
-                  value={imgInputUrl}
-                  onChange={e => setImgInputUrl(e.target.value)}
-                  onPaste={e => {
-                    const pasted = e.clipboardData.getData('text').trim();
-                    if (pasted) { e.preventDefault(); setImgInputUrl(pasted); }
-                  }}
-                  placeholder="Paste image or video URL..."
-                  className="flex-1 bg-transparent text-white text-xs placeholder:text-white/30 focus:outline-none min-w-0"
-                  style={{ colorScheme: 'dark' }}
-                  autoFocus
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' && imgInputUrl.trim()) {
+              <div className="mt-1 mb-1 bg-[#0a1a0a] border-2 border-[#059669] p-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[#059669] text-[10px] font-black uppercase tracking-widest">Image / Video</span>
+                  <button onClick={() => { setShowImgInput(false); setImgInputUrl(''); }} className="text-white/30 hover:text-white text-xs">✕</button>
+                </div>
+                {/* URL input row */}
+                <div className="flex gap-2 mb-2">
+                  <input
+                    type="url"
+                    value={imgInputUrl}
+                    onChange={e => setImgInputUrl(e.target.value)}
+                    onPaste={e => {
+                      const pasted = e.clipboardData.getData('text').trim();
+                      if (pasted) { e.preventDefault(); setImgInputUrl(pasted); }
+                    }}
+                    placeholder="Paste image or video URL..."
+                    className="flex-1 bg-[#111] border border-[#059669]/50 text-white text-xs px-2 py-1.5 placeholder:text-white/30 focus:outline-none focus:border-[#059669] min-w-0"
+                    style={{ colorScheme: 'dark' }}
+                    autoFocus
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && imgInputUrl.trim()) {
+                        const line = `/img=${imgInputUrl.trim()}`;
+                        const cur = composerMessage.trim();
+                        setComposerMessage(cur ? cur + '\n' + line : line);
+                        setImgInputUrl(''); setShowImgInput(false);
+                      }
+                      if (e.key === 'Escape') { setShowImgInput(false); setImgInputUrl(''); }
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      if (!imgInputUrl.trim()) return;
                       const line = `/img=${imgInputUrl.trim()}`;
                       const cur = composerMessage.trim();
                       setComposerMessage(cur ? cur + '\n' + line : line);
-                      setImgInputUrl('');
-                      setShowImgInput(false);
-                    }
-                    if (e.key === 'Escape') { setShowImgInput(false); setImgInputUrl(''); }
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    if (!imgInputUrl.trim()) return;
-                    const line = `/img=${imgInputUrl.trim()}`;
-                    const cur = composerMessage.trim();
-                    setComposerMessage(cur ? cur + '\n' + line : line);
-                    setImgInputUrl('');
-                    setShowImgInput(false);
-                  }}
-                  disabled={!imgInputUrl.trim()}
-                  className="px-3 py-1 bg-[#059669] border-2 border-black text-white font-black text-xs disabled:opacity-40 hover:bg-[#065F46] transition-all"
-                >
-                  Add
-                </button>
+                      setImgInputUrl(''); setShowImgInput(false);
+                    }}
+                    disabled={!imgInputUrl.trim()}
+                    className="px-3 py-1 bg-[#059669] border-2 border-black text-white font-black text-xs disabled:opacity-40 hover:bg-[#065F46] transition-all flex-shrink-0"
+                  >
+                    Add
+                  </button>
+                </div>
+                {/* Preset images grid */}
+                <div className="grid grid-cols-4 gap-1.5">
+                  {VIBEMAIL_IMAGES.map((img) => (
+                    <button
+                      key={img.id}
+                      onClick={() => {
+                        const line = `/img=${img.file}`;
+                        const cur = composerMessage.trim();
+                        setComposerMessage(cur ? cur + '\n' + line : line);
+                        setShowImgInput(false);
+                      }}
+                      className="border border-[#059669]/30 hover:border-[#059669] transition-all overflow-hidden"
+                    >
+                      {img.isVideo
+                        ? <video src={img.file} className="w-full h-12 object-cover" muted loop autoPlay playsInline />
+                        : <img src={img.file} alt={img.name} className="w-full h-12 object-cover" />}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -2647,6 +2671,10 @@ export function VibeMailInboxWithClaim({
             {/* GIF Picker - Tenor */}
             {showGifPicker && (
               <div className="mt-2 bg-[#0d0d0d] border border-[#7C3AED]/40 p-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[#7C3AED] text-[10px] font-black uppercase tracking-widest">GIF</span>
+                  <button onClick={() => setShowGifPicker(false)} className="text-white/30 hover:text-white text-xs">✕</button>
+                </div>
                 <div className="flex items-center gap-2 mb-2">
                   <input
                     type="text"
@@ -2690,66 +2718,6 @@ export function VibeMailInboxWithClaim({
               </div>
             )}
 
-            {showImagePicker && (
-              <div className="mt-2 bg-[#1a1a1a] border border-[#FFD700]/20 p-2">
-                {/* Custom image upload */}
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={imageUploadRef}
-                  className="hidden"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    setIsUploadingImage(true);
-                    try {
-                      const uploadUrl = await generateUploadUrl();
-                      const res = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': file.type }, body: file });
-                      if (!res.ok) throw new Error('Upload failed');
-                      const { storageId } = await res.json();
-                      setComposerImageId(`img:${storageId}`);
-                      setComposerCustomImagePreview(URL.createObjectURL(file));
-                      setShowImagePicker(false);
-                    } catch (err) { console.error('Image upload error:', err); }
-                    finally { setIsUploadingImage(false); e.target.value = ''; }
-                  }}
-                />
-                <button
-                  onClick={() => imageUploadRef.current?.click()}
-                  disabled={isUploadingImage}
-                  className="w-full mb-2 py-1.5 bg-[#1a1a1a] border border-[#FFD700]/30 text-white text-xs flex items-center justify-center gap-2 hover:border-[#FFD700]/60 disabled:opacity-50"
-                  style={{ WebkitTextFillColor: 'white' }}
-                >
-                  {isUploadingImage ? (
-                    <span>Uploading...</span>
-                  ) : (
-                    <>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                      Upload image
-                    </>
-                  )}
-                </button>
-                <div className="grid grid-cols-4 gap-2">
-                  {VIBEMAIL_IMAGES.map((img) => (
-                    <button
-                      key={img.id}
-                      onClick={() => { setComposerImageId(composerImageId === img.id ? null : img.id); setComposerCustomImagePreview(null); }}
-                      className={`p-1 border transition-all ${
-                        composerImageId === img.id
-                          ? 'border-vintage-gold bg-vintage-gold/20'
-                          : 'border-vintage-gold/20 hover:border-vintage-gold/50'
-                      }`}
-                    >
-                      {img.isVideo ? (
-                        <video src={img.file} className="w-full h-10 object-cover" muted loop autoPlay playsInline />
-                      ) : (
-                        <img src={img.file} alt={img.name} className="w-full h-10 object-cover" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
 
             {showMiniappInput && (
