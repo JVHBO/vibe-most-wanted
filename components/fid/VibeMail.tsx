@@ -958,6 +958,7 @@ export function VibeMailInboxWithClaim({
   const isDrawingRef = useRef(false);
   const currentStrokeRef = useRef<{x:number,y:number}[]>([]);
   const designInitRef = useRef(false);
+  const [isSavingDesign, setIsSavingDesign] = useState(false);
 
   // Auto-advance carousel every 3s when preview is open and has multiple quests
   useEffect(() => {
@@ -2889,26 +2890,16 @@ export function VibeMailInboxWithClaim({
                 currentAudioId={isCustomAudio(composerAudioId || undefined) ? composerAudioId : null}
               />
 
-              {/* Preview + Design buttons */}
+              {/* Preview button — Edit Design lives inside the preview overlay */}
               {(composerMessage.trim() || composerImageId || composerQuestData) && (
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setShowPreview(true)}
-                    className="h-9 px-3 flex items-center gap-1.5 border-2 border-[#DB2777] bg-[#DB2777] text-white hover:bg-[#BE185D] transition-all"
-                    style={{ WebkitTextFillColor: 'white' }}
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                    <span className="font-black text-xs uppercase tracking-wide">Preview</span>
-                  </button>
-                  <button
-                    onClick={() => setShowDesign(true)}
-                    className="h-9 px-3 flex items-center gap-1.5 border-2 border-[#8B5CF6] bg-[#8B5CF6] text-white hover:bg-[#7C3AED] transition-all"
-                    style={{ WebkitTextFillColor: 'white' }}
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                    <span className="font-black text-xs uppercase tracking-wide">Edit</span>
-                  </button>
-                </div>
+                <button
+                  onClick={() => setShowPreview(true)}
+                  className="h-9 px-3 flex items-center gap-1.5 border-2 border-[#DB2777] bg-[#DB2777] text-white hover:bg-[#BE185D] transition-all"
+                  style={{ WebkitTextFillColor: 'white' }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <span className="font-black text-xs uppercase tracking-wide">Preview</span>
+                </button>
               )}
 
               {/* Spacer */}
@@ -3363,15 +3354,44 @@ export function VibeMailInboxWithClaim({
                   </div>
 
                   {/* Footer buttons */}
-                  <div className="p-2.5 border-t-2 border-[#333] flex gap-2">
-                    <button
-                      onClick={() => { setShowDesign(false); setShowPreview(true); }}
-                      className="flex-1 py-2.5 bg-[#DB2777] border-2 border-[#DB2777] text-white font-bold text-xs uppercase tracking-wide hover:bg-[#BE185D] transition-all"
-                    >Preview Result</button>
-                    <button
-                      onClick={() => setShowDesign(false)}
-                      className="flex-1 py-2.5 bg-[#1a1a1a] border-2 border-[#444] text-white font-bold text-xs uppercase tracking-wide hover:border-[#8B5CF6] transition-all"
-                    >Back to Compose</button>
+                  <div className="p-2.5 border-t-2 border-[#333] flex flex-col gap-2">
+                    {/* Save drawing as image attachment */}
+                    {drawStrokes.length > 0 && (
+                      <button
+                        disabled={isSavingDesign}
+                        onClick={async () => {
+                          const canvas = drawCanvasRef.current;
+                          if (!canvas) return;
+                          setIsSavingDesign(true);
+                          try {
+                            const blob = await new Promise<Blob | null>(res => canvas.toBlob(res, 'image/png'));
+                            if (!blob) throw new Error('export failed');
+                            const uploadUrl = await generateUploadUrl();
+                            const res = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: blob });
+                            if (!res.ok) throw new Error('upload failed');
+                            const { storageId } = await res.json();
+                            setComposerImageId(`img:${storageId}`);
+                            setComposerCustomImagePreview(URL.createObjectURL(blob));
+                            setShowDesign(false);
+                          } catch (e) { console.error('Design save error:', e); }
+                          finally { setIsSavingDesign(false); }
+                        }}
+                        className="w-full py-2.5 bg-[#22C55E] border-2 border-[#22C55E] text-black font-black text-xs uppercase tracking-wide hover:bg-[#16A34A] disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        {isSavingDesign ? 'Saving…' : 'Save Drawing to Mail'}
+                      </button>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => { setShowDesign(false); setShowPreview(true); }}
+                        className="flex-1 py-2.5 bg-[#DB2777] border-2 border-[#DB2777] text-white font-bold text-xs uppercase tracking-wide hover:bg-[#BE185D] transition-all"
+                      >Preview</button>
+                      <button
+                        onClick={() => setShowDesign(false)}
+                        className="flex-1 py-2.5 bg-[#1a1a1a] border-2 border-[#444] text-white font-bold text-xs uppercase tracking-wide hover:border-[#8B5CF6] transition-all"
+                      >← Compose</button>
+                    </div>
                   </div>
                 </div>
               );
