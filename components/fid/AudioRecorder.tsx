@@ -11,13 +11,14 @@ interface AudioRecorderProps {
   onClear: () => void;
   currentAudioId: string | null;
   disabled?: boolean;
+  toolbar?: boolean; // compact toolbar mode
 }
 
 const AUDIO_ACCEPT = 'audio/mp3,audio/mpeg,audio/ogg,audio/wav,audio/m4a,audio/aac,audio/*';
 
 const MAX_DURATION = 15;
 
-export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled }: AudioRecorderProps) {
+export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled, toolbar }: AudioRecorderProps) {
   const { lang } = useLanguage();
   const {
     isRecording,
@@ -224,6 +225,60 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled 
           {t.delete}
         </button>
       </div>
+    );
+  }
+
+  // Toolbar compact mode
+  if (toolbar) {
+    return (
+      <>
+        <audio ref={audioRef} />
+        <input ref={fileInputRef} type="file" accept={AUDIO_ACCEPT} className="hidden" onChange={handleFileUpload} />
+        {/* Recording active — show inline status */}
+        {isRecording && (
+          <div className="flex items-center gap-1.5 h-9 px-2 bg-red-500/20 border border-red-500/50">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+            <span className="text-red-400 font-bold text-[10px]">{recordingTime}s</span>
+            <button onClick={stopRecording} className="ml-1 w-6 h-6 bg-red-500 flex items-center justify-center text-white text-xs rounded-sm">⏹</button>
+          </div>
+        )}
+        {/* Recorded preview */}
+        {hasRecordedAudio && !isRecording && (
+          <div className="flex items-center gap-1 h-9 px-2 bg-[#1a1a1a] border border-[#FFD700]/30">
+            <button onClick={handlePlayPause} className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${isPlaying ? 'bg-red-500 text-white animate-pulse' : 'bg-vintage-gold text-black'}`}>{isPlaying ? '⏹' : '▶'}</button>
+            <span className="text-vintage-gold text-[10px] font-bold">{recordingTime}s</span>
+            <button onClick={handleUploadAndSend} disabled={isUploading || disabled} className="ml-1 px-2 h-6 bg-vintage-gold text-black text-[10px] font-black disabled:opacity-50">{isUploading ? '...' : t.send}</button>
+            <button onClick={() => { clearRecording(); setIsPlaying(false); }} className="px-1 h-6 text-white/40 text-[10px] hover:text-white">✕</button>
+          </div>
+        )}
+        {/* Idle OR custom audio selected */}
+        {!isRecording && !hasRecordedAudio && (
+          <>
+            {isCustomAudio ? (
+              <div className="flex items-center gap-1 h-9 px-2 bg-[#1a1a1a] border border-[#FFD700]/30">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5 text-vintage-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                <span className="text-vintage-gold text-[10px] font-bold flex-1">{t.recorded}</span>
+                <button onClick={handleClear} className="text-red-400 text-[10px] hover:text-red-300">✕</button>
+              </div>
+            ) : (
+              <>
+                {isSupported && (
+                  <button
+                    onClick={startRecording}
+                    disabled={disabled || isUploading}
+                    title="Record voice"
+                    className="w-9 h-9 flex items-center justify-center border-2 border-[#C2410C] bg-[#EA580C] text-white hover:bg-[#C2410C] transition-all disabled:opacity-50"
+                    style={{ WebkitTextFillColor: 'white' }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                  </button>
+                )}
+              </>
+            )}
+          </>
+        )}
+        {(error || uploadError) && <span className="text-red-400 text-[9px]">{error || uploadError}</span>}
+      </>
     );
   }
 

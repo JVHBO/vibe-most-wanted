@@ -5,13 +5,13 @@ const BASE = 'https://www.myinstants.com';
 export async function GET(req: NextRequest) {
   const search = req.nextUrl.searchParams.get('search') || '';
   const url = search
-    ? `${BASE}/api/v1/instants/?search=${encodeURIComponent(search)}&format=json`
+    ? `${BASE}/api/v1/instants/?name=${encodeURIComponent(search)}&format=json`
     : `${BASE}/api/v1/instants/featured/?format=json`;
 
   try {
     const res = await fetch(url, {
       headers: { Accept: 'application/json' },
-      next: { revalidate: 60 },
+      cache: 'no-store',
     });
     if (!res.ok) return NextResponse.json({ results: [] }, { status: 200 });
     const data = await res.json();

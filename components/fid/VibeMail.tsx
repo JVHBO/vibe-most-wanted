@@ -48,7 +48,6 @@ const SLASH_COMMANDS = [
   { cmd: '/link', icon: '🔗', label: 'Insert link' },
   { cmd: '/img', icon: '📷', label: 'Attach image' },
   { cmd: '/sound', icon: '🔊', label: 'Attach sound' },
-  { cmd: '/app', icon: '🎮', label: 'Link miniapp' },
   { cmd: '/clear', icon: '🗑️', label: 'Clear message' },
 ] as const;
 
@@ -187,7 +186,7 @@ function renderFormattedMessage(message: string, lang: string = "en", username?:
     .filter(line => {
       const t = line.trim();
       // Skip lines that are slash commands for media/navigation (not text formatting)
-      return !/^\/(app|cast|sound|img|follow|miniapp|channel|clear)\s*/i.test(t);
+      return !/^\/(cast|sound|img|follow|miniapp|channel|clear)[=\s]/i.test(t);
     })
     .join('\n')
     .trim();
@@ -409,6 +408,16 @@ export function getSoundFile(audioId: string): string | null {
   return sound?.file || null;
 }
 
+// Extract inline /sound=URL and optional volume from message text
+export function extractInlineSoundUrl(message: string): { url: string; volume: number; name?: string } | null {
+  const match = message.match(/^\/sound=(\S+?)(?:\s+volume=([\d.]+))?$/im);
+  if (!match) return null;
+  const url = match[1];
+  const volume = match[2] ? Math.min(1, Math.max(0, parseFloat(match[2]))) : 0.2;
+  const namePart = url.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ') || 'Audio';
+  return { url, volume, name: namePart };
+}
+
 // Get image file from ID
 export function getImageFile(imageId: string): { file: string; isVideo: boolean } | null {
   const image = VIBEMAIL_IMAGES.find(i => i.id === imageId);
@@ -454,6 +463,121 @@ interface VibeMailInboxProps {
   onClose: () => void;
   asPage?: boolean;
   hideClose?: boolean;
+}
+
+// Module-level rich message renderer — commands become media inline
+// /sound=URL → audio player, /img=URL → image/video, other commands → hidden
+function renderRichMessageFn(
+  text: string,
+  playingAudio: string | null,
+  audioRef: React.RefObject<HTMLAudioElement | null>,
+  setPlayingAudio: (id: string | null) => void,
+  lang: string = 'en',
+  username?: string
+): React.ReactNode {
+  if (!text) return null;
+  const normalizedText = text.replace(/\\n/g, '\n');
+  const lines = normalizedText.split('\n');
+  const nodes: React.ReactNode[] = [];
+  const pendingText: string[] = [];
+
+  const flushText = () => {
+    const t = pendingText.join('\n').trim();
+    if (t) {
+      nodes.push(
+        <span key={`txt-${nodes.length}`} className="whitespace-pre-wrap leading-relaxed">
+          {renderFormattedMessage(t, lang, username)}
+        </span>
+      );
+    }
+    pendingText.length = 0;
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // /sound=URL [volume=X]
+    const soundM = trimmed.match(/^\/sound=(\S+?)(?:\s+volume=([\d.]+))?$/i);
+    if (soundM) {
+      flushText();
+      const url = soundM[1];
+      const volume = soundM[2] ? Math.min(1, Math.max(0, parseFloat(soundM[2]))) : 0.2;
+      const name = url.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ') || 'Audio';
+      const pid = `inline:${url}`;
+      nodes.push(
+        <div key={`snd-${nodes.length}`} className="bg-[#1a0a00] border border-[#F97316]/40 rounded-lg p-2 flex items-center gap-2 my-1">
+          <button
+            onClick={() => {
+              if (playingAudio === pid) {
+                audioRef.current?.pause();
+                setPlayingAudio(null);
+              } else if (audioRef.current) {
+                audioRef.current.src = url;
+                audioRef.current.volume = volume;
+                audioRef.current.play().catch(console.error);
+                setPlayingAudio(pid);
+              }
+            }}
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${playingAudio === pid ? 'bg-red-500 text-white animate-pulse' : 'bg-[#F97316] text-black'}`}
+          >
+            {playingAudio === pid ? '■' : '▶'}
+          </button>
+          <div className="flex-1 min-w-0">
+            <p className="text-[#F97316] font-bold text-xs truncate">{name}</p>
+            <p className="text-white/40 text-[10px]">{playingAudio === pid ? 'Playing' : 'Tap to play'} · {Math.round(volume * 100)}% vol</p>
+          </div>
+        </div>
+      );
+      continue;
+    }
+
+    // /img=URL
+    const imgM = trimmed.match(/^\/img=(\S+)$/i);
+    if (imgM) {
+      flushText();
+      const url = imgM[1];
+      const isVid = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+      nodes.push(isVid
+        ? <video key={`vid-${nodes.length}`} src={url} className="max-w-full max-h-48 object-contain border border-[#FFD700]/30 my-1 rounded" autoPlay loop muted playsInline />
+        : <img key={`img-${nodes.length}`} src={url} alt="Media" className="max-w-full max-h-48 object-contain border border-[#FFD700]/30 my-1 rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+      );
+      continue;
+    }
+
+    // Other slash commands — hide
+    if (/^\/(cast|follow|miniapp|channel|clear|link|b)[=\s]/i.test(trimmed) || trimmed === '/clear') {
+      flushText();
+      continue;
+    }
+
+    pendingText.push(line);
+  }
+
+  flushText();
+  return nodes.length > 0 ? <>{nodes}</> : null;
+}
+
+// Reusable sound row for the picker
+function SoundRow({ name, isSelected, isPreviewing, onPlay, onUse }: {
+  name: string; isSelected: boolean; isPreviewing: boolean;
+  onPlay: () => void; onUse: () => void;
+}) {
+  return (
+    <div className={`flex items-center gap-2 px-2 py-1.5 border transition-all ${
+      isSelected ? 'bg-[#F97316]/20 border-[#F97316] text-[#F97316]' : 'bg-[#111] border-[#2a2a2a] text-white/70 hover:border-[#F97316]/40'
+    }`}>
+      <button onClick={onPlay} className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-[#F97316]/10 border border-[#F97316]/30 hover:bg-[#F97316]/30 transition-all text-[#F97316]">
+        {isPreviewing
+          ? <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          : <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        }
+      </button>
+      <span className="flex-1 text-[10px] font-bold truncate">{name}</span>
+      <button onClick={onUse} className={`flex-shrink-0 px-2 py-0.5 text-[9px] font-black uppercase border transition-all ${
+        isSelected ? 'bg-[#F97316] border-[#F97316] text-black' : 'bg-transparent border-[#F97316]/40 text-[#F97316]/60 hover:border-[#F97316] hover:text-[#F97316]'
+      }`}>{isSelected ? 'Selected' : 'Use'}</button>
+    </div>
+  );
 }
 
 // VibeMail Inbox Component - Shows all messages for a card
@@ -563,13 +687,21 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
             <div className="bg-gradient-to-b from-vintage-black/80 to-vintage-charcoal rounded-lg p-3 flex-1">
               <div className="flex items-start justify-between gap-2 mb-3">
                 <div className="text-white text-sm leading-relaxed flex-1">
-                  {selectedMessage.imageId ? (
-                    renderMessageWithMedia(selectedMessage.message || "", selectedMessage.imageId, lang, username)
-                  ) : translatedContent ? (
+                  {translatedContent ? (
                     <span>"{translatedContent}"</span>
                   ) : (
-                    <span>"{renderFormattedMessage(selectedMessage.message || "", lang, username)}"</span>
+                    renderRichMessageFn(selectedMessage.message || "", playingAudio, audioRef, setPlayingAudio, lang, username)
                   )}
+                  {selectedMessage.imageId && (() => {
+                    const isCustom = selectedMessage.imageId!.startsWith('img:');
+                    const customUrl = isCustom ? `${VIBEFID_STORAGE_URL_INLINE}/${selectedMessage.imageId!.slice(4)}` : null;
+                    const imgData = !isCustom ? getImageFile(selectedMessage.imageId!) : null;
+                    if (customUrl) return <img src={customUrl} alt="VibeMail" className="max-w-[150px] max-h-[150px] object-cover rounded-lg mt-1 border border-vintage-gold/30" />;
+                    if (!imgData) return null;
+                    return imgData.isVideo
+                      ? <video src={imgData.file} className="max-w-[150px] max-h-[150px] rounded-lg mt-1 border border-vintage-gold/30" autoPlay loop muted playsInline />
+                      : <img src={imgData.file} alt="VibeMail" className="max-w-[150px] max-h-[150px] object-cover rounded-lg mt-1 border border-vintage-gold/30" />;
+                  })()}
                 </div>
                 {selectedMessage.message && (
                   <button
@@ -612,6 +744,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                   </div>
                 </div>
               )}
+
 
 
               {/* NFT Gift Display */}
@@ -825,6 +958,13 @@ export function VibeMailInboxWithClaim({
   const miSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [composerImageId, setComposerImageId] = useState<string | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [gifSearch, setGifSearch] = useState('');
+  const [gifResults, setGifResults] = useState<Array<{ id: string; title: string; url: string; preview: string }>>([]);
+  const [gifLoading, setGifLoading] = useState(false);
+  const gifSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mediaUploadRef = useRef<HTMLInputElement | null>(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [composerCastUrl, setComposerCastUrl] = useState<string | null>(null);
   const [showCastInput, setShowCastInput] = useState(false);
   const [castInputValue, setCastInputValue] = useState('');
@@ -838,27 +978,59 @@ export function VibeMailInboxWithClaim({
   const broadcastMutation = useMutation(api.cardVotes.broadcastVibeMail);
   const deleteMessagesMutation = useMutation(api.cardVotes.deleteMessages);
 
-  // Myinstants search (debounced)
-  useEffect(() => {
-    if (miSearchTimeout.current) clearTimeout(miSearchTimeout.current);
-    miSearchTimeout.current = setTimeout(async () => {
-      setMiLoading(true);
-      try {
-        const res = await fetch(`/api/myinstants?search=${encodeURIComponent(miSearch)}`);
-        const data = await res.json();
-        setMiResults(data.results ?? []);
-      } catch { setMiResults([]); }
-      finally { setMiLoading(false); }
-    }, miSearch ? 400 : 0);
-    return () => { if (miSearchTimeout.current) clearTimeout(miSearchTimeout.current); };
-  }, [miSearch]);
+  // Fetch myinstants sounds (always fresh, no stale-check complexity)
+  const doFetchMi = async (search: string) => {
+    setMiLoading(true);
+    try {
+      const res = await fetch(`/api/myinstants?search=${encodeURIComponent(search)}`, { cache: 'no-store' });
+      const data = await res.json();
+      setMiResults(data.results ?? []);
+    } catch { setMiResults([]); }
+    finally { setMiLoading(false); }
+  };
 
-  // Load featured sounds when picker opens
-  useEffect(() => {
-    if (showSoundPicker && miResults.length === 0 && !miLoading) {
-      setMiSearch('');
-    }
-  }, [showSoundPicker]);
+  // openSoundPicker: opens picker and loads sounds
+  const openSoundPicker = (initialSearch = '') => {
+    setShowSoundPicker(true); setShowImagePicker(false); setShowGifPicker(false); setShowCastInput(false); setShowMiniappInput(false);
+    setMiSearch(initialSearch);
+    doFetchMi(initialSearch);
+  };
+
+  // GIF search via Tenor
+  const doFetchGifs = async (search: string) => {
+    setGifLoading(true);
+    try {
+      const res = await fetch(`/api/tenor?search=${encodeURIComponent(search)}`, { cache: 'no-store' });
+      const data = await res.json();
+      setGifResults(data.results ?? []);
+    } catch { setGifResults([]); }
+    finally { setGifLoading(false); }
+  };
+
+  const openGifPicker = () => {
+    setShowGifPicker(true); setShowSoundPicker(false); setShowImagePicker(false); setShowCastInput(false); setShowMiniappInput(false);
+    setGifSearch('');
+    doFetchGifs('');
+  };
+
+  // Media upload: detect type and set audioId or imageId accordingly
+  const handleMediaUpload = async (file: File) => {
+    const isAudio = file.type.startsWith('audio/');
+    setIsUploadingMedia(true);
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const res = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': file.type }, body: file });
+      if (!res.ok) throw new Error('Upload failed');
+      const { storageId } = await res.json();
+      if (isAudio) {
+        setComposerAudioId(`custom:${storageId}`);
+      } else {
+        setComposerImageId(`img:${storageId}`);
+        setComposerCustomImagePreview(URL.createObjectURL(file));
+      }
+    } catch (e) { console.error('Media upload error:', e); }
+    finally { setIsUploadingMedia(false); }
+  };
 
   // VibeMail Stats
   const vibeMailStats = useQuery(
@@ -1332,6 +1504,15 @@ export function VibeMailInboxWithClaim({
     setComposerMessage(val);
     const cursorPos = e.target.selectionStart ?? val.length;
     const textBeforeCursor = val.slice(0, cursorPos);
+
+    // Detect /sound= command
+    const soundMatch = textBeforeCursor.match(/\/sound=(.*)$/i);
+    if (soundMatch) {
+      setSlashMenuOpen(false);
+      if (!showSoundPicker) openSoundPicker('');
+      return;
+    }
+
     const slashMatch = textBeforeCursor.match(/\/(\w*)$/);
     if (slashMatch !== null) {
       setSlashMenuOpen(true);
@@ -1373,16 +1554,12 @@ export function VibeMailInboxWithClaim({
         setShowImagePicker(true); setShowSoundPicker(false); setShowCastInput(false); setShowMiniappInput(false);
         break;
       case '/sound':
-        setComposerMessage((before + after).slice(0, 200));
-        setShowSoundPicker(true); setShowImagePicker(false); setShowCastInput(false); setShowMiniappInput(false);
+        setComposerMessage((before + '/sound=' + after).slice(0, 200));
+        openSoundPicker();
         break;
       case '/cast':
         setComposerMessage((before + after).slice(0, 200));
         setShowCastInput(true); setShowSoundPicker(false); setShowImagePicker(false); setShowMiniappInput(false);
-        break;
-      case '/app':
-        setComposerMessage((before + after).slice(0, 200));
-        setShowMiniappInput(true); setShowSoundPicker(false); setShowImagePicker(false); setShowCastInput(false);
         break;
     }
     setSlashMenuOpen(false);
@@ -1396,7 +1573,7 @@ export function VibeMailInboxWithClaim({
     const before = composerMessage.slice(0, pos);
     const after = composerMessage.slice(pos);
     const needsNewline = before.length > 0 && !before.endsWith('\n');
-    const prefix = needsNewline ? '\n' + cmd + ' ' : cmd + ' ';
+    const prefix = needsNewline ? '\n' + cmd + '=' : cmd + '=';
     const newMsg = (before + prefix + placeholder + after).slice(0, 500);
     setComposerMessage(newMsg);
     const newCursor = before.length + prefix.length;
@@ -1408,41 +1585,74 @@ export function VibeMailInboxWithClaim({
     }, 10);
   };
 
-  // Validate a slash command's argument
-  const validateCmd = (cmd: string, rest: string): boolean => {
-    const r = rest.trim();
+  // Validate a slash command — val is the part after `=`
+  const validateCmd = (cmd: string, val: string): boolean => {
+    const v = val.trim();
     switch (cmd) {
       case '/b': case '/i': case '/clear': return true;
-      case '/link': return r.length > 3 && r.includes('(') && r.includes(')');
-      case '/img': return r.length > 0;
-      case '/sound': return r.length > 0;
-      case '/cast': return r.startsWith('http');
-      case '/app': return r.startsWith('http') || r.startsWith('farcaster');
-      case '/follow': return r.length > 0;
-      case '/miniapp': return r.startsWith('http') || r.startsWith('farcaster');
-      case '/channel': return r.length > 0;
+      case '/link': return v.length > 3 && v.includes('(') && v.includes(')');
+      case '/img': return v.length > 0;
+      case '/sound': return v.startsWith('http') || v.startsWith('/');
+      case '/cast': return v.startsWith('http');
+      case '/follow': return v.length > 0;
+      case '/miniapp': return v.startsWith('http') || v.startsWith('farcaster');
+      case '/channel': return v.length > 0;
       default: return false;
     }
   };
 
+  // Per-command colors (syntax highlighting like a programming language)
+  const CMD_COLORS: Record<string, { cmd: string; arg: string; param: string }> = {
+    '/sound':   { cmd: '#F97316', arg: '#FED7AA', param: '#FDE68A' }, // orange — audio
+    '/img':     { cmd: '#A855F7', arg: '#DDD6FE', param: '#E9D5FF' }, // purple — image
+    '/b':       { cmd: '#06B6D4', arg: '#CFFAFE', param: '#CFFAFE' }, // cyan — bold
+    '/i':       { cmd: '#06B6D4', arg: '#CFFAFE', param: '#CFFAFE' }, // cyan — italic
+    '/link':    { cmd: '#3B82F6', arg: '#BFDBFE', param: '#BAE6FD' }, // blue — link
+    '/cast':    { cmd: '#EAB308', arg: '#FEF08A', param: '#FEF9C3' }, // yellow — cast
+    '/clear':   { cmd: '#EF4444', arg: '#FCA5A5', param: '#FECACA' }, // red — clear
+    '/follow':  { cmd: '#14B8A6', arg: '#99F6E4', param: '#CCFBF1' }, // teal — follow
+    '/miniapp': { cmd: '#10B981', arg: '#A7F3D0', param: '#D1FAE5' }, // green — miniapp
+    '/channel': { cmd: '#14B8A6', arg: '#99F6E4', param: '#CCFBF1' }, // teal — channel
+  };
+  const UNKNOWN_COLOR = { cmd: '#EF4444', arg: '#FCA5A5', param: '#FECACA' };
+
   // Render syntax-highlighted composer text (for overlay)
+  // Format: /command=value param=value2   e.g.  /sound=https://... volume=0.2
   const renderColoredComposer = (text: string): React.ReactNode => {
-    const KNOWN = new Set(['/b','/i','/link','/img','/sound','/cast','/app','/clear','/follow','/miniapp','/channel']);
+    const KNOWN = new Set(Object.keys(CMD_COLORS));
     const lines = text.split('\n');
     return lines.map((line, idx) => {
       const isLast = idx === lines.length - 1;
-      const m = line.match(/^(\/[a-zA-Z]+)([ \t]+)?(.*)?$/);
+      // Match: /cmd (=value)? (space param=val)*  OR  /cmd space (for inline like /b /i)
+      const m = line.match(/^(\/[a-zA-Z]+)(=?)([^\s]*)((?:\s+[a-zA-Z_]+=\S+)*)(.*)$/);
       if (m) {
-        const [, cmd, space = '', rest = ''] = m;
+        const [, cmd, eq, val, params, trailing] = m;
         const known = KNOWN.has(cmd);
-        const valid = known && validateCmd(cmd, rest);
-        const cmdColor = valid ? '#22C55E' : '#EF4444';
-        const restColor = valid ? '#86efac' : '#fca5a5';
+        const palette = known ? CMD_COLORS[cmd] : UNKNOWN_COLOR;
+        const valid = known && validateCmd(cmd, val);
+        const cmdColor = valid ? palette.cmd : '#EF4444';
+        const valColor = valid ? palette.arg : '#FCA5A5';
+        // Parse param tokens: name=value
+        const paramTokens = (params || '').match(/\s+[a-zA-Z_]+=\S+/g) || [];
         return (
           <span key={idx}>
-            <span style={{ color: cmdColor, fontWeight: 700 }}>{cmd}</span>
-            {space && <span style={{ color: '#fff' }}>{space}</span>}
-            {rest && <span style={{ color: restColor }}>{rest}</span>}
+            <span style={{ color: cmdColor, fontWeight: 800 }}>{cmd}</span>
+            {eq && <span style={{ color: '#6b7280' }}>{eq}</span>}
+            {val && <span style={{ color: valColor }}>{val}</span>}
+            {paramTokens.map((token, i) => {
+              const eqIdx = token.indexOf('=');
+              const pName = token.slice(0, eqIdx + 1); // includes = and leading space
+              const pVal = token.slice(eqIdx + 1);
+              return (
+                <span key={i}>
+                  <span style={{ color: '#6b7280' }}>{pName.slice(0, pName.indexOf(pName.trimStart()[0]))}</span>
+                  <span style={{ color: '#FDE68A', fontStyle: 'italic' }}>{pName.trimStart().slice(0, -1)}</span>
+                  <span style={{ color: '#6b7280' }}>=</span>
+                  <span style={{ color: '#67e8f9' }}>{pVal}</span>
+                </span>
+              );
+            })}
+            {trailing && <span style={{ color: '#9ca3af' }}>{trailing}</span>}
             {!isLast && '\n'}
           </span>
         );
@@ -1450,6 +1660,10 @@ export function VibeMailInboxWithClaim({
       return <span key={idx} style={{ color: '#e5e7eb' }}>{line}{!isLast && '\n'}</span>;
     });
   };
+
+  // renderRichMessage is a module-level function (see below VibeMailInboxWithClaim)
+  const renderRichMessage = (text: string, lang_?: string, username_?: string) =>
+    renderRichMessageFn(text, playingAudio, audioRef, setPlayingAudio, lang_ || lang, username_ || username);
 
   // Format selected text as bold
   const handleFormatBold = () => {
@@ -2008,7 +2222,7 @@ export function VibeMailInboxWithClaim({
                     {showCostInfo && (
                       <div className="absolute top-full right-0 mt-1 w-64 bg-[#0d0d0d] border-2 border-black shadow-[6px_6px_0px_#000] z-50">
                         <div className="bg-[#FFD700] px-3 py-1.5 flex items-center justify-between border-b-2 border-black">
-                          <span className="font-black text-black text-[10px] uppercase tracking-widest">VibeMail Costs</span>
+                          <span className="font-black text-black text-[10px] uppercase tracking-widest">{t.vibemailCostsTitle || 'VibeMail Costs'}</span>
                           <button onClick={() => setShowCostInfo(false)} className="text-black/60 hover:text-black font-bold text-xs">✕</button>
                         </div>
                         <div className="divide-y divide-[#1a1a1a]">
@@ -2018,8 +2232,8 @@ export function VibeMailInboxWithClaim({
                               <span className="bg-[#22C55E] text-black font-black text-[9px] px-1.5 py-0.5 uppercase tracking-wide">FREE MAIL</span>
                               <span className="text-[#22C55E] font-black text-xs">0 VBMS</span>
                             </div>
-                            <p className="text-white text-xs font-bold">Just a Message</p>
-                            <p className="text-white/40 text-[10px]">Sem quest · limite 1 por destinatario por dia</p>
+                            <p className="text-white text-xs font-bold">{t.vibemailFreeMailTitle || 'Just a Message'}</p>
+                            <p className="text-white/40 text-[10px]">{t.vibemailFreeMailDesc || 'No quest · limit 1 per recipient per day'}</p>
                           </div>
                           {/* Quest VibeMail */}
                           <div className="px-3 py-2">
@@ -2027,8 +2241,8 @@ export function VibeMailInboxWithClaim({
                               <span className="bg-[#FFD700] text-black font-black text-[9px] px-1.5 py-0.5 uppercase tracking-wide">QUEST MAIL</span>
                               <span className="text-[#FFD700] font-black text-xs">1.000 VBMS</span>
                             </div>
-                            <p className="text-white text-xs font-bold">With Social Quest</p>
-                            <p className="text-white/40 text-[10px]">Por destinatario · recipiente ganha VBMS ao completar as quests</p>
+                            <p className="text-white text-xs font-bold">{t.vibemailQuestMailTitle || 'With Social Quest'}</p>
+                            <p className="text-white/40 text-[10px]">{t.vibemailQuestMailDesc || 'Per recipient · recipient earns VBMS upon completing quests'}</p>
                           </div>
                           {/* Broadcast */}
                           <div className="px-3 py-2">
@@ -2036,8 +2250,8 @@ export function VibeMailInboxWithClaim({
                               <span className="bg-[#2563EB] text-white font-black text-[9px] px-1.5 py-0.5 uppercase tracking-wide">BROADCAST</span>
                               <span className="text-[#60a5fa] font-black text-xs">1.000 × N VBMS</span>
                             </div>
-                            <p className="text-white text-xs font-bold">Transmissao / Aleatorio</p>
-                            <p className="text-white/40 text-[10px]">1.000 VBMS multiplicado pelo numero de destinatarios</p>
+                            <p className="text-white text-xs font-bold">{t.vibemailBroadcastTitleFull || 'Broadcast / Random'}</p>
+                            <p className="text-white/40 text-[10px]">{t.vibemailBroadcastDescCost || '1,000 VBMS multiplied by number of recipients'}</p>
                           </div>
                         </div>
                       </div>
@@ -2245,81 +2459,157 @@ export function VibeMailInboxWithClaim({
             </div>
             <p className="text-[#FFD700]/50 text-[10px] mb-1">Type / for commands · **bold** · *italic* · [text](url)</p>
 
-            {/* Voice Recorder - only show if no meme sound selected */}
-            {!composerAudioId || isCustomAudio(composerAudioId || undefined) ? (
-              <div className="mt-2">
-                <AudioRecorder
-                  onAudioReady={(id) => setComposerAudioId(id)}
-                  onClear={() => setComposerAudioId(null)}
-                  currentAudioId={isCustomAudio(composerAudioId || undefined) ? composerAudioId : null}
-                />
-              </div>
-            ) : (
-              <div className="mt-2 p-2 bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg flex items-center justify-between">
-                <span className="text-white text-sm flex items-center gap-1">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                  Meme sound selected
-                </span>
-                <button
-                  onClick={() => setComposerAudioId(null)}
-                  className="text-red-400 text-xs hover:text-red-300"
-                >Clear</button>
-              </div>
-            )}
+            {/* Inline /sound volume control — shown when message has /sound URL volume=X */}
+            {(() => {
+              const inlineSound = extractInlineSoundUrl(composerMessage);
+              if (!inlineSound) return null;
+              return (
+                <div className="mt-1 flex items-center gap-2 px-2 py-1.5 bg-[#1a0a00] border border-[#F97316]/40">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  <span className="text-[#F97316] text-[9px] font-black uppercase tracking-widest flex-shrink-0">Volume</span>
+                  <input
+                    type="range"
+                    min="0" max="1" step="0.05"
+                    value={inlineSound.volume}
+                    onChange={e => {
+                      const v = parseFloat(e.target.value).toFixed(2);
+                      const updated = composerMessage.replace(
+                        /^(\/sound=\S+)(?:\s+volume=[\d.]+)?/im,
+                        `$1 volume=${v}`
+                      );
+                      setComposerMessage(updated);
+                    }}
+                    className="flex-1 accent-[#F97316] h-1"
+                  />
+                  <span className="text-[#FED7AA] text-[9px] font-mono w-8 text-right">{Math.round(inlineSound.volume * 100)}%</span>
+                  <button
+                    onClick={() => setComposerMessage(composerMessage.replace(/\n?\/sound=[^\n]*/i, '').trim())}
+                    className="text-[#F97316]/50 hover:text-red-400 text-[9px] flex-shrink-0"
+                  >✕</button>
+                </div>
+              );
+            })()}
 
             {/* Attachment panels - shown above toolbar when active */}
             <audio ref={composerAudioRef} onEnded={() => setPreviewSound(null)} />
 
             {showSoundPicker && !isCustomAudio(composerAudioId || undefined) && (
-              <div className="mt-2 bg-[#0d0d0d] border border-[#FFD700]/30 p-2">
+              <div className="mt-2 bg-[#0d0d0d] border-2 border-[#F97316]/50 p-2">
+                {/* Header + close */}
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[#F97316] text-[10px] font-black uppercase tracking-widest">Audios</span>
+                  <button onClick={() => setShowSoundPicker(false)} className="text-white/30 hover:text-white text-xs">✕</button>
+                </div>
                 {/* Search */}
                 <input
                   type="text"
                   value={miSearch}
-                  onChange={e => setMiSearch(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setMiSearch(val);
+                    if (miSearchTimeout.current) clearTimeout(miSearchTimeout.current);
+                    miSearchTimeout.current = setTimeout(() => doFetchMi(val), val ? 500 : 0);
+                  }}
                   placeholder="Search myinstants..."
-                  className="w-full mb-2 px-2 py-1.5 bg-[#1a1a1a] border border-[#FFD700]/30 text-[#FFD700] text-xs placeholder-[#FFD700]/30 outline-none focus:border-[#FFD700]/60"
+                  autoFocus
+                  className="w-full mb-2 px-2 py-1.5 bg-[#1a1a1a] border border-[#F97316]/30 text-[#F97316] text-xs placeholder-[#F97316]/30 outline-none focus:border-[#F97316]/60"
                   style={{ colorScheme: 'dark' }}
                 />
-                {/* Results */}
-                <div className="grid grid-cols-2 gap-1.5 max-h-40 overflow-y-auto">
-                  {miLoading ? (
-                    <div className="col-span-2 text-center text-[#FFD700]/40 text-xs py-3">Loading...</div>
-                  ) : miResults.length === 0 ? (
-                    <div className="col-span-2 text-center text-[#FFD700]/30 text-xs py-3">No sounds found</div>
-                  ) : miResults.map((sound) => {
-                    const miId = `mi:${sound.name}|${sound.url}`;
-                    const isSelected = composerAudioId === miId;
-                    const isPreviewing = previewSound === miId;
+                {/* Results — local sounds + myinstants in one list */}
+                <div className="flex flex-col gap-1 max-h-56 overflow-y-auto">
+                  {/* Local miniapp sounds (always shown, filtered locally) */}
+                  {VIBEMAIL_SOUNDS.filter(s => !miSearch || s.name.toLowerCase().includes(miSearch.toLowerCase())).map(sound => {
+                    const soundLine = `/sound=${sound.file} volume=0.2`;
+                    const isSelected = composerMessage.includes(`/sound=${sound.file}`);
+                    const isPreviewing = previewSound === sound.file;
                     return (
-                      <button
-                        key={sound.url}
-                        onClick={() => {
+                      <SoundRow key={sound.id} name={sound.name} isSelected={isSelected} isPreviewing={isPreviewing}
+                        onPlay={() => {
                           if (composerAudioRef.current) {
-                            if (isPreviewing) {
-                              composerAudioRef.current.pause();
-                              setPreviewSound(null);
-                            } else {
-                              composerAudioRef.current.src = sound.url;
-                              composerAudioRef.current.play().catch(console.error);
-                              setPreviewSound(miId);
-                            }
+                            if (isPreviewing) { composerAudioRef.current.pause(); setPreviewSound(null); }
+                            else { composerAudioRef.current.src = sound.file; composerAudioRef.current.volume = 0.2; composerAudioRef.current.play().catch(console.error); setPreviewSound(sound.file); }
                           }
-                          setComposerAudioId(isSelected ? null : miId);
-                          if (!isSelected) setShowSoundPicker(false);
                         }}
-                        className={`p-1.5 border text-[10px] transition-all flex items-center gap-1.5 font-bold truncate ${
-                          isSelected
-                            ? 'bg-[#FFD700]/20 border-[#FFD700] text-[#FFD700]'
-                            : 'bg-[#1a1200] border-[#FFD700]/30 text-[#FFD700]/70 hover:border-[#FFD700]/70 hover:text-[#FFD700]'
-                        }`}
-                      >
-                        <span className="flex-shrink-0">{isPreviewing ? '⏹' : '▶'}</span>
-                        <span className="truncate">{sound.name}</span>
-                      </button>
+                        onUse={() => {
+                          const replaced = composerMessage.replace(/^\/sound=\S*(?:\s+volume=[\d.]+)?/im, soundLine);
+                          const newText = replaced !== composerMessage ? replaced : (composerMessage.trim() ? `${composerMessage.trim()}\n${soundLine}` : soundLine);
+                          setComposerMessage(newText.slice(0, 200)); setShowSoundPicker(false);
+                        }}
+                      />
                     );
                   })}
+
+                  {/* Myinstants results (from API) */}
+                  {miLoading
+                    ? <div className="text-center text-[#F97316]/40 text-xs py-3">Searching...</div>
+                    : miResults.map(sound => {
+                        const isSelected = composerMessage.includes(`/sound=${sound.url}`);
+                        const isPreviewing = previewSound === sound.url;
+                        return (
+                          <SoundRow key={sound.url} name={sound.name} isSelected={isSelected} isPreviewing={isPreviewing}
+                            onPlay={() => {
+                              if (composerAudioRef.current) {
+                                if (isPreviewing) { composerAudioRef.current.pause(); setPreviewSound(null); }
+                                else { composerAudioRef.current.src = sound.url; composerAudioRef.current.volume = 0.2; composerAudioRef.current.play().catch(console.error); setPreviewSound(sound.url); }
+                              }
+                            }}
+                            onUse={() => {
+                              const soundLine = `/sound=${sound.url} volume=0.2`;
+                              const replaced = composerMessage.replace(/^\/sound=\S*(?:\s+volume=[\d.]+)?/im, soundLine);
+                              const newText = replaced !== composerMessage ? replaced : (composerMessage.trim() ? `${composerMessage.trim()}\n${soundLine}` : soundLine);
+                              setComposerMessage(newText.slice(0, 200)); setShowSoundPicker(false);
+                            }}
+                          />
+                        );
+                      })
+                  }
                 </div>
+              </div>
+            )}
+
+            {/* GIF Picker - Tenor */}
+            {showGifPicker && (
+              <div className="mt-2 bg-[#0d0d0d] border border-[#7C3AED]/40 p-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <input
+                    type="text"
+                    value={gifSearch}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setGifSearch(val);
+                      if (gifSearchTimeout.current) clearTimeout(gifSearchTimeout.current);
+                      gifSearchTimeout.current = setTimeout(() => doFetchGifs(val), 500);
+                    }}
+                    placeholder="Search GIFs..."
+                    className="vibemail-input flex-1 bg-[#0a0a0a] border border-[#7C3AED]/40 text-white px-2 py-1 text-xs focus:outline-none focus:border-[#7C3AED]"
+                    style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
+                  />
+                  <button onClick={() => setShowGifPicker(false)} className="text-white/40 hover:text-white text-xs px-1">✕</button>
+                </div>
+                {gifLoading ? (
+                  <p className="text-white/40 text-[10px] text-center py-2">Loading...</p>
+                ) : gifResults.length === 0 ? (
+                  <p className="text-white/40 text-[10px] text-center py-2">No results</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-1 max-h-48 overflow-y-auto">
+                    {gifResults.map((gif) => (
+                      <button
+                        key={gif.id}
+                        onClick={() => {
+                          // Insert /img=URL command at cursor or end
+                          const gifLine = `/img=${gif.url}`;
+                          const current = composerMessage.trim();
+                          setComposerMessage((current ? current + '\n' + gifLine : gifLine).slice(0, 200));
+                          setShowGifPicker(false);
+                        }}
+                        className="relative border border-[#7C3AED]/20 hover:border-[#7C3AED] transition-all overflow-hidden"
+                      >
+                        <img src={gif.preview} alt={gif.title} className="w-full h-16 object-cover" loading="lazy" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <p className="text-white/20 text-[8px] text-right mt-1">Powered by Tenor</p>
               </div>
             )}
 
@@ -2412,20 +2702,10 @@ export function VibeMailInboxWithClaim({
 
             {/* Bottom toolbar */}
             <div className="flex items-center gap-1 border-t-2 border-[#333] pt-2 mt-2">
-              {/* Aa - VERMELHO */}
-              <button
-                onClick={handleFormatBold}
-                className="w-9 h-9 flex items-center justify-center border-2 border-[#DC2626] bg-[#DC2626] text-white hover:bg-[#B91C1C] transition-all font-black text-sm"
-                style={{ WebkitTextFillColor: 'white' }}
-                title="Bold"
-              >
-                Aa
-              </button>
-
               {/* Som - LARANJA */}
               {!isCustomAudio(composerAudioId || undefined) && (
                 <button
-                  onClick={() => insertCommand('/sound', 'nome-do-som')}
+                  onClick={() => openSoundPicker()}
                   className="w-9 h-9 flex items-center justify-center border-2 border-[#EA580C] bg-[#EA580C] text-white hover:bg-[#C2410C] transition-all"
                   style={{ WebkitTextFillColor: 'white' }}
                   title="/sound"
@@ -2434,26 +2714,44 @@ export function VibeMailInboxWithClaim({
                 </button>
               )}
 
-              {/* Imagem - VIOLETA escuro */}
+              {/* GIF - VIOLETA */}
               <button
-                onClick={() => insertCommand('/img', 'url-da-imagem')}
-                className="w-9 h-9 flex items-center justify-center border-2 border-[#7C3AED] bg-[#7C3AED] text-white hover:bg-[#5B21B6] transition-all"
+                onClick={openGifPicker}
+                className={`w-9 h-9 flex items-center justify-center border-2 transition-all ${showGifPicker ? 'border-[#5B21B6] bg-[#5B21B6]' : 'border-[#7C3AED] bg-[#7C3AED] hover:bg-[#5B21B6]'} text-white`}
                 style={{ WebkitTextFillColor: 'white' }}
-                title="/img"
+                title="GIF / Image"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                <span className="font-black text-[10px] leading-none">GIF</span>
               </button>
 
-
-              {/* Miniapp - VERDE */}
+              {/* Media upload (audio/image/video/gif) */}
+              <input
+                ref={mediaUploadRef}
+                type="file"
+                accept="audio/*,image/*,video/mp4,video/webm,.gif"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleMediaUpload(f); e.target.value = ''; }}
+              />
               <button
-                onClick={() => insertCommand('/app', 'https://farcaster.xyz/miniapps/...')}
-                className="w-9 h-9 flex items-center justify-center border-2 border-[#16A34A] bg-[#16A34A] text-white hover:bg-[#15803D] transition-all"
+                onClick={() => mediaUploadRef.current?.click()}
+                disabled={isUploadingMedia}
+                title="Upload media"
+                className="w-9 h-9 flex items-center justify-center border-2 border-[#1D4ED8] bg-[#2563EB] text-white hover:bg-[#1D4ED8] transition-all disabled:opacity-50"
                 style={{ WebkitTextFillColor: 'white' }}
-                title="/app"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                {isUploadingMedia
+                  ? <span className="text-[9px] font-black">...</span>
+                  : <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                }
               </button>
+
+              {/* Voice recorder (mic only, no upload) */}
+              <AudioRecorder
+                toolbar
+                onAudioReady={(id) => setComposerAudioId(id)}
+                onClear={() => setComposerAudioId(null)}
+                currentAudioId={isCustomAudio(composerAudioId || undefined) ? composerAudioId : null}
+              />
 
               {/* Preview - ROSA/PINK */}
               {(composerMessage.trim() || composerImageId || composerQuestData) && (
@@ -2583,7 +2881,9 @@ export function VibeMailInboxWithClaim({
                         </div>
                       </div>
                     ); })()}
-                    <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#e5e7eb' }}>{composerMessage || <span style={{ color: 'rgba(255,255,255,0.3)' }}>(no text)</span>}</p>
+                    <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb' }}>
+                      {composerMessage ? renderRichMessage(composerMessage) : <span style={{ color: 'rgba(255,255,255,0.3)' }}>(no text)</span>}
+                    </div>
                     {composerCastUrl && <p className="text-[#9945FF] text-xs mt-2 truncate">Cast: {composerCastUrl}</p>}
                     {composerMiniappUrl && (
                       <div className="mt-2 bg-[#0d1f0d] border border-[#22C55E]/50 rounded px-2 py-1.5 flex items-center gap-1.5">

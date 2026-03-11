@@ -43,6 +43,19 @@ export const saveDrawing = mutation({
   },
 });
 
+// Delete all drawings (admin cleanup)
+export const clearAllDrawings = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("drawings").collect();
+    for (const d of all) {
+      try { await ctx.storage.delete(d.storageId); } catch {}
+      await ctx.db.delete(d._id);
+    }
+    return { deleted: all.length };
+  },
+});
+
 // Get recent drawings with signed URLs
 export const getRecentDrawings = query({
   args: {},

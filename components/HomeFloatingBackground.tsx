@@ -302,22 +302,28 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
       if (!container) return;
       const W = canvas.width;
       const H = canvas.height;
+      // Scale down to ~25% of original so it floats as a small element, not full-screen
+      const scale = 0.25;
+      const fw = Math.round(W * scale);
+      const fh = Math.round(H * scale);
+      // Random horizontal start position
+      const leftPct = 10 + Math.random() * 60;
       const floatEl = document.createElement('div');
-      floatEl.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;pointer-events:none;opacity:0;`;
+      floatEl.style.cssText = `position:absolute;left:${leftPct}%;bottom:10%;width:${fw}px;height:${fh}px;pointer-events:none;opacity:0;`;
       const img = document.createElement('img');
       img.src = dataUrl;
       img.draggable = false;
       img.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;';
       floatEl.appendChild(img);
       container.appendChild(floatEl);
-      // Start from where it was drawn, rise upward
+      // Float upward and fade
       floatEl.animate([
-        { opacity: 0,   transform: 'translateY(0px)' },
-        { opacity: 0.3, transform: 'translateY(-40px)',  offset: 0.06 },
-        { opacity: 0.3, transform: `translateY(-${H * 0.5}px)`, offset: 0.6 },
-        { opacity: 0,   transform: `translateY(-${H}px)` },
-      ], { duration: 22000, easing: 'ease-in', fill: 'forwards' });
-      setTimeout(() => { try { container.removeChild(floatEl); } catch {} }, 23000);
+        { opacity: 0,   transform: 'translateY(0px) rotate(0deg)' },
+        { opacity: 0.85, transform: 'translateY(-60px) rotate(-1deg)',  offset: 0.05 },
+        { opacity: 0.85, transform: `translateY(-${H * 0.4}px) rotate(1deg)`, offset: 0.55 },
+        { opacity: 0,   transform: `translateY(-${H * 0.8}px) rotate(-2deg)` },
+      ], { duration: 18000, easing: 'ease-in', fill: 'forwards' });
+      setTimeout(() => { try { container.removeChild(floatEl); } catch {} }, 19000);
     };
 
     // Auto-launch saved drawing on page load
@@ -364,10 +370,10 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
             }
             if (!username) return;
 
-            // Compress: draw dataUrl to a smaller JPEG canvas
+            // Compress: resize to 600px wide, keep transparency (PNG)
             const offscreen = document.createElement('canvas');
-            offscreen.width = 800;
-            offscreen.height = Math.round(800 * canvas.height / canvas.width);
+            offscreen.width = 600;
+            offscreen.height = Math.round(600 * canvas.height / canvas.width);
             const octx = offscreen.getContext('2d')!;
             const srcImg = new Image();
             await new Promise<void>((resolve) => {
@@ -381,7 +387,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
                 const uploadUrl = await generateUploadUrlRef.current({});
                 const result = await fetch(uploadUrl, {
                   method: 'POST',
-                  headers: { 'Content-Type': 'image/jpeg' },
+                  headers: { 'Content-Type': 'image/png' },
                   body: blob,
                 });
                 const { storageId } = await result.json();
@@ -393,7 +399,7 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
               } catch (e) {
                 console.warn('Drawing upload failed:', e);
               }
-            }, 'image/jpeg', 0.4);
+            }, 'image/png');
           } catch (e) {
             console.warn('Drawing share failed:', e);
           }
@@ -416,9 +422,9 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
     };
 
     const onMouseDown = (e: MouseEvent) => {
-      if (e.button !== 0) return;
+      if (e.button !== 2) return; // right-click to draw
       if (isInteractive(e.clientX, e.clientY)) return;
-      e.preventDefault(); // prevent browser drag/text-selection capturing mousemove
+      e.preventDefault();
       isDrawing = true;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -429,10 +435,14 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
     };
 
     const onMouseUp = (e: MouseEvent) => {
-      if (e.button !== 0 || !isDrawing) return;
+      if (e.button !== 2 || !isDrawing) return;
       isDrawing = false;
       hasDrawing = true;
       updateHint(true);
+    };
+
+    const onContextMenu = (e: MouseEvent) => {
+      if (isDrawing || hasDrawing) e.preventDefault();
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -465,12 +475,14 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
     document.addEventListener('mousedown', onMouseDown, { passive: false });
     document.addEventListener('mouseup', onMouseUp);
     document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('contextmenu', onContextMenu);
 
     return () => {
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mousedown', onMouseDown);
       document.removeEventListener('mouseup', onMouseUp);
       document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('contextmenu', onContextMenu);
     };
   }, []);
 
@@ -566,8 +578,12 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
         // Display shared drawings in background with staggered delays
         for (const drawing of sharedDrawings) {
           if (!drawing.url) continue;
+          const scale = 0.25;
+          const fw = Math.round(W * scale);
+          const fh = Math.round(H * scale);
+          const leftPct = 5 + Math.random() * 70;
           const drawEl = document.createElement('div');
-          drawEl.style.cssText = `position:absolute;left:0;top:0;width:${W}px;height:${H}px;pointer-events:none;`;
+          drawEl.style.cssText = `position:absolute;left:${leftPct}%;bottom:5%;width:${fw}px;height:${fh}px;pointer-events:none;opacity:0;`;
 
           const drawImg = document.createElement('img');
           drawImg.src = drawing.url;
@@ -575,31 +591,17 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           drawImg.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;';
           drawEl.appendChild(drawImg);
 
-          const label = document.createElement('div');
-          label.style.cssText = `
-            position:absolute;
-            bottom:20px;
-            right:20px;
-            color:rgba(201,168,76,0.7);
-            font-size:11px;
-            font-family:monospace;
-            pointer-events:none;
-            text-shadow:0 1px 3px rgba(0,0,0,0.8);
-          `;
-          label.textContent = `@${drawing.authorUsername}`;
-          drawEl.appendChild(label);
-
           container.appendChild(drawEl);
 
-          const delay = Math.random() * 30000; // 0-30s stagger
+          const delay = Math.random() * 30000;
           drawEl.animate([
-            { opacity: 0, transform: 'translateY(0px)' },
-            { opacity: 0.25, transform: 'translateY(-40px)', offset: 0.06 },
-            { opacity: 0.25, transform: `translateY(-${H * 0.5}px)`, offset: 0.6 },
-            { opacity: 0, transform: `translateY(-${H}px)` },
-          ], { duration: 25000, delay, easing: 'ease-in', fill: 'forwards' });
+            { opacity: 0,    transform: 'translateY(0px) rotate(0deg)' },
+            { opacity: 0.8,  transform: 'translateY(-50px) rotate(-1deg)', offset: 0.05 },
+            { opacity: 0.8,  transform: `translateY(-${H * 0.4}px) rotate(1deg)`, offset: 0.55 },
+            { opacity: 0,    transform: `translateY(-${H * 0.8}px) rotate(-2deg)` },
+          ], { duration: 20000, delay, easing: 'ease-in', fill: 'forwards' });
 
-          setTimeout(() => { try { container.removeChild(drawEl); } catch {} }, delay + 26000);
+          setTimeout(() => { try { container.removeChild(drawEl); } catch {} }, delay + 21000);
         }
 
         const loadedFlags: boolean[] = [];
