@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const BASE = 'https://www.myinstants.com';
 
+// NOTE: Myinstants API blocks Vercel IPs.
+// This route is kept as a fallback but the actual search now goes through
+// the Convex HTTP action at agile-orca-761.convex.site/myinstants
 export async function GET(req: NextRequest) {
   const search = req.nextUrl.searchParams.get('search') || '';
   const url = search
@@ -19,17 +22,15 @@ export async function GET(req: NextRequest) {
       },
       cache: 'no-store',
     });
-    const raw = await res.text();
-    if (!res.ok) return NextResponse.json({ results: [], _debug: `status:${res.status} body:${raw.slice(0,100)}` }, { status: 200 });
-    let data: any;
-    try { data = JSON.parse(raw); } catch { return NextResponse.json({ results: [], _debug: `not_json:${raw.slice(0,100)}` }); }
+    if (!res.ok) return NextResponse.json({ results: [] }, { status: 200 });
+    const data = await res.json();
     // Normalize: return [{name, url}]
     const results = (data.results ?? []).slice(0, 24).map((item: any) => ({
       name: item.name as string,
       url: item.sound?.startsWith('http') ? item.sound : `${BASE}${item.sound}`,
     }));
-    return NextResponse.json({ results, _debug: `ok_count:${results.length}` });
-  } catch (e: any) {
-    return NextResponse.json({ results: [], _debug: `err:${e?.message}` });
+    return NextResponse.json({ results });
+  } catch {
+    return NextResponse.json({ results: [] });
   }
 }

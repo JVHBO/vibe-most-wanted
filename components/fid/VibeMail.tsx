@@ -337,10 +337,12 @@ export function getMiName(audioId: string): string {
   return rest.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/-/g, ' ') || 'Sound';
 }
 
-// Proxy myinstants audio through our API to bypass CORS restrictions
+const CONVEX_SITE_URL = 'https://agile-orca-761.convex.site';
+
+// Proxy myinstants audio through Convex to bypass CORS restrictions
 export function proxyAudioUrl(url: string): string {
   if (url.includes('myinstants.com')) {
-    return `/api/audio-proxy?url=${encodeURIComponent(url)}`;
+    return `${CONVEX_SITE_URL}/audio-proxy?url=${encodeURIComponent(url)}`;
   }
   return url;
 }
@@ -1004,7 +1006,7 @@ export function VibeMailInboxWithClaim({
   const doFetchMi = async (search: string) => {
     setMiLoading(true);
     try {
-      const res = await fetch(`/api/myinstants?search=${encodeURIComponent(search)}`, { cache: 'no-store' });
+      const res = await fetch(`${CONVEX_SITE_URL}/myinstants?search=${encodeURIComponent(search)}`, { cache: 'no-store' });
       const data = await res.json();
       setMiResults(data.results ?? []);
     } catch { setMiResults([]); }
@@ -2633,7 +2635,7 @@ export function VibeMailInboxWithClaim({
                       const miMatch = finalUrl.match(/myinstants\.com\/instant\/([^/?#]+)/i);
                       if (miMatch) {
                         try {
-                          const r = await fetch(`/api/myinstants?search=${encodeURIComponent(miMatch[1])}`);
+                          const r = await fetch(`${CONVEX_SITE_URL}/myinstants?search=${encodeURIComponent(miMatch[1])}`);
                           const d = await r.json();
                           if (d.results?.[0]?.url) { finalUrl = d.results[0].url; }
                           else { setSoundUrlError('Not found'); setSoundUrlLoading(false); return; }
