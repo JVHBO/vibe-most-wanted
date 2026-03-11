@@ -50,6 +50,11 @@ const MISSION_DATA: Record<string, MissionInfo> = {
     title: 'VIBE Badge',
     description: '2x coins in Wanted Cast!',
   },
+  send_vibemail_daily: {
+    icon: '/images/icons/mission.svg',
+    title: 'Send a VibeMail',
+    description: 'Send a VibeMail to someone today',
+  },
 };
 
 export function getMissionInfo(missionType: string): MissionInfo {

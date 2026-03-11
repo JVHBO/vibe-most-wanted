@@ -70,6 +70,7 @@ const MISSION_REWARDS = {
   tcg_play_3: { type: "coins", amount: 75 },        // Play 3 VibeClash matches
   tcg_win_streak_3: { type: "coins", amount: 150 }, // Win 3 in a row in VibeClash
   first_baccarat_win: { type: "coins", amount: 100 }, // First Baccarat win
+  send_vibemail_daily: { type: "coins", amount: 50 },  // Sent a VibeMail today
 };
 
 /**
@@ -826,6 +827,68 @@ export const markChainModalSeen = mutation({
     if (!profile) throw new Error("Profile not found");
     await ctx.db.patch(profile._id, { chainModalSeen: true });
     return { success: true };
+  },
+});
+
+/**
+ * Mark daily VibeMail send mission as completed
+ * Called after successfully sending any VibeMail (free or paid)
+ */
+export const markVibemailSent = mutation({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }) => {
+    const today = new Date().toISOString().split('T')[0];
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
+
+    const existing = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", today)
+          .eq("missionType", "send_vibemail_daily")
+      )
+      .first();
+
+    if (!existing) {
+      await ctx.db.insert("personalMissions", {
+        playerAddress: normalizedAddress,
+        date: today,
+        missionType: "send_vibemail_daily",
+        completed: true,
+        claimed: false,
+        reward: MISSION_REWARDS.send_vibemail_daily.amount,
+        completedAt: Date.now(),
+      });
+    }
+  },
+});
+
+/**
+ * Log VibeMail send activity to coinTransactions (for transaction history display)
+ * Does NOT change in-game coin balance — purely a record for the UI
+ */
+export const logVibemailActivity = mutation({
+  args: {
+    playerAddress: v.string(),
+    recipientUsername: v.string(),
+    isPaid: v.boolean(),
+  },
+  handler: async (ctx, { playerAddress, recipientUsername, isPaid }) => {
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
+    const balance = profile?.coins ?? 0;
+
+    await logTransaction(ctx, {
+      address: normalizedAddress,
+      type: 'spend',
+      amount: isPaid ? 1000 : 0,
+      source: 'vibemail',
+      description: isPaid
+        ? `VibeMail sent to @${recipientUsername} (1,000 VBMS on-chain)`
+        : `Free VibeMail sent to @${recipientUsername}`,
+      balanceBefore: balance,
+      balanceAfter: balance,
+    });
   },
 });
 

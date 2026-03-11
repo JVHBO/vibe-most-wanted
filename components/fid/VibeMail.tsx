@@ -1091,6 +1091,8 @@ export function VibeMailInboxWithClaim({
   const replyMutation = useMutation(api.cardVotes.replyToMessage);
   const broadcastMutation = useMutation(api.cardVotes.broadcastVibeMail);
   const deleteMessagesMutation = useMutation(api.cardVotes.deleteMessages);
+  const markVibemailSentMutation = useMutation(api.missions.markVibemailSent);
+  const logVibemailActivityMutation = useMutation(api.missions.logVibemailActivity);
 
   // Fetch myinstants sounds (always fresh, no stale-check complexity)
   const doFetchMi = async (search: string) => {
@@ -1607,6 +1609,11 @@ export function VibeMailInboxWithClaim({
         });
       }
       haptics.send();
+      // Log activity + mark daily mission (fire-and-forget, don't block UX)
+      if (myAddress) {
+        markVibemailSentMutation({ playerAddress: myAddress }).catch(() => {});
+        logVibemailActivityMutation({ playerAddress: myAddress, recipientUsername: recipUsername, isPaid: !hasFreemail }).catch(() => {});
+      }
       setSendSuccess({ recipient: recipUsername, timestamp: Date.now() });
       setTimeout(() => setSendSuccess(null), 3000);
       setShowComposer(false);
