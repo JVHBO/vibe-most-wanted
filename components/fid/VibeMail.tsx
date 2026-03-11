@@ -3029,38 +3029,98 @@ export function VibeMailInboxWithClaim({
                         </div>
                       </div>
                     ); })()}
-                    <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb' }}>
-                      {composerMessage ? renderRichMessage(composerMessage) : <span style={{ color: 'rgba(255,255,255,0.3)' }}>(no text)</span>}
-                    </div>
-                    {composerCastUrl && <p className="text-[#9945FF] text-xs mt-2 truncate">Cast: {composerCastUrl}</p>}
-                    {composerMiniappUrl && (
-                      <div className="mt-2 bg-[#0d1f0d] border border-[#22C55E]/50 rounded px-2 py-1.5 flex items-center gap-1.5">
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
-                        <span className="text-[#22C55E] text-xs truncate">{composerMiniappUrl}</span>
-                      </div>
-                    )}
-                    {composerImageId && (
-                      <div className="mt-2">
-                        {composerImageId.startsWith('img:') ? (
-                          composerCustomImagePreview ? (
-                            <img src={composerCustomImagePreview} alt="Custom" className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" />
-                          ) : (
-                            <p className="text-[#FFD700]/70 text-xs">Custom image attached</p>
-                          )
-                        ) : (() => {
-                          const imgData = getImageFile(composerImageId);
-                          return imgData ? (
-                            imgData.isVideo ? (
-                              <video src={imgData.file} className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" autoPlay loop muted playsInline />
-                            ) : (
-                              <img src={imgData.file} alt="Attachment" className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" />
-                            )
-                          ) : (
-                            <p className="text-[#FFD700]/70 text-xs">Image attached</p>
-                          );
-                        })()}
-                      </div>
-                    )}
+                    {/* Body — designed layout if positions set, else flow layout */}
+                    {(() => {
+                      const hasDesign = Object.keys(elementPositions).length > 0 || drawnIds.length > 0;
+                      const pvTextOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
+                      const pvAudioMatch = composerMessage.match(/\/sound=(\S+)/i);
+                      const pvImgSrc = composerImageId
+                        ? (composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''))
+                        : '';
+
+                      if (!hasDesign) return (
+                        <>
+                          <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb' }}>
+                            {composerMessage ? renderRichMessage(composerMessage) : <span style={{ color: 'rgba(255,255,255,0.3)' }}>(no text)</span>}
+                          </div>
+                          {composerCastUrl && <p className="text-[#9945FF] text-xs mt-2 truncate">Cast: {composerCastUrl}</p>}
+                          {composerMiniappUrl && (
+                            <div className="mt-2 bg-[#0d1f0d] border border-[#22C55E]/50 rounded px-2 py-1.5 flex items-center gap-1.5">
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
+                              <span className="text-[#22C55E] text-xs truncate">{composerMiniappUrl}</span>
+                            </div>
+                          )}
+                          {composerImageId && (
+                            <div className="mt-2">
+                              {composerImageId.startsWith('img:') ? (
+                                composerCustomImagePreview ? (
+                                  <img src={composerCustomImagePreview} alt="Custom" className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" />
+                                ) : (
+                                  <p className="text-[#FFD700]/70 text-xs">Custom image attached</p>
+                                )
+                              ) : (() => {
+                                const imgData = getImageFile(composerImageId);
+                                return imgData ? (
+                                  imgData.isVideo ? (
+                                    <video src={imgData.file} className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" autoPlay loop muted playsInline />
+                                  ) : (
+                                    <img src={imgData.file} alt="Attachment" className="max-w-full max-h-48 object-contain border border-[#FFD700]/30" />
+                                  )
+                                ) : (
+                                  <p className="text-[#FFD700]/70 text-xs">Image attached</p>
+                                );
+                              })()}
+                            </div>
+                          )}
+                        </>
+                      );
+
+                      // Designed layout — elements at their custom positions
+                      const allPos = Object.values(elementPositions);
+                      const minH = allPos.length ? Math.max(120, ...allPos.map(p => p.y + p.h + 16)) : 120;
+                      return (
+                        <div style={{ position: 'relative', minHeight: minH }}>
+                          {pvTextOnly && elementPositions['text'] && (() => {
+                            const pos = elementPositions['text'];
+                            return (
+                              <div key="pvtext" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
+                                <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb' }}>{renderRichMessage(composerMessage)}</div>
+                              </div>
+                            );
+                          })()}
+                          {pvAudioMatch && elementPositions['audio'] && (() => {
+                            const pos = elementPositions['audio'];
+                            const aName = pvAudioMatch[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio';
+                            return (
+                              <div key="pvaudio" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
+                                <div className="bg-[#1a1a1a] border border-[#FFD700]/40 px-3 py-2 flex items-center gap-2 h-full">
+                                  <span className="text-[#FFD700] text-base">♪</span>
+                                  <span className="text-white text-xs capitalize truncate">{aName}</span>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                          {pvImgSrc && elementPositions['image'] && (() => {
+                            const pos = elementPositions['image'];
+                            return (
+                              <div key="pvimg" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
+                                <img src={pvImgSrc} alt="Attachment" className="w-full h-full object-contain border border-[#FFD700]/30" />
+                              </div>
+                            );
+                          })()}
+                          {drawnIds.map(id => {
+                            const src = drawingImages[id];
+                            const pos = elementPositions[id];
+                            if (!src || !pos) return null;
+                            return (
+                              <div key={id} style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
+                                <img src={src} alt="" className="w-full h-full" />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                     <div className="mt-3 text-right">
                       <span className="text-[#FFD700] text-sm font-bold">+{hasFreemail ? 0 : 100} VBMS</span>
                     </div>
@@ -3172,15 +3232,15 @@ export function VibeMailInboxWithClaim({
                           onClick={() => setElementPositions(p => { const e = p[id] || pos; return { ...p, [id]: { ...e, w: Math.max(40, e.w * 0.82), h: Math.max(20, e.h * 0.82) } }; })}>−</button>
                         <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Bigger"
                           onClick={() => setElementPositions(p => { const e = p[id] || pos; return { ...p, [id]: { ...e, w: e.w * 1.18, h: e.h * 1.18 } }; })}>+</button>
-                        {isDrawEl && (
-                          <button className="w-6 h-6 bg-red-900 border border-red-700 text-red-400 text-xs hover:bg-red-800 flex items-center justify-center" title="Delete"
-                            onClick={() => {
-                              setElementPositions(p => { const n = { ...p }; delete n[id]; return n; });
+                        <button className="w-6 h-6 bg-red-900 border border-red-700 text-red-400 text-xs hover:bg-red-800 flex items-center justify-center" title="Delete"
+                          onClick={() => {
+                            setElementPositions(p => { const n = { ...p }; delete n[id]; return n; });
+                            if (isDrawEl) {
                               setDrawingImages(p => { const n = { ...p }; delete n[id]; return n; });
                               setDrawnIds(p => p.filter(x => x !== id));
-                              setSelectedEl(null);
-                            }}>✕</button>
-                        )}
+                            }
+                            setSelectedEl(null);
+                          }}>🗑</button>
                       </div>
                     )}
                     {/* Content fills the box */}
@@ -3264,7 +3324,59 @@ export function VibeMailInboxWithClaim({
                       }}
                       disabled={!drawnIds.length}
                       className="px-2 py-1 text-[10px] border border-[#444] text-white/50 hover:border-white/70 disabled:opacity-25 transition-all"
-                    >↩ Undo Draw</button>
+                    >↩ Undo</button>
+                    {/* Group all drawings into one moveable block */}
+                    <button
+                      disabled={drawnIds.length < 2}
+                      onClick={async () => {
+                        if (drawnIds.length < 2) return;
+                        const positions = drawnIds.map(id => elementPositions[id]).filter(Boolean);
+                        if (!positions.length) return;
+                        const minX = Math.min(...positions.map(p => p.x));
+                        const minY = Math.min(...positions.map(p => p.y));
+                        const maxX = Math.max(...positions.map(p => p.x + p.w));
+                        const maxY = Math.max(...positions.map(p => p.y + p.h));
+                        const W = Math.max(1, maxX - minX);
+                        const H = Math.max(1, maxY - minY);
+                        const off = document.createElement('canvas');
+                        off.width = W; off.height = H;
+                        const gctx = off.getContext('2d');
+                        if (!gctx) return;
+                        await Promise.all(drawnIds.map(id => new Promise<void>(resolve => {
+                          const src = drawingImages[id];
+                          const pos = elementPositions[id];
+                          if (!src || !pos) { resolve(); return; }
+                          const img = new Image();
+                          img.onload = () => {
+                            gctx.save();
+                            gctx.translate(pos.x - minX + pos.w / 2, pos.y - minY + pos.h / 2);
+                            gctx.rotate(((pos.r ?? 0) * Math.PI) / 180);
+                            gctx.drawImage(img, -pos.w / 2, -pos.h / 2, pos.w, pos.h);
+                            gctx.restore(); resolve();
+                          };
+                          img.onerror = () => resolve();
+                          img.src = src;
+                        })));
+                        const dataUrl = off.toDataURL('image/png');
+                        const newId = `draw_${drawingIdRef.current++}`;
+                        setElementPositions(p => {
+                          const n = { ...p };
+                          drawnIds.forEach(id => delete n[id]);
+                          n[newId] = { x: minX, y: minY, w: W, h: H, r: 0 };
+                          return n;
+                        });
+                        setDrawingImages(p => {
+                          const n: Record<string, string> = {};
+                          Object.entries(p).forEach(([k, v]) => { if (!drawnIds.includes(k)) n[k] = v; });
+                          n[newId] = dataUrl;
+                          return n;
+                        });
+                        setDrawnIds([newId]);
+                        setSelectedEl(newId);
+                      }}
+                      className="px-2 py-1 text-[10px] border border-[#555] text-white/40 hover:border-[#FFD700] hover:text-[#FFD700] disabled:opacity-20 transition-all"
+                      title="Merge all drawing strokes into one moveable block"
+                    >⬜ Group</button>
                     {/* Reset layout */}
                     <button
                       onClick={() => {
@@ -3430,11 +3542,12 @@ export function VibeMailInboxWithClaim({
                           if (!area) return;
                           setIsSavingDesign(true);
                           try {
-                            // Composite all drawing elements onto a single canvas
+                            // Composite all drawing elements onto a single canvas (transparent background)
                             const off = document.createElement('canvas');
                             off.width = area.offsetWidth; off.height = area.offsetHeight;
                             const ctx = off.getContext('2d');
                             if (!ctx) throw new Error('no ctx');
+                            // NO fillRect — keeps transparent background
                             await Promise.all(drawnIds.map(id => new Promise<void>(resolve => {
                               const src = drawingImages[id];
                               const pos = elementPositions[id];
@@ -3453,15 +3566,26 @@ export function VibeMailInboxWithClaim({
                             })));
                             const blob = await new Promise<Blob | null>(res => off.toBlob(res, 'image/png'));
                             if (!blob) throw new Error('export failed');
-                            const uploadUrl = await generateUploadUrl();
-                            const res = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: blob });
-                            if (!res.ok) throw new Error('upload failed');
-                            const { storageId } = await res.json();
-                            setComposerImageId(`img:${storageId}`);
-                            setComposerCustomImagePreview(URL.createObjectURL(blob));
+                            // Save locally first — instant preview
+                            const localUrl = URL.createObjectURL(blob);
+                            setComposerCustomImagePreview(localUrl);
+                            setComposerImageId('img:local_drawing');
                             setShowDesign(false);
-                          } catch (e) { console.error('Design save error:', e); }
-                          finally { setIsSavingDesign(false); }
+                            setIsSavingDesign(false);
+                            // Upload to server in background
+                            (async () => {
+                              try {
+                                const uploadUrl = await generateUploadUrl();
+                                const res = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: blob });
+                                if (!res.ok) throw new Error('upload failed');
+                                const { storageId } = await res.json();
+                                setComposerImageId(`img:${storageId}`);
+                              } catch (e) { console.error('Drawing upload error:', e); }
+                            })();
+                          } catch (e) {
+                            console.error('Design save error:', e);
+                            setIsSavingDesign(false);
+                          }
                         }}
                         className="w-full py-2.5 bg-[#22C55E] border-2 border-[#22C55E] text-black font-black text-xs uppercase tracking-wide hover:bg-[#16A34A] disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
                       >
