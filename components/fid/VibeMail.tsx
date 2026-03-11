@@ -978,6 +978,7 @@ export function VibeMailInboxWithClaim({
   const designInitRef = useRef(false);
   const drawingIdRef = useRef(0);
   const [isSavingDesign, setIsSavingDesign] = useState(false);
+  const [hiddenElements, setHiddenElements] = useState<Set<string>>(new Set());
 
   // Auto-advance carousel every 3s when preview is open and has multiple quests
   useEffect(() => {
@@ -989,7 +990,7 @@ export function VibeMailInboxWithClaim({
 
   // Init design editor: default element positions + canvas size
   useEffect(() => {
-    if (!showDesign) { designInitRef.current = false; return; }
+    if (!showDesign) { designInitRef.current = false; setHiddenElements(new Set()); return; }
     if (designInitRef.current) return;
     designInitRef.current = true;
     requestAnimationFrame(() => {
@@ -3266,6 +3267,8 @@ export function VibeMailInboxWithClaim({
                             if (isDrawEl) {
                               setDrawingImages(p => { const n = { ...p }; delete n[id]; return n; });
                               setDrawnIds(p => p.filter(x => x !== id));
+                            } else {
+                              setHiddenElements(p => new Set([...p, id]));
                             }
                             setSelectedEl(null);
                           }}>🗑</button>
@@ -3412,6 +3415,7 @@ export function VibeMailInboxWithClaim({
                         setDrawingImages({});
                         setDrawnIds([]);
                         setSelectedEl(null);
+                        setHiddenElements(new Set());
                         designInitRef.current = false;
                         // re-trigger init
                         requestAnimationFrame(() => {
@@ -3532,10 +3536,10 @@ export function VibeMailInboxWithClaim({
                     {/* Draggable elements — absolutely positioned */}
                     <div className="absolute inset-0 z-10" style={{ pointerEvents: editTool === 'select' ? 'auto' : 'none' }}
                       onClick={e => { if (e.target === e.currentTarget) setSelectedEl(null); }}>
-                      {textOnly && renderEl('text', '#FFD700', (pos) =>
+                      {textOnly && !hiddenElements.has('text') && renderEl('text', '#FFD700', (pos) =>
                         <div className="w-full h-full bg-[#111] border border-[#333] p-2 text-white/80 leading-relaxed overflow-hidden" style={{ fontSize: Math.max(8, Math.min(15, pos.h * 0.2)) }}>{textOnly}</div>
                       )}
-                      {audioMatch && renderEl('audio', '#F97316',
+                      {audioMatch && !hiddenElements.has('audio') && renderEl('audio', '#F97316',
                         <div className="w-full h-full flex items-center gap-2.5 px-3" style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: '3px solid #F97316' }}>
                           {/* Play button */}
                           <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: '#F97316', boxShadow: '0 0 10px rgba(249,115,22,0.45)' }}>
@@ -3555,7 +3559,7 @@ export function VibeMailInboxWithClaim({
                           <span className="text-[#F97316]/20 text-base flex-shrink-0">♪</span>
                         </div>
                       )}
-                      {imgSrc && renderEl('image', '#22C55E',
+                      {imgSrc && !hiddenElements.has('image') && renderEl('image', '#22C55E',
                         <img src={imgSrc} alt="" className="w-full h-full object-cover" draggable={false} style={{ pointerEvents: 'none', userSelect: 'none' }} />
                       )}
                       {/* Drawing elements */}
