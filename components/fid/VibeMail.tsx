@@ -1499,8 +1499,15 @@ export function VibeMailInboxWithClaim({
   };
 
   // Handle textarea change with slash command detection
+  // Count only non-command lines toward the char limit
+  const countVisibleChars = (text: string) =>
+    text.split('\n').filter(l => !l.match(/^\/(img|sound|gif|video|url)=/i)).join('\n').length;
+
   const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value.slice(0, 200);
+    const raw = e.target.value;
+    // Only block if visible (non-command) text exceeds 200
+    if (countVisibleChars(raw) > 200) return;
+    const val = raw;
     setComposerMessage(val);
     const cursorPos = e.target.selectionStart ?? val.length;
     const textBeforeCursor = val.slice(0, cursorPos);
@@ -2769,7 +2776,7 @@ export function VibeMailInboxWithClaim({
               <div className="flex-1" />
 
               {/* Character count */}
-              <span className="text-white/30 text-[10px] mr-1">{composerMessage.length}/200</span>
+              <span className="text-white/30 text-[10px] mr-1">{countVisibleChars(composerMessage)}/200</span>
             </div>
 
 
@@ -4093,14 +4100,18 @@ export function VibeMailComposer({ message, setMessage, audioId, setAudioId, ima
       {/* Message Input */}
       <textarea
         value={message}
-        onChange={(e) => setMessage(e.target.value.slice(0, 200))}
+        onChange={(e) => {
+          const raw = e.target.value;
+          const visible = raw.split('\n').filter((l: string) => !l.match(/^\/(img|sound|gif|video|url)=/i)).join('\n').length;
+          if (visible <= 200) setMessage(raw);
+        }}
         placeholder={t.vibeMailPlaceholder}
         className="w-full h-28 min-h-[112px] bg-[#111] border-2 border-[#444] p-2 text-white text-sm placeholder:text-white/40 resize-none focus:border-[#FFD700] focus:outline-none"
                 style={{ colorScheme: 'dark', WebkitTextFillColor: 'white' }}
       />
       <div className="flex justify-between items-center">
         <p className="text-vintage-gold/60 text-xs">{t.vibeImageTip}</p>
-        <p className="text-white/40 text-xs">{message.length}/200</p>
+        <p className="text-white/40 text-xs">{message.split('\n').filter((l: string) => !l.match(/^\/(img|sound|gif|video|url)=/i)).join('\n').length}/200</p>
       </div>
 
       {/* Voice Recorder */}
