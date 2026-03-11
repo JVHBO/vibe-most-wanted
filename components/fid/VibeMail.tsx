@@ -3297,7 +3297,7 @@ export function VibeMailInboxWithClaim({
                       cursor: 'grab',
                       outline: isSel ? `2px solid ${accentColor}` : (groupDraw && isDrawEl ? '1px dashed rgba(167,139,250,0.4)' : 'none'),
                       boxSizing: 'border-box', overflow: 'visible',
-                      zIndex: isSel ? 9999 : ((pos.z ?? 0) + 1) * 10,
+                      zIndex: ((pos.z ?? 0) + 1) * 10,
                     }}
                     onPointerDown={(e) => {
                       if ((e.target as HTMLElement).closest('[data-action]')) return;
@@ -3356,7 +3356,8 @@ export function VibeMailInboxWithClaim({
                     {isSel && (
                       <div
                         data-action="true"
-                        className="absolute -top-7 left-0 flex items-center gap-0.5 z-20"
+                        className="absolute -top-7 left-0 flex items-center gap-0.5"
+                        style={{ zIndex: 99999 }}
                         onClick={e => e.stopPropagation()}
                       >
                         <span className="px-1 py-0.5 text-[8px] font-black text-black" style={{ background: accentColor }}>
@@ -3394,8 +3395,8 @@ export function VibeMailInboxWithClaim({
                     {isSel && (
                       <div
                         data-resize="true"
-                        className="absolute bottom-0 right-0 w-6 h-6 flex items-center justify-center text-[10px] font-black z-20"
-                        style={{ background: accentColor, color: '#000', cursor: 'se-resize', touchAction: 'none' }}
+                        className="absolute bottom-0 right-0 w-6 h-6 flex items-center justify-center text-[10px] font-black"
+                        style={{ background: accentColor, color: '#000', cursor: 'se-resize', touchAction: 'none', zIndex: 99999 }}
                         onPointerDown={(e) => {
                           e.stopPropagation();
                           e.currentTarget.setPointerCapture(e.pointerId);
