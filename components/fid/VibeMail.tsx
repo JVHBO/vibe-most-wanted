@@ -941,15 +941,17 @@ export function VibeMailInboxWithClaim({
   const [composerFollowTarget, setComposerFollowTarget] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const [previewQuestIdx, setPreviewQuestIdx] = useState(0);
-  // Design editor state (only what needs to trigger re-renders)
+  // Design editor state
   const [showDesign, setShowDesign] = useState(false);
-  const [editTool, setEditTool] = useState<'select' | 'draw' | 'erase'>('select');
+  const [editTool, setEditTool] = useState<'select' | 'draw'>('select');
   const [drawColor, setDrawColor] = useState('#FFD700');
   const [drawSize, setDrawSize] = useState(4);
-  const [drawStrokes, setDrawStrokes] = useState<Array<{points: {x:number,y:number}[], color: string, size: number, erase?: boolean}>>([]);
-  const [undoStack, setUndoStack] = useState<Array<Array<{points: {x:number,y:number}[], color: string, size: number, erase?: boolean}>>>([]);
-  const [elementPositions, setElementPositions] = useState<Record<string, {x:number,y:number,w:number,h:number}>>({});
+  // elementPositions: x/y/w/h in px + optional rotation degrees
+  const [elementPositions, setElementPositions] = useState<Record<string, {x:number,y:number,w:number,h:number,r?:number}>>({});
   const [selectedEl, setSelectedEl] = useState<string | null>(null);
+  // Drawing elements — each completed stroke becomes an image element
+  const [drawingImages, setDrawingImages] = useState<Record<string, string>>({}); // id → dataUrl
+  const [drawnIds, setDrawnIds] = useState<string[]>([]); // ordered for undo
   const designAreaRef = useRef<HTMLDivElement | null>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement | null>(null);
   // Refs for hot-path — zero re-renders during drag / resize / draw
@@ -958,6 +960,7 @@ export function VibeMailInboxWithClaim({
   const isDrawingRef = useRef(false);
   const currentStrokeRef = useRef<{x:number,y:number}[]>([]);
   const designInitRef = useRef(false);
+  const drawingIdRef = useRef(0);
   const [isSavingDesign, setIsSavingDesign] = useState(false);
 
   // Auto-advance carousel every 3s when preview is open and has multiple quests
@@ -3082,10 +3085,27 @@ export function VibeMailInboxWithClaim({
 
             {/* Design Editor - full-screen canvas */}
             {showDesign && (() => {
-              // renderEl: function (NOT component) — avoids React remount on every state change
+              const textOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
+              const audioMatch = composerMessage.match(/\/sound=(\S+)/i);
+              const audioName = audioMatch ? audioMatch[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio' : 'Audio';
+              const imgSrc = composerImageId
+                ? (composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''))
+                : '';
+
+              // Default position for each element (fallback when pos not yet set by useEffect)
+              const getDefaultPos = (id: string) => {
+                const area = designAreaRef.current;
+                const W = area ? Math.max(60, area.offsetWidth - 24) : 296;
+                const els = ['text', 'audio', 'image'].filter(e => (e === 'text' && textOnly) || (e === 'audio' && audioMatch) || (e === 'image' && imgSrc));
+                const idx = els.indexOf(id);
+                const y = 40 + Math.max(0, idx) * 72;
+                return { x: 12, y, w: W, h: id === 'image' ? 150 : 56, r: 0 };
+              };
+
+              // renderEl: plain function returning JSX (NOT a React component — avoids remount on state change)
               const renderEl = (id: string, accentColor: string, content: React.ReactNode) => {
-                const pos = elementPositions[id];
-                if (!pos) return null;
+                const pos = elementPositions[id] || getDefaultPos(id);
+                const isDrawEl = id.startsWith('draw_');
                 const isSel = selectedEl === id;
                 return (
                   <div
@@ -3095,13 +3115,15 @@ export function VibeMailInboxWithClaim({
                       position: 'absolute',
                       left: pos.x, top: pos.y,
                       width: pos.w, height: pos.h,
+                      transform: `rotate(${pos.r ?? 0}deg)`,
+                      transformOrigin: 'center center',
                       touchAction: 'none', userSelect: 'none',
                       cursor: 'grab', zIndex: isSel ? 15 : 10,
-                      outline: isSel ? `2px solid ${accentColor}` : '1px solid rgba(255,255,255,0.08)',
-                      boxSizing: 'border-box', overflow: 'hidden',
+                      outline: isSel ? `2px solid ${accentColor}` : '1px solid rgba(255,255,255,0.06)',
+                      boxSizing: 'border-box', overflow: 'visible',
                     }}
                     onPointerDown={(e) => {
-                      if ((e.target as HTMLElement).closest('[data-resize]')) return;
+                      if ((e.target as HTMLElement).closest('[data-action]')) return;
                       e.stopPropagation();
                       setSelectedEl(id);
                       dragRef.current = { id, origX: pos.x, origY: pos.y, startMX: e.clientX, startMY: e.clientY };
@@ -3125,17 +3147,40 @@ export function VibeMailInboxWithClaim({
                       if (el) {
                         setElementPositions(p => ({
                           ...p,
-                          [id]: { x: parseFloat(el.style.left) || drag.origX, y: parseFloat(el.style.top) || drag.origY, w: (p[id] || pos).w, h: (p[id] || pos).h }
+                          [id]: { ...(p[id] || pos), x: parseFloat(el.style.left) || drag.origX, y: parseFloat(el.style.top) || drag.origY }
                         }));
                       }
                       dragRef.current = null;
                       e.currentTarget.releasePointerCapture(e.pointerId);
                     }}
                   >
-                    {/* Label when selected */}
+                    {/* Action bar when selected */}
                     {isSel && (
-                      <div className="absolute -top-5 left-0 px-1.5 py-0.5 text-[8px] font-black text-black z-20 pointer-events-none" style={{ background: accentColor }}>
-                        {id.toUpperCase()} — drag ↕↔ · resize ↘
+                      <div
+                        data-action="true"
+                        className="absolute -top-7 left-0 flex items-center gap-0.5 z-20"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <span className="px-1 py-0.5 text-[8px] font-black text-black" style={{ background: accentColor }}>
+                          {isDrawEl ? 'DRAW' : id.toUpperCase()}
+                        </span>
+                        <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Rotate CCW"
+                          onClick={() => setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), r: ((p[id]?.r ?? 0) - 15 + 360) % 360 } }))}>↺</button>
+                        <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Rotate CW"
+                          onClick={() => setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), r: ((p[id]?.r ?? 0) + 15) % 360 } }))}>↻</button>
+                        <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Smaller"
+                          onClick={() => setElementPositions(p => { const e = p[id] || pos; return { ...p, [id]: { ...e, w: Math.max(40, e.w * 0.82), h: Math.max(20, e.h * 0.82) } }; })}>−</button>
+                        <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Bigger"
+                          onClick={() => setElementPositions(p => { const e = p[id] || pos; return { ...p, [id]: { ...e, w: e.w * 1.18, h: e.h * 1.18 } }; })}>+</button>
+                        {isDrawEl && (
+                          <button className="w-6 h-6 bg-red-900 border border-red-700 text-red-400 text-xs hover:bg-red-800 flex items-center justify-center" title="Delete"
+                            onClick={() => {
+                              setElementPositions(p => { const n = { ...p }; delete n[id]; return n; });
+                              setDrawingImages(p => { const n = { ...p }; delete n[id]; return n; });
+                              setDrawnIds(p => p.filter(x => x !== id));
+                              setSelectedEl(null);
+                            }}>✕</button>
+                        )}
                       </div>
                     )}
                     {/* Content fills the box */}
@@ -3169,7 +3214,7 @@ export function VibeMailInboxWithClaim({
                           if (el) {
                             setElementPositions(p => ({
                               ...p,
-                              [id]: { x: (p[id] || pos).x, y: (p[id] || pos).y, w: parseFloat(el.style.width) || pos.w, h: parseFloat(el.style.height) || pos.h }
+                              [id]: { ...(p[id] || pos), w: parseFloat(el.style.width) || pos.w, h: parseFloat(el.style.height) || pos.h }
                             }));
                           }
                           resizeRef.current = null;
@@ -3181,73 +3226,69 @@ export function VibeMailInboxWithClaim({
                 );
               };
 
-              const textOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
-              const audioMatch = composerMessage.match(/\/sound=(\S+)/i);
-              const audioName = audioMatch ? audioMatch[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio' : 'Audio';
-              const imgSrc = composerImageId
-                ? (composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''))
-                : '';
-
               return (
                 <div className="fixed inset-0 z-[600] bg-[#0a0a0a] flex flex-col" style={{ colorScheme: 'dark', color: 'white' }}>
                   {/* Toolbar */}
                   <div className="flex items-center gap-1.5 px-2 py-2 border-b-2 border-[#8B5CF6] bg-[#111] flex-wrap">
                     <span className="text-[#8B5CF6] font-black text-[10px] uppercase tracking-wider">Edit</span>
                     <div className="flex gap-1">
-                      {(['select', 'draw', 'erase'] as const).map(tool => (
+                      {(['select', 'draw'] as const).map(tool => (
                         <button
                           key={tool}
                           onClick={() => setEditTool(tool)}
                           className={`px-2 py-1 text-[10px] font-bold border-2 uppercase transition-all ${editTool === tool ? 'border-[#FFD700] bg-[#FFD700] text-black' : 'border-[#444] text-white/50 hover:border-white/50'}`}
                         >
-                          {tool === 'select' ? '↖ Move' : tool === 'draw' ? '✏ Draw' : '⌫ Erase'}
+                          {tool === 'select' ? '↖ Move' : '✏ Draw'}
                         </button>
                       ))}
                     </div>
-                    {editTool !== 'select' && (
+                    {editTool === 'draw' && (
                       <div className="flex items-center gap-1.5">
                         <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)}
                           className="w-6 h-6 border border-[#444] p-0 bg-transparent cursor-pointer" />
                         <input type="range" min="1" max="24" value={drawSize} onChange={e => setDrawSize(parseInt(e.target.value))}
-                          className="w-16 accent-[#FFD700]" style={{ height: 4 }} />
+                          className="w-14 accent-[#FFD700]" style={{ height: 4 }} />
                         <span className="text-white/30 text-[9px]">{drawSize}px</span>
                       </div>
                     )}
                     <div className="flex-1" />
+                    {/* Undo last drawn element */}
                     <button
                       onClick={() => {
-                        if (!undoStack.length) return;
-                        const prev = undoStack[undoStack.length - 1];
-                        setDrawStrokes(prev);
-                        setUndoStack(u => u.slice(0, -1));
-                        const canvas = drawCanvasRef.current;
-                        const ctx = canvas?.getContext('2d');
-                        if (!ctx || !canvas) return;
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        prev.forEach(s => {
-                          if (s.points.length < 2) return;
-                          ctx.beginPath();
-                          if (s.erase) { ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; ctx.lineWidth = s.size * 5; }
-                          else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = s.color; ctx.lineWidth = s.size; }
-                          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-                          ctx.moveTo(s.points[0].x, s.points[0].y);
-                          s.points.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
-                          ctx.stroke();
+                        if (!drawnIds.length) return;
+                        const lastId = drawnIds[drawnIds.length - 1];
+                        setDrawnIds(p => p.slice(0, -1));
+                        setDrawingImages(p => { const n = { ...p }; delete n[lastId]; return n; });
+                        setElementPositions(p => { const n = { ...p }; delete n[lastId]; return n; });
+                        if (selectedEl === lastId) setSelectedEl(null);
+                      }}
+                      disabled={!drawnIds.length}
+                      className="px-2 py-1 text-[10px] border border-[#444] text-white/50 hover:border-white/70 disabled:opacity-25 transition-all"
+                    >↩ Undo Draw</button>
+                    {/* Reset layout */}
+                    <button
+                      onClick={() => {
+                        setElementPositions({});
+                        setDrawingImages({});
+                        setDrawnIds([]);
+                        setSelectedEl(null);
+                        designInitRef.current = false;
+                        // re-trigger init
+                        requestAnimationFrame(() => {
+                          const area = designAreaRef.current;
+                          const W = area ? Math.max(60, area.offsetWidth - 24) : 296;
+                          setElementPositions(() => {
+                            const next: Record<string, {x:number,y:number,w:number,h:number,r?:number}> = {};
+                            let y = 8;
+                            if (textOnly) { next['text'] = { x: 12, y, w: W, h: 64 }; y += 76; }
+                            if (audioMatch) { next['audio'] = { x: 12, y, w: W, h: 56 }; y += 68; }
+                            if (imgSrc) { next['image'] = { x: 12, y, w: W, h: 150 }; }
+                            return next;
+                          });
                         });
                       }}
-                      disabled={!undoStack.length}
-                      className="px-2 py-1 text-[10px] border border-[#444] text-white/50 hover:border-white/70 disabled:opacity-25 transition-all"
-                    >↩ Undo</button>
-                    <button
-                      onClick={() => {
-                        setUndoStack(p => [...p, drawStrokes]);
-                        setDrawStrokes([]);
-                        const canvas = drawCanvasRef.current;
-                        if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
-                      }}
-                      disabled={!drawStrokes.length}
-                      className="px-2 py-1 text-[10px] border border-red-900 text-red-500 hover:border-red-500 disabled:opacity-25 transition-all"
-                    >🗑</button>
+                      className="px-2 py-1 text-[10px] border border-[#555] text-white/40 hover:border-white/60 hover:text-white/70 transition-all"
+                    >↺ Reset</button>
                   </div>
 
                   {/* Design canvas + elements */}
@@ -3262,12 +3303,11 @@ export function VibeMailInboxWithClaim({
                       ref={el => { drawCanvasRef.current = el; }}
                       className="absolute inset-0 z-30"
                       style={{
-                        pointerEvents: editTool !== 'select' ? 'auto' : 'none',
+                        pointerEvents: editTool === 'draw' ? 'auto' : 'none',
                         touchAction: 'none',
-                        cursor: editTool === 'erase' ? 'cell' : editTool === 'draw' ? 'crosshair' : 'default',
+                        cursor: 'crosshair',
                       }}
                       onPointerDown={(e) => {
-                        if (editTool === 'select') return;
                         e.currentTarget.setPointerCapture(e.pointerId);
                         const canvas = e.currentTarget;
                         const rect = canvas.getBoundingClientRect();
@@ -3275,12 +3315,13 @@ export function VibeMailInboxWithClaim({
                         const x = (e.clientX - rect.left) * scaleX, y = (e.clientY - rect.top) * scaleY;
                         currentStrokeRef.current = [{ x, y }];
                         isDrawingRef.current = true;
-                        // Draw single dot
                         const ctx = canvas.getContext('2d');
                         if (ctx) {
+                          ctx.globalCompositeOperation = 'source-over';
+                          ctx.fillStyle = drawColor;
                           ctx.beginPath();
-                          if (editTool === 'erase') { ctx.globalCompositeOperation = 'destination-out'; ctx.arc(x, y, drawSize * 2.5, 0, Math.PI * 2); ctx.fill(); }
-                          else { ctx.globalCompositeOperation = 'source-over'; ctx.fillStyle = drawColor; ctx.arc(x, y, drawSize / 2, 0, Math.PI * 2); ctx.fill(); }
+                          ctx.arc(x, y, drawSize / 2, 0, Math.PI * 2);
+                          ctx.fill();
                         }
                       }}
                       onPointerMove={(e) => {
@@ -3294,8 +3335,9 @@ export function VibeMailInboxWithClaim({
                         const pts = currentStrokeRef.current;
                         if (pts.length > 0) {
                           ctx.beginPath();
-                          if (editTool === 'erase') { ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; ctx.lineWidth = drawSize * 5; }
-                          else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = drawColor; ctx.lineWidth = drawSize; }
+                          ctx.globalCompositeOperation = 'source-over';
+                          ctx.strokeStyle = drawColor;
+                          ctx.lineWidth = drawSize;
                           ctx.lineCap = 'round'; ctx.lineJoin = 'round';
                           ctx.moveTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
                           ctx.lineTo(x, y);
@@ -3306,10 +3348,29 @@ export function VibeMailInboxWithClaim({
                       onPointerUp={() => {
                         if (!isDrawingRef.current) return;
                         isDrawingRef.current = false;
+                        const canvas = drawCanvasRef.current;
                         const pts = currentStrokeRef.current;
-                        if (pts.length > 0) {
-                          setUndoStack(p => [...p, drawStrokes]);
-                          setDrawStrokes(p => [...p, { points: pts, color: drawColor, size: drawSize, erase: editTool === 'erase' }]);
+                        if (!canvas || pts.length === 0) { currentStrokeRef.current = []; return; }
+                        // Compute bounding box
+                        const margin = Math.max(drawSize * 2, 6);
+                        const minCX = Math.max(0, Math.min(...pts.map(p => p.x)) - margin);
+                        const minCY = Math.max(0, Math.min(...pts.map(p => p.y)) - margin);
+                        const maxCX = Math.min(canvas.width, Math.max(...pts.map(p => p.x)) + margin);
+                        const maxCY = Math.min(canvas.height, Math.max(...pts.map(p => p.y)) + margin);
+                        const cW = maxCX - minCX, cH = maxCY - minCY;
+                        if (cW > 0 && cH > 0) {
+                          const off = document.createElement('canvas');
+                          off.width = cW; off.height = cH;
+                          off.getContext('2d')?.drawImage(canvas, minCX, minCY, cW, cH, 0, 0, cW, cH);
+                          const dataUrl = off.toDataURL('image/png');
+                          // Convert canvas coords to screen element coords
+                          const rect = canvas.getBoundingClientRect();
+                          const sX = rect.width / canvas.width, sY = rect.height / canvas.height;
+                          const id = `draw_${drawingIdRef.current++}`;
+                          setDrawingImages(p => ({ ...p, [id]: dataUrl }));
+                          setElementPositions(p => ({ ...p, [id]: { x: minCX * sX, y: minCY * sY, w: cW * sX, h: cH * sY } }));
+                          setDrawnIds(p => [...p, id]);
+                          canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
                         }
                         currentStrokeRef.current = [];
                       }}
@@ -3329,7 +3390,8 @@ export function VibeMailInboxWithClaim({
                     </div>
 
                     {/* Draggable elements — absolutely positioned */}
-                    <div className="absolute inset-0 z-10" style={{ pointerEvents: editTool === 'select' ? 'auto' : 'none', marginTop: 32 }}>
+                    <div className="absolute inset-0 z-10" style={{ pointerEvents: editTool === 'select' ? 'auto' : 'none' }}
+                      onClick={e => { if (e.target === e.currentTarget) setSelectedEl(null); }}>
                       {textOnly && renderEl('text', '#FFD700',
                         <div className="w-full h-full bg-[#111] border border-[#333] p-2 text-xs text-white/80 leading-relaxed overflow-hidden">{textOnly}</div>
                       )}
@@ -3345,6 +3407,10 @@ export function VibeMailInboxWithClaim({
                       {imgSrc && renderEl('image', '#22C55E',
                         <img src={imgSrc} alt="" className="w-full h-full object-cover" />
                       )}
+                      {/* Drawing elements */}
+                      {drawnIds.map(id => drawingImages[id] ? renderEl(id, '#A78BFA',
+                        <img src={drawingImages[id]} alt="" className="w-full h-full object-contain pointer-events-none" style={{ imageRendering: 'pixelated' }} />
+                      ) : null)}
                     </div>
 
                     {/* Locked footer */}
@@ -3355,16 +3421,37 @@ export function VibeMailInboxWithClaim({
 
                   {/* Footer buttons */}
                   <div className="p-2.5 border-t-2 border-[#333] flex flex-col gap-2">
-                    {/* Save drawing as image attachment */}
-                    {drawStrokes.length > 0 && (
+                    {/* Save all drawings composited as single image attachment */}
+                    {drawnIds.length > 0 && (
                       <button
                         disabled={isSavingDesign}
                         onClick={async () => {
-                          const canvas = drawCanvasRef.current;
-                          if (!canvas) return;
+                          const area = designAreaRef.current;
+                          if (!area) return;
                           setIsSavingDesign(true);
                           try {
-                            const blob = await new Promise<Blob | null>(res => canvas.toBlob(res, 'image/png'));
+                            // Composite all drawing elements onto a single canvas
+                            const off = document.createElement('canvas');
+                            off.width = area.offsetWidth; off.height = area.offsetHeight;
+                            const ctx = off.getContext('2d');
+                            if (!ctx) throw new Error('no ctx');
+                            await Promise.all(drawnIds.map(id => new Promise<void>(resolve => {
+                              const src = drawingImages[id];
+                              const pos = elementPositions[id];
+                              if (!src || !pos) { resolve(); return; }
+                              const img = new Image();
+                              img.onload = () => {
+                                ctx.save();
+                                ctx.translate(pos.x + pos.w / 2, pos.y + pos.h / 2);
+                                ctx.rotate(((pos.r ?? 0) * Math.PI) / 180);
+                                ctx.drawImage(img, -pos.w / 2, -pos.h / 2, pos.w, pos.h);
+                                ctx.restore();
+                                resolve();
+                              };
+                              img.onerror = () => resolve();
+                              img.src = src;
+                            })));
+                            const blob = await new Promise<Blob | null>(res => off.toBlob(res, 'image/png'));
                             if (!blob) throw new Error('export failed');
                             const uploadUrl = await generateUploadUrl();
                             const res = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: blob });
