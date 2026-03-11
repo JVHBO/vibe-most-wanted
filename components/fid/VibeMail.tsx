@@ -3135,24 +3135,44 @@ export function VibeMailInboxWithClaim({
                           })()}
                           {pvAudioMatch && elementPositions['audio'] && (() => {
                             const pos = elementPositions['audio'];
-                            const aName = pvAudioMatch[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio';
+                            const rawUrl = pvAudioMatch[1];
+                            const audioUrl = proxyAudioUrl(rawUrl);
+                            const volMatch = composerMessage.match(/\/sound=\S+\s+volume=([\d.]+)/i);
+                            const vol = volMatch ? Math.min(1, Math.max(0, parseFloat(volMatch[1]))) : 0.2;
+                            const aName = rawUrl.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio';
+                            const pid = `preview:${audioUrl}`;
+                            const isPlaying = playingAudio === pid;
                             return (
                               <div key="pvaudio" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
-                                <div className="w-full h-full flex items-center gap-2.5 px-3" style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: '3px solid #F97316' }}>
-                                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background: '#F97316', boxShadow: '0 0 10px rgba(249,115,22,0.45)' }}>
-                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <button
+                                  className="w-full h-full flex items-center gap-2.5 px-3 active:opacity-80 transition-opacity"
+                                  style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: `3px solid ${isPlaying ? '#ff6b00' : '#F97316'}` }}
+                                  onClick={() => {
+                                    if (isPlaying) { audioRef.current?.pause(); setPlayingAudio(null); }
+                                    else if (audioRef.current) {
+                                      audioRef.current.src = audioUrl; audioRef.current.volume = vol;
+                                      audioRef.current.play().catch(() => setPlayingAudio(null));
+                                      setPlayingAudio(pid);
+                                    }
+                                  }}
+                                >
+                                  <div className="w-8 h-8 flex items-center justify-center flex-shrink-0 transition-all" style={{ background: '#F97316', boxShadow: isPlaying ? '0 0 16px rgba(249,115,22,0.7)' : '0 0 10px rgba(249,115,22,0.45)' }}>
+                                    {isPlaying
+                                      ? <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                      : <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                    }
                                   </div>
                                   <div className="flex items-center gap-px flex-shrink-0">
                                     {[3,6,4,8,5,9,4,7,3,6,8,5].map((h, i) => (
-                                      <div key={i} style={{ width: 2, height: h * 2.2, background: i < 5 ? '#F97316' : 'rgba(249,115,22,0.3)', borderRadius: 1 }} />
+                                      <div key={i} style={{ width: 2, height: h * 2.2, background: isPlaying ? (i % 2 === 0 ? '#F97316' : 'rgba(249,115,22,0.5)') : (i < 5 ? '#F97316' : 'rgba(249,115,22,0.25)'), borderRadius: 1 }} />
                                     ))}
                                   </div>
-                                  <div className="flex-1 min-w-0">
+                                  <div className="flex-1 min-w-0 text-left">
                                     <p className="text-white font-bold text-[11px] capitalize truncate leading-tight">{aName}</p>
-                                    <p className="text-[#F97316]/50 text-[8px] uppercase tracking-widest">Sound</p>
+                                    <p className="text-[#F97316]/50 text-[8px] uppercase tracking-widest">{isPlaying ? 'Playing…' : 'Sound'}</p>
                                   </div>
-                                  <span className="text-[#F97316]/20 text-base flex-shrink-0">♪</span>
-                                </div>
+                                  <span className="text-[#F97316]/15 text-base flex-shrink-0">♪</span>
+                                </button>
                               </div>
                             );
                           })()}
@@ -3162,8 +3182,8 @@ export function VibeMailInboxWithClaim({
                             return (
                               <div key="pvimg" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box' }}>
                                 {isVid
-                                  ? <video src={pvImgSrc} className="w-full h-full object-contain" autoPlay loop muted playsInline />
-                                  : <img src={pvImgSrc} alt="Attachment" className="w-full h-full object-contain border border-[#FFD700]/30" />}
+                                  ? <video src={pvImgSrc} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+                                  : <img src={pvImgSrc} alt="Attachment" className="w-full h-full object-cover" />}
                               </div>
                             );
                           })()}
@@ -3240,7 +3260,7 @@ export function VibeMailInboxWithClaim({
                       transformOrigin: 'center center',
                       touchAction: 'none', userSelect: 'none',
                       cursor: 'grab',
-                      outline: isSel ? `2px solid ${accentColor}` : (groupDraw && isDrawEl ? '1px dashed rgba(167,139,250,0.5)' : '1px solid rgba(255,255,255,0.06)'),
+                      outline: isSel ? `2px solid ${accentColor}` : (groupDraw && isDrawEl ? '1px dashed rgba(167,139,250,0.4)' : 'none'),
                       boxSizing: 'border-box', overflow: 'visible',
                       zIndex: isSel ? 9999 : ((pos.z ?? 0) + 1) * 10,
                     }}
@@ -3446,11 +3466,12 @@ export function VibeMailInboxWithClaim({
                     >↺ Reset</button>
                   </div>
 
-                  {/* Design canvas + elements */}
+                  {/* Design canvas + elements — wrapped in mail-card container matching preview exactly */}
+                  <div className="flex-1 overflow-y-auto bg-[#0a0a0a]" style={{ padding: '12px 12px 0' }}>
                   <div
                     ref={designAreaRef}
-                    className="flex-1 relative bg-[#0d0d0d]"
-                    style={{ overflow: 'hidden' }}
+                    className="relative bg-[#111]"
+                    style={{ minHeight: 300, border: '2px solid rgba(255,215,0,0.3)', padding: '0 16px' }}
                     onClick={(e) => { if (e.target === e.currentTarget) setSelectedEl(null); }}
                   >
                     {/* Canvas — draw layer on top */}
@@ -3587,6 +3608,7 @@ export function VibeMailInboxWithClaim({
                       <span className="text-[#FFD700]/30 text-[9px] font-black">+100 VBMS (locked)</span>
                     </div>
                   </div>
+                  </div>{/* end mail-card wrapper */}
 
                   {/* Footer buttons */}
                   <div className="p-2.5 border-t-2 border-[#333] flex flex-col gap-2">
