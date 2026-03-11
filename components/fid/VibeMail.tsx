@@ -1566,11 +1566,8 @@ export function VibeMailInboxWithClaim({
     }
   };
 
-  const VIBEMAIL_ALLOWED_FID = 214746;
-
   const handleDirectSend = async (recipFid: number, recipUsername: string, isReply: boolean, origMsgId?: any) => {
     if (!myFid || !myAddress) return;
-    if (myFid !== VIBEMAIL_ALLOWED_FID) return;
     setIsSending(true);
     // Build final message: prepend quest banner if set
     const finalMessage = composerQuestData
@@ -3105,13 +3102,13 @@ export function VibeMailInboxWithClaim({
                           </div>
                         </div>
                       );
-                      // Scroll indicator arrow — sticky so it floats at the bottom of the visible viewport
+                      // Scroll indicator arrow — fixed to viewport bottom so it always shows where screen ends
                       const scrollArrow = (
-                        <div style={{ position: 'sticky', bottom: 52, display: 'flex', justifyContent: 'flex-end', paddingRight: 8, zIndex: 200, pointerEvents: 'none' }}>
-                          <div className="animate-bounce select-none" style={{ opacity: 0.55 }}>
-                            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                              <circle cx="14" cy="14" r="13" fill="rgba(0,0,0,0.55)" stroke="#FFD700" strokeWidth="1.5"/>
-                              <polyline points="9,11 14,18 19,11" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                        <div style={{ position: 'fixed', bottom: 64, right: 16, zIndex: 9100, pointerEvents: 'none' }}>
+                          <div className="animate-bounce select-none" style={{ opacity: 0.7 }}>
+                            <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                              <circle cx="18" cy="18" r="17" fill="rgba(0,0,0,0.7)" stroke="#FFD700" strokeWidth="2"/>
+                              <polyline points="11,14 18,23 25,14" stroke="#FFD700" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
                             </svg>
                           </div>
                         </div>
