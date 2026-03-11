@@ -512,7 +512,7 @@ function renderRichMessageFn(
       flushText();
       const url = proxyAudioUrl(soundM[1]);
       const volume = soundM[2] ? Math.min(1, Math.max(0, parseFloat(soundM[2]))) : 0.2;
-      const name = url.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ') || 'Audio';
+      const name = soundM[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').replace(/\s+/g, ' ').trim() || 'Audio';
       const pid = `inline:${url}`;
       nodes.push(
         <div key={`snd-${nodes.length}`} className="bg-[#1a0a00] border border-[#F97316]/40 rounded-lg p-2 flex items-center gap-2 my-1">
@@ -941,6 +941,21 @@ export function VibeMailInboxWithClaim({
   const [composerFollowTarget, setComposerFollowTarget] = useState<string>('');
   const [showPreview, setShowPreview] = useState(false);
   const [previewQuestIdx, setPreviewQuestIdx] = useState(0);
+  // Design editor state
+  const [showDesign, setShowDesign] = useState(false);
+  const [editTool, setEditTool] = useState<'select' | 'draw' | 'erase'>('select');
+  const [drawColor, setDrawColor] = useState('#FFD700');
+  const [drawSize, setDrawSize] = useState(4);
+  const [drawStrokes, setDrawStrokes] = useState<Array<{points: {x:number,y:number}[], color: string, size: number, erase?: boolean}>>([]);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [currentStroke, setCurrentStroke] = useState<{x:number,y:number}[]>([]);
+  const [undoStack, setUndoStack] = useState<typeof drawStrokes[]>([]);
+  const [elementPositions, setElementPositions] = useState<Record<string, {x:number,y:number,w:number,h:number}>>({});
+  const [selectedEl, setSelectedEl] = useState<string | null>(null);
+  const [draggingEl, setDraggingEl] = useState<{id:string,startMX:number,startMY:number,origX:number,origY:number}|null>(null);
+  const [resizingEl, setResizingEl] = useState<{id:string,startMX:number,startMY:number,startW:number,startH:number}|null>(null);
+  const designAreaRef = useRef<HTMLDivElement | null>(null);
+  const drawCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Auto-advance carousel every 3s when preview is open and has multiple quests
   useEffect(() => {
@@ -2849,16 +2864,26 @@ export function VibeMailInboxWithClaim({
                 currentAudioId={isCustomAudio(composerAudioId || undefined) ? composerAudioId : null}
               />
 
-              {/* Preview - ROSA/PINK */}
+              {/* Preview + Design buttons */}
               {(composerMessage.trim() || composerImageId || composerQuestData) && (
-                <button
-                  onClick={() => setShowPreview(true)}
-                  className="h-9 px-3 flex items-center gap-1.5 border-2 border-[#DB2777] bg-[#DB2777] text-white hover:bg-[#BE185D] transition-all"
-                  style={{ WebkitTextFillColor: 'white' }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                  <span className="font-black text-xs uppercase tracking-wide">Preview</span>
-                </button>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setShowPreview(true)}
+                    className="h-9 px-3 flex items-center gap-1.5 border-2 border-[#DB2777] bg-[#DB2777] text-white hover:bg-[#BE185D] transition-all"
+                    style={{ WebkitTextFillColor: 'white' }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span className="font-black text-xs uppercase tracking-wide">Preview</span>
+                  </button>
+                  <button
+                    onClick={() => setShowDesign(true)}
+                    className="h-9 px-3 flex items-center gap-1.5 border-2 border-[#8B5CF6] bg-[#8B5CF6] text-white hover:bg-[#7C3AED] transition-all"
+                    style={{ WebkitTextFillColor: 'white' }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <span className="font-black text-xs uppercase tracking-wide">Edit</span>
+                  </button>
+                </div>
               )}
 
               {/* Spacer */}
@@ -2872,12 +2897,20 @@ export function VibeMailInboxWithClaim({
             {/* Preview - full-screen overlay */}
             {showPreview && (
               <div className="fixed inset-0 z-[600] bg-[#0a0a0a] flex flex-col" style={{ colorScheme: 'dark', color: 'white' }}>
-                {/* Header */}
-                <div className="flex items-center justify-between p-3 border-b-2 border-[#FFD700]">
-                  <p className="text-[#FFD700] font-black text-sm uppercase tracking-widest">Preview</p>
-                  <button onClick={() => setShowPreview(false)} className="text-white/60 hover:text-white text-xs border border-[#444] px-2 py-1">
-                    Edit
+                {/* Header - Tab bar */}
+                <div className="flex items-stretch border-b-2 border-[#FFD700]">
+                  <div className="flex-1 flex items-center justify-center py-3 border-r border-[#FFD700]/30 bg-[#FFD700]/10">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" className="mr-1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span className="text-[#FFD700] font-black text-xs uppercase tracking-widest">Preview</span>
+                  </div>
+                  <button
+                    onClick={() => { setShowPreview(false); setShowDesign(true); }}
+                    className="flex-1 flex items-center justify-center py-3 hover:bg-[#8B5CF6]/10 transition-all group"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="mr-1.5 text-white/40 group-hover:text-[#8B5CF6]"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <span className="text-white/40 group-hover:text-[#8B5CF6] font-black text-xs uppercase tracking-widest transition-all">Edit Design</span>
                   </button>
+                  <button onClick={() => setShowPreview(false)} className="px-4 text-white/30 hover:text-white/80 text-lg border-l border-[#FFD700]/30">✕</button>
                 </div>
                 {/* Content - scrollable */}
                 <div className="flex-1 overflow-y-auto p-3">
@@ -3015,16 +3048,265 @@ export function VibeMailInboxWithClaim({
                   </div>
                 </div>
                 {/* Bottom */}
-                <div className="p-3 border-t-2 border-[#333]">
+                <div className="p-3 border-t-2 border-[#333] flex gap-2">
+                  <button
+                    onClick={() => { setShowPreview(false); setShowDesign(true); }}
+                    className="flex-1 py-2.5 bg-[#8B5CF6] border-2 border-[#8B5CF6] text-white font-bold text-xs uppercase tracking-wide hover:bg-[#7C3AED] transition-all flex items-center justify-center gap-1.5"
+                  >
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    Edit Design
+                  </button>
                   <button
                     onClick={() => setShowPreview(false)}
-                    className="w-full py-3 bg-[#1a1a1a] border-2 border-[#444] text-white font-bold text-sm hover:border-[#FFD700] transition-all"
-                  >
-                    Back to Edit
-                  </button>
+                    className="flex-1 py-2.5 bg-[#1a1a1a] border-2 border-[#444] text-white font-bold text-xs uppercase tracking-wide hover:border-[#FFD700] transition-all"
+                  >Back to Compose</button>
                 </div>
               </div>
             )}
+
+            {/* Design Editor - full-screen canvas */}
+            {showDesign && (() => {
+              // Helper: draggable element wrapper
+              const DraggableEl = ({ id, accentColor, children }: { id: string; accentColor: string; children: React.ReactNode }) => {
+                const pos = elementPositions[id] || { x: 0, y: 0, w: 100, h: 60 };
+                const isSel = selectedEl === id;
+                return (
+                  <div
+                    style={{
+                      position: 'relative', marginBottom: 8,
+                      transform: `translate(${pos.x}px, ${pos.y}px)`,
+                      width: `${pos.w}%`,
+                      outline: isSel ? `2px solid ${accentColor}` : '2px solid transparent',
+                      cursor: draggingEl?.id === id ? 'grabbing' : 'grab',
+                      userSelect: 'none', touchAction: 'none',
+                    }}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      setSelectedEl(id);
+                      setDraggingEl({ id, startMX: e.clientX, startMY: e.clientY, origX: pos.x, origY: pos.y });
+                      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                    }}
+                    onPointerMove={(e) => {
+                      if (!draggingEl || draggingEl.id !== id) return;
+                      e.stopPropagation();
+                      setElementPositions(p => ({ ...p, [id]: { x: draggingEl.origX + (e.clientX - draggingEl.startMX), y: draggingEl.origY + (e.clientY - draggingEl.startMY), w: (p[id] || pos).w, h: (p[id] || pos).h } }));
+                    }}
+                    onPointerUp={(e) => { setDraggingEl(null); (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); }}
+                  >
+                    {isSel && <div className="absolute -top-4 left-0 z-30 px-1 text-[8px] font-black text-black" style={{ background: accentColor }}>{id.toUpperCase()} — drag to move</div>}
+                    {children}
+                    {/* Resize handle bottom-right */}
+                    {isSel && (
+                      <div
+                        className="absolute bottom-0 right-0 w-5 h-5 z-30 flex items-center justify-center text-[9px] font-black"
+                        style={{ background: accentColor, color: '#000', cursor: 'se-resize', touchAction: 'none' }}
+                        onPointerDown={(e) => {
+                          e.stopPropagation();
+                          setResizingEl({ id, startMX: e.clientX, startMY: e.clientY, startW: pos.w, startH: pos.h });
+                          (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                        }}
+                        onPointerMove={(e) => {
+                          if (!resizingEl || resizingEl.id !== id) return;
+                          e.stopPropagation();
+                          const area = designAreaRef.current;
+                          if (!area) return;
+                          const newW = Math.max(20, Math.min(100, resizingEl.startW + ((e.clientX - resizingEl.startMX) / area.offsetWidth) * 100));
+                          const newH = Math.max(30, resizingEl.startH + (e.clientY - resizingEl.startMY));
+                          setElementPositions(p => ({ ...p, [id]: { x: (p[id] || pos).x, y: (p[id] || pos).y, w: newW, h: newH } }));
+                        }}
+                        onPointerUp={(e) => { setResizingEl(null); (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); }}
+                      >↘</div>
+                    )}
+                  </div>
+                );
+              };
+
+              return (
+                <div className="fixed inset-0 z-[600] bg-[#0a0a0a] flex flex-col" style={{ colorScheme: 'dark', color: 'white' }}>
+                  {/* Toolbar */}
+                  <div className="flex items-center gap-1.5 p-2 border-b-2 border-[#8B5CF6] bg-[#111] flex-wrap">
+                    <span className="text-[#8B5CF6] font-black text-xs uppercase tracking-wider mr-1">Edit</span>
+                    {(['select', 'draw', 'erase'] as const).map(tool => (
+                      <button
+                        key={tool}
+                        onClick={() => setEditTool(tool)}
+                        className={`px-2 py-1 text-[10px] font-bold border-2 uppercase transition-all ${editTool === tool ? 'border-[#FFD700] bg-[#FFD700] text-black' : 'border-[#444] text-white/60 hover:border-white/60'}`}
+                      >
+                        {tool === 'select' ? '↖ Move' : tool === 'draw' ? '✏ Draw' : '⌫ Erase'}
+                      </button>
+                    ))}
+                    {editTool !== 'select' && (
+                      <>
+                        <input type="color" value={drawColor} onChange={e => setDrawColor(e.target.value)}
+                          className="w-7 h-7 border-2 border-[#444] p-0 bg-transparent" title="Color" />
+                        <input type="range" min="1" max="20" value={drawSize} onChange={e => setDrawSize(parseInt(e.target.value))}
+                          className="w-16 accent-[#FFD700] h-1" />
+                        <span className="text-white/40 text-[10px] w-6">{drawSize}px</span>
+                      </>
+                    )}
+                    <div className="flex-1" />
+                    <button
+                      onClick={() => {
+                        if (!undoStack.length) return;
+                        const prev = undoStack[undoStack.length - 1];
+                        setDrawStrokes(prev);
+                        setUndoStack(u => u.slice(0, -1));
+                        const canvas = drawCanvasRef.current;
+                        if (!canvas) return;
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) return;
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        prev.forEach(s => {
+                          if (s.points.length < 2) return;
+                          ctx.beginPath();
+                          if (s.erase) { ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; ctx.lineWidth = s.size * 5; }
+                          else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = s.color; ctx.lineWidth = s.size; }
+                          ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                          ctx.moveTo(s.points[0].x, s.points[0].y);
+                          s.points.slice(1).forEach(p => ctx.lineTo(p.x, p.y));
+                          ctx.stroke();
+                        });
+                      }}
+                      disabled={!undoStack.length}
+                      className="px-2 py-1 text-[10px] border-2 border-[#444] text-white/60 hover:border-white/60 disabled:opacity-30"
+                    >↩ Undo</button>
+                    <button
+                      onClick={() => {
+                        setUndoStack(p => [...p, drawStrokes]);
+                        setDrawStrokes([]);
+                        const canvas = drawCanvasRef.current;
+                        if (canvas) canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
+                      }}
+                      disabled={!drawStrokes.length}
+                      className="px-2 py-1 text-[10px] border-2 border-red-800 text-red-400 hover:border-red-500 disabled:opacity-30"
+                    >🗑 Clear</button>
+                  </div>
+
+                  {/* Canvas area */}
+                  <div ref={designAreaRef} className="flex-1 relative overflow-hidden bg-[#0d0d0d]">
+                    {/* Drawing canvas */}
+                    <canvas
+                      ref={(el) => {
+                        drawCanvasRef.current = el;
+                        if (el) requestAnimationFrame(() => {
+                          const area = designAreaRef.current;
+                          if (area && (el.width !== area.offsetWidth || el.height !== area.offsetHeight)) {
+                            el.width = area.offsetWidth;
+                            el.height = area.offsetHeight;
+                          }
+                        });
+                      }}
+                      className="absolute inset-0 z-20"
+                      style={{ pointerEvents: editTool !== 'select' ? 'auto' : 'none', touchAction: 'none' }}
+                      onPointerDown={(e) => {
+                        if (editTool === 'select') return;
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setIsDrawing(true);
+                        setCurrentStroke([{ x: e.clientX - rect.left, y: e.clientY - rect.top }]);
+                      }}
+                      onPointerMove={(e) => {
+                        if (!isDrawing || editTool === 'select') return;
+                        const canvas = drawCanvasRef.current;
+                        if (!canvas) return;
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) return;
+                        const rect = canvas.getBoundingClientRect();
+                        const x = e.clientX - rect.left, y = e.clientY - rect.top;
+                        setCurrentStroke(pts => {
+                          const newPts = [...pts, { x, y }];
+                          if (newPts.length >= 2) {
+                            ctx.beginPath();
+                            if (editTool === 'erase') { ctx.globalCompositeOperation = 'destination-out'; ctx.strokeStyle = 'rgba(0,0,0,1)'; ctx.lineWidth = drawSize * 5; }
+                            else { ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = drawColor; ctx.lineWidth = drawSize; }
+                            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                            ctx.moveTo(newPts[newPts.length - 2].x, newPts[newPts.length - 2].y);
+                            ctx.lineTo(x, y);
+                            ctx.stroke();
+                          }
+                          return newPts;
+                        });
+                      }}
+                      onPointerUp={() => {
+                        if (!isDrawing) return;
+                        setUndoStack(p => [...p, drawStrokes]);
+                        setDrawStrokes(p => [...p, { points: currentStroke, color: drawColor, size: drawSize, erase: editTool === 'erase' }]);
+                        setCurrentStroke([]);
+                        setIsDrawing(false);
+                      }}
+                    />
+
+                    {/* Elements layer */}
+                    <div
+                      className="absolute inset-0 z-10 overflow-y-auto p-3"
+                      style={{ pointerEvents: editTool === 'select' ? 'auto' : 'none' }}
+                      onClick={() => setSelectedEl(null)}
+                    >
+                      {/* Header banner - locked */}
+                      <div className="mb-2 border-2 border-[#FFD700]/20 opacity-60 p-2 flex items-center gap-2">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="#FFD700"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                        <span className="text-[#FFD700]/60 text-[9px] font-black uppercase tracking-widest">Quest Banner — header (locked)</span>
+                      </div>
+
+                      {/* Text block */}
+                      {composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim() && (
+                        <DraggableEl id="text" accentColor="#FFD700">
+                          <div className="bg-[#111] border border-[#333] p-2 text-xs text-white/80 leading-relaxed min-h-[40px]">
+                            {composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim() || '(text)'}
+                          </div>
+                        </DraggableEl>
+                      )}
+
+                      {/* Audio player block */}
+                      {composerMessage.match(/\/sound=(\S+)/i) && (() => {
+                        const m = composerMessage.match(/\/sound=(\S+)/i);
+                        const rawName = m ? m[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio' : 'Audio';
+                        return (
+                          <DraggableEl id="audio" accentColor="#F97316">
+                            <div className="bg-[#1a0a00] border border-[#F97316]/40 p-2 flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-[#F97316] flex items-center justify-center text-sm flex-shrink-0">▶</div>
+                              <div>
+                                <p className="text-[#F97316] font-bold text-xs">{rawName}</p>
+                                <p className="text-white/40 text-[10px]">Tap to play</p>
+                              </div>
+                            </div>
+                          </DraggableEl>
+                        );
+                      })()}
+
+                      {/* Image block */}
+                      {composerImageId && (() => {
+                        const imgSrc = composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || '');
+                        if (!imgSrc) return null;
+                        const pos = elementPositions['image'] || { x: 0, y: 0, w: 100, h: 150 };
+                        return (
+                          <DraggableEl id="image" accentColor="#22C55E">
+                            <img src={imgSrc} alt="" className="w-full object-contain border border-[#22C55E]/30" style={{ height: pos.h }} />
+                          </DraggableEl>
+                        );
+                      })()}
+
+                      {/* Footer VBMS - locked */}
+                      <div className="mt-4 border border-[#FFD700]/20 opacity-60 p-2 flex justify-end">
+                        <span className="text-[#FFD700]/60 text-xs font-black">+100 VBMS — footer (locked)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Footer buttons */}
+                  <div className="p-3 border-t-2 border-[#333] flex gap-2">
+                    <button
+                      onClick={() => { setShowDesign(false); setShowPreview(true); }}
+                      className="flex-1 py-2.5 bg-[#DB2777] border-2 border-[#DB2777] text-white font-bold text-xs uppercase tracking-wide hover:bg-[#BE185D] transition-all"
+                    >Preview Result</button>
+                    <button
+                      onClick={() => setShowDesign(false)}
+                      className="flex-1 py-2.5 bg-[#1a1a1a] border-2 border-[#444] text-white font-bold text-xs uppercase tracking-wide hover:border-[#8B5CF6] transition-all"
+                    >Back to Compose</button>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Next Button - Opens gift modal first, then sends everything */}
             <button
