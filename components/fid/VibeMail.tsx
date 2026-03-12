@@ -968,6 +968,10 @@ export function VibeMailInboxWithClaim({
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
   const [sendNetwork, setSendNetwork] = useState<'arb' | 'base'>('arb');
+  const [showNetworkModal, setShowNetworkModal] = useState(false);
+  const skipNetworkModalRef = React.useRef(false);
+  const sendNetworkRef = React.useRef<'arb' | 'base'>('arb');
+  const sendBtnRef = React.useRef<HTMLButtonElement>(null);
   const [openAppConfirm, setOpenAppConfirm] = useState<{ url: string; name: string } | null>(null);
   const [miniappPreviewCache, setMiniappPreviewCache] = useState<Record<string, any>>({});
   const [msgPage, setMsgPage] = useState(0);
@@ -1610,7 +1614,7 @@ export function VibeMailInboxWithClaim({
       : composerMessage;
     try {
       // On-chain confirmation — ARB only (Base skips on-chain validation)
-      if (!hasFreemail || sendNetwork === 'arb') {
+      if (!hasFreemail || sendNetworkRef.current === 'arb') {
         await validateOnArb(100, ARB_CLAIM_TYPE.VIBEMAIL);
       }
 
@@ -3811,30 +3815,68 @@ export function VibeMailInboxWithClaim({
               );
             })()}
 
-            {/* Network selector — only for free mails */}
-            {hasFreemail && (
-              <div className="flex gap-1.5 mb-2">
-                <button
-                  onClick={() => setSendNetwork('arb')}
-                  className={`flex-1 py-1.5 text-xs font-bold border-2 border-black transition-all ${sendNetwork === 'arb' ? 'bg-[#9B6DFF] text-white shadow-none translate-x-[2px] translate-y-[2px]' : 'bg-[#1a1a1a] text-white/50 shadow-[2px_2px_0px_#000]'}`}
-                >
-                  ARB
-                </button>
-                <button
-                  onClick={() => setSendNetwork('base')}
-                  className={`flex-1 py-1.5 text-xs font-bold border-2 border-black transition-all ${sendNetwork === 'base' ? 'bg-[#0052FF] text-white shadow-none translate-x-[2px] translate-y-[2px]' : 'bg-[#1a1a1a] text-white/50 shadow-[2px_2px_0px_#000]'}`}
-                >
-                  BASE
-                </button>
+            {/* Network Modal — appears as bottom sheet after clicking Send */}
+            {showNetworkModal && (
+              <div className="fixed inset-0 z-[700] bg-black/80 flex items-end justify-center pb-6 px-4" onClick={() => setShowNetworkModal(false)}>
+                <div className="w-full max-w-sm bg-[#111] border-2 border-[#FFD700] shadow-[6px_6px_0px_#FFD700]" onClick={e => e.stopPropagation()}>
+                  <div className="px-4 py-3 border-b-2 border-black">
+                    <p className="text-[#FFD700] font-black text-sm uppercase tracking-widest">Choose Network</p>
+                    <p className="text-white/40 text-xs mt-0.5">Free VibeMail · No VBMS required</p>
+                  </div>
+                  <div className="flex divide-x-2 divide-black">
+                    <button
+                      onClick={() => {
+                        sendNetworkRef.current = 'arb';
+                        setSendNetwork('arb');
+                        setShowNetworkModal(false);
+                        skipNetworkModalRef.current = true;
+                        requestAnimationFrame(() => sendBtnRef.current?.click());
+                      }}
+                      className="flex-1 py-5 flex flex-col items-center gap-1.5 bg-[#1a1a1a] hover:bg-[#9B6DFF]/20 active:bg-[#9B6DFF]/30 transition-all"
+                    >
+                      <span className="text-[#9B6DFF] font-black text-2xl">ARB</span>
+                      <span className="text-white/50 text-[10px] uppercase tracking-wider">Arbitrum</span>
+                      <span className="text-white/30 text-[9px]">On-chain confirmation</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        sendNetworkRef.current = 'base';
+                        setSendNetwork('base');
+                        setShowNetworkModal(false);
+                        skipNetworkModalRef.current = true;
+                        requestAnimationFrame(() => sendBtnRef.current?.click());
+                      }}
+                      className="flex-1 py-5 flex flex-col items-center gap-1.5 bg-[#1a1a1a] hover:bg-[#0052FF]/20 active:bg-[#0052FF]/30 transition-all"
+                    >
+                      <span className="text-[#0052FF] font-black text-2xl">BASE</span>
+                      <span className="text-white/50 text-[10px] uppercase tracking-wider">Base Chain</span>
+                      <span className="text-white/30 text-[9px]">No on-chain fee</span>
+                    </button>
+                  </div>
+                  <button
+                    onClick={() => setShowNetworkModal(false)}
+                    className="w-full py-3 bg-[#0a0a0a] text-white/40 text-xs font-bold uppercase tracking-widest border-t-2 border-black hover:text-white/70 transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
 
             {/* Next Button - Opens gift modal first, then sends everything */}
             <button
+              ref={sendBtnRef}
               onClick={async () => {
                 if (isSending || isTransferPending) return;
                 if (!composerMessage.trim() && !composerImageId) return;
                 if (!myAddress || !myFid) return;
+
+                // Free mail: show network modal first (skip if coming from modal)
+                if (hasFreemail && !skipNetworkModalRef.current) {
+                  setShowNetworkModal(true);
+                  return;
+                }
+                skipNetworkModalRef.current = false;
 
                 // For replies - send directly
                 if (replyToMessageId && replyToFid) {
