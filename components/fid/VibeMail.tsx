@@ -2297,7 +2297,7 @@ export function VibeMailInboxWithClaim({
 
                 {randomList.length > 0 && (
                   <p className="text-green-400 text-xs mt-2 text-center font-bold">
-                    <span className="flex items-center justify-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> {(t.vibemailReadyToSend || 'Ready to send to {count} people').replace('{count}', String(randomList.length))} = {randomList.length * 1000} VBMS</span>
+                    <span className="flex items-center justify-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> {(t.vibemailReadyToSend || 'Ready to send to {count} people').replace('{count}', String(randomList.length))} = {randomList.length * (composerQuestData ? questMailCost : Number(VIBEMAIL_COST_VBMS))} VBMS</span>
                   </p>
                 )}
               </div>
@@ -4017,7 +4017,7 @@ export function VibeMailInboxWithClaim({
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/></svg>
                   {randomList.length > 0
-                    ? `${(t.vibemailSendToList || 'Send to List ({count})').replace('{count}', String(randomList.length))} (${randomList.length * 1000} VBMS)`
+                    ? `${(t.vibemailSendToList || 'Send to List ({count})').replace('{count}', String(randomList.length))} (${randomList.length * (composerQuestData ? questMailCost : Number(VIBEMAIL_COST_VBMS))} VBMS)`
                     : t.vibemailRandomCost}
                 </span>
               ) : (
