@@ -23,6 +23,7 @@ import { CastPreview } from './CastPreview';
 import { MiniappPreview } from './MiniappPreview';
 import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
 import { translateText } from '@/lib/fid/translateRotator';
+import { LanguageSelect } from '@/components/SettingsModal';
 
 // Translation cache helpers (localStorage, keyed by messageId + lang)
 function getTranslationCache(msgId: string, targetLang: string): string | null {
@@ -765,7 +766,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
             </div>
 
             {/* Message Content */}
-            <div className="bg-gradient-to-b from-vintage-black/80 to-vintage-charcoal rounded-lg p-3 flex-1">
+            <div className="bg-gradient-to-b from-vintage-black/80 to-vintage-charcoal rounded-lg p-3 flex-1 overflow-y-auto min-h-0">
               <div className="mb-3">
                 <div className="text-white text-sm leading-relaxed flex-1">
                   {isTranslating ? (
@@ -863,7 +864,8 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                 stopAudio();
                 setSelectedMessage(null);
               }}
-              className="mt-3 w-full py-2 bg-vintage-black border border-vintage-gold/30 text-vintage-gold rounded-lg hover:bg-vintage-gold/10"
+              className="mt-3 w-full py-2 bg-vintage-black border-2 border-vintage-gold text-vintage-gold rounded-lg hover:bg-vintage-gold/10"
+              style={{ color: '#FFD400', borderColor: '#FFD400' }}
             >
               Back to Inbox
             </button>
@@ -4098,6 +4100,7 @@ export function VibeMailInboxWithClaim({
                 <p className="text-white/40 text-[10px]">{new Date(selectedMessage.createdAt).toLocaleString()}</p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
+                <LanguageSelect />
                 <span className={`text-[9px] font-bold px-1.5 py-0.5 border border-black ${selectedMessage.isPaid ? 'bg-yellow-500/20 text-yellow-400' : 'bg-[#FFD700]/10 text-[#FFD700]/60'}`}>
                   {selectedMessage.isPaid ? 'PAID' : 'FREE'}
                 </span>
@@ -4420,12 +4423,9 @@ export function VibeMailInboxWithClaim({
                 </div>
               )}
 
-              {/* Vote info footer */}
+              {/* Date footer */}
               <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
                 <span className="text-white/40">{new Date(selectedMessage.createdAt).toLocaleDateString()}</span>
-                <span className={`font-bold ${selectedMessage.isPaid ? 'text-yellow-400' : 'text-[#FFD700]/60'}`}>
-                  +{selectedMessage.voteCount} {selectedMessage.isPaid ? t.paidVote : t.freeVote}
-                </span>
               </div>
             </div>{/* end content padding */}
             </div>{/* end scroll container */}
@@ -4912,12 +4912,18 @@ export function VibeMailInboxWithClaim({
                       <p className={`text-xs truncate leading-tight ${msg.isRead ? 'text-white/40' : 'text-white/80'}`}>
                         {(() => {
                           const raw = msg.message || '';
-                          const clean = raw.replace(/\[VQUEST:\{.*?\}\]/s, '').trim();
+                          const clean = raw.replace(/\[VQUEST:\{.*?\}\]/s, '').replace(/\/img=\S+/gi, '').replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').trim();
                           return clean.slice(0, 60) || (msg.audioId ? '' : msg.giftNftName || '...');
                         })()}
                       </p>
                       {/* Attachment / quest chips */}
-                      {(msg.imageId || msg.audioId || msg.castUrl || msg.giftNftImageUrl || msg.miniappUrl || parseQuestBanner(msg.message || '')) && (
+                      {(() => {
+                        const msgText = msg.message || '';
+                        const hasGifInText = /\/img=https?:\/\/(media\.giphy|media[0-9]*\.giphy|giphy\.com)/i.test(msgText) || /\/img=\S+\.gif/i.test(msgText);
+                        const hasImgInText = /\/img=/i.test(msgText) && !hasGifInText;
+                        const hasSoundInText = /\/sound=/i.test(msgText);
+                        return (msg.imageId || msg.audioId || msg.castUrl || msg.giftNftImageUrl || msg.miniappUrl || hasGifInText || hasImgInText || hasSoundInText || parseQuestBanner(msgText));
+                      })() && (
                         <div className="flex items-center gap-1 mt-1 flex-wrap">
                           {parseQuestBanner(msg.message || '') && (
                             <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-[#FFD700]/15 border border-[#FFD700]/40 text-[#FFD700] font-black text-[9px] uppercase tracking-wide">
@@ -4954,6 +4960,17 @@ export function VibeMailInboxWithClaim({
                               NFT
                             </span>
                           )}
+                          {(() => {
+                            const mt = msg.message || '';
+                            const hasGif = /\/img=https?:\/\/(media\.giphy|media[0-9]*\.giphy|giphy\.com)/i.test(mt) || /\/img=\S+\.gif/i.test(mt);
+                            const hasImg = /\/img=/i.test(mt) && !hasGif;
+                            const hasSound = /\/sound=/i.test(mt) && !msg.audioId;
+                            return (<>
+                              {hasGif && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-purple-500/15 border border-purple-500/40 text-purple-400 font-bold text-[9px]">GIF</span>}
+                              {hasImg && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-blue-500/15 border border-blue-500/40 text-blue-400 font-bold text-[9px]">IMG</span>}
+                              {hasSound && <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-orange-500/15 border border-orange-500/40 text-orange-400 font-bold text-[9px]">♪</span>}
+                            </>);
+                          })()}
                         </div>
                       )}
                     </div>
