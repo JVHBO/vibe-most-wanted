@@ -3838,7 +3838,7 @@ export function VibeMailInboxWithClaim({
                   {/* Footer buttons */}
                   <div className="p-2.5 border-t-2 border-[#333] flex flex-col gap-2">
                     {/* Save all drawings composited as single image attachment */}
-                    {drawnIds.length > 0 && (
+                    {(drawnIds.length > 0 || allImgSrcs.length > 0) && (
                       <button
                         disabled={isSavingDesign}
                         onClick={async () => {
@@ -3853,68 +3853,96 @@ export function VibeMailInboxWithClaim({
                             const ctx = off.getContext('2d');
                             if (!ctx) throw new Error('no ctx');
                             ctx.scale(dpr, dpr);
-                            // Draw strokes only — transparent background, GIF stays as separate element
-                            const sortedDrawIds = [...drawnIds].sort((a, b) => ((elementPositions[a]?.z ?? 0) - (elementPositions[b]?.z ?? 0)));
-                            await Promise.all(sortedDrawIds.map(id => new Promise<void>(resolve => {
-                              const src = drawingImages[id];
-                              const pos = elementPositions[id];
-                              if (!src || !pos) { resolve(); return; }
-                              const img = new Image();
-                              img.onload = () => {
+
+                            // Black background
+                            ctx.fillStyle = '#111';
+                            ctx.fillRect(0, 0, W, H);
+
+                            // Collect all elements sorted by z
+                            type DrawTask = { z: number; draw: () => Promise<void> };
+                            const tasks: DrawTask[] = [];
+
+                            // Images at their current positions
+                            for (const { key, src } of allImgSrcs) {
+                              if (!src || hiddenElements.has(key)) continue;
+                              const p = elementPositions[key] || getDefaultPos(key);
+                              const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(src);
+                              tasks.push({ z: p.z ?? 0, draw: () => new Promise<void>(resolve => {
                                 ctx.save();
-                                ctx.translate(pos.x + pos.w / 2, pos.y + pos.h / 2);
-                                ctx.rotate(((pos.r ?? 0) * Math.PI) / 180);
-                                ctx.drawImage(img, -pos.w / 2, -pos.h / 2, pos.w, pos.h);
-                                ctx.restore();
-                                resolve();
-                              };
-                              img.onerror = () => resolve();
-                              img.src = src;
-                            })));
+                                ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+                                ctx.rotate(((p.r ?? 0) * Math.PI) / 180);
+                                if (isVid) {
+                                  // Draw current frame from video element in DOM
+                                  const videos = area.querySelectorAll('video');
+                                  let drawn = false;
+                                  for (const vid of Array.from(videos)) {
+                                    try { ctx.drawImage(vid, -p.w / 2, -p.h / 2, p.w, p.h); drawn = true; break; } catch {}
+                                  }
+                                  if (!drawn) { ctx.fillStyle = '#222'; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); }
+                                  ctx.restore(); resolve();
+                                } else {
+                                  const img = new Image();
+                                  const draw = () => { try { ctx.drawImage(img, -p.w / 2, -p.h / 2, p.w, p.h); } catch {} ctx.restore(); resolve(); };
+                                  img.onload = draw;
+                                  img.onerror = () => { const img2 = new Image(); img2.onload = () => { try { ctx.drawImage(img2, -p.w / 2, -p.h / 2, p.w, p.h); } catch {} ctx.restore(); resolve(); }; img2.onerror = () => { ctx.restore(); resolve(); }; img2.src = src; };
+                                  img.crossOrigin = 'anonymous';
+                                  img.src = src;
+                                }
+                              })});
+                            }
+
+                            // Drawn strokes at their current positions
+                            const sortedDrawIds = [...drawnIds].sort((a, b) => ((elementPositions[a]?.z ?? 0) - (elementPositions[b]?.z ?? 0)));
+                            for (const id of sortedDrawIds) {
+                              const src = drawingImages[id];
+                              const p = elementPositions[id];
+                              if (!src || !p) continue;
+                              tasks.push({ z: p.z ?? 0, draw: () => new Promise<void>(resolve => {
+                                const img = new Image();
+                                img.onload = () => { ctx.save(); ctx.translate(p.x + p.w / 2, p.y + p.h / 2); ctx.rotate(((p.r ?? 0) * Math.PI) / 180); ctx.drawImage(img, -p.w / 2, -p.h / 2, p.w, p.h); ctx.restore(); resolve(); };
+                                img.onerror = () => resolve();
+                                img.src = src;
+                              })});
+                            }
+
+                            // Draw all in z-order
+                            tasks.sort((a, b) => a.z - b.z);
+                            for (const task of tasks) { await task.draw(); }
+
                             const blob = await new Promise<Blob | null>(res => off.toBlob(res, 'image/png'));
                             if (!blob) throw new Error('export failed');
-                            // Save locally first — instant preview
-                            const localUrl = URL.createObjectURL(blob);
+
+                            // Upload SYNCHRONOUSLY before closing editor — fixes race condition with send
+                            const uploadUrl = await generateUploadUrl();
+                            const uploadRes = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: blob });
+                            if (!uploadRes.ok) throw new Error('upload failed');
+                            const { storageId } = await uploadRes.json();
+                            const serverUrl = `${VIBEFID_STORAGE_URL}/${storageId}`;
+
                             const compositeId = 'draw_composite';
-                            // Replace all individual draws with one merged composite (transparent PNG, GIF stays untouched)
                             setDrawingImages(prev => {
-                              const next: Record<string, string> = { [compositeId]: localUrl };
-                              // Revoke old blob URLs to avoid memory leaks
-                              for (const [k, v] of Object.entries(prev)) { if (v.startsWith('blob:')) URL.revokeObjectURL(v); }
-                              return next;
+                              for (const [, v] of Object.entries(prev)) { if (v.startsWith('blob:')) URL.revokeObjectURL(v); }
+                              return { [compositeId]: serverUrl };
                             });
                             setDrawnIds([compositeId]);
                             setElementPositions(p => {
                               const next = { ...p };
-                              for (const k of Object.keys(next)) { if (k.startsWith('draw_') && k !== compositeId) delete next[k]; }
-                              // Composite covers the full canvas area, inherits highest draw z
-                              const maxZ = drawnIds.reduce((m, id) => Math.max(m, next[id]?.z ?? 0), next[compositeId]?.z ?? 0);
-                              next[compositeId] = { x: 0, y: 0, w: W, h: H, r: 0, z: maxZ };
+                              for (const k of Object.keys(next)) { if (k.startsWith('draw_') || k.startsWith('img_')) delete next[k]; }
+                              next[compositeId] = { x: 0, y: 0, w: W, h: H, r: 0, z: 0 };
                               return next;
                             });
+                            setComposerDrawingId('img:' + storageId);
                             setShowDesign(false);
-                            setIsSavingDesign(false);
-                            // Upload to server in background, update preview when done
-                            (async () => {
-                              try {
-                                const uploadUrl = await generateUploadUrl();
-                                const res = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: blob });
-                                if (!res.ok) throw new Error('upload failed');
-                                const { storageId } = await res.json();
-                                const serverUrl = `${VIBEFID_STORAGE_URL}/${storageId}`;
-                                setDrawingImages(prev => ({ ...prev, [compositeId]: serverUrl }));
-                                setComposerDrawingId('img:' + storageId);
-                              } catch (e) { console.error('Drawing upload error:', e); }
-                            })();
                           } catch (e) {
                             console.error('Design save error:', e);
+                          } finally {
                             setIsSavingDesign(false);
                           }
                         }}
                         className="w-full py-2.5 bg-[#22C55E] border-2 border-[#22C55E] text-black font-black text-xs uppercase tracking-wide hover:bg-[#16A34A] disabled:opacity-50 transition-all flex items-center justify-center gap-1.5"
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        {isSavingDesign ? 'Saving…' : 'Save Drawing to Mail'}
+                        {isSavingDesign ? 'Uploading…' : 'Save Design to Mail'}
                       </button>
                     )}
                     <div className="flex gap-2">
