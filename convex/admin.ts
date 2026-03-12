@@ -755,7 +755,7 @@ export const cleanupOldMatches = internalMutation({
     const cutoffTime = Date.now() - (daysOld * 24 * 60 * 60 * 1000);
     const oldMatches = await ctx.db
       .query("matches")
-      .filter((q) => q.lt(q.field("timestamp"), cutoffTime))
+      .withIndex("by_timestamp", (q) => q.lt("timestamp", cutoffTime))
       .take(100);
 
     if (oldMatches.length === 0) {

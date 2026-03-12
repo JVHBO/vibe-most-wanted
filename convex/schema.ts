@@ -253,7 +253,8 @@ export default defineSchema({
     // Legacy field from Firebase migration
     matchId: v.optional(v.string()),
   })
-    .index("by_player", ["playerAddress", "timestamp"]),
+    .index("by_player", ["playerAddress", "timestamp"])
+    .index("by_timestamp", ["timestamp"]),
 
   // PvP Rooms (for realtime matchmaking)
   rooms: defineTable({
