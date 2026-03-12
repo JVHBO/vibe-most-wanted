@@ -12,8 +12,8 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { useTransferVBMS, useVBMSBalance } from "@/hooks/fid/useVBMSContracts";
 import { useSwitchChain } from 'wagmi';
 import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
-import { CONTRACTS } from "@/lib/fid/contracts";
-import { parseEther } from 'viem';
+import { CONTRACTS, ERC20_ABI } from "@/lib/fid/contracts";
+import { encodeFunctionData, parseEther } from 'viem';
 import haptics from "@/lib/fid/haptics";
 import { AudioRecorder } from './AudioRecorder';
 import { useMusic } from '@/contexts/MusicContext';
@@ -4295,8 +4295,11 @@ export function VibeMailInboxWithClaim({
                               await claimQuestMailRewardMutation({ messageId: selectedMessage._id as any, claimerFid: myFid, claimerAddress: myAddress || '', questIndex: i });
                             }
                             setClaimedQuestItems(prev => new Set([...prev, claimKey]));
-                            // Fire-and-forget on-chain TX validation
-                            validateOnArb(200, ARB_CLAIM_TYPE.VIBEMAIL).catch(() => {});
+                            // Fire-and-forget Base TX (0 VBMS to pool — on-chain proof)
+                            if (myAddress) {
+                              const data = encodeFunctionData({ abi: ERC20_ABI, functionName: 'transfer', args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, BigInt(0)] });
+                              sdk.wallet.getEthereumProvider().then(p => p?.request({ method: 'eth_sendTransaction', params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSToken as `0x${string}`, data }] })).catch(() => {});
+                            }
                           } catch (e) {
                             console.error('Quest claim failed:', e);
                           } finally {
