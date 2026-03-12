@@ -4054,7 +4054,7 @@ export function VibeMailInboxWithClaim({
                           setClaimingQuest(claimKey);
                           try {
                             if (myFid && selectedMessage._id) {
-                              await claimQuestMailRewardMutation({ messageId: selectedMessage._id as any, claimerFid: myFid, questIndex: i });
+                              await claimQuestMailRewardMutation({ messageId: selectedMessage._id as any, claimerFid: myFid, claimerAddress: myAddress || '', questIndex: i });
                             }
                             setClaimedQuestItems(prev => new Set([...prev, claimKey]));
                           } catch (e) {
