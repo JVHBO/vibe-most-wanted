@@ -28,6 +28,8 @@ import { encodeFunctionData } from "viem";
 import { useMiniappFrameContext } from "@/components/MiniappFrame";
 
 import { api } from "@/convex/_generated/api";
+import { api as fidApi } from "@/lib/fid/convex-generated/api";
+import { vibefidConvex } from "@/contexts/VibeFIDConvexProvider";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import { ProgressBar } from "@/components/ProgressBar";
 // Shop moved to /shop page
@@ -679,8 +681,15 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   }, [currentView]);
 
   // 📬 VibeMail unread count for notification dot on VibeFID button
+  // NOTE: messages are in VibeFID Convex (scintillating-mandrill-101), NOT VMW Convex — must use vibefidConvex client directly
   const userFidForVibemail = farcasterFidState || userProfile?.farcasterFid || (userProfile?.fid ? parseInt(userProfile.fid) : undefined);
-  const unreadVibeMailCount = useQuery(api.cardVotes.getUnreadMessageCount, userFidForVibemail ? { cardFid: userFidForVibemail } : "skip");
+  const [unreadVibeMailCount, setUnreadVibeMailCount] = useState<number>(0);
+  useEffect(() => {
+    if (!userFidForVibemail) return;
+    vibefidConvex.query(fidApi.cardVotes.getUnreadMessageCount, { cardFid: userFidForVibemail })
+      .then(setUnreadVibeMailCount)
+      .catch(() => {});
+  }, [userFidForVibemail]);
 
   // Listen for floating background vibecard clicks → open FID modal
   useEffect(() => {
