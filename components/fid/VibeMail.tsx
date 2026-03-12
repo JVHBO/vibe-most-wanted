@@ -1968,7 +1968,7 @@ export function VibeMailInboxWithClaim({
                 className="vm-btn-recv flex-1 border-2 border-[#8B5CF6]/40 shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-left flex flex-col justify-between overflow-hidden relative"
                 style={{ minHeight: 120 }}
               >
-                <img src="/vibemail-free-bg.png" alt="" className="vm-bg-recv absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
+                <img src="/vibemail-free-bg.png" alt="" className="vm-bg-recv absolute right-0 bottom-0 h-full w-auto max-w-[60%] object-contain object-right-bottom pointer-events-none select-none opacity-20" />
                 <div className="relative z-10 p-4 flex flex-col justify-between h-full">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-[#8B5CF6] border-2 border-black flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -2015,7 +2015,7 @@ export function VibeMailInboxWithClaim({
                 style={{ minHeight: 120 }}
               >
                 {/* Background image */}
-                <img src="/vibemail-quest-bg.png" alt="" className="vm-bg-send absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
+                <img src="/vibemail-quest-bg.png" alt="" className="vm-bg-send absolute right-0 bottom-0 h-full w-auto max-w-[60%] object-contain object-right-bottom pointer-events-none select-none opacity-20" />
                 <div className="relative z-10 p-4 flex flex-col justify-between h-full">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-[#FFD700] border-2 border-black flex items-center justify-center flex-shrink-0 overflow-hidden">
