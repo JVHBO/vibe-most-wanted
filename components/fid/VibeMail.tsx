@@ -1041,6 +1041,7 @@ export function VibeMailInboxWithClaim({
   const [claimingQuest, setClaimingQuest] = useState<string | null>(null);
   const [claimedMailVbms, setClaimedMailVbms] = useState<Set<string>>(new Set());
   const [claimingMailId, setClaimingMailId] = useState<string | null>(null);
+  const [questCarouselIdx, setQuestCarouselIdx] = useState(0);
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
@@ -1638,6 +1639,8 @@ export function VibeMailInboxWithClaim({
     }
     setPlayingAudio(null);
   };
+
+  useEffect(() => { setQuestCarouselIdx(0); }, [selectedMessage?._id]);
 
   useEffect(() => {
     return () => {
@@ -4186,347 +4189,312 @@ export function VibeMailInboxWithClaim({
                   setShowScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 24);
                 }}
               >
-            <div className="bg-[#0a0a0a] p-3 pb-6 space-y-3">
-              {/* Message text + inline media commands */}
-              {(() => {
-                const parsed = parseQuestBanner(selectedMessage.message || '');
-                const msg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
-                const mediaOnlyMsg = msg.split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n');
-                return msg ? (
-                  <div className="text-white text-sm leading-relaxed">
-                    {translatedContent ? (
-                      <>
-                        <span>{translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').trim()}</span>
-                        <span className="text-white/30 text-[10px] ml-1">({(t as any).translatedLabel || 'translated'})</span>
-                        {mediaOnlyMsg && renderRichMessageFn(mediaOnlyMsg, playingAudio, audioRef, setPlayingAudio, lang, username)}
-                      </>
-                    ) : (
-                      renderRichMessageFn(msg, playingAudio, audioRef, setPlayingAudio, lang, username)
-                    )}
-                  </div>
-                ) : null;
-              })()}
-
-              {/* Legacy imageId attachment */}
-              {selectedMessage.imageId && (() => {
-                const isCustom = selectedMessage.imageId.startsWith('img:');
-                const customUrl = isCustom ? `${VIBEFID_STORAGE_URL_INLINE}/${selectedMessage.imageId.slice(4)}` : null;
-                const imgData = !isCustom ? getImageFile(selectedMessage.imageId) : null;
-                if (customUrl) return <img src={customUrl} alt="VibeMail" className="w-full rounded border-2 border-black" />;
-                if (!imgData) return null;
-                return imgData.isVideo
-                  ? <video src={imgData.file} className="w-full rounded border-2 border-black" autoPlay loop muted playsInline />
-                  : <img src={imgData.file} alt="VibeMail" className="w-full rounded border-2 border-black" />;
-              })()}
-
-              {/* Legacy audioId player */}
-              {selectedMessage.audioId && (
-                <div className="border-2 border-black shadow-[2px_2px_0px_#000] p-3 flex items-center gap-3 bg-[#1a0e00]">
-                  <button
-                    onClick={() => {
-                      if (playingAudio === selectedMessage.audioId) { stopAudio(); }
-                      else { playAudioById(selectedMessage.audioId!, audioRef, convex, setPlayingAudio); }
-                    }}
-                    className={`w-10 h-10 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center flex-shrink-0 transition-all ${playingAudio === selectedMessage.audioId ? 'bg-red-500 text-white animate-pulse' : 'bg-vintage-gold text-black hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'}`}
-                  >
-                    {playingAudio === selectedMessage.audioId
-                      ? <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[#F97316] font-bold text-sm truncate flex items-center gap-1">
-                      {isCustomAudio(selectedMessage.audioId) ? (<><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>Voice message</>) : (isMiAudio(selectedMessage.audioId) ? getMiName(selectedMessage.audioId!) : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound))}
-                    </p>
-                    <p className="text-white/50 text-xs">{playingAudio === selectedMessage.audioId ? t.playing : t.tapToPlay}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Miniapp preview */}
-              {selectedMessage.miniappUrl && <MiniappPreview url={selectedMessage.miniappUrl} />}
-
-              {/* NFT Gift */}
-              {selectedMessage.giftNftImageUrl && (
-                <div onClick={() => { const url = getMarketplaceUrl(selectedMessage.giftNftCollection); if (url) openMarketplace(url, sdk, true); }}
-                  className="bg-[#111] border-2 border-black shadow-[2px_2px_0px_#000] p-3 flex items-center gap-3 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all cursor-pointer">
-                  <div className="relative flex-shrink-0">
-                    <img src={selectedMessage.giftNftImageUrl} alt={selectedMessage.giftNftName || 'NFT Gift'} className="w-14 h-14 object-cover border-2 border-black" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }} />
-                    <div className="absolute -top-1 -right-1 bg-vintage-gold border border-black w-4 h-4 flex items-center justify-center">
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-vintage-gold font-bold text-sm truncate">{selectedMessage.giftNftName}</p>
-                    <p className="text-white/50 text-xs">{selectedMessage.giftNftCollection}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Date footer */}
-              <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
-                <span className="text-white/40">{new Date(selectedMessage.createdAt).toLocaleDateString()}</span>
-              </div>
-
-              {/* Quest Banner */}
+            <div className="bg-[#0a0a0a] pb-6">
+              {/* Quest Banner CAROUSEL - TOP */}
               {(() => {
                 const parsed = parseQuestBanner(selectedMessage.message || '');
                 if (!parsed) return null;
                 const { questData } = parsed;
+                const quests = questData.quests || [];
+                if (quests.length === 0) return null;
+                const idx = Math.min(questCarouselIdx, quests.length - 1);
+                const q = quests[idx];
+                const claimKey = `${selectedMessage._id}_${idx}`;
+                const isClaimedFromDB = questMailClaims?.some((c: any) => c.questIndex === idx) ?? false;
+                const isClaimed = isClaimedFromDB || claimedQuestItems.has(claimKey);
+                const markClaimed = async () => {
+                  if (claimingQuest === claimKey || !myFid || !myAddress || !selectedMessage._id) return;
+                  setClaimingQuest(claimKey);
+                  try {
+                    const { ConvexHttpClient } = await import('convex/browser');
+                    const { api: vmwApi } = await import('@/convex/_generated/api');
+                    const vmwClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+                    const questReward = q.reward || questData.rewardPerQuest || 200;
+                    const result = await vmwClient.action(vmwApi.vbmsClaim.claimQuestMailVBMS, {
+                      messageId: selectedMessage._id as any,
+                      claimerFid: myFid,
+                      claimerAddress: myAddress,
+                      questIndex: idx,
+                      amount: questReward,
+                    });
+                    const data = encodeFunctionData({
+                      abi: POOL_ABI,
+                      functionName: 'claimVBMS',
+                      args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
+                    });
+                    const provider = await sdk.wallet.getEthereumProvider();
+                    await provider!.request({
+                      method: 'eth_sendTransaction',
+                      params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data }],
+                    });
+                    setClaimedQuestItems(prev => new Set([...prev, claimKey]));
+                  } catch (e) {
+                    console.error('Quest claim failed:', e);
+                  } finally {
+                    setClaimingQuest(null);
+                  }
+                };
                 return (
-                  <div className="mt-3 border-2 border-black shadow-[4px_4px_0px_#000] overflow-hidden">
-                    {/* Header */}
+                  <div className="border-b-2 border-black overflow-hidden">
+                    {/* Carousel header */}
                     <div className="bg-[#FFD700] px-3 py-2 flex items-center gap-2 border-b-2 border-black">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="#000" strokeWidth="0"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                       <span className="font-black text-black text-xs uppercase tracking-widest flex-1">Quest VibeMail</span>
-                      <span className="text-black/50 text-[9px] font-bold">{(questData.quests || []).length} quest{(questData.quests || []).length !== 1 ? 's' : ''}</span>
-                    </div>
-                    {/* Quest items - full banner cards */}
-                    <div className="bg-[#0d0d0d] flex flex-col divide-y-2 divide-black">
-                      {(questData.quests || []).map((q: any, i: number) => {
-                        const claimKey = `${selectedMessage._id}_${i}`;
-                        const isClaimedFromDB = questMailClaims?.some((c: any) => c.questIndex === i) ?? false;
-                        const isClaimed = isClaimedFromDB || claimedQuestItems.has(claimKey);
-                        const markClaimed = async () => {
-                          if (claimingQuest === claimKey || !myFid || !myAddress || !selectedMessage._id) return;
-                          setClaimingQuest(claimKey);
-                          try {
-                            // Call VMW Convex action (works from VibeFID context too)
-                            const { ConvexHttpClient } = await import('convex/browser');
-                            const { api: vmwApi } = await import('@/convex/_generated/api');
-                            const vmwClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-                            const questReward = q.reward || questData.rewardPerQuest || 200;
-                            const result = await vmwClient.action(vmwApi.vbmsClaim.claimQuestMailVBMS, {
-                              messageId: selectedMessage._id as any,
-                              claimerFid: myFid,
-                              claimerAddress: myAddress,
-                              questIndex: i,
-                              amount: questReward,
-                            });
-                            // On-chain claim: pool sends VBMS to user
-                            const data = encodeFunctionData({
-                              abi: POOL_ABI,
-                              functionName: 'claimVBMS',
-                              args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
-                            });
-                            const provider = await sdk.wallet.getEthereumProvider();
-                            await provider!.request({
-                              method: 'eth_sendTransaction',
-                              params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data }],
-                            });
-                            setClaimedQuestItems(prev => new Set([...prev, claimKey]));
-                          } catch (e) {
-                            console.error('Quest claim failed:', e);
-                          } finally {
-                            setClaimingQuest(null);
-                          }
-                        };
-
-                        if (q.type === 'follow_farcaster') {
-                          const profileUrl = `https://warpcast.com/${q.username}`;
-                          return (
-                            <div key={i} className="overflow-hidden">
-                              {/* Full-bleed banner */}
-                              <div className="relative h-28 overflow-hidden bg-[#1a0a2e]">
-                                {q.banner && <img src={q.banner} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />}
-                                {!q.banner && q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                                <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#8B5CF6] border border-black/50">
-                                  <span className="text-white font-black text-[8px] uppercase tracking-widest">Follow</span>
-                                </div>
-                                {/* Avatar + text pinned to bottom */}
-                                <div className="absolute bottom-2 left-3 flex items-center gap-2">
-                                  {q.pfp
-                                    ? <img src={q.pfp} className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] shadow-lg flex-shrink-0" alt="" />
-                                    : <div className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20 flex items-center justify-center flex-shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                                  }
-                                  <div>
-                                    <p className="text-white font-black text-sm drop-shadow">@{q.username}</p>
-                                    <p className="text-[#8B5CF6] text-[9px] uppercase tracking-widest font-bold">VibeFID Holder</p>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex gap-1.5 p-2">
-                                <button onClick={async () => { try { await sdk.actions?.openUrl?.(profileUrl); } catch { window.open(profileUrl, '_blank'); } }}
-                                  className="flex-1 py-1.5 bg-[#8B5CF6] border-2 border-black text-white font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide">
-                                  Go to Profile
-                                </button>
-                                <button onClick={markClaimed} disabled={isClaimed || claimingQuest === claimKey}
-                                  className={`flex-1 py-1.5 border-2 border-black font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
-                                  {isClaimed ? '✓ +200 VBMS' : claimingQuest === claimKey ? '...' : 'Claim +200 VBMS'}
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        if (q.type === 'use_miniapp') {
-                          const previewData = miniappPreviewCache[q.url];
-                          const splashImg = previewData?.splash_image_url || previewData?.screenshot_urls?.[0] || '';
-                          const appDesc = previewData?.description || '';
-                          // Fetch preview if not cached
-                          if (!previewData && q.url) {
-                            const cacheKey = `miniapp_preview_${q.url}`;
-                            try {
-                              const cached = sessionStorage.getItem(cacheKey);
-                              if (cached) {
-                                const d = JSON.parse(cached);
-                                setMiniappPreviewCache(prev => ({ ...prev, [q.url]: d }));
-                              } else {
-                                fetch(`/api/fid/miniapp-preview?url=${encodeURIComponent(q.url)}`)
-                                  .then(r => r.json())
-                                  .then(data => {
-                                    const app = data?.mini_app ?? data?.miniApp ?? null;
-                                    if (app) {
-                                      setMiniappPreviewCache(prev => ({ ...prev, [q.url]: app }));
-                                      try { sessionStorage.setItem(cacheKey, JSON.stringify(app)); } catch {}
-                                    }
-                                  }).catch(() => {});
-                              }
-                            } catch {}
-                          }
-                          return (
-                            <div key={i} className="overflow-hidden">
-                              {/* App header row */}
-                              <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-                                {q.icon
-                                  ? <img src={q.icon} className="w-10 h-10 rounded-xl border-2 border-[#22C55E] object-cover flex-shrink-0" alt="" onError={(e: any) => e.target.style.display='none'} />
-                                  : <div className="w-10 h-10 rounded-xl border-2 border-[#22C55E] bg-[#22C55E]/20 flex items-center justify-center flex-shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>
-                                }
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-white font-black text-sm truncate">{q.name}</p>
-                                  <p className="text-[#22C55E] text-[9px] uppercase tracking-widest font-bold">Mini App</p>
-                                </div>
-                                <div className="px-2 py-0.5 bg-[#22C55E] border border-black/50 flex-shrink-0">
-                                  <span className="text-black font-black text-[9px] uppercase tracking-widest">Miniapp</span>
-                                </div>
-                              </div>
-                              {/* Description */}
-                              {appDesc ? (
-                                <p className="text-white/60 text-[10px] px-3 pb-2 line-clamp-2">{appDesc}</p>
-                              ) : null}
-                              {/* Screenshot / splash image */}
-                              {splashImg ? (
-                                <div className="overflow-hidden h-28">
-                                  <img src={splashImg} alt="" className="w-full h-full object-cover" />
-                                </div>
-                              ) : (
-                                <div className="h-1 bg-[#22C55E]/20 mx-3 mb-3" />
-                              )}
-                              {/* Buttons */}
-                              <div className="flex gap-2 px-3 pb-3">
-                                <button
-                                  onClick={() => setOpenAppConfirm({ url: q.url, name: q.name })}
-                                  className="flex-1 py-2 bg-[#22C55E] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">
-                                  Open App
-                                </button>
-                                <button
-                                  onClick={markClaimed}
-                                  disabled={isClaimed || claimingQuest === claimKey}
-                                  className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
-                                  {isClaimed ? '✓ +200 VBMS' : claimingQuest === claimKey ? '...' : 'Claim +200 VBMS'}
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        if (q.type === 'join_channel') {
-                          const channelUrl = q.channelUrl || `https://warpcast.com/~/channel/${q.channelId}`;
-                          return (
-                            <div key={i} className="overflow-hidden">
-                              {/* Banner bg */}
-                              <div className="relative h-28 overflow-hidden bg-[#1a0e00]">
-                                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
-                                {/* Channel icon */}
-                                <div className="absolute bottom-0 left-4 translate-y-1/2 z-10">
-                                  <div className="w-14 h-14 border-[3px] border-[#FF9F0A] bg-[#FF9F0A]/20 flex items-center justify-center shadow-lg">
-                                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF9F0A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                                  </div>
-                                </div>
-                                <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#FF9F0A] border border-black/50">
-                                  <span className="text-black font-black text-[9px] uppercase tracking-widest">Channel</span>
-                                </div>
-                              </div>
-                              <div className="pt-9 px-4 pb-3">
-                                <p className="text-white font-black text-sm truncate">/{q.channelName || q.channelId}</p>
-                                <p className="text-[#FF9F0A] text-[10px] uppercase tracking-widest">Farcaster Channel</p>
-                                <div className="flex gap-2 mt-2.5">
-                                  <button
-                                    onClick={async () => { try { await sdk.actions?.openUrl?.(channelUrl); } catch { window.open(channelUrl, '_blank'); } }}
-                                    className="flex-1 py-2 bg-[#FF9F0A] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">
-                                    Join Channel
-                                  </button>
-                                  <button
-                                    onClick={markClaimed}
-                                    disabled={isClaimed || claimingQuest === claimKey}
-                                    className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
-                                    {isClaimed ? '✓ +200 VBMS' : claimingQuest === claimKey ? '...' : 'Claim +200 VBMS'}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        }
-
-                        return null;
-                      })}
-                    </div>
-                    {/* Claim 100 VBMS reward */}
-                    {(() => {
-                      const mailId = String(selectedMessage._id);
-                      const isClaimed = claimedMailVbms.has(mailId);
-                      const isClaiming = claimingMailId === mailId;
-                      return (
-                        <div className="border-t-2 border-black p-3 bg-[#111] flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-[#FFD700] font-black text-xs uppercase tracking-wide">Reward</p>
-                            <p className="text-white/60 text-[10px]">100 VBMS for receiving this Quest</p>
-                          </div>
-                          <button
-                            onClick={async () => {
-                              if (!myAddress || isClaimed || isClaiming) return;
-                              setClaimingMailId(mailId);
-                              try {
-                                const { ConvexHttpClient } = await import('convex/browser');
-                                const { api: vmwApi } = await import('@/convex/_generated/api');
-                                const vmwClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-                                const receiptReward = questData.baseReward || 100;
-                                const result = await vmwClient.action(vmwApi.vbmsClaim.claimQuestReceiptVBMS, {
-                                  messageId: selectedMessage._id as any,
-                                  claimerAddress: myAddress,
-                                  amount: receiptReward,
-                                });
-                                const txData = encodeFunctionData({
-                                  abi: POOL_ABI,
-                                  functionName: 'claimVBMS',
-                                  args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
-                                });
-                                const provider = await sdk.wallet.getEthereumProvider();
-                                await provider!.request({
-                                  method: 'eth_sendTransaction',
-                                  params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data: txData }],
-                                });
-                                setClaimedMailVbms(prev => new Set([...prev, mailId]));
-                              } catch (e) {
-                                console.error('Receipt claim failed:', e);
-                              } finally {
-                                setClaimingMailId(null);
-                              }
-                            }}
-                            disabled={isClaimed || isClaiming || !myAddress}
-                            className={`px-4 py-2 border-2 border-black font-black text-xs uppercase tracking-wide shadow-[3px_3px_0px_#000] flex-shrink-0 transition-all ${
-                              isClaimed
-                                ? 'bg-[#222] text-[#22C55E] shadow-none cursor-default'
-                                : isClaiming
-                                ? 'bg-[#FFD700]/50 text-black cursor-wait'
-                                : 'bg-[#FFD700] text-black hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
-                            }`}
-                          >
-                            {isClaimed ? 'Claimed!' : isClaiming ? '...' : 'Claim VBMS'}
-                          </button>
+                      {quests.length > 1 && (
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setQuestCarouselIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
+                            className="w-6 h-6 flex items-center justify-center border-2 border-black/40 bg-black/20 disabled:opacity-30 font-black text-black text-sm leading-none">‹</button>
+                          <span className="text-black/60 text-[9px] font-bold w-8 text-center">{idx + 1}/{quests.length}</span>
+                          <button onClick={() => setQuestCarouselIdx(i => Math.min(quests.length - 1, i + 1))} disabled={idx === quests.length - 1}
+                            className="w-6 h-6 flex items-center justify-center border-2 border-black/40 bg-black/20 disabled:opacity-30 font-black text-black text-sm leading-none">›</button>
                         </div>
-                      );
-                    })()}
+                      )}
+                    </div>
+                    {/* Single quest item */}
+                    <div className="bg-[#0d0d0d]">
+                      {q.type === 'follow_farcaster' && (() => {
+                        const profileUrl = `https://warpcast.com/${q.username}`;
+                        return (
+                          <div className="overflow-hidden">
+                            <div className="relative h-28 overflow-hidden bg-[#1a0a2e]">
+                              {q.banner && <img src={q.banner} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />}
+                              {!q.banner && q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                              <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#8B5CF6] border border-black/50">
+                                <span className="text-white font-black text-[8px] uppercase tracking-widest">Follow</span>
+                              </div>
+                              <div className="absolute bottom-2 left-3 flex items-center gap-2">
+                                {q.pfp ? <img src={q.pfp} className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] shadow-lg flex-shrink-0" alt="" /> : <div className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20 flex items-center justify-center flex-shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>}
+                                <div>
+                                  <p className="text-white font-black text-sm drop-shadow">@{q.username}</p>
+                                  <p className="text-[#8B5CF6] text-[9px] uppercase tracking-widest font-bold">VibeFID Holder</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-1.5 p-2">
+                              <button onClick={async () => { try { await sdk.actions?.openUrl?.(profileUrl); } catch { window.open(profileUrl, '_blank'); } }}
+                                className="flex-1 py-1.5 bg-[#8B5CF6] border-2 border-black text-white font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide">Go to Profile</button>
+                              <button onClick={markClaimed} disabled={isClaimed || claimingQuest === claimKey}
+                                className={`flex-1 py-1.5 border-2 border-black font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
+                                {isClaimed ? '✓ Claimed' : claimingQuest === claimKey ? '...' : `Claim +${q.reward || questData.rewardPerQuest || 200} VBMS`}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      {q.type === 'use_miniapp' && (() => {
+                        const previewData = miniappPreviewCache[q.url];
+                        const splashImg = previewData?.splash_image_url || previewData?.screenshot_urls?.[0] || '';
+                        const appDesc = previewData?.description || '';
+                        if (!previewData && q.url) {
+                          const cacheKey = `miniapp_preview_${q.url}`;
+                          try {
+                            const cached = sessionStorage.getItem(cacheKey);
+                            if (cached) { setMiniappPreviewCache(prev => ({ ...prev, [q.url]: JSON.parse(cached) })); }
+                            else { fetch(`/api/fid/miniapp-preview?url=${encodeURIComponent(q.url)}`).then(r => r.json()).then(data => { const app = data?.mini_app ?? data?.miniApp ?? null; if (app) { setMiniappPreviewCache(prev => ({ ...prev, [q.url]: app })); try { sessionStorage.setItem(cacheKey, JSON.stringify(app)); } catch {} } }).catch(() => {}); }
+                          } catch {}
+                        }
+                        return (
+                          <div className="overflow-hidden">
+                            <div className="flex items-center gap-2 px-3 pt-3 pb-2">
+                              {q.icon ? <img src={q.icon} className="w-10 h-10 rounded-xl border-2 border-[#22C55E] object-cover flex-shrink-0" alt="" onError={(e: any) => e.target.style.display='none'} /> : <div className="w-10 h-10 rounded-xl border-2 border-[#22C55E] bg-[#22C55E]/20 flex items-center justify-center flex-shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>}
+                              <div className="flex-1 min-w-0"><p className="text-white font-black text-sm truncate">{q.name}</p><p className="text-[#22C55E] text-[9px] uppercase tracking-widest font-bold">Mini App</p></div>
+                              <div className="px-2 py-0.5 bg-[#22C55E] border border-black/50 flex-shrink-0"><span className="text-black font-black text-[9px] uppercase tracking-widest">Miniapp</span></div>
+                            </div>
+                            {appDesc ? <p className="text-white/60 text-[10px] px-3 pb-2 line-clamp-2">{appDesc}</p> : null}
+                            {splashImg ? <div className="overflow-hidden h-28"><img src={splashImg} alt="" className="w-full h-full object-cover" /></div> : <div className="h-1 bg-[#22C55E]/20 mx-3 mb-3" />}
+                            <div className="flex gap-2 px-3 pb-3">
+                              <button onClick={() => setOpenAppConfirm({ url: q.url, name: q.name })}
+                                className="flex-1 py-2 bg-[#22C55E] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">Open App</button>
+                              <button onClick={markClaimed} disabled={isClaimed || claimingQuest === claimKey}
+                                className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
+                                {isClaimed ? '✓ Claimed' : claimingQuest === claimKey ? '...' : `Claim +${q.reward || questData.rewardPerQuest || 200} VBMS`}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      {q.type === 'join_channel' && (() => {
+                        const channelUrl = q.channelUrl || `https://warpcast.com/~/channel/${q.channelId}`;
+                        return (
+                          <div className="overflow-hidden">
+                            <div className="relative h-28 overflow-hidden bg-[#1a0e00]">
+                              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#0d0d0d]" />
+                              <div className="absolute bottom-0 left-4 translate-y-1/2 z-10">
+                                <div className="w-14 h-14 border-[3px] border-[#FF9F0A] bg-[#FF9F0A]/20 flex items-center justify-center shadow-lg">
+                                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FF9F0A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                </div>
+                              </div>
+                              <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#FF9F0A] border border-black/50"><span className="text-black font-black text-[9px] uppercase tracking-widest">Channel</span></div>
+                            </div>
+                            <div className="pt-9 px-4 pb-3">
+                              <p className="text-white font-black text-sm truncate">/{q.channelName || q.channelId}</p>
+                              <p className="text-[#FF9F0A] text-[10px] uppercase tracking-widest">Farcaster Channel</p>
+                              <div className="flex gap-2 mt-2.5">
+                                <button onClick={async () => { try { await sdk.actions?.openUrl?.(channelUrl); } catch { window.open(channelUrl, '_blank'); } }}
+                                  className="flex-1 py-2 bg-[#FF9F0A] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">Join Channel</button>
+                                <button onClick={markClaimed} disabled={isClaimed || claimingQuest === claimKey}
+                                  className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
+                                  {isClaimed ? '✓ Claimed' : claimingQuest === claimKey ? '...' : `Claim +${q.reward || questData.rewardPerQuest || 200} VBMS`}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    {/* Dot indicators */}
+                    {quests.length > 1 && (
+                      <div className="flex justify-center gap-1.5 py-2 bg-[#0d0d0d] border-t border-black/40">
+                        {quests.map((_: any, dotIdx: number) => (
+                          <button key={dotIdx} onClick={() => setQuestCarouselIdx(dotIdx)}
+                            className={`w-1.5 h-1.5 rounded-full transition-all ${dotIdx === idx ? 'bg-[#FFD700]' : 'bg-white/20'}`} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Message text + media */}
+              <div className="p-3 space-y-3">
+                {/* Message text + inline media commands */}
+                {(() => {
+                  const parsed = parseQuestBanner(selectedMessage.message || '');
+                  const msg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
+                  const mediaOnlyMsg = msg.split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n');
+                  return msg ? (
+                    <div className="text-white text-sm leading-relaxed">
+                      {translatedContent ? (
+                        <>
+                          <span>{translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').trim()}</span>
+                          <span className="text-white/30 text-[10px] ml-1">({(t as any).translatedLabel || 'translated'})</span>
+                          {mediaOnlyMsg && renderRichMessageFn(mediaOnlyMsg, playingAudio, audioRef, setPlayingAudio, lang, username)}
+                        </>
+                      ) : (
+                        renderRichMessageFn(msg, playingAudio, audioRef, setPlayingAudio, lang, username)
+                      )}
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* Legacy imageId attachment */}
+                {selectedMessage.imageId && (() => {
+                  const isCustom = selectedMessage.imageId.startsWith('img:');
+                  const customUrl = isCustom ? `${VIBEFID_STORAGE_URL_INLINE}/${selectedMessage.imageId.slice(4)}` : null;
+                  const imgData = !isCustom ? getImageFile(selectedMessage.imageId) : null;
+                  if (customUrl) return <img src={customUrl} alt="VibeMail" className="w-full rounded border-2 border-black" />;
+                  if (!imgData) return null;
+                  return imgData.isVideo
+                    ? <video src={imgData.file} className="w-full rounded border-2 border-black" autoPlay loop muted playsInline />
+                    : <img src={imgData.file} alt="VibeMail" className="w-full rounded border-2 border-black" />;
+                })()}
+
+                {/* Legacy audioId player */}
+                {selectedMessage.audioId && (
+                  <div className="border-2 border-black shadow-[2px_2px_0px_#000] p-3 flex items-center gap-3 bg-[#1a0e00]">
+                    <button
+                      onClick={() => {
+                        if (playingAudio === selectedMessage.audioId) { stopAudio(); }
+                        else { playAudioById(selectedMessage.audioId!, audioRef, convex, setPlayingAudio); }
+                      }}
+                      className={`w-10 h-10 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center flex-shrink-0 transition-all ${playingAudio === selectedMessage.audioId ? 'bg-red-500 text-white animate-pulse' : 'bg-vintage-gold text-black hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'}`}
+                    >
+                      {playingAudio === selectedMessage.audioId
+                        ? <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                        : <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[#F97316] font-bold text-sm truncate flex items-center gap-1">
+                        {isCustomAudio(selectedMessage.audioId) ? (<><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>Voice message</>) : (isMiAudio(selectedMessage.audioId) ? getMiName(selectedMessage.audioId!) : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound))}
+                      </p>
+                      <p className="text-white/50 text-xs">{playingAudio === selectedMessage.audioId ? t.playing : t.tapToPlay}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Miniapp preview */}
+                {selectedMessage.miniappUrl && <MiniappPreview url={selectedMessage.miniappUrl} />}
+
+                {/* NFT Gift */}
+                {selectedMessage.giftNftImageUrl && (
+                  <div onClick={() => { const url = getMarketplaceUrl(selectedMessage.giftNftCollection); if (url) openMarketplace(url, sdk, true); }}
+                    className="bg-[#111] border-2 border-black shadow-[2px_2px_0px_#000] p-3 flex items-center gap-3 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all cursor-pointer">
+                    <div className="relative flex-shrink-0">
+                      <img src={selectedMessage.giftNftImageUrl} alt={selectedMessage.giftNftName || 'NFT Gift'} className="w-14 h-14 object-cover border-2 border-black" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }} />
+                      <div className="absolute -top-1 -right-1 bg-vintage-gold border border-black w-4 h-4 flex items-center justify-center">
+                        <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-vintage-gold font-bold text-sm truncate">{selectedMessage.giftNftName}</p>
+                      <p className="text-white/50 text-xs">{selectedMessage.giftNftCollection}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Date footer */}
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
+                  <span className="text-white/40">{new Date(selectedMessage.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+
+              {/* Receipt Reward - BOTTOM */}
+              {(() => {
+                const parsed = parseQuestBanner(selectedMessage.message || '');
+                if (!parsed) return null;
+                const { questData } = parsed;
+                const mailId = String(selectedMessage._id);
+                const isClaimed = claimedMailVbms.has(mailId);
+                const isClaiming = claimingMailId === mailId;
+                return (
+                  <div className="border-t-2 border-black p-3 bg-[#111] flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[#FFD700] font-black text-xs uppercase tracking-wide">Reward</p>
+                      <p className="text-white/60 text-[10px]">{questData.baseReward || 100} VBMS for receiving this Quest</p>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!myAddress || isClaimed || isClaiming) return;
+                        setClaimingMailId(mailId);
+                        try {
+                          const { ConvexHttpClient } = await import('convex/browser');
+                          const { api: vmwApi } = await import('@/convex/_generated/api');
+                          const vmwClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+                          const receiptReward = questData.baseReward || 100;
+                          const result = await vmwClient.action(vmwApi.vbmsClaim.claimQuestReceiptVBMS, {
+                            messageId: selectedMessage._id as any,
+                            claimerAddress: myAddress,
+                            amount: receiptReward,
+                          });
+                          const txData = encodeFunctionData({
+                            abi: POOL_ABI,
+                            functionName: 'claimVBMS',
+                            args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
+                          });
+                          const provider = await sdk.wallet.getEthereumProvider();
+                          await provider!.request({
+                            method: 'eth_sendTransaction',
+                            params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data: txData }],
+                          });
+                          setClaimedMailVbms(prev => new Set([...prev, mailId]));
+                        } catch (e) {
+                          console.error('Receipt claim failed:', e);
+                        } finally {
+                          setClaimingMailId(null);
+                        }
+                      }}
+                      disabled={isClaimed || isClaiming || !myAddress}
+                      className={`px-4 py-2 border-2 border-black font-black text-xs uppercase tracking-wide shadow-[3px_3px_0px_#000] flex-shrink-0 transition-all ${
+                        isClaimed
+                          ? 'bg-[#222] text-[#22C55E] shadow-none cursor-default'
+                          : isClaiming
+                          ? 'bg-[#FFD700]/50 text-black cursor-wait'
+                          : 'bg-[#FFD700] text-black hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
+                      }`}
+                    >
+                      {isClaimed ? 'Claimed!' : isClaiming ? '...' : 'Claim VBMS'}
+                    </button>
                   </div>
                 );
               })()}
