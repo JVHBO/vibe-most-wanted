@@ -969,9 +969,9 @@ export function VibeMailInboxWithClaim({
   const [isTranslating, setIsTranslating] = useState(false);
   const [sendNetwork, setSendNetwork] = useState<'arb' | 'base'>('arb');
   const [showNetworkModal, setShowNetworkModal] = useState(false);
-  const skipNetworkModalRef = React.useRef(false);
-  const sendNetworkRef = React.useRef<'arb' | 'base'>('arb');
-  const sendBtnRef = React.useRef<HTMLButtonElement>(null);
+  const skipNetworkModalRef = useRef(false);
+  const sendNetworkRef = useRef<'arb' | 'base'>('arb');
+  const sendBtnRef = useRef<HTMLButtonElement>(null);
   const [openAppConfirm, setOpenAppConfirm] = useState<{ url: string; name: string } | null>(null);
   const [miniappPreviewCache, setMiniappPreviewCache] = useState<Record<string, any>>({});
   const [msgPage, setMsgPage] = useState(0);
@@ -1996,12 +1996,9 @@ export function VibeMailInboxWithClaim({
                   if (settings.miniapp && settings.miniappName) quests.push({ type: 'use_miniapp', url: settings.miniapp, name: settings.miniappName, icon: settings.miniappIcon || '' });
                   if (settings.channel && settings.channelName) quests.push({ type: 'join_channel', channelId: settings.channelName, channelName: settings.channelName, channelUrl: settings.channel, channelImg: settings.channelImg || '' });
                   if (quests.length === 0) {
-                    // No settings yet — open composer with hint
-                    setComposerMessage('');
-                    setComposerQuestData(null);
-                    setComposerQuestType('social_quest');
+                    // No quests configured — open quest settings first
                     setShowPurposeModal(false);
-                    setShowComposer(true);
+                    setShowQuestEditModal(true);
                     return;
                   }
                   setComposerMessage('');
@@ -2010,8 +2007,12 @@ export function VibeMailInboxWithClaim({
                   setShowPurposeModal(false);
                   setShowComposer(true);
                 }}
-                className="flex-1 p-4 bg-[#111] border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-left flex flex-col justify-between"
+                className="flex-1 border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-left flex flex-col justify-between overflow-hidden relative"
+                style={{ minHeight: 120 }}
               >
+                {/* Background image */}
+                <img src="/vibemail-quest-bg.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none select-none" />
+                <div className="relative z-10 p-4 flex flex-col justify-between h-full">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-[#FFD700] border-2 border-black flex items-center justify-center flex-shrink-0">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="#000" stroke="#000" strokeWidth="0"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -2042,6 +2043,7 @@ export function VibeMailInboxWithClaim({
                     <p className="mt-3 text-white/20 text-[9px]">{(t as any).vibemailConfigureSettings || 'Configure in the Settings tab before using'}</p>
                   );
                 })()}
+                </div>{/* end z-10 wrapper */}
               </button>
             </div>
           </div>
