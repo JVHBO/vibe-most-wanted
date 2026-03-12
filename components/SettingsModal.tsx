@@ -596,7 +596,7 @@ export function SettingsModal({
               onChange={(e) => setLang(e.target.value as any)}
               value={lang}
               className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold"
-              style={{ backgroundColor: '#1A1A1A', color: '#FFD400' }}
+              style={{ backgroundColor: '#1A1A1A', color: '#FFD400', colorScheme: 'dark' }}
             >
               <option value="en" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇺🇸 English</option>
               <option value="pt-BR" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>🇧🇷 Português</option>
@@ -634,7 +634,7 @@ export function SettingsModal({
               }}
               value={musicMode}
               className="w-full bg-vintage-black text-vintage-gold px-4 py-3 rounded-lg border border-vintage-gold/50 hover:bg-vintage-gold/10 transition cursor-pointer font-modern font-semibold"
-              style={{ backgroundColor: '#1A1A1A', color: '#FFD400' }}
+              style={{ backgroundColor: '#1A1A1A', color: '#FFD400', colorScheme: 'dark' }}
             >
               <option value="default" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>{t('musicModeDefault')}</option>
               <option value="language" style={{ backgroundColor: '#1A1A1A', color: '#F5F5F5' }}>{t('musicModeLanguage')}</option>

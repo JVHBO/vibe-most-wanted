@@ -15,7 +15,8 @@ import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
 import { WantedCastsTab } from "@/components/fid/WantedCastsTab";
 import { VibeMailInboxWithClaim } from "@/components/fid/VibeMail";
-import { VibeFIDConvexProvider } from "@/contexts/VibeFIDConvexProvider";
+import { VibeFIDConvexProvider, vibefidConvex } from "@/contexts/VibeFIDConvexProvider";
+import { api as fidApi } from "@/lib/fid/convex-generated/api";
 import { AutoFitText } from "@/components/AutoFitText";
 
 
@@ -54,6 +55,14 @@ export default function QuestsPage() {
     if (c) setLocalChain(c);
   }, [(profileDashboard as any)?.preferredChain]);
   const effectiveChain = localChain;
+
+  // VibeMail unread count for red dot on tab
+  const [vibeMailUnread, setVibeMailUnread] = useState(0);
+  useEffect(() => {
+    if (!userFid) return;
+    vibefidConvex.query(fidApi.cardVotes.getUnreadMessageCount, { cardFid: userFid })
+      .then(setVibeMailUnread).catch(() => {});
+  }, [userFid]);
 
   // State
   const [verifying, setVerifying] = useState<string | null>(null);
@@ -483,10 +492,13 @@ export default function QuestsPage() {
                 key={key}
                 onClick={() => { if (locked) return; AudioManager.buttonClick(); setActiveTab(key); }}
                 disabled={locked}
-                className={`flex-1 py-1.5 font-black uppercase border-4 border-black transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${locked ? 'qt-messages-locked opacity-40 cursor-not-allowed' : activeTab === key ? `${activeClass} shadow-none` : `${inactiveClass} shadow-[3px_3px_0px_#000]`}`}
+                className={`relative flex-1 py-1.5 font-black uppercase border-4 border-black transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${locked ? 'qt-messages-locked opacity-40 cursor-not-allowed' : activeTab === key ? `${activeClass} shadow-none` : `${inactiveClass} shadow-[3px_3px_0px_#000]`}`}
                 style={{ fontSize: 'clamp(8px, 2.8vw, 11px)', lineHeight: 1.2 }}
               >
                 {label}
+                {key === 'messages' && vibeMailUnread > 0 && activeTab !== 'messages' && (
+                  <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black animate-pulse z-10" />
+                )}
               </button>
             );
           })}

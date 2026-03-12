@@ -296,8 +296,8 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
               className="w-7 h-7 bg-red-700 text-white font-bold text-xs border border-red-500 rounded flex items-center justify-center hover:bg-red-600 transition-colors flex-shrink-0"
             >✕</button>
           </div>
-          <div className="flex-1 overflow-y-auto min-h-0">
-            <VibeMailInbox cardFid={fid} username={card?.username || username} onClose={onClose} asPage={true} hideClose={true} />
+          <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+            <VibeMailInbox cardFid={fid} username={card?.username || username} onClose={onClose} inline={true} hideClose={true} />
           </div>
         </div>
       </div>

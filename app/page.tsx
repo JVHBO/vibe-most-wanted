@@ -3938,6 +3938,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
               setSuccessMessage={setSuccessMessage}
               t={t}
               refreshUserProfile={refreshUserProfile}
+              onOpenFidModal={() => { setShowFidMailModal(true); }}
             />
           )}
 

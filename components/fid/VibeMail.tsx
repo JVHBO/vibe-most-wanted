@@ -492,6 +492,17 @@ interface VibeMailInboxProps {
   onClose: () => void;
   asPage?: boolean;
   hideClose?: boolean;
+  inline?: boolean;
+}
+
+function getInboxPreview(msg: VibeMailMessage): { text: string; hasGif: boolean; hasImage: boolean; hasSoundCmd: boolean; hasQuest: boolean } {
+  let text = msg.message || '';
+  const hasGif = /\/img=https?:\/\/(media\.giphy|media[0-9]*\.giphy|giphy\.com)/i.test(text) || /\/img=\S+\.gif/i.test(text);
+  const hasImage = /\/img=/i.test(text) && !hasGif;
+  const hasSoundCmd = /\/sound=/i.test(text);
+  const hasQuest = !!msg.miniappUrl;
+  text = text.replace(/\/img=\S+/gi, '').replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').trim();
+  return { text, hasGif, hasImage, hasSoundCmd, hasQuest };
 }
 
 // Module-level rich message renderer — commands become media inline
@@ -635,7 +646,7 @@ function SoundRow({ name, isSelected, isPreviewing, onPlay, onUse }: {
 // VibeMail Inbox Component - Shows all messages for a card
 const INBOX_PAGE_SIZE = 8;
 
-export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = false }: VibeMailInboxProps) {
+export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = false, inline = false }: VibeMailInboxProps) {
   const { lang } = useLanguage();
   const t = fidTranslations[lang];
   const { isMusicEnabled, setIsMusicEnabled } = useMusic();
@@ -665,6 +676,18 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
     // Auto-play audio if exists (both predefined and custom)
     if (msg.audioId) {
       playAudioById(msg.audioId, audioRef, convex, setPlayingAudio);
+    } else if (msg.message) {
+      // Auto-play first /sound=URL from text
+      const soundMatch = msg.message.match(/\/sound=(\S+?)(?:\s+volume=([\d.]+))?/i);
+      if (soundMatch && audioRef.current) {
+        const url = proxyAudioUrl(soundMatch[1]);
+        const volume = soundMatch[2] ? Math.min(1, Math.max(0, parseFloat(soundMatch[2]))) : 0.2;
+        const pid = `inline:${url}`;
+        audioRef.current.src = url;
+        audioRef.current.volume = volume;
+        audioRef.current.play().catch(() => {});
+        setPlayingAudio(pid);
+      }
     }
   };
 
@@ -703,15 +726,19 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
   }, []);
 
   return (
-    <div className={asPage
-      ? "min-h-screen bg-vintage-dark"
-      : "fixed inset-0 z-[350] flex items-center justify-center bg-black/90 p-4"
+    <div className={inline
+      ? "flex flex-col h-full"
+      : asPage
+        ? "min-h-screen bg-vintage-dark"
+        : "fixed inset-0 z-[350] flex items-center justify-center bg-black/90 p-4"
     }>
       <audio ref={audioRef} onEnded={() => setPlayingAudio(null)} />
 
-      <div className={asPage
-        ? "bg-vintage-charcoal p-4 w-full h-full flex flex-col"
-        : "bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-4 w-full max-w-md max-h-[calc(100vh-120px)] overflow-hidden flex flex-col"
+      <div className={inline
+        ? "bg-vintage-charcoal p-4 flex flex-col flex-1 overflow-y-auto"
+        : asPage
+          ? "bg-vintage-charcoal p-4 w-full h-full flex flex-col"
+          : "bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-4 w-full max-w-md max-h-[calc(100vh-120px)] overflow-hidden flex flex-col"
       }>
         {!hideClose && (
           <div className="flex justify-end mb-2">
@@ -746,7 +773,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                   ) : translatedContent ? (
                     <>
                       <span>{translatedContent}</span>
-                      <span className="text-white/30 text-[10px] ml-1">(traduzido)</span>
+                      <span className="text-white/30 text-[10px] ml-1">({(t as any).translatedLabel || 'translated'})</span>
                       {renderRichMessageFn(
                         (selectedMessage.message || '').split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n'),
                         playingAudio, audioRef, setPlayingAudio, lang, username
@@ -875,7 +902,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                         )}
                         {/* Content */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 mb-0.5">
+                          <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                             <span className={`text-xs font-bold truncate ${msg.isRead ? 'text-white/50' : 'text-vintage-gold'}`}>
                               {msg.voterUsername ? `@${msg.voterUsername}` : 'Anonymous'}
                             </span>
@@ -883,9 +910,16 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                             {msg.isPaid && <span className="text-[9px] text-yellow-400 font-bold flex-shrink-0">PAID</span>}
                             {msg.audioId && <span className="text-[9px] text-vintage-burnt-gold flex-shrink-0">♪</span>}
                             {msg.giftNftImageUrl && <span className="text-[9px] text-purple-400 flex-shrink-0">NFT</span>}
+                            {(() => { const p = getInboxPreview(msg); return (<>
+                              {p.hasGif && <span className="text-[9px] px-1 bg-purple-900/50 text-purple-300 border border-purple-500/40 rounded flex-shrink-0">gif</span>}
+                              {p.hasImage && <span className="text-[9px] px-1 bg-blue-900/50 text-blue-300 border border-blue-500/40 rounded flex-shrink-0">img</span>}
+                              {p.hasSoundCmd && !msg.audioId && <span className="text-[9px] text-vintage-burnt-gold flex-shrink-0">♪</span>}
+                              {p.hasQuest && <span className="text-[9px] px-1 bg-green-900/50 text-green-300 border border-green-500/40 rounded flex-shrink-0">quest</span>}
+                              {msg.castUrl && <span className="text-[9px] px-1 bg-orange-900/50 text-orange-300 border border-orange-500/40 rounded flex-shrink-0">cast</span>}
+                            </>); })()}
                           </div>
                           <p className={`text-xs truncate leading-tight ${msg.isRead ? 'text-white/40' : 'text-white/80'}`}>
-                            {msg.message?.slice(0, 60) || (msg.audioId ? 'Voice message' : msg.giftNftName || '...')}
+                            {(() => { const p = getInboxPreview(msg); return p.text || (msg.audioId ? 'Voice message' : msg.giftNftName || '...'); })()}
                           </p>
                         </div>
                       </div>
@@ -4321,7 +4355,7 @@ export function VibeMailInboxWithClaim({
                     {translatedContent ? (
                       <>
                         <span>{translatedContent}</span>
-                        <span className="text-white/30 text-[10px] ml-1">(traduzido)</span>
+                        <span className="text-white/30 text-[10px] ml-1">({(t as any).translatedLabel || 'translated'})</span>
                         {mediaOnlyMsg && renderRichMessageFn(mediaOnlyMsg, playingAudio, audioRef, setPlayingAudio, lang, username)}
                       </>
                     ) : (

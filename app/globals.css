@@ -1290,3 +1290,8 @@ body > * {
   0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.5); }
   50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.4); }
 }
+
+/* Fix: select text visible on dark backgrounds across all themes */
+select {
+  color-scheme: dark;
+}

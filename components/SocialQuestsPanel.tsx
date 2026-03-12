@@ -17,6 +17,7 @@ interface SocialQuestsPanelProps {
   onRewardClaimed?: (amount: number) => void;
   hasVibeBadge?: boolean;
   hasVibeFID?: boolean;
+  onOpenFidModal?: () => void;
 }
 
 export function SocialQuestsPanel({
@@ -26,6 +27,7 @@ export function SocialQuestsPanel({
   onRewardClaimed,
   hasVibeBadge = false,
   hasVibeFID = false,
+  onOpenFidModal,
 }: SocialQuestsPanelProps) {
   const { t } = useLanguage();
   // 2x bonus if player has VibeFID or VIBE Badge
@@ -412,9 +414,9 @@ export function SocialQuestsPanel({
     return "now";
   };
 
-  // Open VibeFID miniapp to mint
+  // Open VibeFID mint modal (or redirect if no modal handler provided)
   const openVibeFIDMint = () => {
-    window.location.href = '/fid';
+    if (onOpenFidModal) { onOpenFidModal(); } else { window.location.href = '/fid'; }
   };
 
   return (
