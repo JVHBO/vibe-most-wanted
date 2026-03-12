@@ -960,6 +960,7 @@ export function VibeMailInboxWithClaim({
   const [claimingQuestId, setClaimingQuestId] = useState<string | null>(null);
   const [questClaimResult, setQuestClaimResult] = useState<{ questId: string; success: boolean; error?: string } | null>(null);
   const [claimedQuestItems, setClaimedQuestItems] = useState<Set<string>>(new Set());
+  const [claimingQuest, setClaimingQuest] = useState<string | null>(null);
   const [claimedMailVbms, setClaimedMailVbms] = useState<Set<string>>(new Set());
   const [claimingMailId, setClaimingMailId] = useState<string | null>(null);
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
@@ -3843,7 +3844,8 @@ export function VibeMailInboxWithClaim({
 
                 // BROADCAST MODE - send to multiple recipients (costs 100 VBMS per recipient)
                 if (sendMode === 'broadcast' && broadcastRecipients.length > 0) {
-                  const totalCost = BigInt(broadcastRecipients.length) * parseEther(VIBEMAIL_COST_VBMS);
+                  const costPerRecipient = composerQuestData ? BigInt(questMailCost) : BigInt(Number(VIBEMAIL_COST_VBMS));
+                  const totalCost = BigInt(broadcastRecipients.length) * parseEther(String(costPerRecipient));
                   setIsSending(true);
                   setBroadcastResult(null);
                   try {
@@ -3961,7 +3963,7 @@ export function VibeMailInboxWithClaim({
               ) : sendMode === 'broadcast' ? (
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                  {t.vibemailSendTo.replace('{count}', String(broadcastRecipients.length)).replace('{cost}', String(broadcastRecipients.length * 1000))}
+                  {t.vibemailSendTo.replace('{count}', String(broadcastRecipients.length)).replace('{cost}', String(broadcastRecipients.length * (composerQuestData ? questMailCost : Number(VIBEMAIL_COST_VBMS))))}
                 </span>
               ) : sendMode === 'random' ? (
                 <span className="flex items-center gap-2">
@@ -4048,14 +4050,18 @@ export function VibeMailInboxWithClaim({
                         const isClaimedFromDB = questMailClaims?.some((c: any) => c.questIndex === i) ?? false;
                         const isClaimed = isClaimedFromDB || claimedQuestItems.has(claimKey);
                         const markClaimed = async () => {
+                          if (claimingQuest === claimKey) return;
+                          setClaimingQuest(claimKey);
                           try {
                             if (myFid && selectedMessage._id) {
                               await claimQuestMailRewardMutation({ messageId: selectedMessage._id as any, claimerFid: myFid, questIndex: i });
                             }
+                            setClaimedQuestItems(prev => new Set([...prev, claimKey]));
                           } catch (e) {
                             console.error('Quest claim failed:', e);
+                          } finally {
+                            setClaimingQuest(null);
                           }
-                          setClaimedQuestItems(prev => new Set([...prev, claimKey]));
                         };
 
                         if (q.type === 'follow_farcaster') {
@@ -4087,9 +4093,9 @@ export function VibeMailInboxWithClaim({
                                   className="flex-1 py-1.5 bg-[#8B5CF6] border-2 border-black text-white font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide">
                                   Go to Profile
                                 </button>
-                                <button onClick={markClaimed} disabled={isClaimed}
-                                  className={`flex-1 py-1.5 border-2 border-black font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
-                                  {isClaimed ? '✓ +200 VBMS' : 'Claim +200 VBMS'}
+                                <button onClick={markClaimed} disabled={isClaimed || claimingQuest === claimKey}
+                                  className={`flex-1 py-1.5 border-2 border-black font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
+                                  {isClaimed ? '✓ +200 VBMS' : claimingQuest === claimKey ? '...' : 'Claim +200 VBMS'}
                                 </button>
                               </div>
                             </div>
@@ -4158,9 +4164,9 @@ export function VibeMailInboxWithClaim({
                                 </button>
                                 <button
                                   onClick={markClaimed}
-                                  disabled={isClaimed}
-                                  className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
-                                  {isClaimed ? '✓ +200 VBMS' : 'Claim +200 VBMS'}
+                                  disabled={isClaimed || claimingQuest === claimKey}
+                                  className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
+                                  {isClaimed ? '✓ +200 VBMS' : claimingQuest === claimKey ? '...' : 'Claim +200 VBMS'}
                                 </button>
                               </div>
                             </div>
@@ -4195,9 +4201,9 @@ export function VibeMailInboxWithClaim({
                                   </button>
                                   <button
                                     onClick={markClaimed}
-                                    disabled={isClaimed}
-                                    className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
-                                    {isClaimed ? '✓ +200 VBMS' : 'Claim +200 VBMS'}
+                                    disabled={isClaimed || claimingQuest === claimKey}
+                                    className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
+                                    {isClaimed ? '✓ +200 VBMS' : claimingQuest === claimKey ? '...' : 'Claim +200 VBMS'}
                                   </button>
                                 </div>
                               </div>
