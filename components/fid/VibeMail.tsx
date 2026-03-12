@@ -585,8 +585,10 @@ function renderRichMessageFn(
       nodes.push(isVid
         ? <video key={mediaKey} src={url} className="w-full max-h-72 object-contain border border-[#FFD700]/30 my-1 rounded" autoPlay loop muted playsInline
             onError={(e) => { const el = e.currentTarget; el.style.display='none'; const err = document.createElement('div'); err.className='text-red-400 text-xs py-2 px-3 bg-red-900/30 border border-red-500/30 rounded my-1'; err.textContent='Video unavailable — check URL'; el.parentNode?.insertBefore(err, el.nextSibling); }} />
-        : <img key={mediaKey} src={url} alt="Media" className="w-full max-h-72 object-contain border border-[#FFD700]/30 my-1 rounded"
-            onError={(e) => { const el = e.currentTarget; el.style.display='none'; const err = document.createElement('div'); err.className='text-red-400 text-xs py-2 px-3 bg-red-900/30 border border-red-500/30 rounded my-1'; err.textContent='Image unavailable — check URL'; el.parentNode?.insertBefore(err, el.nextSibling); }} />
+        : <img key={mediaKey} src={url} alt="" loading="lazy" className="w-full max-h-72 object-contain border border-[#FFD700]/30 my-1 rounded bg-[#1a1a1a]"
+            style={{ minHeight: 80 }}
+            onLoad={(e) => { (e.currentTarget as HTMLImageElement).style.minHeight = ''; }}
+            onError={(e) => { const el = e.currentTarget; el.style.display='none'; el.style.minHeight=''; const err = document.createElement('div'); err.className='text-red-400 text-xs py-2 px-3 bg-red-900/30 border border-red-500/30 rounded my-1'; err.textContent='Image unavailable'; el.parentNode?.insertBefore(err, el.nextSibling); }} />
       );
       continue;
     }
@@ -734,28 +736,6 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
 
             {/* Message Content */}
             <div className="bg-gradient-to-b from-vintage-black/80 to-vintage-charcoal rounded-lg p-3 flex-1">
-              {selectedMessage.message && (
-                <div className="flex justify-end mb-2">
-                  <button
-                    onClick={() => {
-                      if (translatedContent) { setTranslatedContent(null); return; }
-                      const stripped = stripMediaCommands(selectedMessage.message || '');
-                      if (!stripped) return;
-                      const cached = getTranslationCache(selectedMessage._id, lang);
-                      if (cached) { setTranslatedContent(cached); return; }
-                      setIsTranslating(true);
-                      translateText(stripped, lang)
-                        .then(result => { if (result) { setTranslatedContent(result); setTranslationCache(selectedMessage._id, lang, result); } })
-                        .catch(() => {})
-                        .finally(() => setIsTranslating(false));
-                    }}
-                    disabled={isTranslating}
-                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${translatedContent ? 'bg-blue-600 border-blue-400 text-white' : 'bg-vintage-black/50 border-vintage-gold/30 text-vintage-gold/70 hover:text-vintage-gold'}`}
-                  >
-                    {isTranslating ? '...' : translatedContent ? lang.toUpperCase().replace('-', '') : 'TR'}
-                  </button>
-                </div>
-              )}
               <div className="mb-3">
                 <div className="text-white text-sm leading-relaxed flex-1">
                   {isTranslating ? (
@@ -984,6 +964,7 @@ export function VibeMailInboxWithClaim({
   const [showScrollDown, setShowScrollDown] = useState(false);
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [sendNetwork, setSendNetwork] = useState<'arb' | 'base'>('arb');
   const [openAppConfirm, setOpenAppConfirm] = useState<{ url: string; name: string } | null>(null);
   const [miniappPreviewCache, setMiniappPreviewCache] = useState<Record<string, any>>({});
   const [msgPage, setMsgPage] = useState(0);
@@ -1617,8 +1598,10 @@ export function VibeMailInboxWithClaim({
       ? `[VQUEST:${JSON.stringify(composerQuestData)}]\n${composerMessage}`
       : composerMessage;
     try {
-      // On-chain confirmation via ARB validator (generates TX proof)
-      await validateOnArb(100, ARB_CLAIM_TYPE.VIBEMAIL);
+      // On-chain confirmation — ARB only (Base skips on-chain validation)
+      if (!hasFreemail || sendNetwork === 'arb') {
+        await validateOnArb(100, ARB_CLAIM_TYPE.VIBEMAIL);
+      }
 
       if (!hasFreemail) {
         await transferVBMS(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(VIBEMAIL_COST_VBMS));
@@ -3816,6 +3799,24 @@ export function VibeMailInboxWithClaim({
               );
             })()}
 
+            {/* Network selector — only for free mails */}
+            {hasFreemail && (
+              <div className="flex gap-1.5 mb-2">
+                <button
+                  onClick={() => setSendNetwork('arb')}
+                  className={`flex-1 py-1.5 text-xs font-bold border-2 border-black transition-all ${sendNetwork === 'arb' ? 'bg-[#9B6DFF] text-white shadow-none translate-x-[2px] translate-y-[2px]' : 'bg-[#1a1a1a] text-white/50 shadow-[2px_2px_0px_#000]'}`}
+                >
+                  ARB
+                </button>
+                <button
+                  onClick={() => setSendNetwork('base')}
+                  className={`flex-1 py-1.5 text-xs font-bold border-2 border-black transition-all ${sendNetwork === 'base' ? 'bg-[#0052FF] text-white shadow-none translate-x-[2px] translate-y-[2px]' : 'bg-[#1a1a1a] text-white/50 shadow-[2px_2px_0px_#000]'}`}
+                >
+                  BASE
+                </button>
+              </div>
+            )}
+
             {/* Next Button - Opens gift modal first, then sends everything */}
             <button
               onClick={async () => {
@@ -3996,28 +3997,6 @@ export function VibeMailInboxWithClaim({
                 <p className="text-white/40 text-[10px]">{new Date(selectedMessage.createdAt).toLocaleString()}</p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                {selectedMessage.message && (
-                  <button
-                    onClick={() => {
-                      if (translatedContent) { setTranslatedContent(null); return; }
-                      const parsed = parseQuestBanner(selectedMessage.message || '');
-                      const msg = (parsed ? parsed.cleanMessage : selectedMessage.message || '').trim();
-                      const stripped = stripMediaCommands(msg);
-                      if (!stripped) return;
-                      const cached = getTranslationCache(selectedMessage._id, lang);
-                      if (cached) { setTranslatedContent(cached); return; }
-                      setIsTranslating(true);
-                      translateText(stripped, lang)
-                        .then(result => { if (result) { setTranslatedContent(result); setTranslationCache(selectedMessage._id, lang, result); } })
-                        .catch(() => {})
-                        .finally(() => setIsTranslating(false));
-                    }}
-                    disabled={isTranslating}
-                    className={`px-2 py-1 text-[10px] font-bold border-2 border-black transition-all ${translatedContent ? 'bg-blue-600 text-white' : 'bg-[#1a1a1a] text-white/50 hover:text-white'}`}
-                  >
-                    {isTranslating ? '...' : translatedContent ? lang.toUpperCase().replace('-', '') : 'TR'}
-                  </button>
-                )}
                 <span className={`text-[9px] font-bold px-1.5 py-0.5 border border-black ${selectedMessage.isPaid ? 'bg-yellow-500/20 text-yellow-400' : 'bg-[#FFD700]/10 text-[#FFD700]/60'}`}>
                   {selectedMessage.isPaid ? 'PAID' : 'FREE'}
                 </span>
