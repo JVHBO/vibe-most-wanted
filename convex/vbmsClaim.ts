@@ -1246,3 +1246,97 @@ export const signArbValidation = action({
     return { signature };
   },
 });
+
+// ========== Quest VibeMail VBMS Claim ==========
+// Receiver claims VBMS per quest item directly from pool (sender already paid)
+
+export const claimQuestMailVBMS = action({
+  args: {
+    messageId: v.id("cardVotes"),
+    claimerFid: v.number(),
+    claimerAddress: v.string(),
+    questIndex: v.number(),
+  },
+  handler: async (ctx, args): Promise<{ amount: number; nonce: string; signature: string }> => {
+    const { messageId, claimerFid, claimerAddress, questIndex } = args;
+
+    if (!claimerAddress || claimerFid <= 0) throw new Error("Invalid claimer");
+
+    // Read message to determine reward amount from quest data
+    const msg = await ctx.runQuery(internal.cardVotes.getMessageForClaim, { messageId });
+    if (!msg) throw new Error("Message not found");
+
+    // Parse [VQUEST:{...}] to find per-quest reward
+    let amount = 200; // default
+    try {
+      const match = (msg.message || '').match(/\[VQUEST:(\{.*\})\]/s);
+      if (match) {
+        const questData = JSON.parse(match[1]);
+        const quest = (questData.quests || [])[questIndex];
+        if (quest?.reward && quest.reward > 0) amount = quest.reward;
+        else if (questData.rewardPerQuest && questData.rewardPerQuest > 0) amount = questData.rewardPerQuest;
+      }
+    } catch {}
+
+    // Check + record claim atomically via internal mutation
+    await ctx.runMutation(internal.cardVotes.recordQuestMailClaim, {
+      messageId,
+      claimerFid,
+      claimerAddress,
+      questIndex,
+    });
+
+    const nonce = generateNonce();
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
+      address: claimerAddress,
+      amount,
+      nonce,
+    });
+
+    return { amount, nonce, signature };
+  },
+});
+
+// ========== Quest VibeMail RECEIPT Claim ==========
+// Claim VBMS reward for receiving a quest VibeMail (baseReward from questData)
+
+export const claimQuestReceiptVBMS = action({
+  args: {
+    messageId: v.id("cardVotes"),
+    claimerAddress: v.string(),
+  },
+  handler: async (ctx, args): Promise<{ amount: number; nonce: string; signature: string }> => {
+    const { messageId, claimerAddress } = args;
+
+    if (!claimerAddress) throw new Error("Invalid claimer");
+
+    // Read message to determine receipt reward amount
+    const msg = await ctx.runQuery(internal.cardVotes.getMessageForClaim, { messageId });
+    if (!msg) throw new Error("Message not found");
+
+    // Parse [VQUEST:{...}] for baseReward
+    let amount = 100; // default
+    try {
+      const match = (msg.message || '').match(/\[VQUEST:(\{.*\})\]/s);
+      if (match) {
+        const questData = JSON.parse(match[1]);
+        if (questData.baseReward && questData.baseReward > 0) amount = questData.baseReward;
+      }
+    } catch {}
+
+    // Record via vibeMailQuestClaims (idempotency handled server-side)
+    await ctx.runMutation(internal.cardVotes.recordReceiptClaim, {
+      messageId: String(messageId),
+      claimerAddress,
+    });
+
+    const nonce = generateNonce();
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
+      address: claimerAddress,
+      amount,
+      nonce,
+    });
+
+    return { amount, nonce, signature };
+  },
+});

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useMutation, useQuery, useConvex } from 'convex/react';
+import { useMutation, useQuery, useConvex, useAction } from 'convex/react';
 import { api } from "@/lib/fid/convex-generated/api";
 import { Id } from "@/lib/fid/convex-generated/dataModel";
 import { AudioManager } from '@/lib/audio-manager';
@@ -9,10 +9,10 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { fidTranslations } from "@/lib/fid/fidTranslations";
 import { translations } from "@/lib/translations";
 import { sdk } from '@farcaster/miniapp-sdk';
-import { useTransferVBMS, useVBMSBalance } from "@/hooks/fid/useVBMSContracts";
+import { useTransferVBMS, useVBMSBalance, useClaimVBMS } from "@/hooks/fid/useVBMSContracts";
 import { useSwitchChain } from 'wagmi';
 import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
-import { CONTRACTS, ERC20_ABI } from "@/lib/fid/contracts";
+import { CONTRACTS, ERC20_ABI, POOL_ABI } from "@/lib/fid/contracts";
 import { encodeFunctionData, parseEther } from 'viem';
 import haptics from "@/lib/fid/haptics";
 import { AudioRecorder } from './AudioRecorder';
@@ -1542,7 +1542,6 @@ export function VibeMailInboxWithClaim({
 
   // Generate upload URL for custom images (same storage as AudioRecorder)
   const generateUploadUrl = useMutation(api.audioStorage.generateUploadUrl);
-  const claimQuestMailRewardMutation = useMutation(api.cardVotes.claimQuestMailReward);
   const questMailClaims = useQuery(
     api.cardVotes.getQuestMailClaims,
     selectedMessage?._id && myFid ? { messageId: selectedMessage._id as any, claimerFid: myFid } : 'skip'
@@ -4288,18 +4287,31 @@ export function VibeMailInboxWithClaim({
                         const isClaimedFromDB = questMailClaims?.some((c: any) => c.questIndex === i) ?? false;
                         const isClaimed = isClaimedFromDB || claimedQuestItems.has(claimKey);
                         const markClaimed = async () => {
-                          if (claimingQuest === claimKey) return;
+                          if (claimingQuest === claimKey || !myFid || !myAddress || !selectedMessage._id) return;
                           setClaimingQuest(claimKey);
                           try {
-                            if (myFid && selectedMessage._id) {
-                              await claimQuestMailRewardMutation({ messageId: selectedMessage._id as any, claimerFid: myFid, claimerAddress: myAddress || '', questIndex: i });
-                            }
+                            // Call VMW Convex action (works from VibeFID context too)
+                            const { ConvexHttpClient } = await import('convex/browser');
+                            const { api: vmwApi } = await import('@/convex/_generated/api');
+                            const vmwClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+                            const result = await vmwClient.action(vmwApi.vbmsClaim.claimQuestMailVBMS, {
+                              messageId: selectedMessage._id as any,
+                              claimerFid: myFid,
+                              claimerAddress: myAddress,
+                              questIndex: i,
+                            });
+                            // On-chain claim: pool sends VBMS to user
+                            const data = encodeFunctionData({
+                              abi: POOL_ABI,
+                              functionName: 'claimVBMS',
+                              args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
+                            });
+                            const provider = await sdk.wallet.getEthereumProvider();
+                            await provider!.request({
+                              method: 'eth_sendTransaction',
+                              params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data }],
+                            });
                             setClaimedQuestItems(prev => new Set([...prev, claimKey]));
-                            // Fire-and-forget Base TX (0 VBMS to pool — on-chain proof)
-                            if (myAddress) {
-                              const data = encodeFunctionData({ abi: ERC20_ABI, functionName: 'transfer', args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, BigInt(0)] });
-                              sdk.wallet.getEthereumProvider().then(p => p?.request({ method: 'eth_sendTransaction', params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSToken as `0x${string}`, data }] })).catch(() => {});
-                            }
                           } catch (e) {
                             console.error('Quest claim failed:', e);
                           } finally {
@@ -4473,17 +4485,29 @@ export function VibeMailInboxWithClaim({
                               if (!myAddress || isClaimed || isClaiming) return;
                               setClaimingMailId(mailId);
                               try {
-                                const res = await fetch('/api/fid/claim-quest-coins', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ address: myAddress, vibemailId: mailId }),
+                                const { ConvexHttpClient } = await import('convex/browser');
+                                const { api: vmwApi } = await import('@/convex/_generated/api');
+                                const vmwClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+                                const result = await vmwClient.action(vmwApi.vbmsClaim.claimQuestReceiptVBMS, {
+                                  messageId: selectedMessage._id as any,
+                                  claimerAddress: myAddress,
                                 });
-                                const data = await res.json();
-                                if (data.success || data.reason === 'already_claimed') {
-                                  setClaimedMailVbms(prev => new Set([...prev, mailId]));
-                                }
-                              } catch {}
-                              setClaimingMailId(null);
+                                const txData = encodeFunctionData({
+                                  abi: POOL_ABI,
+                                  functionName: 'claimVBMS',
+                                  args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
+                                });
+                                const provider = await sdk.wallet.getEthereumProvider();
+                                await provider!.request({
+                                  method: 'eth_sendTransaction',
+                                  params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data: txData }],
+                                });
+                                setClaimedMailVbms(prev => new Set([...prev, mailId]));
+                              } catch (e) {
+                                console.error('Receipt claim failed:', e);
+                              } finally {
+                                setClaimingMailId(null);
+                              }
                             }}
                             disabled={isClaimed || isClaiming || !myAddress}
                             className={`px-4 py-2 border-2 border-black font-black text-xs uppercase tracking-wide shadow-[3px_3px_0px_#000] flex-shrink-0 transition-all ${
@@ -4494,7 +4518,7 @@ export function VibeMailInboxWithClaim({
                                 : 'bg-[#FFD700] text-black hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
                             }`}
                           >
-                            {isClaimed ? 'Claimed!' : isClaiming ? '...' : 'Claim 100 VBMS'}
+                            {isClaimed ? 'Claimed!' : isClaiming ? '...' : 'Claim VBMS'}
                           </button>
                         </div>
                       );

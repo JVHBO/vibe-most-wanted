@@ -1,6 +1,5 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
 
 /**
  * VibeMail Notification for VBMS
@@ -14,15 +13,13 @@ import { internal } from "./_generated/api";
 export const getUnreadMessageCount = query({
   args: { cardFid: v.number() },
   handler: async (ctx, args) => {
-    // Use index to get only unread for this card
-    // 🚀 BANDWIDTH FIX: Added .take() limit - most users have <10 unread
     const unread = await ctx.db
       .query("cardVotes")
       .withIndex("by_card_unread", (q) =>
         q.eq("cardFid", args.cardFid).eq("isRead", false)
       )
       .filter((q) => q.neq(q.field("message"), undefined))
-      .take(100); // Cap at 100 for notification badge
+      .take(100);
 
     return unread.length;
   },
@@ -44,8 +41,16 @@ export const getQuestMailClaims = query({
   },
 });
 
-// Claim a quest mail item reward (200 VBMS per item, on-chain TX done client-side)
-export const claimQuestMailReward = mutation({
+// Internal: get message for claim validation (used by vbmsClaim actions)
+export const getMessageForClaim = internalQuery({
+  args: { messageId: v.id("cardVotes") },
+  handler: async (ctx, { messageId }) => {
+    return await ctx.db.get(messageId);
+  },
+});
+
+// Internal: record claim (called by claimQuestMailVBMS action in vbmsClaim.ts)
+export const recordQuestMailClaim = internalMutation({
   args: {
     messageId: v.id("cardVotes"),
     claimerFid: v.number(),
@@ -53,7 +58,6 @@ export const claimQuestMailReward = mutation({
     questIndex: v.number(),
   },
   handler: async (ctx, args) => {
-    // Idempotency check
     const existing = await ctx.db
       .query("questMailItemClaims")
       .withIndex("by_message_claimer", (q) =>
@@ -71,12 +75,24 @@ export const claimQuestMailReward = mutation({
       questIndex: args.questIndex,
       claimedAt: Date.now(),
     });
+  },
+});
 
-    // Award 200 VBMS (on-chain ARB TX is done client-side via validateOnArb)
-    await ctx.scheduler.runAfter(0, internal.economy.addCoins, {
-      address: args.claimerAddress,
-      amount: 200,
-      reason: `Quest VibeMail reward (item #${args.questIndex})`,
+// Internal: record receipt claim in vibeMailQuestClaims
+export const recordReceiptClaim = internalMutation({
+  args: { messageId: v.string(), claimerAddress: v.string() },
+  handler: async (ctx, { messageId, claimerAddress }) => {
+    const existing = await ctx.db
+      .query("vibeMailQuestClaims")
+      .withIndex("by_address_mailid", (q) =>
+        q.eq("address", claimerAddress.toLowerCase()).eq("vibemailId", messageId)
+      )
+      .first();
+    if (existing) throw new Error("Already claimed");
+    await ctx.db.insert("vibeMailQuestClaims", {
+      address: claimerAddress.toLowerCase(),
+      vibemailId: messageId,
+      claimedAt: Date.now(),
     });
   },
 });
