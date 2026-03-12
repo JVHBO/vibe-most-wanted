@@ -1295,3 +1295,9 @@ body > * {
 select {
   color-scheme: dark;
 }
+/* Force gold text on Settings selects — WebKit ignores color without this */
+select.settings-select {
+  color: #FFD400 !important;
+  background-color: #1A1A1A !important;
+  -webkit-text-fill-color: #FFD400 !important;
+}
