@@ -1128,6 +1128,7 @@ export function VibeMailInboxWithClaim({
   const [miLoading, setMiLoading] = useState(false);
   const miSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [composerImageId, setComposerImageId] = useState<string | null>(null);
+  const [composerDrawingId, setComposerDrawingId] = useState<string | null>(null); // Drawing saved from design editor (separate from imageId)
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [gifSearch, setGifSearch] = useState('');
@@ -1672,7 +1673,7 @@ export function VibeMailInboxWithClaim({
           senderPfpUrl: userPfpUrl || undefined,
           message: finalMessage,
           audioId: composerAudioId || undefined,
-          imageId: composerImageId || undefined,
+          imageId: composerDrawingId || composerImageId || undefined,
           miniappUrl: composerMiniappUrl || undefined,
         });
       } else {
@@ -1684,7 +1685,7 @@ export function VibeMailInboxWithClaim({
           senderPfpUrl: userPfpUrl || undefined,
           message: finalMessage,
           audioId: composerAudioId || undefined,
-          imageId: composerImageId || undefined,
+          imageId: composerDrawingId || composerImageId || undefined,
           castUrl: composerCastUrl || undefined,
           miniappUrl: composerMiniappUrl || undefined,
         });
@@ -1703,6 +1704,7 @@ export function VibeMailInboxWithClaim({
       setComposerQuestType(null);
       setComposerAudioId(null);
       setComposerImageId(null);
+      setComposerDrawingId(null);
       setComposerCustomImagePreview(null);
       setComposerCastUrl(null);
       setComposerMiniappUrl(null);
@@ -2113,6 +2115,7 @@ export function VibeMailInboxWithClaim({
                   setShowSoundPicker(false);
                   setPreviewSound(null);
                   setComposerImageId(null);
+                  setComposerDrawingId(null);
                   setShowImagePicker(false);
                   setComposerCastUrl(null);
                   setShowCastInput(false);
@@ -3042,7 +3045,7 @@ export function VibeMailInboxWithClaim({
               />
 
               {/* Preview button — Edit Design lives inside the preview overlay */}
-              {(composerMessage.trim() || composerImageId || composerQuestData) && (
+              {(composerMessage.trim() || composerImageId || composerDrawingId || composerQuestData) && (
                 <button
                   onClick={() => setShowPreview(true)}
                   className="h-9 px-3 flex items-center gap-1.5 border-2 border-[#DB2777] bg-[#DB2777] text-white hover:bg-[#BE185D] transition-all"
@@ -3245,6 +3248,12 @@ export function VibeMailInboxWithClaim({
                                     <p className="text-[#FFD700]/70 text-xs">Image attached</p>
                                   );
                                 })()}
+                              </div>
+                            )}
+                            {composerDrawingId && (
+                              <div className="mt-2 flex items-center gap-1.5 px-2 py-1 bg-[#1a0a2e] border border-[#A78BFA]/40">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                <span className="text-[#A78BFA] text-[10px] font-bold">Drawing overlay attached</span>
                               </div>
                             )}
                           </div>
@@ -3809,7 +3818,6 @@ export function VibeMailInboxWithClaim({
                             if (!blob) throw new Error('export failed');
                             // Save locally first — instant preview
                             const localUrl = URL.createObjectURL(blob);
-                            setComposerCustomImagePreview(localUrl);
                             const compositeId = 'draw_composite';
                             // Replace all individual draws with one merged composite (transparent PNG, GIF stays untouched)
                             setDrawingImages(prev => {
@@ -3838,8 +3846,7 @@ export function VibeMailInboxWithClaim({
                                 const { storageId } = await res.json();
                                 const serverUrl = `${VIBEFID_STORAGE_URL}/${storageId}`;
                                 setDrawingImages(prev => ({ ...prev, [compositeId]: serverUrl }));
-                                setComposerImageId('img:' + storageId);
-                                setComposerCustomImagePreview(serverUrl);
+                                setComposerDrawingId('img:' + storageId);
                               } catch (e) { console.error('Drawing upload error:', e); }
                             })();
                           } catch (e) {
@@ -3921,7 +3928,7 @@ export function VibeMailInboxWithClaim({
               ref={sendBtnRef}
               onClick={async () => {
                 if (isSending || isTransferPending) return;
-                if (!composerMessage.trim() && !composerImageId) return;
+                if (!composerMessage.trim() && !composerImageId && !composerDrawingId) return;
                 if (!myAddress || !myFid) return;
 
                 // Free mail: show network modal first (skip if coming from modal)
@@ -3963,7 +3970,7 @@ export function VibeMailInboxWithClaim({
                       recipientFids: broadcastRecipients.map(r => r.fid),
                       message: broadcastMessage,
                       audioId: composerAudioId || undefined,
-                      imageId: composerImageId || undefined,
+                      imageId: composerDrawingId || composerImageId || undefined,
                       senderAddress: myAddress,
                       senderFid: myFid,
                     });
@@ -3983,6 +3990,7 @@ export function VibeMailInboxWithClaim({
                     setComposerMessage('');
                     setComposerAudioId(null);
                     setComposerImageId(null);
+                    setComposerDrawingId(null);
                   } catch (err) {
                     console.error('Broadcast error:', err);
                     setBroadcastResult({ success: false, sent: 0, total: broadcastRecipients.length, failed: broadcastRecipients.length });
@@ -4008,7 +4016,7 @@ export function VibeMailInboxWithClaim({
                       recipientFids: randomList.map(r => r.fid),
                       message: composerMessage,
                       audioId: composerAudioId || undefined,
-                      imageId: composerImageId || undefined,
+                      imageId: composerDrawingId || composerImageId || undefined,
                       senderAddress: myAddress,
                       senderFid: myFid,
                     });
@@ -4020,6 +4028,7 @@ export function VibeMailInboxWithClaim({
                     setComposerMessage('');
                     setComposerAudioId(null);
                     setComposerImageId(null);
+                    setComposerDrawingId(null);
                   } catch (err) {
                     console.error('Random list error:', err);
                     setBroadcastResult({ success: false, sent: 0, total: randomList.length, failed: randomList.length });
@@ -4040,7 +4049,7 @@ export function VibeMailInboxWithClaim({
                   await handleDirectSend(recipientFid, recipientUsername, false);
                 }
               }}
-              disabled={isSending || isTransferPending || (!composerMessage.trim() && !composerImageId && !composerQuestData) || (!replyToMessageId && sendMode === 'single' && !recipientFid) || (sendMode === 'broadcast' && broadcastRecipients.length === 0) || (sendMode === 'random' && !randomCard && randomList.length === 0)}
+              disabled={isSending || isTransferPending || (!composerMessage.trim() && !composerImageId && !composerDrawingId && !composerQuestData) || (!replyToMessageId && sendMode === 'single' && !recipientFid) || (sendMode === 'broadcast' && broadcastRecipients.length === 0) || (sendMode === 'random' && !randomCard && randomList.length === 0)}
               className="mt-3 w-full py-3 bg-vintage-gold text-black font-bold border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[4px_4px_0px_#000] flex items-center justify-center gap-2"
             >
               {isSending || isTransferPending ? (
