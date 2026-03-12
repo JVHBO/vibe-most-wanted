@@ -6,14 +6,16 @@
 
 /* VibeMail button animations */
 @keyframes vm-bg-send {
-  0%   { transform: translateX(-30px); }
-  50%  { transform: translateX(30px); }
-  100% { transform: translateX(-30px); }
+  0%   { transform: translateX(0%);    opacity: 0; }
+  12%  {                               opacity: 0.3; }
+  88%  {                               opacity: 0.3; }
+  100% { transform: translateX(100%); opacity: 0; }
 }
 @keyframes vm-bg-recv {
-  0%   { transform: translateX(30px); }
-  50%  { transform: translateX(-30px); }
-  100% { transform: translateX(30px); }
+  0%   { transform: translateX(100%); opacity: 0; }
+  12%  {                               opacity: 0.3; }
+  88%  {                               opacity: 0.3; }
+  100% { transform: translateX(0%);   opacity: 0; }
 }
 @keyframes vm-glow-gold {
   0%, 100% { box-shadow: 0 0 0px #FFD700; }
