@@ -778,7 +778,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                     <span className="text-white/40 text-xs">...</span>
                   ) : translatedContent ? (
                     <>
-                      <span>{translatedContent}</span>
+                      <span>{translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').trim()}</span>
                       <span className="text-white/30 text-[10px] ml-1">({(t as any).translatedLabel || 'translated'})</span>
                       {renderRichMessageFn(
                         (selectedMessage.message || '').split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n'),
@@ -865,6 +865,39 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
               )}
 
             </div>
+
+            {/* Quest Banner (view-only) */}
+            {(() => {
+              const parsed = parseQuestBanner(selectedMessage.message || '');
+              if (!parsed) return null;
+              const { questData } = parsed;
+              return (
+                <div className="mt-3 border-2 border-black shadow-[4px_4px_0px_#000] overflow-hidden">
+                  <div className="bg-[#FFD700] px-3 py-2 flex items-center gap-2 border-b-2 border-black">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#000"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <span className="font-black text-black text-xs uppercase tracking-widest flex-1">Quest VibeMail</span>
+                    <span className="text-black/50 text-[9px] font-bold">{(questData.quests || []).length} quest{(questData.quests || []).length !== 1 ? 's' : ''}</span>
+                  </div>
+                  <div className="bg-[#111] divide-y divide-[#222]">
+                    {(questData.quests || []).map((q: any, i: number) => (
+                      <div key={i} className="px-3 py-2 flex items-center gap-2">
+                        {q.type === 'follow_farcaster' && <div className="w-2 h-2 rounded-full bg-[#8B5CF6] flex-shrink-0" />}
+                        {q.type === 'use_miniapp' && <div className="w-2 h-2 rounded-full bg-[#22C55E] flex-shrink-0" />}
+                        {q.type === 'join_channel' && <div className="w-2 h-2 rounded-full bg-[#FF9F0A] flex-shrink-0" />}
+                        <span className="text-white/70 text-xs truncate">
+                          {q.type === 'follow_farcaster' ? `Follow @${q.username}` : q.type === 'use_miniapp' ? `Open: ${q.name || q.url}` : q.type === 'join_channel' ? `Join /${q.channelName || q.channelId}` : q.type}
+                        </span>
+                        <span className="ml-auto text-[#FFD700] text-[10px] font-black flex-shrink-0">+200 VBMS</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="px-3 py-2 bg-[#0d0d0d] border-t-2 border-black flex items-center justify-between">
+                    <span className="text-[#FFD700] text-[10px] font-black uppercase">Reward</span>
+                    <span className="text-white/50 text-[10px]">100 VBMS for receiving</span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Back Button */}
             <button
@@ -4155,13 +4188,93 @@ export function VibeMailInboxWithClaim({
                 }}
               >
             <div className="bg-[#0a0a0a] p-3 pb-6 space-y-3">
+              {/* Message text + inline media commands */}
+              {(() => {
+                const parsed = parseQuestBanner(selectedMessage.message || '');
+                const msg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
+                const mediaOnlyMsg = msg.split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n');
+                return msg ? (
+                  <div className="text-white text-sm leading-relaxed">
+                    {translatedContent ? (
+                      <>
+                        <span>{translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').trim()}</span>
+                        <span className="text-white/30 text-[10px] ml-1">({(t as any).translatedLabel || 'translated'})</span>
+                        {mediaOnlyMsg && renderRichMessageFn(mediaOnlyMsg, playingAudio, audioRef, setPlayingAudio, lang, username)}
+                      </>
+                    ) : (
+                      renderRichMessageFn(msg, playingAudio, audioRef, setPlayingAudio, lang, username)
+                    )}
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Legacy imageId attachment */}
+              {selectedMessage.imageId && (() => {
+                const isCustom = selectedMessage.imageId.startsWith('img:');
+                const customUrl = isCustom ? `${VIBEFID_STORAGE_URL_INLINE}/${selectedMessage.imageId.slice(4)}` : null;
+                const imgData = !isCustom ? getImageFile(selectedMessage.imageId) : null;
+                if (customUrl) return <img src={customUrl} alt="VibeMail" className="w-full rounded border-2 border-black" />;
+                if (!imgData) return null;
+                return imgData.isVideo
+                  ? <video src={imgData.file} className="w-full rounded border-2 border-black" autoPlay loop muted playsInline />
+                  : <img src={imgData.file} alt="VibeMail" className="w-full rounded border-2 border-black" />;
+              })()}
+
+              {/* Legacy audioId player */}
+              {selectedMessage.audioId && (
+                <div className="border-2 border-black shadow-[2px_2px_0px_#000] p-3 flex items-center gap-3 bg-[#1a0e00]">
+                  <button
+                    onClick={() => {
+                      if (playingAudio === selectedMessage.audioId) { stopAudio(); }
+                      else { playAudioById(selectedMessage.audioId!, audioRef, convex, setPlayingAudio); }
+                    }}
+                    className={`w-10 h-10 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center flex-shrink-0 transition-all ${playingAudio === selectedMessage.audioId ? 'bg-red-500 text-white animate-pulse' : 'bg-vintage-gold text-black hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'}`}
+                  >
+                    {playingAudio === selectedMessage.audioId
+                      ? <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[#F97316] font-bold text-sm truncate flex items-center gap-1">
+                      {isCustomAudio(selectedMessage.audioId) ? (<><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>Voice message</>) : (isMiAudio(selectedMessage.audioId) ? getMiName(selectedMessage.audioId!) : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound))}
+                    </p>
+                    <p className="text-white/50 text-xs">{playingAudio === selectedMessage.audioId ? t.playing : t.tapToPlay}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Miniapp preview */}
+              {selectedMessage.miniappUrl && <MiniappPreview url={selectedMessage.miniappUrl} />}
+
+              {/* NFT Gift */}
+              {selectedMessage.giftNftImageUrl && (
+                <div onClick={() => { const url = getMarketplaceUrl(selectedMessage.giftNftCollection); if (url) openMarketplace(url, sdk, true); }}
+                  className="bg-[#111] border-2 border-black shadow-[2px_2px_0px_#000] p-3 flex items-center gap-3 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all cursor-pointer">
+                  <div className="relative flex-shrink-0">
+                    <img src={selectedMessage.giftNftImageUrl} alt={selectedMessage.giftNftName || 'NFT Gift'} className="w-14 h-14 object-cover border-2 border-black" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }} />
+                    <div className="absolute -top-1 -right-1 bg-vintage-gold border border-black w-4 h-4 flex items-center justify-center">
+                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-vintage-gold font-bold text-sm truncate">{selectedMessage.giftNftName}</p>
+                    <p className="text-white/50 text-xs">{selectedMessage.giftNftCollection}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Date footer */}
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
+                <span className="text-white/40">{new Date(selectedMessage.createdAt).toLocaleDateString()}</span>
+              </div>
+
               {/* Quest Banner */}
               {(() => {
                 const parsed = parseQuestBanner(selectedMessage.message || '');
                 if (!parsed) return null;
                 const { questData } = parsed;
                 return (
-                  <div className="mb-3 border-2 border-black shadow-[4px_4px_0px_#000] overflow-hidden">
+                  <div className="mt-3 border-2 border-black shadow-[4px_4px_0px_#000] overflow-hidden">
                     {/* Header */}
                     <div className="bg-[#FFD700] px-3 py-2 flex items-center gap-2 border-b-2 border-black">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="#000" strokeWidth="0"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -4182,6 +4295,8 @@ export function VibeMailInboxWithClaim({
                               await claimQuestMailRewardMutation({ messageId: selectedMessage._id as any, claimerFid: myFid, claimerAddress: myAddress || '', questIndex: i });
                             }
                             setClaimedQuestItems(prev => new Set([...prev, claimKey]));
+                            // Fire-and-forget on-chain TX validation
+                            validateOnArb(200, ARB_CLAIM_TYPE.VIBEMAIL).catch(() => {});
                           } catch (e) {
                             console.error('Quest claim failed:', e);
                           } finally {
@@ -4384,85 +4499,6 @@ export function VibeMailInboxWithClaim({
                   </div>
                 );
               })()}
-              {/* Message text + inline media commands */}
-              {(() => {
-                const parsed = parseQuestBanner(selectedMessage.message || '');
-                const msg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
-                const mediaOnlyMsg = msg.split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n');
-                return msg ? (
-                  <div className="text-white text-sm leading-relaxed">
-                    {translatedContent ? (
-                      <>
-                        <span>{translatedContent}</span>
-                        <span className="text-white/30 text-[10px] ml-1">({(t as any).translatedLabel || 'translated'})</span>
-                        {mediaOnlyMsg && renderRichMessageFn(mediaOnlyMsg, playingAudio, audioRef, setPlayingAudio, lang, username)}
-                      </>
-                    ) : (
-                      renderRichMessageFn(msg, playingAudio, audioRef, setPlayingAudio, lang, username)
-                    )}
-                  </div>
-                ) : null;
-              })()}
-
-              {/* Legacy imageId attachment */}
-              {selectedMessage.imageId && (() => {
-                const isCustom = selectedMessage.imageId.startsWith('img:');
-                const customUrl = isCustom ? `${VIBEFID_STORAGE_URL_INLINE}/${selectedMessage.imageId.slice(4)}` : null;
-                const imgData = !isCustom ? getImageFile(selectedMessage.imageId) : null;
-                if (customUrl) return <img src={customUrl} alt="VibeMail" className="w-full rounded border-2 border-black" />;
-                if (!imgData) return null;
-                return imgData.isVideo
-                  ? <video src={imgData.file} className="w-full rounded border-2 border-black" autoPlay loop muted playsInline />
-                  : <img src={imgData.file} alt="VibeMail" className="w-full rounded border-2 border-black" />;
-              })()}
-
-              {/* Legacy audioId player */}
-              {selectedMessage.audioId && (
-                <div className="border-2 border-black shadow-[2px_2px_0px_#000] p-3 flex items-center gap-3 bg-[#1a0e00]">
-                  <button
-                    onClick={() => {
-                      if (playingAudio === selectedMessage.audioId) { stopAudio(); }
-                      else { playAudioById(selectedMessage.audioId!, audioRef, convex, setPlayingAudio); }
-                    }}
-                    className={`w-10 h-10 border-2 border-black shadow-[2px_2px_0px_#000] flex items-center justify-center flex-shrink-0 transition-all ${playingAudio === selectedMessage.audioId ? 'bg-red-500 text-white animate-pulse' : 'bg-vintage-gold text-black hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000]'}`}
-                  >
-                    {playingAudio === selectedMessage.audioId
-                      ? <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[#F97316] font-bold text-sm truncate flex items-center gap-1">
-                      {isCustomAudio(selectedMessage.audioId) ? (<><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>Voice message</>) : (isMiAudio(selectedMessage.audioId) ? getMiName(selectedMessage.audioId!) : (VIBEMAIL_SOUNDS.find(s => s.id === selectedMessage.audioId)?.name || t.memeSound))}
-                    </p>
-                    <p className="text-white/50 text-xs">{playingAudio === selectedMessage.audioId ? t.playing : t.tapToPlay}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Miniapp preview */}
-              {selectedMessage.miniappUrl && <MiniappPreview url={selectedMessage.miniappUrl} />}
-
-              {/* NFT Gift */}
-              {selectedMessage.giftNftImageUrl && (
-                <div onClick={() => { const url = getMarketplaceUrl(selectedMessage.giftNftCollection); if (url) openMarketplace(url, sdk, true); }}
-                  className="bg-[#111] border-2 border-black shadow-[2px_2px_0px_#000] p-3 flex items-center gap-3 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all cursor-pointer">
-                  <div className="relative flex-shrink-0">
-                    <img src={selectedMessage.giftNftImageUrl} alt={selectedMessage.giftNftName || 'NFT Gift'} className="w-14 h-14 object-cover border-2 border-black" onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }} />
-                    <div className="absolute -top-1 -right-1 bg-vintage-gold border border-black w-4 h-4 flex items-center justify-center">
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-vintage-gold font-bold text-sm truncate">{selectedMessage.giftNftName}</p>
-                    <p className="text-white/50 text-xs">{selectedMessage.giftNftCollection}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Date footer */}
-              <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
-                <span className="text-white/40">{new Date(selectedMessage.createdAt).toLocaleDateString()}</span>
-              </div>
             </div>{/* end content padding */}
             </div>{/* end scroll container */}
 

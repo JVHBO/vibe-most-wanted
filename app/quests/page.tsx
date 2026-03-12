@@ -28,6 +28,13 @@ export default function QuestsPage() {
   const { refreshProfile } = useProfile();
   const { validateOnArb } = useArbValidator();
   const [activeTab, setActiveTab] = useState<'missions' | 'wanted' | 'messages'>('missions');
+  // Open vibemail tab if navigated with ?tab=vibemail
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const tab = new URLSearchParams(window.location.search).get('tab');
+      if (tab === 'vibemail' || tab === 'messages') setActiveTab('messages');
+    }
+  }, []);
 
   // Social Quests
   const socialQuestProgress = useQuery(

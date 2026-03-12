@@ -1,15 +1,13 @@
-import { query } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 /**
  * VibeMail Notification for VBMS
  *
- * This file only contains the query needed for the red dot notification
- * on the VibeFID button. All other VibeMail/voting functionality has been
- * moved to VibeFID's own Convex deployment.
- *
  * The cardVotes table still exists and is written to by VibeFID,
  * VBMS just reads the unread count for the notification indicator.
+ * Quest VibeMail claim mutations also live here.
  */
 
 // Get unread message count for a card (used for red dot on VibeFID button)
@@ -27,5 +25,58 @@ export const getUnreadMessageCount = query({
       .take(100); // Cap at 100 for notification badge
 
     return unread.length;
+  },
+});
+
+// Get quest mail item claims for a message+claimer (for UI state)
+export const getQuestMailClaims = query({
+  args: {
+    messageId: v.id("cardVotes"),
+    claimerFid: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("questMailItemClaims")
+      .withIndex("by_message_claimer", (q) =>
+        q.eq("messageId", args.messageId).eq("claimerFid", args.claimerFid)
+      )
+      .collect();
+  },
+});
+
+// Claim a quest mail item reward (200 VBMS per item, on-chain TX done client-side)
+export const claimQuestMailReward = mutation({
+  args: {
+    messageId: v.id("cardVotes"),
+    claimerFid: v.number(),
+    claimerAddress: v.string(),
+    questIndex: v.number(),
+  },
+  handler: async (ctx, args) => {
+    // Idempotency check
+    const existing = await ctx.db
+      .query("questMailItemClaims")
+      .withIndex("by_message_claimer", (q) =>
+        q.eq("messageId", args.messageId).eq("claimerFid", args.claimerFid)
+      )
+      .filter((q) => q.eq(q.field("questIndex"), args.questIndex))
+      .first();
+
+    if (existing) throw new Error("Already claimed");
+
+    await ctx.db.insert("questMailItemClaims", {
+      messageId: args.messageId,
+      claimerFid: args.claimerFid,
+      claimerAddress: args.claimerAddress,
+      questIndex: args.questIndex,
+      claimedAt: Date.now(),
+    });
+
+    // Award 200 VBMS (on-chain ARB TX is done client-side via validateOnArb)
+    await ctx.scheduler.runAfter(0, internal.economy.addCoins, {
+      address: args.claimerAddress,
+      amount: 200,
+      reason: `Quest VibeMail reward (item #${args.questIndex})`,
+    });
   },
 });

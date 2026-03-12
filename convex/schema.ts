@@ -2150,6 +2150,16 @@ export default defineSchema({
     .index("by_address", ["address"])
     .index("by_address_mailid", ["address", "vibemailId"]),
 
+  // Quest VibeMail individual item claims (follow/miniapp/channel quests → 200 VBMS each)
+  questMailItemClaims: defineTable({
+    messageId: v.id("cardVotes"),
+    claimerFid: v.number(),
+    claimerAddress: v.string(),
+    questIndex: v.number(),
+    claimedAt: v.number(),
+  })
+    .index("by_message_claimer", ["messageId", "claimerFid"]),
+
   drawings: defineTable({
     storageId: v.id("_storage"),
     authorAddress: v.string(),

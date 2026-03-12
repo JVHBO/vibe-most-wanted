@@ -428,7 +428,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
                   </div>
                   {/* VibeMail button - bottom right (own card only) */}
                   {isOwnCard && <button
-                    onClick={() => setMobilePanel('mail')}
+                    onClick={() => { onClose(); router.push('/quests?tab=messages'); }}
                     className="absolute -bottom-2 -right-2 z-20 w-7 h-7 rounded-xl flex items-center justify-center transition-all"
                     style={{ background: '#BE185D', border: '2px solid #000', boxShadow: '2px 2px 0px #000', color: '#fff' }}
                     title="VibeMail inbox"
