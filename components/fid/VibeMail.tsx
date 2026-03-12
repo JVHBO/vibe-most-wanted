@@ -4915,7 +4915,7 @@ export function VibeMailInboxWithClaim({
                     <div className="space-y-1">
                       <p className="text-white/40 text-[10px] uppercase font-bold px-1">Recent Messages</p>
                       {pagedMessages.map((msg: VibeMailMessage) => (
-                        <div key={msg._id} className="bg-[#111] border-2 border-black p-2 flex items-center gap-2">
+                        <div key={msg._id} onClick={() => setSelectedMessage(msg)} className="bg-[#111] border-2 border-black p-2 flex items-center gap-2 cursor-pointer hover:bg-[#1a1a1a] active:bg-[#222] transition-colors">
                           <div className={`w-2 h-2 rounded-full flex-shrink-0 ${msg.isRead ? 'bg-[#22C55E]' : 'bg-white/20'}`} />
                           <div className="flex-1 min-w-0">
                             {msg.recipientUsername && (
