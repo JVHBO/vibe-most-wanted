@@ -8,7 +8,7 @@ import { CardMedia } from '@/components/fid/CardMedia';
 import FoilCardEffect from '@/components/fid/FoilCardEffect';
 import CriminalBackstoryCard from '@/components/fid/CriminalBackstoryCard';
 import { VibeMailComposer } from '@/components/fid/VibeMail';
-import { VibeFidMailModal } from '@/components/fid/VibeFidMailModal';
+import { useRouter } from 'next/navigation';
 import { useFarcasterContext } from '@/hooks/fid/useFarcasterContext';
 import { useVibeVote } from '@/hooks/fid/useVibeVote';
 import { useVBMSBalance } from '@/hooks/fid/useVBMSContracts';
@@ -41,6 +41,7 @@ interface VibeFidSectionProps {
 }
 
 export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCardStatus, vmwCoinsBalance }: VibeFidSectionProps) {
+  const router = useRouter();
   const { lang } = useLanguage();
   const t = fidTranslations[lang] || fidTranslations['en'];
   const farcasterContext = useFarcasterContext();
@@ -97,7 +98,6 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
   // Modals
   const [showScoreModal, setShowScoreModal] = useState(false);
   const [showBackstoryModal, setShowBackstoryModal] = useState(false);
-  const [showVibeMailInbox, setShowVibeMailInbox] = useState(false);
   const [showPaidVoteModal, setShowPaidVoteModal] = useState(false);
   const [showEvolutionModal, setShowEvolutionModal] = useState(false);
   const [showTraitsPopup, setShowTraitsPopup] = useState(false);
@@ -391,7 +391,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
             <button
               onClick={() => {
                 AudioManager.buttonClick();
-                if (isOwnCard) { setShowVibeMailInbox(true); return; }
+                if (isOwnCard) { router.push('/fid/vibemail'); return; }
                 if (!viewerFid) {
                   setError('Connect Farcaster to vibe');
                   setTimeout(() => setError(null), 3000);
@@ -773,10 +773,6 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
         </div>
       )}
 
-      {/* VibeMail + Card Split Modal */}
-      {showVibeMailInbox && isOwnCard && (
-        <VibeFidMailModal fid={fid} username={card?.username} onClose={() => setShowVibeMailInbox(false)} />
-      )}
 
       {/* Create Quest Modal */}
       {showCreateQuestModal && isOwnCard && effectiveUser && (

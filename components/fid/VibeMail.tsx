@@ -30,6 +30,12 @@ function getTranslationCache(msgId: string, targetLang: string): string | null {
 function setTranslationCache(msgId: string, targetLang: string, text: string): void {
   try { localStorage.setItem(`vm_tr_${msgId}_${targetLang}`, text); } catch {}
 }
+function stripMediaCommands(text: string): string {
+  return text.split('\n')
+    .filter(line => !/^\/(?:img|sound|video|url|cast|follow|miniapp|channel|clear|link|b)[=\s]/i.test(line.trim()) && line.trim() !== '/clear')
+    .join('\n')
+    .trim();
+}
 
 const VIBEMAIL_COST_VBMS = "1000"; // Cost for paid VibeMail
 const VIBEMAIL_RECIPIENT_VBMS = 500; // VBMS recipient earns per message
@@ -660,12 +666,12 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
   // Auto-translate when lang changes or message opens
   useEffect(() => {
     if (!selectedMessage?.message) { setTranslatedContent(null); return; }
-    const msg = selectedMessage.message.trim();
-    if (!msg) return;
+    const stripped = stripMediaCommands(selectedMessage.message.trim());
+    if (!stripped) return;
     const cached = getTranslationCache(selectedMessage._id, lang);
     if (cached) { setTranslatedContent(cached); return; }
     setIsTranslating(true);
-    translateText(msg, lang)
+    translateText(stripped, lang)
       .then(result => {
         if (result) { setTranslatedContent(result); setTranslationCache(selectedMessage._id, lang, result); }
         else setTranslatedContent(null);
@@ -728,12 +734,41 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
 
             {/* Message Content */}
             <div className="bg-gradient-to-b from-vintage-black/80 to-vintage-charcoal rounded-lg p-3 flex-1">
+              {selectedMessage.message && (
+                <div className="flex justify-end mb-2">
+                  <button
+                    onClick={() => {
+                      if (translatedContent) { setTranslatedContent(null); return; }
+                      const stripped = stripMediaCommands(selectedMessage.message || '');
+                      if (!stripped) return;
+                      const cached = getTranslationCache(selectedMessage._id, lang);
+                      if (cached) { setTranslatedContent(cached); return; }
+                      setIsTranslating(true);
+                      translateText(stripped, lang)
+                        .then(result => { if (result) { setTranslatedContent(result); setTranslationCache(selectedMessage._id, lang, result); } })
+                        .catch(() => {})
+                        .finally(() => setIsTranslating(false));
+                    }}
+                    disabled={isTranslating}
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${translatedContent ? 'bg-blue-600 border-blue-400 text-white' : 'bg-vintage-black/50 border-vintage-gold/30 text-vintage-gold/70 hover:text-vintage-gold'}`}
+                  >
+                    {isTranslating ? '...' : translatedContent ? lang.toUpperCase().replace('-', '') : 'TR'}
+                  </button>
+                </div>
+              )}
               <div className="mb-3">
                 <div className="text-white text-sm leading-relaxed flex-1">
-                  {translatedContent ? (
-                    <><span>{translatedContent}</span><span className="text-white/30 text-[10px] ml-1">(traduzido)</span></>
-                  ) : isTranslating ? (
+                  {isTranslating ? (
                     <span className="text-white/40 text-xs">...</span>
+                  ) : translatedContent ? (
+                    <>
+                      <span>{translatedContent}</span>
+                      <span className="text-white/30 text-[10px] ml-1">(traduzido)</span>
+                      {renderRichMessageFn(
+                        selectedMessage.message.split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n'),
+                        playingAudio, audioRef, setPlayingAudio, lang, username
+                      )}
+                    </>
                   ) : (
                     renderRichMessageFn(selectedMessage.message || "", playingAudio, audioRef, setPlayingAudio, lang, username)
                   )}
@@ -1503,11 +1538,12 @@ export function VibeMailInboxWithClaim({
     if (!selectedMessage?.message) { setTranslatedContent(null); return; }
     const parsed = parseQuestBanner(selectedMessage.message);
     const msg = (parsed ? parsed.cleanMessage : selectedMessage.message).trim();
-    if (!msg) return;
+    const stripped = stripMediaCommands(msg);
+    if (!stripped) return;
     const cached = getTranslationCache(selectedMessage._id, lang);
     if (cached) { setTranslatedContent(cached); return; }
     setIsTranslating(true);
-    translateText(msg, lang)
+    translateText(stripped, lang)
       .then(result => {
         if (result) { setTranslatedContent(result); setTranslationCache(selectedMessage._id, lang, result); }
         else setTranslatedContent(null);
@@ -3751,6 +3787,7 @@ export function VibeMailInboxWithClaim({
                                 const { storageId } = await res.json();
                                 const serverUrl = `${VIBEFID_STORAGE_URL}/${storageId}`;
                                 setDrawingImages(prev => ({ ...prev, [compositeId]: serverUrl }));
+                                setComposerImageId('img:' + storageId);
                               } catch (e) { console.error('Drawing upload error:', e); }
                             })();
                           } catch (e) {
@@ -3959,7 +3996,28 @@ export function VibeMailInboxWithClaim({
                 <p className="text-white/40 text-[10px]">{new Date(selectedMessage.createdAt).toLocaleString()}</p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
-                {isTranslating && <span className="text-white/30 text-[10px]">...</span>}
+                {selectedMessage.message && (
+                  <button
+                    onClick={() => {
+                      if (translatedContent) { setTranslatedContent(null); return; }
+                      const parsed = parseQuestBanner(selectedMessage.message || '');
+                      const msg = (parsed ? parsed.cleanMessage : selectedMessage.message || '').trim();
+                      const stripped = stripMediaCommands(msg);
+                      if (!stripped) return;
+                      const cached = getTranslationCache(selectedMessage._id, lang);
+                      if (cached) { setTranslatedContent(cached); return; }
+                      setIsTranslating(true);
+                      translateText(stripped, lang)
+                        .then(result => { if (result) { setTranslatedContent(result); setTranslationCache(selectedMessage._id, lang, result); } })
+                        .catch(() => {})
+                        .finally(() => setIsTranslating(false));
+                    }}
+                    disabled={isTranslating}
+                    className={`px-2 py-1 text-[10px] font-bold border-2 border-black transition-all ${translatedContent ? 'bg-blue-600 text-white' : 'bg-[#1a1a1a] text-white/50 hover:text-white'}`}
+                  >
+                    {isTranslating ? '...' : translatedContent ? lang.toUpperCase().replace('-', '') : 'TR'}
+                  </button>
+                )}
                 <span className={`text-[9px] font-bold px-1.5 py-0.5 border border-black ${selectedMessage.isPaid ? 'bg-yellow-500/20 text-yellow-400' : 'bg-[#FFD700]/10 text-[#FFD700]/60'}`}>
                   {selectedMessage.isPaid ? 'PAID' : 'FREE'}
                 </span>
@@ -4197,10 +4255,15 @@ export function VibeMailInboxWithClaim({
               {(() => {
                 const parsed = parseQuestBanner(selectedMessage.message || '');
                 const msg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
+                const mediaOnlyMsg = msg.split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n');
                 return msg ? (
                   <div className="text-white text-sm leading-relaxed">
                     {translatedContent ? (
-                      <><span>{translatedContent}</span><span className="text-white/30 text-[10px] ml-1">(traduzido)</span></>
+                      <>
+                        <span>{translatedContent}</span>
+                        <span className="text-white/30 text-[10px] ml-1">(traduzido)</span>
+                        {mediaOnlyMsg && renderRichMessageFn(mediaOnlyMsg, playingAudio, audioRef, setPlayingAudio, lang, username)}
+                      </>
                     ) : (
                       renderRichMessageFn(msg, playingAudio, audioRef, setPlayingAudio, lang, username)
                     )}
