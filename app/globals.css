@@ -4,6 +4,34 @@
 @tailwind components;
 @tailwind utilities;
 
+/* VibeMail button animations */
+@keyframes vm-send {
+  0%   { transform: translateX(-28px) rotate(-8deg); opacity: 0; }
+  15%  { opacity: 1; }
+  60%  { transform: translateX(4px) rotate(0deg); opacity: 1; }
+  85%  { transform: translateX(32px) rotate(6deg); opacity: 0.4; }
+  100% { transform: translateX(44px) rotate(8deg); opacity: 0; }
+}
+@keyframes vm-receive {
+  0%   { transform: translateX(28px) rotate(8deg); opacity: 0; }
+  15%  { opacity: 1; }
+  60%  { transform: translateX(-4px) rotate(0deg); opacity: 1; }
+  85%  { transform: translateX(-32px) rotate(-6deg); opacity: 0.4; }
+  100% { transform: translateX(-44px) rotate(-8deg); opacity: 0; }
+}
+@keyframes vm-glow-gold {
+  0%, 100% { box-shadow: 0 0 0px #FFD700; }
+  50%       { box-shadow: 0 0 18px #FFD70066; }
+}
+@keyframes vm-glow-purple {
+  0%, 100% { box-shadow: 0 0 0px #8B5CF6; }
+  50%       { box-shadow: 0 0 18px #8B5CF666; }
+}
+.vm-btn-send  { animation: vm-glow-gold   3s ease-in-out infinite; }
+.vm-btn-recv  { animation: vm-glow-purple 3s ease-in-out infinite; }
+.vm-icon-send { animation: vm-send    2.4s ease-in-out infinite; }
+.vm-icon-recv { animation: vm-receive 2.4s ease-in-out infinite; }
+
 /* ═══════════════════════════════════════════════════════════════════════════════
    CUSTOM CURSOR - Ornamental Golden Spade theme (tilted like arrow cursor)
    ═══════════════════════════════════════════════════════════════════════════════ */

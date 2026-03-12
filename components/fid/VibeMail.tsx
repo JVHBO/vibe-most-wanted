@@ -1965,11 +1965,11 @@ export function VibeMailInboxWithClaim({
                   setShowPurposeModal(false);
                   setShowComposer(true);
                 }}
-                className="flex-1 p-4 bg-[#111] border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-left flex flex-col justify-between"
+                className="vm-btn-recv flex-1 p-4 bg-[#111] border-2 border-[#8B5CF6]/40 shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-left flex flex-col justify-between overflow-hidden relative"
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-[#8B5CF6] border-2 border-black flex items-center justify-center flex-shrink-0">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  <div className="w-10 h-10 bg-[#8B5CF6] border-2 border-black flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="vm-icon-recv"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                   </div>
                   <div className="flex-1">
                     <p className="text-white font-black text-base">Just a Message</p>
@@ -2007,15 +2007,15 @@ export function VibeMailInboxWithClaim({
                   setShowPurposeModal(false);
                   setShowComposer(true);
                 }}
-                className="flex-1 border-2 border-black shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-left flex flex-col justify-between overflow-hidden relative"
+                className="vm-btn-send flex-1 border-2 border-[#FFD700]/40 shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-left flex flex-col justify-between overflow-hidden relative"
                 style={{ minHeight: 120 }}
               >
                 {/* Background image */}
-                <img src="/vibemail-quest-bg.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30 pointer-events-none select-none" />
+                <img src="/vibemail-quest-bg.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none select-none" />
                 <div className="relative z-10 p-4 flex flex-col justify-between h-full">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-[#FFD700] border-2 border-black flex items-center justify-center flex-shrink-0">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#000" stroke="#000" strokeWidth="0"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <div className="w-10 h-10 bg-[#FFD700] border-2 border-black flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#000" stroke="#000" strokeWidth="0" className="vm-icon-send"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                   </div>
                   <div className="flex-1">
                     <p className="text-white font-black text-base">With Social Quest</p>
