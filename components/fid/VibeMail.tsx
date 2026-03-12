@@ -10,6 +10,7 @@ import { fidTranslations } from "@/lib/fid/fidTranslations";
 import { translations } from "@/lib/translations";
 import { sdk } from '@farcaster/miniapp-sdk';
 import { useTransferVBMS, useVBMSBalance } from "@/hooks/fid/useVBMSContracts";
+import { useSwitchChain } from 'wagmi';
 import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
 import { CONTRACTS } from "@/lib/fid/contracts";
 import { parseEther } from 'viem';
@@ -1474,6 +1475,7 @@ export function VibeMailInboxWithClaim({
 
   // TX hook for VibeMail (free mail = 0 VBMS, no quest, 1 per day limit)
   const { transfer: transferVBMS, isPending: isTransferPending } = useTransferVBMS();
+  const { switchChainAsync } = useSwitchChain();
 
   // Free VibeMail limit (uses same system as voting)
   const freeVotesRemaining = useQuery(
@@ -1620,6 +1622,8 @@ export function VibeMailInboxWithClaim({
 
       if (!hasFreemail) {
         const cost = composerQuestData ? String(questMailCost) : VIBEMAIL_COST_VBMS;
+        // Switch to Base before VBMS transfer (wallet may be on ARB after free mail)
+        await switchChainAsync({ chainId: CONTRACTS.CHAIN_ID });
         await transferVBMS(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(cost));
       }
       if (isReply && origMsgId) {
