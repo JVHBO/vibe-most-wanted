@@ -3862,6 +3862,74 @@ export function VibeMailInboxWithClaim({
                             type DrawTask = { z: number; draw: () => Promise<void> };
                             const tasks: DrawTask[] = [];
 
+                            // Text element at its current position
+                            if (textOnly && !hiddenElements.has('text')) {
+                              const p = elementPositions['text'] || getDefaultPos('text');
+                              tasks.push({ z: p.z ?? 0, draw: async () => {
+                                ctx.save();
+                                ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+                                ctx.rotate(((p.r ?? 0) * Math.PI) / 180);
+                                ctx.fillStyle = '#000';
+                                ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                                const fontSize = Math.max(8, Math.min(15, p.h * 0.2));
+                                ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+                                ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                                // Word-wrap
+                                let ty = -p.h / 2 + 8 + fontSize;
+                                for (const line of textOnly.split('\n')) {
+                                  const words = line.split(' ');
+                                  let cur = '';
+                                  for (const word of words) {
+                                    const test = cur ? cur + ' ' + word : word;
+                                    if (ctx.measureText(test).width > p.w - 16) {
+                                      if (cur) { ctx.fillText(cur, -p.w / 2 + 8, ty); ty += fontSize * 1.4; }
+                                      cur = word;
+                                    } else { cur = test; }
+                                  }
+                                  if (cur) { ctx.fillText(cur, -p.w / 2 + 8, ty); ty += fontSize * 1.4; }
+                                  if (ty > p.h / 2 - 8) break;
+                                }
+                                ctx.restore();
+                              }});
+                            }
+
+                            // Audio element at its current position
+                            if (audioMatch && !hiddenElements.has('audio')) {
+                              const p = elementPositions['audio'] || getDefaultPos('audio');
+                              tasks.push({ z: p.z ?? 0, draw: async () => {
+                                ctx.save();
+                                ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+                                ctx.rotate(((p.r ?? 0) * Math.PI) / 180);
+                                // Gradient bg
+                                const grad = ctx.createLinearGradient(-p.w / 2, -p.h / 2, p.w / 2, p.h / 2);
+                                grad.addColorStop(0, '#1c0900');
+                                grad.addColorStop(1, '#0d0d0d');
+                                ctx.fillStyle = grad;
+                                ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                                // Orange left border
+                                ctx.fillStyle = '#F97316';
+                                ctx.fillRect(-p.w / 2, -p.h / 2, 3, p.h);
+                                // Play button square
+                                ctx.fillStyle = '#F97316';
+                                ctx.fillRect(-p.w / 2 + 8, -14, 28, 28);
+                                ctx.fillStyle = '#000';
+                                ctx.beginPath();
+                                ctx.moveTo(-p.w / 2 + 17, -7);
+                                ctx.lineTo(-p.w / 2 + 17, 7);
+                                ctx.lineTo(-p.w / 2 + 30, 0);
+                                ctx.closePath();
+                                ctx.fill();
+                                // Audio name
+                                ctx.font = 'bold 11px Arial, sans-serif';
+                                ctx.fillStyle = '#fff';
+                                ctx.fillText(audioName.slice(0, 28), -p.w / 2 + 44, 3);
+                                ctx.font = '8px Arial, sans-serif';
+                                ctx.fillStyle = 'rgba(249,115,22,0.6)';
+                                ctx.fillText('SOUND', -p.w / 2 + 44, 14);
+                                ctx.restore();
+                              }});
+                            }
+
                             // Images at their current positions
                             for (const { key, src } of allImgSrcs) {
                               if (!src || hiddenElements.has(key)) continue;
