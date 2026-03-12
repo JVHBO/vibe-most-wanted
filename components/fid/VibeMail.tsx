@@ -745,7 +745,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                       <span>{translatedContent}</span>
                       <span className="text-white/30 text-[10px] ml-1">(traduzido)</span>
                       {renderRichMessageFn(
-                        selectedMessage.message.split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n'),
+                        (selectedMessage.message || '').split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n'),
                         playingAudio, audioRef, setPlayingAudio, lang, username
                       )}
                     </>
