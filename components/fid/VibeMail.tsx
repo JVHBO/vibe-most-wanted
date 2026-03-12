@@ -1965,8 +1965,11 @@ export function VibeMailInboxWithClaim({
                   setShowPurposeModal(false);
                   setShowComposer(true);
                 }}
-                className="vm-btn-recv flex-1 p-4 bg-[#111] border-2 border-[#8B5CF6]/40 shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-left flex flex-col justify-between overflow-hidden relative"
+                className="vm-btn-recv flex-1 border-2 border-[#8B5CF6]/40 shadow-[4px_4px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all text-left flex flex-col justify-between overflow-hidden relative"
+                style={{ minHeight: 120 }}
               >
+                <img src="/vibemail-free-bg.png" alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none select-none" />
+                <div className="relative z-10 p-4 flex flex-col justify-between h-full">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-[#8B5CF6] border-2 border-black flex items-center justify-center flex-shrink-0 overflow-hidden">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="vm-icon-recv"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
@@ -1981,6 +1984,7 @@ export function VibeMailInboxWithClaim({
                   <span className="px-2 py-0.5 bg-[#22C55E]/20 border border-[#22C55E]/50 text-[#22C55E] font-black text-[9px] uppercase tracking-wide">FREE</span>
                   <span className="text-white/30 text-[9px]">Limit: 1 per recipient per day</span>
                 </div>
+                </div>{/* end z-10 wrapper */}
               </button>
 
               {/* Option 2: With Social Quest */}
