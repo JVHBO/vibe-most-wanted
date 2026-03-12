@@ -12,6 +12,7 @@ import type * as audioStorage from "../audioStorage.js";
 import type * as cardValidation from "../cardValidation.js";
 import type * as cardVotes from "../cardVotes.js";
 import type * as farcasterCards from "../farcasterCards.js";
+import type * as http from "../http.js";
 import type * as mostWanted from "../mostWanted.js";
 import type * as neynarScore from "../neynarScore.js";
 import type * as nftGifts from "../nftGifts.js";
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   cardValidation: typeof cardValidation;
   cardVotes: typeof cardVotes;
   farcasterCards: typeof farcasterCards;
+  http: typeof http;
   mostWanted: typeof mostWanted;
   neynarScore: typeof neynarScore;
   nftGifts: typeof nftGifts;

@@ -37,8 +37,10 @@ function stripMediaCommands(text: string): string {
     .trim();
 }
 
-const VIBEMAIL_COST_VBMS = "1000"; // Cost for paid VibeMail
+const VIBEMAIL_COST_VBMS = "1000"; // Cost for paid "Just a Message" (no quests)
 const VIBEMAIL_RECIPIENT_VBMS = 500; // VBMS recipient earns per message
+const QUEST_BASE_VBMS = 500; // Base for quest mails (goes to recipient claim button)
+const QUEST_PER_VBMS = 200; // Per quest reward (recipient claims each quest)
 
 const QUEST_PURPOSES = [
   { id: 'follow', icon: '👤', label: 'Follow Quest', shortDesc: 'Ask to follow your profile', questType: 'follow_me', needsCast: false,
@@ -1452,6 +1454,11 @@ export function VibeMailInboxWithClaim({
 
   // Generate upload URL for custom images (same storage as AudioRecorder)
   const generateUploadUrl = useMutation(api.audioStorage.generateUploadUrl);
+  const claimQuestMailRewardMutation = useMutation(api.cardVotes.claimQuestMailReward);
+  const questMailClaims = useQuery(
+    api.cardVotes.getQuestMailClaims,
+    selectedMessage?._id && myFid ? { messageId: selectedMessage._id as any, claimerFid: myFid } : 'skip'
+  );
 
   // Query to get recipient address (kept for compat)
   const targetFidForGift = recipientFid || replyToFid;
@@ -1469,6 +1476,9 @@ export function VibeMailInboxWithClaim({
     myFid ? { voterFid: myFid } : 'skip'
   );
   const hasFreemail = (freeVotesRemaining?.remaining ?? 0) > 0 && !composerQuestData;
+
+  const questCount = composerQuestData?.quests?.length ?? 0;
+  const questMailCost = QUEST_BASE_VBMS + questCount * QUEST_PER_VBMS;
 
   const searchResults = useQuery(
     api.cardVotes.searchCardsForVibeMail,
@@ -1604,7 +1614,8 @@ export function VibeMailInboxWithClaim({
       }
 
       if (!hasFreemail) {
-        await transferVBMS(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(VIBEMAIL_COST_VBMS));
+        const cost = composerQuestData ? String(questMailCost) : VIBEMAIL_COST_VBMS;
+        await transferVBMS(CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther(cost));
       }
       if (isReply && origMsgId) {
         await replyMutation({
@@ -3121,7 +3132,7 @@ export function VibeMailInboxWithClaim({
                         : (pvImgMsgMatch ? pvImgMsgMatch[1] : '');
 
                       // Both flow and designed layouts use the same fixed-height container
-                      const claimVbms = hasFreemail ? 0 : 100;
+                      const claimVbms = hasFreemail ? 0 : QUEST_BASE_VBMS;
                       const claimBtn = (
                         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 9999, pointerEvents: 'none' }}>
                           <div className="flex items-center justify-between px-3 py-2 border-t border-[#FFD700]/30 bg-[#0a0a0a]/95">
@@ -3964,7 +3975,9 @@ export function VibeMailInboxWithClaim({
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                   {hasFreemail
                     ? `${t.vibemailSend || 'Send'} · ${t.vibemailFreeLabel || 'Free'} (${freeVotesRemaining?.remaining ?? 0}/${freeVotesRemaining?.max ?? 1})`
-                    : `${t.vibemailSend || 'Send'} · ${Number(VIBEMAIL_COST_VBMS).toLocaleString()} VBMS`}
+                    : composerQuestData
+                      ? `${t.vibemailSend || 'Send'} · ${questMailCost.toLocaleString()} VBMS`
+                      : `${t.vibemailSend || 'Send'} · ${Number(VIBEMAIL_COST_VBMS).toLocaleString()} VBMS`}
                 </span>
               )}
             </button>
@@ -4032,8 +4045,18 @@ export function VibeMailInboxWithClaim({
                     <div className="bg-[#0d0d0d] flex flex-col divide-y-2 divide-black">
                       {(questData.quests || []).map((q: any, i: number) => {
                         const claimKey = `${selectedMessage._id}_${i}`;
-                        const isClaimed = claimedQuestItems.has(claimKey);
-                        const markClaimed = () => setClaimedQuestItems(prev => new Set([...prev, claimKey]));
+                        const isClaimedFromDB = questMailClaims?.some((c: any) => c.questIndex === i) ?? false;
+                        const isClaimed = isClaimedFromDB || claimedQuestItems.has(claimKey);
+                        const markClaimed = async () => {
+                          try {
+                            if (myFid && selectedMessage._id) {
+                              await claimQuestMailRewardMutation({ messageId: selectedMessage._id as any, claimerFid: myFid, questIndex: i });
+                            }
+                          } catch (e) {
+                            console.error('Quest claim failed:', e);
+                          }
+                          setClaimedQuestItems(prev => new Set([...prev, claimKey]));
+                        };
 
                         if (q.type === 'follow_farcaster') {
                           const profileUrl = `https://warpcast.com/${q.username}`;
@@ -4066,7 +4089,7 @@ export function VibeMailInboxWithClaim({
                                 </button>
                                 <button onClick={markClaimed} disabled={isClaimed}
                                   className={`flex-1 py-1.5 border-2 border-black font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
-                                  {isClaimed ? 'Done!' : 'Claim'}
+                                  {isClaimed ? '✓ +200 VBMS' : 'Claim +200 VBMS'}
                                 </button>
                               </div>
                             </div>
@@ -4137,7 +4160,7 @@ export function VibeMailInboxWithClaim({
                                   onClick={markClaimed}
                                   disabled={isClaimed}
                                   className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
-                                  {isClaimed ? 'Done!' : 'Claim'}
+                                  {isClaimed ? '✓ +200 VBMS' : 'Claim +200 VBMS'}
                                 </button>
                               </div>
                             </div>
@@ -4174,7 +4197,7 @@ export function VibeMailInboxWithClaim({
                                     onClick={markClaimed}
                                     disabled={isClaimed}
                                     className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}>
-                                    {isClaimed ? 'Done!' : 'Claim'}
+                                    {isClaimed ? '✓ +200 VBMS' : 'Claim +200 VBMS'}
                                   </button>
                                 </div>
                               </div>
