@@ -71,7 +71,7 @@ const SLASH_COMMANDS = [
 
 // Parse quest banner marker from message text
 function parseQuestBanner(message: string): { questData: any; cleanMessage: string } | null {
-  const match = message.match(/\[VQUEST:(\{.*?\})\]/s);
+  const match = message.match(/\[VQUEST:(\{.*\})\]/s);
   if (!match) return null;
   try {
     return { questData: JSON.parse(match[1]), cleanMessage: message.replace(match[0], '').trim() };
@@ -537,6 +537,9 @@ function renderRichMessageFn(
   for (const line of lines) {
     const trimmed = line.trim();
 
+    // Skip [VQUEST:...] quest banner lines — should be stripped before calling but guard here too
+    if (trimmed.startsWith('[VQUEST:')) continue;
+
     // /sound=URL [volume=X]
     const soundM = trimmed.match(/^\/sound=(\S+?)(?:\s+volume=([\d.]+))?$/i);
     if (soundM) {
@@ -695,7 +698,9 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
   // Auto-translate when lang changes or message opens
   useEffect(() => {
     if (!selectedMessage?.message) { setTranslatedContent(null); return; }
-    const stripped = stripMediaCommands(selectedMessage.message.trim());
+    const parsedQ = parseQuestBanner(selectedMessage.message);
+    const msgForTranslation = (parsedQ ? parsedQ.cleanMessage : selectedMessage.message).trim();
+    const stripped = stripMediaCommands(msgForTranslation);
     if (!stripped) return;
     const cached = getTranslationCache(selectedMessage._id, lang);
     if (cached) { setTranslatedContent(cached); return; }
@@ -781,7 +786,10 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                       )}
                     </>
                   ) : (
-                    renderRichMessageFn(selectedMessage.message || "", playingAudio, audioRef, setPlayingAudio, lang, username)
+                    renderRichMessageFn(
+                      (() => { const p = parseQuestBanner(selectedMessage.message || ''); return p ? p.cleanMessage : (selectedMessage.message || ''); })(),
+                      playingAudio, audioRef, setPlayingAudio, lang, username
+                    )
                   )}
                   {selectedMessage.imageId && (() => {
                     const isCustom = selectedMessage.imageId!.startsWith('img:');
