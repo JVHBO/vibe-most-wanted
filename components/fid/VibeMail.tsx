@@ -4294,11 +4294,13 @@ export function VibeMailInboxWithClaim({
                             const { ConvexHttpClient } = await import('convex/browser');
                             const { api: vmwApi } = await import('@/convex/_generated/api');
                             const vmwClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+                            const questReward = q.reward || questData.rewardPerQuest || 200;
                             const result = await vmwClient.action(vmwApi.vbmsClaim.claimQuestMailVBMS, {
                               messageId: selectedMessage._id as any,
                               claimerFid: myFid,
                               claimerAddress: myAddress,
                               questIndex: i,
+                              amount: questReward,
                             });
                             // On-chain claim: pool sends VBMS to user
                             const data = encodeFunctionData({
@@ -4488,9 +4490,11 @@ export function VibeMailInboxWithClaim({
                                 const { ConvexHttpClient } = await import('convex/browser');
                                 const { api: vmwApi } = await import('@/convex/_generated/api');
                                 const vmwClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+                                const receiptReward = questData.baseReward || 100;
                                 const result = await vmwClient.action(vmwApi.vbmsClaim.claimQuestReceiptVBMS, {
                                   messageId: selectedMessage._id as any,
                                   claimerAddress: myAddress,
+                                  amount: receiptReward,
                                 });
                                 const txData = encodeFunctionData({
                                   abi: POOL_ABI,
