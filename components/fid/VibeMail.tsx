@@ -2804,7 +2804,7 @@ export function VibeMailInboxWithClaim({
               <div className="mt-2 bg-[#0d0d0d] border-2 border-[#F97316]/50 p-2">
                 {/* Header + close */}
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[#F97316] text-[10px] font-black uppercase tracking-widest">Audios</span>
+                  <span className="text-[#F97316] text-[10px] font-black uppercase tracking-widest">Audios ({(composerMessage.match(/\/sound=/gi) || []).length}/3)</span>
                   <button onClick={() => setShowSoundPicker(false)} className="text-white/30 hover:text-white text-xs">✕</button>
                 </div>
                 {/* Direct URL input */}
@@ -2834,6 +2834,8 @@ export function VibeMailInboxWithClaim({
                         setSoundUrlLoading(false); return;
                       }
                       const soundLine = `/sound=${finalUrl} volume=0.2`;
+                      const soundCount = (composerMessage.match(/\/sound=/gi) || []).length;
+                      if (soundCount >= 3) { setSoundUrlError('Max 3 audios'); setSoundUrlLoading(false); return; }
                       const cur = composerMessage.trim();
                       setComposerMessage(cur ? cur + '\n' + soundLine : soundLine);
                       setShowSoundPicker(false); setSoundUrlLoading(false); setSoundUrlInput(''); setSoundUrlError('');
@@ -2876,8 +2878,9 @@ export function VibeMailInboxWithClaim({
                           }
                         }}
                         onUse={() => {
-                          const replaced = composerMessage.replace(/^\/sound=\S*(?:\s+volume=[\d.]+)?/im, soundLine);
-                          const newText = replaced !== composerMessage ? replaced : (composerMessage.trim() ? `${composerMessage.trim()}\n${soundLine}` : soundLine);
+                          const soundCount = (composerMessage.match(/\/sound=/gi) || []).length;
+                          if (soundCount >= 3) return;
+                          const newText = composerMessage.trim() ? `${composerMessage.trim()}\n${soundLine}` : soundLine;
                           setComposerMessage(newText); setShowSoundPicker(false);
                         }}
                       />
@@ -2903,8 +2906,9 @@ export function VibeMailInboxWithClaim({
                             }}
                             onUse={() => {
                               const soundLine = `/sound=${sound.url} volume=0.2`;
-                              const replaced = composerMessage.replace(/^\/sound=\S*(?:\s+volume=[\d.]+)?/im, soundLine);
-                              const newText = replaced !== composerMessage ? replaced : (composerMessage.trim() ? `${composerMessage.trim()}\n${soundLine}` : soundLine);
+                              const soundCount = (composerMessage.match(/\/sound=/gi) || []).length;
+                              if (soundCount >= 3) return;
+                              const newText = composerMessage.trim() ? `${composerMessage.trim()}\n${soundLine}` : soundLine;
                               setComposerMessage(newText); setShowSoundPicker(false);
                             }}
                           />
@@ -3805,6 +3809,7 @@ export function VibeMailInboxWithClaim({
                             if (!blob) throw new Error('export failed');
                             // Save locally first — instant preview
                             const localUrl = URL.createObjectURL(blob);
+                            setComposerCustomImagePreview(localUrl);
                             const compositeId = 'draw_composite';
                             // Replace all individual draws with one merged composite (transparent PNG, GIF stays untouched)
                             setDrawingImages(prev => {
@@ -3834,6 +3839,7 @@ export function VibeMailInboxWithClaim({
                                 const serverUrl = `${VIBEFID_STORAGE_URL}/${storageId}`;
                                 setDrawingImages(prev => ({ ...prev, [compositeId]: serverUrl }));
                                 setComposerImageId('img:' + storageId);
+                                setComposerCustomImagePreview(serverUrl);
                               } catch (e) { console.error('Drawing upload error:', e); }
                             })();
                           } catch (e) {
