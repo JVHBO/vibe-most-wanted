@@ -1651,8 +1651,9 @@ export function VibeMailInboxWithClaim({
       ? `[VQUEST:${JSON.stringify(composerQuestData)}]\n${composerMessage}`
       : composerMessage;
     try {
-      // On-chain confirmation — ARB only (Base skips on-chain validation)
-      if (!hasFreemail || sendNetworkRef.current === 'arb') {
+      // On-chain ARB validation only for free mails on ARB network
+      // Paid mails use VBMS transfer as proof — no ARB validation needed
+      if (hasFreemail && sendNetworkRef.current === 'arb') {
         await validateOnArb(100, ARB_CLAIM_TYPE.VIBEMAIL);
       }
 
@@ -3937,9 +3938,7 @@ export function VibeMailInboxWithClaim({
                   setIsSending(true);
                   setBroadcastResult(null);
                   try {
-                    // On-chain confirmation via ARB validator
-                    await validateOnArb(100, ARB_CLAIM_TYPE.VIBEMAIL);
-                    // Transfer VBMS to contract (payment for broadcast)
+                    // Transfer VBMS to contract (payment for broadcast — no ARB validation needed)
                     const txHash = await transferVBMS(CONTRACTS.VBMSPoolTroll, totalCost);
                     if (!txHash) {
                       console.error('Broadcast payment failed');
