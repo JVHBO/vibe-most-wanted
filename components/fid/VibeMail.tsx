@@ -1094,8 +1094,12 @@ export function VibeMailInboxWithClaim({
         const textOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
         if (textOnly && !prev['text']) { next['text'] = { x: 12, y, w: W, h: 64 }; y += 76; }
         if (composerMessage.match(/\/sound=/i) && !prev['audio']) { next['audio'] = { x: 12, y, w: W, h: 56 }; y += 68; }
-        const hasImg = composerImageId || composerMessage.match(/\/img=/i);
-        if (hasImg && !prev['image']) { next['image'] = { x: 12, y, w: W, h: 150 }; }
+        const imgMatches = [...composerMessage.matchAll(/\/img=(\S+)/gi)];
+        imgMatches.forEach((_, idx) => {
+          const key = `img_${idx}`;
+          if (!prev[key]) { next[key] = { x: 12, y, w: W, h: 150 }; y += 162; }
+        });
+        if (composerImageId && !prev['img_upload']) { next['img_upload'] = { x: 12, y, w: W, h: 150 }; }
         return next;
       });
     });
@@ -3185,10 +3189,11 @@ export function VibeMailInboxWithClaim({
                       const hasDesign = Object.keys(elementPositions).length > 0 || drawnIds.length > 0;
                       const pvTextOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
                       const pvAudioMatch = composerMessage.match(/\/sound=(\S+)/i);
-                      const pvImgMsgMatch = composerMessage.match(/\/img=(\S+)/i);
-                      const pvImgSrc = composerImageId
-                        ? (composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''))
-                        : (pvImgMsgMatch ? pvImgMsgMatch[1] : '');
+                      // Multi-image preview: one slot per /img= in message + optional upload
+                      const pvAllImgSrcs: { key: string; src: string }[] = [
+                        ...[...composerMessage.matchAll(/\/img=(\S+)/gi)].map((m, i) => ({ key: `img_${i}`, src: m[1] })),
+                        ...(composerImageId ? [{ key: 'img_upload', src: composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || '') }] : []),
+                      ];
 
                       // Both flow and designed layouts use the same fixed-height container
                       const claimVbms = hasFreemail ? 0 : QUEST_BASE_VBMS;
@@ -3319,14 +3324,15 @@ export function VibeMailInboxWithClaim({
                                 </div>
                               )});
                             }
-                            if (pvImgSrc && elementPositions['image']) {
-                              const pos = elementPositions['image'];
-                              const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(pvImgSrc);
-                              pvItems.push({ key: 'pvimg', z: pos.z ?? 0, node: (
-                                <div key="pvimg" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex: ((pos.z ?? 0) + 1) * 10 }}>
+                            for (const { key, src } of pvAllImgSrcs) {
+                              if (!src || !elementPositions[key]) continue;
+                              const pos = elementPositions[key];
+                              const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(src);
+                              pvItems.push({ key, z: pos.z ?? 0, node: (
+                                <div key={key} style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex: ((pos.z ?? 0) + 1) * 10 }}>
                                   {isVid
-                                    ? <video src={pvImgSrc} className="w-full h-full object-cover" autoPlay loop muted playsInline />
-                                    : <img src={pvImgSrc} alt="Attachment" className="w-full h-full object-cover" />}
+                                    ? <video src={src} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+                                    : <img src={src} alt="Image" className="w-full h-full object-cover" />}
                                 </div>
                               )});
                             }
@@ -3372,19 +3378,26 @@ export function VibeMailInboxWithClaim({
               const textOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
               const audioMatch = composerMessage.match(/\/sound=(\S+)/i);
               const audioName = audioMatch ? audioMatch[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio' : 'Audio';
-              const imgMsgMatch = composerMessage.match(/\/img=(\S+)/i);
-              const imgSrc = composerImageId
-                ? (composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''))
-                : (imgMsgMatch ? imgMsgMatch[1] : '');
+              // Multi-image: one slot per /img= in message + optional upload slot
+              const allImgSrcs: { key: string; src: string; label: string }[] = [
+                ...[...composerMessage.matchAll(/\/img=(\S+)/gi)].map((m, i) => ({ key: `img_${i}`, src: m[1], label: `Img #${i + 1}` })),
+                ...(composerImageId ? [{ key: 'img_upload', src: composerImageId.startsWith('img:') ? (composerCustomImagePreview || '') : (getImageFile(composerImageId)?.file || ''), label: 'Upload' }] : []),
+              ];
+              // Legacy: imgSrc for hint condition only
+              const imgSrc = allImgSrcs.length > 0 ? allImgSrcs[0].src : '';
 
               // Default position for each element (fallback when pos not yet set by useEffect)
               const getDefaultPos = (id: string) => {
                 const area = designAreaRef.current;
                 const W = area ? Math.max(60, area.offsetWidth - 24) : 296;
-                const els = ['text', 'audio', 'image'].filter(e => (e === 'text' && textOnly) || (e === 'audio' && audioMatch) || (e === 'image' && imgSrc));
+                const isImg = id.startsWith('img_') || id === 'img_upload';
+                const imgIdx = isImg ? (id === 'img_upload' ? allImgSrcs.length - 1 : parseInt(id.split('_')[1]) || 0) : 0;
+                const baseY = 40 + (textOnly ? 76 : 0) + (audioMatch ? 68 : 0) + imgIdx * 162;
+                if (isImg) return { x: 12, y: baseY, w: W, h: 150, r: 0 };
+                const els = ['text', 'audio'].filter(e => (e === 'text' && textOnly) || (e === 'audio' && audioMatch));
                 const idx = els.indexOf(id);
                 const y = 40 + Math.max(0, idx) * 72;
-                return { x: 12, y, w: W, h: id === 'image' ? 150 : 56, r: 0 };
+                return { x: 12, y, w: W, h: 56, r: 0 };
               };
 
               // renderEl: plain function returning JSX (NOT a React component — avoids remount on state change)
@@ -3471,7 +3484,7 @@ export function VibeMailInboxWithClaim({
                         onClick={e => e.stopPropagation()}
                       >
                         <span className="px-1 py-0.5 text-[8px] font-black text-black" style={{ background: accentColor }}>
-                          {isDrawEl ? 'DRAW' : id.toUpperCase()} {pos.z ? `L${pos.z}` : 'L0'}
+                          {isDrawEl ? 'DRAW' : id === 'img_upload' ? 'UPLOAD' : id.startsWith('img_') ? `IMG #${parseInt(id.split('_')[1]) + 1}` : id.toUpperCase()} {pos.z ? `L${pos.z}` : 'L0'}
                         </span>
                         <button className="w-6 h-6 bg-[#1a1a1a] border border-[#555] text-white text-xs hover:bg-[#333] flex items-center justify-center" title="Rotate CCW"
                           onClick={() => { pushDesignUndo(); setElementPositions(p => ({ ...p, [id]: { ...(p[id] || pos), r: ((p[id]?.r ?? 0) - 15 + 360) % 360 } })); }}>↺</button>
@@ -3743,13 +3756,14 @@ export function VibeMailInboxWithClaim({
                             </div>
                           )});
                         }
-                        if (imgSrc && !hiddenElements.has('image')) {
-                          const p = elementPositions['image'] || getDefaultPos('image');
-                          const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(imgSrc);
-                          editItems.push({ id: 'image', z: p.z ?? 0, node: renderEl('image', '#22C55E',
+                        for (const { key, src, label } of allImgSrcs) {
+                          if (!src || hiddenElements.has(key)) continue;
+                          const p = elementPositions[key] || getDefaultPos(key);
+                          const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(src);
+                          editItems.push({ id: key, z: p.z ?? 0, node: renderEl(key, '#22C55E',
                             isVid
-                              ? <video src={imgSrc} className="w-full h-full object-cover" autoPlay loop muted playsInline style={{ pointerEvents: 'none' }} />
-                              : <img src={imgSrc} alt="" className="w-full h-full object-cover" draggable={false} style={{ pointerEvents: 'none', userSelect: 'none' }} />
+                              ? <video src={src} className="w-full h-full object-cover" autoPlay loop muted playsInline style={{ pointerEvents: 'none' }} />
+                              : <img src={src} alt={label} className="w-full h-full object-cover" draggable={false} style={{ pointerEvents: 'none', userSelect: 'none' }} />
                           )});
                         }
                         for (const id of drawnIds) {
