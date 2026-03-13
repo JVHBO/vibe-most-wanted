@@ -3858,6 +3858,27 @@ export function VibeMailInboxWithClaim({
                             ctx.fillStyle = '#111';
                             ctx.fillRect(0, 0, W, H);
 
+                            // Helper: draw image safely onto canvas at element position
+                            // NEVER uses img2-without-crossOrigin fallback (would taint canvas → toBlob SecurityError)
+                            const drawImgAt = (src: string, p: { x: number; y: number; w: number; h: number; r?: number }) =>
+                              new Promise<void>(resolve => {
+                                if (!src) { resolve(); return; }
+                                ctx.save();
+                                ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+                                if (p.r) ctx.rotate((p.r * Math.PI) / 180);
+                                const img = new Image();
+                                // blob: and data: are same-origin → no crossOrigin needed (crossOrigin on blob: causes CORS error)
+                                if (!src.startsWith('blob:') && !src.startsWith('data:')) img.crossOrigin = 'anonymous';
+                                img.onload = () => { try { ctx.drawImage(img, -p.w / 2, -p.h / 2, p.w, p.h); } catch {} ctx.restore(); resolve(); };
+                                img.onerror = () => {
+                                  // Draw dark placeholder — DO NOT retry without crossOrigin (canvas taint → toBlob failure)
+                                  ctx.fillStyle = '#1a1a1a';
+                                  ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                                  ctx.restore(); resolve();
+                                };
+                                img.src = src;
+                              });
+
                             // Collect all elements sorted by z
                             type DrawTask = { z: number; draw: () => Promise<void> };
                             const tasks: DrawTask[] = [];
@@ -3868,13 +3889,12 @@ export function VibeMailInboxWithClaim({
                               tasks.push({ z: p.z ?? 0, draw: async () => {
                                 ctx.save();
                                 ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
-                                ctx.rotate(((p.r ?? 0) * Math.PI) / 180);
+                                if (p.r) ctx.rotate((p.r * Math.PI) / 180);
                                 ctx.fillStyle = '#000';
                                 ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
                                 const fontSize = Math.max(8, Math.min(15, p.h * 0.2));
                                 ctx.font = `bold ${fontSize}px Arial, sans-serif`;
                                 ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                                // Word-wrap
                                 let ty = -p.h / 2 + 8 + fontSize;
                                 for (const line of textOnly.split('\n')) {
                                   const words = line.split(' ');
@@ -3899,64 +3919,53 @@ export function VibeMailInboxWithClaim({
                               tasks.push({ z: p.z ?? 0, draw: async () => {
                                 ctx.save();
                                 ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
-                                ctx.rotate(((p.r ?? 0) * Math.PI) / 180);
-                                // Gradient bg
+                                if (p.r) ctx.rotate((p.r * Math.PI) / 180);
                                 const grad = ctx.createLinearGradient(-p.w / 2, -p.h / 2, p.w / 2, p.h / 2);
-                                grad.addColorStop(0, '#1c0900');
-                                grad.addColorStop(1, '#0d0d0d');
+                                grad.addColorStop(0, '#1c0900'); grad.addColorStop(1, '#0d0d0d');
                                 ctx.fillStyle = grad;
                                 ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-                                // Orange left border
                                 ctx.fillStyle = '#F97316';
                                 ctx.fillRect(-p.w / 2, -p.h / 2, 3, p.h);
-                                // Play button square
-                                ctx.fillStyle = '#F97316';
                                 ctx.fillRect(-p.w / 2 + 8, -14, 28, 28);
                                 ctx.fillStyle = '#000';
                                 ctx.beginPath();
-                                ctx.moveTo(-p.w / 2 + 17, -7);
-                                ctx.lineTo(-p.w / 2 + 17, 7);
-                                ctx.lineTo(-p.w / 2 + 30, 0);
-                                ctx.closePath();
-                                ctx.fill();
-                                // Audio name
-                                ctx.font = 'bold 11px Arial, sans-serif';
-                                ctx.fillStyle = '#fff';
+                                ctx.moveTo(-p.w / 2 + 17, -7); ctx.lineTo(-p.w / 2 + 17, 7); ctx.lineTo(-p.w / 2 + 30, 0);
+                                ctx.closePath(); ctx.fill();
+                                ctx.font = 'bold 11px Arial, sans-serif'; ctx.fillStyle = '#fff';
                                 ctx.fillText(audioName.slice(0, 28), -p.w / 2 + 44, 3);
-                                ctx.font = '8px Arial, sans-serif';
-                                ctx.fillStyle = 'rgba(249,115,22,0.6)';
+                                ctx.font = '8px Arial, sans-serif'; ctx.fillStyle = 'rgba(249,115,22,0.6)';
                                 ctx.fillText('SOUND', -p.w / 2 + 44, 14);
                                 ctx.restore();
                               }});
                             }
 
                             // Images at their current positions
-                            for (const { key, src } of allImgSrcs) {
-                              if (!src || hiddenElements.has(key)) continue;
+                            for (const { key, src: rawSrc } of allImgSrcs) {
+                              if (hiddenElements.has(key)) continue;
+                              // For img: storage IDs, prefer server URL over local blob preview (better CORS support)
+                              const src = !rawSrc && composerImageId?.startsWith('img:')
+                                ? `${VIBEFID_STORAGE_URL}/${composerImageId.slice(4)}`
+                                : rawSrc;
+                              if (!src) continue;
                               const p = elementPositions[key] || getDefaultPos(key);
                               const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(src);
-                              tasks.push({ z: p.z ?? 0, draw: () => new Promise<void>(resolve => {
-                                ctx.save();
-                                ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
-                                ctx.rotate(((p.r ?? 0) * Math.PI) / 180);
+                              tasks.push({ z: p.z ?? 0, draw: () => {
                                 if (isVid) {
-                                  // Draw current frame from video element in DOM
-                                  const videos = area.querySelectorAll('video');
-                                  let drawn = false;
-                                  for (const vid of Array.from(videos)) {
-                                    try { ctx.drawImage(vid, -p.w / 2, -p.h / 2, p.w, p.h); drawn = true; break; } catch {}
-                                  }
-                                  if (!drawn) { ctx.fillStyle = '#222'; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); }
-                                  ctx.restore(); resolve();
-                                } else {
-                                  const img = new Image();
-                                  const draw = () => { try { ctx.drawImage(img, -p.w / 2, -p.h / 2, p.w, p.h); } catch {} ctx.restore(); resolve(); };
-                                  img.onload = draw;
-                                  img.onerror = () => { const img2 = new Image(); img2.onload = () => { try { ctx.drawImage(img2, -p.w / 2, -p.h / 2, p.w, p.h); } catch {} ctx.restore(); resolve(); }; img2.onerror = () => { ctx.restore(); resolve(); }; img2.src = src; };
-                                  img.crossOrigin = 'anonymous';
-                                  img.src = src;
+                                  // Draw current frame directly from video DOM element (no CORS issue)
+                                  return new Promise<void>(resolve => {
+                                    ctx.save();
+                                    ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
+                                    if (p.r) ctx.rotate((p.r * Math.PI) / 180);
+                                    let drawn = false;
+                                    for (const vid of Array.from(area.querySelectorAll('video'))) {
+                                      try { ctx.drawImage(vid, -p.w / 2, -p.h / 2, p.w, p.h); drawn = true; break; } catch {}
+                                    }
+                                    if (!drawn) { ctx.fillStyle = '#222'; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); }
+                                    ctx.restore(); resolve();
+                                  });
                                 }
-                              })});
+                                return drawImgAt(src, p);
+                              }});
                             }
 
                             // Drawn strokes at their current positions
@@ -3965,12 +3974,7 @@ export function VibeMailInboxWithClaim({
                               const src = drawingImages[id];
                               const p = elementPositions[id];
                               if (!src || !p) continue;
-                              tasks.push({ z: p.z ?? 0, draw: () => new Promise<void>(resolve => {
-                                const img = new Image();
-                                img.onload = () => { ctx.save(); ctx.translate(p.x + p.w / 2, p.y + p.h / 2); ctx.rotate(((p.r ?? 0) * Math.PI) / 180); ctx.drawImage(img, -p.w / 2, -p.h / 2, p.w, p.h); ctx.restore(); resolve(); };
-                                img.onerror = () => resolve();
-                                img.src = src;
-                              })});
+                              tasks.push({ z: p.z ?? 0, draw: () => drawImgAt(src, p) });
                             }
 
                             // Draw all in z-order
