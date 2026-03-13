@@ -2054,21 +2054,28 @@ export function VibeMailInboxWithClaim({
     const baseColor = composerColor || '#e5e7eb';
     const lines = text.split('\n');
     return lines.map((line, lineIdx) => {
-      const isLastLine = lineIdx === lines.length - 1;
+      const isLast = lineIdx === lines.length - 1;
       // Mute command lines
       if (/^\/(?:img|sound)=/i.test(line.trim())) {
-        return <span key={lineIdx}><span style={{ color: '#444', fontStyle: 'italic' }}>{line}</span>{!isLastLine && '\n'}</span>;
+        return <span key={lineIdx}><span style={{ color: '#3a3a3a', fontStyle: 'italic' }}>{line}</span>{!isLast && '\n'}</span>;
       }
-      // Parse inline {c:#COLOR}text{/c} tags
-      const parts = line.split(/(\{c:#[0-9a-fA-F]{3,8}\}|\{\/c\})/);
-      let activeColor: string | null = null;
-      const rendered = parts.map((part, pi) => {
-        const open = part.match(/^\{c:(#[0-9a-fA-F]{3,8})\}$/);
-        if (open) { activeColor = open[1]; return null; }
-        if (part === '{/c}') { activeColor = null; return null; }
-        return <span key={pi} style={{ color: activeColor || baseColor }}>{part}</span>;
-      });
-      return <span key={lineIdx}>{rendered}{!isLastLine && '\n'}</span>;
+      // Parse inline {c:#COLOR}text{/c} — while+indexOf
+      const segs: React.ReactNode[] = [];
+      let rem = line;
+      let cur = baseColor;
+      let si = 0;
+      while (rem.length > 0) {
+        const om = rem.match(/\{c:(#[0-9a-fA-F]{3,8})\}/);
+        const oi = om ? rem.indexOf(om[0]) : -1;
+        const ci = rem.indexOf('{/c}');
+        if (oi === -1 && ci === -1) { segs.push(<span key={si++} style={{ color: cur }}>{rem}</span>); break; }
+        const useOpen = oi !== -1 && (ci === -1 || oi <= ci);
+        const ni = useOpen ? oi : ci;
+        if (ni > 0) segs.push(<span key={si++} style={{ color: cur }}>{rem.slice(0, ni)}</span>);
+        if (useOpen) { cur = om![1]; rem = rem.slice(oi + om![0].length); }
+        else { cur = baseColor; rem = rem.slice(ci + 5); }
+      }
+      return <span key={lineIdx}>{segs}{!isLast && '\n'}</span>;
     });
   };
 
