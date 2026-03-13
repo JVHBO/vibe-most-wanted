@@ -912,7 +912,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                     ))}
                   </div>
                   <div className="px-3 py-2 bg-[#0d0d0d] border-t-2 border-black flex items-center justify-between">
-                    <span className="text-[#FFD700] text-[10px] font-black uppercase">Reward</span>
+                    <span className="text-[#FFD700] text-[10px] font-black uppercase">{t.questRewardLabel || 'Reward'}</span>
                     <span className="text-white/50 text-[10px]">100 VBMS for receiving</span>
                   </div>
                 </div>
@@ -928,7 +928,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
               className="mt-3 w-full py-2 bg-vintage-black border-2 border-vintage-gold text-vintage-gold rounded-lg hover:bg-vintage-gold/10"
               style={{ color: '#FFD400', borderColor: '#FFD400' }}
             >
-              Back to Inbox
+              {t.backToInbox || 'Back to Inbox'}
             </button>
           </div>
         ) : (
@@ -4353,7 +4353,7 @@ export function VibeMailInboxWithClaim({
                     {/* Carousel header */}
                     <div className="bg-[#FFD700] px-3 py-2 flex items-center gap-2 border-b-2 border-black">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="#000" stroke="#000" strokeWidth="0"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                      <span className="font-black text-black text-xs uppercase tracking-widest flex-1">Quest VibeMail</span>
+                      <span className="font-black text-black text-xs uppercase tracking-widest flex-1">{t.questVibemailHeader || 'Quest VibeMail'}</span>
                       {quests.length > 1 && (
                         <div className="flex items-center gap-1">
                           <button onClick={() => setQuestCarouselIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
@@ -4375,22 +4375,22 @@ export function VibeMailInboxWithClaim({
                               {!q.banner && q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                               <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#8B5CF6] border border-black/50">
-                                <span className="text-white font-black text-[8px] uppercase tracking-widest">Follow</span>
+                                <span className="text-white font-black text-[8px] uppercase tracking-widest">{t.questFollowBadge || 'Follow'}</span>
                               </div>
                               <div className="absolute bottom-2 left-3 flex items-center gap-2">
                                 {q.pfp ? <img src={q.pfp} className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] shadow-lg flex-shrink-0" alt="" /> : <div className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20 flex items-center justify-center flex-shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" strokeWidth="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>}
                                 <div>
                                   <p className="text-white font-black text-sm drop-shadow">@{q.username}</p>
-                                  <p className="text-[#8B5CF6] text-[9px] uppercase tracking-widest font-bold">VibeFID Holder</p>
+                                  <p className="text-[#8B5CF6] text-[9px] uppercase tracking-widest font-bold">{t.questVibefidHolder || 'VibeFID Holder'}</p>
                                 </div>
                               </div>
                             </div>
                             <div className="flex gap-1.5 p-2">
                               <button onClick={async () => { try { await sdk.actions?.openUrl?.(profileUrl); } catch { window.open(profileUrl, '_blank'); } }}
-                                className="flex-1 py-1.5 bg-[#8B5CF6] border-2 border-black text-white font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide">Go to Profile</button>
+                                className="flex-1 py-1.5 bg-[#8B5CF6] border-2 border-black text-white font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide">{t.questGoToProfile || 'Go to Profile'}</button>
                               <button onClick={markClaimed} disabled={isClaimed || claimingQuest === claimKey}
                                 className={`flex-1 py-1.5 border-2 border-black font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
-                                {isClaimed ? '✓ Claimed' : claimingQuest === claimKey ? '...' : `Claim +${q.reward || questData.rewardPerQuest || 200} VBMS`}
+                                {isClaimed ? (t.questClaimed || '✓ Claimed') : claimingQuest === claimKey ? '...' : (t.questClaimVbms || 'Claim +{amount} VBMS').replace('{amount}', String(q.reward || questData.rewardPerQuest || 200))}
                               </button>
                             </div>
                           </div>
@@ -4412,17 +4412,17 @@ export function VibeMailInboxWithClaim({
                           <div className="overflow-hidden">
                             <div className="flex items-center gap-2 px-3 pt-3 pb-2">
                               {q.icon ? <img src={q.icon} className="w-10 h-10 rounded-xl border-2 border-[#22C55E] object-cover flex-shrink-0" alt="" onError={(e: any) => e.target.style.display='none'} /> : <div className="w-10 h-10 rounded-xl border-2 border-[#22C55E] bg-[#22C55E]/20 flex items-center justify-center flex-shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg></div>}
-                              <div className="flex-1 min-w-0"><p className="text-white font-black text-sm truncate">{q.name}</p><p className="text-[#22C55E] text-[9px] uppercase tracking-widest font-bold">Mini App</p></div>
-                              <div className="px-2 py-0.5 bg-[#22C55E] border border-black/50 flex-shrink-0"><span className="text-black font-black text-[9px] uppercase tracking-widest">Miniapp</span></div>
+                              <div className="flex-1 min-w-0"><p className="text-white font-black text-sm truncate">{q.name}</p><p className="text-[#22C55E] text-[9px] uppercase tracking-widest font-bold">{t.questMiniAppLabel || 'Mini App'}</p></div>
+                              <div className="px-2 py-0.5 bg-[#22C55E] border border-black/50 flex-shrink-0"><span className="text-black font-black text-[9px] uppercase tracking-widest">{t.questMiniAppLabel || 'Miniapp'}</span></div>
                             </div>
                             {appDesc ? <p className="text-white/60 text-[10px] px-3 pb-2 line-clamp-2">{appDesc}</p> : null}
                             {splashImg ? <div className="overflow-hidden h-28"><img src={splashImg} alt="" className="w-full h-full object-cover" /></div> : <div className="h-1 bg-[#22C55E]/20 mx-3 mb-3" />}
                             <div className="flex gap-2 px-3 pb-3">
                               <button onClick={() => setOpenAppConfirm({ url: q.url, name: q.name })}
-                                className="flex-1 py-2 bg-[#22C55E] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">Open App</button>
+                                className="flex-1 py-2 bg-[#22C55E] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">{t.questOpenApp || 'Open App'}</button>
                               <button onClick={markClaimed} disabled={isClaimed || claimingQuest === claimKey}
                                 className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
-                                {isClaimed ? '✓ Claimed' : claimingQuest === claimKey ? '...' : `Claim +${q.reward || questData.rewardPerQuest || 200} VBMS`}
+                                {isClaimed ? (t.questClaimed || '✓ Claimed') : claimingQuest === claimKey ? '...' : (t.questClaimVbms || 'Claim +{amount} VBMS').replace('{amount}', String(q.reward || questData.rewardPerQuest || 200))}
                               </button>
                             </div>
                           </div>
@@ -4443,13 +4443,13 @@ export function VibeMailInboxWithClaim({
                             </div>
                             <div className="pt-9 px-4 pb-3">
                               <p className="text-white font-black text-sm truncate">/{q.channelName || q.channelId}</p>
-                              <p className="text-[#FF9F0A] text-[10px] uppercase tracking-widest">Farcaster Channel</p>
+                              <p className="text-[#FF9F0A] text-[10px] uppercase tracking-widest">{t.questFarcasterChannel || 'Farcaster Channel'}</p>
                               <div className="flex gap-2 mt-2.5">
                                 <button onClick={async () => { try { await sdk.actions?.openUrl?.(channelUrl); } catch { window.open(channelUrl, '_blank'); } }}
-                                  className="flex-1 py-2 bg-[#FF9F0A] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">Join Channel</button>
+                                  className="flex-1 py-2 bg-[#FF9F0A] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">{t.questJoinChannel || 'Join Channel'}</button>
                                 <button onClick={markClaimed} disabled={isClaimed || claimingQuest === claimKey}
                                   className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
-                                  {isClaimed ? '✓ Claimed' : claimingQuest === claimKey ? '...' : `Claim +${q.reward || questData.rewardPerQuest || 200} VBMS`}
+                                  {isClaimed ? (t.questClaimed || '✓ Claimed') : claimingQuest === claimKey ? '...' : (t.questClaimVbms || 'Claim +{amount} VBMS').replace('{amount}', String(q.reward || questData.rewardPerQuest || 200))}
                                 </button>
                               </div>
                             </div>
@@ -4682,7 +4682,7 @@ export function VibeMailInboxWithClaim({
                           : 'bg-[#FFD700] text-black hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none'
                       }`}
                     >
-                      {isClaimed ? 'Claimed!' : isClaiming ? '...' : 'Claim VBMS'}
+                      {isClaimed ? (t.questClaimedMail || 'Claimed!') : isClaiming ? '...' : (t.questClaimMailVbms || 'Claim VBMS')}
                     </button>
                   </div>
                 );
