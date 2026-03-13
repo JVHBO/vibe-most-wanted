@@ -266,19 +266,30 @@ function renderFormattedMessage(message: string, lang: string = "en", username?:
     while (remaining.length > 0) {
       const linkMatch = remaining.match(/\[([^\]]+)\]\(([^)]+)\)/);
       const boldMatch = remaining.match(/\*\*([^*]+)\*\*/);
+      const colorMatch = remaining.match(/\{c:(#[0-9a-fA-F]{3,8})\}([\s\S]*?)\{\/c\}/);
 
       const linkIdx = linkMatch ? remaining.indexOf(linkMatch[0]) : -1;
       const boldIdx = boldMatch ? remaining.indexOf(boldMatch[0]) : -1;
+      const colorIdx = colorMatch ? remaining.indexOf(colorMatch[0]) : -1;
 
-      if (linkIdx === -1 && boldIdx === -1) {
+      if (linkIdx === -1 && boldIdx === -1 && colorIdx === -1) {
         if (remaining) parts.push(<span key={`${lineIdx}-${keyIdx++}`}>{remaining}</span>);
         break;
       }
 
-      if (linkIdx !== -1 && (boldIdx === -1 || linkIdx < boldIdx)) {
-        if (linkIdx > 0) {
-          parts.push(<span key={`${lineIdx}-${keyIdx++}`}>{remaining.slice(0, linkIdx)}</span>);
-        }
+      // Find earliest match
+      const earliest = [
+        linkIdx !== -1 ? linkIdx : Infinity,
+        boldIdx !== -1 ? boldIdx : Infinity,
+        colorIdx !== -1 ? colorIdx : Infinity,
+      ].indexOf(Math.min(
+        linkIdx !== -1 ? linkIdx : Infinity,
+        boldIdx !== -1 ? boldIdx : Infinity,
+        colorIdx !== -1 ? colorIdx : Infinity,
+      ));
+
+      if (earliest === 0 && linkIdx !== -1) {
+        if (linkIdx > 0) parts.push(<span key={`${lineIdx}-${keyIdx++}`}>{remaining.slice(0, linkIdx)}</span>);
         const [, linkText, linkUrl] = linkMatch!;
         parts.push(
           <button
@@ -286,28 +297,26 @@ function renderFormattedMessage(message: string, lang: string = "en", username?:
             onClick={async (e) => {
               e.stopPropagation();
               try {
-                if (sdk?.actions?.openMiniApp) {
-                  await sdk.actions.openMiniApp({ url: linkUrl });
-                } else {
-                  window.open(linkUrl, '_blank');
-                }
-              } catch {
-                window.open(linkUrl, '_blank');
-              }
+                if (sdk?.actions?.openMiniApp) { await sdk.actions.openMiniApp({ url: linkUrl }); } else { window.open(linkUrl, '_blank'); }
+              } catch { window.open(linkUrl, '_blank'); }
             }}
             className="text-vintage-gold underline hover:text-yellow-400 font-bold transition-colors"
-          >
-            {linkText}
-          </button>
+          >{linkText}</button>
         );
         remaining = remaining.slice(linkIdx + linkMatch![0].length);
-      } else {
-        if (boldIdx > 0) {
-          parts.push(<span key={`${lineIdx}-${keyIdx++}`}>{remaining.slice(0, boldIdx)}</span>);
-        }
+      } else if (earliest === 1 && boldIdx !== -1) {
+        if (boldIdx > 0) parts.push(<span key={`${lineIdx}-${keyIdx++}`}>{remaining.slice(0, boldIdx)}</span>);
         const [, boldText] = boldMatch!;
         parts.push(<strong key={`${lineIdx}-${keyIdx++}`} className="text-vintage-gold">{boldText}</strong>);
         remaining = remaining.slice(boldIdx + boldMatch![0].length);
+      } else if (colorIdx !== -1) {
+        if (colorIdx > 0) parts.push(<span key={`${lineIdx}-${keyIdx++}`}>{remaining.slice(0, colorIdx)}</span>);
+        const [, colorHex, colorText] = colorMatch!;
+        parts.push(<span key={`${lineIdx}-${keyIdx++}`} style={{ color: colorHex }}>{colorText}</span>);
+        remaining = remaining.slice(colorIdx + colorMatch![0].length);
+      } else {
+        if (remaining) parts.push(<span key={`${lineIdx}-${keyIdx++}`}>{remaining}</span>);
+        break;
       }
     }
 
@@ -2019,6 +2028,50 @@ export function VibeMailInboxWithClaim({
     });
   };
 
+  // Apply color to selected text or whole message
+  const applyColorToText = (color: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) { setComposerColor(color); return; }
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    if (start === end) {
+      // No selection → whole-message color
+      setComposerColor(color);
+      return;
+    }
+    const selected = composerMessage.slice(start, end);
+    // If color is '' (default), strip any {c:...} tags from selection
+    const newPart = color === ''
+      ? selected.replace(/\{c:#[0-9a-fA-F]{3,8}\}/g, '').replace(/\{\/c\}/g, '')
+      : `{c:${color}}${selected}{/c}`;
+    setComposerMessage(composerMessage.slice(0, start) + newPart + composerMessage.slice(end));
+    // Restore focus
+    requestAnimationFrame(() => { textarea.focus(); textarea.setSelectionRange(start, start + newPart.length); });
+  };
+
+  // Render composer overlay with inline colors + muted commands
+  const renderComposerOverlay = (text: string): React.ReactNode => {
+    const baseColor = composerColor || '#e5e7eb';
+    const lines = text.split('\n');
+    return lines.map((line, lineIdx) => {
+      const isLastLine = lineIdx === lines.length - 1;
+      // Mute command lines
+      if (/^\/(?:img|sound)=/i.test(line.trim())) {
+        return <span key={lineIdx}><span style={{ color: '#444', fontStyle: 'italic' }}>{line}</span>{!isLastLine && '\n'}</span>;
+      }
+      // Parse inline {c:#COLOR}text{/c} tags
+      const parts = line.split(/(\{c:#[0-9a-fA-F]{3,8}\}|\{\/c\})/);
+      let activeColor: string | null = null;
+      const rendered = parts.map((part, pi) => {
+        const open = part.match(/^\{c:(#[0-9a-fA-F]{3,8})\}$/);
+        if (open) { activeColor = open[1]; return null; }
+        if (part === '{/c}') { activeColor = null; return null; }
+        return <span key={pi} style={{ color: activeColor || baseColor }}>{part}</span>;
+      });
+      return <span key={lineIdx}>{rendered}{!isLastLine && '\n'}</span>;
+    });
+  };
+
   // renderRichMessage is a module-level function (see below VibeMailInboxWithClaim)
   const renderRichMessage = (text: string, lang_?: string, username_?: string) =>
     renderRichMessageFn(text, playingAudio, audioRef, setPlayingAudio, lang_ || lang, username_ || username);
@@ -2823,13 +2876,16 @@ export function VibeMailInboxWithClaim({
                   <option value="'Courier New', monospace" style={{ fontFamily: 'Courier New' }}>Courier New</option>
                   <option value="Verdana, sans-serif" style={{ fontFamily: 'Verdana' }}>Verdana</option>
                   <option value="'Trebuchet MS', sans-serif" style={{ fontFamily: 'Trebuchet MS' }}>Trebuchet MS</option>
+                  <option value="'Times New Roman', serif" style={{ fontFamily: 'Times New Roman' }}>Times New Roman</option>
+                  <option value="Impact, sans-serif" style={{ fontFamily: 'Impact' }}>Impact</option>
+                  <option value="'Comic Sans MS', cursive" style={{ fontFamily: 'Comic Sans MS' }}>Comic Sans</option>
                 </select>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" title="Click to change whole-message color, or select text first to color only that part">
                   {['', '#FFFFFF', '#FFD700', '#F97316', '#22C55E', '#8B5CF6', '#3B82F6', '#EC4899', '#EF4444'].map(c => (
                     <button
                       key={c || 'default'}
-                      onClick={() => setComposerColor(c)}
-                      title={c || 'Default color'}
+                      onMouseDown={e => { e.preventDefault(); applyColorToText(c); }}
+                      title={c ? c : 'Default / Remove color'}
                       className="w-4 h-4 flex-shrink-0 transition-transform hover:scale-110"
                       style={{
                         background: c || '#555',
@@ -2840,8 +2896,16 @@ export function VibeMailInboxWithClaim({
                   ))}
                 </div>
               </div>
-              {/* Syntax-highlighted textarea — overlay + transparent input */}
+              {/* Textarea with color overlay */}
               <div className="relative border-2 border-[#444] bg-[#0a0a0a] focus-within:border-[#666] h-36 min-h-[144px]">
+                {/* Overlay: renders colors, pointer-events-none */}
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 px-3 py-2 text-xs leading-relaxed pointer-events-none overflow-hidden whitespace-pre-wrap break-words select-none"
+                  style={{ fontFamily: composerFont || undefined, wordBreak: 'break-word' }}
+                >
+                  {composerMessage ? renderComposerOverlay(composerMessage) : <span style={{ color: 'transparent' }}>placeholder</span>}
+                </div>
                 <textarea
                   ref={textareaRef}
                   value={composerMessage}
@@ -2849,7 +2913,7 @@ export function VibeMailInboxWithClaim({
                   onKeyDown={(e) => { if (e.key === 'Escape') setSlashMenuOpen(false); }}
                   placeholder="Write your message... (type / for commands)"
                   className="vibemail-input absolute inset-0 w-full h-full px-3 py-2 text-xs bg-transparent focus:outline-none resize-none leading-relaxed placeholder:text-white/30"
-                  style={{ colorScheme: 'dark', fontFamily: composerFont || undefined, color: composerColor || '#FFFFFF' }}
+                  style={{ colorScheme: 'dark', fontFamily: composerFont || undefined, color: 'transparent', caretColor: composerColor || '#FFFFFF' }}
                 />
               </div>
               {/* Command chips */}
