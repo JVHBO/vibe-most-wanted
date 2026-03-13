@@ -3746,7 +3746,10 @@ export function VibeMailInboxWithClaim({
                           const sX = rect.width / canvas.width, sY = rect.height / canvas.height;
                           const id = `draw_${drawingIdRef.current++}`;
                           setDrawingImages(p => ({ ...p, [id]: dataUrl }));
-                          setElementPositions(p => ({ ...p, [id]: { x: minCX * sX, y: minCY * sY, w: cW * sX, h: cH * sY } }));
+                          setElementPositions(p => {
+                            const maxZ = Object.values(p).reduce((m, v) => Math.max(m, v.z ?? 0), 0);
+                            return { ...p, [id]: { x: minCX * sX, y: minCY * sY, w: cW * sX, h: cH * sY, z: maxZ + 1 } };
+                          });
                           setDrawnIds(p => [...p, id]);
                           canvas.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height);
                         }
