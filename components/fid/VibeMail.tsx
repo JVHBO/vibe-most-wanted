@@ -70,11 +70,21 @@ const SLASH_COMMANDS = [
 ] as const;
 
 // Parse quest banner marker from message text
+// Uses brace-counting instead of greedy regex to handle VDESIGN co-existing in same message
 function parseQuestBanner(message: string): { questData: any; cleanMessage: string } | null {
-  const match = message.match(/\[VQUEST:(\{.*\})\]/s);
-  if (!match) return null;
+  const markerStart = message.indexOf('[VQUEST:{');
+  if (markerStart === -1) return null;
+  const jsonStart = markerStart + 8; // position of opening '{'
+  let depth = 0, pos = jsonStart;
+  for (; pos < message.length; pos++) {
+    if (message[pos] === '{') depth++;
+    else if (message[pos] === '}') { depth--; if (depth === 0) break; }
+  }
+  if (depth !== 0 || message[pos + 1] !== ']') return null;
+  const jsonStr = message.slice(jsonStart, pos + 1);
+  const fullMatch = message.slice(markerStart, pos + 2); // [VQUEST:{...}]
   try {
-    return { questData: JSON.parse(match[1]), cleanMessage: message.replace(match[0], '').trim() };
+    return { questData: JSON.parse(jsonStr), cleanMessage: message.replace(fullMatch, '').trim() };
   } catch { return null; }
 }
 
@@ -4478,8 +4488,8 @@ export function VibeMailInboxWithClaim({
                         const isPlaying = playingAudio === pid;
                         const p = dm.audio;
                         return (
-                          <div style={{ position:'absolute', left:p.x, top:p.y, width:p.w, height:p.h, transform:`rotate(${p.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex:((p.z??0)+1)*10 }}>
-                            <button className="w-full h-full flex items-center gap-2.5 px-3" style={{ background:'linear-gradient(135deg,#1c0900 0%,#0d0d0d 100%)', borderLeft:`3px solid ${isPlaying?'#ff6b00':'#F97316'}` }}
+                          <div style={{ position:'absolute', left:p.x, top:p.y, width:p.w, height:p.h, transform:`rotate(${p.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex: Math.max(500, ((p.z??0)+1)*10) }}>
+                            <button className="w-full h-full flex items-center gap-2.5 px-3" style={{ background:'linear-gradient(135deg,#1c0900 0%,#0d0d0d 100%)', borderLeft:`3px solid ${isPlaying?'#ff6b00':'#F97316'}`, border:`2px solid ${isPlaying?'#ff6b00':'#F97316'}` }}
                               onClick={() => { if (isPlaying) { audioRef.current?.pause(); setPlayingAudio(null); } else if (audioRef.current) { audioRef.current.src=audioUrl; audioRef.current.volume=vol; audioRef.current.play().catch(()=>setPlayingAudio(null)); setPlayingAudio(pid); } }}>
                               <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background:'#F97316' }}>
                                 {isPlaying ? <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> : <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
