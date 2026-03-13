@@ -1266,6 +1266,11 @@ export const claimQuestMailVBMS = action({
 
     if (!claimerAddress || claimerFid <= 0) throw new Error("Invalid claimer");
 
+    // 🔒 SECURITY: Sender cannot claim their own quest mail
+    const message = await ctx.runQuery(internal.cardVotes.getMessageForClaim, { messageId });
+    if (!message) throw new Error("Message not found");
+    if (message.senderFid === claimerFid) throw new Error("Cannot claim your own sent mail");
+
     // Amount from frontend (parsed by client from [VQUEST:{...}]), capped server-side
     const amount = Math.min(Math.max(args.amount ?? 200, 1), MAX_QUEST_ITEM_REWARD);
 
