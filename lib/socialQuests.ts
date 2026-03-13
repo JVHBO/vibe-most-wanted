@@ -336,6 +336,19 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     featured: true,
     pfpUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/488a215f-ffcc-47d1-8dca-847a2079c900/original',
   },
+  {
+    id: 'follow_arbitrum',
+    type: 'follow',
+    target: 'arbitrum',
+    targetFid: 281,
+    displayName: 'Follow @arbitrum',
+    description: 'Follow Arbitrum on Farcaster',
+    reward: 50,
+    icon: '',
+    url: 'https://farcaster.xyz/arbitrum',
+    group: 'arb_creators',
+    featured: true,
+  },
 ];
 // Get quests by type
 export function getFollowQuests(): SocialQuest[] {

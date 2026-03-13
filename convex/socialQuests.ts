@@ -40,6 +40,7 @@ const QUEST_REWARDS: Record<string, number> = {
   follow_0xhohenheim: 50,
   follow_atown: 50,
   follow_flowstatecoop: 50,
+  follow_arbitrum: 50,
 };
 
 // ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
@@ -386,6 +387,7 @@ const QUEST_CONFIG: Record<string, { type: string }> = {
   follow_0xhohenheim: { type: "channel" },
   follow_atown: { type: "channel" },
   follow_flowstatecoop: { type: "channel" },
+  follow_arbitrum: { type: "channel" },
 };
 
 /**

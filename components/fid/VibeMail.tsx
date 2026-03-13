@@ -1621,6 +1621,18 @@ export function VibeMailInboxWithClaim({
 
     if (msg.audioId) {
       playAudioById(msg.audioId, audioRef, convex, setPlayingAudio);
+    } else if (msg.message) {
+      // Auto-play first /sound=URL from text (including VDESIGN mails)
+      const soundMatch = msg.message.match(/\/sound=(\S+?)(?:\s+volume=([\d.]+))?/i);
+      if (soundMatch && audioRef.current) {
+        const url = proxyAudioUrl(soundMatch[1]);
+        const volume = soundMatch[2] ? Math.min(1, Math.max(0, parseFloat(soundMatch[2]))) : 0.2;
+        const pid = `inline:${url}`;
+        audioRef.current.src = url;
+        audioRef.current.volume = volume;
+        audioRef.current.play().catch(() => {});
+        setPlayingAudio(pid);
+      }
     }
   };
 
