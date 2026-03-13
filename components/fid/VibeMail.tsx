@@ -78,6 +78,16 @@ function parseQuestBanner(message: string): { questData: any; cleanMessage: stri
   } catch { return null; }
 }
 
+function parseDesignManifest(message: string): Record<string, any> | null {
+  const match = message.match(/\[VDESIGN:(\{.*?\})\]/s);
+  if (!match) return null;
+  try { return JSON.parse(match[1]); } catch { return null; }
+}
+
+function stripDesignManifest(message: string): string {
+  return message.replace(/\n?\[VDESIGN:\{.*?\}\]/s, '').trim();
+}
+
 
 
 // Check if message is a welcome message and return translated version
@@ -1175,6 +1185,7 @@ export function VibeMailInboxWithClaim({
   const miSearchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [composerImageId, setComposerImageId] = useState<string | null>(null);
   const [composerDrawingId, setComposerDrawingId] = useState<string | null>(null); // Drawing saved from design editor (separate from imageId)
+  const [composerDesignManifest, setComposerDesignManifest] = useState<Record<string, any> | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [showGifPicker, setShowGifPicker] = useState(false);
   const [gifSearch, setGifSearch] = useState('');
@@ -1694,10 +1705,12 @@ export function VibeMailInboxWithClaim({
   const handleDirectSend = async (recipFid: number, recipUsername: string, isReply: boolean, origMsgId?: any) => {
     if (!myFid || !myAddress) return;
     setIsSending(true);
-    // Build final message: prepend quest banner if set
-    const finalMessage = composerQuestData
-      ? `[VQUEST:${JSON.stringify(composerQuestData)}]\n${composerMessage}`
-      : composerMessage;
+    // Build final message: prepend quest banner + append design manifest if set
+    const finalMessage = (() => {
+      let msg = composerQuestData ? `[VQUEST:${JSON.stringify(composerQuestData)}]\n${composerMessage}` : composerMessage;
+      if (composerDesignManifest) msg += `\n[VDESIGN:${JSON.stringify(composerDesignManifest)}]`;
+      return msg;
+    })();
     try {
       // On-chain ARB validation only for free mails on ARB network
       // Paid mails use VBMS transfer as proof — no ARB validation needed
@@ -3392,6 +3405,10 @@ export function VibeMailInboxWithClaim({
                             pvItems.sort((a, b) => a.z - b.z);
                             return pvItems.map(item => item.node);
                           })()}
+                          {/* Drawing overlay from saved design manifest */}
+                          {composerDesignManifest?.draw?.src && (
+                            <img src={composerDesignManifest.draw.src} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 9990 }} />
+                          )}
                           {scrollArrow}
                           {claimBtn}
                         </div>
@@ -3605,15 +3622,10 @@ export function VibeMailInboxWithClaim({
                   <div className="flex items-center gap-1.5 px-2 py-2 border-b-2 border-[#8B5CF6] bg-[#111] flex-wrap">
                     <span className="text-[#8B5CF6] font-black text-[10px] uppercase tracking-wider">Edit</span>
                     <div className="flex gap-1">
-                      {(['select', 'draw'] as const).map(tool => (
-                        <button
-                          key={tool}
-                          onClick={() => setEditTool(tool)}
-                          className={`px-2 py-1 text-[10px] font-bold border-2 uppercase transition-all ${editTool === tool ? 'border-[#FFD700] bg-[#FFD700] text-black' : 'border-[#444] text-white/50 hover:border-white/50'}`}
-                        >
-                          {tool === 'select' ? '↖ Move' : '✏ Draw'}
-                        </button>
-                      ))}
+                      <button
+                        onClick={() => setEditTool('select')}
+                        className={`px-2 py-1 text-[10px] font-bold border-2 uppercase transition-all ${editTool === 'select' ? 'border-[#FFD700] bg-[#FFD700] text-black' : 'border-[#444] text-white/50 hover:border-white/50'}`}
+                      >↖ Move</button>
                     </div>
                     {editTool === 'draw' && (
                       <div className="flex items-center gap-1.5">
@@ -3907,163 +3919,66 @@ export function VibeMailInboxWithClaim({
                           if (!area) return;
                           setIsSavingDesign(true);
                           try {
-                            const dpr = window.devicePixelRatio || 1;
                             const W = area.offsetWidth, H = area.offsetHeight;
-                            const off = document.createElement('canvas');
-                            off.width = W * dpr; off.height = H * dpr;
-                            const ctx = off.getContext('2d');
-                            if (!ctx) throw new Error('no ctx');
-                            ctx.scale(dpr, dpr);
+                            const dpr = window.devicePixelRatio || 1;
 
-                            // Black background
-                            ctx.fillStyle = '#111';
-                            ctx.fillRect(0, 0, W, H);
-
-                            // Helper: draw image safely onto canvas at element position
-                            // NEVER uses img2-without-crossOrigin fallback (would taint canvas → toBlob SecurityError)
-                            const drawImgAt = (src: string, p: { x: number; y: number; w: number; h: number; r?: number }) =>
-                              new Promise<void>(resolve => {
-                                if (!src) { resolve(); return; }
-                                ctx.save();
-                                ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
-                                if (p.r) ctx.rotate((p.r * Math.PI) / 180);
-                                const img = new Image();
-                                // blob: and data: are same-origin → no crossOrigin needed (crossOrigin on blob: causes CORS error)
-                                if (!src.startsWith('blob:') && !src.startsWith('data:')) img.crossOrigin = 'anonymous';
-                                img.onload = () => { try { ctx.drawImage(img, -p.w / 2, -p.h / 2, p.w, p.h); } catch {} ctx.restore(); resolve(); };
-                                img.onerror = () => {
-                                  // Draw dark placeholder — DO NOT retry without crossOrigin (canvas taint → toBlob failure)
-                                  ctx.fillStyle = '#1a1a1a';
-                                  ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-                                  ctx.restore(); resolve();
-                                };
-                                img.src = src;
-                              });
-
-                            // Collect all elements sorted by z
-                            type DrawTask = { z: number; draw: () => Promise<void> };
-                            const tasks: DrawTask[] = [];
-
-                            // Text element at its current position
-                            if (textOnly && !hiddenElements.has('text')) {
-                              const p = elementPositions['text'] || getDefaultPos('text');
-                              tasks.push({ z: p.z ?? 0, draw: async () => {
-                                ctx.save();
-                                ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
-                                if (p.r) ctx.rotate((p.r * Math.PI) / 180);
-                                ctx.fillStyle = '#000';
-                                ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-                                const fontSize = Math.max(8, Math.min(15, p.h * 0.2));
-                                ctx.font = `bold ${fontSize}px Arial, sans-serif`;
-                                ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                                let ty = -p.h / 2 + 8 + fontSize;
-                                for (const line of textOnly.split('\n')) {
-                                  const words = line.split(' ');
-                                  let cur = '';
-                                  for (const word of words) {
-                                    const test = cur ? cur + ' ' + word : word;
-                                    if (ctx.measureText(test).width > p.w - 16) {
-                                      if (cur) { ctx.fillText(cur, -p.w / 2 + 8, ty); ty += fontSize * 1.4; }
-                                      cur = word;
-                                    } else { cur = test; }
-                                  }
-                                  if (cur) { ctx.fillText(cur, -p.w / 2 + 8, ty); ty += fontSize * 1.4; }
-                                  if (ty > p.h / 2 - 8) break;
-                                }
-                                ctx.restore();
-                              }});
+                            // 1. Upload drawing strokes as transparent PNG (only the drawing layer — no composite)
+                            let drawUrl: string | null = null;
+                            if (drawnIds.length > 0) {
+                              const drawCanvas = document.createElement('canvas');
+                              drawCanvas.width = W * dpr; drawCanvas.height = H * dpr;
+                              const dCtx = drawCanvas.getContext('2d')!;
+                              dCtx.scale(dpr, dpr);
+                              const sortedIds = [...drawnIds].sort((a, b) => (elementPositions[a]?.z ?? 0) - (elementPositions[b]?.z ?? 0));
+                              for (const id of sortedIds) {
+                                const src = drawingImages[id];
+                                const p = elementPositions[id];
+                                if (!src || !p) continue;
+                                await new Promise<void>(resolve => {
+                                  const img = new Image();
+                                  img.onload = () => {
+                                    dCtx.save();
+                                    dCtx.translate(p.x + p.w / 2, p.y + p.h / 2);
+                                    if (p.r) dCtx.rotate((p.r * Math.PI) / 180);
+                                    try { dCtx.drawImage(img, -p.w / 2, -p.h / 2, p.w, p.h); } catch {}
+                                    dCtx.restore(); resolve();
+                                  };
+                                  img.onerror = () => resolve();
+                                  img.src = src; // data: URL — no CORS issue
+                                });
+                              }
+                              const drawBlob = await new Promise<Blob | null>(res => drawCanvas.toBlob(res, 'image/png'));
+                              if (drawBlob) {
+                                const uploadUrl = await generateUploadUrl();
+                                const uploadRes = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: drawBlob });
+                                if (!uploadRes.ok) throw new Error('upload failed');
+                                const { storageId } = await uploadRes.json();
+                                drawUrl = `${VIBEFID_STORAGE_URL}/${storageId}`;
+                              }
                             }
 
-                            // Audio element at its current position
-                            if (audioMatch && !hiddenElements.has('audio')) {
-                              const p = elementPositions['audio'] || getDefaultPos('audio');
-                              tasks.push({ z: p.z ?? 0, draw: async () => {
-                                ctx.save();
-                                ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
-                                if (p.r) ctx.rotate((p.r * Math.PI) / 180);
-                                const grad = ctx.createLinearGradient(-p.w / 2, -p.h / 2, p.w / 2, p.h / 2);
-                                grad.addColorStop(0, '#1c0900'); grad.addColorStop(1, '#0d0d0d');
-                                ctx.fillStyle = grad;
-                                ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-                                ctx.fillStyle = '#F97316';
-                                ctx.fillRect(-p.w / 2, -p.h / 2, 3, p.h);
-                                ctx.fillRect(-p.w / 2 + 8, -14, 28, 28);
-                                ctx.fillStyle = '#000';
-                                ctx.beginPath();
-                                ctx.moveTo(-p.w / 2 + 17, -7); ctx.lineTo(-p.w / 2 + 17, 7); ctx.lineTo(-p.w / 2 + 30, 0);
-                                ctx.closePath(); ctx.fill();
-                                ctx.font = 'bold 11px Arial, sans-serif'; ctx.fillStyle = '#fff';
-                                ctx.fillText(audioName.slice(0, 28), -p.w / 2 + 44, 3);
-                                ctx.font = '8px Arial, sans-serif'; ctx.fillStyle = 'rgba(249,115,22,0.6)';
-                                ctx.fillText('SOUND', -p.w / 2 + 44, 14);
-                                ctx.restore();
-                              }});
+                            // 2. Build VDESIGN manifest — positions only, GIFs/videos stay as live URLs
+                            const manifest: Record<string, any> = {};
+                            if (elementPositions['text'] && !hiddenElements.has('text')) manifest.text = elementPositions['text'];
+                            if (elementPositions['audio'] && !hiddenElements.has('audio')) manifest.audio = elementPositions['audio'];
+                            const imgPos: Record<string, any> = {};
+                            for (const { key } of allImgSrcs) {
+                              if (!elementPositions[key] || hiddenElements.has(key)) continue;
+                              imgPos[key] = elementPositions[key];
+                              // img_upload needs explicit src since it's not in the message text
+                              if (key === 'img_upload' && composerImageId?.startsWith('img:')) {
+                                imgPos[key] = { ...imgPos[key], src: `${VIBEFID_STORAGE_URL}/${composerImageId.slice(4)}` };
+                              }
                             }
+                            if (Object.keys(imgPos).length > 0) manifest.imgs = imgPos;
+                            if (drawUrl) manifest.draw = { src: drawUrl, x: 0, y: 0, w: W, h: H, r: 0, z: 99 };
 
-                            // Images at their current positions
-                            for (const { key, src: rawSrc } of allImgSrcs) {
-                              if (hiddenElements.has(key)) continue;
-                              // For img: storage IDs, prefer server URL over local blob preview (better CORS support)
-                              const src = !rawSrc && composerImageId?.startsWith('img:')
-                                ? `${VIBEFID_STORAGE_URL}/${composerImageId.slice(4)}`
-                                : rawSrc;
-                              if (!src) continue;
-                              const p = elementPositions[key] || getDefaultPos(key);
-                              const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(src);
-                              tasks.push({ z: p.z ?? 0, draw: () => {
-                                if (isVid) {
-                                  // Draw current frame directly from video DOM element (no CORS issue)
-                                  return new Promise<void>(resolve => {
-                                    ctx.save();
-                                    ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
-                                    if (p.r) ctx.rotate((p.r * Math.PI) / 180);
-                                    let drawn = false;
-                                    for (const vid of Array.from(area.querySelectorAll('video'))) {
-                                      try { ctx.drawImage(vid, -p.w / 2, -p.h / 2, p.w, p.h); drawn = true; break; } catch {}
-                                    }
-                                    if (!drawn) { ctx.fillStyle = '#222'; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); }
-                                    ctx.restore(); resolve();
-                                  });
-                                }
-                                return drawImgAt(src, p);
-                              }});
-                            }
-
-                            // Drawn strokes at their current positions
-                            const sortedDrawIds = [...drawnIds].sort((a, b) => ((elementPositions[a]?.z ?? 0) - (elementPositions[b]?.z ?? 0)));
-                            for (const id of sortedDrawIds) {
-                              const src = drawingImages[id];
-                              const p = elementPositions[id];
-                              if (!src || !p) continue;
-                              tasks.push({ z: p.z ?? 0, draw: () => drawImgAt(src, p) });
-                            }
-
-                            // Draw all in z-order
-                            tasks.sort((a, b) => a.z - b.z);
-                            for (const task of tasks) { await task.draw(); }
-
-                            const blob = await new Promise<Blob | null>(res => off.toBlob(res, 'image/png'));
-                            if (!blob) throw new Error('export failed');
-
-                            // Upload SYNCHRONOUSLY before closing editor — fixes race condition with send
-                            const uploadUrl = await generateUploadUrl();
-                            const uploadRes = await fetch(uploadUrl, { method: 'POST', headers: { 'Content-Type': 'image/png' }, body: blob });
-                            if (!uploadRes.ok) throw new Error('upload failed');
-                            const { storageId } = await uploadRes.json();
-                            const serverUrl = `${VIBEFID_STORAGE_URL}/${storageId}`;
-
-                            const compositeId = 'draw_composite';
-                            setDrawingImages(prev => {
-                              for (const [, v] of Object.entries(prev)) { if (v.startsWith('blob:')) URL.revokeObjectURL(v); }
-                              return { [compositeId]: serverUrl };
-                            });
-                            setDrawnIds([compositeId]);
-                            setElementPositions(p => {
-                              const next: typeof p = {};
-                              next[compositeId] = { x: 0, y: 0, w: W, h: H, r: 0, z: 0 };
-                              return next;
-                            });
-                            setComposerDrawingId('img:' + storageId);
+                            // 3. Store manifest, clear draw state, keep element positions for PREVIEW
+                            setComposerDesignManifest(Object.keys(manifest).length > 0 ? manifest : null);
+                            for (const v of Object.values(drawingImages)) { if (v.startsWith('blob:')) URL.revokeObjectURL(v); }
+                            setDrawingImages({});
+                            setDrawnIds([]);
+                            setComposerDrawingId(null);
                             setShowDesign(false);
                           } catch (e) {
                             console.error('Design save error:', e);
@@ -4178,10 +4093,12 @@ export function VibeMailInboxWithClaim({
                     }
                     console.log('Broadcast payment TX:', txHash);
 
-                    // Build final message with quest banner
-                    const broadcastMessage = composerQuestData
-                      ? `[VQUEST:${JSON.stringify(composerQuestData)}]\n${composerMessage}`
-                      : composerMessage;
+                    // Build final message with quest banner + design manifest
+                    const broadcastMessage = (() => {
+                      let msg = composerQuestData ? `[VQUEST:${JSON.stringify(composerQuestData)}]\n${composerMessage}` : composerMessage;
+                      if (composerDesignManifest) msg += `\n[VDESIGN:${JSON.stringify(composerDesignManifest)}]`;
+                      return msg;
+                    })();
                     // Send broadcast after payment
                     const result = await broadcastMutation({
                       recipientFids: broadcastRecipients.map(r => r.fid),
@@ -4518,16 +4435,80 @@ export function VibeMailInboxWithClaim({
 
               {/* Message text + media */}
               <div className="p-3 space-y-3">
-                {/* Message text + inline media commands */}
+                {/* VDESIGN - animated layout (GIFs, videos stay live) */}
                 {(() => {
+                  const dm = parseDesignManifest(selectedMessage.message || '');
+                  if (!dm) return null;
+                  const rawMsg = selectedMessage.message || '';
+                  const qParsed = parseQuestBanner(rawMsg);
+                  const baseMsg = qParsed ? qParsed.cleanMessage : rawMsg;
+                  const cleanMsg = stripDesignManifest(baseMsg);
+                  const textOnly = cleanMsg.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
+                  const audioMatch = cleanMsg.match(/\/sound=(\S+)/i);
+                  const imgUrls = [...cleanMsg.matchAll(/\/img=(\S+)/gi)].map((m: RegExpMatchArray) => m[1]);
+                  const volMatch = cleanMsg.match(/\/sound=\S+\s+volume=([\d.]+)/i);
+                  const vol = volMatch ? Math.min(1, Math.max(0, parseFloat(volMatch[1]))) : 0.2;
+                  const imgUploadUrl = selectedMessage.imageId?.startsWith('img:') ? `${VIBEFID_STORAGE_URL_INLINE}/${selectedMessage.imageId.slice(4)}` : null;
+                  return (
+                    <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, background: '#111', overflow: 'hidden' }}>
+                      {/* Text */}
+                      {textOnly && dm.text && (() => { const p = dm.text; return (
+                        <div style={{ position:'absolute', left:p.x, top:p.y, width:p.w, height:p.h, transform:`rotate(${p.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', background:'#000', padding:8, boxSizing:'border-box', zIndex:((p.z??0)+1)*10 }}>
+                          <div className="text-white/90 text-sm leading-relaxed" style={{ fontSize: Math.max(8, Math.min(15, p.h * 0.2)) }}>{textOnly}</div>
+                        </div>
+                      ); })()}
+                      {/* Audio */}
+                      {audioMatch && dm.audio && (() => {
+                        const rawUrl = audioMatch[1];
+                        const audioUrl = proxyAudioUrl(rawUrl);
+                        const aName = rawUrl.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio';
+                        const pid = `vd:${audioUrl}`;
+                        const isPlaying = playingAudio === pid;
+                        const p = dm.audio;
+                        return (
+                          <div style={{ position:'absolute', left:p.x, top:p.y, width:p.w, height:p.h, transform:`rotate(${p.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex:((p.z??0)+1)*10 }}>
+                            <button className="w-full h-full flex items-center gap-2.5 px-3" style={{ background:'linear-gradient(135deg,#1c0900 0%,#0d0d0d 100%)', borderLeft:`3px solid ${isPlaying?'#ff6b00':'#F97316'}` }}
+                              onClick={() => { if (isPlaying) { audioRef.current?.pause(); setPlayingAudio(null); } else if (audioRef.current) { audioRef.current.src=audioUrl; audioRef.current.volume=vol; audioRef.current.play().catch(()=>setPlayingAudio(null)); setPlayingAudio(pid); } }}>
+                              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background:'#F97316' }}>
+                                {isPlaying ? <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> : <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
+                              </div>
+                              <p className="text-white font-bold text-[11px] capitalize truncate flex-1">{aName}</p>
+                            </button>
+                          </div>
+                        );
+                      })()}
+                      {/* Images — GIFs and videos stay animated */}
+                      {dm.imgs && Object.entries(dm.imgs as Record<string, any>).map(([key, pos]: [string, any]) => {
+                        const src = pos.src || (key === 'img_upload' ? imgUploadUrl : imgUrls[parseInt(key.replace('img_', '')) || 0]) || '';
+                        if (!src) return null;
+                        const isVid = /\.(mp4|webm|mov|ogg)(\?|$)/i.test(src);
+                        return (
+                          <div key={key} style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex:((pos.z??0)+1)*10 }}>
+                            {isVid ? <video src={src} className="w-full h-full object-cover" autoPlay loop muted playsInline /> : <img src={src} alt="" className="w-full h-full object-cover" />}
+                          </div>
+                        );
+                      })}
+                      {/* Drawing overlay (transparent PNG) */}
+                      {dm.draw?.src && (
+                        <img src={dm.draw.src} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', pointerEvents:'none', zIndex:9990 }} />
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Message text + inline media commands (hidden when VDESIGN present) */}
+                {(() => {
+                  const hasDm = !!parseDesignManifest(selectedMessage.message || '');
                   const parsed = parseQuestBanner(selectedMessage.message || '');
-                  const msg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
+                  const rawMsg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
+                  const msg = stripDesignManifest(rawMsg);
+                  if (hasDm) return null; // VDESIGN renders everything
                   const mediaOnlyMsg = msg.split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n');
                   return msg ? (
                     <div className="text-white text-sm leading-relaxed">
                       {translatedContent ? (
                         <>
-                          <span>{translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').trim()}</span>
+                          <span>{translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').replace(/\[VDESIGN:\{.*?\}\]/gs, '').trim()}</span>
                           <span className="text-white/30 text-[10px] ml-1">({(t as any).translatedLabel || 'translated'})</span>
                           {mediaOnlyMsg && renderRichMessageFn(mediaOnlyMsg, playingAudio, audioRef, setPlayingAudio, lang, username)}
                         </>
@@ -4538,8 +4519,8 @@ export function VibeMailInboxWithClaim({
                   ) : null;
                 })()}
 
-                {/* Legacy imageId attachment */}
-                {selectedMessage.imageId && (() => {
+                {/* Legacy imageId attachment — hidden when VDESIGN handles the layout */}
+                {selectedMessage.imageId && !parseDesignManifest(selectedMessage.message || '') && (() => {
                   const isCustom = selectedMessage.imageId.startsWith('img:');
                   const customUrl = isCustom ? `${VIBEFID_STORAGE_URL_INLINE}/${selectedMessage.imageId.slice(4)}` : null;
                   const imgData = !isCustom ? getImageFile(selectedMessage.imageId) : null;
