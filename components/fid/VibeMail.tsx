@@ -4303,7 +4303,7 @@ export function VibeMailInboxWithClaim({
             <div className="bg-[#0a0a0a] pb-6">
               {/* Quest Banner CAROUSEL - TOP (hidden for sender's own messages) */}
               {(() => {
-                if (activeTab === 'sent' || selectedMessage.senderFid === myFid) return null;
+                if (activeTab === 'sent' || selectedMessage.voterFid === myFid) return null;
                 const parsed = parseQuestBanner(selectedMessage.message || '');
                 if (!parsed) return null;
                 const { questData } = parsed;
