@@ -4464,7 +4464,7 @@ export function VibeMailInboxWithClaim({
                   const rawMsg = selectedMessage.message || '';
                   const qParsed = parseQuestBanner(rawMsg);
                   const baseMsg = qParsed ? qParsed.cleanMessage : rawMsg;
-                  const cleanMsg = stripDesignManifest(baseMsg);
+                  const cleanMsg = stripDesignManifest(baseMsg).replace(/\[VQUEST:\{[\s\S]*?\}\]/g, '').trim();
                   const textOnly = cleanMsg.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
                   const audioMatch = cleanMsg.match(/\/sound=(\S+)/i);
                   const imgUrls = [...cleanMsg.matchAll(/\/img=(\S+)/gi)].map((m: RegExpMatchArray) => m[1]);
@@ -4489,12 +4489,16 @@ export function VibeMailInboxWithClaim({
                         const p = dm.audio;
                         return (
                           <div style={{ position:'absolute', left:p.x, top:p.y, width:p.w, height:p.h, transform:`rotate(${p.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex: Math.max(500, ((p.z??0)+1)*10) }}>
-                            <button className="w-full h-full flex items-center gap-2.5 px-3" style={{ background:'linear-gradient(135deg,#1c0900 0%,#0d0d0d 100%)', borderLeft:`3px solid ${isPlaying?'#ff6b00':'#F97316'}`, border:`2px solid ${isPlaying?'#ff6b00':'#F97316'}` }}
+                            <button className="w-full h-full flex items-center gap-2 px-2"
+                              style={{ background:'rgba(0,0,0,0.85)', border:`2px solid ${isPlaying?'#ff6b00':'#F97316'}`, backdropFilter:'blur(4px)' }}
                               onClick={() => { if (isPlaying) { audioRef.current?.pause(); setPlayingAudio(null); } else if (audioRef.current) { audioRef.current.src=audioUrl; audioRef.current.volume=vol; audioRef.current.play().catch(()=>setPlayingAudio(null)); setPlayingAudio(pid); } }}>
-                              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background:'#F97316' }}>
-                                {isPlaying ? <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> : <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
+                              <div className="w-7 h-7 flex items-center justify-center flex-shrink-0 rounded-sm" style={{ background:'#F97316' }}>
+                                {isPlaying ? <svg width="10" height="10" viewBox="0 0 24 24" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> : <svg width="10" height="10" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
                               </div>
-                              <p className="text-white font-bold text-[11px] capitalize truncate flex-1">{aName}</p>
+                              <div className="flex flex-col items-start min-w-0 flex-1">
+                                <p className="text-white font-bold text-[10px] capitalize truncate w-full leading-tight">{aName}</p>
+                                <p className="text-[#F97316] text-[9px] font-bold uppercase tracking-wider leading-tight">SOUND</p>
+                              </div>
                             </button>
                           </div>
                         );
