@@ -4489,23 +4489,24 @@ export function VibeMailInboxWithClaim({
                         const p = dm.audio;
                         return (
                           <div style={{ position:'absolute', left:p.x, top:p.y, width:p.w, height:p.h, transform:`rotate(${p.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex: Math.max(500, ((p.z??0)+1)*10) }}>
-                            <button className="w-full h-full flex items-center gap-2.5 px-3"
-                              style={{ background:'linear-gradient(135deg,#1c0900 0%,#0d0d0d 100%)', borderLeft:`3px solid ${isPlaying?'#ff6b00':'#F97316'}`, borderTop:`1px solid rgba(249,115,22,0.2)`, borderRight:`1px solid rgba(249,115,22,0.15)`, borderBottom:`1px solid rgba(249,115,22,0.15)` }}
-                              onClick={() => { if (isPlaying) { audioRef.current?.pause(); setPlayingAudio(null); } else if (audioRef.current) { audioRef.current.src=audioUrl; audioRef.current.volume=vol; audioRef.current.play().catch(()=>setPlayingAudio(null)); setPlayingAudio(pid); } }}>
-                              <div className="w-8 h-8 flex items-center justify-center flex-shrink-0" style={{ background:'#F97316', boxShadow:'0 0 10px rgba(249,115,22,0.45)' }}>
-                                {isPlaying ? <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> : <svg width="11" height="11" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
-                              </div>
-                              <div className="flex items-center gap-px flex-shrink-0">
-                                {[3,6,4,8,5,9,4,7,3,6,8,5].map((h, i) => (
-                                  <div key={i} style={{ width:2, height: isPlaying ? h*2.2 : h*1.5, background: isPlaying ? '#F97316' : (i < 5 ? '#F97316' : 'rgba(249,115,22,0.3)'), borderRadius:1, transition:'height 0.15s ease' }} />
-                                ))}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-white font-bold text-[11px] capitalize truncate leading-tight">{aName}</p>
-                                <p className="text-[#F97316]/50 text-[8px] uppercase tracking-widest">Sound</p>
-                              </div>
-                              <span className="text-[#F97316]/20 text-base flex-shrink-0">♪</span>
-                            </button>
+                            <div className="w-full h-full flex items-center justify-center p-1.5">
+                              <button className="flex items-center gap-2 px-2.5 py-1.5 rounded-full"
+                                style={{ background:'#000', border:`2px solid ${isPlaying?'#ff6b00':'#F97316'}`, boxShadow:`0 0 12px rgba(249,115,22,${isPlaying?'0.6':'0.3'})`, maxWidth:'100%', minWidth:0 }}
+                                onClick={() => { if (isPlaying) { audioRef.current?.pause(); setPlayingAudio(null); } else if (audioRef.current) { audioRef.current.src=audioUrl; audioRef.current.volume=vol; audioRef.current.play().catch(()=>setPlayingAudio(null)); setPlayingAudio(pid); } }}>
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background:'#F97316', boxShadow:'0 0 8px rgba(249,115,22,0.6)' }}>
+                                  {isPlaying ? <svg width="9" height="9" viewBox="0 0 24 24" fill="#000"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> : <svg width="9" height="9" viewBox="0 0 24 24" fill="#000"><polygon points="5 3 19 12 5 21 5 3"/></svg>}
+                                </div>
+                                <div className="flex items-center gap-px flex-shrink-0">
+                                  {[3,5,8,5,9,6,8,4,7,5].map((h, i) => (
+                                    <div key={i} style={{ width:2, height: isPlaying ? h*2 : h*1.3, background: isPlaying ? '#F97316' : (i < 5 ? '#F97316' : 'rgba(249,115,22,0.35)'), borderRadius:1, transition:'height 0.15s ease' }} />
+                                  ))}
+                                </div>
+                                <div className="min-w-0" style={{ maxWidth: 120 }}>
+                                  <p className="text-white font-bold text-[10px] capitalize truncate leading-tight">{aName}</p>
+                                  <p className="text-[#F97316] text-[8px] uppercase tracking-widest leading-tight">sound</p>
+                                </div>
+                              </button>
+                            </div>
                           </div>
                         );
                       })()}
