@@ -1564,10 +1564,22 @@ export function VibeMailInboxWithClaim({
 
   // Generate upload URL for custom images (same storage as AudioRecorder)
   const generateUploadUrl = useMutation(api.audioStorage.generateUploadUrl);
-  const questMailClaims = useQuery(
-    api.cardVotes.getQuestMailClaims,
-    selectedMessage?._id && myFid ? { messageId: selectedMessage._id as any, claimerFid: myFid } : 'skip'
-  );
+  // Claims are stored in VMW Convex (agile-orca) — must use vmwClient, not VibeFID api
+  const [questMailClaims, setQuestMailClaims] = useState<any[] | null>(null);
+  useEffect(() => {
+    if (!selectedMessage?._id || !myFid) { setQuestMailClaims(null); return; }
+    const msgId = selectedMessage._id;
+    const fid = myFid;
+    (async () => {
+      try {
+        const { ConvexHttpClient } = await import('convex/browser');
+        const { api: vmwApi } = await import('@/convex/_generated/api');
+        const vmwClient = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+        const claims = await vmwClient.query(vmwApi.cardVotes.getQuestMailClaims, { messageId: msgId as any, claimerFid: fid });
+        setQuestMailClaims(claims);
+      } catch { setQuestMailClaims([]); }
+    })();
+  }, [selectedMessage?._id, myFid]);
 
   // Query to get recipient address (kept for compat)
   const targetFidForGift = recipientFid || replyToFid;
@@ -4328,6 +4340,8 @@ export function VibeMailInboxWithClaim({
                       params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data }],
                     });
                     setClaimedQuestItems(prev => new Set([...prev, claimKey]));
+                    // Refresh DB claims so state survives re-renders
+                    setQuestMailClaims(prev => [...(prev || []), { questIndex: idx, claimerFid: myFid }]);
                   } catch (e) {
                     console.error('Quest claim failed:', e);
                   } finally {
