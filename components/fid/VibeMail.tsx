@@ -98,6 +98,29 @@ function stripDesignManifest(message: string): string {
   return message.replace(/\n?\[VDESIGN:\{.*?\}\]/s, '').trim();
 }
 
+function parseVStyle(message: string): { font?: string; color?: string } | null {
+  const match = message.match(/\[VSTYLE:(\{[^}]*\})\]/);
+  if (!match) return null;
+  try { return JSON.parse(match[1]); } catch { return null; }
+}
+
+function stripVStyle(message: string): string {
+  return message.replace(/\n?\[VSTYLE:\{[^}]*\}\]/g, '').trim();
+}
+
+function parseCommandChips(message: string): Array<{ type: 'img' | 'sound'; label: string; fullMatch: string }> {
+  const chips: Array<{ type: 'img' | 'sound'; label: string; fullMatch: string }> = [];
+  for (const m of message.matchAll(/\/img=(\S+)/gi)) {
+    const name = decodeURIComponent(m[1].split('/').pop()?.split('?')[0] || 'image').replace(/[-_%+]/g, ' ').trim();
+    chips.push({ type: 'img', label: name.length > 18 ? name.slice(0, 15) + '...' : name, fullMatch: m[0] });
+  }
+  for (const m of message.matchAll(/\/sound=(\S+)(\s+volume=[\d.]+)?/gi)) {
+    const name = decodeURIComponent(m[1].split('/').pop()?.split('?')[0] || 'sound').replace(/[-_%+]/g, ' ').replace(/\.[^.]+$/, '').trim();
+    chips.push({ type: 'sound', label: name.length > 18 ? name.slice(0, 15) + '...' : name, fullMatch: m[0] + (m[2] || '') });
+  }
+  return chips;
+}
+
 
 
 // Check if message is a welcome message and return translated version
@@ -1182,6 +1205,8 @@ export function VibeMailInboxWithClaim({
   const [replyToMessageId, setReplyToMessageId] = useState<Id<'cardVotes'> | null>(null);
   const [replyToFid, setReplyToFid] = useState<number | null>(null); // FID of user we're replying to
   const [composerMessage, setComposerMessage] = useState('');
+  const [composerFont, setComposerFont] = useState('');
+  const [composerColor, setComposerColor] = useState('');
   const [composerAudioId, setComposerAudioId] = useState<string | null>(null);
   const [recipientFid, setRecipientFid] = useState<number | null>(null);
   const [recipientUsername, setRecipientUsername] = useState<string>('');
@@ -1743,6 +1768,7 @@ export function VibeMailInboxWithClaim({
     const finalMessage = (() => {
       let msg = composerQuestData ? `[VQUEST:${JSON.stringify(composerQuestData)}]\n${composerMessage}` : composerMessage;
       if (composerDesignManifest) msg += `\n[VDESIGN:${JSON.stringify(composerDesignManifest)}]`;
+      if (composerFont || composerColor) msg += `\n[VSTYLE:${JSON.stringify({ ...(composerFont ? { font: composerFont } : {}), ...(composerColor ? { color: composerColor } : {}) })}]`;
       return msg;
     })();
     try {
@@ -1794,6 +1820,8 @@ export function VibeMailInboxWithClaim({
       setTimeout(() => setSendSuccess(null), 3000);
       setShowComposer(false);
       setComposerMessage('');
+      setComposerFont('');
+      setComposerColor('');
       setComposerQuestData(null);
       setComposerQuestType(null);
       setComposerAudioId(null);
@@ -2781,6 +2809,37 @@ export function VibeMailInboxWithClaim({
                   </div>
                 </div>
               )}
+              {/* Font + Color toolbar */}
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                <select
+                  value={composerFont}
+                  onChange={e => setComposerFont(e.target.value)}
+                  className="bg-[#111] border border-[#333] text-white text-[10px] px-1.5 py-1 focus:outline-none focus:border-[#555] cursor-pointer"
+                  style={{ fontFamily: composerFont || 'inherit' }}
+                >
+                  <option value="">Font: Default</option>
+                  <option value="Arial, sans-serif" style={{ fontFamily: 'Arial' }}>Arial</option>
+                  <option value="Georgia, serif" style={{ fontFamily: 'Georgia' }}>Georgia</option>
+                  <option value="'Courier New', monospace" style={{ fontFamily: 'Courier New' }}>Courier New</option>
+                  <option value="Verdana, sans-serif" style={{ fontFamily: 'Verdana' }}>Verdana</option>
+                  <option value="'Trebuchet MS', sans-serif" style={{ fontFamily: 'Trebuchet MS' }}>Trebuchet MS</option>
+                </select>
+                <div className="flex items-center gap-1">
+                  {['', '#FFFFFF', '#FFD700', '#F97316', '#22C55E', '#8B5CF6', '#3B82F6', '#EC4899', '#EF4444'].map(c => (
+                    <button
+                      key={c || 'default'}
+                      onClick={() => setComposerColor(c)}
+                      title={c || 'Default color'}
+                      className="w-4 h-4 flex-shrink-0 transition-transform hover:scale-110"
+                      style={{
+                        background: c || '#555',
+                        border: composerColor === c ? '2px solid #fff' : '2px solid transparent',
+                        outline: composerColor === c ? '1px solid #000' : 'none',
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
               {/* Syntax-highlighted textarea — overlay + transparent input */}
               <div className="relative border-2 border-[#444] bg-[#0a0a0a] focus-within:border-[#666] h-36 min-h-[144px]">
                 <textarea
@@ -2789,10 +2848,29 @@ export function VibeMailInboxWithClaim({
                   onChange={handleMessageChange}
                   onKeyDown={(e) => { if (e.key === 'Escape') setSlashMenuOpen(false); }}
                   placeholder="Write your message... (type / for commands)"
-                  className="vibemail-input absolute inset-0 w-full h-full px-3 py-2 text-xs bg-transparent focus:outline-none resize-none leading-relaxed text-white placeholder:text-white/30"
-                  style={{ colorScheme: 'dark' }}
+                  className="vibemail-input absolute inset-0 w-full h-full px-3 py-2 text-xs bg-transparent focus:outline-none resize-none leading-relaxed placeholder:text-white/30"
+                  style={{ colorScheme: 'dark', fontFamily: composerFont || undefined, color: composerColor || '#FFFFFF' }}
                 />
               </div>
+              {/* Command chips */}
+              {parseCommandChips(composerMessage).length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {parseCommandChips(composerMessage).map((chip, i) => (
+                    <div key={i} className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[#111] border border-[#333] text-[9px] font-bold">
+                      {chip.type === 'img' ? (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#A855F7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      ) : (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F97316" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                      )}
+                      <span className="text-white/60 max-w-[100px] truncate">{chip.label}</span>
+                      <button
+                        onClick={() => setComposerMessage(prev => prev.replace(chip.fullMatch, '').replace(/\n{2,}/g, '\n').trim())}
+                        className="text-white/30 hover:text-red-400 ml-0.5 leading-none text-[11px]"
+                      >✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             {/* IMG panel */}
             {showImgInput && (
@@ -4131,6 +4209,7 @@ export function VibeMailInboxWithClaim({
                     const broadcastMessage = (() => {
                       let msg = composerQuestData ? `[VQUEST:${JSON.stringify(composerQuestData)}]\n${composerMessage}` : composerMessage;
                       if (composerDesignManifest) msg += `\n[VDESIGN:${JSON.stringify(composerDesignManifest)}]`;
+                      if (composerFont || composerColor) msg += `\n[VSTYLE:${JSON.stringify({ ...(composerFont ? { font: composerFont } : {}), ...(composerColor ? { color: composerColor } : {}) })}]`;
                       return msg;
                     })();
                     // Send broadcast after payment
@@ -4549,14 +4628,15 @@ export function VibeMailInboxWithClaim({
                   const hasDm = !!parseDesignManifest(selectedMessage.message || '');
                   const parsed = parseQuestBanner(selectedMessage.message || '');
                   const rawMsg = parsed ? parsed.cleanMessage : (selectedMessage.message || '');
-                  const msg = stripDesignManifest(rawMsg);
+                  const vstyle = parseVStyle(rawMsg);
+                  const msg = stripVStyle(stripDesignManifest(rawMsg));
                   if (hasDm) return null; // VDESIGN renders everything
                   const mediaOnlyMsg = msg.split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n');
                   return msg ? (
-                    <div className="text-white text-sm leading-relaxed">
+                    <div className="text-white text-sm leading-relaxed" style={{ ...(vstyle?.font ? { fontFamily: vstyle.font } : {}), ...(vstyle?.color ? { color: vstyle.color } : {}) }}>
                       {translatedContent ? (
                         <>
-                          <span>{translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').replace(/\[VDESIGN:\{.*?\}\]/gs, '').trim()}</span>
+                          <span>{translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').replace(/\[VDESIGN:\{.*?\}\]/gs, '').replace(/\[VSTYLE:\{[^}]*\}\]/g, '').trim()}</span>
                           <span className="text-white/30 text-[10px] ml-1">({(t as any).translatedLabel || 'translated'})</span>
                           {mediaOnlyMsg && renderRichMessageFn(mediaOnlyMsg, playingAudio, audioRef, setPlayingAudio, lang, username)}
                         </>
