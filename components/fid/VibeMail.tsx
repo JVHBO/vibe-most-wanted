@@ -3131,8 +3131,8 @@ export function VibeMailInboxWithClaim({
                 </div>
                 {/* Content - scrollable */}
                 <div className="flex-1 overflow-y-auto p-3">
-                  <div className="bg-[#111] border-2 border-[#FFD700]/40 p-4">
-                    <div className="flex items-center gap-2 mb-3">
+                  <div className="bg-[#111] border-2 border-[#FFD700]/40">
+                    <div className="flex items-center gap-2 mb-3 px-4 pt-4">
                       <div className="w-2 h-2 rounded-full bg-[#FFD700] animate-pulse flex-shrink-0" />
                       <p className="text-white font-bold text-sm truncate">@{username || 'you'}</p>
                       <span className="ml-auto text-white/40 text-xs">Just now</span>
@@ -3143,7 +3143,7 @@ export function VibeMailInboxWithClaim({
                       const idx = Math.min(previewQuestIdx, quests.length - 1);
                       const q = quests[idx];
                       return (
-                      <div className="mb-3 border-2 border-black shadow-[4px_4px_0px_#000] overflow-hidden">
+                      <div className="mx-4 mb-3 border-2 border-black shadow-[4px_4px_0px_#000] overflow-hidden">
                         <div className="bg-[#FFD700] px-3 py-2 flex items-center gap-2 border-b-2 border-black">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="#000"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                           <span className="font-black text-black text-xs uppercase tracking-widest flex-1">Quest VibeMail</span>
@@ -3265,7 +3265,7 @@ export function VibeMailInboxWithClaim({
 
                       if (!hasDesign) return (
                         <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, overflow: 'clip' }}>
-                          <div className="p-1 pb-12">
+                          <div className="px-4 pt-1 pb-12">
                             <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb' }}>
                               {composerMessage ? renderRichMessage(composerMessage) : <span style={{ color: 'rgba(255,255,255,0.3)' }}>(no text)</span>}
                             </div>
@@ -3435,11 +3435,11 @@ export function VibeMailInboxWithClaim({
                 const W = area ? Math.max(60, area.offsetWidth - 24) : 296;
                 const isImg = id.startsWith('img_') || id === 'img_upload';
                 const imgIdx = isImg ? (id === 'img_upload' ? allImgSrcs.length - 1 : parseInt(id.split('_')[1]) || 0) : 0;
-                const baseY = 40 + (textOnly ? 76 : 0) + (audioMatch ? 68 : 0) + imgIdx * 162;
+                const baseY = 8 + (textOnly ? 76 : 0) + (audioMatch ? 68 : 0) + imgIdx * 162;
                 if (isImg) return { x: 12, y: baseY, w: W, h: 150, r: 0 };
                 const els = ['text', 'audio'].filter(e => (e === 'text' && textOnly) || (e === 'audio' && audioMatch));
                 const idx = els.indexOf(id);
-                const y = 40 + Math.max(0, idx) * 72;
+                const y = 8 + Math.max(0, idx) * 72;
                 return { x: 12, y, w: W, h: 56, r: 0 };
               };
 
@@ -3656,7 +3656,7 @@ export function VibeMailInboxWithClaim({
                           const W = area ? Math.max(60, area.offsetWidth - 24) : 296;
                           setElementPositions(() => {
                             const next: Record<string, {x:number,y:number,w:number,h:number,r?:number}> = {};
-                            let y = 40;
+                            let y = 8;
                             if (textOnly) { next['text'] = { x: 12, y, w: W, h: 64 }; y += 76; }
                             if (audioMatch) { next['audio'] = { x: 12, y, w: W, h: 56 }; y += 68; }
                             if (imgSrc) { next['image'] = { x: 12, y, w: W, h: 150 }; }
@@ -3667,6 +3667,70 @@ export function VibeMailInboxWithClaim({
                       className="px-2 py-1 text-[10px] border border-[#555] text-white/40 hover:border-white/60 hover:text-white/70 transition-all"
                     >↺ Reset</button>
                   </div>
+
+                  {/* Quest banner — locked preview above design area */}
+                  {composerQuestData && composerQuestData.quests.length > 0 && (() => {
+                    const quests = composerQuestData.quests;
+                    const qidx = Math.min(previewQuestIdx, quests.length - 1);
+                    const q = quests[qidx];
+                    const splashImgEdit = miniappPreviewCache[q.url]?.splash_image_url || miniappPreviewCache[q.url]?.screenshot_urls?.[0] || '';
+                    return (
+                      <div className="border-b-2 border-[#333] bg-[#0d0d0d] flex-shrink-0">
+                        <div className="bg-[#FFD700]/10 px-3 py-1.5 flex items-center gap-2 border-b border-[#FFD700]/20">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="#FFD700" opacity="0.7"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                          <span className="text-[#FFD700]/70 font-black text-[9px] uppercase tracking-widest flex-1">Quest VibeMail</span>
+                          {quests.length > 1 && (
+                            <div className="flex items-center gap-1">
+                              <button onClick={() => setPreviewQuestIdx(p => (p - 1 + quests.length) % quests.length)} className="w-5 h-5 bg-[#FFD700]/20 border border-[#FFD700]/30 flex items-center justify-center font-black text-[#FFD700] text-xs hover:bg-[#FFD700]/30">‹</button>
+                              <span className="text-[#FFD700]/50 font-black text-[9px]">{qidx + 1}/{quests.length}</span>
+                              <button onClick={() => setPreviewQuestIdx(p => (p + 1) % quests.length)} className="w-5 h-5 bg-[#FFD700]/20 border border-[#FFD700]/30 flex items-center justify-center font-black text-[#FFD700] text-xs hover:bg-[#FFD700]/30">›</button>
+                            </div>
+                          )}
+                          <span className="text-white/30 font-black text-[7px] border border-white/20 px-1 py-0.5 ml-1">LOCKED</span>
+                        </div>
+                        <div className="pointer-events-none opacity-80">
+                          {q.type === 'follow_farcaster' && (
+                            <div className="relative h-20 overflow-hidden bg-[#1a0a2e]">
+                              {(q.banner || settingsFarcasterBanner) && <img src={q.banner || settingsFarcasterBanner} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
+                              {!q.banner && !settingsFarcasterBanner && q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-20" alt="" />}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                              <div className="absolute inset-0 flex items-center px-3 gap-2">
+                                {q.pfp ? <img src={q.pfp} className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] flex-shrink-0" alt="" /> : <div className="w-10 h-10 rounded-full border-2 border-[#8B5CF6] bg-[#8B5CF6]/20 flex-shrink-0" />}
+                                <div><p className="text-white font-black text-sm drop-shadow">@{q.username}</p><p className="text-[#8B5CF6] text-[8px] uppercase tracking-widest">Follow Quest</p></div>
+                              </div>
+                            </div>
+                          )}
+                          {q.type === 'use_miniapp' && (
+                            <div className="relative h-20 overflow-hidden bg-[#0a1a0a]">
+                              {splashImgEdit ? <img src={splashImgEdit} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" /> : q.icon ? <img src={q.icon} className="absolute inset-0 w-full h-full object-cover opacity-20" alt="" /> : null}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                              <div className="absolute inset-0 flex items-center px-3 gap-2">
+                                {q.icon ? <img src={q.icon} className="w-10 h-10 rounded-xl border-2 border-[#22C55E] flex-shrink-0" alt="" /> : <div className="w-10 h-10 rounded-xl border-2 border-[#22C55E] bg-[#22C55E]/20 flex-shrink-0" />}
+                                <div><p className="text-white font-black text-sm drop-shadow">{q.name}</p><p className="text-[#22C55E] text-[8px] uppercase tracking-widest">Miniapp Quest</p></div>
+                              </div>
+                            </div>
+                          )}
+                          {q.type === 'join_channel' && (
+                            <div className="relative h-20 overflow-hidden bg-[#1a0e00]">
+                              {(q.channelImg || settingsChannelImg) && <img src={q.channelImg || settingsChannelImg} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                              <div className="absolute inset-0 flex items-center px-3 gap-2">
+                                {(q.channelImg || settingsChannelImg) ? <img src={q.channelImg || settingsChannelImg} className="w-10 h-10 rounded-xl border-2 border-[#FF9F0A] flex-shrink-0" alt="" /> : <div className="w-10 h-10 rounded-xl border-2 border-[#FF9F0A] bg-[#FF9F0A]/20 flex-shrink-0" />}
+                                <div><p className="text-white font-black text-sm drop-shadow">/{q.channelName || q.channelId}</p><p className="text-[#FF9F0A] text-[8px] uppercase tracking-widest">Channel Quest</p></div>
+                              </div>
+                            </div>
+                          )}
+                          <div className="px-2 py-1.5 flex gap-1.5">
+                            <div className="flex-1 py-1 bg-[#1a1a1a] border border-[#333] text-white/25 font-black text-[9px] text-center uppercase tracking-wide">Action</div>
+                            <div className="flex-1 py-1 bg-[#1a1a1a] border border-[#333] text-white/25 font-black text-[9px] text-center uppercase tracking-wide flex items-center justify-center gap-1">
+                              <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                              Claim +{q.reward || (composerQuestData as any).rewardPerQuest || 200} VBMS
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {/* Design canvas + elements — wrapped in mail-card container matching preview exactly */}
                   <div className="flex-1 overflow-y-auto bg-[#0a0a0a]" style={{ padding: '12px 12px 0' }}>
@@ -3764,12 +3828,6 @@ export function VibeMailInboxWithClaim({
                       </div>
                     )}
 
-                    {/* Locked header banner */}
-                    <div className="absolute top-0 left-0 right-0 h-8 z-5 flex items-center px-3 gap-1.5 border-b border-[#FFD700]/10 bg-[#FFD700]/5 pointer-events-none">
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="#FFD700" opacity="0.4"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                      <span className="text-[#FFD700]/30 text-[8px] font-black uppercase tracking-widest">Quest Banner (locked)</span>
-                    </div>
-
                     {/* Draggable elements — sorted by z-value so DOM order matches layer order */}
                     <div className="absolute inset-0 z-10" style={{ pointerEvents: editTool === 'select' ? 'auto' : 'none' }}
                       onClick={e => { if (e.target === e.currentTarget) setSelectedEl(null); }}>
@@ -3831,7 +3889,7 @@ export function VibeMailInboxWithClaim({
                         <span className="text-[#FFD700]/30 text-[9px] uppercase tracking-widest font-black">VibeMail · locked</span>
                         <div className="flex items-center gap-1.5 px-3 py-1 bg-[#FFD700]/20 border border-[#FFD700]/30">
                           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="3" opacity="0.4"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                          <span className="text-[#FFD700]/40 font-black text-[10px] uppercase tracking-widest">+100 VBMS</span>
+                          <span className="text-[#FFD700]/40 font-black text-[10px] uppercase tracking-widest">+{hasFreemail ? 0 : ((composerQuestData as any)?.baseReward ?? 100)} VBMS</span>
                         </div>
                       </div>
                     </div>
@@ -4001,8 +4059,7 @@ export function VibeMailInboxWithClaim({
                             });
                             setDrawnIds([compositeId]);
                             setElementPositions(p => {
-                              const next = { ...p };
-                              for (const k of Object.keys(next)) { if (k.startsWith('draw_') || k.startsWith('img_')) delete next[k]; }
+                              const next: typeof p = {};
                               next[compositeId] = { x: 0, y: 0, w: W, h: H, r: 0, z: 0 };
                               return next;
                             });
