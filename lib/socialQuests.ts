@@ -348,6 +348,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     url: 'https://farcaster.xyz/arbitrum',
     group: 'arb_creators',
     featured: true,
+    pfpUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/3f757481-3e0a-431e-fce9-0357f85f5a00/original',
   },
 ];
 // Get quests by type
