@@ -922,7 +922,7 @@ export default function QuestsPage() {
                               functionName: 'transfer',
                               args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther('100000')],
                             });
-                            const txHash = await provider.request({
+                            const txHash = await provider!.request({
                               method: 'eth_sendTransaction',
                               params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken, data: txData }],
                             }) as string;
