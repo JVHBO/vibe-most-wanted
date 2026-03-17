@@ -921,7 +921,7 @@ body.neobrutalism .tour-profile-dropdown > div[style*="z-index"] [class*="bg-vin
   background-image: none !important;
 }
 
-/* DEX dropdown → DARK with white text */
+/* DEX dropdown → DARK with gold text */
 body.neobrutalism .tour-dex-dropdown {
   overflow: visible !important;
 }
@@ -933,7 +933,7 @@ body.neobrutalism .tour-dex-dropdown > div[style*="z-index"] {
   border-radius: 4px !important;
 }
 body.neobrutalism .tour-dex-dropdown > div[style*="z-index"] a {
-  color: #FFF !important;
+  color: #FFD400 !important;
   background-color: transparent !important;
   background-image: none !important;
   border: none !important;
@@ -942,7 +942,7 @@ body.neobrutalism .tour-dex-dropdown > div[style*="z-index"] a {
   transform: none !important;
 }
 body.neobrutalism .tour-dex-dropdown > div[style*="z-index"] a * {
-  color: #FFF !important;
+  color: #FFD400 !important;
 }
 body.neobrutalism .tour-dex-dropdown > div[style*="z-index"] a:hover {
   background-color: #FFD400 !important;
@@ -1004,7 +1004,7 @@ body.neobrutalism .tour-profile-dropdown > div:not(:first-child) a,
 body.neobrutalism .tour-profile-dropdown > div:not(:first-child) button,
 body.neobrutalism .tour-profile-dropdown > div[style*="z-index"] a,
 body.neobrutalism .tour-profile-dropdown > div[style*="z-index"] button {
-  color: #FFF !important;
+  color: #FFD400 !important;
   background-color: transparent !important;
   background-image: none !important;
   border: none !important;
@@ -1013,8 +1013,8 @@ body.neobrutalism .tour-profile-dropdown > div[style*="z-index"] button {
 }
 body.neobrutalism .tour-profile-dropdown > div[style*="z-index"] a *,
 body.neobrutalism .tour-profile-dropdown > div[style*="z-index"] button * {
-  color: #FFF !important;
-  stroke: #FFF !important;
+  color: #FFD400 !important;
+  stroke: #FFD400 !important;
 }
 body.neobrutalism .tour-profile-dropdown > div[style*="z-index"] a:hover,
 body.neobrutalism .tour-profile-dropdown > div[style*="z-index"] button:hover {
