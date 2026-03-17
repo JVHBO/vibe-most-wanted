@@ -452,6 +452,7 @@ export default defineSchema({
   customFollowQuests: defineTable({
     addedBy: v.string(),              // address of player who paid
     targetUsername: v.string(),       // Farcaster username to follow
+    displayName: v.optional(v.string()), // Farcaster display name
     targetFid: v.number(),            // FID of target user
     pfpUrl: v.optional(v.string()),
     bannerUrl: v.optional(v.string()),

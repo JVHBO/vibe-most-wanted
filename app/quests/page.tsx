@@ -213,6 +213,7 @@ export default function QuestsPage() {
   const [customCarouselIdx, setCustomCarouselIdx] = useState(0);
   const [claimingCustom, setClaimingCustom] = useState<string | null>(null);
   const [claimedCustom, setClaimedCustom] = useState<Set<string>>(new Set());
+  const [customQuestPreview, setCustomQuestPreview] = useState<{ fid: number; username: string; display_name: string; pfp_url?: string; banner_url?: string } | null>(null);
 
   // All mission types (matching backend) - using translation keys
   const ALL_MISSION_TYPES = [
@@ -794,51 +795,74 @@ export default function QuestsPage() {
                 </span>
               </div>
 
-              {/* Add custom quest input */}
+              {/* Add custom quest — compact with preview banner */}
               {address && (
-                <div className="px-3 py-2 border-b-2 border-[#A855F720] bg-[#0a0a0a]">
-                  <p className="text-white/50 text-[9px] uppercase tracking-widest mb-1.5">
-                    {(t as any)('questsAddCustomCost') || 'Add any Farcaster profile — costs 100k VBMS'}
-                  </p>
-                  <div className="flex gap-1.5">
-                    <input
-                      value={customQuestUsername}
-                      onChange={e => { setCustomQuestUsername(e.target.value.replace(/^@/, '')); setCustomQuestError(''); }}
-                      placeholder="@username"
-                      className="flex-1 bg-[#111] border-2 border-[#A855F740] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#A855F7]"
-                    />
-                    <button
-                      disabled={isAddingCustom || !customQuestUsername.trim()}
-                      onClick={async () => {
-                        if (!address || !customQuestUsername.trim()) return;
-                        setIsAddingCustom(true);
-                        setCustomQuestError('');
-                        try {
-                          // Fetch FID + pfp/banner from Farcaster
-                          const res = await fetch(`/api/fid/lookup-username?username=${encodeURIComponent(customQuestUsername.trim())}`);
-                          const data = await res.json();
-                          if (!data.fid) throw new Error(data.error || 'User not found');
-                          await addCustomFollowQuest({
-                            address: address.toLowerCase(),
-                            targetUsername: data.username || customQuestUsername.trim(),
-                            targetFid: data.fid,
-                            pfpUrl: data.pfp_url,
-                            bannerUrl: data.banner_url,
-                          });
-                          setCustomQuestUsername('');
-                        } catch (e: any) {
-                          setCustomQuestError(e.message || 'Error');
-                        } finally {
-                          setIsAddingCustom(false);
-                        }
-                      }}
-                      className="px-3 py-1.5 border-2 border-black font-black text-[10px] uppercase disabled:opacity-40"
-                      style={{ background: '#A855F7', color: '#fff', boxShadow: '2px 2px 0px #000' }}
-                    >
-                      {isAddingCustom ? '...' : ((t as any)('questsAddCustomBtn') || 'Pay 100k')}
-                    </button>
+                <div className="border-b-2 border-[#A855F720]">
+                  {/* Preview banner (shown after lookup) */}
+                  {customQuestPreview && (
+                    <div className="relative h-16 overflow-hidden bg-[#1a0a2e]">
+                      {customQuestPreview.banner_url
+                        ? <img src={customQuestPreview.banner_url} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />
+                        : customQuestPreview.pfp_url
+                          ? <img src={customQuestPreview.pfp_url} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.4, transform: 'scale(1.6)', filter: 'blur(6px)' }} alt="" />
+                          : null
+                      }
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                      <div className="absolute bottom-1.5 left-2 flex items-center gap-1.5">
+                        {customQuestPreview.pfp_url && <img src={customQuestPreview.pfp_url} className="w-7 h-7 rounded-full border border-[#A855F7]" alt="" />}
+                        <div>
+                          <p className="text-white font-black text-xs drop-shadow">{customQuestPreview.display_name}</p>
+                          <p className="text-[#A855F7] text-[8px]">@{customQuestPreview.username}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <div className="px-2 py-1.5 bg-[#0a0a0a]">
+                    <p className="text-white/40 text-[8px] uppercase tracking-widest mb-1">
+                      {(t as any)('questsAddCustomCost') || 'Add any Farcaster profile — costs 100k VBMS'}
+                    </p>
+                    <div className="flex gap-1">
+                      <input
+                        value={customQuestUsername}
+                        onChange={e => { setCustomQuestUsername(e.target.value.replace(/^@/, '')); setCustomQuestError(''); setCustomQuestPreview(null); }}
+                        placeholder="@username"
+                        className="flex-1 bg-[#111] border border-[#A855F740] text-white text-[10px] px-2 py-1 focus:outline-none focus:border-[#A855F7]"
+                      />
+                      <button
+                        disabled={isAddingCustom || !customQuestUsername.trim()}
+                        onClick={async () => {
+                          if (!address || !customQuestUsername.trim()) return;
+                          setIsAddingCustom(true);
+                          setCustomQuestError('');
+                          try {
+                            const res = await fetch(`/api/fid/lookup-username?username=${encodeURIComponent(customQuestUsername.trim())}`);
+                            const data = await res.json();
+                            if (!data.fid) throw new Error(data.error || 'User not found');
+                            setCustomQuestPreview(data);
+                            await addCustomFollowQuest({
+                              address: address.toLowerCase(),
+                              targetUsername: data.username || customQuestUsername.trim(),
+                              displayName: data.display_name,
+                              targetFid: data.fid,
+                              pfpUrl: data.pfp_url,
+                              bannerUrl: data.banner_url,
+                            });
+                            setCustomQuestUsername('');
+                            setCustomQuestPreview(null);
+                          } catch (e: any) {
+                            setCustomQuestError(e.message || 'Error');
+                          } finally {
+                            setIsAddingCustom(false);
+                          }
+                        }}
+                        className="px-2 py-1 border border-black font-black text-[9px] uppercase disabled:opacity-40"
+                        style={{ background: '#A855F7', color: '#fff', boxShadow: '1px 1px 0px #000' }}
+                      >
+                        {isAddingCustom ? '...' : ((t as any)('questsAddCustomBtn') || 'Pay 100k')}
+                      </button>
+                    </div>
+                    {customQuestError && <p className="text-red-400 text-[8px] mt-0.5">{customQuestError}</p>}
                   </div>
-                  {customQuestError && <p className="text-red-400 text-[9px] mt-1">{customQuestError}</p>}
                 </div>
               )}
 
@@ -857,6 +881,7 @@ export default function QuestsPage() {
                 const isClaiming = claimingCustom === questId;
                 const banner = q.bannerUrl;
                 const pfp = q.pfpUrl;
+                const displayName = (q as any).displayName || q.targetUsername;
                 const profileUrl = `https://warpcast.com/${q.targetUsername}`;
                 return (
                   <div>
@@ -873,8 +898,8 @@ export default function QuestsPage() {
                       <div className="absolute bottom-2 left-3 flex items-center gap-2">
                         {pfp ? <img src={pfp} className="w-10 h-10 rounded-full border-2 border-[#A855F7] shadow-lg flex-shrink-0" alt="" /> : <div className="w-10 h-10 rounded-full border-2 border-[#A855F7] bg-[#A855F7]/20 flex-shrink-0" />}
                         <div>
-                          <p className="text-white font-black text-sm drop-shadow">@{q.targetUsername}</p>
-                          <p className="text-[#A855F7] text-[9px] uppercase tracking-widest font-bold">Farcaster</p>
+                          <p className="text-white font-black text-sm drop-shadow">{displayName}</p>
+                          <p className="text-[#A855F7] text-[9px]">@{q.targetUsername}</p>
                         </div>
                       </div>
                     </div>

@@ -446,6 +446,7 @@ export const addCustomFollowQuest = mutation({
   args: {
     address: v.string(),
     targetUsername: v.string(),
+    displayName: v.optional(v.string()),
     targetFid: v.number(),
     pfpUrl: v.optional(v.string()),
     bannerUrl: v.optional(v.string()),
@@ -497,6 +498,7 @@ export const addCustomFollowQuest = mutation({
     await ctx.db.insert("customFollowQuests", {
       addedBy: address,
       targetUsername: args.targetUsername.toLowerCase().replace(/^@/, ""),
+      displayName: args.displayName,
       targetFid: args.targetFid,
       pfpUrl: args.pfpUrl,
       bannerUrl: args.bannerUrl,

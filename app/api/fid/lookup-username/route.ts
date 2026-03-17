@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
   const result = {
     fid: u.fid,
     username: u.username,
+    display_name: u.display_name || u.username,
     pfp_url: u.pfp_url,
     banner_url: u.profile?.banner?.url || u.profile?.banner_image_url || u.banner_url || null,
   };
