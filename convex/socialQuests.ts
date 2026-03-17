@@ -427,7 +427,6 @@ export const verifyAndCompleteQuest = action({
 
 // ── CUSTOM FOLLOW QUESTS ──────────────────────────────────────────────────────
 
-const CUSTOM_QUEST_COST = 100000;  // 100k VBMS to add
 const CUSTOM_QUEST_REWARD = 200;   // 200 VBMS per follower
 
 /** Get all active custom follow quests */
@@ -441,7 +440,7 @@ export const getCustomFollowQuests = query({
   },
 });
 
-/** Pay 100k VBMS to add a Farcaster user as a custom follow quest */
+/** Record custom follow quest after on-chain VBMS payment */
 export const addCustomFollowQuest = mutation({
   args: {
     address: v.string(),
@@ -450,21 +449,10 @@ export const addCustomFollowQuest = mutation({
     targetFid: v.number(),
     pfpUrl: v.optional(v.string()),
     bannerUrl: v.optional(v.string()),
+    txHash: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const address = normalizeAddress(args.address);
-
-    // Get profile and check balance
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .first();
-    if (!profile) throw new ConvexError("Profile not found");
-
-    const coins = profile.coins || 0;
-    if (coins < CUSTOM_QUEST_COST) {
-      throw new ConvexError(`Not enough VBMS. Need ${CUSTOM_QUEST_COST.toLocaleString()}, have ${coins.toLocaleString()}`);
-    }
 
     // Prevent duplicates
     const existing = await ctx.db
@@ -472,27 +460,6 @@ export const addCustomFollowQuest = mutation({
       .withIndex("by_targetFid", (q) => q.eq("targetFid", args.targetFid))
       .first();
     if (existing?.active) throw new ConvexError("This user is already a custom quest");
-
-    // Deduct VBMS
-    await ctx.db.patch(profile._id, {
-      coins: coins - CUSTOM_QUEST_COST,
-      lifetimeSpent: (profile.lifetimeSpent || 0) + CUSTOM_QUEST_COST,
-    });
-
-    // Log transaction
-    await ctx.db.insert("coinTransactions", {
-      address,
-      amount: -CUSTOM_QUEST_COST,
-      type: "spend",
-      source: "custom_follow_quest",
-      description: `Added custom follow quest: @${args.targetUsername}`,
-      timestamp: Date.now(),
-      balanceBefore: coins,
-      balanceAfter: coins - CUSTOM_QUEST_COST,
-    });
-
-    // Audit log
-    await createAuditLog(ctx, address, "spend", -CUSTOM_QUEST_COST, coins, coins - CUSTOM_QUEST_COST, "custom_follow_quest");
 
     // Create quest
     await ctx.db.insert("customFollowQuests", {
@@ -502,12 +469,13 @@ export const addCustomFollowQuest = mutation({
       targetFid: args.targetFid,
       ...(args.pfpUrl !== undefined ? { pfpUrl: args.pfpUrl } : {}),
       ...(args.bannerUrl !== undefined ? { bannerUrl: args.bannerUrl } : {}),
+      ...(args.txHash !== undefined ? { txHash: args.txHash } : {}),
       reward: CUSTOM_QUEST_REWARD,
       active: true,
       createdAt: Date.now(),
     });
 
-    return { success: true, remainingCoins: coins - CUSTOM_QUEST_COST };
+    return { success: true };
   },
 });
 

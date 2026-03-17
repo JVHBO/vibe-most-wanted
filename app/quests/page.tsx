@@ -14,6 +14,9 @@ import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
+import { useTransferVBMS } from "@/lib/hooks/useVBMSContracts";
+import { CONTRACTS } from "@/lib/contracts";
+import { parseEther } from "viem";
 import { WantedCastsTab } from "@/components/fid/WantedCastsTab";
 import { VibeMailInboxWithClaim } from "@/components/fid/VibeMail";
 import { VibeFIDConvexProvider, vibefidConvex } from "@/contexts/VibeFIDConvexProvider";
@@ -28,6 +31,7 @@ export default function QuestsPage() {
   const { t } = useLanguage();
   const { refreshProfile } = useProfile();
   const { validateOnArb } = useArbValidator();
+  const { transfer: transferVBMS } = useTransferVBMS();
   const [activeTab, setActiveTab] = useState<'missions' | 'wanted' | 'messages'>('missions');
   // Open vibemail tab if navigated with ?tab=vibemail
   useEffect(() => {
@@ -907,11 +911,13 @@ export default function QuestsPage() {
                           setCustomQuestError('');
                           try {
                             let data = customQuestPreview as any;
-                            if (!data) {
-                              const res = await fetch(`/api/fid/lookup-username?username=${encodeURIComponent(customQuestUsername.trim())}`);
-                              data = await res.json();
-                            }
-                            if (!data?.fid) throw new Error('User not found');
+                            if (!data?.fid) throw new Error('Select a user first');
+                            // Step 1: on-chain VBMS transfer (1000 VBMS to pool)
+                            const txHash = await transferVBMS(
+                              CONTRACTS.VBMSPoolTroll as `0x${string}`,
+                              parseEther('1000')
+                            );
+                            // Step 2: record quest in Convex with txHash
                             await addCustomFollowQuest({
                               address: address.toLowerCase(),
                               targetUsername: data.username || customQuestUsername.trim(),
@@ -919,12 +925,13 @@ export default function QuestsPage() {
                               targetFid: data.fid,
                               pfpUrl: data.pfp_url || undefined,
                               bannerUrl: data.banner_url || undefined,
+                              txHash,
                             });
                             setCustomQuestUsername('');
                             setCustomQuestPreview(null);
                             setCustomModalOpen(false);
                           } catch (e: any) {
-                            setCustomQuestError(e.data || e.message || 'Error');
+                            setCustomQuestError(e.data || e.shortMessage || e.message || 'Error');
                           } finally {
                             setIsAddingCustom(false);
                           }
@@ -932,7 +939,7 @@ export default function QuestsPage() {
                         className="w-full mt-2 py-1.5 border-2 border-black font-black text-xs uppercase disabled:opacity-40"
                         style={{ background: '#A855F7', color: '#fff', boxShadow: '2px 2px 0px #000' }}
                       >
-                        {isAddingCustom ? '...' : 'PAY 100K VBMS & ADD'}
+                        {isAddingCustom ? 'CONFIRM IN WALLET...' : 'PAY 1000 VBMS & ADD'}
                       </button>
                     </div>
                   </div>

@@ -448,7 +448,7 @@ export default defineSchema({
     .index("by_player", ["playerAddress"])
     .index("by_player_quest", ["playerAddress", "questId"]),
 
-  // Custom Follow Quests — paid by players (100k VBMS each)
+  // Custom Follow Quests — paid by players (1000 VBMS on-chain)
   customFollowQuests: defineTable({
     addedBy: v.string(),              // address of player who paid
     targetUsername: v.string(),       // Farcaster username to follow
@@ -459,6 +459,7 @@ export default defineSchema({
     reward: v.number(),               // VBMS reward for followers (200)
     active: v.boolean(),
     createdAt: v.number(),
+    txHash: v.optional(v.string()),   // On-chain payment TX hash
   })
     .index("by_active", ["active"])
     .index("by_addedBy", ["addedBy"])
