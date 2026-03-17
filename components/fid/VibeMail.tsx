@@ -266,7 +266,7 @@ function renderFormattedMessage(message: string, lang: string = "en", username?:
     while (remaining.length > 0) {
       const linkMatch = remaining.match(/\[([^\]]+)\]\(([^)]+)\)/);
       const boldMatch = remaining.match(/\*\*([^*]+)\*\*/);
-      const colorMatch = remaining.match(/\{c:(#[0-9a-fA-F]{3,8})\}([\s\S]*?)\{\/c\}/);
+      const colorMatch = remaining.match(/\{c:\s*#\s*([0-9a-fA-F]{3,8})\}([\s\S]*?)\{\/c\}/);
 
       const linkIdx = linkMatch ? remaining.indexOf(linkMatch[0]) : -1;
       const boldIdx = boldMatch ? remaining.indexOf(boldMatch[0]) : -1;
@@ -312,7 +312,7 @@ function renderFormattedMessage(message: string, lang: string = "en", username?:
       } else if (colorIdx !== -1) {
         if (colorIdx > 0) parts.push(<span key={`${lineIdx}-${keyIdx++}`}>{remaining.slice(0, colorIdx)}</span>);
         const [, colorHex, colorText] = colorMatch!;
-        parts.push(<span key={`${lineIdx}-${keyIdx++}`} style={{ color: colorHex }}>{colorText}</span>);
+        parts.push(<span key={`${lineIdx}-${keyIdx++}`} style={{ color: '#' + colorHex }}>{colorText}</span>);
         remaining = remaining.slice(colorIdx + colorMatch![0].length);
       } else {
         if (remaining) parts.push(<span key={`${lineIdx}-${keyIdx++}`}>{remaining}</span>);
@@ -2069,7 +2069,7 @@ export function VibeMailInboxWithClaim({
     const selected = composerMessage.slice(start, end);
     // If color is '' (default), strip any {c:...} tags from selection
     const newPart = color === ''
-      ? selected.replace(/\{c:#[0-9a-fA-F]{3,8}\}/g, '').replace(/\{\/c\}/g, '')
+      ? selected.replace(/\{c:\s*#\s*[0-9a-fA-F]{3,8}\}/g, '').replace(/\{\/c\}/g, '')
       : `{c:${color}}${selected}{/c}`;
     setComposerMessage(composerMessage.slice(0, start) + newPart + composerMessage.slice(end));
     // Restore focus
@@ -2092,14 +2092,14 @@ export function VibeMailInboxWithClaim({
       let cur = baseColor;
       let si = 0;
       while (rem.length > 0) {
-        const om = rem.match(/\{c:(#[0-9a-fA-F]{3,8})\}/);
+        const om = rem.match(/\{c:\s*#\s*([0-9a-fA-F]{3,8})\}/);
         const oi = om ? rem.indexOf(om[0]) : -1;
         const ci = rem.indexOf('{/c}');
         if (oi === -1 && ci === -1) { segs.push(<span key={si++} style={{ color: cur }}>{rem}</span>); break; }
         const useOpen = oi !== -1 && (ci === -1 || oi <= ci);
         const ni = useOpen ? oi : ci;
         if (ni > 0) segs.push(<span key={si++} style={{ color: cur }}>{rem.slice(0, ni)}</span>);
-        if (useOpen) { cur = om![1]; rem = rem.slice(oi + om![0].length); }
+        if (useOpen) { cur = '#' + om![1]; rem = rem.slice(oi + om![0].length); }
         else { cur = baseColor; rem = rem.slice(ci + 5); }
       }
       return <span key={lineIdx}>{segs}{!isLast && '\n'}</span>;

@@ -504,10 +504,10 @@ export default function QuestsPage() {
   }
 
   return (
-    <div className="fixed inset-0 bg-[#1a1a1a] overflow-hidden">
+    <div className="fixed inset-0 game-background overflow-hidden">
 
       {/* Header */}
-      <div className={`absolute top-0 left-0 right-0 z-20 ${activeTab === 'messages' ? 'bg-[#111]' : 'bg-[#1a1a1a]'} border-b-4 border-black`}>
+      <div className={`absolute top-0 left-0 right-0 z-20 ${activeTab === 'messages' ? 'bg-[#111]' : 'bg-[#0d0d0d]/90'} border-b-4 border-black`}>
         <div className="relative flex items-center justify-between px-3 py-1.5">
           <Link
             href="/"
@@ -814,7 +814,7 @@ export default function QuestsPage() {
 
                     {/* Preview banner */}
                     {customQuestPreview && (
-                      <div className="relative h-16 overflow-hidden bg-[#1a0a2e]">
+                      <div className="relative h-16 overflow-hidden game-background">
                         {(customQuestPreview as any).banner_url
                           ? <img src={(customQuestPreview as any).banner_url} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />
                           : customQuestPreview.pfp_url
@@ -960,7 +960,7 @@ export default function QuestsPage() {
                 const profileUrl = `https://warpcast.com/${q.targetUsername}`;
                 return (
                   <div>
-                    <div className="relative h-28 overflow-hidden bg-[#1a0a2e]">
+                    <div className="relative h-28 overflow-hidden game-background">
                       {(() => {
                         if (banner) return <img src={banner} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.75 }} alt="" />;
                         if (pfp) return <img src={pfp} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.5, transform: 'scale(1.6)', filter: 'blur(6px)' }} alt="" />;
@@ -1094,7 +1094,7 @@ export default function QuestsPage() {
                           }}>
 
                           {/* Banner image area */}
-                          <div className="relative h-28 bg-[#111] flex items-center justify-center overflow-hidden">
+                          <div className="relative h-28 game-background flex items-center justify-center overflow-hidden">
                             {bgSrc && (
                               <img
                                 src={bgSrc}
