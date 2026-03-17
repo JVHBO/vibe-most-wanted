@@ -424,3 +424,139 @@ export const verifyAndCompleteQuest = action({
     return { completed: true, message: "Quest verified and marked complete!" };
   },
 });
+
+// ── CUSTOM FOLLOW QUESTS ──────────────────────────────────────────────────────
+
+const CUSTOM_QUEST_COST = 100000;  // 100k VBMS to add
+const CUSTOM_QUEST_REWARD = 200;   // 200 VBMS per follower
+
+/** Get all active custom follow quests */
+export const getCustomFollowQuests = query({
+  args: {},
+  handler: async (ctx) => {
+    return ctx.db
+      .query("customFollowQuests")
+      .withIndex("by_active", (q) => q.eq("active", true))
+      .take(50);
+  },
+});
+
+/** Pay 100k VBMS to add a Farcaster user as a custom follow quest */
+export const addCustomFollowQuest = mutation({
+  args: {
+    address: v.string(),
+    targetUsername: v.string(),
+    targetFid: v.number(),
+    pfpUrl: v.optional(v.string()),
+    bannerUrl: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const address = normalizeAddress(args.address);
+
+    // Get profile and check balance
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+    if (!profile) throw new Error("Profile not found");
+
+    const coins = profile.coins || 0;
+    if (coins < CUSTOM_QUEST_COST) {
+      throw new Error(`Not enough VBMS. Need ${CUSTOM_QUEST_COST.toLocaleString()}, have ${coins.toLocaleString()}`);
+    }
+
+    // Prevent duplicates
+    const existing = await ctx.db
+      .query("customFollowQuests")
+      .withIndex("by_targetFid", (q) => q.eq("targetFid", args.targetFid))
+      .first();
+    if (existing?.active) throw new Error("This user is already a custom quest");
+
+    // Deduct VBMS
+    await ctx.db.patch(profile._id, {
+      coins: coins - CUSTOM_QUEST_COST,
+      lifetimeSpent: (profile.lifetimeSpent || 0) + CUSTOM_QUEST_COST,
+    });
+
+    // Log transaction
+    await ctx.db.insert("coinTransactions", {
+      address,
+      amount: -CUSTOM_QUEST_COST,
+      type: "spend",
+      source: "custom_follow_quest",
+      description: `Added custom follow quest: @${args.targetUsername}`,
+      timestamp: Date.now(),
+      balanceBefore: coins,
+      balanceAfter: coins - CUSTOM_QUEST_COST,
+    });
+
+    // Audit log
+    await createAuditLog(ctx, address, "spend", -CUSTOM_QUEST_COST, coins, coins - CUSTOM_QUEST_COST, "custom_follow_quest");
+
+    // Create quest
+    await ctx.db.insert("customFollowQuests", {
+      addedBy: address,
+      targetUsername: args.targetUsername.toLowerCase().replace(/^@/, ""),
+      targetFid: args.targetFid,
+      pfpUrl: args.pfpUrl,
+      bannerUrl: args.bannerUrl,
+      reward: CUSTOM_QUEST_REWARD,
+      active: true,
+      createdAt: Date.now(),
+    });
+
+    return { success: true, remainingCoins: coins - CUSTOM_QUEST_COST };
+  },
+});
+
+/** Claim reward for following a custom quest user (auto-verify like standard quests) */
+export const claimCustomFollowReward = mutation({
+  args: {
+    address: v.string(),
+    questId: v.string(), // customFollowQuests._id as string
+  },
+  handler: async (ctx, args) => {
+    const address = normalizeAddress(args.address);
+
+    const quest = await ctx.db.get(args.questId as any);
+    if (!quest || !(quest as any).active) throw new Error("Quest not found or inactive");
+
+    // Check not already claimed via socialQuestProgress
+    const progressId = `custom_${args.questId}`;
+    const existing = await ctx.db
+      .query("socialQuestProgress")
+      .withIndex("by_player_quest", (q) => q.eq("playerAddress", address).eq("questId", progressId))
+      .first();
+    if (existing?.claimed) throw new Error("Already claimed");
+
+    const reward = (quest as any).reward || CUSTOM_QUEST_REWARD;
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+    if (!profile) throw new Error("Profile not found");
+
+    const balanceBefore = profile.coins || 0;
+    const balanceAfter = balanceBefore + reward;
+
+    await ctx.db.patch(profile._id, { coins: balanceAfter });
+
+    await createAuditLog(ctx, address, "claim", reward, balanceBefore, balanceAfter, "custom_follow_quest");
+
+    // Track in socialQuestProgress
+    if (existing) {
+      await ctx.db.patch(existing._id, { completed: true, claimed: true, claimedAt: Date.now() });
+    } else {
+      await ctx.db.insert("socialQuestProgress", {
+        playerAddress: address,
+        questId: progressId,
+        completed: true,
+        completedAt: Date.now(),
+        claimed: true,
+        claimedAt: Date.now(),
+      });
+    }
+
+    return { success: true, reward, newBalance: balanceAfter };
+  },
+});

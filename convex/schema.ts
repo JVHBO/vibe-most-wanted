@@ -448,6 +448,21 @@ export default defineSchema({
     .index("by_player", ["playerAddress"])
     .index("by_player_quest", ["playerAddress", "questId"]),
 
+  // Custom Follow Quests — paid by players (100k VBMS each)
+  customFollowQuests: defineTable({
+    addedBy: v.string(),              // address of player who paid
+    targetUsername: v.string(),       // Farcaster username to follow
+    targetFid: v.number(),            // FID of target user
+    pfpUrl: v.optional(v.string()),
+    bannerUrl: v.optional(v.string()),
+    reward: v.number(),               // VBMS reward for followers (200)
+    active: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_active", ["active"])
+    .index("by_addedBy", ["addedBy"])
+    .index("by_targetFid", ["targetFid"]),
+
   // Personal Missions (daily bonuses that need to be claimed)
   personalMissions: defineTable({
     playerAddress: v.string(),

@@ -45,6 +45,9 @@ export default function QuestsPage() {
   const markCompleted = useMutation(api.socialQuests.markQuestCompleted);
   const verifyAndCompleteQuest = useAction(api.socialQuests.verifyAndCompleteQuest);
   const claimSocialReward = useMutation(api.socialQuests.claimSocialQuestReward);
+  const customFollowQuests = useQuery(api.socialQuests.getCustomFollowQuests);
+  const addCustomFollowQuest = useMutation(api.socialQuests.addCustomFollowQuest);
+  const claimCustomFollowReward = useMutation(api.socialQuests.claimCustomFollowReward);
 
 
   // 🚀 BANDWIDTH FIX: Use getProfileDashboard instead of getProfile
@@ -202,6 +205,14 @@ export default function QuestsPage() {
 
   // Dynamic banner cache for quests that don't have hardcoded bannerUrl
   const [dynamicBanners, setDynamicBanners] = useState<Record<number, string>>({});
+
+  // Custom follow quest UI state
+  const [customQuestUsername, setCustomQuestUsername] = useState('');
+  const [isAddingCustom, setIsAddingCustom] = useState(false);
+  const [customQuestError, setCustomQuestError] = useState('');
+  const [customCarouselIdx, setCustomCarouselIdx] = useState(0);
+  const [claimingCustom, setClaimingCustom] = useState<string | null>(null);
+  const [claimedCustom, setClaimedCustom] = useState<Set<string>>(new Set());
 
   // All mission types (matching backend) - using translation keys
   const ALL_MISSION_TYPES = [
@@ -986,6 +997,147 @@ export default function QuestsPage() {
                     {!userFid && (
                       <p className="text-vintage-ice/50 text-[10px] text-center">{t('questsConnectFarcaster')}</p>
                     )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* ── CUSTOM FOLLOW QUESTS ─────────────────────────────── */}
+            <div className="border-4 overflow-hidden" style={{ borderColor: '#A855F7', boxShadow: '3px 3px 0px #A855F780' }}>
+              {/* Header */}
+              <div className="flex items-center justify-between px-3 py-1.5 bg-[#0d0d0d]" style={{ borderBottom: '2px solid #A855F740' }}>
+                <span className="font-black text-sm uppercase tracking-wider" style={{ color: '#A855F7' }}>
+                  {(t as any)('questsCustomFollows') || 'CUSTOM FOLLOWS'}
+                </span>
+                <span className="text-white/40 text-[10px] font-bold">
+                  {customFollowQuests?.length ?? 0}/∞
+                </span>
+              </div>
+
+              {/* Add custom quest input */}
+              {address && (
+                <div className="px-3 py-2 border-b-2 border-[#A855F720] bg-[#0a0a0a]">
+                  <p className="text-white/50 text-[9px] uppercase tracking-widest mb-1.5">
+                    {(t as any)('questsAddCustomCost') || 'Add any Farcaster profile — costs 100k VBMS'}
+                  </p>
+                  <div className="flex gap-1.5">
+                    <input
+                      value={customQuestUsername}
+                      onChange={e => { setCustomQuestUsername(e.target.value.replace(/^@/, '')); setCustomQuestError(''); }}
+                      placeholder="@username"
+                      className="flex-1 bg-[#111] border-2 border-[#A855F740] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#A855F7]"
+                    />
+                    <button
+                      disabled={isAddingCustom || !customQuestUsername.trim()}
+                      onClick={async () => {
+                        if (!address || !customQuestUsername.trim()) return;
+                        setIsAddingCustom(true);
+                        setCustomQuestError('');
+                        try {
+                          // Fetch FID + pfp/banner from Farcaster
+                          const res = await fetch(`/api/fid/lookup-username?username=${encodeURIComponent(customQuestUsername.trim())}`);
+                          const data = await res.json();
+                          if (!data.fid) throw new Error(data.error || 'User not found');
+                          await addCustomFollowQuest({
+                            address: address.toLowerCase(),
+                            targetUsername: data.username || customQuestUsername.trim(),
+                            targetFid: data.fid,
+                            pfpUrl: data.pfp_url,
+                            bannerUrl: data.banner_url,
+                          });
+                          setCustomQuestUsername('');
+                        } catch (e: any) {
+                          setCustomQuestError(e.message || 'Error');
+                        } finally {
+                          setIsAddingCustom(false);
+                        }
+                      }}
+                      className="px-3 py-1.5 border-2 border-black font-black text-[10px] uppercase disabled:opacity-40"
+                      style={{ background: '#A855F7', color: '#fff', boxShadow: '2px 2px 0px #000' }}
+                    >
+                      {isAddingCustom ? '...' : ((t as any)('questsAddCustomBtn') || 'Pay 100k')}
+                    </button>
+                  </div>
+                  {customQuestError && <p className="text-red-400 text-[9px] mt-1">{customQuestError}</p>}
+                </div>
+              )}
+
+              {/* Custom quest carousel */}
+              {(() => {
+                const quests = customFollowQuests || [];
+                if (quests.length === 0) return (
+                  <p className="text-white/30 text-[10px] text-center py-4">
+                    {(t as any)('questsNoCustomQuests') || 'No custom quests yet. Be the first!'}
+                  </p>
+                );
+                const idx = Math.min(customCarouselIdx, quests.length - 1);
+                const q = quests[idx];
+                const questId = String(q._id);
+                const isClaimed = claimedCustom.has(questId);
+                const isClaiming = claimingCustom === questId;
+                const banner = q.bannerUrl;
+                const pfp = q.pfpUrl;
+                const profileUrl = `https://warpcast.com/${q.targetUsername}`;
+                return (
+                  <div>
+                    <div className="relative h-28 overflow-hidden bg-[#1a0a2e]">
+                      {(() => {
+                        if (banner) return <img src={banner} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.75 }} alt="" />;
+                        if (pfp) return <img src={pfp} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.5, transform: 'scale(1.6)', filter: 'blur(6px)' }} alt="" />;
+                        return null;
+                      })()}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                      <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#A855F7] border border-black/50">
+                        <span className="text-white font-black text-[8px] uppercase tracking-widest">CUSTOM</span>
+                      </div>
+                      <div className="absolute bottom-2 left-3 flex items-center gap-2">
+                        {pfp ? <img src={pfp} className="w-10 h-10 rounded-full border-2 border-[#A855F7] shadow-lg flex-shrink-0" alt="" /> : <div className="w-10 h-10 rounded-full border-2 border-[#A855F7] bg-[#A855F7]/20 flex-shrink-0" />}
+                        <div>
+                          <p className="text-white font-black text-sm drop-shadow">@{q.targetUsername}</p>
+                          <p className="text-[#A855F7] text-[9px] uppercase tracking-widest font-bold">Farcaster</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-3 py-1.5 bg-[#111]">
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <span className="text-[#A855F7] font-bold text-[10px]">+{q.reward} VBMS</span>
+                        <span className="text-white/30 text-[9px]">for following</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5 px-3 pb-3 pt-1.5">
+                      <button onClick={() => { AudioManager.buttonClick(); window.open(profileUrl, '_blank'); }}
+                        className="flex-1 py-1.5 border-2 border-black font-black text-[10px] uppercase"
+                        style={{ background: '#A855F7', color: '#fff', boxShadow: '2px 2px 0px #000' }}>
+                        {t('questsFollow') || 'Follow'}
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!address || isClaimed || isClaiming) return;
+                          setClaimingCustom(questId);
+                          try {
+                            await claimCustomFollowReward({ address: address.toLowerCase(), questId });
+                            setClaimedCustom(prev => new Set([...prev, questId]));
+                          } catch (e: any) { setCustomQuestError(e.message || 'Error'); }
+                          finally { setClaimingCustom(null); }
+                        }}
+                        disabled={isClaimed || isClaiming || !address}
+                        className={`flex-1 py-1.5 border-2 border-black font-black text-[10px] uppercase disabled:opacity-60 ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}
+                        style={{ boxShadow: isClaimed ? 'none' : '2px 2px 0px #000' }}>
+                        {isClaimed ? '✓ Claimed' : isClaiming ? '...' : `+${q.reward} VBMS`}
+                      </button>
+                      {quests.length > 1 && (
+                        <>
+                          <button onClick={() => setCustomCarouselIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
+                            className="w-7 h-7 bg-black border-2 border-[#A855F780] flex items-center justify-center disabled:opacity-30">
+                            <span className="text-[#A855F7] font-black text-sm">‹</span>
+                          </button>
+                          <button onClick={() => setCustomCarouselIdx(i => Math.min(quests.length - 1, i + 1))} disabled={idx >= quests.length - 1}
+                            className="w-7 h-7 bg-black border-2 border-[#A855F780] flex items-center justify-center disabled:opacity-30">
+                            <span className="text-[#A855F7] font-black text-sm">›</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
