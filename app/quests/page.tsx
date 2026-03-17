@@ -284,10 +284,10 @@ export default function QuestsPage() {
     checkBadge();
   }, [address, convex]);
 
-  // Fetch Farcaster banners for follow quests missing bannerUrl
+  // Fetch Farcaster banners for ALL follow quests without a hardcoded bannerUrl
   useEffect(() => {
     const fidsToFetch = SOCIAL_QUESTS
-      .filter(q => q.type === 'follow' && q.targetFid && !q.bannerUrl && !dynamicBanners[q.targetFid!])
+      .filter(q => q.type === 'follow' && q.targetFid && !q.bannerUrl)
       .map(q => q.targetFid!);
     for (const fid of fidsToFetch) {
       fetch(`/api/fid/user-profile?fid=${fid}`)
@@ -705,8 +705,14 @@ export default function QuestsPage() {
                   const isPlaceholder = mission._id.startsWith('placeholder_');
                   const isVibeBadge = mission.missionType === 'claim_vibe_badge';
                   const mAura = 5 * (vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1);
+                  const playerPfp = profileDashboard?.pfpUrl || profileDashboard?.pfp_url;
                   return (
-                    <div className="px-3 py-2">
+                    <div className="relative overflow-hidden">
+                      {/* Player pfp as background blur */}
+                      {playerPfp && (
+                        <img src={playerPfp} className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(12px)', transform: 'scale(1.4)', opacity: 0.15 }} alt="" />
+                      )}
+                      <div className="relative px-3 py-2">
                       {/* Compact carousel card */}
                       <div className={`flex items-center gap-3 p-2.5 border-2 transition-all ${mission.completed ? "border-yellow-400/30 bg-yellow-400/5" : "border-white/10 opacity-60"}`}>
                         <div className={`w-1 self-stretch flex-shrink-0 ${mission.completed ? "bg-yellow-400" : "bg-white/10"}`} />
@@ -769,6 +775,8 @@ export default function QuestsPage() {
                           </button>
                         </div>
                       </div>
+                    </div>
+                    </div>
                     </div>
                   );
                 })()}
@@ -1077,18 +1085,12 @@ export default function QuestsPage() {
 
                           {/* Banner image area */}
                           <div className="relative h-28 bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
-                            {/* Background: banner fills entire area, pfp blurred fallback */}
                             {banner ? (
-                              <div className="absolute inset-0 bg-cover bg-center"
-                                style={{ backgroundImage: `url(${banner})` }} />
+                              <img src={banner} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.85 }} alt="" />
                             ) : pfp ? (
-                              <div className="absolute inset-0 bg-cover bg-center"
-                                style={{ backgroundImage: `url(${pfp})`, filter: 'blur(6px)', transform: 'scale(1.6)', opacity: 0.5 }} />
+                              <img src={pfp} className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(8px)', transform: 'scale(1.6)', opacity: 0.55 }} alt="" />
                             ) : null}
-                            {/* Only darken when no banner */}
-                            {!banner && <div className="absolute inset-0 bg-black/40" />}
-                            {/* Gradient at bottom to make info readable */}
-                            {banner && <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                             {/* Group type badge */}
                             <span className={`absolute top-2 left-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${
                               quest.type === 'channel'

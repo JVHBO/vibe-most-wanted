@@ -498,10 +498,10 @@ export const addCustomFollowQuest = mutation({
     await ctx.db.insert("customFollowQuests", {
       addedBy: address,
       targetUsername: args.targetUsername.toLowerCase().replace(/^@/, ""),
-      displayName: args.displayName,
+      ...(args.displayName !== undefined ? { displayName: args.displayName } : {}),
       targetFid: args.targetFid,
-      pfpUrl: args.pfpUrl,
-      bannerUrl: args.bannerUrl,
+      ...(args.pfpUrl !== undefined ? { pfpUrl: args.pfpUrl } : {}),
+      ...(args.bannerUrl !== undefined ? { bannerUrl: args.bannerUrl } : {}),
       reward: CUSTOM_QUEST_REWARD,
       active: true,
       createdAt: Date.now(),
