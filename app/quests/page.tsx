@@ -14,9 +14,8 @@ import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
-import { useTransferVBMS } from "@/lib/hooks/useVBMSContracts";
-import { CONTRACTS } from "@/lib/contracts";
-import { parseEther } from "viem";
+import { CONTRACTS, ERC20_ABI } from "@/lib/contracts";
+import { encodeFunctionData, parseEther } from "viem";
 import { WantedCastsTab } from "@/components/fid/WantedCastsTab";
 import { VibeMailInboxWithClaim } from "@/components/fid/VibeMail";
 import { VibeFIDConvexProvider, vibefidConvex } from "@/contexts/VibeFIDConvexProvider";
@@ -31,7 +30,6 @@ export default function QuestsPage() {
   const { t } = useLanguage();
   const { refreshProfile } = useProfile();
   const { validateOnArb } = useArbValidator();
-  const { transfer: transferVBMS } = useTransferVBMS();
   const [activeTab, setActiveTab] = useState<'missions' | 'wanted' | 'messages'>('missions');
   // Open vibemail tab if navigated with ?tab=vibemail
   useEffect(() => {
@@ -912,11 +910,26 @@ export default function QuestsPage() {
                           try {
                             let data = customQuestPreview as any;
                             if (!data?.fid) throw new Error('Select a user first');
-                            // Step 1: on-chain VBMS transfer (1000 VBMS to pool)
-                            const txHash = await transferVBMS(
-                              CONTRACTS.VBMSPoolTroll as `0x${string}`,
-                              parseEther('100000')
-                            );
+                            // Step 1: on-chain VBMS transfer (100k VBMS to pool) via SDK
+                            const txData = encodeFunctionData({
+                              abi: ERC20_ABI,
+                              functionName: 'transfer',
+                              args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther('100000')],
+                            });
+                            let txHash: string | undefined;
+                            try {
+                              const { sdk } = await import('@farcaster/miniapp-sdk');
+                              const provider = await sdk.wallet.getEthereumProvider();
+                              txHash = await provider.request({
+                                method: 'eth_sendTransaction',
+                                params: [{ to: CONTRACTS.VBMSToken, data: txData, chainId: '0x2105' }],
+                              }) as string;
+                            } catch {
+                              // wagmi fallback
+                              const { sendTransaction } = await import('@wagmi/core');
+                              const { config } = await import('@/lib/wagmi');
+                              txHash = await sendTransaction(config, { to: CONTRACTS.VBMSToken as `0x${string}`, data: txData, chainId: 8453 });
+                            }
                             // Step 2: record quest in Convex with txHash
                             await addCustomFollowQuest({
                               address: address.toLowerCase(),
@@ -946,97 +959,119 @@ export default function QuestsPage() {
                 </div>
               )}
 
-              {/* Compact header row */}
-              <div className="flex items-center justify-between px-2 py-1.5 bg-[#0d0d0d]">
-                <span className="font-black text-[10px] uppercase tracking-wider" style={{ color: '#A855F7' }}>
+              {/* Header — fixed, same pattern as VIBE CREATORS */}
+              <div className="px-3 py-1.5 bg-[#111] border-b-2 flex items-center justify-between" style={{ borderColor: '#A855F7' }}>
+                <span className="text-xs font-black uppercase tracking-widest" style={{ color: '#A855F7' }}>
                   {(t as any)('questsCustomFollows') || 'FOLLOW COMMUNITY'}
                 </span>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-white/30 text-[9px]">{customFollowQuests?.length ?? 0}/∞</span>
                   {address && (
                     <button
                       onClick={() => setCustomModalOpen(true)}
                       className="px-2 py-0.5 border border-black font-black text-[9px] uppercase"
                       style={{ background: '#A855F7', color: '#fff', boxShadow: '1px 1px 0px #000' }}
                     >
-                      CREATE QUEST
+                      + ADD
                     </button>
                   )}
+                  <p className="text-white/40 text-[10px]">{Math.min(customCarouselIdx, Math.max(0, (customFollowQuests?.length ?? 1) - 1)) + 1}/{customFollowQuests?.length ?? 0}</p>
                 </div>
               </div>
 
-              {/* Custom quest carousel — only shown when quests exist */}
+              {/* Custom quest carousel — same structure as VIBE CREATORS */}
               {(() => {
                 const quests = customFollowQuests || [];
-                if (quests.length === 0) return null;
+                if (quests.length === 0) return (
+                  <div className="flex flex-col items-center justify-center h-28 bg-[#111] text-white/20 text-xs">
+                    <span>No quests yet</span>
+                    <span className="text-[9px] mt-0.5">Pay 100K VBMS to add a profile</span>
+                  </div>
+                );
                 const idx = Math.min(customCarouselIdx, quests.length - 1);
                 const q = quests[idx];
                 const questId = String(q._id);
                 const isClaimed = claimedCustom.has(questId);
                 const isClaiming = claimingCustom === questId;
-                const banner = q.bannerUrl;
+                const bgSrc = q.bannerUrl || q.pfpUrl;
                 const pfp = q.pfpUrl;
                 const displayName = (q as any).displayName || q.targetUsername;
                 const profileUrl = `https://warpcast.com/${q.targetUsername}`;
                 return (
-                  <div>
-                    <div className="relative h-28 overflow-hidden bg-[#1a0a2e]">
-                      {(() => {
-                        if (banner) return <img src={banner} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.75 }} alt="" />;
-                        if (pfp) return <img src={pfp} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.75 }} alt="" />;
-                        return null;
-                      })()}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                      <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#A855F7] border border-black/50">
-                        <span className="text-white font-black text-[8px] uppercase tracking-widest">CUSTOM</span>
-                      </div>
-                      <div className="absolute bottom-2 left-3 flex items-center gap-2">
-                        {pfp ? <img src={pfp} className="w-10 h-10 rounded-full border-2 border-[#A855F7] shadow-lg flex-shrink-0" alt="" /> : <div className="w-10 h-10 rounded-full border-2 border-[#A855F7] bg-[#A855F7]/20 flex-shrink-0" />}
-                        <div>
-                          <p className="text-white font-black text-sm drop-shadow">{displayName}</p>
-                          <p className="text-[#A855F7] text-[9px]">@{q.targetUsername}</p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="px-3 py-1.5 bg-[#111]">
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <span className="text-[#A855F7] font-bold text-[10px]">+{q.reward} VBMS</span>
-                        <span className="text-white/30 text-[9px]">for following</span>
-                      </div>
-                    </div>
-                    <div className="flex gap-1.5 px-3 pb-3 pt-1.5">
-                      <button onClick={() => { AudioManager.buttonClick(); window.open(profileUrl, '_blank'); }}
-                        className="flex-1 py-1.5 border-2 border-black font-black text-[10px] uppercase"
-                        style={{ background: '#A855F7', color: '#fff', boxShadow: '2px 2px 0px #000' }}>
-                        {t('questsFollow') || 'Follow'}
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (!address || isClaimed || isClaiming) return;
-                          setClaimingCustom(questId);
-                          try {
-                            await claimCustomFollowReward({ address: address.toLowerCase(), questId });
-                            setClaimedCustom(prev => new Set([...prev, questId]));
-                          } catch (e: any) { setCustomQuestError(e.message || 'Error'); }
-                          finally { setClaimingCustom(null); }
-                        }}
-                        disabled={isClaimed || isClaiming || !address}
-                        className={`flex-1 py-1.5 border-2 border-black font-black text-[10px] uppercase disabled:opacity-60 ${isClaimed ? 'bg-[#222] text-[#22C55E]' : 'bg-[#FFD700] text-black'}`}
-                        style={{ boxShadow: isClaimed ? 'none' : '2px 2px 0px #000' }}>
-                        {isClaimed ? '✓ Claimed' : isClaiming ? '...' : `+${q.reward} VBMS`}
-                      </button>
-                      {quests.length > 1 && (
-                        <>
-                          <button onClick={() => setCustomCarouselIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
-                            className="w-7 h-7 bg-black border-2 border-[#A855F780] flex items-center justify-center disabled:opacity-30">
-                            <span className="text-[#A855F7] font-black text-sm">‹</span>
-                          </button>
-                          <button onClick={() => setCustomCarouselIdx(i => Math.min(quests.length - 1, i + 1))} disabled={idx >= quests.length - 1}
-                            className="w-7 h-7 bg-black border-2 border-[#A855F780] flex items-center justify-center disabled:opacity-30">
-                            <span className="text-[#A855F7] font-black text-sm">›</span>
-                          </button>
-                        </>
+                  <div key={questId}>
+                    {/* Banner image area — same as VIBE CREATORS */}
+                    <div className="relative h-28 bg-[#111] flex items-center justify-center overflow-hidden">
+                      {bgSrc && (
+                        <img src={bgSrc} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.8, filter: 'none' }} alt="" />
                       )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/10" />
+                      <span className="absolute top-2 left-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider border bg-[#A855F7]/80 text-white border-[#A855F7]/60">
+                        CUSTOM
+                      </span>
+                      {isClaimed && (
+                        <div className="absolute inset-0 bg-green-900/60 flex items-center justify-center z-10">
+                          <span className="text-green-400 font-black text-lg">DONE</span>
+                        </div>
+                      )}
+                      {pfp ? (
+                        <img src={pfp} alt={displayName} className="relative z-10 w-16 h-16 rounded-full object-cover border-4 shadow-lg" style={{ borderColor: '#A855F7' }} />
+                      ) : (
+                        <div className="relative z-10 w-16 h-16 rounded-full bg-[#222] border-4 flex items-center justify-center" style={{ borderColor: '#A855F740' }}>
+                          <span className="font-black text-xl" style={{ color: '#A855F799' }}>@</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Info row */}
+                    <div className="px-3 pt-2 pb-1 bg-[#111]">
+                      <p className="text-white font-black text-xs truncate">{displayName}</p>
+                    </div>
+
+                    {/* Buttons row — same layout as VIBE CREATORS */}
+                    <div className="px-3 pb-3 bg-[#111] flex items-center justify-between gap-2">
+                      <div className="flex flex-col">
+                        <span className="text-[#FFD700] font-bold text-xs">+{q.reward} VBMS</span>
+                        <span className="text-[#A855F7] text-[9px] font-bold">for following</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {quests.length > 1 && (
+                          <>
+                            <button onClick={() => setCustomCarouselIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
+                              className="w-7 h-7 bg-black border-2 flex items-center justify-center disabled:opacity-30"
+                              style={{ borderColor: '#A855F780' }}>
+                              <span className="font-black text-sm leading-none" style={{ color: '#A855F7' }}>‹</span>
+                            </button>
+                            <button onClick={() => setCustomCarouselIdx(i => Math.min(quests.length - 1, i + 1))} disabled={idx >= quests.length - 1}
+                              className="w-7 h-7 bg-black border-2 flex items-center justify-center disabled:opacity-30"
+                              style={{ borderColor: '#A855F780' }}>
+                              <span className="font-black text-sm leading-none" style={{ color: '#A855F7' }}>›</span>
+                            </button>
+                          </>
+                        )}
+                        <button onClick={() => { AudioManager.buttonClick(); window.open(profileUrl, '_blank'); }}
+                          className="px-2 py-1.5 bg-[#111] border-2 font-black text-[10px] transition-all"
+                          style={{ borderColor: '#A855F7', color: '#A855F7', boxShadow: '2px 2px 0px #000' }}>
+                          {t('questsFollow')}
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!address || isClaimed || isClaiming) return;
+                            setClaimingCustom(questId);
+                            try {
+                              await claimCustomFollowReward({ address: address.toLowerCase(), questId });
+                              setClaimedCustom(prev => new Set([...prev, questId]));
+                            } catch (e: any) { setCustomQuestError(e.data || e.message || 'Error'); }
+                            finally { setClaimingCustom(null); }
+                          }}
+                          disabled={isClaimed || isClaiming || !address}
+                          className="px-2 py-1.5 font-black text-[10px] border-2 border-black transition-all disabled:opacity-60"
+                          style={{
+                            backgroundColor: isClaimed ? '#1a2a1a' : '#FFD700',
+                            color: isClaimed ? '#22C55E' : '#000',
+                            boxShadow: isClaimed ? 'none' : '2px 2px 0px #000',
+                          }}>
+                          {isClaimed ? (t('questsDone') || 'Done') : isClaiming ? '...' : (t('questsVerify') || 'Verify')}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
