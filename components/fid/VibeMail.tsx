@@ -590,8 +590,9 @@ function renderRichMessageFn(
   for (const line of lines) {
     const trimmed = line.trim();
 
-    // Skip [VQUEST:...] quest banner lines — should be stripped before calling but guard here too
+    // Skip [VQUEST:...] and [VSTYLE:...] lines — should be stripped before calling but guard here too
     if (trimmed.startsWith('[VQUEST:')) continue;
+    if (trimmed.startsWith('[VSTYLE:')) continue;
 
     // /sound=URL [volume=X]
     const soundM = trimmed.match(/^\/sound=(\S+?)(?:\s+volume=([\d.]+))?$/i);
@@ -4450,9 +4451,10 @@ export function VibeMailInboxWithClaim({
                 }}
               >
             <div className="bg-[#0a0a0a] pb-6">
-              {/* Quest Banner CAROUSEL - TOP (hidden for sender's own messages) */}
+              {/* Quest Banner CAROUSEL - TOP */}
               {(() => {
-                if (activeTab === 'sent' || selectedMessage.voterFid === myFid) return null;
+                if (selectedMessage.voterFid === myFid) return null;
+                const isSender = activeTab === 'sent';
                 const parsed = parseQuestBanner(selectedMessage.message || '');
                 if (!parsed) return null;
                 const { questData } = parsed;
@@ -4464,7 +4466,7 @@ export function VibeMailInboxWithClaim({
                 const isClaimedFromDB = questMailClaims?.some((c: any) => c.questIndex === idx) ?? false;
                 const isClaimed = isClaimedFromDB || claimedQuestItems.has(claimKey);
                 const markClaimed = async () => {
-                  if (claimingQuest === claimKey || !myFid || !myAddress || !selectedMessage._id) return;
+                  if (isSender || claimingQuest === claimKey || !myFid || !myAddress || !selectedMessage._id) return;
                   setClaimingQuest(claimKey);
                   try {
                     const { ConvexHttpClient } = await import('convex/browser');
@@ -4537,7 +4539,7 @@ export function VibeMailInboxWithClaim({
                             <div className="flex gap-1.5 p-2">
                               <button onClick={async () => { try { await sdk.actions?.openUrl?.(profileUrl); } catch { window.open(profileUrl, '_blank'); } }}
                                 className="flex-1 py-1.5 bg-[#8B5CF6] border-2 border-black text-white font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide">{t.questGoToProfile || 'Go to Profile'}</button>
-                              <button onClick={markClaimed} disabled={isClaimed || claimingQuest === claimKey}
+                              <button onClick={markClaimed} disabled={isSender || isClaimed || claimingQuest === claimKey}
                                 className={`flex-1 py-1.5 border-2 border-black font-black text-[10px] shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
                                 {isClaimed ? (t.questClaimed || '✓ Claimed') : claimingQuest === claimKey ? '...' : (t.questClaimVbms || 'Claim +{amount} VBMS').replace('{amount}', String(q.reward || questData.rewardPerQuest || 200))}
                               </button>
@@ -4569,7 +4571,7 @@ export function VibeMailInboxWithClaim({
                             <div className="flex gap-2 px-3 pb-3">
                               <button onClick={() => setOpenAppConfirm({ url: q.url, name: q.name })}
                                 className="flex-1 py-2 bg-[#22C55E] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">{t.questOpenApp || 'Open App'}</button>
-                              <button onClick={markClaimed} disabled={isClaimed || claimingQuest === claimKey}
+                              <button onClick={markClaimed} disabled={isSender || isClaimed || claimingQuest === claimKey}
                                 className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
                                 {isClaimed ? (t.questClaimed || '✓ Claimed') : claimingQuest === claimKey ? '...' : (t.questClaimVbms || 'Claim +{amount} VBMS').replace('{amount}', String(q.reward || questData.rewardPerQuest || 200))}
                               </button>
@@ -4596,7 +4598,7 @@ export function VibeMailInboxWithClaim({
                               <div className="flex gap-2 mt-2.5">
                                 <button onClick={async () => { try { await sdk.actions?.openUrl?.(channelUrl); } catch { window.open(channelUrl, '_blank'); } }}
                                   className="flex-1 py-2 bg-[#FF9F0A] border-2 border-black text-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide">{t.questJoinChannel || 'Join Channel'}</button>
-                                <button onClick={markClaimed} disabled={isClaimed || claimingQuest === claimKey}
+                                <button onClick={markClaimed} disabled={isSender || isClaimed || claimingQuest === claimKey}
                                   className={`flex-1 py-2 border-2 border-black font-black text-xs shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all uppercase tracking-wide disabled:opacity-60 disabled:cursor-not-allowed ${isClaimed ? 'bg-[#222] text-[#22C55E]' : claimingQuest === claimKey ? 'bg-[#444] text-white' : 'bg-[#FFD700] text-black'}`}>
                                   {isClaimed ? (t.questClaimed || '✓ Claimed') : claimingQuest === claimKey ? '...' : (t.questClaimVbms || 'Claim +{amount} VBMS').replace('{amount}', String(q.reward || questData.rewardPerQuest || 200))}
                                 </button>
@@ -4628,7 +4630,8 @@ export function VibeMailInboxWithClaim({
                   const rawMsg = selectedMessage.message || '';
                   const qParsed = parseQuestBanner(rawMsg);
                   const baseMsg = qParsed ? qParsed.cleanMessage : rawMsg;
-                  const cleanMsg = stripDesignManifest(baseMsg).replace(/\[VQUEST:\{[\s\S]*?\}\]/g, '').trim();
+                  const vstyle = parseVStyle(baseMsg);
+                  const cleanMsg = stripVStyle(stripDesignManifest(baseMsg).replace(/\[VQUEST:\{[\s\S]*?\}\]/g, '').trim());
                   const textOnly = cleanMsg.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
                   const audioMatch = cleanMsg.match(/\/sound=(\S+)/i);
                   const imgUrls = [...cleanMsg.matchAll(/\/img=(\S+)/gi)].map((m: RegExpMatchArray) => m[1]);
@@ -4640,7 +4643,7 @@ export function VibeMailInboxWithClaim({
                       {/* Text */}
                       {textOnly && dm.text && (() => { const p = dm.text; return (
                         <div style={{ position:'absolute', left:p.x, top:p.y, width:p.w, height:p.h, transform:`rotate(${p.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', background:'#000', padding:8, boxSizing:'border-box', zIndex:((p.z??0)+1)*10 }}>
-                          <div className="text-white/90 text-sm leading-relaxed" style={{ fontSize: Math.max(8, Math.min(15, p.h * 0.2)) }}>{textOnly}</div>
+                          <div className="text-white/90 text-sm leading-relaxed" style={{ fontSize: Math.max(8, Math.min(15, p.h * 0.2)), fontFamily: vstyle?.font || undefined, color: vstyle?.color || undefined }}>{textOnly}</div>
                         </div>
                       ); })()}
                       {/* Audio */}
@@ -4774,8 +4777,9 @@ export function VibeMailInboxWithClaim({
 
               </div>
 
-              {/* Receipt Reward - BOTTOM */}
+              {/* Receipt Reward - BOTTOM (recipient only) */}
               {(() => {
+                if (activeTab === 'sent') return null;
                 const parsed = parseQuestBanner(selectedMessage.message || '');
                 if (!parsed) return null;
                 const { questData } = parsed;
