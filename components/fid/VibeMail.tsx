@@ -556,6 +556,7 @@ function getInboxPreview(msg: VibeMailMessage): { text: string; hasGif: boolean;
   const hasSoundCmd = /\/sound=/i.test(text);
   const hasQuest = !!msg.miniappUrl;
   text = text.replace(/\/img=\S+/gi, '').replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').trim();
+  text = text.replace(/\{c:\s*#\s*[0-9a-fA-F]{3,8}\}/gi, '').replace(/\{\/c\}/gi, '').trim();
   return { text, hasGif, hasImage, hasSoundCmd, hasQuest };
 }
 
