@@ -2,12 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from 'convex/react';
-import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/lib/fid/convex-generated/api';
-
-const vibefidHttp = new ConvexHttpClient(
-  process.env.NEXT_PUBLIC_VIBEFID_CONVEX_URL || 'https://scintillating-mandrill-101.convex.cloud'
-);
 import Link from 'next/link';
 import { CardMedia } from '@/components/fid/CardMedia';
 import FoilCardEffect from '@/components/fid/FoilCardEffect';
@@ -57,27 +52,45 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
   const effectiveUser = farcasterContext.user || devUser;
   const isOwnCard = effectiveUser?.fid === fid;
 
-  // VibeFID Convex queries — use ConvexHttpClient to avoid WebSocket issues
+  // VibeFID Convex queries — direct HTTP fetch (avoids WebSocket issues)
+  const VIBEFID_URL = 'https://scintillating-mandrill-101.convex.cloud';
   const [fidCards, setFidCards] = useState<any[] | undefined>(undefined);
   const [scoreHistory, setScoreHistory] = useState<any>(undefined);
   const [unreadMessageCount, setUnreadMessageCount] = useState<number | undefined>(undefined);
-  const fetchedRef = useRef(false);
 
-  useEffect(() => {
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-    vibefidHttp.query(api.farcasterCards.getFarcasterCardsByFid, { fid })
-      .then(setFidCards)
-      .catch(() => setFidCards([]));
-    vibefidHttp.query(api.neynarScore.getScoreHistory, { fid })
-      .then(setScoreHistory)
-      .catch(() => setScoreHistory(null));
+  const fetchVibeFIDData = async () => {
+    try {
+      const r = await fetch(`${VIBEFID_URL}/api/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: 'farcasterCards:getFarcasterCardsByFid', args: { fid } }),
+      });
+      const d = await r.json();
+      setFidCards(d?.value ?? []);
+    } catch { setFidCards([]); }
+    try {
+      const r = await fetch(`${VIBEFID_URL}/api/query`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: 'neynarScore:getScoreHistory', args: { fid } }),
+      });
+      const d = await r.json();
+      setScoreHistory(d?.value ?? null);
+    } catch { setScoreHistory(null); }
     if (isOwnCard) {
-      vibefidHttp.query(api.cardVotes.getUnreadMessageCount, { cardFid: fid })
-        .then(setUnreadMessageCount)
-        .catch(() => setUnreadMessageCount(0));
+      try {
+        const r = await fetch(`${VIBEFID_URL}/api/query`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path: 'cardVotes:getUnreadMessageCount', args: { cardFid: fid } }),
+        });
+        const d = await r.json();
+        setUnreadMessageCount(d?.value ?? 0);
+      } catch { setUnreadMessageCount(0); }
     }
-  }, [fid, isOwnCard]);
+  };
+
+  useEffect(() => { fetchVibeFIDData(); }, [fid]);
 
   const saveScoreCheck = useMutation(api.neynarScore.saveScoreCheck);
   const upgradeCardRarity = useMutation(api.farcasterCards.upgradeCardRarity);

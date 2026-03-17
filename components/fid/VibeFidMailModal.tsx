@@ -3,11 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useQuery, useMutation } from 'convex/react';
-import { ConvexHttpClient } from 'convex/browser';
-
-const vibefidHttp = new ConvexHttpClient(
-  process.env.NEXT_PUBLIC_VIBEFID_CONVEX_URL || 'https://scintillating-mandrill-101.convex.cloud'
-);
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/fid/convex-generated/api';
 import { CardMedia } from '@/components/fid/CardMedia';
@@ -77,20 +72,27 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
   const [upgradeAnimPhase, setUpgradeAnimPhase] = useState<'charging'|'burst'|'reveal'>('charging');
   const [backstory, setBackstory] = useState<any>(null);
   const router = useRouter();
+  const VIBEFID_URL = 'https://scintillating-mandrill-101.convex.cloud';
   const [fidCards, setFidCards] = useState<any[] | undefined>(undefined);
   const [unreadCount, setUnreadCount] = useState<number | undefined>(undefined);
   const [scoreHistory, setScoreHistory] = useState<any>(undefined);
-  const fetchedRef = useRef(false);
 
   useEffect(() => {
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-    vibefidHttp.query(api.farcasterCards.getFarcasterCardsByFid, { fid })
-      .then(setFidCards).catch(() => setFidCards([]));
-    vibefidHttp.query(api.cardVotes.getUnreadMessageCount, { cardFid: fid })
-      .then(setUnreadCount).catch(() => setUnreadCount(0));
-    vibefidHttp.query(api.neynarScore.getScoreHistory, { fid })
-      .then(setScoreHistory).catch(() => setScoreHistory(null));
+    const fetchData = async () => {
+      try {
+        const r = await fetch(`${VIBEFID_URL}/api/query`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: 'farcasterCards:getFarcasterCardsByFid', args: { fid } }) });
+        const d = await r.json(); setFidCards(d?.value ?? []);
+      } catch { setFidCards([]); }
+      try {
+        const r = await fetch(`${VIBEFID_URL}/api/query`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: 'cardVotes:getUnreadMessageCount', args: { cardFid: fid } }) });
+        const d = await r.json(); setUnreadCount(d?.value ?? 0);
+      } catch { setUnreadCount(0); }
+      try {
+        const r = await fetch(`${VIBEFID_URL}/api/query`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: 'neynarScore:getScoreHistory', args: { fid } }) });
+        const d = await r.json(); setScoreHistory(d?.value ?? null);
+      } catch { setScoreHistory(null); }
+    };
+    fetchData();
   }, [fid]);
 
   const saveScoreCheck = useMutation(api.neynarScore.saveScoreCheck);

@@ -2,11 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQuery, useConvex, useAction } from 'convex/react';
-import { ConvexHttpClient } from 'convex/browser';
-
-const vibefidHttp = new ConvexHttpClient(
-  process.env.NEXT_PUBLIC_VIBEFID_CONVEX_URL || 'https://scintillating-mandrill-101.convex.cloud'
-);
 import { api } from "@/lib/fid/convex-generated/api";
 import { Id } from "@/lib/fid/convex-generated/dataModel";
 import { AudioManager } from '@/lib/audio-manager';
@@ -723,8 +718,11 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
   const [inboxPage, setInboxPage] = useState(0);
 
   useEffect(() => {
-    vibefidHttp.query(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 })
-      .then(setMessages).catch(() => setMessages([]));
+    fetch('https://scintillating-mandrill-101.convex.cloud/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: 'cardVotes:getMessagesForCard', args: { cardFid, limit: 50 } }),
+    }).then(r => r.json()).then(d => setMessages(d?.value ?? [])).catch(() => setMessages([]));
   }, [cardFid]);
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
