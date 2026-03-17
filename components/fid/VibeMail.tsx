@@ -832,7 +832,7 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
                     <span className="text-white/40 text-xs">...</span>
                   ) : translatedContent ? (
                     <>
-                      <span>{translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').trim()}</span>
+                      {renderFormattedMessage(translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').trim(), lang, username)}
                       <span className="text-white/30 text-[10px] ml-1">({(t as any).translatedLabel || 'translated'})</span>
                       {renderRichMessageFn(
                         (selectedMessage.message || '').split('\n').filter((l: string) => /^\/(?:img|sound|video)=/i.test(l.trim())).join('\n'),
@@ -4738,7 +4738,7 @@ export function VibeMailInboxWithClaim({
                     <div className="text-white text-sm leading-relaxed" style={{ ...(vstyle?.font ? { fontFamily: vstyle.font } : {}), ...(vstyle?.color ? { color: vstyle.color } : {}) }}>
                       {translatedContent ? (
                         <>
-                          <span>{translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').replace(/\[VDESIGN:\{.*?\}\]/gs, '').replace(/\[VSTYLE:\{[^}]*\}\]/g, '').trim()}</span>
+                          {renderFormattedMessage(translatedContent.replace(/\[VQUEST:\{.*?\}\]/gs, '').replace(/\[VDESIGN:\{.*?\}\]/gs, '').replace(/\[VSTYLE:\{[^}]*\}\]/g, '').trim(), lang, username)}
                           <span className="text-white/30 text-[10px] ml-1">({(t as any).translatedLabel || 'translated'})</span>
                           {mediaOnlyMsg && renderRichMessageFn(mediaOnlyMsg, playingAudio, audioRef, setPlayingAudio, lang, username)}
                         </>
