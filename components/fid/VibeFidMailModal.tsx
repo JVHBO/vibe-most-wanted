@@ -241,6 +241,8 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
 
   const handleShare = async () => {
     if (!card) return;
+    // Open window synchronously before any awaits to avoid popup blocker
+    const openedWindow = window.open('', '_blank');
     setShareLoading(true);
     try {
       const currentScore = scoreData?.score ?? card.neynarScore ?? 0;
@@ -287,7 +289,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
 
       const castText = `My VibeFID Card 🎴\n\n${currentRarity}${foilText}\n⚡ ${power.toLocaleString()} Power\n📊 Score: ${currentScore.toFixed(3)} (${diffSign}${scoreDiff.toFixed(4)})\n\n${rankingSection}\n\nFID #${card.fid}\n\nMint yours at @jvhbo`;
       const shareUrl = `https://vibemostwanted.xyz/share/score/${card.fid}?lang=en&v=${Date.now()}`;
-      await shareToFarcaster(castText, shareUrl);
+      await shareToFarcaster(castText, shareUrl, openedWindow);
     } catch (err: any) {
       setError(err.message || 'Failed to share');
       setTimeout(() => setError(null), 3000);

@@ -14,13 +14,16 @@ async function checkIsInMiniApp(): Promise<boolean> {
 }
 
 /**
- * Share to Farcaster using SDK when in miniapp, fallback to window.open
+ * Share to Farcaster using SDK when in miniapp, fallback to window.open.
+ * Pass a pre-opened window (openedWindow) to avoid popup blocker in async handlers.
  */
-export async function shareToFarcaster(text: string, embedUrl?: string): Promise<void> {
+export async function shareToFarcaster(text: string, embedUrl?: string, openedWindow?: Window | null): Promise<void> {
   const isInMiniApp = await checkIsInMiniApp();
-  
+
   if (isInMiniApp && sdk.actions?.composeCast) {
     try {
+      // Close the pre-opened window if SDK composeCast will be used
+      if (openedWindow && !openedWindow.closed) openedWindow.close();
       await sdk.actions.composeCast({
         text,
         embeds: embedUrl ? [embedUrl] : undefined,
@@ -30,13 +33,17 @@ export async function shareToFarcaster(text: string, embedUrl?: string): Promise
       // Fallback to URL method if SDK fails
     }
   }
-  
-  // Fallback: open warpcast compose URL
+
+  // Fallback: redirect the pre-opened window or open a new one
   const params = new URLSearchParams();
   params.set('text', text);
   if (embedUrl) {
     params.append('embeds[]', embedUrl);
   }
   const url = 'https://warpcast.com/~/compose?' + params.toString();
-  window.open(url, '_blank');
+  if (openedWindow && !openedWindow.closed) {
+    openedWindow.location.href = url;
+  } else {
+    window.open(url, '_blank');
+  }
 }

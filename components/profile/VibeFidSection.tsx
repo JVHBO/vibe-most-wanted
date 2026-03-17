@@ -660,8 +660,9 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
                     <button
                       onClick={async () => {
                         AudioManager.buttonClick();
+                        const openedWindow = window.open('', '_blank');
                         const castText = `My VibeFID just EVOLVED!\n\n${evolutionData.oldRarity} → ${evolutionData.newRarity}\nPower: ${evolutionData.oldPower} → ${evolutionData.newPower}\n\n@jvhbo`;
-                        await shareToFarcaster(castText, `https://vibemostwanted.xyz/share/fid/${fid}`);
+                        await shareToFarcaster(castText, `https://vibemostwanted.xyz/share/fid/${fid}`, openedWindow);
                       }}
                       className="flex-1 px-3 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg transition-colors text-sm"
                     >

@@ -892,6 +892,8 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
   // Handle share with selected language - uses score GIF (same as card page)
   const handleShareWithLanguage = async (selectedLang: typeof lang) => {
     if (!myCard) return;
+    // Open window synchronously before awaits to avoid popup blocker
+    const openedWindow = window.open('', '_blank');
 
     try {
       setShowShareModal(false);
@@ -976,7 +978,7 @@ FID #${myCard.fid}
 ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
 
       const shareUrl = `https://vibemostwanted.xyz/share/score/${myCard.fid}?lang=${selectedLang}&v=${Date.now()}`;
-      await shareToFarcaster(castText, shareUrl);
+      await shareToFarcaster(castText, shareUrl, openedWindow);
     } catch (error) {
       console.error('Share failed:', error);
     }
@@ -1897,11 +1899,12 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                       <button
                         onClick={async () => {
                           AudioManager.buttonClick();
+                          const openedWindow = window.open('', '_blank');
                           const shareUrl = `https://vibemostwanted.xyz/fid/${myCard?.fid}`;
                           const scoreDiff = evolutionData.newScore - evolutionData.oldScore;
                           const diffSign = scoreDiff >= 0 ? '+' : '';
                           const castText = `My VibeFID just EVOLVED!\n\n${evolutionData.oldRarity} → ${evolutionData.newRarity}\nPower: ${evolutionData.oldPower} → ${evolutionData.newPower}\nNeynar Score: ${diffSign}${scoreDiff.toFixed(4)}\nBounty: ${evolutionData.newBounty.toLocaleString()}\n\n@jvhbo`;
-                          await shareToFarcaster(castText, shareUrl);
+                          await shareToFarcaster(castText, shareUrl, openedWindow);
                         }}
                         className="flex-1 px-3 py-3 sm:px-4 sm:py-4 bg-vintage-gold hover:bg-vintage-burnt-gold text-black font-bold rounded-lg transition-colors text-center text-xs sm:text-base"
                       >
