@@ -293,13 +293,28 @@ export default function QuestsPage() {
       fetch(`/api/fid/user-profile?fid=${fid}`)
         .then(r => r.json())
         .then(d => {
-          // banner_url takes priority; fall back to pfp_url for zoom effect
           setDynamicBanners(prev => ({ ...prev, [fid]: d.banner_url || d.pfp_url || '' }));
         })
         .catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetch Farcaster banners for custom follow quests
+  useEffect(() => {
+    if (!customFollowQuests || customFollowQuests.length === 0) return;
+    for (const q of (customFollowQuests as any[])) {
+      const fid = q.targetFid;
+      if (!fid || dynamicBanners[fid]) continue;
+      fetch(`/api/fid/user-profile?fid=${fid}`)
+        .then(r => r.json())
+        .then(d => {
+          setDynamicBanners(prev => ({ ...prev, [fid]: d.banner_url || d.pfp_url || '' }));
+        })
+        .catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customFollowQuests]);
 
   // Build complete missions list from personalMissions + ALL_MISSION_TYPES
   useEffect(() => {
@@ -954,18 +969,18 @@ export default function QuestsPage() {
                 const questId = String(q._id);
                 const isClaimed = claimedCustom.has(questId);
                 const isClaiming = claimingCustom === questId;
-                const banner = q.bannerUrl;
                 const pfp = q.pfpUrl;
+                const dynData = q.targetFid ? dynamicBanners[q.targetFid] : undefined;
+                const banner = (dynData && dynData !== pfp) ? dynData : q.bannerUrl || null;
+                const bgSrc = banner || pfp;
                 const displayName = (q as any).displayName || q.targetUsername;
                 const profileUrl = `https://warpcast.com/${q.targetUsername}`;
                 return (
                   <div>
-                    <div className="relative h-28 overflow-hidden bg-[#1a0a2e]">
-                      {(() => {
-                        if (banner) return <img src={banner} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.75 }} alt="" />;
-                        if (pfp) return <img src={pfp} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.5, transform: 'scale(1.6)', filter: 'blur(6px)' }} alt="" />;
-                        return null;
-                      })()}
+                    <div className="relative h-28 overflow-hidden">
+                      {bgSrc && (
+                        <img src={bgSrc} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: banner ? 0.85 : 0.7, filter: banner ? 'none' : 'blur(8px)', transform: banner ? 'none' : 'scale(1.5)' }} alt="" />
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                       <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#A855F7] border border-black/50">
                         <span className="text-white font-black text-[8px] uppercase tracking-widest">CUSTOM</span>
@@ -1100,8 +1115,8 @@ export default function QuestsPage() {
                                 src={bgSrc}
                                 className="absolute inset-0 w-full h-full object-cover"
                                 style={{
-                                  opacity: banner ? 0.9 : 0.6,
-                                  filter: banner ? 'none' : 'blur(10px)',
+                                  opacity: banner ? 0.9 : 0.75,
+                                  filter: banner ? 'none' : 'blur(8px)',
                                   transform: banner ? 'none' : 'scale(1.5)',
                                 }}
                                 alt=""
