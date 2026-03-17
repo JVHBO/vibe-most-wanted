@@ -784,95 +784,61 @@ export default function QuestsPage() {
 
             {/* ── CUSTOM FOLLOW QUESTS ─────────────────────────────── */}
             <div className="border-4 overflow-hidden" style={{ borderColor: '#A855F7', boxShadow: '3px 3px 0px #A855F780' }}>
-              {/* Header */}
-              <div className="flex items-center justify-between px-3 py-1.5 bg-[#0d0d0d]" style={{ borderBottom: '2px solid #A855F740' }}>
-                <span className="font-black text-sm uppercase tracking-wider" style={{ color: '#A855F7' }}>
+              {/* Single compact row: label + input + button + count */}
+              <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0d0d0d]">
+                <span className="font-black text-[10px] uppercase tracking-wider shrink-0" style={{ color: '#A855F7' }}>
                   {(t as any)('questsCustomFollows') || 'CUSTOM FOLLOWS'}
                 </span>
-                <span className="text-white/40 text-[10px] font-bold">
-                  {customFollowQuests?.length ?? 0}/∞
-                </span>
+                {address && (
+                  <>
+                    <input
+                      value={customQuestUsername}
+                      onChange={e => { setCustomQuestUsername(e.target.value.replace(/^@/, '')); setCustomQuestError(''); setCustomQuestPreview(null); }}
+                      placeholder="@username"
+                      className="flex-1 min-w-0 bg-[#111] border border-[#A855F740] text-white text-[10px] px-2 py-0.5 focus:outline-none focus:border-[#A855F7]"
+                    />
+                    <button
+                      disabled={isAddingCustom || !customQuestUsername.trim()}
+                      onClick={async () => {
+                        if (!address || !customQuestUsername.trim()) return;
+                        setIsAddingCustom(true);
+                        setCustomQuestError('');
+                        try {
+                          const res = await fetch(`/api/fid/lookup-username?username=${encodeURIComponent(customQuestUsername.trim())}`);
+                          const data = await res.json();
+                          if (!data.fid) throw new Error(data.error || 'User not found');
+                          setCustomQuestPreview(data);
+                          await addCustomFollowQuest({
+                            address: address.toLowerCase(),
+                            targetUsername: data.username || customQuestUsername.trim(),
+                            displayName: data.display_name,
+                            targetFid: data.fid,
+                            pfpUrl: data.pfp_url,
+                            bannerUrl: data.banner_url,
+                          });
+                          setCustomQuestUsername('');
+                          setCustomQuestPreview(null);
+                        } catch (e: any) {
+                          setCustomQuestError(e.message || 'Error');
+                        } finally {
+                          setIsAddingCustom(false);
+                        }
+                      }}
+                      className="shrink-0 px-2 py-0.5 border border-black font-black text-[9px] uppercase disabled:opacity-40"
+                      style={{ background: '#A855F7', color: '#fff', boxShadow: '1px 1px 0px #000' }}
+                    >
+                      {isAddingCustom ? '...' : '+100k'}
+                    </button>
+                  </>
+                )}
+                <span className="text-white/30 text-[9px] shrink-0">{customFollowQuests?.length ?? 0}/∞</span>
               </div>
+              {customQuestError && <p className="text-red-400 text-[8px] px-2 pb-1">{customQuestError}</p>}
 
-              {/* Add custom quest — compact with preview banner */}
-              {address && (
-                <div className="border-b-2 border-[#A855F720]">
-                  {/* Preview banner (shown after lookup) */}
-                  {customQuestPreview && (
-                    <div className="relative h-16 overflow-hidden bg-[#1a0a2e]">
-                      {customQuestPreview.banner_url
-                        ? <img src={customQuestPreview.banner_url} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />
-                        : customQuestPreview.pfp_url
-                          ? <img src={customQuestPreview.pfp_url} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.4, transform: 'scale(1.6)', filter: 'blur(6px)' }} alt="" />
-                          : null
-                      }
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                      <div className="absolute bottom-1.5 left-2 flex items-center gap-1.5">
-                        {customQuestPreview.pfp_url && <img src={customQuestPreview.pfp_url} className="w-7 h-7 rounded-full border border-[#A855F7]" alt="" />}
-                        <div>
-                          <p className="text-white font-black text-xs drop-shadow">{customQuestPreview.display_name}</p>
-                          <p className="text-[#A855F7] text-[8px]">@{customQuestPreview.username}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  <div className="px-2 py-1.5 bg-[#0a0a0a]">
-                    <p className="text-white/40 text-[8px] uppercase tracking-widest mb-1">
-                      {(t as any)('questsAddCustomCost') || 'Add any Farcaster profile — costs 100k VBMS'}
-                    </p>
-                    <div className="flex gap-1">
-                      <input
-                        value={customQuestUsername}
-                        onChange={e => { setCustomQuestUsername(e.target.value.replace(/^@/, '')); setCustomQuestError(''); setCustomQuestPreview(null); }}
-                        placeholder="@username"
-                        className="flex-1 bg-[#111] border border-[#A855F740] text-white text-[10px] px-2 py-1 focus:outline-none focus:border-[#A855F7]"
-                      />
-                      <button
-                        disabled={isAddingCustom || !customQuestUsername.trim()}
-                        onClick={async () => {
-                          if (!address || !customQuestUsername.trim()) return;
-                          setIsAddingCustom(true);
-                          setCustomQuestError('');
-                          try {
-                            const res = await fetch(`/api/fid/lookup-username?username=${encodeURIComponent(customQuestUsername.trim())}`);
-                            const data = await res.json();
-                            if (!data.fid) throw new Error(data.error || 'User not found');
-                            setCustomQuestPreview(data);
-                            await addCustomFollowQuest({
-                              address: address.toLowerCase(),
-                              targetUsername: data.username || customQuestUsername.trim(),
-                              displayName: data.display_name,
-                              targetFid: data.fid,
-                              pfpUrl: data.pfp_url,
-                              bannerUrl: data.banner_url,
-                            });
-                            setCustomQuestUsername('');
-                            setCustomQuestPreview(null);
-                          } catch (e: any) {
-                            setCustomQuestError(e.message || 'Error');
-                          } finally {
-                            setIsAddingCustom(false);
-                          }
-                        }}
-                        className="px-2 py-1 border border-black font-black text-[9px] uppercase disabled:opacity-40"
-                        style={{ background: '#A855F7', color: '#fff', boxShadow: '1px 1px 0px #000' }}
-                      >
-                        {isAddingCustom ? '...' : ((t as any)('questsAddCustomBtn') || 'Pay 100k')}
-                      </button>
-                    </div>
-                    {customQuestError && <p className="text-red-400 text-[8px] mt-0.5">{customQuestError}</p>}
-                  </div>
-                </div>
-              )}
-
-              {/* Custom quest carousel */}
+              {/* Custom quest carousel — only shown when quests exist */}
               {(() => {
                 const quests = customFollowQuests || [];
-                if (quests.length === 0) return (
-                  <p className="text-white/30 text-[10px] text-center py-4">
-                    {(t as any)('questsNoCustomQuests') || 'No custom quests yet. Be the first!'}
-                  </p>
-                );
+                if (quests.length === 0) return null;
                 const idx = Math.min(customCarouselIdx, quests.length - 1);
                 const q = quests[idx];
                 const questId = String(q._id);
