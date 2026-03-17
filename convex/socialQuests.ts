@@ -521,6 +521,17 @@ export const claimCustomFollowReward = mutation({
 
     await ctx.db.patch(profile._id, { coins: balanceAfter });
 
+    await ctx.db.insert("coinTransactions", {
+      address,
+      amount: reward,
+      type: "earn",
+      source: "custom_follow_quest",
+      description: `Custom quest: follow @${(quest as any).targetUsername}`,
+      timestamp: Date.now(),
+      balanceBefore,
+      balanceAfter,
+    });
+
     await createAuditLog(ctx, address, "claim", reward, balanceBefore, balanceAfter, "custom_follow_quest");
 
     // Track in socialQuestProgress
