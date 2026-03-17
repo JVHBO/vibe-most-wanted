@@ -2,7 +2,12 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useQuery, useMutation, useConvex } from 'convex/react';
+import { useQuery, useMutation } from 'convex/react';
+import { ConvexHttpClient } from 'convex/browser';
+
+const vibefidHttp = new ConvexHttpClient(
+  process.env.NEXT_PUBLIC_VIBEFID_CONVEX_URL || 'https://scintillating-mandrill-101.convex.cloud'
+);
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/fid/convex-generated/api';
 import { CardMedia } from '@/components/fid/CardMedia';
@@ -72,7 +77,6 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
   const [upgradeAnimPhase, setUpgradeAnimPhase] = useState<'charging'|'burst'|'reveal'>('charging');
   const [backstory, setBackstory] = useState<any>(null);
   const router = useRouter();
-  const convex = useConvex();
   const [fidCards, setFidCards] = useState<any[] | undefined>(undefined);
   const [unreadCount, setUnreadCount] = useState<number | undefined>(undefined);
   const [scoreHistory, setScoreHistory] = useState<any>(undefined);
@@ -81,11 +85,11 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
   useEffect(() => {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
-    convex.query(api.farcasterCards.getFarcasterCardsByFid, { fid })
+    vibefidHttp.query(api.farcasterCards.getFarcasterCardsByFid, { fid })
       .then(setFidCards).catch(() => setFidCards([]));
-    convex.query(api.cardVotes.getUnreadMessageCount, { cardFid: fid })
+    vibefidHttp.query(api.cardVotes.getUnreadMessageCount, { cardFid: fid })
       .then(setUnreadCount).catch(() => setUnreadCount(0));
-    convex.query(api.neynarScore.getScoreHistory, { fid })
+    vibefidHttp.query(api.neynarScore.getScoreHistory, { fid })
       .then(setScoreHistory).catch(() => setScoreHistory(null));
   }, [fid]);
 

@@ -1,8 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useConvex } from 'convex/react';
+import { useQuery, useMutation } from 'convex/react';
+import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/lib/fid/convex-generated/api';
+
+const vibefidHttp = new ConvexHttpClient(
+  process.env.NEXT_PUBLIC_VIBEFID_CONVEX_URL || 'https://scintillating-mandrill-101.convex.cloud'
+);
 import Link from 'next/link';
 import { CardMedia } from '@/components/fid/CardMedia';
 import FoilCardEffect from '@/components/fid/FoilCardEffect';
@@ -52,8 +57,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
   const effectiveUser = farcasterContext.user || devUser;
   const isOwnCard = effectiveUser?.fid === fid;
 
-  // VibeFID Convex queries — use one-time HTTP fetch (avoids WebSocket issues)
-  const convex = useConvex();
+  // VibeFID Convex queries — use ConvexHttpClient to avoid WebSocket issues
   const [fidCards, setFidCards] = useState<any[] | undefined>(undefined);
   const [scoreHistory, setScoreHistory] = useState<any>(undefined);
   const [unreadMessageCount, setUnreadMessageCount] = useState<number | undefined>(undefined);
@@ -62,14 +66,14 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
   useEffect(() => {
     if (fetchedRef.current) return;
     fetchedRef.current = true;
-    convex.query(api.farcasterCards.getFarcasterCardsByFid, { fid })
+    vibefidHttp.query(api.farcasterCards.getFarcasterCardsByFid, { fid })
       .then(setFidCards)
       .catch(() => setFidCards([]));
-    convex.query(api.neynarScore.getScoreHistory, { fid })
+    vibefidHttp.query(api.neynarScore.getScoreHistory, { fid })
       .then(setScoreHistory)
       .catch(() => setScoreHistory(null));
     if (isOwnCard) {
-      convex.query(api.cardVotes.getUnreadMessageCount, { cardFid: fid })
+      vibefidHttp.query(api.cardVotes.getUnreadMessageCount, { cardFid: fid })
         .then(setUnreadMessageCount)
         .catch(() => setUnreadMessageCount(0));
     }
