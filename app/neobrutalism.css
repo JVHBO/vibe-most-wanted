@@ -4,7 +4,7 @@
 
    Palette:
    - Yellow  #FFD400  (profile bar, active nav, titles)
-   - Purple  #9B5CFF  (arena, VibeFID, accents)
+   - Purple  #6A3CFF  (arena, VibeFID, accents)
    - Red     #FF3B3B  (boss, danger, NEO badge)
    - Green   #00FF85  (bet, success)
    - Blue    #00A6FF  (spin, TCG, primary action)
@@ -79,7 +79,7 @@ body.neobrutalism [class*="from-black"] {
   background-image: none !important;
 }
 body.neobrutalism [class*="from-pink-6"][class*="via-purple-6"] {
-  background-color: #9B5CFF !important;
+  background-color: #6A3CFF !important;
 }
 body.neobrutalism [class*="from-green-7"][class*="via-emerald-6"] {
   background-color: #00FF85 !important;
@@ -138,7 +138,7 @@ body.neobrutalism [class*="text-yellow"],
 body.neobrutalism [class*="text-amber"] { color: #FFD400 !important; }
 body.neobrutalism [class*="text-purple-3"],
 body.neobrutalism [class*="text-purple-2"],
-body.neobrutalism [class*="text-purple-1"] { color: #9B5CFF !important; }
+body.neobrutalism [class*="text-purple-1"] { color: #6A3CFF !important; }
 body.neobrutalism [class*="text-blue"],
 body.neobrutalism [class*="text-cyan"] { color: #00A6FF !important; }
 body.neobrutalism [class*="text-orange"] { color: #FFD400 !important; }
@@ -516,7 +516,7 @@ body.neobrutalism .tour-header [class*="text-vintage-burnt"] {
 body.neobrutalism .tour-vibefid-btn,
 body.neobrutalism button.tour-vibefid-btn,
 body.neobrutalism .tour-vibefid-btn[class*="bg-vintage-gold"] {
-  background-color: #9B5CFF !important;
+  background-color: #6A3CFF !important;
   width: 100% !important;
   background-image: none !important;
   color: #FFF !important;
@@ -827,7 +827,7 @@ body.neobrutalism .tour-cards-section [class*="border-yellow-4"] {
   box-shadow: 4px 4px 0px #FFD400 !important;
 }
 body.neobrutalism .tour-cards-section [class*="border-purple-4"] {
-  box-shadow: 4px 4px 0px #9B5CFF !important;
+  box-shadow: 4px 4px 0px #6A3CFF !important;
 }
 body.neobrutalism .tour-cards-section [class*="border-blue-4"] {
   box-shadow: 4px 4px 0px #00A6FF !important;
@@ -981,8 +981,8 @@ body.neobrutalism .tour-dex-btn,
 body.neobrutalism a.tour-dex-btn,
 body.neobrutalism div.tour-dex-btn,
 body.neobrutalism .tour-dex-btn[class*="bg-vintage-black"] {
-  background: #6B1AB5 !important;
-  background-color: #6B1AB5 !important;
+  background: #6A3CFF !important;
+  background-color: #6A3CFF !important;
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
   border-radius: 4px !important;
@@ -1310,7 +1310,7 @@ body.neobrutalism button[class*="-bottom-2"][class*="-right-2"][class*="z-20"] {
 
 /* L (Lore) - Top Left → Purple (button itself has the position classes) */
 body.neobrutalism button[class*="-top-2"][class*="-left-2"][class*="z-20"] {
-  background-color: #9B5CFF !important;
+  background-color: #6A3CFF !important;
   color: #FFF !important;
 }
 
@@ -2449,8 +2449,8 @@ body.neobrutalism .tour-dex-btn,
 body.neobrutalism div.tour-dex-btn,
 body.neobrutalism .tour-header .tour-dex-btn,
 body.neobrutalism .tour-dex-btn[class*="bg-vintage-black"] {
-  background: #6B1AB5 !important;
-  background-color: #6B1AB5 !important;
+  background: #6A3CFF !important;
+  background-color: #6A3CFF !important;
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
   border-radius: 4px !important;
@@ -2488,7 +2488,7 @@ body.neobrutalism .raid-btn-back {
   color: #fff !important;
 }
 body.neobrutalism .raid-btn-rank {
-  background-color: #9B5CFF !important;
+  background-color: #6A3CFF !important;
   color: #fff !important;
 }
 body.neobrutalism .raid-btn-help {
@@ -2512,7 +2512,7 @@ body.neobrutalism .raid-btn-edit {
   color: #000 !important;
 }
 body.neobrutalism .raid-btn-share {
-  background-color: #9B5CFF !important;
+  background-color: #6A3CFF !important;
   color: #fff !important;
 }
 body.neobrutalism .raid-btn-clear {
@@ -2669,7 +2669,7 @@ body.neobrutalism .arena-sfx-panel {
 /* SFX buttons - each gets a distinct color */
 body.neobrutalism .arena-sfx-panel button:nth-child(1) { background-color: #FF3B3B !important; color: #000 !important; border: 2px solid #000 !important; border-radius: 2px !important; }
 body.neobrutalism .arena-sfx-panel button:nth-child(2) { background-color: #FF69B4 !important; color: #000 !important; border: 2px solid #000 !important; border-radius: 2px !important; }
-body.neobrutalism .arena-sfx-panel button:nth-child(3) { background-color: #9B5CFF !important; color: #fff !important; border: 2px solid #000 !important; border-radius: 2px !important; }
+body.neobrutalism .arena-sfx-panel button:nth-child(3) { background-color: #6A3CFF !important; color: #fff !important; border: 2px solid #000 !important; border-radius: 2px !important; }
 body.neobrutalism .arena-sfx-panel button:nth-child(4) { background-color: #00A6FF !important; color: #000 !important; border: 2px solid #000 !important; border-radius: 2px !important; }
 body.neobrutalism .arena-sfx-panel button:nth-child(5) { background-color: #FF9900 !important; color: #000 !important; border: 2px solid #000 !important; border-radius: 2px !important; }
 body.neobrutalism .arena-sfx-panel button:nth-child(6) { background-color: #00FF85 !important; color: #000 !important; border: 2px solid #000 !important; border-radius: 2px !important; }
