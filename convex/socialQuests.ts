@@ -5,7 +5,7 @@
  * Verification is done via external API, backend just tracks claims
  */
 
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import { query, mutation, internalMutation, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { normalizeAddress } from "./utils";
@@ -459,11 +459,11 @@ export const addCustomFollowQuest = mutation({
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address))
       .first();
-    if (!profile) throw new Error("Profile not found");
+    if (!profile) throw new ConvexError("Profile not found");
 
     const coins = profile.coins || 0;
     if (coins < CUSTOM_QUEST_COST) {
-      throw new Error(`Not enough VBMS. Need ${CUSTOM_QUEST_COST.toLocaleString()}, have ${coins.toLocaleString()}`);
+      throw new ConvexError(`Not enough VBMS. Need ${CUSTOM_QUEST_COST.toLocaleString()}, have ${coins.toLocaleString()}`);
     }
 
     // Prevent duplicates
@@ -471,7 +471,7 @@ export const addCustomFollowQuest = mutation({
       .query("customFollowQuests")
       .withIndex("by_targetFid", (q) => q.eq("targetFid", args.targetFid))
       .first();
-    if (existing?.active) throw new Error("This user is already a custom quest");
+    if (existing?.active) throw new ConvexError("This user is already a custom quest");
 
     // Deduct VBMS
     await ctx.db.patch(profile._id, {
