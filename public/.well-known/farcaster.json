@@ -12,7 +12,7 @@
     "imageUrl": "https://vibemostwanted.xyz/screenshot-1.png",
     "aspectRatio": "3:2",
     "buttonTitle": "Play Now",
-    "splashImageUrl": "https://vibemostwanted.xyz/splash.gif",
+    "splashImageUrl": "https://vibemostwanted.xyz/splash.gif?v=2",
     "splashBackgroundColor": "#0C0C0C",
     "webhookUrl": "https://api.neynar.com/f/app/e4b053fc-a6bd-4975-a6bc-a3174e617d19/event",
     "castShareUrl": "https://vibemostwanted.xyz",
