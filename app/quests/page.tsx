@@ -216,6 +216,7 @@ export default function QuestsPage() {
   const [customQuestPreview, setCustomQuestPreview] = useState<{ fid: number; username: string; display_name: string; pfp_url?: string; banner_url?: string } | null>(null);
   const [customSearchResults, setCustomSearchResults] = useState<{ fid: number; username: string; display_name: string; pfp_url?: string }[]>([]);
   const [customSearchOpen, setCustomSearchOpen] = useState(false);
+  const [customModalOpen, setCustomModalOpen] = useState(false);
   const customSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // All mission types (matching backend) - using translation keys
@@ -788,14 +789,40 @@ export default function QuestsPage() {
             {/* ── CUSTOM FOLLOW QUESTS ─────────────────────────────── */}
             <div className="border-4 overflow-hidden" style={{ borderColor: '#A855F7', boxShadow: '3px 3px 0px #A855F780' }}>
               {/* Single compact row: label + input + button + count */}
-              <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0d0d0d]">
-                <span className="font-black text-[10px] uppercase tracking-wider shrink-0" style={{ color: '#A855F7' }}>
-                  {(t as any)('questsCustomFollows') || 'FOLLOW COMMUNITY'}
-                </span>
-                {address && (
-                  <>
-                    <div className="relative flex-1 min-w-0">
+              {/* Modal overlay */}
+              {customModalOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70" onClick={() => { setCustomModalOpen(false); setCustomQuestUsername(''); setCustomQuestPreview(null); setCustomSearchResults([]); setCustomQuestError(''); }}>
+                  <div className="border-4 overflow-hidden w-72 bg-[#0d0d0d]" style={{ borderColor: '#A855F7', boxShadow: '4px 4px 0px #A855F780' }} onClick={e => e.stopPropagation()}>
+                    {/* Modal header */}
+                    <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: '2px solid #A855F740' }}>
+                      <span className="font-black text-xs uppercase tracking-wider" style={{ color: '#A855F7' }}>ADD TO FOLLOW COMMUNITY</span>
+                      <button onClick={() => { setCustomModalOpen(false); setCustomQuestUsername(''); setCustomQuestPreview(null); setCustomSearchResults([]); setCustomQuestError(''); }} className="text-white/40 hover:text-white text-sm font-black">✕</button>
+                    </div>
+
+                    {/* Preview banner */}
+                    {customQuestPreview && (
+                      <div className="relative h-16 overflow-hidden bg-[#1a0a2e]">
+                        {(customQuestPreview as any).banner_url
+                          ? <img src={(customQuestPreview as any).banner_url} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />
+                          : customQuestPreview.pfp_url
+                            ? <img src={customQuestPreview.pfp_url} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.4, transform: 'scale(1.6)', filter: 'blur(6px)' }} alt="" />
+                            : null
+                        }
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                        <div className="absolute bottom-1.5 left-2 flex items-center gap-1.5">
+                          {customQuestPreview.pfp_url && <img src={customQuestPreview.pfp_url} className="w-8 h-8 rounded-full border border-[#A855F7]" alt="" />}
+                          <div>
+                            <p className="text-white font-black text-xs drop-shadow">{customQuestPreview.display_name}</p>
+                            <p className="text-[#A855F7] text-[8px]">@{customQuestPreview.username} · FID {customQuestPreview.fid}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Search input */}
+                    <div className="px-3 py-2">
                       <input
+                        autoFocus
                         value={customQuestUsername}
                         onChange={e => {
                           const val = e.target.value.replace(/^@/, '');
@@ -803,28 +830,26 @@ export default function QuestsPage() {
                           setCustomQuestError('');
                           setCustomQuestPreview(null);
                           if (customSearchTimer.current) clearTimeout(customSearchTimer.current);
-                          if (val.length < 2) { setCustomSearchResults([]); setCustomSearchOpen(false); return; }
+                          if (val.length < 2) { setCustomSearchResults([]); return; }
                           customSearchTimer.current = setTimeout(async () => {
                             const r = await fetch(`/api/fid/neynar-user-search?q=${encodeURIComponent(val)}`);
                             const d = await r.json();
                             setCustomSearchResults(d.users || []);
-                            setCustomSearchOpen(true);
                           }, 300);
                         }}
-                        onBlur={() => setTimeout(() => setCustomSearchOpen(false), 150)}
-                        onFocus={() => { if (customSearchResults.length > 0) setCustomSearchOpen(true); }}
-                        placeholder="@username or FID"
-                        className="w-full bg-[#111] border border-[#A855F740] text-white text-[10px] px-2 py-0.5 focus:outline-none focus:border-[#A855F7]"
+                        placeholder="Search @username or FID..."
+                        className="w-full bg-[#111] border-2 border-[#A855F740] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#A855F7]"
                       />
-                      {customSearchOpen && customSearchResults.length > 0 && (
-                        <div className="absolute left-0 right-0 top-full z-50 border-2 border-[#A855F7] bg-[#0d0d0d] shadow-[0_4px_20px_rgba(168,85,247,0.4)] max-h-40 overflow-y-auto">
+
+                      {/* Results list */}
+                      {customSearchResults.length > 0 && !customQuestPreview && (
+                        <div className="mt-1 border-2 border-[#A855F740] bg-[#0a0a0a] max-h-36 overflow-y-auto">
                           {customSearchResults.map(u => (
                             <button
                               key={u.fid}
-                              onMouseDown={() => {
+                              onClick={() => {
                                 setCustomQuestUsername(u.username);
                                 setCustomQuestPreview({ fid: u.fid, username: u.username, display_name: u.display_name, pfp_url: u.pfp_url });
-                                setCustomSearchOpen(false);
                                 setCustomSearchResults([]);
                               }}
                               className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#A855F720] text-left border-b border-[#A855F720] last:border-0"
@@ -838,47 +863,67 @@ export default function QuestsPage() {
                           ))}
                         </div>
                       )}
-                    </div>
-                    <button
-                      disabled={isAddingCustom || !customQuestUsername.trim()}
-                      onClick={async () => {
-                        if (!address || !customQuestUsername.trim()) return;
-                        setIsAddingCustom(true);
-                        setCustomQuestError('');
-                        try {
-                          // If preview already set from dropdown, use it; otherwise lookup
-                          let data = customQuestPreview;
-                          if (!data) {
-                            const res = await fetch(`/api/fid/lookup-username?username=${encodeURIComponent(customQuestUsername.trim())}`);
-                            data = await res.json();
+
+                      {customQuestError && <p className="text-red-400 text-[9px] mt-1">{customQuestError}</p>}
+
+                      <button
+                        disabled={isAddingCustom || !customQuestUsername.trim()}
+                        onClick={async () => {
+                          if (!address || !customQuestUsername.trim()) return;
+                          setIsAddingCustom(true);
+                          setCustomQuestError('');
+                          try {
+                            let data = customQuestPreview as any;
+                            if (!data) {
+                              const res = await fetch(`/api/fid/lookup-username?username=${encodeURIComponent(customQuestUsername.trim())}`);
+                              data = await res.json();
+                            }
+                            if (!data?.fid) throw new Error('User not found');
+                            await addCustomFollowQuest({
+                              address: address.toLowerCase(),
+                              targetUsername: data.username || customQuestUsername.trim(),
+                              displayName: data.display_name,
+                              targetFid: data.fid,
+                              pfpUrl: data.pfp_url,
+                              bannerUrl: data.banner_url,
+                            });
+                            setCustomQuestUsername('');
+                            setCustomQuestPreview(null);
+                            setCustomModalOpen(false);
+                          } catch (e: any) {
+                            setCustomQuestError(e.message || 'Error');
+                          } finally {
+                            setIsAddingCustom(false);
                           }
-                          if (!data?.fid) throw new Error('User not found');
-                          await addCustomFollowQuest({
-                            address: address.toLowerCase(),
-                            targetUsername: data.username || customQuestUsername.trim(),
-                            displayName: data.display_name,
-                            targetFid: data.fid,
-                            pfpUrl: data.pfp_url,
-                            bannerUrl: (data as any).banner_url,
-                          });
-                          setCustomQuestUsername('');
-                          setCustomQuestPreview(null);
-                        } catch (e: any) {
-                          setCustomQuestError(e.message || 'Error');
-                        } finally {
-                          setIsAddingCustom(false);
-                        }
-                      }}
-                      className="shrink-0 px-2 py-0.5 border border-black font-black text-[9px] uppercase disabled:opacity-40"
+                        }}
+                        className="w-full mt-2 py-1.5 border-2 border-black font-black text-xs uppercase disabled:opacity-40"
+                        style={{ background: '#A855F7', color: '#fff', boxShadow: '2px 2px 0px #000' }}
+                      >
+                        {isAddingCustom ? '...' : 'PAY 100K VBMS & ADD'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Compact header row */}
+              <div className="flex items-center justify-between px-2 py-1.5 bg-[#0d0d0d]">
+                <span className="font-black text-[10px] uppercase tracking-wider" style={{ color: '#A855F7' }}>
+                  {(t as any)('questsCustomFollows') || 'FOLLOW COMMUNITY'}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-white/30 text-[9px]">{customFollowQuests?.length ?? 0}/∞</span>
+                  {address && (
+                    <button
+                      onClick={() => setCustomModalOpen(true)}
+                      className="px-2 py-0.5 border border-black font-black text-[9px] uppercase"
                       style={{ background: '#A855F7', color: '#fff', boxShadow: '1px 1px 0px #000' }}
                     >
-                      {isAddingCustom ? '...' : '+100k'}
+                      CREATE QUEST
                     </button>
-                  </>
-                )}
-                <span className="text-white/30 text-[9px] shrink-0">{customFollowQuests?.length ?? 0}/∞</span>
+                  )}
+                </div>
               </div>
-              {customQuestError && <p className="text-red-400 text-[8px] px-2 pb-1">{customQuestError}</p>}
 
               {/* Custom quest carousel — only shown when quests exist */}
               {(() => {
