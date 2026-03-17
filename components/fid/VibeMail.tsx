@@ -4620,7 +4620,7 @@ export function VibeMailInboxWithClaim({
               })()}
 
               {/* Message text + media */}
-              <div className="p-3 space-y-3">
+              <div className="p-3 space-y-3" style={{ width: VIBEMAIL_CARD_WIDTH, maxWidth: '100%', margin: '0 auto', minHeight: VIBEMAIL_CARD_HEIGHT, background: '#111' }}>
                 {/* VDESIGN - animated layout (GIFs, videos stay live) */}
                 {(() => {
                   const dm = parseDesignManifest(selectedMessage.message || '');
