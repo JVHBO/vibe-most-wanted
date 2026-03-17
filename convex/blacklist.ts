@@ -141,6 +141,26 @@ export const EXPLOITER_BLACKLIST: Record<string, { username: string; fid: number
   "0x8215db2678e8482dd6051b6847e148ce058ec3b6": { username: "hancox", fid: 1134926, amountStolen: 1510500, claims: 0 },
   // ===== EXPLOIT #4: Multiple signatures via public recovery functions (Feb 27, 2026) =====
   "0x3c21f515b3709348e3e3d7c9446d1972d3393dc4": { username: "unknown", fid: 0, amountStolen: 30000, claims: 6 },
+  // ===== EXPLOIT #5: Sybil attack via chickenattack.base.eth (Mar 17, 2026) =====
+  // 88 wallets, each claimed 12k VBMS, funneled to 0x0b9b7c1503f3242e992c11cb25d881612a483723 (chickenattack.base.eth)
+  "0x0b9b7c1503f3242e992c11cb25d881612a483723": { username: "chickenattack", fid: 0, amountStolen: 1056000, claims: 88 },
+  "0x1f4246cec7cee8ae4e3556c7a08b25cedcb01b6d": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0x2b34472032bc7fe3b0d3503b882719dd91ff5dc9": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0x6e042f02891513c691a6114f102397632b957f71": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0xf5961ef0671f6f26af5f6e08e70ea242dc93488c": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0xb242c4a4077e0748fd5d73ae19abb426d370f691": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0x89b811b18c557a366b188901de1b12d1784955f7": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0x778a39aa93215b3ae0cb9b1df6c0b00d54e72550": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0x9115aeb942758ea9252c93e3c4adc6293d03f741": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0x742ebc870604fcf079ef9375a0ca838ab3d5e9e7": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0xdf3002ac81f11090088df65e1ed774e6e78a4e6a": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0xa89f178f48cbd4a7089e06b2698ba926a1b18040": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0x59b1391c9e7435e2cc771a80fd910bee09aa6aa1": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0xd875aaf00a1db3a710ef4e875e4895deea3a044f": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0xa2091e9600622b7aa8cca55a2b7f33a6de6f978e": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0x23de535a439232d5a771164eac038165c07e0f7b": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0x2ed485bfcadcc852fed923985c5bbf25cd6dfbb0": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
+  "0x000022bbfd7c786d1f082bde7ce48deddd50eac5": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
 };
 
 // ========== CHECK BLACKLIST ==========
