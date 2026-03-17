@@ -4772,10 +4772,6 @@ export function VibeMailInboxWithClaim({
                   </div>
                 )}
 
-                {/* Date footer */}
-                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
-                  <span className="text-white/40">{new Date(selectedMessage.createdAt).toLocaleDateString()}</span>
-                </div>
               </div>
 
               {/* Receipt Reward - BOTTOM */}
@@ -4837,6 +4833,11 @@ export function VibeMailInboxWithClaim({
                   </div>
                 );
               })()}
+
+              {/* Date footer - always last */}
+              <div className="px-3 pt-2 pb-1 border-t border-white/10 flex items-center justify-between text-[10px]">
+                <span className="text-white/40">{new Date(selectedMessage.createdAt).toLocaleDateString()}</span>
+              </div>
             </div>{/* end content padding */}
             </div>{/* end scroll container */}
 
