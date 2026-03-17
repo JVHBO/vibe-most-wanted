@@ -504,10 +504,10 @@ export default function QuestsPage() {
   }
 
   return (
-    <div className="fixed inset-0 game-background overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden" style={{ background: 'radial-gradient(ellipse at top, rgba(255,215,0,0.12) 0%, transparent 55%), radial-gradient(ellipse at bottom right, rgba(0,198,255,0.06) 0%, transparent 55%), linear-gradient(135deg, #0C0C0C 0%, #1A1A1A 50%, #121212 100%)', backgroundSize: '200% 200%', animation: 'subtleGradient 20s ease infinite' }}>
 
       {/* Header */}
-      <div className={`absolute top-0 left-0 right-0 z-20 ${activeTab === 'messages' ? 'bg-[#111]' : 'bg-[#0d0d0d]/90'} border-b-4 border-black`}>
+      <div className="absolute top-0 left-0 right-0 z-20 border-b-4 border-black" style={{ background: activeTab === 'messages' ? '#111' : 'rgba(10,10,10,0.92)' }}>
         <div className="relative flex items-center justify-between px-3 py-1.5">
           <Link
             href="/"
