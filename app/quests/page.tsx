@@ -325,6 +325,19 @@ export default function QuestsPage() {
           descKey: def.descKey,
         };
       }
+      // Special handling for VibeFID minted — Base OR ARB counts
+      if (def.type === 'vibefid_minted') {
+        const hasVibeFID = vibeBadgeEligibility?.hasVibeFIDCards || false;
+        return {
+          _id: existing?._id || 'placeholder_vibefid_minted',
+          missionType: def.type,
+          completed: hasVibeFID,
+          claimed: existing?.claimed || false,
+          reward: def.reward,
+          titleKey: def.titleKey,
+          descKey: def.descKey,
+        };
+      }
       // Return locked mission placeholder
       return {
         _id: `placeholder_${def.type}`,
