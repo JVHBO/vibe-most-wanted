@@ -4643,7 +4643,7 @@ export function VibeMailInboxWithClaim({
                       {/* Text */}
                       {textOnly && dm.text && (() => { const p = dm.text; return (
                         <div style={{ position:'absolute', left:p.x, top:p.y, width:p.w, height:p.h, transform:`rotate(${p.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', background:'#000', padding:8, boxSizing:'border-box', zIndex:((p.z??0)+1)*10 }}>
-                          <div className="text-white/90 text-sm leading-relaxed" style={{ fontSize: Math.max(8, Math.min(15, p.h * 0.2)), fontFamily: vstyle?.font || undefined, color: vstyle?.color || undefined }}>{textOnly}</div>
+                          <div className="text-white/90 text-sm leading-relaxed" style={{ fontSize: Math.max(8, Math.min(15, p.h * 0.2)), fontFamily: vstyle?.font || undefined, color: vstyle?.color || undefined }}>{renderFormattedMessage(textOnly)}</div>
                         </div>
                       ); })()}
                       {/* Audio */}
