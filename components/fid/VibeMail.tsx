@@ -1107,6 +1107,7 @@ export function VibeMailInboxWithClaim({
   const sendBtnRef = useRef<HTMLButtonElement>(null);
   const [openAppConfirm, setOpenAppConfirm] = useState<{ url: string; name: string } | null>(null);
   const [miniappPreviewCache, setMiniappPreviewCache] = useState<Record<string, any>>({});
+  const [questBannerCache, setQuestBannerCache] = useState<Record<number, string>>({});
   const [msgPage, setMsgPage] = useState(0);
   const [showPurposeModal, setShowPurposeModal] = useState(false);
   const [composerQuestType, setComposerQuestType] = useState<string | null>(null);
@@ -1437,6 +1438,30 @@ export function VibeMailInboxWithClaim({
             }).catch(() => {});
         }
       }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, sentMessages]);
+
+  // Fetch Farcaster banners for follow_farcaster quests in all messages
+  useEffect(() => {
+    const msgs = [...(messages || []), ...(sentMessages || [])];
+    const fidsToFetch = new Set<number>();
+    for (const msg of msgs) {
+      const parsed = parseQuestBanner(msg.message || '');
+      if (!parsed) continue;
+      for (const q of parsed.questData.quests || []) {
+        if (q.type === 'follow_farcaster' && q.fid && !q.banner && !questBannerCache[q.fid]) {
+          fidsToFetch.add(q.fid);
+        }
+      }
+    }
+    for (const fid of fidsToFetch) {
+      fetch(`/api/fid/user-profile?fid=${fid}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.banner_url) setQuestBannerCache(prev => ({ ...prev, [fid]: d.banner_url }));
+        })
+        .catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, sentMessages]);
@@ -4522,8 +4547,12 @@ export function VibeMailInboxWithClaim({
                         return (
                           <div className="overflow-hidden">
                             <div className="relative h-28 overflow-hidden bg-[#1a0a2e]">
-                              {q.banner && <img src={q.banner} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />}
-                              {!q.banner && q.pfp && <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover opacity-60" alt="" />}
+                              {(() => {
+                                const bannerUrl = questBannerCache[q.fid] || q.banner;
+                                if (bannerUrl) return <img src={bannerUrl} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.75 }} alt="" />;
+                                if (q.pfp) return <img src={q.pfp} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.55, transform: 'scale(1.6)', filter: 'blur(6px)' }} alt="" />;
+                                return null;
+                              })()}
                               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                               <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#8B5CF6] border border-black/50">
                                 <span className="text-white font-black text-[8px] uppercase tracking-widest">{t.questFollowBadge || 'Follow'}</span>
