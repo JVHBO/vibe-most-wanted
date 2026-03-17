@@ -902,10 +902,10 @@ export default function QuestsPage() {
                             await addCustomFollowQuest({
                               address: address.toLowerCase(),
                               targetUsername: data.username || customQuestUsername.trim(),
-                              displayName: data.display_name,
+                              displayName: data.display_name || undefined,
                               targetFid: data.fid,
-                              pfpUrl: data.pfp_url,
-                              bannerUrl: data.banner_url,
+                              pfpUrl: data.pfp_url || undefined,
+                              bannerUrl: data.banner_url || undefined,
                             });
                             setCustomQuestUsername('');
                             setCustomQuestPreview(null);
@@ -963,7 +963,7 @@ export default function QuestsPage() {
                     <div className="relative h-28 overflow-hidden bg-[#1a0a2e]">
                       {(() => {
                         if (banner) return <img src={banner} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.75 }} alt="" />;
-                        if (pfp) return <img src={pfp} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.5, transform: 'scale(1.6)', filter: 'blur(6px)' }} alt="" />;
+                        if (pfp) return <img src={pfp} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.75 }} alt="" />;
                         return null;
                       })()}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
@@ -1051,11 +1051,9 @@ export default function QuestsPage() {
                       const isVerifying = verifying === quest.id;
                       const isClaimingSocial = claiming === quest.id;
                       const pfp = quest.pfpUrl;
-                      // dynamicBanners stores real banner or pfp fallback from Neynar (always fresh)
                       const dynData = quest.targetFid ? dynamicBanners[quest.targetFid] : undefined;
-                      // Real banner: from Neynar if it's a different URL than pfp, else hardcoded bannerUrl
-                      const banner = dynData && dynData !== pfp ? dynData : quest.bannerUrl || null;
-                      // Background src: banner > pfp blur
+                      // Hardcoded bannerUrl always wins; only use Neynar data if no hardcoded banner
+                      const banner = quest.bannerUrl || (dynData && dynData !== pfp ? dynData : null);
                       const bgSrc = banner || pfp;
                       const displayReward = effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward;
                       const hasVibeFID2x = vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge;
@@ -1100,9 +1098,8 @@ export default function QuestsPage() {
                                 src={bgSrc}
                                 className="absolute inset-0 w-full h-full object-cover"
                                 style={{
-                                  opacity: banner ? 0.9 : 0.6,
-                                  filter: banner ? 'none' : 'blur(10px)',
-                                  transform: banner ? 'none' : 'scale(1.5)',
+                                  opacity: 0.8,
+                                  filter: 'none',
                                 }}
                                 alt=""
                               />

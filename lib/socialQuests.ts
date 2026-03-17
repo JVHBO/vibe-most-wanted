@@ -82,6 +82,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     collection: 'vibe-most-wanted',
     group: 'vbms',
     pfpUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/4bb83ee3-fb9a-4839-77f1-45c6fd30f100/original',
+    bannerUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/75f1b780-45f6-4d39-b0f7-eeecc34aed00/original',
   },
 
   // Team Pothead
@@ -143,6 +144,7 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     url: 'https://warpcast.com/~/channel/fidmfers',
     group: 'vbms',
     pfpUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/4ff0a9e9-0b5f-453f-07cd-567eaad18100/original',
+    bannerUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/a9c9038f-4f3b-43cf-256a-7a4d4ef3b700/original',
   },
 
   // Meowverse
