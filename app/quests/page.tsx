@@ -814,7 +814,7 @@ export default function QuestsPage() {
 
                     {/* Preview banner */}
                     {customQuestPreview && (
-                      <div className="relative h-16 overflow-hidden game-background">
+                      <div className="relative h-16 overflow-hidden bg-[#1a0a2e]">
                         {(customQuestPreview as any).banner_url
                           ? <img src={(customQuestPreview as any).banner_url} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />
                           : customQuestPreview.pfp_url
@@ -960,7 +960,7 @@ export default function QuestsPage() {
                 const profileUrl = `https://warpcast.com/${q.targetUsername}`;
                 return (
                   <div>
-                    <div className="relative h-28 overflow-hidden game-background">
+                    <div className="relative h-28 overflow-hidden bg-[#1a0a2e]">
                       {(() => {
                         if (banner) return <img src={banner} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.75 }} alt="" />;
                         if (pfp) return <img src={pfp} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.5, transform: 'scale(1.6)', filter: 'blur(6px)' }} alt="" />;
@@ -1094,7 +1094,7 @@ export default function QuestsPage() {
                           }}>
 
                           {/* Banner image area */}
-                          <div className="relative h-28 game-background flex items-center justify-center overflow-hidden">
+                          <div className="relative h-28 flex items-center justify-center overflow-hidden">
                             {bgSrc && (
                               <img
                                 src={bgSrc}
