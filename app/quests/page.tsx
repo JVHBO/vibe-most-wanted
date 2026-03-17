@@ -214,6 +214,9 @@ export default function QuestsPage() {
   const [claimingCustom, setClaimingCustom] = useState<string | null>(null);
   const [claimedCustom, setClaimedCustom] = useState<Set<string>>(new Set());
   const [customQuestPreview, setCustomQuestPreview] = useState<{ fid: number; username: string; display_name: string; pfp_url?: string; banner_url?: string } | null>(null);
+  const [customSearchResults, setCustomSearchResults] = useState<{ fid: number; username: string; display_name: string; pfp_url?: string }[]>([]);
+  const [customSearchOpen, setCustomSearchOpen] = useState(false);
+  const customSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // All mission types (matching backend) - using translation keys
   const ALL_MISSION_TYPES = [
@@ -791,12 +794,51 @@ export default function QuestsPage() {
                 </span>
                 {address && (
                   <>
-                    <input
-                      value={customQuestUsername}
-                      onChange={e => { setCustomQuestUsername(e.target.value.replace(/^@/, '')); setCustomQuestError(''); setCustomQuestPreview(null); }}
-                      placeholder="@username"
-                      className="flex-1 min-w-0 bg-[#111] border border-[#A855F740] text-white text-[10px] px-2 py-0.5 focus:outline-none focus:border-[#A855F7]"
-                    />
+                    <div className="relative flex-1 min-w-0">
+                      <input
+                        value={customQuestUsername}
+                        onChange={e => {
+                          const val = e.target.value.replace(/^@/, '');
+                          setCustomQuestUsername(val);
+                          setCustomQuestError('');
+                          setCustomQuestPreview(null);
+                          if (customSearchTimer.current) clearTimeout(customSearchTimer.current);
+                          if (val.length < 2) { setCustomSearchResults([]); setCustomSearchOpen(false); return; }
+                          customSearchTimer.current = setTimeout(async () => {
+                            const r = await fetch(`/api/fid/neynar-user-search?q=${encodeURIComponent(val)}`);
+                            const d = await r.json();
+                            setCustomSearchResults(d.users || []);
+                            setCustomSearchOpen(true);
+                          }, 300);
+                        }}
+                        onBlur={() => setTimeout(() => setCustomSearchOpen(false), 150)}
+                        onFocus={() => { if (customSearchResults.length > 0) setCustomSearchOpen(true); }}
+                        placeholder="@username or FID"
+                        className="w-full bg-[#111] border border-[#A855F740] text-white text-[10px] px-2 py-0.5 focus:outline-none focus:border-[#A855F7]"
+                      />
+                      {customSearchOpen && customSearchResults.length > 0 && (
+                        <div className="absolute left-0 right-0 top-full z-50 border-2 border-[#A855F7] bg-[#0d0d0d] shadow-[0_4px_20px_rgba(168,85,247,0.4)] max-h-40 overflow-y-auto">
+                          {customSearchResults.map(u => (
+                            <button
+                              key={u.fid}
+                              onMouseDown={() => {
+                                setCustomQuestUsername(u.username);
+                                setCustomQuestPreview({ fid: u.fid, username: u.username, display_name: u.display_name, pfp_url: u.pfp_url });
+                                setCustomSearchOpen(false);
+                                setCustomSearchResults([]);
+                              }}
+                              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#A855F720] text-left border-b border-[#A855F720] last:border-0"
+                            >
+                              {u.pfp_url && <img src={u.pfp_url} className="w-6 h-6 rounded-full shrink-0" alt="" />}
+                              <div className="min-w-0">
+                                <p className="text-white text-[10px] font-bold truncate">{u.display_name}</p>
+                                <p className="text-[#A855F7] text-[8px] truncate">@{u.username} · {u.fid}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <button
                       disabled={isAddingCustom || !customQuestUsername.trim()}
                       onClick={async () => {
@@ -804,17 +846,20 @@ export default function QuestsPage() {
                         setIsAddingCustom(true);
                         setCustomQuestError('');
                         try {
-                          const res = await fetch(`/api/fid/lookup-username?username=${encodeURIComponent(customQuestUsername.trim())}`);
-                          const data = await res.json();
-                          if (!data.fid) throw new Error(data.error || 'User not found');
-                          setCustomQuestPreview(data);
+                          // If preview already set from dropdown, use it; otherwise lookup
+                          let data = customQuestPreview;
+                          if (!data) {
+                            const res = await fetch(`/api/fid/lookup-username?username=${encodeURIComponent(customQuestUsername.trim())}`);
+                            data = await res.json();
+                          }
+                          if (!data?.fid) throw new Error('User not found');
                           await addCustomFollowQuest({
                             address: address.toLowerCase(),
                             targetUsername: data.username || customQuestUsername.trim(),
                             displayName: data.display_name,
                             targetFid: data.fid,
                             pfpUrl: data.pfp_url,
-                            bannerUrl: data.banner_url,
+                            bannerUrl: (data as any).banner_url,
                           });
                           setCustomQuestUsername('');
                           setCustomQuestPreview(null);
