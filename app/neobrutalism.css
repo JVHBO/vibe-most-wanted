@@ -954,7 +954,8 @@ body.neobrutalism .tour-dex-dropdown > div[style*="z-index"] a:hover * {
   color: #000 !important;
 }
 
-/* Settings gear button → solid red */
+/* Settings gear button → solid red (high specificity to beat bg-vintage-charcoal/80 rule) */
+body.neobrutalism [class*="bg-vintage-charcoal"] .tour-settings-gear,
 body.neobrutalism .tour-settings-gear {
   background: #CC2222 !important;
   background-color: #CC2222 !important;
@@ -962,10 +963,12 @@ body.neobrutalism .tour-settings-gear {
   box-shadow: 3px 3px 0px #000 !important;
   border-radius: 4px !important;
 }
+body.neobrutalism [class*="bg-vintage-charcoal"] .tour-settings-gear *,
 body.neobrutalism .tour-settings-gear * {
-  color: #FFF !important;
-  stroke: #FFF !important;
+  color: #FFD400 !important;
+  stroke: #FFD400 !important;
 }
+body.neobrutalism [class*="bg-vintage-charcoal"] .tour-settings-gear:hover,
 body.neobrutalism .tour-settings-gear:hover {
   background: #AA1111 !important;
   background-color: #AA1111 !important;
