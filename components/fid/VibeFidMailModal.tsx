@@ -75,7 +75,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
   const convex = useConvex();
   const [fidCards, setFidCards] = useState<any[] | undefined>(undefined);
   const [unreadCount, setUnreadCount] = useState<number | undefined>(undefined);
-  const [scoreHistory, setScoreHistory] = useState<any[] | undefined>(undefined);
+  const [scoreHistory, setScoreHistory] = useState<any>(undefined);
   const fetchedRef = useRef(false);
 
   useEffect(() => {
@@ -86,7 +86,7 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
     convex.query(api.cardVotes.getUnreadMessageCount, { cardFid: fid })
       .then(setUnreadCount).catch(() => setUnreadCount(0));
     convex.query(api.neynarScore.getScoreHistory, { fid })
-      .then(setScoreHistory).catch(() => setScoreHistory([]));
+      .then(setScoreHistory).catch(() => setScoreHistory(null));
   }, [fid]);
 
   const saveScoreCheck = useMutation(api.neynarScore.saveScoreCheck);

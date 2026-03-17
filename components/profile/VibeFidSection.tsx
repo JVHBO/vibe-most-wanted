@@ -55,7 +55,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
   // VibeFID Convex queries — use one-time HTTP fetch (avoids WebSocket issues)
   const convex = useConvex();
   const [fidCards, setFidCards] = useState<any[] | undefined>(undefined);
-  const [scoreHistory, setScoreHistory] = useState<any[] | undefined>(undefined);
+  const [scoreHistory, setScoreHistory] = useState<any>(undefined);
   const [unreadMessageCount, setUnreadMessageCount] = useState<number | undefined>(undefined);
   const fetchedRef = useRef(false);
 
@@ -67,7 +67,7 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
       .catch(() => setFidCards([]));
     convex.query(api.neynarScore.getScoreHistory, { fid })
       .then(setScoreHistory)
-      .catch(() => setScoreHistory([]));
+      .catch(() => setScoreHistory(null));
     if (isOwnCard) {
       convex.query(api.cardVotes.getUnreadMessageCount, { cardFid: fid })
         .then(setUnreadMessageCount)
