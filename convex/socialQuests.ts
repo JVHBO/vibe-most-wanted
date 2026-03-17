@@ -440,6 +440,15 @@ export const getCustomFollowQuests = query({
   },
 });
 
+/** Admin: delete custom follow quest by ID */
+export const adminDeleteCustomFollowQuest = mutation({
+  args: { id: v.string() },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id as any);
+    return { deleted: args.id };
+  },
+});
+
 /** Record custom follow quest after on-chain VBMS payment */
 export const addCustomFollowQuest = mutation({
   args: {

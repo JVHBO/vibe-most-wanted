@@ -971,7 +971,9 @@ export default function QuestsPage() {
                       + ADD
                     </button>
                   )}
-                  <p className="text-white/40 text-[10px]">{Math.min(customCarouselIdx, Math.max(0, (customFollowQuests?.length ?? 1) - 1)) + 1}/{customFollowQuests?.length ?? 0}</p>
+                  {(customFollowQuests?.length ?? 0) > 0 && (
+                    <p className="text-white/40 text-[10px]">{Math.min(customCarouselIdx, (customFollowQuests?.length ?? 1) - 1) + 1}/{customFollowQuests?.length}</p>
+                  )}
                 </div>
               </div>
 
@@ -1054,6 +1056,7 @@ export default function QuestsPage() {
                             if (!address || isClaimed || isClaiming) return;
                             setClaimingCustom(questId);
                             try {
+                              if (effectiveChain === 'arbitrum') await validateOnArb(q.reward, ARB_CLAIM_TYPE.QUEST);
                               await claimCustomFollowReward({ address: address.toLowerCase(), questId });
                               setClaimedCustom(prev => new Set([...prev, questId]));
                             } catch (e: any) { setCustomQuestError(e.data || e.message || 'Error'); }
