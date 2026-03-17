@@ -915,7 +915,7 @@ export default function QuestsPage() {
                             // Step 1: on-chain VBMS transfer (1000 VBMS to pool)
                             const txHash = await transferVBMS(
                               CONTRACTS.VBMSPoolTroll as `0x${string}`,
-                              parseEther('1000')
+                              parseEther('100000')
                             );
                             // Step 2: record quest in Convex with txHash
                             await addCustomFollowQuest({
@@ -939,7 +939,7 @@ export default function QuestsPage() {
                         className="w-full mt-2 py-1.5 border-2 border-black font-black text-xs uppercase disabled:opacity-40"
                         style={{ background: '#A855F7', color: '#fff', boxShadow: '2px 2px 0px #000' }}
                       >
-                        {isAddingCustom ? 'CONFIRM IN WALLET...' : 'PAY 1000 VBMS & ADD'}
+                        {isAddingCustom ? 'CONFIRM IN WALLET...' : 'PAY 100K VBMS & ADD'}
                       </button>
                     </div>
                   </div>
