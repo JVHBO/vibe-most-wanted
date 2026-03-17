@@ -175,27 +175,9 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled,
     return () => audio.removeEventListener('ended', handleEnded);
   }, []);
 
-  // Not supported - show only upload
+  // Not supported - nothing to show
   if (!isSupported) {
-    return (
-      <div className="space-y-2">
-        <input ref={fileInputRef} type="file" accept={AUDIO_ACCEPT} className="hidden" onChange={handleFileUpload} />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || isUploading}
-          className="w-full flex items-center justify-center gap-2 bg-[#2563EB] border-2 border-[#1D4ED8] text-white py-2 px-3 text-xs hover:bg-[#1D4ED8] transition-colors disabled:opacity-50"
-          style={{ WebkitTextFillColor: 'white' }}
-        >
-          {isUploading ? <span>{t.uploading}</span> : (
-            <>
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <span>Upload audio file (MP3, WAV, M4A...)</span>
-            </>
-          )}
-        </button>
-        {(uploadError) && <p className="text-red-400 text-xs text-center">{uploadError}</p>}
-      </div>
-    );
+    return null;
   }
 
   // Permission denied
@@ -366,36 +348,17 @@ export function AudioRecorder({ onAudioReady, onClear, currentAudioId, disabled,
         </div>
       )}
 
-      {/* Idle state - record OR upload */}
-      {!isRecording && !hasRecordedAudio && !isCustomAudio && (
+      {/* Idle state - record only */}
+      {!isRecording && !hasRecordedAudio && !isCustomAudio && isSupported && (
         <div className="flex gap-2">
-          {/* Record button - only show if supported */}
-          {isSupported && (
-            <button
-              onClick={startRecording}
-              disabled={disabled || isUploading}
-              className="flex-1 flex items-center justify-center gap-2 bg-[#EA580C] border-2 border-[#C2410C] text-white py-2 px-3 text-xs hover:bg-[#C2410C] transition-colors disabled:opacity-50"
-              style={{ WebkitTextFillColor: 'white' }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-              <span>{t.record}</span>
-            </button>
-          )}
-          {/* Upload audio file button */}
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={startRecording}
             disabled={disabled || isUploading}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#2563EB] border-2 border-[#1D4ED8] text-white py-2 px-3 text-xs hover:bg-[#1D4ED8] transition-colors disabled:opacity-50"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#EA580C] border-2 border-[#C2410C] text-white py-2 px-3 text-xs hover:bg-[#C2410C] transition-colors disabled:opacity-50"
             style={{ WebkitTextFillColor: 'white' }}
           >
-            {isUploading ? (
-              <span>{t.uploading}</span>
-            ) : (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span>Upload audio</span>
-              </>
-            )}
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+            <span>{t.record}</span>
           </button>
         </div>
       )}

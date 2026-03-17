@@ -349,8 +349,9 @@ function renderFormattedMessage(message: string, lang: string = "en", username?:
   return <>{result}</>;
 }
 
-// VibeMail card body height — fixed for consistent look and future NFT generation
+// VibeMail card body dimensions — fixed for consistent look across all devices
 export const VIBEMAIL_CARD_HEIGHT = 400;
+export const VIBEMAIL_CARD_WIDTH = 390;
 
 // Electronic Secretaries - intercept messages randomly
 export const VIBEMAIL_SECRETARIES = [
@@ -1180,8 +1181,8 @@ export function VibeMailInboxWithClaim({
     requestAnimationFrame(() => {
       const area = designAreaRef.current;
       const canvas = drawCanvasRef.current;
-      if (canvas && area) { canvas.width = area.offsetWidth; canvas.height = area.offsetHeight; }
-      const W = area ? Math.max(60, area.offsetWidth - 24) : 296;
+      if (canvas) { canvas.width = VIBEMAIL_CARD_WIDTH; canvas.height = VIBEMAIL_CARD_HEIGHT; }
+      const W = VIBEMAIL_CARD_WIDTH - 24;
       setElementPositions(prev => {
         const next = { ...prev };
         let y = 40;
@@ -3460,7 +3461,7 @@ export function VibeMailInboxWithClaim({
                       );
 
                       if (!hasDesign) return (
-                        <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, overflow: 'clip' }}>
+                        <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, width: VIBEMAIL_CARD_WIDTH, maxWidth: '100%', margin: '0 auto', overflow: 'clip' }}>
                           <div className="px-4 pt-1 pb-12">
                             <div className="text-sm leading-relaxed" style={{ color: '#e5e7eb' }}>
                               {composerMessage ? renderRichMessage(composerMessage) : <span style={{ color: 'rgba(255,255,255,0.3)' }}>(no text)</span>}
@@ -3508,7 +3509,7 @@ export function VibeMailInboxWithClaim({
 
                       // Designed layout — elements at their custom absolute positions
                       return (
-                        <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, overflow: 'clip' }}>
+                        <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, width: VIBEMAIL_CARD_WIDTH, maxWidth: '100%', margin: '0 auto', overflow: 'clip' }}>
                           {(() => {
                             type PvItem = { key: string; z: number; node: React.ReactNode };
                             const pvItems: PvItem[] = [];
@@ -3631,8 +3632,7 @@ export function VibeMailInboxWithClaim({
 
               // Default position for each element (fallback when pos not yet set by useEffect)
               const getDefaultPos = (id: string) => {
-                const area = designAreaRef.current;
-                const W = area ? Math.max(60, area.offsetWidth - 24) : 296;
+                const W = VIBEMAIL_CARD_WIDTH - 24;
                 const isImg = id.startsWith('img_') || id === 'img_upload';
                 const imgIdx = isImg ? (id === 'img_upload' ? allImgSrcs.length - 1 : parseInt(id.split('_')[1]) || 0) : 0;
                 const baseY = 8 + (textOnly ? 76 : 0) + (audioMatch ? 68 : 0) + imgIdx * 162;
@@ -3847,8 +3847,7 @@ export function VibeMailInboxWithClaim({
                         designInitRef.current = false;
                         // re-trigger init
                         requestAnimationFrame(() => {
-                          const area = designAreaRef.current;
-                          const W = area ? Math.max(60, area.offsetWidth - 24) : 296;
+                          const W = VIBEMAIL_CARD_WIDTH - 24;
                           setElementPositions(() => {
                             const next: Record<string, {x:number,y:number,w:number,h:number,r?:number}> = {};
                             let y = 8;
@@ -3928,11 +3927,11 @@ export function VibeMailInboxWithClaim({
                   })()}
 
                   {/* Design canvas + elements — wrapped in mail-card container matching preview exactly */}
-                  <div className="flex-1 overflow-y-auto bg-[#0a0a0a]" style={{ padding: '12px 12px 0' }}>
+                  <div className="flex-1 overflow-y-auto bg-[#0a0a0a]" style={{ padding: '12px 12px 0', display: 'flex', justifyContent: 'center' }}>
                   <div
                     ref={designAreaRef}
                     className="relative bg-[#111]"
-                    style={{ height: VIBEMAIL_CARD_HEIGHT, border: '2px solid rgba(255,215,0,0.3)', padding: '0 16px', overflow: 'hidden' }}
+                    style={{ height: VIBEMAIL_CARD_HEIGHT, width: VIBEMAIL_CARD_WIDTH, maxWidth: '100%', flexShrink: 0, border: '2px solid rgba(255,215,0,0.3)', padding: '0 16px', overflow: 'hidden' }}
                     onClick={(e) => { if (e.target === e.currentTarget) setSelectedEl(null); }}
                   >
                     {/* Canvas — draw layer on top */}
@@ -4102,7 +4101,7 @@ export function VibeMailInboxWithClaim({
                           if (!area) return;
                           setIsSavingDesign(true);
                           try {
-                            const W = area.offsetWidth, H = area.offsetHeight;
+                            const W = VIBEMAIL_CARD_WIDTH, H = VIBEMAIL_CARD_HEIGHT;
                             const dpr = window.devicePixelRatio || 1;
 
                             // 1. Upload drawing strokes as transparent PNG (only the drawing layer — no composite)
@@ -4637,7 +4636,7 @@ export function VibeMailInboxWithClaim({
                   const vol = volMatch ? Math.min(1, Math.max(0, parseFloat(volMatch[1]))) : 0.2;
                   const imgUploadUrl = selectedMessage.imageId?.startsWith('img:') ? `${VIBEFID_STORAGE_URL_INLINE}/${selectedMessage.imageId.slice(4)}` : null;
                   return (
-                    <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, background: '#111', overflow: 'hidden' }}>
+                    <div style={{ position: 'relative', height: VIBEMAIL_CARD_HEIGHT, width: VIBEMAIL_CARD_WIDTH, maxWidth: '100%', margin: '0 auto', background: '#111', overflow: 'hidden' }}>
                       {/* Text */}
                       {textOnly && dm.text && (() => { const p = dm.text; return (
                         <div style={{ position:'absolute', left:p.x, top:p.y, width:p.w, height:p.h, transform:`rotate(${p.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', background:'#000', padding:8, boxSizing:'border-box', zIndex:((p.z??0)+1)*10 }}>
