@@ -284,35 +284,39 @@ export default function QuestsPage() {
     checkBadge();
   }, [address, convex]);
 
-  // Fetch Farcaster banners for ALL follow quests (overrides hardcoded stale URLs)
+  // Fetch Farcaster banners — cache banner_url only (not pfp) in localStorage for 24h
+  // dynamicBanners[fid] = real banner URL from Farcaster, or '' if user has no banner
+  const fetchAndCacheBanner = (fid: number) => {
+    const CACHE_KEY = `vbms_fc_banner_${fid}`;
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const { url, ts } = JSON.parse(cached);
+        if (Date.now() - ts < 24 * 60 * 60 * 1000) {
+          if (url) setDynamicBanners(prev => ({ ...prev, [fid]: url }));
+          return;
+        }
+      }
+    } catch {}
+    fetch(`/api/fid/user-profile?fid=${fid}`)
+      .then(r => r.json())
+      .then(d => {
+        const url = d.banner_url || '';  // only real banner, NOT pfp fallback
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ url, ts: Date.now() })); } catch {}
+        if (url) setDynamicBanners(prev => ({ ...prev, [fid]: url }));
+      })
+      .catch(() => {});
+  };
+
   useEffect(() => {
-    const fidsToFetch = SOCIAL_QUESTS
-      .filter(q => q.type === 'follow' && q.targetFid)
-      .map(q => q.targetFid!);
-    for (const fid of fidsToFetch) {
-      fetch(`/api/fid/user-profile?fid=${fid}`)
-        .then(r => r.json())
-        .then(d => {
-          setDynamicBanners(prev => ({ ...prev, [fid]: d.banner_url || d.pfp_url || '' }));
-        })
-        .catch(() => {});
-    }
+    const fids = SOCIAL_QUESTS.filter(q => q.type === 'follow' && q.targetFid).map(q => q.targetFid!);
+    fids.forEach(fetchAndCacheBanner);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Fetch Farcaster banners for custom follow quests
   useEffect(() => {
     if (!customFollowQuests || customFollowQuests.length === 0) return;
-    for (const q of (customFollowQuests as any[])) {
-      const fid = q.targetFid;
-      if (!fid || dynamicBanners[fid]) continue;
-      fetch(`/api/fid/user-profile?fid=${fid}`)
-        .then(r => r.json())
-        .then(d => {
-          setDynamicBanners(prev => ({ ...prev, [fid]: d.banner_url || d.pfp_url || '' }));
-        })
-        .catch(() => {});
-    }
+    (customFollowQuests as any[]).forEach((q: any) => { if (q.targetFid) fetchAndCacheBanner(q.targetFid); });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customFollowQuests]);
 
@@ -970,8 +974,8 @@ export default function QuestsPage() {
                 const isClaimed = claimedCustom.has(questId);
                 const isClaiming = claimingCustom === questId;
                 const pfp = q.pfpUrl;
-                const dynData = q.targetFid ? dynamicBanners[q.targetFid] : undefined;
-                const banner = (dynData && dynData !== pfp) ? dynData : q.bannerUrl || null;
+                const dynBanner = q.targetFid ? dynamicBanners[q.targetFid] : undefined;
+                const banner = dynBanner || q.bannerUrl || null;
                 const bgSrc = banner || pfp;
                 const displayName = (q as any).displayName || q.targetUsername;
                 const profileUrl = `https://warpcast.com/${q.targetUsername}`;
@@ -1066,11 +1070,10 @@ export default function QuestsPage() {
                       const isVerifying = verifying === quest.id;
                       const isClaimingSocial = claiming === quest.id;
                       const pfp = quest.pfpUrl;
-                      // dynamicBanners stores real banner or pfp fallback from Neynar (always fresh)
-                      const dynData = quest.targetFid ? dynamicBanners[quest.targetFid] : undefined;
-                      // Real banner: from Neynar if it's a different URL than pfp, else hardcoded bannerUrl
-                      const banner = dynData && dynData !== pfp ? dynData : quest.bannerUrl || null;
-                      // Background src: banner > pfp blur
+                      // dynamicBanners[fid] = real Farcaster banner URL only (no pfp fallback)
+                      const dynBanner = quest.targetFid ? dynamicBanners[quest.targetFid] : undefined;
+                      // Priority: dynamic Farcaster banner > hardcoded bannerUrl > pfp blur
+                      const banner = dynBanner || quest.bannerUrl || null;
                       const bgSrc = banner || pfp;
                       const displayReward = effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward;
                       const hasVibeFID2x = vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge;
@@ -1109,7 +1112,7 @@ export default function QuestsPage() {
                           }}>
 
                           {/* Banner image area */}
-                          <div className="relative h-28 flex items-center justify-center overflow-hidden">
+                          <div className="relative h-28 bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
                             {bgSrc && (
                               <img
                                 src={bgSrc}
