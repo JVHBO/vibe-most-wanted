@@ -61,7 +61,10 @@ export async function GET(request: NextRequest) {
       { headers: { api_key: NEYNAR_API_KEY } }
     );
     if (!response.ok) return NextResponse.json({ error: "Neynar error" }, { status: 502 });
-    const data = await response.json();
+    const raw = await response.json();
+    // Normalize camelCase Neynar fields to snake_case used by MiniappPreview
+    const rawApp = raw?.mini_app ?? raw?.miniApp ?? {};
+    const data = rawApp.name ? fromManifest(rawApp, url) : raw;
     miniappCache.set(url, { data, expiresAt: Date.now() + CACHE_TTL_MS });
     return NextResponse.json(data, {
       headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200" },
