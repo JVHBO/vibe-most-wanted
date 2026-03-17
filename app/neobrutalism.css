@@ -954,6 +954,25 @@ body.neobrutalism .tour-dex-dropdown > div[style*="z-index"] a:hover * {
   color: #000 !important;
 }
 
+/* Settings gear button → solid red */
+body.neobrutalism .tour-settings-gear {
+  background: #CC2222 !important;
+  background-color: #CC2222 !important;
+  border: 3px solid #000 !important;
+  box-shadow: 3px 3px 0px #000 !important;
+  border-radius: 4px !important;
+}
+body.neobrutalism .tour-settings-gear * {
+  color: #FFF !important;
+  stroke: #FFF !important;
+}
+body.neobrutalism .tour-settings-gear:hover {
+  background: #AA1111 !important;
+  background-color: #AA1111 !important;
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #000 !important;
+}
+
 /* DEX/Balance chip → solid purple with gold text */
 body.neobrutalism .tour-dex-btn,
 body.neobrutalism a.tour-dex-btn,
