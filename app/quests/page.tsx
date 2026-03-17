@@ -787,7 +787,7 @@ export default function QuestsPage() {
               {/* Single compact row: label + input + button + count */}
               <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[#0d0d0d]">
                 <span className="font-black text-[10px] uppercase tracking-wider shrink-0" style={{ color: '#A855F7' }}>
-                  {(t as any)('questsCustomFollows') || 'CUSTOM FOLLOWS'}
+                  {(t as any)('questsCustomFollows') || 'FOLLOW COMMUNITY'}
                 </span>
                 {address && (
                   <>
