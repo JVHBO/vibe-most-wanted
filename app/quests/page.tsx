@@ -855,10 +855,13 @@ export default function QuestsPage() {
                               className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#A855F720] text-left border-b border-[#A855F720] last:border-0"
                             >
                               {u.pfp_url && <img src={u.pfp_url} className="w-6 h-6 rounded-full shrink-0" alt="" />}
-                              <div className="min-w-0">
+                              <div className="min-w-0 flex-1">
                                 <p className="text-white text-[10px] font-bold truncate">{u.display_name}</p>
                                 <p className="text-[#A855F7] text-[8px] truncate">@{u.username} · {u.fid}</p>
                               </div>
+                              {customFollowQuests?.some(q => q.targetFid === u.fid) && (
+                                <span className="text-[8px] text-white/40 shrink-0 ml-1">already added</span>
+                              )}
                             </button>
                           ))}
                         </div>
@@ -867,9 +870,13 @@ export default function QuestsPage() {
                       {customQuestError && <p className="text-red-400 text-[9px] mt-1">{customQuestError}</p>}
 
                       <button
-                        disabled={isAddingCustom || !customQuestUsername.trim()}
+                        disabled={isAddingCustom || !customQuestUsername.trim() || !!(customQuestPreview && customFollowQuests?.some(q => q.targetFid === customQuestPreview.fid))}
                         onClick={async () => {
                           if (!address || !customQuestUsername.trim()) return;
+                          if (customQuestPreview && customFollowQuests?.some(q => q.targetFid === customQuestPreview.fid)) {
+                            setCustomQuestError('This user is already in Follow Community');
+                            return;
+                          }
                           setIsAddingCustom(true);
                           setCustomQuestError('');
                           try {
