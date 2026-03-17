@@ -626,13 +626,13 @@ export default function RaidPage() {
       <div className="absolute top-0 left-0 right-0 z-10 px-3 pt-2 pb-1 pointer-events-none">
         <div className="flex items-start gap-2 pointer-events-auto">
           {/* Left - Back */}
-          <button
-            onClick={() => router.push('/')}
-            className="raid-btn-back shrink-0 px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white border-2 border-black text-[11px] font-bold uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-            style={{ boxShadow: '3px 3px 0px #000' }}
+          <Link
+            href="/"
+            className="shrink-0 px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+            style={{ boxShadow: '4px 4px 0px #000' }}
           >
             {(t as (k: string) => string)('raidBossBack')}
-          </button>
+          </Link>
 
           {/* Center - Boss Name + Description */}
           {currentBoss && (() => {

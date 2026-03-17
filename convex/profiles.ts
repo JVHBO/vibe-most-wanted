@@ -2946,6 +2946,21 @@ export const getProfileByFid = query({
   },
 });
 
+export const getUsernamesByFids = query({
+  args: { fids: v.array(v.number()) },
+  handler: async (ctx, { fids }) => {
+    const results: Record<number, string> = {};
+    for (const fid of fids.slice(0, 20)) {
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_fid", (q) => q.eq("farcasterFid", fid))
+        .first();
+      if (profile?.username) results[fid] = profile.username;
+    }
+    return results;
+  },
+});
+
 /**
  * Get top players by coins (for admin scripts)
  */

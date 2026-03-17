@@ -5,6 +5,7 @@ import { useQuery, useMutation, useAction, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { SOCIAL_QUESTS, type SocialQuest } from "@/lib/socialQuests";
 import { AudioManager } from "@/lib/audio-manager";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -474,13 +475,14 @@ export default function QuestsPage() {
       {/* Header */}
       <div className={`absolute top-0 left-0 right-0 z-20 ${activeTab === 'messages' ? 'bg-[#111]' : 'bg-[#1a1a1a]'} border-b-4 border-black`}>
         <div className="relative flex items-center justify-between px-3 py-1.5">
-          <button
-            onClick={() => router.push("/")}
+          <Link
+            href="/"
+            onClick={() => AudioManager.buttonClick()}
             className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
             style={{ boxShadow: '4px 4px 0px #000' }}
           >
             ← BACK
-          </button>
+          </Link>
           <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[55%]"><AutoFitText>SOCIAL QUESTS</AutoFitText></h1>
           <div className="w-20" />
         </div>

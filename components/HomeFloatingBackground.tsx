@@ -40,8 +40,8 @@ interface FloatItem {
   bannerUrl?: string;
 }
 
-const CACHE_KEY = "vmw_hfb_v22";
-const CACHE_DATE_KEY = "vmw_hfb_date_v15";
+const CACHE_KEY = "vmw_hfb_v25";
+const CACHE_DATE_KEY = "vmw_hfb_date_v18";
 const VIBEFID_CONVEX = "https://scintillating-mandrill-101.convex.cloud";
 
 // Casts to hide from the background animation
@@ -542,10 +542,18 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
             winnerNum: idx + 1,
           }));
 
+          // Lookup VMW usernames by FID
+          const validCards = cards.filter(c => c.cardImageUrl);
+          const fids = validCards.map(c => c.fid);
+          let fidToUsername: Record<number, string> = {};
+          try {
+            fidToUsername = await convex.query(api.profiles.getUsernamesByFids, { fids });
+          } catch {}
+
           apiItems = [
-            ...cards.filter(c => c.cardImageUrl).map(c => ({
+            ...validCards.map(c => ({
               id: c._id,
-              href: `/fid/${c.fid}`,
+              href: fidToUsername[c.fid] ? `/profile/${fidToUsername[c.fid]}` : `/?fid=${c.fid}`,
               type: "vibecard" as const,
               imageUrl: c.cardImageUrl,
             })),
@@ -661,15 +669,10 @@ export function HomeFloatingBackground({ onOpenFidModal }: HomeFloatingBackgroun
           el.addEventListener("click", (e) => {
             e.preventDefault();
             const href = el.dataset.href || item.href;
-            // vibecard /fid/N → open modal instead of navigating
+            // vibecard → navigate to profile page
             if (item.type === "vibecard") {
-              const match = href.match(/\/fid\/(\d+)/);
-              if (match) {
-                const fidNum = parseInt(match[1]);
-                if (onOpenFidModalRef.current) { onOpenFidModalRef.current(fidNum); return; }
-                window.dispatchEvent(new CustomEvent('open-fid-modal', { detail: { fid: fidNum } }));
-                return;
-              }
+              routerRef.current?.push(href);
+              return;
             }
             if (href.startsWith("http")) window.open(href, "_blank", "noopener");
             else routerRef.current?.push(href);

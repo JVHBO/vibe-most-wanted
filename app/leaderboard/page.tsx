@@ -429,9 +429,10 @@ const convex = useConvex();
           <Link
             href="/"
             onClick={() => AudioManager.buttonClick()}
-            className="group px-3 py-2 bg-black/50 hover:bg-vintage-gold/10 text-vintage-burnt-gold hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/50 rounded transition-all duration-200 text-xs font-bold uppercase tracking-wider"
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+            style={{ boxShadow: '4px 4px 0px #000' }}
           >
-            <span className="group-hover:-translate-x-0.5 inline-block transition-transform">&larr;</span> Back
+            ← BACK
           </Link>
 
           {/* Center: Title */}
@@ -454,12 +455,12 @@ const convex = useConvex();
               <button
                 onClick={handleOpenDefenseDeck}
                 disabled={isLoadingCards || nfts.length < HAND_SIZE}
-                className={`px-3 py-2 rounded text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-1.5 ${
+                className={`ldb-def-btn px-3 py-1 border-4 border-black text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
                   isLoadingCards
-                    ? 'bg-black/50 border border-vintage-gold/30 text-vintage-burnt-gold/50'
+                    ? 'bg-black/50 text-vintage-burnt-gold/50 cursor-not-allowed'
                     : userProfile.hasDefenseDeck
-                    ? 'bg-black/50 border border-vintage-gold/30 text-vintage-burnt-gold hover:text-vintage-gold hover:border-vintage-gold/50'
-                    : 'bg-amber-500/20 border border-amber-500/50 text-amber-400 hover:bg-amber-500/30'
+                    ? 'bg-[#FFD400] hover:bg-yellow-300 text-black'
+                    : 'bg-amber-500 hover:bg-amber-400 text-black'
                 }`}
               >
                 {isLoadingCards ? (
@@ -548,10 +549,10 @@ const convex = useConvex();
                         <button
                           onClick={() => handleAttackClick(top3[1])}
                           disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
-                          className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition ${
+                          className={`ldb-attack-btn px-2.5 py-1 text-[10px] font-black uppercase tracking-widest transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none border-4 border-black ${
                             attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
-                              ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
-                              : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
+                              ? 'bg-[#CC2222] hover:bg-[#AA1111] text-white'
+                              : 'bg-gray-800 text-gray-600 cursor-not-allowed'
                           }`}
                         >
                           Attack
@@ -584,10 +585,10 @@ const convex = useConvex();
                         <button
                           onClick={() => handleAttackClick(top3[0])}
                           disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
-                          className={`px-4 py-1.5 rounded text-xs font-bold uppercase tracking-wide transition ${
+                          className={`ldb-attack-btn px-4 py-1.5 text-xs font-black uppercase tracking-widest transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none border-4 border-black ${
                             attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
-                              ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
-                              : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
+                              ? 'bg-[#CC2222] hover:bg-[#AA1111] text-white'
+                              : 'bg-gray-800 text-gray-600 cursor-not-allowed'
                           }`}
                         >
                           Attack
@@ -620,10 +621,10 @@ const convex = useConvex();
                         <button
                           onClick={() => handleAttackClick(top3[2])}
                           disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
-                          className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition ${
+                          className={`ldb-attack-btn px-2.5 py-1 text-[10px] font-black uppercase tracking-widest transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none border-4 border-black ${
                             attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
-                              ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
-                              : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
+                              ? 'bg-[#CC2222] hover:bg-[#AA1111] text-white'
+                              : 'bg-gray-800 text-gray-600 cursor-not-allowed'
                           }`}
                         >
                           Attack
@@ -690,10 +691,10 @@ const convex = useConvex();
                               <button
                                 onClick={() => handleAttackClick(profile)}
                                 disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
-                                className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wide transition ${
+                                className={`ldb-attack-btn px-2.5 py-1 text-[10px] font-black uppercase tracking-widest transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none border-4 border-black ${
                                   attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
-                                    ? 'bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30'
-                                    : 'bg-gray-800/50 text-gray-600 cursor-not-allowed border border-gray-700/50'
+                                    ? 'bg-[#CC2222] hover:bg-[#AA1111] text-white'
+                                    : 'bg-gray-800 text-gray-600 cursor-not-allowed'
                                 }`}
                               >
                                 Attack

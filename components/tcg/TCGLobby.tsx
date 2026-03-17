@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import Link from "next/link";
 import { AudioManager } from "@/lib/audio-manager";
 import { useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -270,14 +271,15 @@ export function TCGLobby({
       <div className="absolute top-0 left-0 right-0 z-10 p-3 bg-gradient-to-b from-black via-black/90 to-transparent backdrop-blur-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           {/* Left: Back button */}
-          <button
+          <Link
+            href="/"
             onClick={() => { AudioManager.buttonNav(); onGoHome(); }}
             onMouseEnter={() => AudioManager.buttonHover()}
-            className="px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white border-2 border-black text-[11px] font-bold uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-            style={{ boxShadow: '3px 3px 0px #000' }}
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+            style={{ boxShadow: '4px 4px 0px #000' }}
           >
             ← BACK
-          </button>
+          </Link>
 
           {/* Center: Title */}
           <h1 className="text-base md:text-xl font-display font-bold text-vintage-gold uppercase tracking-widest">
@@ -288,8 +290,7 @@ export function TCGLobby({
           <button
             onClick={() => { AudioManager.buttonNav(); onNavigate("deck-builder"); }}
             onMouseEnter={() => AudioManager.buttonHover()}
-            className="px-3 py-1.5 bg-[#FFD400] text-black border-2 border-black text-xs font-bold uppercase tracking-wider transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-          style={{ boxShadow: '3px 3px 0px #000' }}
+            className="tcg-tab-btn px-3 py-1.5 bg-[#FFD400] text-black border-4 border-black text-xs font-bold uppercase tracking-wider transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
           >
             {hasDeck ? t('tcgEdit') : t('tcgBuildDeck')}
           </button>
@@ -312,34 +313,31 @@ export function TCGLobby({
         <div className="flex gap-1 mb-4">
           <button
             onClick={() => setLobbyTab("play")}
-            className={`flex-1 py-2.5 px-3 font-black text-xs uppercase tracking-wider border-2 border-black transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none ${
+            className={`tcg-tab-btn flex-1 py-2.5 px-3 font-black text-xs uppercase tracking-wider border-4 border-black transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
               lobbyTab === "play"
-                ? "bg-vintage-gold text-black"
+                ? "bg-[#CC2222] text-white"
                 : "bg-gray-800 text-vintage-gold"
             }`}
-            style={{ boxShadow: lobbyTab === "play" ? '3px 3px 0px #000' : '2px 2px 0px #000' }}
           >
             {t('tcgPlay')}
           </button>
           <button
             onClick={() => setLobbyTab("leaderboard")}
-            className={`flex-1 py-2.5 px-3 font-black text-xs uppercase tracking-wider border-2 border-black transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none ${
+            className={`tcg-tab-btn flex-1 py-2.5 px-3 font-black text-xs uppercase tracking-wider border-4 border-black transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
               lobbyTab === "leaderboard"
-                ? "bg-vintage-gold text-black"
+                ? "bg-[#FFD400] text-black"
                 : "bg-gray-800 text-vintage-gold"
             }`}
-            style={{ boxShadow: lobbyTab === "leaderboard" ? '3px 3px 0px #000' : '2px 2px 0px #000' }}
           >
             Leaderboard
           </button>
           <button
             onClick={() => setLobbyTab("rules")}
-            className={`flex-1 py-2.5 px-3 font-black text-xs uppercase tracking-wider border-2 border-black transition-all active:translate-x-[1px] active:translate-y-[1px] active:shadow-none ${
+            className={`tcg-tab-btn flex-1 py-2.5 px-3 font-black text-xs uppercase tracking-wider border-4 border-black transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ${
               lobbyTab === "rules"
-                ? "bg-vintage-gold text-black"
+                ? "bg-[#FFD400] text-black"
                 : "bg-gray-800 text-vintage-gold"
             }`}
-            style={{ boxShadow: lobbyTab === "rules" ? '3px 3px 0px #000' : '2px 2px 0px #000' }}
           >
             {t('tcgRules')}
           </button>
@@ -366,7 +364,7 @@ export function TCGLobby({
                     </div>
                     <button
                       onClick={() => setShowPoolModal(true)}
-                      className="tcg-btn-pool px-3 py-2 rounded text-xs font-bold uppercase tracking-wide transition-all flex items-center gap-1.5 text-green-400"
+                      className="tcg-btn-pool-action px-3 py-2 bg-[#FFD400] hover:bg-yellow-300 text-black border-4 border-black text-xs font-black uppercase tracking-wide transition-all flex items-center gap-1.5 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
                     >
                       Pool: {(myDefensePool?.poolAmount || 0).toLocaleString()} {myDefensePool?.isActive && <span className="text-green-400">&#10003;</span>}
                     </button>
@@ -387,8 +385,7 @@ export function TCGLobby({
                   <p className="text-vintage-burnt-gold text-sm mb-4">Create your first deck to start battling!</p>
                   <button
                     onClick={() => onNavigate("deck-builder")}
-                    className="px-6 py-3 bg-vintage-gold hover:bg-yellow-300 text-black font-black border-2 border-black text-sm uppercase tracking-wide transition-all active:translate-y-[2px] active:shadow-none"
-                    style={{ boxShadow: '3px 3px 0px #000' }}
+                    className="tcg-tab-btn px-6 py-3 bg-[#FFD400] hover:bg-yellow-300 text-black font-black border-4 border-black text-sm uppercase tracking-wide transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
                   >
                     {t('tcgBuildDeck')}
                   </button>
@@ -414,8 +411,7 @@ export function TCGLobby({
                       <button
                         onClick={() => { AudioManager.buttonClick(); onStartPvE(); }}
                         onMouseEnter={() => AudioManager.buttonHover()}
-                        className="tcg-btn-cpu w-full px-4 py-3 bg-green-600 hover:bg-green-500 text-black font-black text-sm uppercase tracking-wide border-2 border-black transition-all active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2"
-                        style={{ boxShadow: '3px 3px 0px #000' }}
+                        className="tcg-btn-cpu w-full px-4 py-3 bg-[#16A34A] hover:bg-green-500 text-white font-black text-sm uppercase tracking-wide border-4 border-black transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-2"
                       >
                         {t('tcgBattleCpu')} {dailyBattles < REWARDED_BATTLES_PER_DAY ? `(+${BATTLE_AURA_REWARD} AURA)` : ""}
                       </button>
@@ -446,8 +442,7 @@ export function TCGLobby({
                             onClick={() => { AudioManager.buttonClick(); handleFindMatch(); }}
                             onMouseEnter={() => AudioManager.buttonHover()}
                             disabled={!hasDeck}
-                            className="tcg-btn-findmatch w-full px-4 py-3 bg-amber-500 hover:bg-amber-400 text-black font-black text-sm uppercase tracking-wide border-2 border-black transition-all disabled:opacity-40 disabled:cursor-not-allowed active:translate-y-[2px] active:shadow-none flex items-center justify-center gap-2 mb-2"
-                            style={{ boxShadow: '3px 3px 0px #000' }}
+                            className="tcg-btn-findmatch w-full px-4 py-3 bg-[#FFD400] hover:bg-yellow-300 text-black font-black text-sm uppercase tracking-wide border-4 border-black transition-all disabled:opacity-40 disabled:cursor-not-allowed active:translate-x-[3px] active:translate-y-[3px] active:shadow-none flex items-center justify-center gap-2 mb-2"
                           >
                             Find Match
                           </button>
@@ -459,8 +454,7 @@ export function TCGLobby({
                             onClick={() => { AudioManager.buttonClick(); handleCreateMatch(); }}
                             onMouseEnter={() => AudioManager.buttonHover()}
                             disabled={!hasDeck}
-                            className="tcg-btn-createroom w-full px-3 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-black text-xs uppercase tracking-wide border-2 border-black transition-all disabled:opacity-40 disabled:cursor-not-allowed active:translate-y-[1px] active:shadow-none"
-                            style={{ boxShadow: '2px 2px 0px #000' }}
+                            className="tcg-btn-createroom w-full px-3 py-2.5 bg-[#7C3AED] hover:bg-purple-500 text-white font-black text-xs uppercase tracking-wide border-4 border-black transition-all disabled:opacity-40 disabled:cursor-not-allowed active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
                           >
                             Create Room
                           </button>
@@ -478,8 +472,7 @@ export function TCGLobby({
                               onClick={() => { if (roomIdInput.length >= 4) { AudioManager.buttonClick(); handleJoinMatch(roomIdInput); } }}
                               onMouseEnter={() => AudioManager.buttonHover()}
                               disabled={!hasDeck || roomIdInput.length < 4}
-                              className="tcg-btn-join px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-black text-xs uppercase tracking-wide border-2 border-black transition-all disabled:opacity-40 disabled:cursor-not-allowed active:translate-y-[1px] active:shadow-none"
-                              style={{ boxShadow: '2px 2px 0px #000' }}
+                              className="tcg-btn-join px-4 py-2 bg-[#CC2222] hover:bg-[#AA1111] text-white font-black text-xs uppercase tracking-wide border-4 border-black transition-all disabled:opacity-40 disabled:cursor-not-allowed active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
                             >
                               Join
                             </button>
@@ -759,7 +752,7 @@ export function TCGLobby({
                   </div>
                   <button
                     onClick={handleWithdrawPool}
-                    className="w-full py-2 bg-red-900/40 hover:bg-red-900/60 text-red-400 border border-red-500/40 rounded font-bold text-xs uppercase tracking-wider transition-all"
+                    className="tcg-btn-pool-action w-full py-2 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black font-black text-xs uppercase tracking-wider transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
                   >
                     Withdraw Pool
                   </button>
@@ -774,12 +767,9 @@ export function TCGLobby({
                         <button
                           key={tier}
                           onClick={() => setSelectedPoolTier(tier)}
-                          className={`px-3 py-1.5 text-[10px] font-black transition-all border-2 border-black active:translate-y-[1px] active:shadow-none ${
-                            selectedPoolTier === tier
-                              ? "bg-vintage-gold text-black"
-                              : "bg-gray-800 text-vintage-gold"
+                          className={`tcg-btn-tier px-3 py-1.5 text-[10px] font-black transition-all border-4 border-black active:translate-x-[3px] active:translate-y-[3px] active:shadow-none bg-[#FFD400] hover:bg-yellow-300 text-black ${
+                            selectedPoolTier === tier ? "opacity-100" : "opacity-50"
                           }`}
-                          style={{ boxShadow: selectedPoolTier === tier ? '2px 2px 0px #000' : '1px 1px 0px #000' }}
                         >
                           {(tier / 1000).toFixed(0)}k
                         </button>
@@ -817,8 +807,7 @@ export function TCGLobby({
                   <button
                     onClick={handleActivatePool}
                     disabled={!activeDeck?._id || poolTxStep === "transferring" || Number(vbmsBalance || 0) < selectedPoolTier}
-                    className="w-full py-2.5 bg-green-600 hover:bg-green-500 text-black font-black text-xs uppercase tracking-wider border-2 border-black transition-all disabled:opacity-40 active:translate-y-[1px] active:shadow-none"
-                    style={{ boxShadow: '2px 2px 0px #000' }}
+                    className="tcg-btn-pool-action w-full py-2.5 bg-[#16A34A] hover:bg-green-500 text-white font-black text-xs uppercase tracking-wider border-4 border-black transition-all disabled:opacity-40 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
                   >
                     {poolTxStep === "transferring" ? "Sending VBMS..." : "Activate Defense Pool"}
                   </button>
@@ -828,7 +817,7 @@ export function TCGLobby({
 
               <button
                 onClick={() => setShowPoolModal(false)}
-                className="w-full mt-3 py-1.5 text-vintage-burnt-gold/50 hover:text-vintage-gold text-[10px] uppercase tracking-wider transition-colors"
+                className="tcg-btn-pool-action w-full mt-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-vintage-gold border-4 border-black font-black text-[10px] uppercase tracking-wider transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
               >
                 Close
               </button>

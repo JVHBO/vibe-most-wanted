@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { FeaturedCastAuctions } from "@/components/FeaturedCastAuctions";
 import type { NeynarCast } from "@/lib/neynar";
@@ -153,13 +154,13 @@ export default function CastQuestsPage() {
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-20 bg-vintage-charcoal/90 border-b-2 border-vintage-gold/40 backdrop-blur-sm">
         <div className="flex items-center justify-between px-3 py-2.5">
-          <button
-            onClick={() => router.push("/")}
-            className="px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white border-2 border-black text-[11px] font-bold uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-            style={{ boxShadow: '3px 3px 0px #000' }}
+          <Link
+            href="/"
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+            style={{ boxShadow: '4px 4px 0px #000' }}
           >
             ← BACK
-          </button>
+          </Link>
           <h1 className="text-xl font-display font-bold text-vintage-gold tracking-wider">{t('questsTitle')}</h1>
           <div className="w-20" />
         </div>

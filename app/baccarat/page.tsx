@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
@@ -804,13 +805,13 @@ export default function BaccaratPage() {
       {/* Header */}
       <div className="bacc-header border-b-4 border-black px-4 py-2 bg-[#1a1a1a]">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <button
-            onClick={() => router.push('/')}
-            className="bacc-back-btn px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+          <Link
+            href="/"
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
             style={{ boxShadow: '4px 4px 0px #000' }}
           >
             ← {t('baccaratBack')}
-          </button>
+          </Link>
           <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[50%]">
             <AutoFitText>{t('baccaratTitle')}</AutoFitText>
           </h1>

@@ -23,6 +23,7 @@ const RARITY_SHADOW: Record<string, string> = {
 interface CardData {
   _id: string;
   fid: number;
+  username?: string;
   cardImageUrl: string;
   rarity: string;
 }
@@ -148,7 +149,7 @@ export function FloatingCardsBackground() {
           `;
 
           const link = document.createElement("a");
-          link.href = `/fid/${c.fid}`;
+          link.href = c.username ? `/profile/${c.username}` : `/profile/${c.fid}`;
           link.style.cssText = "display:block;width:100%;height:100%;";
           link.addEventListener("mouseenter", () => {
             wrapper.style.filter = "brightness(0.75)";

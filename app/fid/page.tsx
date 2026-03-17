@@ -37,6 +37,7 @@ import { DailyLeader } from "@/components/fid/DailyLeader";
 import { useClaimVBMS } from "@/hooks/fid/useVBMSContracts";
 import { FloatingCardsBackground } from "@/components/fid/FloatingCardsBackground";
 import { shareToFarcaster } from "@/lib/fid/share-utils";
+import { VibeFidMailModal } from "@/components/fid/VibeFidMailModal";
 
 
 
@@ -173,6 +174,7 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showCardModal, setShowCardModal] = useState(false);
   const [mintedSuccessfully, setMintedSuccessfully] = useState(false);
 
   // Neynar score state
@@ -1565,13 +1567,12 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
         <div className="pointer-events-auto flex flex-col items-center gap-3">
           {/* Main action button */}
           {myCard ? (
-            <Link
-              href={`/fid/${myCard.fid}`}
-              onClick={() => AudioManager.buttonClick()}
+            <button
+              onClick={() => { AudioManager.buttonClick(); setShowCardModal(true); }}
               className="px-10 py-4 bg-vintage-gold text-vintage-black font-bold text-xl rounded-xl transition-all hover:scale-105 hover:bg-vintage-burnt-gold shadow-[0_0_30px_rgba(255,215,0,0.3)]"
             >
               {t.viewMyCard || "View My Card"}
-            </Link>
+            </button>
           ) : (
             <button
               onClick={handleGenerateCard}
@@ -1931,6 +1932,15 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
           isOpen={showAboutModal}
           onClose={() => setShowAboutModal(false)}
         />
+
+        {showCardModal && myCard && (
+          <VibeFidMailModal
+            fid={myCard.fid}
+            username={myCard.username}
+            ownerFid={effectiveFarcasterUser?.fid}
+            onClose={() => setShowCardModal(false)}
+          />
+        )}
 
         {/* OLD MODAL REMOVED - replaced with FidAboutTraitsModal component */}
         {false && showAboutModal && (

@@ -432,12 +432,12 @@ ${shareT.shareTextMintYours}`;
                   </div>
 
                   {fid && (
-                    <a
-                      href={`/fid/${fid}`}
+                    <button
+                      onClick={() => window.dispatchEvent(new CustomEvent('open-fid-modal', { detail: { fid } }))}
                       className="block w-full px-4 py-2 bg-vintage-gold text-vintage-black font-bold rounded-lg hover:bg-vintage-burnt-gold transition-colors text-center text-sm"
                     >
-                      View Card Page
-                    </a>
+                      View Card
+                    </button>
                   )}
                 </div>
               )}

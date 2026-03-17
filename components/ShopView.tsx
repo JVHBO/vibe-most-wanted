@@ -7,6 +7,7 @@ import { ShopNotification } from "./ShopNotification";
 import { PackOpeningAnimation } from "./PackOpeningAnimation";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { getAssetUrl } from "@/lib/ipfs-assets";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
 import { AudioManager } from "@/lib/audio-manager";
@@ -123,7 +124,7 @@ export function ShopView({ address }: ShopViewProps) {
   const totalUnopenedPacks = playerPacks?.reduce((sum: number, pack: any) => sum + (pack.unopened || 0), 0) || 0;
 
   return (
-    <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
+    <div className="fixed inset-0 bg-vintage-deep-black">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black/90 to-vintage-charcoal/50" />
 
@@ -139,14 +140,15 @@ export function ShopView({ address }: ShopViewProps) {
       {/* TOP HUD */}
       <div className="absolute top-0 left-0 right-0 z-10 p-3">
         <div className="relative flex items-center justify-between">
-          <button
-            onClick={() => { AudioManager.buttonNav(); router.push("/"); }}
+          <Link
+            href="/"
+            onClick={() => AudioManager.buttonNav()}
             onMouseEnter={() => AudioManager.buttonHover()}
-            className="shop-back-btn px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
             style={{ boxShadow: '4px 4px 0px #000' }}
           >
             {(t as (k: string) => string)('raidBossBack')}
-          </button>
+          </Link>
 
           <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[50%]"><AutoFitText>{t('shopTitle') as string}</AutoFitText></h1>
 
@@ -158,12 +160,12 @@ export function ShopView({ address }: ShopViewProps) {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="absolute inset-0 pt-14 pb-16 overflow-hidden flex flex-col">
+      <div className="absolute inset-0 pt-14 pb-16 overflow-y-auto flex flex-col">
         <div className="relative z-10 px-4 py-2 flex-1 flex flex-col justify-center">
 
           {/* Daily Free Pack Card */}
           <div className="max-w-sm mx-auto mb-4">
-            <div className={`bg-vintage-charcoal/50 border ${isArb ? 'border-amber-400/50' : 'border-vintage-gold/30'} rounded-xl p-4 transition-all`}>
+            <div className={`bg-vintage-charcoal/50 border ${isArb ? 'border-amber-400/50' : 'border-vintage-gold/30'} rounded-xl p-4 transition-all shadow-xl`}>
 
               {/* Pack Header */}
               <div className="flex items-center gap-4 mb-3">
@@ -174,20 +176,20 @@ export function ShopView({ address }: ShopViewProps) {
                   </h3>
                   <p className="text-vintage-ice/60 text-xs">{t('shopNothingCardPerPack' as any)}</p>
                 </div>
-                <div style={{ padding:"4px 12px", borderRadius:"999px", fontSize:"12px", fontWeight:700, background:"#F59E0B", color:"#000" }}>
-                  {isArb ? t('shopDayArb' as any) : t('shopDayBase' as any)}
+                <div style={{ padding:"4px 12px", borderRadius:"999px", fontSize:"12px", fontWeight:700, background:"#D4A843", color:"#000" }}>
+                  {packsPerDay}/day
                 </div>
               </div>
 
               {/* Nothing Card Warning */}
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mb-3">
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mb-3 shadow-lg">
                 <p className="text-amber-300/80 text-xs text-center">
                   {t('shopNothingCardWarning')}
                 </p>
               </div>
 
               {/* Drop Rates */}
-              <div className="bg-vintage-black/30 border border-vintage-gold/20 rounded-lg p-2 mb-3 text-xs">
+              <div className="bg-vintage-black/30 border border-vintage-gold/20 rounded-lg p-2 mb-3 text-xs shadow-lg">
                 <div className="grid grid-cols-4 gap-1 text-center">
                   <div>
                     <span className="text-vintage-ice/50 block">Common</span>
@@ -210,7 +212,7 @@ export function ShopView({ address }: ShopViewProps) {
 
               {/* ARB Mode Toggle */}
               {arbSupported && (
-                <div className="flex items-center justify-between rounded-lg px-3 py-2 mb-3 border bg-vintage-black/30 border-vintage-gold/20">
+                <div className="flex items-center justify-between rounded-lg px-3 py-2 mb-3 border bg-vintage-black/30 border-vintage-gold/20 shadow-lg">
                   <div>
                     <p className="font-bold text-sm text-vintage-ice/70">
                       {t('shopArbMode' as any)}
@@ -220,11 +222,11 @@ export function ShopView({ address }: ShopViewProps) {
                   <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
                     <button
                       onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
-                      className={`px-3 py-1 font-bold text-xs uppercase cursor-pointer rounded ${effectiveChain === 'base' ? 'ct-base-active' : 'ct-base-inactive'}`}
+                      className={`px-3 py-1 font-bold text-xs uppercase cursor-pointer rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] ${effectiveChain === 'base' ? 'ct-base-active' : 'ct-base-inactive'}`}
                     >BASE</button>
                     <button
                       onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
-                      className={`px-3 py-1 font-bold text-xs uppercase cursor-pointer rounded ${effectiveChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive'}`}
+                      className={`px-3 py-1 font-bold text-xs uppercase cursor-pointer rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] ${effectiveChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive'}`}
                     >ARB</button>
                   </div>
                 </div>
@@ -237,8 +239,8 @@ export function ShopView({ address }: ShopViewProps) {
                     onClick={() => { AudioManager.buttonClick(); handleClaimDailyFree(); }}
                     onMouseEnter={() => AudioManager.buttonHover()}
                     disabled={claimingDaily}
-                    className={`w-full h-11 font-display font-bold rounded-lg transition-all disabled:opacity-50 text-vintage-black shadow-[0_4px_0_rgba(0,0,0,0.5)] hover:shadow-[0_2px_0_rgba(0,0,0,0.5)] hover:translate-y-[2px] active:shadow-none active:translate-y-[4px] ${isArb ? 'bg-amber-500 bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500' : 'bg-vintage-gold bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500'}`}
-                  >
+                    className="shop-claim-btn w-full h-11 font-display font-bold rounded-lg transition-all disabled:opacity-50 text-vintage-black active:translate-y-[4px] bg-vintage-gold bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500"
+                                      >
                     {claimingDaily ? "..." : isArb ? t('shopClaimFreePackArb' as any) : t('shopClaimFreePack' as any)}
                   </button>
                 ) : (
@@ -272,8 +274,8 @@ export function ShopView({ address }: ShopViewProps) {
                 }
               }}
               disabled={openingPack}
-              className="py-3 px-4 rounded-xl font-display font-bold transition-all flex items-center justify-center gap-2 bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold hover:bg-vintage-gold/30"
-            >
+              className="shop-open-btn py-3 px-4 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#FFD400] hover:bg-[#ECC200] text-black active:translate-x-[3px] active:translate-y-[3px]"
+                          >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20 12v10H4V12" />
                 <path d="M2 7h20v5H2z" />
@@ -288,8 +290,8 @@ export function ShopView({ address }: ShopViewProps) {
             <button
               onMouseEnter={() => AudioManager.buttonHover()}
               onClick={() => { AudioManager.buttonClick(); router.push('/shop/burn'); }}
-              className="py-3 px-4 rounded-xl font-display font-bold transition-all flex items-center justify-center gap-2 bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30"
-            >
+              className="shop-burn-btn py-3 px-4 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#CC2222] hover:bg-[#AA1111] text-white active:translate-x-[3px] active:translate-y-[3px]"
+                          >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 6h18" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
@@ -305,19 +307,19 @@ export function ShopView({ address }: ShopViewProps) {
           <div className="max-w-sm mx-auto">
             <p className="text-xs text-vintage-ice/40 text-center mb-2">Burn Values (VBMS)</p>
             <div className="grid grid-cols-4 gap-1 text-xs text-center">
-              <div className="rounded p-2 bg-vintage-charcoal/30">
+              <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
                 <span className="text-vintage-ice/50 block">Common</span>
                 <span className="text-green-400 font-bold">200</span>
               </div>
-              <div className="rounded p-2 bg-vintage-charcoal/30">
+              <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
                 <span className="text-blue-400/70 block">Rare</span>
                 <span className="text-green-400 font-bold">1.1k</span>
               </div>
-              <div className="rounded p-2 bg-vintage-charcoal/30">
+              <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
                 <span className="text-purple-400/70 block">Epic</span>
                 <span className="text-green-400 font-bold">4k</span>
               </div>
-              <div className="rounded p-2 bg-vintage-charcoal/30">
+              <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
                 <span className="text-yellow-400/70 block">Legend</span>
                 <span className="text-green-400 font-bold">40k</span>
               </div>
@@ -326,6 +328,7 @@ export function ShopView({ address }: ShopViewProps) {
 
         </div>
       </div>
+
 
       {/* BOTTOM BAR */}
       <div className="absolute bottom-0 left-0 right-0 z-10 bg-vintage-charcoal/90 border-t border-vintage-gold/20">
@@ -336,13 +339,6 @@ export function ShopView({ address }: ShopViewProps) {
           >
             Help
           </button>
-
-          <div className="text-center">
-            <p className="text-xs text-vintage-ice/50">Daily Packs</p>
-            <p className={`text-sm font-bold ${isArb ? 'text-blue-400' : 'text-green-400'}`}>
-              {packsPerDay}/day {isArb ? '(ARB)' : ''}
-            </p>
-          </div>
 
           <div className="text-right">
             <p className="text-xs text-vintage-ice/50">Your Packs</p>
