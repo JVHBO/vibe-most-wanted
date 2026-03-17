@@ -1070,10 +1070,8 @@ export default function QuestsPage() {
                       const isVerifying = verifying === quest.id;
                       const isClaimingSocial = claiming === quest.id;
                       const pfp = quest.pfpUrl;
-                      // dynamicBanners[fid] = real Farcaster banner URL only (no pfp fallback)
-                      const dynBanner = quest.targetFid ? dynamicBanners[quest.targetFid] : undefined;
-                      // Priority: dynamic Farcaster banner > hardcoded bannerUrl > pfp blur
-                      const banner = dynBanner || quest.bannerUrl || null;
+                      const dynData = quest.targetFid ? dynamicBanners[quest.targetFid] : undefined;
+                      const banner = dynData && dynData !== pfp ? dynData : quest.bannerUrl || null;
                       const bgSrc = banner || pfp;
                       const displayReward = effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward;
                       const hasVibeFID2x = vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge;
@@ -1112,14 +1110,14 @@ export default function QuestsPage() {
                           }}>
 
                           {/* Banner image area */}
-                          <div className="relative h-28 bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
+                          <div className="relative h-28 bg-[#111] flex items-center justify-center overflow-hidden">
                             {bgSrc && (
                               <img
                                 src={bgSrc}
                                 className="absolute inset-0 w-full h-full object-cover"
                                 style={{
-                                  opacity: banner ? 0.9 : 0.75,
-                                  filter: banner ? 'none' : 'blur(8px)',
+                                  opacity: banner ? 0.9 : 0.6,
+                                  filter: banner ? 'none' : 'blur(10px)',
                                   transform: banner ? 'none' : 'scale(1.5)',
                                 }}
                                 alt=""
