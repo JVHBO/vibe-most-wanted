@@ -284,41 +284,22 @@ export default function QuestsPage() {
     checkBadge();
   }, [address, convex]);
 
-  // Fetch Farcaster banners — cache banner_url only (not pfp) in localStorage for 24h
-  // dynamicBanners[fid] = real banner URL from Farcaster, or '' if user has no banner
-  const fetchAndCacheBanner = (fid: number) => {
-    const CACHE_KEY = `vbms_fc_banner_${fid}`;
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        const { url, ts } = JSON.parse(cached);
-        if (Date.now() - ts < 24 * 60 * 60 * 1000) {
-          if (url) setDynamicBanners(prev => ({ ...prev, [fid]: url }));
-          return;
-        }
-      }
-    } catch {}
-    fetch(`/api/fid/user-profile?fid=${fid}`)
-      .then(r => r.json())
-      .then(d => {
-        const url = d.banner_url || '';  // only real banner, NOT pfp fallback
-        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ url, ts: Date.now() })); } catch {}
-        if (url) setDynamicBanners(prev => ({ ...prev, [fid]: url }));
-      })
-      .catch(() => {});
-  };
-
+  // Fetch Farcaster banners for ALL follow quests (overrides hardcoded stale URLs)
   useEffect(() => {
-    const fids = SOCIAL_QUESTS.filter(q => q.type === 'follow' && q.targetFid).map(q => q.targetFid!);
-    fids.forEach(fetchAndCacheBanner);
+    const fidsToFetch = SOCIAL_QUESTS
+      .filter(q => q.type === 'follow' && q.targetFid)
+      .map(q => q.targetFid!);
+    for (const fid of fidsToFetch) {
+      fetch(`/api/fid/user-profile?fid=${fid}`)
+        .then(r => r.json())
+        .then(d => {
+          // banner_url takes priority; fall back to pfp_url for zoom effect
+          setDynamicBanners(prev => ({ ...prev, [fid]: d.banner_url || d.pfp_url || '' }));
+        })
+        .catch(() => {});
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (!customFollowQuests || customFollowQuests.length === 0) return;
-    (customFollowQuests as any[]).forEach((q: any) => { if (q.targetFid) fetchAndCacheBanner(q.targetFid); });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customFollowQuests]);
 
   // Build complete missions list from personalMissions + ALL_MISSION_TYPES
   useEffect(() => {
@@ -523,10 +504,10 @@ export default function QuestsPage() {
   }
 
   return (
-    <div className="fixed inset-0 overflow-hidden" style={{ background: 'radial-gradient(ellipse at top, rgba(255,215,0,0.12) 0%, transparent 55%), radial-gradient(ellipse at bottom right, rgba(0,198,255,0.06) 0%, transparent 55%), linear-gradient(135deg, #0C0C0C 0%, #1A1A1A 50%, #121212 100%)', backgroundSize: '200% 200%', animation: 'subtleGradient 20s ease infinite' }}>
+    <div className="fixed inset-0 bg-[#1a1a1a] overflow-hidden">
 
       {/* Header */}
-      <div className="absolute top-0 left-0 right-0 z-20 border-b-4 border-black" style={{ background: activeTab === 'messages' ? '#111' : 'rgba(10,10,10,0.92)' }}>
+      <div className={`absolute top-0 left-0 right-0 z-20 ${activeTab === 'messages' ? 'bg-[#111]' : 'bg-[#1a1a1a]'} border-b-4 border-black`}>
         <div className="relative flex items-center justify-between px-3 py-1.5">
           <Link
             href="/"
@@ -973,18 +954,18 @@ export default function QuestsPage() {
                 const questId = String(q._id);
                 const isClaimed = claimedCustom.has(questId);
                 const isClaiming = claimingCustom === questId;
+                const banner = q.bannerUrl;
                 const pfp = q.pfpUrl;
-                const dynBanner = q.targetFid ? dynamicBanners[q.targetFid] : undefined;
-                const banner = dynBanner || q.bannerUrl || null;
-                const bgSrc = banner || pfp;
                 const displayName = (q as any).displayName || q.targetUsername;
                 const profileUrl = `https://warpcast.com/${q.targetUsername}`;
                 return (
                   <div>
-                    <div className="relative h-28 overflow-hidden">
-                      {bgSrc && (
-                        <img src={bgSrc} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: banner ? 0.85 : 0.7, filter: banner ? 'none' : 'blur(8px)', transform: banner ? 'none' : 'scale(1.5)' }} alt="" />
-                      )}
+                    <div className="relative h-28 overflow-hidden bg-[#1a0a2e]">
+                      {(() => {
+                        if (banner) return <img src={banner} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.75 }} alt="" />;
+                        if (pfp) return <img src={pfp} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.5, transform: 'scale(1.6)', filter: 'blur(6px)' }} alt="" />;
+                        return null;
+                      })()}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
                       <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#A855F7] border border-black/50">
                         <span className="text-white font-black text-[8px] uppercase tracking-widest">CUSTOM</span>
@@ -1070,8 +1051,11 @@ export default function QuestsPage() {
                       const isVerifying = verifying === quest.id;
                       const isClaimingSocial = claiming === quest.id;
                       const pfp = quest.pfpUrl;
+                      // dynamicBanners stores real banner or pfp fallback from Neynar (always fresh)
                       const dynData = quest.targetFid ? dynamicBanners[quest.targetFid] : undefined;
+                      // Real banner: from Neynar if it's a different URL than pfp, else hardcoded bannerUrl
                       const banner = dynData && dynData !== pfp ? dynData : quest.bannerUrl || null;
+                      // Background src: banner > pfp blur
                       const bgSrc = banner || pfp;
                       const displayReward = effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward;
                       const hasVibeFID2x = vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge;
