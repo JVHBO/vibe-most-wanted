@@ -697,7 +697,7 @@ body.neobrutalism .tour-game-grid a {
 
 /* 1. ARENA → Purple */
 body.neobrutalism .tour-game-grid > div > *:nth-child(1) {
-  background-color: #7B3DF0 !important;
+  background-color: #6A3CFF !important;
 }
 body.neobrutalism .tour-game-grid > div > *:nth-child(1) * {
   color: #FFF !important;
@@ -1758,7 +1758,7 @@ body.neobrutalism button[class*="from-green-4"][class*="to-emerald-4"] {
 }
 /* Buy button: purple→pink */
 body.neobrutalism [class*="from-purple-6"][class*="to-pink-6"] {
-  background: #7B3DF0 !important;
+  background: #6A3CFF !important;
   background-image: none !important;
   border: 3px solid #000 !important;
   border-radius: 4px !important;
