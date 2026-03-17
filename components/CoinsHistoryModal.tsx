@@ -173,21 +173,21 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
         {/* Filter Tabs - Fixed width buttons */}
         <div className="grid grid-cols-4 gap-1.5 p-2 border-b border-vintage-gold/20">
           {([
-            { key: 'all', label: T('txHistoryAll'), color: 'bg-vintage-gold' },
-            { key: 'earn', label: T('txHistoryEarned'), color: 'bg-green-500' },
-            { key: 'convert', label: T('txHistoryConverted'), color: 'bg-purple-500' },
-            { key: 'spend', label: T('txHistorySpent'), color: 'bg-red-500' },
+            { key: 'all',     label: T('txHistoryAll'),       dot: '#FFD700', activeBg: '#FFD700', activeText: '#000', inactiveBorder: '#FFD700', inactiveText: '#FFD700' },
+            { key: 'earn',    label: T('txHistoryEarned'),    dot: '#22C55E', activeBg: '#22C55E', activeText: '#000', inactiveBorder: '#22C55E', inactiveText: '#22C55E' },
+            { key: 'convert', label: T('txHistoryConverted'), dot: '#A855F7', activeBg: '#A855F7', activeText: '#fff', inactiveBorder: '#A855F7', inactiveText: '#A855F7' },
+            { key: 'spend',   label: T('txHistorySpent'),     dot: '#EF4444', activeBg: '#EF4444', activeText: '#fff', inactiveBorder: '#EF4444', inactiveText: '#EF4444' },
           ] as const).map((f) => (
             <button
               key={f.key}
               onClick={() => setFilter(f.key as FilterType)}
-              className={`py-2 text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-1.5 ${
-                filter === f.key
-                  ? 'bg-vintage-gold text-vintage-deep-black'
-                  : 'bg-vintage-black/50 text-vintage-gold/70 hover:bg-vintage-gold/20'
-              }`}
+              className="py-2 text-xs font-bold border-2 transition-all flex items-center justify-center gap-1.5"
+              style={filter === f.key
+                ? { background: f.activeBg, color: f.activeText, borderColor: f.activeBg, boxShadow: `2px 2px 0px #000` }
+                : { background: 'transparent', color: f.inactiveText, borderColor: `${f.inactiveBorder}60` }
+              }
             >
-              <span className={`w-2 h-2 rounded-full ${f.color} flex-shrink-0`}></span>
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: f.dot }}></span>
               <span className="truncate">{f.label}</span>
             </button>
           ))}
