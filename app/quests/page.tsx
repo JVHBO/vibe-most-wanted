@@ -642,7 +642,6 @@ export default function QuestsPage() {
                             <span className="text-xl">{quest.type === 'notification' ? '🔔' : '⭐'}</span>
                             <div className="flex-1 min-w-0">
                               <p className="text-vintage-gold font-bold text-xs truncate">{quest.displayName}</p>
-                              <p className="text-vintage-burnt-gold text-[10px] truncate">{quest.description}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -1059,7 +1058,6 @@ export default function QuestsPage() {
                           {/* Info row */}
                           <div className="px-3 pt-2 pb-1 bg-[#111]">
                             <p className="text-white font-black text-xs truncate">{quest.displayName}</p>
-                            <p className="text-white/50 text-[10px] truncate">{quest.description}</p>
                           </div>
 
                           {/* Buttons row */}
