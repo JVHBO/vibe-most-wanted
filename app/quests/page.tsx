@@ -200,7 +200,8 @@ export default function QuestsPage() {
     catch (e) { console.error('Failed to switch chain:', e); }
   };
 
-  // No API call needed - pfp/banner URLs are hardcoded in socialQuests.ts
+  // Dynamic banner cache for quests that don't have hardcoded bannerUrl
+  const [dynamicBanners, setDynamicBanners] = useState<Record<number, string>>({});
 
   // All mission types (matching backend) - using translation keys
   const ALL_MISSION_TYPES = [
@@ -266,6 +267,20 @@ export default function QuestsPage() {
     };
     checkBadge();
   }, [address, convex]);
+
+  // Fetch Farcaster banners for follow quests missing bannerUrl
+  useEffect(() => {
+    const fidsToFetch = SOCIAL_QUESTS
+      .filter(q => q.type === 'follow' && q.targetFid && !q.bannerUrl && !dynamicBanners[q.targetFid!])
+      .map(q => q.targetFid!);
+    for (const fid of fidsToFetch) {
+      fetch(`/api/fid/user-profile?fid=${fid}`)
+        .then(r => r.json())
+        .then(d => { if (d.banner_url) setDynamicBanners(prev => ({ ...prev, [fid]: d.banner_url })); })
+        .catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Build complete missions list from personalMissions + ALL_MISSION_TYPES
   useEffect(() => {
@@ -656,40 +671,6 @@ export default function QuestsPage() {
 
               {/* Personal Missions (Welcome, VibeFID, etc) */}
               <div className="bg-vintage-charcoal/80 border-2 border-vintage-gold/40 rounded-xl overflow-hidden" style={{ boxShadow: "3px 3px 0px rgba(0,0,0,0.5)" }}>
-                <div className="flex items-center justify-between px-3 py-2 border-b border-vintage-gold/20">
-                  <p className="text-vintage-gold text-sm font-bold">{t('questsPersonalMissions')}</p>
-                  {(() => {
-                    const hasClaimable = missions.some(m => m.completed && !m.claimed);
-                    return (
-                      <button
-                        onClick={async () => {
-                          if (!address || !hasClaimable) return;
-                          setIsClaimingAll(true);
-                          try {
-                            const chain = effectiveChain;
-                            await claimAllMissions({ playerAddress: address.toLowerCase(), chain });
-                            await refreshMissions();
-                          } catch (e) {
-                            console.error(e);
-                          } finally {
-                            setIsClaimingAll(false);
-                          }
-                        }}
-                        disabled={isClaimingAll || !hasClaimable}
-                        className="relative px-3 py-1 font-bold text-xs rounded border-2 border-black transition-all"
-                        style={{
-                          backgroundColor: hasClaimable ? '#FFD700' : '#333',
-                          color: hasClaimable ? '#000' : '#666',
-                          boxShadow: hasClaimable ? '2px 2px 0px #000' : 'none',
-                          borderColor: hasClaimable ? '#000' : '#555',
-                        }}
-                      >
-                        {hasClaimable && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />}
-                        {isClaimingAll ? "..." : t('mission_claim_all')}
-                      </button>
-                    );
-                  })()}
-                </div>
                 {isLoadingMissions ? (
                   <div className="flex items-center justify-center py-6">
                     <div className="animate-spin w-5 h-5 border-2 border-vintage-gold border-t-transparent rounded-full" />
@@ -776,6 +757,32 @@ export default function QuestsPage() {
                     </div>
                   );
                 })()}
+                {/* Claim All — below missions list */}
+                {(() => {
+                  const hasClaimable = missions.some(m => m.completed && !m.claimed);
+                  if (!hasClaimable && !isClaimingAll) return null;
+                  return (
+                    <div className="px-3 pb-2 pt-1 border-t border-vintage-gold/10">
+                      <button
+                        onClick={async () => {
+                          if (!address || !hasClaimable) return;
+                          setIsClaimingAll(true);
+                          try {
+                            await claimAllMissions({ playerAddress: address.toLowerCase(), chain: effectiveChain });
+                            await refreshMissions();
+                          } catch (e) { console.error(e); }
+                          finally { setIsClaimingAll(false); }
+                        }}
+                        disabled={isClaimingAll || !hasClaimable}
+                        className="relative w-full py-1.5 font-bold text-xs border-2 border-black transition-all"
+                        style={{ backgroundColor: '#FFD700', color: '#000', boxShadow: '2px 2px 0px #000' }}
+                      >
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
+                        {isClaimingAll ? "..." : t('mission_claim_all')}
+                      </button>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Keyframes for carousel slide animation */}
@@ -818,7 +825,7 @@ export default function QuestsPage() {
                       const isVerifying = verifying === quest.id;
                       const isClaimingSocial = claiming === quest.id;
                       const pfp = quest.pfpUrl;
-                      const banner = quest.bannerUrl;
+                      const banner = quest.bannerUrl || (quest.targetFid ? dynamicBanners[quest.targetFid] : undefined);
                       const displayReward = effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward;
                       const hasVibeFID2x = vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge;
                       const auraReward = 5 * (hasVibeFID2x ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1);
@@ -862,8 +869,8 @@ export default function QuestsPage() {
                               <div className="absolute inset-0 bg-cover bg-center"
                                 style={{ backgroundImage: `url(${banner})` }} />
                             ) : pfp ? (
-                              <div className="absolute inset-0 bg-cover bg-center blur-sm scale-110 opacity-30"
-                                style={{ backgroundImage: `url(${pfp})` }} />
+                              <div className="absolute inset-0 bg-cover bg-center"
+                                style={{ backgroundImage: `url(${pfp})`, filter: 'blur(6px)', transform: 'scale(1.6)', opacity: 0.5 }} />
                             ) : null}
                             {/* Only darken when no banner */}
                             {!banner && <div className="absolute inset-0 bg-black/40" />}
