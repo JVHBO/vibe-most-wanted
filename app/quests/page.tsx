@@ -284,15 +284,18 @@ export default function QuestsPage() {
     checkBadge();
   }, [address, convex]);
 
-  // Fetch Farcaster banners for ALL follow quests without a hardcoded bannerUrl
+  // Fetch Farcaster banners for ALL follow quests (overrides hardcoded stale URLs)
   useEffect(() => {
     const fidsToFetch = SOCIAL_QUESTS
-      .filter(q => q.type === 'follow' && q.targetFid && !q.bannerUrl)
+      .filter(q => q.type === 'follow' && q.targetFid)
       .map(q => q.targetFid!);
     for (const fid of fidsToFetch) {
       fetch(`/api/fid/user-profile?fid=${fid}`)
         .then(r => r.json())
-        .then(d => { if (d.banner_url) setDynamicBanners(prev => ({ ...prev, [fid]: d.banner_url })); })
+        .then(d => {
+          // banner_url takes priority; fall back to pfp_url for zoom effect
+          setDynamicBanners(prev => ({ ...prev, [fid]: d.banner_url || d.pfp_url || '' }));
+        })
         .catch(() => {});
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -705,19 +708,22 @@ export default function QuestsPage() {
                   const isPlaceholder = mission._id.startsWith('placeholder_');
                   const isVibeBadge = mission.missionType === 'claim_vibe_badge';
                   const mAura = 5 * (vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1);
-                  const playerPfp = profileDashboard?.pfpUrl || profileDashboard?.pfp_url;
+                  const playerPfp = profileDashboard?.pfpUrl || (profileDashboard as any)?.pfp_url;
+                  const missionCardClass = mission.completed
+                    ? "flex items-center gap-3 p-2.5 border-2 transition-all border-yellow-400/30 bg-yellow-400/5"
+                    : "flex items-center gap-3 p-2.5 border-2 transition-all border-white/10 opacity-60";
+                  const missionBarClass = mission.completed ? "w-1 self-stretch flex-shrink-0 bg-yellow-400" : "w-1 self-stretch flex-shrink-0 bg-white/10";
+                  const missionTitleClass = mission.completed ? "text-xs font-bold truncate text-vintage-ice" : "text-xs font-bold truncate text-vintage-ice/50";
                   return (
                     <div className="relative overflow-hidden">
-                      {/* Player pfp as background blur */}
                       {playerPfp && (
                         <img src={playerPfp} className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(12px)', transform: 'scale(1.4)', opacity: 0.15 }} alt="" />
                       )}
                       <div className="relative px-3 py-2">
-                      {/* Compact carousel card */}
-                      <div className={`flex items-center gap-3 p-2.5 border-2 transition-all ${mission.completed ? "border-yellow-400/30 bg-yellow-400/5" : "border-white/10 opacity-60"}`}>
-                        <div className={`w-1 self-stretch flex-shrink-0 ${mission.completed ? "bg-yellow-400" : "bg-white/10"}`} />
+                        <div className={missionCardClass}>
+                        <div className={missionBarClass} />
                         <div className="flex-1 min-w-0">
-                          <p className={`text-xs font-bold truncate ${mission.completed ? "text-vintage-ice" : "text-vintage-ice/50"}`}>
+                          <p className={missionTitleClass}>
                             {t(mission.titleKey)}
                           </p>
                           <p className="text-[10px] text-vintage-ice/40 truncate">{t(mission.descKey)}</p>
@@ -775,7 +781,6 @@ export default function QuestsPage() {
                           </button>
                         </div>
                       </div>
-                    </div>
                     </div>
                     </div>
                   );
@@ -867,7 +872,7 @@ export default function QuestsPage() {
                                 <p className="text-white text-[10px] font-bold truncate">{u.display_name}</p>
                                 <p className="text-[#A855F7] text-[8px] truncate">@{u.username} · {u.fid}</p>
                               </div>
-                              {customFollowQuests?.some(q => q.targetFid === u.fid) && (
+                              {customFollowQuests?.some((q: any) => q.targetFid === u.fid) && (
                                 <span className="text-[8px] text-white/40 shrink-0 ml-1">already added</span>
                               )}
                             </button>
@@ -878,10 +883,10 @@ export default function QuestsPage() {
                       {customQuestError && <p className="text-red-400 text-[9px] mt-1">{customQuestError}</p>}
 
                       <button
-                        disabled={isAddingCustom || !customQuestUsername.trim() || !!(customQuestPreview && customFollowQuests?.some(q => q.targetFid === customQuestPreview.fid))}
+                        disabled={isAddingCustom || !customQuestUsername.trim() || !!(customQuestPreview && customFollowQuests?.some((q: any) => q.targetFid === customQuestPreview.fid))}
                         onClick={async () => {
                           if (!address || !customQuestUsername.trim()) return;
-                          if (customQuestPreview && customFollowQuests?.some(q => q.targetFid === customQuestPreview.fid)) {
+                          if (customQuestPreview && customFollowQuests?.some((q: any) => q.targetFid === customQuestPreview.fid)) {
                             setCustomQuestError('This user is already in Follow Community');
                             return;
                           }
@@ -1046,7 +1051,12 @@ export default function QuestsPage() {
                       const isVerifying = verifying === quest.id;
                       const isClaimingSocial = claiming === quest.id;
                       const pfp = quest.pfpUrl;
-                      const banner = quest.bannerUrl || (quest.targetFid ? dynamicBanners[quest.targetFid] : undefined);
+                      // dynamicBanners stores real banner or pfp fallback from Neynar (always fresh)
+                      const dynData = quest.targetFid ? dynamicBanners[quest.targetFid] : undefined;
+                      // Real banner: from Neynar if it's a different URL than pfp, else hardcoded bannerUrl
+                      const banner = dynData && dynData !== pfp ? dynData : quest.bannerUrl || null;
+                      // Background src: banner > pfp blur
+                      const bgSrc = banner || pfp;
                       const displayReward = effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward;
                       const hasVibeFID2x = vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge;
                       const auraReward = 5 * (hasVibeFID2x ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1);
@@ -1084,13 +1094,20 @@ export default function QuestsPage() {
                           }}>
 
                           {/* Banner image area */}
-                          <div className="relative h-28 bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
-                            {banner ? (
-                              <img src={banner} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.85 }} alt="" />
-                            ) : pfp ? (
-                              <img src={pfp} className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(8px)', transform: 'scale(1.6)', opacity: 0.55 }} alt="" />
-                            ) : null}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                          <div className="relative h-28 bg-[#111] flex items-center justify-center overflow-hidden">
+                            {bgSrc && (
+                              <img
+                                src={bgSrc}
+                                className="absolute inset-0 w-full h-full object-cover"
+                                style={{
+                                  opacity: banner ? 0.9 : 0.6,
+                                  filter: banner ? 'none' : 'blur(10px)',
+                                  transform: banner ? 'none' : 'scale(1.5)',
+                                }}
+                                alt=""
+                              />
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/10" />
                             {/* Group type badge */}
                             <span className={`absolute top-2 left-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider border ${
                               quest.type === 'channel'
