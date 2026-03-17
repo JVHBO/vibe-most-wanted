@@ -924,7 +924,7 @@ export default function QuestsPage() {
                             setCustomQuestPreview(null);
                             setCustomModalOpen(false);
                           } catch (e: any) {
-                            setCustomQuestError(e.message || 'Error');
+                            setCustomQuestError(e.data || e.message || 'Error');
                           } finally {
                             setIsAddingCustom(false);
                           }
