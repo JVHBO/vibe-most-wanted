@@ -709,13 +709,18 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
   const { lang } = useLanguage();
   const t = fidTranslations[lang];
   const { isMusicEnabled, setIsMusicEnabled } = useMusic();
-  const messages = useQuery(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 });
+  const [messages, setMessages] = useState<VibeMailMessage[] | undefined>(undefined);
   const markAsRead = useMutation(api.cardVotes.markMessageAsRead);
   const [selectedMessage, setSelectedMessage] = useState<VibeMailMessage | null>(null);
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const convex = useConvex();
   const [inboxPage, setInboxPage] = useState(0);
+
+  useEffect(() => {
+    convex.query(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 })
+      .then(setMessages).catch(() => setMessages([]));
+  }, [cardFid]);
   const [translatedContent, setTranslatedContent] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
 
@@ -969,7 +974,11 @@ export function VibeMailInbox({ cardFid, username, onClose, asPage, hideClose = 
         ) : (
           /* Message List */
           <div className="flex-1 flex flex-col overflow-hidden">
-            {!messages || messages.length === 0 ? (
+            {messages === undefined ? (
+              <div className="text-center py-10">
+                <p className="text-white/40 text-sm">Loading...</p>
+              </div>
+            ) : messages.length === 0 ? (
               <div className="text-center py-10">
                 <p className="text-white/60 text-sm">{t.noMessagesYet}</p>
                 <p className="text-white/40 text-xs mt-1">

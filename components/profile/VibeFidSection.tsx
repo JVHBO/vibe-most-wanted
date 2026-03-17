@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from 'convex/react';
+import { useState, useEffect, useRef } from 'react';
+import { useQuery, useMutation, useConvex } from 'convex/react';
 import { api } from '@/lib/fid/convex-generated/api';
 import Link from 'next/link';
 import { CardMedia } from '@/components/fid/CardMedia';
@@ -52,18 +52,33 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
   const effectiveUser = farcasterContext.user || devUser;
   const isOwnCard = effectiveUser?.fid === fid;
 
-  // VibeFID Convex queries (uses VibeFIDConvexProvider context)
-  const fidCards = useQuery(api.farcasterCards.getFarcasterCardsByFid, { fid });
-  const scoreHistory = useQuery(api.neynarScore.getScoreHistory, { fid });
+  // VibeFID Convex queries — use one-time HTTP fetch (avoids WebSocket issues)
+  const convex = useConvex();
+  const [fidCards, setFidCards] = useState<any[] | undefined>(undefined);
+  const [scoreHistory, setScoreHistory] = useState<any[] | undefined>(undefined);
+  const [unreadMessageCount, setUnreadMessageCount] = useState<number | undefined>(undefined);
+  const fetchedRef = useRef(false);
+
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    convex.query(api.farcasterCards.getFarcasterCardsByFid, { fid })
+      .then(setFidCards)
+      .catch(() => setFidCards([]));
+    convex.query(api.neynarScore.getScoreHistory, { fid })
+      .then(setScoreHistory)
+      .catch(() => setScoreHistory([]));
+    if (isOwnCard) {
+      convex.query(api.cardVotes.getUnreadMessageCount, { cardFid: fid })
+        .then(setUnreadMessageCount)
+        .catch(() => setUnreadMessageCount(0));
+    }
+  }, [fid, isOwnCard]);
+
   const saveScoreCheck = useMutation(api.neynarScore.saveScoreCheck);
   const upgradeCardRarity = useMutation(api.farcasterCards.upgradeCardRarity);
   const refreshCardScore = useMutation(api.farcasterCards.refreshCardScore);
   const updateCardImages = useMutation(api.farcasterCards.updateCardImages);
-
-  const unreadMessageCount = useQuery(
-    api.cardVotes.getUnreadMessageCount,
-    isOwnCard ? { cardFid: fid } : 'skip'
-  );
 
   const card = fidCards?.[0];
   const currentTraits = card ? { foil: card.foil, wear: card.wear } : null;

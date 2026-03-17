@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useConvex } from 'convex/react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/fid/convex-generated/api';
 import { CardMedia } from '@/components/fid/CardMedia';
@@ -72,9 +72,23 @@ function ModalInner({ fid, username, ownerFid, onClose }: VibeFidMailModalProps)
   const [upgradeAnimPhase, setUpgradeAnimPhase] = useState<'charging'|'burst'|'reveal'>('charging');
   const [backstory, setBackstory] = useState<any>(null);
   const router = useRouter();
-  const fidCards = useQuery(api.farcasterCards.getFarcasterCardsByFid, { fid });
-  const unreadCount = useQuery(api.cardVotes.getUnreadMessageCount, { cardFid: fid });
-  const scoreHistory = useQuery(api.neynarScore.getScoreHistory, { fid });
+  const convex = useConvex();
+  const [fidCards, setFidCards] = useState<any[] | undefined>(undefined);
+  const [unreadCount, setUnreadCount] = useState<number | undefined>(undefined);
+  const [scoreHistory, setScoreHistory] = useState<any[] | undefined>(undefined);
+  const fetchedRef = useRef(false);
+
+  useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+    convex.query(api.farcasterCards.getFarcasterCardsByFid, { fid })
+      .then(setFidCards).catch(() => setFidCards([]));
+    convex.query(api.cardVotes.getUnreadMessageCount, { cardFid: fid })
+      .then(setUnreadCount).catch(() => setUnreadCount(0));
+    convex.query(api.neynarScore.getScoreHistory, { fid })
+      .then(setScoreHistory).catch(() => setScoreHistory([]));
+  }, [fid]);
+
   const saveScoreCheck = useMutation(api.neynarScore.saveScoreCheck);
   const upgradeCardRarity = useMutation(api.farcasterCards.upgradeCardRarity);
   const refreshCardScore = useMutation(api.farcasterCards.refreshCardScore);
