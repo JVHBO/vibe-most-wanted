@@ -5237,7 +5237,11 @@ export function VibeMailInboxWithClaim({
             {activeTab === 'sent' && (
             <div className="space-y-3">
               {/* Sent Analytics Panel */}
-              {!sentMessages || sentMessages.length === 0 ? (
+              {sentMessages === undefined ? (
+                <div className="text-center py-8">
+                  <p className="text-white/40 text-sm">Loading...</p>
+                </div>
+              ) : sentMessages.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-white/60 text-sm">No messages sent yet</p>
                   <p className="text-white/40 text-xs mt-1">Your sent messages will appear here</p>
@@ -5317,7 +5321,11 @@ export function VibeMailInboxWithClaim({
 
             {activeTab === 'inbox' && (
             <div className="flex-1 overflow-y-auto min-h-0 space-y-2">
-            {!currentMessages || currentMessages.length === 0 ? (
+            {currentMessages === undefined ? (
+              <div className="text-center py-8">
+                <p className="text-white/40 text-sm">Loading...</p>
+              </div>
+            ) : currentMessages.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-white/60 text-sm">{t.noMessagesYet}</p>
                 <p className="text-white/40 text-xs mt-1">
