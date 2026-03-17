@@ -8,12 +8,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ConvexProfileService, type UserProfile, type MatchHistory } from "../lib/convex-profile"; // ✨ Convex para Profiles
 import { ConvexPvPService, type GameRoom } from "../lib/convex-pvp"; // ✨ Convex para PvP Rooms
 import { sdk } from "@farcaster/miniapp-sdk";
-
-// Call ready() immediately at module load — before React renders anything
-// This ensures splash is dismissed even if the component crashes
-if (typeof window !== 'undefined') {
-  try { sdk?.actions?.ready?.(); } catch (_) {}
-}
 import { BadgeList } from "@/components/Badge";
 import { getUserBadges } from "@/lib/badges";
 import { useLanguage } from "@/contexts/LanguageContext";
