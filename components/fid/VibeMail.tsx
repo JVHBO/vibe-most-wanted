@@ -1215,16 +1215,25 @@ export function VibeMailInboxWithClaim({
     });
   }, [showDesign]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const messages = useQuery(api.cardVotes.getMessagesForCard, { cardFid, limit: 50 });
-  const sentMessages = useQuery(
-    api.cardVotes.getSentMessages,
-    myFid ? { voterFid: myFid, limit: 50 } : 'skip'
-  );
+  const [messages, setMessages] = useState<VibeMailMessage[] | undefined>(undefined);
+  const [sentMessages, setSentMessages] = useState<VibeMailMessage[] | undefined>(undefined);
   const markAsRead = useMutation(api.cardVotes.markMessageAsRead);
   const [selectedMessage, setSelectedMessage] = useState<VibeMailMessage | null>(null);
   const [playingAudio, setPlayingAudio] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const convex = useConvex();
+  const VIBEFID_URL = 'https://scintillating-mandrill-101.convex.cloud';
+
+  useEffect(() => {
+    fetch(`${VIBEFID_URL}/api/query`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: 'cardVotes:getMessagesForCard', args: { cardFid, limit: 50 } }) })
+      .then(r => r.json()).then(d => setMessages(d?.value ?? [])).catch(() => setMessages([]));
+  }, [cardFid]);
+
+  useEffect(() => {
+    if (!myFid) return;
+    fetch(`${VIBEFID_URL}/api/query`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: 'cardVotes:getSentMessages', args: { voterFid: myFid, limit: 50 } }) })
+      .then(r => r.json()).then(d => setSentMessages(d?.value ?? [])).catch(() => setSentMessages([]));
+  }, [myFid]);
   const [showComposer, setShowComposer] = useState(false);
   const [showDexModal, setShowDexModal] = useState(false);
   const [replyToMessageId, setReplyToMessageId] = useState<Id<'cardVotes'> | null>(null);
