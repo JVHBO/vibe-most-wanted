@@ -665,19 +665,25 @@ export const checkVibeBadgeEligibility = action({
     // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy (Base + Arbitrum)
     const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || process.env.ALCHEMY_API_KEY;
 
+    // Check both primary address AND the originally passed address (NFT may be on linked wallet)
+    const addressesToCheck = [...new Set([normalizedAddress, playerAddress.toLowerCase()])];
+
     let hasVibeFIDCards = false;
     try {
-      const [baseRes, arbRes] = await Promise.all([
-        fetch(`https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_CONTRACT}`).catch(() => null),
-        fetch(`https://arb-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_ARB_CONTRACT}`).catch(() => null),
-      ]);
-      if (baseRes?.ok) {
-        const data = await baseRes.json();
-        if (data.isHolderOfContract === true) hasVibeFIDCards = true;
-      }
-      if (!hasVibeFIDCards && arbRes?.ok) {
-        const data = await arbRes.json();
-        if (data.isHolderOfContract === true) hasVibeFIDCards = true;
+      for (const addr of addressesToCheck) {
+        if (hasVibeFIDCards) break;
+        const [baseRes, arbRes] = await Promise.all([
+          fetch(`https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${addr}&contractAddress=${VIBEFID_CONTRACT}`).catch(() => null),
+          fetch(`https://arb-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${addr}&contractAddress=${VIBEFID_ARB_CONTRACT}`).catch(() => null),
+        ]);
+        if (baseRes?.ok) {
+          const data = await baseRes.json();
+          if (data.isHolderOfContract === true) hasVibeFIDCards = true;
+        }
+        if (!hasVibeFIDCards && arbRes?.ok) {
+          const data = await arbRes.json();
+          if (data.isHolderOfContract === true) hasVibeFIDCards = true;
+        }
       }
     } catch (error) {
       console.error("❌ Alchemy check failed:", error);
@@ -761,19 +767,25 @@ export const claimVibeBadge = action({
     // 🚀 ON-CHAIN CHECK: Verify VibeFID ownership via Alchemy (Base + Arbitrum)
     const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY || process.env.ALCHEMY_API_KEY;
 
+    // Check both primary address AND the originally passed address (NFT may be on linked wallet)
+    const addressesToCheck = [...new Set([normalizedAddress, playerAddress.toLowerCase()])];
+
     let hasVibeFID = false;
     try {
-      const [baseRes, arbRes] = await Promise.all([
-        fetch(`https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_CONTRACT}`).catch(() => null),
-        fetch(`https://arb-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${normalizedAddress}&contractAddress=${VIBEFID_ARB_CONTRACT}`).catch(() => null),
-      ]);
-      if (baseRes?.ok) {
-        const data = await baseRes.json();
-        if (data.isHolderOfContract === true) hasVibeFID = true;
-      }
-      if (!hasVibeFID && arbRes?.ok) {
-        const data = await arbRes.json();
-        if (data.isHolderOfContract === true) hasVibeFID = true;
+      for (const addr of addressesToCheck) {
+        if (hasVibeFID) break;
+        const [baseRes, arbRes] = await Promise.all([
+          fetch(`https://base-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${addr}&contractAddress=${VIBEFID_CONTRACT}`).catch(() => null),
+          fetch(`https://arb-mainnet.g.alchemy.com/nft/v3/${ALCHEMY_API_KEY}/isHolderOfContract?wallet=${addr}&contractAddress=${VIBEFID_ARB_CONTRACT}`).catch(() => null),
+        ]);
+        if (baseRes?.ok) {
+          const data = await baseRes.json();
+          if (data.isHolderOfContract === true) hasVibeFID = true;
+        }
+        if (!hasVibeFID && arbRes?.ok) {
+          const data = await arbRes.json();
+          if (data.isHolderOfContract === true) hasVibeFID = true;
+        }
       }
     } catch (error) {
       console.error("❌ Alchemy check failed:", error);
