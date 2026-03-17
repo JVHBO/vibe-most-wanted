@@ -910,26 +910,23 @@ export default function QuestsPage() {
                           try {
                             let data = customQuestPreview as any;
                             if (!data?.fid) throw new Error('Select a user first');
-                            // Step 1: on-chain VBMS transfer (100k VBMS to pool) via SDK
+                            // Step 1: on-chain 100k VBMS transfer to pool (exact same pattern as leaderboard claim)
+                            const { sdk } = await import('@farcaster/miniapp-sdk');
+                            const provider = await sdk.wallet.getEthereumProvider();
+                            if (!provider) throw new Error('Wallet not available');
+                            try {
+                              await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
+                            } catch {}
                             const txData = encodeFunctionData({
                               abi: ERC20_ABI,
                               functionName: 'transfer',
                               args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther('100000')],
                             });
-                            let txHash: string | undefined;
-                            try {
-                              const { sdk } = await import('@farcaster/miniapp-sdk');
-                              const provider = await sdk.wallet.getEthereumProvider();
-                              txHash = await provider.request({
-                                method: 'eth_sendTransaction',
-                                params: [{ to: CONTRACTS.VBMSToken, data: txData, chainId: '0x2105' }],
-                              }) as string;
-                            } catch {
-                              // wagmi fallback
-                              const { sendTransaction } = await import('@wagmi/core');
-                              const { config } = await import('@/lib/wagmi');
-                              txHash = await sendTransaction(config, { to: CONTRACTS.VBMSToken as `0x${string}`, data: txData, chainId: 8453 });
-                            }
+                            const txHash = await provider.request({
+                              method: 'eth_sendTransaction',
+                              params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken, data: txData }],
+                            }) as string;
+                            if (!txHash) throw new Error('TX failed');
                             // Step 2: record quest in Convex with txHash
                             await addCustomFollowQuest({
                               address: address.toLowerCase(),

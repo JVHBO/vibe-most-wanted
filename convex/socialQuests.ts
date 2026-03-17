@@ -479,6 +479,7 @@ export const addCustomFollowQuest = mutation({
   },
 });
 
+
 /** Claim reward for following a custom quest user (auto-verify like standard quests) */
 export const claimCustomFollowReward = mutation({
   args: {
