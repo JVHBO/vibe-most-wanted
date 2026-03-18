@@ -25,12 +25,12 @@ export const submitBugReport = mutation({
     // Daily limit: 1 report per address per 24h
     if (args.address) {
       const since = Date.now() - ONE_DAY_MS;
-      const existing = await ctx.db
+      const recent = await ctx.db
         .query('bugReports')
         .withIndex('by_address', (q) => q.eq('address', args.address as string))
         .filter((q) => q.gt(q.field('createdAt'), since))
-        .first();
-      if (existing) return { limited: true };
+        .take(2);
+      if (recent.length >= 2) return { limited: true };
     }
 
     await ctx.db.insert('bugReports', {
