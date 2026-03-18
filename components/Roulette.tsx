@@ -412,7 +412,7 @@ export function Roulette({ onClose }: RouletteProps) {
           if (provider) {
             const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
             if (accounts && accounts.length > 0) {
-              signingAddress = accounts[0];
+              signingAddress = accounts[0] as `0x${string}`;
               if (signingAddress.toLowerCase() !== address.toLowerCase()) {
                 console.log('[Roulette] ⚠️ Address mismatch! Signing with provider address:', signingAddress, 'useAccount:', address);
               }
