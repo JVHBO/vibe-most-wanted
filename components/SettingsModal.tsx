@@ -962,7 +962,7 @@ export function SettingsModal({
                 </svg>
                 <div className="flex-1 text-left">
                   <p className="font-modern font-bold text-vintage-gold">{t('linkedWallets')}</p>
-                  <p className="text-xs text-vintage-burnt-gold">{t('linkedWalletsDesc')}</p>
+                  <p className="text-xs text-vintage-gold/70">{t('linkedWalletsDesc')}</p>
                 </div>
                 <svg
                   width="18" height="18" viewBox="0 0 24 24" fill="none"
