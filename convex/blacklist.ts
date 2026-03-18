@@ -231,7 +231,7 @@ export const EXPLOITER_BLACKLIST: Record<string, { username: string; fid: number
   "0xd43df5342935e9e19bf10f152400612338f24c85": { username: "unknown", fid: 0, amountStolen: 12000, claims: 1 },
   // ===== EXPLOIT #6: ERC-4337 batch sybil (Mar 18, 2026) =====
   // 16 mule wallets used in single bundled tx, funneled to 0x0b9b7c15 (same chickenattack)
-  "0x0b9b7c1503f3242e992c11cb25d881612a483723": { username: "chickenattack", fid: 0, amountStolen: 160000, claims: 16 },
+  // Note: 0x0b9b7c15 already banned in exploit #5
   "0xcc2ba46344c875855ccda3d9874be1386a47f8ed": { username: "unknown", fid: 0, amountStolen: 10000, claims: 1 },
   "0x3c12c3b705f42c5c10bf22d88f1cd5ffab0c7302": { username: "unknown", fid: 0, amountStolen: 10000, claims: 1 },
   "0x15b5312f492465e5e390c4dd6c46f44b165abbb1": { username: "unknown", fid: 0, amountStolen: 10000, claims: 1 },
