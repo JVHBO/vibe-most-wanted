@@ -2183,4 +2183,15 @@ export default defineSchema({
     authorUsername: v.string(),
     createdAt: v.number(),
   }).index("by_created", ["createdAt"]),
+
+  bugReports: defineTable({
+    description: v.string(),
+    category: v.string(),
+    deviceInfo: v.string(),
+    address: v.optional(v.string()),
+    fid: v.optional(v.number()),
+    imageBase64: v.optional(v.string()),
+    status: v.string(),
+    createdAt: v.number(),
+  }).index("by_created", ["createdAt"]),
 });

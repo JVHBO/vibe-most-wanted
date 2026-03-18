@@ -66,6 +66,9 @@ interface SettingsModalProps {
   preferredChain?: string; // "base" | "arbitrum"
   onChainChange?: (chain: string) => void;
   canChangeChain?: boolean; // false = hide network toggle (e.g. Base App)
+  // Changelog & Report
+  onChangelogClick?: () => void;
+  onReportClick?: () => void;
 }
 
 export function SettingsModal({
@@ -111,6 +114,8 @@ export function SettingsModal({
   preferredChain,
   onChainChange,
   canChangeChain = true,
+  onChangelogClick,
+  onReportClick,
 }: SettingsModalProps) {
   const { address: walletAddress, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -1215,6 +1220,28 @@ export function SettingsModal({
               </div>
             </div>
           )}
+
+          {/* Changelog & Report */}
+          <div className="flex gap-2">
+            {onChangelogClick && (
+              <button
+                onClick={() => { onClose(); onChangelogClick(); }}
+                className="flex-1 px-3 py-2.5 bg-vintage-black/50 hover:bg-vintage-black/70 border border-vintage-gold/40 hover:border-vintage-gold/70 text-vintage-gold rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2"
+              >
+                <span>📋</span>
+                <span>{t('whatsNew')}</span>
+              </button>
+            )}
+            {onReportClick && (
+              <button
+                onClick={() => { onClose(); onReportClick(); }}
+                className="flex-1 px-3 py-2.5 bg-vintage-black/50 hover:bg-vintage-black/70 border border-red-500/30 hover:border-red-500/60 text-red-400 hover:text-red-300 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2"
+              >
+                <span>🐛</span>
+                <span>{t('reportBug')}</span>
+              </button>
+            )}
+          </div>
 
           {/* Close Button */}
           <button

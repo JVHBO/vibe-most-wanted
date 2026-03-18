@@ -50,6 +50,10 @@ export function usePopupStates() {
   const [showDailyClaimPopup, setShowDailyClaimPopup] = useState<boolean>(false);
   const [showWeeklyLeaderboardPopup, setShowWeeklyLeaderboardPopup] = useState<boolean>(false);
 
+  // Changelog & Bug report
+  const [showChangelog, setShowChangelog] = useState<boolean>(false);
+  const [showReport, setShowReport] = useState<boolean>(false);
+
   return {
     // Onboarding
     showTutorial, setShowTutorial,
@@ -87,5 +91,8 @@ export function usePopupStates() {
     // Claim popups
     showDailyClaimPopup, setShowDailyClaimPopup,
     showWeeklyLeaderboardPopup, setShowWeeklyLeaderboardPopup,
+    // Changelog & Bug report
+    showChangelog, setShowChangelog,
+    showReport, setShowReport,
   };
 }

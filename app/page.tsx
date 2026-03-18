@@ -114,6 +114,8 @@ const LeaderboardRewardsModal = dynamic(() => import("@/app/(game)/components/mo
 const MyCardsModal = dynamic(() => import("@/app/(game)/components/modals/MyCardsModal").then(m => m.MyCardsModal), { ssr: false });
 const ChainSelectionModal = dynamic(() => import("@/app/(game)/components/modals/ChainSelectionModal").then(m => m.ChainSelectionModal), { ssr: false });
 const DefenseDeckModal = dynamic(() => import("@/app/(game)/components/modals/DefenseDeckModal").then(m => m.DefenseDeckModal), { ssr: false });
+const ChangelogModal = dynamic(() => import("@/components/ChangelogModal").then(m => m.ChangelogModal), { ssr: false });
+const ReportModal = dynamic(() => import("@/components/ReportModal").then(m => m.ReportModal), { ssr: false });
 
 // Shared style para botoes de marketplace/ataque vermelhos
 const STYLE_ATTACK_RED = { background: 'linear-gradient(145deg, #DC2626, #991B1B)' } as const;
@@ -314,6 +316,23 @@ export default function TCGPage() {
   }, [isInFarcaster, wagmiAddress, userProfile]);
 
   // Notify Farcaster SDK that app is ready
+  // Init global error log buffer for bug reports
+  useEffect(() => {
+    import('@/lib/log-buffer').then(({ initLogBuffer }) => initLogBuffer());
+  }, []);
+
+  // Auto-show changelog when new version detected
+  useEffect(() => {
+    import('@/components/ChangelogModal').then(({ CHANGELOG_VERSION, CHANGELOG_STORAGE_KEY }) => {
+      const seen = localStorage.getItem(CHANGELOG_STORAGE_KEY);
+      if (seen !== CHANGELOG_VERSION) {
+        setShowChangelog(true);
+        localStorage.setItem(CHANGELOG_STORAGE_KEY, CHANGELOG_VERSION);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // CRITICAL: Call ready() IMMEDIATELY - affects ranking and $10k reward pool!
   // Do NOT wait for wallet connection - Farcaster counts daily users via ready()
   const [sdkReadyCalled, setSdkReadyCalled] = useState(false);
@@ -375,6 +394,8 @@ export default function TCGPage() {
     fidModalTarget, setFidModalTarget,
     showDailyClaimPopup, setShowDailyClaimPopup,
     showWeeklyLeaderboardPopup, setShowWeeklyLeaderboardPopup,
+    showChangelog, setShowChangelog,
+    showReport, setShowReport,
   } = usePopupStates();
 
   const {
@@ -3538,6 +3559,25 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
             console.error("Failed to set chain:", e);
           }
         }}
+        onChangelogClick={() => setShowChangelog(true)}
+        onReportClick={() => setShowReport(true)}
+      />
+
+      {/* Changelog Modal */}
+      <ChangelogModal
+        isOpen={showChangelog}
+        onClose={() => setShowChangelog(false)}
+        t={t}
+      />
+
+      {/* Bug Report Modal */}
+      <ReportModal
+        isOpen={showReport}
+        onClose={() => setShowReport(false)}
+        t={t}
+        address={address}
+        fid={farcasterFidState ?? null}
+        currentView={currentView}
       />
 
       {/* Chain Select Modal (first-time) - only if ARB supported */}
