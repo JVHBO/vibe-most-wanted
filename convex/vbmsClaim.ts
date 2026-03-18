@@ -332,8 +332,16 @@ export const prepareInboxClaimInternal = internalMutation({
     bonus: number;
     bonusReasons: string[];
   }> => {
-    // 🚫 BLACKLIST CHECK
+    // 🚫 BLACKLIST CHECK (hardcoded + dynamic DB)
     if (isBlacklisted(address)) {
+      throw new Error("[CLAIM_BLACKLISTED]");
+    }
+    const lower = address.toLowerCase();
+    const dynBan = await ctx.db
+      .query("dynamicBlacklist")
+      .withIndex("by_address", (q: any) => q.eq("address", lower))
+      .first();
+    if (dynBan) {
       throw new Error("[CLAIM_BLACKLISTED]");
     }
 
