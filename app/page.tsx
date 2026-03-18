@@ -3561,6 +3561,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         }}
         onChangelogClick={() => setShowChangelog(true)}
         onReportClick={() => setShowReport(true)}
+        isInFarcaster={isInFarcaster}
       />
 
       {/* Changelog Modal */}

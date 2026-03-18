@@ -69,6 +69,7 @@ interface SettingsModalProps {
   // Changelog & Report
   onChangelogClick?: () => void;
   onReportClick?: () => void;
+  isInFarcaster?: boolean;
 }
 
 export function SettingsModal({
@@ -116,6 +117,7 @@ export function SettingsModal({
   canChangeChain = true,
   onChangelogClick,
   onReportClick,
+  isInFarcaster = false,
 }: SettingsModalProps) {
   const { address: walletAddress, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
@@ -155,6 +157,7 @@ export function SettingsModal({
 
   // 🔀 MERGE ACCOUNT: Old accounts (no FID) can merge into FID accounts
   const [showMergeCode, setShowMergeCode] = useState(false);
+  const [linkedWalletOpen, setLinkedWalletOpen] = useState(false);
   const [showMergeWarning, setShowMergeWarning] = useState(false); // Warning modal before generating code
   const [generatedMergeCode, setGeneratedMergeCode] = useState<string | null>(null);
   const [mergeCodeExpiresAt, setMergeCodeExpiresAt] = useState<number | null>(null);
@@ -945,21 +948,33 @@ export function SettingsModal({
           </div>
 
 
-          {/* 🔗 Linked Wallets Section - Always show if wallet connected */}
+          {/* 🔗 Linked Wallets + Merge — collapsible */}
           {walletAddress && (
-            <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
-              <div className="flex items-center gap-3 mb-3">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-vintage-gold">
+            <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 overflow-hidden">
+              {/* Header — always visible, click to toggle */}
+              <button
+                onClick={() => setLinkedWalletOpen((v) => !v)}
+                className="w-full flex items-center gap-3 p-2 sm:p-3 hover:bg-vintage-gold/5 transition-colors"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
                   <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <div>
+                <div className="flex-1 text-left">
                   <p className="font-modern font-bold text-vintage-gold">{t('linkedWallets')}</p>
-                  <p className="text-xs text-vintage-burnt-gold">
-                    {t('linkedWalletsDesc')}
-                  </p>
+                  <p className="text-xs text-vintage-burnt-gold">{t('linkedWalletsDesc')}</p>
                 </div>
-              </div>
+                <svg
+                  width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  className={`shrink-0 text-vintage-gold/60 transition-transform duration-200 ${linkedWalletOpen ? 'rotate-180' : ''}`}
+                >
+                  <path d="M6 9l6 6 6-6" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+
+              {/* Expandable content */}
+              {linkedWalletOpen && (
+              <div className="px-2 sm:px-3 pb-3 border-t border-vintage-gold/20">
 
               <div className="space-y-2">
                 {/* Primary wallet */}
@@ -1011,7 +1026,7 @@ export function SettingsModal({
 
               {/* 🔗 UNIFIED: Enter Code to Link/Merge (Only for Farcaster users) */}
               {hasFarcaster && (
-                <div className="mt-3 pt-3 border-t border-vintage-gold/20">
+                <div className="mt-3 pt-3 border-t border-vintage-gold/10">
                   <p className="text-vintage-burnt-gold text-xs mb-3">
                     {t('enterCodeToLinkOrMerge') || 'Enter 6-digit code to link wallet or merge account'}
                   </p>
@@ -1051,12 +1066,10 @@ export function SettingsModal({
 
                 </div>
               )}
-            </div>
-          )}
 
-          {/* 🔀 MERGE ACCOUNT - For OLD accounts (no FID) to generate merge code */}
-          {userProfile && !hasFarcaster && walletAddress && (
-            <div className="bg-orange-900/30 border border-orange-500/50 p-2 sm:p-3 rounded-xl">
+              {/* 🔀 MERGE ACCOUNT - inside the same dropdown, for OLD accounts (no FID) */}
+              {userProfile && !hasFarcaster && (
+              <div className="mt-3 pt-3 border-t border-vintage-gold/10 bg-orange-900/20 rounded-lg p-2 sm:p-3">
               <div className="flex items-center gap-3 mb-3">
                 <span className="text-2xl">🔀</span>
                 <p className="font-modern font-bold text-orange-400">{t('mergeAccountTitle')}</p>
@@ -1187,11 +1200,16 @@ export function SettingsModal({
                   {t('mergeWantToMerge')}
                 </button>
               )}
+              </div>
+              )}
+
+              </div>
+              )}
             </div>
           )}
 
-          {/* Disconnect Wallet */}
-          {walletAddress && disconnectWallet && (
+          {/* Disconnect Wallet — hidden in Farcaster miniapp */}
+          {walletAddress && disconnectWallet && !isInFarcaster && (
             <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
