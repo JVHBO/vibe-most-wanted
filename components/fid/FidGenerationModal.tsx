@@ -54,9 +54,9 @@ export default function FidGenerationModal({
   const { lang } = useLanguage();
   const [currentSlide, setCurrentSlide] = useState(0); // 0 = backstory, 1 = card
   const [selectedChain, setSelectedChain] = useState<VibeFIDChain>("base");
-  const arbAvailable = !!VIBEFID_ARB_CONTRACT_ADDRESS;
-  const currentMintPrice = selectedChain === "arbitrum" ? MINT_PRICE_ARB : MINT_PRICE;
-  const currentMintPriceUsd = selectedChain === "arbitrum" ? "~$0.68" : "~$0.90";
+  const arbAvailable = false; // ARB mint disabled — existing holders handled manually
+  const currentMintPrice = MINT_PRICE;
+  const currentMintPriceUsd = "~$0.90";
   const [showShareLangModal, setShowShareLangModal] = useState(false);
   const [isGeneratingShare, setIsGeneratingShare] = useState(false);
   const storyScrollRef = useRef<HTMLDivElement>(null);

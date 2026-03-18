@@ -779,12 +779,9 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
 
     autoCreateOrUpdateProfile();
   }, [address, isInFarcaster, farcasterFidState, isCheckingFarcaster, userProfile, isLoadingProfile, upsertProfileFromFarcaster, refreshProfile]);
-  // ARB supported only on Warpcast (clientFid 9152), not Base App or other clients
-  // For non-miniapp (browser), isInFarcaster=false so arbSupported=true
-  // Frame mode = desktop browser, always ARB supported
-  const arbSupported = isFrameMode || !isInFarcaster || isWarpcastClient(farcasterClientFid);
-  // Effective chain: force "base" when ARB not supported (e.g. Base App)
-  const effectiveChain = !arbSupported ? "base" : ((userProfile as any)?.preferredChain || "arbitrum");
+  // ARB disabled — all transactions on Base only
+  const arbSupported = false;
+  const effectiveChain = "base";
   // On-chain TX hooks for mission claims
   const { validateOnArb } = useArbValidator();
   // Arb Mode announcement disabled - no longer needed
