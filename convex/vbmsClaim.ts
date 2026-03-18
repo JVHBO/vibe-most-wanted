@@ -1385,6 +1385,13 @@ export const adminClearAllPendingConversions = action({
     let cleared = 0, restored = 0, skipped = 0;
     for (const profile of profiles) {
       try {
+        // SECURITY: never restore coins for blacklisted addresses
+        if (isBlacklisted(profile.address)) {
+          await ctx.runMutation(internal.vbmsClaim.clearPendingOnly, { address: profile.address });
+          console.log(`[adminClearAll] ${profile.address}: BLACKLISTED - cleared pending only`);
+          cleared++;
+          continue;
+        }
         const nonce = profile.pendingNonce;
         if (nonce) {
           const isUsed = await ctx.runAction(internal.vbmsClaim.checkNonceUsedOnChain, { nonce });
