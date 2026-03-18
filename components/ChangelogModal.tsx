@@ -15,18 +15,27 @@ interface ChangelogEntry {
 const CHANGELOG: ChangelogEntry[] = [
   {
     version: '0.3.0',
-    date: 'Mar 2026',
+    date: 'Week of Mar 17, 2026',
     isNew: true,
     features: [
-      { emoji: '🛡️', text: 'Security system hardened — anti-exploit protection' },
+      { emoji: '📋', text: 'Changelog modal — stay updated on new features' },
+      { emoji: '🐛', text: 'Bug report system with screenshot & auto device info' },
+      { emoji: '🛡️', text: 'Security hardened — anti-exploit protection' },
       { emoji: '🔒', text: 'FID authentication improved' },
-      { emoji: '⚡', text: 'Performance & stability improvements' },
-      { emoji: '🐛', text: 'Bug fixes across economy and quest systems' },
+    ],
+  },
+  {
+    version: '0.2.8',
+    date: 'Week of Mar 10, 2026',
+    features: [
+      { emoji: '⚡', text: 'Performance improvements across all game modes' },
+      { emoji: '🐛', text: 'Fixed quest claim edge cases' },
+      { emoji: '💬', text: 'Vibemail stability fixes' },
     ],
   },
   {
     version: '0.2.5',
-    date: 'Feb 2026',
+    date: 'Week of Feb 17, 2026',
     features: [
       { emoji: '📬', text: 'Vibemail — send messages to card holders' },
       { emoji: '🎯', text: 'Daily & weekly quests with VBMS rewards' },
@@ -35,28 +44,35 @@ const CHANGELOG: ChangelogEntry[] = [
     ],
   },
   {
-    version: '0.2.0',
-    date: 'Jan 2026',
+    version: '0.2.2',
+    date: 'Week of Feb 3, 2026',
     features: [
-      { emoji: '⚔️', text: 'Raid Boss — cooperative battles with power bonuses' },
       { emoji: '🌐', text: 'Arbitrum chain support added' },
       { emoji: '🃏', text: 'Defense Deck system for PvP meta' },
       { emoji: '📊', text: 'Aura leaderboard revamped' },
     ],
   },
   {
+    version: '0.2.0',
+    date: 'Week of Jan 20, 2026',
+    features: [
+      { emoji: '⚔️', text: 'Raid Boss — cooperative battles with power bonuses' },
+      { emoji: '🎰', text: 'Baccarat casino with VBMS wagering' },
+      { emoji: '🤺', text: 'PvP Poker Battle with entry fees' },
+    ],
+  },
+  {
     version: '0.1.5',
-    date: 'Dec 2025',
+    date: 'Week of Dec 9, 2025',
     features: [
       { emoji: '🃏', text: 'Vibe Clash TCG — 54 unique cards, 6 turns, 3 lanes' },
-      { emoji: '🤺', text: 'PvP Poker Battle with entry fees' },
-      { emoji: '🎰', text: 'Baccarat casino with VBMS wagering' },
       { emoji: '✨', text: 'Combo & synergy system for card pairs' },
+      { emoji: '🔊', text: 'AI voice combo callouts' },
     ],
   },
   {
     version: '0.1.0',
-    date: 'Nov 2025',
+    date: 'Week of Nov 25, 2025',
     features: [
       { emoji: '🚀', text: 'Vibe Most Wanted officially launched' },
       { emoji: '🔗', text: 'Farcaster miniapp integration' },
