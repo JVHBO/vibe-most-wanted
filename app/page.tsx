@@ -1408,9 +1408,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
   const sendMissionTx = async (reward: number, claimType: typeof ARB_CLAIM_TYPE[keyof typeof ARB_CLAIM_TYPE]) => {
     if (!address || reward <= 0) return;
     try {
-      if (effectiveChain === 'arbitrum') {
-        await validateOnArb(reward, claimType);
-      } else {
+      {
         // Base: send 0 VBMS to pool — on-chain proof, no actual transfer
         const data = encodeFunctionData({
           abi: ERC20_ABI,
