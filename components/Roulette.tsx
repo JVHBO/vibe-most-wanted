@@ -404,23 +404,19 @@ export function Roulette({ onClose }: RouletteProps) {
     try {
       toast.info("🔐 Preparing blockchain claim...");
 
-      // 1. Get actual signing address — Farcaster wallet may differ from useAccount()
+      // 1. Get actual signing address — ALWAYS try eth_accounts first (works in miniapp AND browser)
       let signingAddress = address;
-      if (useFarcasterSDK) {
-        try {
-          const provider = await sdk.wallet.getEthereumProvider();
-          if (provider) {
-            const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
-            if (accounts && accounts.length > 0) {
-              signingAddress = accounts[0] as `0x${string}`;
-              if (signingAddress.toLowerCase() !== address.toLowerCase()) {
-                console.log('[Roulette] ⚠️ Address mismatch! Signing with provider address:', signingAddress, 'useAccount:', address);
-              }
-            }
+      try {
+        const provider = await sdk.wallet.getEthereumProvider();
+        if (provider) {
+          const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
+          if (accounts && accounts.length > 0) {
+            signingAddress = accounts[0] as `0x${string}`;
+            console.log('[Roulette] Using provider address:', signingAddress, '(useAccount was:', address, ')');
           }
-        } catch (e) {
-          console.warn('[Roulette] Could not get Farcaster wallet address, using useAccount:', e);
         }
+      } catch (e) {
+        console.warn('[Roulette] Could not get provider address, using useAccount:', address);
       }
 
       // 2. Get signature from backend using actual wallet address

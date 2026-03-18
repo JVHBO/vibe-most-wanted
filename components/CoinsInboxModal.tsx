@@ -330,21 +330,14 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       // 🔑 CRITICAL: For Farcaster SDK, get the ACTUAL wallet address from provider
       // This is the address that will be msg.sender in the contract
       // It may differ from the address prop (which comes from userProfile)
-      let signingAddress = address;
-      if (useFarcasterSDK) {
-        try {
-          signingAddress = await getFarcasterWalletAddress();
-          console.log('[CoinsInboxModal] Using Farcaster wallet address for signature:', signingAddress);
-          console.log('[CoinsInboxModal] Original address from prop:', address);
-          if (signingAddress.toLowerCase() !== address?.toLowerCase()) {
-            console.log('[CoinsInboxModal] ⚠️ Address mismatch! Using provider address for signature.');
-          }
-        } catch (error) {
-          console.error('[CoinsInboxModal] Failed to get Farcaster wallet address:', error);
-          toast.error('Erro ao obter endereço da carteira');
-          setIsProcessing(false);
-          return;
-        }
+      // ALWAYS try to get actual wallet address from provider (works in miniapp AND browser)
+      let signingAddress = address as string;
+      try {
+        const actualAddr = await getFarcasterWalletAddress();
+        signingAddress = actualAddr;
+        console.log('[CoinsInboxModal] Using provider address:', signingAddress, '(prop was:', address, ')');
+      } catch (e) {
+        console.warn('[CoinsInboxModal] Could not get provider address, using prop address:', address);
       }
 
       console.log('[CoinsInboxModal] Converting TESTVBMS to VBMS...', { amount: selectedAmount, fid: userFid });
