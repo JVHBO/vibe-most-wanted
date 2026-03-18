@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { validateCardTraits } from "./cardValidation";
+import { isBlacklisted } from "./blacklist";
 
 /**
  * Mint a Farcaster Card
@@ -804,6 +805,9 @@ export const claimVibeMailQuestCoins = mutation({
   },
   handler: async (ctx, { address, vibemailId }) => {
     const normalizedAddress = address.toLowerCase();
+
+    // 🚫 Blacklist check
+    if (isBlacklisted(normalizedAddress)) return { success: false, reason: "blacklisted" };
 
     // Check already claimed
     const existing = await ctx.db

@@ -6,6 +6,7 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { normalizeAddress } from "./utils";
 import { createAuditLog } from "./coinAudit";
+import { isBlacklisted } from "./blacklist";
 
 const FEE_PERCENT = 0.1; // 10% platform fee
 const MIN_REWARD = 50;
@@ -149,6 +150,14 @@ export const payQuestReward = mutation({
     // Get completer profile
     const profile = await getProfile(ctx, normalized);
     if (!profile) throw new Error("Completer profile not found");
+
+    // 🔒 Verify FID matches the address's profile (prevent FID spoofing)
+    if (profile.fid !== args.completerFid && profile.farcasterFid !== args.completerFid) {
+      throw new Error("FID does not match address");
+    }
+
+    // 🚫 Blacklist check
+    if (isBlacklisted(normalized)) throw new Error("Account banned");
 
     const reward = quest.rewardPerCompleter;
     const balanceBefore = profile.coins || 0;
