@@ -14,6 +14,13 @@ import { broadcastNeynarNotification, sendNeynarNotification } from "@/lib/neyna
  */
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Only internal callers with CRON_SECRET can broadcast
+    const authHeader = request.headers.get('authorization');
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { title, body, targetFids, targetUrl } = await request.json();
 
     if (!title || !body) {

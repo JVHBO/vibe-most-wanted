@@ -1217,6 +1217,29 @@ export const getClaimBehaviorAnalytics = query({
   },
 });
 
+// ========== QUERY: Check ARB Sign Eligibility ==========
+// Called by the /api/arb/sign-validation route before signing
+export const checkArbSignEligibility = query({
+  args: { address: v.string(), amount: v.number() },
+  handler: async (ctx, { address, amount }): Promise<{ eligible: boolean; reason?: string }> => {
+    if (isBlacklisted(address)) {
+      return { eligible: false, reason: "BLACKLISTED" };
+    }
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+    if (!profile || !profile.fid) {
+      return { eligible: false, reason: "NO_PROFILE" };
+    }
+    const coins = profile.coins ?? 0;
+    if (coins < amount) {
+      return { eligible: false, reason: `INSUFFICIENT_COINS:${coins}` };
+    }
+    return { eligible: true };
+  },
+});
+
 // ========== ACTION: Sign ARB Validation ==========
 // Called from client via Convex. Signs directly — no HTTP round-trip.
 export const signArbValidation = action({
@@ -1225,10 +1248,27 @@ export const signArbValidation = action({
     amount: v.number(),
     nonce: v.string(),
   },
-  handler: async (_ctx, { address, amount, nonce }): Promise<{ signature: string }> => {
+  handler: async (ctx, { address, amount, nonce }): Promise<{ signature: string }> => {
     const MAX_AMOUNT = 12000;
     if (amount < 0 || amount > MAX_AMOUNT) {
       throw new Error(`Invalid amount: ${amount}`);
+    }
+
+    // 🚫 BLACKLIST CHECK
+    if (isBlacklisted(address)) {
+      throw new Error("[CLAIM_BLACKLISTED]");
+    }
+
+    // 🔒 PROFILE CHECK: must have a registered account with FID and enough coins
+    const profile = await ctx.runQuery(internal.notifications.getProfileByAddress, {
+      address: address.toLowerCase(),
+    });
+    if (!profile || !profile.fid) {
+      throw new Error("[NO_PROFILE] Address has no registered account");
+    }
+    const coins = profile.coins ?? 0;
+    if (coins < amount) {
+      throw new Error(`[INSUFFICIENT_COINS] Balance ${coins} < requested ${amount}`);
     }
 
     const privateKey = process.env.VBMS_SIGNER_PRIVATE_KEY;
