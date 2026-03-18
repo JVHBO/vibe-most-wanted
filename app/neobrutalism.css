@@ -2503,7 +2503,7 @@ body.neobrutalism .raid-btn-refuel {
 }
 body.neobrutalism .raid-btn-refuel:disabled {
   background-color: #006633 !important;
-  color: #004422 !important;
+  color: #00FF85 !important;
   box-shadow: 2px 2px 0px #000 !important;
   transform: none !important;
 }
@@ -3098,6 +3098,7 @@ body.neobrutalism .shop-back-btn {
 /* === LEADERBOARD BUTTONS (DEF + ATTACK) === */
 body.neobrutalism button.ldb-def-btn,
 body.neobrutalism button.ldb-attack-btn {
+  border-radius: 4px !important;
   box-shadow: none !important;
   outline: 3px solid #000 !important;
   outline-offset: 0px !important;

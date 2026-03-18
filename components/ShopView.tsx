@@ -239,14 +239,14 @@ export function ShopView({ address }: ShopViewProps) {
                     onClick={() => { AudioManager.buttonClick(); handleClaimDailyFree(); }}
                     onMouseEnter={() => AudioManager.buttonHover()}
                     disabled={claimingDaily}
-                    className="shop-claim-btn w-full h-11 font-display font-bold rounded-lg transition-all disabled:opacity-50 text-vintage-black active:translate-y-[4px] bg-vintage-gold bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500"
+                    className="shop-claim-btn w-full h-11 font-display font-bold rounded transition-all disabled:opacity-50 text-vintage-black active:translate-y-[4px] bg-vintage-gold bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500"
                                       >
                     {claimingDaily ? "..." : isArb ? t('shopClaimFreePackArb' as any) : t('shopClaimFreePack' as any)}
                   </button>
                 ) : (
                   <button
                     disabled
-                    className="w-full h-11 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold/70 font-display font-bold rounded-lg cursor-not-allowed"
+                    className="w-full h-11 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold/70 font-display font-bold rounded cursor-not-allowed"
                   >
                     {dailyFreeStatus?.timeRemaining
                       ? `${t('shopNextPackIn' as any)} ${formatTimeRemaining(dailyFreeStatus.timeRemaining)}`

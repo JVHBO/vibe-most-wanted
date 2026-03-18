@@ -784,7 +784,7 @@ export default function RaidPage() {
                   <button
                     onClick={handleRefuelWithCoins}
                     disabled={isRefueling}
-                    className="raid-btn-refuel px-3 py-1.5 bg-black/60 hover:bg-green-900/30 text-green-400 border border-green-500/50 rounded font-bold text-xs transition disabled:opacity-50 uppercase tracking-wide"
+                    className="raid-btn-refuel px-3 py-1.5 bg-black/60 hover:bg-green-900/30 text-white border border-green-500/50 rounded font-bold text-xs transition disabled:opacity-50 uppercase tracking-wide"
                   >
                     {isRefueling ? '...' : (t as (k: string) => string)('raidBossFreeRefuel')}
                   </button>
@@ -802,7 +802,7 @@ export default function RaidPage() {
                   </button>
                   <button
                     onClick={() => setShowClearConfirm(true)}
-                    className="raid-btn-clear px-3 py-1.5 bg-black/60 hover:bg-red-900/50 text-red-400 border border-red-500/50 rounded font-bold text-xs transition uppercase tracking-wide"
+                    className="raid-btn-clear px-3 py-1.5 bg-black/60 hover:bg-red-900/50 text-white border border-red-500/50 rounded font-bold text-xs transition uppercase tracking-wide"
                   >
                     {(t as (k: string) => string)('raidBossClearBtn')}
                   </button>
