@@ -67,12 +67,11 @@ const UNISWAP_V3_POOLS: Record<string, { pool: `0x${string}`; isToken0Weth: bool
 
 export async function GET(request: Request) {
   try {
-    // Verify cron secret (optional security)
+    // Verify cron secret (mandatory)
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      // Allow without auth for testing, but log warning
-      console.warn('[save-prices] No valid auth header, proceeding anyway');
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Create viem client

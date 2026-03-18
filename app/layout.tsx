@@ -15,6 +15,7 @@ import { Analytics } from "@vercel/analytics/react";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { NeynarMiniAppProvider } from "@/contexts/NeynarMiniAppProvider";
 import { MiniappFrame } from "@/components/MiniappFrame";
+import GlobalBanGuard from "@/components/GlobalBanGuard";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -147,9 +148,11 @@ export default function RootLayout({
                     <MusicProvider>
                       <FarcasterNotificationRegistration />
                       <BrowserNotifications />
+                      <GlobalBanGuard>
                       <MiniappFrame>
                         {children}
                       </MiniappFrame>
+                    </GlobalBanGuard>
                     </MusicProvider>
                   </LanguageProvider>
                 </PlayerCardsProvider>
