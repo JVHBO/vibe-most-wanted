@@ -360,7 +360,7 @@ export function Roulette({ onClose }: RouletteProps) {
   }, []);
 
   // Helper function to claim via Farcaster SDK
-  const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
+  const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string, walletAddress?: string) => {
     const provider = await sdk.wallet.getEthereumProvider();
     if (!provider) throw new Error("Farcaster wallet not available");
 
@@ -387,7 +387,7 @@ export function Roulette({ onClose }: RouletteProps) {
     const txHash = await provider.request({
       method: 'eth_sendTransaction',
       params: [{
-        from: address as `0x${string}`,
+        from: (walletAddress || address) as `0x${string}`,
         to: CONTRACTS.VBMSPoolTroll,
         data: dataWithBuilderCode,
       }],
@@ -404,17 +404,37 @@ export function Roulette({ onClose }: RouletteProps) {
     try {
       toast.info("🔐 Preparing blockchain claim...");
 
-      // 1. Get signature from backend
-      const claimData = await prepareClaimAction({ address });
+      // 1. Get actual signing address — Farcaster wallet may differ from useAccount()
+      let signingAddress = address;
+      if (useFarcasterSDK) {
+        try {
+          const provider = await sdk.wallet.getEthereumProvider();
+          if (provider) {
+            const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
+            if (accounts && accounts.length > 0) {
+              signingAddress = accounts[0];
+              if (signingAddress.toLowerCase() !== address.toLowerCase()) {
+                console.log('[Roulette] ⚠️ Address mismatch! Signing with provider address:', signingAddress, 'useAccount:', address);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[Roulette] Could not get Farcaster wallet address, using useAccount:', e);
+        }
+      }
+
+      // 2. Get signature from backend using actual wallet address
+      const claimData = await prepareClaimAction({ address: signingAddress });
 
       toast.info("🔐 Sign the transaction...");
 
-      // 2. Send blockchain TX
+      // 3. Send blockchain TX
       const txHash = useFarcasterSDK
         ? await claimViaFarcasterSDK(
             claimData.amount.toString(),
             claimData.nonce,
-            claimData.signature
+            claimData.signature,
+            signingAddress
           )
         : await claimVBMS(
             claimData.amount.toString(),
