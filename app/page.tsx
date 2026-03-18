@@ -3578,6 +3578,8 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         address={address}
         fid={farcasterFidState ?? null}
         currentView={currentView}
+        username={userProfile?.username ?? null}
+        farcasterDisplayName={userProfile?.farcasterDisplayName ?? null}
       />
 
       {/* Chain Select Modal (first-time) - only if ARB supported */}

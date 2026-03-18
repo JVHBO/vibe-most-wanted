@@ -1642,6 +1642,7 @@ export const translations = {
     reportCategorySuggestion: 'Sugestão',
     reportCategoryOther: 'Outro',
     reportDescriptionRequired: 'Descrição é obrigatória',
+    reportDailyLimit: 'Você já enviou um report hoje. Tente novamente amanhã.',
   },
   en: {
     transactionInProgress: 'Transaction in progress',
@@ -3266,6 +3267,7 @@ export const translations = {
     reportCategorySuggestion: 'Suggestion',
     reportCategoryOther: 'Other',
     reportDescriptionRequired: 'Description is required',
+    reportDailyLimit: 'You already submitted a report today. Try again tomorrow.',
   },
   es: {
     transactionInProgress: 'Transacción en progreso',
@@ -4893,6 +4895,7 @@ export const translations = {
     reportCategorySuggestion: 'Sugerencia',
     reportCategoryOther: 'Otro',
     reportDescriptionRequired: 'La descripción es obligatoria',
+    reportDailyLimit: 'Ya enviaste un reporte hoy. Inténtalo mañana.',
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
@@ -6520,6 +6523,7 @@ export const translations = {
     reportCategorySuggestion: 'सुझाव',
     reportCategoryOther: 'अन्य',
     reportDescriptionRequired: 'विवरण आवश्यक है',
+    reportDailyLimit: 'आपने आज पहले ही एक रिपोर्ट भेजी है। कल फिर कोशिश करें।',
   },
   ru: {
     transactionInProgress: 'Транзакция в процессе',
@@ -8143,6 +8147,7 @@ export const translations = {
     reportCategorySuggestion: 'Предложение',
     reportCategoryOther: 'Другое',
     reportDescriptionRequired: 'Описание обязательно',
+    reportDailyLimit: 'Вы уже отправили отчёт сегодня. Попробуйте завтра.',
   },
   "zh-CN": {
     transactionInProgress: '交易进行中',
@@ -9786,6 +9791,7 @@ export const translations = {
     reportCategorySuggestion: '建议',
     reportCategoryOther: '其他',
     reportDescriptionRequired: '描述为必填项',
+    reportDailyLimit: '您今天已提交过报告，请明天再试。',
   },
   id: {
     transactionInProgress: 'Transaksi sedang berlangsung',
@@ -11403,6 +11409,7 @@ export const translations = {
     reportCategorySuggestion: 'Saran',
     reportCategoryOther: 'Lainnya',
     reportDescriptionRequired: 'Deskripsi diperlukan',
+    reportDailyLimit: 'Anda sudah mengirim laporan hari ini. Coba lagi besok.',
   },
   fr: {
     transactionInProgress: 'Transaction en cours',
@@ -13021,6 +13028,7 @@ export const translations = {
     reportCategorySuggestion: 'Suggestion',
     reportCategoryOther: 'Autre',
     reportDescriptionRequired: 'La description est requise',
+    reportDailyLimit: "Vous avez déjà soumis un rapport aujourd'hui. Réessayez demain.",
   },
   ja: {
     transactionInProgress: '取引処理中',
@@ -14637,6 +14645,7 @@ export const translations = {
     reportCategorySuggestion: '提案',
     reportCategoryOther: 'その他',
     reportDescriptionRequired: '説明は必須です',
+    reportDailyLimit: '本日はすでにレポートを送信しました。明日また試してください。',
   },
   it: {
     transactionInProgress: 'Transazione in corso',
@@ -16844,5 +16853,6 @@ export const translations = {
     reportCategorySuggestion: 'Suggerimento',
     reportCategoryOther: 'Altro',
     reportDescriptionRequired: 'La descrizione è obbligatoria',
+    reportDailyLimit: 'Hai già inviato una segnalazione oggi. Riprova domani.',
   }
 } as const;

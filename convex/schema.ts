@@ -2190,8 +2190,12 @@ export default defineSchema({
     deviceInfo: v.string(),
     address: v.optional(v.string()),
     fid: v.optional(v.number()),
+    username: v.optional(v.string()),
+    farcasterDisplayName: v.optional(v.string()),
     imageBase64: v.optional(v.string()),
     status: v.string(),
     createdAt: v.number(),
-  }).index("by_created", ["createdAt"]),
+  })
+    .index("by_created", ["createdAt"])
+    .index("by_address", ["address"]),
 });

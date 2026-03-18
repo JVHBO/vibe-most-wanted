@@ -19,6 +19,7 @@ import type * as backup from "../backup.js";
 import type * as bettingCredits from "../bettingCredits.js";
 import type * as blacklist from "../blacklist.js";
 import type * as blockchainVerify from "../blockchainVerify.js";
+import type * as bugReports from "../bugReports.js";
 import type * as cardPacks from "../cardPacks.js";
 import type * as cardSchema from "../cardSchema.js";
 import type * as cardValidation from "../cardValidation.js";
@@ -91,6 +92,7 @@ declare const fullApi: ApiFromModules<{
   bettingCredits: typeof bettingCredits;
   blacklist: typeof blacklist;
   blockchainVerify: typeof blockchainVerify;
+  bugReports: typeof bugReports;
   cardPacks: typeof cardPacks;
   cardSchema: typeof cardSchema;
   cardValidation: typeof cardValidation;

@@ -13,6 +13,8 @@ interface ReportModalProps {
   address?: string;
   fid?: number | null;
   currentView?: string;
+  username?: string | null;
+  farcasterDisplayName?: string | null;
 }
 
 type Category = 'bug' | 'ux' | 'suggestion' | 'other';
@@ -59,7 +61,7 @@ async function resizeImageToBase64(file: File): Promise<string> {
   });
 }
 
-export function ReportModal({ isOpen, onClose, t, address, fid, currentView }: ReportModalProps) {
+export function ReportModal({ isOpen, onClose, t, address, fid, currentView, username, farcasterDisplayName }: ReportModalProps) {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category>('bug');
   const [imageBase64, setImageBase64] = useState<string | null>(null);
@@ -103,14 +105,21 @@ export function ReportModal({ isOpen, onClose, t, address, fid, currentView }: R
     setErrorMsg('');
     try {
       const deviceInfo = collectDeviceInfo(address, fid, currentView);
-      await submitReport({
+      const result = await submitReport({
         description: description.trim(),
         category,
         deviceInfo: JSON.stringify(deviceInfo),
         address: address || null,
         fid: fid ?? null,
+        username: username || null,
+        farcasterDisplayName: farcasterDisplayName || null,
         imageBase64: imageBase64 || null,
       });
+      if (result?.limited) {
+        setStatus('error');
+        setErrorMsg(t('reportDailyLimit'));
+        return;
+      }
       setStatus('success');
       setTimeout(() => {
         setStatus('idle');
