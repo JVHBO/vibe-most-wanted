@@ -171,6 +171,10 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
   const [generatedTraits, setGeneratedTraits] = useState<GeneratedTraits | null>(null);
   const [backstoryData, setBackstoryData] = useState<CriminalBackstoryData | null>(null);
 
+  // Recovery: detect on-chain mint without Convex record
+  const [recoveryChain, setRecoveryChain] = useState<VibeFIDChain | null>(null);
+  const [isCheckingOnChain, setIsCheckingOnChain] = useState(false);
+
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [showAboutModal, setShowAboutModal] = useState(false);
@@ -889,6 +893,41 @@ const searchParams = useSearchParams();  const testFid = searchParams.get("testF
     userFid ? { cardFid: userFid } : "skip"
   );
 
+  // Recovery: when myCard is null but FID exists, check on-chain if minted
+  useEffect(() => {
+    if (myCard !== null || !userFid || isCheckingOnChain || recoveryChain) return;
+    // myCard === null means query finished and returned null (not loading)
+    if (myCard === undefined) return; // Still loading
+
+    const checkOnChain = async () => {
+      setIsCheckingOnChain(true);
+      try {
+        const ARB_CONTRACT = '0xC39DDd9E2798D5612C700B899d0c80707c542dB0';
+        const BASE_CONTRACT = '0x60274A138d026E3cB337B40567100FdEC3127565';
+        const fidAbi = [{ name: 'fidMinted', type: 'function', stateMutability: 'view', inputs: [{ name: 'fid', type: 'uint256' }], outputs: [{ name: '', type: 'bool' }] }];
+
+        const [arbResult, baseResult] = await Promise.allSettled([
+          createPublicClient({ chain: arbitrum, transport: http('https://arb1.arbitrum.io/rpc') })
+            .readContract({ address: ARB_CONTRACT as `0x${string}`, abi: fidAbi, functionName: 'fidMinted', args: [BigInt(userFid)] }),
+          createPublicClient({ chain: base, transport: http('https://mainnet.base.org') })
+            .readContract({ address: BASE_CONTRACT as `0x${string}`, abi: fidAbi, functionName: 'fidMinted', args: [BigInt(userFid)] }),
+        ]);
+
+        if (arbResult.status === 'fulfilled' && arbResult.value === true) {
+          setRecoveryChain('arbitrum');
+        } else if (baseResult.status === 'fulfilled' && baseResult.value === true) {
+          setRecoveryChain('base');
+        }
+      } catch {
+        // Silently ignore - just show normal mint screen
+      } finally {
+        setIsCheckingOnChain(false);
+      }
+    };
+
+    checkOnChain();
+  }, [myCard, userFid, isCheckingOnChain, recoveryChain]);
+
   // Handle share with selected language - uses score GIF (same as card page)
   const handleShareWithLanguage = async (selectedLang: typeof lang) => {
     if (!myCard) return;
@@ -1161,6 +1200,81 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       link.click();
     } catch (err: any) {
       console.error('Failed to generate share image:', err);
+    }
+  };
+
+  // Recovery: save card data to Convex for FIDs already minted on-chain but missing from DB
+  const handleRecoverCard = async () => {
+    if (!recoveryChain || !effectiveFarcasterUser) return;
+    setLoading(true);
+    setError("Recovering your card...");
+    try {
+      const fid = effectiveFarcasterUser.fid;
+      const user = await getUserByFid(fid);
+      if (!user) throw new Error('Could not fetch Farcaster data');
+
+      const score = user.experimental?.neynar_user_score || 0;
+      const rarity = calculateRarityFromScore(score);
+      const suit = getSuitFromFid(fid);
+      const suitSymbol = getSuitSymbol(suit);
+      const color = getSuitColor(suit);
+      const rank = generateRankFromRarity(rarity);
+      const fidTraits = getFidTraits(fid);
+      const foil = fidTraits.foil;
+      const wear = fidTraits.wear;
+
+      const rarityKey = rarity.toLowerCase() as 'mythic' | 'legendary' | 'epic' | 'rare' | 'common';
+      const basePower = VIBEFID_POWER_CONFIG.rarityBase[rarityKey] || VIBEFID_POWER_CONFIG.rarityBase.common;
+      const wearKey = wear.toLowerCase().replace(' ', '') as 'pristine' | 'mint';
+      const wearMult = VIBEFID_POWER_CONFIG.wearMultiplier[wearKey] || VIBEFID_POWER_CONFIG.wearMultiplier.default;
+      const foilKey = foil.toLowerCase() as 'prize' | 'standard' | 'none';
+      const foilMult = VIBEFID_POWER_CONFIG.foilMultiplier[foilKey] || VIBEFID_POWER_CONFIG.foilMultiplier.none;
+      const power = Math.round(basePower * wearMult * foilMult);
+
+      setError("Generating card image...");
+      const createdAt = await getFarcasterAccountCreationDate(fid);
+      const cardImageDataUrl = await generateFarcasterCardImage({
+        fid, username: user.username, displayName: user.display_name,
+        pfpUrl: user.pfp_url, bio: user.profile?.bio?.text || "",
+        neynarScore: score, suit, suitSymbol, rank, color, rarity,
+        bounty: power * 10, createdAt: createdAt || undefined,
+      });
+
+      setError("Uploading card to IPFS...");
+      const cardPngBlob = await fetch(cardImageDataUrl).then(r => r.blob());
+      const pngFormData = new FormData();
+      pngFormData.append('image', cardPngBlob, `card-${fid}.png`);
+      const pngUploadResponse = await fetch('/api/fid/upload-nft-image', { method: 'POST', body: pngFormData });
+      if (!pngUploadResponse.ok) throw new Error('Failed to upload card image');
+      const { ipfsUrl: cardImageIpfsUrl } = await pngUploadResponse.json();
+
+      const chainConfig = getVibeFIDConfig(recoveryChain);
+      setError("Restoring card data...");
+      await mintCard({
+        fid, username: user.username, displayName: user.display_name,
+        pfpUrl: user.pfp_url, bio: user.profile?.bio?.text || "",
+        neynarScore: score, followerCount: user.follower_count,
+        followingCount: user.following_count, powerBadge: user.power_badge || false,
+        address: address || user.custody_address || '',
+        rarity, foil, wear, power, suit, rank, suitSymbol, color,
+        imageUrl: cardImageIpfsUrl, cardImageUrl: cardImageIpfsUrl,
+        contractAddress: chainConfig.address.toLowerCase(),
+        chain: recoveryChain, language: lang,
+      });
+
+      setError(null);
+      setMintedSuccessfully(true);
+      setRecoveryChain(null);
+    } catch (err: any) {
+      if (err?.message?.includes('already minted') || err?.message?.includes('already exists')) {
+        // Card exists now - just reload
+        setRecoveryChain(null);
+        setMintedSuccessfully(true);
+      } else {
+        setError(err?.message || 'Recovery failed. Please contact support.');
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -1575,13 +1689,26 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
             >
               {t.viewMyCard || "View My Card"}
             </button>
+          ) : recoveryChain ? (
+            <div className="flex flex-col items-center gap-3">
+              <p className="text-vintage-gold/80 text-sm text-center max-w-xs">
+                Your VibeFID was minted on {recoveryChain === 'arbitrum' ? 'Arbitrum' : 'Base'} but card data needs to be restored.
+              </p>
+              <button
+                onClick={handleRecoverCard}
+                disabled={loading}
+                className="px-10 py-4 bg-vintage-gold text-vintage-black font-bold text-xl rounded-xl transition-all hover:scale-105 hover:bg-vintage-burnt-gold disabled:opacity-50 shadow-[0_0_30px_rgba(255,215,0,0.3)]"
+              >
+                {loading ? 'Restoring...' : '🔄 Restore My Card'}
+              </button>
+            </div>
           ) : (
             <button
               onClick={handleGenerateCard}
-              disabled={loading}
+              disabled={loading || isCheckingOnChain}
               className="px-10 py-4 bg-vintage-gold text-vintage-black font-bold text-xl rounded-xl transition-all hover:scale-105 hover:bg-vintage-burnt-gold disabled:opacity-50 shadow-[0_0_30px_rgba(255,215,0,0.3)]"
             >
-              {loading ? t.generating : effectiveFarcasterUser ? t.mintMyCard : t.connectFarcasterToMint}
+              {loading ? t.generating : isCheckingOnChain ? 'Checking...' : effectiveFarcasterUser ? t.mintMyCard : t.connectFarcasterToMint}
             </button>
           )}
 
