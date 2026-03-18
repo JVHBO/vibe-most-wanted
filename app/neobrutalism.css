@@ -3148,3 +3148,7 @@ body.neobrutalism .bg-vintage-black select option {
   color: #F5F5F5 !important;
   background-color: #1A1A1A !important;
 }
+
+/* Linked Wallets description - force gold */
+.settings-linked-desc { color: #C9A227 !important; }
+body.neobrutalism .settings-linked-desc { color: #FFD400 !important; }
