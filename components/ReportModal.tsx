@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
 import { Modal } from '@/app/(game)/components/ui/Modal';
 import { getLogBuffer } from '@/lib/log-buffer';
 
@@ -36,7 +37,7 @@ function collectDeviceInfo(address?: string, fid?: number | null, currentView?: 
   };
 }
 
-async function resizeImageToBase64(file: File): Promise<string> {
+async function resizeImageToBlob(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);
@@ -54,7 +55,10 @@ async function resizeImageToBase64(file: File): Promise<string> {
       if (!ctx) { reject(new Error('canvas ctx failed')); return; }
       ctx.drawImage(img, 0, 0, width, height);
       URL.revokeObjectURL(objectUrl);
-      resolve(canvas.toDataURL('image/jpeg', 0.65));
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('toBlob failed'));
+      }, 'image/jpeg', 0.65);
     };
     img.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('img load failed')); };
     img.src = objectUrl;
@@ -64,34 +68,32 @@ async function resizeImageToBase64(file: File): Promise<string> {
 export function ReportModal({ isOpen, onClose, t, address, fid, currentView, username, farcasterDisplayName }: ReportModalProps) {
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<Category>('bug');
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const submitReport = useMutation(api.bugReports.submitBugReport);
+  const generateUploadUrl = useMutation(api.bugReports.generateImageUploadUrl);
 
   const handleImageChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (file.size > 2 * 1024 * 1024) {
+    if (file.size > 5 * 1024 * 1024) {
       setErrorMsg(t('reportImageTooLarge'));
       return;
     }
     setErrorMsg('');
-    try {
-      const b64 = await resizeImageToBase64(file);
-      setImageBase64(b64);
-      setImagePreview(b64);
-    } catch {
-      setErrorMsg('Failed to process image');
-    }
+    setImageFile(file);
+    // Preview only
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
   }, [t]);
 
   const handleRemoveImage = useCallback(() => {
-    setImageBase64(null);
+    setImageFile(null);
     setImagePreview(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
@@ -104,6 +106,20 @@ export function ReportModal({ isOpen, onClose, t, address, fid, currentView, use
     setStatus('sending');
     setErrorMsg('');
     try {
+      // Upload image to Convex Storage if present
+      let imageStorageId: Id<'_storage'> | null = null;
+      if (imageFile) {
+        const uploadUrl = await generateUploadUrl();
+        const blob = await resizeImageToBlob(imageFile);
+        const uploadRes = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'image/jpeg' },
+          body: blob,
+        });
+        const { storageId } = await uploadRes.json();
+        imageStorageId = storageId;
+      }
+
       const deviceInfo = collectDeviceInfo(address, fid, currentView);
       const result = await submitReport({
         description: description.trim(),
@@ -113,19 +129,21 @@ export function ReportModal({ isOpen, onClose, t, address, fid, currentView, use
         fid: fid ?? null,
         username: username || null,
         farcasterDisplayName: farcasterDisplayName || null,
-        imageBase64: imageBase64 || null,
+        imageStorageId: imageStorageId,
       });
+
       if (result?.limited) {
         setStatus('error');
         setErrorMsg(t('reportDailyLimit'));
         return;
       }
+
       setStatus('success');
       setTimeout(() => {
         setStatus('idle');
         setDescription('');
         setCategory('bug');
-        setImageBase64(null);
+        setImageFile(null);
         setImagePreview(null);
         onClose();
       }, 2500);
@@ -133,7 +151,7 @@ export function ReportModal({ isOpen, onClose, t, address, fid, currentView, use
       setStatus('error');
       setErrorMsg(t('reportError'));
     }
-  }, [description, category, imageBase64, address, fid, currentView, submitReport, t, onClose]);
+  }, [description, category, imageFile, address, fid, currentView, username, farcasterDisplayName, submitReport, generateUploadUrl, t, onClose]);
 
   const categoryOptions: { value: Category; label: string }[] = [
     { value: 'bug', label: t('reportCategoryBug') },
@@ -215,7 +233,7 @@ export function ReportModal({ isOpen, onClose, t, address, fid, currentView, use
                 {t('reportAddImage')}
               </label>
               {imagePreview ? (
-                <div className="relative inline-block">
+                <div>
                   <img
                     src={imagePreview}
                     alt="preview"
@@ -261,9 +279,7 @@ export function ReportModal({ isOpen, onClose, t, address, fid, currentView, use
             </div>
 
             {/* Error */}
-            {errorMsg && (
-              <p className="text-red-400 text-xs">{errorMsg}</p>
-            )}
+            {errorMsg && <p className="text-red-400 text-xs">{errorMsg}</p>}
 
             {/* Submit */}
             <button

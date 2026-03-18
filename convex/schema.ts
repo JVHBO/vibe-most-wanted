@@ -2192,7 +2192,7 @@ export default defineSchema({
     fid: v.optional(v.number()),
     username: v.optional(v.string()),
     farcasterDisplayName: v.optional(v.string()),
-    imageBase64: v.optional(v.string()),
+    imageStorageId: v.optional(v.id("_storage")),
     status: v.string(),
     createdAt: v.number(),
   })
