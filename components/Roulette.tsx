@@ -308,8 +308,6 @@ export function Roulette({ onClose }: RouletteProps) {
   const prepareClaimAction = useAction(api.roulette.prepareRouletteClaim);
   const recordClaimMutation = useMutation(api.roulette.recordRouletteClaim);
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
-  const clearPendingMutation = useMutation(api.roulette.adminClearPendingSpin);
-  const [isRecovering, setIsRecovering] = useState(false);
 
   const canSpin = canSpinData?.canSpin ?? false;
   const spinsRemaining = canSpinData?.spinsRemaining ?? 0;
@@ -1072,27 +1070,6 @@ export function Roulette({ onClose }: RouletteProps) {
             {isSpinning ? t.spinning : canSpin ? t.spin : t.noSpinsToday}
           </button>
 
-          {/* Recover Pending Claim - show when no free spins and no result displayed */}
-          {!canSpin && address && (
-            <button
-              onClick={async () => {
-                if (!address || isRecovering) return;
-                setIsRecovering(true);
-                try {
-                  const res = await clearPendingMutation({ address });
-                  toast.info(res.message);
-                } catch (e: any) {
-                  toast.error(e.message || 'Erro ao recuperar');
-                } finally {
-                  setIsRecovering(false);
-                }
-              }}
-              disabled={isRecovering}
-              className="w-full mt-2 py-2 rounded-xl text-sm text-vintage-gold/70 hover:text-vintage-gold border border-vintage-gold/20 hover:border-vintage-gold/40 transition-all"
-            >
-              {isRecovering ? '...' : '⚠️ Recover stuck claim'}
-            </button>
-          )}
 
           {/* Paid Spin Button - show when no free spins left */}
           {!canSpin && paidSpinCostData && canBuyPaidSpinData && (

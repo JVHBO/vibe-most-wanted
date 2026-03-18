@@ -1375,3 +1375,60 @@ export const claimQuestReceiptVBMS = action({
     return { amount, nonce, signature };
   },
 });
+
+// ========== ACTION: Admin Clear All Stuck Pending Conversions ==========
+export const adminClearAllPendingConversions = action({
+  args: {},
+  handler: async (ctx): Promise<{ cleared: number; restored: number; skipped: number }> => {
+    const profiles = await ctx.runQuery(internal.vbmsClaim.getPendingConversionProfiles);
+    console.log(`[adminClearAll] Found ${profiles.length} profiles with pending conversions`);
+    let cleared = 0, restored = 0, skipped = 0;
+    for (const profile of profiles) {
+      try {
+        const nonce = profile.pendingNonce;
+        if (nonce) {
+          const isUsed = await ctx.runAction(internal.vbmsClaim.checkNonceUsedOnChain, { nonce });
+          if (isUsed) {
+            await ctx.runMutation(internal.vbmsClaim.clearPendingOnly, { address: profile.address });
+            console.log(`[adminClearAll] ${profile.address}: nonce used on-chain, cleared`);
+            cleared++;
+          } else {
+            await ctx.runMutation(internal.vbmsClaim.restoreOnSignFailure, { address: profile.address, amount: profile.pendingConversion });
+            console.log(`[adminClearAll] ${profile.address}: restored ${profile.pendingConversion} coins`);
+            restored++;
+          }
+        } else {
+          await ctx.runMutation(internal.vbmsClaim.restoreOnSignFailure, { address: profile.address, amount: profile.pendingConversion });
+          console.log(`[adminClearAll] ${profile.address}: no nonce, restored ${profile.pendingConversion} coins`);
+          restored++;
+        }
+      } catch (e) {
+        console.error(`[adminClearAll] Error processing ${profile.address}:`, e);
+        skipped++;
+      }
+    }
+    return { cleared, restored, skipped };
+  },
+});
+
+export const getPendingConversionProfiles = internalQuery({
+  args: {},
+  handler: async (ctx): Promise<Array<{ address: string; pendingConversion: number; pendingNonce: string | undefined }>> => {
+    const profiles = await ctx.db.query("profiles").collect();
+    return profiles
+      .filter((p) => (p.pendingConversion || 0) > 0)
+      .map((p) => ({ address: p.address, pendingConversion: p.pendingConversion || 0, pendingNonce: p.pendingNonce }));
+  },
+});
+
+export const clearPendingOnly = internalMutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .first();
+    if (!profile) return;
+    await ctx.db.patch(profile._id, { pendingConversion: 0, pendingConversionTimestamp: undefined, pendingNonce: undefined });
+  },
+});
