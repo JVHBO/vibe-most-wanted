@@ -18,8 +18,8 @@ const CHANGELOG: ChangelogEntry[] = [
     date: 'Mar 2026',
     isNew: true,
     features: [
-      { emoji: '🛡️', text: 'Security system hardened — anti-sybil & anti-exploit protection' },
-      { emoji: '🔒', text: 'FID authentication improved — spoofing prevention' },
+      { emoji: '🛡️', text: 'Security system hardened — anti-exploit protection' },
+      { emoji: '🔒', text: 'FID authentication improved' },
       { emoji: '⚡', text: 'Performance & stability improvements' },
       { emoji: '🐛', text: 'Bug fixes across economy and quest systems' },
     ],
