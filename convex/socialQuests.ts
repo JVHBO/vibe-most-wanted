@@ -10,6 +10,7 @@ import { query, mutation, internalMutation, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { normalizeAddress } from "./utils";
 import { createAuditLog } from "./coinAudit";
+import { isBlacklisted } from "./blacklist";
 
 // Social Quest Rewards (halved - Vibe Clash is main mode)
 // Must match lib/socialQuests.ts
@@ -234,6 +235,7 @@ export const claimSocialQuestReward = mutation({
   },
   handler: async (ctx, { address, questId }) => {
     const normalizedAddress = normalizeAddress(address);
+    if (isBlacklisted(normalizedAddress)) throw new ConvexError("[BLACKLISTED]");
 
     // Get base reward amount
     const baseReward = QUEST_REWARDS[questId];

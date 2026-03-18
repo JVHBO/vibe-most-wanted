@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query, internalQuery, internalMutation, MutationCtx, QueryCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
+import { isBlacklisted } from "./blacklist";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FEATURED CAST AUCTIONS - Bid VBMS to have casts featured
@@ -470,6 +471,7 @@ export const placeBid = mutation({
   handler: async (ctx, args) => {
     // 🔗 LINKED WALLET FIX: Always resolve to primary address
     const normalizedAddress = await resolvePrimaryAddress(ctx, args.address);
+    if (isBlacklisted(normalizedAddress)) throw new Error("[BLACKLISTED]");
 
     // 1. Validate slot number
     if (args.slotNumber < 0 || args.slotNumber >= TOTAL_SLOTS) {
@@ -1042,6 +1044,7 @@ export const requestRefund = mutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
+    if (isBlacklisted(normalizedAddress)) throw new Error("[BLACKLISTED]");
 
     const pendingRefunds = await ctx.db
       .query("castAuctionBids")
@@ -1194,6 +1197,7 @@ export const processRefund = mutation({
   handler: async (ctx, { bidId, txHash }) => {
     const bid = await ctx.db.get(bidId);
     if (!bid) throw new Error("Bid not found");
+    if (isBlacklisted(bid.bidderAddress)) throw new Error("[BLACKLISTED]");
     if (bid.status !== "refund_requested") {
       throw new Error("Bid is not in refund_requested status");
     }

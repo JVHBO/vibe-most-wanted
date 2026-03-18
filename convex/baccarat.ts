@@ -13,6 +13,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { createAuditLog } from "./coinAudit";
+import { isBlacklisted } from "./blacklist";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -639,6 +640,7 @@ export const cashOut = mutation({
   },
   handler: async (ctx, args) => {
     const playerAddress = args.address.toLowerCase();
+    if (isBlacklisted(playerAddress)) throw new Error("[BLACKLISTED]");
     const now = Date.now();
 
     // Get betting credits

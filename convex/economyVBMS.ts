@@ -6,6 +6,7 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { isBlacklisted } from "./blacklist";
 
 // Entry Fees in VBMS
 const VBMS_ENTRY_FEES = {
@@ -73,6 +74,8 @@ export const awardPvPVBMS = mutation({
     opponentAddress: v.optional(v.string()),
   },
   handler: async (ctx, { address, won, opponentAddress }) => {
+    if (isBlacklisted(address)) throw new Error("[BLACKLISTED]");
+
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
