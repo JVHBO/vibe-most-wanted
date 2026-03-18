@@ -12,6 +12,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
 import { mintRateLimit, checkRateLimit as checkDistributedRateLimit, getClientIdentifier } from '@/lib/security';
+import { ConvexHttpClient } from 'convex/browser';
+import { api } from '@/convex/_generated/api';
 
 // Rate limiting: track last request time per address
 const rateLimitMap = new Map<string, number>();
@@ -89,6 +91,23 @@ export async function POST(request: NextRequest) {
         { error: 'Too many requests. Please wait 10 seconds.' },
         { status: 429 }
       );
+    }
+
+    // SECURITY: Verify address has Convex inbox balance >= amount
+    // This closes the bypass where attacker calls this endpoint directly without a Convex account
+    const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+    const [banCheck, economy] = await Promise.all([
+      convex.query(api.blacklist.checkBlacklist, { address: address.toLowerCase() }),
+      convex.query(api.vbmsClaim.getPlayerEconomy, { address: address.toLowerCase() }),
+    ]);
+    if (banCheck.isBlacklisted) {
+      console.warn('⚠️ Blacklisted address tried to sign-claim:', address);
+      return NextResponse.json({ error: 'Account banned' }, { status: 403 });
+    }
+    const inboxBalance = economy?.coinsInbox ?? 0;
+    if (inboxBalance < amountNum) {
+      console.warn('⚠️ Insufficient inbox balance for sign-claim:', address, 'inbox:', inboxBalance, 'requested:', amountNum);
+      return NextResponse.json({ error: 'Insufficient inbox balance' }, { status: 403 });
     }
 
     console.log('📝 Signing VBMS claim:', { address, amount, nonce });
