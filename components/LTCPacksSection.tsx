@@ -428,8 +428,9 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
     if (name) params.set("name", name);
     if (m?.foil && m.foil !== "None") params.set("foil", m.foil);
     if (card?.tokenId) params.set("tokenId", card.tokenId);
-    // Pass baccarat image path (strip domain if present)
-    if (m?.image && m.image.startsWith("/images/")) params.set("cardImg", m.image);
+    // Pass card image — baccarat local path or CDN URL
+    const imgToShare = m?.image || m?.cdnImage;
+    if (imgToShare) params.set("cardImg", imgToShare);
     const shareUrl = `https://vibemostwanted.xyz/share/pack?${params.toString()}`;
     shareToFarcaster(text, shareUrl);
   };

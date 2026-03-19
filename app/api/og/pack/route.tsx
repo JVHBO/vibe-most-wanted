@@ -31,10 +31,17 @@ export async function GET(request: NextRequest) {
   const rarityGlow = RARITY_GLOW[rarity] || RARITY_GLOW.common;
   const rarityLabel = rarity.charAt(0).toUpperCase() + rarity.slice(1);
 
-  // Proxy card image — baccarat portraits are on the same domain
-  const cardImg = cardImgParam
-    ? `https://vibemostwanted.xyz${cardImgParam.startsWith('/') ? '' : '/'}${cardImgParam}`
-    : '';
+  // Build absolute image URL — proxy external URLs, resolve local paths
+  let cardImg = '';
+  if (cardImgParam) {
+    if (cardImgParam.startsWith('http')) {
+      // External CDN URL — proxy through our image proxy
+      cardImg = `https://vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(cardImgParam)}`;
+    } else {
+      // Local path like /images/baccarat/...
+      cardImg = `https://vibemostwanted.xyz${cardImgParam.startsWith('/') ? '' : '/'}${cardImgParam}`;
+    }
+  }
 
   return new ImageResponse(
     (
