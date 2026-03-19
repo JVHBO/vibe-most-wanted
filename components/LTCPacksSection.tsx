@@ -274,8 +274,8 @@ function OpenModal({ address, onClose, onRevealed }: {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="bg-vintage-charcoal border border-vintage-gold/50 rounded-t-2xl w-full max-w-sm p-5 max-h-[80vh] flex flex-col"
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-vintage-charcoal border border-vintage-gold/50 rounded-2xl w-full max-w-sm p-5 max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-vintage-gold">Open VMW Packs</h3>
@@ -431,8 +431,8 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-end justify-center" onClick={onClose}>
-      <div className="bg-vintage-charcoal border border-vintage-gold/50 rounded-t-2xl w-full max-w-sm p-5 max-h-[85vh] flex flex-col"
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-vintage-charcoal border border-vintage-gold/50 rounded-2xl w-full max-w-sm p-5 max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-vintage-gold">Burn VMW Cards</h3>

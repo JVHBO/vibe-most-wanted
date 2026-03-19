@@ -163,8 +163,8 @@ export function ShopView({ address }: ShopViewProps) {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="absolute inset-0 pt-14 pb-16 overflow-y-auto flex flex-col">
-        <div className="relative z-10 px-4 py-2 flex-1 flex flex-col justify-center">
+      <div className="absolute inset-0 pt-14 pb-14 overflow-y-auto flex flex-col">
+        <div className="relative z-10 px-4 py-1 flex-1 flex flex-col justify-center">
 
           {/* ── Pack Carousel ── */}
           <div className="mb-2 relative">
@@ -196,13 +196,13 @@ export function ShopView({ address }: ShopViewProps) {
               {/* Slide 1: Free Pack */}
               <div className="snap-start flex-none w-full px-6">
                 <div className="max-w-sm mx-auto h-full">
-                  <div className={`bg-vintage-charcoal/50 border ${isArb ? 'border-amber-400/50' : 'border-vintage-gold/30'} rounded-xl p-4 transition-all shadow-xl h-full flex flex-col`}>
+                  <div className={`bg-vintage-charcoal/50 border ${isArb ? 'border-amber-400/50' : 'border-vintage-gold/30'} rounded-xl p-3 transition-all shadow-xl h-full flex flex-col`}>
 
               {/* Pack Header */}
-              <div className="flex items-center gap-4 mb-3">
-                <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className="w-16 h-16 object-contain drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]" />
+              <div className="flex items-center gap-3 mb-2">
+                <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className="w-12 h-12 object-contain drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]" />
                 <div className="flex-1">
-                  <h3 className="text-xl font-display font-bold text-vintage-gold">
+                  <h3 className="text-base font-display font-bold text-vintage-gold">
                     Nothing Packs (non LTC)
                   </h3>
                   <p className="text-vintage-ice/60 text-xs">{t('shopNothingCardPerPack' as any)}</p>
@@ -213,14 +213,14 @@ export function ShopView({ address }: ShopViewProps) {
               </div>
 
               {/* Nothing Card Warning */}
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-2 mb-3 shadow-lg">
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-1.5 mb-2 shadow-lg">
                 <p className="text-amber-300/80 text-xs text-center">
                   {t('shopNothingCardWarning')}
                 </p>
               </div>
 
               {/* Drop Rates */}
-              <div className="bg-vintage-black/30 border border-vintage-gold/20 rounded-lg p-2 mb-3 text-xs shadow-lg">
+              <div className="bg-vintage-black/30 border border-vintage-gold/20 rounded-lg p-1.5 mb-2 text-xs shadow-lg">
                 <div className="grid grid-cols-4 gap-1 text-center">
                   <div>
                     <span className="text-vintage-ice/50 block">Common</span>
@@ -243,7 +243,7 @@ export function ShopView({ address }: ShopViewProps) {
 
               {/* ARB Mode Toggle */}
               {arbSupported && (
-                <div className="flex items-center justify-between rounded-lg px-3 py-2 mb-3 border bg-vintage-black/30 border-vintage-gold/20 shadow-lg">
+                <div className="flex items-center justify-between rounded-lg px-3 py-1.5 mb-2 border bg-vintage-black/30 border-vintage-gold/20 shadow-lg">
                   <div>
                     <p className="font-bold text-sm text-vintage-ice/70">
                       {t('shopArbMode' as any)}
@@ -270,14 +270,14 @@ export function ShopView({ address }: ShopViewProps) {
                     onClick={() => { AudioManager.buttonClick(); handleClaimDailyFree(); }}
                     onMouseEnter={() => AudioManager.buttonHover()}
                     disabled={claimingDaily}
-                    className="shop-claim-btn w-full h-11 font-display font-bold rounded transition-all disabled:opacity-50 text-vintage-black active:translate-y-[4px] bg-vintage-gold bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500"
+                    className="shop-claim-btn w-full h-9 font-display font-bold rounded transition-all disabled:opacity-50 text-vintage-black active:translate-y-[4px] bg-vintage-gold bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500"
                                       >
                     {claimingDaily ? "..." : isArb ? t('shopClaimFreePackArb' as any) : t('shopClaimFreePack' as any)}
                   </button>
                 ) : (
                   <button
                     disabled
-                    className="w-full h-11 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold/70 font-display font-bold rounded cursor-not-allowed"
+                    className="w-full h-9 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold/70 font-display font-bold rounded cursor-not-allowed"
                   >
                     {dailyFreeStatus?.timeRemaining
                       ? `${t('shopNextPackIn' as any)} ${formatTimeRemaining(dailyFreeStatus.timeRemaining)}`
