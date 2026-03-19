@@ -301,7 +301,7 @@ export function ShopView({ address }: ShopViewProps) {
           </div>{/* /carousel */}
 
           {/* Dots indicator */}
-          <div className="flex justify-center gap-2 mt-2">
+          <div className="flex justify-center gap-2 -mt-1 mb-2">
             <div className={`h-1.5 rounded-full transition-all ${activeSlide === 0 ? 'w-4 bg-vintage-gold' : 'w-1.5 bg-white/30'}`} />
             <div className={`h-1.5 rounded-full transition-all ${activeSlide === 1 ? 'w-4 bg-vintage-gold' : 'w-1.5 bg-white/30'}`} />
           </div>
