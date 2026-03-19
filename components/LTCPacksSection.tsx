@@ -76,9 +76,10 @@ function useOwnedBoxes(address: string | undefined) {
   const refresh = useCallback(() => {
     if (!address) return;
     setLoading(true);
-    fetch(`/api/vibemarket/owned?address=${address}&contractAddress=${VMW_DROP}`)
+    fetch(`/api/vibemarket/owned?address=${address.toLowerCase()}&contractAddress=${VMW_DROP}`)
       .then((r) => r.json())
       .then((d) => {
+        console.log('[VMW packs]', d);
         const rawBoxes = d.boxes ?? d.boosterboxes ?? d.data?.boxes ?? d.data?.boosterboxes;
         if (Array.isArray(rawBoxes)) {
           const RNAME: Record<string, number> = { COMMON: 0, RARE: 1, EPIC: 2, LEGENDARY: 3, MYTHIC: 4 };
@@ -372,7 +373,7 @@ function OpenModal({ address, onClose, onRevealed }: {
 }
 
 // ── Revealed Cards Animation ──────────────────────────────────────────────────
-type CardMeta = { image: string; name?: string; foil?: string };
+type CardMeta = { image: string; cdnImage?: string; name?: string; foil?: string };
 
 function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose: () => void }) {
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
@@ -380,18 +381,23 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
 
   useEffect(() => {
     cards.forEach(card => {
+      // 1. Try local baccarat image by tokenId immediately (no API call)
+      const localByTokenId = getVbmsBaccaratImageUrlByTokenId(card.tokenId);
+      if (localByTokenId) {
+        setMeta(prev => ({ ...prev, [card.tokenId]: { image: localByTokenId } }));
+      }
+      // 2. Fetch metadata for name, foil, and better image resolution
       fetch(`https://build.wield.xyz/vibe/boosterbox/metadata/vibe-most-wanted/${card.tokenId}`)
         .then(r => r.json())
         .then(d => {
-          if (!d.image) return;
           const attrs: any[] = d.attributes || [];
           const get = (t: string) => attrs.find((a: any) => a.trait_type === t)?.value;
           const charName = get("name") || get("Name");
           const foil = get("Foil");
-          // Prefer local baccarat image (shows character card), fallback to vibechain CDN
-          const localImg = charName ? getVbmsBaccaratImageUrl(charName) : null;
+          const localByName = charName ? getVbmsBaccaratImageUrl(charName) : null;
           setMeta(prev => ({ ...prev, [card.tokenId]: {
-            image: localImg || d.image,
+            image: localByName || localByTokenId || d.image,
+            cdnImage: d.image,
             name: charName,
             foil,
           }}));
@@ -402,84 +408,126 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
 
   const flip = (i: number) => setFlipped((p) => { const n = new Set(p); n.add(i); return n; });
   const flipAll = () => setFlipped(new Set(cards.map((_, i) => i)));
+  const allFlipped = flipped.size === cards.length;
+
+  const doShare = () => {
+    const card = cards[0];
+    const m = meta[card?.tokenId];
+    const name = m?.name || "";
+    const rarity = RARITY_NAMES[card?.rarity] || "Common";
+    const foilLabel = m?.foil && m.foil !== "None" ? `${m.foil} Foil ` : "";
+    const text = [
+      `🎴 Just pulled a ${foilLabel}${rarity} ${name}!`,
+      `Token #${card?.tokenId} · Vibe Most Wanted`,
+      cards.length > 1 ? `(+${cards.length - 1} more cards)` : "",
+      `vibemostwanted.xyz/shop`,
+    ].filter(Boolean).join("\n");
+    // Build /share/pack URL with rarity counts — Farcaster fetches OG tags from this page
+    const rarityKey = rarity.toLowerCase();
+    const params = new URLSearchParams({ packType: "vbms" });
+    params.set(rarityKey, "1");
+    if (foilLabel.includes("Prize")) params.set("foilPrize", "1");
+    else if (foilLabel) params.set("foilStandard", "1");
+    const shareUrl = `https://vibemostwanted.xyz/share/pack?${params.toString()}`;
+    shareToFarcaster(text, shareUrl);
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
-      <h3 className="text-2xl font-display font-bold text-vintage-gold mb-2">Cards Revealed!</h3>
-      <p className="text-vintage-ice/40 text-xs mb-5">Tap a card to reveal</p>
-      <div className="flex flex-wrap gap-3 justify-center mb-6">
-        {cards.map((card, i) => (
-          <div key={i} onClick={() => flip(i)} className="cursor-pointer" style={{ perspective: 600 }}>
-            <div style={{ transition: "transform 0.6s", transformStyle: "preserve-3d", transform: flipped.has(i) ? "rotateY(180deg)" : "rotateY(0deg)", width: 100, height: 140, position: "relative" }}>
-              {/* Front (pack) */}
-              <div style={{ backfaceVisibility: "hidden", position: "absolute", inset: 0 }}
-                className="rounded-xl bg-vintage-charcoal border border-vintage-gold/30 flex items-center justify-center">
-                <img src={PACK_IMAGE} alt="?" className="w-16 h-16 object-contain" />
-              </div>
-              {/* Back (card) */}
-              {(() => {
-                const m = meta[card.tokenId];
-                const foilType: 'Prize' | 'Standard' | null = m?.foil === "Prize" ? "Prize" : (m?.foil && m.foil !== "None") ? "Standard" : null;
-                return (
-                  <div style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", position: "absolute", inset: 0 }}
-                    className={`rounded-xl border-2 overflow-hidden ${RARITY_BG[card.rarity] ?? RARITY_BG[0]}`}>
-                    {m?.image
-                      ? <FoilCardEffect foilType={foilType} className="w-full h-full">
-                          <img src={m.image} alt="card" className="w-full h-full object-cover" />
-                        </FoilCardEffect>
-                      : <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2">
-                          <span className={`text-xs font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
-                          <span className="text-[10px] text-white/40">#{card.tokenId}</span>
-                        </div>
-                    }
-                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 py-1 px-1 text-center">
-                      <span className={`text-[9px] font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
-                      {m?.name && <span className="block text-[8px] text-white/50 capitalize">{m.name}</span>}
-                      {foilType && <span className="block text-[8px] text-yellow-300 font-bold">✨ {foilType === "Prize" ? "PRIZE FOIL" : "FOIL"}</span>}
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        ))}
+    <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: "#0D0D0D" }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/8">
+        <div>
+          <h3 className="text-lg font-display font-bold text-vintage-gold leading-tight">Cards Revealed!</h3>
+          {!allFlipped && <p className="text-white/30 text-xs mt-0.5">Tap to reveal</p>}
+        </div>
+        <button onClick={onClose}
+          className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/50 hover:bg-white/20 text-lg leading-none active:scale-90 transition-all">
+          ×
+        </button>
       </div>
-      {flipped.size < cards.length && (
-        <button onClick={flipAll} className="mb-3 px-4 py-1.5 text-sm font-bold text-black bg-vintage-gold rounded-lg">Reveal All</button>
-      )}
-      <div className="flex gap-2 items-center">
-        <a href={`https://opensea.io/assets/base/${VMW_DROP}/${cards[0].tokenId}`}
-          target="_blank" rel="noopener noreferrer"
-          className="px-3 py-2.5 rounded-xl border border-blue-400/50 text-blue-300 text-xs font-bold flex items-center gap-1 hover:bg-blue-500/10 active:scale-95 transition-all">
-          <svg width="13" height="13" viewBox="0 0 90 90"><circle cx="45" cy="45" r="45" fill="#2081E2"/><path d="M22.3 46.8l.2-.3 12.4-19.5c.2-.3.6-.2.7.1 2.1 4.7 3.9 10.5 3 14.1-.4 1.5-1.4 3.6-2.5 5.5-.1.3-.3.5-.4.8-.1.1-.2.2-.4.2H22.7c-.3 0-.5-.3-.4-.6v-.3zM74.5 49.6v.7c0 .2-.1.3-.3.4-.8.3-3.6 1.6-4.7 3.2-2.9 4.1-5.2 9.9-10.2 9.9H37.2c-7.5 0-13.6-6.1-13.6-13.7v-.2c0-.2.2-.4.4-.4h14.5c.3 0 .5.3.4.5-.1.7-.1 1.4 0 2.1.3 2.9 2.7 5.1 5.6 5.1h8.8v-5H44.7c-.3 0-.5-.3-.3-.6 0-.1.1-.1.1-.2 1.1-1.5 2.6-3.8 3-6.3.2-1.3.1-2.6-.1-3.8-.1-.5-.1-.9-.3-1.4v-.3c0-.1.1-.1.1-.1.7-.1 1.5.2 2.2.4.2.1.4.3.5.3.3.2.6.3.8.5.7.6 1.3 1.3 1.7 2.2.3.5.5 1.1.6 1.7.1.2.1.5.1.7 0 .4 0 .8-.1 1.2-.2.7-.5 1.3-.9 1.9h5.8c.2 0 .4.2.4.4v.1c0 .3-.3.6-.5.6z" fill="white"/></svg>
-          OS
-        </a>
-        <button onClick={() => {
-          const card = cards[0];
-          const m = meta[card?.tokenId];
-          const name = m?.name || "";
-          const rarity = RARITY_NAMES[card?.rarity] || "Common";
-          const foilLabel = m?.foil && m.foil !== "None" ? `${m.foil} Foil ` : "";
-          const lines = [
-            `🎴 Just pulled a ${foilLabel}${rarity} ${name}!`,
-            ``,
-            `Token #${card?.tokenId} · Vibe Most Wanted`,
-            cards.length > 1 ? `(${cards.length} cards revealed)` : "",
-            ``,
-            `vibemostwanted.xyz/shop`,
-          ].filter(Boolean).join("\n");
-          // Use vibechain CDN image as embed so Farcaster shows card preview
-          const embedUrl = m?.image && !m.image.startsWith("/")
-            ? m.image
-            : `https://vibemostwanted.xyz/share/pack?packType=vbms&rare=${rarity.toLowerCase()}`;
-          shareToFarcaster(lines, embedUrl);
-        }}
-          className="px-3 py-2.5 rounded-xl border border-purple-400/50 text-purple-300 text-xs font-bold flex items-center gap-1 hover:bg-purple-500/10 active:scale-95 transition-all">
-          🟣 Share
-        </button>
-        <button onClick={onClose} className="flex-1 px-6 py-2.5 bg-vintage-gold text-black font-black rounded-xl active:scale-95 transition-all">
-          Done
-        </button>
+
+      {/* Cards */}
+      <div className="flex-1 overflow-y-auto flex flex-wrap gap-4 justify-center items-center content-center p-6">
+        {cards.map((card, i) => {
+          const m = meta[card.tokenId];
+          const foilType: 'Prize' | 'Standard' | null = m?.foil === "Prize" ? "Prize" : (m?.foil && m.foil !== "None") ? "Standard" : null;
+          const isFlipped = flipped.has(i);
+          return (
+            <div key={i} onClick={() => flip(i)} className="cursor-pointer select-none" style={{ perspective: 800 }}>
+              <div style={{
+                transition: "transform 0.55s cubic-bezier(0.4,0,0.2,1)",
+                transformStyle: "preserve-3d",
+                transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                width: 110, height: 154, position: "relative",
+              }}>
+                {/* Front — pack */}
+                <div style={{ backfaceVisibility: "hidden", position: "absolute", inset: 0 }}
+                  className="rounded-2xl bg-[#1A1A1A] border border-vintage-gold/20 flex flex-col items-center justify-center gap-2 shadow-xl">
+                  <img src={PACK_IMAGE} alt="pack" className="w-16 h-16 object-contain" />
+                  <span className="text-[10px] text-white/30 font-mono">#{card.tokenId}</span>
+                </div>
+                {/* Back — card */}
+                <div style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", position: "absolute", inset: 0 }}
+                  className={`rounded-2xl border-2 overflow-hidden shadow-xl ${RARITY_BG[card.rarity] ?? RARITY_BG[0]}`}>
+                  {m?.image
+                    ? <FoilCardEffect foilType={foilType} className="w-full h-full">
+                        <img src={m.image} alt="card" className="w-full h-full object-cover" />
+                      </FoilCardEffect>
+                    : <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2">
+                        <span className={`text-sm font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
+                        <span className="text-[10px] text-white/40">#{card.tokenId}</span>
+                      </div>
+                  }
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent pt-4 pb-1.5 px-1.5 text-center">
+                    <span className={`text-[10px] font-black uppercase tracking-wider ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
+                    {m?.name && <span className="block text-[9px] text-white/60 capitalize mt-0.5">{m.name}</span>}
+                    {foilType && <span className="block text-[9px] text-yellow-300 font-bold mt-0.5">✨ {foilType === "Prize" ? "PRIZE FOIL" : "FOIL"}</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bottom bar */}
+      <div className="px-4 pb-6 pt-3 border-t border-white/8" style={{ background: "#111" }}>
+        {!allFlipped && (
+          <button onClick={flipAll}
+            className="w-full mb-3 py-2.5 rounded-xl border border-vintage-gold/30 bg-vintage-gold/10 text-vintage-gold text-sm font-bold active:scale-95 transition-all">
+            Reveal All
+          </button>
+        )}
+        <div className="grid grid-cols-3 gap-2">
+          {/* OpenSea */}
+          <a href={`https://opensea.io/assets/base/${VMW_DROP}/${cards[0].tokenId}`}
+            target="_blank" rel="noopener noreferrer"
+            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-[#2081E2] text-white text-xs font-bold active:scale-95 transition-all">
+            <svg width="20" height="20" viewBox="0 0 90 90" fill="none">
+              <circle cx="45" cy="45" r="45" fill="white" fillOpacity="0.15"/>
+              <path d="M22.3 46.8l.2-.3 12.4-19.5c.2-.3.6-.2.7.1 2.1 4.7 3.9 10.5 3 14.1-.4 1.5-1.4 3.6-2.5 5.5-.1.3-.3.5-.4.8-.1.1-.2.2-.4.2H22.7c-.3 0-.5-.3-.4-.6v-.3zM74.5 49.6v.7c0 .2-.1.3-.3.4-.8.3-3.6 1.6-4.7 3.2-2.9 4.1-5.2 9.9-10.2 9.9H37.2c-7.5 0-13.6-6.1-13.6-13.7v-.2c0-.2.2-.4.4-.4h14.5c.3 0 .5.3.4.5-.1.7-.1 1.4 0 2.1.3 2.9 2.7 5.1 5.6 5.1h8.8v-5H44.7c-.3 0-.5-.3-.3-.6 0-.1.1-.1.1-.2 1.1-1.5 2.6-3.8 3-6.3.2-1.3.1-2.6-.1-3.8-.1-.5-.1-.9-.3-1.4v-.3c0-.1.1-.1.1-.1.7-.1 1.5.2 2.2.4.2.1.4.3.5.3.3.2.6.3.8.5.7.6 1.3 1.3 1.7 2.2.3.5.5 1.1.6 1.7.1.2.1.5.1.7 0 .4 0 .8-.1 1.2-.2.7-.5 1.3-.9 1.9h5.8c.2 0 .4.2.4.4v.1c0 .3-.3.6-.5.6z" fill="white"/>
+            </svg>
+            OpenSea
+          </a>
+          {/* Farcaster share */}
+          <button onClick={doShare}
+            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-[#7C3AED] text-white text-xs font-bold active:scale-95 transition-all">
+            <svg width="20" height="20" viewBox="0 0 1000 1000" fill="none">
+              <rect width="1000" height="1000" rx="200" fill="white" fillOpacity="0.15"/>
+              <path d="M257.778 155.556H742.222V844.444H657.778V544.444H342.222V844.444H257.778V155.556Z" fill="white"/>
+              <path d="M342.222 544.444L257.778 844.444H742.222L657.778 544.444H342.222Z" fill="white"/>
+            </svg>
+            Share
+          </button>
+          {/* Done */}
+          <button onClick={onClose}
+            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-vintage-gold text-black text-xs font-black active:scale-95 transition-all">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Done
+          </button>
+        </div>
       </div>
     </div>
   );
