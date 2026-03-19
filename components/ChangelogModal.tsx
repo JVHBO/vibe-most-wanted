@@ -2,7 +2,7 @@
 
 import { Modal } from '@/app/(game)/components/ui/Modal';
 
-export const CHANGELOG_VERSION = '0.3.0';
+export const CHANGELOG_VERSION = '0.3.5';
 export const CHANGELOG_STORAGE_KEY = 'vmw_changelog_seen';
 
 interface ChangelogEntry {
@@ -14,9 +14,22 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.3.5',
+    date: 'Week of Mar 18, 2026',
+    isNew: true,
+    features: [
+      { emoji: '🎴', text: 'LTC Packs — buy, open & burn Vibe Most Wanted NFT packs on-chain' },
+      { emoji: '🎉', text: 'After buying packs, a modal shows only your new packs ready to open' },
+      { emoji: '✨', text: 'Card reveal: shaking animation + rarity sounds (same as Nothing packs)' },
+      { emoji: '🔥', text: 'Burn for ETH now uses 1 transaction (direct bonding curve sell)' },
+      { emoji: '📸', text: 'Farcaster share shows real card image, name & rarity in the embed' },
+      { emoji: '🔄', text: 'Shop carousel auto-scrolls, freezes when modals are open' },
+    ],
+  },
+  {
     version: '0.3.0',
     date: 'Week of Mar 17, 2026',
-    isNew: true,
+    isNew: false,
     features: [
       { emoji: '📋', text: 'Changelog modal — stay updated on new features' },
       { emoji: '🐛', text: 'Bug report system with screenshot & auto device info' },

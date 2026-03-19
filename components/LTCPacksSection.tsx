@@ -38,6 +38,7 @@ const DROP_ABI = [
   { name: "mint", type: "function", inputs: [{ name: "amount", type: "uint256" }, { name: "recipient", type: "address" }, { name: "referrer", type: "address" }, { name: "originReferrer", type: "address" }], outputs: [], stateMutability: "payable" },
   { name: "open", type: "function", inputs: [{ name: "tokenIds", type: "uint256[]" }], outputs: [], stateMutability: "payable" },
   { name: "sellAndClaimOffer", type: "function", inputs: [{ name: "tokenId", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
+  { name: "sell", type: "function", inputs: [{ name: "tokenId", type: "uint256" }, { name: "recipient", type: "address" }, { name: "referrer", type: "address" }], outputs: [], stateMutability: "nonpayable" },
 ] as const;
 
 const TOKEN_ABI = [
@@ -593,24 +594,22 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
     setSelling(true);
     setSellMode(mode);
     try {
-      // Step 1: sell card NFT → receive VBMS
-      await writeContractAsync({
-        address: VMW_DROP, abi: DROP_ABI, functionName: "sellAndClaimOffer",
-        args: [BigInt(selected)], chainId: base.id,
-      });
-      toast.success(mode === "vbms" ? `Card sold for ${offerVbms ? parseFloat(formatEther(offerVbms)).toFixed(0) : "?"} VBMS! ✅` : "Step 1/2: Card sold for VBMS ✅");
-
-      if (mode === "eth" && offerVbms) {
-        // Step 2: sell VBMS → ETH
-        const minOut = offerVbms * 95n / 100n; // 5% slippage
+      if (mode === "vbms") {
+        // sellAndClaimOffer → receives VBMS tokens
         await writeContractAsync({
-          address: VMW_TOKEN, abi: TOKEN_ABI, functionName: "sell",
-          args: [offerVbms, address as `0x${string}`, minOut, ZERO, ZERO],
+          address: VMW_DROP, abi: DROP_ABI, functionName: "sellAndClaimOffer",
+          args: [BigInt(selected)], chainId: base.id,
+        });
+        toast.success(`Card sold for ${offerVbms ? parseFloat(formatEther(offerVbms)).toFixed(0) : "?"} VBMS! ✅`);
+      } else {
+        // sell → 1 tx, receives ETH directly from bonding curve
+        await writeContractAsync({
+          address: VMW_DROP, abi: DROP_ABI, functionName: "sell",
+          args: [BigInt(selected), address as `0x${string}`, ZERO],
           chainId: base.id,
         });
-        toast.success(`Sold for ETH! ✅`);
+        toast.success(`Card sold for ETH! ✅`);
       }
-
       refresh();
       setSelected(null);
       onClose();
@@ -691,11 +690,11 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
                   <button onClick={() => handleSell("eth")} disabled={selling}
                     className="flex flex-col items-center py-3 rounded-xl bg-blue-500/10 border border-blue-400/40 hover:bg-blue-500/20 disabled:opacity-40 transition-all active:scale-95">
                     <span className="text-blue-400 font-black text-sm">ETH</span>
-                    {ethQuote && <span className="text-xs text-vintage-ice/60 mt-0.5">{parseFloat(formatEther(ethQuote)).toFixed(5)} ETH</span>}
-                    {selling && sellMode === "eth" && <span className="text-[10px] text-blue-400/60 mt-1">2 TXs…</span>}
+                    {ethQuote && <span className="text-xs text-vintage-ice/60 mt-0.5">~{parseFloat(formatEther(ethQuote)).toFixed(5)} ETH</span>}
+                    {selling && sellMode === "eth" && <span className="text-[10px] text-blue-400/60 mt-1">Selling…</span>}
                   </button>
                 </div>
-                <p className="text-[10px] text-vintage-ice/30 text-center">ETH = 2 transactions (sell card → sell tokens)</p>
+                <p className="text-[10px] text-vintage-ice/30 text-center">Bonding curve price · 1 transaction each</p>
               </div>
             )}
           </>
