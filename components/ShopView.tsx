@@ -216,11 +216,11 @@ export function ShopView({ address }: ShopViewProps) {
                 const slide = Math.round(el.scrollLeft / el.clientWidth);
                 setActiveSlide(slide);
               }}
-              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none"
+              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none h-full"
               style={{ scrollbarWidth: 'none' }}>
 
               {/* Slide 1: Free Pack */}
-              <div className="snap-start flex-none w-full px-6">
+              <div className="snap-start flex-none w-full px-6 h-full">
                 <div className="max-w-sm mx-auto h-full">
                   <div className={`bg-vintage-charcoal/50 border ${isArb ? 'border-amber-400/50' : 'border-vintage-gold/30'} rounded-xl p-3 transition-all shadow-xl h-full flex flex-col`}>
 
@@ -317,7 +317,7 @@ export function ShopView({ address }: ShopViewProps) {
               </div>
 
               {/* Slide 2: VMW LTC Pack */}
-              <div className="snap-start flex-none w-full px-6">
+              <div className="snap-start flex-none w-full px-6 h-full">
                 <div className="max-w-sm mx-auto h-full">
                   <VMWPackCard address={address} onMintSuccess={(qty) => setVmwMint(m => ({ trigger: m.trigger + 1, qty }))} />
                 </div>

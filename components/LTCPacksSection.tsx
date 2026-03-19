@@ -131,9 +131,12 @@ export function VMWPackCard({ address, onMintSuccess }: { address: string | unde
   const [priceUsd, setPriceUsd] = useState<string | null>(null);
   useEffect(() => {
     if (!priceEth) return;
-    fetch(`https://build.wield.xyz/utils/eth-to-usd?eth=${priceEth}`)
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd')
       .then(r => r.json())
-      .then(d => setPriceUsd((d.usd || d.price || 0).toFixed(2)))
+      .then(d => {
+        const ethUsd = d?.ethereum?.usd;
+        if (ethUsd) setPriceUsd((parseFloat(priceEth) * ethUsd).toFixed(2));
+      })
       .catch(() => {});
   }, [priceEth]);
 
@@ -167,7 +170,7 @@ export function VMWPackCard({ address, onMintSuccess }: { address: string | unde
           <div style={{ padding: "3px 8px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: "#D4A843", color: "#000" }}>
             {priceEth ? `${priceEth} ETH` : "…"}
           </div>
-          {priceUsd && <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>${priceUsd}</div>}
+          {priceUsd && <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", marginTop: "2px" }}>${priceUsd}</div>}
         </div>
       </div>
 
