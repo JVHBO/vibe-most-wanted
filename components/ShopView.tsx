@@ -193,7 +193,7 @@ export function ShopView({ address }: ShopViewProps) {
         <div className="relative z-10 px-4 py-1 flex-1 flex flex-col justify-center">
 
           {/* ── Pack Carousel ── */}
-          <div className="mb-2 relative">
+          <div className="mb-2 relative" style={{ height: '260px' }}>
             {/* Arrow left */}
             {activeSlide === 1 && (
               <button onClick={() => { setActiveSlide(0); carouselRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}

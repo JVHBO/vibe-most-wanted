@@ -155,45 +155,43 @@ export function VMWPackCard({ address, onMintSuccess }: { address: string | unde
   };
 
   return (
-    <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-4 shadow-xl h-full flex flex-col">
+    <div className="bg-vintage-charcoal/50 border border-vintage-gold/30 rounded-xl p-3 shadow-xl h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-3">
-        <img src={PACK_IMAGE} alt="VMW Pack" className="w-16 h-16 object-contain drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]" loading="lazy" />
+      <div className="flex items-center gap-3 mb-2">
+        <img src={PACK_IMAGE} alt="VMW Pack" className="w-12 h-12 object-contain drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]" loading="lazy" />
         <div className="flex-1">
-          <h3 className="text-xl font-display font-bold text-vintage-gold">Vibe Most Wanted Packs</h3>
-          <p className="text-vintage-ice/60 text-xs">1 LTC card per pack · NFT on Base</p>
+          <h3 className="text-base font-display font-bold text-vintage-gold leading-tight">Vibe Most Wanted Packs</h3>
+          <p className="text-vintage-ice/60 text-[11px]">1 LTC card per pack · NFT on Base</p>
         </div>
         <div style={{ textAlign: "center" }}>
-          <div style={{ padding: "4px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: "#D4A843", color: "#000" }}>
+          <div style={{ padding: "3px 8px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: "#D4A843", color: "#000" }}>
             {priceEth ? `${priceEth} ETH` : "…"}
           </div>
           {priceUsd && <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>${priceUsd}</div>}
         </div>
       </div>
 
-      {/* Info */}
-      <div className="bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2 mb-3">
-        <p className="text-green-300/80 text-xs text-center">Real NFTs · 2× power vs Nothing cards · Mythic tier</p>
+      {/* Info + disclaimer combined */}
+      <div className="bg-green-500/10 border border-green-500/30 rounded-lg px-2 py-1 mb-2">
+        <p className="text-green-300/80 text-[10px] text-center">Real NFTs · 2× power vs Nothing · Mythic tier</p>
       </div>
-
-      {/* Vibechain disclaimer */}
-      <div className="bg-blue-500/10 border border-blue-400/20 rounded-lg px-3 py-1.5 mb-3">
-        <p className="text-blue-300/60 text-[10px] text-center">⚡ Drop rates, rarity & pricing powered by <span className="font-bold text-blue-300/80">vibe.market</span> · Same cards as in-game</p>
+      <div className="bg-blue-500/10 border border-blue-400/20 rounded-lg px-2 py-1 mb-2">
+        <p className="text-blue-300/60 text-[10px] text-center">⚡ Powered by <span className="font-bold text-blue-300/80">vibe.market</span> · Same in-game cards</p>
       </div>
 
       {/* Drop Rates */}
-      <div className="bg-vintage-black/30 border border-vintage-gold/20 rounded-lg p-2 mb-3 text-xs">
+      <div className="bg-vintage-black/30 border border-vintage-gold/20 rounded-lg p-1.5 mb-2 text-xs">
         <div className="grid grid-cols-5 gap-1 text-center">
-          <div><span className="text-vintage-ice/50 block">Common</span><span className="text-vintage-ice font-bold">66%</span></div>
-          <div><span className="text-blue-400/70 block">Rare</span><span className="text-blue-400 font-bold">24%</span></div>
-          <div><span className="text-purple-400/70 block">Epic</span><span className="text-purple-400 font-bold">9%</span></div>
-          <div><span className="text-yellow-400/70 block">Legend</span><span className="text-yellow-400 font-bold">0.45%</span></div>
-          <div><span className="text-pink-400/70 block">Mythic</span><span className="text-pink-400 font-bold">0.02%</span></div>
+          <div><span className="text-vintage-ice/50 block text-[9px]">Common</span><span className="text-vintage-ice font-bold text-[10px]">66%</span></div>
+          <div><span className="text-blue-400/70 block text-[9px]">Rare</span><span className="text-blue-400 font-bold text-[10px]">24%</span></div>
+          <div><span className="text-purple-400/70 block text-[9px]">Epic</span><span className="text-purple-400 font-bold text-[10px]">9%</span></div>
+          <div><span className="text-yellow-400/70 block text-[9px]">Legend</span><span className="text-yellow-400 font-bold text-[10px]">0.45%</span></div>
+          <div><span className="text-pink-400/70 block text-[9px]">Mythic</span><span className="text-pink-400 font-bold text-[10px]">0.02%</span></div>
         </div>
       </div>
 
       {/* Qty */}
-      <div className="flex items-center justify-center gap-2 mb-3">
+      <div className="flex items-center justify-center gap-2 mb-2">
         <span className="text-vintage-ice/50 text-xs">Qty:</span>
         {[1, 5, 10].map((q) => (
           <button key={q} onClick={() => setQty(q)}
@@ -206,7 +204,7 @@ export function VMWPackCard({ address, onMintSuccess }: { address: string | unde
       {/* Buy button */}
       <div className="mt-auto">
         <button onClick={handleMint} disabled={minting || !priceWei || !address}
-          className="shop-claim-btn w-full h-11 font-display font-bold rounded transition-all disabled:opacity-50 text-vintage-black active:translate-y-[4px] bg-vintage-gold bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500">
+          className="shop-claim-btn w-full h-10 font-display font-bold rounded transition-all disabled:opacity-50 text-vintage-black active:translate-y-[4px] bg-vintage-gold bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500">
           {minting ? "Minting…" : `Buy ${qty > 1 ? qty + "× " : ""}Pack`}
         </button>
       </div>
