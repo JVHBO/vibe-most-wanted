@@ -201,7 +201,7 @@ export async function GET(request: NextRequest) {
               $VBMS
             </div>
             <div style={{ fontSize: '28px', color: 'rgba(255,255,255,0.6)', display: 'flex' }}>
-              · Open packs at vibemostwanted.xyz
+              · Vibe Most Wanted
             </div>
           </div>
         </div>
