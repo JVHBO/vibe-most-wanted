@@ -800,7 +800,7 @@ export function VMWActionButtons({ address, autoOpenTrigger, mintQty = 1, onModa
 
   return (
     <>
-      <div className="max-w-sm mx-auto grid grid-cols-2 gap-2 mb-2">
+      <div className="max-w-sm mx-auto grid grid-cols-2 gap-2 mb-2 mt-6">
         {/* Open Packs */}
         <button onClick={() => setShowOpen(true)} disabled={!address}
           className="shop-open-btn py-2 px-3 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#FFD400] hover:bg-[#ECC200] text-black active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50">

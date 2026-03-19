@@ -104,12 +104,12 @@ interface ChangelogModalProps {
 export function ChangelogModal({ isOpen, onClose, t }: ChangelogModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-md" zIndex={200}>
-      <div className="p-5">
+      <div className="p-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">📋</span>
-            <h2 className="font-display font-bold text-vintage-gold text-xl">
+            <span className="text-xl">📋</span>
+            <h2 className="font-display font-bold text-vintage-gold text-lg">
               {t('changelogTitle')}
             </h2>
           </div>
@@ -123,13 +123,13 @@ export function ChangelogModal({ isOpen, onClose, t }: ChangelogModalProps) {
         </div>
 
         {/* Entries */}
-        <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-[45vh] overflow-y-auto pr-1">
           {CHANGELOG.map((entry) => (
             <div
               key={entry.version}
-              className="bg-vintage-black/50 rounded-xl border border-vintage-gold/20 p-4"
+              className="bg-vintage-black/50 rounded-xl border border-vintage-gold/20 p-3"
             >
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-2">
                 <span className="font-display font-bold text-vintage-gold text-sm">
                   v{entry.version}
                 </span>
@@ -141,7 +141,7 @@ export function ChangelogModal({ isOpen, onClose, t }: ChangelogModalProps) {
                   </span>
                 )}
               </div>
-              <ul className="space-y-1.5">
+              <ul className="space-y-1">
                 {entry.features.map((f, i) => (
                   <li key={i} className="flex items-start gap-2 text-xs text-vintage-gold/80">
                     <span className="shrink-0 mt-0.5">{f.emoji}</span>
@@ -156,7 +156,7 @@ export function ChangelogModal({ isOpen, onClose, t }: ChangelogModalProps) {
         {/* Footer */}
         <button
           onClick={onClose}
-          className="mt-4 w-full px-4 py-2.5 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold text-sm transition-all"
+          className="mt-3 w-full px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold text-sm transition-all"
         >
           {t('changelogClose')}
         </button>
