@@ -64,7 +64,7 @@ const PACK_IMAGE = "https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedeliv
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Box { tokenId: string; isRevealed: boolean; imageUrl?: string; rarity?: number }
-interface RevealedCard { tokenId: string; rarity: number; imageUrl?: string }
+interface RevealedCard { tokenId: string; rarity: number; imageUrl?: string; name?: string; foil?: string }
 
 // ── Hook: owned boxes ─────────────────────────────────────────────────────────
 function useOwnedBoxes(address: string | undefined) {
@@ -171,7 +171,7 @@ export function VMWPackCard({ address }: { address: string | undefined }) {
 
       {/* Vibechain disclaimer */}
       <div className="bg-blue-500/10 border border-blue-400/20 rounded-lg px-3 py-1.5 mb-3">
-        <p className="text-blue-300/60 text-[10px] text-center">⚡ Powered by <span className="font-bold text-blue-300/80">vibe.market</span> · NFTs live on Base · Independent from in-game cards</p>
+        <p className="text-blue-300/60 text-[10px] text-center">⚡ Drop rates, rarity & pricing powered by <span className="font-bold text-blue-300/80">vibe.market</span> · Same cards as in-game</p>
       </div>
 
       {/* Drop Rates */}
@@ -368,15 +368,26 @@ function OpenModal({ address, onClose, onRevealed }: {
 }
 
 // ── Revealed Cards Animation ──────────────────────────────────────────────────
+type CardMeta = { image: string; name?: string; foil?: string };
+
 function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose: () => void }) {
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
-  const [images, setImages] = useState<Record<string, string>>({});
+  const [meta, setMeta] = useState<Record<string, CardMeta>>({});
 
   useEffect(() => {
     cards.forEach(card => {
       fetch(`https://build.wield.xyz/vibe/boosterbox/metadata/vibe-most-wanted/${card.tokenId}`)
         .then(r => r.json())
-        .then(d => { if (d.image) setImages(prev => ({ ...prev, [card.tokenId]: d.image })); })
+        .then(d => {
+          if (!d.image) return;
+          const attrs: any[] = d.attributes || [];
+          const get = (t: string) => attrs.find((a: any) => a.trait_type === t)?.value;
+          setMeta(prev => ({ ...prev, [card.tokenId]: {
+            image: d.image,
+            name: get("name") || get("Name"),
+            foil: get("Foil"),
+          }}));
+        })
         .catch(() => {});
     });
   }, [cards]);
@@ -398,19 +409,33 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
                 <img src={PACK_IMAGE} alt="?" className="w-16 h-16 object-contain" />
               </div>
               {/* Back (card) */}
-              <div style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", position: "absolute", inset: 0 }}
-                className={`rounded-xl border-2 overflow-hidden ${RARITY_BG[card.rarity] ?? RARITY_BG[0]}`}>
-                {images[card.tokenId]
-                  ? <img src={images[card.tokenId]} alt="card" className="w-full h-full object-cover" />
-                  : <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2">
-                      <span className={`text-xs font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
-                      <span className="text-[10px] text-white/40">#{card.tokenId}</span>
+              {(() => {
+                const m = meta[card.tokenId];
+                const isFoil = m?.foil && m.foil !== "None";
+                return (
+                  <div style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", position: "absolute", inset: 0 }}
+                    className={`rounded-xl border-2 overflow-hidden ${RARITY_BG[card.rarity] ?? RARITY_BG[0]}`}>
+                    {m?.image
+                      ? <>
+                          <img src={m.image} alt="card" className="w-full h-full object-cover" />
+                          {isFoil && (
+                            <div className="absolute inset-0 rounded-xl pointer-events-none"
+                              style={{ background: "linear-gradient(135deg,rgba(255,0,128,0.3),rgba(0,255,255,0.3),rgba(255,255,0,0.3),rgba(128,0,255,0.3))", mixBlendMode: "screen", animation: "spin 3s linear infinite" }} />
+                          )}
+                        </>
+                      : <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2">
+                          <span className={`text-xs font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
+                          <span className="text-[10px] text-white/40">#{card.tokenId}</span>
+                        </div>
+                    }
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 py-1 px-1 text-center">
+                      <span className={`text-[9px] font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
+                      {m?.name && <span className="block text-[8px] text-white/50 capitalize">{m.name}</span>}
+                      {isFoil && <span className="block text-[8px] text-yellow-300 font-bold">✨ FOIL</span>}
                     </div>
-                }
-                <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 text-center">
-                  <span className={`text-[9px] font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
-                </div>
-              </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         ))}
