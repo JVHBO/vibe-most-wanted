@@ -15,7 +15,9 @@ import { base } from "viem/chains";
 import { toast } from "sonner";
 import sdk from "@farcaster/miniapp-sdk";
 import { createPublicClient, http } from "viem";
-import { getVbmsBaccaratImageUrlByTokenId } from "@/lib/tcg/images";
+import { getVbmsBaccaratImageUrlByTokenId, getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
+import FoilCardEffect from "@/components/FoilCardEffect";
+import { shareToFarcaster } from "@/lib/share-utils";
 
 // ── Contracts ─────────────────────────────────────────────────────────────────
 const VMW_DROP = "0xf14c1dc8ce5fe65413379f76c43fa1460c31e728" as `0x${string}`;
@@ -77,9 +79,10 @@ function useOwnedBoxes(address: string | undefined) {
     fetch(`/api/vibemarket/owned?address=${address}&contractAddress=${VMW_DROP}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.success && Array.isArray(d.boxes)) {
+        const rawBoxes = d.boxes ?? d.boosterboxes ?? d.data?.boxes ?? d.data?.boosterboxes;
+        if (Array.isArray(rawBoxes)) {
           const RNAME: Record<string, number> = { COMMON: 0, RARE: 1, EPIC: 2, LEGENDARY: 3, MYTHIC: 4 };
-          setBoxes(d.boxes.map((b: any) => ({
+          setBoxes(rawBoxes.map((b: any) => ({
             tokenId: String(b.tokenId ?? b.id ?? ""),
             isRevealed: b.rarityName && b.rarityName !== "NOT_ASSIGNED",
             imageUrl: b.imageUrl || b.image,
@@ -383,10 +386,14 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
           if (!d.image) return;
           const attrs: any[] = d.attributes || [];
           const get = (t: string) => attrs.find((a: any) => a.trait_type === t)?.value;
+          const charName = get("name") || get("Name");
+          const foil = get("Foil");
+          // Prefer local baccarat image (shows character card), fallback to vibechain CDN
+          const localImg = charName ? getVbmsBaccaratImageUrl(charName) : null;
           setMeta(prev => ({ ...prev, [card.tokenId]: {
-            image: d.image,
-            name: get("name") || get("Name"),
-            foil: get("Foil"),
+            image: localImg || d.image,
+            name: charName,
+            foil,
           }}));
         })
         .catch(() => {});
@@ -412,18 +419,14 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
               {/* Back (card) */}
               {(() => {
                 const m = meta[card.tokenId];
-                const isFoil = m?.foil && m.foil !== "None";
+                const foilType: 'Prize' | 'Standard' | null = m?.foil === "Prize" ? "Prize" : (m?.foil && m.foil !== "None") ? "Standard" : null;
                 return (
                   <div style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", position: "absolute", inset: 0 }}
                     className={`rounded-xl border-2 overflow-hidden ${RARITY_BG[card.rarity] ?? RARITY_BG[0]}`}>
                     {m?.image
-                      ? <>
+                      ? <FoilCardEffect foilType={foilType} className="w-full h-full">
                           <img src={m.image} alt="card" className="w-full h-full object-cover" />
-                          {isFoil && (
-                            <div className="absolute inset-0 rounded-xl pointer-events-none"
-                              style={{ background: "linear-gradient(135deg,rgba(255,0,128,0.3),rgba(0,255,255,0.3),rgba(255,255,0,0.3),rgba(128,0,255,0.3))", mixBlendMode: "screen", animation: "spin 3s linear infinite" }} />
-                          )}
-                        </>
+                        </FoilCardEffect>
                       : <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2">
                           <span className={`text-xs font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
                           <span className="text-[10px] text-white/40">#{card.tokenId}</span>
@@ -432,7 +435,7 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
                     <div className="absolute bottom-0 left-0 right-0 bg-black/70 py-1 px-1 text-center">
                       <span className={`text-[9px] font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
                       {m?.name && <span className="block text-[8px] text-white/50 capitalize">{m.name}</span>}
-                      {isFoil && <span className="block text-[8px] text-yellow-300 font-bold">✨ FOIL</span>}
+                      {foilType && <span className="block text-[8px] text-yellow-300 font-bold">✨ {foilType === "Prize" ? "PRIZE FOIL" : "FOIL"}</span>}
                     </div>
                   </div>
                 );
@@ -444,9 +447,40 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
       {flipped.size < cards.length && (
         <button onClick={flipAll} className="mb-3 px-4 py-1.5 text-sm font-bold text-black bg-vintage-gold rounded-lg">Reveal All</button>
       )}
-      <button onClick={onClose} className="px-6 py-3 bg-vintage-gold text-black font-black rounded-xl active:scale-95 transition-all">
-        Done
-      </button>
+      <div className="flex gap-2 items-center">
+        <a href={`https://opensea.io/assets/base/${VMW_DROP}/${cards[0].tokenId}`}
+          target="_blank" rel="noopener noreferrer"
+          className="px-3 py-2.5 rounded-xl border border-blue-400/50 text-blue-300 text-xs font-bold flex items-center gap-1 hover:bg-blue-500/10 active:scale-95 transition-all">
+          <svg width="13" height="13" viewBox="0 0 90 90"><circle cx="45" cy="45" r="45" fill="#2081E2"/><path d="M22.3 46.8l.2-.3 12.4-19.5c.2-.3.6-.2.7.1 2.1 4.7 3.9 10.5 3 14.1-.4 1.5-1.4 3.6-2.5 5.5-.1.3-.3.5-.4.8-.1.1-.2.2-.4.2H22.7c-.3 0-.5-.3-.4-.6v-.3zM74.5 49.6v.7c0 .2-.1.3-.3.4-.8.3-3.6 1.6-4.7 3.2-2.9 4.1-5.2 9.9-10.2 9.9H37.2c-7.5 0-13.6-6.1-13.6-13.7v-.2c0-.2.2-.4.4-.4h14.5c.3 0 .5.3.4.5-.1.7-.1 1.4 0 2.1.3 2.9 2.7 5.1 5.6 5.1h8.8v-5H44.7c-.3 0-.5-.3-.3-.6 0-.1.1-.1.1-.2 1.1-1.5 2.6-3.8 3-6.3.2-1.3.1-2.6-.1-3.8-.1-.5-.1-.9-.3-1.4v-.3c0-.1.1-.1.1-.1.7-.1 1.5.2 2.2.4.2.1.4.3.5.3.3.2.6.3.8.5.7.6 1.3 1.3 1.7 2.2.3.5.5 1.1.6 1.7.1.2.1.5.1.7 0 .4 0 .8-.1 1.2-.2.7-.5 1.3-.9 1.9h5.8c.2 0 .4.2.4.4v.1c0 .3-.3.6-.5.6z" fill="white"/></svg>
+          OS
+        </a>
+        <button onClick={() => {
+          const card = cards[0];
+          const m = meta[card?.tokenId];
+          const name = m?.name || "";
+          const rarity = RARITY_NAMES[card?.rarity] || "Common";
+          const foilLabel = m?.foil && m.foil !== "None" ? `${m.foil} Foil ` : "";
+          const lines = [
+            `🎴 Just pulled a ${foilLabel}${rarity} ${name}!`,
+            ``,
+            `Token #${card?.tokenId} · Vibe Most Wanted`,
+            cards.length > 1 ? `(${cards.length} cards revealed)` : "",
+            ``,
+            `vibemostwanted.xyz/shop`,
+          ].filter(Boolean).join("\n");
+          // Use vibechain CDN image as embed so Farcaster shows card preview
+          const embedUrl = m?.image && !m.image.startsWith("/")
+            ? m.image
+            : `https://vibemostwanted.xyz/share/pack?packType=vbms&rare=${rarity.toLowerCase()}`;
+          shareToFarcaster(lines, embedUrl);
+        }}
+          className="px-3 py-2.5 rounded-xl border border-purple-400/50 text-purple-300 text-xs font-bold flex items-center gap-1 hover:bg-purple-500/10 active:scale-95 transition-all">
+          🟣 Share
+        </button>
+        <button onClick={onClose} className="flex-1 px-6 py-2.5 bg-vintage-gold text-black font-black rounded-xl active:scale-95 transition-all">
+          Done
+        </button>
+      </div>
     </div>
   );
 }

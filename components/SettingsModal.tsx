@@ -954,7 +954,7 @@ export function SettingsModal({
               {/* Header — always visible, click to toggle */}
               <button
                 onClick={() => setLinkedWalletOpen((v) => !v)}
-                className="w-full flex items-center gap-3 p-2 sm:p-3 hover:bg-vintage-gold/5 transition-colors"
+                className="w-full flex items-center gap-3 p-2 sm:p-3 hover:bg-white/5 transition-colors"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
                   <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -962,7 +962,7 @@ export function SettingsModal({
                 </svg>
                 <div className="flex-1 text-left">
                   <p className="font-modern font-bold text-vintage-gold">{t('linkedWallets')}</p>
-                  <p className="text-xs settings-linked-desc">{t('linkedWalletsDesc')}</p>
+                  <p className="text-xs text-[#C9A227]">{t('linkedWalletsDesc')}</p>
                 </div>
                 <svg
                   width="18" height="18" viewBox="0 0 24 24" fill="none"
