@@ -834,14 +834,7 @@ export const claimVibeMailQuestCoins = mutation({
       vibemailId,
       claimedAt: Date.now(),
     });
-    await createAuditLog(ctx, {
-      address: normalizedAddress,
-      action: "vibemail_quest_claim",
-      coinsAfter: newCoins,
-      coinsBefore: currentCoins,
-      delta: REWARD,
-      metadata: { vibemailId },
-    });
+    await createAuditLog(ctx, normalizedAddress, "claim", REWARD, currentCoins, newCoins, "vibemail_quest", vibemailId);
 
     return { success: true, coinsAwarded: REWARD };
   },
