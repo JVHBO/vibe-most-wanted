@@ -417,23 +417,27 @@ export function GamePopups({
               )}
             </div>
 
-            {/* Share Incentive Banner */}
-            {sharesRemaining !== undefined && sharesRemaining > 0 && (
-              <div className="bg-green-500/20 border border-green-400 rounded-lg px-2 py-1 text-center">
-                <p className="text-green-400 font-bold text-xs animate-pulse">
-                  💰 Share +10 coins! ({sharesRemaining}/3)
-                </p>
-              </div>
-            )}
-            {sharesRemaining === 0 && (
-              <div className="bg-gray-500/20 border border-gray-400 rounded-lg px-2 py-1 text-center">
-                <p className="text-gray-400 font-semibold text-xs">
-                  Share limit reached (3/3)
-                </p>
-              </div>
+            {/* Share section — hidden for attack type */}
+            {lastBattleResult?.type !== 'attack' && (
+              <>
+                {sharesRemaining !== undefined && sharesRemaining > 0 && (
+                  <div className="bg-green-500/20 border border-green-400 rounded-lg px-2 py-1 text-center">
+                    <p className="text-green-400 font-bold text-xs animate-pulse">
+                      💰 Share +10 coins! ({sharesRemaining}/3)
+                    </p>
+                  </div>
+                )}
+                {sharesRemaining === 0 && (
+                  <div className="bg-gray-500/20 border border-gray-400 rounded-lg px-2 py-1 text-center">
+                    <p className="text-gray-400 font-semibold text-xs">
+                      Share limit reached (3/3)
+                    </p>
+                  </div>
+                )}
+              </>
             )}
 
-            <div className="flex gap-2">
+            {lastBattleResult?.type !== 'attack' && <div className="flex gap-2">
               <a
                 href={(() => {
                   if (!lastBattleResult || !userProfile) return '#';
@@ -495,7 +499,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
               >
                 <FarcasterIcon size={16} /> Cast
               </button>
-            </div>
+            </div>}
             <button
               onClick={handleCloseVictoryScreen}
               className="absolute top-2 right-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-full w-8 h-8 flex items-center justify-center text-xl font-bold shadow-gold"
