@@ -15,6 +15,7 @@ import { base } from "viem/chains";
 import { toast } from "sonner";
 import sdk from "@farcaster/miniapp-sdk";
 import { createPublicClient, http } from "viem";
+import { getVbmsBaccaratImageUrlByTokenId } from "@/lib/tcg/images";
 
 // ── Contracts ─────────────────────────────────────────────────────────────────
 const VMW_DROP = "0xf14c1dc8ce5fe65413379f76c43fa1460c31e728" as `0x${string}`;
@@ -76,12 +77,13 @@ function useOwnedBoxes(address: string | undefined) {
     fetch(`/api/vibemarket/owned?address=${address}&contractAddress=${VMW_DROP}`)
       .then((r) => r.json())
       .then((d) => {
-        if (d.success && Array.isArray(d.boosterboxes)) {
-          setBoxes(d.boosterboxes.map((b: any) => ({
-            tokenId: String(b.tokenId ?? b.id ?? b.token_id ?? ""),
-            isRevealed: !!b.isRevealed,
+        if (d.success && Array.isArray(d.boxes)) {
+          const RNAME: Record<string, number> = { COMMON: 0, RARE: 1, EPIC: 2, LEGENDARY: 3, MYTHIC: 4 };
+          setBoxes(d.boxes.map((b: any) => ({
+            tokenId: String(b.tokenId ?? b.id ?? ""),
+            isRevealed: b.rarityName && b.rarityName !== "NOT_ASSIGNED",
             imageUrl: b.imageUrl || b.image,
-            rarity: b.rarity?.rarity ?? b.rarityValue,
+            rarity: RNAME[b.rarityName] ?? 0,
           })));
         }
       })
@@ -120,6 +122,14 @@ export function VMWPackCard({ address }: { address: string | undefined }) {
   });
   const priceWei = priceData as bigint | undefined;
   const priceEth = priceWei ? parseFloat(formatEther(priceWei)).toFixed(4) : null;
+  const [priceUsd, setPriceUsd] = useState<string | null>(null);
+  useEffect(() => {
+    if (!priceEth) return;
+    fetch(`https://build.wield.xyz/utils/eth-to-usd?eth=${priceEth}`)
+      .then(r => r.json())
+      .then(d => setPriceUsd((d.usd || d.price || 0).toFixed(2)))
+      .catch(() => {});
+  }, [priceEth]);
 
   const handleMint = async () => {
     if (!address || !priceWei) return;
@@ -146,14 +156,22 @@ export function VMWPackCard({ address }: { address: string | undefined }) {
           <h3 className="text-xl font-display font-bold text-vintage-gold">Vibe Most Wanted Packs</h3>
           <p className="text-vintage-ice/60 text-xs">1 LTC card per pack · NFT on Base</p>
         </div>
-        <div style={{ padding: "4px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: "#D4A843", color: "#000" }}>
-          {priceEth ? `${priceEth} ETH` : "…"}
+        <div style={{ textAlign: "center" }}>
+          <div style={{ padding: "4px 10px", borderRadius: "999px", fontSize: "11px", fontWeight: 700, background: "#D4A843", color: "#000" }}>
+            {priceEth ? `${priceEth} ETH` : "…"}
+          </div>
+          {priceUsd && <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginTop: "2px" }}>${priceUsd}</div>}
         </div>
       </div>
 
       {/* Info */}
       <div className="bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2 mb-3">
         <p className="text-green-300/80 text-xs text-center">Real NFTs · 2× power vs Nothing cards · Mythic tier</p>
+      </div>
+
+      {/* Vibechain disclaimer */}
+      <div className="bg-blue-500/10 border border-blue-400/20 rounded-lg px-3 py-1.5 mb-3">
+        <p className="text-blue-300/60 text-[10px] text-center">⚡ Powered by <span className="font-bold text-blue-300/80">vibe.market</span> · NFTs live on Base · Independent from in-game cards</p>
       </div>
 
       {/* Drop Rates */}
@@ -200,6 +218,8 @@ function OpenModal({ address, onClose, onRevealed }: {
   const [opening, setOpening] = useState(false);
   const [phase, setPhase] = useState<"select" | "waiting" | "done">("select");
   const [dots, setDots] = useState(".");
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 5;
   const { writeContractAsync } = useWriteContractWithAttribution();
   const { chainId } = useAccount();
 
@@ -279,7 +299,7 @@ function OpenModal({ address, onClose, onRevealed }: {
         onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-vintage-gold">Open VMW Packs</h3>
-          <button onClick={onClose} className="text-vintage-ice/50 hover:text-white text-xl">×</button>
+          <button onClick={onClose} className="w-7 h-7 rounded-full bg-[#CC2222] hover:bg-[#AA1111] text-white font-black flex items-center justify-center text-sm active:scale-95 transition-all">×</button>
         </div>
 
         {phase === "waiting" ? (
@@ -299,12 +319,23 @@ function OpenModal({ address, onClose, onRevealed }: {
               </div>
             ) : (
               <>
-                <p className="text-vintage-ice/60 text-xs mb-3">{unopened.length} pack{unopened.length !== 1 ? "s" : ""} available · Select to open</p>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-vintage-ice/60 text-xs">{unopened.length} pack{unopened.length !== 1 ? "s" : ""} · {selected.size} selected</p>
+                  {Math.ceil(unopened.length / PAGE_SIZE) > 1 && (
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
+                        className="w-6 h-6 rounded bg-white/10 text-white/60 disabled:opacity-30 text-sm flex items-center justify-center">‹</button>
+                      <span className="text-xs text-vintage-ice/40">{page + 1}/{Math.ceil(unopened.length / PAGE_SIZE)}</span>
+                      <button onClick={() => setPage(p => Math.min(Math.ceil(unopened.length / PAGE_SIZE) - 1, p + 1))} disabled={page >= Math.ceil(unopened.length / PAGE_SIZE) - 1}
+                        className="w-6 h-6 rounded bg-white/10 text-white/60 disabled:opacity-30 text-sm flex items-center justify-center">›</button>
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1 overflow-y-auto space-y-2 mb-4">
-                  {unopened.map((box) => (
+                  {unopened.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((box) => (
                     <button key={box.tokenId} onClick={() => toggleSelect(box.tokenId)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all ${selected.has(box.tokenId) ? "border-vintage-gold bg-vintage-gold/10" : "border-white/10 bg-white/5 hover:border-white/20"}`}>
-                      <img src={PACK_IMAGE} alt="Pack" className="w-10 h-10 object-contain" />
+                      className={`w-full flex items-center gap-3 p-2 rounded-xl border transition-all ${selected.has(box.tokenId) ? "border-vintage-gold bg-vintage-gold/10" : "border-white/10 bg-white/5 hover:border-white/20"}`}>
+                      <img src={PACK_IMAGE} alt="Pack" className="w-8 h-8 object-contain" />
                       <div className="text-left">
                         <p className="text-sm font-bold text-white">VMW #{box.tokenId}</p>
                         <p className="text-xs text-vintage-ice/40">Unopened pack</p>
@@ -318,11 +349,11 @@ function OpenModal({ address, onClose, onRevealed }: {
 
                 <div className="space-y-2">
                   <button onClick={() => setSelected(new Set(unopened.map((b) => b.tokenId)))}
-                    className="w-full py-2 text-xs text-vintage-gold/70 hover:text-vintage-gold border border-vintage-gold/20 rounded-lg transition-all">
-                    Select All
+                    className="w-full py-2 text-xs font-bold text-black bg-vintage-gold/80 hover:bg-vintage-gold rounded-lg transition-all active:scale-95">
+                    Select All ({unopened.length})
                   </button>
                   <button onClick={handleOpen} disabled={selected.size === 0 || !entropyFee}
-                    className="w-full py-3 font-black text-sm uppercase tracking-widest bg-[#FFD400] text-black rounded-xl disabled:opacity-40 active:scale-95 transition-all">
+                    className="w-full py-3 font-black text-sm uppercase tracking-widest bg-[#FFD400] hover:bg-[#ECC200] text-black rounded-xl disabled:opacity-40 active:scale-95 transition-all shadow-[0_4px_0px_#000]">
                     Open {selected.size > 0 ? `${selected.size} ` : ""}Pack{selected.size !== 1 ? "s" : ""}
                     {entropyFee && selected.size > 0 ? ` · ${parseFloat(formatEther(entropyFee * BigInt(selected.size))).toFixed(5)} ETH` : ""}
                   </button>
@@ -339,17 +370,28 @@ function OpenModal({ address, onClose, onRevealed }: {
 // ── Revealed Cards Animation ──────────────────────────────────────────────────
 function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose: () => void }) {
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
+  const [images, setImages] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    cards.forEach(card => {
+      fetch(`https://build.wield.xyz/vibe/boosterbox/metadata/vibe-most-wanted/${card.tokenId}`)
+        .then(r => r.json())
+        .then(d => { if (d.image) setImages(prev => ({ ...prev, [card.tokenId]: d.image })); })
+        .catch(() => {});
+    });
+  }, [cards]);
 
   const flip = (i: number) => setFlipped((p) => { const n = new Set(p); n.add(i); return n; });
   const flipAll = () => setFlipped(new Set(cards.map((_, i) => i)));
 
   return (
     <div className="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-4">
-      <h3 className="text-2xl font-display font-bold text-vintage-gold mb-6">Cards Revealed!</h3>
+      <h3 className="text-2xl font-display font-bold text-vintage-gold mb-2">Cards Revealed!</h3>
+      <p className="text-vintage-ice/40 text-xs mb-5">Tap a card to reveal</p>
       <div className="flex flex-wrap gap-3 justify-center mb-6">
         {cards.map((card, i) => (
           <div key={i} onClick={() => flip(i)} className="cursor-pointer" style={{ perspective: 600 }}>
-            <div style={{ transition: "transform 0.5s", transformStyle: "preserve-3d", transform: flipped.has(i) ? "rotateY(180deg)" : "rotateY(0deg)", width: 100, height: 140, position: "relative" }}>
+            <div style={{ transition: "transform 0.6s", transformStyle: "preserve-3d", transform: flipped.has(i) ? "rotateY(180deg)" : "rotateY(0deg)", width: 100, height: 140, position: "relative" }}>
               {/* Front (pack) */}
               <div style={{ backfaceVisibility: "hidden", position: "absolute", inset: 0 }}
                 className="rounded-xl bg-vintage-charcoal border border-vintage-gold/30 flex items-center justify-center">
@@ -357,18 +399,24 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
               </div>
               {/* Back (card) */}
               <div style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", position: "absolute", inset: 0 }}
-                className={`rounded-xl border-2 flex flex-col items-center justify-center gap-1 p-2 ${RARITY_BG[card.rarity] ?? RARITY_BG[0]}`}>
-                <span className={`text-xs font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>
-                  {RARITY_NAMES[card.rarity] ?? "Common"}
-                </span>
-                <span className="text-[10px] text-white/40">#{card.tokenId}</span>
+                className={`rounded-xl border-2 overflow-hidden ${RARITY_BG[card.rarity] ?? RARITY_BG[0]}`}>
+                {images[card.tokenId]
+                  ? <img src={images[card.tokenId]} alt="card" className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2">
+                      <span className={`text-xs font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
+                      <span className="text-[10px] text-white/40">#{card.tokenId}</span>
+                    </div>
+                }
+                <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 text-center">
+                  <span className={`text-[9px] font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
       {flipped.size < cards.length && (
-        <button onClick={flipAll} className="mb-3 text-vintage-gold text-sm font-bold underline">Reveal All</button>
+        <button onClick={flipAll} className="mb-3 px-4 py-1.5 text-sm font-bold text-black bg-vintage-gold rounded-lg">Reveal All</button>
       )}
       <button onClick={onClose} className="px-6 py-3 bg-vintage-gold text-black font-black rounded-xl active:scale-95 transition-all">
         Done
@@ -436,7 +484,7 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
         onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-vintage-gold">Burn VMW Cards</h3>
-          <button onClick={onClose} className="text-vintage-ice/50 hover:text-white text-xl">×</button>
+          <button onClick={onClose} className="w-7 h-7 rounded-full bg-[#CC2222] hover:bg-[#AA1111] text-white font-black flex items-center justify-center text-sm active:scale-95 transition-all">×</button>
         </div>
 
         {loading ? (
@@ -455,12 +503,10 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
                 const offer = offers[rarityIdx];
                 return (
                   <button key={box.tokenId} onClick={() => setSelected(box.tokenId)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all ${selected === box.tokenId ? "border-vintage-gold bg-vintage-gold/10" : "border-white/10 bg-white/5 hover:border-white/20"}`}>
-                    <div className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center ${RARITY_BG[rarityIdx] ?? RARITY_BG[0]}`}>
-                      <span className={`text-[10px] font-black ${RARITY_COLORS[rarityIdx] ?? RARITY_COLORS[0]}`}>
-                        {(RARITY_NAMES[rarityIdx] ?? "C").slice(0, 1)}
-                      </span>
-                    </div>
+                    className={`w-full flex items-center gap-3 p-2 rounded-xl border transition-all ${selected === box.tokenId ? "border-vintage-gold bg-vintage-gold/10" : "border-white/10 bg-white/5 hover:border-white/20"}`}>
+                    {(() => { const img = getVbmsBaccaratImageUrlByTokenId(box.tokenId); return img
+                      ? <img src={img} alt="card" className="w-10 h-14 object-cover rounded-md" />
+                      : <div className={`w-10 h-14 rounded-md border-2 flex items-center justify-center ${RARITY_BG[rarityIdx] ?? RARITY_BG[0]}`}><span className={`text-[10px] font-black ${RARITY_COLORS[rarityIdx] ?? RARITY_COLORS[0]}`}>{(RARITY_NAMES[rarityIdx] ?? "C").slice(0,1)}</span></div>; })()}
                     <div className="text-left flex-1">
                       <p className={`text-sm font-bold ${RARITY_COLORS[rarityIdx] ?? RARITY_COLORS[0]}`}>
                         {RARITY_NAMES[rarityIdx] ?? "Common"}
@@ -540,14 +586,28 @@ export function VMWActionButtons({ address }: { address: string | undefined }) {
 
       {/* Burn values */}
       <div className="max-w-sm mx-auto">
-        <p className="text-xs text-vintage-ice/40 text-center mb-2">VMW Burn Values (VBMS)</p>
+        <p className="text-xs text-vintage-ice/40 text-center mb-2">Burn Values (VBMS)</p>
         <div className="grid grid-cols-5 gap-1 text-xs text-center">
-          {(["Common", "Rare", "Epic", "Legend", "Mythic"] as const).map((r, i) => (
-            <div key={r} className="rounded p-1.5 bg-vintage-charcoal/30 border border-[#D4A843]/20">
-              <span className={`block text-[10px] ${RARITY_COLORS[i]}/70`}>{r}</span>
-              <BurnValueDisplay rarityIndex={i} />
-            </div>
-          ))}
+          <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+            <span className="text-vintage-ice/50 block">Common</span>
+            <BurnValueDisplay rarityIndex={0} />
+          </div>
+          <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+            <span className="text-blue-400/70 block">Rare</span>
+            <BurnValueDisplay rarityIndex={1} />
+          </div>
+          <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+            <span className="text-purple-400/70 block">Epic</span>
+            <BurnValueDisplay rarityIndex={2} />
+          </div>
+          <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+            <span className="text-yellow-400/70 block">Legend</span>
+            <BurnValueDisplay rarityIndex={3} />
+          </div>
+          <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+            <span className="text-pink-400/70 block">Mythic</span>
+            <BurnValueDisplay rarityIndex={4} />
+          </div>
         </div>
       </div>
 
