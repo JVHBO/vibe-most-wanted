@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ShopNotification } from "./ShopNotification";
 import { PackOpeningAnimation } from "./PackOpeningAnimation";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -12,6 +12,7 @@ import { getAssetUrl } from "@/lib/ipfs-assets";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
 import { AudioManager } from "@/lib/audio-manager";
 import { AutoFitText } from "@/components/AutoFitText";
+import { VMWPackCard, VMWActionButtons } from "@/components/LTCPacksSection";
 
 
 interface ShopViewProps {
@@ -76,6 +77,8 @@ export function ShopView({ address }: ShopViewProps) {
   const [claimingDaily, setClaimingDaily] = useState(false);
   const [showPacksModal, setShowPacksModal] = useState(false);
   const [openQuantities, setOpenQuantities] = useState<Record<string, number>>({});
+  const [activeSlide, setActiveSlide] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   // Handle daily free claim
   const handleClaimDailyFree = async () => {
@@ -163,16 +166,44 @@ export function ShopView({ address }: ShopViewProps) {
       <div className="absolute inset-0 pt-14 pb-16 overflow-y-auto flex flex-col">
         <div className="relative z-10 px-4 py-2 flex-1 flex flex-col justify-center">
 
-          {/* Daily Free Pack Card */}
-          <div className="max-w-sm mx-auto mb-4">
-            <div className={`bg-vintage-charcoal/50 border ${isArb ? 'border-amber-400/50' : 'border-vintage-gold/30'} rounded-xl p-4 transition-all shadow-xl`}>
+          {/* ── Pack Carousel ── */}
+          <div className="mb-2 relative">
+            {/* Arrow left */}
+            {activeSlide === 1 && (
+              <button onClick={() => { setActiveSlide(0); carouselRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center text-vintage-gold bg-black/50 rounded-full border border-vintage-gold/30 shadow-lg">
+                ‹
+              </button>
+            )}
+            {/* Arrow right */}
+            {activeSlide === 0 && (
+              <button onClick={() => { setActiveSlide(1); carouselRef.current?.scrollTo({ left: carouselRef.current.scrollWidth, behavior: 'smooth' }); }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 flex items-center justify-center text-vintage-gold bg-black/50 rounded-full border border-vintage-gold/30 shadow-lg">
+                ›
+              </button>
+            )}
+
+            {/* Slides */}
+            <div ref={carouselRef}
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                const slide = Math.round(el.scrollLeft / el.clientWidth);
+                setActiveSlide(slide);
+              }}
+              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none"
+              style={{ scrollbarWidth: 'none' }}>
+
+              {/* Slide 1: Free Pack */}
+              <div className="snap-start flex-none w-full px-6">
+                <div className="max-w-sm mx-auto h-full">
+                  <div className={`bg-vintage-charcoal/50 border ${isArb ? 'border-amber-400/50' : 'border-vintage-gold/30'} rounded-xl p-4 transition-all shadow-xl h-full flex flex-col`}>
 
               {/* Pack Header */}
               <div className="flex items-center gap-4 mb-3">
                 <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className="w-16 h-16 object-contain drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]" />
                 <div className="flex-1">
                   <h3 className="text-xl font-display font-bold text-vintage-gold">
-                    {t('shopDailyFreePack' as any)}
+                    Nothing Packs (non LTC)
                   </h3>
                   <p className="text-vintage-ice/60 text-xs">{t('shopNothingCardPerPack' as any)}</p>
                 </div>
@@ -233,7 +264,7 @@ export function ShopView({ address }: ShopViewProps) {
               )}
 
               {/* Claim Button */}
-              <div>
+              <div className="mt-auto">
                 {dailyFreeStatus?.canClaim ? (
                   <button
                     onClick={() => { AudioManager.buttonClick(); handleClaimDailyFree(); }}
@@ -257,74 +288,93 @@ export function ShopView({ address }: ShopViewProps) {
             </div>
           </div>
 
-          {/* Action Buttons Row */}
-          <div className="max-w-sm mx-auto grid grid-cols-2 gap-3 mb-4">
-            {/* Your Packs Button */}
-            <button
-              onMouseEnter={() => AudioManager.buttonHover()}
-              onClick={() => {
-                AudioManager.buttonClick();
-                if (playerPacks && playerPacks.length > 0) {
-                  const initialQuantities: Record<string, number> = {};
-                  playerPacks.forEach((pack: any) => {
-                    initialQuantities[pack._id] = 1;
-                  });
-                  setOpenQuantities(initialQuantities);
-                  setShowPacksModal(true);
-                }
-              }}
-              disabled={openingPack}
-              className="shop-open-btn py-3 px-4 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#FFD400] hover:bg-[#ECC200] text-black active:translate-x-[3px] active:translate-y-[3px]"
-                          >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 12v10H4V12" />
-                <path d="M2 7h20v5H2z" />
-                <path d="M12 22V7" />
-                <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
-                <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
-              </svg>
-              <span>{t('shopOpenPacks')} {totalUnopenedPacks > 0 ? `(${totalUnopenedPacks})` : ''}</span>
-            </button>
+              </div>
 
-            {/* Burn Cards Button */}
-            <button
-              onMouseEnter={() => AudioManager.buttonHover()}
-              onClick={() => { AudioManager.buttonClick(); router.push('/shop/burn'); }}
-              className="shop-burn-btn py-3 px-4 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#CC2222] hover:bg-[#AA1111] text-white active:translate-x-[3px] active:translate-y-[3px]"
-                          >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 6h18" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                <line x1="10" y1="11" x2="10" y2="17" />
-                <line x1="14" y1="11" x2="14" y2="17" />
-              </svg>
-              <span>{t('shopBurnCards')} {playerCards && playerCards.length > 0 ? `(${playerCards.length})` : ''}</span>
-            </button>
+              {/* Slide 2: VMW LTC Pack */}
+              <div className="snap-start flex-none w-full px-6">
+                <div className="max-w-sm mx-auto h-full">
+                  <VMWPackCard address={address} />
+                </div>
+              </div>
+
+            </div>{/* /slides */}
+          </div>{/* /carousel */}
+
+          {/* Dots indicator */}
+          <div className="flex justify-center gap-2 mt-2">
+            <div className={`h-1.5 rounded-full transition-all ${activeSlide === 0 ? 'w-4 bg-vintage-gold' : 'w-1.5 bg-white/30'}`} />
+            <div className={`h-1.5 rounded-full transition-all ${activeSlide === 1 ? 'w-4 bg-vintage-gold' : 'w-1.5 bg-white/30'}`} />
           </div>
 
-          {/* Burn Values Info */}
-          <div className="max-w-sm mx-auto">
-            <p className="text-xs text-vintage-ice/40 text-center mb-2">Burn Values (VBMS)</p>
-            <div className="grid grid-cols-4 gap-1 text-xs text-center">
-              <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
-                <span className="text-vintage-ice/50 block">Common</span>
-                <span className="text-green-400 font-bold">200</span>
+          {/* Action Buttons */}
+          {activeSlide === 0 ? (
+            <>
+              <div className="max-w-sm mx-auto grid grid-cols-2 gap-3 mb-4">
+                <button
+                  onMouseEnter={() => AudioManager.buttonHover()}
+                  onClick={() => {
+                    AudioManager.buttonClick();
+                    if (playerPacks && playerPacks.length > 0) {
+                      const initialQuantities: Record<string, number> = {};
+                      playerPacks.forEach((pack: any) => {
+                        initialQuantities[pack._id] = 1;
+                      });
+                      setOpenQuantities(initialQuantities);
+                      setShowPacksModal(true);
+                    }
+                  }}
+                  disabled={openingPack}
+                  className="shop-open-btn py-3 px-4 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#FFD400] hover:bg-[#ECC200] text-black active:translate-x-[3px] active:translate-y-[3px]"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 12v10H4V12" />
+                    <path d="M2 7h20v5H2z" />
+                    <path d="M12 22V7" />
+                    <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+                    <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+                  </svg>
+                  <span>{t('shopOpenPacks')} {totalUnopenedPacks > 0 ? `(${totalUnopenedPacks})` : ''}</span>
+                </button>
+                <button
+                  onMouseEnter={() => AudioManager.buttonHover()}
+                  onClick={() => { AudioManager.buttonClick(); router.push('/shop/burn'); }}
+                  className="shop-burn-btn py-3 px-4 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#CC2222] hover:bg-[#AA1111] text-white active:translate-x-[3px] active:translate-y-[3px]"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 6h18" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
+                  <span>{t('shopBurnCards')} {playerCards && playerCards.length > 0 ? `(${playerCards.length})` : ''}</span>
+                </button>
               </div>
-              <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
-                <span className="text-blue-400/70 block">Rare</span>
-                <span className="text-green-400 font-bold">1.1k</span>
+              <div className="max-w-sm mx-auto">
+                <p className="text-xs text-vintage-ice/40 text-center mb-2">Burn Values (VBMS)</p>
+                <div className="grid grid-cols-4 gap-1 text-xs text-center">
+                  <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+                    <span className="text-vintage-ice/50 block">Common</span>
+                    <span className="text-green-400 font-bold">200</span>
+                  </div>
+                  <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+                    <span className="text-blue-400/70 block">Rare</span>
+                    <span className="text-green-400 font-bold">1.1k</span>
+                  </div>
+                  <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+                    <span className="text-purple-400/70 block">Epic</span>
+                    <span className="text-green-400 font-bold">4k</span>
+                  </div>
+                  <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+                    <span className="text-yellow-400/70 block">Legend</span>
+                    <span className="text-green-400 font-bold">40k</span>
+                  </div>
+                </div>
               </div>
-              <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
-                <span className="text-purple-400/70 block">Epic</span>
-                <span className="text-green-400 font-bold">4k</span>
-              </div>
-              <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
-                <span className="text-yellow-400/70 block">Legend</span>
-                <span className="text-green-400 font-bold">40k</span>
-              </div>
-            </div>
-          </div>
+            </>
+          ) : (
+            <VMWActionButtons address={address} />
+          )}
 
         </div>
       </div>
