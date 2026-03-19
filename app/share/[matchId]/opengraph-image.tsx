@@ -33,55 +33,34 @@ export default async function Image({ params }: { params: Promise<{ matchId: str
     let finalPlayerPfpUrl = '';
     let finalOpponentPfpUrl = '';
 
-    // Fetch player PFP from Convex (same logic as profile OG)
-    if (playerName) {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+
+    const fetchPfp = async (username: string): Promise<string> => {
       try {
-        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 4000);
         const response = await fetch(`${convexUrl}/api/query`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             path: 'profiles:getProfileByUsername',
-            args: { username: playerName.toLowerCase() },
+            args: { username: username.toLowerCase() },
             format: 'json',
           }),
+          signal: controller.signal,
         });
-
+        clearTimeout(timer);
         if (response.ok) {
           const data = await response.json();
-          if (data.value?.twitterProfileImageUrl) {
-            finalPlayerPfpUrl = data.value.twitterProfileImageUrl;
-          }
+          return data.value?.twitterProfileImageUrl || '';
         }
-      } catch (e) {
-        // Ignore errors, will use fallback
-      }
-    }
+      } catch (e) { /* timeout or network error */ }
+      return '';
+    };
 
-    // Fetch opponent PFP from Convex (same logic as player)
-    if (opponentName) {
-      try {
-        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL_PROD || process.env.NEXT_PUBLIC_CONVEX_URL!;
-        const response = await fetch(`${convexUrl}/api/query`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            path: 'profiles:getProfileByUsername',
-            args: { username: opponentName.toLowerCase() },
-            format: 'json',
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.value?.twitterProfileImageUrl) {
-            finalOpponentPfpUrl = data.value.twitterProfileImageUrl;
-          }
-        }
-      } catch (e) {
-        // Ignore errors, will use fallback
-      }
-    }
+    // Fetch both PFPs in parallel with 4s timeout each
+    if (playerName) finalPlayerPfpUrl = await fetchPfp(playerName);
+    if (opponentName) finalOpponentPfpUrl = await fetchPfp(opponentName);
 
     // Special handling for known users (hardcoded fallbacks)
     if (playerName.toLowerCase() === 'nico' && !finalPlayerPfpUrl) {

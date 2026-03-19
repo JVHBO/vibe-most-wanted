@@ -171,10 +171,10 @@ export function GamePopups({
     if (showWinPopup && soundEnabled) {
       // Map victory images to their audio files
       const audioMap: Record<string, string> = {
-        '/victory-1.jpg': '/win-sound.mp3',
-        '/victory-2.jpg': '/marvin-victory.mp3',
-        '/bom.jpg': '/victory-sound.mp3',
-        '/victory-3.jpg': '/victory-3.mp3',
+        '/victory-1.jpg': getAssetUrl('/win-sound.mp3'),
+        '/victory-2.jpg': getAssetUrl('/marvin-victory.mp3'),
+        '/bom.jpg': getAssetUrl('/victory-sound.mp3'),
+        '/victory-3.jpg': getAssetUrl('/victory-3.mp3'),
       };
 
       const audioFile = audioMap[currentVictoryImage];
@@ -219,7 +219,7 @@ export function GamePopups({
   // Play loss audio when popup opens
   useEffect(() => {
     if (showLossPopup && soundEnabled && !currentLossMedia.isVideo) {
-      const audio = new Audio('/lose-sound.mp3');
+      const audio = new Audio(getAssetUrl('/lose-sound.mp3'));
       audio.volume = 0.7;
       audio.play().catch(err => console.error('Failed to play loss audio:', err));
     }
@@ -249,7 +249,7 @@ export function GamePopups({
         tieAudioRef.current = null;
       }
 
-      const audio = new Audio('/tie-music.mp3');
+      const audio = new Audio(getAssetUrl('/tie-music.mp3'));
       audio.volume = 0.7;
       audio.loop = true;
       tieAudioRef.current = audio;
@@ -391,7 +391,7 @@ export function GamePopups({
 
           <div className="relative flex flex-col items-center gap-2" onClick={(e) => e.stopPropagation()}>
             <img
-                src={currentVictoryImage}
+                src={getAssetUrl(currentVictoryImage)}
                 alt="Victory!"
                 className={`rounded-xl shadow-2xl border-2 object-contain ${
                   currentVictoryImage === '/victory-2.jpg'
