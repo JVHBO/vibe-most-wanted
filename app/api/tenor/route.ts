@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     : `${BASE}/trending?api_key=${GIPHY_KEY}&limit=${limit}&rating=g`;
 
   try {
-    const res = await fetch(url, { cache: 'no-store' });
+    const res = await fetch(url, { next: { revalidate: search ? 300 : 60 } });
     if (!res.ok) return NextResponse.json({ results: [] });
     const data = await res.json();
     const results = (data.data ?? []).map((item: any) => ({

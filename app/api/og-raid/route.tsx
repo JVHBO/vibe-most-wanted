@@ -33,7 +33,7 @@ export async function GET(request: Request) {
 
         // Fetch with longer timeout and proper headers
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 3000);
 
         const response = await fetch(imageUrl, {
           signal: controller.signal,

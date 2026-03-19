@@ -99,6 +99,20 @@ export const IPFS_ASSETS: Record<string, string> = {
   "/splash.png": "https://ipfs.filebase.io/ipfs/QmZ1cfYCW9mDzD4V9iMhVoUQGFd1QwNLfMmEEBQKwEfFSb",
   "/og-image.png": "https://ipfs.filebase.io/ipfs/QmU27iyqYXLYD3P7xKZqVNdqLKq8mFvZKq8LNdqLKqYXLY",
 
+  // GIFs
+  "/icon.gif": "https://ipfs.filebase.io/ipfs/Qmd1GsvkTotjBnNs3zDf1nayEa287gqMdM4wV83JAjyxsC",
+  "/splash.gif": "https://ipfs.filebase.io/ipfs/QmQSx1jbKUP74hgkuDPSj9udd6oWuQfWnYbKQ27qhS8zKm",
+
+  // TCG sounds
+  "/sounds/defeat-bait.mp4": "https://ipfs.filebase.io/ipfs/QmbRUZjMvTm8Ud7jbk6fn8raw86sShXFjV1pL2bF5zgQ4u",
+  "/sounds/defeat.mp3": "https://ipfs.filebase.io/ipfs/QmRGRnC9LTUijmYkjApuoAT5LiPqzDP6bknU4f2qEsRq2p",
+  "/sounds/victory.mp3": "https://ipfs.filebase.io/ipfs/QmTD6UBtdoJpXVTZVNbm7Be7Go5utiKbdBBQoDs6rwqydd",
+  "/sounds/legendary-pull.mp3": "https://ipfs.filebase.io/ipfs/QmXCgNvkJdc3eZC4LhkYEq3bHC1j1MRuV16S1VWhDkhD5V",
+  "/sounds/quandale-dingle-meme.mp3": "https://ipfs.filebase.io/ipfs/QmZUtCfYP7nJrh1m8wiLJ1bmXfqmL2WfGAd6EQA8i9izjS",
+  "/sounds/let-him-cook-now.mp3": "https://ipfs.filebase.io/ipfs/QmSTdwK9NAeUiTAmH86wihNGXgnu2F6udx3dyLHgp6jXtx",
+  "/sounds/attack.mp3": "https://ipfs.filebase.io/ipfs/QmaWxzSAvnLygnbiA1dufT9iHsDJ1mHFA486BmXzcBMjUF",
+  "/sounds/hit.mp3": "https://ipfs.filebase.io/ipfs/QmXyp5N9wqPCoqmQHWR1EUMPXBsriKwHSadQ4HkwZ9nVHM",
+
   // Victory/Loss/Tie images
   "/victory-1.jpg": "https://ipfs.filebase.io/ipfs/QmRJqgjTShNeUWF9B8vb6G5bJu3z6JE9VYSHVPshvTHWuy",
   "/victory-2.jpg": "https://ipfs.filebase.io/ipfs/QmemgMVC1LN7koqjc7Jmwn69TwgRHCgsQouk4pRhU6DVT4",
