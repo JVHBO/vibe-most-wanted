@@ -18,6 +18,7 @@ import { createPublicClient, http } from "viem";
 import { getVbmsBaccaratImageUrlByTokenId, getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import { shareToFarcaster } from "@/lib/share-utils";
+import { FarcasterIcon } from "@/components/PokerIcons";
 
 // ── Contracts ─────────────────────────────────────────────────────────────────
 const VMW_DROP = "0xf14c1dc8ce5fe65413379f76c43fa1460c31e728" as `0x${string}`;
@@ -299,8 +300,8 @@ function OpenModal({ address, onClose, onRevealed }: {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-vintage-charcoal border border-vintage-gold/50 rounded-2xl w-full max-w-sm p-5 max-h-[80vh] flex flex-col"
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center" style={{ padding: '56px 16px 64px' }} onClick={onClose}>
+      <div className="bg-vintage-charcoal border border-vintage-gold/50 rounded-2xl w-full max-w-sm p-4 flex flex-col overflow-hidden" style={{ maxHeight: '100%' }}
         onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-vintage-gold">Open VMW Packs</h3>
@@ -417,17 +418,18 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
     const rarity = RARITY_NAMES[card?.rarity] || "Common";
     const foilLabel = m?.foil && m.foil !== "None" ? `${m.foil} Foil ` : "";
     const text = [
-      `🎴 Just pulled a ${foilLabel}${rarity} ${name}!`,
+      `🎴 Just pulled a ${foilLabel}${rarity}${name ? ` ${name}` : ""}!`,
       `Token #${card?.tokenId} · Vibe Most Wanted`,
       cards.length > 1 ? `(+${cards.length - 1} more cards)` : "",
-      `vibemostwanted.xyz/shop`,
     ].filter(Boolean).join("\n");
-    // Build /share/pack URL with rarity counts — Farcaster fetches OG tags from this page
-    const rarityKey = rarity.toLowerCase();
-    const params = new URLSearchParams({ packType: "vbms" });
-    params.set(rarityKey, "1");
-    if (foilLabel.includes("Prize")) params.set("foilPrize", "1");
-    else if (foilLabel) params.set("foilStandard", "1");
+    // Build share URL passing card details for dynamic OG image
+    const params = new URLSearchParams();
+    params.set("rarity", rarity.toLowerCase());
+    if (name) params.set("name", name);
+    if (m?.foil && m.foil !== "None") params.set("foil", m.foil);
+    if (card?.tokenId) params.set("tokenId", card.tokenId);
+    // Pass baccarat image path (strip domain if present)
+    if (m?.image && m.image.startsWith("/images/")) params.set("cardImg", m.image);
     const shareUrl = `https://vibemostwanted.xyz/share/pack?${params.toString()}`;
     shareToFarcaster(text, shareUrl);
   };
@@ -437,9 +439,8 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
   const cardH = Math.round(cardW * 1.4);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center" style={{ background: "rgba(0,0,0,0.92)" }}>
-      <div className="w-full max-w-sm bg-[#111] rounded-t-3xl border-t border-x border-vintage-gold/30 flex flex-col"
-        style={{ maxHeight: "88vh" }}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: "rgba(0,0,0,0.92)", padding: "56px 16px 64px" }}>
+      <div className="w-full max-w-sm bg-[#111] rounded-2xl border border-vintage-gold/30 flex flex-col overflow-hidden" style={{ maxHeight: "100%" }}>
 
         {/* Handle + header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3">
@@ -513,7 +514,7 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
             </a>
             <button onClick={doShare}
               className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl bg-[#7C3AED] text-white text-xs font-bold active:scale-95 transition-all">
-              <svg width="18" height="18" viewBox="0 0 1000 1000" fill="none"><path d="M257.778 155.556H742.222V844.444H657.778V544.444H342.222V844.444H257.778V155.556Z" fill="white"/><path d="M342.222 544.444L257.778 844.444H742.222L657.778 544.444H342.222Z" fill="white"/></svg>
+              <FarcasterIcon size={18} />
               Share
             </button>
             <button onClick={onClose}
@@ -584,8 +585,8 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="bg-vintage-charcoal border border-vintage-gold/50 rounded-2xl w-full max-w-sm p-5 max-h-[85vh] flex flex-col"
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center" style={{ padding: '56px 16px 64px' }} onClick={onClose}>
+      <div className="bg-vintage-charcoal border border-vintage-gold/50 rounded-2xl w-full max-w-sm p-4 flex flex-col overflow-hidden" style={{ maxHeight: '100%' }}
         onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-vintage-gold">Burn VMW Cards</h3>
