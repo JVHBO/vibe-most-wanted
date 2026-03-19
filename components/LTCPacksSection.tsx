@@ -179,7 +179,7 @@ export function VMWPackCard({ address, onMintSuccess }: { address: string | unde
         <p className="text-green-300/80 text-[10px] text-center">Real NFTs · 2× power vs Nothing · Mythic tier</p>
       </div>
       <div className="bg-blue-500/10 border border-blue-400/20 rounded-lg px-2 py-1 mb-2">
-        <p className="text-blue-300/60 text-[10px] text-center">⚡ Powered by <span className="font-bold text-blue-300/80">vibe.market</span> · Same in-game cards</p>
+        <p className="text-blue-300/60 text-[10px] text-center">⚡ Powered by <span className="font-bold text-blue-300/80">vibechain</span> · 7.5% platform fee · Same in-game cards</p>
       </div>
 
       {/* Drop Rates */}
@@ -695,7 +695,7 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
                     {selling && sellMode === "eth" && <span className="text-[10px] text-blue-400/60 mt-1">Selling…</span>}
                   </button>
                 </div>
-                <p className="text-[10px] text-vintage-ice/30 text-center">Bonding curve price · 1 transaction each</p>
+                <p className="text-[10px] text-vintage-ice/30 text-center">Bonding curve price · 7.5% platform fee · via vibechain</p>
               </div>
             )}
           </>
@@ -717,20 +717,20 @@ function JustBoughtModal({ packs, loading, onOpenNow, onLater }: {
       <div className="w-full max-w-sm bg-[#111] border border-vintage-gold/50 rounded-2xl flex flex-col overflow-hidden shadow-2xl" style={{ maxHeight: "100%" }}>
         <div className="px-4 pt-5 pb-4 text-center border-b border-white/10">
           <div className="text-3xl mb-1">🎉</div>
-          <h3 className="text-lg font-display font-bold text-vintage-gold">Packs Comprados!</h3>
-          <p className="text-white/40 text-xs mt-0.5">Abra agora para revelar suas cartas</p>
+          <h3 className="text-lg font-display font-bold text-vintage-gold">Packs Purchased!</h3>
+          <p className="text-white/40 text-xs mt-0.5">Open now to reveal your cards</p>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
           {loading ? (
             <div className="flex flex-col items-center gap-3 py-8">
               <div className="w-10 h-10 rounded-full border-2 border-vintage-gold/30 border-t-vintage-gold animate-spin" />
-              <p className="text-vintage-gold/60 text-xs">Indexando packs na blockchain…</p>
+              <p className="text-vintage-gold/60 text-xs">Indexing packs on blockchain…</p>
             </div>
           ) : packs.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-8">
               <div className="w-10 h-10 rounded-full border-2 border-vintage-gold/30 border-t-vintage-gold animate-spin" />
-              <p className="text-vintage-gold/60 text-xs">Aguardando confirmação…</p>
+              <p className="text-vintage-gold/60 text-xs">Waiting for confirmation…</p>
             </div>
           ) : (
             packs.map((box) => (
@@ -738,7 +738,7 @@ function JustBoughtModal({ packs, loading, onOpenNow, onLater }: {
                 <img src={PACK_IMAGE} alt="Pack" className="w-10 h-10 object-contain" />
                 <div>
                   <p className="text-sm font-bold text-white">VMW #{box.tokenId}</p>
-                  <p className="text-xs text-vintage-ice/40">Pack não aberto</p>
+                  <p className="text-xs text-vintage-ice/40">Unopened pack</p>
                 </div>
               </div>
             ))
@@ -750,10 +750,10 @@ function JustBoughtModal({ packs, loading, onOpenNow, onLater }: {
             onClick={() => onOpenNow(packs.map(b => b.tokenId))}
             disabled={packs.length === 0}
             className="w-full py-3 font-black text-sm uppercase tracking-widest bg-[#FFD400] hover:bg-[#ECC200] text-black rounded-xl disabled:opacity-40 active:scale-95 transition-all shadow-[0_4px_0px_#000]">
-            {packs.length > 0 ? `Abrir ${packs.length} Pack${packs.length > 1 ? "s" : ""} Agora` : "Aguardando…"}
+            {packs.length > 0 ? `Open ${packs.length} Pack${packs.length > 1 ? "s" : ""} Now` : "Waiting…"}
           </button>
           <button onClick={onLater} className="w-full py-2 text-vintage-ice/40 text-xs font-bold hover:text-vintage-ice/60 transition-colors">
-            Abrir depois
+            Open later
           </button>
         </div>
       </div>
