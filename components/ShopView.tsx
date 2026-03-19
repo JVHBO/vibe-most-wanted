@@ -79,7 +79,33 @@ export function ShopView({ address }: ShopViewProps) {
   const [openQuantities, setOpenQuantities] = useState<Record<string, number>>({});
   const [activeSlide, setActiveSlide] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
-  const [vmwOpenTrigger, setVmwOpenTrigger] = useState(0);
+  const [vmwMint, setVmwMint] = useState<{ trigger: number; qty: number }>({ trigger: 0, qty: 1 });
+  const userScrolledRef = useRef(false);
+
+  // Auto-scroll carousel slowly with long cooldown
+  useEffect(() => {
+    const COOLDOWN = 6000; // 6s between auto-scrolls
+    let lastUserScroll = 0;
+    const interval = setInterval(() => {
+      if (Date.now() - lastUserScroll < COOLDOWN) return;
+      if (!carouselRef.current) return;
+      const el = carouselRef.current;
+      const nextSlide = activeSlide === 0 ? 1 : 0;
+      el.scrollTo({ left: nextSlide * el.clientWidth, behavior: 'smooth' });
+      setActiveSlide(nextSlide);
+    }, COOLDOWN);
+
+    // Track user interaction to pause auto-scroll
+    const onUserScroll = () => { lastUserScroll = Date.now(); };
+    carouselRef.current?.addEventListener('touchstart', onUserScroll, { passive: true });
+    carouselRef.current?.addEventListener('mousedown', onUserScroll);
+
+    return () => {
+      clearInterval(interval);
+      carouselRef.current?.removeEventListener('touchstart', onUserScroll);
+      carouselRef.current?.removeEventListener('mousedown', onUserScroll);
+    };
+  }, [activeSlide]);
 
   // Handle daily free claim
   const handleClaimDailyFree = async () => {
@@ -291,7 +317,7 @@ export function ShopView({ address }: ShopViewProps) {
               {/* Slide 2: VMW LTC Pack */}
               <div className="snap-start flex-none w-full px-6">
                 <div className="max-w-sm mx-auto h-full">
-                  <VMWPackCard address={address} onMintSuccess={() => setVmwOpenTrigger(t => t + 1)} />
+                  <VMWPackCard address={address} onMintSuccess={(qty) => setVmwMint(m => ({ trigger: m.trigger + 1, qty }))} />
                 </div>
               </div>
 
@@ -371,7 +397,7 @@ export function ShopView({ address }: ShopViewProps) {
               </div>
             </>
           ) : (
-            <VMWActionButtons address={address} autoOpenTrigger={vmwOpenTrigger} />
+            <VMWActionButtons address={address} autoOpenTrigger={vmwMint.trigger} mintQty={vmwMint.qty} />
           )}
 
         </div>

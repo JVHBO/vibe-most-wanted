@@ -115,7 +115,7 @@ function useOfferAmounts() {
 }
 
 // ── Buy Card (Slide 2 of carousel) ───────────────────────────────────────────
-export function VMWPackCard({ address, onMintSuccess }: { address: string | undefined; onMintSuccess?: () => void }) {
+export function VMWPackCard({ address, onMintSuccess }: { address: string | undefined; onMintSuccess?: (qty: number) => void }) {
   const [qty, setQty] = useState(1);
   const [minting, setMinting] = useState(false);
   const { chainId } = useAccount();
@@ -147,7 +147,7 @@ export function VMWPackCard({ address, onMintSuccess }: { address: string | unde
         value: priceWei, chainId: base.id,
       });
       toast.success(`Minted ${qty} pack${qty > 1 ? "s" : ""}! ✅`);
-      onMintSuccess?.();
+      onMintSuccess?.(qty);
     } catch (e: any) {
       toast.error((e?.shortMessage || e?.message || "Mint failed").slice(0, 80));
     } finally { setMinting(false); }
@@ -214,13 +214,14 @@ export function VMWPackCard({ address, onMintSuccess }: { address: string | unde
 }
 
 // ── Open Modal ────────────────────────────────────────────────────────────────
-function OpenModal({ address, onClose, onRevealed }: {
+function OpenModal({ address, onClose, onRevealed, preSelectedIds }: {
   address: string;
   onClose: () => void;
   onRevealed: (cards: RevealedCard[]) => void;
+  preSelectedIds?: string[];
 }) {
   const { unopened, loading, refresh } = useOwnedBoxes(address);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set(preSelectedIds ?? []));
   const [opening, setOpening] = useState(false);
   const [phase, setPhase] = useState<"select" | "waiting" | "done">("select");
   const [dots, setDots] = useState(".");
@@ -378,7 +379,12 @@ type CardMeta = { image: string; cdnImage?: string; name?: string; foil?: string
 
 function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose: () => void }) {
   const [flipped, setFlipped] = useState<Set<number>>(new Set());
+  const [shakingCard, setShakingCard] = useState<number | null>(null);
   const [meta, setMeta] = useState<Record<string, CardMeta>>({});
+
+  const playSound = (src: string) => {
+    try { const a = new Audio(src); a.volume = 0.6; a.play().catch(() => {}); } catch {}
+  };
 
   useEffect(() => {
     cards.forEach(card => {
@@ -407,8 +413,36 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
     });
   }, [cards]);
 
-  const flip = (i: number) => setFlipped((p) => { const n = new Set(p); n.add(i); return n; });
-  const flipAll = () => setFlipped(new Set(cards.map((_, i) => i)));
+  const flip = (i: number) => {
+    if (flipped.has(i) || shakingCard !== null) return;
+    setShakingCard(i);
+    playSound('/sounds/espera.mp3');
+    setTimeout(() => {
+      const rarity = RARITY_NAMES[cards[i]?.rarity] || "Common";
+      const sounds: Record<string, string> = {
+        Mythic: '/sounds/legendary-pull.mp3',
+        Legendary: '/sounds/legendary-pull.mp3',
+        Epic: '/sounds/epic-pull.mp3',
+        Rare: '/sounds/rare-pull.mp3',
+        Common: '/sounds/common-pull.mp3',
+      };
+      playSound(sounds[rarity] || sounds.Common);
+      setFlipped((p) => { const n = new Set(p); n.add(i); return n; });
+      setShakingCard(null);
+    }, 1800);
+  };
+  const flipAll = () => {
+    cards.forEach((_, i) => {
+      if (!flipped.has(i)) {
+        setTimeout(() => {
+          const rarity = RARITY_NAMES[cards[i]?.rarity] || "Common";
+          const sounds: Record<string, string> = { Mythic: '/sounds/legendary-pull.mp3', Legendary: '/sounds/legendary-pull.mp3', Epic: '/sounds/epic-pull.mp3', Rare: '/sounds/rare-pull.mp3', Common: '/sounds/common-pull.mp3' };
+          playSound(sounds[rarity] || sounds.Common);
+          setFlipped((p) => { const n = new Set(p); n.add(i); return n; });
+        }, i * 400);
+      }
+    });
+  };
   const allFlipped = flipped.size === cards.length;
 
   const doShare = () => {
@@ -460,7 +494,7 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
             const foilType: 'Prize' | 'Standard' | null = m?.foil === "Prize" ? "Prize" : (m?.foil && m.foil !== "None") ? "Standard" : null;
             const isFlipped = flipped.has(i);
             return (
-              <div key={i} onClick={() => flip(i)} className="cursor-pointer select-none flex-shrink-0" style={{ perspective: 800 }}>
+              <div key={i} onClick={() => flip(i)} className={`cursor-pointer select-none flex-shrink-0 ${shakingCard === i ? 'card-shaking' : ''}`} style={{ perspective: 800 }}>
                 <div style={{
                   transition: "transform 0.55s cubic-bezier(0.4,0,0.2,1)",
                   transformStyle: "preserve-3d",
@@ -671,22 +705,95 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
   );
 }
 
+// ── Just Bought Modal ─────────────────────────────────────────────────────────
+function JustBoughtModal({ packs, loading, onOpenNow, onLater }: {
+  packs: Box[];
+  loading: boolean;
+  onOpenNow: (ids: string[]) => void;
+  onLater: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/85 z-[100] flex items-center justify-center" style={{ padding: "56px 16px 64px" }}>
+      <div className="w-full max-w-sm bg-[#111] border border-vintage-gold/50 rounded-2xl flex flex-col overflow-hidden shadow-2xl" style={{ maxHeight: "100%" }}>
+        <div className="px-4 pt-5 pb-4 text-center border-b border-white/10">
+          <div className="text-3xl mb-1">🎉</div>
+          <h3 className="text-lg font-display font-bold text-vintage-gold">Packs Comprados!</h3>
+          <p className="text-white/40 text-xs mt-0.5">Abra agora para revelar suas cartas</p>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+          {loading ? (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <div className="w-10 h-10 rounded-full border-2 border-vintage-gold/30 border-t-vintage-gold animate-spin" />
+              <p className="text-vintage-gold/60 text-xs">Indexando packs na blockchain…</p>
+            </div>
+          ) : packs.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 py-8">
+              <div className="w-10 h-10 rounded-full border-2 border-vintage-gold/30 border-t-vintage-gold animate-spin" />
+              <p className="text-vintage-gold/60 text-xs">Aguardando confirmação…</p>
+            </div>
+          ) : (
+            packs.map((box) => (
+              <div key={box.tokenId} className="flex items-center gap-3 p-2 rounded-xl border border-vintage-gold/30 bg-vintage-gold/5">
+                <img src={PACK_IMAGE} alt="Pack" className="w-10 h-10 object-contain" />
+                <div>
+                  <p className="text-sm font-bold text-white">VMW #{box.tokenId}</p>
+                  <p className="text-xs text-vintage-ice/40">Pack não aberto</p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="px-4 pb-5 pt-3 space-y-2 border-t border-white/10">
+          <button
+            onClick={() => onOpenNow(packs.map(b => b.tokenId))}
+            disabled={packs.length === 0}
+            className="w-full py-3 font-black text-sm uppercase tracking-widest bg-[#FFD400] hover:bg-[#ECC200] text-black rounded-xl disabled:opacity-40 active:scale-95 transition-all shadow-[0_4px_0px_#000]">
+            {packs.length > 0 ? `Abrir ${packs.length} Pack${packs.length > 1 ? "s" : ""} Agora` : "Aguardando…"}
+          </button>
+          <button onClick={onLater} className="w-full py-2 text-vintage-ice/40 text-xs font-bold hover:text-vintage-ice/60 transition-colors">
+            Abrir depois
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Action Buttons for VMW slide ──────────────────────────────────────────────
-export function VMWActionButtons({ address, autoOpenTrigger }: { address: string | undefined; autoOpenTrigger?: number }) {
-  const { unopened, opened, refresh } = useOwnedBoxes(address);
+export function VMWActionButtons({ address, autoOpenTrigger, mintQty = 1 }: { address: string | undefined; autoOpenTrigger?: number; mintQty?: number }) {
+  const { boxes, unopened, opened, loading, refresh } = useOwnedBoxes(address);
   const [showOpen, setShowOpen] = useState(false);
   const [showBurn, setShowBurn] = useState(false);
   const [revealedCards, setRevealedCards] = useState<RevealedCard[]>([]);
+  const [justBought, setJustBought] = useState<{ packs: Box[]; loading: boolean } | null>(null);
+  const prevUnopened = useRef<Set<string>>(new Set());
+  const [openPreSelected, setOpenPreSelected] = useState<string[] | null>(null);
 
-  // Auto-open after mint: refresh packs then open modal
+  // After mint: snapshot current packs, start polling for new ones
   useEffect(() => {
     if (!autoOpenTrigger) return;
-    setShowOpen(false);
-    // Wait for chain to confirm + API to index
-    const t1 = setTimeout(() => refresh(), 3000);
-    const t2 = setTimeout(() => { refresh(); setShowOpen(true); }, 5000);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    prevUnopened.current = new Set(unopened.map(b => b.tokenId));
+    setJustBought({ packs: [], loading: true });
+    const t1 = setTimeout(() => refresh(), 4000);
+    const t2 = setTimeout(() => refresh(), 8000);
+    const t3 = setTimeout(() => refresh(), 15000);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [autoOpenTrigger]);
+
+  // When boxes update, find new packs for just-bought modal
+  useEffect(() => {
+    if (!justBought) return;
+    const newPacks = unopened.filter(b => !prevUnopened.current.has(b.tokenId));
+    if (newPacks.length > 0) {
+      setJustBought({ packs: newPacks, loading: false });
+    } else if (justBought.loading && unopened.length > 0) {
+      // Fallback: show newest mintQty packs by tokenId
+      const sorted = [...unopened].sort((a, b) => Number(b.tokenId) - Number(a.tokenId));
+      setJustBought({ packs: sorted.slice(0, mintQty), loading: false });
+    }
+  }, [boxes]);
 
   return (
     <>
@@ -740,7 +847,26 @@ export function VMWActionButtons({ address, autoOpenTrigger }: { address: string
         </div>
       </div>
 
-      {showOpen && address && <OpenModal address={address} onClose={() => setShowOpen(false)} onRevealed={(cards) => setRevealedCards(cards)} />}
+      {justBought && address && (
+        <JustBoughtModal
+          packs={justBought.packs}
+          loading={justBought.loading}
+          onOpenNow={(ids) => {
+            setJustBought(null);
+            setOpenPreSelected(ids);
+            setShowOpen(true);
+          }}
+          onLater={() => setJustBought(null)}
+        />
+      )}
+      {showOpen && address && (
+        <OpenModal
+          address={address}
+          onClose={() => { setShowOpen(false); setOpenPreSelected(null); }}
+          onRevealed={(cards) => { setRevealedCards(cards); setShowOpen(false); setOpenPreSelected(null); }}
+          preSelectedIds={openPreSelected ?? undefined}
+        />
+      )}
       {showBurn && address && <BurnModal address={address} onClose={() => setShowBurn(false)} />}
       {revealedCards.length > 0 && <RevealedCardsModal cards={revealedCards} onClose={() => setRevealedCards([])} />}
     </>
