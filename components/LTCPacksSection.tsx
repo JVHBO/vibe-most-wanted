@@ -539,6 +539,8 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
   const [selected, setSelected] = useState<string | null>(null);
   const [selling, setSelling] = useState(false);
   const [sellMode, setSellMode] = useState<"vbms" | "eth" | null>(null);
+  const [burnPage, setBurnPage] = useState(0);
+  const BURN_PAGE_SIZE = 5;
   const offers = useOfferAmounts();
   const { writeContractAsync } = useWriteContractWithAttribution();
   const { chainId } = useAccount();
@@ -604,17 +606,29 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
           </div>
         ) : (
           <>
-            <p className="text-vintage-ice/60 text-xs mb-3">Select a card to burn</p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-vintage-ice/60 text-xs">Select a card to burn</p>
+              {Math.ceil(opened.length / BURN_PAGE_SIZE) > 1 && (
+                <div className="flex items-center gap-1">
+                  <button onClick={() => setBurnPage(p => Math.max(0, p - 1))} disabled={burnPage === 0}
+                    className="w-6 h-6 rounded bg-white/10 text-white/60 disabled:opacity-30 text-sm flex items-center justify-center">‹</button>
+                  <span className="text-xs text-vintage-ice/40">{burnPage + 1}/{Math.ceil(opened.length / BURN_PAGE_SIZE)}</span>
+                  <button onClick={() => setBurnPage(p => Math.min(Math.ceil(opened.length / BURN_PAGE_SIZE) - 1, p + 1))} disabled={burnPage >= Math.ceil(opened.length / BURN_PAGE_SIZE) - 1}
+                    className="w-6 h-6 rounded bg-white/10 text-white/60 disabled:opacity-30 text-sm flex items-center justify-center">›</button>
+                </div>
+              )}
+            </div>
             <div className="flex-1 overflow-y-auto space-y-2 mb-4">
-              {opened.map((box) => {
+              {opened.slice(burnPage * BURN_PAGE_SIZE, (burnPage + 1) * BURN_PAGE_SIZE).map((box) => {
                 const rarityIdx = box.rarity ?? 0;
                 const offer = offers[rarityIdx];
+                const cardImg = getVbmsBaccaratImageUrlByTokenId(box.tokenId);
                 return (
                   <button key={box.tokenId} onClick={() => setSelected(box.tokenId)}
                     className={`w-full flex items-center gap-3 p-2 rounded-xl border transition-all ${selected === box.tokenId ? "border-vintage-gold bg-vintage-gold/10" : "border-white/10 bg-white/5 hover:border-white/20"}`}>
-                    {(() => { const img = getVbmsBaccaratImageUrlByTokenId(box.tokenId); return img
-                      ? <img src={img} alt="card" className="w-10 h-14 object-cover rounded-md" />
-                      : <div className={`w-10 h-14 rounded-md border-2 flex items-center justify-center ${RARITY_BG[rarityIdx] ?? RARITY_BG[0]}`}><span className={`text-[10px] font-black ${RARITY_COLORS[rarityIdx] ?? RARITY_COLORS[0]}`}>{(RARITY_NAMES[rarityIdx] ?? "C").slice(0,1)}</span></div>; })()}
+                    {cardImg
+                      ? <img src={cardImg} alt="card" className="w-10 h-14 object-cover rounded-md flex-shrink-0" />
+                      : <div className={`w-10 h-14 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${RARITY_BG[rarityIdx] ?? RARITY_BG[0]}`}><span className={`text-[10px] font-black ${RARITY_COLORS[rarityIdx] ?? RARITY_COLORS[0]}`}>{(RARITY_NAMES[rarityIdx] ?? "C").slice(0,1)}</span></div>}
                     <div className="text-left flex-1">
                       <p className={`text-sm font-bold ${RARITY_COLORS[rarityIdx] ?? RARITY_COLORS[0]}`}>
                         {RARITY_NAMES[rarityIdx] ?? "Common"}
