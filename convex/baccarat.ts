@@ -962,6 +962,7 @@ export const playPvE = mutation({
   handler: async (ctx, args) => {
     const { address, username, betOn, amount } = args;
     const playerAddress = address.toLowerCase();
+    if (isBlacklisted(playerAddress)) throw new Error("[BLACKLISTED]");
     const now = Date.now();
 
     // Use individual bets if provided, otherwise use legacy single bet

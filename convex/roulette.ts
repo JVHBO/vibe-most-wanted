@@ -155,6 +155,7 @@ export const spin = mutation({
   handler: async (ctx, { address, chain }) => {
     const today = getTodayKey();
     const normalizedAddress = address.toLowerCase();
+    if (isBlacklisted(normalizedAddress)) throw new Error("[BLACKLISTED]");
     // 🔒 SECURITY FIX: Use primary address so all linked wallets share the same daily limit
     const effectiveAddress = await resolveToPrimary(ctx, normalizedAddress);
 

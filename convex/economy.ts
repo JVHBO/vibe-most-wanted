@@ -16,6 +16,7 @@ import { api, internal } from "./_generated/api";
 import { applyLanguageBoost } from "./languageBoost";
 import { createAuditLog } from "./coinAudit";
 import { logTransaction } from "./coinsInbox";
+import { isBlacklisted } from "./blacklist";
 
 // ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
 async function getProfileByAddress(ctx: any, address: string) {
@@ -1107,6 +1108,9 @@ export const claimLoginBonus = mutation({
     address: v.string(),
   },
   handler: async (ctx, { address }) => {
+    const normalizedAddr = address.toLowerCase();
+    if (isBlacklisted(normalizedAddr)) throw new Error("[BLACKLISTED]");
+
     let profile = await getProfileByAddress(ctx, address);
 
     if (!profile) {

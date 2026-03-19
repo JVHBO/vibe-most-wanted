@@ -15,6 +15,7 @@ import { mutation, query, action, internalQuery, internalMutation } from "./_gen
 import { internal } from "./_generated/api";
 import { applyLanguageBoost } from "./languageBoost";
 import { createAuditLog } from "./coinAudit";
+import { isBlacklisted } from "./blacklist";
 import { logTransaction } from "./coinsInbox";
 
 // ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
@@ -318,6 +319,7 @@ export const claimMission = mutation({
   },
   handler: async (ctx, { playerAddress, missionId, language, skipCoins, chain }) => {
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
+    if (isBlacklisted(normalizedAddress)) throw new Error("[BLACKLISTED]");
 
     // Get mission
     const mission = await ctx.db.get(missionId);

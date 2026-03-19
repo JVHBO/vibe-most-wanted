@@ -6,6 +6,7 @@
 
 import { v, ConvexError } from "convex/values";
 import { createAuditLog } from "./coinAudit";
+import { isBlacklisted } from "./blacklist";
 import { mutation, query, internalMutation, internalQuery, QueryCtx, MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getCurrentBoss, getNextBoss, getBossRotationInfo, BOSS_HP_BY_RARITY, BOSS_REWARDS_BY_RARITY } from "../lib/raid-boss";
@@ -1154,6 +1155,7 @@ export const claimRaidRewards = mutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
     const normalizedAddress = address.toLowerCase();
+    if (isBlacklisted(normalizedAddress)) throw new Error("[BLACKLISTED]");
 
     // Get all unclaimed contributions
     // 🚀 BANDWIDTH FIX: Limited to 100 unclaimed bosses per player

@@ -3,6 +3,7 @@ import { mutation, query, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { validateCardTraits } from "./cardValidation";
 import { isBlacklisted } from "./blacklist";
+import { createAuditLog } from "./coinAudit";
 
 /**
  * Mint a Farcaster Card
@@ -832,6 +833,14 @@ export const claimVibeMailQuestCoins = mutation({
       address: normalizedAddress,
       vibemailId,
       claimedAt: Date.now(),
+    });
+    await createAuditLog(ctx, {
+      address: normalizedAddress,
+      action: "vibemail_quest_claim",
+      coinsAfter: newCoins,
+      coinsBefore: currentCoins,
+      delta: REWARD,
+      metadata: { vibemailId },
     });
 
     return { success: true, coinsAwarded: REWARD };

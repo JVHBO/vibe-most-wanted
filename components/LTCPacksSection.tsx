@@ -81,7 +81,6 @@ function useOwnedBoxes(address: string | undefined) {
     fetch(`/api/vibemarket/owned?address=${address.toLowerCase()}&contractAddress=${VMW_DROP}`)
       .then((r) => r.json())
       .then((d) => {
-        console.log('[VMW packs]', d);
         const rawBoxes = d.boxes ?? d.boosterboxes ?? d.data?.boxes ?? d.data?.boosterboxes;
         if (Array.isArray(rawBoxes)) {
           const RNAME: Record<string, number> = { COMMON: 0, RARE: 1, EPIC: 2, LEGENDARY: 3, MYTHIC: 4 };
