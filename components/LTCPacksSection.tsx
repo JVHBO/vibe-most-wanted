@@ -329,10 +329,10 @@ function OpenModal({ address, onClose, onRevealed }: {
                   {Math.ceil(unopened.length / PAGE_SIZE) > 1 && (
                     <div className="flex items-center gap-1">
                       <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}
-                        className="w-6 h-6 rounded bg-white/10 text-white/60 disabled:opacity-30 text-sm flex items-center justify-center">‹</button>
-                      <span className="text-xs text-vintage-ice/40">{page + 1}/{Math.ceil(unopened.length / PAGE_SIZE)}</span>
+                        className="w-7 h-7 rounded-lg bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold disabled:opacity-30 text-base font-bold flex items-center justify-center active:scale-90 transition-all">‹</button>
+                      <span className="text-xs text-vintage-gold font-bold px-1">{page + 1}/{Math.ceil(unopened.length / PAGE_SIZE)}</span>
                       <button onClick={() => setPage(p => Math.min(Math.ceil(unopened.length / PAGE_SIZE) - 1, p + 1))} disabled={page >= Math.ceil(unopened.length / PAGE_SIZE) - 1}
-                        className="w-6 h-6 rounded bg-white/10 text-white/60 disabled:opacity-30 text-sm flex items-center justify-center">›</button>
+                        className="w-7 h-7 rounded-lg bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold disabled:opacity-30 text-base font-bold flex items-center justify-center active:scale-90 transition-all">›</button>
                     </div>
                   )}
                 </div>
@@ -432,101 +432,96 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
     shareToFarcaster(text, shareUrl);
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: "#0D0D0D" }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-5 pb-3 border-b border-white/8">
-        <div>
-          <h3 className="text-lg font-display font-bold text-vintage-gold leading-tight">Cards Revealed!</h3>
-          {!allFlipped && <p className="text-white/30 text-xs mt-0.5">Tap to reveal</p>}
-        </div>
-        <button onClick={onClose}
-          className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/50 hover:bg-white/20 text-lg leading-none active:scale-90 transition-all">
-          ×
-        </button>
-      </div>
+  // Card size: bigger when single card, smaller for multiple
+  const cardW = cards.length === 1 ? 160 : 120;
+  const cardH = Math.round(cardW * 1.4);
 
-      {/* Cards */}
-      <div className="flex-1 overflow-y-auto flex flex-wrap gap-4 justify-center items-center content-center p-6">
-        {cards.map((card, i) => {
-          const m = meta[card.tokenId];
-          const foilType: 'Prize' | 'Standard' | null = m?.foil === "Prize" ? "Prize" : (m?.foil && m.foil !== "None") ? "Standard" : null;
-          const isFlipped = flipped.has(i);
-          return (
-            <div key={i} onClick={() => flip(i)} className="cursor-pointer select-none" style={{ perspective: 800 }}>
-              <div style={{
-                transition: "transform 0.55s cubic-bezier(0.4,0,0.2,1)",
-                transformStyle: "preserve-3d",
-                transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
-                width: 110, height: 154, position: "relative",
-              }}>
-                {/* Front — pack */}
-                <div style={{ backfaceVisibility: "hidden", position: "absolute", inset: 0 }}
-                  className="rounded-2xl bg-[#1A1A1A] border border-vintage-gold/20 flex flex-col items-center justify-center gap-2 shadow-xl">
-                  <img src={PACK_IMAGE} alt="pack" className="w-16 h-16 object-contain" />
-                  <span className="text-[10px] text-white/30 font-mono">#{card.tokenId}</span>
-                </div>
-                {/* Back — card */}
-                <div style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", position: "absolute", inset: 0 }}
-                  className={`rounded-2xl border-2 overflow-hidden shadow-xl ${RARITY_BG[card.rarity] ?? RARITY_BG[0]}`}>
-                  {m?.image
-                    ? <FoilCardEffect foilType={foilType} className="w-full h-full">
-                        <img src={m.image} alt="card" className="w-full h-full object-cover" />
-                      </FoilCardEffect>
-                    : <div className="w-full h-full flex flex-col items-center justify-center gap-1 p-2">
-                        <span className={`text-sm font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
-                        <span className="text-[10px] text-white/40">#{card.tokenId}</span>
-                      </div>
-                  }
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent pt-4 pb-1.5 px-1.5 text-center">
-                    <span className={`text-[10px] font-black uppercase tracking-wider ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
-                    {m?.name && <span className="block text-[9px] text-white/60 capitalize mt-0.5">{m.name}</span>}
-                    {foilType && <span className="block text-[9px] text-yellow-300 font-bold mt-0.5">✨ {foilType === "Prize" ? "PRIZE FOIL" : "FOIL"}</span>}
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center" style={{ background: "rgba(0,0,0,0.92)" }}>
+      <div className="w-full max-w-sm bg-[#111] rounded-t-3xl border-t border-x border-vintage-gold/30 flex flex-col"
+        style={{ maxHeight: "88vh" }}>
+
+        {/* Handle + header */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-3">
+          <div>
+            <h3 className="text-base font-display font-bold text-vintage-gold">Cards Revealed! 🎴</h3>
+            {!allFlipped && <p className="text-white/30 text-xs">Tap to flip</p>}
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-full bg-[#CC2222] flex items-center justify-center text-white font-black text-lg leading-none active:scale-90 transition-all">×</button>
+        </div>
+
+        {/* Cards area */}
+        <div className="flex-1 overflow-y-auto flex flex-wrap gap-3 justify-center items-center content-center px-4 py-3 min-h-0">
+          {cards.map((card, i) => {
+            const m = meta[card.tokenId];
+            const foilType: 'Prize' | 'Standard' | null = m?.foil === "Prize" ? "Prize" : (m?.foil && m.foil !== "None") ? "Standard" : null;
+            const isFlipped = flipped.has(i);
+            return (
+              <div key={i} onClick={() => flip(i)} className="cursor-pointer select-none flex-shrink-0" style={{ perspective: 800 }}>
+                <div style={{
+                  transition: "transform 0.55s cubic-bezier(0.4,0,0.2,1)",
+                  transformStyle: "preserve-3d",
+                  transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                  width: cardW, height: cardH, position: "relative",
+                }}>
+                  {/* Front — pack */}
+                  <div style={{ backfaceVisibility: "hidden", position: "absolute", inset: 0 }}
+                    className="rounded-2xl bg-[#1A1A1A] border border-vintage-gold/20 flex flex-col items-center justify-center gap-2 shadow-xl">
+                    <img src={PACK_IMAGE} alt="pack" className="w-3/4 h-3/4 object-contain" />
+                    <span className="text-[10px] text-white/30 font-mono">#{card.tokenId}</span>
+                  </div>
+                  {/* Back — card */}
+                  <div style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)", position: "absolute", inset: 0 }}
+                    className={`rounded-2xl border-2 overflow-hidden shadow-xl ${RARITY_BG[card.rarity] ?? RARITY_BG[0]}`}>
+                    {m?.image
+                      ? <FoilCardEffect foilType={foilType} className="w-full h-full">
+                          <img src={m.image} alt="card" className="w-full h-full object-cover"
+                            onError={(e) => { if (m.cdnImage) (e.target as HTMLImageElement).src = m.cdnImage; }} />
+                        </FoilCardEffect>
+                      : <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-2">
+                          <span className={`text-base font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
+                          <span className="text-[10px] text-white/30">#{card.tokenId}</span>
+                        </div>
+                    }
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent pt-6 pb-1.5 px-1.5 text-center">
+                      <span className={`text-[10px] font-black uppercase tracking-wider ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
+                      {m?.name && <span className="block text-[9px] text-white/60 capitalize mt-0.5">{m.name}</span>}
+                      {foilType && <span className="block text-[8px] text-yellow-300 font-bold mt-0.5">✨ {foilType === "Prize" ? "PRIZE FOIL" : "FOIL"}</span>}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* Bottom bar */}
-      <div className="px-4 pb-6 pt-3 border-t border-white/8" style={{ background: "#111" }}>
-        {!allFlipped && (
-          <button onClick={flipAll}
-            className="w-full mb-3 py-2.5 rounded-xl border border-vintage-gold/30 bg-vintage-gold/10 text-vintage-gold text-sm font-bold active:scale-95 transition-all">
-            Reveal All
-          </button>
-        )}
-        <div className="grid grid-cols-3 gap-2">
-          {/* OpenSea */}
-          <a href={`https://opensea.io/assets/base/${VMW_DROP}/${cards[0].tokenId}`}
-            target="_blank" rel="noopener noreferrer"
-            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-[#2081E2] text-white text-xs font-bold active:scale-95 transition-all">
-            <svg width="20" height="20" viewBox="0 0 90 90" fill="none">
-              <circle cx="45" cy="45" r="45" fill="white" fillOpacity="0.15"/>
-              <path d="M22.3 46.8l.2-.3 12.4-19.5c.2-.3.6-.2.7.1 2.1 4.7 3.9 10.5 3 14.1-.4 1.5-1.4 3.6-2.5 5.5-.1.3-.3.5-.4.8-.1.1-.2.2-.4.2H22.7c-.3 0-.5-.3-.4-.6v-.3zM74.5 49.6v.7c0 .2-.1.3-.3.4-.8.3-3.6 1.6-4.7 3.2-2.9 4.1-5.2 9.9-10.2 9.9H37.2c-7.5 0-13.6-6.1-13.6-13.7v-.2c0-.2.2-.4.4-.4h14.5c.3 0 .5.3.4.5-.1.7-.1 1.4 0 2.1.3 2.9 2.7 5.1 5.6 5.1h8.8v-5H44.7c-.3 0-.5-.3-.3-.6 0-.1.1-.1.1-.2 1.1-1.5 2.6-3.8 3-6.3.2-1.3.1-2.6-.1-3.8-.1-.5-.1-.9-.3-1.4v-.3c0-.1.1-.1.1-.1.7-.1 1.5.2 2.2.4.2.1.4.3.5.3.3.2.6.3.8.5.7.6 1.3 1.3 1.7 2.2.3.5.5 1.1.6 1.7.1.2.1.5.1.7 0 .4 0 .8-.1 1.2-.2.7-.5 1.3-.9 1.9h5.8c.2 0 .4.2.4.4v.1c0 .3-.3.6-.5.6z" fill="white"/>
-            </svg>
-            OpenSea
-          </a>
-          {/* Farcaster share */}
-          <button onClick={doShare}
-            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-[#7C3AED] text-white text-xs font-bold active:scale-95 transition-all">
-            <svg width="20" height="20" viewBox="0 0 1000 1000" fill="none">
-              <rect width="1000" height="1000" rx="200" fill="white" fillOpacity="0.15"/>
-              <path d="M257.778 155.556H742.222V844.444H657.778V544.444H342.222V844.444H257.778V155.556Z" fill="white"/>
-              <path d="M342.222 544.444L257.778 844.444H742.222L657.778 544.444H342.222Z" fill="white"/>
-            </svg>
-            Share
-          </button>
-          {/* Done */}
-          <button onClick={onClose}
-            className="flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl bg-vintage-gold text-black text-xs font-black active:scale-95 transition-all">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            Done
-          </button>
+        {/* Actions */}
+        <div className="px-4 pb-6 pt-3 border-t border-white/10 space-y-2">
+          {!allFlipped && (
+            <button onClick={flipAll}
+              className="w-full py-2.5 rounded-xl border border-vintage-gold/40 bg-vintage-gold/10 text-vintage-gold text-sm font-bold active:scale-95 transition-all">
+              Reveal All
+            </button>
+          )}
+          <div className="grid grid-cols-3 gap-2">
+            <a href={`https://opensea.io/assets/base/${VMW_DROP}/${cards[0].tokenId}`}
+              target="_blank" rel="noopener noreferrer"
+              className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl bg-[#2081E2] text-white text-xs font-bold active:scale-95 transition-all">
+              <svg width="18" height="18" viewBox="0 0 90 90" fill="none"><circle cx="45" cy="45" r="45" fill="white" fillOpacity="0.2"/><path d="M22.3 46.8l.2-.3 12.4-19.5c.2-.3.6-.2.7.1 2.1 4.7 3.9 10.5 3 14.1-.4 1.5-1.4 3.6-2.5 5.5-.1.3-.3.5-.4.8-.1.1-.2.2-.4.2H22.7c-.3 0-.5-.3-.4-.6v-.3zM74.5 49.6v.7c0 .2-.1.3-.3.4-.8.3-3.6 1.6-4.7 3.2-2.9 4.1-5.2 9.9-10.2 9.9H37.2c-7.5 0-13.6-6.1-13.6-13.7v-.2c0-.2.2-.4.4-.4h14.5c.3 0 .5.3.4.5-.1.7-.1 1.4 0 2.1.3 2.9 2.7 5.1 5.6 5.1h8.8v-5H44.7c-.3 0-.5-.3-.3-.6 0-.1.1-.1.1-.2 1.1-1.5 2.6-3.8 3-6.3.2-1.3.1-2.6-.1-3.8-.1-.5-.1-.9-.3-1.4v-.3c0-.1.1-.1.1-.1.7-.1 1.5.2 2.2.4.2.1.4.3.5.3.3.2.6.3.8.5.7.6 1.3 1.3 1.7 2.2.3.5.5 1.1.6 1.7.1.2.1.5.1.7 0 .4 0 .8-.1 1.2-.2.7-.5 1.3-.9 1.9h5.8c.2 0 .4.2.4.4v.1c0 .3-.3.6-.5.6z" fill="white"/></svg>
+              OpenSea
+            </a>
+            <button onClick={doShare}
+              className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl bg-[#7C3AED] text-white text-xs font-bold active:scale-95 transition-all">
+              <svg width="18" height="18" viewBox="0 0 1000 1000" fill="none"><path d="M257.778 155.556H742.222V844.444H657.778V544.444H342.222V844.444H257.778V155.556Z" fill="white"/><path d="M342.222 544.444L257.778 844.444H742.222L657.778 544.444H342.222Z" fill="white"/></svg>
+              Share
+            </button>
+            <button onClick={onClose}
+              className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl bg-vintage-gold text-black text-xs font-black active:scale-95 transition-all">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Done
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -611,10 +606,10 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
               {Math.ceil(opened.length / BURN_PAGE_SIZE) > 1 && (
                 <div className="flex items-center gap-1">
                   <button onClick={() => setBurnPage(p => Math.max(0, p - 1))} disabled={burnPage === 0}
-                    className="w-6 h-6 rounded bg-white/10 text-white/60 disabled:opacity-30 text-sm flex items-center justify-center">‹</button>
+                    className="w-7 h-7 rounded-lg bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold disabled:opacity-30 text-base font-bold flex items-center justify-center active:scale-90 transition-all">‹</button>
                   <span className="text-xs text-vintage-ice/40">{burnPage + 1}/{Math.ceil(opened.length / BURN_PAGE_SIZE)}</span>
                   <button onClick={() => setBurnPage(p => Math.min(Math.ceil(opened.length / BURN_PAGE_SIZE) - 1, p + 1))} disabled={burnPage >= Math.ceil(opened.length / BURN_PAGE_SIZE) - 1}
-                    className="w-6 h-6 rounded bg-white/10 text-white/60 disabled:opacity-30 text-sm flex items-center justify-center">›</button>
+                    className="w-7 h-7 rounded-lg bg-vintage-gold/20 border border-vintage-gold/50 text-vintage-gold disabled:opacity-30 text-base font-bold flex items-center justify-center active:scale-90 transition-all">›</button>
                 </div>
               )}
             </div>
