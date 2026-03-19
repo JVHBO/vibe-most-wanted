@@ -99,6 +99,20 @@ export const IPFS_ASSETS: Record<string, string> = {
   "/splash.png": "https://ipfs.filebase.io/ipfs/QmZ1cfYCW9mDzD4V9iMhVoUQGFd1QwNLfMmEEBQKwEfFSb",
   "/og-image.png": "https://ipfs.filebase.io/ipfs/QmU27iyqYXLYD3P7xKZqVNdqLKq8mFvZKq8LNdqLKqYXLY",
 
+  // Victory/Loss/Tie images
+  "/victory-1.jpg": "https://ipfs.filebase.io/ipfs/QmRJqgjTShNeUWF9B8vb6G5bJu3z6JE9VYSHVPshvTHWuy",
+  "/victory-2.jpg": "https://ipfs.filebase.io/ipfs/QmemgMVC1LN7koqjc7Jmwn69TwgRHCgsQouk4pRhU6DVT4",
+  "/victory-3.jpg": "https://ipfs.filebase.io/ipfs/QmTxpeJQZDpkqqtASe3ofMZjymNVgKfn5crbrd1qRXd9Bs",
+  "/bom.jpg": "https://ipfs.filebase.io/ipfs/QmWrSs9bS9P96aY6gY8K2NbYjjdXhi2PguBqEwGqwefhMu",
+
+  // Victory/Loss/Tie audio
+  "/win-sound.mp3": "https://ipfs.filebase.io/ipfs/QmVH5sAsh8qMYP4xizWqt6WZ6aUQXXbp7zoEim9ndqEws1",
+  "/marvin-victory.mp3": "https://ipfs.filebase.io/ipfs/Qmet8Z6mUm6EFeFgDAdG4DCpMrfUGwNdA9uahEbsT2fizD",
+  "/victory-sound.mp3": "https://ipfs.filebase.io/ipfs/QmYvQQgEMG2Fn9M6ZUbNQvZ6t3kYkEDmi7BPztVCZiXmbf",
+  "/victory-3.mp3": "https://ipfs.filebase.io/ipfs/QmQD6BeG21Nzer6VWGk2xYqjTrW5pytXNtqPamWjEVDJAv",
+  "/lose-sound.mp3": "https://ipfs.filebase.io/ipfs/QmbjgiL2hz5XMbEVcjwtbcSrfe4Mm6pzFRJNon3XgTNAud",
+  "/tie-music.mp3": "https://ipfs.filebase.io/ipfs/QmZ8HWt6S273JqJcfduowRWdgPch7Y4dDgofP1UwbyCdNe",
+
   // Music files (64 MB total - HIGH PRIORITY for bandwidth savings)
   "/jazz-background.mp3": "https://ipfs.filebase.io/ipfs/QmcdrajJ9vUk8kivw35ZVfEvn2nLh3moZQbhsUDHntPYaQ",
   "/music/default.mp3": "https://ipfs.filebase.io/ipfs/QmcdrajJ9vUk8kivw35ZVfEvn2nLh3moZQbhsUDHntPYaQ",
