@@ -435,23 +435,21 @@ export function AttackCardSelectionModal({
       onClick={handleCancel}
     >
       <div
-        className="bg-vintage-charcoal rounded-2xl border-4 border-red-600 max-w-6xl w-full p-4 md:p-6 lg:p-8 shadow-lg shadow-red-600/50 h-[90vh] flex flex-col"
+        className="bg-vintage-charcoal rounded-2xl border-4 border-red-600 max-w-6xl w-full p-2 md:p-4 lg:p-6 shadow-lg shadow-red-600/50 h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <h2 className="text-2xl md:text-3xl font-display font-bold text-center mb-2 text-red-500 flex-shrink-0">
-          † ATTACK {targetPlayer.username.toUpperCase()}
-        </h2>
-
-        {/* Counter */}
-        <div className="text-center mb-2 flex-shrink-0">
-          <p className="text-vintage-burnt-gold text-sm sm:text-base font-modern">
-            Select {HAND_SIZE} cards ({attackSelectedCards.length}/{HAND_SIZE})
-          </p>
+        {/* Header + Counter inline */}
+        <div className="flex items-center justify-center gap-2 mb-1 flex-shrink-0">
+          <h2 className="text-lg md:text-2xl font-display font-bold text-red-500">
+            † ATTACK {targetPlayer.username.toUpperCase()}
+          </h2>
+          <span className="text-vintage-burnt-gold text-xs font-modern">
+            ({attackSelectedCards.length}/{HAND_SIZE})
+          </span>
         </div>
 
         {/* Controls Row: Collection Filter + Sort Button */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-4 flex-shrink-0">
+        <div className="flex flex-wrap items-center justify-center gap-2 mb-2 flex-shrink-0">
           <select
             value={selectedCollections.length === 0 ? 'all' : selectedCollections[0]}
             onChange={(e) => {
@@ -489,12 +487,12 @@ export function AttackCardSelectionModal({
         </div>
 
         {/* Selected Attack Deck Display */}
-        <div className="mb-2 bg-red-900/40 border border-red-600/50 rounded-lg p-2 flex-shrink-0">
-          <div className="flex flex-wrap gap-1 justify-center">
+        <div className="mb-1 bg-red-900/40 border border-red-600/50 rounded-lg p-1.5 flex-shrink-0">
+          <div className="flex gap-1 justify-center items-center">
             {Array.from({ length: HAND_SIZE }).map((_, i) => (
               <div
                 key={i}
-                className="w-8 h-12 sm:w-10 sm:h-14 border border-dashed border-red-600/50 rounded flex items-center justify-center overflow-hidden relative"
+                className="w-7 h-10 sm:w-8 sm:h-12 border border-dashed border-red-600/50 rounded flex items-center justify-center overflow-hidden relative"
               >
                 {attackSelectedCards[i] ? (
                   <>
@@ -513,11 +511,8 @@ export function AttackCardSelectionModal({
               </div>
             ))}
           </div>
-          <div className="mt-1 text-center">
-            <p className="text-xs text-vintage-burnt-gold">Attack Power</p>
-            <p className="text-lg font-bold text-red-500">
-              {attackSelectedCardsPower.toLocaleString()}
-            </p>
+          <div className="mt-0.5 text-center">
+            <p className="text-xs font-bold text-red-400">⚔ {attackSelectedCardsPower.toLocaleString()}</p>
           </div>
         </div>
 
@@ -527,7 +522,7 @@ export function AttackCardSelectionModal({
             <LoadingSpinner />
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto mb-4">
+          <div className="flex-1 overflow-y-auto mb-2">
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 pb-4">
               {paginatedCards.map((nft) => {
                 const isSelected = attackSelectedCards.find(c => isSameCard(c, nft));
@@ -625,7 +620,7 @@ export function AttackCardSelectionModal({
         )}
 
         {/* Action Buttons */}
-        <div className="space-y-2 flex-shrink-0">
+        <div className="space-y-1 flex-shrink-0">
           <button
             onClick={handleAttack}
             disabled={attackSelectedCards.length !== HAND_SIZE || isAttacking}
