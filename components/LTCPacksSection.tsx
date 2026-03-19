@@ -110,7 +110,7 @@ function useOfferAmounts() {
 }
 
 // ── Buy Card (Slide 2 of carousel) ───────────────────────────────────────────
-export function VMWPackCard({ address }: { address: string | undefined }) {
+export function VMWPackCard({ address, onMintSuccess }: { address: string | undefined; onMintSuccess?: () => void }) {
   const [qty, setQty] = useState(1);
   const [minting, setMinting] = useState(false);
   const { chainId } = useAccount();
@@ -142,6 +142,7 @@ export function VMWPackCard({ address }: { address: string | undefined }) {
         value: priceWei, chainId: base.id,
       });
       toast.success(`Minted ${qty} pack${qty > 1 ? "s" : ""}! ✅`);
+      onMintSuccess?.();
     } catch (e: any) {
       toast.error((e?.shortMessage || e?.message || "Mint failed").slice(0, 80));
     } finally { setMinting(false); }
@@ -578,11 +579,21 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
 }
 
 // ── Action Buttons for VMW slide ──────────────────────────────────────────────
-export function VMWActionButtons({ address }: { address: string | undefined }) {
-  const { unopened, opened } = useOwnedBoxes(address);
+export function VMWActionButtons({ address, autoOpenTrigger }: { address: string | undefined; autoOpenTrigger?: number }) {
+  const { unopened, opened, refresh } = useOwnedBoxes(address);
   const [showOpen, setShowOpen] = useState(false);
   const [showBurn, setShowBurn] = useState(false);
   const [revealedCards, setRevealedCards] = useState<RevealedCard[]>([]);
+
+  // Auto-open after mint: refresh packs then open modal
+  useEffect(() => {
+    if (!autoOpenTrigger) return;
+    setShowOpen(false);
+    // Wait for chain to confirm + API to index
+    const t1 = setTimeout(() => refresh(), 3000);
+    const t2 = setTimeout(() => { refresh(); setShowOpen(true); }, 5000);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [autoOpenTrigger]);
 
   return (
     <>

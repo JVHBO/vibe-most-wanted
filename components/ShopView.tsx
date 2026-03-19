@@ -79,6 +79,7 @@ export function ShopView({ address }: ShopViewProps) {
   const [openQuantities, setOpenQuantities] = useState<Record<string, number>>({});
   const [activeSlide, setActiveSlide] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const [vmwOpenTrigger, setVmwOpenTrigger] = useState(0);
 
   // Handle daily free claim
   const handleClaimDailyFree = async () => {
@@ -155,10 +156,7 @@ export function ShopView({ address }: ShopViewProps) {
 
           <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[50%]"><AutoFitText>{t('shopTitle') as string}</AutoFitText></h1>
 
-          <div className="text-right">
-            <p className="text-[10px] text-vintage-ice/50 uppercase tracking-wider">{(t as (k: string) => string)('shopYourCards')}</p>
-            <p className="text-sm font-bold text-vintage-gold leading-tight">{playerCards?.length || 0}</p>
-          </div>
+          <div className="w-10" />
         </div>
       </div>
 
@@ -293,7 +291,7 @@ export function ShopView({ address }: ShopViewProps) {
               {/* Slide 2: VMW LTC Pack */}
               <div className="snap-start flex-none w-full px-6">
                 <div className="max-w-sm mx-auto h-full">
-                  <VMWPackCard address={address} />
+                  <VMWPackCard address={address} onMintSuccess={() => setVmwOpenTrigger(t => t + 1)} />
                 </div>
               </div>
 
@@ -373,7 +371,7 @@ export function ShopView({ address }: ShopViewProps) {
               </div>
             </>
           ) : (
-            <VMWActionButtons address={address} />
+            <VMWActionButtons address={address} autoOpenTrigger={vmwOpenTrigger} />
           )}
 
         </div>
