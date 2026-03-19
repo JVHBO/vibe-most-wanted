@@ -80,11 +80,14 @@ export function ShopView({ address }: ShopViewProps) {
   const [activeSlide, setActiveSlide] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [vmwMint, setVmwMint] = useState<{ trigger: number; qty: number }>({ trigger: 0, qty: 1 });
+  const [vmwModalOpen, setVmwModalOpen] = useState(false);
   const userScrolledRef = useRef(false);
 
-  // Auto-scroll carousel slowly with long cooldown
+  // Auto-scroll carousel slowly — pauses when any modal is open or user interacts
+  const anyModalOpen = showPacksModal || revealedCards.length > 0 || vmwModalOpen;
   useEffect(() => {
-    const COOLDOWN = 6000; // 6s between auto-scrolls
+    if (anyModalOpen) return; // freeze while modal is open
+    const COOLDOWN = 6000;
     let lastUserScroll = 0;
     const interval = setInterval(() => {
       if (Date.now() - lastUserScroll < COOLDOWN) return;
@@ -95,17 +98,16 @@ export function ShopView({ address }: ShopViewProps) {
       setActiveSlide(nextSlide);
     }, COOLDOWN);
 
-    // Track user interaction to pause auto-scroll
     const onUserScroll = () => { lastUserScroll = Date.now(); };
-    carouselRef.current?.addEventListener('touchstart', onUserScroll, { passive: true });
-    carouselRef.current?.addEventListener('mousedown', onUserScroll);
-
+    const el = carouselRef.current;
+    el?.addEventListener('touchstart', onUserScroll, { passive: true });
+    el?.addEventListener('mousedown', onUserScroll);
     return () => {
       clearInterval(interval);
-      carouselRef.current?.removeEventListener('touchstart', onUserScroll);
-      carouselRef.current?.removeEventListener('mousedown', onUserScroll);
+      el?.removeEventListener('touchstart', onUserScroll);
+      el?.removeEventListener('mousedown', onUserScroll);
     };
-  }, [activeSlide]);
+  }, [activeSlide, anyModalOpen]);
 
   // Handle daily free claim
   const handleClaimDailyFree = async () => {
@@ -397,7 +399,7 @@ export function ShopView({ address }: ShopViewProps) {
               </div>
             </>
           ) : (
-            <VMWActionButtons address={address} autoOpenTrigger={vmwMint.trigger} mintQty={vmwMint.qty} />
+            <VMWActionButtons address={address} autoOpenTrigger={vmwMint.trigger} mintQty={vmwMint.qty} onModalStateChange={setVmwModalOpen} />
           )}
 
         </div>

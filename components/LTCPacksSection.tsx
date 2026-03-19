@@ -762,7 +762,7 @@ function JustBoughtModal({ packs, loading, onOpenNow, onLater }: {
 }
 
 // ── Action Buttons for VMW slide ──────────────────────────────────────────────
-export function VMWActionButtons({ address, autoOpenTrigger, mintQty = 1 }: { address: string | undefined; autoOpenTrigger?: number; mintQty?: number }) {
+export function VMWActionButtons({ address, autoOpenTrigger, mintQty = 1, onModalStateChange }: { address: string | undefined; autoOpenTrigger?: number; mintQty?: number; onModalStateChange?: (open: boolean) => void }) {
   const { boxes, unopened, opened, loading, refresh } = useOwnedBoxes(address);
   const [showOpen, setShowOpen] = useState(false);
   const [showBurn, setShowBurn] = useState(false);
@@ -770,6 +770,12 @@ export function VMWActionButtons({ address, autoOpenTrigger, mintQty = 1 }: { ad
   const [justBought, setJustBought] = useState<{ packs: Box[]; loading: boolean } | null>(null);
   const prevUnopened = useRef<Set<string>>(new Set());
   const [openPreSelected, setOpenPreSelected] = useState<string[] | null>(null);
+
+  // Notify parent when any modal opens/closes
+  useEffect(() => {
+    const isOpen = showOpen || showBurn || revealedCards.length > 0 || !!justBought;
+    onModalStateChange?.(isOpen);
+  }, [showOpen, showBurn, revealedCards.length, justBought]);
 
   // After mint: snapshot current packs, start polling for new ones
   useEffect(() => {
