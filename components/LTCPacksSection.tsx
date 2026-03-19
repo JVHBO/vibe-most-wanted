@@ -395,23 +395,39 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
       if (localByTokenId) {
         setMeta(prev => ({ ...prev, [card.tokenId]: { image: localByTokenId } }));
       }
-      // 2. Fetch metadata for name, foil, and better image resolution
-      fetch(`https://build.wield.xyz/vibe/boosterbox/metadata/vibe-most-wanted/${card.tokenId}`)
-        .then(r => r.json())
-        .then(d => {
-          const attrs: any[] = d.attributes || [];
-          const get = (t: string) => attrs.find((a: any) => a.trait_type === t)?.value;
-          const charName = get("name") || get("Name");
-          const foil = get("Foil");
-          const localByName = charName ? getVbmsBaccaratImageUrl(charName) : null;
-          setMeta(prev => ({ ...prev, [card.tokenId]: {
-            image: localByName || localByTokenId || d.image,
-            cdnImage: d.image,
-            name: charName,
-            foil,
-          }}));
-        })
-        .catch(() => {});
+
+      // 2. Poll Wield API until the character name is indexed (up to ~3 min after on-chain reveal)
+      let attempts = 0;
+      const MAX_ATTEMPTS = 12; // 12 × 15s = 3 min
+      const POLL_INTERVAL = 15_000;
+
+      const fetchMeta = () => {
+        fetch(`https://build.wield.xyz/vibe/boosterbox/metadata/vibe-most-wanted/${card.tokenId}`)
+          .then(r => r.json())
+          .then(d => {
+            const attrs: any[] = d.attributes || [];
+            const get = (t: string) => attrs.find((a: any) => a.trait_type === t)?.value;
+            const charName = get("name") || get("Name") || get("Character");
+            const foil = get("Foil");
+            const localByName = charName ? getVbmsBaccaratImageUrl(charName) : null;
+            const resolvedImg = localByName || localByTokenId || null;
+            // Only update if we have a character name — d.image is the pack artwork, never use as fallback
+            if (charName || resolvedImg) {
+              setMeta(prev => ({ ...prev, [card.tokenId]: {
+                image: resolvedImg ?? undefined,
+                cdnImage: d.image,
+                name: charName,
+                foil,
+              }}));
+            } else if (++attempts < MAX_ATTEMPTS) {
+              // Not indexed yet — retry
+              setTimeout(fetchMeta, POLL_INTERVAL);
+            }
+          })
+          .catch(() => { if (++attempts < MAX_ATTEMPTS) setTimeout(fetchMeta, POLL_INTERVAL); });
+      };
+
+      fetchMeta();
     });
   }, [cards]);
 
@@ -518,8 +534,9 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
                             onError={(e) => { if (m.cdnImage) (e.target as HTMLImageElement).src = m.cdnImage; }} />
                         </FoilCardEffect>
                       : <div className="w-full h-full flex flex-col items-center justify-center gap-2 p-2">
-                          <span className={`text-base font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
-                          <span className="text-[10px] text-white/30">#{card.tokenId}</span>
+                          <div className="w-6 h-6 rounded-full border-2 border-current border-t-transparent animate-spin opacity-60" />
+                          <span className={`text-sm font-black ${RARITY_COLORS[card.rarity] ?? RARITY_COLORS[0]}`}>{RARITY_NAMES[card.rarity] ?? "Common"}</span>
+                          <span className="text-[9px] text-white/30 text-center">Indexing…</span>
                         </div>
                     }
                     <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 to-transparent pt-6 pb-1.5 px-1.5 text-center">
