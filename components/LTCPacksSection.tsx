@@ -401,6 +401,9 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
       const MAX_ATTEMPTS = 12; // 12 × 15s = 3 min
       const POLL_INTERVAL = 15_000;
 
+      // Pack cover URL — never show this in reveal
+      const PACK_COVER_FRAGMENT = "54f04f3d-8d29-420e-aaeb-ba6b17e45e00";
+
       const fetchMeta = () => {
         fetch(`https://build.wield.xyz/vibe/boosterbox/metadata/vibe-most-wanted/${card.tokenId}`)
           .then(r => r.json())
@@ -411,14 +414,18 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
             const foil = get("Foil");
             const localByName = charName ? getVbmsBaccaratImageUrl(charName) : null;
             const resolvedImg = localByName || localByTokenId || null;
-            // Only update if we have a character name — d.image is the pack artwork, never use as fallback
-            if (charName || resolvedImg) {
+            // Safe CDN image: only use d.image if it's NOT the pack cover art
+            const safeCdn = d.image?.includes(PACK_COVER_FRAGMENT) ? undefined : d.image;
+            if (charName) {
+              // Card is indexed — show what we have (local or safe CDN), spinner if nothing yet
               setMeta(prev => ({ ...prev, [card.tokenId]: {
-                image: resolvedImg ?? undefined,
-                cdnImage: d.image,
+                image: resolvedImg ?? safeCdn ?? undefined,
+                cdnImage: safeCdn, // safe fallback for onError — never the pack cover
                 name: charName,
                 foil,
               }}));
+            } else if (resolvedImg) {
+              setMeta(prev => ({ ...prev, [card.tokenId]: { image: resolvedImg } }));
             } else if (++attempts < MAX_ATTEMPTS) {
               // Not indexed yet — retry
               setTimeout(fetchMeta, POLL_INTERVAL);
