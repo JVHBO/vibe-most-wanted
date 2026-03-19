@@ -3,6 +3,7 @@ import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { createAuditLog } from "./coinAudit";
+import { isBlacklisted } from "./blacklist";
 import { ethers } from "ethers";
 
 // Generate secure nonce for blockchain transactions
