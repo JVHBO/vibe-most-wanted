@@ -800,10 +800,10 @@ export function VMWActionButtons({ address, autoOpenTrigger, mintQty = 1, onModa
 
   return (
     <>
-      <div className="max-w-sm mx-auto grid grid-cols-2 gap-3 mb-4">
+      <div className="max-w-sm mx-auto grid grid-cols-2 gap-2 mb-2">
         {/* Open Packs */}
         <button onClick={() => setShowOpen(true)} disabled={!address}
-          className="shop-open-btn py-3 px-4 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#FFD400] hover:bg-[#ECC200] text-black active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50">
+          className="shop-open-btn py-2 px-3 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#FFD400] hover:bg-[#ECC200] text-black active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50">
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20 12v10H4V12" /><path d="M2 7h20v5H2z" /><path d="M12 22V7" />
             <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
@@ -813,7 +813,7 @@ export function VMWActionButtons({ address, autoOpenTrigger, mintQty = 1, onModa
 
         {/* Burn */}
         <button onClick={() => setShowBurn(true)} disabled={!address}
-          className="shop-burn-btn py-3 px-4 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#CC2222] hover:bg-[#AA1111] text-white active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50">
+          className="shop-burn-btn py-2 px-3 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#CC2222] hover:bg-[#AA1111] text-white active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50">
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
             <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -824,8 +824,8 @@ export function VMWActionButtons({ address, autoOpenTrigger, mintQty = 1, onModa
       </div>
 
       {/* Burn values */}
-      <div className="max-w-sm mx-auto">
-        <p className="text-xs text-vintage-ice/40 text-center mb-2">Burn Values (VBMS)</p>
+      <div className="max-w-sm mx-auto mt-1">
+        <p className="text-xs text-vintage-ice/40 text-center mb-1">Burn Values (VBMS)</p>
         <div className="grid grid-cols-5 gap-1 text-xs text-center">
           <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
             <span className="text-vintage-ice/50 block">Common</span>
