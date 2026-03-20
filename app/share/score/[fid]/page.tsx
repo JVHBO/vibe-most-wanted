@@ -85,7 +85,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
             type: 'launch_frame',
             name: 'VibeFID',
             url: 'https://vibemostwanted.xyz/fid',
-            splashImageUrl: 'https://vibemostwanted.xyz/fid-assets/images/splash-200.png',
+            splashImageUrl: 'https://ipfs.filebase.io/ipfs/QmdDjLUMbyR8bggv3fJXT85fXAEsitNnrZqry3imZAj63z',
             splashBackgroundColor: '#1a1a1a',
           },
         },

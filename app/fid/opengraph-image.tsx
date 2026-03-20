@@ -12,11 +12,10 @@ export const contentType = 'image/png';
 export const revalidate = 604800;
 
 export default async function Image() {
-  // Fetch VibeFID card images from public URLs
-  const baseUrl = 'https://vibemostwanted.xyz';
-  const cardImage1 = fetch(`${baseUrl}/fid-assets/images/raid-bosses/vibefid/rare.png`).then(res => res.arrayBuffer());
-  const cardImage2 = fetch(`${baseUrl}/fid-assets/images/raid-bosses/vibefid/epic.png`).then(res => res.arrayBuffer());
-  const cardImage3 = fetch(`${baseUrl}/fid-assets/images/raid-bosses/vibefid/legendary.png`).then(res => res.arrayBuffer());
+  // Fetch VibeFID card images from IPFS (avoid self-referential Vercel requests)
+  const cardImage1 = fetch('https://ipfs.filebase.io/ipfs/QmUPRMEdkaJbLqWgXjL7Vh4FsqJ8kEd3xTvJpYZHQ8UeFn').then(res => res.arrayBuffer());
+  const cardImage2 = fetch('https://ipfs.filebase.io/ipfs/QmUdMMGFr65vKKAo9KYbXxq7DgWqQx5TN3JbPHQbM8N8YF').then(res => res.arrayBuffer());
+  const cardImage3 = fetch('https://ipfs.filebase.io/ipfs/QmZuPVRQ25UDCkLqKfBmQJZWEjL2LKdQjC3kPCNqYNqvq5').then(res => res.arrayBuffer());
 
   const [card1, card2, card3] = await Promise.all([cardImage1, cardImage2, cardImage3]);
 
