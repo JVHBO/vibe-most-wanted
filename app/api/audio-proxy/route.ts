@@ -24,16 +24,24 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), 8000);
     const res = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Referer': 'https://www.myinstants.com/',
       },
+      signal: ac.signal,
     });
+    clearTimeout(t);
 
     if (!res.ok) return new NextResponse('Fetch failed', { status: res.status });
 
+    const contentLength = Number(res.headers.get('Content-Length') || 0);
+    if (contentLength > 5 * 1024 * 1024) return new NextResponse('File too large', { status: 413 });
+
     const buffer = await res.arrayBuffer();
+    if (buffer.byteLength > 5 * 1024 * 1024) return new NextResponse('File too large', { status: 413 });
     return new NextResponse(buffer, {
       status: 200,
       headers: {

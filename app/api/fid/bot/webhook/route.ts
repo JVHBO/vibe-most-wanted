@@ -90,10 +90,13 @@ export async function POST(request: NextRequest) {
     console.log(`Bot triggered by @${authorUsername} for @${targetUsername} (FID: ${targetFid})`);
 
     // Fetch all data in parallel for speed
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 5000);
     const [userResponse, rankResponse, openRankResponse] = await Promise.all([
       // Neynar score
       fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${targetFid}`, {
-        headers: { api_key: NEYNAR_API_KEY }
+        headers: { api_key: NEYNAR_API_KEY },
+        signal: ac.signal,
       }),
       // VibeFID rank from Convex
       fetch("https://scintillating-mandrill-101.convex.cloud/api/query", {
@@ -104,14 +107,17 @@ export async function POST(request: NextRequest) {
           args: { fid: targetFid },
           format: 'json',
         }),
+        signal: ac.signal,
       }).catch(() => null),
       // OpenRank global rank
       fetch('https://graph.cast.k3l.io/scores/global/engagement/fids', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify([targetFid]),
+        signal: ac.signal,
       }).catch(() => null),
     ]);
+    clearTimeout(timeout);
 
     let score = 0;
     let rarity = 'Common';
