@@ -45,7 +45,7 @@ export function getFilebaseClient(): S3Client | null {
  * Get default bucket name
  */
 export function getFilebaseBucket(): string {
-  return process.env.FILEBASE_BUCKET_NAME || 'vibefid';
+  return process.env.FILEBASE_BUCKET_NAME || 'test33';
 }
 
 /**
