@@ -504,7 +504,9 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json(responseData);
+    return NextResponse.json(responseData, {
+      headers: { 'Cache-Control': 'private, max-age=300, stale-while-revalidate=600' },
+    });
   } catch (error: any) {
     console.error("[profile-nfts] Error:", error);
     return NextResponse.json(

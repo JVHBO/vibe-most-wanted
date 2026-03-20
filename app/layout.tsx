@@ -20,29 +20,34 @@ import GlobalBanGuard from "@/components/GlobalBanGuard";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const cinzel = Cinzel_Decorative({
   variable: "--font-vintage",
   subsets: ["latin"],
   weight: ["400", "700", "900"],
+  display: "swap",
 });
 
 const playfair = Playfair_Display_SC({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "700", "900"],
+  display: "swap",
 });
 
 const rajdhani = Rajdhani({
   variable: "--font-modern",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+  display: "swap",
 });
 
 export const viewport: Viewport = {
