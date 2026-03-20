@@ -1,6 +1,7 @@
 import React from "react";
 import type { PvEGameState } from "@/lib/tcg/types";
 import { stopBgm } from "@/lib/tcg/audio";
+import { getAssetUrl } from "@/lib/ipfs-assets";
 
 const BATTLE_AURA_REWARD = 85;
 
@@ -47,7 +48,7 @@ export function PvEResultView({ pveGameState, showDefeatBait, onPlayAgain, onBac
               muted
               className="w-48 h-48 mx-auto mb-4 rounded-xl object-cover"
             >
-              <source src="/sounds/defeat-bait.mp4" type="video/mp4" />
+              <source src={getAssetUrl("/sounds/defeat-bait.mp4")} type="video/mp4" />
             </video>
           ) : isWinner ? (
             <img

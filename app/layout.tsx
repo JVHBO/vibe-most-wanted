@@ -104,7 +104,7 @@ export const metadata: Metadata = {
           "type": "launch_miniapp",
           "name": "$VBMS",
           "url": "https://vibemostwanted.xyz",
-          "splashImageUrl": "https://vibemostwanted.xyz/splash.gif",
+          "splashImageUrl": "https://ipfs.filebase.io/ipfs/QmQSx1jbKUP74hgkuDPSj9udd6oWuQfWnYbKQ27qhS8zKm",
           "splashBackgroundColor": "#0C0C0C"
         }
       }
@@ -119,7 +119,7 @@ export const metadata: Metadata = {
           "type": "launch_miniapp",
           "name": "$VBMS",
           "url": "https://vibemostwanted.xyz",
-          "splashImageUrl": "https://vibemostwanted.xyz/splash.gif",
+          "splashImageUrl": "https://ipfs.filebase.io/ipfs/QmQSx1jbKUP74hgkuDPSj9udd6oWuQfWnYbKQ27qhS8zKm",
           "splashBackgroundColor": "#0C0C0C"
         }
       }

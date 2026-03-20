@@ -1,5 +1,6 @@
 import React from "react";
 import { stopBgm } from "@/lib/tcg/audio";
+import { getAssetUrl } from "@/lib/ipfs-assets";
 
 interface PvPResultViewProps {
   currentMatch: any;
@@ -76,7 +77,7 @@ export function PvPResultView({ currentMatch, address, showDefeatBait, onBackToL
                 }
               }}
             >
-              <source src="/sounds/defeat-bait.mp4" type="video/mp4" />
+              <source src={getAssetUrl("/sounds/defeat-bait.mp4")} type="video/mp4" />
             </video>
           ) : isWinner ? (
             <img

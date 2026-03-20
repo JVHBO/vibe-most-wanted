@@ -2,6 +2,7 @@
  * TCG Audio System - Sound effects, combo voices, and BGM management
  * Fix Issue #7: All new Audio() instances are tracked in allBgmAudios for proper cleanup
  */
+import { getAssetUrl } from '@/lib/ipfs-assets';
 
 export type SoundType = "card" | "turn" | "ability" | "victory" | "defeat" | "select" | "combo" | "error" | "tick" | "buff" | "debuff" | "destroy" | "steal" | "draw" | "energy" | "shuffle" | "heal" | "shield" | "bomb" | "hit" | "damage";
 export type MemeSound = "mechaArena" | "ggez" | "bruh" | "emotional" | "wow";
@@ -269,7 +270,7 @@ export const playSound = (type: SoundType) => {
     case "victory":
       try {
         stopBgm();
-        const victoryAudio = trackAudio(new Audio("/sounds/victory.mp3"));
+        const victoryAudio = trackAudio(new Audio(getAssetUrl("/sounds/victory.mp3")));
         victoryAudio.volume = 0.6;
         currentBgmAudio = victoryAudio;
         victoryAudio.play().catch(() => {});
@@ -296,7 +297,7 @@ export const playSound = (type: SoundType) => {
     case "defeat":
       try {
         stopBgm();
-        const defeatAudio = trackAudio(new Audio("/sounds/defeat.mp3"));
+        const defeatAudio = trackAudio(new Audio(getAssetUrl("/sounds/defeat.mp3")));
         defeatAudio.volume = 0.6;
         currentBgmAudio = defeatAudio;
         defeatAudio.play().catch(() => {});
@@ -368,7 +369,7 @@ export const playSound = (type: SoundType) => {
     case "hit":
       try {
         // FIX Issue #7: track attack audio for cleanup
-        const attackAudio = trackAudio(new Audio("/sounds/attack.mp3"));
+        const attackAudio = trackAudio(new Audio(getAssetUrl("/sounds/attack.mp3")));
         attackAudio.volume = 0.3;
         attackAudio.play().catch(() => {});
       } catch {
