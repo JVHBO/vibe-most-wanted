@@ -35,7 +35,7 @@ export function PackOpeningAnimation({ cards, packType = 'Basic Pack', onClose }
   }, []);
 
   const playSound = useCallback((src: string) => {
-    const audio = new Audio(src);
+    const audio = new Audio(getAssetUrl(src));
     audio.volume = 0.6;
     audio.play().catch(() => {});
     return audio;

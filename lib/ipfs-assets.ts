@@ -112,6 +112,9 @@ export const IPFS_ASSETS: Record<string, string> = {
   "/sounds/let-him-cook-now.mp3": "https://ipfs.filebase.io/ipfs/QmSTdwK9NAeUiTAmH86wihNGXgnu2F6udx3dyLHgp6jXtx",
   "/sounds/attack.mp3": "https://ipfs.filebase.io/ipfs/QmaWxzSAvnLygnbiA1dufT9iHsDJ1mHFA486BmXzcBMjUF",
   "/sounds/hit.mp3": "https://ipfs.filebase.io/ipfs/QmXyp5N9wqPCoqmQHWR1EUMPXBsriKwHSadQ4HkwZ9nVHM",
+  "/sounds/epic-pull.mp3": "https://ipfs.filebase.io/ipfs/Qmbq7Jb59g3XfgBALDzAhYYZT47rthdUoQYYeG8aMT6tiM",
+  "/sounds/rare-pull.mp3": "https://ipfs.filebase.io/ipfs/QmPCf2NMDLqpcnCb1FTR7QeNHTVAjEFxuoq5NPvuSZdMaD",
+  "/sounds/common-pull.mp3": "https://ipfs.filebase.io/ipfs/QmQ35esjWZ9HGrTp97F8EDbe2UvVaDtDj34xLuYe2wfhqf",
 
   // Victory/Loss/Tie images
   "/victory-1.jpg": "https://ipfs.filebase.io/ipfs/QmRJqgjTShNeUWF9B8vb6G5bJu3z6JE9VYSHVPshvTHWuy",

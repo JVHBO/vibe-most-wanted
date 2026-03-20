@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import sdk from "@farcaster/miniapp-sdk";
 import { createPublicClient, http } from "viem";
 import { getVbmsBaccaratImageUrlByTokenId, getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
+import { getAssetUrl } from "@/lib/ipfs-assets";
 import FoilCardEffect from "@/components/FoilCardEffect";
 import { shareToFarcaster } from "@/lib/share-utils";
 import { FarcasterIcon } from "@/components/PokerIcons";
@@ -384,7 +385,7 @@ function RevealedCardsModal({ cards, onClose }: { cards: RevealedCard[]; onClose
   const [meta, setMeta] = useState<Record<string, CardMeta>>({});
 
   const playSound = (src: string) => {
-    try { const a = new Audio(src); a.volume = 0.6; a.play().catch(() => {}); } catch {}
+    try { const a = new Audio(getAssetUrl(src)); a.volume = 0.6; a.play().catch(() => {}); } catch {}
   };
 
   useEffect(() => {

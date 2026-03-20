@@ -393,7 +393,7 @@ export const playSound = (type: SoundType) => {
 
     case "damage":
       try {
-        const damageAudio = trackAudio(new Audio("/sounds/hit.mp3"));
+        const damageAudio = trackAudio(new Audio(getAssetUrl("/sounds/hit.mp3")));
         damageAudio.volume = 0.3;
         damageAudio.play().catch(() => {});
       } catch {
