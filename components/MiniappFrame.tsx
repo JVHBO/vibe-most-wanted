@@ -90,7 +90,8 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const forced = localStorage.getItem("vbms_force_miniapp") === "1";
     if (forced) setForcedMiniapp(true);
-    const isDesktop = window.innerWidth >= 480;
+    const isMobileUA = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isDesktop = window.innerWidth >= 1024 && !isMobileUA;
     const shouldFrame = isDesktop && !isMiniappMode() && !forced;
     setShowFrame(shouldFrame);
     if (shouldFrame) {
