@@ -498,60 +498,65 @@ export const claimCustomFollowReward = mutation({
     questId: v.id("customFollowQuests"),
   },
   handler: async (ctx, args) => {
-    const address = normalizeAddress(args.address);
+    try {
+      const address = normalizeAddress(args.address);
 
-    if (isBlacklisted(address)) throw new ConvexError("[BLACKLISTED]");
+      if (isBlacklisted(address)) throw new ConvexError("[BLACKLISTED]");
 
-    const quest = await ctx.db.get(args.questId);
-    if (!quest || !quest.active) throw new ConvexError("Quest not found or inactive");
+      const quest = await ctx.db.get(args.questId);
+      if (!quest || !quest.active) throw new ConvexError("Quest not found or inactive");
 
-    // Check not already claimed via socialQuestProgress
-    const progressId = `custom_${args.questId}`;
-    const existing = await ctx.db
-      .query("socialQuestProgress")
-      .withIndex("by_player_quest", (q) => q.eq("playerAddress", address).eq("questId", progressId))
-      .first();
-    if (existing?.claimed) throw new ConvexError("Already claimed");
+      // Check not already claimed via socialQuestProgress
+      const progressId = `custom_${args.questId}`;
+      const existing = await ctx.db
+        .query("socialQuestProgress")
+        .withIndex("by_player_quest", (q) => q.eq("playerAddress", address).eq("questId", progressId))
+        .first();
+      if (existing?.claimed) throw new ConvexError("Already claimed");
 
-    const reward = quest.reward || CUSTOM_QUEST_REWARD;
-    const profile = await ctx.db
-      .query("profiles")
-      .withIndex("by_address", (q) => q.eq("address", address))
-      .first();
-    if (!profile) throw new ConvexError("Profile not found");
+      const reward = quest.reward || CUSTOM_QUEST_REWARD;
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q) => q.eq("address", address))
+        .first();
+      if (!profile) throw new ConvexError("Profile not found");
 
-    const balanceBefore = profile.coins || 0;
-    const balanceAfter = balanceBefore + reward;
+      const balanceBefore = profile.coins || 0;
+      const balanceAfter = balanceBefore + reward;
 
-    await ctx.db.patch(profile._id, { coins: balanceAfter });
+      await ctx.db.patch(profile._id, { coins: balanceAfter });
 
-    await ctx.db.insert("coinTransactions", {
-      address,
-      amount: reward,
-      type: "earn",
-      source: "custom_follow_quest",
-      description: `Custom quest: follow @${quest.targetUsername}`,
-      timestamp: Date.now(),
-      balanceBefore,
-      balanceAfter,
-    });
-
-    await createAuditLog(ctx, address, "earn", reward, balanceBefore, balanceAfter, "custom_follow_quest");
-
-    // Track in socialQuestProgress
-    if (existing) {
-      await ctx.db.patch(existing._id, { completed: true, claimed: true, claimedAt: Date.now() });
-    } else {
-      await ctx.db.insert("socialQuestProgress", {
-        playerAddress: address,
-        questId: progressId,
-        completed: true,
-        completedAt: Date.now(),
-        claimed: true,
-        claimedAt: Date.now(),
+      await ctx.db.insert("coinTransactions", {
+        address,
+        amount: reward,
+        type: "earn",
+        source: "custom_follow_quest",
+        description: `Custom quest: follow @${quest.targetUsername}`,
+        timestamp: Date.now(),
+        balanceBefore,
+        balanceAfter,
       });
-    }
 
-    return { success: true, reward, newBalance: balanceAfter };
+      await createAuditLog(ctx, address, "earn", reward, balanceBefore, balanceAfter, "custom_follow_quest");
+
+      // Track in socialQuestProgress
+      if (existing) {
+        await ctx.db.patch(existing._id, { completed: true, claimed: true, claimedAt: Date.now() });
+      } else {
+        await ctx.db.insert("socialQuestProgress", {
+          playerAddress: address,
+          questId: progressId,
+          completed: true,
+          completedAt: Date.now(),
+          claimed: true,
+          claimedAt: Date.now(),
+        });
+      }
+
+      return { success: true, reward, newBalance: balanceAfter };
+    } catch (e) {
+      if (e instanceof ConvexError) throw e;
+      throw new ConvexError(`claimCustomFollow error: ${e instanceof Error ? e.message : String(e)}`);
+    }
   },
 });
