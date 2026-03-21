@@ -1,63 +1,40 @@
 ﻿"use client";
-// Updated: Removed warning banners
-import React, { useEffect, useState, useCallback, useMemo, memo, useRef } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import NextImage from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ConvexProfileService, type UserProfile, type MatchHistory } from "../lib/convex-profile"; // ✨ Convex para Profiles
+import { ConvexProfileService, type UserProfile } from "../lib/convex-profile"; // ✨ Convex para Profiles
 import { ConvexPvPService, type GameRoom } from "../lib/convex-pvp"; // ✨ Convex para PvP Rooms
 import { sdk } from "@farcaster/miniapp-sdk";
-import { BadgeList } from "@/components/Badge";
-import { getUserBadges } from "@/lib/badges";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useMusic } from "@/contexts/MusicContext";
 import { getAssetUrl } from "@/lib/ipfs-assets";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { useAccount, useDisconnect, useConnect } from "wagmi";
+import { useAccount, useDisconnect } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useQuery, useMutation, useAction, useConvex } from "convex/react";
+import { useQuery, useMutation, useConvex } from "convex/react";
 import { toast } from "sonner";
-import { isMiniappMode } from "@/lib/utils/miniapp";
-import { isWarpcastClient } from "@/lib/utils/miniapp";
-import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
 import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
-import { CONTRACTS, ERC20_ABI } from "@/lib/contracts";
-import { encodeFunctionData } from "viem";
 import { useMiniappFrameContext } from "@/components/MiniappFrame";
 
 import { api } from "@/convex/_generated/api";
 import { api as fidApi } from "@/lib/fid/convex-generated/api";
 import { vibefidConvex } from "@/contexts/VibeFIDConvexProvider";
-import FoilCardEffect from "@/components/FoilCardEffect";
-import { ProgressBar } from "@/components/ProgressBar";
-// Shop moved to /shop page
 import { CreateProfileModal } from "@/components/CreateProfileModal";
-import { DEFAULT_TOUR_STEPS, type TourStep } from "@/components/GuidedTour";
-import { InboxDisplay } from "@/components/InboxDisplay";
-import { CoinsInboxDisplay } from "@/components/CoinsInboxDisplay";
-import { CardMedia } from "@/components/CardMedia";
-import { NotEnoughCardsGuide } from "@/components/NotEnoughCardsGuide";
+import { DEFAULT_TOUR_STEPS } from "@/components/GuidedTour";
 import { GamePopups } from "@/components/GamePopups";
 import { PvPPreviewModal } from "@/components/PvPPreviewModal";
 import { GameNavBar } from "@/components/GameNavBar";
 import { ConnectScreen } from "@/components/ConnectScreen";
 import { GameHeader } from "@/components/GameHeader";
-import { NFTCard } from "@/components/NFTCard";
-// RaidBossModal moved to /raid page
 import { PriceTicker } from "@/components/PriceTicker";
 import { AllCollectionsButton } from "@/components/AllCollectionsButton";
-import ShameList from "@/components/ShameList";
 import BannedScreen from "@/components/BannedScreen";
-import { SocialQuestsPanel } from "@/components/SocialQuestsPanel";
 // New Home Components
 import { GameGrid, CardsPreview } from "@/components/home";
 import { VibeFidMailModal } from "@/components/fid/VibeFidMailModal";
 import { Roulette } from "@/components/Roulette";
-// TEMPORARILY DISABLED - Causing performance issues
-// import { MobileDebugConsole } from "@/components/MobileDebugConsole";
-import { HAND_SIZE, getMaxAttacks, JC_CONTRACT_ADDRESS as JC_WALLET_ADDRESS, IS_DEV } from "@/lib/config";
+import { HAND_SIZE, getMaxAttacks } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
 import { usePopupStates } from "@/hooks/usePopupStates";
@@ -66,6 +43,17 @@ import { useMissionState } from "@/hooks/useMissionState";
 import { useDefenseDeckState } from "@/hooks/useDefenseDeckState";
 import { useAttackState } from "@/hooks/useAttackState";
 import { useCardFilterState } from "@/hooks/useCardFilterState";
+import { useFarcasterInit } from "@/hooks/useFarcasterInit";
+import { useJCDeckLoader } from "@/hooks/useJCDeckLoader";
+import { useMissionsManager } from "@/hooks/useMissionsManager";
+import { useProfileStatsSync } from "@/hooks/useProfileStatsSync";
+import { useSaveDefenseDeck } from "@/hooks/useSaveDefenseDeck";
+import { useAccessAnalytics } from "@/hooks/useAccessAnalytics";
+import { useAutoCreateProfile } from "@/hooks/useAutoCreateProfile";
+import { useDailyClaim } from "@/hooks/useDailyClaim";
+import { useWeeklyLeaderboardClaim } from "@/hooks/useWeeklyLeaderboardClaim";
+import { getMissionInfo } from "@/lib/missions/missionConfig";
+import { generateAIHand } from "@/lib/utils/aiHandGeneration";
 import { usePowerCalculation } from "@/app/(game)/hooks/battle/usePowerCalculation";
 import { BattleArena } from "@/app/(game)/components/battle/BattleArena";
 import { MissionsView } from "@/app/(game)/components/views/MissionsView";
@@ -82,9 +70,6 @@ import { useSessionLock } from "@/lib/hooks/useSessionLock";
 import { AudioManager } from "@/lib/audio-manager";
 // 🎨 Loading Spinner
 import LoadingSpinner from "@/components/LoadingSpinner";
-// CardLoadingScreen removed - wasn't working properly
-// 💎 VBMS Blockchain Contracts
-import { useApproveVBMS, useCreateBattle, useJoinBattle, useFinishVBMSBattle, useActiveBattle } from "@/lib/hooks/useVBMSContracts";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible balance hook
 
 import { filterCardsByCollections, COLLECTIONS, getCollectionContract, getCardUniqueId, type CollectionId } from "@/lib/collections/index"; // getEnabledCollections removed - now only used by Context
@@ -93,7 +78,6 @@ import { isSameCard, findCard, getCardKey } from "@/lib/nft";
 import { getImage, fetchNFTs, clearAllNftCache } from "@/lib/nft/fetcher"; // checkCollectionBalances removed - now only used by Context
 import { convertIpfsUrl } from "@/lib/ipfs-url-converter";
 import type { Card } from "@/lib/types/card";
-// RunawayEasterEgg removed
 
 // 🚀 Dynamic imports — modals loaded on demand, not in initial bundle
 const DifficultyModal = dynamic(() => import("@/components/DifficultyModal"), { ssr: false });
@@ -112,20 +96,16 @@ const AttackCardSelectionModal = dynamic(() => import("@/components/AttackCardSe
 const SessionLockedModal = dynamic(() => import("@/components/SessionLockedModal").then(m => m.SessionLockedModal), { ssr: false });
 const LeaderboardRewardsModal = dynamic(() => import("@/app/(game)/components/modals/LeaderboardRewardsModal").then(m => m.LeaderboardRewardsModal), { ssr: false });
 const MyCardsModal = dynamic(() => import("@/app/(game)/components/modals/MyCardsModal").then(m => m.MyCardsModal), { ssr: false });
-const ChainSelectionModal = dynamic(() => import("@/app/(game)/components/modals/ChainSelectionModal").then(m => m.ChainSelectionModal), { ssr: false });
+
 const DefenseDeckModal = dynamic(() => import("@/app/(game)/components/modals/DefenseDeckModal").then(m => m.DefenseDeckModal), { ssr: false });
 const ChangelogModal = dynamic(() => import("@/components/ChangelogModal").then(m => m.ChangelogModal), { ssr: false });
 const ReportModal = dynamic(() => import("@/components/ReportModal").then(m => m.ReportModal), { ssr: false });
 
-// Shared style para botoes de marketplace/ataque vermelhos
 const STYLE_ATTACK_RED = { background: 'linear-gradient(145deg, #DC2626, #991B1B)' } as const;
 
 const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY;
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_VIBE_CONTRACT;
-const JC_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_JC_CONTRACT || CONTRACT_ADDRESS; // JC can have different contract
 const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN;
-
-// ✅ Image caching moved to lib/nft/fetcher.ts
 
 // 🎨 Avatar URL helper - Uses real Twitter profile pic when available
 const getAvatarUrl = (twitterData?: string | null | { twitter?: string; twitterProfileImageUrl?: string }): string | null => {
@@ -154,16 +134,6 @@ const getAvatarFallback = (): string => {
 
 // Tornar AudioManager global para persistir entre páginas
 
-// ✅ NFT attribute functions moved to lib/nft/attributes.ts
-// ✅ NFT fetching functions moved to lib/nft/fetcher.ts
-
-// 🚀 BANDWIDTH FIX (Jan 2026): REMOVED fetchNFTsFromAllCollections function (~110 lines)
-// NFT fetching is now ONLY done by PlayerCardsContext.tsx
-// This eliminates duplicate Alchemy API calls!
-
-
-// Match History Section Component - REMOVED from leaderboard (only in profile page now)
-
 export default function TCGPage() {
   const { lang, setLang, t } = useLanguage();
   const { musicMode, setMusicMode, isMusicEnabled, setIsMusicEnabled, setVolume: syncMusicVolume, customMusicUrl, setCustomMusicUrl, isCustomMusicLoading, customMusicError, playlist, setPlaylist, addToPlaylist, removeFromPlaylist, currentPlaylistIndex, skipToNext, skipToPrevious, currentTrackName, currentTrackThumbnail, isPaused, pause, play } = useMusic();
@@ -174,28 +144,22 @@ export default function TCGPage() {
   // Wagmi hooks for wallet connection
   const { address: wagmiAddress, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  const { connect, connectors } = useConnect();
-
   // Desktop frame mode: MiniappFrame wraps app on desktop browser
   // When true, force miniapp layout (nav at bottom, compact labels) even outside Farcaster
   const isFrameMode = useMiniappFrameContext();
 
-  // State for Farcaster context detection
-  const [isInFarcaster, setIsInFarcaster] = useState<boolean>(false);
-  const [farcasterFidState, setFarcasterFidState] = useState<number | undefined>(undefined);
-  const [farcasterClientFid, setFarcasterClientFid] = useState<number | undefined>(undefined);
-  const [isCheckingFarcaster, setIsCheckingFarcaster] = useState<boolean>(true); // Start true to wait for Farcaster check
+  // Farcaster context detection (auto-connect wallet, FID, miniapp check)
+  const {
+    isInFarcaster, setIsInFarcaster,
+    farcasterFidState, setFarcasterFidState,
+    farcasterClientFid,
+    isCheckingFarcaster, setIsCheckingFarcaster,
+  } = useFarcasterInit(isFrameMode);
 
   // Resolve primary address (handles linked/secondary wallets on website)
   const { primaryAddress } = usePrimaryAddress();
 
-  // 🔧 DEV MODE: Force admin wallet for testing
-  const DEV_WALLET_BYPASS = false; // DISABLED: Only for localhost testing
-  const address = DEV_WALLET_BYPASS
-    ? '0xbb4c7d8b2e32c7c99d358be999377c208cce53c2'
-    : (primaryAddress || wagmiAddress);
-
-  // Debug bypass (removed console.log for production)
+  const address = primaryAddress || wagmiAddress;
 
   // 🚀 BANDWIDTH FIX: Move useProfile to top for early access to profileDashboard
   const { userProfile, isLoadingProfile: isLoadingProfileFromContext, setUserProfile, refreshProfile } = useProfile();
@@ -264,7 +228,7 @@ export default function TCGPage() {
         setPlayerMissions(pm || []);
         setBanCheck(bc);
       } catch (e) {
-        console.error('Error loading quest data:', e);
+        devError('Error loading quest data:', e);
       }
     };
     loadQuestData();
@@ -289,7 +253,7 @@ export default function TCGPage() {
     const saveFarcasterProfile = async () => {
       if (!isInFarcaster || !wagmiAddress) return;
 
-      console.log('[Farcaster] 💾 Saving address to localStorage:', wagmiAddress);
+      devLog('[Farcaster] Saving address to localStorage:', wagmiAddress);
       localStorage.setItem('connectedAddress', wagmiAddress.toLowerCase());
 
       // Save FID to profile
@@ -333,37 +297,6 @@ export default function TCGPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // CRITICAL: Call ready() IMMEDIATELY - affects ranking and $10k reward pool!
-  // Do NOT wait for wallet connection - Farcaster counts daily users via ready()
-  const [sdkReadyCalled, setSdkReadyCalled] = useState(false);
-
-  useEffect(() => {
-    // Only call once
-    if (sdkReadyCalled) return;
-
-    const initFarcasterSDK = async () => {
-      try {
-        if (typeof window === 'undefined') return;
-
-        // Check if SDK is available
-        if (!sdk || typeof sdk.actions?.ready !== 'function') {
-          console.log('[Farcaster SDK] Not available (not in miniapp context)');
-          return;
-        }
-
-        // Call ready() IMMEDIATELY - DO NOT wait for wallet connection!
-        await sdk.actions.ready();
-        setSdkReadyCalled(true);
-        console.log('[Farcaster SDK] ✅ ready() called IMMEDIATELY on app load');
-      } catch (error) {
-        console.error('[Farcaster SDK] Error calling ready():', error);
-      }
-    };
-
-    // Execute immediately on mount
-    initFarcasterSDK();
-  }, [sdkReadyCalled]);
-
   const {
     showTutorial, setShowTutorial,
     showGuidedTour, setShowGuidedTour,
@@ -388,8 +321,6 @@ export default function TCGPage() {
     showSettings, setShowSettings,
     showCreateProfile, setShowCreateProfile,
     showChangeUsername, setShowChangeUsername,
-    showChainModal, setShowChainModal,
-    showArbAnnounce, setShowArbAnnounce,
     showFidMailModal, setShowFidMailModal,
     fidModalTarget, setFidModalTarget,
     showDailyClaimPopup, setShowDailyClaimPopup,
@@ -435,9 +366,7 @@ export default function TCGPage() {
     banCheck, setBanCheck,
     loginBonusClaimed, setLoginBonusClaimed,
     isClaimingBonus, setIsClaimingBonus,
-    isClaimingQuest, setIsClaimingQuest,
     isClaimingWeeklyReward, setIsClaimingWeeklyReward,
-    pendingClaimAction, setPendingClaimAction,
     missions, setMissions,
     isLoadingMissions, setIsLoadingMissions,
     isClaimingMission, setIsClaimingMission,
@@ -446,7 +375,6 @@ export default function TCGPage() {
   } = useMissionState();
 
   const {
-    defenseDeckWarningDismissed, setDefenseDeckWarningDismissed,
     defenseDeckSaveStatus, setDefenseDeckSaveStatus,
     defenseDeckSortByPower, setDefenseDeckSortByPower,
     defenseDeckCollection, setDefenseDeckCollection,
@@ -482,36 +410,20 @@ export default function TCGPage() {
     selectedRoomMode, setSelectedRoomMode,
   } = useCardFilterState();
 
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
-  const [musicEnabled, setMusicEnabled] = useState<boolean>(true);
+  const soundEnabled = true;
   const [musicVolume, setMusicVolume] = useState<number>(0.1); // Volume padrão 10%
-  const [isMounted, setIsMounted] = useState<boolean>(false);
   const [nfts, setNfts] = useState<any[]>([]);
-  const [jcNfts, setJcNfts] = useState<any[]>([]);
-  const [jcNftsLoading, setJcNftsLoading] = useState<boolean>(true);
-  const [jcLoadingProgress, setJcLoadingProgress] = useState<{page: number, cards: number} | null>(null);
+  const { jcNfts, jcNftsLoading, jcLoadingProgress } = useJCDeckLoader();
   const [status, setStatus] = useState<string>("idle");
-  const [skippedCardLoading, setSkippedCardLoading] = useState(false);
-
   // 🔗 Get cards from shared context (persists across routes!)
   // 🚀 BANDWIDTH FIX: Use context's loadNFTs instead of local duplicate
-  const { nfts: contextNfts, status: contextStatus, syncNftsFromHome, loadNFTs: contextLoadNFTs, forceReloadNFTs: contextForceReloadNFTs, refreshUserProfile } = usePlayerCards();
-
-  // Check sessionStorage on mount to skip loading if already loaded this session
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const alreadyLoaded = sessionStorage.getItem('vbms_cards_loaded') === 'true';
-      if (alreadyLoaded) {
-        setSkippedCardLoading(true);
-      }
-    }
-  }, []);
+  const { nfts: contextNfts, status: contextStatus, forceReloadNFTs: contextForceReloadNFTs, refreshUserProfile } = usePlayerCards();
 
   // 🔗 Sync with context: If context has cards, use them (prevents reload on navigation)
   // 🚀 BANDWIDTH FIX (Jan 2026): Context is now the single source of truth for NFT loading
   useEffect(() => {
     if (contextStatus === 'loaded' && contextNfts.length > 0 && nfts.length === 0) {
-      console.log('📦 Syncing from context:', contextNfts.length, 'cards');
+      devLog('Syncing from context:', contextNfts.length, 'cards');
       setNfts([...contextNfts]);
       setStatus('loaded');
       if (typeof window !== 'undefined') {
@@ -529,7 +441,6 @@ export default function TCGPage() {
   const victoryAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastVictoryIndexRef = useRef<number>(-1); // Track last victory screen to prevent consecutive duplicates
 
-  // Convex client for imperative queries (already declared above)
 
   // 🎯 Check VibeFID achievement when cards load (moved from removed local loadNFTs)
   useEffect(() => {
@@ -558,21 +469,13 @@ export default function TCGPage() {
 
   // 🚀 Performance: Memoized JC NFTs (AI deck)
   const sortedJcNfts = useSortedByPower(jcNfts);
-  const strongestJcNfts = useStrongestCards(jcNfts, HAND_SIZE);
 
   // Economy mutations
   const awardPvECoins = useMutation(api.economy.awardPvECoins);
-  const awardPvPCoins = useMutation(api.economy.awardPvPCoins);
   const recordAttackResult = useMutation(api.economy.recordAttackResult); // ⚛️ ATOMIC: Combines coins + match + profile update
-  const claimLoginBonus = useMutation(api.economy.claimLoginBonus);
   const payEntryFee = useMutation(api.economy.payEntryFee);
-  const claimQuestReward = useMutation(api.quests.claimQuestReward);
   const setPreferredChainMutation = useMutation(api.missions.setPreferredChain);
-  const markChainModalSeenMutation = useMutation(api.missions.markChainModalSeen);
 
-  // VBMS Economy mutations (PvP with real VBMS)
-  const chargeVBMSEntryFee = useMutation(api.economyVBMS.chargeVBMSEntryFee);
-  const awardPvPVBMS = useMutation(api.economyVBMS.awardPvPVBMS);
   // 🚀 BANDWIDTH FIX: Use profileDashboard instead of separate query
   const getVBMSBalance = profileDashboard ? {
     inbox: profileDashboard.inbox,
@@ -586,23 +489,14 @@ export default function TCGPage() {
   const claimPvPWinReward = useMutation(api.pvp.claimPvPWinReward);
 
   // 💎 VBMS Blockchain Contract Hooks (using Farcaster-compatible hook)
-  const { balance: vbmsBlockchainBalance, refetch: refetchVBMSBalance } = useFarcasterVBMSBalance(address);
-const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
-  const { createBattle, isPending: isCreatingBattle } = useCreateBattle();
-  const { joinBattle, isPending: isJoiningBattle } = useJoinBattle();
-  const { finishBattle: finishVBMSBattle } = useFinishVBMSBattle();
-  const { battleId: activeBattleId, refetch: refetchActiveBattle } = useActiveBattle(address as `0x${string}`);
+  const { balance: vbmsBlockchainBalance } = useFarcasterVBMSBalance(address);
 
-  // 🎯 Weekly Quests mutations
-  const claimWeeklyReward = useMutation(api.quests.claimWeeklyReward);
 
   // 🏅 Weekly Leaderboard Rewards (skip in miniapp for performance)
   const weeklyRewardEligibility = useQuery(
     api.quests.checkWeeklyRewardEligibility,
     address ? { address } : "skip"
   );
-  const prepareWeeklyLeaderboardVBMSClaim = useAction(api.quests.prepareWeeklyLeaderboardVBMSClaim);
-  const recordWeeklyLeaderboardClaim = useMutation(api.quests.recordWeeklyLeaderboardClaim);
   // Show weekly leaderboard popup when eligible
   useEffect(() => {
     if (weeklyRewardEligibility?.eligible && address) {
@@ -618,6 +512,8 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     inbox: profileDashboard.inbox,
     lifetimeEarned: profileDashboard.lifetimeEarned,
     cooldownRemaining: profileDashboard.cooldownRemaining,
+    pendingConversion: profileDashboard.pendingConversion || 0,
+    pendingConversionTimestamp: profileDashboard.pendingConversionTimestamp || null,
   } : null;
 
   // 🎮 Daily Attempts System (PvE limits)
@@ -724,69 +620,15 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     return () => window.removeEventListener('open-fid-modal', handler);
   }, []);
 
-  // REMOVED: Referral system disabled
-  // Leaderboard moved to /leaderboard page
-  const [matchHistory, setMatchHistory] = useState<MatchHistory[]>([]);
-
-  // 🆕 AUTO-CREATE: Mutation to auto-create profile from Farcaster
-  const upsertProfileFromFarcaster = useMutation(api.profiles.upsertProfileFromFarcaster);
-  const hasAutoCreatedProfile = useRef(false);
 
   // 🆕 AUTO-CREATE/UPDATE PROFILE: When user enters via Farcaster with FID + wallet
-  // Also updates existing profiles that are missing farcasterFid (fixes Base App claim)
-  useEffect(() => {
-    const autoCreateOrUpdateProfile = async () => {
-      // Only run once, when we have all required data
-      if (hasAutoCreatedProfile.current) return;
-      if (!address) return;
-      if (!isInFarcaster) return;
-      if (!farcasterFidState) return;
-      if (isCheckingFarcaster) return;
-      if (isLoadingProfile) return; // Still loading
-
-      // If profile exists AND already has farcasterFid, skip
-      if (userProfile && (userProfile as any).farcasterFid) return;
-
-      // Get Farcaster context for username/displayName/pfpUrl
-      try {
-        const context = await sdk.context;
-        if (!context?.user) return;
-
-        const { fid, username, displayName, pfpUrl } = context.user;
-        if (!fid) return;
-
-        const action = userProfile ? 'Updating' : 'Creating';
-        console.log(`[AutoCreate] 🆕 ${action} profile for Farcaster user:`, { fid, username, address });
-        hasAutoCreatedProfile.current = true;
-
-        await upsertProfileFromFarcaster({
-          address,
-          fid,
-          username: username || `fid${fid}`,
-          displayName: displayName || undefined,
-          pfpUrl: pfpUrl || undefined,
-        });
-
-        console.log(`[AutoCreate] ✅ Profile ${action.toLowerCase()}d successfully!`);
-
-        // Refresh profile to get the new data
-        await refreshProfile();
-      } catch (error) {
-        console.error('[AutoCreate] ❌ Failed to auto-create/update profile:', error);
-        hasAutoCreatedProfile.current = false; // Allow retry
-      }
-    };
-
-    autoCreateOrUpdateProfile();
-  }, [address, isInFarcaster, farcasterFidState, isCheckingFarcaster, userProfile, isLoadingProfile, upsertProfileFromFarcaster, refreshProfile]);
+  useAutoCreateProfile({
+    address, isInFarcaster, farcasterFidState, isCheckingFarcaster,
+    userProfile, isLoadingProfile, refreshProfile,
+  });
   // ARB disabled — all transactions on Base only
   const arbSupported = false;
   const effectiveChain = "base";
-  // On-chain TX hooks for mission claims
-  const { validateOnArb } = useArbValidator();
-  // Arb Mode announcement disabled - no longer needed
-  // REMOVED: showReferrals - Referral system disabled
-
   // Check if any missions are claimable (for pulsing button)
   const hasClaimableMissions = useMemo(() => {
     // Daily LOGIN bonus claimable?
@@ -812,16 +654,11 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     return dailyLoginClaimable || dailyQuestClaimable || personalMissionsClaimable;
   }, [questProgress, loginBonusClaimed, address, userProfile, playerMissions]);
 
-  // Raid Boss States
-  // Raid Boss moved to /raid page
-
   // 🚀 Performance: Memoized battle card power totals (for UI display)
   const pveSelectedCardsPower = useTotalPower(pveSelectedCards);
   const { totalPower: attackSelectedCardsPower } = usePowerCalculation(attackSelectedCards, true);
   const { totalPower: dealerCardsPower } = usePowerCalculation(dealerCards, true);
 
-  // Refs for preventing race conditions
-  const updateStatsInProgress = useRef(false);
 
   // Calculate max attacks for current user
   const maxAttacks = useMemo(() => getMaxAttacks(address), [address]);
@@ -863,7 +700,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         }
       }
     } catch (error: any) {
-      console.error('Error awarding share bonus:', error);
+      devError('Error awarding share bonus:', error);
     }
   };
 
@@ -875,10 +712,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     video.load();
   }, []);
 
-  // Set mounted state to prevent hydration errors
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   // Generate particle configurations once to prevent hydration errors
   const particleConfigs = useMemo(() => {
@@ -897,8 +730,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
 
       if (savedMusicEnabled !== null) {
         const isEnabled = savedMusicEnabled === 'true';
-        setMusicEnabled(isEnabled);
-        // 🔧 FIX: Also update the MusicContext state to prevent audio playing when muted
         setIsMusicEnabled(isEnabled);
       }
       if (savedMusicVolume !== null) {
@@ -939,221 +770,9 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     syncMusicVolume(musicVolume);
   }, [musicVolume, syncMusicVolume]);
 
-  // Auto-connect Farcaster wallet in miniapp context (Nov 14 simple version)
-  useEffect(() => {
-    const initFarcasterWallet = async () => {
-      // Frame mode: desktop browser with MiniappFrame wrapper → force miniapp layout
-      // No real Farcaster SDK, no FID, no wallet auto-connect — just use miniapp UI layout
-      if (isFrameMode) {
-        setIsInFarcaster(true);
-        setIsCheckingFarcaster(false);
-        return;
-      }
-
-      console.log('[Farcaster] 🔍 Initializing wallet connection...');
-      try {
-        console.log('[Farcaster] SDK check:', {
-          hasSdk: !!sdk,
-          hasWallet: !!sdk?.wallet,
-          hasEthProvider: !!sdk?.wallet?.ethProvider,
-        });
-
-        // STEP 1: Check if SDK exists at all
-        if (!sdk) {
-          console.log('[Farcaster] ⚠️ No SDK available - not in Farcaster');
-          setIsInFarcaster(false);
-          setIsCheckingFarcaster(false);
-          return;
-        }
-
-        // STEP 2: Check if SDK context has valid FID (proves we're in Farcaster)
-        // This check is SEPARATE from wallet availability - fixes analytics misclassification
-        try {
-          const contextPromise = sdk.context;
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('SDK context timeout')), 5000)
-          );
-
-          const context = await Promise.race([contextPromise, timeoutPromise]) as any;
-
-          if (!context || !context.user || !context.user.fid) {
-            console.log('[Farcaster] ⚠️ SDK present but invalid context - not in miniapp');
-            setIsInFarcaster(false);
-            setIsCheckingFarcaster(false);
-            return;
-          }
-
-          // ✅ We ARE in Farcaster miniapp - set this EARLY for correct analytics
-          console.log('[Farcaster] ✅ Farcaster miniapp confirmed - FID:', context.user.fid);
-          setFarcasterFidState(context.user.fid);
-          setFarcasterClientFid(context.client?.clientFid);
-          setIsInFarcaster(true); // Set BEFORE wallet check!
-        } catch (contextError) {
-          console.log('[Farcaster] ⚠️ Failed to get valid SDK context:', contextError);
-          setIsInFarcaster(false);
-          setIsCheckingFarcaster(false);
-          return;
-        }
-
-        // STEP 3: Now try to connect wallet (user is still in Farcaster even if this fails)
-        // iOS: Retry wallet check up to 3 times with delay (wallet may take longer to initialize)
-        let walletAvailable = typeof sdk.wallet !== 'undefined' && !!sdk.wallet.ethProvider;
-        let retries = 0;
-        const maxRetries = 3;
-
-        while (!walletAvailable && retries < maxRetries) {
-          console.log(`[Farcaster] ⏳ Wallet not ready, retry ${retries + 1}/${maxRetries}...`);
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-          walletAvailable = typeof sdk.wallet !== 'undefined' && !!sdk.wallet.ethProvider;
-          retries++;
-        }
-
-        if (!walletAvailable) {
-          console.log('[Farcaster] ⚠️ Wallet not available after retries - user is in Farcaster but wallet not ready');
-          setIsCheckingFarcaster(false);
-          return;
-        }
-
-        console.log('[Farcaster] ✅ Wallet available, connecting...');
-
-        try {
-          // Find the Farcaster miniapp connector
-          console.log('[Farcaster] 🔍 Available connectors:', connectors.map(c => ({ id: c.id, name: c.name })));
-
-          // Try multiple possible connector IDs (case variations)
-          const farcasterConnector = connectors.find((c) =>
-            c.id === 'farcasterMiniApp' ||
-            c.id === 'farcaster' ||
-            c.name?.toLowerCase().includes('farcaster')
-          );
-
-          if (!farcasterConnector) {
-            console.error('[Farcaster] ❌ Farcaster connector not found in wagmi config');
-            console.error('[Farcaster] Available connector IDs:', connectors.map(c => c.id));
-
-            // Show user-friendly error
-            toast.error('Connector Farcaster não encontrado. Por favor, recarregue a página.');
-            setIsCheckingFarcaster(false);
-            return;
-          }
-
-          console.log('[Farcaster] 📡 Connecting with Farcaster wagmi connector:', farcasterConnector.id);
-
-          // Connect using wagmi - this will populate wagmiAddress automatically
-          await connect({ connector: farcasterConnector });
-
-          console.log('[Farcaster] ✅ Connected successfully');
-          devLog('✓ Auto-connected Farcaster wallet via wagmi');
-
-          // ✓ Save FID to profile for notifications
-          try {
-            const context = await sdk.context;
-            const fid = context?.user?.fid;
-            if (fid) {
-              devLog('📱 Farcaster FID detected:', fid);
-            }
-          } catch (fidError) {
-            devLog('! Could not get FID:', fidError);
-          }
-        } catch (connectError: any) {
-          console.error('[Farcaster] ❌ Connection error:', connectError);
-          // Handle authorization errors
-          if (connectError?.message?.includes('not been authorized')) {
-            console.warn('[Farcaster] ⚠️ Wallet not authorized - user needs to enable in Farcaster settings');
-            devLog('! Farcaster wallet not authorized yet - staying in miniapp but without wallet');
-          }
-        } finally {
-          setIsCheckingFarcaster(false);
-        }
-      } catch (err) {
-        devLog('! Not in Farcaster context or wallet unavailable:', err);
-        setIsInFarcaster(false);
-        setIsCheckingFarcaster(false);
-      }
-    };
-    initFarcasterWallet();
-  }, [connect, connectors, isFrameMode]);
 
   // 📊 Log access analytics (miniapp vs farcaster_web vs web)
-  const logAccessMutation = useMutation(api.accessAnalytics.logAccess);
-  const logAccessDebugMutation = useMutation(api.accessAnalytics.logAccessDebug);
-  const hasLoggedAccess = useRef(false);
-
-  useEffect(() => {
-    // Only log once per session, when we have address and finished checking
-    if (hasLoggedAccess.current || !address || isCheckingFarcaster) return;
-
-    // Gather debug info
-    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
-    const referrer = typeof document !== 'undefined' ? document.referrer : '';
-    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-    const isIframe = typeof window !== 'undefined' && window.parent !== window;
-    const sdkAvailable = !!sdk;
-
-    // Determine source with more granularity
-    let source: "miniapp" | "farcaster_web" | "web" | "frame";
-
-    if (isInFarcaster) {
-      // Farcaster SDK is working = Warpcast app
-      source = "miniapp";
-    } else {
-      // Check if came from farcaster.xyz (browser access)
-      const isFromFarcaster =
-        referrer.includes('farcaster.xyz') ||
-        referrer.includes('warpcast.com') ||
-        currentUrl.includes('farcaster.xyz') ||
-        // Check if in iframe from farcaster
-        (isIframe && (referrer.includes('farcaster') || referrer.includes('warpcast')));
-
-      source = isFromFarcaster ? "farcaster_web" : "web";
-    }
-
-    hasLoggedAccess.current = true;
-
-    // Log main analytics
-    logAccessMutation({ address, source })
-      .then(() => devLog(`📊 Access logged: ${source}`))
-      .catch((err) => devError("Failed to log access:", err));
-
-    // Log debug info for analysis
-    logAccessDebugMutation({
-      address,
-      source,
-      userAgent: userAgent.substring(0, 500), // Limit length
-      referrer: referrer.substring(0, 500),
-      currentUrl: currentUrl.substring(0, 500),
-      isIframe,
-      sdkAvailable,
-    }).catch((err) => devError("Failed to log debug:", err));
-
-  }, [address, isInFarcaster, isCheckingFarcaster, logAccessMutation, logAccessDebugMutation, sdk]);
-
-  // 🔔 Handler to enable Farcaster notifications
-  const handleEnableNotifications = async () => {
-    try {
-      if (!sdk || !sdk.actions || !isInFarcaster) {
-        devLog('! Farcaster SDK not available');
-        toast.error('Farcaster SDK not available');
-        return;
-      }
-
-      devLog('🔔 Requesting Farcaster notification permissions...');
-      toast.loading('Requesting notification permissions...');
-
-      const result = await sdk.actions.addMiniApp();
-      devLog('✓ Notification permission result:', result);
-
-      toast.dismiss();
-      toast.success('Notifications enabled! 🔔');
-
-      if (soundEnabled) AudioManager.buttonClick();
-    } catch (error) {
-      devError('✗ Error enabling notifications:', error);
-      toast.dismiss();
-      toast.error('Failed to enable notifications');
-      if (soundEnabled) AudioManager.buttonError();
-    }
-  };
+  useAccessAnalytics({ address, isInFarcaster, isCheckingFarcaster });
 
   // 🎉 Show victory popup with RANDOM image selection
   const showVictory = () => {
@@ -1374,207 +993,17 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     // TESTVBMS already added - no modal
   };
 
-  // 💰 Handler to claim daily login bonus
-  const handleClaimLoginBonus = async () => {
-    if (!address || loginBonusClaimed || isClaimingBonus) return;
+  const { handleClaimLoginBonus, handleDailyClaimNow } = useDailyClaim({
+    address, lang, effectiveChain, soundEnabled,
+    loginBonusClaimed, isClaimingBonus,
+    setIsClaimingBonus, setLoginBonusClaimed,
+    setShowDailyClaimPopup, refreshProfile,
+  });
 
-    try {
-      setIsClaimingBonus(true);
-      devLog('💰 Claiming login bonus...');
-
-      const result = await claimLoginBonus({ address });
-
-      if (result.awarded > 0) {
-        devLog(`✓ Login bonus claimed: +${result.awarded} $TESTVBMS`);
-        setLoginBonusClaimed(true);
-        if (soundEnabled) AudioManager.buttonClick();
-
-      } else {
-        devLog(`! ${result.reason}`);
-        if (soundEnabled) AudioManager.buttonError();
-      }
-    } catch (error) {
-      devError('✗ Error claiming login bonus:', error);
-      if (soundEnabled) AudioManager.buttonError();
-    } finally {
-      setIsClaimingBonus(false);
-    }
-  };
-
-  // 💎 Handler to claim daily bonus with blockchain TX
-  // Send on-chain TX after Convex mission claim (non-blocking)
-  // ARB: validateClaim on VBMSValidator (no tokens, just proof)
-  // Base: transfer 0 VBMS to pool (no tokens moved, just on-chain marker)
-  const sendMissionTx = async (reward: number, claimType: typeof ARB_CLAIM_TYPE[keyof typeof ARB_CLAIM_TYPE]) => {
-    if (!address || reward <= 0) return;
-    try {
-      {
-        // Base: send 0 VBMS to pool — on-chain proof, no actual transfer
-        const data = encodeFunctionData({
-          abi: ERC20_ABI,
-          functionName: 'transfer',
-          args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, BigInt(0)],
-        });
-
-        try {
-          // Farcaster SDK first
-          const provider = await sdk.wallet.getEthereumProvider();
-          if (provider) {
-            await provider.request({
-              method: 'eth_sendTransaction',
-              params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken as `0x${string}`, data }],
-            });
-            return;
-          }
-        } catch {}
-
-        // Fallback: wagmi
-        const { sendTransaction } = await import('wagmi/actions');
-        const { config } = await import('@/lib/wagmi');
-        await sendTransaction(config, {
-          to: CONTRACTS.VBMSToken as `0x${string}`,
-          data,
-          chainId: CONTRACTS.CHAIN_ID,
-        });
-      }
-    } catch (err: any) {
-      devError('Mission TX (non-blocking):', err);
-      // Show visible error only for user rejections (not silent chain/wallet issues)
-      if (err?.message?.includes('rejected') || err?.message?.includes('denied') || err?.code === 4001) {
-        toast.error('Transaction rejected by wallet.');
-      } else if (err?.message && !err.message.includes('connector not found')) {
-        toast.error('Transaction failed. Please check your wallet and try again.');
-      }
-    }
-  };
-
-  const handleDailyClaimNow = async () => {
-    if (!address || isClaimingBonus) return;
-
-    try {
-      setIsClaimingBonus(true);
-      devLog('Daily claim - claiming all unclaimed missions...');
-
-      const claimResult = await convex.mutation(api.missions.claimAllMissions, {
-        playerAddress: address,
-        language: lang,
-        chain: effectiveChain,
-      });
-
-      if (claimResult && claimResult.claimed > 0) {
-        devLog(`Claimed ${claimResult.claimed} missions (+${claimResult.totalReward} coins)`);
-        if (soundEnabled) AudioManager.buttonSuccess();
-        // Update UI immediately, fire TX in background
-        setLoginBonusClaimed(true);
-        setShowDailyClaimPopup(false);
-        await refreshProfile();
-        sendMissionTx(claimResult.totalReward, ARB_CLAIM_TYPE.DAILY_LOGIN); // fire-and-forget
-      } else {
-        devLog('No unclaimed missions found');
-        if (soundEnabled) AudioManager.buttonError();
-        setLoginBonusClaimed(true);
-        setShowDailyClaimPopup(false);
-      }
-    } catch (error) {
-      devError('Error claiming daily bonus:', error);
-      if (soundEnabled) AudioManager.buttonError();
-    } finally {
-      setIsClaimingBonus(false);
-    }
-  };
-
-  // 🎯 Handler to claim daily quest reward
-  const handleClaimQuestReward = async () => {
-    if (!address || isClaimingQuest) return;
-
-    // Show chain modal on first claim
-    if (!(userProfile as any)?.chainModalSeen) {
-      setPendingClaimAction(() => () => handleClaimQuestReward());
-      setShowChainModal(true);
-      return;
-    }
-
-    try {
-      setIsClaimingQuest(true);
-      devLog('🎯 Claiming quest reward...');
-
-      const chain = effectiveChain;
-      const result = await claimQuestReward({ address, chain });
-
-      devLog(`✓ Quest reward claimed: +${result.reward} $TESTVBMS`);
-      if (soundEnabled) AudioManager.buttonClick();
-    } catch (error: any) {
-      devError('✗ Error claiming quest reward:', error);
-      toast.error(error.message || 'Failed to claim quest reward');
-      if (soundEnabled) AudioManager.buttonError();
-    } finally {
-      setIsClaimingQuest(false);
-    }
-  };
-
-  // 🏅 Handler to claim weekly leaderboard reward
-  const handleClaimWeeklyLeaderboardReward = async () => {
-    if (!address || isClaimingWeeklyReward) return;
-    setIsClaimingWeeklyReward(true);
-
-    try {
-      devLog('🏅 Preparing weekly leaderboard VBMS claim...');
-      const result = await prepareWeeklyLeaderboardVBMSClaim({ address });
-
-      toast.info('🔐 Sign transaction to receive VBMS...');
-
-      // Force Base chain and send TX
-      const provider = await sdk.wallet.getEthereumProvider();
-      if (!provider) throw new Error('Wallet not available');
-
-      try {
-        await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
-      } catch {}
-
-      const { encodeFunctionData, parseEther } = await import('viem');
-      const { POOL_ABI } = await import('@/lib/contracts');
-      const data = encodeFunctionData({
-        abi: POOL_ABI,
-        functionName: 'claimVBMS',
-        args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
-      });
-
-      const txHash = await provider.request({
-        method: 'eth_sendTransaction',
-        params: [{ from: address as `0x${string}`, to: '0x062b914668f3fd35c3ae02e699cb82e1cf4be18b', data }],
-      }) as string;
-
-      await recordWeeklyLeaderboardClaim({ address, txHash });
-      setShowWeeklyLeaderboardPopup(false);
-      toast.success(`✅ ${result.amount.toLocaleString()} VBMS claimed! Rank #${result.rank}`);
-      if (soundEnabled) AudioManager.buttonClick();
-
-    } catch (error: any) {
-      devError('✗ Error claiming weekly reward:', error);
-      toast.error(error.message || 'Failed to claim weekly reward');
-      if (soundEnabled) AudioManager.buttonError();
-    } finally {
-      setIsClaimingWeeklyReward(false);
-    }
-  };
-
-  // 🎯 Handler to claim weekly quest reward
-  const handleClaimWeeklyQuestReward = async (questId: string) => {
-    if (!address) return;
-
-    try {
-      devLog(`🎯 Claiming weekly quest reward: ${questId}...`);
-
-      const result = await claimWeeklyReward({ address, questId });
-
-      if (soundEnabled) AudioManager.buttonSuccess();
-      devLog(`✓ Weekly quest reward claimed: ${questId} → +${result.reward} $TESTVBMS`);
-
-    } catch (error: any) {
-      devError('Error claiming reward:', error);
-      if (soundEnabled) AudioManager.buttonError();
-    }
-  };
+  const { handleClaimWeeklyLeaderboardReward } = useWeeklyLeaderboardClaim({
+    address, soundEnabled, isClaimingWeeklyReward,
+    setIsClaimingWeeklyReward, setShowWeeklyLeaderboardPopup,
+  });
 
   // Handler for game mode selection from GameGrid
   type GameMode = 'battle-ai' | 'mecha' | 'raid' | 'baccarat' | 'tcg';
@@ -1605,8 +1034,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     }
   };
 
-  // Salvar estado da música no localStorage e controlar reprodução
-  // ⚠️ DISABLED: Now using MusicContext instead of AudioManager
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('musicEnabled', isMusicEnabled.toString());
@@ -1690,8 +1117,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     }
     // Update MusicContext state
     setIsMusicEnabled(!isMusicEnabled);
-    // Keep local state in sync
-    setMusicEnabled(!isMusicEnabled);
   }, [isMusicEnabled, soundEnabled, setIsMusicEnabled]);
 
   // Wallet connection is now handled by RainbowKit ConnectButton
@@ -1713,92 +1138,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     devLog('🔌 Desconectado');
   }, [soundEnabled, disconnect]);
 
-  const loadJCNFTs = useCallback(async () => {
-    try {
-      devLog('※ Loading JC deck from optimized static file...');
-
-      // Load from optimized static endpoint (instant!)
-      const res = await fetch('/api/jc-deck');
-      if (!res.ok) {
-        throw new Error(`Failed to load JC deck: ${res.status}`);
-      }
-
-      const data = await res.json();
-      const cards = data.cards || [];
-
-      devLog(`✓ JC deck loaded instantly: ${cards.length} cards from ${data.source}`);
-
-      // Map to expected format with normalized URLs
-      const processed = cards.map((card: any) => ({
-        tokenId: card.tokenId,
-        imageUrl: normalizeUrl(card.imageUrl || ''),
-        rarity: card.rarity,
-        status: card.status,
-        power: card.power,
-        name: card.name,
-        attributes: card.attributes || [],
-        // Reconstruct full NFT object if needed
-        raw: {
-          metadata: {
-            name: card.name,
-            image: card.imageUrl,
-            attributes: card.attributes
-          }
-        }
-      }));
-
-      setJcNfts(processed);
-      setJcNftsLoading(false);
-
-      devLog('✓ JC NFTs ready:', processed.length, 'cards');
-      devLog(`   Legendary: ${processed.filter((c: any) => c.rarity === 'Legendary').length}`);
-      devLog(`   Epic: ${processed.filter((c: any) => c.rarity === 'Epic').length}`);
-      devLog(`   Rare: ${processed.filter((c: any) => c.rarity === 'Rare').length}`);
-
-    } catch (e: any) {
-      devError('✗ Error loading JC NFTs from static file:', e);
-      devLog('!  Falling back to live API...');
-
-      // Fallback to original live API method
-      try {
-        const revealed = await fetchNFTs(JC_WALLET_ADDRESS, JC_CONTRACT_ADDRESS, (page, cards) => {
-          setJcLoadingProgress({ page, cards });
-        });
-
-        const processed = revealed.map(nft => {
-          const imageUrl = nft?.image?.cachedUrl ||
-                           nft?.image?.thumbnailUrl ||
-                           nft?.image?.originalUrl ||
-                           nft?.raw?.metadata?.image ||
-                           '';
-
-          return {
-            ...nft,
-            imageUrl: normalizeUrl(imageUrl),
-            name: nft.title || nft.name || `Card #${nft.tokenId}`, // Add name for Card type compatibility
-            rarity: findAttr(nft, 'rarity'),
-            status: findAttr(nft, 'status'),
-            wear: findAttr(nft, 'wear'),
-            foil: findAttr(nft, 'foil'),
-            power: calcPower(nft),
-          };
-        });
-
-        setJcNfts(processed);
-        setJcNftsLoading(false);
-        setJcLoadingProgress(null);
-        devLog('✓ JC NFTs loaded from live API:', processed.length, 'cards');
-
-      } catch (fallbackError: any) {
-        devError('✗ Fallback also failed:', fallbackError);
-        setJcNftsLoading(false);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    loadJCNFTs();
-  }, []); // Run only once on mount
 
   // Load unlocked difficulties from localStorage
   useEffect(() => {
@@ -1887,83 +1226,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     }, 300);
   }, [strongestNfts, soundEnabled]);
 
-  // Generate AI hand with strategic ordering based on difficulty
-  const generateAIHand = useCallback((difficulty: 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad') => {
-    const available = jcNfts;
-    if (available.length < HAND_SIZE) {
-      toast.error('AI deck not ready yet...');
-      return [];
-    }
-
-    const sorted = [...available].sort((a, b) => (b.power || 0) - (a.power || 0));
-    let pickedCards: any[] = [];
-
-    // Select cards based on difficulty (same logic as normal battle)
-    switch (difficulty) {
-      case 'gey':
-        const weakest = sorted.filter(c => (c.power || 0) === 15);
-        pickedCards = weakest.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-        break;
-      case 'goofy':
-        const weak = sorted.filter(c => {
-          const p = c.power || 0;
-          return p === 18 || p === 21;
-        });
-        pickedCards = weak.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-        break;
-      case 'gooner':
-        const medium = sorted.filter(c => {
-          const p = c.power || 0;
-          return p === 60 || p === 72;
-        });
-        pickedCards = medium.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-        break;
-      case 'gangster':
-        const cards150 = sorted.filter(c => (c.power || 0) === 150);
-        if (cards150.length >= HAND_SIZE) {
-          pickedCards = cards150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-        } else {
-          const legendaries = sorted.filter(c => (c.rarity || '').toLowerCase().includes('legend'));
-          pickedCards = legendaries.slice(0, HAND_SIZE);
-        }
-        break;
-      case 'gigachad':
-        pickedCards = sorted.slice(0, HAND_SIZE);
-        break;
-    }
-
-    // Apply strategic ordering based on difficulty
-    let orderedCards: any[] = [];
-    switch (difficulty) {
-      case 'gey':
-      case 'goofy':
-        // Random order (no strategy)
-        orderedCards = pickedCards.sort(() => Math.random() - 0.5);
-        break;
-      case 'gooner':
-        // Weak-first strategy (sacrifice weak cards)
-        orderedCards = [...pickedCards].sort((a, b) => (a.power || 0) - (b.power || 0));
-        break;
-      case 'gangster':
-        // Strong-first strategy (overwhelming force)
-        orderedCards = [...pickedCards].sort((a, b) => (b.power || 0) - (a.power || 0));
-        break;
-      case 'gigachad':
-        // Balanced strategy (strong-weak-strong-weak-strong)
-        const sortedByPower = [...pickedCards].sort((a, b) => (b.power || 0) - (a.power || 0));
-        orderedCards = [
-          sortedByPower[0], // strongest
-          sortedByPower[4], // weakest
-          sortedByPower[1], // 2nd strongest
-          sortedByPower[3], // 2nd weakest
-          sortedByPower[2]  // middle
-        ];
-        break;
-    }
-
-    devLog(`🤖 AI ordered cards for ${difficulty}:`, orderedCards.map(c => `#${c.tokenId} (${c.power} PWR)`));
-    return orderedCards;
-  }, [jcNfts]);
 
   const playHand = useCallback((cardsToPlay?: any[], battleDifficulty?: typeof aiDifficulty) => {
         const cards = cardsToPlay || selectedCards;
@@ -2025,94 +1287,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     devLog('  Sorted top 5:', sorted.slice(0, 5).map(c => `#${c.tokenId} (${c.power} PWR)`));
     devLog('  Difficulty:', difficulty);
 
-    let pickedDealer: any[] = [];
-
-    // Different strategies based on difficulty (5 levels)
-    // Power-based ranges (actual unique values: 15, 18, 21, 38, 45, 53, 60, 72, 84, 150, 180, 225)
-    switch (difficulty) {
-      case 'gey':
-        // GEY (Level 1): Weakest (15 PWR only), total = 75 PWR
-        const weakest = sorted.filter(c => (c.power || 0) === 15);
-        pickedDealer = weakest.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-        devLog('~ GEY: 15 PWR only');
-        devLog('  Available:', weakest.length);
-        devLog('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
-        break;
-
-      case 'goofy':
-        // GOOFY (Level 2): Weak (18-21 PWR), total ~90-105 PWR
-        const weak = sorted.filter(c => {
-          const p = c.power || 0;
-          return p === 18 || p === 21;
-        });
-        if (weak.length >= HAND_SIZE) {
-          pickedDealer = weak.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-        } else {
-          // Fallback: expand to include nearby power values (15-38 range)
-          devLog('  ! Not enough 18-21 PWR cards, using expanded range');
-          const weakExpanded = sorted.filter(c => {
-            const p = c.power || 0;
-            return p >= 18 && p <= 38;
-          });
-          pickedDealer = weakExpanded.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-        }
-        devLog('∿ GOOFY: 18-21 PWR');
-        devLog('  Available:', weak.length);
-        devLog('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
-        break;
-
-      case 'gooner':
-        // GOONER (Level 3): Medium (60-72 PWR), total ~300-360 PWR
-        const medium = sorted.filter(c => {
-          const p = c.power || 0;
-          return p === 60 || p === 72;
-        });
-        pickedDealer = medium.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-        devLog('† GOONER: 60-72 PWR');
-        devLog('  Available:', medium.length);
-        devLog('  Picked 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
-        break;
-
-      case 'gangster':
-        // GANGSTER (Level 4): Strong legendaries (150 PWR only, total 750)
-        // Filter cards with exactly 150 power
-        const cards150 = sorted.filter(c => (c.power || 0) === 150);
-        devLog('‡ GANGSTER DEBUG:');
-        devLog('  Total cards in sorted:', sorted.length);
-        devLog('  Cards with 150 PWR:', cards150.length);
-        if (cards150.length > 0) {
-          devLog('  First 3 cards with 150 PWR:', cards150.slice(0, 3).map(c => `#${c.tokenId} (${c.power} PWR, ${c.rarity})`));
-        }
-
-        if (cards150.length >= HAND_SIZE) {
-          // Randomize to add variety
-          pickedDealer = cards150.sort(() => Math.random() - 0.5).slice(0, HAND_SIZE);
-          devLog('  ✓ Picked', HAND_SIZE, 'random cards from 150 PWR pool');
-        } else {
-          // Fallback: pick legendaries
-          devLog('  ! Not enough 150 PWR cards, using legendaries fallback');
-          const legendaries = sorted.filter(c => {
-            const r = (c.rarity || '').toLowerCase();
-            return r.includes('legend');
-          });
-          devLog('  Legendaries found:', legendaries.length);
-          pickedDealer = legendaries.slice(0, HAND_SIZE);
-        }
-        devLog('‡ GANGSTER FINAL:', pickedDealer.length, 'cards picked');
-        devLog('  Cards:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        devLog('  Total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
-        break;
-
-      case 'gigachad':
-        // GIGACHAD (Level 5): TOP 5 STRONGEST (always same cards, total ~855)
-        pickedDealer = sorted.slice(0, HAND_SIZE);
-        devLog('§ GIGACHAD picked top 5:', pickedDealer.map(c => `#${c.tokenId} (${c.power} PWR)`));
-        devLog('§ GIGACHAD total PWR:', pickedDealer.reduce((sum, c) => sum + (c.power || 0), 0));
-        break;
-    }
+    const pickedDealer = generateAIHand(sorted, difficulty as any);
 
     setTimeout(() => {
       // Use orderedOpponentCards if elimination mode, otherwise use pickedDealer
@@ -2232,7 +1407,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                     eliminationDifficulty // difficulty
                   );
 
-                  ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
                 } catch (err) {
                   devError('✗ Error awarding PvE coins (Elimination):', err);
                 }
@@ -2252,7 +1426,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
               });
 
               // TESTVBMS sent to inbox - player can claim later needed
-              console.log('[DEBUG PvE Elimination] coinsEarned:', coinsEarned, 'finalResult:', finalResult);
+              devLog('[PvE Elimination] coinsEarned:', coinsEarned, 'finalResult:', finalResult);
 
               // Close battle first
               setTimeout(() => {
@@ -2370,7 +1544,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
             );
 
             // Reload match history
-            ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
           } catch (err) {
             devError('✗ Error awarding PvE coins:', err);
           }
@@ -2404,109 +1577,15 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     }, 4500);
   }, [selectedCards, nfts, t, soundEnabled, isBattling, aiDifficulty, address, userProfile]);
 
-  const saveDefenseDeck = useCallback(async () => {
-    if (!address || !userProfile || selectedCards.length !== HAND_SIZE) return;
-
-    try {
-      // ✓ Verify profile exists in Convex first
-      // 🚀 BANDWIDTH FIX: userProfile already verified at function start (line 2398)
-      devLog('✓ Profile verified:', userProfile.username);
-
-      // ✓ Validate all cards have required data
-      const invalidCards = selectedCards.filter(card =>
-        !card.tokenId ||
-        typeof card.power !== 'number' ||
-        isNaN(card.power) ||
-        !card.imageUrl ||
-        card.imageUrl === 'undefined' ||
-        card.imageUrl === ''
-      );
-
-      if (invalidCards.length > 0) {
-        devError('✗ Invalid cards detected:', invalidCards);
-        toast.error(`${invalidCards.length} card(s) have invalid data (missing image or power). Please refresh and try again.`);
-        return;
-      }
-
-      // ✓ MUDANÇA: Salvar objetos completos ao invés de apenas tokenIds
-      const defenseDeckData = selectedCards.map(card => {
-        const hasFoil = card.foil && card.foil !== 'None' && card.foil !== '';
-        return {
-          tokenId: String(card.tokenId),
-          power: Number(card.power) || 0,
-          imageUrl: String(card.imageUrl),
-          name: card.name || `Card #${card.tokenId}`,
-          rarity: card.rarity || 'Common',
-          foil: hasFoil ? String(card.foil) : undefined,
-        };
-      });
-
-      devLog('💾 Saving defense deck:', {
-        address,
-        cardCount: defenseDeckData.length,
-        cards: defenseDeckData.map(c => ({
-          tokenId: c.tokenId,
-          power: c.power,
-          foil: c.foil,
-          imageUrl: c.imageUrl.substring(0, 50) + '...'
-        }))
-      });
-
-      // ✓ Try to save with retry logic
-      let saveSuccess = false;
-      let lastError: any = null;
-
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          setDefenseDeckSaveStatus(`Saving... (Attempt ${attempt}/3)`);
-          devLog(`📡 Attempt ${attempt}/3 to save defense deck...`);
-          await ConvexProfileService.updateDefenseDeck(address, defenseDeckData);
-          devLog(`✓ Defense deck saved successfully on attempt ${attempt}`);
-          saveSuccess = true;
-          setDefenseDeckSaveStatus('');
-          break;
-        } catch (err: any) {
-          lastError = err;
-          devError(`✗ Attempt ${attempt}/3 failed:`, err);
-
-          // If it's the last attempt, throw
-          if (attempt === 3) {
-            setDefenseDeckSaveStatus('');
-            throw err;
-          }
-
-          // Wait before retry (exponential backoff)
-          setDefenseDeckSaveStatus(`Retrying in ${attempt} second(s)...`);
-          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
-        }
-      }
-
-      if (saveSuccess) {
-        if (soundEnabled) AudioManager.buttonSuccess();
-        setShowDefenseDeckSaved(true);
-
-        // Hide success message after 3 seconds
-        setTimeout(() => {
-          setShowDefenseDeckSaved(false);
-        }, 3000);
-
-        // Reload profile to get updated defense deck
-        await refreshProfile();
-      }
-    } catch (error: any) {
-      devError('Error saving defense deck:', error);
-
-      // More helpful error message
-      const errorMsg = error?.message || String(error);
-      if (errorMsg.includes('Server Error') || errorMsg.includes('Request ID')) {
-        toast.error('Convex server error. This might be temporary. Please wait a few seconds and try again.');
-      } else if (errorMsg.includes('Profile not found')) {
-        toast.error('Your profile was not found. Please refresh the page and try again.');
-      } else {
-        toast.error(`Error saving defense deck: ${errorMsg}. Please try again or refresh the page.`);
-      }
-    }
-  }, [address, userProfile, selectedCards, soundEnabled]);
+  const { saveDefenseDeck } = useSaveDefenseDeck({
+    address,
+    userProfile,
+    selectedCards,
+    soundEnabled,
+    setDefenseDeckSaveStatus,
+    setShowDefenseDeckSaved,
+    refreshProfile,
+  });
 
   const totalPower = useMemo(() =>
     selectedCards.reduce((sum, c) => sum + (c.power || 0), 0),
@@ -2775,8 +1854,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
                       isRanked ? 20 : 0 // entryFeePaid (20 for ranked, 0 for casual)
                     );
 
-                    ConvexProfileService.getMatchHistory(address, 20).then(setMatchHistory);
-
+  
                     // 🔔 Send notification to defender (opponent)
                     fetch('/api/notifications/send', {
                       method: 'POST',
@@ -2895,301 +1973,28 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     }
   }, [pvpMode, isSearching, address]);
 
-  // Profile loading moved to ProfileContext - no local useEffect needed
+  // Mission management (load, claim, claimAll) handled by useMissionsManager hook
+  const { loadMissions, claimMission, claimAllMissions } = useMissionsManager({
+    address,
+    soundEnabled,
+    lang,
+    effectiveChain,
+    userProfile,
+    setMissions,
+    setIsLoadingMissions,
+    setIsClaimingMission,
+    setIsClaimingAll,
+    setShowDailyClaimPopup,
+    refreshProfile,
+  });
 
-  // Load missions when address changes or profile becomes available
-  // profileDashboard?._id ensures we wait for account creation before loading
+  // Load missions when address/profile becomes available
   useEffect(() => {
     if (address && profileDashboard) {
       loadMissions();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address, profileDashboard?._id]);
-
-  // Helper function to get mission info
-  const getMissionInfo = (missionType: string) => {
-    const missionData: Record<string, { icon: string; title: string; description: string }> = {
-      daily_login: {
-        icon: '/images/icons/mission.svg',
-        title: 'Daily Login',
-        description: 'Login bonus for today',
-      },
-      first_pve_win: {
-        icon: '/images/icons/victory.svg',
-        title: 'First PvE Victory',
-        description: 'Win your first PvE battle today',
-      },
-      first_pvp_match: {
-        icon: '/images/icons/battle.svg',
-        title: 'First PvP Match',
-        description: 'Complete your first PvP match today',
-      },
-      streak_3: {
-        icon: '/images/icons/achievement.svg',
-        title: '3-Win Streak',
-        description: 'Win 3 matches in a row',
-      },
-      streak_5: {
-        icon: '/images/icons/achievement.svg',
-        title: '5-Win Streak',
-        description: 'Win 5 matches in a row',
-      },
-      streak_10: {
-        icon: '/images/icons/achievement.svg',
-        title: '10-Win Streak',
-        description: 'Win 10 matches in a row',
-      },
-      welcome_gift: {
-        icon: '/images/icons/coins.svg',
-        title: 'Welcome Gift',
-        description: 'Receive your welcome bonus!',
-      },
-      vibefid_minted: {
-        icon: '/images/icons/achievement.svg',
-        title: 'VibeFID Collection',
-        description: 'Own at least one VibeFID card!',
-      },
-      claim_vibe_badge: {
-        icon: '/images/icons/achievement.svg',
-        title: 'VIBE Badge',
-        description: '2x coins in Wanted Cast!',
-      },
-    };
-
-    return missionData[missionType] || {
-      icon: '/images/icons/help.svg',
-      title: 'Unknown Mission',
-      description: missionType,
-    };
-  };
-
-  // Function to load missions
-  const loadMissions = async () => {
-    if (!address) return;
-
-    setIsLoadingMissions(true);
-    try {
-      // 🚀 BANDWIDTH FIX: Only call these mutations once per session
-      const sessionKey = `vbms_missions_init_${address.toLowerCase()}`;
-      const today = new Date().toISOString().split('T')[0];
-      const cached = sessionStorage.getItem(sessionKey);
-
-      if (cached !== today) {
-        // 🚀 BANDWIDTH FIX: Only call ensureWelcomeGift if user doesn't have it yet
-        // This saves ~10MB/day by skipping the mutation for users who already have the gift
-        if (!userProfile?.hasReceivedWelcomeGift) {
-          await convex.mutation(api.missions.ensureWelcomeGift, {
-            playerAddress: address,
-          });
-        }
-
-        // Mark daily login mission as completed (auto-unlock on login)
-        await convex.mutation(api.missions.markDailyLogin, {
-          playerAddress: address,
-        });
-
-        sessionStorage.setItem(sessionKey, today);
-      }
-
-      // Get completed missions from database
-      const playerMissions = await convex.query(api.missions.getPlayerMissions, {
-        playerAddress: address,
-      });
-
-      // Define all possible missions (rewards match backend)
-      const allMissionTypes = [
-        { type: 'daily_login', reward: 100, date: 'today' },
-        { type: 'first_pve_win', reward: 50, date: 'today' },
-        { type: 'first_pvp_match', reward: 100, date: 'today' },
-        { type: 'streak_3', reward: 150, date: 'today' },
-        { type: 'streak_5', reward: 300, date: 'today' },
-        { type: 'streak_10', reward: 750, date: 'today' },
-        { type: 'welcome_gift', reward: 500, date: 'once' },
-        { type: 'vibefid_minted', reward: 5000, date: 'once' },
-        { type: 'claim_vibe_badge', reward: 0, date: 'once' }, // Badge reward, not coins
-      ];
-
-      // Check VIBE badge eligibility (VibeFID holder check)
-      // 🚀 BANDWIDTH FIX: Cache badge eligibility per session (rarely changes)
-      let vibeBadgeEligibility = null;
-      const badgeCacheKey = `vbms_badge_${address.toLowerCase()}`;
-      try {
-        const cached = sessionStorage.getItem(badgeCacheKey);
-        if (cached) {
-          vibeBadgeEligibility = JSON.parse(cached);
-        }
-      } catch (e) { /* ignore */ }
-
-      if (!vibeBadgeEligibility) {
-        // 🚀 ON-CHAIN: Now uses action with Alchemy verification
-        vibeBadgeEligibility = await convex.action(api.missions.checkVibeBadgeEligibility, {
-          playerAddress: address,
-        });
-        try {
-          sessionStorage.setItem(badgeCacheKey, JSON.stringify(vibeBadgeEligibility));
-        } catch (e) { /* ignore */ }
-      }
-
-      // Merge with existing missions from DB
-      const completeMissionsList = allMissionTypes.map((missionDef) => {
-        const existingMission = (playerMissions || []).find(
-          (m: any) => m.missionType === missionDef.type
-        );
-
-        if (existingMission) {
-          return existingMission; // Return actual mission from DB
-        } else {
-          // Special handling for VIBE badge mission
-          if (missionDef.type === 'claim_vibe_badge') {
-            return {
-              _id: `placeholder_${missionDef.type}`,
-              missionType: missionDef.type,
-              completed: vibeBadgeEligibility?.eligible || false, // Completed if eligible (has VibeFID)
-              claimed: vibeBadgeEligibility?.hasBadge || false,   // Claimed if already has badge
-              reward: missionDef.reward,
-              date: missionDef.date,
-            };
-          }
-
-          // Return placeholder for locked mission
-          return {
-            _id: `placeholder_${missionDef.type}`,
-            missionType: missionDef.type,
-            completed: false,
-            claimed: false,
-            reward: missionDef.reward,
-            date: missionDef.date,
-          };
-        }
-      });
-
-      setMissions(completeMissionsList);
-      devLog('📋 Loaded missions:', completeMissionsList);
-
-      // Show daily claim popup if daily_login mission is unclaimed
-      const dailyLoginMission = completeMissionsList.find((m: any) => m.missionType === 'daily_login');
-      if (dailyLoginMission?.completed && !dailyLoginMission?.claimed) {
-        setShowDailyClaimPopup(true);
-      }
-    } catch (error) {
-      devError('Error loading missions:', error);
-
-      // Fallback: Always show locked missions even on error
-      const fallbackMissions = [
-        { _id: 'placeholder_daily_login', missionType: 'daily_login', completed: false, claimed: false, reward: 100, date: 'today' },
-        { _id: 'placeholder_first_pve_win', missionType: 'first_pve_win', completed: false, claimed: false, reward: 50, date: 'today' },
-        { _id: 'placeholder_first_pvp_match', missionType: 'first_pvp_match', completed: false, claimed: false, reward: 100, date: 'today' },
-        { _id: 'placeholder_streak_3', missionType: 'streak_3', completed: false, claimed: false, reward: 150, date: 'today' },
-        { _id: 'placeholder_streak_5', missionType: 'streak_5', completed: false, claimed: false, reward: 300, date: 'today' },
-        { _id: 'placeholder_streak_10', missionType: 'streak_10', completed: false, claimed: false, reward: 750, date: 'today' },
-        { _id: 'placeholder_welcome_gift', missionType: 'welcome_gift', completed: false, claimed: false, reward: 500, date: 'once' },
-        { _id: 'placeholder_vibefid_minted', missionType: 'vibefid_minted', completed: false, claimed: false, reward: 5000, date: 'once' },
-        { _id: 'placeholder_claim_vibe_badge', missionType: 'claim_vibe_badge', completed: false, claimed: false, reward: 0, date: 'once' },
-      ];
-      setMissions(fallbackMissions);
-    } finally {
-      setIsLoadingMissions(false);
-    }
-  };
-
-  // Function to claim individual mission
-  const claimMission = async (missionId: string, missionType?: string) => {
-    if (!address) return;
-
-    // Special handling for VIBE badge claim (before placeholder check because it uses placeholder ID)
-    if (missionType === 'claim_vibe_badge') {
-      setIsClaimingMission(missionId);
-      try {
-        // 🚀 ON-CHAIN: Now uses action with Alchemy verification
-        const result = await convex.action(api.missions.claimVibeBadge, {
-          playerAddress: address,
-        });
-
-        if (soundEnabled) AudioManager.buttonSuccess();
-        devLog('✅ VIBE Badge claimed:', result);
-
-        // Reload missions and profile to update UI
-        await loadMissions();
-        await refreshProfile();
-      } catch (error: any) {
-        devError('Error claiming VIBE badge:', error);
-        if (soundEnabled) AudioManager.buttonError();
-        toast.error(error.message || 'Failed to claim VIBE badge');
-      } finally {
-        setIsClaimingMission(null);
-      }
-      return;
-    }
-
-    // Don't try to claim placeholder missions (except VIBE badge which is handled above)
-    if (missionId.startsWith('placeholder_')) {
-      if (soundEnabled) AudioManager.buttonError();
-      return;
-    }
-
-    setIsClaimingMission(missionId);
-    try {
-      // Regular mission claim
-      const result = await convex.mutation(api.missions.claimMission, {
-        playerAddress: address,
-        missionId: missionId as any,
-        language: lang,
-        chain: effectiveChain,
-      });
-
-      if (soundEnabled) AudioManager.buttonSuccess();
-      devLog('✅ Mission claimed:', result);
-
-      // Fire TX in background, don't block UI
-      if (result?.reward > 0) {
-        sendMissionTx(result.reward, ARB_CLAIM_TYPE.MISSION); // fire-and-forget
-      }
-
-      // Reload missions and profile to update UI
-      await loadMissions();
-      await refreshProfile();
-      } catch (error: any) {
-      devError('Error claiming mission:', error);
-      if (soundEnabled) AudioManager.buttonError();
-      toast.error(error.message || 'Failed to claim mission');
-    } finally {
-      setIsClaimingMission(null);
-    }
-  };
-
-  // Function to claim all missions
-  const claimAllMissions = async () => {
-    if (!address) return;
-
-    setIsClaimingAll(true);
-    try {
-      const result = await convex.mutation(api.missions.claimAllMissions, {
-        playerAddress: address,
-        language: lang,
-        chain: effectiveChain,
-      });
-
-      if (result && result.claimed > 0) {
-        if (soundEnabled) AudioManager.buttonSuccess();
-        devLog(`✅ Claimed ${result.claimed} missions (+${result.totalReward} coins)`);
-
-        // Fire TX in background, don't block UI
-        sendMissionTx(result.totalReward, ARB_CLAIM_TYPE.MISSION); // fire-and-forget
-
-        // Reload missions and profile
-        await loadMissions();
-        await refreshProfile();
-      } else {
-        if (soundEnabled) AudioManager.buttonClick();
-        toast.error('No missions to claim!');
-      }
-    } catch (error: any) {
-      devError('Error claiming all missions:', error);
-      if (soundEnabled) AudioManager.buttonError();
-      toast.error(error.message || 'Failed to claim missions');
-    } finally {
-      setIsClaimingAll(false);
-    }
-  };
 
   // Auto scroll to play buttons when 5 cards are selected
   useEffect(() => {
@@ -3200,109 +2005,16 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
     }
   }, [selectedCards.length]);
 
-  // Update profile stats when NFTs change (with mutex to prevent race conditions)
-  useEffect(() => {
-    // Guard: Skip if update already in progress
-    if (updateStatsInProgress.current) {
-      devLog('⏸️ Stats update already in progress, skipping...');
-      return;
-    }
-
-    if (address && userProfile && nfts.length > 0) {
-      updateStatsInProgress.current = true;
-
-      // 🚀 BANDWIDTH FIX v2: SessionStorage cache to skip duplicate updates in same session
-      const statsKey = `vbms_stats_${address.toLowerCase()}`;
-      const currentHash = `${nfts.length}-${openedCardsCount}-${totalNftPower}`;
-      const cachedHash = sessionStorage.getItem(statsKey);
-
-      if (cachedHash === currentHash) {
-        devLog('📊 Stats already sent this session, skipping');
-        updateStatsInProgress.current = false;
-        return;
-      }
-
-      // 🚀 Performance: Using pre-computed memoized values
-      devLog('📊 Updating profile stats:', { totalCards: nfts.length, openedCards: openedCardsCount, totalPower: totalNftPower, tokenIds: nftTokenIds.length });
-
-      // Calculate collection-specific powers for leaderboard filtering
-      const collectionPowers = nfts.reduce((acc, nft) => {
-        const collection = nft.collection || 'vibe'; // Default to vibe if no collection specified
-        const power = nft.power || 0;
-
-        if (collection === 'vibe') {
-          acc.vibePower = (acc.vibePower || 0) + power;
-        } else if (collection === 'gmvbrs') {
-          acc.vbrsPower = (acc.vbrsPower || 0) + power;
-        } else if (collection === 'vibefid') {
-          acc.vibefidPower = (acc.vibefidPower || 0) + power;
-        }
-
-        return acc;
-      }, {} as { vibePower?: number; vbrsPower?: number; vibefidPower?: number });
-
-      devLog('📊 Collection powers:', collectionPowers);
-
-      // 🚀 BANDWIDTH FIX: Only update if stats actually changed from profile
-      const currentStats = userProfile?.stats;
-      const statsChanged =
-        nfts.length !== (currentStats?.totalCards || 0) ||
-        totalNftPower !== (currentStats?.totalPower || 0) ||
-        openedCardsCount !== (currentStats?.openedCards || 0);
-
-      if (!statsChanged) {
-        devLog('📊 Stats unchanged, skipping update');
-        sessionStorage.setItem(statsKey, currentHash); // Cache so we skip next time too
-        updateStatsInProgress.current = false;
-        return;
-      }
-
-      const shouldSendTokenIds = nfts.length !== (currentStats?.totalCards || 0);
-
-      if (shouldSendTokenIds) {
-        devLog('📊 Token count changed, sending tokenIds:', { stored: currentStats?.totalCards, current: nfts.length });
-      }
-
-      // 🚀 BANDWIDTH FIX: Don't reload profile after update
-      ConvexProfileService.updateStats(
-        address,
-        nfts.length,
-        openedCardsCount,
-        unopenedCardsCount,
-        totalNftPower,
-        shouldSendTokenIds ? nftTokenIds : undefined, // Only send when count changed
-        collectionPowers
-      )
-        .then(() => {
-          // 🚀 BANDWIDTH FIX v2: Cache the stats we just sent
-          sessionStorage.setItem(statsKey, currentHash);
-
-          // Update local state with the stats we just sent (no refetch needed)
-          if (userProfile) {
-            setUserProfile({
-              ...userProfile,
-              stats: {
-                ...userProfile.stats,
-                totalCards: nfts.length,
-                openedCards: openedCardsCount,
-                unopenedCards: unopenedCardsCount,
-                totalPower: totalNftPower,
-                ...collectionPowers,
-              },
-            });
-          }
-        })
-        .catch((error) => {
-          devError('Error updating profile stats:', error);
-        })
-        .finally(() => {
-          // Always release the lock
-          updateStatsInProgress.current = false;
-        });
-    }
-  }, [address, nfts]); // Removed userProfile to prevent infinite loop
-
-  // Leaderboard loading moved to /leaderboard page to reduce queries
+  useProfileStatsSync({
+    address,
+    userProfile,
+    nfts,
+    openedCardsCount,
+    unopenedCardsCount,
+    totalNftPower,
+    nftTokenIds,
+    setUserProfile,
+  });
 
   // Cleanup old rooms and matchmaking entries periodically
   useEffect(() => {
@@ -3353,7 +2065,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
 
     sessionStorage.setItem(sessionKey, '1');
     cleanConflictingDefense({ address }).catch(err => {
-      console.error('Error cleaning conflicting defense cards:', err);
+      devError('Error cleaning conflicting defense cards:', err);
     });
   }, [address, defenseLockedTokenIds.size, cleanConflictingDefense]);
 
@@ -3504,7 +2216,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         t={t}
-        musicEnabled={musicEnabled}
+        musicEnabled={isMusicEnabled}
         toggleMusic={toggleMusic}
         musicVolume={musicVolume}
         setMusicVolume={setMusicVolume}
@@ -3551,7 +2263,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
             const updated = await ConvexProfileService.getProfile(address);
             setUserProfile(updated);
           } catch (e) {
-            console.error("Failed to set chain:", e);
+            devError("Failed to set chain:", e);
           }
         }}
         onChangelogClick={() => setShowChangelog(true)}
@@ -3577,26 +2289,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         username={userProfile?.username ?? null}
         farcasterDisplayName={userProfile?.farcasterDisplayName ?? null}
       />
-
-      {/* Chain Select Modal (first-time) - only if ARB supported */}
-      <ChainSelectionModal
-        isOpen={showChainModal && arbSupported}
-        onClose={async () => {
-          if (address) { try { await markChainModalSeenMutation({ address }); } catch {} }
-          setShowChainModal(false);
-        }}
-        onSelectChain={async (chain) => {
-          if (!address) return;
-          await setPreferredChainMutation({ address, chain });
-          await markChainModalSeenMutation({ address });
-          const updated = await ConvexProfileService.getProfile(address);
-          setUserProfile(updated);
-          setShowChainModal(false);
-          if (pendingClaimAction) { pendingClaimAction(); setPendingClaimAction(null); }
-        }}
-      />
-
-      {/* Arb Mode Announcement Modal - REMOVED */}
 
       {/* Mecha Arena Modal */}
       <CpuArenaModal
@@ -3637,8 +2329,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
 
       {/* Game Mode Selection - Now handled directly by GameGrid */}
 
-      {/* REMOVED: Referrals Modal - System disabled */}
-
       {/* Elimination Mode - Card Ordering Screen */}
       <EliminationOrderingModal
         isOpen={eliminationPhase === 'ordering'}
@@ -3647,7 +2337,7 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         soundEnabled={soundEnabled}
         onStartBattle={() => {
           // Generate AI card order based on difficulty
-          const aiCards = generateAIHand(eliminationDifficulty);
+          const aiCards = generateAIHand(jcNfts, eliminationDifficulty);
           setOrderedOpponentCards(aiCards);
 
           // Start elimination battle
@@ -3778,9 +2468,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         api={api}
       />
 
-
-      {/* Raid Boss moved to /raid page */}
-
       {/* PvP Menu Modals (Game mode selection, PvP menu, Create/Join room, Auto-match) */}
       <PvPMenuModals
         pvpMode={pvpMode}
@@ -3824,8 +2511,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         isCardLocked={isCardLocked}
         t={t}
       />
-
-      {/* Old inline tutorial removed - Now using WelcomeOnboarding component */}
 
       <header className={`tour-header flex flex-col items-center ${isInFarcaster ? 'gap-1 mb-0 py-1.5 w-full max-w-[304px] mx-auto' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg ${isInFarcaster ? 'mt-[60px]' : ''}`}>
         {!isInFarcaster && (
@@ -3991,9 +2676,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
             </div>
           )}
 
-          {/* 🏪 Shop View */}
-          {/* Shop moved to /shop page */}
-
           {/* End content wrapper */}
           </div>
 
@@ -4012,7 +2694,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
             t={t}
             onProfileCreated={async () => {
               setShowTutorial(true);
-              // REMOVED: Referral tracking - System disabled
             }}
           />
 
@@ -4050,10 +2731,10 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
             try {
               if (address) {
                 await consumePveAttempt({ address });
-                console.log('✅ PvE attempt consumed successfully');
+                devLog('PvE attempt consumed successfully');
               }
             } catch (error) {
-              console.error('❌ Failed to consume PvE attempt:', error);
+              devError('Failed to consume PvE attempt:', error);
               toast.error(error instanceof Error ? error.message : 'Failed to start battle. Please try again.');
               return; // Don't start battle if attempt consumption failed
             }
@@ -4095,11 +2776,6 @@ const { approve: approveVBMS, isPending: isApprovingVBMS } = useApproveVBMS();
         remainingAttempts={pveAttemptsData?.remaining ?? 10}
         totalAttempts={pveAttemptsData?.total ?? 10}
       />
-
-      {/* Easter Egg removed */}
-
-      {/* TEMPORARILY DISABLED - Causing performance issues */}
-      {/* <MobileDebugConsole /> */}
 
       </div>
     </div>

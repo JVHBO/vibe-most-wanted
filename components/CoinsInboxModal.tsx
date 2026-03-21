@@ -31,6 +31,8 @@ interface CoinsInboxModalProps {
     coins: number; // TESTVBMS balance (after claiming from inbox)
     lifetimeEarned: number;
     cooldownRemaining?: number; // Seconds until next conversion allowed
+    pendingConversion?: number; // Coins stuck in failed conversion
+    pendingConversionTimestamp?: number | null;
   };
   onClose: () => void;
   userAddress?: string; // Pass address from parent (for Farcaster mobile)
@@ -129,6 +131,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const claimInboxAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
   const recordTESTVBMSConversion = useMutation(api.vbmsClaim.recordTESTVBMSConversion);
+  const recoverPendingConversion = useMutation(api.vbmsClaim.recoverPendingConversion);
   const { claimVBMS } = useClaimVBMS();
 
   // Get VBMS wallet balance from blockchain (using Farcaster-compatible hook for miniapp)
@@ -233,6 +236,9 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const inboxAmount = inboxStatus.inbox || 0; // TESTVBMS no inbox
   const testvbmsBalance = inboxStatus.coins || 0; // TESTVBMS no saldo
   const canClaimInbox = inboxAmount >= 1 && !isProcessing;
+  const stuckPending = inboxStatus.pendingConversion || 0;
+  const stuckTimestamp = inboxStatus.pendingConversionTimestamp || 0;
+  const canRecover = stuckPending > 0 && (Date.now() - stuckTimestamp) >= 30 * 60 * 1000;
 
   // Parse conversion amount
   const selectedAmount = parseInt(convertAmount) || 0;
@@ -598,6 +604,41 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             )
           }
 
+
+          {/* Stuck pending conversion recovery */}
+          {stuckPending > 0 && (
+            <div className={`mt-3 border-2 p-3 ${canRecover ? 'border-[#F97316] bg-[#1c0900]' : 'border-[#555] bg-[#1a1a1a]'}`}>
+              <p className="text-white font-bold text-xs mb-1">
+                {stuckPending.toLocaleString()} coins stuck in a pending conversion
+              </p>
+              {canRecover ? (
+                <button
+                  onClick={async () => {
+                    if (!address || isProcessing) return;
+                    setIsProcessing(true);
+                    try {
+                      const r = await recoverPendingConversion({ address });
+                      toast.success(`Recovered ${r.recovered.toLocaleString()} coins`);
+                      await Promise.all([refreshUserProfile(), refreshProfile()]);
+                    } catch (e: any) {
+                      toast.error(e.message || 'Recovery failed');
+                    } finally {
+                      setIsProcessing(false);
+                    }
+                  }}
+                  disabled={isProcessing}
+                  className="w-full py-2 bg-[#F97316] border-2 border-black text-black font-bold text-xs shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] disabled:opacity-50 transition-all"
+                >
+                  Recover {stuckPending.toLocaleString()} coins
+                </button>
+              ) : (
+                <p className="text-[#888] text-[11px]">
+                  Available for recovery in {Math.ceil((30 * 60 * 1000 - (Date.now() - stuckTimestamp)) / 60000)} min
+                  (transaction may still confirm)
+                </p>
+              )}
+            </div>
+          )}
 
           </div>
         </div>

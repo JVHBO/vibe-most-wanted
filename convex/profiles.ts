@@ -330,6 +330,10 @@ export const getProfileDashboard = query({
       // 🔗 Chain preference
       preferredChain: profile.preferredChain || "arbitrum",
       chainModalSeen: profile.chainModalSeen || false,
+
+      // Pending conversion recovery
+      pendingConversion: profile.pendingConversion || 0,
+      pendingConversionTimestamp: profile.pendingConversionTimestamp || null,
     };
   },
 });

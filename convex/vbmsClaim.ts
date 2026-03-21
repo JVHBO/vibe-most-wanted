@@ -1155,6 +1155,17 @@ export const recordTESTVBMSConversion = mutation({
       txHash,
     });
 
+    // 🧹 Remove the "(pending)" record created at conversion start to avoid confusion
+    const pendingRecord = await ctx.db
+      .query("coinTransactions")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .filter((q) => q.eq(q.field("source"), "pending_conversion"))
+      .order("desc")
+      .first();
+    if (pendingRecord) {
+      await ctx.db.delete(pendingRecord._id);
+    }
+
     console.log(`✅ ${address} converted ${amount} TESTVBMS → VBMS (tx: ${txHash})`);
 
     return {
@@ -1439,3 +1450,117 @@ export const clearPendingOnly = internalMutation({
     await ctx.db.patch(profile._id, { pendingConversion: 0, pendingConversionTimestamp: undefined, pendingNonce: undefined });
   },
 });
+
+/**
+ * User-callable recovery: restores coins stuck in a failed TESTVBMS → VBMS conversion.
+ * Requires 30 minutes to have passed since the conversion was initiated (TX is dead by then).
+ */
+export const recoverPendingConversion = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const profile = await getProfile(ctx, address);
+    const pending = profile.pendingConversion || 0;
+
+    if (pending <= 0) {
+      throw new Error("No pending conversion to recover.");
+    }
+
+    const timestamp = profile.pendingConversionTimestamp || 0;
+    const elapsedMs = Date.now() - timestamp;
+    const THIRTY_MINUTES = 30 * 60 * 1000;
+
+    if (elapsedMs < THIRTY_MINUTES) {
+      const remaining = Math.ceil((THIRTY_MINUTES - elapsedMs) / 60000);
+      throw new Error(`Transaction may still be processing. Try again in ${remaining} minute(s).`);
+    }
+
+    const restoredBalance = (profile.coins || 0) + pending;
+    await ctx.db.patch(profile._id, {
+      coins: restoredBalance,
+      pendingConversion: 0,
+      pendingConversionTimestamp: undefined,
+      pendingNonce: undefined,
+    });
+
+    // Remove stale (pending) transaction record if present
+    const pendingRecord = await ctx.db
+      .query("coinTransactions")
+      .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+      .filter((q) => q.eq(q.field("source"), "pending_conversion"))
+      .order("desc")
+      .first();
+    if (pendingRecord) {
+      await ctx.db.delete(pendingRecord._id);
+    }
+
+    await logTransaction(ctx, {
+      address,
+      type: 'refund',
+      amount: pending,
+      source: 'recovery',
+      description: `Recovered ${pending.toLocaleString()} TESTVBMS from failed conversion`,
+      balanceBefore: profile.coins || 0,
+      balanceAfter: restoredBalance,
+    });
+
+    console.log(`🔄 RECOVERY: ${address} restored ${pending} TESTVBMS (was pending since ${new Date(timestamp).toISOString()})`);
+    return { recovered: pending, newBalance: restoredBalance };
+  },
+});
+
+/**
+ * ADMIN: Recover stuck pending conversion by username (no time restriction).
+ * For support use only.
+ */
+export const adminRecoverPendingByUsername = mutation({
+  args: { username: v.string(), adminKey: v.string() },
+  handler: async (ctx, { username, adminKey }) => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) {
+      throw new Error("Unauthorized");
+    }
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_username", (q) => q.eq("username", username.toLowerCase()))
+      .first();
+
+    if (!profile) throw new Error(`Profile not found: ${username}`);
+
+    const pending = profile.pendingConversion || 0;
+    const address = profile.address;
+
+    const restoredBalance = (profile.coins || 0) + pending;
+    await ctx.db.patch(profile._id, {
+      coins: restoredBalance,
+      pendingConversion: 0,
+      pendingConversionTimestamp: undefined,
+      pendingNonce: undefined,
+    });
+
+    if (pending > 0) {
+      const pendingRecord = await ctx.db
+        .query("coinTransactions")
+        .withIndex("by_address", (q) => q.eq("address", address.toLowerCase()))
+        .filter((q) => q.eq(q.field("source"), "pending_conversion"))
+        .order("desc")
+        .first();
+      if (pendingRecord) {
+        await ctx.db.delete(pendingRecord._id);
+      }
+
+      await logTransaction(ctx, {
+        address,
+        type: 'refund',
+        amount: pending,
+        source: 'admin_recovery',
+        description: `[ADMIN] Recovered ${pending.toLocaleString()} TESTVBMS from failed conversion`,
+        balanceBefore: profile.coins || 0,
+        balanceAfter: restoredBalance,
+      });
+    }
+
+    console.log(`[ADMIN RECOVERY] ${username} (${address}): restored ${pending} TESTVBMS, balance now ${restoredBalance}`);
+    return { username, address, recovered: pending, newBalance: restoredBalance };
+  },
+});
+

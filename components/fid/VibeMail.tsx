@@ -1203,7 +1203,7 @@ export function VibeMailInboxWithClaim({
         let y = 40;
         const textOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
         if (textOnly && !prev['text']) { next['text'] = { x: 12, y, w: W, h: 64 }; y += 76; }
-        if (composerMessage.match(/\/sound=/i) && !prev['audio']) { next['audio'] = { x: 12, y, w: W, h: 56 }; y += 68; }
+        if ((composerMessage.match(/\/sound=/i) || isCustomAudio(composerAudioId || undefined)) && !prev['audio']) { next['audio'] = { x: 12, y, w: W, h: 56 }; y += 68; }
         const imgMatches = [...composerMessage.matchAll(/\/img=(\S+)/gi)];
         imgMatches.forEach((_, idx) => {
           const key = `img_${idx}`;
@@ -2104,9 +2104,9 @@ export function VibeMailInboxWithClaim({
     const lines = text.split('\n');
     return lines.map((line, lineIdx) => {
       const isLast = lineIdx === lines.length - 1;
-      // Mute command lines
+      // Hide command lines — keep transparent span so cursor positions stay aligned
       if (/^\/(?:img|sound)=/i.test(line.trim())) {
-        return <span key={lineIdx}><span style={{ color: '#3a3a3a', fontStyle: 'italic' }}>{line}</span>{!isLast && '\n'}</span>;
+        return <span key={lineIdx}><span style={{ color: 'transparent' }}>{line}</span>{!isLast && '\n'}</span>;
       }
       // Parse inline {c:#COLOR}text{/c} — while+indexOf
       const segs: React.ReactNode[] = [];
@@ -3477,6 +3477,8 @@ export function VibeMailInboxWithClaim({
                       const hasDesign = Object.keys(elementPositions).length > 0 || drawnIds.length > 0;
                       const pvTextOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
                       const pvAudioMatch = composerMessage.match(/\/sound=(\S+)/i);
+                      const pvHasVoice = isCustomAudio(composerAudioId || undefined);
+                      const pvEffectiveAudio = pvAudioMatch || pvHasVoice;
                       // Multi-image preview: one slot per /img= in message + optional upload
                       const pvAllImgSrcs: { key: string; src: string }[] = [
                         ...[...composerMessage.matchAll(/\/img=(\S+)/gi)].map((m, i) => ({ key: `img_${i}`, src: m[1] })),
@@ -3569,14 +3571,10 @@ export function VibeMailInboxWithClaim({
                                 </div>
                               )});
                             }
-                            if (pvAudioMatch && elementPositions['audio']) {
+                            if (pvEffectiveAudio && elementPositions['audio']) {
                               const pos = elementPositions['audio'];
-                              const rawUrl = pvAudioMatch[1];
-                              const audioUrl = proxyAudioUrl(rawUrl);
-                              const volMatch = composerMessage.match(/\/sound=\S+\s+volume=([\d.]+)/i);
-                              const vol = volMatch ? Math.min(1, Math.max(0, parseFloat(volMatch[1]))) : 0.2;
-                              const aName = rawUrl.split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio';
-                              const pid = `preview:${audioUrl}`;
+                              const aName = pvHasVoice ? 'Voice message' : (pvAudioMatch ? pvAudioMatch[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio' : 'Audio');
+                              const pid = pvHasVoice ? composerAudioId! : `preview:${proxyAudioUrl(pvAudioMatch![1])}`;
                               const isPlaying = playingAudio === pid;
                               pvItems.push({ key: 'pvaudio', z: pos.z ?? 0, node: (
                                 <div key="pvaudio" style={{ position:'absolute', left:pos.x, top:pos.y, width:pos.w, height:pos.h, transform:`rotate(${pos.r??0}deg)`, transformOrigin:'center center', overflow:'hidden', boxSizing:'border-box', zIndex: ((pos.z ?? 0) + 1) * 10 }}>
@@ -3585,7 +3583,12 @@ export function VibeMailInboxWithClaim({
                                     style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: `3px solid ${isPlaying ? '#ff6b00' : '#F97316'}` }}
                                     onClick={() => {
                                       if (isPlaying) { audioRef.current?.pause(); setPlayingAudio(null); }
-                                      else if (audioRef.current) {
+                                      else if (pvHasVoice) {
+                                        if (composerAudioId) playAudioById(composerAudioId, audioRef, convex, setPlayingAudio);
+                                      } else if (audioRef.current && pvAudioMatch) {
+                                        const audioUrl = proxyAudioUrl(pvAudioMatch[1]);
+                                        const volMatch = composerMessage.match(/\/sound=\S+\s+volume=([\d.]+)/i);
+                                        const vol = volMatch ? Math.min(1, Math.max(0, parseFloat(volMatch[1]))) : 0.2;
                                         audioRef.current.src = audioUrl; audioRef.current.volume = vol;
                                         audioRef.current.play().catch(() => setPlayingAudio(null));
                                         setPlayingAudio(pid);
@@ -3669,7 +3672,9 @@ export function VibeMailInboxWithClaim({
             {showDesign && (() => {
               const textOnly = composerMessage.replace(/\/sound=\S+(\s+volume=[\d.]+)?/gi, '').replace(/\/img=\S+/gi, '').trim();
               const audioMatch = composerMessage.match(/\/sound=(\S+)/i);
-              const audioName = audioMatch ? audioMatch[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio' : 'Audio';
+              const hasVoiceAudio = isCustomAudio(composerAudioId || undefined);
+              const effectiveAudioMatch = audioMatch || hasVoiceAudio;
+              const audioName = hasVoiceAudio ? 'Voice message' : (audioMatch ? audioMatch[1].split('/').pop()?.replace(/\.[^.]+$/, '').replace(/[-_%+]/g, ' ').trim() || 'Audio' : 'Audio');
               // Multi-image: one slot per /img= in message + optional upload slot
               const allImgSrcs: { key: string; src: string; label: string }[] = [
                 ...[...composerMessage.matchAll(/\/img=(\S+)/gi)].map((m, i) => ({ key: `img_${i}`, src: m[1], label: `Img #${i + 1}` })),
@@ -3683,9 +3688,9 @@ export function VibeMailInboxWithClaim({
                 const W = VIBEMAIL_CARD_WIDTH - 24;
                 const isImg = id.startsWith('img_') || id === 'img_upload';
                 const imgIdx = isImg ? (id === 'img_upload' ? allImgSrcs.length - 1 : parseInt(id.split('_')[1]) || 0) : 0;
-                const baseY = 8 + (textOnly ? 76 : 0) + (audioMatch ? 68 : 0) + imgIdx * 162;
+                const baseY = 8 + (textOnly ? 76 : 0) + (effectiveAudioMatch ? 68 : 0) + imgIdx * 162;
                 if (isImg) return { x: 12, y: baseY, w: W, h: 150, r: 0 };
-                const els = ['text', 'audio'].filter(e => (e === 'text' && textOnly) || (e === 'audio' && audioMatch));
+                const els = ['text', 'audio'].filter(e => (e === 'text' && textOnly) || (e === 'audio' && effectiveAudioMatch));
                 const idx = els.indexOf(id);
                 const y = 8 + Math.max(0, idx) * 72;
                 return { x: 12, y, w: W, h: 56, r: 0 };
@@ -3900,7 +3905,7 @@ export function VibeMailInboxWithClaim({
                             const next: Record<string, {x:number,y:number,w:number,h:number,r?:number}> = {};
                             let y = 8;
                             if (textOnly) { next['text'] = { x: 12, y, w: W, h: 64 }; y += 76; }
-                            if (audioMatch) { next['audio'] = { x: 12, y, w: W, h: 56 }; y += 68; }
+                            if (effectiveAudioMatch) { next['audio'] = { x: 12, y, w: W, h: 56 }; y += 68; }
                             if (imgSrc) { next['image'] = { x: 12, y, w: W, h: 150 }; }
                             return next;
                           });
@@ -4082,7 +4087,7 @@ export function VibeMailInboxWithClaim({
                             <div className="w-full h-full p-2 text-white/90 leading-relaxed overflow-hidden" style={{ background: '#000', fontSize: Math.max(8, Math.min(15, pos.h * 0.2)) }}>{textOnly}</div>
                           )});
                         }
-                        if (audioMatch && !hiddenElements.has('audio')) {
+                        if (effectiveAudioMatch && !hiddenElements.has('audio')) {
                           const p = elementPositions['audio'] || getDefaultPos('audio');
                           editItems.push({ id: 'audio', z: p.z ?? 0, node: renderEl('audio', '#F97316',
                             <div className="w-full h-full flex items-center gap-2.5 px-3" style={{ background: 'linear-gradient(135deg, #1c0900 0%, #0d0d0d 100%)', borderLeft: '3px solid #F97316', pointerEvents: 'none' }}>
