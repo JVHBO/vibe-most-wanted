@@ -988,7 +988,7 @@ export default function QuestsPage() {
                 );
                 const idx = Math.min(customCarouselIdx, quests.length - 1);
                 const q = quests[idx];
-                const questId = String(q._id);
+                const questId = q._id;
                 const isClaimed = claimedCustom.has(questId);
                 const isClaiming = claimingCustom === questId;
                 const bgSrc = q.bannerUrl || q.pfpUrl;

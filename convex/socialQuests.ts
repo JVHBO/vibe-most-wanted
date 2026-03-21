@@ -495,13 +495,15 @@ export const addCustomFollowQuest = mutation({
 export const claimCustomFollowReward = mutation({
   args: {
     address: v.string(),
-    questId: v.string(), // customFollowQuests._id as string
+    questId: v.id("customFollowQuests"),
   },
   handler: async (ctx, args) => {
     const address = normalizeAddress(args.address);
 
-    const quest = await ctx.db.get(args.questId as any);
-    if (!quest || !(quest as any).active) throw new Error("Quest not found or inactive");
+    if (isBlacklisted(address)) throw new ConvexError("[BLACKLISTED]");
+
+    const quest = await ctx.db.get(args.questId);
+    if (!quest || !quest.active) throw new ConvexError("Quest not found or inactive");
 
     // Check not already claimed via socialQuestProgress
     const progressId = `custom_${args.questId}`;
@@ -509,14 +511,14 @@ export const claimCustomFollowReward = mutation({
       .query("socialQuestProgress")
       .withIndex("by_player_quest", (q) => q.eq("playerAddress", address).eq("questId", progressId))
       .first();
-    if (existing?.claimed) throw new Error("Already claimed");
+    if (existing?.claimed) throw new ConvexError("Already claimed");
 
-    const reward = (quest as any).reward || CUSTOM_QUEST_REWARD;
+    const reward = quest.reward || CUSTOM_QUEST_REWARD;
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q) => q.eq("address", address))
       .first();
-    if (!profile) throw new Error("Profile not found");
+    if (!profile) throw new ConvexError("Profile not found");
 
     const balanceBefore = profile.coins || 0;
     const balanceAfter = balanceBefore + reward;
@@ -528,13 +530,13 @@ export const claimCustomFollowReward = mutation({
       amount: reward,
       type: "earn",
       source: "custom_follow_quest",
-      description: `Custom quest: follow @${(quest as any).targetUsername}`,
+      description: `Custom quest: follow @${quest.targetUsername}`,
       timestamp: Date.now(),
       balanceBefore,
       balanceAfter,
     });
 
-    await createAuditLog(ctx, address, "claim", reward, balanceBefore, balanceAfter, "custom_follow_quest");
+    await createAuditLog(ctx, address, "earn", reward, balanceBefore, balanceAfter, "custom_follow_quest");
 
     // Track in socialQuestProgress
     if (existing) {
