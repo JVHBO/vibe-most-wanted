@@ -2,7 +2,6 @@
   "description": "VMW TCG Card Data - Official data from Wield API",
   "totalCards": 54,
   "apiEndpoint": "https://build.wield.xyz/vibe/boosterbox/metadata?contractAddress=0xf14c1dc8ce5fe65413379f76c43fa1460c31e728",
-  "apiKey": "YUEPI-G3KJ7-5FCXV-ANSPV-BZ3DA",
   "lastUpdated": "2026-01-21",
   "cards": [
     { "onChainName": "neymar", "baccarat": "neymar", "suit": "???", "rank": "???", "rarity": "Mythic", "minted": false, "tokenId": null, "crime": "Farcaster's new king saved everyone from Goofy Romero's kingdom" },

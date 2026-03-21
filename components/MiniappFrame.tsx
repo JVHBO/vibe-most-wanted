@@ -75,6 +75,7 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   const [frameX, setFrameX] = useState<number | null>(null);
   const [frameY, setFrameY] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [forcedMiniapp, setForcedMiniapp] = useState(false);
   const dragging = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
 
@@ -87,11 +88,25 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    const forced = localStorage.getItem("vbms_force_miniapp") === "1";
+    if (forced) setForcedMiniapp(true);
     const isDesktop = window.innerWidth >= 480;
-    setShowFrame(isDesktop && !isMiniappMode());
-    if (isDesktop && !isMiniappMode()) {
-      setFrameX(Math.round((window.innerWidth - 410) / 2));
-      setFrameY(80);
+    const shouldFrame = isDesktop && !isMiniappMode() && !forced;
+    setShowFrame(shouldFrame);
+    if (shouldFrame) {
+      const savedPos = localStorage.getItem("vbms_frame_pos");
+      if (savedPos) {
+        try {
+          const { x, y } = JSON.parse(savedPos);
+          setFrameX(x); setFrameY(y);
+        } catch {
+          setFrameX(Math.round((window.innerWidth - 410) / 2));
+          setFrameY(80);
+        }
+      } else {
+        setFrameX(Math.round((window.innerWidth - 410) / 2));
+        setFrameY(80);
+      }
     }
     if ("Notification" in window) {
       setNotifStatus(Notification.permission as "default" | "granted" | "denied");
@@ -153,8 +168,42 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
 
   if (!showFrame) {
     return (
-      <MiniappFrameContext.Provider value={false}>
+      <MiniappFrameContext.Provider value={forcedMiniapp}>
         {children}
+        {forcedMiniapp && (
+          <button
+            onClick={() => {
+              localStorage.removeItem("vbms_force_miniapp");
+              setForcedMiniapp(false);
+              const isDesktop = window.innerWidth >= 480;
+              if (isDesktop && !isMiniappMode()) {
+                setFrameX(Math.round((window.innerWidth - 410) / 2));
+                setFrameY(80);
+                setShowFrame(true);
+              }
+            }}
+            title="Exit miniapp mode"
+            style={{
+              position: "fixed",
+              bottom: "12px",
+              right: "12px",
+              zIndex: 9999,
+              background: "#1a1a1a",
+              border: "1px solid rgba(255,255,255,0.15)",
+              borderRadius: "8px",
+              color: "rgba(255,255,255,0.5)",
+              fontSize: "11px",
+              padding: "5px 10px",
+              cursor: "pointer",
+              fontFamily: "system-ui, sans-serif",
+              display: "flex",
+              alignItems: "center",
+              gap: "5px",
+            }}
+          >
+            <span style={{ fontSize: "13px" }}>⊞</span> Exit miniapp
+          </button>
+        )}
       </MiniappFrameContext.Provider>
     );
   }
@@ -264,6 +313,18 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
                 <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0 12px" }} />
                 <button onClick={() => { setMenuOpen(false); navigator.clipboard?.writeText("https://vibemostwanted.xyz"); }} style={itemStyle}>
                   <span>⎘</span><span>Copy link</span>
+                </button>
+                <div style={{ height: "1px", background: "rgba(255,255,255,0.06)", margin: "0 12px" }} />
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    localStorage.setItem("vbms_force_miniapp", "1");
+                    setForcedMiniapp(true);
+                    setShowFrame(false);
+                  }}
+                  style={itemStyle}
+                >
+                  <span>⊡</span><span>Force miniapp version</span>
                 </button>
                 {isConnected && (
                   <>

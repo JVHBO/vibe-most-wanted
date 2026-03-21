@@ -15,9 +15,7 @@ export function useMissionState() {
   // Claim flow
   const [loginBonusClaimed, setLoginBonusClaimed] = useState<boolean>(false);
   const [isClaimingBonus, setIsClaimingBonus] = useState<boolean>(false);
-  const [isClaimingQuest, setIsClaimingQuest] = useState<boolean>(false);
   const [isClaimingWeeklyReward, setIsClaimingWeeklyReward] = useState<boolean>(false);
-  const [pendingClaimAction, setPendingClaimAction] = useState<(() => void) | null>(null);
 
   // Mission list
   const [missions, setMissions] = useState<any[]>([]);
@@ -33,9 +31,7 @@ export function useMissionState() {
     banCheck, setBanCheck,
     loginBonusClaimed, setLoginBonusClaimed,
     isClaimingBonus, setIsClaimingBonus,
-    isClaimingQuest, setIsClaimingQuest,
     isClaimingWeeklyReward, setIsClaimingWeeklyReward,
-    pendingClaimAction, setPendingClaimAction,
     missions, setMissions,
     isLoadingMissions, setIsLoadingMissions,
     isClaimingMission, setIsClaimingMission,

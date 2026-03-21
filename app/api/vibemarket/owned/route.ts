@@ -3,9 +3,10 @@
  * GET /api/vibemarket/owned?address=0x...&contractAddress=0x...
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { WIELD_API_KEY } from '@/lib/config/keys';
 
 const WIELD_BASE = 'https://build.wield.xyz/vibe/boosterbox';
-const API_KEY = 'YUEPI-G3KJ7-5FCXV-ANSPV-BZ3DA';
+const API_KEY = WIELD_API_KEY;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

@@ -39,9 +39,6 @@ export function usePopupStates() {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const [showCreateProfile, setShowCreateProfile] = useState<boolean>(false);
   const [showChangeUsername, setShowChangeUsername] = useState<boolean>(false);
-  const [showChainModal, setShowChainModal] = useState<boolean>(false);
-  const [showArbAnnounce, setShowArbAnnounce] = useState<boolean>(false);
-
   // Feature modals
   const [showFidMailModal, setShowFidMailModal] = useState<boolean>(false);
   const [fidModalTarget, setFidModalTarget] = useState<number | null>(null); // null = own card
@@ -83,8 +80,6 @@ export function usePopupStates() {
     showSettings, setShowSettings,
     showCreateProfile, setShowCreateProfile,
     showChangeUsername, setShowChangeUsername,
-    showChainModal, setShowChainModal,
-    showArbAnnounce, setShowArbAnnounce,
     // Feature modals
     showFidMailModal, setShowFidMailModal,
     fidModalTarget, setFidModalTarget,
