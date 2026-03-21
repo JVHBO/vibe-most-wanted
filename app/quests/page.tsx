@@ -50,6 +50,10 @@ export default function QuestsPage() {
   const customFollowQuests = useQuery(api.socialQuests.getCustomFollowQuests);
   const addCustomFollowQuest = useMutation(api.socialQuests.addCustomFollowQuest);
   const claimCustomFollowReward = useMutation(api.socialQuests.claimCustomFollowReward);
+  const claimedCustomQuestIds = useQuery(
+    api.socialQuests.getClaimedCustomQuestIds,
+    address ? { address: address.toLowerCase() } : "skip"
+  );
 
 
   // 🚀 BANDWIDTH FIX: Use getProfileDashboard instead of getProfile
@@ -215,6 +219,13 @@ export default function QuestsPage() {
   const [customCarouselIdx, setCustomCarouselIdx] = useState(0);
   const [claimingCustom, setClaimingCustom] = useState<string | null>(null);
   const [claimedCustom, setClaimedCustom] = useState<Set<string>>(new Set());
+
+  // Sync claimed custom quests from backend on load
+  useEffect(() => {
+    if (claimedCustomQuestIds && claimedCustomQuestIds.length > 0) {
+      setClaimedCustom(new Set(claimedCustomQuestIds));
+    }
+  }, [claimedCustomQuestIds]);
   const [customQuestPreview, setCustomQuestPreview] = useState<{ fid: number; username: string; display_name: string; pfp_url?: string; banner_url?: string } | null>(null);
   const [customSearchResults, setCustomSearchResults] = useState<{ fid: number; username: string; display_name: string; pfp_url?: string }[]>([]);
   const [customSearchOpen, setCustomSearchOpen] = useState(false);

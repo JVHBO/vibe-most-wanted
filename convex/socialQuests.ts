@@ -442,6 +442,23 @@ export const getCustomFollowQuests = query({
   },
 });
 
+/** Get set of custom quest IDs already claimed by a player */
+export const getClaimedCustomQuestIds = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = normalizeAddress(address);
+    const progress = await ctx.db
+      .query("socialQuestProgress")
+      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedAddress))
+      .filter((q) => q.eq(q.field("claimed"), true))
+      .take(200);
+    // Return only the questIds that start with "custom_"
+    return progress
+      .filter((p) => p.questId.startsWith("custom_"))
+      .map((p) => p.questId.replace("custom_", ""));
+  },
+});
+
 /** Admin: delete custom follow quest by ID */
 export const adminDeleteCustomFollowQuest = mutation({
   args: { id: v.string() },
