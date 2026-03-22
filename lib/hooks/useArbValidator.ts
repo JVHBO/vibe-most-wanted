@@ -15,8 +15,12 @@ import { CONTRACTS, VALIDATOR_ABI } from '../contracts';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { isMiniappMode, isWarpcastClient } from '@/lib/utils/miniapp';
 import { toast } from 'sonner';
-import { useConvex } from 'convex/react';
+import { ConvexHttpClient } from 'convex/browser';
 import { api } from '@/convex/_generated/api';
+
+// Direct VMW Convex client — bypasses context so it works inside VibeFIDConvexProvider too
+const VMW_CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL || 'https://agile-orca-761.convex.cloud';
+const vmwConvex = new ConvexHttpClient(VMW_CONVEX_URL);
 
 // ClaimType enum matching contract
 export const ARB_CLAIM_TYPE = {
@@ -41,7 +45,6 @@ export type ArbClaimType = typeof ARB_CLAIM_TYPE[keyof typeof ARB_CLAIM_TYPE];
  */
 export function useArbValidator() {
   const { address } = useAccount();
-  const convex = useConvex();
 
   const validateOnArb = async (amount: number, claimType: ArbClaimType): Promise<string | null> => {
     if (!address) return null;
@@ -68,7 +71,7 @@ export function useArbValidator() {
       // 🔒 Get signature via Convex action (blacklist + profile + coins verified server-side)
       let signature: string;
       try {
-        const result = await convex.action(api.vbmsClaim.signArbValidation, { address, amount, nonce });
+        const result = await vmwConvex.action(api.vbmsClaim.signArbValidation, { address, amount, nonce });
         signature = result.signature;
       } catch (signErr: any) {
         console.warn('[ArbValidator] Sign failed:', signErr.message);

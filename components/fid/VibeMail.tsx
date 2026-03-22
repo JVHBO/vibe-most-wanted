@@ -24,6 +24,7 @@ import { MiniappPreview } from './MiniappPreview';
 import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
 import { translateText } from '@/lib/fid/translateRotator';
 import { LanguageSelect } from '@/components/SettingsModal';
+import { toast } from 'sonner';
 
 // Translation cache helpers (localStorage, keyed by messageId + lang)
 function getTranslationCache(msgId: string, targetLang: string): string | null {
@@ -1238,6 +1239,7 @@ export function VibeMailInboxWithClaim({
   const [showDexModal, setShowDexModal] = useState(false);
   const [replyToMessageId, setReplyToMessageId] = useState<Id<'cardVotes'> | null>(null);
   const [replyToFid, setReplyToFid] = useState<number | null>(null); // FID of user we're replying to
+  const [isForwarding, setIsForwarding] = useState(false); // forwarding a message to a new recipient
   const [composerMessage, setComposerMessage] = useState('');
   const [composerFont, setComposerFont] = useState('');
   const [composerColor, setComposerColor] = useState('');
@@ -1900,8 +1902,10 @@ export function VibeMailInboxWithClaim({
       setSearchQuery('');
       setReplyToMessageId(null);
       setReplyToFid(null);
+      setIsForwarding(false);
     } catch (err: any) {
       console.error('Send failed:', err);
+      toast.error('Failed to send message. Please try again.');
     } finally {
       setIsSending(false);
     }
@@ -2338,6 +2342,7 @@ export function VibeMailInboxWithClaim({
                   setShowComposer(false);
                   setReplyToMessageId(null);
                   setReplyToFid(null);
+                  setIsForwarding(false);
                   setRecipientFid(null);
                   setRecipientUsername('');
                   setSearchQuery('');
@@ -2361,7 +2366,7 @@ export function VibeMailInboxWithClaim({
                 className="w-8 h-8 bg-[#DC2626] border-2 border-black shadow-[2px_2px_0px_#000] text-white font-bold hover:bg-[#B91C1C] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center"
               >X</button>
               <h3 className="text-vintage-gold font-bold text-lg uppercase tracking-wide">
-                {replyToMessageId ? 'Reply' : 'New Message'}
+                {replyToMessageId ? 'Reply' : isForwarding ? 'Forward' : 'New Message'}
               </h3>
               <div className="w-10" />
             </div>
@@ -2382,11 +2387,20 @@ export function VibeMailInboxWithClaim({
               </button>
             </div>
 
-            {/* Reply indicator */}
+            {/* Reply / Forward indicator */}
             {replyToMessageId && (
               <div className="mb-2 bg-[#0a0a0a] border-2 border-black p-2 flex items-center gap-2">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
                 <p className="text-white/70 text-xs">Replying to message</p>
+              </div>
+            )}
+            {isForwarding && !replyToMessageId && (
+              <div className="mb-2 bg-[#0a0a0a] border-2 border-[#FFD700]/50 p-2 flex items-center gap-2">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
+                <p className="text-white/70 text-xs">Forwarding message — choose a recipient</p>
+                <button onClick={() => setIsForwarding(false)} className="ml-auto text-white/40 hover:text-white/70">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
               </div>
             )}
 
@@ -4432,6 +4446,11 @@ export function VibeMailInboxWithClaim({
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
                   {t.vibemailReply}
                 </span>
+              ) : isForwarding ? (
+                <span className="flex items-center gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
+                  {hasFreemail ? 'Forward · Free' : `Forward · ${Number(VIBEMAIL_COST_VBMS).toLocaleString()} VBMS`}
+                </span>
               ) : sendMode === 'broadcast' ? (
                 <span className="flex items-center gap-2">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -4912,23 +4931,50 @@ export function VibeMailInboxWithClaim({
             )}
             </div>{/* end relative scroll wrapper */}
 
-            {/* Reply button */}
-            {myFid && myAddress && selectedMessage.voterFid && selectedMessage.voterFid !== myFid && (
-              <button
-                onClick={() => {
-                  AudioManager.buttonClick();
-                  const msgId = selectedMessage._id;
-                  const senderFid = selectedMessage.voterFid;
-                  setSelectedMessage(null);
-                  setReplyToMessageId(msgId);
-                  setReplyToFid(senderFid || null);
-                  setShowComposer(true);
-                }}
-                className="mt-2 w-full py-2 bg-vintage-gold text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-                Reply
-              </button>
+            {/* Reply + Forward buttons */}
+            {myFid && myAddress && (
+              <div className={`mt-2 flex gap-2 ${selectedMessage.voterFid && selectedMessage.voterFid !== myFid ? '' : 'justify-center'}`}>
+                {selectedMessage.voterFid && selectedMessage.voterFid !== myFid && (
+                  <button
+                    onClick={() => {
+                      AudioManager.buttonClick();
+                      const msgId = selectedMessage._id;
+                      const senderFid = selectedMessage.voterFid;
+                      setSelectedMessage(null);
+                      setReplyToMessageId(msgId);
+                      setReplyToFid(senderFid || null);
+                      setIsForwarding(false);
+                      setShowComposer(true);
+                    }}
+                    className="flex-1 py-2 bg-vintage-gold text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+                    Reply
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    AudioManager.buttonClick();
+                    const rawMsg = selectedMessage.message || '';
+                    const qParsed = parseQuestBanner(rawMsg);
+                    const baseMsg = qParsed ? qParsed.cleanMessage : rawMsg;
+                    const cleanMsg = stripVStyle(stripDesignManifest(baseMsg)).replace(/\[VQUEST:\{[\s\S]*?\}\]/g, '').trim();
+                    setSelectedMessage(null);
+                    setReplyToMessageId(null);
+                    setReplyToFid(null);
+                    setIsForwarding(true);
+                    setComposerMessage(cleanMsg);
+                    setComposerImageId(selectedMessage.imageId || null);
+                    setComposerAudioId(selectedMessage.audioId || null);
+                    setSendMode('single');
+                    setShowComposer(true);
+                  }}
+                  className="flex-1 py-2 bg-[#1a1a1a] text-white font-bold border-2 border-[#FFD700]/50 shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all flex items-center justify-center gap-2"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 10 20 15 15 20"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>
+                  Forward
+                </button>
+              </div>
             )}
           </div>
         ) : (
