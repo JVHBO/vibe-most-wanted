@@ -1070,7 +1070,14 @@ export default function QuestsPage() {
                               if (effectiveChain === 'arbitrum') await validateOnArb(q.reward, ARB_CLAIM_TYPE.QUEST);
                               await claimCustomFollowReward({ address: address.toLowerCase(), questId });
                               setClaimedCustom(prev => new Set([...prev, questId]));
-                            } catch (e: any) { setCustomQuestError(e.data || e.message || 'Error'); }
+                            } catch (e: any) {
+                              const msg = e.data || e.message || 'Error';
+                              if (msg === 'Already claimed') {
+                                setClaimedCustom(prev => new Set([...prev, questId]));
+                              } else {
+                                setCustomQuestError(msg);
+                              }
+                            }
                             finally { setClaimingCustom(null); }
                           }}
                           disabled={isClaimed || isClaiming || !address}
