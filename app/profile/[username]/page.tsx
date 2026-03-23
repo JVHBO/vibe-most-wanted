@@ -558,7 +558,7 @@ export default function ProfilePage() {
                   {profile.address.slice(0, 6)}...{profile.address.slice(-4)} {copiedAddress ? '✓' : ''}
                 </button>
                 {profile.fid && farcasterUsername && (
-                  <a href={`https://warpcast.com/${farcasterUsername}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-2 py-0.5 bg-purple-600 text-white text-xs font-bold border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all">@{farcasterUsername}</a>
+                  <a href={`https://base.app/profile/${profile.address}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-2 py-0.5 bg-purple-600 text-white text-xs font-bold border-2 border-black shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all">@{farcasterUsername}</a>
                 )}
                 {profile.twitter && (
                   <a href={`https://twitter.com/${profile.twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="text-vintage-neon-blue hover:text-blue-400">𝕏</a>
