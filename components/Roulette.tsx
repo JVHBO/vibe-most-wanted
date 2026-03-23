@@ -11,7 +11,7 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import haptics from '@/lib/haptics';
 import { CONTRACTS, POOL_ABI } from '@/lib/contracts';
 import { encodeFunctionData, parseEther, erc20Abi } from 'viem';
-import { encodeBuilderCodeSuffix, BUILDER_CODE } from '@/lib/builder-code';
+import { dataSuffix as ATTRIBUTION_SUFFIX, BUILDER_CODE } from '@/lib/hooks/useWriteContractWithAttribution';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
 import { isMiniappMode, isWarpcastClient } from '@/lib/utils/miniapp';
@@ -368,7 +368,7 @@ export function Roulette({ onClose }: RouletteProps) {
       args: [parseEther(amount), nonce as `0x${string}`, signature as `0x${string}`],
     });
 
-    const dataSuffix = encodeBuilderCodeSuffix(BUILDER_CODE);
+    const dataSuffix = ATTRIBUTION_SUFFIX;
     const dataWithBuilderCode = (data + dataSuffix.slice(2)) as `0x${string}`;
 
     // Force Base chain — claim contract is on Base only
@@ -618,7 +618,7 @@ export function Roulette({ onClose }: RouletteProps) {
       });
 
       // Append builder code for Base attribution
-      const dataSuffix = encodeBuilderCodeSuffix(BUILDER_CODE);
+      const dataSuffix = ATTRIBUTION_SUFFIX;
       const dataWithBuilderCode = (transferData + dataSuffix.slice(2)) as `0x${string}`;
       console.log('[Roulette] Paid spin with builder code:', BUILDER_CODE);
 

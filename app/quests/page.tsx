@@ -16,6 +16,7 @@ import { useArbValidator, ARB_CLAIM_TYPE } from "@/lib/hooks/useArbValidator";
 import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
 import { CONTRACTS, ERC20_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
+import { dataSuffix as ATTRIBUTION_SUFFIX } from "@/lib/hooks/useWriteContractWithAttribution";
 import { WantedCastsTab } from "@/components/fid/WantedCastsTab";
 import { VibeMailInboxWithClaim } from "@/components/fid/VibeMail";
 import { VibeFIDConvexProvider, vibefidConvex } from "@/contexts/VibeFIDConvexProvider";
@@ -928,11 +929,12 @@ export default function QuestsPage() {
                             try {
                               await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
                             } catch {}
-                            const txData = encodeFunctionData({
+                            const txCallData = encodeFunctionData({
                               abi: ERC20_ABI,
                               functionName: 'transfer',
                               args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther('100000')],
                             });
+                            const txData = (txCallData + ATTRIBUTION_SUFFIX.slice(2)) as `0x${string}`;
                             const txHash = await provider!.request({
                               method: 'eth_sendTransaction',
                               params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken, data: txData }],
