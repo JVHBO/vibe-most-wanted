@@ -14,6 +14,7 @@ import { useSwitchChain } from 'wagmi';
 import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
 import { CONTRACTS, ERC20_ABI, POOL_ABI } from "@/lib/fid/contracts";
 import { encodeFunctionData, parseEther } from 'viem';
+import { dataSuffix as ATTRIBUTION_SUFFIX } from '@/lib/hooks/useWriteContractWithAttribution';
 import haptics from "@/lib/fid/haptics";
 import { AudioRecorder } from './AudioRecorder';
 import { useMusic } from '@/contexts/MusicContext';
@@ -4551,11 +4552,12 @@ export function VibeMailInboxWithClaim({
                       questIndex: idx,
                       amount: questReward,
                     });
-                    const data = encodeFunctionData({
+                    const callData = encodeFunctionData({
                       abi: POOL_ABI,
                       functionName: 'claimVBMS',
                       args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
                     });
+                    const data = (callData + ATTRIBUTION_SUFFIX.slice(2)) as `0x${string}`;
                     const provider = await sdk.wallet.getEthereumProvider();
                     await provider!.request({
                       method: 'eth_sendTransaction',
@@ -4881,11 +4883,12 @@ export function VibeMailInboxWithClaim({
                             claimerAddress: myAddress,
                             amount: receiptReward,
                           });
-                          const txData = encodeFunctionData({
+                          const txCallData = encodeFunctionData({
                             abi: POOL_ABI,
                             functionName: 'claimVBMS',
                             args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
                           });
+                          const txData = (txCallData + ATTRIBUTION_SUFFIX.slice(2)) as `0x${string}`;
                           const provider = await sdk.wallet.getEthereumProvider();
                           await provider!.request({
                             method: 'eth_sendTransaction',

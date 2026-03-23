@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { api } from '@/convex/_generated/api';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
+import { dataSuffix as ATTRIBUTION_SUFFIX } from '@/lib/hooks/useWriteContractWithAttribution';
 
 interface Params {
   address: string | undefined;
@@ -43,11 +44,12 @@ export function useWeeklyLeaderboardClaim({
 
       const { encodeFunctionData, parseEther } = await import('viem');
       const { POOL_ABI } = await import('@/lib/contracts');
-      const data = encodeFunctionData({
+      const callData = encodeFunctionData({
         abi: POOL_ABI,
         functionName: 'claimVBMS',
         args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
       });
+      const data = (callData + ATTRIBUTION_SUFFIX.slice(2)) as `0x${string}`;
 
       const txHash = await provider.request({
         method: 'eth_sendTransaction',
