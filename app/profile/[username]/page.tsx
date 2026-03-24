@@ -149,6 +149,7 @@ export default function ProfilePage() {
     baccaratImagePath?: string;
   } | null>(null);
   const [shareRewardMessage, setShareRewardMessage] = useState('');
+  const [showAuraGuide, setShowAuraGuide] = useState(false);
 
   // Attack Modal States
   const [showAttackCardSelection, setShowAttackCardSelection] = useState<boolean>(false);
@@ -526,7 +527,51 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-vintage-black text-vintage-ice p-3 md:p-6 overflow-x-hidden">
+    <div className="min-h-screen bg-vintage-black text-vintage-ice p-3 md:p-6 pb-20" style={{ overflowX: 'clip' }}>
+      {/* Aura Level Guide Modal */}
+      {showAuraGuide && (
+        <div className="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4" onClick={() => setShowAuraGuide(false)}>
+          <div className="bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-xl max-w-sm w-full" style={{ maxHeight: '75vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-vintage-gold/20 sticky top-0 bg-vintage-charcoal">
+              <span className="text-vintage-gold font-black text-sm uppercase tracking-wide">Aura Levels & Perks</span>
+              <button onClick={() => setShowAuraGuide(false)} className="text-vintage-burnt-gold text-xl leading-none">×</button>
+            </div>
+            <div className="p-3 space-y-2">
+              {AURA_LEVELS.map((lvl, i) => {
+                const GUIDE_PERKS: Record<string, string[]> = {
+                  human:    ['Base access'],
+                  great_ape:['1 free VibeMail / day'],
+                  ssj1:     ['1 free VibeMail / day', '+1 Roulette spin / day', 'Standard daily earn cap'],
+                  ssj2:     ['3 free VibeMails / day', '+2 Roulette spins / day', 'Increased earn cap'],
+                  ssj3:     ['5 free VibeMails / day', '+3 Roulette spins / day', 'Higher earn cap', '+1 daily attack slot'],
+                  ssj4:     ['10 free VibeMails / day', '+5 Roulette spins / day', 'Max earn cap tier 1', 'Exclusive TCG card back'],
+                  ssj_god:  ['Unlimited VibeMails', '+10 Roulette spins / day', 'Max earn cap tier 2', 'Exclusive God profile frame'],
+                  ssj_blue: ['Unlimited VibeMails', 'Unlimited Roulette spins', 'Absolute max earn cap', 'SSJ Blue exclusive badge'],
+                };
+                const perks = GUIDE_PERKS[lvl.key] ?? [];
+                const isCurrentLevel = lvl.key === getAuraLevelProgress(profile?.stats?.aura ?? 0).level.key;
+                return (
+                  <div key={lvl.key} className={`p-2 rounded border ${isCurrentLevel ? 'border-vintage-gold/40 bg-vintage-gold/5' : 'border-black/20 bg-vintage-black/20'}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className={`text-xs font-black uppercase ${lvl.color}`}>{lvl.name || 'Human'}</span>
+                      <span className="text-[9px] text-vintage-burnt-gold/50">{lvl.threshold.toLocaleString()} XP{isCurrentLevel ? ' ← you' : ''}</span>
+                    </div>
+                    <ul className="space-y-0.5">
+                      {perks.map((p, j) => (
+                        <li key={j} className="flex items-center gap-1.5 text-[9px] text-white/60">
+                          <span className="w-1 h-1 rounded-full bg-vintage-burnt-gold/40 flex-shrink-0" />
+                          {p}
+                          <span className="ml-auto text-[7px] text-yellow-500/60 font-bold">SOON</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
       {/* Compact Profile Header */}
       <div className="max-w-6xl mx-auto mb-4">
         <div className="bg-vintage-charcoal rounded-xl border border-vintage-gold/50 p-4 md:p-5">
@@ -641,10 +686,14 @@ export default function ProfilePage() {
                     </span>
                     <span className="text-[9px] text-vintage-burnt-gold/50 uppercase">Aura Level</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[10px]">
+                  <div className="flex items-center gap-2 text-[10px]">
                     <span className={`font-bold ${level.color}`}>{aura.toLocaleString()}</span>
                     {next && <span className="text-vintage-burnt-gold/40">/ {next.toLocaleString()} XP</span>}
                     {!next && <span className="text-cyan-400 font-bold text-[9px]">MAX LEVEL</span>}
+                    <button
+                      onClick={() => setShowAuraGuide(true)}
+                      className="w-4 h-4 rounded-full bg-vintage-burnt-gold/30 text-vintage-burnt-gold text-[9px] font-black flex items-center justify-center hover:bg-vintage-burnt-gold/50 transition-colors flex-shrink-0"
+                    >?</button>
                   </div>
                 </div>
 

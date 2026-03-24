@@ -68,9 +68,10 @@ p, h1, h2, h3, h4, h5, h6, li, blockquote, td, th, dt, dd, figcaption, .cursor-t
 }
 
 /* Prevent horizontal overflow for Farcaster miniapp */
+/* overflow-x: clip instead of hidden — hidden blocks vertical scroll on iOS/WebKit */
 html, body {
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
   box-sizing: border-box;
 }
 
