@@ -471,14 +471,6 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
               <p className="text-vintage-ice/50 text-[10px]">{card.rarity}</p>
             </div>
 
-            {/* Vote count */}
-            <div className="flex items-center gap-1">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="#BE185D">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-              </svg>
-              <span className="text-vintage-ice/60 text-xs">{totalVotes} vibes</span>
-            </div>
-
             {/* Action buttons */}
             <div className="flex gap-1.5 mt-auto flex-wrap">
               <button
@@ -499,15 +491,6 @@ export function VibeFidSection({ fid, isOwnProfile, address, hasVibeBadge, onCar
               >
                 OpenSea
               </button>
-              {isOwnCard && (
-                <button
-                  onClick={() => { AudioManager.buttonClick(); setShowCreateQuestModal(true); }}
-                  className="w-full px-2 py-1.5 bg-[#22C55E] border border-black text-black font-bold rounded text-xs hover:bg-[#16A34A] transition-colors"
-                  title="Create a social quest and pay players to complete it"
-                >
-                  + Create Quest
-                </button>
-              )}
             </div>
           </div>
         </div>

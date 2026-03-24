@@ -444,12 +444,13 @@ export const getPlayerEconomy = query({
       // Calculate claimable
       claimableBalance: Math.max(0, (profile.coinsInbox || 0) - (profile.poolDebt || 0)),
 
-      // Daily convert limit
-      dailyConvertLimit: DAILY_CONVERT_LIMIT,
+      // Daily convert limit (aura-based)
+      dailyConvertLimit: getAuraDailyLimit(profile.stats?.aura ?? 0),
       dailyConvertRemaining: (() => {
+        const limit = getAuraDailyLimit(profile.stats?.aura ?? 0);
         const today = new Date().toISOString().slice(0, 10);
         const used = profile.dailyConvertDate === today ? (profile.dailyConvertedVBMS || 0) : 0;
-        return Math.max(0, DAILY_CONVERT_LIMIT - used);
+        return Math.max(0, limit - used);
       })(),
     };
   },
@@ -928,9 +929,19 @@ export const convertTESTVBMStoVBMS = action({
 // Conversion cooldown (3 minutes)
 const CONVERSION_COOLDOWN_MS = 3 * 60 * 1000;
 // Claim limits
-const MAX_CLAIM_AMOUNT = 200_000;   // Per conversion max
-const DAILY_CONVERT_LIMIT = 200_000; // Per day total max
+const MAX_CLAIM_AMOUNT = 200_000;   // Per conversion max (single transaction)
 const MIN_CLAIM_AMOUNT = 100;
+
+// Aura XP → daily earn cap (matches lib/aura-levels.ts thresholds)
+function getAuraDailyLimit(aura: number): number {
+  if (aura >= 52000) return 750_000; // SSJ Blue
+  if (aura >= 28000) return 650_000; // SSJ God
+  if (aura >= 14000) return 500_000; // SSJ4
+  if (aura >= 6000)  return 400_000; // SSJ3
+  if (aura >= 2500)  return 300_000; // SSJ2
+  if (aura >= 800)   return 200_000; // SSJ1
+  return 100_000; // Human / Great Ape
+}
 
 // Internal mutation to handle database operations
 export const convertTESTVBMSInternal = internalMutation({
@@ -995,7 +1006,8 @@ export const convertTESTVBMSInternal = internalMutation({
       throw new Error(`[CLAIM_COOLDOWN]${remainingSeconds}`);
     }
 
-    // 🔒 DAILY LIMIT CHECK - 200k max per day
+    // 🔒 DAILY LIMIT CHECK - aura-based daily cap
+    const DAILY_CONVERT_LIMIT = getAuraDailyLimit(profile.stats?.aura ?? 0);
     const today = new Date().toISOString().slice(0, 10);
     const dailyConverted = profile.dailyConvertDate === today ? (profile.dailyConvertedVBMS || 0) : 0;
     const dailyRemaining = DAILY_CONVERT_LIMIT - dailyConverted;
