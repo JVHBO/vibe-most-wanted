@@ -44,6 +44,17 @@ function determinePrize(): { amount: number; index: number } {
   // Fallback to smallest prize
   return { amount: PRIZES[0].amount, index: 0 };
 }
+// Aura XP → bonus roulette spins (matches lib/aura-levels.ts thresholds)
+function getAuraSpinBonus(aura: number): number {
+  if (aura >= 52000) return 10; // SSJ Blue
+  if (aura >= 28000) return 8;  // SSJ God
+  if (aura >= 14000) return 6;  // SSJ4
+  if (aura >= 6000)  return 4;  // SSJ3
+  if (aura >= 2500)  return 2;  // SSJ2
+  if (aura >= 800)   return 1;  // SSJ1
+  return 0; // Human / Great Ape
+}
+
 // Helper to find profile by address (including linked addresses)
 // 🚀 BANDWIDTH FIX: Use addressLinks index instead of full table scan
 async function findProfileByAddress(ctx: any, normalizedAddress: string) {
@@ -120,7 +131,8 @@ export const canSpin = query({
     // 🔗 Arbitrum bonus: +1 spin (read from profile.preferredChain)
     const chain = (profile as any)?.preferredChain || "arbitrum";
     const arbBonus = chain === "arbitrum" ? 1 : 0;
-    const maxSpins = (isVibeFidHolder ? 3 : 1) + arbBonus;
+    const auraBonus = getAuraSpinBonus((profile as any)?.stats?.aura ?? 0);
+    const maxSpins = (isVibeFidHolder ? 3 : 1) + arbBonus + auraBonus;
 
     // 🚀 BANDWIDTH FIX: Use .take(maxSpins) instead of .collect()
     // 🔒 SECURITY FIX: Query spins under effectiveAddress (primary)
@@ -144,6 +156,7 @@ export const canSpin = query({
       isVibeFidHolder,
       maxSpins,
       isArbMode: arbBonus > 0,
+      auraBonus,
     };
   },
 });
@@ -173,20 +186,21 @@ export const spin = mutation({
       const isVibeFidHolder = !!vibeFidCard;
       // 🔗 Arbitrum bonus: +1 spin
       const arbBonus = chain === "arbitrum" ? 1 : 0;
-      const maxSpins = (isVibeFidHolder ? 3 : 1) + arbBonus;
+      const auraBonus = getAuraSpinBonus((profile as any)?.stats?.aura ?? 0);
+      const maxSpins = (isVibeFidHolder ? 3 : 1) + arbBonus + auraBonus;
 
-      // 🔒 SECURITY FIX: Check spins under effectiveAddress (primary)
+      // 🚀 BANDWIDTH: take at most maxSpins + small buffer
       const existingSpins = await ctx.db
         .query("rouletteSpins")
         .withIndex("by_address_date", (q) =>
           q.eq("address", effectiveAddress).eq("date", today)
         )
-        .take(maxSpins);
+        .take(maxSpins + 1);
 
       if (existingSpins.length >= maxSpins) {
         return {
           success: false,
-          error: isVibeFidHolder ? "Voce usou seus 3 spins VibeFID hoje" : "Voce ja girou hoje",
+          error: `Voce usou todos os seus ${maxSpins} spins hoje`,
           prize: null,
           prizeIndex: null,
         };
