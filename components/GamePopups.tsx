@@ -731,7 +731,7 @@ ${lastBattleResult.playerPower} vs ${lastBattleResult.opponentPower}
       )}
 
       {showDailyClaimPopup && !loginBonusClaimed && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[300] p-4" onClick={() => setShowDailyClaimPopup(false)}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4" onClick={() => setShowDailyClaimPopup(false)}>
           <div className="bg-[#1E1E1E] border-4 border-black shadow-[6px_6px_0px_#000] max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="bg-[#22C55E] border-b-4 border-black px-4 py-3 flex items-center justify-between">

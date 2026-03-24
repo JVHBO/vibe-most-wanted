@@ -2271,9 +2271,9 @@ export default function TCGPage() {
         isInFarcaster={isInFarcaster}
       />
 
-      {/* Changelog Modal */}
+      {/* Changelog Modal — hide when daily claim popup is open to avoid two modals stacking */}
       <ChangelogModal
-        isOpen={showChangelog}
+        isOpen={showChangelog && !showDailyClaimPopup}
         onClose={() => setShowChangelog(false)}
         t={t}
         onReportBug={() => setShowReport(true)}

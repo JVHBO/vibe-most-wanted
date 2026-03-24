@@ -140,7 +140,7 @@ export default function RootLayout({
   return (
     <html lang="en" style={{ overflowX: 'clip' }}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased neobrutalism`}
       >
         <ErrorBoundary>
           <ThemeProvider>

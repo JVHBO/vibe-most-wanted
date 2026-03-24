@@ -1,25 +1,13 @@
 "use client";
 
-import { useEffect, Suspense } from "react";
+import { Suspense } from "react";
 
-function ThemeDetector() {
-  useEffect(() => {
-    document.body.classList.add("neobrutalism");
-    return () => {
-      document.body.classList.remove("neobrutalism");
-    };
-  }, []);
-
-  return null;
-}
-
+// neobrutalism is now the default theme — applied directly on <body> in layout.tsx
+// ThemeProvider kept as a wrapper for future theme extensions
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <Suspense fallback={null}>
-        <ThemeDetector />
-      </Suspense>
+    <Suspense fallback={null}>
       {children}
-    </>
+    </Suspense>
   );
 }

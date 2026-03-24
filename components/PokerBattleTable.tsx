@@ -3301,7 +3301,7 @@ export function PokerBattleTable({
 
         {/* ACTION CONFIRMATION DIALOG */}
         {showActionConfirm && pendingAction && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[250] animate-in fade-in duration-300">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[350] animate-in fade-in duration-300">
             <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-vintage-gold p-6 text-center shadow-2xl max-w-md mx-4">
               <h3 className="text-2xl font-display font-bold text-vintage-gold mb-4">
                 Confirm Action
@@ -3668,7 +3668,7 @@ export function PokerBattleTable({
 
       {/* Exit Confirmation Modal for Spectators */}
       {showExitConfirmation && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[300] animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[350] animate-in fade-in duration-300">
           <div className="bg-gradient-to-b from-vintage-charcoal to-vintage-deep-black rounded-2xl border-4 border-vintage-gold p-6 text-center shadow-2xl max-w-md mx-4 animate-in zoom-in duration-300">
             <div className="text-5xl mb-4 text-vintage-gold font-bold">$</div>
             <h3 className="text-2xl font-display font-bold text-vintage-gold mb-4">

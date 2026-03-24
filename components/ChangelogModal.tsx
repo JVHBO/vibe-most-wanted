@@ -126,7 +126,7 @@ interface ChangelogModalProps {
 
 export function ChangelogModal({ isOpen, onClose, t, onReportBug }: ChangelogModalProps) {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} className="max-w-md" zIndex={200}>
+    <Modal isOpen={isOpen} onClose={onClose} className="max-w-md" zIndex={9999}>
       <div className="p-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
