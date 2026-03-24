@@ -111,9 +111,10 @@ interface ChangelogModalProps {
   isOpen: boolean;
   onClose: () => void;
   t: (key: any) => string;
+  onReportBug?: () => void;
 }
 
-export function ChangelogModal({ isOpen, onClose, t }: ChangelogModalProps) {
+export function ChangelogModal({ isOpen, onClose, t, onReportBug }: ChangelogModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-md" zIndex={200}>
       <div className="p-4">
@@ -166,12 +167,22 @@ export function ChangelogModal({ isOpen, onClose, t }: ChangelogModalProps) {
         </div>
 
         {/* Footer */}
-        <button
-          onClick={onClose}
-          className="mt-3 w-full px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold text-sm transition-all"
-        >
-          {t('changelogClose')}
-        </button>
+        <div className="mt-3 flex gap-2">
+          {onReportBug && (
+            <button
+              onClick={() => { onClose(); onReportBug(); }}
+              className="flex-1 px-3 py-2 bg-red-900/40 hover:bg-red-900/60 border border-red-600/40 text-red-400 rounded-xl font-bold text-xs transition-all"
+            >
+              🐛 Found a bug? Send a report
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="flex-1 px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold text-sm transition-all"
+          >
+            {t('changelogClose')}
+          </button>
+        </div>
       </div>
     </Modal>
   );

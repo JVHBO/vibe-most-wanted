@@ -2276,6 +2276,7 @@ export default function TCGPage() {
         isOpen={showChangelog}
         onClose={() => setShowChangelog(false)}
         t={t}
+        onReportBug={() => setShowReport(true)}
       />
 
       {/* Bug Report Modal */}
