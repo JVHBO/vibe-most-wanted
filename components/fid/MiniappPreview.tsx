@@ -44,7 +44,7 @@ export function MiniappPreview({ url }: MiniappPreviewProps) {
       .finally(() => setLoading(false));
   }, [url]);
 
-  const handleOpen = () => sdk.actions.openUrl(url);
+  const handleOpen = () => { try { sdk.actions.openUrl(url); } catch { window.open(url, '_blank'); } };
 
   if (loading) {
     return (
