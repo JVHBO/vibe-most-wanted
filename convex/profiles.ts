@@ -3085,6 +3085,7 @@ export const resetWeeklyAura = internalMutation({
     for (const profile of profiles) {
       const currentAura = profile.stats?.aura ?? DEFAULT_AURA;
       if (currentAura !== DEFAULT_AURA) {
+        // Note: spreading profile.stats preserves auraXP (permanent, never resets)
         await ctx.db.patch(profile._id, {
           stats: { ...profile.stats, aura: DEFAULT_AURA },
         });

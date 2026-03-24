@@ -28,6 +28,7 @@ import { usePlayerCards } from '@/contexts/PlayerCardsContext';
 import { getCardDisplayPower } from '@/lib/power-utils';
 import { getCharacterFromImage } from '@/lib/vmw-image-mapping';
 import tcgCardsData from '@/data/vmw-tcg-cards.json';
+import { getAuraLevelProgress } from '@/lib/aura-levels';
 import tcgAbilitiesData from '@/data/tcg-abilities.json';
 
 // TCG abilities type
@@ -584,8 +585,21 @@ export default function ProfilePage() {
             </div>
             <div className="w-px bg-black/40" />
             <div className="flex-1 flex flex-col items-center justify-center py-2">
-              <p className="text-sm md:text-base font-bold text-purple-400 leading-none">{(profile.stats.aura ?? 500).toLocaleString()}</p>
-              <p className="text-[9px] text-vintage-burnt-gold uppercase tracking-wide mt-1">{t('profileAura')}</p>
+              {(() => {
+                const auraXP = profile.stats.auraXP ?? 0;
+                const lvl = getAuraLevelProgress(auraXP);
+                return (
+                  <>
+                    <p className={`text-sm md:text-base font-bold leading-none ${lvl.level.color}`}>
+                      {(profile.stats.aura ?? 500).toLocaleString()}
+                    </p>
+                    {lvl.level.name && (
+                      <span className={`text-[9px] font-black uppercase tracking-wide ${lvl.level.color}`}>{lvl.level.name}</span>
+                    )}
+                    <p className="text-[9px] text-vintage-burnt-gold uppercase tracking-wide mt-0.5">{t('profileAura')}</p>
+                  </>
+                );
+              })()}
             </div>
             <div className="w-px bg-black/40" />
             <div className="flex-1 flex flex-col items-center justify-center py-2">
@@ -595,6 +609,42 @@ export default function ProfilePage() {
               <p className="text-[9px] text-vintage-burnt-gold uppercase tracking-wide mt-1">{t('profileVbms')}</p>
             </div>
           </div>
+
+          {/* Aura XP / SSJ Level Progress */}
+          {(() => {
+            const auraXP = profile.stats.auraXP ?? 0;
+            const { level, progress, next } = getAuraLevelProgress(auraXP);
+            return (
+              <div className="mt-3 w-full border-2 border-black bg-vintage-black/40 shadow-[2px_2px_0px_#000] p-2">
+                <div className="flex items-center justify-between mb-1">
+                  <div className="flex items-center gap-1.5">
+                    {level.name ? (
+                      <span className={`text-[10px] font-black uppercase tracking-wider ${level.color}`}>{level.name}</span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-vintage-burnt-gold uppercase tracking-wider">Base</span>
+                    )}
+                    <span className="text-[9px] text-vintage-burnt-gold/60">Aura XP</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[9px] text-vintage-burnt-gold">
+                    <span className={level.color}>{auraXP.toLocaleString()}</span>
+                    {next && <span className="text-vintage-burnt-gold/50">/ {next.toLocaleString()}</span>}
+                    {!next && <span className="text-pink-400 font-bold">MAX</span>}
+                  </div>
+                </div>
+                <div className="w-full h-1 bg-vintage-deep-black rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-gradient-to-r ${level.gradient} transition-all duration-700`}
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                {next && (
+                  <p className="text-[8px] text-vintage-burnt-gold/40 mt-0.5 text-right">
+                    {(next - auraXP).toLocaleString()} XP to next level
+                  </p>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Back button */}
           <button

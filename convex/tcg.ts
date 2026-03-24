@@ -2063,6 +2063,7 @@ async function processTurn(ctx: any, matchId: Id<"tcgMatches">) {
           stats: {
             ...winnerProfile.stats,
             aura: winnerCurrentAura + TCG_CONFIG.AURA_WIN,
+            auraXP: (winnerProfile.stats?.auraXP ?? 0) + TCG_CONFIG.AURA_WIN, // Permanent XP accumulation
           },
         });
         console.log(`🎯 Vibe Clash: ${winnerId} WIN +50 aura (${winnerCurrentAura} → ${winnerCurrentAura + TCG_CONFIG.AURA_WIN})`);
@@ -2237,6 +2238,7 @@ export const forfeitMatch = mutation({
           stats: {
             ...winnerProfile.stats,
             aura: winnerCurrentAura + TCG_CONFIG.AURA_WIN,
+            auraXP: (winnerProfile.stats?.auraXP ?? 0) + TCG_CONFIG.AURA_WIN, // Permanent XP accumulation
           },
         });
         console.log(`🎯 Vibe Clash Forfeit: ${winnerId} WIN +50 aura (${winnerCurrentAura} → ${winnerCurrentAura + TCG_CONFIG.AURA_WIN})`);
@@ -2344,7 +2346,7 @@ export const claimVictoryByTimeout = mutation({
     if (winnerProfile) {
       const currentAura = winnerProfile.stats?.aura ?? 500;
       await ctx.db.patch(winnerProfile._id, {
-        stats: { ...winnerProfile.stats, aura: currentAura + TCG_CONFIG.AURA_WIN },
+        stats: { ...winnerProfile.stats, aura: currentAura + TCG_CONFIG.AURA_WIN, auraXP: (winnerProfile.stats?.auraXP ?? 0) + TCG_CONFIG.AURA_WIN },
       });
       console.log(`🎯 Vibe Clash Timeout Win: ${winnerId} +50 aura`);
     }
@@ -3626,6 +3628,7 @@ export const recordPvEBattle = mutation({
         stats: {
           ...profile.stats,
           aura: currentAura + auraAwarded,
+          auraXP: (profile.stats?.auraXP ?? 0) + auraAwarded, // Permanent XP accumulation
         },
       });
     }

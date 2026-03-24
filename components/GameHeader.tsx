@@ -9,6 +9,7 @@ import { getUserBadges } from "@/lib/badges";
 import { PriceTicker } from "@/components/PriceTicker";
 import { useBondingProgress } from "@/lib/hooks/useBondingProgress";
 import type { UserProfile } from "@/lib/convex-profile";
+import { getAuraLevel } from "@/lib/aura-levels";
 
 interface GameHeaderProps {
   isInFarcaster: boolean;
@@ -93,7 +94,13 @@ export function GameHeader({
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-vintage-gold">@{userProfile.username}</span>
+                    <span className="text-sm font-semibold text-vintage-gold">
+                      @{userProfile.username}
+                      {(() => {
+                        const lvl = getAuraLevel(userProfile.stats?.auraXP ?? 0);
+                        return lvl.name ? <span className={`ml-1 text-xs font-bold ${lvl.color}`}>({lvl.name})</span> : null;
+                      })()}
+                    </span>
                     <BadgeList badges={getUserBadges(userProfile.address, userProfile.userIndex ?? 9999, userProfile.hasVibeBadge)} size="sm" />
                   </div>
                 </button>

@@ -29,6 +29,7 @@ export default defineSchema({
 
       // Aura System (unified leaderboard ranking)
       aura: v.optional(v.number()), // Default: 500, primary ranking criteria
+      auraXP: v.optional(v.number()), // Permanent XP - never resets, used for SSJ levels
       honor: v.optional(v.number()), // DEPRECATED - kept for old data migration only
 
       // Collection-specific power (for leaderboard filtering)

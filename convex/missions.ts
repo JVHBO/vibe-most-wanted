@@ -381,6 +381,7 @@ export const claimMission = mutation({
         stats: {
           ...profile.stats,
           aura: currentAura + auraReward,
+          auraXP: (profile.stats?.auraXP ?? 0) + auraReward, // Permanent XP accumulation
         },
       });
 
@@ -504,6 +505,7 @@ export const claimAllMissions = mutation({
       stats: {
         ...profile.stats,
         aura: currentAura + totalAuraReward,
+        auraXP: (profile.stats?.auraXP ?? 0) + totalAuraReward, // Permanent XP accumulation
       },
     });
 

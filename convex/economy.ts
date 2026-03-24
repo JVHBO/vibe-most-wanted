@@ -688,6 +688,7 @@ export const awardPvECoins = mutation({
         stats: {
           ...profile.stats,
           aura: currentAura + auraReward, // Award aura for PvE win
+          auraXP: (profile.stats?.auraXP ?? 0) + auraReward, // Permanent XP accumulation
         },
         dailyLimits: {
           ...dailyLimits,
@@ -920,6 +921,7 @@ export const awardPvPCoins = mutation({
         stats: {
           ...profile.stats,
           aura: currentAura + auraReward, // Award aura for PvP win
+          auraXP: (profile.stats?.auraXP ?? 0) + auraReward, // Permanent XP accumulation
         },
         winStreak: newStreak,
         lastWinTimestamp: Date.now(),
@@ -1798,6 +1800,7 @@ export const recordAttackResult = mutation({
       // ATTACKER WINS: Gains +10 aura (nerfed from +20, Vibe Clash is main mode)
       auraChange = 10;
       newStats.aura = currentAura + auraChange;
+      newStats.auraXP = (newStats.auraXP ?? 0) + auraChange; // Only positive gains accumulate
 
       // DEFENDER LOSES: Loses -10 aura (nerfed from -20, Vibe Clash is main mode)
       const defenderProfile = await getProfileByAddress(ctx, normalizedOpponentAddress);
