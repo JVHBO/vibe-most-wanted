@@ -586,7 +586,7 @@ export default function ProfilePage() {
             <div className="w-px bg-black/40" />
             <div className="flex-1 flex flex-col items-center justify-center py-2">
               {(() => {
-                const auraXP = profile.stats.auraXP ?? 0;
+                const auraXP = profile.stats.aura ?? 0;
                 const lvl = getAuraLevelProgress(auraXP);
                 return (
                   <>
@@ -612,7 +612,7 @@ export default function ProfilePage() {
 
           {/* Aura XP / SSJ Level Progress */}
           {(() => {
-            const auraXP = profile.stats.auraXP ?? 0;
+            const auraXP = profile.stats.aura ?? 0;
             const { level, progress, next } = getAuraLevelProgress(auraXP);
             return (
               <div className="mt-3 w-full border-2 border-black bg-vintage-black/40 shadow-[2px_2px_0px_#000] p-2">

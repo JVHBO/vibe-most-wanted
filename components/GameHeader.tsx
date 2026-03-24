@@ -97,7 +97,7 @@ export function GameHeader({
                     <span className="text-sm font-semibold text-vintage-gold">
                       @{userProfile.username}
                       {(() => {
-                        const lvl = getAuraLevel(userProfile.stats?.auraXP ?? 0);
+                        const lvl = getAuraLevel(userProfile.stats?.aura ?? 0);
                         return lvl.name ? <span className={`ml-1 text-xs font-bold ${lvl.color}`}>({lvl.name})</span> : null;
                       })()}
                     </span>

@@ -31,7 +31,7 @@ export interface UserProfile {
     unopenedCards: number;
     // Aura system (unified ranking)
     aura?: number;
-    auraXP?: number; // Permanent XP - never resets, used for SSJ levels
+    weeklyAura?: number; // Weekly leaderboard counter - resets to 0 every Sunday
     // Collection-specific power
     vibePower?: number;
     vbrsPower?: number;

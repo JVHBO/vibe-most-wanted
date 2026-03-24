@@ -28,8 +28,8 @@ export default defineSchema({
       unopenedCards: v.number(),
 
       // Aura System (unified leaderboard ranking)
-      aura: v.optional(v.number()), // Default: 500, primary ranking criteria
-      auraXP: v.optional(v.number()), // Permanent XP - never resets, used for SSJ levels
+      aura: v.optional(v.number()), // Permanent XP - accumulates forever, never resets, used for SSJ levels
+      weeklyAura: v.optional(v.number()), // Weekly leaderboard counter - resets to 0 every Sunday
       honor: v.optional(v.number()), // DEPRECATED - kept for old data migration only
 
       // Collection-specific power (for leaderboard filtering)
@@ -202,7 +202,9 @@ export default defineSchema({
     .index("by_fid", ["farcasterFid"]) // 🔒 SECURITY: For FID-based lookups
     .index("by_total_power", ["stats.totalPower"]) // For leaderboard (legacy)
     .index("by_aura", ["stats.aura"]) // For aura-based leaderboard
-    .index("by_defense_aura", ["hasFullDefenseDeck", "stats.aura"]), // 🚀 BANDWIDTH FIX: Efficient leaderboard query
+    .index("by_weekly_aura", ["stats.weeklyAura"]) // For weekly aura leaderboard
+    .index("by_defense_aura", ["hasFullDefenseDeck", "stats.aura"]) // Legacy: permanent aura
+    .index("by_defense_weekly_aura", ["hasFullDefenseDeck", "stats.weeklyAura"]), // 🚀 Weekly leaderboard index
 
   // Player Matches (Match History)
   matches: defineTable({

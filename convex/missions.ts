@@ -381,7 +381,7 @@ export const claimMission = mutation({
         stats: {
           ...profile.stats,
           aura: currentAura + auraReward,
-          auraXP: (profile.stats?.auraXP ?? 0) + auraReward, // Permanent XP accumulation
+          weeklyAura: (profile.stats?.weeklyAura ?? 0) + auraReward, // Weekly leaderboard counter
         },
       });
 
@@ -505,7 +505,7 @@ export const claimAllMissions = mutation({
       stats: {
         ...profile.stats,
         aura: currentAura + totalAuraReward,
-        auraXP: (profile.stats?.auraXP ?? 0) + totalAuraReward, // Permanent XP accumulation
+        weeklyAura: (profile.stats?.weeklyAura ?? 0) + totalAuraReward, // Weekly leaderboard counter
       },
     });
 

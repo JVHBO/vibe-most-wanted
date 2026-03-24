@@ -402,7 +402,7 @@ export const getLeaderboardLite = query({
       // 🚀 BANDWIDTH FIX: Fetch more profiles and filter linked addresses
       const topProfiles = await ctx.db
         .query("profiles")
-        .withIndex("by_defense_aura", (q) => q.eq("hasFullDefenseDeck", true))
+        .withIndex("by_defense_weekly_aura", (q) => q.eq("hasFullDefenseDeck", true))
         .order("desc")
         .take(limit + 100); // Fetch extra to account for filtered ones
 
@@ -434,7 +434,7 @@ export const getLeaderboardLite = query({
           twitterProfileImageUrl: p.twitterProfileImageUrl,
           farcasterPfpUrl: p.farcasterPfpUrl,
           stats: {
-            aura: blacklisted ? -punishment : (p.stats?.aura ?? 500),
+            aura: blacklisted ? -punishment : (p.stats?.weeklyAura ?? 0),
             totalPower: blacklisted ? -punishment : (p.stats?.totalPower || 0),
           },
           hasDefenseDeck: p.hasFullDefenseDeck === true || (p.defenseDeck?.length || 0) === 5,
@@ -464,7 +464,7 @@ export const updateLeaderboardFullCache = internalMutation({
       // Fetch top 250 profiles with defense deck (extra to account for filtered ones)
       const topProfiles = await ctx.db
         .query("profiles")
-        .withIndex("by_defense_aura", (q) => q.eq("hasFullDefenseDeck", true))
+        .withIndex("by_defense_weekly_aura", (q) => q.eq("hasFullDefenseDeck", true))
         .order("desc")
         .take(250);
 
@@ -503,7 +503,7 @@ export const updateLeaderboardFullCache = internalMutation({
           username: p.username || "unknown",
           twitterProfileImageUrl: p.twitterProfileImageUrl,
           farcasterPfpUrl: p.farcasterPfpUrl,
-          aura: blacklisted ? -punishment : (p.stats?.aura ?? 500),
+          aura: blacklisted ? -punishment : (p.stats?.weeklyAura ?? 0),
           totalPower: blacklisted ? -punishment : (p.stats?.totalPower || 0),
           hasDefenseDeck: true,
           userIndex: p.userIndex || 0,
@@ -688,7 +688,8 @@ export const upsertProfileFromFarcaster = mutation({
         totalCards: 0,
         openedCards: 0,
         unopenedCards: 0,
-        aura: 500, // Initial aura for new players
+        aura: 0, // Permanent XP accumulator - starts at 0
+        weeklyAura: 0, // Weekly leaderboard counter - starts at 0
         pveWins: 0,
         pveLosses: 0,
         pvpWins: 0,
@@ -3068,13 +3069,13 @@ export const migrateLegacyFidProfiles = internalMutation({
 
 /**
  * 🔄 WEEKLY AURA RESET
- * Resets all players' aura to 500 every Sunday at 00:00 UTC
+ * Resets all players' weeklyAura to 0 every Sunday at 00:00 UTC
  * Called by cron job in crons.ts
  */
 export const resetWeeklyAura = internalMutation({
   args: {},
   handler: async (ctx) => {
-    const DEFAULT_AURA = 500;
+    const DEFAULT_WEEKLY_AURA = 0;
     let totalReset = 0;
 
     console.log(`🔄 Starting weekly aura reset...`);
@@ -3083,17 +3084,17 @@ export const resetWeeklyAura = internalMutation({
     const profiles = await ctx.db.query("profiles").take(10000);
 
     for (const profile of profiles) {
-      const currentAura = profile.stats?.aura ?? DEFAULT_AURA;
-      if (currentAura !== DEFAULT_AURA) {
-        // Note: spreading profile.stats preserves auraXP (permanent, never resets)
+      const currentWeeklyAura = profile.stats?.weeklyAura ?? DEFAULT_WEEKLY_AURA;
+      if (currentWeeklyAura !== DEFAULT_WEEKLY_AURA) {
+        // Note: spreading profile.stats preserves aura (permanent XP, never resets)
         await ctx.db.patch(profile._id, {
-          stats: { ...profile.stats, aura: DEFAULT_AURA },
+          stats: { ...profile.stats, weeklyAura: DEFAULT_WEEKLY_AURA },
         });
         totalReset++;
       }
     }
 
-    console.log(`✅ Weekly aura reset complete: ${totalReset} profiles reset to ${DEFAULT_AURA} aura`);
+    console.log(`✅ Weekly aura reset complete: ${totalReset} profiles reset to ${DEFAULT_WEEKLY_AURA} weeklyAura`);
     return { totalReset };
   },
 });
