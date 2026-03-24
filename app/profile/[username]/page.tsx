@@ -531,7 +531,7 @@ export default function ProfilePage() {
       {/* Aura Level Guide Modal */}
       {showAuraGuide && (
         <div className="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4" onClick={() => setShowAuraGuide(false)}>
-          <div className="bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-xl max-w-sm w-full" style={{ maxHeight: '75vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
+          <div className="bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-xl max-w-sm w-full" style={{ maxHeight: 'calc(100% - 32px)', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-4 py-3 border-b border-vintage-gold/20 sticky top-0 bg-vintage-charcoal">
               <span className="text-vintage-gold font-black text-sm uppercase tracking-wide">Aura Levels & Perks</span>
               <button onClick={() => setShowAuraGuide(false)} className="text-vintage-burnt-gold text-xl leading-none">×</button>

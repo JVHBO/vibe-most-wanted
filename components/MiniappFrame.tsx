@@ -358,7 +358,8 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
               maxHeight: "660px",
               minHeight: "560px",
               background: "#0C0C0C",
-              overflow: "hidden",
+              overflowX: "hidden",
+              overflowY: "auto",
               // KEY: all position:fixed children are now relative to this box
               transform: "translateZ(0)",
             }}>
