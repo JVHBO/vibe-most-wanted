@@ -71,12 +71,29 @@ export default async function Image({ params }: { params: Promise<{ address: str
     }
   } catch (_) {}
 
-  // Fetch neynar score from VibeFID Convex
+  // Fetch neynar score — VibeFID Convex first, fallback to Neynar API directly
   if (fid) {
     try {
       const card = await convexQuery(CONVEX_FID, 'farcasterCards:getFarcasterCardByFid', { fid });
       if (card) neynarScore = card.latestNeynarScore ?? card.neynarScore ?? null;
     } catch (_) {}
+
+    // Fallback: fetch directly from Neynar API if no VibeFID card
+    if (neynarScore === null) {
+      try {
+        const neynarKey = process.env.NEYNAR_API_KEY;
+        if (neynarKey) {
+          const r = await fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${fid}`, {
+            headers: { 'x-api-key': neynarKey },
+          });
+          if (r.ok) {
+            const d = await r.json();
+            const score = d.users?.[0]?.experimental?.neynar_user_score;
+            if (typeof score === 'number') neynarScore = score;
+          }
+        }
+      } catch (_) {}
+    }
   }
 
   const proxyImg = (url: string) => {
