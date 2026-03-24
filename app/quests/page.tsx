@@ -168,6 +168,8 @@ export default function QuestsPage() {
 
   const claimMission = useMutation(api.missions.claimMission);
   const claimAllMissions = useMutation(api.missions.claimAllMissions);
+  const markAndClaimNeynarScoreCast = useMutation(api.missions.markAndClaimNeynarScoreCast);
+  const [castingNeynarScore, setCastingNeynarScore] = useState(false);
   const setPreferredChainMutation = useMutation(api.missions.setPreferredChain);
   const markChainModalSeenMutation = useMutation(api.missions.markChainModalSeen);
   const [showChainModal, setShowChainModal] = useState(false);
@@ -187,6 +189,7 @@ export default function QuestsPage() {
   const [missions, setMissions] = useState<any[]>([]);
   const [isLoadingMissions, setIsLoadingMissions] = useState(true);
   const [isClaimingAll, setIsClaimingAll] = useState(false);
+  const [showAllQuestsModal, setShowAllQuestsModal] = useState(false);
   const [arbSupported, setArbSupported] = useState(false);
 
   useEffect(() => {
@@ -235,6 +238,7 @@ export default function QuestsPage() {
 
   // All mission types (matching backend) - using translation keys
   const ALL_MISSION_TYPES = [
+    { type: 'neynar_score_cast', reward: 200, date: 'weekly', titleKey: 'mission_neynar_score_cast', descKey: 'mission_neynar_score_cast_desc' },
     { type: 'daily_login', reward: 50, date: 'today', titleKey: 'mission_daily_login', descKey: 'mission_daily_login_desc' },
     { type: 'first_pve_win', reward: 25, date: 'today', titleKey: 'mission_first_pve_win', descKey: 'mission_first_pve_win_desc' },
     { type: 'first_pvp_match', reward: 50, date: 'today', titleKey: 'mission_first_pvp_match', descKey: 'mission_first_pvp_match_desc' },
@@ -245,7 +249,6 @@ export default function QuestsPage() {
     { type: 'tcg_pvp_match', reward: 50, date: 'today', titleKey: 'mission_tcg_pvp_match', descKey: 'mission_tcg_pvp_match_desc' },
     { type: 'tcg_play_3', reward: 75, date: 'today', titleKey: 'mission_tcg_play_3', descKey: 'mission_tcg_play_3_desc' },
     { type: 'tcg_win_streak_3', reward: 150, date: 'today', titleKey: 'mission_tcg_win_streak_3', descKey: 'mission_tcg_win_streak_3_desc' },
-    { type: 'welcome_gift', reward: 250, date: 'once', titleKey: 'mission_welcome_gift', descKey: 'mission_welcome_gift_desc' },
     { type: 'vibefid_minted', reward: 5000, date: 'once', titleKey: 'mission_vibefid_minted', descKey: 'mission_vibefid_minted_desc' },
     { type: 'claim_vibe_badge', reward: 0, date: 'once', titleKey: 'mission_vibe_badge', descKey: 'mission_vibe_badge_desc' },
   ];
@@ -724,6 +727,9 @@ export default function QuestsPage() {
                   const missionList = missions
                     .filter((m: any) => !m.claimed)
                     .sort((a: any, b: any) => {
+                      // Neymar score quest always first
+                      if (a.missionType === 'neynar_score_cast') return -1;
+                      if (b.missionType === 'neynar_score_cast') return 1;
                       if (a.completed && !b.completed) return -1;
                       if (b.completed && !a.completed) return 1;
                       return 0;
@@ -736,11 +742,12 @@ export default function QuestsPage() {
                   const isVibeBadge = mission.missionType === 'claim_vibe_badge';
                   const mAura = 5 * (vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1);
                   const playerPfp = profileDashboard?.pfpUrl || (profileDashboard as any)?.pfp_url;
-                  const missionCardClass = mission.completed
+                  const isNeymarQuest = mission.missionType === 'neynar_score_cast';
+                  const missionCardClass = (mission.completed || isNeymarQuest)
                     ? "flex items-center gap-3 p-2.5 border-2 transition-all border-yellow-400/30 bg-yellow-400/5"
                     : "flex items-center gap-3 p-2.5 border-2 transition-all border-white/10 opacity-60";
-                  const missionBarClass = mission.completed ? "w-1 self-stretch flex-shrink-0 bg-yellow-400" : "w-1 self-stretch flex-shrink-0 bg-white/10";
-                  const missionTitleClass = mission.completed ? "text-xs font-bold truncate text-vintage-ice" : "text-xs font-bold truncate text-vintage-ice/50";
+                  const missionBarClass = (mission.completed || isNeymarQuest) ? "w-1 self-stretch flex-shrink-0 bg-yellow-400" : "w-1 self-stretch flex-shrink-0 bg-white/10";
+                  const missionTitleClass = (mission.completed || isNeymarQuest) ? "text-xs font-bold truncate text-vintage-ice" : "text-xs font-bold truncate text-vintage-ice/50";
                   return (
                     <div className="relative overflow-hidden">
                       {playerPfp && (
@@ -794,6 +801,28 @@ export default function QuestsPage() {
                               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                               {isClaiming ? "..." : t('mission_claim')}
                             </button>
+                          ) : mission.missionType === 'neynar_score_cast' ? (
+                            <button
+                              onClick={async () => {
+                                if (!address || castingNeynarScore) return;
+                                AudioManager.buttonClick();
+                                setCastingNeynarScore(true);
+                                try {
+                                  const { sdk } = await import('@farcaster/miniapp-sdk');
+                                  await sdk.actions.composeCast({ text: "@vibefid what's my neymar score" });
+                                  await markAndClaimNeynarScoreCast({ playerAddress: address.toLowerCase(), chain: effectiveChain });
+                                  AudioManager.buttonSuccess();
+                                  await refreshMissions();
+                                } catch (e: any) {
+                                  if (!e?.message?.includes('Already claimed')) console.error(e);
+                                } finally { setCastingNeynarScore(false); }
+                              }}
+                              disabled={castingNeynarScore}
+                              className="px-2 py-1 border-2 border-black bg-cyan-500 text-black font-bold text-xs"
+                              style={{ boxShadow: "2px 2px 0px #000" }}
+                            >
+                              {castingNeynarScore ? '...' : '🎙️ Cast'}
+                            </button>
                           ) : (
                             <span className="text-vintage-ice/20 text-[10px]">{t('mission_locked')}</span>
                           )}
@@ -806,6 +835,11 @@ export default function QuestsPage() {
                             className="w-6 h-6 bg-black border border-[#FFD700]/50 flex items-center justify-center disabled:opacity-20">
                             <span className="text-[#FFD700] font-black text-xs leading-none">›</span>
                           </button>
+                          <button onClick={() => { AudioManager.buttonClick(); setShowAllQuestsModal(true); }}
+                            className="px-2 h-6 bg-vintage-gold border-2 border-black text-black font-bold text-[9px]"
+                            style={{ boxShadow: "2px 2px 0px #000" }}>
+                            All
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -813,6 +847,72 @@ export default function QuestsPage() {
                   );
                 })()}
               </div>
+
+              {/* All Quests Modal */}
+              {showAllQuestsModal && (
+                <div className="fixed inset-0 z-[300] flex items-end justify-center bg-black/70" onClick={() => setShowAllQuestsModal(false)}>
+                  <div
+                    className="w-full max-w-md bg-vintage-charcoal border-t-2 border-x-2 border-vintage-gold/40 rounded-t-2xl"
+                    style={{ maxHeight: 'calc(100% - 64px)', display: 'flex', flexDirection: 'column' }}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-vintage-gold/20 flex-shrink-0">
+                      <span className="font-display font-bold text-vintage-gold text-sm">📋 All Missions</span>
+                      <button onClick={() => setShowAllQuestsModal(false)} className="text-vintage-gold/60 hover:text-vintage-gold text-lg leading-none">✕</button>
+                    </div>
+                    {/* List */}
+                    <div className="overflow-y-auto flex-1 px-3 py-2 space-y-1.5">
+                      {missions.map((m: any) => {
+                        const isNeymar = m.missionType === 'neynar_score_cast';
+                        const isActive = m.completed || isNeymar;
+                        const statusLabel = m.claimed ? '✅' : isNeymar && !m.claimed ? '🎙️' : m.completed ? '🔓' : '🔒';
+                        return (
+                          <div key={m._id} className={`flex items-center gap-2 p-2 rounded-lg border ${m.claimed ? 'border-green-500/20 bg-green-900/10' : isActive ? 'border-vintage-gold/40 bg-vintage-gold/5' : 'border-white/5'}`}>
+                            <span className="text-base shrink-0">{statusLabel}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-xs font-bold truncate ${m.claimed ? 'text-vintage-ice/40 line-through' : isActive ? 'text-vintage-ice' : 'text-vintage-ice/40'}`}>
+                                {t(m.titleKey)}
+                              </p>
+                              {m.reward > 0 && (
+                                <span className="text-[9px] text-vintage-gold/60">+{m.reward} VBMS</span>
+                              )}
+                            </div>
+                            {isNeymar && !m.claimed ? (
+                              <button
+                                onClick={async () => {
+                                  if (!address || castingNeynarScore) return;
+                                  AudioManager.buttonClick();
+                                  setCastingNeynarScore(true);
+                                  setShowAllQuestsModal(false);
+                                  try {
+                                    const { sdk } = await import('@farcaster/miniapp-sdk');
+                                    await sdk.actions.composeCast({ text: "@vibefid what's my neymar score" });
+                                    await markAndClaimNeynarScoreCast({ playerAddress: address.toLowerCase(), chain: effectiveChain });
+                                    AudioManager.buttonSuccess();
+                                    await refreshMissions();
+                                  } catch (e: any) {
+                                    if (!e?.message?.includes('Already claimed')) console.error(e);
+                                  } finally { setCastingNeynarScore(false); }
+                                }}
+                                disabled={castingNeynarScore}
+                                className="px-2 py-1 border-2 border-black bg-cyan-500 text-black font-bold text-[10px] shrink-0"
+                                style={{ boxShadow: "2px 2px 0px #000" }}
+                              >
+                                {castingNeynarScore ? '...' : '🎙️ Cast'}
+                              </button>
+                            ) : (
+                              <span className={`text-[10px] font-bold shrink-0 ${m.claimed ? 'text-green-400' : m.completed ? 'text-yellow-400' : 'text-vintage-ice/30'}`}>
+                                {m.claimed ? 'Done' : m.completed ? 'Claim' : 'Locked'}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Keyframes for carousel slide animation */}
               <style>{`

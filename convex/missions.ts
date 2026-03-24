@@ -72,6 +72,7 @@ const MISSION_REWARDS = {
   tcg_win_streak_3: { type: "coins", amount: 150 }, // Win 3 in a row in VibeClash
   first_baccarat_win: { type: "coins", amount: 100 }, // First Baccarat win
   send_vibemail_daily: { type: "coins", amount: 50 },  // Sent a VibeMail today
+  neynar_score_cast: { type: "coins", amount: 200 },   // Weekly: cast @vibefid for score
 };
 
 /**
@@ -82,20 +83,30 @@ export const getPlayerMissions = query({
   args: { playerAddress: v.string() },
   handler: async (ctx, { playerAddress }) => {
     const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const day = now.getUTCDay();
+    const daysToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(now);
+    monday.setUTCDate(now.getUTCDate() + daysToMonday);
+    const weekKey = `week_${monday.toISOString().split('T')[0]}`;
     const normalizedAddress = await resolveAddress(ctx, playerAddress);
 
-    // Get today's missions + one-time missions (two indexed queries avoids full player scan)
-    const [todayMissions, onceMissions] = await Promise.all([
+    // Get today's + weekly + one-time missions
+    const [todayMissions, weeklyMissions, onceMissions] = await Promise.all([
       ctx.db
         .query("personalMissions")
         .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress).eq("date", today))
         .collect(),
       ctx.db
         .query("personalMissions")
+        .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress).eq("date", weekKey))
+        .collect(),
+      ctx.db
+        .query("personalMissions")
         .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress).eq("date", "once"))
         .collect(),
     ]);
-    const missions = [...todayMissions, ...onceMissions];
+    const missions = [...todayMissions, ...weeklyMissions, ...onceMissions];
 
     // Return only essential fields to reduce bandwidth
     return missions.map(m => ({
@@ -905,6 +916,95 @@ export const logVibemailActivity = mutation({
       balanceBefore: balance,
       balanceAfter: balance,
     });
+  },
+});
+
+/**
+ * Complete and claim the weekly "Cast @vibefid for Neynar score" mission in one step.
+ * Uses current ISO week key so it resets every Monday.
+ */
+export const markAndClaimNeynarScoreCast = mutation({
+  args: {
+    playerAddress: v.string(),
+    chain: v.optional(v.string()),
+  },
+  handler: async (ctx, { playerAddress, chain }) => {
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
+    if (isBlacklisted(normalizedAddress)) throw new Error("[BLACKLISTED]");
+
+    // Compute this week's key (Monday of current week)
+    const now = new Date();
+    const day = now.getUTCDay();
+    const daysToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(now);
+    monday.setUTCDate(now.getUTCDate() + daysToMonday);
+    const weekKey = `week_${monday.toISOString().split('T')[0]}`;
+
+    // Check if already claimed this week
+    const existing = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", weekKey)
+          .eq("missionType", "neynar_score_cast")
+      )
+      .first();
+
+    if (existing?.claimed) throw new Error("Already claimed this week");
+
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
+    if (!profile) throw new Error("Profile not found");
+
+    let reward = MISSION_REWARDS.neynar_score_cast.amount;
+    if (chain === "arbitrum") reward = reward * 2;
+
+    const newBalance = (profile.coins || 0) + reward;
+    const newLifetimeEarned = (profile.lifetimeEarned || 0) + reward;
+    const auraMultiplier = (profile.hasVibeBadge === true ? 2 : 1) * (chain === "arbitrum" ? 2 : 1);
+    const auraReward = 5 * auraMultiplier;
+
+    const currentBalance = profile.coins || 0;
+    const currentAura = profile.stats?.aura ?? 500;
+
+    await ctx.db.patch(profile._id, {
+      coins: newBalance,
+      lifetimeEarned: newLifetimeEarned,
+      stats: {
+        ...profile.stats,
+        aura: currentAura + auraReward,
+        weeklyAura: (profile.stats?.weeklyAura ?? 0) + auraReward,
+      },
+    });
+
+    // Create or update the mission record
+    if (existing) {
+      await ctx.db.patch(existing._id, { completed: true, claimed: true, claimedAt: Date.now() });
+    } else {
+      await ctx.db.insert("personalMissions", {
+        playerAddress: normalizedAddress,
+        date: weekKey,
+        missionType: "neynar_score_cast",
+        completed: true,
+        claimed: true,
+        reward,
+        completedAt: Date.now(),
+        claimedAt: Date.now(),
+      });
+    }
+
+    // Audit log
+    await createAuditLog(ctx, normalizedAddress, "earn", reward, currentBalance, newBalance, "claimMission", "neynar_score_cast", { missionType: "neynar_score_cast" });
+    await logTransaction(ctx, {
+      address: normalizedAddress,
+      type: 'earn',
+      amount: reward,
+      source: 'mission',
+      description: 'Weekly: cast @vibefid for Neynar score',
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
+    });
+
+    return { reward };
   },
 });
 

@@ -487,7 +487,8 @@ export default defineSchema({
       v.literal("tcg_play_3"), // Play 3 VibeClash matches (daily)
       v.literal("tcg_win_streak_3"), // Win 3 VibeClash matches in a row (daily)
       v.literal("first_baccarat_win"), // First Baccarat win (daily)
-      v.literal("send_vibemail_daily") // Sent a VibeMail today (daily)
+      v.literal("send_vibemail_daily"), // Sent a VibeMail today (daily)
+      v.literal("neynar_score_cast") // Cast @vibefid for Neynar score (weekly)
     ),
     completed: v.boolean(), // Mission requirement completed
     claimed: v.boolean(), // Reward claimed by player
