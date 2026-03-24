@@ -3098,3 +3098,18 @@ export const resetWeeklyAura = internalMutation({
     return { totalReset };
   },
 });
+
+/**
+ * Admin: Set a player's permanent aura XP directly (for testing SSJ levels)
+ * Does NOT touch weeklyAura (leaderboard counter stays unaffected)
+ */
+export const adminSetAuraXP = mutation({
+  args: { address: v.string(), aura: v.number() },
+  handler: async (ctx, { address, aura }) => {
+    const normalized = address.toLowerCase();
+    const profile = await ctx.db.query("profiles").withIndex("by_address", q => q.eq("address", normalized)).first();
+    if (!profile) throw new Error('Profile not found');
+    await ctx.db.patch(profile._id, { stats: { ...profile.stats, aura } });
+    return { ok: true, aura };
+  },
+});

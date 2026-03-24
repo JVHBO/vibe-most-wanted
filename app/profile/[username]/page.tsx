@@ -28,7 +28,7 @@ import { usePlayerCards } from '@/contexts/PlayerCardsContext';
 import { getCardDisplayPower } from '@/lib/power-utils';
 import { getCharacterFromImage } from '@/lib/vmw-image-mapping';
 import tcgCardsData from '@/data/vmw-tcg-cards.json';
-import { getAuraLevelProgress } from '@/lib/aura-levels';
+import { getAuraLevelProgress, AURA_LEVELS } from '@/lib/aura-levels';
 import tcgAbilitiesData from '@/data/tcg-abilities.json';
 
 // TCG abilities type
@@ -610,38 +610,93 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Aura XP / SSJ Level Progress */}
+          {/* SSJ Level Panel */}
           {(() => {
-            const auraXP = profile.stats.aura ?? 0;
-            const { level, progress, next } = getAuraLevelProgress(auraXP);
+            const aura = profile.stats.aura ?? 0;
+            const { level, progress, next } = getAuraLevelProgress(aura);
+            const nextLevel = AURA_LEVELS[AURA_LEVELS.findIndex(l => l.key === level.key) + 1] ?? null;
+
+            // Perks per level key — all SOON for now
+            const PERKS: Record<string, { icon: string; label: string }[]> = {
+              human:    [],
+              great_ape: [{ icon: '✉️', label: '1 free VibeMail / day' }],
+              ssj1:     [{ icon: '✉️', label: '1 free VibeMail / day' }, { icon: '🎰', label: '+1 Roulette spin / day' }, { icon: '💰', label: 'Standard daily earn cap' }],
+              ssj2:     [{ icon: '✉️', label: '3 free VibeMails / day' }, { icon: '🎰', label: '+2 Roulette spins / day' }, { icon: '💰', label: 'Increased earn cap' }],
+              ssj3:     [{ icon: '✉️', label: '5 free VibeMails / day' }, { icon: '🎰', label: '+3 Roulette spins / day' }, { icon: '💰', label: 'Higher earn cap' }, { icon: '⚔️', label: '+1 daily attack slot' }],
+              ssj4:     [{ icon: '✉️', label: '10 free VibeMails / day' }, { icon: '🎰', label: '+5 Roulette spins / day' }, { icon: '💰', label: 'Max earn cap tier 1' }, { icon: '🃏', label: 'Exclusive TCG card back' }],
+              ssj_god:  [{ icon: '✉️', label: 'Unlimited VibeMails' }, { icon: '🎰', label: '+10 Roulette spins / day' }, { icon: '💰', label: 'Max earn cap tier 2' }, { icon: '🏆', label: 'Exclusive God profile frame' }],
+              ssj_blue: [{ icon: '✉️', label: 'Unlimited VibeMails' }, { icon: '🎰', label: 'Unlimited Roulette spins' }, { icon: '💰', label: 'Absolute max earn cap' }, { icon: '👑', label: 'SSJ Blue exclusive badge' }],
+            };
+
+            const levelIdx = AURA_LEVELS.findIndex(l => l.key === level.key);
+            const unlockedPerks = PERKS[level.key] ?? [];
+
             return (
-              <div className="mt-3 w-full border-2 border-black bg-vintage-black/40 shadow-[2px_2px_0px_#000] p-2">
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-1.5">
-                    {level.name ? (
-                      <span className={`text-[10px] font-black uppercase tracking-wider ${level.color}`}>{level.name}</span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-vintage-burnt-gold uppercase tracking-wider">Base</span>
-                    )}
-                    <span className="text-[9px] text-vintage-burnt-gold/60">Aura XP</span>
+              <div className="mt-3 w-full border-2 border-black bg-vintage-black/40 shadow-[2px_2px_0px_#000]">
+                {/* Header row */}
+                <div className="flex items-center justify-between px-3 py-2 border-b border-black/30">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-base font-black uppercase tracking-wider ${level.color}`}>
+                      {level.name || 'Human'}
+                    </span>
+                    <span className="text-[9px] text-vintage-burnt-gold/50 uppercase">Aura Level</span>
                   </div>
-                  <div className="flex items-center gap-1 text-[9px] text-vintage-burnt-gold">
-                    <span className={level.color}>{auraXP.toLocaleString()}</span>
-                    {next && <span className="text-vintage-burnt-gold/50">/ {next.toLocaleString()}</span>}
-                    {!next && <span className="text-pink-400 font-bold">MAX</span>}
+                  <div className="flex items-center gap-1 text-[10px]">
+                    <span className={`font-bold ${level.color}`}>{aura.toLocaleString()}</span>
+                    {next && <span className="text-vintage-burnt-gold/40">/ {next.toLocaleString()} XP</span>}
+                    {!next && <span className="text-cyan-400 font-bold text-[9px]">MAX LEVEL</span>}
                   </div>
                 </div>
-                <div className="w-full h-1 bg-vintage-deep-black rounded-full overflow-hidden">
-                  <div
-                    className={`h-full bg-gradient-to-r ${level.gradient} transition-all duration-700`}
-                    style={{ width: `${progress}%` }}
-                  />
+
+                {/* Progress bar */}
+                <div className="px-3 pt-2 pb-1">
+                  <div className="w-full h-1 bg-vintage-deep-black rounded-full overflow-hidden">
+                    <div
+                      className={`h-full bg-gradient-to-r ${level.gradient} transition-all duration-700`}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  {next && nextLevel && (
+                    <div className="flex justify-between mt-0.5">
+                      <span className={`text-[8px] font-bold ${level.color}`}>{level.name || 'Human'}</span>
+                      <span className={`text-[8px] font-bold ${nextLevel.color}`}>{nextLevel.name}</span>
+                    </div>
+                  )}
                 </div>
-                {next && (
-                  <p className="text-[8px] text-vintage-burnt-gold/40 mt-0.5 text-right">
-                    {(next - auraXP).toLocaleString()} XP to next level
-                  </p>
-                )}
+
+                {/* Perks grid */}
+                <div className="px-3 pb-2 pt-1">
+                  <p className="text-[8px] text-vintage-burnt-gold/50 uppercase tracking-wider mb-1.5">Perks</p>
+                  {unlockedPerks.length > 0 ? (
+                    <div className="flex flex-col gap-1">
+                      {unlockedPerks.map((perk, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="text-[11px]">{perk.icon}</span>
+                          <span className="text-[10px] text-white/70">{perk.label}</span>
+                          <span className="ml-auto text-[8px] bg-yellow-500/20 text-yellow-400 font-bold px-1.5 py-0.5 rounded uppercase tracking-wide border border-yellow-500/30">SOON</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[9px] text-vintage-burnt-gold/30 italic">Reach Great Ape to unlock perks</p>
+                  )}
+
+                  {/* Next level teaser */}
+                  {nextLevel && (PERKS[nextLevel.key]?.length ?? 0) > 0 && (
+                    <div className="mt-2 pt-2 border-t border-black/20">
+                      <p className="text-[8px] text-vintage-burnt-gold/40 uppercase tracking-wider mb-1">
+                        Next: <span className={nextLevel.color}>{nextLevel.name}</span> at {nextLevel.threshold.toLocaleString()} XP
+                      </p>
+                      {PERKS[nextLevel.key].slice(0, 2).map((perk, i) => (
+                        <div key={i} className="flex items-center gap-2 opacity-40">
+                          <span className="text-[10px]">{perk.icon}</span>
+                          <span className="text-[9px] text-white/50">{perk.label}</span>
+                          <span className="ml-auto text-[7px] bg-black/40 text-white/30 font-bold px-1 py-0.5 rounded uppercase">🔒</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })()}

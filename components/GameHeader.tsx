@@ -93,14 +93,16 @@ export function GameHeader({
                       {userProfile.username[0].toUpperCase()}
                     </div>
                   )}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-vintage-gold">
-                      @{userProfile.username}
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex flex-col items-start justify-center min-w-0">
+                      <span className="text-sm font-semibold text-vintage-gold leading-none truncate max-w-[120px]">@{userProfile.username}</span>
                       {(() => {
                         const lvl = getAuraLevel(userProfile.stats?.aura ?? 0);
-                        return lvl.name ? <span className={`ml-1 text-xs font-bold ${lvl.color}`}>({lvl.name})</span> : null;
+                        return lvl.name
+                          ? <span className={`text-[9px] font-bold ${lvl.color} leading-none mt-0.5 uppercase tracking-wide`}>{lvl.name}</span>
+                          : null;
                       })()}
-                    </span>
+                    </div>
                     <BadgeList badges={getUserBadges(userProfile.address, userProfile.userIndex ?? 9999, userProfile.hasVibeBadge)} size="sm" />
                   </div>
                 </button>
