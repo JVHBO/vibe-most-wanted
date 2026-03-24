@@ -488,7 +488,8 @@ export default defineSchema({
       v.literal("tcg_win_streak_3"), // Win 3 VibeClash matches in a row (daily)
       v.literal("first_baccarat_win"), // First Baccarat win (daily)
       v.literal("send_vibemail_daily"), // Sent a VibeMail today (daily)
-      v.literal("neynar_score_cast") // Cast @vibefid for Neynar score (weekly)
+      v.literal("neynar_score_cast"), // Cast @vibefid for Neynar score (weekly)
+      v.literal("daily_share") // Share VMW on Farcaster (daily)
     ),
     completed: v.boolean(), // Mission requirement completed
     claimed: v.boolean(), // Reward claimed by player

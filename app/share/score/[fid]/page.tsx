@@ -83,8 +83,8 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
           title: t.buttonTitle,
           action: {
             type: 'launch_frame',
-            name: 'VibeFID',
-            url: 'https://vibefid.xyz',
+            name: 'Vibe Most Wanted',
+            url: 'https://vibemostwanted.xyz/fid',
             splashImageUrl: 'https://ipfs.filebase.io/ipfs/QmdDjLUMbyR8bggv3fJXT85fXAEsitNnrZqry3imZAj63z',
             splashBackgroundColor: '#1a1a1a',
           },
@@ -97,6 +97,6 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
 export default async function ScoreSharePage({ params }: PageProps) {
   const { fid } = await params;
 
-  // Redirect to VibeFID miniapp
-  redirect(`https://vibefid.xyz`);
+  // Redirect to Vibe Most Wanted miniapp
+  redirect(`/fid/${fid}`);
 }

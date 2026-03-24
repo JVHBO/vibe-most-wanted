@@ -2,7 +2,7 @@
 
 import { Modal } from '@/app/(game)/components/ui/Modal';
 
-export const CHANGELOG_VERSION = '0.3.6';
+export const CHANGELOG_VERSION = '0.3.7';
 export const CHANGELOG_STORAGE_KEY = 'vmw_changelog_seen';
 
 interface ChangelogEntry {
@@ -14,9 +14,19 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '0.3.6',
+    version: '0.3.7',
     date: 'Week of Mar 24, 2026',
     isNew: true,
+    features: [
+      { emoji: '🎙️', text: 'New quest: Check your Neymar Score — cast @vibefid weekly for +200 VBMS' },
+      { emoji: '📤', text: 'New quest: Daily Farcaster Share — share VMW once a day for +100 VBMS' },
+      { emoji: '📋', text: 'All Missions modal — tap "All" to see every quest and its status' },
+    ],
+  },
+  {
+    version: '0.3.6',
+    date: 'Week of Mar 24, 2026',
+    isNew: false,
     features: [
       { emoji: '🐉', text: 'Aura XP Levels — 8 Dragon Ball tiers from Human to SSJ Blue' },
       { emoji: '🎰', text: 'Roulette bonus spins based on your Aura level (up to +10/day at SSJ Blue)' },

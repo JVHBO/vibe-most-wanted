@@ -169,7 +169,9 @@ export default function QuestsPage() {
   const claimMission = useMutation(api.missions.claimMission);
   const claimAllMissions = useMutation(api.missions.claimAllMissions);
   const markAndClaimNeynarScoreCast = useMutation(api.missions.markAndClaimNeynarScoreCast);
+  const markAndClaimDailyShare = useMutation(api.missions.markAndClaimDailyShare);
   const [castingNeynarScore, setCastingNeynarScore] = useState(false);
+  const [sharingDaily, setSharingDaily] = useState(false);
   const setPreferredChainMutation = useMutation(api.missions.setPreferredChain);
   const markChainModalSeenMutation = useMutation(api.missions.markChainModalSeen);
   const [showChainModal, setShowChainModal] = useState(false);
@@ -239,16 +241,13 @@ export default function QuestsPage() {
   // All mission types (matching backend) - using translation keys
   const ALL_MISSION_TYPES = [
     { type: 'neynar_score_cast', reward: 200, date: 'weekly', titleKey: 'mission_neynar_score_cast', descKey: 'mission_neynar_score_cast_desc' },
+    { type: 'daily_share', reward: 100, date: 'today', titleKey: 'mission_daily_share', descKey: 'mission_daily_share_desc' },
     { type: 'daily_login', reward: 50, date: 'today', titleKey: 'mission_daily_login', descKey: 'mission_daily_login_desc' },
+    { type: 'first_baccarat_win', reward: 100, date: 'today', titleKey: 'mission_first_baccarat_win', descKey: 'mission_first_baccarat_win_desc' },
     { type: 'first_pve_win', reward: 25, date: 'today', titleKey: 'mission_first_pve_win', descKey: 'mission_first_pve_win_desc' },
     { type: 'first_pvp_match', reward: 50, date: 'today', titleKey: 'mission_first_pvp_match', descKey: 'mission_first_pvp_match_desc' },
-    { type: 'first_baccarat_win', reward: 100, date: 'today', titleKey: 'mission_first_baccarat_win', descKey: 'mission_first_baccarat_win_desc' },
     { type: 'streak_3', reward: 75, date: 'today', titleKey: 'mission_streak_3', descKey: 'mission_streak_3_desc' },
     { type: 'streak_5', reward: 150, date: 'today', titleKey: 'mission_streak_5', descKey: 'mission_streak_5_desc' },
-    { type: 'tcg_pve_win', reward: 25, date: 'today', titleKey: 'mission_tcg_pve_win', descKey: 'mission_tcg_pve_win_desc' },
-    { type: 'tcg_pvp_match', reward: 50, date: 'today', titleKey: 'mission_tcg_pvp_match', descKey: 'mission_tcg_pvp_match_desc' },
-    { type: 'tcg_play_3', reward: 75, date: 'today', titleKey: 'mission_tcg_play_3', descKey: 'mission_tcg_play_3_desc' },
-    { type: 'tcg_win_streak_3', reward: 150, date: 'today', titleKey: 'mission_tcg_win_streak_3', descKey: 'mission_tcg_win_streak_3_desc' },
     { type: 'vibefid_minted', reward: 5000, date: 'once', titleKey: 'mission_vibefid_minted', descKey: 'mission_vibefid_minted_desc' },
     { type: 'claim_vibe_badge', reward: 0, date: 'once', titleKey: 'mission_vibe_badge', descKey: 'mission_vibe_badge_desc' },
   ];
@@ -727,9 +726,11 @@ export default function QuestsPage() {
                   const missionList = missions
                     .filter((m: any) => !m.claimed)
                     .sort((a: any, b: any) => {
-                      // Neymar score quest always first
+                      // Neymar score quest first, then share quest
                       if (a.missionType === 'neynar_score_cast') return -1;
                       if (b.missionType === 'neynar_score_cast') return 1;
+                      if (a.missionType === 'daily_share') return -1;
+                      if (b.missionType === 'daily_share') return 1;
                       if (a.completed && !b.completed) return -1;
                       if (b.completed && !a.completed) return 1;
                       return 0;
@@ -743,11 +744,12 @@ export default function QuestsPage() {
                   const mAura = 5 * (vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1);
                   const playerPfp = profileDashboard?.pfpUrl || (profileDashboard as any)?.pfp_url;
                   const isNeymarQuest = mission.missionType === 'neynar_score_cast';
-                  const missionCardClass = (mission.completed || isNeymarQuest)
+                  const isShareQuest = mission.missionType === 'daily_share';
+                  const missionCardClass = (mission.completed || isNeymarQuest || isShareQuest)
                     ? "flex items-center gap-3 p-2.5 border-2 transition-all border-yellow-400/30 bg-yellow-400/5"
                     : "flex items-center gap-3 p-2.5 border-2 transition-all border-white/10 opacity-60";
-                  const missionBarClass = (mission.completed || isNeymarQuest) ? "w-1 self-stretch flex-shrink-0 bg-yellow-400" : "w-1 self-stretch flex-shrink-0 bg-white/10";
-                  const missionTitleClass = (mission.completed || isNeymarQuest) ? "text-xs font-bold truncate text-vintage-ice" : "text-xs font-bold truncate text-vintage-ice/50";
+                  const missionBarClass = (mission.completed || isNeymarQuest || isShareQuest) ? "w-1 self-stretch flex-shrink-0 bg-yellow-400" : "w-1 self-stretch flex-shrink-0 bg-white/10";
+                  const missionTitleClass = (mission.completed || isNeymarQuest || isShareQuest) ? "text-xs font-bold truncate text-vintage-ice" : "text-xs font-bold truncate text-vintage-ice/50";
                   return (
                     <div className="relative overflow-hidden">
                       {playerPfp && (
@@ -801,7 +803,7 @@ export default function QuestsPage() {
                               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                               {isClaiming ? "..." : t('mission_claim')}
                             </button>
-                          ) : mission.missionType === 'neynar_score_cast' ? (
+                          ) : isNeymarQuest ? (
                             <button
                               onClick={async () => {
                                 if (!address || castingNeynarScore) return;
@@ -822,6 +824,28 @@ export default function QuestsPage() {
                               style={{ boxShadow: "2px 2px 0px #000" }}
                             >
                               {castingNeynarScore ? '...' : '🎙️ Cast'}
+                            </button>
+                          ) : isShareQuest ? (
+                            <button
+                              onClick={async () => {
+                                if (!address || sharingDaily) return;
+                                AudioManager.buttonClick();
+                                setSharingDaily(true);
+                                try {
+                                  const { sdk } = await import('@farcaster/miniapp-sdk');
+                                  await sdk.actions.composeCast({ text: "🎮 Playing Vibe Most Wanted!\nCollect cards, earn VBMS, battle for glory!\nhttps://vibemostwanted.xyz" });
+                                  await markAndClaimDailyShare({ playerAddress: address.toLowerCase(), chain: effectiveChain });
+                                  AudioManager.buttonSuccess();
+                                  await refreshMissions();
+                                } catch (e: any) {
+                                  if (!e?.message?.includes('Already claimed')) console.error(e);
+                                } finally { setSharingDaily(false); }
+                              }}
+                              disabled={sharingDaily}
+                              className="px-2 py-1 border-2 border-black bg-cyan-500 text-black font-bold text-xs"
+                              style={{ boxShadow: "2px 2px 0px #000" }}
+                            >
+                              {sharingDaily ? '...' : '📤 Share'}
                             </button>
                           ) : (
                             <span className="text-vintage-ice/20 text-[10px]">{t('mission_locked')}</span>
@@ -865,8 +889,10 @@ export default function QuestsPage() {
                     <div className="overflow-y-auto flex-1 px-3 py-2 space-y-1.5">
                       {missions.map((m: any) => {
                         const isNeymar = m.missionType === 'neynar_score_cast';
-                        const isActive = m.completed || isNeymar;
-                        const statusLabel = m.claimed ? '✅' : isNeymar && !m.claimed ? '🎙️' : m.completed ? '🔓' : '🔒';
+                        const isShare = m.missionType === 'daily_share';
+                        const isActionQuest = (isNeymar || isShare) && !m.claimed;
+                        const isActive = m.completed || isNeymar || isShare;
+                        const statusLabel = m.claimed ? '✅' : isNeymar ? '🎙️' : isShare ? '📤' : m.completed ? '🔓' : '🔒';
                         return (
                           <div key={m._id} className={`flex items-center gap-2 p-2 rounded-lg border ${m.claimed ? 'border-green-500/20 bg-green-900/10' : isActive ? 'border-vintage-gold/40 bg-vintage-gold/5' : 'border-white/5'}`}>
                             <span className="text-base shrink-0">{statusLabel}</span>
@@ -878,28 +904,40 @@ export default function QuestsPage() {
                                 <span className="text-[9px] text-vintage-gold/60">+{m.reward} VBMS</span>
                               )}
                             </div>
-                            {isNeymar && !m.claimed ? (
+                            {isActionQuest ? (
                               <button
                                 onClick={async () => {
-                                  if (!address || castingNeynarScore) return;
+                                  if (!address) return;
                                   AudioManager.buttonClick();
-                                  setCastingNeynarScore(true);
                                   setShowAllQuestsModal(false);
-                                  try {
-                                    const { sdk } = await import('@farcaster/miniapp-sdk');
-                                    await sdk.actions.composeCast({ text: "@vibefid what's my neymar score" });
-                                    await markAndClaimNeynarScoreCast({ playerAddress: address.toLowerCase(), chain: effectiveChain });
-                                    AudioManager.buttonSuccess();
-                                    await refreshMissions();
-                                  } catch (e: any) {
-                                    if (!e?.message?.includes('Already claimed')) console.error(e);
-                                  } finally { setCastingNeynarScore(false); }
+                                  if (isNeymar) {
+                                    setCastingNeynarScore(true);
+                                    try {
+                                      const { sdk } = await import('@farcaster/miniapp-sdk');
+                                      await sdk.actions.composeCast({ text: "@vibefid what's my neymar score" });
+                                      await markAndClaimNeynarScoreCast({ playerAddress: address.toLowerCase(), chain: effectiveChain });
+                                      AudioManager.buttonSuccess();
+                                      await refreshMissions();
+                                    } catch (e: any) {
+                                      if (!e?.message?.includes('Already claimed')) console.error(e);
+                                    } finally { setCastingNeynarScore(false); }
+                                  } else {
+                                    setSharingDaily(true);
+                                    try {
+                                      const { sdk } = await import('@farcaster/miniapp-sdk');
+                                      await sdk.actions.composeCast({ text: "🎮 Playing Vibe Most Wanted!\nCollect cards, earn VBMS, battle for glory!\nhttps://vibemostwanted.xyz" });
+                                      await markAndClaimDailyShare({ playerAddress: address.toLowerCase(), chain: effectiveChain });
+                                      AudioManager.buttonSuccess();
+                                      await refreshMissions();
+                                    } catch (e: any) {
+                                      if (!e?.message?.includes('Already claimed')) console.error(e);
+                                    } finally { setSharingDaily(false); }
+                                  }
                                 }}
-                                disabled={castingNeynarScore}
                                 className="px-2 py-1 border-2 border-black bg-cyan-500 text-black font-bold text-[10px] shrink-0"
                                 style={{ boxShadow: "2px 2px 0px #000" }}
                               >
-                                {castingNeynarScore ? '...' : '🎙️ Cast'}
+                                {isNeymar ? '🎙️ Cast' : '📤 Share'}
                               </button>
                             ) : (
                               <span className={`text-[10px] font-bold shrink-0 ${m.claimed ? 'text-green-400' : m.completed ? 'text-yellow-400' : 'text-vintage-ice/30'}`}>

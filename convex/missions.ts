@@ -73,6 +73,7 @@ const MISSION_REWARDS = {
   first_baccarat_win: { type: "coins", amount: 100 }, // First Baccarat win
   send_vibemail_daily: { type: "coins", amount: 50 },  // Sent a VibeMail today
   neynar_score_cast: { type: "coins", amount: 200 },   // Weekly: cast @vibefid for score
+  daily_share: { type: "coins", amount: 100 },          // Daily: share VMW on Farcaster
 };
 
 /**
@@ -1000,6 +1001,84 @@ export const markAndClaimNeynarScoreCast = mutation({
       amount: reward,
       source: 'mission',
       description: 'Weekly: cast @vibefid for Neynar score',
+      balanceBefore: currentBalance,
+      balanceAfter: newBalance,
+    });
+
+    return { reward };
+  },
+});
+
+/**
+ * Complete and claim the daily "Share VMW on Farcaster" mission in one step.
+ */
+export const markAndClaimDailyShare = mutation({
+  args: {
+    playerAddress: v.string(),
+    chain: v.optional(v.string()),
+  },
+  handler: async (ctx, { playerAddress, chain }) => {
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
+    if (isBlacklisted(normalizedAddress)) throw new Error("[BLACKLISTED]");
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const existing = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", today)
+          .eq("missionType", "daily_share")
+      )
+      .first();
+
+    if (existing?.claimed) throw new Error("Already claimed today");
+
+    const profile = await getProfileByAddress(ctx, normalizedAddress);
+    if (!profile) throw new Error("Profile not found");
+
+    let reward = MISSION_REWARDS.daily_share.amount;
+    if (chain === "arbitrum") reward = reward * 2;
+
+    const currentBalance = profile.coins || 0;
+    const newBalance = currentBalance + reward;
+    const newLifetimeEarned = (profile.lifetimeEarned || 0) + reward;
+    const currentAura = profile.stats?.aura ?? 500;
+    const auraMultiplier = (profile.hasVibeBadge === true ? 2 : 1) * (chain === "arbitrum" ? 2 : 1);
+    const auraReward = 5 * auraMultiplier;
+
+    await ctx.db.patch(profile._id, {
+      coins: newBalance,
+      lifetimeEarned: newLifetimeEarned,
+      stats: {
+        ...profile.stats,
+        aura: currentAura + auraReward,
+        weeklyAura: (profile.stats?.weeklyAura ?? 0) + auraReward,
+      },
+    });
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { completed: true, claimed: true, claimedAt: Date.now() });
+    } else {
+      await ctx.db.insert("personalMissions", {
+        playerAddress: normalizedAddress,
+        date: today,
+        missionType: "daily_share",
+        completed: true,
+        claimed: true,
+        reward,
+        completedAt: Date.now(),
+        claimedAt: Date.now(),
+      });
+    }
+
+    await createAuditLog(ctx, normalizedAddress, "earn", reward, currentBalance, newBalance, "claimMission", "daily_share", { missionType: "daily_share" });
+    await logTransaction(ctx, {
+      address: normalizedAddress,
+      type: 'earn',
+      amount: reward,
+      source: 'mission',
+      description: 'Daily: share VMW on Farcaster',
       balanceBefore: currentBalance,
       balanceAfter: newBalance,
     });
