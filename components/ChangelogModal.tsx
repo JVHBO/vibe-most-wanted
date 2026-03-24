@@ -2,7 +2,7 @@
 
 import { Modal } from '@/app/(game)/components/ui/Modal';
 
-export const CHANGELOG_VERSION = '0.3.5';
+export const CHANGELOG_VERSION = '0.3.6';
 export const CHANGELOG_STORAGE_KEY = 'vmw_changelog_seen';
 
 interface ChangelogEntry {
@@ -13,6 +13,18 @@ interface ChangelogEntry {
 }
 
 const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: '0.3.6',
+    date: 'Week of Mar 24, 2026',
+    isNew: true,
+    features: [
+      { emoji: '🐉', text: 'Aura XP Levels — 8 Dragon Ball tiers from Human to SSJ Blue' },
+      { emoji: '🎰', text: 'Roulette bonus spins based on your Aura level (up to +10/day at SSJ Blue)' },
+      { emoji: '💰', text: 'Daily earn cap now scales with Aura level (100k at Human → 750k at SSJ Blue)' },
+      { emoji: '📋', text: 'View your SSJ level, progress bar and all perks on your /profile' },
+      { emoji: '🔧', text: 'Fixed profile page scroll in Farcaster miniapp' },
+    ],
+  },
   {
     version: '0.3.5',
     date: 'Week of Mar 18, 2026',
