@@ -169,7 +169,9 @@ export default function QuestsPage() {
   const claimMission = useMutation(api.missions.claimMission);
   const claimAllMissions = useMutation(api.missions.claimAllMissions);
   const markAndClaimNeynarScoreCast = useMutation(api.missions.markAndClaimNeynarScoreCast);
+  const markAndClaimDailyShare = useMutation(api.missions.markAndClaimDailyShare);
   const [castingNeynarScore, setCastingNeynarScore] = useState(false);
+  const [sharingDaily, setSharingDaily] = useState(false);
   const setPreferredChainMutation = useMutation(api.missions.setPreferredChain);
   const markChainModalSeenMutation = useMutation(api.missions.markChainModalSeen);
   const [showChainModal, setShowChainModal] = useState(false);
@@ -823,6 +825,34 @@ export default function QuestsPage() {
                             >
                               {castingNeynarScore ? '...' : '🎙️ Cast'}
                             </button>
+                          ) : isShareQuest ? (
+                            <button
+                              onClick={async () => {
+                                if (!address || sharingDaily) return;
+                                AudioManager.buttonClick();
+                                setSharingDaily(true);
+                                try {
+                                  const { sdk } = await import('@farcaster/miniapp-sdk');
+                                  const shareUrl = `https://vibemostwanted.xyz/share/vibe/${address}`;
+                                  const power = profileDashboard?.stats?.totalPower || 0;
+                                  const aura = profileDashboard?.stats?.aura || 0;
+                                  await sdk.actions.composeCast({
+                                    text: `⚔️ Playing Vibe Most Wanted!\n\nPower: ${power} | Aura: ${aura}\nCollect cards, earn $VBMS, battle for glory!`,
+                                    embeds: [shareUrl],
+                                  });
+                                  await markAndClaimDailyShare({ playerAddress: address.toLowerCase(), chain: effectiveChain });
+                                  AudioManager.buttonSuccess();
+                                  await refreshMissions();
+                                } catch (e: any) {
+                                  if (!e?.message?.includes('Already claimed')) console.error(e);
+                                } finally { setSharingDaily(false); }
+                              }}
+                              disabled={sharingDaily}
+                              className="px-2 py-1 border-2 border-black bg-cyan-500 text-black font-bold text-xs"
+                              style={{ boxShadow: "2px 2px 0px #000" }}
+                            >
+                              {sharingDaily ? '...' : '📤 Share'}
+                            </button>
                           ) : (
                             <span className="text-vintage-ice/20 text-[10px]">{t('mission_locked')}</span>
                           )}
@@ -866,9 +896,9 @@ export default function QuestsPage() {
                       {missions.map((m: any) => {
                         const isNeymar = m.missionType === 'neynar_score_cast';
                         const isShare = m.missionType === 'daily_share';
-                        const isActionQuest = isNeymar && !m.claimed;
+                        const isActionQuest = (isNeymar || isShare) && !m.claimed;
                         const isActive = m.completed || isNeymar || isShare;
-                        const statusLabel = m.claimed ? '✅' : isNeymar ? '🎙️' : m.completed ? '🔓' : '🔒';
+                        const statusLabel = m.claimed ? '✅' : isNeymar ? '🎙️' : isShare ? '📤' : m.completed ? '🔓' : '🔒';
                         return (
                           <div key={m._id} className={`flex items-center gap-2 p-2 rounded-lg border ${m.claimed ? 'border-green-500/20 bg-green-900/10' : isActive ? 'border-vintage-gold/40 bg-vintage-gold/5' : 'border-white/5'}`}>
                             <span className="text-base shrink-0">{statusLabel}</span>
@@ -897,6 +927,23 @@ export default function QuestsPage() {
                                     } catch (e: any) {
                                       if (!e?.message?.includes('Already claimed')) console.error(e);
                                     } finally { setCastingNeynarScore(false); }
+                                  } else if (isShare) {
+                                    setSharingDaily(true);
+                                    try {
+                                      const { sdk } = await import('@farcaster/miniapp-sdk');
+                                      const shareUrl = `https://vibemostwanted.xyz/share/vibe/${address}`;
+                                      const power = profileDashboard?.stats?.totalPower || 0;
+                                      const aura = profileDashboard?.stats?.aura || 0;
+                                      await sdk.actions.composeCast({
+                                        text: `⚔️ Playing Vibe Most Wanted!\n\nPower: ${power} | Aura: ${aura}\nCollect cards, earn $VBMS, battle for glory!`,
+                                        embeds: [shareUrl],
+                                      });
+                                      await markAndClaimDailyShare({ playerAddress: address.toLowerCase(), chain: effectiveChain });
+                                      AudioManager.buttonSuccess();
+                                      await refreshMissions();
+                                    } catch (e: any) {
+                                      if (!e?.message?.includes('Already claimed')) console.error(e);
+                                    } finally { setSharingDaily(false); }
                                   }
                                 }}
                                 className="px-2 py-1 border-2 border-black bg-cyan-500 text-black font-bold text-[10px] shrink-0"
