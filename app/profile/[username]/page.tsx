@@ -539,14 +539,14 @@ export default function ProfilePage() {
             <div className="p-3 space-y-2">
               {AURA_LEVELS.map((lvl, i) => {
                 const GUIDE_PERKS: Record<string, string[]> = {
-                  human:    ['Base access'],
-                  great_ape:['1 free VibeMail / day'],
-                  ssj1:     ['1 free VibeMail / day', '+1 Roulette spin / day', 'Standard daily earn cap'],
-                  ssj2:     ['3 free VibeMails / day', '+2 Roulette spins / day', 'Increased earn cap'],
-                  ssj3:     ['5 free VibeMails / day', '+3 Roulette spins / day', 'Higher earn cap', '+1 daily attack slot'],
-                  ssj4:     ['10 free VibeMails / day', '+5 Roulette spins / day', 'Max earn cap tier 1', 'Exclusive TCG card back'],
-                  ssj_god:  ['Unlimited VibeMails', '+10 Roulette spins / day', 'Max earn cap tier 2', 'Exclusive God profile frame'],
-                  ssj_blue: ['Unlimited VibeMails', 'Unlimited Roulette spins', 'Absolute max earn cap', 'SSJ Blue exclusive badge'],
+                  human:    ['100k/day earn cap'],
+                  great_ape:['1 free VibeMail/day', '100k/day earn cap'],
+                  ssj1:     ['1 free VibeMail/day', '+1 Roulette spin/day', '200k/day earn cap'],
+                  ssj2:     ['2 free VibeMails/day', '+2 Roulette spins/day', '300k/day earn cap'],
+                  ssj3:     ['3 free VibeMails/day', '+4 Roulette spins/day', '400k/day earn cap'],
+                  ssj4:     ['4 free VibeMails/day', '+6 Roulette spins/day', '500k/day earn cap'],
+                  ssj_god:  ['5 free VibeMails/day', '+8 Roulette spins/day', '650k/day earn cap'],
+                  ssj_blue: ['5 free VibeMails/day', '+10 Roulette spins/day', '750k/day earn cap'],
                 };
                 const perks = GUIDE_PERKS[lvl.key] ?? [];
                 const isCurrentLevel = lvl.key === getAuraLevelProgress(profile?.stats?.aura ?? 0).level.key;
@@ -663,14 +663,14 @@ export default function ProfilePage() {
 
             // Perks per level key — all SOON for now
             const PERKS: Record<string, { icon: string; label: string }[]> = {
-              human:    [],
-              great_ape: [{ icon: '✉️', label: '1 free VibeMail / day' }],
-              ssj1:     [{ icon: '✉️', label: '1 free VibeMail / day' }, { icon: '🎰', label: '+1 Roulette spin / day' }, { icon: '💰', label: 'Standard daily earn cap' }],
-              ssj2:     [{ icon: '✉️', label: '3 free VibeMails / day' }, { icon: '🎰', label: '+2 Roulette spins / day' }, { icon: '💰', label: 'Increased earn cap' }],
-              ssj3:     [{ icon: '✉️', label: '5 free VibeMails / day' }, { icon: '🎰', label: '+3 Roulette spins / day' }, { icon: '💰', label: 'Higher earn cap' }, { icon: '⚔️', label: '+1 daily attack slot' }],
-              ssj4:     [{ icon: '✉️', label: '10 free VibeMails / day' }, { icon: '🎰', label: '+5 Roulette spins / day' }, { icon: '💰', label: 'Max earn cap tier 1' }, { icon: '🃏', label: 'Exclusive TCG card back' }],
-              ssj_god:  [{ icon: '✉️', label: 'Unlimited VibeMails' }, { icon: '🎰', label: '+10 Roulette spins / day' }, { icon: '💰', label: 'Max earn cap tier 2' }, { icon: '🏆', label: 'Exclusive God profile frame' }],
-              ssj_blue: [{ icon: '✉️', label: 'Unlimited VibeMails' }, { icon: '🎰', label: 'Unlimited Roulette spins' }, { icon: '💰', label: 'Absolute max earn cap' }, { icon: '👑', label: 'SSJ Blue exclusive badge' }],
+              human:    [{ icon: '💰', label: '100k/day earn cap' }],
+              great_ape:[{ icon: '✉️', label: '1 free VibeMail/day' }, { icon: '💰', label: '100k/day earn cap' }],
+              ssj1:     [{ icon: '✉️', label: '1 free VibeMail/day' }, { icon: '🎰', label: '+1 Roulette spin/day' }, { icon: '💰', label: '200k/day earn cap' }],
+              ssj2:     [{ icon: '✉️', label: '2 free VibeMails/day' }, { icon: '🎰', label: '+2 Roulette spins/day' }, { icon: '💰', label: '300k/day earn cap' }],
+              ssj3:     [{ icon: '✉️', label: '3 free VibeMails/day' }, { icon: '🎰', label: '+4 Roulette spins/day' }, { icon: '💰', label: '400k/day earn cap' }],
+              ssj4:     [{ icon: '✉️', label: '4 free VibeMails/day' }, { icon: '🎰', label: '+6 Roulette spins/day' }, { icon: '💰', label: '500k/day earn cap' }],
+              ssj_god:  [{ icon: '✉️', label: '5 free VibeMails/day' }, { icon: '🎰', label: '+8 Roulette spins/day' }, { icon: '💰', label: '650k/day earn cap' }],
+              ssj_blue: [{ icon: '✉️', label: '5 free VibeMails/day' }, { icon: '🎰', label: '+10 Roulette spins/day' }, { icon: '💰', label: '750k/day earn cap' }],
             };
 
             const levelIdx = AURA_LEVELS.findIndex(l => l.key === level.key);
@@ -727,7 +727,7 @@ export default function ProfilePage() {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[9px] text-vintage-burnt-gold/30 italic">Reach Great Ape to unlock perks</p>
+                    <p className="text-[9px] text-vintage-burnt-gold/30 italic">No perks at this level</p>
                   )}
 
                   {/* Next level teaser */}
