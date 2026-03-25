@@ -155,6 +155,7 @@ export default function TCGPage() {
     farcasterFidState, setFarcasterFidState,
     farcasterClientFid,
     isCheckingFarcaster, setIsCheckingFarcaster,
+    safeAreaInsets,
   } = useFarcasterInit(isFrameMode);
 
   // Resolve primary address (handles linked/secondary wallets on website)
@@ -2592,10 +2593,14 @@ export default function TCGPage() {
             setCurrentView={setCurrentView}
             inboxStatus={inboxStatus}
             hasClaimableMissions={hasClaimableMissions}
+            safeAreaInsets={safeAreaInsets}
           />
 
-          {/* Content wrapper */}
-          <div className={isInFarcaster ? 'pb-[80px]' : ''}>
+          {/* Content wrapper — pb clears fixed bottom nav + safe area */}
+          <div
+            className={isInFarcaster && !(safeAreaInsets.bottom > 0) ? 'pb-[80px]' : ''}
+            style={isInFarcaster && safeAreaInsets.bottom > 0 ? { paddingBottom: 64 + safeAreaInsets.bottom } : undefined}
+          >
 
           {/* Price Ticker - TOP */}
           {isInFarcaster && (

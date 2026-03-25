@@ -16,6 +16,7 @@ interface GameNavBarProps {
   setCurrentView: (view: 'game' | 'inbox') => void;
   inboxStatus: InboxStatus | null | undefined;
   hasClaimableMissions: boolean;
+  safeAreaInsets?: { top: number; bottom: number; left: number; right: number };
 }
 
 export function GameNavBar({
@@ -25,6 +26,7 @@ export function GameNavBar({
   setCurrentView,
   inboxStatus,
   hasClaimableMissions,
+  safeAreaInsets,
 }: GameNavBarProps) {
   const { t } = useLanguage();
   const router = useRouter();
@@ -77,8 +79,17 @@ export function GameNavBar({
     </svg>
   );
 
+  // Use SDK safeAreaInsets.bottom when available (Warpcast real device), CSS env() as fallback
+  const navInsetBottom = safeAreaInsets?.bottom ?? 0;
+
   return (
-    <div className={isInFarcaster ? 'fixed bottom-0 left-0 right-0 z-[100] safe-area-bottom' : 'mb-3 md:mb-6 relative z-40'}>
+    <div
+      className={isInFarcaster
+        ? `fixed bottom-0 left-0 right-0 z-[100] ${navInsetBottom > 0 ? '' : 'safe-area-bottom'}`
+        : 'mb-3 md:mb-6 relative z-40'
+      }
+      style={isInFarcaster && navInsetBottom > 0 ? { paddingBottom: navInsetBottom } : undefined}
+    >
       <div className={`tour-nav-bar bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/30 ${isInFarcaster ? 'p-1' : 'p-2'} flex gap-1`}>
 
         {/* Home */}

@@ -18,6 +18,7 @@ export function useFarcasterInit(isFrameMode: boolean) {
   const [farcasterFidState, setFarcasterFidState] = useState<number | undefined>(undefined);
   const [farcasterClientFid, setFarcasterClientFid] = useState<number | undefined>(undefined);
   const [isCheckingFarcaster, setIsCheckingFarcaster] = useState(true);
+  const [safeAreaInsets, setSafeAreaInsets] = useState({ top: 0, bottom: 0, left: 0, right: 0 });
   const readyCalledRef = useRef(false);
 
   // CRITICAL: Call ready() IMMEDIATELY - affects Farcaster ranking and daily user count
@@ -79,6 +80,9 @@ export function useFarcasterInit(isFrameMode: boolean) {
           setFarcasterFidState(context.user.fid);
           setFarcasterClientFid(context.client?.clientFid);
           setIsInFarcaster(true);
+          if (context.client?.safeAreaInsets) {
+            setSafeAreaInsets(context.client.safeAreaInsets);
+          }
         } catch {
           if (cancelled) return;
           if (!isMobileUA && !isMobileScreen) setIsInFarcaster(false);
@@ -139,5 +143,6 @@ export function useFarcasterInit(isFrameMode: boolean) {
     farcasterClientFid,
     isCheckingFarcaster,
     setIsCheckingFarcaster,
+    safeAreaInsets,
   };
 }
