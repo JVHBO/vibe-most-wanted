@@ -14,21 +14,9 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '0.3.8',
-    date: 'Week of Mar 25, 2026',
-    isNew: true,
-    features: [
-      { emoji: '📱', text: 'Miniapp layout is now fully consistent across all iPhones and Android devices' },
-      { emoji: '🔧', text: 'Fixed safe area on iPhone — bottom nav no longer overlaps game content' },
-      { emoji: '📐', text: 'Game buttons now scale proportionally with screen height (iPhone SE to Pro Max)' },
-      { emoji: '⚡', text: 'No more layout flash on Warpcast — miniapp mode detected instantly on load' },
-      { emoji: '🖥️', text: 'Desktop web always shows the phone frame preview' },
-    ],
-  },
-  {
     version: '0.3.7',
     date: 'Week of Mar 24, 2026',
-    isNew: false,
+    isNew: true,
     features: [
       { emoji: '🎙️', text: 'New quest: Check your Neymar Score — cast @vibefid weekly for +200 VBMS' },
       { emoji: '📤', text: 'New quest: Daily Farcaster Share — share VMW once a day for +100 VBMS' },
