@@ -17,6 +17,7 @@ interface GameGridProps {
   onSelect: (mode: GameMode) => void;
   userAddress?: string; // For conditional TCG access
   onSpin?: () => void; // SPIN roulette callback
+  isInFarcaster?: boolean;
 }
 
 // SVG Icons - outline/sticker style
@@ -118,7 +119,7 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; labelKey: string; 
   },
 ];
 
-export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin }: GameGridProps) {
+export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin, isInFarcaster }: GameGridProps) {
   const { t } = useLanguage();
 
   const handleClick = (mode: GameMode) => {
@@ -129,6 +130,9 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
 
   // Check TCG access
   const isAllowedTCG = userAddress && TCG_ALLOWED_WALLETS.includes(userAddress.toLowerCase());
+
+  // clamp: mín 80px (SE), escala com tela, máx 130px (Pro Max) — mantém proporção visual igual à referência
+  const btnStyle = isInFarcaster ? { height: 'clamp(80px, 14dvh, 130px)' } : {};
 
   return (
     <div className="grid grid-cols-2 gap-2 px-0">
@@ -148,7 +152,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
         const isDisabled = disabled || isSoon;
         const buttonClasses = `
           flex flex-col items-center justify-center gap-1
-          py-4 px-3 rounded-lg
+          ${isInFarcaster ? 'py-0 px-3' : 'py-4 px-3'} rounded-lg
           bg-vintage-charcoal/80
           border border-vintage-gold/20
           ${isSoon ? '' : mode.accentColor}
@@ -175,6 +179,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
               onClick={() => soundEnabled && AudioManager.buttonClick()}
               onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
               className={buttonClasses}
+              style={btnStyle}
             >
               {newBadge}
               {buttonContent}
@@ -189,6 +194,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
             onMouseEnter={() => soundEnabled && !isSoon && AudioManager.buttonHover()}
             disabled={isDisabled}
             className={buttonClasses}
+            style={btnStyle}
           >
             {newBadge}
             {buttonContent}
@@ -209,7 +215,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
             onSpin();
           }}
           onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-          className="tour-spin-btn col-span-2 flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-gradient-to-r from-vintage-gold to-yellow-500 border border-vintage-gold/20 font-display font-bold text-xs text-black hover:scale-[1.02] active:scale-[0.97] transition-all duration-200 shadow-gold"
+          className={`tour-spin-btn col-span-2 flex items-center justify-center gap-2 ${isInFarcaster ? 'py-3' : 'py-2'} px-4 rounded-lg bg-gradient-to-r from-vintage-gold to-yellow-500 border border-vintage-gold/20 font-display font-bold text-xs text-black hover:scale-[1.02] active:scale-[0.97] transition-all duration-200 shadow-gold`}
         >
           {t('gameSpin' as any)}
         </button>

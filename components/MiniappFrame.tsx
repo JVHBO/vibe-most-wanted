@@ -88,6 +88,11 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
+    // Auto-activate forced miniapp mode from URL param (device test popup)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('force_miniapp') === '1') {
+      localStorage.setItem('vbms_force_miniapp', '1');
+    }
     const forced = localStorage.getItem("vbms_force_miniapp") === "1";
     if (forced) setForcedMiniapp(true);
     const isMobileUA = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -166,6 +171,11 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
       });
     }
   };
+
+  // Pages that should never be wrapped in the phone frame
+  if (pathname === '/device-test' || pathname === '/design-test') {
+    return <MiniappFrameContext.Provider value={false}>{children}</MiniappFrameContext.Provider>;
+  }
 
   if (!showFrame) {
     return (

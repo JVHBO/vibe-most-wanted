@@ -3,10 +3,18 @@ import { useConnect } from 'wagmi';
 import { sdk } from '@farcaster/miniapp-sdk';
 import { toast } from 'sonner';
 import { devLog } from '@/lib/utils/logger';
+import { isMiniappMode } from '@/lib/utils/miniapp';
 
 export function useFarcasterInit(isFrameMode: boolean) {
   const { connect, connectors } = useConnect();
-  const [isInFarcaster, setIsInFarcaster] = useState(false);
+  // isActualMiniapp = true when running inside Warpcast iframe (window.self !== window.top)
+  // This is synchronous — no waiting for SDK
+  const [isActualMiniapp] = useState(() =>
+    typeof window !== 'undefined' ? isMiniappMode() : false
+  );
+  const [isInFarcaster, setIsInFarcaster] = useState(() =>
+    typeof window !== 'undefined' ? isMiniappMode() || isFrameMode : isFrameMode
+  );
   const [farcasterFidState, setFarcasterFidState] = useState<number | undefined>(undefined);
   const [farcasterClientFid, setFarcasterClientFid] = useState<number | undefined>(undefined);
   const [isCheckingFarcaster, setIsCheckingFarcaster] = useState(true);
@@ -22,19 +30,33 @@ export function useFarcasterInit(isFrameMode: boolean) {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     const initFarcasterWallet = async () => {
       const isForcedMiniapp = typeof window !== 'undefined' && localStorage.getItem("vbms_force_miniapp") === "1";
-      if (isFrameMode && !isForcedMiniapp) {
-        setIsInFarcaster(true);
-        setIsCheckingFarcaster(false);
+      // isFrameMode = true → phone frame on desktop OR forced miniapp (device test popup)
+      // Force miniapp layout immediately, no Farcaster context needed
+      if (isFrameMode) {
+        if (!cancelled) {
+          setIsInFarcaster(true);
+          setIsCheckingFarcaster(false);
+        }
+        if (isForcedMiniapp) return;
         return;
+      }
+
+      // Mobile browsers: always use miniapp layout (no desktop layout on phones/tablets)
+      const isMobileUA = /Android|iPhone|iPad|iPod|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isMobileScreen = window.innerWidth < 768;
+      if (isMobileUA || isMobileScreen) {
+        if (!cancelled) setIsInFarcaster(true);
+        // Don't return — still run SDK check below to get FID for VibeFID button
       }
 
       console.log('[Farcaster] Initializing wallet connection...');
       try {
         if (!sdk) {
-          setIsInFarcaster(false);
-          setIsCheckingFarcaster(false);
+          if (!cancelled) { if (!isMobileUA && !isMobileScreen) setIsInFarcaster(false); setIsCheckingFarcaster(false); }
           return;
         }
 
@@ -44,9 +66,11 @@ export function useFarcasterInit(isFrameMode: boolean) {
             setTimeout(() => reject(new Error('SDK context timeout')), 5000),
           );
           const context = (await Promise.race([contextPromise, timeoutPromise])) as any;
+          if (cancelled) return;
 
           if (!context?.user?.fid) {
-            setIsInFarcaster(false);
+            // On mobile, keep isInFarcaster=true even without SDK FID
+            if (!isMobileUA && !isMobileScreen) setIsInFarcaster(false);
             setIsCheckingFarcaster(false);
             return;
           }
@@ -56,7 +80,8 @@ export function useFarcasterInit(isFrameMode: boolean) {
           setFarcasterClientFid(context.client?.clientFid);
           setIsInFarcaster(true);
         } catch {
-          setIsInFarcaster(false);
+          if (cancelled) return;
+          if (!isMobileUA && !isMobileScreen) setIsInFarcaster(false);
           setIsCheckingFarcaster(false);
           return;
         }
@@ -65,14 +90,13 @@ export function useFarcasterInit(isFrameMode: boolean) {
         let retries = 0;
         while (!walletAvailable && retries < 3) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
+          if (cancelled) return;
           walletAvailable = typeof sdk.wallet !== 'undefined' && !!sdk.wallet.ethProvider;
           retries++;
         }
 
-        if (!walletAvailable) {
-          setIsCheckingFarcaster(false);
-          return;
-        }
+        if (cancelled) return;
+        if (!walletAvailable) { setIsCheckingFarcaster(false); return; }
 
         try {
           const farcasterConnector = connectors.find(
@@ -95,20 +119,21 @@ export function useFarcasterInit(isFrameMode: boolean) {
             devLog('Farcaster wallet not authorized');
           }
         } finally {
-          setIsCheckingFarcaster(false);
+          if (!cancelled) setIsCheckingFarcaster(false);
         }
       } catch (err) {
-        setIsInFarcaster(false);
-        setIsCheckingFarcaster(false);
+        if (!cancelled) { if (!isMobileUA && !isMobileScreen) setIsInFarcaster(false); setIsCheckingFarcaster(false); }
       }
     };
 
     initFarcasterWallet();
+    return () => { cancelled = true; };
   }, [connect, connectors, isFrameMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     isInFarcaster,
     setIsInFarcaster,
+    isActualMiniapp,
     farcasterFidState,
     setFarcasterFidState,
     farcasterClientFid,

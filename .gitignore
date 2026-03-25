@@ -27,6 +27,9 @@
 # Local private folders
 prints/
 
+# Dev-only pages (localhost only, never deploy)
+app/device-test/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

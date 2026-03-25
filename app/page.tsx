@@ -151,6 +151,7 @@ export default function TCGPage() {
   // Farcaster context detection (auto-connect wallet, FID, miniapp check)
   const {
     isInFarcaster, setIsInFarcaster,
+    isActualMiniapp,
     farcasterFidState, setFarcasterFidState,
     farcasterClientFid,
     isCheckingFarcaster, setIsCheckingFarcaster,
@@ -2513,7 +2514,7 @@ export default function TCGPage() {
         t={t}
       />
 
-      <header className={`tour-header flex flex-col items-center ${isInFarcaster ? 'gap-1 mb-0 py-1.5 w-full max-w-[304px] mx-auto' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg ${isInFarcaster ? 'mt-[60px]' : ''}`}>
+      <header className={`tour-header flex flex-col items-center ${isInFarcaster ? 'gap-1 mb-0 py-1.5 w-full max-w-[304px] mx-auto' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg ${isActualMiniapp ? 'mt-[60px]' : ''}`}>
         {!isInFarcaster && (
           <div className="text-center relative">
             <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
@@ -2550,7 +2551,7 @@ export default function TCGPage() {
               href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 text-purple-300 hover:text-purple-100 bg-purple-900/50 hover:bg-purple-800/60 font-modern font-semibold rounded-lg transition-all duration-300 tracking-wider flex items-center gap-2 text-sm md:text-base"
+              className="hidden md:flex px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 text-purple-300 hover:text-purple-100 bg-purple-900/50 hover:bg-purple-800/60 font-modern font-semibold rounded-lg transition-all duration-300 tracking-wider items-center gap-2 text-sm md:text-base"
             >
               <span className="text-base md:text-lg">♦</span> {t('tryMiniapp')}
             </a>
@@ -2594,7 +2595,7 @@ export default function TCGPage() {
           />
 
           {/* Content wrapper */}
-          <div className={isInFarcaster ? 'pb-[60px]' : ''}>
+          <div className={isInFarcaster ? 'pb-[80px]' : ''}>
 
           {/* Price Ticker - TOP */}
           {isInFarcaster && (
@@ -2624,6 +2625,7 @@ export default function TCGPage() {
                 onSelect={handleGameModeSelect}
                 userAddress={address}
                 onSpin={() => setShowRoulette(true)}
+                isInFarcaster={isInFarcaster}
               />
             </div>
             <div className="tour-cards-section w-full mt-2">

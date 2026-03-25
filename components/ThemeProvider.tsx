@@ -1,13 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
-
-// neobrutalism is now the default theme — applied directly on <body> in layout.tsx
-// ThemeProvider kept as a wrapper for future theme extensions
+// neobrutalism applied server-side on <body> in layout.tsx — no Suspense needed
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <Suspense fallback={null}>
-      {children}
-    </Suspense>
-  );
+  return <>{children}</>;
 }
