@@ -2,7 +2,7 @@
 
 import { Modal } from '@/app/(game)/components/ui/Modal';
 
-export const CHANGELOG_VERSION = '0.3.8';
+export const CHANGELOG_VERSION = '0.3.7';
 export const CHANGELOG_STORAGE_KEY = 'vmw_changelog_seen';
 
 interface ChangelogEntry {
@@ -18,9 +18,11 @@ const CHANGELOG: ChangelogEntry[] = [
     date: 'Week of Mar 25, 2026',
     isNew: true,
     features: [
-      { emoji: '📱', text: 'Miniapp layout is now consistent across all devices and screen sizes' },
-      { emoji: '🔧', text: 'Fixed safe area padding on iPhone — bottom nav no longer overlaps content' },
-      { emoji: '📐', text: 'Game buttons scale proportionally with screen height (SE to Pro Max)' },
+      { emoji: '📱', text: 'Miniapp layout is now fully consistent across all iPhones and Android devices' },
+      { emoji: '🔧', text: 'Fixed safe area on iPhone — bottom nav no longer overlaps game content' },
+      { emoji: '📐', text: 'Game buttons now scale proportionally with screen height (iPhone SE to Pro Max)' },
+      { emoji: '⚡', text: 'No more layout flash on Warpcast — miniapp mode detected instantly on load' },
+      { emoji: '🖥️', text: 'Desktop web always shows the phone frame preview' },
     ],
   },
   {
