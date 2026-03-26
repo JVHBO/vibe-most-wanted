@@ -116,6 +116,7 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; labelKey: string; 
     accentColor: 'hover:border-orange-400/50',
     isLink: true,
     href: '/tcg',
+    comingSoon: true, // HIDDEN — rework in progress
   },
 ];
 
