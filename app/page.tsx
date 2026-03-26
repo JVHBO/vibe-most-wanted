@@ -2520,52 +2520,8 @@ export default function TCGPage() {
         t={t}
       />
 
-      <header className={`tour-header flex flex-col items-center ${isInFarcaster ? 'gap-1 mb-0 py-1.5 w-full max-w-[304px] mx-auto' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg ${isActualMiniapp ? 'mt-[60px]' : ''}`}>
-        {!isInFarcaster && (
-          <div className="text-center relative">
-            <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
-            <h1 className="relative text-3xl md:text-5xl lg:text-6xl font-display font-black text-vintage-gold tracking-wider mb-1 md:mb-2" style={{textShadow: '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3)'}}>
-            </h1>
-            <p className="relative text-xs md:text-sm text-vintage-burnt-gold font-modern tracking-[0.2em] md:tracking-[0.3em] uppercase">{t('cardBattle')}</p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-center gap-2">
-          {/* VibeFID Button - Opens VibeFID + Mail modal */}
-          {!!userFidForVibemail && (
-            <button
-              onClick={() => {
-                if (soundEnabled) AudioManager.buttonClick();
-                setShowFidMailModal(true);
-              }}
-              onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
-              className="tour-vibefid-btn relative px-8 md:px-12 py-2 md:py-2 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
-            >
-              {/* notification dot when there are unread VibeMails */}
-              {typeof unreadVibeMailCount === 'number' && unreadVibeMailCount > 0 && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
-              )}
-              <div className="flex items-center justify-center gap-1">
-                <span className="text-sm font-bold">{t("vibefidMint")}</span>
-              </div>
-              <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('vibefidCheckScore')}</span>
-            </button>
-          )}
-
-          {!isInFarcaster && (
-            <a
-              href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden md:flex px-4 md:px-6 py-2.5 md:py-3 border border-vintage-gold/30 text-purple-300 hover:text-purple-100 bg-purple-900/50 hover:bg-purple-800/60 font-modern font-semibold rounded-lg transition-all duration-300 tracking-wider items-center gap-2 text-sm md:text-base"
-            >
-              <span className="text-base md:text-lg">♦</span> {t('tryMiniapp')}
-            </a>
-          )}
-        </div>
-
-        {/* Settings & Docs moved to profile dropdown */}
-      </header>
+      {/* Header spacer for fixed GameHeader in real Warpcast iframe */}
+      {isActualMiniapp && <div className="mt-[60px]" />}
 
       {!address ? (
         <ConnectScreen
@@ -2607,11 +2563,10 @@ export default function TCGPage() {
             style={isInFarcaster && safeAreaInsets.bottom > 0 ? { paddingBottom: 64 + safeAreaInsets.bottom } : undefined}
           >
 
-          {/* Price Ticker - TOP */}
+          {/* Price Ticker */}
           {isInFarcaster && (
-            <div className="flex flex-col items-center py-1 w-full max-w-[304px] mx-auto mt-2">
+            <div className="flex items-center justify-center py-1 w-full max-w-[304px] mx-auto mt-1">
               <PriceTicker className="w-full" />
-              <AllCollectionsButton className="mt-1" />
             </div>
           )}
 
@@ -2636,17 +2591,6 @@ export default function TCGPage() {
                 userAddress={address}
                 onSpin={() => setShowRoulette(true)}
                 isInFarcaster={isInFarcaster}
-              />
-            </div>
-            <div className="tour-cards-section w-full mt-2">
-              <CardsPreview
-                cards={nfts}
-                soundEnabled={soundEnabled}
-                loading={status === 'fetching' || contextStatus === 'fetching' || (status === 'idle' && nfts.length === 0 && contextStatus !== 'loaded')}
-                onViewAll={() => {
-                  if (soundEnabled) AudioManager.buttonClick();
-                  setShowMyCardsModal(true);
-                }}
               />
             </div>
           </div>
