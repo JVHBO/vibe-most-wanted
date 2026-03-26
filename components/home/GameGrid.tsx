@@ -105,6 +105,7 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; labelKey: string; 
     accentColor: 'hover:border-emerald-400/50',
     isLink: true,
     href: '/baccarat',
+    fullWidth: true,
   },
 ];
 
