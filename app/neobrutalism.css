@@ -756,9 +756,6 @@ body.neobrutalism .tour-game-grid > div > *:nth-child(5),
 body.neobrutalism .tour-game-grid > div > .tour-spin-btn {
   background-color: #CC5500 !important;
   background-image: none !important;
-  border: 5px solid #000 !important;
-  box-shadow: 6px 6px 0px #000 !important;
-  border-radius: 4px !important;
 }
 body.neobrutalism .tour-game-grid > div > *:nth-child(5) *,
 body.neobrutalism .tour-game-grid > div > .tour-spin-btn * {
@@ -770,12 +767,9 @@ body.neobrutalism .tour-game-grid > div > .tour-spin-btn * {
 body.neobrutalism .tour-spin-btn {
   background-color: #CC5500 !important;
   background-image: none !important;
-  border: 5px solid #000 !important;
-  box-shadow: 6px 6px 0px #000 !important;
   color: #FFF !important;
   font-weight: 900 !important;
   animation: none !important;
-  border-radius: 4px !important;
 }
 
 /* Legacy SPIN button (if outside grid) */
