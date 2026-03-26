@@ -2557,18 +2557,14 @@ export default function TCGPage() {
             safeAreaInsets={safeAreaInsets}
           />
 
-          {/* Content wrapper — pb clears fixed bottom nav + safe area */}
+          {/* Content wrapper — fills available height between header spacer and nav */}
           <div
-            className={isInFarcaster && !(safeAreaInsets.bottom > 0) ? 'pb-[80px]' : ''}
-            style={isInFarcaster && safeAreaInsets.bottom > 0 ? { paddingBottom: 64 + safeAreaInsets.bottom } : undefined}
+            className={isInFarcaster ? 'flex flex-col' : ''}
+            style={isInFarcaster ? {
+              height: `calc(100dvh - 60px)`,
+              paddingBottom: safeAreaInsets.bottom > 0 ? `${64 + safeAreaInsets.bottom}px` : '80px',
+            } : undefined}
           >
-
-          {/* Price Ticker */}
-          {isInFarcaster && (
-            <div className="flex items-center justify-center py-1 w-full max-w-[304px] mx-auto mt-1">
-              <PriceTicker className="w-full" />
-            </div>
-          )}
 
           {errorMsg && (
             <div className="bg-red-500/10 border border-red-500/50 rounded-xl p-4 mb-6">
@@ -2580,19 +2576,11 @@ export default function TCGPage() {
 
           {/* Game View */}
           {currentView === 'game' && (
-          <>
-          <div className={`flex flex-col ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto min-h-[calc(100dvh-170px)]' : 'px-2 mx-auto max-w-sm'} gap-2`}>
+          <div className={isInFarcaster ? 'flex-1 flex flex-col px-2 w-full max-w-[304px] mx-auto gap-2' : 'px-2 mx-auto max-w-sm'}>
 
-            {/* Cards Preview */}
+            {/* Price Ticker */}
             {isInFarcaster && (
-              <div className="w-full">
-                <CardsPreview
-                  cards={nfts}
-                  soundEnabled={soundEnabled}
-                  loading={status === 'loading'}
-                  onViewAll={() => router.push('/shop')}
-                />
-              </div>
+              <PriceTicker className="w-full" />
             )}
 
             {/* Game Grid */}
@@ -2607,12 +2595,25 @@ export default function TCGPage() {
               />
             </div>
 
-            {/* Redeem button — pushed to bottom */}
+            {/* Cards Preview */}
+            {isInFarcaster && (
+              <CardsPreview
+                cards={nfts}
+                soundEnabled={soundEnabled}
+                loading={status === 'loading'}
+                onViewAll={() => router.push('/shop')}
+              />
+            )}
+
+            {/* Spacer — pushes Redeem to bottom */}
+            {isInFarcaster && <div className="flex-1 min-h-[8px]" />}
+
+            {/* Redeem button */}
             {isInFarcaster && (
               <button
                 onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setCurrentView('inbox'); }}
                 onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-                className="relative mt-auto w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-vintage-charcoal/80 border border-vintage-gold/30 hover:border-vintage-gold/60 hover:bg-vintage-charcoal transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
+                className="relative w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-vintage-charcoal/80 border border-vintage-gold/30 hover:border-vintage-gold/60 hover:bg-vintage-charcoal transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
               >
                 {inboxStatus && inboxStatus.coins >= 100 && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
@@ -2630,8 +2631,8 @@ export default function TCGPage() {
                 )}
               </button>
             )}
+
           </div>
-          </>
           )}
 
 
