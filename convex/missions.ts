@@ -74,6 +74,7 @@ const MISSION_REWARDS = {
   send_vibemail_daily: { type: "coins", amount: 50 },  // Sent a VibeMail today
   neynar_score_cast: { type: "coins", amount: 200 },   // Weekly: cast @vibefid for score
   daily_share: { type: "coins", amount: 100 },          // Daily: share VMW on Farcaster
+  daily_roulette_spin: { type: "coins", amount: 75 },  // Daily: spin the roulette
 };
 
 /**
@@ -1113,6 +1114,38 @@ export const markBaccaratWin = mutation({
         completed: true,
         claimed: false,
         reward: MISSION_REWARDS.first_baccarat_win.amount,
+        completedAt: Date.now(),
+      });
+    }
+  },
+});
+
+/**
+ * Mark daily roulette spin mission as completed
+ */
+export const markRouletteSpin = mutation({
+  args: { playerAddress: v.string() },
+  handler: async (ctx, { playerAddress }) => {
+    const today = new Date().toISOString().split('T')[0];
+    const normalizedAddress = await resolveAddress(ctx, playerAddress);
+
+    const existing = await ctx.db
+      .query("personalMissions")
+      .withIndex("by_player_date_type", (q) =>
+        q.eq("playerAddress", normalizedAddress)
+          .eq("date", today)
+          .eq("missionType", "daily_roulette_spin")
+      )
+      .first();
+
+    if (!existing) {
+      await ctx.db.insert("personalMissions", {
+        playerAddress: normalizedAddress,
+        date: today,
+        missionType: "daily_roulette_spin",
+        completed: true,
+        claimed: false,
+        reward: MISSION_REWARDS.daily_roulette_spin.amount,
         completedAt: Date.now(),
       });
     }

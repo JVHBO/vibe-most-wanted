@@ -32,7 +32,7 @@ const baseProps = {
   nfts: [],
   isClaimingMission: null,
   isClaimingAll: false,
-  getMissionInfo: (type: string) => ({ icon: '/icon.png', title: type, description: `Desc ${type}` }),
+  getMissionInfo: (type: string) => ({ icon: '/icon.png', titleKey: type, descKey: `desc_${type}`, howToKey: `how_${type}` }),
   claimMission: vi.fn(),
   claimAllMissions: vi.fn(),
   setSuccessMessage: vi.fn(),

@@ -477,6 +477,7 @@ export default function TCGPage() {
   const recordAttackResult = useMutation(api.economy.recordAttackResult); // ⚛️ ATOMIC: Combines coins + match + profile update
   const payEntryFee = useMutation(api.economy.payEntryFee);
   const setPreferredChainMutation = useMutation(api.missions.setPreferredChain);
+  const markRouletteSpin = useMutation(api.missions.markRouletteSpin);
 
   // 🚀 BANDWIDTH FIX: Use profileDashboard instead of separate query
   const getVBMSBalance = profileDashboard ? {
@@ -2317,7 +2318,10 @@ export default function TCGPage() {
       {/* Daily Roulette Modal */}
       {showRoulette && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4">
-          <Roulette onClose={() => setShowRoulette(false)} />
+          <Roulette onClose={() => {
+            setShowRoulette(false);
+            if (address) markRouletteSpin({ playerAddress: address }).catch(() => {});
+          }} />
         </div>
       )}
 

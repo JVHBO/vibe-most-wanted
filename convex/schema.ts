@@ -489,7 +489,8 @@ export default defineSchema({
       v.literal("first_baccarat_win"), // First Baccarat win (daily)
       v.literal("send_vibemail_daily"), // Sent a VibeMail today (daily)
       v.literal("neynar_score_cast"), // Cast @vibefid for Neynar score (weekly)
-      v.literal("daily_share") // Share VMW on Farcaster (daily)
+      v.literal("daily_share"), // Share VMW on Farcaster (daily)
+      v.literal("daily_roulette_spin") // Spin the roulette (daily)
     ),
     completed: v.boolean(), // Mission requirement completed
     claimed: v.boolean(), // Reward claimed by player
