@@ -106,18 +106,6 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; labelKey: string; 
     isLink: true,
     href: '/baccarat',
   },
-  {
-    id: 'tcg',
-    icon: <CardsIcon />,
-    labelKey: 'gameTcg',
-    sublabel: '',
-    cards: null,
-    iconColor: 'text-orange-400',
-    accentColor: 'hover:border-orange-400/50',
-    isLink: true,
-    href: '/tcg',
-    comingSoon: true, // HIDDEN — rework in progress
-  },
 ];
 
 export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin, isInFarcaster }: GameGridProps) {
