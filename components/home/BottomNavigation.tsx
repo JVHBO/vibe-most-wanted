@@ -43,7 +43,7 @@ export function BottomNavigation({
 
   return (
     <div className={isInFarcaster ? 'fixed bottom-0 left-0 right-0 z-[100]' : 'mb-3 md:mb-4'}>
-      <div className={`bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2 max-w-[304px] mx-auto pt-1.5 pb-0 px-1.5' : 'rounded-xl border-2 p-1.5'} border-vintage-gold/30 flex gap-1`}>
+      <div className={`bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2 border-t-yellow-600/30 max-w-[304px] mx-auto pt-1.5 pb-0 px-1.5' : 'rounded-xl border-2 border-vintage-gold/30 p-1.5'} flex gap-1`}>
 
         {/* Home */}
         <button
