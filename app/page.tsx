@@ -760,9 +760,10 @@ export default function TCGPage() {
       return;
     }
 
+    // TOUR DISABLED — re-enable by setting TOUR_ENABLED = true
+    const TOUR_ENABLED = false;
     const tutorialSeen = localStorage.getItem('tutorialSeenV2');
-    if (!tutorialSeen) {
-      // Show tutorial for this user (first time) - V2 resets for all users
+    if (!tutorialSeen && TOUR_ENABLED) {
       setShowTutorial(true);
     }
   }, [address, userProfile]);
@@ -2701,7 +2702,7 @@ export default function TCGPage() {
             soundEnabled={soundEnabled}
             t={t}
             onProfileCreated={async () => {
-              setShowTutorial(true);
+              // setShowTutorial(true); // TOUR DISABLED
             }}
           />
 
