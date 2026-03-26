@@ -215,6 +215,20 @@ export default function QuestsPage() {
     catch (e) { console.error('Failed to switch chain:', e); }
   };
 
+  // Open URL using Farcaster SDK when inside miniapp, otherwise window.open
+  const openExternalUrl = async (url: string) => {
+    if (isMiniappMode()) {
+      try {
+        const { sdk } = await import('@farcaster/miniapp-sdk');
+        await sdk.actions.openUrl(url);
+        return;
+      } catch (e) {
+        console.error('[openExternalUrl] SDK failed, falling back:', e);
+      }
+    }
+    window.open(url, '_blank');
+  };
+
   // Dynamic banner cache for quests that don't have hardcoded bannerUrl
   const [dynamicBanners, setDynamicBanners] = useState<Record<number, string>>({});
 
@@ -415,14 +429,14 @@ export default function QuestsPage() {
 
     // Regular quests (follow/channel)
     if (!visitedQuests.has(quest.id)) {
-      window.open(quest.url, "_blank");
+      openExternalUrl(quest.url);
       setVisitedQuests((prev) => new Set([...prev, quest.id]));
       AudioManager.buttonClick();
       return;
     }
 
     if (!userFid || !address) {
-      window.open(quest.url, "_blank");
+      openExternalUrl(quest.url);
       return;
     }
 
@@ -438,11 +452,11 @@ export default function QuestsPage() {
         setLocalCompleted((prev) => new Set([...prev, quest.id]));
         AudioManager.buttonSuccess();
       } else {
-        window.open(quest.url, "_blank");
+        openExternalUrl(quest.url);
       }
     } catch (error) {
       console.error("Error verifying quest:", error);
-      window.open(quest.url, "_blank");
+      openExternalUrl(quest.url);
     } finally {
       setVerifying(null);
     }
@@ -466,7 +480,7 @@ export default function QuestsPage() {
 
   // Follow button: opens URL and marks as visited
   const handleFollowQuest = (quest: SocialQuest) => {
-    window.open(quest.url, "_blank");
+    openExternalUrl(quest.url);
     setVisitedQuests(prev => new Set([...prev, quest.id]));
     AudioManager.buttonClick();
   };
@@ -1209,7 +1223,7 @@ export default function QuestsPage() {
                             </button>
                           </>
                         )}
-                        <button onClick={() => { AudioManager.buttonClick(); window.open(profileUrl, '_blank'); }}
+                        <button onClick={() => { AudioManager.buttonClick(); openExternalUrl(profileUrl); }}
                           className="px-2 py-1.5 bg-[#111] border-2 font-black text-[10px] transition-all"
                           style={{ borderColor: '#A855F7', color: '#A855F7', boxShadow: '2px 2px 0px #000' }}>
                           {t('questsFollow')}
