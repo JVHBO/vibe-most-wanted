@@ -763,13 +763,15 @@ body.neobrutalism .tour-game-grid > div > .tour-spin-btn * {
   stroke: #FFF !important;
 }
 
-/* Also catch SPIN button via class */
-body.neobrutalism .tour-spin-btn {
+/* Also catch SPIN button via class — thinner border to visually match others (orange/black has higher contrast) */
+body.neobrutalism .tour-game-grid .tour-spin-btn {
   background-color: #CC5500 !important;
   background-image: none !important;
   color: #FFF !important;
   font-weight: 900 !important;
   animation: none !important;
+  border: 3px solid #000 !important;
+  box-shadow: 4px 4px 0px #000 !important;
 }
 
 /* Legacy SPIN button (if outside grid) */

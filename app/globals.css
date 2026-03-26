@@ -97,7 +97,7 @@ a, button, [role="button"], input[type="submit"], input[type="button"], .cursor-
 
 /* Safe area — bottom nav stays above iOS home indicator / Android gesture area */
 .safe-area-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 *, *::before, *::after {
