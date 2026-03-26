@@ -33,6 +33,7 @@ export function GameNavBar({
 
   const baseBtn = `flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'}`;
   const activeClass = 'bg-vintage-gold text-vintage-black';
+  const homeActiveClass = 'bg-blue-700 text-white';
   const inactiveClass = 'bg-vintage-black text-vintage-gold hover:bg-vintage-gold/10 border border-vintage-gold/30';
 
   const HomeIcon = ({ size }: { size: string }) => (
@@ -96,7 +97,7 @@ export function GameNavBar({
         <button
           onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setCurrentView('game'); }}
           onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-          className={`${baseBtn} ${currentView === 'game' ? activeClass : inactiveClass}`}
+          className={`${baseBtn} ${currentView === 'game' ? homeActiveClass + ' nav-btn-home-active' : inactiveClass}`}
         >
           {isInFarcaster ? (
             <>

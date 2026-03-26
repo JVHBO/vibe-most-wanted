@@ -72,11 +72,32 @@ p, h1, h2, h3, h4, h5, h6, li, blockquote, td, th, dt, dd, figcaption, .cursor-t
 html {
   max-width: 100vw;
   overflow-x: clip;
+  /* Prevent iOS font size inflation on rotation */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 body {
   max-width: 100vw;
   overflow-x: visible;
   box-sizing: border-box;
+  /* Smoother text on mobile */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Remove 300ms tap delay on all interactive elements */
+a, button, [role="button"], input[type="submit"], input[type="button"], .cursor-pointer, select, label {
+  touch-action: manipulation;
+}
+
+/* Prevent accidental pull-to-refresh in miniapp/farcaster */
+[data-phone-body] {
+  overscroll-behavior: contain;
+}
+
+/* Safe area — bottom nav stays above iOS home indicator */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 *, *::before, *::after {
@@ -1306,3 +1327,8 @@ select.settings-select {
   background-color: #1A1A1A !important;
   -webkit-text-fill-color: #FFD400 !important;
 }
+
+/* Nav button color overrides (beat neobrutalism !important) */
+.nav-btn-home-active { background-color: #1e40af !important; color: #ffffff !important; }
+.nav-btn-shop { background-color: #7c3aed !important; color: #ffffff !important; }
+.nav-btn-wanted { background-color: #dc2626 !important; color: #ffffff !important; }

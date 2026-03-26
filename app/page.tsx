@@ -2516,7 +2516,7 @@ export default function TCGPage() {
         t={t}
       />
 
-      <header className={`tour-header flex flex-col items-center ${isInFarcaster ? 'gap-1 mb-0 py-1.5 w-full max-w-[304px] mx-auto' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6'} bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg ${isActualMiniapp ? 'mt-[60px]' : ''}`}>
+      <header className={`tour-header flex flex-col items-center ${isInFarcaster ? '' : 'gap-3 md:gap-6 mb-4 md:mb-8 p-3 md:p-6 bg-vintage-charcoal/80 border border-vintage-gold/30 rounded-lg'}`}>
         {!isInFarcaster && (
           <div className="text-center relative">
             <div className="absolute inset-0 blur-3xl opacity-30 bg-vintage-gold rounded-full" style={{boxShadow: '0 0 80px rgba(255, 215, 0, 0.4)'}}></div>
@@ -2526,29 +2526,28 @@ export default function TCGPage() {
           </div>
         )}
 
-        <div className="flex items-center justify-center gap-2">
-          {/* VibeFID Button - Opens VibeFID + Mail modal */}
-          {!!userFidForVibemail && (
-            <button
-              onClick={() => {
-                if (soundEnabled) AudioManager.buttonClick();
-                setShowFidMailModal(true);
-              }}
-              onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
-              className="tour-vibefid-btn relative px-8 md:px-12 py-2 md:py-2 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
-            >
-              {/* notification dot when there are unread VibeMails */}
-              {typeof unreadVibeMailCount === 'number' && unreadVibeMailCount > 0 && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
-              )}
-              <div className="flex items-center justify-center gap-1">
-                <span className="text-sm font-bold">{t("vibefidMint")}</span>
-              </div>
-              <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('vibefidCheckScore')}</span>
-            </button>
-          )}
+        {!isInFarcaster && (
+          <div className="flex items-center justify-center gap-2">
+            {/* VibeFID Button - Opens VibeFID + Mail modal */}
+            {!!userFidForVibemail && (
+              <button
+                onClick={() => {
+                  if (soundEnabled) AudioManager.buttonClick();
+                  setShowFidMailModal(true);
+                }}
+                onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
+                className="tour-vibefid-btn relative px-8 md:px-12 py-2 md:py-2 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs md:text-base cursor-pointer"
+              >
+                {typeof unreadVibeMailCount === 'number' && unreadVibeMailCount > 0 && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
+                )}
+                <div className="flex items-center justify-center gap-1">
+                  <span className="text-sm font-bold">{t("vibefidMint")}</span>
+                </div>
+                <span className="text-[10px] md:text-xs opacity-75 font-normal leading-tight">{t('vibefidCheckScore')}</span>
+              </button>
+            )}
 
-          {!isInFarcaster && (
             <a
               href="https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast"
               target="_blank"
@@ -2557,8 +2556,8 @@ export default function TCGPage() {
             >
               <span className="text-base md:text-lg">♦</span> {t('tryMiniapp')}
             </a>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Settings & Docs moved to profile dropdown */}
       </header>
@@ -2605,7 +2604,7 @@ export default function TCGPage() {
 
           {/* Price Ticker - TOP */}
           {isInFarcaster && (
-            <div className="flex flex-col items-center py-1 w-full max-w-[304px] mx-auto mt-2">
+            <div className="flex flex-col items-center py-1 w-full max-w-[304px] mx-auto mt-[75px]">
               <PriceTicker className="w-full" />
               <AllCollectionsButton className="mt-1" />
             </div>
@@ -2651,21 +2650,21 @@ export default function TCGPage() {
               <button
                 onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setCurrentView('inbox'); }}
                 onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-                className="relative w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-vintage-charcoal/80 border border-vintage-gold/30 hover:border-vintage-gold/60 hover:bg-vintage-charcoal transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
+                className="relative w-full flex items-center justify-center gap-2 py-5 px-4 rounded-lg bg-green-700 border border-green-500 hover:bg-green-600 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
               >
                 {inboxStatus && inboxStatus.coins >= 100 && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
                 )}
-                <svg className="w-4 h-4 text-vintage-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg className="w-5 h-5 shrink-0 text-vintage-gold relative -top-[2px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="10" width="18" height="12" rx="2" />
                   <path d="M12 10V4" /><path d="M12 4c-2 0-4 2-4 4h4" /><path d="M12 4c2 0 4 2 4 4h-4" />
                   <line x1="12" y1="10" x2="12" y2="22" /><line x1="3" y1="15" x2="21" y2="15" />
                 </svg>
-                <span className="text-vintage-gold font-display font-bold text-xs tracking-wider uppercase">
+                <span className="text-vintage-gold font-modern font-semibold text-base leading-none tracking-wider uppercase">
                   {(t as (k: string) => string)('navClaim')}
                 </span>
                 {inboxStatus && inboxStatus.coins > 0 && (
-                  <span className="text-vintage-gold/60 text-xs font-mono">{inboxStatus.coins.toLocaleString()}</span>
+                  <span className="text-vintage-gold/60 font-modern font-semibold text-base leading-none">{inboxStatus.coins.toLocaleString()}</span>
                 )}
               </button>
             )}

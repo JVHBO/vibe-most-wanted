@@ -121,7 +121,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
   const isAllowedTCG = userAddress && TCG_ALLOWED_WALLETS.includes(userAddress.toLowerCase());
 
   // clamp: mín 80px (SE), escala com tela, máx 130px (Pro Max) — mantém proporção visual igual à referência
-  const btnStyle = isInFarcaster ? { height: 'clamp(80px, 14dvh, 130px)' } : {};
+  const btnStyle = isInFarcaster ? { height: 'clamp(70px, 11dvh, 105px)' } : {};
 
   return (
     <div className="grid grid-cols-2 gap-2 px-0">
@@ -209,7 +209,15 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
         >
           <svg className="w-7 h-7 text-vintage-gold scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
-            <path d="M12 6v6l4 2" />
+            <circle cx="12" cy="12" r="2.5" />
+            <line x1="12" y1="2" x2="12" y2="9.5" />
+            <line x1="12" y1="14.5" x2="12" y2="22" />
+            <line x1="2" y1="12" x2="9.5" y2="12" />
+            <line x1="14.5" y1="12" x2="22" y2="12" />
+            <line x1="4.93" y1="4.93" x2="8.28" y2="8.28" />
+            <line x1="15.72" y1="15.72" x2="19.07" y2="19.07" />
+            <line x1="19.07" y1="4.93" x2="15.72" y2="8.28" />
+            <line x1="8.28" y1="15.72" x2="4.93" y2="19.07" />
           </svg>
           <span className="text-vintage-gold font-display font-bold text-xs leading-tight tracking-wider uppercase">
             {t('gameSpin' as any)}

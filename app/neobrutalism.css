@@ -624,9 +624,9 @@ body.neobrutalism .tour-nav-bar img {
 /* Nav: Color each button differently via nth-child
    PADRÃO: cada botao = cor da página/seção que abre
    HOME=Gold(ativo), CLAIM=Pink, LEADERBOARD=Red, SHOP=Cyan, WANTED=Green */
-/* 1. HOME → Gold (brand, texto branco igual aos outros) */
+/* 1. HOME → Blue */
 body.neobrutalism .tour-nav-bar > *:nth-child(1) {
-  background-color: #FFD400 !important;
+  background-color: #1e40af !important;
   color: #FFF !important;
 }
 body.neobrutalism .tour-nav-bar > *:nth-child(1) * {
@@ -651,7 +651,7 @@ body.neobrutalism .tour-nav-bar > *:nth-child(3) * {
   color: #FFF !important;
   stroke: #FFF !important;
 }
-/* 4. SHOP → Cyan */
+/* 4. SHOP (desktop) / WANTED (farcaster) */
 body.neobrutalism .tour-nav-bar > *:nth-child(4) {
   background-color: #0099BB !important;
   color: #FFF !important;
@@ -660,7 +660,7 @@ body.neobrutalism .tour-nav-bar > *:nth-child(4) * {
   color: #FFF !important;
   stroke: #FFF !important;
 }
-/* 5. WANTED → Green */
+/* 5. WANTED (desktop only) */
 body.neobrutalism .tour-nav-bar > *:nth-child(5) {
   background-color: #22AA44 !important;
   color: #FFF !important;
@@ -3152,3 +3152,6 @@ body.neobrutalism .bg-vintage-black select option {
 /* Linked Wallets description - force gold */
 .settings-linked-desc { color: #C9A227 !important; }
 body.neobrutalism .settings-linked-desc { color: #FFD400 !important; }
+
+/* Nav HOME color override */
+body.neobrutalism .nav-btn-home-active { background-color: #1e40af !important; color: #ffffff !important; border-color: #3b82f6 !important; }
