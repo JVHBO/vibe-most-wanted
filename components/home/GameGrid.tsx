@@ -121,7 +121,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
   const isAllowedTCG = userAddress && TCG_ALLOWED_WALLETS.includes(userAddress.toLowerCase());
 
   // clamp: mín 80px (SE), escala com tela, máx 130px (Pro Max) — mantém proporção visual igual à referência
-  const btnStyle = isInFarcaster ? { height: 'clamp(80px, 13dvh, 120px)' } : {};
+  const btnStyle = isInFarcaster ? { height: 'clamp(74px, 11dvh, 100px)' } : {};
 
   return (
     <div className="grid grid-cols-2 gap-2 px-0">
