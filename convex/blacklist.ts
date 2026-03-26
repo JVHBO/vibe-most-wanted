@@ -265,9 +265,15 @@ const EXPLOIT3_BANNED = new Set([
   "0x8215db2678e8482dd6051b6847e148ce058ec3b6",
 ]);
 
+// ===== EXPLOIT #4: Pending conversion recover double-spend (Mar 25, 2026) =====
+// yareey (FID 898627): converted TESTVBMS on-chain then used recoverPendingConversion to get coins back too
+const EXPLOIT4_BANNED = new Set([
+  "0x395169ad5db3221ef904d2d05f4b8759d87a25d9",
+]);
+
 export function isBlacklisted(address: string): boolean {
   const lower = address.toLowerCase();
-  return lower in EXPLOITER_BLACKLIST || EXPLOIT3_BANNED.has(lower);
+  return lower in EXPLOITER_BLACKLIST || EXPLOIT3_BANNED.has(lower) || EXPLOIT4_BANNED.has(lower);
 }
 
 

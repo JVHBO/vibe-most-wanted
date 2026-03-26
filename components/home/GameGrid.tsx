@@ -105,7 +105,6 @@ const gameModeConfigs: { id: GameMode; icon: React.ReactNode; labelKey: string; 
     accentColor: 'hover:border-emerald-400/50',
     isLink: true,
     href: '/baccarat',
-    fullWidth: true,
   },
 ];
 
@@ -197,7 +196,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
         );
       })}
 
-      {/* SPIN - full width button at bottom of grid */}
+      {/* SPIN - same row as Baccarat (col 2) */}
       {onSpin && (
         <button
           onClick={() => {
@@ -205,9 +204,17 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
             onSpin();
           }}
           onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-          className={`tour-spin-btn col-span-2 flex items-center justify-center gap-2 ${isInFarcaster ? 'py-3' : 'py-2'} px-4 rounded-lg bg-gradient-to-r from-vintage-gold to-yellow-500 border border-vintage-gold/20 font-display font-bold text-xs text-black hover:scale-[1.02] active:scale-[0.97] transition-all duration-200 shadow-gold`}
+          style={btnStyle}
+          className={`tour-spin-btn flex flex-col items-center justify-center gap-1 ${isInFarcaster ? 'py-0 px-3' : 'py-4 px-3'} rounded-lg bg-gradient-to-br from-vintage-gold/20 to-yellow-500/10 border border-vintage-gold/40 hover:border-vintage-gold/70 hover:bg-vintage-gold/20 font-display font-bold text-xs text-vintage-gold hover:scale-[1.02] active:scale-[0.97] transition-all duration-200`}
         >
-          {t('gameSpin' as any)}
+          <svg className="w-7 h-7 text-vintage-gold scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z" />
+            <path d="M12 8v4l3 3" />
+            <circle cx="12" cy="12" r="1" fill="currentColor" />
+          </svg>
+          <span className="text-vintage-gold font-display font-bold text-xs leading-tight tracking-wider uppercase">
+            {t('gameSpin' as any)}
+          </span>
         </button>
       )}
     </div>

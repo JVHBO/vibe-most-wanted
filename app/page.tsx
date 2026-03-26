@@ -2581,8 +2581,21 @@ export default function TCGPage() {
           {/* Game View */}
           {currentView === 'game' && (
           <>
-          {/* GAME BUTTONS - EXACT CENTER */}
-          <div className={`flex flex-col items-center ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto' : 'px-2'}`}>
+          <div className={`flex flex-col items-center justify-center gap-2 ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto' : 'px-2 mx-auto max-w-sm'}`}>
+
+            {/* Cards Preview */}
+            {isInFarcaster && (
+              <div className="w-full">
+                <CardsPreview
+                  cards={nfts}
+                  soundEnabled={soundEnabled}
+                  loading={status === 'loading'}
+                  onViewAll={() => router.push('/shop')}
+                />
+              </div>
+            )}
+
+            {/* Game Grid */}
             <div className="tour-game-grid w-full">
               <GameGrid
                 soundEnabled={soundEnabled}
@@ -2593,8 +2606,31 @@ export default function TCGPage() {
                 isInFarcaster={isInFarcaster}
               />
             </div>
-          </div>
 
+            {/* Redeem button — inside content, not in nav */}
+            {isInFarcaster && (
+              <button
+                onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setCurrentView('inbox'); }}
+                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
+                className="relative w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-vintage-charcoal/80 border border-vintage-gold/30 hover:border-vintage-gold/60 hover:bg-vintage-charcoal transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
+              >
+                {inboxStatus && inboxStatus.coins >= 100 && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
+                )}
+                <svg className="w-4 h-4 text-vintage-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="10" width="18" height="12" rx="2" />
+                  <path d="M12 10V4" /><path d="M12 4c-2 0-4 2-4 4h4" /><path d="M12 4c2 0 4 2 4 4h-4" />
+                  <line x1="12" y1="10" x2="12" y2="22" /><line x1="3" y1="15" x2="21" y2="15" />
+                </svg>
+                <span className="text-vintage-gold font-display font-bold text-xs tracking-wider uppercase">
+                  {(t as (k: string) => string)('navClaim')}
+                </span>
+                {inboxStatus && inboxStatus.coins > 0 && (
+                  <span className="text-vintage-gold/60 text-xs font-mono">{inboxStatus.coins.toLocaleString()}</span>
+                )}
+              </button>
+            )}
+          </div>
           </>
           )}
 

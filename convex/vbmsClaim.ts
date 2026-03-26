@@ -1470,6 +1470,9 @@ export const clearPendingOnly = internalMutation({
 export const recoverPendingConversion = mutation({
   args: { address: v.string() },
   handler: async (ctx, { address }) => {
+    // 🔒 TEMPORARILY DISABLED — pending security audit (Mar 25, 2026)
+    throw new Error("[RECOVER_DISABLED]");
+
     const profile = await getProfile(ctx, address);
     const pending = profile.pendingConversion || 0;
 
