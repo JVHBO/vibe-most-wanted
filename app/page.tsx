@@ -2665,7 +2665,7 @@ export default function TCGPage() {
               <button
                 onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setCurrentView('inbox'); }}
                 onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-                className="relative w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-green-700 border border-green-500 hover:bg-green-600 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
+                className="relative w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg bg-green-700 border border-green-500 hover:bg-green-600 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
               >
                 {inboxStatus && inboxStatus.coins >= 100 && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
