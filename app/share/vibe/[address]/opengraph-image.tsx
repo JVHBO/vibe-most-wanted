@@ -96,22 +96,29 @@ export default async function Image({ params }: { params: Promise<{ address: str
     }
   }
 
-  const proxyImg = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('https://vibemostwanted.xyz/')) return url;
-    return `https://vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(url)}`;
-  };
+  // In edge functions we fetch external URLs directly — no need for the browser proxy
+  const proxyImg = (url: string) => url;
 
-  const bgUrl = proxyImg('https://ipfs.filebase.io/ipfs/QmemgMVC1LN78M2z7QzWGQRFYKvJm7x2N5JJuLoq8JEQxP');
-  const pfp = proxyImg(pfpUrl);
+  const bgUrl = 'https://ipfs.filebase.io/ipfs/QmemgMVC1LN78M2z7QzWGQRFYKvJm7x2N5JJuLoq8JEQxP';
+  const pfp = pfpUrl ? `https://vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(pfpUrl)}` : '';
   const auraColor = getAuraColor(aura);
   const auraLabel = getAuraLabel(aura);
+
+  // Validate bgUrl is reachable before using in ImageResponse (prevents crash on IPFS timeout)
+  let bgReachable = false;
+  try {
+    const bgCheck = await fetch(bgUrl, { signal: AbortSignal.timeout(3000), method: 'HEAD' });
+    bgReachable = bgCheck.ok;
+  } catch { bgReachable = false; }
 
   return new ImageResponse(
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', position: 'relative' }}>
-        {/* BG */}
-        <img src={bgUrl} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        {/* BG — fallback to dark gradient if IPFS is unreachable */}
+        {bgReachable
+          ? <img src={bgUrl} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          : <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 30% 30%, #1a1020 0%, #0a0a0a 70%)', display: 'flex' }} />
+        }
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(10,8,2,0.92) 100%)', display: 'flex' }} />
 
         {/* Gold top border */}
