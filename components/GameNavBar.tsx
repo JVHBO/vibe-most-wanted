@@ -111,27 +111,20 @@ export function GameNavBar({
           )}
         </button>
 
-        {/* Claim/Inbox */}
-        <button
-          onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setCurrentView('inbox'); }}
-          onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-          className={`relative ${baseBtn} ${currentView === 'inbox' ? activeClass : inactiveClass}`}
-        >
-          {inboxStatus && inboxStatus.coins >= 100 && (
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
-          )}
-          {isInFarcaster ? (
-            <>
-              <span className="text-[10px] font-bold whitespace-nowrap">{(t as (k: string) => string)('navClaim')}</span>
-              <ClaimIcon size="w-5 h-5" />
-            </>
-          ) : (
-            <>
-              <ClaimIcon size="w-5 h-5 md:w-6 md:h-6" />
-              <span className="hidden sm:inline">{(t as (k: string) => string)('navClaim')}</span>
-            </>
-          )}
-        </button>
+        {/* Claim/Inbox — desktop only; Farcaster has it in-content */}
+        {!isInFarcaster && (
+          <button
+            onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setCurrentView('inbox'); }}
+            onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
+            className={`relative ${baseBtn} ${currentView === 'inbox' ? activeClass : inactiveClass}`}
+          >
+            {inboxStatus && inboxStatus.coins >= 100 && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
+            )}
+            <ClaimIcon size="w-5 h-5 md:w-6 md:h-6" />
+            <span className="hidden sm:inline">{(t as (k: string) => string)('navClaim')}</span>
+          </button>
+        )}
 
         {/* Leaderboard */}
         <button
