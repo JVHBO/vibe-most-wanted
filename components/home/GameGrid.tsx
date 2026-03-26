@@ -205,7 +205,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, userAddress, onSpin
           }}
           onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
           style={btnStyle}
-          className={`tour-spin-btn flex flex-col items-center justify-center gap-1 ${isInFarcaster ? 'py-0 px-3' : 'py-4 px-3'} rounded-lg bg-gradient-to-br from-vintage-gold/20 to-yellow-500/10 border border-vintage-gold/40 hover:border-vintage-gold/70 hover:bg-vintage-gold/20 hover:scale-[1.02] active:scale-[0.97] transition-all duration-200 relative`}
+          className={`tour-spin-btn flex flex-col items-center justify-center gap-1 ${isInFarcaster ? 'py-0 px-3' : 'py-4 px-3'} rounded-lg bg-vintage-charcoal/80 border border-vintage-gold/20 hover:border-vintage-gold/50 hover:bg-vintage-charcoal hover:scale-[1.02] active:scale-[0.97] transition-all duration-200 relative`}
         >
           <svg className="w-7 h-7 text-vintage-gold scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10" />
