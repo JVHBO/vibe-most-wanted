@@ -2581,7 +2581,7 @@ export default function TCGPage() {
           {/* Game View */}
           {currentView === 'game' && (
           <>
-          <div className={`flex flex-col items-center justify-center gap-2 ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto' : 'px-2 mx-auto max-w-sm'}`}>
+          <div className={`flex flex-col ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto min-h-[calc(100dvh-170px)]' : 'px-2 mx-auto max-w-sm'} gap-2`}>
 
             {/* Cards Preview */}
             {isInFarcaster && (
@@ -2607,12 +2607,12 @@ export default function TCGPage() {
               />
             </div>
 
-            {/* Redeem button — inside content, not in nav */}
+            {/* Redeem button — pushed to bottom */}
             {isInFarcaster && (
               <button
                 onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setCurrentView('inbox'); }}
                 onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-                className="relative w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-vintage-charcoal/80 border border-vintage-gold/30 hover:border-vintage-gold/60 hover:bg-vintage-charcoal transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
+                className="relative mt-auto w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-vintage-charcoal/80 border border-vintage-gold/30 hover:border-vintage-gold/60 hover:bg-vintage-charcoal transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
               >
                 {inboxStatus && inboxStatus.coins >= 100 && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
