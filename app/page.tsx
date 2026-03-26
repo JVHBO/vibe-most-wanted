@@ -2609,7 +2609,7 @@ export default function TCGPage() {
                 <button
                   onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowFidMailModal(true); }}
                   onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
-                  className="tour-vibefid-btn relative w-full px-8 py-1.5 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0 text-xs cursor-pointer mb-1"
+                  className="tour-vibefid-btn relative w-full px-8 py-2.5 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs cursor-pointer mb-1"
                 >
                   {typeof unreadVibeMailCount === 'number' && unreadVibeMailCount > 0 && (
                     <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
