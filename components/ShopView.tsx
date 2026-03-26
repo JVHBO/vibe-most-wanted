@@ -17,9 +17,10 @@ import { VMWPackCard, VMWActionButtons } from "@/components/LTCPacksSection";
 
 interface ShopViewProps {
   address: string | undefined;
+  initialSlide?: number;
 }
 
-export function ShopView({ address }: ShopViewProps) {
+export function ShopView({ address, initialSlide = 0 }: ShopViewProps) {
   const { t } = useLanguage();
   const router = useRouter();
 
@@ -77,11 +78,18 @@ export function ShopView({ address }: ShopViewProps) {
   const [claimingDaily, setClaimingDaily] = useState(false);
   const [showPacksModal, setShowPacksModal] = useState(false);
   const [openQuantities, setOpenQuantities] = useState<Record<string, number>>({});
-  const [activeSlide, setActiveSlide] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(initialSlide);
   const carouselRef = useRef<HTMLDivElement>(null);
   const [vmwMint, setVmwMint] = useState<{ trigger: number; qty: number }>({ trigger: 0, qty: 1 });
   const [vmwModalOpen, setVmwModalOpen] = useState(false);
   const userScrolledRef = useRef(false);
+
+  // If initialSlide=1, scroll carousel to VMW slide on mount
+  useEffect(() => {
+    if (initialSlide === 1 && carouselRef.current) {
+      carouselRef.current.scrollTo({ left: carouselRef.current.scrollWidth, behavior: 'instant' });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-scroll carousel slowly — pauses when any modal is open or user interacts
   const anyModalOpen = showPacksModal || revealedCards.length > 0 || vmwModalOpen;

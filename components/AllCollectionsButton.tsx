@@ -135,7 +135,7 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
                   key={priceData.id}
                   onClick={() => {
                     AudioManager.buttonClick();
-                    if (priceData.id === 'vibe') { setShowModal(false); router.push('/shop'); }
+                    if (priceData.id === 'vibe') { setShowModal(false); router.push('/shop?slide=1'); }
                     else handleCollectionClick(priceData.id, priceData.displayName);
                   }}
                   onMouseEnter={() => AudioManager.buttonHover()}
