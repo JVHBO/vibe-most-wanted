@@ -2,7 +2,7 @@
 
 import { Modal } from '@/app/(game)/components/ui/Modal';
 
-export const CHANGELOG_VERSION = '0.3.7';
+export const CHANGELOG_VERSION = '0.3.8';
 export const CHANGELOG_STORAGE_KEY = 'vmw_changelog_seen';
 
 interface ChangelogEntry {
@@ -14,9 +14,20 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.3.8',
+    date: 'Mar 25, 2026',
+    isNew: true,
+    features: [
+      { emoji: '🎰', text: 'SPIN icon updated to roulette wheel' },
+      { emoji: '🟢', text: 'REDEEM button moved into content (bigger, green, easier to tap)' },
+      { emoji: '🏠', text: 'HOME nav button now blue' },
+      { emoji: '🛡️', text: 'Security patch — exploit blocked, recovery disabled pending audit' },
+    ],
+  },
+  {
     version: '0.3.7',
     date: 'Week of Mar 24, 2026',
-    isNew: true,
+    isNew: false,
     features: [
       { emoji: '🎙️', text: 'New quest: Check your Neymar Score — cast @vibefid weekly for +200 VBMS' },
       { emoji: '📤', text: 'New quest: Daily Farcaster Share — share VMW once a day for +100 VBMS' },
