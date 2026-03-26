@@ -2598,7 +2598,7 @@ export default function TCGPage() {
 
           {/* Content wrapper — pb clears fixed bottom nav + safe area */}
           <div
-            className={isInFarcaster && !(safeAreaInsets.bottom > 0) ? 'pb-[80px]' : ''}
+            className={`${isInFarcaster ? 'min-h-[calc(100dvh-64px)] flex flex-col' : ''} ${isInFarcaster && !(safeAreaInsets.bottom > 0) ? 'pb-[80px]' : ''}`}
             style={isInFarcaster && safeAreaInsets.bottom > 0 ? { paddingBottom: 64 + safeAreaInsets.bottom } : undefined}
           >
 
@@ -2622,7 +2622,7 @@ export default function TCGPage() {
           {currentView === 'game' && (
           <>
           {/* GAME BUTTONS - EXACT CENTER */}
-          <div className={`flex flex-col items-center ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto' : 'px-2'}`}>
+          <div className={`flex flex-col items-center ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto flex-1 justify-between' : 'px-2'}`}>
             <div className="tour-game-grid w-full">
               <GameGrid
                 soundEnabled={soundEnabled}

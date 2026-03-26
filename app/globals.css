@@ -95,9 +95,9 @@ a, button, [role="button"], input[type="submit"], input[type="button"], .cursor-
   overscroll-behavior: contain;
 }
 
-/* Safe area — bottom nav stays above iOS home indicator */
+/* Safe area — bottom nav stays above iOS home indicator / Android gesture area */
 .safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
 }
 
 *, *::before, *::after {
