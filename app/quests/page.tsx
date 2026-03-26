@@ -546,7 +546,7 @@ export default function QuestsPage() {
           >
             ← BACK
           </Link>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[55%]"><AutoFitText>SOCIAL QUESTS</AutoFitText></h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[55%]"><AutoFitText>QUESTS</AutoFitText></h1>
           <div className="w-20" />
         </div>
 
