@@ -2598,29 +2598,30 @@ export default function TCGPage() {
 
           {/* Content wrapper — pb clears fixed bottom nav + safe area */}
           <div
-            className={`${isInFarcaster ? 'min-h-[calc(100dvh-64px)] flex flex-col' : ''} ${isInFarcaster && !(safeAreaInsets.bottom > 0) ? 'pb-[80px]' : ''}`}
+            className={isInFarcaster && !(safeAreaInsets.bottom > 0) ? 'pb-[80px]' : ''}
             style={isInFarcaster && safeAreaInsets.bottom > 0 ? { paddingBottom: 64 + safeAreaInsets.bottom } : undefined}
           >
 
           {/* Price Ticker - TOP */}
           {isInFarcaster && (
-            <div className="flex flex-col items-center py-1 w-full max-w-[304px] mx-auto mt-[75px]">
+            <div className="flex flex-col items-center pt-0 pb-1 w-full max-w-[304px] mx-auto mt-[58px]">
+              {!!userFidForVibemail && (
+                <button
+                  onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowFidMailModal(true); }}
+                  onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
+                  className="tour-vibefid-btn relative w-full px-8 py-1.5 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0 text-xs cursor-pointer mb-1"
+                >
+                  {typeof unreadVibeMailCount === 'number' && unreadVibeMailCount > 0 && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
+                  )}
+                  <div className="flex items-center justify-center gap-1">
+                    <span className="text-sm font-bold">{t("vibefidMint")}</span>
+                  </div>
+                  <span className="text-[10px] opacity-75 font-normal leading-tight">{t('vibefidCheckScore')}</span>
+                </button>
+              )}
               <PriceTicker className="w-full" />
-              <div className="flex items-center gap-3 mt-1">
-                <AllCollectionsButton />
-                {!!userFidForVibemail && (
-                  <button
-                    onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowFidMailModal(true); }}
-                    onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
-                    className="relative flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors"
-                  >
-                    {typeof unreadVibeMailCount === 'number' && unreadVibeMailCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
-                    )}
-                    💜 VibeFID / Mail
-                  </button>
-                )}
-              </div>
+              <AllCollectionsButton className="mt-0.5" />
             </div>
           )}
 
@@ -2636,7 +2637,7 @@ export default function TCGPage() {
           {currentView === 'game' && (
           <>
           {/* GAME BUTTONS - EXACT CENTER */}
-          <div className={`flex flex-col items-center ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto flex-1 justify-between' : 'px-2'}`}>
+          <div className={`flex flex-col items-center ${isInFarcaster ? 'px-2 w-full max-w-[304px] mx-auto' : 'px-2'}`}>
             <div className="tour-game-grid w-full">
               <GameGrid
                 soundEnabled={soundEnabled}
@@ -2647,7 +2648,7 @@ export default function TCGPage() {
                 isInFarcaster={isInFarcaster}
               />
             </div>
-            <div className="tour-cards-section w-full mt-2">
+            <div className="tour-cards-section w-full mt-1">
               <CardsPreview
                 cards={nfts}
                 soundEnabled={soundEnabled}
@@ -2664,7 +2665,7 @@ export default function TCGPage() {
               <button
                 onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setCurrentView('inbox'); }}
                 onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-                className="relative w-full flex items-center justify-center gap-2 py-5 px-4 rounded-lg bg-green-700 border border-green-500 hover:bg-green-600 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
+                className="relative w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-green-700 border border-green-500 hover:bg-green-600 transition-all duration-200 hover:scale-[1.02] active:scale-[0.97]"
               >
                 {inboxStatus && inboxStatus.coins >= 100 && (
                   <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
