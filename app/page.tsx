@@ -2606,7 +2606,21 @@ export default function TCGPage() {
           {isInFarcaster && (
             <div className="flex flex-col items-center py-1 w-full max-w-[304px] mx-auto mt-[75px]">
               <PriceTicker className="w-full" />
-              <AllCollectionsButton className="mt-1" />
+              <div className="flex items-center gap-3 mt-1">
+                <AllCollectionsButton />
+                {!!userFidForVibemail && (
+                  <button
+                    onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowFidMailModal(true); }}
+                    onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
+                    className="relative flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors"
+                  >
+                    {typeof unreadVibeMailCount === 'number' && unreadVibeMailCount > 0 && (
+                      <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
+                    )}
+                    💜 VibeFID / Mail
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
