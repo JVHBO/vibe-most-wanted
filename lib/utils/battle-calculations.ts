@@ -1,10 +1,10 @@
 import { HAND_SIZE } from '@/lib/config';
 import type { NFT } from '@/hooks/useCardCalculations';
-import type { Difficulty } from '@/hooks/useBattleOptimizations';
+
+export type Difficulty = 'gey' | 'goofy' | 'gooner' | 'gangster' | 'gigachad';
 
 /**
  * Pure functions for battle calculations.
- * Extracted from useBattleOptimizations hooks for testability.
  */
 
 /** Select AI deck based on difficulty */
