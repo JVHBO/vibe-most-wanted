@@ -8,6 +8,7 @@
 
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { isBlacklisted } from "./blacklist";
 
 /**
  * ADD BETTING CREDITS
@@ -26,18 +27,23 @@ export const addBettingCredits = mutation({
     const { address, amount, txHash } = args;
     const normalizedAddress = address.toLowerCase();
 
+    // Blacklist check
+    if (isBlacklisted(normalizedAddress)) {
+      throw new Error("Address is banned");
+    }
+
     // Enforce maximum entry limit
     if (amount > MAX_BETTING_CREDITS) {
       throw new Error(`Maximum entry is ${MAX_BETTING_CREDITS} VBMS`);
     }
 
-    // Check if this txHash was already processed
-    const existingCredit = await ctx.db
-      .query("bettingCredits")
+    // Check if this txHash was already processed (check bettingTransactions, not bettingCredits)
+    const existingTx = await ctx.db
+      .query("bettingTransactions")
       .withIndex("by_txHash", (q) => q.eq("txHash", txHash))
       .first();
 
-    if (existingCredit) {
+    if (existingTx) {
       throw new Error("Transaction already processed");
     }
 
@@ -56,6 +62,7 @@ export const addBettingCredits = mutation({
       // Add to existing balance
       await ctx.db.patch(credits._id, {
         balance: credits.balance + amount,
+        totalDeposited: (credits.totalDeposited || 0) + amount,
         lastDeposit: Date.now(),
       });
     } else {

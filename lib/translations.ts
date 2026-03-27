@@ -1106,6 +1106,7 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ Esta conta será apagada SOMENTE após a outra conta usar o código de merge.',
     // === CLAIM ERROR MESSAGES ===
     claimErrorDailyLimit: 'Limite diario de recuperacao atingido (3/dia). Tente novamente amanha.',
+    claimErrorDailyCount: 'Limite de conversoes diarias atingido ({limit}/dia). Aumente seu nivel de Aura para mais conversoes.',
     claimErrorCooldown: 'Cooldown ativo. Aguarde {seconds} segundos antes de converter.',
     claimErrorWaitRecover: 'Aguarde {seconds} segundos antes de recuperar.',
     claimErrorBlockedAlreadyClaimed: 'Recuperacao bloqueada: Esta conversao ja foi resgatada na blockchain. Seus tokens VBMS estao na sua carteira.',
@@ -2788,6 +2789,7 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ This account will be deleted ONLY after the other account uses the merge code.',
     // === CLAIM ERROR MESSAGES ===
     claimErrorDailyLimit: 'Daily recovery limit reached (3/day). Try again tomorrow.',
+    claimErrorDailyCount: 'Daily conversion limit reached ({limit}/day). Increase your Aura level for more conversions.',
     claimErrorCooldown: 'Cooldown active. Wait {seconds} seconds before converting.',
     claimErrorWaitRecover: 'Wait {seconds} seconds before recovering.',
     claimErrorBlockedAlreadyClaimed: 'Recovery blocked: This conversion was already claimed on the blockchain. Your VBMS tokens are in your wallet.',
@@ -4473,6 +4475,7 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ Esta cuenta será eliminada SOLO después de que la otra cuenta use el código de fusión.',
     // === CLAIM ERROR MESSAGES ===
     claimErrorDailyLimit: 'Limite diario de recuperacion alcanzado (3/dia). Intenta manana.',
+    claimErrorDailyCount: 'Limite de conversiones diarias alcanzado ({limit}/dia). Aumenta tu nivel de Aura para mas.',
     claimErrorCooldown: 'Cooldown activo. Espera {seconds} segundos antes de convertir.',
     claimErrorWaitRecover: 'Espera {seconds} segundos antes de recuperar.',
     claimErrorBlockedAlreadyClaimed: 'Recuperacion bloqueada: Esta conversion ya fue reclamada en blockchain. Tus tokens VBMS estan en tu wallet.',
@@ -6159,6 +6162,7 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ यह अकाउंट तभी हटाया जाएगा जब दूसरा अकाउंट मर्ज कोड का उपयोग करेगा।',
     // === CLAIM ERROR MESSAGES ===
     claimErrorDailyLimit: 'Daily recovery limit puri ho gayi (3/din). Kal phir try karo.',
+    claimErrorDailyCount: 'Daily conversion limit puri ho gayi ({limit}/din). Aura level badhao zyada conversions ke liye.',
     claimErrorCooldown: 'Cooldown active hai. {seconds} seconds wait karo convert karne se pehle.',
     claimErrorWaitRecover: 'Recover karne se pehle {seconds} seconds wait karo.',
     claimErrorBlockedAlreadyClaimed: 'Recovery blocked: Ye conversion already blockchain pe claim ho chuki hai. Aapke VBMS tokens aapki wallet mein hain.',
@@ -7840,6 +7844,7 @@ export const translations = {
     mergeAccountDeletedAfter: '⚠️ Этот аккаунт будет удалён ТОЛЬКО после того, как другой аккаунт использует код объединения.',
     // === CLAIM ERROR MESSAGES ===
     claimErrorDailyLimit: 'Достигнут дневной лимит восстановления (3/день). Попробуйте завтра.',
+    claimErrorDailyCount: 'Достигнут дневной лимит конвертаций ({limit}/день). Повысьте уровень Aura для большего.',
     claimErrorCooldown: 'Активен кулдаун. Подождите {seconds} секунд перед конвертацией.',
     claimErrorWaitRecover: 'Подождите {seconds} секунд перед восстановлением.',
     claimErrorBlockedAlreadyClaimed: 'Восстановление заблокировано: Эта конвертация уже была получена в блокчейне. Ваши токены VBMS в вашем кошельке.',

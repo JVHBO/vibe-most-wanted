@@ -452,6 +452,12 @@ export const getPlayerEconomy = query({
         const used = profile.dailyConvertDate === today ? (profile.dailyConvertedVBMS || 0) : 0;
         return Math.max(0, limit - used);
       })(),
+      // Daily conversion count limit (aura-based)
+      dailyConvertCountLimit: getAuraDailyConversionLimit(profile.stats?.aura ?? 0),
+      dailyConvertCountUsed: (() => {
+        const today = new Date().toISOString().slice(0, 10);
+        return profile.dailyConvertDate === today ? (profile.dailyConvertCount || 0) : 0;
+      })(),
     };
   },
 });
@@ -939,8 +945,20 @@ function getAuraDailyLimit(aura: number): number {
   if (aura >= 14000) return 500_000; // SSJ4
   if (aura >= 6000)  return 400_000; // SSJ3
   if (aura >= 2500)  return 300_000; // SSJ2
-  if (aura >= 800)   return 200_000; // SSJ1
+  if (aura >= 510)   return 200_000; // SSJ1
   return 100_000; // Human / Great Ape
+}
+
+// Max conversions per day by aura level
+function getAuraDailyConversionLimit(aura: number): number {
+  if (aura >= 52000) return 20;  // SSJ Blue
+  if (aura >= 28000) return 15;  // SSJ God
+  if (aura >= 14000) return 10;  // SSJ4
+  if (aura >= 6000)  return 7;   // SSJ3
+  if (aura >= 2500)  return 5;   // SSJ2
+  if (aura >= 510)   return 3;   // SSJ1
+  if (aura >= 200)   return 2;   // Great Ape
+  return 1; // Human
 }
 
 // Internal mutation to handle database operations
@@ -1007,12 +1025,19 @@ export const convertTESTVBMSInternal = internalMutation({
     }
 
     // 🔒 DAILY LIMIT CHECK - aura-based daily cap
-    const DAILY_CONVERT_LIMIT = getAuraDailyLimit(profile.stats?.aura ?? 0);
+    const aura = profile.stats?.aura ?? 0;
+    const DAILY_CONVERT_LIMIT = getAuraDailyLimit(aura);
+    const DAILY_CONVERT_COUNT_LIMIT = getAuraDailyConversionLimit(aura);
     const today = new Date().toISOString().slice(0, 10);
-    const dailyConverted = profile.dailyConvertDate === today ? (profile.dailyConvertedVBMS || 0) : 0;
+    const isToday = profile.dailyConvertDate === today;
+    const dailyConverted = isToday ? (profile.dailyConvertedVBMS || 0) : 0;
+    const dailyConvertCount = isToday ? (profile.dailyConvertCount || 0) : 0;
     const dailyRemaining = DAILY_CONVERT_LIMIT - dailyConverted;
     if (dailyRemaining <= 0) {
       throw new Error(`[CLAIM_DAILY_LIMIT]`);
+    }
+    if (dailyConvertCount >= DAILY_CONVERT_COUNT_LIMIT) {
+      throw new Error(`[CLAIM_DAILY_COUNT]${DAILY_CONVERT_COUNT_LIMIT}`);
     }
 
     const testVBMSBalance = profile.coins || 0;
@@ -1055,6 +1080,7 @@ export const convertTESTVBMSInternal = internalMutation({
       lastConversionAttempt: now,
       dailyConvertedVBMS: dailyConverted + claimAmount,
       dailyConvertDate: today,
+      dailyConvertCount: dailyConvertCount + 1,
     });
 
     // 📊 Log pending conversion to transaction history

@@ -271,9 +271,18 @@ const EXPLOIT4_BANNED = new Set([
   "0x395169ad5db3221ef904d2d05f4b8759d87a25d9",
 ]);
 
+// ===== EXPLOIT #5: Betting Credits txHash Replay (Mar 27, 2026) =====
+// lakasut (FID 1145016): reused same deposit txHash hundreds of times in addBettingCredits
+// Root cause: dedup check queried bettingCredits.txHash (only stores first txHash) not bettingTransactions
+// Generated ~938k fake TESTVBMS → converted to VBMS on-chain. Total extracted: 1,068,400 TESTVBMS
+// Already exploited once before (Feb 26) for roulette/recoverPendingConversion abuse
+const EXPLOIT5_BANNED = new Set([
+  "0x351d9ac846d3a4e71c2103b91ed7aca67d85be5e",
+]);
+
 export function isBlacklisted(address: string): boolean {
   const lower = address.toLowerCase();
-  return lower in EXPLOITER_BLACKLIST || EXPLOIT3_BANNED.has(lower) || EXPLOIT4_BANNED.has(lower);
+  return lower in EXPLOITER_BLACKLIST || EXPLOIT3_BANNED.has(lower) || EXPLOIT4_BANNED.has(lower) || EXPLOIT5_BANNED.has(lower);
 }
 
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { createPortal } from "react-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useMutation, useAction } from "convex/react";
+import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { toast } from "sonner";
 import { useClaimVBMS, useDailyClaimInfo } from "@/lib/hooks/useVBMSContracts";
@@ -139,6 +139,12 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
   // Get daily claim limits from contract
   const { remaining: dailyRemaining, resetTime, isLoading: isLoadingLimits, hasError: hasLimitError, refetch: refetchDailyLimit } = useDailyClaimInfo(address as `0x${string}` | undefined);
+
+  // Get Convex-side daily conversion count limits
+  const vbmsDashboard = useQuery(api.vbmsClaim.getVBMSDashboard, address ? { address } : "skip");
+  const dailyConvertCountUsed = vbmsDashboard?.dailyConvertCountUsed ?? 0;
+  const dailyConvertCountLimit = vbmsDashboard?.dailyConvertCountLimit ?? 1;
+  const conversionsLeft = Math.max(0, dailyConvertCountLimit - dailyConvertCountUsed);
   const dailyRemainingNum = parseFloat(dailyRemaining);
   const canCheckLimit = !isLoadingLimits && !hasLimitError && dailyRemainingNum > 0;
 
@@ -248,8 +254,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const exceedsBalance = selectedAmount > testvbmsBalance;
   const isOnCooldown = cooldown > 0;
   const limitUnavailable = !isLoadingLimits && (hasLimitError || dailyRemainingNum === 0);
-  // Block conversion if: limit exceeded, balance exceeded, on cooldown, or limit data unavailable
-  const canConvertTESTVBMS = selectedAmount >= 100 && !isProcessing && !exceedsDailyLimit && !exceedsBalance && !isOnCooldown && !limitUnavailable;
+  // Block conversion if: limit exceeded, balance exceeded, on cooldown, limit data unavailable, or daily count maxed
+  const canConvertTESTVBMS = selectedAmount >= 100 && !isProcessing && !exceedsDailyLimit && !exceedsBalance && !isOnCooldown && !limitUnavailable && conversionsLeft > 0;
 
   // Claim inbox → adiciona ao saldo TESTVBMS (instant, no gas)
   const handleClaimInbox = async () => {
@@ -532,6 +538,17 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             {limitUnavailable && (
               <div className="mt-2 p-2 bg-yellow-900/30 border border-yellow-500/40 text-[10px] text-yellow-300 text-center font-bold">
                 Daily limit reached. Try again later.
+              </div>
+            )}
+            <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-[#333]">
+              <span className="text-[#aaa] font-bold uppercase tracking-wide">Conversions today</span>
+              <span className={`font-bold font-mono ${conversionsLeft === 0 ? 'text-[#FF3B3B]' : 'text-[#00FF85]'}`}>
+                {dailyConvertCountUsed}/{dailyConvertCountLimit}
+              </span>
+            </div>
+            {conversionsLeft === 0 && (
+              <div className="mt-2 p-2 bg-[#FF3B3B]/20 border border-[#FF3B3B]/50 text-[10px] text-[#FF6666] text-center font-bold">
+                Daily conversion limit reached. Increase your Aura level for more.
               </div>
             )}
           </div>

@@ -118,6 +118,7 @@ export default defineSchema({
     lastRecoveryDay: v.optional(v.string()), // "2026-01-01" format for daily reset
     dailyConvertedVBMS: v.optional(v.number()), // Total VBMS converted today
     dailyConvertDate: v.optional(v.string()), // "2026-01-01" format for daily reset
+    dailyConvertCount: v.optional(v.number()), // Number of conversions today
 
     // Daily Limits for Economy
     dailyLimits: v.optional(v.object({
@@ -735,7 +736,8 @@ export default defineSchema({
     timestamp: v.number(),
   })
     .index("by_address", ["address", "timestamp"])
-    .index("by_type", ["type", "timestamp"]),
+    .index("by_type", ["type", "timestamp"])
+    .index("by_txHash", ["txHash"]),
 
   // Round-by-Round Betting (Live betting on each poker round)
   roundBets: defineTable({

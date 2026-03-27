@@ -35,6 +35,7 @@ function parseErrorCode(message: string): { code: string; params: string[] } {
 function getTranslationKey(code: string): string {
   const codeToKey: Record<string, string> = {
     'CLAIM_DAILY_LIMIT': 'claimErrorDailyLimit',
+    'CLAIM_DAILY_COUNT': 'claimErrorDailyCount',
     'CLAIM_COOLDOWN': 'claimErrorCooldown',
     'CLAIM_WAIT_RECOVER': 'claimErrorWaitRecover',
     'CLAIM_BLOCKED_ALREADY_CLAIMED': 'claimErrorBlockedAlreadyClaimed',
