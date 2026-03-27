@@ -141,7 +141,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const { remaining: dailyRemaining, resetTime, isLoading: isLoadingLimits, hasError: hasLimitError, refetch: refetchDailyLimit } = useDailyClaimInfo(address as `0x${string}` | undefined);
 
   // Get Convex-side daily conversion count limits
-  const vbmsDashboard = useQuery(api.vbmsClaim.getVBMSDashboard, address ? { address } : "skip");
+  const vbmsDashboard = useQuery(api.vbmsClaim.getPlayerEconomy, address ? { address } : "skip");
   const dailyConvertCountUsed = vbmsDashboard?.dailyConvertCountUsed ?? 0;
   const dailyConvertCountLimit = vbmsDashboard?.dailyConvertCountLimit ?? 1;
   const conversionsLeft = Math.max(0, dailyConvertCountLimit - dailyConvertCountUsed);

@@ -25,7 +25,7 @@ export const WIELD_COLLECTIONS: Record<string, { contract: string; slug: string 
 // Cache keys
 const OWNER_CACHE_KEY = 'wield_owner_cache';
 const TOKEN_CACHE_KEY = 'wield_token_cache';
-const OWNER_CACHE_TTL = 3 * 60 * 1000; // 3 minutes (faster detection of new mints)
+const OWNER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 const TOKEN_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours — prevents stale burned cards
 
 export interface WieldToken {
@@ -117,9 +117,15 @@ async function fetchOwnerTokens(
   do {
     const url = `${WIELD_BASE_URL}/owner/${address}?contractAddress=${config.contract}&page=${currentPage}&limit=100`;
 
-    const res = await fetch(url, {
+    let res = await fetch(url, {
       headers: { 'API-KEY': WIELD_API_KEY },
     });
+
+    // Retry once on 429
+    if (res.status === 429) {
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      res = await fetch(url, { headers: { 'API-KEY': WIELD_API_KEY } });
+    }
 
     if (!res.ok) {
       throw new Error(`Wield owner fetch failed: ${res.status}`);
@@ -289,22 +295,21 @@ export async function fetchAllWieldCollections(
 ): Promise<Record<string, WieldToken[]>> {
   const results: Record<string, WieldToken[]> = {};
 
-  // Fetch all collections in parallel (with some limiting)
+  // Fetch collections sequentially with delay to avoid 429
   const collections = Object.keys(WIELD_COLLECTIONS);
-  const PARALLEL_LIMIT = 3;
 
-  for (let i = 0; i < collections.length; i += PARALLEL_LIMIT) {
-    const batch = collections.slice(i, i + PARALLEL_LIMIT);
-    const promises = batch.map(c =>
-      fetchWieldTokens(address, c).then(tokens => ({ collection: c, tokens }))
-    );
-
-    const batchResults = await Promise.all(promises);
-    batchResults.forEach(r => {
-      if (r.tokens.length > 0) {
-        results[r.collection] = r.tokens;
-      }
-    });
+  for (let i = 0; i < collections.length; i++) {
+    const c = collections[i];
+    try {
+      const tokens = await fetchWieldTokens(address, c);
+      if (tokens.length > 0) results[c] = tokens;
+    } catch (e) {
+      console.warn(`[Wield] Failed ${c}:`, e);
+    }
+    // 300ms between each collection to stay under rate limit
+    if (i < collections.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+    }
   }
 
   return results;
