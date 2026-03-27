@@ -34,7 +34,7 @@ import BannedScreen from "@/components/BannedScreen";
 import { GameGrid, CardsPreview } from "@/components/home";
 import { VibeFidMailModal } from "@/components/fid/VibeFidMailModal";
 import { Roulette } from "@/components/Roulette";
-import { HAND_SIZE, getMaxAttacks } from "@/lib/config";
+import { HAND_SIZE, getMaxAttacks, isAdmin } from "@/lib/config";
 // 🚀 Performance-optimized hooks
 import { useTotalPower, useSortedByPower, useStrongestCards, usePowerByCollection } from "@/hooks/useCardCalculations";
 import { usePopupStates } from "@/hooks/usePopupStates";
@@ -2689,6 +2689,87 @@ export default function TCGPage() {
                   <span className="text-vintage-gold/60 font-modern font-semibold text-base leading-none">{inboxStatus.coins.toLocaleString()}</span>
                 )}
               </button>
+            )}
+
+            {/* 🎟️ RAFFLE PREVIEW — admin only for now */}
+            {isAdmin(address) && (
+              <div className="w-full mt-2 border-2 border-[#FFD700] bg-[#0d0d0d] shadow-[4px_4px_0px_#000] overflow-hidden">
+                {/* Header */}
+                <div className="bg-[#FFD700] px-3 py-1.5 flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-black font-display font-black text-xs uppercase tracking-widest">🎟️ Raffle</span>
+                    <span className="bg-black text-[#FFD700] text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wider">ADMIN PREVIEW</span>
+                  </div>
+                  <span className="text-black/60 text-[10px] font-bold uppercase">Coming Soon</span>
+                </div>
+
+                {/* Card showcase */}
+                <div className="flex gap-3 p-3">
+                  {/* Card image placeholder */}
+                  <div className="w-16 h-22 shrink-0 border-2 border-[#FFD700]/40 bg-gradient-to-b from-[#1a1400] to-[#0d0d0d] flex flex-col items-center justify-center relative overflow-hidden"
+                       style={{ height: '88px' }}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/10 via-transparent to-[#FF6B00]/10" />
+                    <span className="text-2xl relative z-10">🃏</span>
+                    <span className="text-[8px] text-[#FFD700]/60 font-bold uppercase mt-0.5 relative z-10">Legendary</span>
+                  </div>
+
+                  {/* Card info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[#FFD700] font-display font-black text-sm leading-none truncate">Goofy Romero</p>
+                    <p className="text-white/40 text-[10px] font-bold uppercase tracking-wider mt-0.5">Legendary Card</p>
+
+                    {/* Prize value */}
+                    <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+                      <span className="bg-[#FFD700]/10 border border-[#FFD700]/30 text-[#FFD700] text-[10px] font-bold px-1.5 py-0.5">~$23</span>
+                      <span className="text-white/30 text-[9px]">≈</span>
+                      <span className="text-white/50 text-[9px] font-mono">3.7M VBMS</span>
+                    </div>
+
+                    {/* Ticket price */}
+                    <div className="mt-1.5 flex items-center gap-1">
+                      <span className="text-white/60 text-[10px]">Ticket:</span>
+                      <span className="text-white font-bold text-[10px]">100k VBMS</span>
+                      <span className="text-white/30 text-[9px]">≈ $0.62</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats bar */}
+                <div className="border-t border-[#FFD700]/20 px-3 py-2 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="text-center">
+                      <p className="text-white font-black text-sm leading-none">0</p>
+                      <p className="text-white/40 text-[9px] uppercase">tickets</p>
+                    </div>
+                    <div className="w-px h-6 bg-white/10" />
+                    <div className="text-center">
+                      <p className="text-white font-black text-sm leading-none">37</p>
+                      <p className="text-white/40 text-[9px] uppercase">max</p>
+                    </div>
+                    <div className="w-px h-6 bg-white/10" />
+                    <div className="text-center">
+                      <p className="text-[#FFD700] font-black text-sm leading-none">—</p>
+                      <p className="text-white/40 text-[9px] uppercase">ends</p>
+                    </div>
+                  </div>
+
+                  {/* Buy button (disabled placeholder) */}
+                  <button
+                    disabled
+                    className="bg-[#FFD700]/20 border border-[#FFD700]/30 text-[#FFD700]/50 font-bold text-xs px-3 py-1.5 uppercase tracking-wider cursor-not-allowed"
+                  >
+                    Buy Ticket
+                  </button>
+                </div>
+
+                {/* ARB badge */}
+                <div className="bg-[#12AAFF]/10 border-t border-[#12AAFF]/20 px-3 py-1.5 flex items-center gap-1.5">
+                  <span className="text-[#12AAFF] text-[10px] font-bold uppercase tracking-wider">Arbitrum</span>
+                  <span className="text-white/30 text-[9px]">·</span>
+                  <span className="text-white/40 text-[9px]">Accepts USDC · ETH · ARB</span>
+                  <span className="ml-auto text-[9px] text-white/20 italic">config mode</span>
+                </div>
+              </div>
             )}
           </div>
 
