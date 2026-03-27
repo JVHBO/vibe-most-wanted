@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
 
@@ -11,7 +11,12 @@ function getConvexClient() {
   return new ConvexHttpClient(url);
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get('authorization');
+  const adminSecret = process.env.CRON_SECRET;
+  if (!adminSecret || authHeader !== `Bearer ${adminSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   try {
     const convex = getConvexClient();
     // Get all active poker rooms
