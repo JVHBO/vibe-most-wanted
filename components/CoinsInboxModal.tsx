@@ -246,6 +246,20 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const stuckTimestamp = inboxStatus.pendingConversionTimestamp || 0;
   const canRecover = stuckPending > 0 && (Date.now() - stuckTimestamp) >= 30 * 60 * 1000;
 
+  // Auto-recover stuck pending conversion when modal opens (if 30min passed)
+  useEffect(() => {
+    if (!address || !canRecover) return;
+    recoverPendingConversion({ address })
+      .then((result: any) => {
+        if (result?.restored > 0) {
+          toast.success(`↩️ ${result.restored.toLocaleString()} coins devolvidos (conversão anterior falhou)`);
+          refreshProfile();
+        }
+      })
+      .catch(() => { /* silent — user will see pending banner if not recovered */ });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Parse conversion amount
   const selectedAmount = parseInt(convertAmount) || 0;
 
@@ -411,9 +425,12 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
       toast.dismiss("conversion-wait");
 
+      // ConvexError passes message via error.data; regular Error via error.message
+      const rawErrMsg: string = error.data || error.message || '';
+
       // Check if it's a claim error code that needs translation
-      if (isClaimErrorCode(error.message)) {
-        const { message: translatedMsg, showSupport } = translateClaimError(error.message, lang as SupportedLanguage);
+      if (isClaimErrorCode(rawErrMsg)) {
+        const { message: translatedMsg, showSupport } = translateClaimError(rawErrMsg, lang as SupportedLanguage);
         if (showSupport) {
           toast.error(
             <div className="flex flex-col gap-1">
@@ -428,7 +445,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       } else {
         // Parse error message for user-friendly display (legacy handling)
         let userMessage = "Erro ao converter coins";
-        const errMsg = error.message?.toLowerCase() || '';
+        const errMsg = rawErrMsg.toLowerCase();
 
         if (errMsg.includes('daily') || errMsg.includes('limit')) {
           userMessage = "Limite diário excedido no contrato. Aguarde o reset.";
@@ -622,38 +639,16 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
           }
 
 
-          {/* Stuck pending conversion recovery */}
-          {stuckPending > 0 && (
-            <div className={`mt-3 border-2 p-3 ${canRecover ? 'border-[#F97316] bg-[#1c0900]' : 'border-[#555] bg-[#1a1a1a]'}`}>
+          {/* Stuck pending conversion — show info only, auto-recovered on modal open after 30min */}
+          {stuckPending > 0 && !canRecover && (
+            <div className="mt-3 border-2 border-[#555] bg-[#1a1a1a] p-3">
               <p className="text-white font-bold text-xs mb-1">
-                {stuckPending.toLocaleString()} coins stuck in a pending conversion
+                {stuckPending.toLocaleString()} coins pending conversion
               </p>
-              {canRecover ? (
-                <button
-                  onClick={async () => {
-                    if (!address || isProcessing) return;
-                    setIsProcessing(true);
-                    try {
-                      const r = await recoverPendingConversion({ address });
-                      toast.success(`Recovered ${r.recovered.toLocaleString()} coins`);
-                      await Promise.all([refreshUserProfile(), refreshProfile()]);
-                    } catch (e: any) {
-                      toast.error(e.message || 'Recovery failed');
-                    } finally {
-                      setIsProcessing(false);
-                    }
-                  }}
-                  disabled={isProcessing}
-                  className="w-full py-2 bg-[#F97316] border-2 border-black text-black font-bold text-xs shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] disabled:opacity-50 transition-all"
-                >
-                  Recover {stuckPending.toLocaleString()} coins
-                </button>
-              ) : (
-                <p className="text-[#888] text-[11px]">
-                  Available for recovery in {Math.ceil((30 * 60 * 1000 - (Date.now() - stuckTimestamp)) / 60000)} min
-                  (transaction may still confirm)
-                </p>
-              )}
+              <p className="text-[#888] text-[11px]">
+                Auto-recovery in {Math.ceil((30 * 60 * 1000 - (Date.now() - stuckTimestamp)) / 60000)} min
+                — transaction may still confirm
+              </p>
             </div>
           )}
 

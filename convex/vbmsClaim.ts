@@ -897,7 +897,9 @@ export const convertTESTVBMStoVBMS = action({
         requestedAmount: amount,
         error: error.message,
       });
-      throw error;
+      // Re-throw as ConvexError so client can read the actual error message
+      // (regular Error from mutations shows as "Server Error" on client)
+      throw new ConvexError(error.message || "Server Error");
     }
 
     // Generate signature for blockchain claim
@@ -1491,15 +1493,100 @@ export const clearPendingOnly = internalMutation({
 });
 
 /**
+ * INTERNAL CRON: Auto-restore all stuck pending conversions older than 30 minutes.
+ * Runs every 15 minutes via cron.
+ */
+export const autoRestoreStuckConversions = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const THIRTY_MIN = 30 * 60 * 1000;
+    const cutoff = Date.now() - THIRTY_MIN;
+
+    // Collect all profiles with pending conversions (use take to avoid full scan)
+    const profiles = await ctx.db.query("profiles").take(2000);
+    let restored = 0;
+
+    for (const profile of profiles) {
+      const pending = profile.pendingConversion || 0;
+      if (pending === 0) continue;
+
+      const ts = profile.pendingConversionTimestamp || 0;
+      if (ts > cutoff) continue; // Not expired yet
+
+      const newBalance = (profile.coins || 0) + pending;
+      await ctx.db.patch(profile._id, {
+        coins: newBalance,
+        pendingConversion: 0,
+        pendingConversionTimestamp: undefined,
+        pendingNonce: undefined,
+      });
+
+      // Remove pending record from transaction history
+      const pendingRecord = await ctx.db
+        .query("coinTransactions")
+        .withIndex("by_address", (q: any) => q.eq("address", profile.address.toLowerCase()))
+        .filter((q: any) => q.eq(q.field("source"), "pending_conversion"))
+        .order("desc")
+        .first();
+      if (pendingRecord) await ctx.db.delete(pendingRecord._id);
+
+      await createAuditLog(ctx, profile.address, "recover", pending, 0, newBalance, "autoRestoreStuckConversions");
+      console.log(`[AutoRecover] Restored ${pending} coins for ${profile.address}`);
+      restored++;
+    }
+
+    if (restored > 0) {
+      console.log(`[AutoRecover] Restored ${restored} stuck conversions`);
+    }
+    return { restored };
+  },
+});
+
+/**
  * User-callable recovery: restores coins stuck in a failed TESTVBMS → VBMS conversion.
  * Requires 30 minutes to have passed since the conversion was initiated (TX is dead by then).
  */
 export const recoverPendingConversion = mutation({
   args: { address: v.string() },
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  handler: async (_ctx, _args) => {
-    // 🔒 TEMPORARILY DISABLED — pending security audit (Mar 25, 2026)
-    throw new Error("[RECOVER_DISABLED]");
+  handler: async (ctx, { address }) => {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", address.toLowerCase()))
+      .first();
+
+    if (!profile) throw new Error("Profile not found");
+
+    const pending = profile.pendingConversion || 0;
+    if (pending === 0) return { restored: 0 };
+
+    const pendingTimestamp = profile.pendingConversionTimestamp || 0;
+    const elapsed = Date.now() - pendingTimestamp;
+    const THIRTY_MIN = 30 * 60 * 1000;
+
+    if (elapsed < THIRTY_MIN) {
+      const remainingSec = Math.ceil((THIRTY_MIN - elapsed) / 1000);
+      throw new Error(`[CLAIM_WAIT_RECOVER]${remainingSec}`);
+    }
+
+    const restoredBalance = (profile.coins || 0) + pending;
+    await ctx.db.patch(profile._id, {
+      coins: restoredBalance,
+      pendingConversion: 0,
+      pendingConversionTimestamp: undefined,
+      pendingNonce: undefined,
+    });
+
+    // Remove the "(pending)" record from transaction history
+    const pendingRecord = await ctx.db
+      .query("coinTransactions")
+      .withIndex("by_address", (q: any) => q.eq("address", address.toLowerCase()))
+      .filter((q: any) => q.eq(q.field("source"), "pending_conversion"))
+      .order("desc")
+      .first();
+    if (pendingRecord) await ctx.db.delete(pendingRecord._id);
+
+    await createAuditLog(ctx, address, "recover", pending, 0, restoredBalance, "recoverPendingConversion");
+    return { restored: pending };
   },
 });
 

@@ -10,6 +10,13 @@ crons.interval(
   internal.pokerBattle.cleanupOldPokerRooms
 );
 
+// Auto-restore stuck pending TESTVBMS→VBMS conversions (every 15 minutes)
+crons.interval(
+  "auto restore stuck conversions",
+  { minutes: 15 },
+  internal.vbmsClaim.autoRestoreStuckConversions
+);
+
 // Daily gaming tips DISABLED - user requested removal
 // crons.daily(
 //   "send periodic gaming tips",

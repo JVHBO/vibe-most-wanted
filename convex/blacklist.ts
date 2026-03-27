@@ -294,23 +294,19 @@ export function getBlacklistInfo(address: string) {
 
 export const checkBan = query({
   args: { address: v.string() },
-  handler: async (ctx, { address }) => {
+  handler: async (_ctx, { address }) => {
     if (!address) return { isBanned: false };
 
     const normalizedAddress = address.toLowerCase();
+    if (!isBlacklisted(normalizedAddress)) return { isBanned: false };
+
     const info = EXPLOITER_BLACKLIST[normalizedAddress];
-
-    if (info) {
-      return {
-        isBanned: true,
-        username: info.username,
-        amountStolen: info.amountStolen,
-        reason: `Your account was permanently banned for exploiting ${info.amountStolen.toLocaleString()} VBMS in December 2025.`,
-        exploitDate: "December 10-12, 2025",
-      };
-    }
-
-    return { isBanned: false };
+    return {
+      isBanned: true,
+      username: info?.username || "unknown",
+      amountStolen: info?.amountStolen || 0,
+      reason: "This address is permanently banned from Vibe Most Wanted for exploiting game economy.",
+    };
   },
 });
 
@@ -368,25 +364,73 @@ export const checkBlacklist = query({
 
 export const resetExploiterBalances = internalMutation({
   handler: async (ctx) => {
-    let resetCount = 0;
+    return await _zeroAllBlacklisted(ctx);
+  },
+});
 
-    for (const address of Object.keys(EXPLOITER_BLACKLIST)) {
+// All blacklisted addresses (all exploit sets combined)
+function getAllBlacklistedAddresses(): string[] {
+  const from_main = Object.keys(EXPLOITER_BLACKLIST);
+  const from_exploit3 = Array.from(EXPLOIT3_BANNED);
+  const from_exploit4 = Array.from(EXPLOIT4_BANNED);
+  const from_exploit5 = Array.from(EXPLOIT5_BANNED);
+  return [...new Set([...from_main, ...from_exploit3, ...from_exploit4, ...from_exploit5])];
+}
+
+async function _zeroAllBlacklisted(ctx: any) {
+  let resetCount = 0;
+  const addresses = getAllBlacklistedAddresses();
+
+  for (const address of addresses) {
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", address))
+      .first();
+
+    if (profile) {
+      const hadCoins = (profile.coins || 0) + (profile.coinsInbox || 0) + (profile.pendingConversion || 0);
+      await ctx.db.patch(profile._id, {
+        coins: 0,
+        coinsInbox: 0,
+        pendingConversion: 0,
+        pendingConversionTimestamp: undefined,
+        pendingNonce: undefined,
+      });
+      if (hadCoins > 0) resetCount++;
+      console.log(`🚫 Zeroed exploiter: ${address}`);
+    }
+
+  }
+
+  console.log(`[ZeroBlacklisted] Done. Zeroed ${resetCount} accounts.`);
+  return { resetCount, total: addresses.length };
+}
+
+// Admin-callable: zero ALL blacklisted addresses (requires secret key)
+export const adminZeroAllBlacklisted = mutation({
+  args: { adminKey: v.string() },
+  handler: async (ctx, { adminKey }) => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+    const addresses = getAllBlacklistedAddresses();
+    let resetCount = 0;
+    for (const address of addresses) {
       const profile = await ctx.db
         .query("profiles")
         .withIndex("by_address", (q: any) => q.eq("address", address))
         .first();
-
-      if (profile && (profile.coins || 0) > 0) {
-        await ctx.db.patch(profile._id, {
-          coins: 0,
-          coinsInbox: 0,
-        });
-        resetCount++;
-        console.log(`🚫 Reset balance for exploiter: ${address} (${EXPLOITER_BLACKLIST[address].username})`);
-      }
+      if (!profile) continue;
+      const had = (profile.coins || 0) + (profile.coinsInbox || 0);
+      if (had === 0 && !profile.pendingConversion) continue;
+      await ctx.db.patch(profile._id, {
+        coins: 0,
+        coinsInbox: 0,
+        pendingConversion: 0,
+        pendingConversionTimestamp: undefined,
+        pendingNonce: undefined,
+      });
+      resetCount++;
     }
-
-    return { resetCount };
+    return { resetCount, total: addresses.length };
   },
 });
 
