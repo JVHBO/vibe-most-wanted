@@ -958,7 +958,7 @@ function getAuraDailyConversionLimit(aura: number): number {
   if (aura >= 6000)  return 3;   // SSJ3
   if (aura >= 2500)  return 2;   // SSJ2
   if (aura >= 800)   return 1;   // SSJ1
-  if (aura >= 510)   return 1;   // Great Ape
+  if (aura >= 510)   return 2;   // Great Ape
   return 1; // Human
 }
 
