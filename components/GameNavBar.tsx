@@ -86,13 +86,12 @@ export function GameNavBar({
   return (
     <div
       className={isInFarcaster
-        ? 'fixed bottom-0 left-0 right-0 z-[100] bg-[#1a1a1a]'
+        ? 'fixed bottom-0 left-0 right-0 z-[100]'
         : 'mb-3 md:mb-6 relative z-40'
       }
-      style={isInFarcaster ? { paddingBottom: navInsetBottom > 0 ? navInsetBottom : undefined } : undefined}
     >
       <div
-        className={`tour-nav-bar bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/30 ${isInFarcaster ? 'p-1' : 'p-2'} flex gap-1`}
+        className={`tour-nav-bar bg-vintage-charcoal/95 backdrop-blur-lg ${isInFarcaster ? 'rounded-none border-t-2' : 'rounded-xl border-2'} border-vintage-gold/30 ${isInFarcaster ? 'pt-1 px-1 pb-0' : 'p-2'} flex gap-1`}
       >
 
         {/* Home */}
