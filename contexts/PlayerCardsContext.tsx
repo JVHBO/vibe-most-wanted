@@ -67,8 +67,9 @@ async function fetchNFTsFromAllCollections(owner: string, forceRefresh: boolean 
 
   const allNfts: any[] = [];
 
-  // 🚀 WIELD: Fetch from Wield API (6 collections, cached)
-  for (const collection of wieldCollections) {
+  // 🚀 WIELD: Fetch from Wield API (6 collections, cached, sequential to avoid 429)
+  for (let i = 0; i < wieldCollections.length; i++) {
+    const collection = wieldCollections[i];
     try {
       const tokens = await fetchWieldTokens(owner, collection.id);
       if (tokens.length > 0) {
@@ -93,6 +94,10 @@ async function fetchNFTsFromAllCollections(owner: string, forceRefresh: boolean 
       } catch (alchemyErr) {
         devError(`✗ [Alchemy fallback] ${collection.id}:`, alchemyErr);
       }
+    }
+    // 800ms between each collection to avoid Wield 429
+    if (i < wieldCollections.length - 1) {
+      await new Promise(resolve => setTimeout(resolve, 800));
     }
   }
 

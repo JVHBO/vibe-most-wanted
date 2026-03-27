@@ -123,7 +123,7 @@ async function fetchOwnerTokens(
 
     // Retry once on 429
     if (res.status === 429) {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 4000));
       res = await fetch(url, { headers: { 'API-KEY': WIELD_API_KEY } });
     }
 
@@ -306,9 +306,9 @@ export async function fetchAllWieldCollections(
     } catch (e) {
       console.warn(`[Wield] Failed ${c}:`, e);
     }
-    // 300ms between each collection to stay under rate limit
+    // 800ms between each collection to stay under rate limit
     if (i < collections.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 800));
     }
   }
 
