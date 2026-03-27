@@ -945,8 +945,9 @@ function getAuraDailyLimit(aura: number): number {
   if (aura >= 14000) return 500_000; // SSJ4
   if (aura >= 6000)  return 400_000; // SSJ3
   if (aura >= 2500)  return 300_000; // SSJ2
-  if (aura >= 510)   return 200_000; // SSJ1
-  return 100_000; // Human / Great Ape
+  if (aura >= 800)   return 200_000; // SSJ1
+  if (aura >= 510)   return 150_000; // Great Ape
+  return 100_000; // Human
 }
 
 // Max conversions per day by aura level (SSJ_N = N conversions/day)
@@ -956,8 +957,8 @@ function getAuraDailyConversionLimit(aura: number): number {
   if (aura >= 14000) return 4;   // SSJ4
   if (aura >= 6000)  return 3;   // SSJ3
   if (aura >= 2500)  return 2;   // SSJ2
-  if (aura >= 510)   return 1;   // SSJ1
-  if (aura >= 200)   return 1;   // Great Ape
+  if (aura >= 800)   return 1;   // SSJ1
+  if (aura >= 510)   return 1;   // Great Ape
   return 1; // Human
 }
 
