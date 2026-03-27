@@ -421,18 +421,25 @@ export default function TCGPage() {
   // 🚀 BANDWIDTH FIX: Use context's loadNFTs instead of local duplicate
   const { nfts: contextNfts, status: contextStatus, forceReloadNFTs: contextForceReloadNFTs, refreshUserProfile } = usePlayerCards();
 
-  // 🔗 Sync with context: If context has cards, use them (prevents reload on navigation)
-  // 🚀 BANDWIDTH FIX (Jan 2026): Context is now the single source of truth for NFT loading
+  // 🔗 Sync with context: Context is the single source of truth for NFT loading
+  // Always sync when context finishes loading (handles burn/mint cache invalidation)
   useEffect(() => {
-    if (contextStatus === 'loaded' && contextNfts.length > 0 && nfts.length === 0) {
-      devLog('Syncing from context:', contextNfts.length, 'cards');
-      setNfts([...contextNfts]);
-      setStatus('loaded');
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('vbms_cards_loaded', 'true');
+    if (contextStatus === 'loaded') {
+      const contextCount = contextNfts.length;
+      const localCount = nfts.length;
+      // Sync if: first load (local empty), or count changed (burn/mint)
+      if (localCount === 0 || localCount !== contextCount) {
+        devLog('Syncing from context:', contextCount, 'cards (was', localCount, ')');
+        setNfts([...contextNfts]);
+        setStatus('loaded');
       }
     }
-  }, [contextNfts, contextStatus, nfts.length]);
+    // Also clear local state when context resets (forceReloadNFTs)
+    if (contextStatus === 'idle' && nfts.length > 0) {
+      setNfts([]);
+      setStatus('idle');
+    }
+  }, [contextNfts, contextStatus]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [selectedCards, setSelectedCards] = useState<any[]>([]);
   const [playerPower, setPlayerPower] = useState<number>(0);

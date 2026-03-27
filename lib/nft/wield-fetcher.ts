@@ -26,6 +26,7 @@ export const WIELD_COLLECTIONS: Record<string, { contract: string; slug: string 
 const OWNER_CACHE_KEY = 'wield_owner_cache';
 const TOKEN_CACHE_KEY = 'wield_token_cache';
 const OWNER_CACHE_TTL = 3 * 60 * 1000; // 3 minutes (faster detection of new mints)
+const TOKEN_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours — prevents stale burned cards
 
 export interface WieldToken {
   tokenId: number;
@@ -66,7 +67,17 @@ function getOwnerCache(): OwnerCache {
 function getTokenCache(): TokenCache {
   if (typeof window === 'undefined') return {};
   try {
-    return JSON.parse(localStorage.getItem(TOKEN_CACHE_KEY) || '{}');
+    const raw = localStorage.getItem(TOKEN_CACHE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    // Check TTL — clear if expired
+    const savedAt = parsed.__savedAt ?? 0;
+    if (Date.now() - savedAt > TOKEN_CACHE_TTL) {
+      localStorage.removeItem(TOKEN_CACHE_KEY);
+      return {};
+    }
+    const { __savedAt, ...cache } = parsed;
+    return cache;
   } catch {
     return {};
   }
@@ -84,7 +95,7 @@ function saveOwnerCache(cache: OwnerCache) {
 function saveTokenCache(cache: TokenCache) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(TOKEN_CACHE_KEY, JSON.stringify(cache));
+    localStorage.setItem(TOKEN_CACHE_KEY, JSON.stringify({ ...cache, __savedAt: Date.now() }));
   } catch (e) {
     console.warn('Failed to save token cache:', e);
   }
@@ -319,6 +330,8 @@ export function clearWieldOwnerCache(address?: string) {
   } else {
     localStorage.removeItem(OWNER_CACHE_KEY);
   }
+  // Also clear token metadata cache to remove burned card data
+  localStorage.removeItem(TOKEN_CACHE_KEY);
 }
 
 /**

@@ -51,7 +51,7 @@ const RARITY_TEXT: Record<string, string> = {
 export default function BurnCardsPage() {
   const router = useRouter();
   const { address, isConnecting } = useAccount();
-  const { refreshUserProfile } = usePlayerCards();
+  const { refreshUserProfile, forceReloadNFTs } = usePlayerCards();
 
   const playerCards = useQuery(api.cardPacks.getPlayerCards, address ? { address } : "skip");
   const lockedCardIds = useQuery(api.cardPacks.getLockedFreeCardIds, address ? { address } : "skip") || [];
@@ -141,8 +141,9 @@ export default function BurnCardsPage() {
         cardIds: Array.from(selectedCards) as Id<"cardInventory">[],
       });
       setSelectedCards(new Set());
-      // 🔄 Refresh profile to update TESTVBMS balance before redirecting
+      // 🔄 Refresh profile + clear NFT caches so burned cards disappear
       await refreshUserProfile();
+      await forceReloadNFTs();
       console.log(`🔥 Burned ${result.cardsBurned} cards for ${result.totalVBMS} TESTVBMS`);
       router.push("/shop");
     } catch (error) {
