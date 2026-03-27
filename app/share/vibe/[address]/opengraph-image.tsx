@@ -52,7 +52,6 @@ export default async function Image({ params }: { params: Promise<{ address: str
   let pfpUrl = '';
   let power = 0;
   let aura = 0;
-  let coins = 0;
   let neynarScore: number | null = null;
   let fid: number | null = null;
 
@@ -66,19 +65,17 @@ export default async function Image({ params }: { params: Promise<{ address: str
       pfpUrl = profile.farcasterPfpUrl || '';
       power = profile.stats?.totalPower || 0;
       aura = profile.stats?.aura || 0;
-      coins = profile.coins || 0;
       fid = profile.farcasterFid || (profile.fid ? parseInt(profile.fid) : null);
     }
   } catch (_) {}
 
-  // Fetch neynar score — VibeFID Convex first, fallback to Neynar API directly
+  // Fetch neynar score
   if (fid) {
     try {
       const card = await convexQuery(CONVEX_FID, 'farcasterCards:getFarcasterCardByFid', { fid });
       if (card) neynarScore = card.latestNeynarScore ?? card.neynarScore ?? null;
     } catch (_) {}
 
-    // Fallback: fetch directly from Neynar API if no VibeFID card
     if (neynarScore === null) {
       try {
         const neynarKey = process.env.NEYNAR_API_KEY;
@@ -96,30 +93,16 @@ export default async function Image({ params }: { params: Promise<{ address: str
     }
   }
 
-  // In edge functions we fetch external URLs directly — no need for the browser proxy
-  const proxyImg = (url: string) => url;
-
-  const bgUrl = 'https://ipfs.filebase.io/ipfs/QmemgMVC1LN78M2z7QzWGQRFYKvJm7x2N5JJuLoq8JEQxP';
   const pfp = pfpUrl ? `https://vibemostwanted.xyz/api/proxy-image?url=${encodeURIComponent(pfpUrl)}` : '';
   const auraColor = getAuraColor(aura);
   const auraLabel = getAuraLabel(aura);
 
-  // Validate bgUrl is reachable before using in ImageResponse (prevents crash on IPFS timeout)
-  let bgReachable = false;
-  try {
-    const bgCheck = await fetch(bgUrl, { signal: AbortSignal.timeout(3000), method: 'HEAD' });
-    bgReachable = bgCheck.ok;
-  } catch { bgReachable = false; }
-
   return new ImageResponse(
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', position: 'relative' }}>
-        {/* BG — fallback to dark gradient if IPFS is unreachable */}
-        {bgReachable
-          ? <img src={bgUrl} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 30% 30%, #1a1020 0%, #0a0a0a 70%)', display: 'flex' }} />
-        }
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(10,8,2,0.92) 100%)', display: 'flex' }} />
+        {/* Dark gradient background (same as miniapp) */}
+        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 30% 30%, #1a1020 0%, #0a0a0a 70%)', display: 'flex' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(10,8,2,0.7) 100%)', display: 'flex' }} />
 
         {/* Gold top border */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '6px', background: 'linear-gradient(90deg, #FFD700, #B8860B, #FFD700)', display: 'flex' }} />
@@ -131,12 +114,11 @@ export default async function Image({ params }: { params: Promise<{ address: str
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          padding: '50px 60px 40px',
-          gap: '0px',
+          padding: '50px 70px 40px',
         }}>
 
-          {/* Header row — PFP + name + brand */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '36px', marginBottom: '40px' }}>
+          {/* Header row — PFP + name + neynar badge */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '36px', marginBottom: '44px' }}>
             {pfp ? (
               <img src={pfp} style={{
                 width: '140px', height: '140px', borderRadius: '50%',
@@ -157,10 +139,10 @@ export default async function Image({ params }: { params: Promise<{ address: str
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: '8px' }}>
-              <div style={{ fontSize: '58px', fontWeight: 900, color: '#FFD700', lineHeight: 1, display: 'flex' }}>
+              <div style={{ fontSize: '56px', fontWeight: 900, color: '#FFD700', lineHeight: 1, display: 'flex' }}>
                 @{username}
               </div>
-              <div style={{ fontSize: '24px', color: 'rgba(255,255,255,0.5)', display: 'flex', letterSpacing: '4px', fontWeight: 700 }}>
+              <div style={{ fontSize: '22px', color: 'rgba(255,255,255,0.5)', display: 'flex', letterSpacing: '4px', fontWeight: 700 }}>
                 VIBE MOST WANTED ⚔️
               </div>
             </div>
@@ -172,31 +154,31 @@ export default async function Image({ params }: { params: Promise<{ address: str
                 background: 'rgba(255,215,0,0.1)',
                 border: '2px solid rgba(255,215,0,0.5)',
                 borderRadius: '16px',
-                padding: '16px 24px',
+                padding: '14px 22px',
                 flexShrink: 0,
               }}>
                 <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: '2px', display: 'flex', marginBottom: '6px' }}>
                   NEYNAR
                 </div>
-                <div style={{ fontSize: '42px', fontWeight: 900, color: '#FFD700', display: 'flex' }}>
+                <div style={{ fontSize: '40px', fontWeight: 900, color: '#FFD700', display: 'flex' }}>
                   {neynarScore.toFixed(2)}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Stats row */}
-          <div style={{ display: 'flex', gap: '24px' }}>
+          {/* Stats row — only Power and Aura */}
+          <div style={{ display: 'flex', gap: '32px' }}>
             {/* Power */}
             <div style={{
               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
               background: 'rgba(18,14,2,0.8)',
               border: '2px solid rgba(255,215,0,0.3)',
-              borderRadius: '16px', padding: '24px 16px',
+              borderRadius: '16px', padding: '28px 20px',
             }}>
-              <div style={{ fontSize: '36px', display: 'flex', marginBottom: '8px' }}>⚡</div>
-              <div style={{ fontSize: '44px', fontWeight: 900, color: '#FFD700', display: 'flex' }}>{fmtNum(power)}</div>
-              <div style={{ fontSize: '16px', color: 'rgba(255,255,255,0.45)', fontWeight: 700, letterSpacing: '2px', display: 'flex', marginTop: '6px' }}>POWER</div>
+              <div style={{ fontSize: '40px', display: 'flex', marginBottom: '10px' }}>⚡</div>
+              <div style={{ fontSize: '52px', fontWeight: 900, color: '#FFD700', display: 'flex' }}>{fmtNum(power)}</div>
+              <div style={{ fontSize: '18px', color: 'rgba(255,255,255,0.45)', fontWeight: 700, letterSpacing: '3px', display: 'flex', marginTop: '8px' }}>POWER</div>
             </div>
 
             {/* Aura */}
@@ -204,38 +186,23 @@ export default async function Image({ params }: { params: Promise<{ address: str
               flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
               background: 'rgba(18,14,2,0.8)',
               border: `2px solid ${auraColor}55`,
-              borderRadius: '16px', padding: '24px 16px',
+              borderRadius: '16px', padding: '28px 20px',
             }}>
-              <div style={{ fontSize: '36px', display: 'flex', marginBottom: '8px' }}>🔥</div>
-              <div style={{ fontSize: '44px', fontWeight: 900, color: auraColor, display: 'flex' }}>{fmtNum(aura)}</div>
-              <div style={{ fontSize: '16px', color: 'rgba(255,255,255,0.45)', fontWeight: 700, letterSpacing: '2px', display: 'flex', marginTop: '6px' }}>
+              <div style={{ fontSize: '40px', display: 'flex', marginBottom: '10px' }}>🔥</div>
+              <div style={{ fontSize: '52px', fontWeight: 900, color: auraColor, display: 'flex' }}>{fmtNum(aura)}</div>
+              <div style={{ fontSize: '18px', color: 'rgba(255,255,255,0.45)', fontWeight: 700, letterSpacing: '3px', display: 'flex', marginTop: '8px' }}>
                 AURA · {auraLabel}
               </div>
             </div>
-
-            {/* VBMS */}
-            <div style={{
-              flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center',
-              background: 'rgba(18,14,2,0.8)',
-              border: '2px solid rgba(255,215,0,0.3)',
-              borderRadius: '16px', padding: '24px 16px',
-            }}>
-              <div style={{ fontSize: '36px', display: 'flex', marginBottom: '8px' }}>💰</div>
-              <div style={{ fontSize: '44px', fontWeight: 900, color: '#FFD700', display: 'flex' }}>{fmtNum(coins)}</div>
-              <div style={{ fontSize: '16px', color: 'rgba(255,255,255,0.45)', fontWeight: 700, letterSpacing: '2px', display: 'flex', marginTop: '6px' }}>$VBMS</div>
-            </div>
           </div>
 
-          {/* Footer */}
+          {/* Footer — branding only, no URL */}
           <div style={{
             marginTop: 'auto',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <div style={{ fontSize: '18px', color: 'rgba(255,255,255,0.35)', display: 'flex' }}>
-              Collect cards • Battle • Earn $VBMS
-            </div>
-            <div style={{ fontSize: '18px', color: 'rgba(255,215,0,0.5)', fontWeight: 700, display: 'flex' }}>
-              vibemostwanted.xyz
+            <div style={{ fontSize: '20px', color: 'rgba(255,255,255,0.35)', display: 'flex', letterSpacing: '2px' }}>
+              Collect cards · Battle · Earn $VBMS
             </div>
           </div>
         </div>
