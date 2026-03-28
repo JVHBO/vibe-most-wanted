@@ -58,6 +58,7 @@ import type * as priceSnapshots from "../priceSnapshots.js";
 import type * as profiles from "../profiles.js";
 import type * as pvp from "../pvp.js";
 import type * as quests from "../quests.js";
+import type * as raffle from "../raffle.js";
 import type * as raidBoss from "../raidBoss.js";
 import type * as rewardsChoice from "../rewardsChoice.js";
 import type * as rooms from "../rooms.js";
@@ -131,6 +132,7 @@ declare const fullApi: ApiFromModules<{
   profiles: typeof profiles;
   pvp: typeof pvp;
   quests: typeof quests;
+  raffle: typeof raffle;
   raidBoss: typeof raidBoss;
   rewardsChoice: typeof rewardsChoice;
   rooms: typeof rooms;

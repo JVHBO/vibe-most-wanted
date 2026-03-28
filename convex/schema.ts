@@ -2206,4 +2206,36 @@ export default defineSchema({
   })
     .index("by_created", ["createdAt"])
     .index("by_address", ["address"]),
+
+  // ─── Raffle ──────────────────────────────────────────────────────────────
+  raffleConfig: defineTable({
+    prizeDescription: v.string(),
+    prizeImageUrl:    v.string(),
+    cardValueUSD:     v.number(),
+    cardValueVBMS:    v.number(),
+    ticketPriceVBMS:  v.number(),
+    ticketPriceUSD:   v.number(),
+    maxTickets:       v.number(),
+    durationDays:     v.number(),
+    epoch:            v.number(),
+    visible:          v.boolean(),
+    updatedAt:        v.number(),
+  })
+    .index("by_epoch", ["epoch"]),
+
+  raffleEntries: defineTable({
+    address:     v.string(),
+    tickets:     v.number(),
+    chain:       v.string(), // "base" | "arb"
+    token:       v.string(), // "VBMS" | "USND" | "ETH"
+    txHash:      v.string(),
+    epoch:       v.number(),
+    blockNumber: v.number(),
+    timestamp:   v.number(),
+    synced:      v.boolean(),
+    arbTxHash:   v.optional(v.string()),
+  })
+    .index("by_epoch",  ["epoch"])
+    .index("by_txHash", ["txHash"])
+    .index("by_address_epoch", ["address", "epoch"]),
 });

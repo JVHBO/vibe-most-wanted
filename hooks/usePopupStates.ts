@@ -51,6 +51,9 @@ export function usePopupStates() {
   const [showChangelog, setShowChangelog] = useState<boolean>(false);
   const [showReport, setShowReport] = useState<boolean>(false);
 
+  // Raffle
+  const [showRaffleModal, setShowRaffleModal] = useState<boolean>(false);
+
   return {
     // Onboarding
     showTutorial, setShowTutorial,
@@ -89,5 +92,7 @@ export function usePopupStates() {
     // Changelog & Bug report
     showChangelog, setShowChangelog,
     showReport, setShowReport,
+    // Raffle
+    showRaffleModal, setShowRaffleModal,
   };
 }
