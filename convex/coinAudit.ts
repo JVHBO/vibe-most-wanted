@@ -183,7 +183,7 @@ export const getPlayerAuditSummary = query({
 
 // ========== QUERY: Get Recent Suspicious Activity ==========
 
-export const getRecentSuspiciousActivity = query({
+export const getRecentSuspiciousActivity = internalQuery({
   args: {
     hours: v.optional(v.number()),
     minAmount: v.optional(v.number()),
