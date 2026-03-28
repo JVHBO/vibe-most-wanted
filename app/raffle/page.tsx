@@ -3,7 +3,22 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useConvex } from "convex/react";
+import { useAccount, useBalance, useReadContract } from "wagmi";
 import { api } from "@/convex/_generated/api";
+import { formatUnits } from "viem";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const VBMS_ADDRESS  = "0xf14c1dc8ce5fe65413379f76c43fa1460c31e728" as const;
+const USDC_ADDRESS  = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" as const;
+const USND_ADDRESS  = "0x4ecf61a6c2fab8a047ceb3b3b263b401763e9d49" as const;
+const ERC20_BALANCE_ABI = [
+  { name: "balanceOf", type: "function", stateMutability: "view",
+    inputs: [{ name: "account", type: "address" }],
+    outputs: [{ name: "", type: "uint256" }] },
+] as const;
+
+// OpenSea link — Goofy Romero (Queen of Diamonds VBMS baccarat card)
+const OPENSEA_GOOFY_ROMERO = "https://opensea.io/assets/base/0xf14c1dc8ce5fe65413379f76c43fa1460c31e728";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface RaffleConfig {
@@ -46,14 +61,28 @@ function useCountdown(endsAt: number | null) {
   return { d, h, m, ended: diff === 0 && endsAt !== null };
 }
 
+// ─── Format balance helper ─────────────────────────────────────────────────────
+function fmtBal(raw: bigint | undefined, decimals: number, symbol: string): string {
+  if (raw === undefined) return "…";
+  const n = parseFloat(formatUnits(raw, decimals));
+  if (n === 0) return `0 ${symbol}`;
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M ${symbol}`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k ${symbol}`;
+  if (n < 0.0001) return `<0.0001 ${symbol}`;
+  return `${n.toFixed(n < 1 ? 6 : 2)} ${symbol}`;
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function RafflePage() {
   const router = useRouter();
   const convex = useConvex();
-  const [showInfo, setShowInfo] = useState(false);
+  const { address: walletAddress } = useAccount();
 
-  const [config, setConfig] = useState<RaffleConfig | null>(null);
-  const [entries, setEntries] = useState<RaffleEntry[]>([]);
+  const [showInfo,    setShowInfo]    = useState(false);
+  const [showBuy,     setShowBuy]     = useState(false);
+  const [buyQty,      setBuyQty]      = useState(1);
+  const [config,      setConfig]      = useState<RaffleConfig | null>(null);
+  const [entries,     setEntries]     = useState<RaffleEntry[]>([]);
   const loaded = useRef(false);
 
   useEffect(() => {
@@ -70,14 +99,103 @@ export default function RafflePage() {
 
   const endsAt = config ? config.updatedAt + config.durationDays * 86400000 : null;
   const { d, h, m, ended } = useCountdown(endsAt);
-
   const totalTickets = entries.reduce((sum, e) => sum + e.tickets, 0);
-  // Snapshot prices — 10k VBMS | $0.06 USDC | ~0.000023 ETH (≈$2,600/ETH)
+
   const ticketPriceVBMS = config?.ticketPriceVBMS ?? 10000;
   const ticketPriceUSD  = config?.ticketPriceUSD  ?? 0.06;
-  const ticketPriceUSDC = ticketPriceUSD; // 1:1 with USD (USDC on Base, 6 dec = 60000)
-  const ticketPriceETH  = 0.000023;       // snapshot ≈$0.06 @ $2600/ETH
+  const ticketPriceETH  = 0.000023;
   const totalVBMS = totalTickets * ticketPriceVBMS;
+
+  // ── On-chain balances ──
+  // Base ETH
+  const { data: baseEthBal } = useBalance({
+    address: walletAddress,
+    chainId: 8453,
+    query: { enabled: !!walletAddress && showBuy },
+  });
+  // VBMS (Base)
+  const { data: vbmsBal } = useReadContract({
+    address: VBMS_ADDRESS,
+    abi: ERC20_BALANCE_ABI,
+    functionName: "balanceOf",
+    args: walletAddress ? [walletAddress] : undefined,
+    chainId: 8453,
+    query: { enabled: !!walletAddress && showBuy },
+  });
+  // USDC (Base)
+  const { data: usdcBal } = useReadContract({
+    address: USDC_ADDRESS,
+    abi: ERC20_BALANCE_ABI,
+    functionName: "balanceOf",
+    args: walletAddress ? [walletAddress] : undefined,
+    chainId: 8453,
+    query: { enabled: !!walletAddress && showBuy },
+  });
+  // ARB ETH
+  const { data: arbEthBal } = useBalance({
+    address: walletAddress,
+    chainId: 42161,
+    query: { enabled: !!walletAddress && showBuy },
+  });
+  // USND (Arb)
+  const { data: usndBal } = useReadContract({
+    address: USND_ADDRESS,
+    abi: ERC20_BALANCE_ABI,
+    functionName: "balanceOf",
+    args: walletAddress ? [walletAddress] : undefined,
+    chainId: 42161,
+    query: { enabled: !!walletAddress && showBuy },
+  });
+
+  const CONTRACTS_LIVE = false; // set true after deploying raffle contracts
+
+  const paymentOptions = [
+    {
+      id: "vbms",
+      chain: "BASE",
+      chainColor: "#0052FF",
+      symbol: "VBMS",
+      label: fmtBal(vbmsBal as bigint | undefined, 18, "VBMS"),
+      price: `${(ticketPriceVBMS * buyQty / 1000).toFixed(0)}k VBMS`,
+      note: "→ pool",
+    },
+    {
+      id: "usdc",
+      chain: "BASE",
+      chainColor: "#0052FF",
+      symbol: "USDC",
+      label: fmtBal(usdcBal as bigint | undefined, 6, "USDC"),
+      price: `$${(ticketPriceUSD * buyQty).toFixed(2)} USDC`,
+      note: "Base",
+    },
+    {
+      id: "eth-base",
+      chain: "BASE",
+      chainColor: "#627EEA",
+      symbol: "ETH",
+      label: fmtBal(baseEthBal?.value, 18, "ETH"),
+      price: `≈${(ticketPriceETH * buyQty).toFixed(6)} ETH`,
+      note: "Base · Chainlink",
+    },
+    {
+      id: "usnd",
+      chain: "ARB",
+      chainColor: "#12AAFF",
+      symbol: "USND",
+      label: fmtBal(usndBal as bigint | undefined, 6, "USND"),
+      price: `$${(ticketPriceUSD * buyQty).toFixed(2)} USND`,
+      note: "Arbitrum One",
+    },
+    {
+      id: "eth-arb",
+      chain: "ARB",
+      chainColor: "#627EEA",
+      symbol: "ETH",
+      label: fmtBal(arbEthBal?.value, 18, "ETH"),
+      price: `≈${(ticketPriceETH * buyQty).toFixed(6)} ETH`,
+      note: "ARB · Chainlink",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-[#111] text-white flex flex-col">
@@ -145,13 +263,93 @@ export default function RafflePage() {
         </div>
       )}
 
+      {/* ── Buy modal ── */}
+      {showBuy && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setShowBuy(false)}>
+          <div className="absolute inset-0 bg-black/80" />
+          <div
+            className="relative w-full max-w-sm border-2 border-t-0 border-black bg-[#1a1a1a] shadow-[0px_-4px_0px_#FFD700] overflow-hidden mb-0 rounded-none"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-[#FFD700] border-b-2 border-black px-4 py-2.5 flex items-center justify-between">
+              <span className="text-black font-black text-sm uppercase tracking-widest">🎟️ Comprar Tickets</span>
+              <button onClick={() => setShowBuy(false)} className="text-black font-black text-lg leading-none">✕</button>
+            </div>
+
+            <div className="px-4 py-4 space-y-4">
+              {/* Qty selector */}
+              <div className="flex items-center gap-3">
+                <span className="text-white/50 text-[10px] font-black uppercase tracking-wider flex-1">Quantidade</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setBuyQty(q => Math.max(1, q - 1))}
+                    className="w-8 h-8 border-2 border-black bg-[#111] text-white font-black text-base flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                  >−</button>
+                  <span className="text-[#FFD700] font-black text-xl w-8 text-center tabular-nums">{buyQty}</span>
+                  <button
+                    onClick={() => setBuyQty(q => Math.min(20, q + 1))}
+                    className="w-8 h-8 border-2 border-black bg-[#111] text-white font-black text-base flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+                  >+</button>
+                </div>
+              </div>
+
+              {/* Payment options */}
+              <div className="border-2 border-black overflow-hidden">
+                <div className="bg-black/40 border-b border-black/40 px-3 py-1.5 flex items-center justify-between">
+                  <span className="text-white/40 font-black text-[9px] uppercase tracking-widest">Rede · Token</span>
+                  <span className="text-white/40 font-black text-[9px] uppercase tracking-widest">Preço total · Saldo</span>
+                </div>
+                {paymentOptions.map((opt, i) => (
+                  <div
+                    key={opt.id}
+                    className={`flex items-center gap-3 px-3 py-2.5 ${i < paymentOptions.length - 1 ? "border-b border-black/30" : ""}`}
+                  >
+                    <div
+                      className="w-9 h-9 shrink-0 border-2 border-black flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]"
+                      style={{ background: opt.chainColor }}
+                    >
+                      <span className="text-white font-black text-[8px] leading-none">{opt.chain}</span>
+                      <span className="text-white/70 font-bold text-[7px] leading-none mt-0.5">{opt.symbol}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-black text-sm leading-none">{opt.price}</p>
+                      <p className="text-white/30 text-[9px] mt-0.5">
+                        {walletAddress
+                          ? <span className="text-white/50">saldo: {opt.label}</span>
+                          : <span className="text-white/20">conecte a wallet</span>
+                        }
+                      </p>
+                    </div>
+                    <button
+                      disabled={!CONTRACTS_LIVE}
+                      className={`border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase transition-all shrink-0 ${
+                        CONTRACTS_LIVE
+                          ? "text-black bg-[#FFD700] shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] cursor-pointer"
+                          : "text-white/30 bg-white/5 cursor-not-allowed"
+                      }`}
+                    >
+                      {CONTRACTS_LIVE ? "Buy" : "Soon"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {!CONTRACTS_LIVE && (
+                <p className="text-white/20 text-[9px] text-center uppercase tracking-wider">
+                  Contratos em deploy · Em breve
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-sm mx-auto px-4 py-5 space-y-4">
 
           {/* ── Prize card ── */}
           <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
-
-            {/* Image + info */}
             <div className="flex">
               <div
                 className="shrink-0 bg-black border-r-2 border-black flex items-center justify-center overflow-hidden"
@@ -180,6 +378,15 @@ export default function RafflePage() {
                   <span className="text-white font-black text-lg">~$23</span>
                   <span className="text-white/30 text-[10px] font-mono">≈ 3.7M VBMS</span>
                 </div>
+                <a
+                  href={OPENSEA_GOOFY_ROMERO}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 mt-1 text-[#2081E2] font-black text-[9px] uppercase tracking-wider hover:underline"
+                >
+                  <svg width="10" height="10" viewBox="0 0 90 90" fill="currentColor"><path d="M45 0C20.15 0 0 20.15 0 45s20.15 45 45 45 45-20.15 45-45S69.85 0 45 0zM22.05 46.25l.17-.26 10.45-16.37a.41.41 0 0 1 .72.04c1.74 3.9 3.24 8.75 2.54 11.77-.3 1.26-1.12 2.96-2.04 4.53a11.6 11.6 0 0 1-.38.63.4.4 0 0 1-.34.18H22.43a.41.41 0 0 1-.38-.52zm57.67 7.09a.42.42 0 0 1-.25.38c-1.06.45-4.68 2.1-6.19 4.18-3.84 5.34-6.77 12.97-13.33 12.97H33.42A20.53 20.53 0 0 1 12.9 50.34v-.35c0-.23.18-.41.41-.41h11.57c.26 0 .46.23.43.49-.11 1.03.07 2.08.52 3.04a6.5 6.5 0 0 0 5.86 3.67h9.19V50.1h-9.09a.42.42 0 0 1-.34-.66l.22-.31c.58-.82 1.41-2.08 2.25-3.52 1.58-2.66 3.12-5.98 3.12-9.3 0-.5-.03-1.06-.09-1.6a27.47 27.47 0 0 0-.37-2.92 21.67 21.67 0 0 0-.59-2.3c-.12-.4-.29-.82-.44-1.22l-.07-.22a.41.41 0 0 1 .58-.5l1.29.46.02.01 1.86.68 1.88.7 2 .75v-5.1a2.05 2.05 0 1 1 4.1 0v3.8l1.6.6c.13.05.25.11.37.19.39.26 1 .71 1.54 1.26 1.23 1.25 2.55 3.12 3.44 5.62.2.55.37 1.13.5 1.73.14.6.22 1.22.25 1.82.03.34.04.67.04 1 0 .93-.1 1.84-.3 2.71-.08.39-.19.78-.31 1.16a16.38 16.38 0 0 1-1.65 3.5l-.44.7-.02.04c-.29.45-.6.9-.92 1.34l-.21.3a.42.42 0 0 0 .34.66h5.98a7.29 7.29 0 0 0 5.13-2.08c.47-.46.89-.96 1.25-1.5 1.16-1.71 1.8-3.76 1.8-5.9v-.5a.42.42 0 0 1 .56-.39l12.08 4.52a.42.42 0 0 1 .27.39z"/></svg>
+                  OpenSea
+                </a>
               </div>
             </div>
 
@@ -214,79 +421,13 @@ export default function RafflePage() {
             </div>
           </div>
 
-          {/* ── Coming soon ── */}
-          <div className="border-2 border-black bg-[#FFD700] shadow-[4px_4px_0px_#000] px-4 py-3 text-center">
-            <p className="text-black font-black text-sm uppercase tracking-widest">Raffle coming soon</p>
-            <p className="text-black/60 font-bold text-[10px] mt-0.5 uppercase tracking-wide">Tickets not available yet · Stay tuned</p>
-          </div>
-
-          {/* ── Ticket prices ── */}
-          <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#000] overflow-hidden">
-            <div className="bg-[#FFD700] border-b-2 border-black px-3 py-2 flex items-center justify-between">
-              <span className="text-black font-black text-[10px] uppercase tracking-widest">Ticket Price · 1 ticket</span>
-              <span className="text-black/50 font-bold text-[8px] uppercase">snapshot</span>
-            </div>
-
-            {/* BASE — VBMS */}
-            <div className="flex items-center gap-3 px-3 py-2.5 border-b border-black/40">
-              <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#0052FF] flex items-center justify-center shadow-[2px_2px_0px_#000]">
-                <span className="text-white font-black text-[9px]">BASE</span>
-              </div>
-              <div className="flex-1">
-                <span className="text-white font-black text-sm">{(ticketPriceVBMS / 1000).toFixed(0)}k VBMS</span>
-                <span className="text-white/30 text-[9px] ml-2">→ pool</span>
-              </div>
-              <button disabled className="border-2 border-black bg-[#0052FF] text-white font-black text-[10px] px-3 py-1.5 uppercase opacity-30 cursor-not-allowed">Buy</button>
-            </div>
-
-            {/* BASE — USDC */}
-            <div className="flex items-center gap-3 px-3 py-2.5 border-b border-black/40">
-              <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#0052FF]/60 flex items-center justify-center shadow-[2px_2px_0px_#000]">
-                <span className="text-white font-black text-[9px]">USDC</span>
-              </div>
-              <div className="flex-1">
-                <span className="text-white font-black text-sm">${ticketPriceUSDC.toFixed(2)} USDC</span>
-                <span className="text-white/30 text-[9px] ml-2">Base</span>
-              </div>
-              <button disabled className="border-2 border-black bg-[#0052FF]/60 text-white font-black text-[10px] px-3 py-1.5 uppercase opacity-30 cursor-not-allowed">Buy</button>
-            </div>
-
-            {/* BASE — ETH */}
-            <div className="flex items-center gap-3 px-3 py-2.5 border-b-2 border-black">
-              <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#627EEA] flex items-center justify-center shadow-[2px_2px_0px_#000]">
-                <span className="text-white font-black text-[9px]">ETH</span>
-              </div>
-              <div className="flex-1">
-                <span className="text-white font-black text-sm">≈{ticketPriceETH.toFixed(6)} ETH</span>
-                <span className="text-white/30 text-[9px] ml-2">Base · Chainlink</span>
-              </div>
-              <button disabled className="border-2 border-black bg-[#627EEA] text-white font-black text-[10px] px-3 py-1.5 uppercase opacity-30 cursor-not-allowed">Buy</button>
-            </div>
-
-            {/* ARB — USND */}
-            <div className="flex items-center gap-3 px-3 py-2.5 border-b border-black/40">
-              <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#12AAFF] flex items-center justify-center shadow-[2px_2px_0px_#000]">
-                <span className="text-white font-black text-[9px]">ARB</span>
-              </div>
-              <div className="flex-1">
-                <span className="text-white font-black text-sm">${ticketPriceUSD.toFixed(2)} USND</span>
-                <span className="text-white/30 text-[9px] ml-2">Arbitrum One</span>
-              </div>
-              <button disabled className="border-2 border-black bg-[#12AAFF] text-white font-black text-[10px] px-3 py-1.5 uppercase opacity-30 cursor-not-allowed">Buy</button>
-            </div>
-
-            {/* ARB — ETH */}
-            <div className="flex items-center gap-3 px-3 py-2.5">
-              <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#627EEA]/80 flex items-center justify-center shadow-[2px_2px_0px_#000]">
-                <span className="text-white font-black text-[9px]">ETH</span>
-              </div>
-              <div className="flex-1">
-                <span className="text-white font-black text-sm">≈{ticketPriceETH.toFixed(6)} ETH</span>
-                <span className="text-white/30 text-[9px] ml-2">ARB · Chainlink</span>
-              </div>
-              <button disabled className="border-2 border-black bg-[#627EEA]/80 text-white font-black text-[10px] px-3 py-1.5 uppercase opacity-30 cursor-not-allowed">Buy</button>
-            </div>
-          </div>
+          {/* ── Buy Tickets button ── */}
+          <button
+            onClick={() => setShowBuy(true)}
+            className="w-full border-2 border-black bg-[#FFD700] text-black font-black text-sm uppercase tracking-widest py-3.5 shadow-[4px_4px_0px_#000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
+          >
+            🎟️ Buy Tickets
+          </button>
 
           {/* ── Participants ── */}
           {entries.length > 0 && (
