@@ -189,7 +189,7 @@ export const AudioManager = {
 
     try {
       // Loop sem interrupções usando AudioContext (uses IPFS in production)
-      const response = await fetch(getAssetUrl('/jazz-background.mp3'));
+      const response = await fetch(getAssetUrl('/jazz-background.wav'));
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
 
@@ -335,6 +335,20 @@ export const AudioManager = {
       }
     } catch (e) {
       devLog('Erro ao tocar som de vitória:', e);
+    }
+  },
+  async levelUp() {
+    await this.init();
+    if (this.context && this.context.state === 'suspended') {
+      await this.context.resume();
+    }
+    try {
+      const audio = new Audio('/sounds/lvlup.wav');
+      audio.volume = 0.85;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) await playPromise;
+    } catch (e) {
+      devLog('Erro ao tocar level up:', e);
     }
   },
   async lose() {

@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { ConvexProfileService, type UserProfile } from "../lib/convex-profile"; // ✨ Convex para Profiles
 import { ConvexPvPService, type GameRoom } from "../lib/convex-pvp"; // ✨ Convex para PvP Rooms
 import { sdk } from "@farcaster/miniapp-sdk";
@@ -329,7 +330,6 @@ export default function TCGPage() {
     showWeeklyLeaderboardPopup, setShowWeeklyLeaderboardPopup,
     showChangelog, setShowChangelog,
     showReport, setShowReport,
-    showRaffleModal, setShowRaffleModal,
   } = usePopupStates();
 
   const {
@@ -2302,90 +2302,6 @@ export default function TCGPage() {
         farcasterDisplayName={userProfile?.farcasterDisplayName ?? null}
       />
 
-      {/* 🎟️ Raffle Modal */}
-      {showRaffleModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setShowRaffleModal(false)}>
-          <div className="absolute inset-0 bg-black/70" />
-          <div
-            className="relative w-full max-w-sm bg-[#0d0d0d] border-2 border-[#FFD700] shadow-[0_-4px_0px_#000] overflow-hidden mb-[72px]"
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="bg-[#FFD700] px-4 py-2.5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-black font-display font-black text-sm uppercase tracking-widest">🎟️ Raffle</span>
-                <span className="bg-black text-[#FFD700] text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wider">ADMIN PREVIEW</span>
-              </div>
-              <button onClick={() => setShowRaffleModal(false)} className="text-black/60 hover:text-black font-bold text-lg leading-none">✕</button>
-            </div>
-
-            {/* Card showcase */}
-            <div className="flex gap-3 p-4">
-              <div className="w-16 shrink-0 border-2 border-[#FFD700]/40 bg-gradient-to-b from-[#1a1400] to-[#0d0d0d] flex flex-col items-center justify-center relative overflow-hidden" style={{ height: 88 }}>
-                <div className="absolute inset-0 bg-gradient-to-br from-[#FFD700]/10 via-transparent to-[#FF6B00]/10" />
-                <span className="text-2xl relative z-10">🃏</span>
-                <span className="text-[8px] text-[#FFD700]/60 font-bold uppercase mt-0.5 relative z-10">Legendary</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[#FFD700] font-display font-black text-base leading-none">Goofy Romero</p>
-                <p className="text-white/40 text-[10px] font-bold uppercase tracking-wider mt-0.5">Legendary Card</p>
-                <div className="mt-2 flex items-center gap-1.5 flex-wrap">
-                  <span className="bg-[#FFD700]/10 border border-[#FFD700]/30 text-[#FFD700] text-[10px] font-bold px-1.5 py-0.5">~$23</span>
-                  <span className="text-white/30 text-[9px]">≈</span>
-                  <span className="text-white/50 text-[9px] font-mono">3.7M VBMS</span>
-                </div>
-                <div className="mt-1.5 space-y-0.5">
-                  <div className="flex items-center gap-1">
-                    <span className="text-white/40 text-[10px]">BASE ticket:</span>
-                    <span className="text-white font-bold text-[10px]">100k VBMS</span>
-                    <span className="text-white/30 text-[9px]">≈ $0.62</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-white/40 text-[10px]">ARB ticket:</span>
-                    <span className="text-white font-bold text-[10px]">$0.62 USND</span>
-                    <span className="text-white/30 text-[9px]">or ETH</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div className="border-t border-[#FFD700]/20 px-4 py-3 flex items-center gap-4">
-              <div className="text-center">
-                <p className="text-white font-black text-lg leading-none">0</p>
-                <p className="text-white/40 text-[9px] uppercase mt-0.5">tickets</p>
-              </div>
-              <div className="w-px h-8 bg-white/10" />
-              <div className="text-center">
-                <p className="text-white font-black text-lg leading-none">37</p>
-                <p className="text-white/40 text-[9px] uppercase mt-0.5">max</p>
-              </div>
-              <div className="w-px h-8 bg-white/10" />
-              <div className="text-center">
-                <p className="text-[#FFD700] font-black text-lg leading-none">7d</p>
-                <p className="text-white/40 text-[9px] uppercase mt-0.5">duration</p>
-              </div>
-              <div className="flex-1" />
-              <button disabled className="bg-[#FFD700]/20 border border-[#FFD700]/30 text-[#FFD700]/50 font-bold text-xs px-4 py-2 uppercase tracking-wider cursor-not-allowed">
-                Buy Ticket
-              </button>
-            </div>
-
-            {/* VRF transparency */}
-            <div className="border-t border-white/5 px-4 py-2.5 bg-white/5">
-              <p className="text-white/30 text-[9px] font-mono">formula: winnerIndex = vrfRandomWord % totalEntries</p>
-              <p className="text-white/20 text-[9px]">Chainlink VRF v2.5 · Arbitrum One · Fully verifiable</p>
-            </div>
-
-            {/* Chain badges */}
-            <div className="border-t border-[#12AAFF]/20 bg-[#12AAFF]/5 px-4 py-2 flex items-center gap-2">
-              <span className="text-[10px] text-[#0052FF] font-bold bg-[#0052FF]/10 px-2 py-0.5 border border-[#0052FF]/30">BASE · VBMS</span>
-              <span className="text-[10px] text-[#12AAFF] font-bold bg-[#12AAFF]/10 px-2 py-0.5 border border-[#12AAFF]/30">ARB · USND + ETH</span>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Mecha Arena Modal */}
       <CpuArenaModal
         isInFarcaster={isInFarcaster}
@@ -2697,21 +2613,6 @@ export default function TCGPage() {
           {/* Price Ticker - TOP */}
           {isInFarcaster && (
             <div className="flex flex-col items-center pt-0 pb-1 w-full max-w-[304px] mx-auto mt-[58px]">
-              {!!userFidForVibemail && (
-                <button
-                  onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowFidMailModal(true); }}
-                  onMouseEnter={() => { if (soundEnabled) AudioManager.buttonHover(); }}
-                  className="tour-vibefid-btn relative w-full px-8 py-2.5 border border-vintage-gold/30 bg-purple-600 text-white font-modern font-semibold rounded-lg transition-all duration-300 hover:bg-purple-500 tracking-wider flex flex-col items-center justify-center gap-0.5 text-xs cursor-pointer mb-1"
-                >
-                  {typeof unreadVibeMailCount === 'number' && unreadVibeMailCount > 0 && (
-                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse border border-vintage-gold z-10" />
-                  )}
-                  <div className="flex items-center justify-center gap-1">
-                    <span className="text-sm font-bold">{t("vibefidMint")}</span>
-                  </div>
-                  <span className="text-[10px] opacity-75 font-normal leading-tight">{t('vibefidCheckScore')}</span>
-                </button>
-              )}
               <PriceTicker className="w-full" />
               <AllCollectionsButton className="mt-0.5" />
             </div>
@@ -2738,8 +2639,6 @@ export default function TCGPage() {
                 userAddress={address}
                 onSpin={() => setShowRoulette(true)}
                 isInFarcaster={isInFarcaster}
-                showRaffle={isAdmin(address)}
-                onRaffle={() => setShowRaffleModal(true)}
               />
             </div>
             <div className="tour-cards-section w-full mt-1">
@@ -2776,6 +2675,40 @@ export default function TCGPage() {
                   <span className="text-vintage-gold/60 font-modern font-semibold text-base leading-none">{inboxStatus.coins.toLocaleString()}</span>
                 )}
               </button>
+            )}
+
+            {/* 🎟️ RAFFLE — neobrutalism, admin only por ora */}
+            {isAdmin(address) && (
+              <Link
+                href="/raffle"
+                onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
+                onClick={() => soundEnabled && AudioManager.buttonClick()}
+                className="w-full mt-1 flex items-center gap-0 border-2 border-black bg-[#FFD700] shadow-[4px_4px_0px_#000] hover:shadow-[2px_2px_0px_#000] hover:translate-x-[2px] hover:translate-y-[2px] active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all overflow-hidden"
+              >
+                {/* Card image */}
+                <div className="shrink-0 w-14 h-14 border-r-2 border-black bg-black flex items-center justify-center overflow-hidden">
+                  <img
+                    src="/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png"
+                    alt="Goofy Romero"
+                    className="h-full w-auto object-contain"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
+                {/* Info */}
+                <div className="flex-1 min-w-0 px-2.5 py-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-black font-display font-black text-xs uppercase tracking-widest leading-none">🎟️ Raffle</span>
+                    <span className="bg-black text-[#FFD700] text-[8px] font-bold px-1 py-px uppercase tracking-wider leading-none">ADMIN</span>
+                  </div>
+                  <p className="text-black/70 font-bold text-[10px] uppercase tracking-wide mt-0.5 leading-tight">Goofy Romero Legendary · ~$23</p>
+                </div>
+                {/* Timer */}
+                <div className="shrink-0 px-2 h-12 border-l-2 border-black flex flex-col items-center justify-center">
+                  <span className="text-black font-mono font-black text-[11px] leading-none">99h</span>
+                  <span className="text-black font-mono font-black text-[11px] leading-none">99m</span>
+                  <span className="text-black/60 text-[8px] uppercase leading-none mt-0.5">left</span>
+                </div>
+              </Link>
             )}
 
           </div>

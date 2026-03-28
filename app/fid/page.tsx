@@ -1068,6 +1068,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
       });
 
       const newBounty = result.newPower * 10;
+      AudioManager.levelUp();
 
       // Step 2: Regenerate video with new values
       setEvolutionPhase('regenerating');
