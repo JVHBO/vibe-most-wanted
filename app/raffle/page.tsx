@@ -14,7 +14,8 @@ import { formatUnits, parseUnits } from "viem";
 // ─── Addresses ────────────────────────────────────────────────────────────────
 const RAFFLE_BASE   = "0x54ac4e3782a21341440c418e7c37b26f937095e4" as const;
 const RAFFLE_ARB    = "0x81739e45a49a84b65c4a528b24048ab2ac172555" as const;
-const VBMS_ADDRESS  = "0xf14c1dc8ce5fe65413379f76c43fa1460c31e728" as const;
+// ERC-20 VBMS token (confirmed in convex/blockchainVerify.ts — NOT the NFT collection)
+const VBMS_ADDRESS  = "0xb03439567cd22f278b21e1ffcdfb8e1696763827" as const;
 const USDC_ADDRESS  = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" as const;
 const USND_ADDRESS  = "0x4ecf61a6c2fab8a047ceb3b3b263b401763e9d49" as const;
 const OPENSEA_URL   = "https://opensea.io/assets/base/0xf14c1dc8ce5fe65413379f76c43fa1460c31e728";
@@ -24,6 +25,8 @@ const ARB_CHAIN_ID  = 42161;
 
 // ─── ABIs ─────────────────────────────────────────────────────────────────────
 const RAFFLE_BASE_ABI = [
+  { name: "active", type: "function", stateMutability: "view",
+    inputs: [], outputs: [{ name: "", type: "bool" }] },
   { name: "buyWithVBMS", type: "function", stateMutability: "nonpayable",
     inputs: [{ name: "count", type: "uint256" }], outputs: [] },
   { name: "buyWithUSDC", type: "function", stateMutability: "nonpayable",
@@ -143,6 +146,14 @@ export default function RafflePage() {
   const ticketPriceVBMS = config?.ticketPriceVBMS ?? 10000;
   const ticketPriceUSD  = config?.ticketPriceUSD  ?? 0.06;
   const totalVBMS = totalTickets * ticketPriceVBMS;
+
+  // ── Raffle active state ──
+  const { data: raffleActive } = useReadContract({
+    address: RAFFLE_BASE, abi: RAFFLE_BASE_ABI, functionName: "active",
+    args: [], chainId: BASE_CHAIN_ID,
+    query: { refetchInterval: 30_000 },
+  });
+  const isRaffleActive = raffleActive === true;
 
   // ── Balances ──
   const { data: baseEthBal } = useBalance({
@@ -689,12 +700,22 @@ export default function RafflePage() {
           </div>
 
           {/* Buy button */}
-          <button
-            onClick={() => { setShowBuy(true); resetStatus(); }}
-            className="w-full border-2 border-black bg-[#FFD700] text-black font-black text-sm uppercase tracking-widest py-3.5 shadow-[4px_4px_0px_#000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
-          >
-            🎟️ Buy Tickets
-          </button>
+          {isRaffleActive ? (
+            <button
+              onClick={() => { setShowBuy(true); resetStatus(); }}
+              className="w-full border-2 border-black bg-[#FFD700] text-black font-black text-sm uppercase tracking-widest py-3.5 shadow-[4px_4px_0px_#000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
+            >
+              🎟️ Buy Tickets
+            </button>
+          ) : raffleActive === false ? (
+            <div className="w-full border-2 border-black bg-[#333] text-white/40 font-black text-sm uppercase tracking-widest py-3.5 text-center shadow-[4px_4px_0px_#555]">
+              🔒 Raffle not active yet
+            </div>
+          ) : (
+            <div className="w-full border-2 border-black bg-[#222] text-white/20 font-black text-sm uppercase tracking-widest py-3.5 text-center animate-pulse">
+              🎟️ Loading…
+            </div>
+          )}
 
           {/* Participants */}
           {entries.length > 0 && (
