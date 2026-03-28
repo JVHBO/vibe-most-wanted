@@ -31,7 +31,7 @@ const RAFFLE_ARB_ABI = [
 ];
 
 const RAFFLE_BASE_ABI = [
-  "event TicketPurchased(address indexed buyer,uint256 count,uint256 totalVBMS,uint256 indexed raffleEpoch)",
+  "event TicketPurchased(address indexed buyer,uint256 count,uint256 amount,address token,uint256 indexed raffleEpoch)",
   "function totalTicketsSold() view returns (uint256)",
   "function getBuyerCount() view returns (uint256)",
   "function getBuyerAt(uint256) view returns (address,uint256)",
@@ -285,6 +285,48 @@ export const markEntrySynced = internalMutation({
 // ═══════════════════════════════════════════════════════════════════════════════
 // ARB ENTRY RECORDING (USND/ETH purchases detected on-chain by API)
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Public mutation called by /api/raffle/sync-base webhook.
+ * Validates VMW_INTERNAL_SECRET, records idempotently, schedules ARB sync.
+ */
+export const recordBaseEntryPublic = mutation({
+  args: {
+    adminKey:    v.string(),
+    buyer:       v.string(),
+    count:       v.number(),
+    txHash:      v.string(),
+    epoch:       v.number(),
+    blockNumber: v.number(),
+    token:       v.optional(v.string()), // "VBMS" | "ETH" | "USDC"
+  },
+  handler: async (ctx, { adminKey, buyer, count, txHash, epoch, blockNumber, token }) => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+
+    const existing = await ctx.db
+      .query("raffleEntries")
+      .withIndex("by_txHash", (q: any) => q.eq("txHash", txHash))
+      .first();
+    if (existing) return { skipped: true };
+
+    await ctx.db.insert("raffleEntries", {
+      address:     buyer.toLowerCase(),
+      tickets:     count,
+      chain:       "base",
+      token:       token ?? "VBMS",
+      txHash,
+      epoch,
+      blockNumber,
+      timestamp:   Date.now(),
+      synced:      false,
+    });
+
+    // Schedule ARB sync — all Base entries count in ARB contract regardless of payment token
+    await ctx.scheduler.runAfter(0, internal.raffle.submitBaseEntriesToARB, { buyer, count, txHash });
+
+    return { recorded: true };
+  },
+});
 
 export const recordARBEntry = mutation({
   args: {

@@ -60,7 +60,7 @@ export default function RafflePage() {
     if (loaded.current) return;
     loaded.current = true;
     Promise.all([
-      convex.query(api.raffle.getRaffleConfig, { epoch: 1 }).catch(() => null),
+      convex.query(api.raffle.getRaffleConfig, {}).catch(() => null),
       convex.query(api.raffle.getRaffleBuyers, { epoch: 1 }).catch(() => []),
     ]).then(([cfg, buyers]) => {
       if (cfg) setConfig(cfg as RaffleConfig);
@@ -72,8 +72,11 @@ export default function RafflePage() {
   const { d, h, m, ended } = useCountdown(endsAt);
 
   const totalTickets = entries.reduce((sum, e) => sum + e.tickets, 0);
-  const ticketPriceVBMS = config?.ticketPriceVBMS ?? 100000;
-  const ticketPriceUSD = config?.ticketPriceUSD ?? 0.62;
+  // Snapshot prices — 10k VBMS | $0.06 USDC | ~0.000023 ETH (≈$2,600/ETH)
+  const ticketPriceVBMS = config?.ticketPriceVBMS ?? 10000;
+  const ticketPriceUSD  = config?.ticketPriceUSD  ?? 0.06;
+  const ticketPriceUSDC = ticketPriceUSD; // 1:1 with USD (USDC on Base, 6 dec = 60000)
+  const ticketPriceETH  = 0.000023;       // snapshot ≈$0.06 @ $2600/ETH
   const totalVBMS = totalTickets * ticketPriceVBMS;
 
   return (
@@ -219,42 +222,69 @@ export default function RafflePage() {
 
           {/* ── Ticket prices ── */}
           <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#000] overflow-hidden">
-            <div className="bg-[#FFD700] border-b-2 border-black px-3 py-2">
-              <span className="text-black font-black text-[10px] uppercase tracking-widest">Ticket Price</span>
+            <div className="bg-[#FFD700] border-b-2 border-black px-3 py-2 flex items-center justify-between">
+              <span className="text-black font-black text-[10px] uppercase tracking-widest">Ticket Price · 1 ticket</span>
+              <span className="text-black/50 font-bold text-[8px] uppercase">snapshot</span>
             </div>
 
-            {/* BASE */}
-            <div className="flex items-center gap-3 px-3 py-3 border-b-2 border-black">
-              <div className="w-9 h-9 shrink-0 border-2 border-black bg-[#0052FF] flex items-center justify-center shadow-[2px_2px_0px_#000]">
-                <span className="text-white font-black text-xs">B</span>
+            {/* BASE — VBMS */}
+            <div className="flex items-center gap-3 px-3 py-2.5 border-b border-black/40">
+              <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#0052FF] flex items-center justify-center shadow-[2px_2px_0px_#000]">
+                <span className="text-white font-black text-[9px]">BASE</span>
               </div>
               <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-black text-sm">{(ticketPriceVBMS / 1000).toFixed(0)}k VBMS</span>
-                  <span className="bg-[#0052FF] text-white text-[8px] font-black px-1.5 py-0.5 uppercase border border-black">BASE</span>
-                </div>
-                <p className="text-white/40 text-[10px] mt-0.5">≈ ${ticketPriceUSD.toFixed(2)} per ticket</p>
+                <span className="text-white font-black text-sm">{(ticketPriceVBMS / 1000).toFixed(0)}k VBMS</span>
+                <span className="text-white/30 text-[9px] ml-2">→ pool</span>
               </div>
-              <button disabled className="border-2 border-black bg-[#0052FF] text-white font-black text-[11px] px-4 py-2 uppercase tracking-wider opacity-30 cursor-not-allowed">
-                Buy
-              </button>
+              <button disabled className="border-2 border-black bg-[#0052FF] text-white font-black text-[10px] px-3 py-1.5 uppercase opacity-30 cursor-not-allowed">Buy</button>
             </div>
 
-            {/* ARB */}
-            <div className="flex items-center gap-3 px-3 py-3">
-              <div className="w-9 h-9 shrink-0 border-2 border-black bg-[#12AAFF] flex items-center justify-center shadow-[2px_2px_0px_#000]">
-                <span className="text-white font-black text-xs">A</span>
+            {/* BASE — USDC */}
+            <div className="flex items-center gap-3 px-3 py-2.5 border-b border-black/40">
+              <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#0052FF]/60 flex items-center justify-center shadow-[2px_2px_0px_#000]">
+                <span className="text-white font-black text-[9px]">USDC</span>
               </div>
               <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-black text-sm">${ticketPriceUSD.toFixed(2)} USND</span>
-                  <span className="bg-[#12AAFF] text-white text-[8px] font-black px-1.5 py-0.5 uppercase border border-black">ARB</span>
-                </div>
-                <p className="text-white/40 text-[10px] mt-0.5">or equivalent ETH</p>
+                <span className="text-white font-black text-sm">${ticketPriceUSDC.toFixed(2)} USDC</span>
+                <span className="text-white/30 text-[9px] ml-2">Base</span>
               </div>
-              <button disabled className="border-2 border-black bg-[#12AAFF] text-white font-black text-[11px] px-4 py-2 uppercase tracking-wider opacity-30 cursor-not-allowed">
-                Buy
-              </button>
+              <button disabled className="border-2 border-black bg-[#0052FF]/60 text-white font-black text-[10px] px-3 py-1.5 uppercase opacity-30 cursor-not-allowed">Buy</button>
+            </div>
+
+            {/* BASE — ETH */}
+            <div className="flex items-center gap-3 px-3 py-2.5 border-b-2 border-black">
+              <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#627EEA] flex items-center justify-center shadow-[2px_2px_0px_#000]">
+                <span className="text-white font-black text-[9px]">ETH</span>
+              </div>
+              <div className="flex-1">
+                <span className="text-white font-black text-sm">≈{ticketPriceETH.toFixed(6)} ETH</span>
+                <span className="text-white/30 text-[9px] ml-2">Base · Chainlink</span>
+              </div>
+              <button disabled className="border-2 border-black bg-[#627EEA] text-white font-black text-[10px] px-3 py-1.5 uppercase opacity-30 cursor-not-allowed">Buy</button>
+            </div>
+
+            {/* ARB — USND */}
+            <div className="flex items-center gap-3 px-3 py-2.5 border-b border-black/40">
+              <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#12AAFF] flex items-center justify-center shadow-[2px_2px_0px_#000]">
+                <span className="text-white font-black text-[9px]">ARB</span>
+              </div>
+              <div className="flex-1">
+                <span className="text-white font-black text-sm">${ticketPriceUSD.toFixed(2)} USND</span>
+                <span className="text-white/30 text-[9px] ml-2">Arbitrum One</span>
+              </div>
+              <button disabled className="border-2 border-black bg-[#12AAFF] text-white font-black text-[10px] px-3 py-1.5 uppercase opacity-30 cursor-not-allowed">Buy</button>
+            </div>
+
+            {/* ARB — ETH */}
+            <div className="flex items-center gap-3 px-3 py-2.5">
+              <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#627EEA]/80 flex items-center justify-center shadow-[2px_2px_0px_#000]">
+                <span className="text-white font-black text-[9px]">ETH</span>
+              </div>
+              <div className="flex-1">
+                <span className="text-white font-black text-sm">≈{ticketPriceETH.toFixed(6)} ETH</span>
+                <span className="text-white/30 text-[9px] ml-2">ARB · Chainlink</span>
+              </div>
+              <button disabled className="border-2 border-black bg-[#627EEA]/80 text-white font-black text-[10px] px-3 py-1.5 uppercase opacity-30 cursor-not-allowed">Buy</button>
             </div>
           </div>
 
