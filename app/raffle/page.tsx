@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { useConvex } from "convex/react";
+import Link from "next/link";
 import {
   useAccount, useBalance, useReadContract,
   useWriteContract, useWaitForTransactionReceipt, useSwitchChain,
 } from "wagmi";
 import { api } from "@/convex/_generated/api";
+import { AudioManager } from "@/lib/audio-manager";
 import { formatUnits, parseUnits } from "viem";
 
 // ─── Addresses ────────────────────────────────────────────────────────────────
@@ -110,7 +111,6 @@ function fmtBal(raw: bigint | undefined, decimals: number, symbol: string) {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function RafflePage() {
-  const router = useRouter();
   const convex = useConvex();
   const { address: walletAddress, chainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
@@ -393,12 +393,14 @@ export default function RafflePage() {
 
       {/* ── Top bar ── */}
       <div className="bg-[#FFD700] border-b-4 border-black px-4 py-3 flex items-center gap-3 shrink-0">
-        <button
-          onClick={() => router.back()}
-          className="border-2 border-black bg-black text-[#FFD700] font-black text-xs px-3 py-1.5 uppercase tracking-wider shadow-[2px_2px_0px_#333] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+        <Link
+          href="/"
+          onClick={() => AudioManager.buttonClick()}
+          className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+          style={{ boxShadow: '4px 4px 0px #000' }}
         >
-          ← Back
-        </button>
+          ← BACK
+        </Link>
         <h1 className="font-display font-black text-black text-base uppercase tracking-widest flex-1 text-center">
           🎟️ Raffle
         </h1>
