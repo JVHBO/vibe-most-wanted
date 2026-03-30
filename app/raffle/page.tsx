@@ -86,6 +86,23 @@ interface RaffleEntry {
   txHash: string;
 }
 
+interface RaffleRecentEntry {
+  address: string;
+  tickets: number;
+  chain: string;
+  token: string;
+  txHash: string;
+  timestamp: number;
+}
+
+function timeAgo(ts: number) {
+  const diff = Date.now() - ts;
+  if (diff < 60_000) return `${Math.max(1, Math.floor(diff / 1000))}s atrás`;
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m atrás`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h atrás`;
+  return `${Math.floor(diff / 86_400_000)}d atrás`;
+}
+
 // ─── Countdown ────────────────────────────────────────────────────────────────
 function useCountdown(endsAt: number | null) {
   const [diff, setDiff] = useState(0);
@@ -123,21 +140,34 @@ export default function RafflePage() {
   const [buyQty,   setBuyQty]   = useState(1);
   const [status,   setStatus]   = useState<BuyStatus>("idle");
   const [errMsg,   setErrMsg]   = useState("");
+  const [lastBuyChain, setLastBuyChain] = useState<"base" | "arb" | null>(null);
   const [pendingApprove, setPendingApprove] = useState(false);
-  const [config,  setConfig]  = useState<RaffleConfig | null>(null);
-  const [entries, setEntries] = useState<RaffleEntry[]>([]);
-  const loaded = useRef(false);
+  const [config,        setConfig]        = useState<RaffleConfig | null>(null);
+  const [entries,       setEntries]       = useState<RaffleEntry[]>([]);
+  const [recentEntries, setRecentEntries] = useState<RaffleRecentEntry[]>([]);
+  const loaded    = useRef(false);
+  const feedTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  function loadRaffleData(epoch: number) {
+    Promise.all([
+      convex.query(api.raffle.getRaffleBuyers, { epoch }).catch(() => []),
+      convex.query(api.raffle.getRecentEntries, { epoch, limit: 10 }).catch(() => []),
+    ]).then(([buyers, recent]) => {
+      if (buyers) setEntries(buyers as RaffleEntry[]);
+      if (recent) setRecentEntries(recent as RaffleRecentEntry[]);
+    });
+  }
 
   useEffect(() => {
     if (loaded.current) return;
     loaded.current = true;
-    Promise.all([
-      convex.query(api.raffle.getRaffleConfig, {}).catch(() => null),
-      convex.query(api.raffle.getRaffleBuyers, { epoch: 1 }).catch(() => []),
-    ]).then(([cfg, buyers]) => {
+    convex.query(api.raffle.getRaffleConfig, {}).catch(() => null).then(cfg => {
       if (cfg) setConfig(cfg as RaffleConfig);
-      if (buyers) setEntries(buyers as RaffleEntry[]);
+      const epoch = (cfg as RaffleConfig | null)?.epoch ?? 1;
+      loadRaffleData(epoch);
+      feedTimer.current = setInterval(() => loadRaffleData(epoch), 30_000);
     });
+    return () => { if (feedTimer.current) clearInterval(feedTimer.current); };
   }, [convex]);
 
   const endsAt      = config ? config.updatedAt + config.durationDays * 86400000 : null;
@@ -244,10 +274,9 @@ export default function RafflePage() {
       setStatus("idle");
     } else if (txConfirmed && status === "buying") {
       setStatus("success");
-      // reload entries
-      loaded.current = false;
-      convex.query(api.raffle.getRaffleBuyers, { epoch: config?.epoch ?? 1 })
-        .then(b => b && setEntries(b as RaffleEntry[]));
+      // reload entries + recent feed
+      const epoch = config?.epoch ?? 1;
+      loadRaffleData(epoch);
     }
   }, [txConfirmed]);
 
@@ -274,6 +303,7 @@ export default function RafflePage() {
         // wait for approve to be confirmed via useEffect, then user clicks again
         return;
       }
+      setLastBuyChain("base");
       setStatus("buying");
       const h = await writeContractAsync({
         address: RAFFLE_BASE, abi: RAFFLE_BASE_ABI, functionName: "buyWithVBMS",
@@ -300,6 +330,7 @@ export default function RafflePage() {
         setTxHash(h);
         return;
       }
+      setLastBuyChain("base");
       setStatus("buying");
       const h = await writeContractAsync({
         address: RAFFLE_BASE, abi: RAFFLE_BASE_ABI, functionName: "buyWithUSDC",
@@ -316,6 +347,7 @@ export default function RafflePage() {
     if (!walletAddress || !ethWeiCost) return;
     try {
       await ensureBase();
+      setLastBuyChain("base");
       setStatus("buying");
       const h = await writeContractAsync({
         address: RAFFLE_BASE, abi: RAFFLE_BASE_ABI, functionName: "buyWithETH",
@@ -345,6 +377,7 @@ export default function RafflePage() {
         setTxHash(h);
         return;
       }
+      setLastBuyChain("arb");
       setStatus("buying");
       const h = await writeContractAsync({
         address: RAFFLE_ARB, abi: RAFFLE_ARB_ABI, functionName: "buyWithUSDN",
@@ -364,6 +397,7 @@ export default function RafflePage() {
         setStatus("switching");
         await switchChainAsync({ chainId: ARB_CHAIN_ID });
       }
+      setLastBuyChain("arb");
       setStatus("buying");
       const h = await writeContractAsync({
         address: RAFFLE_ARB, abi: RAFFLE_ARB_ABI, functionName: "buyWithETH",
@@ -380,6 +414,7 @@ export default function RafflePage() {
     setStatus("idle");
     setErrMsg("");
     setPendingApprove(false);
+    setLastBuyChain(null);
   }
 
   const isBusy = status === "switching" || status === "approving" || status === "buying";
@@ -467,9 +502,21 @@ export default function RafflePage() {
             <div className="px-4 py-4 space-y-4">
               {/* Status feedback */}
               {status === "success" && (
-                <div className="bg-green-900/40 border-2 border-green-500 px-3 py-2 flex items-center justify-between">
-                  <span className="text-green-400 font-black text-xs uppercase">✅ Tickets comprados!</span>
-                  <button onClick={resetStatus} className="text-green-400/60 text-xs">✕</button>
+                <div className="bg-green-900/40 border-2 border-green-500 px-3 py-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-green-400 font-black text-xs uppercase">✅ {buyQty} ticket{buyQty > 1 ? "s" : ""} comprado{buyQty > 1 ? "s" : ""}!</span>
+                    <button onClick={resetStatus} className="text-green-400/60 text-xs ml-2">✕</button>
+                  </div>
+                  {lastBuyChain === "base" && (
+                    <p className="text-green-300/60 text-[10px] mt-1">
+                      ⏳ Sincronizando com ARB em ~2 min — entrada já registrada on-chain
+                    </p>
+                  )}
+                  {lastBuyChain === "arb" && (
+                    <p className="text-green-300/60 text-[10px] mt-1">
+                      🎟️ Entradas registradas na Arbitrum imediatamente
+                    </p>
+                  )}
                 </div>
               )}
               {status === "error" && (
@@ -714,6 +761,28 @@ export default function RafflePage() {
           ) : (
             <div className="w-full border-2 border-black bg-[#222] text-white/20 font-black text-sm uppercase tracking-widest py-3.5 text-center animate-pulse">
               🎟️ Loading…
+            </div>
+          )}
+
+          {/* Recent Activity Feed */}
+          {recentEntries.length > 0 && (
+            <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#000] overflow-hidden">
+              <div className="bg-black border-b-2 border-black px-3 py-2 flex items-center justify-between">
+                <span className="text-[#FFD700] font-black text-[10px] uppercase tracking-widest">⚡ Atividade Recente</span>
+                <span className="text-white/20 font-mono text-[8px]">últimas {recentEntries.length}</span>
+              </div>
+              <div className="divide-y divide-black/40 max-h-52 overflow-y-auto">
+                {recentEntries.map((e) => (
+                  <div key={e.txHash} className="flex items-center gap-2 px-3 py-2">
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black shrink-0 ${e.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
+                      {e.chain.toUpperCase()}
+                    </span>
+                    <span className="flex-1 font-mono text-[10px] text-white/60 truncate">{e.address.slice(0, 6)}…{e.address.slice(-4)}</span>
+                    <span className="text-[#FFD700] font-black text-[10px] shrink-0">{e.tickets}🎟️</span>
+                    <span className="text-white/30 text-[8px] font-mono shrink-0">{timeAgo(e.timestamp)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

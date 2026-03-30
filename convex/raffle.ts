@@ -41,6 +41,22 @@ const RAFFLE_BASE_ABI = [
 // QUERIES — for UI
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Get recent individual purchase entries (for live feed) */
+export const getRecentEntries = query({
+  args: { epoch: v.optional(v.number()), limit: v.optional(v.number()) },
+  handler: async (ctx, { epoch, limit }) => {
+    const n = Math.min(limit ?? 10, 20);
+    if (epoch !== undefined) {
+      return await ctx.db
+        .query("raffleEntries")
+        .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch))
+        .order("desc")
+        .take(n);
+    }
+    return await ctx.db.query("raffleEntries").order("desc").take(n);
+  },
+});
+
 /** Get current raffle config (static, set by admin) */
 export const getRaffleConfig = query({
   args: {},
@@ -325,6 +341,86 @@ export const recordBaseEntryPublic = mutation({
     await ctx.scheduler.runAfter(0, internal.raffle.submitBaseEntriesToARB, { buyer, count, txHash });
 
     return { recorded: true };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CRON — Poll Base chain every 2 min for TicketPurchased events
+// Replaces Alchemy webhook — fully self-contained
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Internal action: polls Base RPC for TicketPurchased events in the last ~3 min.
+ * Idempotent — skips already-recorded txHashes via by_txHash index.
+ */
+export const pollBaseEvents = internalAction({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const contractAddr = BASE_RAFFLE_CONTRACT().toLowerCase();
+    if (!contractAddr) return;
+
+    const TICKET_PURCHASED_TOPIC =
+      "0x3c21b9b2d77366bb49d2e24d368d043e15a59329cb5f15eccdc99ac5ffaa2b6f";
+    const VBMS_ERC20 = "0xb03439567cd22f278b21e1ffcdfb8e1696763827";
+    const USDC_ADDR  = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913";
+
+    try {
+      // Get latest block
+      const blockResp = await fetch(BASE_RPC, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_blockNumber", params: [] }),
+      });
+      const { result: latestHex } = await blockResp.json() as any;
+      const latest = parseInt(latestHex, 16);
+      // ~2 min of blocks on Base (2s block time → 60 blocks), search 90 to be safe
+      const fromBlock = "0x" + (latest - 90).toString(16);
+      const toBlock   = latestHex;
+
+      const logsResp = await fetch(BASE_RPC, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0", id: 2,
+          method: "eth_getLogs",
+          params: [{ address: contractAddr, topics: [TICKET_PURCHASED_TOPIC], fromBlock, toBlock }],
+        }),
+      });
+      const { result: logs } = await logsResp.json() as any;
+      if (!Array.isArray(logs) || logs.length === 0) return;
+
+      for (const log of logs) {
+        const txHash = log.transactionHash as string;
+        if (!txHash) continue;
+
+        // Decode: topics[1]=buyer (indexed), topics[2]=raffleEpoch (indexed)
+        // data = abi.encode(count uint256, amount uint256, token address)
+        const buyer = ("0x" + (log.topics[1] as string).slice(26)).toLowerCase();
+        const epoch = parseInt((log.topics[2] as string) ?? "0x1", 16);
+        const data  = (log.data as string).startsWith("0x")
+          ? (log.data as string).slice(2) : (log.data as string);
+        const count = parseInt(data.slice(0, 64), 16);
+        if (!buyer || isNaN(count) || count <= 0) continue;
+
+        const tokenHex = data.length >= 192
+          ? ("0x" + data.slice(152, 192)).toLowerCase() : null;
+        let token = "VBMS";
+        if (tokenHex === "0x0000000000000000000000000000000000000000") token = "ETH";
+        else if (tokenHex === USDC_ADDR) token = "USDC";
+        else if (tokenHex === VBMS_ERC20) token = "VBMS";
+
+        const blockNumber = parseInt(log.blockNumber as string, 16);
+
+        // Record + schedule ARB sync (idempotent)
+        await ctx.runMutation(internal.raffle.recordBaseEntry, {
+          buyer, count, txHash, epoch, blockNumber,
+        });
+        await ctx.runAction(internal.raffle.submitBaseEntriesToARB, { buyer, count, txHash });
+        console.log(`[raffle/poll] ${token} ${buyer} ×${count} block=${blockNumber}`);
+      }
+    } catch (e) {
+      console.error("[raffle/poll] Error:", e);
+    }
   },
 });
 
