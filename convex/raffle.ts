@@ -288,7 +288,7 @@ export const recordBaseEntry = internalMutation({
       if (token && existing.token === "VBMS" && token !== "VBMS") {
         await ctx.db.patch(existing._id, { token });
       }
-      return;
+      return existing.synced; // true = already submitted to ARB, skip re-submit
     }
 
     // Resolve username from profiles
@@ -472,12 +472,14 @@ export const pollBaseEvents = internalAction({
 
         const blockNumber = parseInt(log.blockNumber as string, 16);
 
-        // Record + schedule ARB sync (idempotent)
-        await ctx.runMutation(internal.raffle.recordBaseEntry, {
+        // Record entry (idempotent) — returns true if already synced to ARB
+        const alreadySynced = await ctx.runMutation(internal.raffle.recordBaseEntry, {
           buyer, count, txHash, epoch, blockNumber, token,
         });
-        await ctx.runAction(internal.raffle.submitBaseEntriesToARB, { buyer, count, txHash });
-        console.log(`[raffle/poll] ${token} ${buyer} ×${count} block=${blockNumber}`);
+        if (!alreadySynced) {
+          await ctx.runAction(internal.raffle.submitBaseEntriesToARB, { buyer, count, txHash });
+        }
+        console.log(`[raffle/poll] ${token} ${buyer} ×${count} block=${blockNumber} synced=${!!alreadySynced}`);
       }
     } catch (e) {
       console.error("[raffle/poll] Error:", e);
