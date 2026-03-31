@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useConvex, useQuery } from "convex/react";
+import { useConvex, useQuery, useMutation } from "convex/react";
 import Link from "next/link";
 import {
   useAccount, useBalance, useReadContract,
@@ -19,7 +19,7 @@ const RAFFLE_ARB    = "0x320128eA0382EaD559094b229E8cCD04D37ebC22" as const;
 const VBMS_ADDRESS  = "0xb03439567cd22f278b21e1ffcdfb8e1696763827" as const;
 const USDC_ADDRESS  = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" as const;
 const USND_ADDRESS  = "0x4ecf61a6c2fab8a047ceb3b3b263b401763e9d49" as const;
-const OPENSEA_URL   = "https://opensea.io/assets/base/0xf14c1dc8ce5fe65413379f76c43fa1460c31e728";
+const OPENSEA_URL   = "https://opensea.io/item/base/0xf14c1dc8ce5fe65413379f76c43fa1460c31e728/13384";
 
 const BASE_CHAIN_ID = 8453;
 const ARB_CHAIN_ID  = 42161;
@@ -172,6 +172,9 @@ export default function RafflePage() {
   const [playerInfo,        setPlayerInfo]        = useState<PlayerTicketInfo | null>(null);
   const [myPurchasesPage,   setMyPurchasesPage]   = useState(0);
   const [pendingTx,         setPendingTx]         = useState<{ txHash: string; chain: "base" | "arb"; qty: number; token: string } | null>(null);
+  const [shareClaimed,      setShareClaimed]      = useState(false);
+  const [shareClaiming,     setShareClaiming]     = useState(false);
+  const claimShareBonus = useMutation(api.raffle.claimShareBonus);
   const [showCardModal,     setShowCardModal]     = useState(false);
   const cardRotRef = useRef({ rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 });
   const cardInnerRef = useRef<HTMLDivElement>(null);
@@ -607,7 +610,7 @@ export default function RafflePage() {
                 }}
               >
                 {/* Front — carta inteira visível */}
-                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img
                     src="/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png"
                     alt="Goofy Romero"
@@ -619,9 +622,13 @@ export default function RafflePage() {
                   <img
                     src="/images/card-back.png"
                     alt="VMW Card Back"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', transform: 'scale(1.13)', transformOrigin: 'center' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.13) translateY(1.3%)', transformOrigin: 'center' }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }}
                   />
+                  <a
+                    href={OPENSEA_URL} target="_blank" rel="noopener noreferrer"
+                    style={{ position: 'absolute', bottom: 10, left: 0, right: 0, textAlign: 'center', color: '#000', fontSize: 11, fontFamily: 'monospace', fontWeight: 900, textDecoration: 'none', letterSpacing: 1 }}
+                  >#13384 ↗</a>
                 </div>
               </div>
             </div>
@@ -966,6 +973,11 @@ export default function RafflePage() {
                   <span className="text-white font-black text-lg">~$23</span>
                   <span className="text-white/30 text-[10px] font-mono">≈ 3.7M VBMS</span>
                 </div>
+                <p className="text-white/50 text-[9px] leading-tight mt-0.5">
+                  {t('raffleVibeMarketHint').split('VibeMarket')[0]}
+                  <a href="https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT" target="_blank" rel="noopener noreferrer" className="text-[#FFD700] underline underline-offset-2 hover:text-white transition-colors">VibeMarket</a>
+                  {t('raffleVibeMarketHint').split('VibeMarket')[1]}
+                </p>
                 <a
                   href={OPENSEA_URL}
                   target="_blank"
@@ -1034,7 +1046,7 @@ export default function RafflePage() {
           {/* Awaiting draw banner — ended but no winner yet */}
           {ended && !raffleResult && (
             <div className="border-2 border-white/20 bg-[#1a1a1a] px-3 py-3 text-center">
-              <p className="text-white/60 font-black text-xs uppercase tracking-widest animate-pulse">⏳ Sorteio em andamento…</p>
+              <p className="text-white/60 font-black text-xs uppercase tracking-widest animate-pulse">⏳ {t('raffleDrawing')}</p>
               <p className="text-white/30 text-[10px] mt-1">Chainlink VRF · Arbitrum One</p>
             </div>
           )}
@@ -1110,6 +1122,43 @@ export default function RafflePage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Share Bonus */}
+          {walletAddress && playerInfo && playerInfo.playerTotal > 0 && (
+            <div className="border-2 border-[#FFD700]/40 bg-[#FFD700]/5 overflow-hidden">
+              <div className="px-3 py-3 flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[#FFD700] font-black text-[10px] uppercase tracking-wider">🎁 Share & get +1 ticket</p>
+                  <p className="text-white/40 text-[9px] mt-0.5">Cast on Farcaster · one time per raffle</p>
+                </div>
+                {shareClaimed ? (
+                  <span className="text-green-400 font-black text-[10px] uppercase shrink-0">✅ Claimed</span>
+                ) : (
+                  <button
+                    disabled={shareClaiming}
+                    onClick={async () => {
+                      const text = encodeURIComponent("I just bought a ticket for the Goofy Romero Legendary raffle on @vibemostwanted 🎟️\n\nJoin us! Only a few tickets left 👇");
+                      const img  = encodeURIComponent("https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/75f1b780-45f6-4d39-b0f7-eeecc34aed00/original");
+                      const link = encodeURIComponent("https://vibe-most-wanted.vercel.app/raffle");
+                      window.open(`https://warpcast.com/~/compose?text=${text}&embeds[]=${img}&embeds[]=${link}`, "_blank");
+                      setShareClaiming(true);
+                      try {
+                        await claimShareBonus({ address: walletAddress });
+                        setShareClaimed(true);
+                      } catch(e: any) {
+                        if (e?.message?.includes("Already claimed")) setShareClaimed(true);
+                      } finally {
+                        setShareClaiming(false);
+                      }
+                    }}
+                    className="shrink-0 bg-[#FFD700] text-black font-black text-[10px] uppercase tracking-wider px-3 py-2 border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50"
+                  >
+                    {shareClaiming ? "…" : "Share 🔗"}
+                  </button>
+                )}
               </div>
             </div>
           )}

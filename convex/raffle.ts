@@ -589,6 +589,76 @@ export const recordARBEntryInternal = internalMutation({
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// SHARE BONUS — +1 ticket for sharing, requires ≥1 paid ticket
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const claimShareBonus = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const addr = address.toLowerCase();
+    const config = await ctx.db.query("raffleConfig").order("desc").first();
+    if (!config) throw new Error("No raffle config");
+    const epoch = config.epoch;
+
+    // Check already claimed
+    const existing = await ctx.db
+      .query("raffleEntries")
+      .withIndex("by_address_epoch", (q: any) => q.eq("address", addr).eq("epoch", epoch))
+      .collect();
+    if (existing.some((e: any) => e.token === "BONUS")) throw new Error("Already claimed");
+
+    // Check has ≥1 paid ticket this epoch
+    const hasPaid = existing.some((e: any) => e.token !== "BONUS");
+    if (!hasPaid) throw new Error("Must buy at least 1 ticket first");
+
+    // Record in Convex immediately
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .first();
+
+    const fakeTxHash = `bonus-share-${addr}-${epoch}-${Date.now()}`;
+    await ctx.db.insert("raffleEntries", {
+      address:     addr,
+      username:    profile?.username,
+      tickets:     1,
+      chain:       "arb",
+      token:       "BONUS",
+      txHash:      fakeTxHash,
+      epoch,
+      blockNumber: 0,
+      timestamp:   Date.now(),
+      synced:      false,
+    });
+
+    // Submit on-chain async
+    await ctx.scheduler.runAfter(0, internal.raffle.submitShareBonusOnChain, { buyer: addr, txHash: fakeTxHash });
+    return { ok: true };
+  },
+});
+
+export const submitShareBonusOnChain = internalAction({
+  args: { buyer: v.string(), txHash: v.string() },
+  handler: async (ctx, { buyer, txHash }) => {
+    const arbAddr    = ARB_RAFFLE_CONTRACT();
+    const privateKey = process.env.VBMS_SIGNER_PRIVATE_KEY;
+    if (!arbAddr || !privateKey) return;
+    try {
+      const { ethers } = await import("ethers");
+      const provider = new ethers.JsonRpcProvider(ARB_RPC);
+      const signer   = new ethers.Wallet(privateKey, provider);
+      const contract = new ethers.Contract(arbAddr, RAFFLE_ARB_ABI, signer);
+      const tx = await (contract as any).addBaseEntries(buyer, 1);
+      await tx.wait(1);
+      await ctx.runMutation(internal.raffle.markEntrySynced, { txHash, arbTxHash: tx.hash });
+      console.log(`[Raffle] Share bonus on-chain: ${buyer} (tx: ${tx.hash})`);
+    } catch (e) {
+      console.error("[Raffle] submitShareBonusOnChain failed:", e);
+    }
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // DRAW — Trigger VRF draw (onlyOwner via signer wallet)
 // ═══════════════════════════════════════════════════════════════════════════════
 
