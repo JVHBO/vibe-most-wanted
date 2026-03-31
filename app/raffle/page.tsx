@@ -203,17 +203,17 @@ export default function RafflePage() {
     });
   }
 
+  const liveConfig = useQuery(api.raffle.getRaffleConfig);
   useEffect(() => {
-    if (loaded.current) return;
-    loaded.current = true;
-    convex.query(api.raffle.getRaffleConfig, {}).catch(() => null).then(cfg => {
-      if (cfg) setConfig(cfg as RaffleConfig);
-      const epoch = (cfg as RaffleConfig | null)?.epoch ?? 1;
-      loadRaffleData(epoch, walletAddress?.toLowerCase());
-      feedTimer.current = setInterval(() => loadRaffleData(epoch, walletAddress?.toLowerCase()), 30_000);
-    });
+    if (!liveConfig) return;
+    const cfg = liveConfig as unknown as RaffleConfig;
+    setConfig(cfg);
+    const epoch = cfg.epoch ?? 1;
+    if (feedTimer.current) clearInterval(feedTimer.current);
+    loadRaffleData(epoch, walletAddress?.toLowerCase());
+    feedTimer.current = setInterval(() => loadRaffleData(epoch, walletAddress?.toLowerCase()), 30_000);
     return () => { if (feedTimer.current) clearInterval(feedTimer.current); };
-  }, [convex]);
+  }, [liveConfig?.epoch]);
 
   // Lock body scroll when any modal is open
   useEffect(() => {

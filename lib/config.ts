@@ -33,6 +33,7 @@ export const JC_CONTRACT_ADDRESS = '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728';
 export const ADMIN_WALLETS = [
   '0x2a9585Da40dE004d6Ff0f5F12cfe726BD2f98B52', // joaovitoribeiro
   '0xBb4c7d8B2E32c7C99d358Be999377c208cCE53c2', // Claude's wallet
+  '0xC815a066F61a3C42A4d6bAFFCA86731FdbD91444', // vibefid
 ] as const;
 
 /**
