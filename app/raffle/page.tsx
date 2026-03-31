@@ -172,8 +172,9 @@ export default function RafflePage() {
   const [playerInfo,        setPlayerInfo]        = useState<PlayerTicketInfo | null>(null);
   const [myPurchasesPage,   setMyPurchasesPage]   = useState(0);
   const [pendingTx,         setPendingTx]         = useState<{ txHash: string; chain: "base" | "arb"; qty: number; token: string } | null>(null);
-  const [cardFlipped,       setCardFlipped]       = useState(false);
   const [showCardModal,     setShowCardModal]     = useState(false);
+  const cardRotRef = useRef({ rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 });
+  const cardInnerRef = useRef<HTMLDivElement>(null);
   const loaded              = useRef(false);
   const feedTimer           = useRef<ReturnType<typeof setInterval> | null>(null);
   const ticketRangeStartRef = useRef<number | null>(null);
@@ -546,50 +547,89 @@ export default function RafflePage() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)' }}
-          onClick={() => { setShowCardModal(false); setCardFlipped(false); }}
+          onClick={() => { setShowCardModal(false); cardRotRef.current = { rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 }; if (cardInnerRef.current) cardInnerRef.current.style.transform = 'rotateY(0deg) rotateX(0deg)'; }}
         >
           <div className="flex flex-col items-center gap-4" onClick={e => e.stopPropagation()}>
-            {/* 3D card */}
+            {/* 3D card — drag to spin */}
             <div
-              className="cursor-pointer select-none"
-              style={{ perspective: '900px', width: 220, height: 310 }}
-              onClick={() => setCardFlipped(f => !f)}
+              className="select-none"
+              style={{ perspective: '900px', width: 220, height: 310, cursor: 'grab' }}
+              onMouseDown={e => {
+                cardRotRef.current.dragging = true;
+                cardRotRef.current.lastX = e.clientX;
+                cardRotRef.current.lastY = e.clientY;
+                (e.currentTarget as HTMLDivElement).style.cursor = 'grabbing';
+              }}
+              onMouseMove={e => {
+                if (!cardRotRef.current.dragging) return;
+                const dx = e.clientX - cardRotRef.current.lastX;
+                const dy = e.clientY - cardRotRef.current.lastY;
+                cardRotRef.current.lastX = e.clientX;
+                cardRotRef.current.lastY = e.clientY;
+                cardRotRef.current.rotY += dx * 0.7;
+                cardRotRef.current.rotX -= dy * 0.4;
+                cardRotRef.current.rotX = Math.max(-40, Math.min(40, cardRotRef.current.rotX));
+                if (cardInnerRef.current) {
+                  cardInnerRef.current.style.transform = `rotateY(${cardRotRef.current.rotY}deg) rotateX(${cardRotRef.current.rotX}deg)`;
+                }
+              }}
+              onMouseUp={e => { cardRotRef.current.dragging = false; (e.currentTarget as HTMLDivElement).style.cursor = 'grab'; }}
+              onMouseLeave={e => { cardRotRef.current.dragging = false; (e.currentTarget as HTMLDivElement).style.cursor = 'grab'; }}
+              onTouchStart={e => {
+                const t = e.touches[0];
+                cardRotRef.current.dragging = true;
+                cardRotRef.current.lastX = t.clientX;
+                cardRotRef.current.lastY = t.clientY;
+              }}
+              onTouchMove={e => {
+                if (!cardRotRef.current.dragging) return;
+                const t = e.touches[0];
+                const dx = t.clientX - cardRotRef.current.lastX;
+                const dy = t.clientY - cardRotRef.current.lastY;
+                cardRotRef.current.lastX = t.clientX;
+                cardRotRef.current.lastY = t.clientY;
+                cardRotRef.current.rotY += dx * 0.7;
+                cardRotRef.current.rotX -= dy * 0.4;
+                cardRotRef.current.rotX = Math.max(-40, Math.min(40, cardRotRef.current.rotX));
+                if (cardInnerRef.current) {
+                  cardInnerRef.current.style.transform = `rotateY(${cardRotRef.current.rotY}deg) rotateX(${cardRotRef.current.rotX}deg)`;
+                }
+              }}
+              onTouchEnd={() => { cardRotRef.current.dragging = false; }}
             >
               <div
+                ref={cardInnerRef}
                 style={{
                   width: '100%', height: '100%',
                   position: 'relative',
                   transformStyle: 'preserve-3d',
-                  transition: 'transform 0.7s cubic-bezier(0.4,0.2,0.2,1)',
-                  transform: cardFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                  transform: 'rotateY(0deg) rotateX(0deg)',
                 }}
               >
                 {/* Front */}
-                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.4)' }}>
+                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)' }}>
                   <img
                     src="/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png"
                     alt="Goofy Romero"
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 </div>
-                {/* Back */}
-                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.4)' }}>
+                {/* Back — same dimensions, cover fills area */}
+                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)' }}>
                   <img
                     src="/images/card-back.png"
                     alt="VMW Card Back"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png';
-                    }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }}
                   />
                 </div>
               </div>
             </div>
-            <p className="text-white/40 text-[10px] uppercase tracking-widest">Toque para girar</p>
+            <p className="text-white/40 text-[10px] uppercase tracking-widest">{t('raffleCardDragHint')}</p>
             <button
-              onClick={() => { setShowCardModal(false); setCardFlipped(false); }}
+              onClick={() => { setShowCardModal(false); cardRotRef.current = { rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 }; }}
               className="text-white/30 text-xs font-black uppercase tracking-widest hover:text-white/60 transition-colors"
-            >✕ Fechar</button>
+            >✕ {t('raffleCardClose')}</button>
           </div>
         </div>
       )}
@@ -894,7 +934,7 @@ export default function RafflePage() {
               <div
                 className="shrink-0 border-r-2 border-black flex items-center justify-center overflow-hidden relative p-2 cursor-pointer"
                 style={{ width: 120, minHeight: 160, background: 'radial-gradient(ellipse at center, #2a2a3e 0%, #111 100%)' }}
-                onClick={() => { setShowCardModal(true); setCardFlipped(false); }}
+                onClick={() => { setShowCardModal(true); }}
                 title="Clique para ver a carta"
               >
                 <img
