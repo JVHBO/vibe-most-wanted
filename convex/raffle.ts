@@ -745,3 +745,116 @@ export const redeployARB = action({
     }
   },
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RESET + NEW RAFFLE — confirmPrizeDelivered → resetRaffle → createRaffle
+// Clears Convex epoch data and opens next epoch on-chain.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const resetAndOpenNewRaffle = action({
+  args: {
+    adminKey:         v.string(),
+    newEpoch:         v.number(),
+    prizeDescription: v.string(),
+    prizeImageUrl:    v.optional(v.string()),
+    ticketPriceUSD:   v.number(),   // e.g. 23
+    maxTickets:       v.number(),   // e.g. 100
+    durationSeconds:  v.number(),   // e.g. 600 = 10 min
+    cardValueUSD:     v.optional(v.number()),
+    cardValueVBMS:    v.optional(v.number()),
+    ticketPriceVBMS:  v.optional(v.number()),
+  },
+  handler: async (ctx, args): Promise<{ ok: boolean; error?: string }> => {
+    if (args.adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+
+    const privateKey = process.env.VBMS_SIGNER_PRIVATE_KEY;
+    const arbAddr    = ARB_RAFFLE_CONTRACT();
+    if (!privateKey || !arbAddr) return { ok: false, error: "Signer or contract not configured" };
+
+    try {
+      const { ethers } = await import("ethers");
+      const provider = new ethers.JsonRpcProvider(ARB_RPC);
+      const signer   = new ethers.Wallet(privateKey, provider);
+      const contract = new ethers.Contract(arbAddr, [
+        "function confirmPrizeDelivered() external",
+        "function resetRaffle() external",
+        "function createRaffle(string,string,uint256,uint256,uint256) external",
+      ], signer);
+
+      // 1. confirmPrizeDelivered (releases funds to owner)
+      console.log("[resetRaffle] confirmPrizeDelivered...");
+      const tx1 = await contract.confirmPrizeDelivered();
+      await tx1.wait(1);
+      console.log("[resetRaffle] confirmPrizeDelivered:", tx1.hash);
+
+      // 2. resetRaffle (clears entries on-chain)
+      console.log("[resetRaffle] resetRaffle...");
+      const tx2 = await contract.resetRaffle();
+      await tx2.wait(1);
+      console.log("[resetRaffle] resetRaffle:", tx2.hash);
+
+      // 3. createRaffle (opens new epoch on-chain)
+      console.log("[resetRaffle] createRaffle epoch", args.newEpoch, "...");
+      const tx3 = await contract.createRaffle(
+        args.prizeDescription,
+        args.prizeImageUrl ?? "",
+        ethers.parseUnits(String(args.ticketPriceUSD), 18),
+        args.maxTickets,
+        args.durationSeconds,
+      );
+      await tx3.wait(1);
+      console.log("[resetRaffle] createRaffle:", tx3.hash);
+
+      // 4. Clear old raffleEntries from Convex
+      await ctx.runMutation(internal.raffle.clearEpochData, { epoch: args.newEpoch - 1 });
+
+      // 5. Set new raffleConfig in Convex
+      await ctx.runMutation(internal.raffle.upsertRaffleConfig, {
+        epoch:            args.newEpoch,
+        prizeDescription: args.prizeDescription,
+        prizeImageUrl:    args.prizeImageUrl ?? "",
+        cardValueUSD:     args.cardValueUSD ?? args.ticketPriceUSD,
+        cardValueVBMS:    args.cardValueVBMS ?? 10000,
+        ticketPriceVBMS:  args.ticketPriceVBMS ?? 10000,
+        ticketPriceUSD:   args.ticketPriceUSD,
+        maxTickets:       args.maxTickets,
+        durationDays:     args.durationSeconds / 86400,
+      });
+
+      return { ok: true };
+    } catch (e: any) {
+      console.error("[resetRaffle] error:", e);
+      return { ok: false, error: e.shortMessage || e.message };
+    }
+  },
+});
+
+export const clearEpochData = internalMutation({
+  args: { epoch: v.number() },
+  handler: async (ctx, { epoch }) => {
+    // Delete raffleEntries for this epoch
+    const entries = await ctx.db.query("raffleEntries")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch)).collect();
+    for (const e of entries) await ctx.db.delete(e._id);
+    // Delete raffleResults for this epoch
+    const results = await ctx.db.query("raffleResults")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch)).collect();
+    for (const r of results) await ctx.db.delete(r._id);
+    console.log(`[clearEpochData] Cleared ${entries.length} entries, ${results.length} results for epoch ${epoch}`);
+  },
+});
+
+export const upsertRaffleConfig = internalMutation({
+  args: {
+    epoch: v.number(), prizeDescription: v.string(), prizeImageUrl: v.string(),
+    cardValueUSD: v.number(), cardValueVBMS: v.number(), ticketPriceVBMS: v.number(),
+    ticketPriceUSD: v.number(), maxTickets: v.number(), durationDays: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.query("raffleConfig")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", args.epoch)).first();
+    const data = { ...args, visible: true, updatedAt: Date.now() };
+    if (existing) await ctx.db.patch(existing._id, data);
+    else await ctx.db.insert("raffleConfig", data);
+  },
+});
