@@ -11,4 +11,11 @@ crons.interval(
   internal.raffle.pollBaseEvents,
 );
 
+// Poll ARB chain every 2 minutes for TicketBoughtUSDN / TicketBoughtETH events
+crons.interval(
+  "poll-arb-raffle-events",
+  { minutes: 2 },
+  internal.raffle.pollARBEvents,
+);
+
 export default crons;

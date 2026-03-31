@@ -487,6 +487,107 @@ export const pollBaseEvents = internalAction({
   },
 });
 
+/**
+ * Internal action: polls ARB RPC for TicketBoughtUSDN / TicketBoughtETH events.
+ * Idempotent — skips already-recorded txHashes via by_txHash index.
+ */
+export const pollARBEvents = internalAction({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const contractAddr = ARB_RAFFLE_CONTRACT().toLowerCase();
+    if (!contractAddr) return;
+
+    // Get current epoch from config
+    const config = await ctx.runQuery(internal.raffle.getRaffleConfig, {});
+    const epoch = (config as any)?.epoch ?? 2;
+
+    // topic0 = keccak256("TicketBoughtUSDN(address,uint256,uint256)")
+    const TOPIC_USDN = "0xc37038deedad9061d649669653f76c9850767b33f444f827331719c714a64173";
+    // topic0 = keccak256("TicketBoughtETH(address,uint256,uint256,uint256)")
+    const TOPIC_ETH  = "0x9a8ba22f7a25533f1cac3b4c237dc571f6fe107fc4f64599b1a6b429acb8dc1c";
+
+    try {
+      const blockResp = await fetch(ARB_RPC, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_blockNumber", params: [] }),
+      });
+      const { result: latestHex } = await blockResp.json() as any;
+      const latest = parseInt(latestHex, 16);
+      // ARB ~0.25s block time → ~720 blocks/3min, search last 800 to be safe
+      const fromBlock = "0x" + (latest - 800).toString(16);
+
+      const logsResp = await fetch(ARB_RPC, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0", id: 2,
+          method: "eth_getLogs",
+          params: [{ address: contractAddr, topics: [[TOPIC_USDN, TOPIC_ETH]], fromBlock, toBlock: latestHex }],
+        }),
+      });
+      const { result: logs } = await logsResp.json() as any;
+      if (!Array.isArray(logs) || logs.length === 0) return;
+
+      for (const log of logs) {
+        const txHash = log.transactionHash as string;
+        if (!txHash) continue;
+
+        // topics[1] = indexed buyer address
+        const buyer = ("0x" + (log.topics[1] as string).slice(26)).toLowerCase();
+        // data[0..64] = count (uint256), rest = amount
+        const data  = (log.data as string).startsWith("0x")
+          ? (log.data as string).slice(2) : (log.data as string);
+        const count = parseInt(data.slice(0, 64), 16);
+        if (!buyer || isNaN(count) || count <= 0) continue;
+
+        const token = (log.topics[0] as string).toLowerCase() === TOPIC_USDN ? "USND" : "ETH";
+        const blockNumber = parseInt(log.blockNumber as string, 16);
+
+        const result = await ctx.runMutation(internal.raffle.recordARBEntryInternal, {
+          buyer, count, token, txHash, epoch, blockNumber,
+        });
+        console.log(`[raffle/arb-poll] ${token} ${buyer} ×${count} block=${blockNumber} result=${JSON.stringify(result)}`);
+      }
+    } catch (e) {
+      console.error("[raffle/arb-poll] Error:", e);
+    }
+  },
+});
+
+export const recordARBEntryInternal = internalMutation({
+  args: {
+    buyer: v.string(), count: v.number(), token: v.string(),
+    txHash: v.string(), epoch: v.number(), blockNumber: v.number(),
+  },
+  handler: async (ctx, { buyer, count, token, txHash, epoch, blockNumber }) => {
+    const existing = await ctx.db
+      .query("raffleEntries")
+      .withIndex("by_txHash", (q: any) => q.eq("txHash", txHash))
+      .first();
+    if (existing) return { skipped: true };
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", buyer.toLowerCase()))
+      .first();
+
+    await ctx.db.insert("raffleEntries", {
+      address:     buyer.toLowerCase(),
+      username:    profile?.username,
+      tickets:     count,
+      chain:       "arb",
+      token,
+      txHash,
+      epoch,
+      blockNumber,
+      timestamp:   Date.now(),
+      synced:      true,
+    });
+    return { recorded: true };
+  },
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DRAW — Trigger VRF draw (onlyOwner via signer wallet)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -715,7 +816,7 @@ export const redeployARB = action({
       console.log("[redeployARB] Deployed:", newAddress);
 
       // 2. createRaffle — maxTickets=4 so requestDraw unlocks after all entries added
-      const tx2 = await contract.createRaffle(
+      const tx2 = await (contract as any).createRaffle(
         "Goofy Romero \u2013 Queen of Diamonds",
         "",
         ethers.parseUnits("23", 18),
@@ -727,7 +828,7 @@ export const redeployARB = action({
 
       // 3. addBaseEntries — one per ticket
       for (const buyer of ENTRIES) {
-        const tx = await contract.addBaseEntries(buyer, 1);
+        const tx = await (contract as any).addBaseEntries(buyer, 1);
         await tx.wait(1);
         console.log("[redeployARB] addBaseEntries:", buyer, "tx:", tx.hash);
       }

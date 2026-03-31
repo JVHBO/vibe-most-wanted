@@ -163,6 +163,7 @@ export default function RafflePage() {
   const [status,   setStatus]   = useState<BuyStatus>("idle");
   const [errMsg,   setErrMsg]   = useState("");
   const [lastBuyChain, setLastBuyChain] = useState<"base" | "arb" | null>(null);
+  const [lastBuyToken, setLastBuyToken] = useState<string>("VBMS");
   const [pendingApprove, setPendingApprove] = useState(false);
   const [config,        setConfig]        = useState<RaffleConfig | null>(null);
   const [entries,       setEntries]       = useState<RaffleEntry[]>([]);
@@ -170,6 +171,7 @@ export default function RafflePage() {
   const [myNewTickets,      setMyNewTickets]      = useState<number[]>([]);
   const [playerInfo,        setPlayerInfo]        = useState<PlayerTicketInfo | null>(null);
   const [myPurchasesPage,   setMyPurchasesPage]   = useState(0);
+  const [pendingTx,         setPendingTx]         = useState<{ txHash: string; chain: "base" | "arb"; qty: number; token: string } | null>(null);
   const loaded              = useRef(false);
   const feedTimer           = useRef<ReturnType<typeof setInterval> | null>(null);
   const ticketRangeStartRef = useRef<number | null>(null);
@@ -181,7 +183,15 @@ export default function RafflePage() {
       addr ? convex.query(api.raffle.getPlayerTicketInfo, { address: addr, epoch }).catch(() => null) : Promise.resolve(null),
     ]).then(([buyers, recent, pinfo]) => {
       if (buyers) setEntries(buyers as RaffleEntry[]);
-      if (recent) setRecentEntries(recent as RaffleRecentEntry[]);
+      if (recent) {
+        setRecentEntries(recent as RaffleRecentEntry[]);
+        // Clear pendingTx once it appears in recent entries
+        setPendingTx(prev => {
+          if (!prev) return null;
+          const found = (recent as RaffleRecentEntry[]).some(e => e.txHash === prev.txHash);
+          return found ? null : prev;
+        });
+      }
       if (pinfo) setPlayerInfo(pinfo as PlayerTicketInfo);
       else if (addr === undefined) setPlayerInfo(null);
     });
@@ -321,6 +331,10 @@ export default function RafflePage() {
       setStatus("idle");
     } else if (txConfirmed && status === "buying") {
       setStatus("success");
+      // Track pending tx until cron syncs it (~2min)
+      if (txHash && lastBuyChain) {
+        setPendingTx({ txHash, chain: lastBuyChain, qty: buyQty, token: lastBuyToken });
+      }
       // If ARB purchase: fetch new totalTickets to compute ticket numbers
       if (lastBuyChain === "arb" && ticketRangeStartRef.current !== null) {
         const before = ticketRangeStartRef.current;
@@ -361,6 +375,7 @@ export default function RafflePage() {
         return;
       }
       setLastBuyChain("base");
+      setLastBuyToken("VBMS");
       setStatus("buying");
       const h = await writeContractAsync({
         address: RAFFLE_BASE, abi: RAFFLE_BASE_ABI, functionName: "buyWithVBMS",
@@ -388,6 +403,7 @@ export default function RafflePage() {
         return;
       }
       setLastBuyChain("base");
+      setLastBuyToken("USDC");
       setStatus("buying");
       const h = await writeContractAsync({
         address: RAFFLE_BASE, abi: RAFFLE_BASE_ABI, functionName: "buyWithUSDC",
@@ -405,6 +421,7 @@ export default function RafflePage() {
     try {
       await ensureBase();
       setLastBuyChain("base");
+      setLastBuyToken("ETH");
       setStatus("buying");
       const h = await writeContractAsync({
         address: RAFFLE_BASE, abi: RAFFLE_BASE_ABI, functionName: "buyWithETH",
@@ -437,6 +454,7 @@ export default function RafflePage() {
       // Capture current total so we know which tickets the player gets
       ticketRangeStartRef.current = arbTotalTickets ?? 0;
       setLastBuyChain("arb");
+      setLastBuyToken("USND");
       setStatus("buying");
       const h = await writeContractAsync({
         address: RAFFLE_ARB, abi: RAFFLE_ARB_ABI, functionName: "buyWithUSDN",
@@ -459,6 +477,7 @@ export default function RafflePage() {
       // Capture current total so we know which tickets the player gets
       ticketRangeStartRef.current = arbTotalTickets ?? 0;
       setLastBuyChain("arb");
+      setLastBuyToken("ETH");
       setStatus("buying");
       const h = await writeContractAsync({
         address: RAFFLE_ARB, abi: RAFFLE_ARB_ABI, functionName: "buyWithETH",
@@ -476,6 +495,7 @@ export default function RafflePage() {
     setErrMsg("");
     setPendingApprove(false);
     setLastBuyChain(null);
+    setLastBuyToken("VBMS");
     setMyNewTickets([]);
     ticketRangeStartRef.current = null;
   }
@@ -727,6 +747,33 @@ export default function RafflePage() {
               {!walletAddress && (
                 <div className="border-2 border-white/10 bg-white/5 px-3 py-2 text-center">
                   <p className="text-white/40 text-[9px] font-black uppercase tracking-wider">{t('raffleConnectWallet')}</p>
+                </div>
+              )}
+
+              {/* Pending tx banner — bought but not yet synced to Convex */}
+              {pendingTx && (
+                <div className="border-2 border-[#FFD700]/50 bg-[#FFD700]/5 px-3 py-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#FFD700] text-xs animate-spin shrink-0">⏳</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[#FFD700] font-black text-[10px] uppercase tracking-wider">
+                        {pendingTx.qty}🎟️ {pendingTx.token} · Sincronizando…
+                      </p>
+                      <p className="text-white/40 text-[9px] mt-0.5 font-mono truncate">
+                        <a
+                          href={pendingTx.chain === "base" ? baseTxUrl(pendingTx.txHash) : arbTxUrl(pendingTx.txHash)}
+                          target="_blank" rel="noopener noreferrer"
+                          className="hover:text-white/70 transition-colors"
+                        >
+                          {pendingTx.txHash.slice(0, 10)}…{pendingTx.txHash.slice(-6)} ↗
+                        </a>
+                      </p>
+                    </div>
+                    <span className={`text-[7px] font-black px-1.5 py-0.5 border-2 border-black shrink-0 ${pendingTx.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
+                      {pendingTx.chain.toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-white/30 text-[8px] mt-1.5">Aparece em ~2min após o cron sincronizar</p>
                 </div>
               )}
 
