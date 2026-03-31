@@ -2221,6 +2221,9 @@ export default defineSchema({
     epoch:            v.number(),
     visible:          v.boolean(),
     updatedAt:        v.number(),
+    // Poller checkpoints — persists last processed block to avoid gaps
+    lastPolledBaseBlock: v.optional(v.number()),
+    lastPolledARBBlock:  v.optional(v.number()),
   })
     .index("by_epoch", ["epoch"]),
 

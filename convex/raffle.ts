@@ -424,6 +424,13 @@ export const pollBaseEvents = internalAction({
     const config = await ctx.runQuery(internal.raffle.getRaffleConfig, {});
     const configEpoch = (config as any)?.epoch ?? 3;
 
+    // Checkpoint-based polling: start from last processed block so no gaps survive cron outages.
+    // Safety cap: 3600 blocks (~2h on Base @2s/block) to avoid unbounded lookback.
+    const BASE_MAX_LOOKBACK = 3600;
+    const savedCheckpoint: number | undefined = (config as any)?.lastPolledBaseBlock;
+    // Reset checkpoint if it's from a different epoch context (epoch change wipes old blocks)
+    const checkpointAge = savedCheckpoint ? 0 : undefined; // used below
+
     const TICKET_PURCHASED_TOPIC =
       "0x3c21b9b2d77366bb49d2e24d368d043e15a59329cb5f15eccdc99ac5ffaa2b6f";
     const VBMS_ERC20 = "0xb03439567cd22f278b21e1ffcdfb8e1696763827";
@@ -438,8 +445,15 @@ export const pollBaseEvents = internalAction({
       });
       const { result: latestHex } = await blockResp.json() as any;
       const latest = parseInt(latestHex, 16);
-      // ~2 min of blocks on Base (2s block time → 60 blocks), search 90 to be safe
-      const fromBlock = "0x" + (latest - 90).toString(16);
+
+      // fromBlock: checkpoint + 1, or fallback to latest - MAX_LOOKBACK
+      const fromBlockNum = savedCheckpoint
+        ? Math.max(savedCheckpoint + 1, latest - BASE_MAX_LOOKBACK)
+        : latest - BASE_MAX_LOOKBACK;
+      // Don't poll if already up to date
+      if (fromBlockNum > latest) return;
+
+      const fromBlock = "0x" + fromBlockNum.toString(16);
       const toBlock   = latestHex;
 
       const logsResp = await fetch(BASE_RPC, {
@@ -452,40 +466,46 @@ export const pollBaseEvents = internalAction({
         }),
       });
       const { result: logs } = await logsResp.json() as any;
-      if (!Array.isArray(logs) || logs.length === 0) return;
 
-      for (const log of logs) {
-        const txHash = log.transactionHash as string;
-        if (!txHash) continue;
+      if (Array.isArray(logs)) {
+        for (const log of logs) {
+          const txHash = log.transactionHash as string;
+          if (!txHash) continue;
 
-        // Decode: topics[1]=buyer (indexed), topics[2]=raffleEpoch (indexed)
-        // data = abi.encode(count uint256, amount uint256, token address)
-        const buyer = ("0x" + (log.topics[1] as string).slice(26)).toLowerCase();
-        // Use Convex config epoch — BASE contract epoch may be stale after ARB reset
-        const epoch = configEpoch;
-        const data  = (log.data as string).startsWith("0x")
-          ? (log.data as string).slice(2) : (log.data as string);
-        const count = parseInt(data.slice(0, 64), 16);
-        if (!buyer || isNaN(count) || count <= 0) continue;
+          // Decode: topics[1]=buyer (indexed), topics[2]=raffleEpoch (indexed)
+          // data = abi.encode(count uint256, amount uint256, token address)
+          const buyer = ("0x" + (log.topics[1] as string).slice(26)).toLowerCase();
+          // Use Convex config epoch — BASE contract epoch may be stale after ARB reset
+          const epoch = configEpoch;
+          const data  = (log.data as string).startsWith("0x")
+            ? (log.data as string).slice(2) : (log.data as string);
+          const count = parseInt(data.slice(0, 64), 16);
+          if (!buyer || isNaN(count) || count <= 0) continue;
 
-        const tokenHex = data.length >= 192
-          ? ("0x" + data.slice(152, 192)).toLowerCase() : null;
-        let token = "VBMS";
-        if (tokenHex === "0x0000000000000000000000000000000000000000") token = "ETH";
-        else if (tokenHex === USDC_ADDR) token = "USDC";
-        else if (tokenHex === VBMS_ERC20) token = "VBMS";
+          const tokenHex = data.length >= 192
+            ? ("0x" + data.slice(152, 192)).toLowerCase() : null;
+          let token = "VBMS";
+          if (tokenHex === "0x0000000000000000000000000000000000000000") token = "ETH";
+          else if (tokenHex === USDC_ADDR) token = "USDC";
+          else if (tokenHex === VBMS_ERC20) token = "VBMS";
 
-        const blockNumber = parseInt(log.blockNumber as string, 16);
+          const blockNumber = parseInt(log.blockNumber as string, 16);
 
-        // Record entry (idempotent) — returns true if already synced to ARB
-        const alreadySynced = await ctx.runMutation(internal.raffle.recordBaseEntry, {
-          buyer, count, txHash, epoch, blockNumber, token,
-        });
-        if (!alreadySynced) {
-          await ctx.runAction(internal.raffle.submitBaseEntriesToARB, { buyer, count, txHash });
+          // Record entry (idempotent) — returns true if already synced to ARB
+          const alreadySynced = await ctx.runMutation(internal.raffle.recordBaseEntry, {
+            buyer, count, txHash, epoch, blockNumber, token,
+          });
+          if (!alreadySynced) {
+            await ctx.runAction(internal.raffle.submitBaseEntriesToARB, { buyer, count, txHash });
+          }
+          console.log(`[raffle/poll] ${token} ${buyer} ×${count} block=${blockNumber} synced=${!!alreadySynced}`);
         }
-        console.log(`[raffle/poll] ${token} ${buyer} ×${count} block=${blockNumber} synced=${!!alreadySynced}`);
       }
+
+      // Save checkpoint so next run continues from here
+      await ctx.runMutation(internal.raffle.updatePollCheckpoint, {
+        lastPolledBaseBlock: latest,
+      });
     } catch (e) {
       console.error("[raffle/poll] Error:", e);
     }
@@ -506,6 +526,11 @@ export const pollARBEvents = internalAction({
     const config = await ctx.runQuery(internal.raffle.getRaffleConfig, {});
     const epoch = (config as any)?.epoch ?? 2;
 
+    // Checkpoint-based polling: ARB 0.25s/block → ~480 blocks/2min cron
+    // Safety cap: 30000 blocks (~2h) to handle long outages without unbounded lookback
+    const ARB_MAX_LOOKBACK = 30000;
+    const savedCheckpoint: number | undefined = (config as any)?.lastPolledARBBlock;
+
     // topic0 = keccak256("TicketBoughtUSDN(address,uint256,uint256)")
     const TOPIC_USDN = "0xc37038deedad9061d649669653f76c9850767b33f444f827331719c714a64173";
     // topic0 = keccak256("TicketBoughtETH(address,uint256,uint256,uint256)")
@@ -519,8 +544,14 @@ export const pollARBEvents = internalAction({
       });
       const { result: latestHex } = await blockResp.json() as any;
       const latest = parseInt(latestHex, 16);
-      // ARB ~0.25s block time → ~720 blocks/3min, search last 800 to be safe
-      const fromBlock = "0x" + (latest - 800).toString(16);
+
+      // fromBlock: checkpoint + 1, or fallback to latest - MAX_LOOKBACK
+      const fromBlockNum = savedCheckpoint
+        ? Math.max(savedCheckpoint + 1, latest - ARB_MAX_LOOKBACK)
+        : latest - ARB_MAX_LOOKBACK;
+      if (fromBlockNum > latest) return;
+
+      const fromBlock = "0x" + fromBlockNum.toString(16);
 
       const logsResp = await fetch(ARB_RPC, {
         method: "POST",
@@ -532,28 +563,34 @@ export const pollARBEvents = internalAction({
         }),
       });
       const { result: logs } = await logsResp.json() as any;
-      if (!Array.isArray(logs) || logs.length === 0) return;
 
-      for (const log of logs) {
-        const txHash = log.transactionHash as string;
-        if (!txHash) continue;
+      if (Array.isArray(logs)) {
+        for (const log of logs) {
+          const txHash = log.transactionHash as string;
+          if (!txHash) continue;
 
-        // topics[1] = indexed buyer address
-        const buyer = ("0x" + (log.topics[1] as string).slice(26)).toLowerCase();
-        // data[0..64] = count (uint256), rest = amount
-        const data  = (log.data as string).startsWith("0x")
-          ? (log.data as string).slice(2) : (log.data as string);
-        const count = parseInt(data.slice(0, 64), 16);
-        if (!buyer || isNaN(count) || count <= 0) continue;
+          // topics[1] = indexed buyer address
+          const buyer = ("0x" + (log.topics[1] as string).slice(26)).toLowerCase();
+          // data[0..64] = count (uint256), rest = amount
+          const data  = (log.data as string).startsWith("0x")
+            ? (log.data as string).slice(2) : (log.data as string);
+          const count = parseInt(data.slice(0, 64), 16);
+          if (!buyer || isNaN(count) || count <= 0) continue;
 
-        const token = (log.topics[0] as string).toLowerCase() === TOPIC_USDN ? "USND" : "ETH";
-        const blockNumber = parseInt(log.blockNumber as string, 16);
+          const token = (log.topics[0] as string).toLowerCase() === TOPIC_USDN ? "USND" : "ETH";
+          const blockNumber = parseInt(log.blockNumber as string, 16);
 
-        const result = await ctx.runMutation(internal.raffle.recordARBEntryInternal, {
-          buyer, count, token, txHash, epoch, blockNumber,
-        });
-        console.log(`[raffle/arb-poll] ${token} ${buyer} ×${count} block=${blockNumber} result=${JSON.stringify(result)}`);
+          const result = await ctx.runMutation(internal.raffle.recordARBEntryInternal, {
+            buyer, count, token, txHash, epoch, blockNumber,
+          });
+          console.log(`[raffle/arb-poll] ${token} ${buyer} ×${count} block=${blockNumber} result=${JSON.stringify(result)}`);
+        }
       }
+
+      // Save checkpoint
+      await ctx.runMutation(internal.raffle.updatePollCheckpoint, {
+        lastPolledARBBlock: latest,
+      });
     } catch (e) {
       console.error("[raffle/arb-poll] Error:", e);
     }
@@ -590,6 +627,22 @@ export const recordARBEntryInternal = internalMutation({
       synced:      true,
     });
     return { recorded: true };
+  },
+});
+
+/** Internal: update poll checkpoints on raffleConfig so pollers resume from where they left off */
+export const updatePollCheckpoint = internalMutation({
+  args: {
+    lastPolledBaseBlock: v.optional(v.number()),
+    lastPolledARBBlock:  v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const config = await ctx.db.query("raffleConfig").order("desc").first();
+    if (!config) return;
+    const patch: Record<string, number> = {};
+    if (args.lastPolledBaseBlock !== undefined) patch.lastPolledBaseBlock = args.lastPolledBaseBlock;
+    if (args.lastPolledARBBlock  !== undefined) patch.lastPolledARBBlock  = args.lastPolledARBBlock;
+    await ctx.db.patch(config._id, patch);
   },
 });
 

@@ -1159,6 +1159,22 @@ export default function RafflePage() {
             </div>
           )}
 
+          {/* DEV: share test button — jvhbo only */}
+          {walletAddress?.toLowerCase() === "0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52" && (
+            <div className="border-2 border-dashed border-yellow-500/50 bg-[#1a1a1a] px-3 py-2 flex items-center gap-3">
+              <span className="text-yellow-400/60 text-[9px] font-mono uppercase">dev</span>
+              <button
+                onClick={() => {
+                  const castText = `Just entered the Goofy Romero ($23) raffle 🎟️\n\nTicket: $0.06 each — grab yours before it's gone!`;
+                  shareToFarcaster(castText, "https://vibemostwanted.xyz/share/raffle");
+                }}
+                className="bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 text-[9px] font-mono px-2 py-1 hover:bg-yellow-500/30 transition-colors"
+              >
+                test share flow
+              </button>
+            </div>
+          )}
+
           {/* My Tickets */}
           {walletAddress && ((playerInfo && playerInfo.playerTotal > 0) || pendingTxList.length > 0) && (
             <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
