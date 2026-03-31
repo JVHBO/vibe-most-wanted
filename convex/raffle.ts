@@ -572,6 +572,18 @@ export const recordARBEntry = mutation({
 // DRAW RESULT — Record & Query winner
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** Admin: patch drawTxHash on existing result */
+export const setDrawTxHash = mutation({
+  args: { adminKey: v.string(), epoch: v.number(), drawTxHash: v.string() },
+  handler: async (ctx, { adminKey, epoch, drawTxHash }) => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+    const rec = await ctx.db.query("raffleResults").withIndex("by_epoch", (q: any) => q.eq("epoch", epoch)).first();
+    if (!rec) throw new Error("No result for epoch " + epoch);
+    await ctx.db.patch(rec._id, { drawTxHash });
+    return { ok: true };
+  },
+});
+
 /** Get recorded draw result for an epoch */
 export const getRaffleResult = query({
   args: { epoch: v.optional(v.number()) },

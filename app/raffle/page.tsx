@@ -857,11 +857,20 @@ export default function RafflePage() {
               <div className="bg-[#FFD700] px-3 py-2 text-center">
                 <span className="text-black font-black text-xs uppercase tracking-widest">🏆 Vencedor</span>
               </div>
-              <div className="px-3 py-3 text-center space-y-1">
+              <div className="px-3 py-3 text-center space-y-2">
                 <p className="text-[#FFD700] font-black text-base">
                   {raffleResult.username ? `@${raffleResult.username}` : `${raffleResult.winner.slice(0,6)}…${raffleResult.winner.slice(-4)}`}
                 </p>
                 <p className="text-white/50 text-[10px]">Ticket #{raffleResult.winnerTicket} de {raffleResult.totalEntries}</p>
+                {raffleResult.drawTxHash && (
+                  <a
+                    href={`https://arbiscan.io/tx/${raffleResult.drawTxHash}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-400/70 text-[9px] font-mono hover:text-blue-400 transition-colors"
+                  >
+                    VRF TX ↗
+                  </a>
+                )}
               </div>
             </div>
           )}
