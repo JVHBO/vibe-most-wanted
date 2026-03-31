@@ -11,6 +11,7 @@ import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import { formatUnits, parseUnits } from "viem";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { shareToFarcaster } from "@/lib/share-utils";
 
 // ─── Addresses ────────────────────────────────────────────────────────────────
 const RAFFLE_BASE   = "0x54ac4e3782a21341440c418e7c37b26f937095e4" as const;
@@ -693,11 +694,11 @@ export default function RafflePage() {
 
               {/* Status feedback */}
               {status === "success" && (
-                <div className="bg-green-900/40 border-2 border-green-500 px-3 py-2.5">
+                <div className="bg-green-900/40 border-2 border-green-500 px-3 py-2.5 space-y-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <p className="text-green-400 font-black text-xs uppercase">
-                        ✅ {buyQty} {t('raffleTicketsBought')}
+                        🎉 {buyQty} {t('raffleTicketsBought')}
                       </p>
                       {lastBuyChain === "arb" && myNewTickets.length > 0 && (
                         <div className="mt-2">
@@ -719,6 +720,37 @@ export default function RafflePage() {
                       )}
                     </div>
                     <button onClick={resetStatus} className="text-green-400/60 text-xs shrink-0 mt-0.5">✕</button>
+                  </div>
+                  {/* Share bonus — shown right after purchase */}
+                  <div className="border-t border-green-500/30 pt-2">
+                    {shareClaimed ? (
+                      <p className="text-green-400/70 font-black text-[10px] uppercase text-center">✅ +1 bonus ticket claimed!</p>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <p className="text-[#FFD700] font-black text-[10px] uppercase">🎁 Share & get +1 ticket</p>
+                          <p className="text-white/40 text-[9px]">Cast on Farcaster · one time per raffle</p>
+                        </div>
+                        <button
+                          disabled={shareClaiming}
+                          onClick={async () => {
+                            const castText = `Just entered the Goofy Romero Legendary raffle on @vibemostwanted 🎟️\n\nWin a rare card NFT — join us! 👇`;
+                            const miniappUrl = "https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast";
+                            shareToFarcaster(castText, miniappUrl);
+                            setShareClaiming(true);
+                            try {
+                              await claimShareBonus({ address: walletAddress! });
+                              setShareClaimed(true);
+                            } catch(e: any) {
+                              if (e?.message?.includes("Already claimed")) setShareClaimed(true);
+                            } finally { setShareClaiming(false); }
+                          }}
+                          className="shrink-0 bg-[#FFD700] text-black font-black text-[10px] uppercase tracking-wider px-3 py-2 border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50"
+                        >
+                          {shareClaiming ? "…" : "Share 🔗"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1101,14 +1133,16 @@ export default function RafflePage() {
           )}
 
           {/* My Tickets */}
-          {walletAddress && playerInfo && playerInfo.playerTotal > 0 && (
+          {walletAddress && ((playerInfo && playerInfo.playerTotal > 0) || pendingTx) && (
             <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
               <div className="bg-[#FFD700] border-b-2 border-black px-3 py-2 flex items-center justify-between">
                 <span className="text-black font-black text-[10px] uppercase tracking-widest">🎟️ {t('raffleMine')}</span>
-                <span className="text-black font-black text-sm">{playerInfo.playerTotal} {t('raffleTicketsLabel')}</span>
+                <span className="text-black font-black text-sm">
+                  {(playerInfo?.playerTotal ?? 0) + (pendingTx ? pendingTx.qty : 0)} {t('raffleTicketsLabel')}
+                </span>
               </div>
               <div className="px-3 py-3 space-y-2">
-                {playerInfo.playerRanges.map((r, i) => (
+                {playerInfo && playerInfo.playerRanges.map((r, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <span className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black shrink-0 ${r.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
                       {r.chain.toUpperCase()} · {r.token}
@@ -1122,42 +1156,16 @@ export default function RafflePage() {
                     </div>
                   </div>
                 ))}
-              </div>
-            </div>
-          )}
-
-          {/* Share Bonus */}
-          {walletAddress && playerInfo && playerInfo.playerTotal > 0 && (
-            <div className="border-2 border-[#FFD700]/40 bg-[#FFD700]/5 overflow-hidden">
-              <div className="px-3 py-3 flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[#FFD700] font-black text-[10px] uppercase tracking-wider">🎁 Share & get +1 ticket</p>
-                  <p className="text-white/40 text-[9px] mt-0.5">Cast on Farcaster · one time per raffle</p>
-                </div>
-                {shareClaimed ? (
-                  <span className="text-green-400 font-black text-[10px] uppercase shrink-0">✅ Claimed</span>
-                ) : (
-                  <button
-                    disabled={shareClaiming}
-                    onClick={async () => {
-                      const text = encodeURIComponent("I just bought a ticket for the Goofy Romero Legendary raffle on @vibemostwanted 🎟️\n\nJoin us! Only a few tickets left 👇");
-                      const img  = encodeURIComponent("https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/75f1b780-45f6-4d39-b0f7-eeecc34aed00/original");
-                      const link = encodeURIComponent("https://vibe-most-wanted.vercel.app/raffle");
-                      window.open(`https://warpcast.com/~/compose?text=${text}&embeds[]=${img}&embeds[]=${link}`, "_blank");
-                      setShareClaiming(true);
-                      try {
-                        await claimShareBonus({ address: walletAddress });
-                        setShareClaimed(true);
-                      } catch(e: any) {
-                        if (e?.message?.includes("Already claimed")) setShareClaimed(true);
-                      } finally {
-                        setShareClaiming(false);
-                      }
-                    }}
-                    className="shrink-0 bg-[#FFD700] text-black font-black text-[10px] uppercase tracking-wider px-3 py-2 border-2 border-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-50"
-                  >
-                    {shareClaiming ? "…" : "Share 🔗"}
-                  </button>
+                {/* Pending tx — bought but not yet synced */}
+                {pendingTx && (
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black shrink-0 ${pendingTx.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
+                      {pendingTx.chain.toUpperCase()} · {pendingTx.token}
+                    </span>
+                    <span className="text-[#FFD700]/60 font-black text-[10px] animate-pulse">
+                      {pendingTx.qty}🎟️ {t('raffleSyncing')}…
+                    </span>
+                  </div>
                 )}
               </div>
             </div>

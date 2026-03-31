@@ -1473,7 +1473,11 @@ export const adminClearAllPendingConversions = action({
 export const getPendingConversionProfiles = internalQuery({
   args: {},
   handler: async (ctx): Promise<Array<{ address: string; pendingConversion: number; pendingNonce: string | undefined }>> => {
-    const profiles = await ctx.db.query("profiles").collect();
+    // Use index to avoid full table scan — only fetch profiles with pendingConversion set
+    const profiles = await ctx.db
+      .query("profiles")
+      .withIndex("by_pending_conversion", (q: any) => q.gt("pendingConversion", 0))
+      .take(500);
     return profiles
       .filter((p) => (p.pendingConversion || 0) > 0)
       .map((p) => ({ address: p.address, pendingConversion: p.pendingConversion || 0, pendingNonce: p.pendingNonce }));
@@ -1502,8 +1506,11 @@ export const autoRestoreStuckConversions = internalMutation({
     const THIRTY_MIN = 30 * 60 * 1000;
     const cutoff = Date.now() - THIRTY_MIN;
 
-    // Collect all profiles with pending conversions (use take to avoid full scan)
-    const profiles = await ctx.db.query("profiles").take(2000);
+    // Use index to only fetch profiles with pendingConversion > 0 (avoids full table scan)
+    const profiles = await ctx.db
+      .query("profiles")
+      .withIndex("by_pending_conversion", (q: any) => q.gt("pendingConversion", 0))
+      .take(200);
     let restored = 0;
 
     for (const profile of profiles) {

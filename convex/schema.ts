@@ -205,7 +205,8 @@ export default defineSchema({
     .index("by_aura", ["stats.aura"]) // For aura-based leaderboard
     .index("by_weekly_aura", ["stats.weeklyAura"]) // For weekly aura leaderboard
     .index("by_defense_aura", ["hasFullDefenseDeck", "stats.aura"]) // Legacy: permanent aura
-    .index("by_defense_weekly_aura", ["hasFullDefenseDeck", "stats.weeklyAura"]), // 🚀 Weekly leaderboard index
+    .index("by_defense_weekly_aura", ["hasFullDefenseDeck", "stats.weeklyAura"]) // 🚀 Weekly leaderboard index
+    .index("by_pending_conversion", ["pendingConversion"]), // 🚀 BANDWIDTH FIX: efficient stuck-conversion scan
 
   // Player Matches (Match History)
   matches: defineTable({

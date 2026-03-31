@@ -420,6 +420,10 @@ export const pollBaseEvents = internalAction({
     const contractAddr = BASE_RAFFLE_CONTRACT().toLowerCase();
     if (!contractAddr) return;
 
+    // Use Convex config epoch (same as ARB) — BASE contract epoch may differ after resets
+    const config = await ctx.runQuery(internal.raffle.getRaffleConfig, {});
+    const configEpoch = (config as any)?.epoch ?? 3;
+
     const TICKET_PURCHASED_TOPIC =
       "0x3c21b9b2d77366bb49d2e24d368d043e15a59329cb5f15eccdc99ac5ffaa2b6f";
     const VBMS_ERC20 = "0xb03439567cd22f278b21e1ffcdfb8e1696763827";
@@ -457,7 +461,8 @@ export const pollBaseEvents = internalAction({
         // Decode: topics[1]=buyer (indexed), topics[2]=raffleEpoch (indexed)
         // data = abi.encode(count uint256, amount uint256, token address)
         const buyer = ("0x" + (log.topics[1] as string).slice(26)).toLowerCase();
-        const epoch = parseInt((log.topics[2] as string) ?? "0x1", 16);
+        // Use Convex config epoch — BASE contract epoch may be stale after ARB reset
+        const epoch = configEpoch;
         const data  = (log.data as string).startsWith("0x")
           ? (log.data as string).slice(2) : (log.data as string);
         const count = parseInt(data.slice(0, 64), 16);
