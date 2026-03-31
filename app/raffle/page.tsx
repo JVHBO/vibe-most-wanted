@@ -619,7 +619,7 @@ export default function RafflePage() {
                   <img
                     src="/images/card-back.png"
                     alt="VMW Card Back"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', transform: 'scale(1.18)', transformOrigin: 'center' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', transform: 'scale(1.11)', transformOrigin: 'center' }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }}
                   />
                 </div>
