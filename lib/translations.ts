@@ -1733,6 +1733,8 @@ export const translations = {
     raffleTimeAgoMins: 'm atrás',
     raffleTimeAgoHours: 'h atrás',
     raffleTimeAgoDays: 'd atrás',
+    raffleMine: 'Meus Tickets',
+    raffleMyBuys: 'Minhas Compras',
   },
   en: {
     transactionInProgress: 'Transaction in progress',
@@ -3448,6 +3450,8 @@ export const translations = {
     raffleTimeAgoMins: 'm ago',
     raffleTimeAgoHours: 'h ago',
     raffleTimeAgoDays: 'd ago',
+    raffleMine: 'My Tickets',
+    raffleMyBuys: 'My Purchases',
   },
   es: {
     transactionInProgress: 'Transacción en progreso',
@@ -5166,6 +5170,8 @@ export const translations = {
     raffleTimeAgoMins: 'm atrás',
     raffleTimeAgoHours: 'h atrás',
     raffleTimeAgoDays: 'd atrás',
+    raffleMine: 'Mis Tickets',
+    raffleMyBuys: 'Mis Compras',
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
@@ -6884,6 +6890,8 @@ export const translations = {
     raffleTimeAgoMins: 'मिनट पहले',
     raffleTimeAgoHours: 'घंटे पहले',
     raffleTimeAgoDays: 'दिन पहले',
+    raffleMine: 'मेरे टिकट',
+    raffleMyBuys: 'मेरी खरीदारी',
   },
   ru: {
     transactionInProgress: 'Транзакция в процессе',
@@ -8598,6 +8606,8 @@ export const translations = {
     raffleTimeAgoMins: 'м назад',
     raffleTimeAgoHours: 'ч назад',
     raffleTimeAgoDays: 'д назад',
+    raffleMine: 'Мои Билеты',
+    raffleMyBuys: 'Мои Покупки',
   },
   "zh-CN": {
     transactionInProgress: '交易进行中',
@@ -10331,6 +10341,8 @@ export const translations = {
     raffleTimeAgoMins: '分钟前',
     raffleTimeAgoHours: '小时前',
     raffleTimeAgoDays: '天前',
+    raffleMine: '我的票',
+    raffleMyBuys: '我的购买',
   },
   id: {
     transactionInProgress: 'Transaksi sedang berlangsung',
@@ -12038,6 +12050,8 @@ export const translations = {
     raffleTimeAgoMins: 'm lalu',
     raffleTimeAgoHours: 'j lalu',
     raffleTimeAgoDays: 'h lalu',
+    raffleMine: 'Tiket Saya',
+    raffleMyBuys: 'Pembelian Saya',
   },
   fr: {
     transactionInProgress: 'Transaction en cours',
@@ -13746,6 +13760,8 @@ export const translations = {
     raffleTimeAgoMins: 'min il y a',
     raffleTimeAgoHours: 'h il y a',
     raffleTimeAgoDays: 'j il y a',
+    raffleMine: 'Mes Tickets',
+    raffleMyBuys: 'Mes Achats',
   },
   ja: {
     transactionInProgress: '取引処理中',
@@ -15452,6 +15468,8 @@ export const translations = {
     raffleTimeAgoMins: '分前',
     raffleTimeAgoHours: '時間前',
     raffleTimeAgoDays: '日前',
+    raffleMine: '私のチケット',
+    raffleMyBuys: '私の購入',
   },
   it: {
     transactionInProgress: 'Transazione in corso',
@@ -17749,5 +17767,7 @@ export const translations = {
     raffleTimeAgoMins: 'min fa',
     raffleTimeAgoHours: 'h fa',
     raffleTimeAgoDays: 'g fa',
+    raffleMine: 'I Miei Biglietti',
+    raffleMyBuys: 'I Miei Acquisti',
   }
 } as const;

@@ -84,18 +84,36 @@ interface RaffleConfig {
 
 interface RaffleEntry {
   address: string;
+  username: string | null;
   tickets: number;
   chain: string;
-  txHash: string;
 }
 
 interface RaffleRecentEntry {
   address: string;
+  username?: string | null;
   tickets: number;
   chain: string;
   token: string;
   txHash: string;
   timestamp: number;
+}
+
+interface PlayerTicketInfo {
+  totalTickets: number;
+  playerTotal: number;
+  playerRanges: Array<{ start: number; end: number; chain: string; token: string }>;
+}
+
+function fmtAddr(addr: string) {
+  return addr.slice(0, 6) + "…" + addr.slice(-4);
+}
+
+function arbTxUrl(txHash: string) {
+  return `https://arbiscan.io/tx/${txHash}`;
+}
+function baseTxUrl(txHash: string) {
+  return `https://basescan.org/tx/${txHash}`;
 }
 
 function timeAgo(ts: number, tFn: (k: any) => string) {
@@ -150,17 +168,21 @@ export default function RafflePage() {
   const [entries,       setEntries]       = useState<RaffleEntry[]>([]);
   const [recentEntries, setRecentEntries] = useState<RaffleRecentEntry[]>([]);
   const [myNewTickets,  setMyNewTickets]  = useState<number[]>([]);
+  const [playerInfo,    setPlayerInfo]    = useState<PlayerTicketInfo | null>(null);
   const loaded              = useRef(false);
   const feedTimer           = useRef<ReturnType<typeof setInterval> | null>(null);
   const ticketRangeStartRef = useRef<number | null>(null);
 
-  function loadRaffleData(epoch: number) {
+  function loadRaffleData(epoch: number, addr?: string) {
     Promise.all([
       convex.query(api.raffle.getRaffleBuyers, { epoch }).catch(() => []),
       convex.query(api.raffle.getRecentEntries, { epoch, limit: 10 }).catch(() => []),
-    ]).then(([buyers, recent]) => {
+      addr ? convex.query(api.raffle.getPlayerTicketInfo, { address: addr, epoch }).catch(() => null) : Promise.resolve(null),
+    ]).then(([buyers, recent, pinfo]) => {
       if (buyers) setEntries(buyers as RaffleEntry[]);
       if (recent) setRecentEntries(recent as RaffleRecentEntry[]);
+      if (pinfo) setPlayerInfo(pinfo as PlayerTicketInfo);
+      else if (addr === undefined) setPlayerInfo(null);
     });
   }
 
@@ -170,18 +192,17 @@ export default function RafflePage() {
     convex.query(api.raffle.getRaffleConfig, {}).catch(() => null).then(cfg => {
       if (cfg) setConfig(cfg as RaffleConfig);
       const epoch = (cfg as RaffleConfig | null)?.epoch ?? 1;
-      loadRaffleData(epoch);
-      feedTimer.current = setInterval(() => loadRaffleData(epoch), 30_000);
+      loadRaffleData(epoch, walletAddress?.toLowerCase());
+      feedTimer.current = setInterval(() => loadRaffleData(epoch, walletAddress?.toLowerCase()), 30_000);
     });
     return () => { if (feedTimer.current) clearInterval(feedTimer.current); };
   }, [convex]);
 
   const endsAt      = config ? config.updatedAt + config.durationDays * 86400000 : null;
   const { d, h, m, ended } = useCountdown(endsAt);
-  const totalTickets = entries.reduce((sum, e) => sum + e.tickets, 0);
+  const totalTicketsConvex = entries.reduce((sum, e) => sum + e.tickets, 0);
   const ticketPriceVBMS = config?.ticketPriceVBMS ?? 10000;
   const ticketPriceUSD  = config?.ticketPriceUSD  ?? 0.06;
-  const totalVBMS = totalTickets * ticketPriceVBMS;
 
   // ── Raffle active state ──
   const { data: raffleActive } = useReadContract({
@@ -241,6 +262,9 @@ export default function RafflePage() {
     query: { refetchInterval: 30_000 },
   });
   const arbTotalTickets = arbTotalTicketsRaw !== undefined ? Number(arbTotalTicketsRaw) : null;
+  // Prefer on-chain value (live), fallback to Convex
+  const totalTickets = arbTotalTickets ?? totalTicketsConvex;
+  const totalVBMS = totalTickets * ticketPriceVBMS;
 
   // ── ARB costs ──
   const { data: costUSDN } = useReadContract({
@@ -298,9 +322,9 @@ export default function RafflePage() {
           }
         });
       }
-      // reload entries + recent feed
+      // reload entries + recent feed + player info
       const epoch = config?.epoch ?? 1;
-      loadRaffleData(epoch);
+      loadRaffleData(epoch, walletAddress?.toLowerCase());
     }
   }, [txConfirmed]);
 
@@ -718,6 +742,36 @@ export default function RafflePage() {
                 </div>
               )}
 
+              {/* My recent purchases — show player's own entries */}
+              {walletAddress && recentEntries.filter(e => e.address.toLowerCase() === walletAddress.toLowerCase()).length > 0 && (
+                <div className="border-2 border-[#FFD700]/30 overflow-hidden">
+                  <div className="bg-[#FFD700]/10 border-b border-[#FFD700]/20 px-3 py-1.5">
+                    <span className="text-[#FFD700] font-black text-[9px] uppercase tracking-widest">{t('raffleMyBuys')}</span>
+                  </div>
+                  <div className="divide-y divide-white/5">
+                    {recentEntries
+                      .filter(e => e.address.toLowerCase() === walletAddress.toLowerCase())
+                      .map(e => (
+                        <a
+                          key={e.txHash}
+                          href={e.chain === "base" ? baseTxUrl(e.txHash) : arbTxUrl(e.txHash)}
+                          target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-3 py-2 hover:bg-white/5 transition-colors"
+                        >
+                          <span className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black shrink-0 ${e.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
+                            {e.chain.toUpperCase()}
+                          </span>
+                          <span className="text-white/30 text-[8px] font-black shrink-0 border border-white/10 px-1">{e.token}</span>
+                          <span className="text-[#FFD700] font-black text-[10px] flex-1">{e.tickets}🎟️</span>
+                          <span className="text-white/30 text-[8px] font-mono shrink-0">{timeAgo(e.timestamp, t)}</span>
+                          <span className="text-blue-400/60 text-[8px] shrink-0">↗</span>
+                        </a>
+                      ))
+                    }
+                  </div>
+                </div>
+              )}
+
               <div className="h-1" />
             </div>
           </div>
@@ -824,9 +878,44 @@ export default function RafflePage() {
                     <span className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black shrink-0 ${e.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
                       {e.chain.toUpperCase()}
                     </span>
-                    <span className="flex-1 font-mono text-[10px] text-white/60 truncate">{e.address.slice(0, 6)}…{e.address.slice(-4)}</span>
+                    <span className="text-white/30 text-[8px] font-black shrink-0 border border-white/10 px-1">{e.token}</span>
+                    <a
+                      href={e.chain === "base" ? baseTxUrl(e.txHash) : arbTxUrl(e.txHash)}
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex-1 min-w-0 truncate hover:underline"
+                    >
+                      <span className="font-bold text-[10px] text-white/80">
+                        {e.username ? `@${e.username}` : fmtAddr(e.address)}
+                      </span>
+                    </a>
                     <span className="text-[#FFD700] font-black text-[10px] shrink-0">{e.tickets}🎟️</span>
                     <span className="text-white/30 text-[8px] font-mono shrink-0">{timeAgo(e.timestamp, t)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* My Tickets */}
+          {walletAddress && playerInfo && playerInfo.playerTotal > 0 && (
+            <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
+              <div className="bg-[#FFD700] border-b-2 border-black px-3 py-2 flex items-center justify-between">
+                <span className="text-black font-black text-[10px] uppercase tracking-widest">🎟️ {t('raffleMine')}</span>
+                <span className="text-black font-black text-sm">{playerInfo.playerTotal} {t('raffleTicketsLabel')}</span>
+              </div>
+              <div className="px-3 py-3 space-y-2">
+                {playerInfo.playerRanges.map((r, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black shrink-0 ${r.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
+                      {r.chain.toUpperCase()} · {r.token}
+                    </span>
+                    <div className="flex flex-wrap gap-1 flex-1">
+                      {Array.from({ length: r.end - r.start + 1 }, (_, k) => r.start + k).map(n => (
+                        <span key={n} className="bg-[#FFD700] text-black font-black text-[10px] px-2 py-0.5 border-2 border-black shadow-[1px_1px_0_#000]">
+                          #{n}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -842,11 +931,13 @@ export default function RafflePage() {
               </div>
               <div className="divide-y divide-black/40 max-h-48 overflow-y-auto">
                 {entries.map((e, i) => (
-                  <div key={e.txHash} className="flex items-center gap-2 px-3 py-2">
-                    <span className="text-white/30 font-mono text-[9px] w-4 text-right">{i + 1}</span>
-                    <span className="flex-1 font-mono text-[10px] text-white/60 truncate">{e.address.slice(0, 6)}…{e.address.slice(-4)}</span>
-                    <span className="text-[#FFD700] font-black text-[10px]">{e.tickets}×</span>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black ${e.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-white"}`}>
+                  <div key={e.address} className="flex items-center gap-2 px-3 py-2">
+                    <span className="text-white/30 font-mono text-[9px] w-4 text-right shrink-0">{i + 1}</span>
+                    <span className="flex-1 font-mono text-[10px] text-white/70 truncate">
+                      {e.username ? `@${e.username}` : fmtAddr(e.address)}
+                    </span>
+                    <span className="text-[#FFD700] font-black text-[10px] shrink-0">{e.tickets}🎟️</span>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black shrink-0 ${e.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
                       {e.chain.toUpperCase()}
                     </span>
                   </div>

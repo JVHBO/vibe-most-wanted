@@ -57,6 +57,37 @@ export const getRecentEntries = query({
   },
 });
 
+/** Get player's ticket ranges (computed from entry order) */
+export const getPlayerTicketInfo = query({
+  args: { address: v.string(), epoch: v.optional(v.number()) },
+  handler: async (ctx, { address, epoch }) => {
+    const ep = epoch ?? 1;
+    const allEntries = await ctx.db
+      .query("raffleEntries")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", ep))
+      .collect();
+
+    // Sort by blockNumber = order entries appear on-chain
+    allEntries.sort((a, b) => a.blockNumber - b.blockNumber);
+
+    let running = 0;
+    const playerRanges: Array<{ start: number; end: number; chain: string; token: string }> = [];
+    let playerTotal = 0;
+
+    for (const entry of allEntries) {
+      const start = running + 1;
+      const end   = running + entry.tickets;
+      if (entry.address.toLowerCase() === address.toLowerCase()) {
+        playerRanges.push({ start, end, chain: entry.chain, token: entry.token });
+        playerTotal += entry.tickets;
+      }
+      running += entry.tickets;
+    }
+
+    return { totalTickets: running, playerTotal, playerRanges };
+  },
+});
+
 /** Get current raffle config (static, set by admin) */
 export const getRaffleConfig = query({
   args: {},
@@ -76,10 +107,14 @@ export const getRaffleBuyers = query({
     ).collect();
 
     // Aggregate by address
-    const map: Record<string, { address: string; tickets: number; chain: string }> = {};
+    const map: Record<string, { address: string; username: string | null; tickets: number; chain: string }> = {};
     for (const e of entries) {
-      if (!map[e.address]) map[e.address] = { address: e.address, tickets: 0, chain: e.chain };
+      if (!map[e.address]) {
+        map[e.address] = { address: e.address, username: e.username ?? null, tickets: 0, chain: e.chain };
+      }
       map[e.address].tickets += e.tickets;
+      // Update username if we have one
+      if (e.username && !map[e.address].username) map[e.address].username = e.username;
     }
 
     return Object.values(map).sort((a, b) => b.tickets - a.tickets);
@@ -244,8 +279,15 @@ export const recordBaseEntry = internalMutation({
       .first();
     if (existing) return;
 
+    // Resolve username from profiles
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", buyer.toLowerCase()))
+      .first();
+
     await ctx.db.insert("raffleEntries", {
       address:     buyer.toLowerCase(),
+      username:    profile?.username,
       tickets:     count,
       chain:       "base",
       token:       "VBMS",
@@ -325,8 +367,15 @@ export const recordBaseEntryPublic = mutation({
       .first();
     if (existing) return { skipped: true };
 
+    // Resolve username from profiles
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", buyer.toLowerCase()))
+      .first();
+
     await ctx.db.insert("raffleEntries", {
       address:     buyer.toLowerCase(),
+      username:    profile?.username,
       tickets:     count,
       chain:       "base",
       token:       token ?? "VBMS",
@@ -443,8 +492,15 @@ export const recordARBEntry = mutation({
       .first();
     if (existing) return { skipped: true };
 
+    // Resolve username from profiles
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", buyer.toLowerCase()))
+      .first();
+
     await ctx.db.insert("raffleEntries", {
       address:     buyer.toLowerCase(),
+      username:    profile?.username,
       tickets:     count,
       chain:       "arb",
       token,

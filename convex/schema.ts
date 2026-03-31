@@ -2225,6 +2225,7 @@ export default defineSchema({
 
   raffleEntries: defineTable({
     address:     v.string(),
+    username:    v.optional(v.string()), // Resolved from profiles table
     tickets:     v.number(),
     chain:       v.string(), // "base" | "arb"
     token:       v.string(), // "VBMS" | "USND" | "ETH"
