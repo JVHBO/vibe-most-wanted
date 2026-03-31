@@ -70,7 +70,7 @@ export const getPlayerTicketInfo = query({
     const allEntries = await ctx.db
       .query("raffleEntries")
       .withIndex("by_epoch", (q: any) => q.eq("epoch", ep))
-      .collect();
+      .take(1000);
 
     // Sort by blockNumber = order entries appear on-chain
     allEntries.sort((a, b) => a.blockNumber - b.blockNumber);
@@ -109,7 +109,7 @@ export const getRaffleBuyers = query({
     const entries = await (epoch !== undefined
       ? q.withIndex("by_epoch", (i: any) => i.eq("epoch", epoch))
       : q
-    ).collect();
+    ).take(1000);
 
     // Aggregate by address
     const map: Record<string, { address: string; username: string | null; tickets: number; chain: string }> = {};
@@ -769,6 +769,69 @@ export const getRaffleResult = query({
       .query("raffleResults")
       .withIndex("by_epoch", (q: any) => q.eq("epoch", ep))
       .first();
+  },
+});
+
+/** Admin: patch fields on existing result (e.g. stored before schema update) */
+export const patchDrawResult = mutation({
+  args: {
+    adminKey:         v.string(),
+    epoch:            v.number(),
+    winnerChain:      v.optional(v.string()),
+    winnerToken:      v.optional(v.string()),
+    prizeDescription: v.optional(v.string()),
+  },
+  handler: async (ctx, { adminKey, epoch, winnerChain, winnerToken, prizeDescription }) => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+    const rec = await ctx.db.query("raffleResults")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch)).first();
+    if (!rec) throw new Error("No result for epoch " + epoch);
+    const patch: Record<string, string> = {};
+    if (winnerChain !== undefined) patch.winnerChain = winnerChain;
+    if (winnerToken !== undefined) patch.winnerToken = winnerToken;
+    if (prizeDescription !== undefined) patch.prizeDescription = prizeDescription;
+    await ctx.db.patch(rec._id, patch);
+    return { ok: true, epoch, ...patch };
+  },
+});
+
+/** Admin: manually insert a missing raffleEntry (for gaps in polling) */
+export const insertMissingEntry = mutation({
+  args: {
+    adminKey:    v.string(),
+    address:     v.string(),
+    tickets:     v.number(),
+    chain:       v.string(),
+    token:       v.string(),
+    txHash:      v.string(),
+    epoch:       v.number(),
+    blockNumber: v.number(),
+  },
+  handler: async (ctx, { adminKey, address, tickets, chain, token, txHash, epoch, blockNumber }) => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+    const existing = await ctx.db
+      .query("raffleEntries")
+      .withIndex("by_txHash", (q: any) => q.eq("txHash", txHash))
+      .first();
+    if (existing) return { skipped: true };
+    const addr = address.toLowerCase();
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", addr))
+      .first();
+    await ctx.db.insert("raffleEntries", {
+      address: addr,
+      username: profile?.username,
+      tickets,
+      chain,
+      token,
+      txHash,
+      epoch,
+      blockNumber,
+      timestamp: Date.now(),
+      synced: true,
+    });
+    return { recorded: true };
   },
 });
 
