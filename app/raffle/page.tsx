@@ -553,7 +553,7 @@ export default function RafflePage() {
             {/* 3D card — drag to spin */}
             <div
               className="select-none"
-              style={{ perspective: '900px', width: 190, height: 268, cursor: 'grab' }}
+              style={{ perspective: '900px', width: 190, height: 310, cursor: 'grab' }}
               onMouseDown={e => {
                 cardRotRef.current.dragging = true;
                 cardRotRef.current.lastX = e.clientX;
@@ -619,7 +619,7 @@ export default function RafflePage() {
                   <img
                     src="/images/card-back.png"
                     alt="VMW Card Back"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', transform: 'scale(1.06)', transformOrigin: 'center' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', transform: 'scale(1.18)', transformOrigin: 'center' }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }}
                   />
                 </div>
