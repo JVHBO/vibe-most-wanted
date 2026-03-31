@@ -553,7 +553,7 @@ export default function RafflePage() {
             {/* 3D card — drag to spin */}
             <div
               className="select-none"
-              style={{ perspective: '900px', width: 190, height: 310, cursor: 'grab' }}
+              style={{ perspective: '900px', width: 204, height: 310, cursor: 'grab' }}
               onMouseDown={e => {
                 cardRotRef.current.dragging = true;
                 cardRotRef.current.lastX = e.clientX;
@@ -607,11 +607,11 @@ export default function RafflePage() {
                 }}
               >
                 {/* Front — carta inteira visível */}
-                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img
                     src="/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png"
                     alt="Goofy Romero"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 </div>
                 {/* Back — zoom para cobrir bordas do formato diferente */}
@@ -619,7 +619,7 @@ export default function RafflePage() {
                   <img
                     src="/images/card-back.png"
                     alt="VMW Card Back"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', transform: 'scale(1.08)', transformOrigin: 'center' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', transform: 'scale(1.13)', transformOrigin: 'center' }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }}
                   />
                 </div>
