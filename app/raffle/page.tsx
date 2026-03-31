@@ -773,7 +773,8 @@ export default function RafflePage() {
                     }
                   </div>
                 </div>
-              )}
+              );
+            })()}
 
               <div className="h-1" />
             </div>
