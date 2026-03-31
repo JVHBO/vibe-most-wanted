@@ -553,7 +553,7 @@ export default function RafflePage() {
             {/* 3D card — drag to spin */}
             <div
               className="select-none"
-              style={{ perspective: '900px', width: 190, height: 310, cursor: 'grab' }}
+              style={{ perspective: '900px', width: 190, height: 268, cursor: 'grab' }}
               onMouseDown={e => {
                 cardRotRef.current.dragging = true;
                 cardRotRef.current.lastX = e.clientX;
