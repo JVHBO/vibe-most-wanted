@@ -52,6 +52,8 @@ const RAFFLE_ARB_ABI = [
     outputs: [{ name: "ethWei", type: "uint256" }, { name: "ethPriceUSD8", type: "uint256" }] },
   { name: "getUSDNCost", type: "function", stateMutability: "view",
     inputs: [{ name: "count", type: "uint256" }], outputs: [{ type: "uint256" }] },
+  { name: "totalTickets", type: "function", stateMutability: "view",
+    inputs: [], outputs: [{ type: "uint256" }] },
 ] as const;
 
 const ERC20_ABI = [
@@ -145,8 +147,10 @@ export default function RafflePage() {
   const [config,        setConfig]        = useState<RaffleConfig | null>(null);
   const [entries,       setEntries]       = useState<RaffleEntry[]>([]);
   const [recentEntries, setRecentEntries] = useState<RaffleRecentEntry[]>([]);
-  const loaded    = useRef(false);
-  const feedTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [myNewTickets,  setMyNewTickets]  = useState<number[]>([]);
+  const loaded              = useRef(false);
+  const feedTimer           = useRef<ReturnType<typeof setInterval> | null>(null);
+  const ticketRangeStartRef = useRef<number | null>(null);
 
   function loadRaffleData(epoch: number) {
     Promise.all([
@@ -228,6 +232,14 @@ export default function RafflePage() {
   });
   const ethWeiCost = ethCostData ? (ethCostData as [bigint, bigint])[0] : undefined;
 
+  // ── ARB total tickets (on-chain, live) ──
+  const { data: arbTotalTicketsRaw, refetch: refetchArbTotal } = useReadContract({
+    address: RAFFLE_ARB, abi: RAFFLE_ARB_ABI, functionName: "totalTickets",
+    args: [], chainId: ARB_CHAIN_ID,
+    query: { refetchInterval: 30_000 },
+  });
+  const arbTotalTickets = arbTotalTicketsRaw !== undefined ? Number(arbTotalTicketsRaw) : null;
+
   // ── ARB costs ──
   const { data: costUSDN } = useReadContract({
     address: RAFFLE_ARB, abi: RAFFLE_ARB_ABI, functionName: "getUSDNCost",
@@ -274,6 +286,16 @@ export default function RafflePage() {
       setStatus("idle");
     } else if (txConfirmed && status === "buying") {
       setStatus("success");
+      // If ARB purchase: fetch new totalTickets to compute ticket numbers
+      if (lastBuyChain === "arb" && ticketRangeStartRef.current !== null) {
+        const before = ticketRangeStartRef.current;
+        refetchArbTotal().then(({ data }) => {
+          const after = Number(data ?? 0);
+          if (after > before) {
+            setMyNewTickets(Array.from({ length: after - before }, (_, i) => before + i + 1));
+          }
+        });
+      }
       // reload entries + recent feed
       const epoch = config?.epoch ?? 1;
       loadRaffleData(epoch);
@@ -377,6 +399,8 @@ export default function RafflePage() {
         setTxHash(h);
         return;
       }
+      // Capture current total so we know which tickets the player gets
+      ticketRangeStartRef.current = arbTotalTickets ?? 0;
       setLastBuyChain("arb");
       setStatus("buying");
       const h = await writeContractAsync({
@@ -397,6 +421,8 @@ export default function RafflePage() {
         setStatus("switching");
         await switchChainAsync({ chainId: ARB_CHAIN_ID });
       }
+      // Capture current total so we know which tickets the player gets
+      ticketRangeStartRef.current = arbTotalTickets ?? 0;
       setLastBuyChain("arb");
       setStatus("buying");
       const h = await writeContractAsync({
@@ -415,6 +441,8 @@ export default function RafflePage() {
     setErrMsg("");
     setPendingApprove(false);
     setLastBuyChain(null);
+    setMyNewTickets([]);
+    ticketRangeStartRef.current = null;
   }
 
   const isBusy = status === "switching" || status === "approving" || status === "buying";
@@ -488,181 +516,196 @@ export default function RafflePage() {
 
       {/* ── Buy modal ── */}
       {showBuy && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => { if (!isBusy) setShowBuy(false); }}>
-          <div className="absolute inset-0 bg-black/80" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => { if (!isBusy) { setShowBuy(false); resetStatus(); } }}>
+          <div className="absolute inset-0 bg-black/85" />
           <div
-            className="relative w-full max-w-sm border-2 border-t-0 border-black bg-[#1a1a1a] shadow-[0_-4px_0_#FFD700]"
+            className="relative w-full max-w-sm border-2 border-black bg-[#1a1a1a] shadow-[6px_6px_0px_#FFD700] flex flex-col max-h-[90vh]"
             onClick={e => e.stopPropagation()}
           >
-            <div className="bg-[#FFD700] border-b-2 border-black px-4 py-2.5 flex items-center justify-between">
+            {/* Header */}
+            <div className="bg-[#FFD700] border-b-2 border-black px-4 py-3 flex items-center justify-between shrink-0">
               <span className="text-black font-black text-sm uppercase tracking-widest">🎟️ Comprar Tickets</span>
-              <button onClick={() => { if (!isBusy) { setShowBuy(false); resetStatus(); } }} className="text-black font-black text-lg leading-none">✕</button>
+              <button
+                onClick={() => { if (!isBusy) { setShowBuy(false); resetStatus(); } }}
+                className="w-7 h-7 flex items-center justify-center border-2 border-black bg-black text-[#FFD700] font-black text-xs shadow-[2px_2px_0px_#333] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+              >✕</button>
             </div>
 
-            <div className="px-4 py-4 space-y-4">
+            {/* Scrollable body */}
+            <div className="overflow-y-auto px-4 py-4 space-y-4">
+
               {/* Status feedback */}
               {status === "success" && (
-                <div className="bg-green-900/40 border-2 border-green-500 px-3 py-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-green-400 font-black text-xs uppercase">✅ {buyQty} ticket{buyQty > 1 ? "s" : ""} comprado{buyQty > 1 ? "s" : ""}!</span>
-                    <button onClick={resetStatus} className="text-green-400/60 text-xs ml-2">✕</button>
+                <div className="bg-green-900/40 border-2 border-green-500 px-3 py-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <p className="text-green-400 font-black text-xs uppercase">
+                        ✅ {buyQty} ticket{buyQty > 1 ? "s" : ""} comprado{buyQty > 1 ? "s" : ""}!
+                      </p>
+                      {lastBuyChain === "arb" && myNewTickets.length > 0 && (
+                        <div className="mt-2">
+                          <p className="text-green-300/70 text-[9px] uppercase tracking-wider mb-1.5">Seus números:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {myNewTickets.map(n => (
+                              <span key={n} className="bg-[#FFD700] text-black font-black text-[10px] px-2 py-0.5 border-2 border-black shadow-[1px_1px_0_#000]">
+                                #{n}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {lastBuyChain === "base" && (
+                        <p className="text-green-300/60 text-[10px] mt-1.5">
+                          ⏳ Ticket registrado on-chain — número aparece em ~2min após sync com ARB
+                        </p>
+                      )}
+                      {lastBuyChain === "arb" && myNewTickets.length === 0 && (
+                        <p className="text-green-300/60 text-[10px] mt-1">🎟️ Registrado na Arbitrum</p>
+                      )}
+                    </div>
+                    <button onClick={resetStatus} className="text-green-400/60 text-xs shrink-0 mt-0.5">✕</button>
                   </div>
-                  {lastBuyChain === "base" && (
-                    <p className="text-green-300/60 text-[10px] mt-1">
-                      ⏳ Sincronizando com ARB em ~2 min — entrada já registrada on-chain
-                    </p>
-                  )}
-                  {lastBuyChain === "arb" && (
-                    <p className="text-green-300/60 text-[10px] mt-1">
-                      🎟️ Entradas registradas na Arbitrum imediatamente
-                    </p>
-                  )}
                 </div>
               )}
               {status === "error" && (
-                <div className="bg-red-900/40 border-2 border-red-500 px-3 py-2 flex items-center justify-between">
-                  <span className="text-red-400 font-black text-[10px] truncate flex-1">{errMsg || "Erro na transação"}</span>
-                  <button onClick={resetStatus} className="text-red-400/60 text-xs ml-2 shrink-0">✕</button>
+                <div className="bg-red-900/40 border-2 border-red-500 px-3 py-2 flex items-center justify-between gap-2">
+                  <span className="text-red-400 font-black text-[10px] flex-1">{errMsg || "Erro na transação"}</span>
+                  <button onClick={resetStatus} className="text-red-400/60 text-xs shrink-0">✕</button>
                 </div>
               )}
               {(status === "switching" || status === "approving" || status === "buying") && (
-                <div className="bg-[#FFD700]/10 border-2 border-[#FFD700]/40 px-3 py-2">
+                <div className="bg-[#FFD700]/10 border-2 border-[#FFD700]/40 px-3 py-2.5 text-center">
                   <span className="text-[#FFD700] font-black text-xs uppercase animate-pulse">
                     {status === "switching" ? "⛓ Trocando rede…" : status === "approving" ? "🔑 Aprovando token…" : "⏳ Enviando transação…"}
                   </span>
                 </div>
               )}
               {pendingApprove && status === "idle" && (
-                <div className="bg-blue-900/40 border-2 border-blue-500 px-3 py-2">
-                  <p className="text-blue-300 font-black text-[10px] uppercase">✅ Aprovação confirmada — clique em Buy novamente</p>
+                <div className="bg-blue-900/40 border-2 border-blue-500 px-3 py-2 text-center">
+                  <p className="text-blue-300 font-black text-[10px] uppercase">✅ Aprovado — clique Buy novamente</p>
                 </div>
               )}
 
               {/* Qty selector */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 bg-black/30 border-2 border-black px-3 py-2.5">
                 <span className="text-white/50 text-[10px] font-black uppercase tracking-wider flex-1">Quantidade</span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={() => setBuyQty(q => Math.max(1, q - 1))}
                     disabled={isBusy}
-                    className="w-8 h-8 border-2 border-black bg-[#111] text-white font-black flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40"
+                    className="w-9 h-9 border-2 border-black bg-[#111] text-white font-black text-lg flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40"
                   >−</button>
-                  <span className="text-[#FFD700] font-black text-xl w-8 text-center tabular-nums">{buyQty}</span>
+                  <span className="text-[#FFD700] font-black text-2xl w-10 text-center tabular-nums">{buyQty}</span>
                   <button
                     onClick={() => setBuyQty(q => Math.min(20, q + 1))}
                     disabled={isBusy}
-                    className="w-8 h-8 border-2 border-black bg-[#111] text-white font-black flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40"
+                    className="w-9 h-9 border-2 border-black bg-[#111] text-white font-black text-lg flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40"
                   >+</button>
                 </div>
               </div>
 
-              {/* Options — BASE */}
+              {/* BASE options */}
               <div className="border-2 border-black overflow-hidden">
-                <div className="bg-[#0052FF]/20 border-b border-black/40 px-3 py-1.5">
-                  <span className="text-[#0052FF] font-black text-[9px] uppercase tracking-widest">BASE Mainnet</span>
+                <div className="bg-[#0052FF] px-3 py-1.5">
+                  <span className="text-white font-black text-[9px] uppercase tracking-widest">⬡ BASE Mainnet</span>
                 </div>
 
                 {/* VBMS */}
-                <div className="flex items-center gap-3 px-3 py-2.5 border-b border-black/30">
-                  <div className="w-9 h-9 shrink-0 border-2 border-black bg-[#0052FF] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
-                    <span className="text-white font-black text-[8px]">BASE</span>
-                    <span className="text-white/70 font-bold text-[7px]">VBMS</span>
+                <div className="flex items-center gap-3 px-3 py-3 border-b border-white/5">
+                  <div className="w-10 h-10 shrink-0 border-2 border-black bg-[#0052FF] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
+                    <span className="text-white font-black text-[8px] leading-none">VBMS</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm">{vbmsPriceLabel}</p>
-                    <p className="text-white/40 text-[9px]">saldo: {fmtBal(vbmsBal as bigint | undefined, 18, "VBMS")}</p>
+                    <p className="text-white font-black text-sm leading-none">{vbmsPriceLabel}</p>
+                    <p className="text-white/30 text-[9px] mt-0.5">saldo: {fmtBal(vbmsBal as bigint | undefined, 18, "VBMS")}</p>
                   </div>
                   <button
                     onClick={handleBuyVBMS}
                     disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase transition-all shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]"
+                    className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
                   >
                     {vbmsNeedsApprove && !pendingApprove ? "Approve" : isBusy ? "…" : "Buy"}
                   </button>
                 </div>
 
                 {/* USDC */}
-                <div className="flex items-center gap-3 px-3 py-2.5 border-b border-black/30">
-                  <div className="w-9 h-9 shrink-0 border-2 border-black bg-[#2775CA] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
-                    <span className="text-white font-black text-[8px]">BASE</span>
-                    <span className="text-white/70 font-bold text-[7px]">USDC</span>
+                <div className="flex items-center gap-3 px-3 py-3 border-b border-white/5">
+                  <div className="w-10 h-10 shrink-0 border-2 border-black bg-[#2775CA] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
+                    <span className="text-white font-black text-[8px] leading-none">USDC</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm">{usdcPriceLabel}</p>
-                    <p className="text-white/40 text-[9px]">saldo: {fmtBal(usdcBal as bigint | undefined, 6, "USDC")}</p>
+                    <p className="text-white font-black text-sm leading-none">{usdcPriceLabel}</p>
+                    <p className="text-white/30 text-[9px] mt-0.5">saldo: {fmtBal(usdcBal as bigint | undefined, 6, "USDC")}</p>
                   </div>
                   <button
                     onClick={handleBuyUSDC}
                     disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase transition-all shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]"
+                    className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
                   >
                     {usdcNeedsApprove && !pendingApprove ? "Approve" : isBusy ? "…" : "Buy"}
                   </button>
                 </div>
 
                 {/* ETH Base */}
-                <div className="flex items-center gap-3 px-3 py-2.5">
-                  <div className="w-9 h-9 shrink-0 border-2 border-black bg-[#627EEA] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
-                    <span className="text-white font-black text-[8px]">BASE</span>
-                    <span className="text-white/70 font-bold text-[7px]">ETH</span>
+                <div className="flex items-center gap-3 px-3 py-3">
+                  <div className="w-10 h-10 shrink-0 border-2 border-black bg-[#627EEA] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
+                    <span className="text-white font-black text-[8px] leading-none">ETH</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm">{ethPriceLabel}</p>
-                    <p className="text-white/40 text-[9px]">saldo: {fmtBal(baseEthBal?.value, 18, "ETH")}</p>
+                    <p className="text-white font-black text-sm leading-none">{ethPriceLabel}</p>
+                    <p className="text-white/30 text-[9px] mt-0.5">saldo: {fmtBal(baseEthBal?.value, 18, "ETH")}</p>
                   </div>
                   <button
                     onClick={handleBuyETHBase}
                     disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase transition-all shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]"
+                    className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
                   >
                     {isBusy ? "…" : "Buy"}
                   </button>
                 </div>
               </div>
 
-              {/* Options — ARB */}
+              {/* ARB options */}
               <div className="border-2 border-black overflow-hidden">
-                <div className="bg-[#12AAFF]/20 border-b border-black/40 px-3 py-1.5">
-                  <span className="text-[#12AAFF] font-black text-[9px] uppercase tracking-widest">Arbitrum One</span>
+                <div className="bg-[#12AAFF] px-3 py-1.5">
+                  <span className="text-black font-black text-[9px] uppercase tracking-widest">◆ Arbitrum One</span>
                 </div>
 
                 {/* USND */}
-                <div className="flex items-center gap-3 px-3 py-2.5 border-b border-black/30">
-                  <div className="w-9 h-9 shrink-0 border-2 border-black bg-[#12AAFF] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
-                    <span className="text-white font-black text-[8px]">ARB</span>
-                    <span className="text-white/70 font-bold text-[7px]">USND</span>
+                <div className="flex items-center gap-3 px-3 py-3 border-b border-white/5">
+                  <div className="w-10 h-10 shrink-0 border-2 border-black bg-[#12AAFF] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
+                    <span className="text-black font-black text-[8px] leading-none">USND</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm">
+                    <p className="text-white font-black text-sm leading-none">
                       {costUSDN ? fmtBal(costUSDN as bigint, 18, "USND") : `$${(ticketPriceUSD * buyQty).toFixed(2)} USND`}
                     </p>
-                    <p className="text-white/40 text-[9px]">saldo: {fmtBal(usndBal as bigint | undefined, 18, "USND")}</p>
+                    <p className="text-white/30 text-[9px] mt-0.5">saldo: {fmtBal(usndBal as bigint | undefined, 18, "USND")}</p>
                   </div>
                   <button
                     onClick={handleBuyUSDN}
                     disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase transition-all shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]"
+                    className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
                   >
                     {!usndAllowance || (costUSDN && (usndAllowance as bigint) < (costUSDN as bigint)) ? "Approve" : isBusy ? "…" : "Buy"}
                   </button>
                 </div>
 
                 {/* ETH ARB */}
-                <div className="flex items-center gap-3 px-3 py-2.5">
-                  <div className="w-9 h-9 shrink-0 border-2 border-black bg-[#627EEA]/80 flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
-                    <span className="text-white font-black text-[8px]">ARB</span>
-                    <span className="text-white/70 font-bold text-[7px]">ETH</span>
+                <div className="flex items-center gap-3 px-3 py-3">
+                  <div className="w-10 h-10 shrink-0 border-2 border-black bg-[#627EEA] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
+                    <span className="text-white font-black text-[8px] leading-none">ETH</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm">
+                    <p className="text-white font-black text-sm leading-none">
                       {arbEthWeiCost ? fmtBal(arbEthWeiCost as bigint, 18, "ETH") : `≈${(0.000023 * buyQty).toFixed(6)} ETH`}
                     </p>
-                    <p className="text-white/40 text-[9px]">saldo: {fmtBal(arbEthBal?.value, 18, "ETH")}</p>
+                    <p className="text-white/30 text-[9px] mt-0.5">saldo: {fmtBal(arbEthBal?.value, 18, "ETH")}</p>
                   </div>
                   <button
                     onClick={handleBuyETHArb}
                     disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase transition-all shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]"
+                    className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
                   >
                     {isBusy ? "…" : "Buy"}
                   </button>
@@ -670,8 +713,12 @@ export default function RafflePage() {
               </div>
 
               {!walletAddress && (
-                <p className="text-white/30 text-[9px] text-center uppercase tracking-wider">Conecte sua wallet para comprar</p>
+                <div className="border-2 border-white/10 bg-white/5 px-4 py-3 text-center">
+                  <p className="text-white/40 text-[10px] font-black uppercase tracking-wider">Conecte sua wallet para comprar</p>
+                </div>
               )}
+
+              <div className="h-1" />
             </div>
           </div>
         </div>
