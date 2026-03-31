@@ -167,8 +167,9 @@ export default function RafflePage() {
   const [config,        setConfig]        = useState<RaffleConfig | null>(null);
   const [entries,       setEntries]       = useState<RaffleEntry[]>([]);
   const [recentEntries, setRecentEntries] = useState<RaffleRecentEntry[]>([]);
-  const [myNewTickets,  setMyNewTickets]  = useState<number[]>([]);
-  const [playerInfo,    setPlayerInfo]    = useState<PlayerTicketInfo | null>(null);
+  const [myNewTickets,      setMyNewTickets]      = useState<number[]>([]);
+  const [playerInfo,        setPlayerInfo]        = useState<PlayerTicketInfo | null>(null);
+  const [myPurchasesPage,   setMyPurchasesPage]   = useState(0);
   const loaded              = useRef(false);
   const feedTimer           = useRef<ReturnType<typeof setInterval> | null>(null);
   const ticketRangeStartRef = useRef<number | null>(null);
@@ -197,6 +198,13 @@ export default function RafflePage() {
     });
     return () => { if (feedTimer.current) clearInterval(feedTimer.current); };
   }, [convex]);
+
+  // Lock body scroll when any modal is open
+  useEffect(() => {
+    const open = showBuy || showInfo;
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [showBuy, showInfo]);
 
   const endsAt      = config ? config.updatedAt + config.durationDays * 86400000 : null;
   const { d, h, m, ended } = useCountdown(endsAt);
@@ -545,7 +553,8 @@ export default function RafflePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => { if (!isBusy) { setShowBuy(false); resetStatus(); } }}>
           <div className="absolute inset-0 bg-black/85" />
           <div
-            className="relative w-full max-w-sm border-2 border-black bg-[#1a1a1a] shadow-[6px_6px_0px_#FFD700] flex flex-col max-h-[90vh]"
+            className="relative w-full max-w-sm border-2 border-black bg-[#1a1a1a] shadow-[6px_6px_0px_#FFD700] flex flex-col"
+            style={{ maxHeight: 'min(92vh, 640px)' }}
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -558,7 +567,7 @@ export default function RafflePage() {
             </div>
 
             {/* Scrollable body */}
-            <div className="overflow-y-auto px-4 py-4 space-y-4">
+            <div className="overflow-y-auto min-h-0 px-3 py-3 space-y-3">
 
               {/* Status feedback */}
               {status === "success" && (
@@ -611,20 +620,14 @@ export default function RafflePage() {
               )}
 
               {/* Qty selector */}
-              <div className="flex items-center gap-3 bg-black/30 border-2 border-black px-3 py-2.5">
-                <span className="text-white/50 text-[10px] font-black uppercase tracking-wider flex-1">{t('raffleQuantity')}</span>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setBuyQty(q => Math.max(1, q - 1))}
-                    disabled={isBusy}
-                    className="w-9 h-9 border-2 border-black bg-[#111] text-white font-black text-lg flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40"
-                  >−</button>
-                  <span className="text-[#FFD700] font-black text-2xl w-10 text-center tabular-nums">{buyQty}</span>
-                  <button
-                    onClick={() => setBuyQty(q => Math.min(20, q + 1))}
-                    disabled={isBusy}
-                    className="w-9 h-9 border-2 border-black bg-[#111] text-white font-black text-lg flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40"
-                  >+</button>
+              <div className="flex items-center gap-2 bg-black/30 border-2 border-black px-3 py-2">
+                <span className="text-white/50 text-[9px] font-black uppercase tracking-wider flex-1">{t('raffleQuantity')}</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setBuyQty(q => Math.max(1, q - 1))} disabled={isBusy}
+                    className="w-7 h-7 border-2 border-black bg-[#111] text-white font-black text-base flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40">−</button>
+                  <span className="text-[#FFD700] font-black text-xl w-8 text-center tabular-nums">{buyQty}</span>
+                  <button onClick={() => setBuyQty(q => Math.min(20, q + 1))} disabled={isBusy}
+                    className="w-7 h-7 border-2 border-black bg-[#111] text-white font-black text-base flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40">+</button>
                 </div>
               </div>
 
@@ -635,55 +638,46 @@ export default function RafflePage() {
                 </div>
 
                 {/* VBMS */}
-                <div className="flex items-center gap-3 px-3 py-3 border-b border-white/5">
-                  <div className="w-10 h-10 shrink-0 border-2 border-black bg-[#0052FF] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
-                    <span className="text-white font-black text-[8px] leading-none">VBMS</span>
+                <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5">
+                  <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#0052FF] flex items-center justify-center shadow-[1px_1px_0px_#000]">
+                    <span className="text-white font-black text-[7px]">VBMS</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm leading-none">{vbmsPriceLabel}</p>
-                    <p className="text-white/30 text-[9px] mt-0.5">{t('raffleBalance')} {fmtBal(vbmsBal as bigint | undefined, 18, "VBMS")}</p>
+                    <p className="text-white font-black text-xs leading-none">{vbmsPriceLabel}</p>
+                    <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(vbmsBal as bigint | undefined, 18, "VBMS")}</p>
                   </div>
-                  <button
-                    onClick={handleBuyVBMS}
-                    disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
-                  >
+                  <button onClick={handleBuyVBMS} disabled={!walletAddress || isBusy}
+                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]">
                     {vbmsNeedsApprove && !pendingApprove ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
 
                 {/* USDC */}
-                <div className="flex items-center gap-3 px-3 py-3 border-b border-white/5">
-                  <div className="w-10 h-10 shrink-0 border-2 border-black bg-[#2775CA] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
-                    <span className="text-white font-black text-[8px] leading-none">USDC</span>
+                <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5">
+                  <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#2775CA] flex items-center justify-center shadow-[1px_1px_0px_#000]">
+                    <span className="text-white font-black text-[7px]">USDC</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm leading-none">{usdcPriceLabel}</p>
-                    <p className="text-white/30 text-[9px] mt-0.5">{t('raffleBalance')} {fmtBal(usdcBal as bigint | undefined, 6, "USDC")}</p>
+                    <p className="text-white font-black text-xs leading-none">{usdcPriceLabel}</p>
+                    <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(usdcBal as bigint | undefined, 6, "USDC")}</p>
                   </div>
-                  <button
-                    onClick={handleBuyUSDC}
-                    disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
-                  >
+                  <button onClick={handleBuyUSDC} disabled={!walletAddress || isBusy}
+                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]">
                     {usdcNeedsApprove && !pendingApprove ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
 
                 {/* ETH Base */}
-                <div className="flex items-center gap-3 px-3 py-3">
-                  <div className="w-10 h-10 shrink-0 border-2 border-black bg-[#627EEA] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
-                    <span className="text-white font-black text-[8px] leading-none">ETH</span>
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#627EEA] flex items-center justify-center shadow-[1px_1px_0px_#000]">
+                    <span className="text-white font-black text-[7px]">ETH</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm leading-none">{ethPriceLabel}</p>
-                    <p className="text-white/30 text-[9px] mt-0.5">{t('raffleBalance')} {fmtBal(baseEthBal?.value, 18, "ETH")}</p>
+                    <p className="text-white font-black text-xs leading-none">{ethPriceLabel}</p>
+                    <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(baseEthBal?.value, 18, "ETH")}</p>
                   </div>
-                  <button
-                    onClick={handleBuyETHBase}
-                    disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
-                  >
+                  <button onClick={handleBuyETHBase} disabled={!walletAddress || isBusy}
+                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]">
                     {isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
@@ -691,66 +685,75 @@ export default function RafflePage() {
 
               {/* ARB options */}
               <div className="border-2 border-black overflow-hidden">
-                <div className="bg-[#12AAFF] px-3 py-1.5">
-                  <span className="text-black font-black text-[9px] uppercase tracking-widest">{t('raffleArbitrumOne')}</span>
+                <div className="bg-[#12AAFF] px-3 py-1">
+                  <span className="text-black font-black text-[8px] uppercase tracking-widest">{t('raffleArbitrumOne')}</span>
                 </div>
 
                 {/* USND */}
-                <div className="flex items-center gap-3 px-3 py-3 border-b border-white/5">
-                  <div className="w-10 h-10 shrink-0 border-2 border-black bg-[#12AAFF] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
-                    <span className="text-black font-black text-[8px] leading-none">USND</span>
+                <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5">
+                  <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#12AAFF] flex items-center justify-center shadow-[1px_1px_0px_#000]">
+                    <span className="text-black font-black text-[7px]">USND</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm leading-none">
+                    <p className="text-white font-black text-xs leading-none">
                       {costUSDN ? fmtBal(costUSDN as bigint, 18, "USND") : `$${(ticketPriceUSD * buyQty).toFixed(2)} USND`}
                     </p>
-                    <p className="text-white/30 text-[9px] mt-0.5">{t('raffleBalance')} {fmtBal(usndBal as bigint | undefined, 18, "USND")}</p>
+                    <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(usndBal as bigint | undefined, 18, "USND")}</p>
                   </div>
-                  <button
-                    onClick={handleBuyUSDN}
-                    disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
-                  >
+                  <button onClick={handleBuyUSDN} disabled={!walletAddress || isBusy}
+                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]">
                     {!usndAllowance || (costUSDN && (usndAllowance as bigint) < (costUSDN as bigint)) ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
 
                 {/* ETH ARB */}
-                <div className="flex items-center gap-3 px-3 py-3">
-                  <div className="w-10 h-10 shrink-0 border-2 border-black bg-[#627EEA] flex flex-col items-center justify-center shadow-[2px_2px_0px_#000]">
-                    <span className="text-white font-black text-[8px] leading-none">ETH</span>
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#627EEA] flex items-center justify-center shadow-[1px_1px_0px_#000]">
+                    <span className="text-white font-black text-[7px]">ETH</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-sm leading-none">
+                    <p className="text-white font-black text-xs leading-none">
                       {arbEthWeiCost ? fmtBal(arbEthWeiCost as bigint, 18, "ETH") : `≈${(0.000023 * buyQty).toFixed(6)} ETH`}
                     </p>
-                    <p className="text-white/30 text-[9px] mt-0.5">{t('raffleBalance')} {fmtBal(arbEthBal?.value, 18, "ETH")}</p>
+                    <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(arbEthBal?.value, 18, "ETH")}</p>
                   </div>
-                  <button
-                    onClick={handleBuyETHArb}
-                    disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
-                  >
+                  <button onClick={handleBuyETHArb} disabled={!walletAddress || isBusy}
+                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]">
                     {isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
               </div>
 
               {!walletAddress && (
-                <div className="border-2 border-white/10 bg-white/5 px-4 py-3 text-center">
-                  <p className="text-white/40 text-[10px] font-black uppercase tracking-wider">{t('raffleConnectWallet')}</p>
+                <div className="border-2 border-white/10 bg-white/5 px-3 py-2 text-center">
+                  <p className="text-white/40 text-[9px] font-black uppercase tracking-wider">{t('raffleConnectWallet')}</p>
                 </div>
               )}
 
-              {/* My recent purchases — show player's own entries */}
-              {walletAddress && recentEntries.filter(e => e.address.toLowerCase() === walletAddress.toLowerCase()).length > 0 && (
+              {/* My Purchases — paginated, 2 items per page */}
+              {walletAddress && (() => {
+                const myBuys = recentEntries.filter(e => e.address.toLowerCase() === walletAddress.toLowerCase());
+                const PAGE_SIZE = 2;
+                const totalPages = Math.ceil(myBuys.length / PAGE_SIZE);
+                const page = Math.min(myPurchasesPage, totalPages - 1);
+                const visible = myBuys.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+                if (myBuys.length === 0) return null;
+                return (
                 <div className="border-2 border-[#FFD700]/30 overflow-hidden">
-                  <div className="bg-[#FFD700]/10 border-b border-[#FFD700]/20 px-3 py-1.5">
+                  <div className="bg-[#FFD700]/10 border-b border-[#FFD700]/20 px-3 py-1 flex items-center justify-between">
                     <span className="text-[#FFD700] font-black text-[9px] uppercase tracking-widest">{t('raffleMyBuys')}</span>
+                    {totalPages > 1 && (
+                      <div className="flex items-center gap-1">
+                        <button onClick={() => setMyPurchasesPage(p => Math.max(0, p - 1))} disabled={page === 0}
+                          className="w-4 h-4 text-[#FFD700]/60 disabled:opacity-30 text-[10px] flex items-center justify-center">‹</button>
+                        <span className="text-white/30 text-[8px]">{page + 1}/{totalPages}</span>
+                        <button onClick={() => setMyPurchasesPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}
+                          className="w-4 h-4 text-[#FFD700]/60 disabled:opacity-30 text-[10px] flex items-center justify-center">›</button>
+                      </div>
+                    )}
                   </div>
                   <div className="divide-y divide-white/5">
-                    {recentEntries
-                      .filter(e => e.address.toLowerCase() === walletAddress.toLowerCase())
+                    {visible
                       .map(e => (
                         <a
                           key={e.txHash}

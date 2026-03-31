@@ -2239,4 +2239,18 @@ export default defineSchema({
     .index("by_epoch",  ["epoch"])
     .index("by_txHash", ["txHash"])
     .index("by_address_epoch", ["address", "epoch"]),
+
+  raffleResults: defineTable({
+    epoch:          v.number(),
+    winner:         v.string(),           // winner address (lowercase)
+    username:       v.optional(v.string()), // resolved from profiles
+    winnerTicket:   v.number(),           // winnerIndex + 1 (1-based)
+    winnerIndex:    v.number(),           // raw (vrfRandomWord % totalEntries)
+    vrfRandomWord:  v.string(),           // bigint as string (for verification)
+    totalEntries:   v.number(),
+    prizeDescription: v.string(),
+    drawTxHash:     v.optional(v.string()), // VRF fulfillment tx on ARB
+    timestamp:      v.number(),
+  })
+    .index("by_epoch", ["epoch"]),
 });

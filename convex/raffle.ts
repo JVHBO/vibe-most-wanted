@@ -41,19 +41,24 @@ const RAFFLE_BASE_ABI = [
 // QUERIES — for UI
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/** Get recent individual purchase entries (for live feed) */
+/** Get recent individual purchase entries (for live feed) — resolves usernames live */
 export const getRecentEntries = query({
   args: { epoch: v.optional(v.number()), limit: v.optional(v.number()) },
   handler: async (ctx, { epoch, limit }) => {
     const n = Math.min(limit ?? 10, 20);
-    if (epoch !== undefined) {
-      return await ctx.db
-        .query("raffleEntries")
-        .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch))
-        .order("desc")
-        .take(n);
-    }
-    return await ctx.db.query("raffleEntries").order("desc").take(n);
+    const raw = epoch !== undefined
+      ? await ctx.db.query("raffleEntries").withIndex("by_epoch", (q: any) => q.eq("epoch", epoch)).order("desc").take(n)
+      : await ctx.db.query("raffleEntries").order("desc").take(n);
+
+    // Resolve username fresh from profiles (handles old entries without username)
+    return await Promise.all(raw.map(async (entry) => {
+      if (entry.username) return entry;
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q: any) => q.eq("address", entry.address))
+        .first();
+      return { ...entry, username: profile?.username ?? null };
+    }));
   },
 });
 
@@ -270,14 +275,21 @@ export const recordBaseEntry = internalMutation({
     txHash:      v.string(),
     epoch:       v.number(),
     blockNumber: v.number(),
+    token:       v.optional(v.string()), // "VBMS" | "USDC" | "ETH"
   },
-  handler: async (ctx, { buyer, count, txHash, epoch, blockNumber }) => {
+  handler: async (ctx, { buyer, count, txHash, epoch, blockNumber, token }) => {
     // Idempotent: skip if already recorded
     const existing = await ctx.db
       .query("raffleEntries")
       .withIndex("by_txHash", (q: any) => q.eq("txHash", txHash))
       .first();
-    if (existing) return;
+    if (existing) {
+      // Backfill token if it was missing or wrong
+      if (token && existing.token === "VBMS" && token !== "VBMS") {
+        await ctx.db.patch(existing._id, { token });
+      }
+      return;
+    }
 
     // Resolve username from profiles
     const profile = await ctx.db
@@ -290,7 +302,7 @@ export const recordBaseEntry = internalMutation({
       username:    profile?.username,
       tickets:     count,
       chain:       "base",
-      token:       "VBMS",
+      token:       token ?? "VBMS",
       txHash,
       epoch,
       blockNumber,
@@ -462,13 +474,52 @@ export const pollBaseEvents = internalAction({
 
         // Record + schedule ARB sync (idempotent)
         await ctx.runMutation(internal.raffle.recordBaseEntry, {
-          buyer, count, txHash, epoch, blockNumber,
+          buyer, count, txHash, epoch, blockNumber, token,
         });
         await ctx.runAction(internal.raffle.submitBaseEntriesToARB, { buyer, count, txHash });
         console.log(`[raffle/poll] ${token} ${buyer} ×${count} block=${blockNumber}`);
       }
     } catch (e) {
       console.error("[raffle/poll] Error:", e);
+    }
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DRAW — Trigger VRF draw (onlyOwner via signer wallet)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const triggerDraw = action({
+  args: { adminKey: v.string() },
+  handler: async (_ctx, { adminKey }): Promise<{ ok: boolean; txHash?: string; error?: string }> => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+
+    const arbAddr    = ARB_RAFFLE_CONTRACT();
+    const privateKey = process.env.VBMS_SIGNER_PRIVATE_KEY;
+    if (!arbAddr || !privateKey) return { ok: false, error: "Contract or signer not configured" };
+
+    try {
+      const { ethers } = await import("ethers");
+      const provider = new ethers.JsonRpcProvider(ARB_RPC);
+      const signer   = new ethers.Wallet(privateKey, provider);
+      const contract = new ethers.Contract(arbAddr, [
+        "function requestDraw() external",
+        "function timeRemaining() view returns (uint256)",
+        "function raffle() view returns (string,string,uint256,uint256,uint256,bool,bool,bool,bool,uint256,uint256,uint256,address)",
+      ], signer);
+
+      // Check if draw is possible
+      const timeLeft = await contract.timeRemaining();
+      console.log(`[Raffle] timeRemaining = ${timeLeft}s`);
+
+      const tx = await contract.requestDraw();
+      console.log(`[Raffle] requestDraw tx: ${tx.hash}`);
+      await tx.wait(1);
+      console.log(`[Raffle] Draw requested! tx: ${tx.hash}`);
+      return { ok: true, txHash: tx.hash };
+    } catch (e: any) {
+      console.error("[Raffle] triggerDraw error:", e?.message ?? e);
+      return { ok: false, error: e?.message ?? String(e) };
     }
   },
 });
@@ -512,5 +563,98 @@ export const recordARBEntry = mutation({
     });
 
     return { recorded: true };
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DRAW RESULT — Record & Query winner
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/** Get recorded draw result for an epoch */
+export const getRaffleResult = query({
+  args: { epoch: v.optional(v.number()) },
+  handler: async (ctx, { epoch }) => {
+    const ep = epoch ?? 1;
+    return await ctx.db
+      .query("raffleResults")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", ep))
+      .first();
+  },
+});
+
+/** Internal: record draw result once VRF fulfilled */
+export const recordDrawResult = internalMutation({
+  args: {
+    epoch:          v.number(),
+    winner:         v.string(),
+    winnerTicket:   v.number(),
+    winnerIndex:    v.number(),
+    vrfRandomWord:  v.string(),
+    totalEntries:   v.number(),
+    prizeDescription: v.string(),
+    drawTxHash:     v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    // Idempotent: skip if already recorded for this epoch
+    const existing = await ctx.db
+      .query("raffleResults")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", args.epoch))
+      .first();
+    if (existing) return { skipped: true };
+
+    // Resolve winner username from profiles
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", args.winner.toLowerCase()))
+      .first();
+
+    await ctx.db.insert("raffleResults", {
+      ...args,
+      winner:    args.winner.toLowerCase(),
+      username:  profile?.username,
+      timestamp: Date.now(),
+    });
+    return { recorded: true };
+  },
+});
+
+/**
+ * Action: poll ARB contract for draw result, store if winner found.
+ * Safe to call repeatedly — idempotent via by_epoch index.
+ */
+export const checkAndRecordDraw = action({
+  args: { epoch: v.optional(v.number()) },
+  handler: async (ctx, { epoch }): Promise<{ hasWinner: boolean; winner?: string; winnerTicket?: number }> => {
+    const arbAddr = ARB_RAFFLE_CONTRACT();
+    if (!arbAddr) return { hasWinner: false };
+
+    try {
+      const { ethers } = await import("ethers");
+      const provider = new ethers.JsonRpcProvider(ARB_RPC);
+      const contract = new ethers.Contract(arbAddr, [
+        "function getDrawResult() view returns (address,uint256,uint256,uint256,string)",
+      ], provider);
+
+      const [winner, winnerIndex, vrfRandomWord, totalEntries, prizeDescription] = await contract.getDrawResult();
+      const ZERO = "0x0000000000000000000000000000000000000000";
+      if (!winner || winner === ZERO) return { hasWinner: false };
+
+      const ep = epoch ?? 1;
+      const winnerTicket = Number(winnerIndex) + 1; // 1-based
+      await ctx.runMutation(internal.raffle.recordDrawResult, {
+        epoch:           ep,
+        winner:          winner.toLowerCase(),
+        winnerTicket,
+        winnerIndex:     Number(winnerIndex),
+        vrfRandomWord:   vrfRandomWord.toString(),
+        totalEntries:    Number(totalEntries),
+        prizeDescription: prizeDescription || "Goofy Romero – Queen of Diamonds",
+      });
+
+      return { hasWinner: true, winner: winner.toLowerCase(), winnerTicket };
+    } catch (e) {
+      console.error("[Raffle] checkAndRecordDraw error:", e);
+      return { hasWinner: false };
+    }
   },
 });
