@@ -10,6 +10,7 @@ import {
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import { formatUnits, parseUnits } from "viem";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Addresses ────────────────────────────────────────────────────────────────
 const RAFFLE_BASE   = "0x54ac4e3782a21341440c418e7c37b26f937095e4" as const;
@@ -97,12 +98,12 @@ interface RaffleRecentEntry {
   timestamp: number;
 }
 
-function timeAgo(ts: number) {
+function timeAgo(ts: number, tFn: (k: any) => string) {
   const diff = Date.now() - ts;
-  if (diff < 60_000) return `${Math.max(1, Math.floor(diff / 1000))}s atrás`;
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m atrás`;
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h atrás`;
-  return `${Math.floor(diff / 86_400_000)}d atrás`;
+  if (diff < 60_000) return `${Math.max(1, Math.floor(diff / 1000))}${tFn('raffleTimeAgoSecs')}`;
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}${tFn('raffleTimeAgoMins')}`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}${tFn('raffleTimeAgoHours')}`;
+  return `${Math.floor(diff / 86_400_000)}${tFn('raffleTimeAgoDays')}`;
 }
 
 // ─── Countdown ────────────────────────────────────────────────────────────────
@@ -134,6 +135,7 @@ function fmtBal(raw: bigint | undefined, decimals: number, symbol: string) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function RafflePage() {
   const convex = useConvex();
+  const { t } = useLanguage();
   const { address: walletAddress, chainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
 
@@ -473,7 +475,7 @@ export default function RafflePage() {
           className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
           style={{ boxShadow: '4px 4px 0px #000' }}
         >
-          ← BACK
+          {t('raffleBack')}
         </Link>
         <h1 className="font-display font-black text-black text-base uppercase tracking-widest flex-1 text-center">
           🎟️ Raffle
@@ -490,7 +492,7 @@ export default function RafflePage() {
           <div className="absolute inset-0 bg-black/80" />
           <div className="relative w-full max-w-sm border-2 border-black bg-[#1a1a1a] shadow-[6px_6px_0px_#FFD700]" onClick={e => e.stopPropagation()}>
             <div className="bg-[#FFD700] border-b-2 border-black px-4 py-2.5 flex items-center justify-between">
-              <span className="text-black font-black text-sm uppercase tracking-widest">Como funciona</span>
+              <span className="text-black font-black text-sm uppercase tracking-widest">{t('raffleHowItWorks')}</span>
               <button onClick={() => setShowInfo(false)} className="text-black font-black text-lg leading-none">✕</button>
             </div>
             <div className="px-4 py-4 space-y-4 text-sm">
@@ -524,7 +526,7 @@ export default function RafflePage() {
           >
             {/* Header */}
             <div className="bg-[#FFD700] border-b-2 border-black px-4 py-3 flex items-center justify-between shrink-0">
-              <span className="text-black font-black text-sm uppercase tracking-widest">🎟️ Comprar Tickets</span>
+              <span className="text-black font-black text-sm uppercase tracking-widest">🎟️ {t('raffleBuyTickets')}</span>
               <button
                 onClick={() => { if (!isBusy) { setShowBuy(false); resetStatus(); } }}
                 className="w-7 h-7 flex items-center justify-center border-2 border-black bg-black text-[#FFD700] font-black text-xs shadow-[2px_2px_0px_#333] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
@@ -540,11 +542,11 @@ export default function RafflePage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <p className="text-green-400 font-black text-xs uppercase">
-                        ✅ {buyQty} ticket{buyQty > 1 ? "s" : ""} comprado{buyQty > 1 ? "s" : ""}!
+                        ✅ {buyQty} {t('raffleTicketsBought')}
                       </p>
                       {lastBuyChain === "arb" && myNewTickets.length > 0 && (
                         <div className="mt-2">
-                          <p className="text-green-300/70 text-[9px] uppercase tracking-wider mb-1.5">Seus números:</p>
+                          <p className="text-green-300/70 text-[9px] uppercase tracking-wider mb-1.5">{t('raffleYourNumbers')}</p>
                           <div className="flex flex-wrap gap-1">
                             {myNewTickets.map(n => (
                               <span key={n} className="bg-[#FFD700] text-black font-black text-[10px] px-2 py-0.5 border-2 border-black shadow-[1px_1px_0_#000]">
@@ -555,12 +557,10 @@ export default function RafflePage() {
                         </div>
                       )}
                       {lastBuyChain === "base" && (
-                        <p className="text-green-300/60 text-[10px] mt-1.5">
-                          ⏳ Ticket registrado on-chain — número aparece em ~2min após sync com ARB
-                        </p>
+                        <p className="text-green-300/60 text-[10px] mt-1.5">{t('raffleBaseSync')}</p>
                       )}
                       {lastBuyChain === "arb" && myNewTickets.length === 0 && (
-                        <p className="text-green-300/60 text-[10px] mt-1">🎟️ Registrado na Arbitrum</p>
+                        <p className="text-green-300/60 text-[10px] mt-1">{t('raffleArbRegistered')}</p>
                       )}
                     </div>
                     <button onClick={resetStatus} className="text-green-400/60 text-xs shrink-0 mt-0.5">✕</button>
@@ -576,19 +576,19 @@ export default function RafflePage() {
               {(status === "switching" || status === "approving" || status === "buying") && (
                 <div className="bg-[#FFD700]/10 border-2 border-[#FFD700]/40 px-3 py-2.5 text-center">
                   <span className="text-[#FFD700] font-black text-xs uppercase animate-pulse">
-                    {status === "switching" ? "⛓ Trocando rede…" : status === "approving" ? "🔑 Aprovando token…" : "⏳ Enviando transação…"}
+                    {status === "switching" ? t('raffleSwitchingChain') : status === "approving" ? t('raffleApprovingToken') : t('raffleSendingTx')}
                   </span>
                 </div>
               )}
               {pendingApprove && status === "idle" && (
                 <div className="bg-blue-900/40 border-2 border-blue-500 px-3 py-2 text-center">
-                  <p className="text-blue-300 font-black text-[10px] uppercase">✅ Aprovado — clique Buy novamente</p>
+                  <p className="text-blue-300 font-black text-[10px] uppercase">{t('raffleApprovedClickBuy')}</p>
                 </div>
               )}
 
               {/* Qty selector */}
               <div className="flex items-center gap-3 bg-black/30 border-2 border-black px-3 py-2.5">
-                <span className="text-white/50 text-[10px] font-black uppercase tracking-wider flex-1">Quantidade</span>
+                <span className="text-white/50 text-[10px] font-black uppercase tracking-wider flex-1">{t('raffleQuantity')}</span>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setBuyQty(q => Math.max(1, q - 1))}
@@ -607,7 +607,7 @@ export default function RafflePage() {
               {/* BASE options */}
               <div className="border-2 border-black overflow-hidden">
                 <div className="bg-[#0052FF] px-3 py-1.5">
-                  <span className="text-white font-black text-[9px] uppercase tracking-widest">⬡ BASE Mainnet</span>
+                  <span className="text-white font-black text-[9px] uppercase tracking-widest">{t('raffleBaseMainnet')}</span>
                 </div>
 
                 {/* VBMS */}
@@ -617,14 +617,14 @@ export default function RafflePage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-black text-sm leading-none">{vbmsPriceLabel}</p>
-                    <p className="text-white/30 text-[9px] mt-0.5">saldo: {fmtBal(vbmsBal as bigint | undefined, 18, "VBMS")}</p>
+                    <p className="text-white/30 text-[9px] mt-0.5">{t('raffleBalance')} {fmtBal(vbmsBal as bigint | undefined, 18, "VBMS")}</p>
                   </div>
                   <button
                     onClick={handleBuyVBMS}
                     disabled={!walletAddress || isBusy}
                     className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
                   >
-                    {vbmsNeedsApprove && !pendingApprove ? "Approve" : isBusy ? "…" : "Buy"}
+                    {vbmsNeedsApprove && !pendingApprove ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
 
@@ -635,14 +635,14 @@ export default function RafflePage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-black text-sm leading-none">{usdcPriceLabel}</p>
-                    <p className="text-white/30 text-[9px] mt-0.5">saldo: {fmtBal(usdcBal as bigint | undefined, 6, "USDC")}</p>
+                    <p className="text-white/30 text-[9px] mt-0.5">{t('raffleBalance')} {fmtBal(usdcBal as bigint | undefined, 6, "USDC")}</p>
                   </div>
                   <button
                     onClick={handleBuyUSDC}
                     disabled={!walletAddress || isBusy}
                     className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
                   >
-                    {usdcNeedsApprove && !pendingApprove ? "Approve" : isBusy ? "…" : "Buy"}
+                    {usdcNeedsApprove && !pendingApprove ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
 
@@ -653,14 +653,14 @@ export default function RafflePage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-black text-sm leading-none">{ethPriceLabel}</p>
-                    <p className="text-white/30 text-[9px] mt-0.5">saldo: {fmtBal(baseEthBal?.value, 18, "ETH")}</p>
+                    <p className="text-white/30 text-[9px] mt-0.5">{t('raffleBalance')} {fmtBal(baseEthBal?.value, 18, "ETH")}</p>
                   </div>
                   <button
                     onClick={handleBuyETHBase}
                     disabled={!walletAddress || isBusy}
                     className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
                   >
-                    {isBusy ? "…" : "Buy"}
+                    {isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
               </div>
@@ -668,7 +668,7 @@ export default function RafflePage() {
               {/* ARB options */}
               <div className="border-2 border-black overflow-hidden">
                 <div className="bg-[#12AAFF] px-3 py-1.5">
-                  <span className="text-black font-black text-[9px] uppercase tracking-widest">◆ Arbitrum One</span>
+                  <span className="text-black font-black text-[9px] uppercase tracking-widest">{t('raffleArbitrumOne')}</span>
                 </div>
 
                 {/* USND */}
@@ -680,14 +680,14 @@ export default function RafflePage() {
                     <p className="text-white font-black text-sm leading-none">
                       {costUSDN ? fmtBal(costUSDN as bigint, 18, "USND") : `$${(ticketPriceUSD * buyQty).toFixed(2)} USND`}
                     </p>
-                    <p className="text-white/30 text-[9px] mt-0.5">saldo: {fmtBal(usndBal as bigint | undefined, 18, "USND")}</p>
+                    <p className="text-white/30 text-[9px] mt-0.5">{t('raffleBalance')} {fmtBal(usndBal as bigint | undefined, 18, "USND")}</p>
                   </div>
                   <button
                     onClick={handleBuyUSDN}
                     disabled={!walletAddress || isBusy}
                     className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
                   >
-                    {!usndAllowance || (costUSDN && (usndAllowance as bigint) < (costUSDN as bigint)) ? "Approve" : isBusy ? "…" : "Buy"}
+                    {!usndAllowance || (costUSDN && (usndAllowance as bigint) < (costUSDN as bigint)) ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
 
@@ -700,21 +700,21 @@ export default function RafflePage() {
                     <p className="text-white font-black text-sm leading-none">
                       {arbEthWeiCost ? fmtBal(arbEthWeiCost as bigint, 18, "ETH") : `≈${(0.000023 * buyQty).toFixed(6)} ETH`}
                     </p>
-                    <p className="text-white/30 text-[9px] mt-0.5">saldo: {fmtBal(arbEthBal?.value, 18, "ETH")}</p>
+                    <p className="text-white/30 text-[9px] mt-0.5">{t('raffleBalance')} {fmtBal(arbEthBal?.value, 18, "ETH")}</p>
                   </div>
                   <button
                     onClick={handleBuyETHArb}
                     disabled={!walletAddress || isBusy}
                     className="border-2 border-black font-black text-[11px] px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] active:shadow-none active:translate-x-[3px] active:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]"
                   >
-                    {isBusy ? "…" : "Buy"}
+                    {isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
               </div>
 
               {!walletAddress && (
                 <div className="border-2 border-white/10 bg-white/5 px-4 py-3 text-center">
-                  <p className="text-white/40 text-[10px] font-black uppercase tracking-wider">Conecte sua wallet para comprar</p>
+                  <p className="text-white/40 text-[10px] font-black uppercase tracking-wider">{t('raffleConnectWallet')}</p>
                 </div>
               )}
 
@@ -768,7 +768,7 @@ export default function RafflePage() {
             <div className="border-t-2 border-black grid grid-cols-3 bg-[#1a1a1a]">
               <div className="flex flex-col items-center py-3 border-r-2 border-black">
                 <span className="font-black text-xl text-white leading-none">{totalTickets}</span>
-                <span className="text-white/40 text-[9px] uppercase mt-0.5 font-bold">tickets</span>
+                <span className="text-white/40 text-[9px] uppercase mt-0.5 font-bold">{t('raffleTicketsLabel')}</span>
               </div>
               <div className="flex flex-col items-center py-3 border-r-2 border-black">
                 <span className="font-black text-sm text-[#FFD700] leading-none">
@@ -776,11 +776,11 @@ export default function RafflePage() {
                     : totalVBMS >= 1_000 ? `${(totalVBMS / 1_000).toFixed(0)}k`
                     : totalVBMS.toString()}
                 </span>
-                <span className="text-white/40 text-[9px] uppercase mt-0.5 font-bold">VBMS pool</span>
+                <span className="text-white/40 text-[9px] uppercase mt-0.5 font-bold">{t('raffleVbmsPool')}</span>
               </div>
               <div className="flex flex-col items-center py-3">
                 {ended ? (
-                  <span className="font-black text-base text-red-400 leading-none">ENDED</span>
+                  <span className="font-black text-base text-red-400 leading-none">{t('raffleEnded')}</span>
                 ) : endsAt ? (
                   <span className="font-mono font-black text-base text-[#FFD700] leading-none tabular-nums">
                     {d > 0 ? `${d}d ${h}h` : `${h}h ${m}m`}
@@ -788,7 +788,7 @@ export default function RafflePage() {
                 ) : (
                   <span className="font-mono font-black text-base text-white/30 leading-none">— —</span>
                 )}
-                <span className="text-white/40 text-[9px] uppercase mt-0.5 font-bold">left</span>
+                <span className="text-white/40 text-[9px] uppercase mt-0.5 font-bold">{t('raffleLeft')}</span>
               </div>
             </div>
           </div>
@@ -799,15 +799,15 @@ export default function RafflePage() {
               onClick={() => { setShowBuy(true); resetStatus(); }}
               className="w-full border-2 border-black bg-[#FFD700] text-black font-black text-sm uppercase tracking-widest py-3.5 shadow-[4px_4px_0px_#000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
             >
-              🎟️ Buy Tickets
+              🎟️ {t('raffleBuyTickets')}
             </button>
           ) : raffleActive === false ? (
             <div className="w-full border-2 border-black bg-[#333] text-white/40 font-black text-sm uppercase tracking-widest py-3.5 text-center shadow-[4px_4px_0px_#555]">
-              🔒 Raffle not active yet
+              {t('raffleNotActive')}
             </div>
           ) : (
             <div className="w-full border-2 border-black bg-[#222] text-white/20 font-black text-sm uppercase tracking-widest py-3.5 text-center animate-pulse">
-              🎟️ Loading…
+              🎟️ {t('raffleBuyTickets')}…
             </div>
           )}
 
@@ -815,8 +815,8 @@ export default function RafflePage() {
           {recentEntries.length > 0 && (
             <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#000] overflow-hidden">
               <div className="bg-black border-b-2 border-black px-3 py-2 flex items-center justify-between">
-                <span className="text-[#FFD700] font-black text-[10px] uppercase tracking-widest">⚡ Atividade Recente</span>
-                <span className="text-white/20 font-mono text-[8px]">últimas {recentEntries.length}</span>
+                <span className="text-[#FFD700] font-black text-[10px] uppercase tracking-widest">{t('raffleRecentActivity')}</span>
+                <span className="text-white/20 font-mono text-[8px]">{t('raffleLast')} {recentEntries.length}</span>
               </div>
               <div className="divide-y divide-black/40 max-h-52 overflow-y-auto">
                 {recentEntries.map((e) => (
@@ -826,7 +826,7 @@ export default function RafflePage() {
                     </span>
                     <span className="flex-1 font-mono text-[10px] text-white/60 truncate">{e.address.slice(0, 6)}…{e.address.slice(-4)}</span>
                     <span className="text-[#FFD700] font-black text-[10px] shrink-0">{e.tickets}🎟️</span>
-                    <span className="text-white/30 text-[8px] font-mono shrink-0">{timeAgo(e.timestamp)}</span>
+                    <span className="text-white/30 text-[8px] font-mono shrink-0">{timeAgo(e.timestamp, t)}</span>
                   </div>
                 ))}
               </div>
@@ -837,8 +837,8 @@ export default function RafflePage() {
           {entries.length > 0 && (
             <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#000] overflow-hidden">
               <div className="bg-[#FFD700] border-b-2 border-black px-3 py-2 flex items-center justify-between">
-                <span className="text-black font-black text-[10px] uppercase tracking-widest">Participants</span>
-                <span className="text-black/60 font-bold text-[9px]">{entries.length} wallets</span>
+                <span className="text-black font-black text-[10px] uppercase tracking-widest">{t('raffleParticipants')}</span>
+                <span className="text-black/60 font-bold text-[9px]">{entries.length} {t('raffleWallets')}</span>
               </div>
               <div className="divide-y divide-black/40 max-h-48 overflow-y-auto">
                 {entries.map((e, i) => (
@@ -858,7 +858,7 @@ export default function RafflePage() {
           {/* VRF */}
           <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#000] overflow-hidden">
             <div className="bg-black border-b-2 border-black px-3 py-2">
-              <span className="text-[#FFD700] font-black text-[10px] uppercase tracking-widest">🔗 Verifiable Fairness</span>
+              <span className="text-[#FFD700] font-black text-[10px] uppercase tracking-widest">{t('raffleVerifiableFairness')}</span>
             </div>
             <div className="px-3 py-3 space-y-2">
               <p className="text-white/40 text-[10px] font-mono">formula: winnerIndex = vrfRandomWord % totalEntries</p>
