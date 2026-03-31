@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useConvex } from "convex/react";
+import { useConvex, useQuery } from "convex/react";
 import Link from "next/link";
 import {
   useAccount, useBalance, useReadContract,
@@ -208,6 +208,7 @@ export default function RafflePage() {
 
   const endsAt      = config ? config.updatedAt + config.durationDays * 86400000 : null;
   const { d, h, m, ended } = useCountdown(endsAt);
+  const raffleResult = useQuery(api.raffle.getRaffleResult, { epoch: config?.epoch ?? 1 });
   const totalTicketsConvex = entries.reduce((sum, e) => sum + e.tickets, 0);
   const ticketPriceVBMS = config?.ticketPriceVBMS ?? 10000;
   const ticketPriceUSD  = config?.ticketPriceUSD  ?? 0.06;
@@ -551,10 +552,9 @@ export default function RafflePage() {
       {/* ── Buy modal ── */}
       {showBuy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => { if (!isBusy) { setShowBuy(false); resetStatus(); } }}>
-          <div className="absolute inset-0 bg-black/85" />
+          <div className="absolute inset-0 bg-black/95" />
           <div
-            className="relative w-full max-w-sm border-2 border-black bg-[#1a1a1a] shadow-[6px_6px_0px_#FFD700] flex flex-col"
-            style={{ maxHeight: 'min(92vh, 640px)' }}
+            className="relative w-full max-w-sm border-2 border-black bg-[#1a1a1a] shadow-[6px_6px_0px_#FFD700]"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -566,8 +566,8 @@ export default function RafflePage() {
               >✕</button>
             </div>
 
-            {/* Scrollable body */}
-            <div className="overflow-y-auto min-h-0 px-3 py-3 space-y-3">
+            {/* Body */}
+            <div className="px-3 py-3 space-y-3">
 
               {/* Status feedback */}
               {status === "success" && (
@@ -851,15 +851,38 @@ export default function RafflePage() {
             </div>
           </div>
 
+          {/* Winner banner — shown when draw completed */}
+          {raffleResult && (
+            <div className="border-2 border-[#FFD700] bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
+              <div className="bg-[#FFD700] px-3 py-2 text-center">
+                <span className="text-black font-black text-xs uppercase tracking-widest">🏆 Vencedor</span>
+              </div>
+              <div className="px-3 py-3 text-center space-y-1">
+                <p className="text-[#FFD700] font-black text-base">
+                  {raffleResult.username ? `@${raffleResult.username}` : `${raffleResult.winner.slice(0,6)}…${raffleResult.winner.slice(-4)}`}
+                </p>
+                <p className="text-white/50 text-[10px]">Ticket #{raffleResult.winnerTicket} de {raffleResult.totalEntries}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Awaiting draw banner — ended but no winner yet */}
+          {ended && !raffleResult && (
+            <div className="border-2 border-white/20 bg-[#1a1a1a] px-3 py-3 text-center">
+              <p className="text-white/60 font-black text-xs uppercase tracking-widest animate-pulse">⏳ Sorteio em andamento…</p>
+              <p className="text-white/30 text-[10px] mt-1">Chainlink VRF · Arbitrum One</p>
+            </div>
+          )}
+
           {/* Buy button */}
-          {isRaffleActive ? (
+          {isRaffleActive && !ended ? (
             <button
               onClick={() => { setShowBuy(true); resetStatus(); }}
               className="w-full border-2 border-black bg-[#FFD700] text-black font-black text-sm uppercase tracking-widest py-3.5 shadow-[4px_4px_0px_#000] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
             >
               🎟️ {t('raffleBuyTickets')}
             </button>
-          ) : raffleActive === false ? (
+          ) : ended ? null : raffleActive === false ? (
             <div className="w-full border-2 border-black bg-[#333] text-white/40 font-black text-sm uppercase tracking-widest py-3.5 text-center shadow-[4px_4px_0px_#555]">
               {t('raffleNotActive')}
             </div>
