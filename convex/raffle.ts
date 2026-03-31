@@ -420,6 +420,9 @@ export const pollBaseEvents = internalAction({
     const contractAddr = BASE_RAFFLE_CONTRACT().toLowerCase();
     if (!contractAddr) return;
 
+    // Retry any BASE entries that failed to sync to ARB on the previous attempt
+    await ctx.runAction(internal.raffle.retryUnsyncedEntries, {});
+
     // Use Convex config epoch (same as ARB) — BASE contract epoch may differ after resets
     const config = await ctx.runQuery(internal.raffle.getRaffleConfig, {});
     const configEpoch = (config as any)?.epoch ?? 3;
@@ -591,6 +594,9 @@ export const pollARBEvents = internalAction({
       await ctx.runMutation(internal.raffle.updatePollCheckpoint, {
         lastPolledARBBlock: latest,
       });
+
+      // Auto-trigger draw if time expired and no winner yet
+      await ctx.runAction(internal.raffle.autoCheckDraw, {});
     } catch (e) {
       console.error("[raffle/arb-poll] Error:", e);
     }
@@ -630,6 +636,115 @@ export const recordARBEntryInternal = internalMutation({
   },
 });
 
+/** Internal: query BASE entries that failed to sync to ARB (synced=false, older than 5min) */
+export const getUnsyncedEntries = internalQuery({
+  args: { epoch: v.number(), staleBefore: v.number() },
+  handler: async (ctx, { epoch, staleBefore }) => {
+    const entries = await ctx.db.query("raffleEntries")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch))
+      .filter((q: any) => q.and(
+        q.eq(q.field("synced"), false),
+        q.eq(q.field("chain"), "base"),
+        q.lt(q.field("timestamp"), staleBefore),
+      ))
+      .take(20);
+    return entries;
+  },
+});
+
+/** Internal: retry ARB sync for BASE entries that failed silently */
+export const retryUnsyncedEntries = internalAction({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const config = await ctx.runQuery(internal.raffle.getRaffleConfig, {});
+    const epoch = (config as any)?.epoch;
+    if (!epoch) return;
+    const staleBefore = Date.now() - 5 * 60 * 1000; // older than 5 min
+    const unsynced = await ctx.runQuery(internal.raffle.getUnsyncedEntries, { epoch, staleBefore });
+    if (unsynced.length === 0) return;
+    console.log(`[raffle/retry] retrying ${unsynced.length} unsynced BASE entries`);
+    for (const entry of unsynced as any[]) {
+      await ctx.runAction(internal.raffle.submitBaseEntriesToARB, {
+        buyer: entry.address, count: entry.tickets, txHash: entry.txHash,
+      });
+    }
+  },
+});
+
+/** Internal: mark drawRequested=true on current config to avoid duplicate requestDraw() */
+export const markDrawRequested = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const config = await ctx.db.query("raffleConfig").order("desc").first();
+    if (config) await ctx.db.patch(config._id, { drawRequested: true });
+  },
+});
+
+/**
+ * Internal: auto-trigger draw when time expires. Called from pollARBEvents.
+ * 1. If VRF fulfilled → checkAndRecordDraw stores winner.
+ * 2. If time expired but no VRF yet → requestDraw() once (guarded by drawRequested flag).
+ */
+export const autoCheckDraw = internalAction({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const arbAddr    = ARB_RAFFLE_CONTRACT();
+    const privateKey = process.env.VBMS_SIGNER_PRIVATE_KEY;
+    if (!arbAddr || !privateKey) return;
+
+    const config = await ctx.runQuery(internal.raffle.getRaffleConfig, {});
+    const epoch  = (config as any)?.epoch;
+    if (!epoch) return;
+
+    // Already have a winner stored → nothing to do
+    const existing = await ctx.runQuery(internal.raffle.getRaffleResult, { epoch });
+    if (existing) return;
+
+    try {
+      const { ethers } = await import("ethers");
+      const provider = new ethers.JsonRpcProvider(ARB_RPC);
+      const contract = new ethers.Contract(arbAddr, [
+        "function timeRemaining() view returns (uint256)",
+        "function totalTickets() view returns (uint256)",
+        "function getDrawResult() view returns (address,uint256,uint256,uint256,string)",
+        "function requestDraw() external",
+      ], new ethers.Wallet(privateKey, provider));
+
+      const [timeLeft, totalTickets, drawResult] = await Promise.all([
+        contract.timeRemaining(),
+        contract.totalTickets(),
+        contract.getDrawResult(),
+      ]);
+
+      const ZERO = "0x0000000000000000000000000000000000000000";
+      const winner = drawResult[0];
+
+      // VRF already fulfilled → record result
+      if (winner && winner !== ZERO) {
+        await ctx.runAction(internal.raffle.checkAndRecordDraw, { epoch });
+        return;
+      }
+
+      // Time not up yet → nothing to do
+      if (Number(timeLeft) > 0) return;
+      // No tickets → nothing to draw
+      if (Number(totalTickets) === 0) return;
+      // Already triggered → wait for VRF callback
+      if ((config as any)?.drawRequested) return;
+
+      // Time expired, tickets exist, VRF not triggered yet → request draw
+      console.log(`[raffle/auto] timeRemaining=0, tickets=${totalTickets}, triggering draw for epoch ${epoch}`);
+      const tx = await contract.requestDraw();
+      await tx.wait(1);
+      console.log(`[raffle/auto] requestDraw tx: ${tx.hash}`);
+      await ctx.runMutation(internal.raffle.markDrawRequested, {});
+    } catch (e: any) {
+      // Swallow errors (contract may revert if already requested, or if called too early)
+      console.error("[raffle/auto] autoCheckDraw error:", e?.shortMessage ?? e?.message ?? e);
+    }
+  },
+});
+
 /** Internal: update poll checkpoints on raffleConfig so pollers resume from where they left off */
 export const updatePollCheckpoint = internalMutation({
   args: {
@@ -657,6 +772,11 @@ export const claimShareBonus = mutation({
     const config = await ctx.db.query("raffleConfig").order("desc").first();
     if (!config) throw new Error("No raffle config");
     const epoch = config.epoch;
+
+    // Block if raffle already has a winner (draw completed)
+    const result = await ctx.db.query("raffleResults")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch)).first();
+    if (result) throw new Error("Raffle has ended");
 
     // Check already claimed
     const existing = await ctx.db

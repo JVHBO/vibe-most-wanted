@@ -2224,6 +2224,8 @@ export default defineSchema({
     // Poller checkpoints — persists last processed block to avoid gaps
     lastPolledBaseBlock: v.optional(v.number()),
     lastPolledARBBlock:  v.optional(v.number()),
+    // Draw state — prevents duplicate requestDraw() gas spend
+    drawRequested:       v.optional(v.boolean()),
   })
     .index("by_epoch", ["epoch"]),
 
