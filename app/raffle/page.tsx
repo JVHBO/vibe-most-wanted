@@ -14,7 +14,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 // ─── Addresses ────────────────────────────────────────────────────────────────
 const RAFFLE_BASE   = "0x54ac4e3782a21341440c418e7c37b26f937095e4" as const;
-const RAFFLE_ARB    = "0x81739e45a49a84b65c4a528b24048ab2ac172555" as const;
+const RAFFLE_ARB    = "0x320128eA0382EaD559094b229E8cCD04D37ebC22" as const;
 // ERC-20 VBMS token (confirmed in convex/blockchainVerify.ts — NOT the NFT collection)
 const VBMS_ADDRESS  = "0xb03439567cd22f278b21e1ffcdfb8e1696763827" as const;
 const USDC_ADDRESS  = "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913" as const;

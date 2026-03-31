@@ -660,3 +660,76 @@ export const checkAndRecordDraw = action({
     }
   },
 });
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// REDEPLOY ARB — Deploy new VBMSRaffleARB with correct keyHash, re-add entries,
+// then call requestDraw. Called after discovering original keyHash was invalid.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export const redeployARB = action({
+  args: { adminKey: v.string() },
+  handler: async (ctx, { adminKey }): Promise<{
+    ok: boolean; newAddress?: string; requestDrawTx?: string; error?: string;
+  }> => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+
+    const privateKey = process.env.VBMS_SIGNER_PRIVATE_KEY;
+    if (!privateKey) return { ok: false, error: "VBMS_SIGNER_PRIVATE_KEY not set" };
+
+    // VRF subscription ID (from storage slot 3 of old contract)
+    const VRF_SUB_ID   = 1617999602672790485923587783825558200181355821866801878070639539839664660800n;
+    const VRF_COORD    = "0x3C0Ca683b403E37668AE3DC4FB62F4B29B6f7a3e";
+    const VRF_KEYHASH  = "0xe9f223d7d83ec85c4f78042a4845af3a1c8df7757b4997b815ce4b8d07aca68c"; // VALID
+    const ETH_USD_FEED = "0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612";
+    const USND_ADDR    = "0x4ecf61a6c2fab8a047ceb3b3b263b401763e9d49";
+
+    // Confirmed 4 entries from Convex DB (epoch 1)
+    const BUYER   = "0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52";
+    const ENTRIES = [BUYER, BUYER, BUYER, BUYER]; // 4 tickets × 1 each
+
+    try {
+      const { ethers } = await import("ethers");
+      const { RAFFLE_ARB_BYTECODE, RAFFLE_ARB_ABI_FULL } = await import("./raffleArbArtifact.js");
+
+      const provider = new ethers.JsonRpcProvider(ARB_RPC);
+      const signer   = new ethers.Wallet(privateKey, provider);
+      console.log("[redeployARB] Deployer:", signer.address);
+
+      // 1. Deploy
+      const factory  = new ethers.ContractFactory(RAFFLE_ARB_ABI_FULL, RAFFLE_ARB_BYTECODE, signer);
+      const contract = await factory.deploy(VRF_COORD, VRF_KEYHASH, VRF_SUB_ID, ETH_USD_FEED, USND_ADDR);
+      await contract.waitForDeployment();
+      const newAddress = await contract.getAddress();
+      console.log("[redeployARB] Deployed:", newAddress);
+
+      // 2. createRaffle — maxTickets=4 so requestDraw unlocks after all entries added
+      const tx2 = await contract.createRaffle(
+        "Goofy Romero \u2013 Queen of Diamonds",
+        "",
+        ethers.parseUnits("23", 18),
+        4,    // maxTickets = exact entry count
+        3600, // 1h minimum — maxTickets triggers first
+      );
+      await tx2.wait(1);
+      console.log("[redeployARB] createRaffle:", tx2.hash);
+
+      // 3. addBaseEntries — one per ticket
+      for (const buyer of ENTRIES) {
+        const tx = await contract.addBaseEntries(buyer, 1);
+        await tx.wait(1);
+        console.log("[redeployARB] addBaseEntries:", buyer, "tx:", tx.hash);
+      }
+
+      // requestDraw NOT called here — consumer must be added to VRF subscription first.
+      // After getting newAddress:
+      //   1. Add newAddress as consumer at vrf.chain.link
+      //   2. npx convex env set RAFFLE_ARB_ADDRESS <newAddress> --prod
+      //   3. Call triggerDraw action
+
+      return { ok: true, newAddress, requestDrawTx: undefined };
+    } catch (e: any) {
+      console.error("[redeployARB] error:", e);
+      return { ok: false, error: e.shortMessage || e.message };
+    }
+  },
+});
