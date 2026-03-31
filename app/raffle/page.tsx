@@ -606,20 +606,20 @@ export default function RafflePage() {
                   transform: 'rotateY(0deg) rotateX(0deg)',
                 }}
               >
-                {/* Front */}
-                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)', background: '#000' }}>
+                {/* Front — carta inteira visível */}
+                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img
                     src="/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png"
                     alt="Goofy Romero"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.12)', transformOrigin: 'center' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                   />
                 </div>
-                {/* Back — same dimensions, cover fills area */}
+                {/* Back — zoom para cobrir bordas do formato diferente */}
                 <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', transform: 'rotateY(180deg)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)' }}>
                   <img
                     src="/images/card-back.png"
                     alt="VMW Card Back"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.08)', transformOrigin: 'center' }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }}
                   />
                 </div>
@@ -852,7 +852,7 @@ export default function RafflePage() {
                     <span className="text-[#FFD700] text-xs animate-spin shrink-0">⏳</span>
                     <div className="flex-1 min-w-0">
                       <p className="text-[#FFD700] font-black text-[10px] uppercase tracking-wider">
-                        {pendingTx.qty}🎟️ {pendingTx.token} · Sincronizando…
+                        {pendingTx.qty}🎟️ {pendingTx.token} · {t('raffleSyncing')}
                       </p>
                       <p className="text-white/40 text-[9px] mt-0.5 font-mono truncate">
                         <a
@@ -868,7 +868,7 @@ export default function RafflePage() {
                       {pendingTx.chain.toUpperCase()}
                     </span>
                   </div>
-                  <p className="text-white/30 text-[8px] mt-1.5">Aparece em ~2min após o cron sincronizar</p>
+                  <p className="text-white/30 text-[8px] mt-1.5">{t('raffleSyncHint')}</p>
                 </div>
               )}
 
