@@ -4,6 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Raffle card shine sweep */
+@keyframes card-shine {
+  0%   { transform: translateX(-120%); }
+  60%  { transform: translateX(220%); }
+  100% { transform: translateX(220%); }
+}
+
 /* VibeMail button animations */
 @keyframes vm-bg-send {
   0%   { transform: translateX(0%);    opacity: 0; }

@@ -172,6 +172,8 @@ export default function RafflePage() {
   const [playerInfo,        setPlayerInfo]        = useState<PlayerTicketInfo | null>(null);
   const [myPurchasesPage,   setMyPurchasesPage]   = useState(0);
   const [pendingTx,         setPendingTx]         = useState<{ txHash: string; chain: "base" | "arb"; qty: number; token: string } | null>(null);
+  const [cardFlipped,       setCardFlipped]       = useState(false);
+  const [showCardModal,     setShowCardModal]     = useState(false);
   const loaded              = useRef(false);
   const feedTimer           = useRef<ReturnType<typeof setInterval> | null>(null);
   const ticketRangeStartRef = useRef<number | null>(null);
@@ -521,23 +523,76 @@ export default function RafflePage() {
     <div className="min-h-screen bg-[#111] text-white flex flex-col">
 
       {/* ── Top bar ── */}
-      <div className="bg-[#FFD700] border-b-4 border-black px-4 py-3 flex items-center gap-3 shrink-0">
+      <div className="bg-black border-b-4 border-[#FFD700] px-4 py-3 flex items-center shrink-0 relative">
         <Link
           href="/"
           onClick={() => AudioManager.buttonClick()}
-          className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
-          style={{ boxShadow: '4px 4px 0px #000' }}
+          className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-[#FFD700] text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all z-10"
+          style={{ boxShadow: '4px 4px 0px #FFD700' }}
         >
           {t('raffleBack')}
         </Link>
-        <h1 className="font-display font-black text-black text-base uppercase tracking-widest flex-1 text-center">
-          🎟️ Raffle
+        <h1 className="absolute left-1/2 -translate-x-1/2 font-display font-black text-[#FFD700] text-base uppercase tracking-widest pointer-events-none">
+          Raffle
         </h1>
         <button
           onClick={() => setShowInfo(true)}
-          className="w-8 h-8 border-2 border-black bg-black text-[#FFD700] font-black text-sm flex items-center justify-center shadow-[2px_2px_0px_#333] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+          className="w-8 h-8 border-2 border-[#FFD700] bg-[#FFD700]/10 text-[#FFD700] font-black text-sm flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all ml-auto z-10"
         >?</button>
       </div>
+
+      {/* ── Card flip 3D modal ── */}
+      {showCardModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)' }}
+          onClick={() => { setShowCardModal(false); setCardFlipped(false); }}
+        >
+          <div className="flex flex-col items-center gap-4" onClick={e => e.stopPropagation()}>
+            {/* 3D card */}
+            <div
+              className="cursor-pointer select-none"
+              style={{ perspective: '900px', width: 220, height: 310 }}
+              onClick={() => setCardFlipped(f => !f)}
+            >
+              <div
+                style={{
+                  width: '100%', height: '100%',
+                  position: 'relative',
+                  transformStyle: 'preserve-3d',
+                  transition: 'transform 0.7s cubic-bezier(0.4,0.2,0.2,1)',
+                  transform: cardFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+                }}
+              >
+                {/* Front */}
+                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.4)' }}>
+                  <img
+                    src="/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png"
+                    alt="Goofy Romero"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                </div>
+                {/* Back */}
+                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.4)' }}>
+                  <img
+                    src="/images/card-back.png"
+                    alt="VMW Card Back"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png';
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            <p className="text-white/40 text-[10px] uppercase tracking-widest">Toque para girar</p>
+            <button
+              onClick={() => { setShowCardModal(false); setCardFlipped(false); }}
+              className="text-white/30 text-xs font-black uppercase tracking-widest hover:text-white/60 transition-colors"
+            >✕ Fechar</button>
+          </div>
+        </div>
+      )}
 
       {/* ── Info modal ── */}
       {showInfo && (
@@ -572,7 +627,7 @@ export default function RafflePage() {
       {/* ── Buy modal ── */}
       {showBuy && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => { if (!isBusy) { setShowBuy(false); resetStatus(); } }}>
-          <div className="absolute inset-0 bg-black/95" />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
           <div
             className="relative w-full max-w-sm border-2 border-black bg-[#1a1a1a] shadow-[6px_6px_0px_#FFD700]"
             onClick={e => e.stopPropagation()}
@@ -667,7 +722,7 @@ export default function RafflePage() {
                     <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(vbmsBal as bigint | undefined, 18, "VBMS")}</p>
                   </div>
                   <button onClick={handleBuyVBMS} disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]">
+                    className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
                     {vbmsNeedsApprove && !pendingApprove ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
@@ -682,7 +737,7 @@ export default function RafflePage() {
                     <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(usdcBal as bigint | undefined, 6, "USDC")}</p>
                   </div>
                   <button onClick={handleBuyUSDC} disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]">
+                    className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
                     {usdcNeedsApprove && !pendingApprove ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
@@ -697,7 +752,7 @@ export default function RafflePage() {
                     <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(baseEthBal?.value, 18, "ETH")}</p>
                   </div>
                   <button onClick={handleBuyETHBase} disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]">
+                    className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
                     {isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
@@ -721,7 +776,7 @@ export default function RafflePage() {
                     <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(usndBal as bigint | undefined, 18, "USND")}</p>
                   </div>
                   <button onClick={handleBuyUSDN} disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]">
+                    className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
                     {!usndAllowance || (costUSDN && (usndAllowance as bigint) < (costUSDN as bigint)) ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
@@ -738,7 +793,7 @@ export default function RafflePage() {
                     <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(arbEthBal?.value, 18, "ETH")}</p>
                   </div>
                   <button onClick={handleBuyETHArb} disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-[10px] px-3 py-1.5 uppercase shrink-0 bg-[#FFD700] text-black shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[2px_2px_0px_#000]">
+                    className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
                     {isBusy ? "…" : t('raffleBuy')}
                   </button>
                 </div>
@@ -836,18 +891,32 @@ export default function RafflePage() {
           {/* Prize card */}
           <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
             <div className="flex">
-              <div className="shrink-0 bg-black border-r-2 border-black flex items-center justify-center overflow-hidden" style={{ width: 110, minHeight: 140 }}>
+              <div
+                className="shrink-0 border-r-2 border-black flex items-center justify-center overflow-hidden relative p-2 cursor-pointer"
+                style={{ width: 120, minHeight: 160, background: 'radial-gradient(ellipse at center, #2a2a3e 0%, #111 100%)' }}
+                onClick={() => { setShowCardModal(true); setCardFlipped(false); }}
+                title="Clique para ver a carta"
+              >
                 <img
                   src="/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png"
                   alt="Goofy Romero"
-                  className="h-full w-auto object-contain"
-                  style={{ maxHeight: 140 }}
+                  className="object-contain drop-shadow-lg"
+                  style={{ maxHeight: 144, maxWidth: 100, width: 'auto', height: 'auto' }}
                   onError={(e) => {
                     const el = e.currentTarget as HTMLImageElement;
                     el.style.display = "none";
-                    el.parentElement!.innerHTML = '<div style="font-size:3rem;display:flex;align-items:center;justify-content:center;height:140px">🃏</div>';
+                    el.parentElement!.innerHTML = '<div style="font-size:3rem;display:flex;align-items:center;justify-content:center;height:144px">🃏</div>';
                   }}
                 />
+                {/* Shine sweep effect */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{
+                    background: 'linear-gradient(105deg, transparent 30%, rgba(255,215,0,0.15) 50%, transparent 70%)',
+                    animation: 'card-shine 2.8s ease-in-out infinite',
+                  }}
+                />
+                <div className="absolute bottom-1 right-1 text-white/30 text-[8px] font-mono pointer-events-none">↗</div>
               </div>
               <div className="flex-1 p-4 flex flex-col justify-center gap-2">
                 <span className="inline-block text-[8px] font-black uppercase tracking-widest text-[#FFD700] bg-[#FFD700]/10 border border-[#FFD700]/40 px-2 py-0.5 self-start">Legendary</span>
