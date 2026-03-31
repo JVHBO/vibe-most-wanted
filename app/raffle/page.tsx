@@ -172,7 +172,7 @@ export default function RafflePage() {
   const [myNewTickets,      setMyNewTickets]      = useState<number[]>([]);
   const [playerInfo,        setPlayerInfo]        = useState<PlayerTicketInfo | null>(null);
   const [myPurchasesPage,   setMyPurchasesPage]   = useState(0);
-  const [pendingTx,         setPendingTx]         = useState<{ txHash: string; chain: "base" | "arb"; qty: number; token: string } | null>(null);
+  const [pendingTxList,     setPendingTxList]     = useState<Array<{ txHash: string; chain: "base" | "arb"; qty: number; token: string }>>([]);
   const [shareClaimed,      setShareClaimed]      = useState(false);
   const [shareClaiming,     setShareClaiming]     = useState(false);
   const claimShareBonus = useMutation(api.raffle.claimShareBonus);
@@ -192,12 +192,10 @@ export default function RafflePage() {
       if (buyers) setEntries(buyers as RaffleEntry[]);
       if (recent) {
         setRecentEntries(recent as RaffleRecentEntry[]);
-        // Clear pendingTx once it appears in recent entries
-        setPendingTx(prev => {
-          if (!prev) return null;
-          const found = (recent as RaffleRecentEntry[]).some(e => e.txHash === prev.txHash);
-          return found ? null : prev;
-        });
+        // Remove from pendingTxList once txHash appears in recent entries
+        setPendingTxList(prev =>
+          prev.filter(p => !(recent as RaffleRecentEntry[]).some(e => e.txHash === p.txHash))
+        );
       }
       if (pinfo) setPlayerInfo(pinfo as PlayerTicketInfo);
       else if (addr === undefined) setPlayerInfo(null);
@@ -338,9 +336,9 @@ export default function RafflePage() {
       setStatus("idle");
     } else if (txConfirmed && status === "buying") {
       setStatus("success");
-      // Track pending tx until cron syncs it (~2min)
+      // Add to pendingTxList until cron syncs it (~2min)
       if (txHash && lastBuyChain) {
-        setPendingTx({ txHash, chain: lastBuyChain, qty: buyQty, token: lastBuyToken });
+        setPendingTxList(prev => [...prev, { txHash, chain: lastBuyChain!, qty: buyQty, token: lastBuyToken }]);
       }
       // If ARB purchase: fetch new totalTickets to compute ticket numbers
       if (lastBuyChain === "arb" && ticketRangeStartRef.current !== null) {
@@ -506,6 +504,8 @@ export default function RafflePage() {
     setMyNewTickets([]);
     ticketRangeStartRef.current = null;
   }
+
+  const pendingTx = pendingTxList.length > 0 ? pendingTxList[0] : null; // compat alias for banner
 
   const isBusy = status === "switching" || status === "approving" || status === "buying";
 
@@ -734,9 +734,8 @@ export default function RafflePage() {
                         <button
                           disabled={shareClaiming}
                           onClick={async () => {
-                            const castText = `Just entered the Goofy Romero Legendary raffle on @vibemostwanted 🎟️\n\nWin a rare card NFT — join us! 👇`;
-                            const miniappUrl = "https://farcaster.xyz/miniapps/0sNKxskaSKsH/vbms---game-and-wanted-cast";
-                            shareToFarcaster(castText, miniappUrl);
+                            const castText = `Just entered the Goofy Romero ($23) raffle 🎟️\n\nTicket: $0.06 each — grab yours before it's gone!`;
+                            shareToFarcaster(castText, "https://vibemostwanted.xyz/share/raffle");
                             setShareClaiming(true);
                             try {
                               await claimShareBonus({ address: walletAddress! });
@@ -1133,12 +1132,12 @@ export default function RafflePage() {
           )}
 
           {/* My Tickets */}
-          {walletAddress && ((playerInfo && playerInfo.playerTotal > 0) || pendingTx) && (
+          {walletAddress && ((playerInfo && playerInfo.playerTotal > 0) || pendingTxList.length > 0) && (
             <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
               <div className="bg-[#FFD700] border-b-2 border-black px-3 py-2 flex items-center justify-between">
                 <span className="text-black font-black text-[10px] uppercase tracking-widest">🎟️ {t('raffleMine')}</span>
                 <span className="text-black font-black text-sm">
-                  {(playerInfo?.playerTotal ?? 0) + (pendingTx ? pendingTx.qty : 0)} {t('raffleTicketsLabel')}
+                  {(playerInfo?.playerTotal ?? 0) + pendingTxList.reduce((s, p) => s + p.qty, 0)} {t('raffleTicketsLabel')}
                 </span>
               </div>
               <div className="px-3 py-3 space-y-2">
@@ -1156,17 +1155,17 @@ export default function RafflePage() {
                     </div>
                   </div>
                 ))}
-                {/* Pending tx — bought but not yet synced */}
-                {pendingTx && (
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black shrink-0 ${pendingTx.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
-                      {pendingTx.chain.toUpperCase()} · {pendingTx.token}
+                {/* Pending txs — bought but not yet synced */}
+                {pendingTxList.map(p => (
+                  <div key={p.txHash} className="flex items-center gap-2">
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black shrink-0 ${p.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
+                      {p.chain.toUpperCase()} · {p.token}
                     </span>
                     <span className="text-[#FFD700]/60 font-black text-[10px] animate-pulse">
-                      {pendingTx.qty}🎟️ {t('raffleSyncing')}…
+                      {p.qty}🎟️ {t('raffleSyncing')}…
                     </span>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           )}
