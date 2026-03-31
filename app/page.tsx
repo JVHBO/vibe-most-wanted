@@ -542,6 +542,19 @@ export default function TCGPage() {
     [profileDashboard?.lockedTokenIds]
   );
 
+  // 🎟️ Raffle config — for widget timer
+  const raffleConfig = useQuery(api.raffle.getRaffleConfig);
+  const raffleTimeLeft = useMemo(() => {
+    if (!raffleConfig) return null;
+    const endsAt = (raffleConfig as any).updatedAt + (raffleConfig as any).durationDays * 86400_000;
+    const diff = endsAt - Date.now();
+    if (diff <= 0) return null;
+    const totalMins = Math.floor(diff / 60000);
+    const h = Math.floor(totalMins / 60);
+    const m = totalMins % 60;
+    return { h, m };
+  }, [raffleConfig]);
+
   // 🔋 Raid Deck - Used for energy check AND locked cards derivation
   const raidDeckData = useQuery(
     api.raidBoss.getPlayerRaidDeck,
@@ -2704,9 +2717,18 @@ export default function TCGPage() {
                 </div>
                 {/* Timer */}
                 <div className="shrink-0 px-2 h-12 border-l-2 border-black flex flex-col items-center justify-center">
-                  <span className="text-black font-mono font-black text-[11px] leading-none">99h</span>
-                  <span className="text-black font-mono font-black text-[11px] leading-none">99m</span>
-                  <span className="text-black/60 text-[8px] uppercase leading-none mt-0.5">left</span>
+                  {raffleTimeLeft ? (
+                    <>
+                      <span className="text-black font-mono font-black text-[11px] leading-none">{raffleTimeLeft.h}h</span>
+                      <span className="text-black font-mono font-black text-[11px] leading-none">{raffleTimeLeft.m}m</span>
+                      <span className="text-black/60 text-[8px] uppercase leading-none mt-0.5">left</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-black font-mono font-black text-[11px] leading-none">--</span>
+                      <span className="text-black/60 text-[8px] uppercase leading-none mt-0.5">ended</span>
+                    </>
+                  )}
                 </div>
               </Link>
             )}

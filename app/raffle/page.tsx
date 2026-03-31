@@ -607,11 +607,11 @@ export default function RafflePage() {
                 }}
               >
                 {/* Front */}
-                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)' }}>
+                <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)', background: '#000' }}>
                   <img
                     src="/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png"
                     alt="Goofy Romero"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scale(1.12)', transformOrigin: 'center' }}
                   />
                 </div>
                 {/* Back — same dimensions, cover fills area */}
