@@ -9,7 +9,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, action, internalAction, internalMutation } from "./_generated/server";
+import { mutation, query, action, internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -773,6 +773,15 @@ export const getRaffleResult = query({
 });
 
 /** Internal: record draw result once VRF fulfilled */
+export const getEntriesForEpoch = internalQuery({
+  args: { epoch: v.number() },
+  handler: async (ctx, { epoch }) => {
+    return await ctx.db.query("raffleEntries")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch))
+      .collect();
+  },
+});
+
 export const recordDrawResult = internalMutation({
   args: {
     epoch:          v.number(),
@@ -783,6 +792,8 @@ export const recordDrawResult = internalMutation({
     totalEntries:   v.number(),
     prizeDescription: v.string(),
     drawTxHash:     v.optional(v.string()),
+    winnerChain:    v.optional(v.string()),
+    winnerToken:    v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Idempotent: skip if already recorded for this epoch
@@ -831,6 +842,24 @@ export const checkAndRecordDraw = action({
 
       const ep = epoch ?? 1;
       const winnerTicket = Number(winnerIndex) + 1; // 1-based
+
+      // Determine which chain/token the winning ticket was purchased with
+      let winnerChain: string | undefined;
+      let winnerToken: string | undefined;
+      try {
+        const allEntries = await ctx.runQuery(internal.raffle.getEntriesForEpoch, { epoch: ep });
+        const sorted = (allEntries as any[]).slice().sort((a: any, b: any) => a.blockNumber - b.blockNumber);
+        let running = 0;
+        for (const entry of sorted) {
+          running += entry.tickets;
+          if (winnerTicket <= running) {
+            winnerChain = entry.chain;
+            winnerToken = entry.token;
+            break;
+          }
+        }
+      } catch {}
+
       await ctx.runMutation(internal.raffle.recordDrawResult, {
         epoch:           ep,
         winner:          winner.toLowerCase(),
@@ -839,6 +868,8 @@ export const checkAndRecordDraw = action({
         vrfRandomWord:   vrfRandomWord.toString(),
         totalEntries:    Number(totalEntries),
         prizeDescription: prizeDescription || "Goofy Romero – Queen of Diamonds",
+        winnerChain,
+        winnerToken,
       });
 
       return { hasWinner: true, winner: winner.toLowerCase(), winnerTicket };
@@ -1017,6 +1048,36 @@ export const clearEpochData = internalMutation({
       .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch)).collect();
     for (const r of results) await ctx.db.delete(r._id);
     console.log(`[clearEpochData] Cleared ${entries.length} entries, ${results.length} results for epoch ${epoch}`);
+  },
+});
+
+/**
+ * One-shot fix: re-stamp raffleEntries from old epoch to current epoch.
+ * Use when BASE contract epoch is stale after ARB reset.
+ * Only re-stamps entries with timestamp AFTER the current epoch config was created.
+ */
+export const restampStaleBaseEntries = mutation({
+  args: { adminKey: v.string() },
+  handler: async (ctx, { adminKey }) => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+
+    const config = await ctx.db.query("raffleConfig").order("desc").first();
+    if (!config) throw new Error("No config");
+    const targetEpoch = config.epoch;
+    const since = config.updatedAt - 24 * 60 * 60 * 1000; // entries since 24h before epoch was set
+
+    // Find entries with wrong epoch that have recent timestamps
+    const stale = await ctx.db.query("raffleEntries")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", targetEpoch - 1))
+      .collect();
+
+    const toFix = stale.filter((e: any) => e.timestamp >= since);
+    for (const e of toFix) {
+      await ctx.db.patch(e._id, { epoch: targetEpoch });
+    }
+
+    console.log(`[restampStaleBaseEntries] Fixed ${toFix.length}/${stale.length} entries → epoch ${targetEpoch}`);
+    return { fixed: toFix.length, total: stale.length, targetEpoch };
   },
 });
 

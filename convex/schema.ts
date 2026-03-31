@@ -2251,6 +2251,8 @@ export default defineSchema({
     totalEntries:   v.number(),
     prizeDescription: v.string(),
     drawTxHash:     v.optional(v.string()), // VRF fulfillment tx on ARB
+    winnerChain:    v.optional(v.string()), // "base" | "arb"
+    winnerToken:    v.optional(v.string()), // "VBMS" | "USDC" | "ETH" | "USND" | "BONUS"
     timestamp:      v.number(),
   })
     .index("by_epoch", ["epoch"]),

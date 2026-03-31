@@ -1054,21 +1054,49 @@ export default function RafflePage() {
           {raffleResult && (
             <div className="border-2 border-[#FFD700] bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
               <div className="bg-[#FFD700] px-3 py-2 text-center">
-                <span className="text-black font-black text-xs uppercase tracking-widest">🏆 Vencedor</span>
+                <span className="text-black font-black text-xs uppercase tracking-widest">🏆 Winner</span>
               </div>
-              <div className="px-3 py-3 text-center space-y-2">
-                <p className="text-[#FFD700] font-black text-base">
-                  {raffleResult.username ? `@${raffleResult.username}` : `${raffleResult.winner.slice(0,6)}…${raffleResult.winner.slice(-4)}`}
-                </p>
-                <p className="text-white/50 text-[10px]">Ticket #{raffleResult.winnerTicket} de {raffleResult.totalEntries}</p>
-                {raffleResult.drawTxHash && (
-                  <a
-                    href={`https://arbiscan.io/tx/${raffleResult.drawTxHash}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-blue-400/70 text-[9px] font-mono hover:text-blue-400 transition-colors"
-                  >
-                    VRF TX ↗
-                  </a>
+              <div className="px-3 py-3 space-y-2">
+                {/* Name + wallet */}
+                <div className="text-center">
+                  <p className="text-[#FFD700] font-black text-lg leading-tight">
+                    {(raffleResult as any).username ? `@${(raffleResult as any).username}` : `${(raffleResult as any).winner.slice(0,6)}…${(raffleResult as any).winner.slice(-4)}`}
+                  </p>
+                  <p className="text-white/30 font-mono text-[9px] mt-0.5">{(raffleResult as any).winner}</p>
+                </div>
+                {/* Ticket + method */}
+                <div className="flex items-center justify-center gap-3 pt-1">
+                  <div className="text-center">
+                    <p className="text-white font-black text-sm">#{(raffleResult as any).winnerTicket}</p>
+                    <p className="text-white/40 text-[8px] uppercase">ticket</p>
+                  </div>
+                  <div className="w-px h-8 bg-white/10" />
+                  <div className="text-center">
+                    <p className="text-white font-black text-sm">{(raffleResult as any).totalEntries}</p>
+                    <p className="text-white/40 text-[8px] uppercase">total</p>
+                  </div>
+                  {(raffleResult as any).winnerChain && (
+                    <>
+                      <div className="w-px h-8 bg-white/10" />
+                      <div className="text-center">
+                        <span className={`text-[9px] font-black px-1.5 py-0.5 border-2 border-black ${(raffleResult as any).winnerChain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
+                          {((raffleResult as any).winnerChain as string).toUpperCase()}
+                        </span>
+                        <p className="text-white/40 text-[8px] uppercase mt-0.5">{(raffleResult as any).winnerToken}</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                {(raffleResult as any).drawTxHash && (
+                  <div className="text-center pt-1">
+                    <a
+                      href={`https://arbiscan.io/tx/${(raffleResult as any).drawTxHash}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-blue-400/70 text-[9px] font-mono hover:text-blue-400 transition-colors"
+                    >
+                      VRF TX ↗
+                    </a>
+                  </div>
                 )}
               </div>
             </div>
