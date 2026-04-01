@@ -139,7 +139,8 @@ function useCountdown(endsAt: number | null) {
   const d = Math.floor(diff / 86400000);
   const h = Math.floor((diff % 86400000) / 3600000);
   const m = Math.floor((diff % 3600000) / 60000);
-  return { d, h, m, ended: diff === 0 && endsAt !== null };
+  const s = Math.floor((diff % 60000) / 1000);
+  return { d, h, m, s, ended: diff === 0 && endsAt !== null };
 }
 
 function fmtBal(raw: bigint | undefined, decimals: number, symbol: string) {
@@ -224,7 +225,7 @@ export default function RafflePage() {
   }, [showBuy, showInfo]);
 
   const endsAt      = config ? config.updatedAt + config.durationDays * 86400000 : null;
-  const { d, h, m, ended } = useCountdown(endsAt);
+  const { d, h, m, s, ended } = useCountdown(endsAt);
   const raffleResult = useQuery(api.raffle.getRaffleResult, { epoch: config?.epoch ?? 1 });
   const totalTicketsConvex = entries.reduce((sum, e) => sum + e.tickets, 0);
   const bonusTicketCount  = useQuery(api.raffle.getBonusTicketCount, { epoch: config?.epoch }) ?? 0;
@@ -1043,7 +1044,7 @@ export default function RafflePage() {
                     <span className="font-black text-base text-red-400 leading-none">{t('raffleEnded')}</span>
                   ) : endsAt ? (
                     <span className="font-mono font-black text-base text-[#FFD700] leading-none tabular-nums">
-                      {d > 0 ? `${d}d ${h}h` : `${h}h ${m}m`}
+                      {d > 0 ? `${d}d ${h}h` : h > 0 ? `${h}h ${m}m` : `${m}m ${String(s).padStart(2,'0')}s`}
                     </span>
                   ) : (
                     <span className="font-mono font-black text-base text-white/30 leading-none">— —</span>
