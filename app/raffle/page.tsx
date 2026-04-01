@@ -1029,8 +1029,9 @@ export default function RafflePage() {
             {/* Stats */}
             <div className="border-t-2 border-black grid grid-cols-3 bg-[#1a1a1a]">
               <div className="flex flex-col items-center py-3 border-r-2 border-black">
-                <div className="flex items-center h-7">
+                <div className="flex items-center h-7 gap-1">
                   <span className="font-black text-xl text-white leading-none">{totalTickets}</span>
+                  {config?.maxTickets && <span className="text-white/30 font-bold text-[10px] leading-none">/{config.maxTickets >= 1000 ? `${config.maxTickets / 1000}k` : config.maxTickets}</span>}
                 </div>
                 <span className="text-white/40 text-[9px] uppercase font-bold">{t('raffleTicketsLabel')}</span>
               </div>
@@ -1059,6 +1060,22 @@ export default function RafflePage() {
                 <span className="text-white/40 text-[9px] uppercase font-bold">{t('raffleLeft')}</span>
               </div>
             </div>
+            {/* Ticket progress bar */}
+            {config?.maxTickets && (
+              <div className="border-t-2 border-black bg-black/40 px-3 py-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-white/30 text-[8px] font-black uppercase tracking-widest">TICKET LIMIT</span>
+                  <span className="text-white/50 text-[8px] font-mono">{totalTickets} / {config.maxTickets.toLocaleString()}</span>
+                </div>
+                <div className="h-2 bg-black/60 border border-black/60 overflow-hidden">
+                  {(() => {
+                    const pct = Math.min(100, (totalTickets / config.maxTickets) * 100);
+                    const color = pct >= 90 ? '#ef4444' : pct >= 60 ? '#f97316' : '#FFD700';
+                    return <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />;
+                  })()}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Winner banner — shown when draw completed */}
