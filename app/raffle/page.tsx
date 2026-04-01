@@ -658,19 +658,19 @@ export default function RafflePage() {
             </div>
             <div className="px-4 py-4 space-y-4 text-sm">
               <div className="space-y-1.5">
-                <p className="text-[#FFD700] font-black text-xs uppercase tracking-wider">🎟️ O que é necessário?</p>
-                <p className="text-white/70 text-[11px] leading-relaxed">Compre tickets com <b className="text-white">VBMS na BASE</b>, <b className="text-white">USDC na BASE</b> ou <b className="text-white">ETH</b>. Cada ticket = 1 entrada no sorteio.</p>
+                <p className="text-[#FFD700] font-black text-xs uppercase tracking-wider">🎟️ {t('raffleInfoQ1')}</p>
+                <p className="text-white/70 text-[11px] leading-relaxed">{t('raffleInfoA1')}</p>
               </div>
               <div className="space-y-1.5">
-                <p className="text-[#FFD700] font-black text-xs uppercase tracking-wider">🏆 Como é sorteado?</p>
-                <p className="text-white/70 text-[11px] leading-relaxed">Via <b className="text-white">Chainlink VRF v2.5</b> — totalmente verificável on-chain. Prêmio enviado manualmente ao vencedor.</p>
+                <p className="text-[#FFD700] font-black text-xs uppercase tracking-wider">🏆 {t('raffleInfoQ2')}</p>
+                <p className="text-white/70 text-[11px] leading-relaxed">{t('raffleInfoA2')}</p>
               </div>
               <div className="space-y-1.5">
-                <p className="text-[#FFD700] font-black text-xs uppercase tracking-wider">♻️ Para onde vai o dinheiro?</p>
-                <p className="text-white/70 text-[11px] leading-relaxed">VBMS vai direto ao pool. USDC/ETH são usados para recomprar VBMS e reinjetar no pool.</p>
+                <p className="text-[#FFD700] font-black text-xs uppercase tracking-wider">♻️ {t('raffleInfoQ3')}</p>
+                <p className="text-white/70 text-[11px] leading-relaxed">{t('raffleInfoA3')}</p>
               </div>
               <div className="border-t border-white/10 pt-3">
-                <p className="text-white/30 text-[10px]">Contrato Base: {RAFFLE_BASE.slice(0, 10)}…{RAFFLE_BASE.slice(-6)}</p>
+                <p className="text-white/30 text-[10px]">{t('raffleInfoContract')} {RAFFLE_BASE.slice(0, 10)}…{RAFFLE_BASE.slice(-6)}</p>
               </div>
             </div>
           </div>
@@ -1223,9 +1223,13 @@ export default function RafflePage() {
                       {e.username ? `@${e.username}` : fmtAddr(e.address)}
                     </span>
                     <span className="text-[#FFD700] font-black text-[10px] shrink-0">{e.tickets}🎟️</span>
-                    <span className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black shrink-0 ${e.chain === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
-                      {e.chain.toUpperCase()}
-                    </span>
+                    <div className="flex gap-0.5 shrink-0">
+                      {((e as any).chains?.length > 0 ? (e as any).chains : [e.chain]).map((c: string) => (
+                        <span key={c} className={`text-[8px] font-black px-1.5 py-0.5 border-2 border-black ${c === "base" ? "bg-[#0052FF] text-white" : "bg-[#12AAFF] text-black"}`}>
+                          {c.toUpperCase()}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
