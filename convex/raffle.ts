@@ -1327,7 +1327,111 @@ export const upsertRaffleConfig = internalMutation({
     const existing = await ctx.db.query("raffleConfig")
       .withIndex("by_epoch", (q: any) => q.eq("epoch", args.epoch)).first();
     const data = { ...args, visible: true, updatedAt: Date.now() };
-    if (existing) await ctx.db.patch(existing._id, data);
-    else await ctx.db.insert("raffleConfig", data);
+    if (existing) {
+      await ctx.db.patch(existing._id, data);
+    } else {
+      // New epoch — insert clean record (no checkpoint/drawRequested from old epoch)
+      await ctx.db.insert("raffleConfig", data);
+    }
+  },
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// WITHDRAW — owner pulls funds from both contracts
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Admin: withdraw all funds from both raffle contracts.
+ * Sequence: confirmPrizeDelivered (ARB) → withdraw ETH → withdrawERC20 tokens.
+ * BASE contract: needs closeRaffle or similar first if still active.
+ */
+export const withdrawRaffleFunds = action({
+  args: { adminKey: v.string() },
+  handler: async (_ctx, { adminKey }): Promise<{
+    ok: boolean;
+    arb?: Record<string, string>;
+    base?: Record<string, string>;
+    error?: string;
+  }> => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+
+    const privateKey = process.env.VBMS_SIGNER_PRIVATE_KEY;
+    const arbAddr    = ARB_RAFFLE_CONTRACT();
+    const baseAddr   = BASE_RAFFLE_CONTRACT();
+    if (!privateKey || !arbAddr || !baseAddr) return { ok: false, error: "Keys or contracts not configured" };
+
+    const USND_ARB  = "0x4ecf61a6c2fab8a047ceb3b3b263b401763e9d49";
+    const USDC_BASE = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+    const VBMS_BASE = "0xb03439567cd22f278b21e1ffcdfb8e1696763827";
+
+    const WITHDRAW_ABI = [
+      "function confirmPrizeDelivered() external",
+      "function withdraw() external",
+      "function withdrawFunds() external",
+      "function withdrawERC20(address token) external",
+      "function withdrawTokens(address token) external",
+      "function owner() view returns (address)",
+    ];
+
+    const tryCall = async (contract: any, fn: string, args: any[] = []) => {
+      try {
+        const tx = await contract[fn](...args);
+        await tx.wait(1);
+        return tx.hash as string;
+      } catch (e: any) {
+        return null;
+      }
+    };
+
+    const results: { arb: Record<string, string>; base: Record<string, string> } = { arb: {}, base: {} };
+
+    try {
+      const { ethers } = await import("ethers");
+
+      // ── ARB ──────────────────────────────────────────────────────────────
+      const arbProvider = new ethers.JsonRpcProvider(ARB_RPC);
+      const arbSigner   = new ethers.Wallet(privateKey, arbProvider);
+      const arbContract = new ethers.Contract(arbAddr, WITHDRAW_ABI, arbSigner);
+
+      // 1. confirmPrizeDelivered (unlocks funds)
+      const confirmTx = await tryCall(arbContract, "confirmPrizeDelivered");
+      if (confirmTx) results.arb.confirmPrizeDelivered = confirmTx;
+
+      // 2. withdraw ETH
+      const wdEth = await tryCall(arbContract, "withdraw") ?? await tryCall(arbContract, "withdrawFunds");
+      if (wdEth) results.arb.withdrawETH = wdEth;
+
+      // 3. withdraw USND
+      const wdUsnd = await tryCall(arbContract, "withdrawERC20", [USND_ARB])
+                  ?? await tryCall(arbContract, "withdrawTokens", [USND_ARB]);
+      if (wdUsnd) results.arb.withdrawUSND = wdUsnd;
+
+      // ── BASE ─────────────────────────────────────────────────────────────
+      const baseProvider = new ethers.JsonRpcProvider(BASE_RPC);
+      const baseSigner   = new ethers.Wallet(privateKey, baseProvider);
+      const baseContract = new ethers.Contract(baseAddr, WITHDRAW_ABI, baseSigner);
+
+      // 1. confirmPrizeDelivered
+      const confirmBaseTx = await tryCall(baseContract, "confirmPrizeDelivered");
+      if (confirmBaseTx) results.base.confirmPrizeDelivered = confirmBaseTx;
+
+      // 2. withdraw ETH
+      const wdBaseEth = await tryCall(baseContract, "withdraw") ?? await tryCall(baseContract, "withdrawFunds");
+      if (wdBaseEth) results.base.withdrawETH = wdBaseEth;
+
+      // 3. withdraw USDC
+      const wdUsdc = await tryCall(baseContract, "withdrawERC20", [USDC_BASE])
+                  ?? await tryCall(baseContract, "withdrawTokens", [USDC_BASE]);
+      if (wdUsdc) results.base.withdrawUSDC = wdUsdc;
+
+      // 4. withdraw VBMS (might be 0, still try)
+      const wdVbms = await tryCall(baseContract, "withdrawERC20", [VBMS_BASE])
+                  ?? await tryCall(baseContract, "withdrawTokens", [VBMS_BASE]);
+      if (wdVbms) results.base.withdrawVBMS = wdVbms;
+
+      return { ok: true, ...results };
+    } catch (e: any) {
+      return { ok: false, error: e?.shortMessage ?? e?.message ?? String(e), ...results };
+    }
   },
 });
