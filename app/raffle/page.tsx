@@ -226,7 +226,7 @@ export default function RafflePage() {
   const { d, h, m, ended } = useCountdown(endsAt);
   const raffleResult = useQuery(api.raffle.getRaffleResult, { epoch: config?.epoch ?? 1 });
   const totalTicketsConvex = entries.reduce((sum, e) => sum + e.tickets, 0);
-  const bonusTicketCount  = entries.filter(e => e.token === "BONUS").reduce((sum, e) => sum + e.tickets, 0);
+  const bonusTicketCount  = useQuery(api.raffle.getBonusTicketCount, { epoch: config?.epoch }) ?? 0;
   const ticketPriceVBMS = config?.ticketPriceVBMS ?? 10000;
   const ticketPriceUSD  = config?.ticketPriceUSD  ?? 0.06;
 

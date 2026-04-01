@@ -129,6 +129,24 @@ export const getRaffleBuyers = query({
   },
 });
 
+/** Get count of bonus (non-paid) tickets for a given epoch */
+export const getBonusTicketCount = query({
+  args: { epoch: v.optional(v.number()) },
+  handler: async (ctx, { epoch }) => {
+    let ep = epoch;
+    if (ep === undefined) {
+      const config = await ctx.db.query("raffleConfig").order("desc").first();
+      ep = config?.epoch ?? 1;
+    }
+    const allEntries = await ctx.db.query("raffleEntries")
+      .withIndex("by_epoch", (i: any) => i.eq("epoch", ep))
+      .take(500);
+    return allEntries
+      .filter((e: any) => e.token === "BONUS")
+      .reduce((sum: number, e: any) => sum + e.tickets, 0);
+  },
+});
+
 /** Get live on-chain raffle state from ARB contract */
 export const getLiveRaffleState = action({
   args: {},
