@@ -11,6 +11,7 @@ import { internal } from "./_generated/api";
 import { normalizeAddress } from "./utils";
 import { createAuditLog } from "./coinAudit";
 import { isBlacklisted } from "./blacklist";
+import { requireInternalAdminKey } from "./adminAuth";
 
 // Social Quest Rewards (halved - Vibe Clash is main mode)
 // Must match lib/socialQuests.ts
@@ -461,8 +462,10 @@ export const getClaimedCustomQuestIds = query({
 
 /** Admin: delete custom follow quest by ID */
 export const adminDeleteCustomFollowQuest = mutation({
-  args: { id: v.string() },
+  args: { id: v.string(), adminKey: v.string() },
   handler: async (ctx, args) => {
+    requireInternalAdminKey(args.adminKey);
+
     await ctx.db.delete(args.id as any);
     return { deleted: args.id };
   },

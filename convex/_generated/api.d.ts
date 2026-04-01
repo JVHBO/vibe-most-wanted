@@ -10,6 +10,7 @@
 
 import type * as accessAnalytics from "../accessAnalytics.js";
 import type * as admin from "../admin.js";
+import type * as adminAuth from "../adminAuth.js";
 import type * as apiStats from "../apiStats.js";
 import type * as arbValidator from "../arbValidator.js";
 import type * as arenaCardsData from "../arenaCardsData.js";
@@ -85,6 +86,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   accessAnalytics: typeof accessAnalytics;
   admin: typeof admin;
+  adminAuth: typeof adminAuth;
   apiStats: typeof apiStats;
   arbValidator: typeof arbValidator;
   arenaCardsData: typeof arenaCardsData;

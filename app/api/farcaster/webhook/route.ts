@@ -123,7 +123,12 @@ async function processWebhookEvent(
   notificationDetails?: { token: string; url: string }
 ) {
   const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+  const internalSecret = process.env.VMW_INTERNAL_SECRET;
   const fidString = String(fid);
+
+  if (!internalSecret) {
+    throw new Error("VMW_INTERNAL_SECRET not configured");
+  }
 
   console.log('📝 Processing:', event, 'for FID:', fidString);
 
@@ -132,6 +137,7 @@ async function processWebhookEvent(
     case 'notifications_enabled':
       if (notificationDetails?.token && notificationDetails?.url) {
         await convex.mutation(api.notifications.saveToken, {
+          adminKey: internalSecret,
           fid: fidString,
           token: notificationDetails.token,
           url: notificationDetails.url,
@@ -145,6 +151,7 @@ async function processWebhookEvent(
     case 'miniapp_removed':
     case 'notifications_disabled':
       await convex.mutation(api.notifications.removeToken, {
+        adminKey: internalSecret,
         fid: fidString,
       });
       console.log('❌ Token removed for FID:', fidString);

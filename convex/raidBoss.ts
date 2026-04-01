@@ -11,6 +11,7 @@ import { mutation, query, internalMutation, internalQuery, QueryCtx, MutationCtx
 import { internal } from "./_generated/api";
 import { getCurrentBoss, getNextBoss, getBossRotationInfo, BOSS_HP_BY_RARITY, BOSS_REWARDS_BY_RARITY } from "../lib/raid-boss";
 import type { CardRarity } from "../lib/types/card";
+import { requireInternalAdminKey } from "./adminAuth";
 
 /**
  * 🔗 MULTI-WALLET: Resolve primary address for linked wallets
@@ -1401,8 +1402,10 @@ export const cleanupLinkedWalletRaidData = internalMutation({
  * Used to skip bosses that are stuck or unwanted
  */
 export const adminForceKillBoss = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { adminKey: v.string() },
+  handler: async (ctx, { adminKey }) => {
+    requireInternalAdminKey(adminKey);
+
     const now = Date.now();
 
     // Get current active boss

@@ -68,7 +68,7 @@ const BASE_RPCS = [
 ];
 
 // Basescan API (different format)
-const BASESCAN_API_KEY = process.env.BASESCAN_API_KEY || "1ZFQ27H4QDE5ESCVWPIJUNTFP3776Y1AJ5";
+const BASESCAN_API_KEY = process.env.BASESCAN_API_KEY;
 
 // Balance cache - avoid re-checking same address/contract combo
 const balanceCache = new Map<string, { balance: number; timestamp: number }>();
@@ -111,6 +111,10 @@ async function tryRpc(rpc: string, data: string, contract: string, timeout: numb
 
 // Try Basescan API (different format - REST API)
 async function tryBasescan(owner: string, contract: string): Promise<number | null> {
+  if (!BASESCAN_API_KEY) {
+    return null;
+  }
+
   const balanceOfSelector = "0x70a08231";
   const ownerPadded = owner.slice(2).toLowerCase().padStart(64, "0");
   const data = balanceOfSelector + ownerPadded;

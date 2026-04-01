@@ -3,6 +3,7 @@ import { query, mutation, internalMutation, internalQuery, QueryCtx, MutationCtx
 import { api, internal } from "./_generated/api";
 import { normalizeAddress, isValidAddress } from "./utils";
 import { isBlacklisted, getBlacklistInfo } from "./blacklist";
+import { requireInternalAdminKey } from "./adminAuth";
 
 /**
  * PROFILE QUERIES & MUTATIONS
@@ -590,6 +591,7 @@ export const getProfileByUsername = query({
  */
 export const upsertProfileFromFarcaster = mutation({
   args: {
+    adminKey: v.optional(v.string()),
     address: v.string(),
     fid: v.number(), // 🔒 REQUIRED - Must be valid Farcaster FID
     username: v.string(), // From Farcaster SDK, not user input
@@ -597,6 +599,10 @@ export const upsertProfileFromFarcaster = mutation({
     pfpUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (args.adminKey !== undefined) {
+      requireInternalAdminKey(args.adminKey);
+    }
+
     // 🔒 SECURITY: Validate FID
     if (!args.fid || args.fid <= 0) {
       throw new Error("🔒 Valid Farcaster FID required to create account");
@@ -3104,8 +3110,10 @@ export const resetWeeklyAura = internalMutation({
  * Does NOT touch weeklyAura (leaderboard counter stays unaffected)
  */
 export const adminSetAuraXP = mutation({
-  args: { address: v.string(), aura: v.number() },
-  handler: async (ctx, { address, aura }) => {
+  args: { address: v.string(), aura: v.number(), adminKey: v.string() },
+  handler: async (ctx, { address, aura, adminKey }) => {
+    requireInternalAdminKey(adminKey);
+
     const normalized = address.toLowerCase();
     const profile = await ctx.db.query("profiles").withIndex("by_address", q => q.eq("address", normalized)).first();
     if (!profile) throw new Error('Profile not found');

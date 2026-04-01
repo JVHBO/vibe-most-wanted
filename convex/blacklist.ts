@@ -15,6 +15,7 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation } from "./_generated/server";
 import { logTransaction } from "./coinsInbox";
+import { requireInternalAdminKey } from "./adminAuth";
 
 // ========== HARDCODED BLACKLIST ==========
 // These addresses are PERMANENTLY banned from VBMS claims
@@ -410,7 +411,7 @@ async function _zeroAllBlacklisted(ctx: any) {
 export const adminZeroAllBlacklisted = mutation({
   args: { adminKey: v.string() },
   handler: async (ctx, { adminKey }) => {
-    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+    requireInternalAdminKey(adminKey);
     const addresses = getAllBlacklistedAddresses();
     let resetCount = 0;
     for (const address of addresses) {
@@ -664,11 +665,14 @@ export const shameExploiter = mutation({
 
 export const adminAddToBlacklist = mutation({
   args: {
+    adminKey: v.string(),
     address: v.string(),
     reason: v.optional(v.string()),
     addedBy: v.optional(v.string()),
   },
-  handler: async (ctx, { address, reason, addedBy }) => {
+  handler: async (ctx, { adminKey, address, reason, addedBy }) => {
+    requireInternalAdminKey(adminKey);
+
     const normalized = address.toLowerCase();
     const existing = await ctx.db
       .query("dynamicBlacklist")
@@ -686,8 +690,10 @@ export const adminAddToBlacklist = mutation({
 });
 
 export const adminRemoveFromBlacklist = mutation({
-  args: { address: v.string() },
-  handler: async (ctx, { address }) => {
+  args: { address: v.string(), adminKey: v.string() },
+  handler: async (ctx, { address, adminKey }) => {
+    requireInternalAdminKey(adminKey);
+
     const normalized = address.toLowerCase();
     const existing = await ctx.db
       .query("dynamicBlacklist")
@@ -713,8 +719,10 @@ export const isDynamicBlacklisted = query({
 // ========== ADMIN: Zero all balances for blacklisted accounts ==========
 
 export const adminZeroBlacklistedBalances = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { adminKey: v.string() },
+  handler: async (ctx, { adminKey }) => {
+    requireInternalAdminKey(adminKey);
+
     const allBlacklisted = Object.keys(EXPLOITER_BLACKLIST);
     let coinsReset = 0;
     let creditsReset = 0;
@@ -776,8 +784,10 @@ export const adminZeroBlacklistedBalances = mutation({
 // ========== ADMIN: Analyze recent VBMS claimers (last N days) ==========
 
 export const adminAnalyzeRecentClaimers = query({
-  args: { days: v.optional(v.number()) },
-  handler: async (ctx, { days = 3 }) => {
+  args: { days: v.optional(v.number()), adminKey: v.string() },
+  handler: async (ctx, { days = 3, adminKey }) => {
+    requireInternalAdminKey(adminKey);
+
     const since = Date.now() - days * 24 * 60 * 60 * 1000;
 
     const recentClaims = await ctx.db
@@ -829,10 +839,13 @@ export const adminAnalyzeRecentClaimers = query({
 
 export const adminZeroAddress = mutation({
   args: {
+    adminKey: v.string(),
     address: v.string(),
     reason: v.optional(v.string()),
   },
-  handler: async (ctx, { address, reason }) => {
+  handler: async (ctx, { adminKey, address, reason }) => {
+    requireInternalAdminKey(adminKey);
+
     const normalized = address.toLowerCase();
     const result: Record<string, any> = { address: normalized, actions: [] };
 

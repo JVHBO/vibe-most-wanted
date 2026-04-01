@@ -17,6 +17,7 @@ import { internal } from "./_generated/api";
 import { createAuditLog } from "./coinAudit";
 import { isBlacklisted, getBlacklistInfo } from "./blacklist";
 import { logTransaction } from "./coinsInbox";
+import { requireInternalAdminKey } from "./adminAuth";
 
 // ========== HELPER: Get Profile (supports multi-wallet via addressLinks) ==========
 
@@ -1430,8 +1431,10 @@ export const claimQuestReceiptVBMS = action({
 
 // ========== ACTION: Admin Clear All Stuck Pending Conversions ==========
 export const adminClearAllPendingConversions = action({
-  args: {},
-  handler: async (ctx): Promise<{ cleared: number; restored: number; skipped: number }> => {
+  args: { adminKey: v.string() },
+  handler: async (ctx, { adminKey }): Promise<{ cleared: number; restored: number; skipped: number }> => {
+    requireInternalAdminKey(adminKey);
+
     const profiles = await ctx.runQuery(internal.vbmsClaim.getPendingConversionProfiles);
     console.log(`[adminClearAll] Found ${profiles.length} profiles with pending conversions`);
     let cleared = 0, restored = 0, skipped = 0;
@@ -1605,9 +1608,7 @@ export const recoverPendingConversion = mutation({
 export const adminRecoverPendingByUsername = mutation({
   args: { username: v.string(), adminKey: v.string() },
   handler: async (ctx, { username, adminKey }) => {
-    if (adminKey !== process.env.VMW_INTERNAL_SECRET) {
-      throw new Error("Unauthorized");
-    }
+    requireInternalAdminKey(adminKey);
 
     const profile = await ctx.db
       .query("profiles")
@@ -1653,4 +1654,3 @@ export const adminRecoverPendingByUsername = mutation({
     return { username, address, recovered: pending, newBalance: restoredBalance };
   },
 });
-

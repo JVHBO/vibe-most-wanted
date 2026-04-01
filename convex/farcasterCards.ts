@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { validateCardTraits } from "./cardValidation";
 import { isBlacklisted } from "./blacklist";
 import { createAuditLog } from "./coinAudit";
+import { requireInternalAdminKey } from "./adminAuth";
 
 /**
  * Mint a Farcaster Card
@@ -776,10 +777,13 @@ export const updateCardImages = mutation({
  */
 export const updateCardPfp = mutation({
   args: {
+    adminKey: v.string(),
     fid: v.number(),
     pfpUrl: v.string(),
   },
   handler: async (ctx, args) => {
+    requireInternalAdminKey(args.adminKey);
+
     const card = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
@@ -845,10 +849,13 @@ export const claimVibeMailQuestCoins = mutation({
  */
 export const adminPatchCard = mutation({
   args: {
+    adminKey: v.string(),
     fid: v.number(),
     suitSymbol: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    requireInternalAdminKey(args.adminKey);
+
     const card = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
@@ -866,9 +873,12 @@ export const adminPatchCard = mutation({
  */
 export const deleteUnmintedCard = mutation({
   args: {
+    adminKey: v.string(),
     fid: v.number(),
   },
   handler: async (ctx, args) => {
+    requireInternalAdminKey(args.adminKey);
+
     const card = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
@@ -956,6 +966,7 @@ export const getHighRarityCards = query({
  */
 export const reimportCard = mutation({
   args: {
+    adminKey: v.string(),
     fid: v.number(),
     username: v.string(),
     displayName: v.string(),
@@ -980,6 +991,8 @@ export const reimportCard = mutation({
     contractAddress: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    requireInternalAdminKey(args.adminKey);
+
     const normalizedAddress = args.address.toLowerCase();
 // 🔒 SECURITY: Server-side validation of card traits    const validation = validateCardTraits(      args.fid,      args.neynarScore,      args.rarity,      args.foil,      args.wear,      args.power    );    if (!validation.valid) {      console.warn(`⚠️ SECURITY: Invalid card traits for FID ${args.fid}:`, validation.errors);    }    // Use server-calculated values (ignore client values)    const finalRarity = validation.correctedValues!.rarity;    const finalFoil = validation.correctedValues!.foil;    const finalWear = validation.correctedValues!.wear;    const finalPower = validation.correctedValues!.power;
 
@@ -1063,10 +1076,13 @@ export const updateNeynarScore = mutation({
 // Fix card address (admin function)
 export const fixCardAddress = mutation({
   args: {
+    adminKey: v.string(),
     fid: v.number(),
     newAddress: v.string(),
   },
   handler: async (ctx, args) => {
+    requireInternalAdminKey(args.adminKey);
+
     const card = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
@@ -1088,10 +1104,13 @@ export const fixCardAddress = mutation({
 // Fix card rarity (admin function - for correcting wrong rarities)
 export const fixCardRarity = mutation({
   args: {
+    adminKey: v.string(),
     fid: v.number(),
     newRarity: v.string(),
   },
   handler: async (ctx, args) => {
+    requireInternalAdminKey(args.adminKey);
+
     const card = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
@@ -1113,11 +1132,14 @@ export const fixCardRarity = mutation({
 // Fix card rarity AND power (admin function)
 export const fixCardRarityAndPower = mutation({
   args: {
+    adminKey: v.string(),
     fid: v.number(),
     newRarity: v.string(),
     newPower: v.number(),
   },
   handler: async (ctx, args) => {
+    requireInternalAdminKey(args.adminKey);
+
     const card = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))
@@ -1140,11 +1162,14 @@ export const fixCardRarityAndPower = mutation({
 // Fix card foil and power (admin function for FID-based deterministic foil)
 export const fixCardFoilAndPower = mutation({
   args: {
+    adminKey: v.string(),
     fid: v.number(),
     newFoil: v.string(),
     newPower: v.number(),
   },
   handler: async (ctx, args) => {
+    requireInternalAdminKey(args.adminKey);
+
     const card = await ctx.db
       .query("farcasterCards")
       .withIndex("by_fid", (q) => q.eq("fid", args.fid))

@@ -38,9 +38,6 @@ const BASE_RPCS = [
   'https://base.blockpi.network/v1/rpc/public',
 ];
 
-// Basescan API key for fallback
-const BASESCAN_API_KEY = process.env.NEXT_PUBLIC_BASESCAN_API_KEY || '1ZFQ27H4QDE5ESCVWPIJUNTFP3776Y1AJ5';
-
 // ============================================
 // WIELD API CONFIGURATION (Jan 2026)
 // More reliable than Alchemy for Vibechain collections
@@ -208,34 +205,9 @@ async function tryRpcCall(
  * Try Basescan API as last resort (different REST format)
  */
 async function tryBasescan(owner: string, contractAddress: string): Promise<number | null> {
-  const balanceOfSelector = '0x70a08231';
-  const ownerPadded = owner.slice(2).toLowerCase().padStart(64, '0');
-  const data = balanceOfSelector + ownerPadded;
-
-  try {
-    const url = `https://api.basescan.org/api?module=proxy&action=eth_call&to=${contractAddress}&data=${data}&tag=latest&apikey=${BASESCAN_API_KEY}`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-
-    if (!res.ok) return null;
-    const json = await res.json();
-
-    if (json.error || json.message === 'NOTOK') return null;
-
-    const result = json.result;
-    if (result === '0x' || result === '0x0' || result === '0x00') {
-      return 0;
-    }
-
-    if (result) {
-      const balance = parseInt(result, 16);
-      if (!isNaN(balance) && balance >= 0) {
-        return balance;
-      }
-    }
-    return null;
-  } catch {
-    return null;
-  }
+  void owner;
+  void contractAddress;
+  return null;
 }
 
 /**

@@ -1,7 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useMutation } from 'convex/react';
 import { sdk } from '@farcaster/miniapp-sdk';
-import { api } from '@/convex/_generated/api';
 import type { UserProfile } from '@/lib/convex-profile';
 
 interface Params {
@@ -23,7 +21,6 @@ export function useAutoCreateProfile({
   isLoadingProfile,
   refreshProfile,
 }: Params) {
-  const upsertProfileFromFarcaster = useMutation(api.profiles.upsertProfileFromFarcaster);
   const hasAutoCreatedProfile = useRef(false);
 
   useEffect(() => {
@@ -47,13 +44,24 @@ export function useAutoCreateProfile({
         console.log(`[AutoCreate] 🆕 ${action} profile for Farcaster user:`, { fid, username, address });
         hasAutoCreatedProfile.current = true;
 
-        await upsertProfileFromFarcaster({
-          address,
-          fid,
-          username: username || `fid${fid}`,
-          displayName: displayName || undefined,
-          pfpUrl: pfpUrl || undefined,
+        const response = await fetch('/api/farcaster/profile-upsert', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            address,
+            fid,
+            username: username || `fid${fid}`,
+            displayName: displayName || undefined,
+            pfpUrl: pfpUrl || undefined,
+          }),
         });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || 'Failed to create/update profile');
+        }
 
         console.log(`[AutoCreate] ✅ Profile ${action.toLowerCase()}d successfully!`);
         await refreshProfile();
@@ -64,5 +72,5 @@ export function useAutoCreateProfile({
     };
 
     run();
-  }, [address, isInFarcaster, farcasterFidState, isCheckingFarcaster, userProfile, isLoadingProfile, upsertProfileFromFarcaster, refreshProfile]);
+  }, [address, isInFarcaster, farcasterFidState, isCheckingFarcaster, userProfile, isLoadingProfile, refreshProfile]);
 }

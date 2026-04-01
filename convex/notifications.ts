@@ -2,6 +2,7 @@
 import { v } from "convex/values";
 import { query, mutation, internalMutation, internalAction, internalQuery, action } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { requireInternalAdminKey } from "./adminAuth";
 
 /**
  * NOTIFICATION TOKENS - QUERIES & MUTATIONS
@@ -17,8 +18,12 @@ import { internal } from "./_generated/api";
  * Get notification token by FID (Farcaster ID)
  */
 export const getTokenByFid = query({
-  args: { fid: v.string() },
-  handler: async (ctx, { fid }) => {
+  args: { fid: v.string(), adminKey: v.optional(v.string()) },
+  handler: async (ctx, { fid, adminKey }) => {
+    if (adminKey !== undefined) {
+      requireInternalAdminKey(adminKey);
+    }
+
     const token = await ctx.db
       .query("notificationTokens")
       .withIndex("by_fid", (q) => q.eq("fid", fid))
@@ -93,12 +98,17 @@ function getPlatformFromUrl(url: string): string {
  */
 export const saveToken = mutation({
   args: {
+    adminKey: v.optional(v.string()),
     fid: v.string(),
     token: v.string(),
     url: v.string(),
     app: v.optional(v.string()), // "vbms" or "vibefid"
   },
-  handler: async (ctx, { fid, token, url, app }) => {
+  handler: async (ctx, { adminKey, fid, token, url, app }) => {
+    if (adminKey !== undefined) {
+      requireInternalAdminKey(adminKey);
+    }
+
     const now = Date.now();
     const platform = getPlatformFromUrl(url);
     const appName = app || "vbms"; // Default to vbms for backward compatibility
@@ -162,8 +172,12 @@ export const saveToken = mutation({
  * Remove notification token for a user
  */
 export const removeToken = mutation({
-  args: { fid: v.string() },
-  handler: async (ctx, { fid }) => {
+  args: { fid: v.string(), adminKey: v.optional(v.string()) },
+  handler: async (ctx, { fid, adminKey }) => {
+    if (adminKey !== undefined) {
+      requireInternalAdminKey(adminKey);
+    }
+
     const existing = await ctx.db
       .query("notificationTokens")
       .withIndex("by_fid", (q) => q.eq("fid", fid))
@@ -185,6 +199,7 @@ export const removeToken = mutation({
  */
 export const importTokens = mutation({
   args: {
+    adminKey: v.optional(v.string()),
     tokens: v.array(
       v.object({
         fid: v.string(),
@@ -194,7 +209,11 @@ export const importTokens = mutation({
       })
     ),
   },
-  handler: async (ctx, { tokens }) => {
+  handler: async (ctx, { adminKey, tokens }) => {
+    if (adminKey !== undefined) {
+      requireInternalAdminKey(adminKey);
+    }
+
     let imported = 0;
     let updated = 0;
 
@@ -767,8 +786,10 @@ export const sendPeriodicTip = internalAction({
  * PUBLIC: Manually trigger periodic tip notification
  */
 export const triggerPeriodicTip = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { adminKey: v.string() },
+  handler: async (ctx, { adminKey }) => {
+    requireInternalAdminKey(adminKey);
+
     console.log("💡 Scheduling periodic tip notification...");
     // Schedule the action (actions can use fetch, mutations cannot)
     await ctx.scheduler.runAfter(0, internal.notifications.sendPeriodicTip, {});
@@ -780,8 +801,10 @@ export const triggerPeriodicTip = mutation({
  * PUBLIC: Manually trigger daily login reminder
  */
 export const triggerDailyLoginReminder = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { adminKey: v.string() },
+  handler: async (ctx, { adminKey }) => {
+    requireInternalAdminKey(adminKey);
+
     console.log("💰 Scheduling daily login reminder...");
     await ctx.scheduler.runAfter(0, internal.notifications.sendDailyLoginReminder, {});
     return { scheduled: true };
@@ -793,10 +816,13 @@ export const triggerDailyLoginReminder = mutation({
  */
 export const sendCustomNotification = action({
   args: {
+    adminKey: v.string(),
     title: v.string(),
     body: v.string(),
   },
-  handler: async (ctx, { title, body }) => {
+  handler: async (ctx, { adminKey, title, body }) => {
+    requireInternalAdminKey(adminKey);
+
     try {
       console.log(`📬 Sending custom notification via Neynar: "${title}"`);
 

@@ -240,14 +240,24 @@ export class ConvexProfileService {
         throw new Error("🔒 Farcaster authentication required to create account");
       }
 
-      // Create profile with Farcaster data
-      await getConvex().mutation(api.profiles.upsertProfileFromFarcaster, {
-        address: normalizedAddress,
-        fid,
-        username,
-        displayName,
-        pfpUrl,
+      const response = await fetch("/api/farcaster/profile-upsert", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          address: normalizedAddress,
+          fid,
+          username,
+          displayName,
+          pfpUrl,
+        }),
       });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload.error || "Erro ao criar perfil");
+      }
 
       devLog("✅ Profile created from Farcaster:", username, "FID:", fid);
     } catch (error: any) {

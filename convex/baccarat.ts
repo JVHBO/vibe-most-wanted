@@ -10,6 +10,7 @@
  */
 
 import { v } from "convex/values";
+import { requireInternalAdminKey } from "./adminAuth";
 import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
 import { createAuditLog } from "./coinAudit";
@@ -257,8 +258,10 @@ export const getDailyPlays = query({
 
 // Admin: Reset daily plays for testing
 export const adminResetDailyPlays = mutation({
-  args: { address: v.string() },
+  args: { address: v.string(), adminKey: v.string() },
   handler: async (ctx, args) => {
+    requireInternalAdminKey(args.adminKey);
+
     const playerAddress = args.address.toLowerCase();
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();

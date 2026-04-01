@@ -5,6 +5,7 @@ import { Id } from "./_generated/dataModel";
 import { createAuditLog } from "./coinAudit";
 import { isBlacklisted } from "./blacklist";
 import { ethers } from "ethers";
+import { requireInternalAdminKey } from "./adminAuth";
 
 // Generate secure nonce for blockchain transactions
 function generateNonce(): string {
@@ -265,8 +266,10 @@ export const getSpinHistory = query({
  * Use when a spin is stuck in claimPending but hasn't expired yet
  */
 export const adminClearPendingSpin = mutation({
-  args: { address: v.string() },
-  handler: async (ctx, { address }) => {
+  args: { address: v.string(), adminKey: v.string() },
+  handler: async (ctx, { address, adminKey }) => {
+    requireInternalAdminKey(adminKey);
+
     const normalizedAddress = address.toLowerCase();
     const today = new Date().toISOString().split('T')[0];
 
