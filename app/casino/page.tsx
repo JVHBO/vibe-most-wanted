@@ -219,13 +219,10 @@ function BaccaratCard() {
         <div className="absolute inset-0 opacity-[0.06]"
           style={{ backgroundImage: 'repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%)', backgroundSize: '10px 10px' }} />
         <div className="relative">
-          <div className="flex justify-center gap-4 mb-4">
-            {["A", "K", "Q"].map((c) => (
-              <div key={c} className="w-10 h-14 rounded flex items-center justify-center text-xl font-bold"
-                style={{ background: '#fff', color: '#0a0a0a', boxShadow: '0 2px 8px rgba(0,0,0,0.5)' }}>
-                {c}
-              </div>
-            ))}
+          <div className="flex justify-center gap-3 mb-4">
+            <img src="/images/baccarat/ace%20spades%2C%20jesse.png"            alt="A♠" className="w-10 h-14 rounded object-cover" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.6)' }} />
+            <img src="/images/baccarat/king%20hearts%2C%20miguel.png"          alt="K♥" className="w-10 h-14 rounded object-cover" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.6)', transform: 'rotate(-6deg)' }} />
+            <img src="/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png" alt="Q♦" className="w-10 h-14 rounded object-cover" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.6)' }} />
           </div>
           <h2 className="text-3xl font-bold tracking-widest uppercase"
             style={{ color: '#FFD700', fontFamily: 'var(--font-cinzel)' }}>

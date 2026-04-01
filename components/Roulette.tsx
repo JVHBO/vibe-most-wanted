@@ -262,11 +262,11 @@ const rouletteTranslations = {
 };
 
 const PRIZES = [
-  { amount: 100, label: "100", color: "#00008B", image: "https://ipfs.filebase.io/ipfs/QmeLCtF8Ytq7FKKzY5r9AiYCwQPzxtvfYz1GPGvfRHAL2U" }, // Dark blue
-  { amount: 500, label: "500", color: "#006400", image: "https://ipfs.filebase.io/ipfs/QmaWpsAeMKMC796hRUtmKWfs2gnqpDNo2YpnKFxi8bK9oq" }, // Dark green
-  { amount: 1000, label: "1K", color: "#8B8B00", image: "https://ipfs.filebase.io/ipfs/QmZxc6QK1mPkVLha4Kr1Bh3bwQX351998TsJ3MxoWL8Av5" }, // Dark yellow
-  { amount: 10000, label: "10K", color: "#4B0082", image: "https://ipfs.filebase.io/ipfs/QmTCd36KKyTSbY3NRrewz8NzdcRAAg3zBQnhfudgAVkyWd" }, // Indigo
-  { amount: 50000, label: "50K", color: "#FFD700", image: "https://ipfs.filebase.io/ipfs/QmdjNEN5URcfQtyG4VWMBjGcsFm8FXYMm56uL3qyB6jZNF" }, // Gold
+  { amount: 100,   label: "100", color: "#111111", image: "https://ipfs.filebase.io/ipfs/QmeLCtF8Ytq7FKKzY5r9AiYCwQPzxtvfYz1GPGvfRHAL2U" }, // Black
+  { amount: 500,   label: "500", color: "#8B0000", image: "https://ipfs.filebase.io/ipfs/QmaWpsAeMKMC796hRUtmKWfs2gnqpDNo2YpnKFxi8bK9oq" }, // Red
+  { amount: 1000,  label: "1K",  color: "#111111", image: "https://ipfs.filebase.io/ipfs/QmZxc6QK1mPkVLha4Kr1Bh3bwQX351998TsJ3MxoWL8Av5" }, // Black
+  { amount: 10000, label: "10K", color: "#8B0000", image: "https://ipfs.filebase.io/ipfs/QmTCd36KKyTSbY3NRrewz8NzdcRAAg3zBQnhfudgAVkyWd" }, // Red
+  { amount: 50000, label: "50K", color: "#1a5c1a", image: "https://ipfs.filebase.io/ipfs/QmdjNEN5URcfQtyG4VWMBjGcsFm8FXYMm56uL3qyB6jZNF" }, // Green jackpot
 ];
 
 const SEGMENT_COUNT = PRIZES.length;
@@ -274,9 +274,11 @@ const SEGMENT_ANGLE = 360 / SEGMENT_COUNT;
 
 interface RouletteProps {
   onClose?: () => void;
+  pfpUrl?: string;
+  onChainChange?: (chain: 'base' | 'arbitrum') => void;
 }
 
-export function Roulette({ onClose }: RouletteProps) {
+export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
   const { address } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { lang } = useLanguage();
@@ -289,6 +291,8 @@ export function Roulette({ onClose }: RouletteProps) {
   const wheelRef = useRef<HTMLDivElement>(null);
   const lastTickSegment = useRef<number>(-1);
   const animationRef = useRef<number | null>(null);
+  const idleRafRef = useRef<number | null>(null);
+  const spinActiveRef = useRef(false);
 
   const canSpinData = useQuery(
     api.roulette.canSpin,
@@ -317,6 +321,9 @@ export function Roulette({ onClose }: RouletteProps) {
   const [isClaiming, setIsClaiming] = useState(false);
   const [isBuyingPaidSpin, setIsBuyingPaidSpin] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
+  const [ballY, setBallY] = useState(0);
+  const [isDraggingBall, setIsDraggingBall] = useState(false);
+  const dragStartYRef = useRef(0);
   const [arbSupported, setArbSupported] = useState(false);
 
   const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('arbitrum');
@@ -344,6 +351,8 @@ export function Roulette({ onClose }: RouletteProps) {
     try { await setPreferredChainMutation({ address, chain }); }
     catch (e) { console.error('Failed to switch chain:', e); }
   };
+
+  useEffect(() => { onChainChange?.(currentChain); }, [currentChain]); // eslint-disable-line
 
   // Check for Farcaster SDK
   useEffect(() => {
@@ -506,8 +515,50 @@ export function Roulette({ onClose }: RouletteProps) {
     }
   }, []);
 
+  // Idle slow rotation
+  useEffect(() => {
+    if (isSpinning || showResult) return;
+    const step = () => {
+      if (spinActiveRef.current) return;
+      setRotation(r => r + 0.15);
+      idleRafRef.current = requestAnimationFrame(step);
+    };
+    idleRafRef.current = requestAnimationFrame(step);
+    return () => { if (idleRafRef.current) cancelAnimationFrame(idleRafRef.current); };
+  }, [isSpinning, showResult]); // eslint-disable-line
+
+  // Ball drag handlers
+  const handleBallDragStart = useCallback((clientY: number) => {
+    if (!canSpin || isSpinning) return;
+    dragStartYRef.current = clientY;
+    setIsDraggingBall(true);
+  }, [canSpin, isSpinning]);
+
+  const handleBallDragMove = useCallback((clientY: number) => {
+    if (!isDraggingBall) return;
+    const dy = clientY - dragStartYRef.current;
+    setBallY(Math.min(0, dy)); // only upward
+  }, [isDraggingBall]);
+
+  const handleBallDragEnd = useCallback(() => {
+    if (!isDraggingBall) return;
+    setIsDraggingBall(false);
+    if (ballY < -70 && canSpin && !isSpinning) {
+      setBallY(-260);
+      setTimeout(() => setBallY(0), 900);
+      // trigger spin (read ref to access latest handleSpin)
+      handleSpinRef.current?.();
+    } else {
+      setBallY(0);
+    }
+  }, [isDraggingBall, ballY, canSpin, isSpinning]); // eslint-disable-line
+
+  const handleSpinRef = useRef<(() => void) | null>(null);
+
   const handleSpin = async () => {
     if (!address || isSpinning || !canSpin) return;
+    spinActiveRef.current = true;
+    if (idleRafRef.current) { cancelAnimationFrame(idleRafRef.current); idleRafRef.current = null; }
 
     AudioManager.buttonClick();
     haptics.action(); // Haptic on spin start
@@ -586,6 +637,7 @@ export function Roulette({ onClose }: RouletteProps) {
             setIsSpinning(false);
             AudioManager.win();
             haptics.spinResult(); // Heavy haptic on result
+            window.dispatchEvent(new CustomEvent('roulette:win'));
           }
         };
 
@@ -595,9 +647,13 @@ export function Roulette({ onClose }: RouletteProps) {
       }
     } catch (error) {
       console.error('Spin error:', error);
+      spinActiveRef.current = false;
       setIsSpinning(false);
     }
   };
+
+  // Keep handleSpinRef updated
+  useEffect(() => { handleSpinRef.current = handleSpin; }); // eslint-disable-line
 
   // Handle paid spin with VBMS token transfer
   const handlePaidSpin = async () => {
@@ -727,6 +783,7 @@ export function Roulette({ onClose }: RouletteProps) {
           setIsSpinning(false);
           AudioManager.win();
           haptics.spinResult();
+          window.dispatchEvent(new CustomEvent('roulette:win'));
         }
       };
 
@@ -795,23 +852,6 @@ export function Roulette({ onClose }: RouletteProps) {
                 clipPath={`url(#segment-clip-${i})`}
                 preserveAspectRatio="xMidYMid slice"
               />
-              {/* Prize value label on top of image */}
-              <text
-                x={textX}
-                y={textY}
-                fill="white"
-                fontSize="8"
-                fontWeight="bold"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                style={{
-                  textShadow: '2px 2px 4px black, -2px -2px 4px black, 0 0 8px black',
-                  transform: `rotate(${midAngle + 90}deg)`,
-                  transformOrigin: `${textX}px ${textY}px`
-                }}
-              >
-                {prize.label}
-              </text>
             </>
           ) : (
             <>
@@ -821,22 +861,6 @@ export function Roulette({ onClose }: RouletteProps) {
                 stroke="#1a1a1a"
                 strokeWidth="0.5"
               />
-              <text
-                x={textX}
-                y={textY}
-                fill="white"
-                fontSize="7"
-                fontWeight="bold"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                style={{
-                  textShadow: '1px 1px 2px black, -1px -1px 2px black',
-                  transform: `rotate(${midAngle + 90}deg)`,
-                  transformOrigin: `${textX}px ${textY}px`
-                }}
-              >
-                {prize.label}
-              </text>
             </>
           )}
         </g>
@@ -873,232 +897,213 @@ export function Roulette({ onClose }: RouletteProps) {
     );
   }
 
+  const FALLBACK_BALL_IMG = "https://ipfs.filebase.io/ipfs/QmdjNEN5URcfQtyG4VWMBjGcsFm8FXYMm56uL3qyB6jZNF";
+  const ballImg = pfpUrl || FALLBACK_BALL_IMG;
+
   return (
-    <div className={`bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-4 mx-auto overflow-y-auto ${
-      showResult ? 'w-full max-w-lg' : 'max-w-sm max-h-[90vh]'
-    }`}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-vintage-gold font-bold text-xl">{t.title}</h2>
-        <div className="flex items-center gap-2">
-          {arbSupported && (
-            <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
-              <button
-                onClick={() => handleSwitchChain('base')}
-                className={`flex items-center gap-1 px-2.5 py-1 font-bold text-[11px] uppercase cursor-pointer rounded ${currentChain === 'base' ? 'ct-base-active' : 'ct-base-inactive'}`}
-              >
-                <svg width="12" height="12" viewBox="0 0 111 111" fill="none">
-                  <circle cx="55.5" cy="55.5" r="55.5" fill={currentChain === 'base' ? 'white' : '#6b7280'}/>
-                  <path d="M55.4999 11.5C31.0225 11.5 11 31.5225 11 55.9999C11 80.4773 31.0225 100.5 55.4999 100.5C79.9773 100.5 99.9998 80.4773 99.9998 55.9999C99.9998 31.5225 79.9773 11.5 55.4999 11.5Z" fill={currentChain === 'base' ? '#0052FF' : 'none'}/>
-                </svg>
-                BASE
-              </button>
-              <button
-                onClick={() => handleSwitchChain('arbitrum')}
-                className={`flex items-center gap-1 px-2.5 py-1 font-bold text-[11px] uppercase cursor-pointer rounded ${currentChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive'}`}
-              >
-                <svg width="12" height="12" viewBox="0 0 50 50" fill="none">
-                  <circle cx="25" cy="25" r="25" fill={currentChain === 'arbitrum' ? '#12AAFF' : '#6b7280'}/>
-                  <path d="M25 8L11 17V33L25 42L39 33V17L25 8Z" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1.5"/>
-                  <path d="M19 31L25 20L31 31" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M21.5 27H28.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-                ARB
-              </button>
-            </div>
-          )}
-          {onClose && (
+    <div className="relative flex flex-col" style={{ minHeight: '100%', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+
+      {/* Chain selector — Normal / Ultra */}
+      {arbSupported && (
+        <div className="flex justify-center pt-3 pb-1">
+          <div style={{ display:'flex', gap:'4px', background:'rgba(0,0,0,0.5)', padding:'4px', borderRadius:'10px', border:'1px solid rgba(255,215,0,0.15)' }}>
             <button
-              onClick={onClose}
-              className="text-vintage-gold hover:text-vintage-burnt-gold text-xl font-bold"
-            >
-              x
-            </button>
-          )}
+              onClick={() => handleSwitchChain('base')}
+              style={{
+                display:'flex', alignItems:'center', gap:'4px',
+                padding:'5px 14px', borderRadius:'7px', fontSize:'11px', fontWeight:'700', letterSpacing:'0.06em',
+                cursor:'pointer', border:'none',
+                background: currentChain === 'base' ? '#0052FF' : 'transparent',
+                color: currentChain === 'base' ? '#fff' : 'rgba(255,255,255,0.4)',
+              }}
+            >Normal</button>
+            <button
+              onClick={() => handleSwitchChain('arbitrum')}
+              style={{
+                display:'flex', alignItems:'center', gap:'4px',
+                padding:'5px 14px', borderRadius:'7px', fontSize:'11px', fontWeight:'700', letterSpacing:'0.06em',
+                cursor:'pointer', border:'none',
+                background: currentChain === 'arbitrum' ? '#12AAFF' : 'transparent',
+                color: currentChain === 'arbitrum' ? '#000' : 'rgba(255,255,255,0.4)',
+              }}
+            >Ultra</button>
+          </div>
         </div>
-      </div>
+      )}
+      {onClose && (
+        <button onClick={onClose} className="absolute top-3 right-4 z-10 text-xl font-bold" style={{ color: 'rgba(255,215,0,0.5)' }}>×</button>
+      )}
 
-      {/* Spins Info */}
+      {/* Spins as PFP balls */}
       {!showResult && (
-        <div className="text-center mb-3 text-sm">
+        <div className="flex justify-center pt-1 pb-2">
           {canSpinData?.testMode ? (
-            <span className="text-yellow-400">{t.testMode}</span>
+            <span style={{ color: '#FFD700', fontSize: '11px' }}>{t.testMode}</span>
+          ) : spinsRemaining > 0 ? (
+            <div className="flex gap-2">
+              {Array.from({ length: Math.min(spinsRemaining, 10) }).map((_, i) => (
+                <div key={i} style={{
+                  width: '26px', height: '26px', borderRadius: '50%', overflow: 'hidden',
+                  border: '2px solid #FFD700',
+                  boxShadow: '0 0 7px rgba(255,215,0,0.6)',
+                  flexShrink: 0,
+                }}>
+                  <img src={ballImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ))}
+            </div>
           ) : (
-            <>
-              <span className="text-vintage-ice">
-                {spinsRemaining > 0 ? (
-                  <>{t.spinsRemaining}: <span className="text-vintage-gold font-bold">{spinsRemaining}</span></>
-                ) : (
-                  <span className="text-red-400">{t.noSpinsToday}</span>
-                )}
-              </span>
-              <span className="text-vintage-ice/50 ml-2">
-                ({t.freeSpin}{isVibeFidHolder && <span className="text-purple-400"> {t.vibefidBonus}</span>}{isArbMode && <span className="text-blue-400"> +1 ARB</span>})
-              </span>
-            </>
+            <span style={{ color: '#f87171', fontSize: '12px' }}>{t.noSpinsToday}</span>
           )}
         </div>
       )}
 
-      {/* Wheel Container - hide when showing result */}
+      {/* 3D Roulette wheel */}
       {!showResult && (
-        <div className="relative w-72 h-72 mx-auto mb-4">
-          {/* Outer ring decoration */}
-          <div className="absolute inset-0 rounded-full border-4 border-vintage-gold shadow-gold" />
-
-          {/* Pointer/Arrow at top */}
-          <div className="absolute -top-2 left-1/2 -translate-x-1/2 z-20">
-            <div className="w-0 h-0 border-l-[15px] border-r-[15px] border-t-[25px] border-l-transparent border-r-transparent border-t-red-600 drop-shadow-lg"
-                 style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
-          </div>
-
-          {/* Wheel */}
-          <div
-            ref={wheelRef}
-            className="w-full h-full"
-            style={{
-              transform: `rotate(${rotation}deg)`,
-            }}
-          >
-            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
-              {/* Background circle */}
-              <circle cx="50" cy="50" r="49" fill="#0C0C0C" stroke="#FFD700" strokeWidth="1" />
-
-              {/* Segments and pins */}
-              {createWheelSegments()}
-
-              {/* Center hub */}
-              <circle cx="50" cy="50" r="10" fill="#1A1A1A" stroke="#FFD700" strokeWidth="2" />
-              <circle cx="50" cy="50" r="6" fill="#FFD700" />
-              <text
-                x="50"
-                y="50"
-                fill="#1A1A1A"
-                fontSize="4"
-                fontWeight="bold"
-                textAnchor="middle"
-                dominantBaseline="middle"
-              >
-                VBMS
-              </text>
-            </svg>
+        <div className="relative mx-auto" style={{ width: '290px', height: '216px' }}>
+          <div style={{ perspective: '560px', perspectiveOrigin: '50% -5%', width: '290px', height: '290px' }}>
+            <div className="relative" style={{
+              width: '290px', height: '290px',
+              transform: 'rotateX(50deg)',
+              transformStyle: 'preserve-3d',
+            }}>
+              {/* Outer wooden bowl */}
+              <div className="absolute inset-0 rounded-full" style={{
+                background: 'conic-gradient(from 0deg, #5c2a0a, #8B4513 18%, #6B2D0A 36%, #3d1500 54%, #8B4513 72%, #5c2a0a 90%, #3d1500)',
+                boxShadow: '0 20px 0 #1a0600, 0 24px 32px rgba(0,0,0,0.95), inset 0 0 24px rgba(0,0,0,0.6)',
+              }} />
+              {/* Metal ball track ring */}
+              <div className="absolute rounded-full" style={{
+                inset: '14px',
+                background: 'radial-gradient(circle at 40% 35%, #1c1c1c 0%, #050505 100%)',
+                boxShadow: 'inset 0 0 16px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,215,0,0.12)',
+              }} />
+              {/* Spinning segments */}
+              <div ref={wheelRef} className="absolute rounded-full overflow-hidden" style={{
+                inset: '32px',
+                transform: `rotate(${rotation}deg)`,
+              }}>
+                <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
+                  <circle cx="50" cy="50" r="49" fill="#0a0a0a" />
+                  {createWheelSegments()}
+                  <circle cx="50" cy="50" r="10" fill="#1A1A1A" stroke="#FFD700" strokeWidth="2.5" />
+                  <circle cx="50" cy="50" r="6"  fill="#FFD700" />
+                  <circle cx="50" cy="50" r="2.5" fill="#1A1A1A" />
+                </svg>
+              </div>
+              <div className="absolute inset-0 rounded-full pointer-events-none" style={{ border: '2px solid rgba(255,215,0,0.2)' }} />
+              {/* Ball on track — only shows when spinning */}
+              {isSpinning && (
+                <div className="absolute z-20" style={{
+                  top: '9px', left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '18px', height: '18px',
+                  borderRadius: '50%', overflow: 'hidden',
+                  border: '2px solid #fff',
+                  boxShadow: '0 0 10px rgba(255,255,255,0.95), 0 3px 8px rgba(0,0,0,0.9)',
+                }}>
+                  <img src={ballImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Result */}
+      {/* Result overlay */}
       {showResult && result && (
-        <div className="text-center mb-4 space-y-3">
-          {/* Special video for 100 VBMS prize */}
-          {result.prize === 100 && (
-            <video
-              src="https://ipfs.filebase.io/ipfs/Qmf8tTdyMgeFSZJmYUSfKCUTtRFtsXgBzMD8WxJ1bAtyqq"
-              autoPlay
-              loop
-              playsInline
-              className="w-full max-w-md max-h-[50vh] object-contain rounded-xl mb-3"
-            />
-          )}
-          {/* Special video for 500 VBMS prize */}
-          {result.prize === 500 && (
-            <video
-              src="https://ipfs.filebase.io/ipfs/QmTTM6dmwWieeBWv6nA9NfY7qWq8Ckt8dqdB2T5Mvtc8yR"
-              autoPlay
-              loop
-              playsInline
-              className="w-full max-w-md max-h-[50vh] object-contain rounded-xl mb-3"
-            />
-          )}
-          {/* Special video for 1K VBMS prize */}
-          {result.prize === 1000 && (
-            <video
-              src="https://ipfs.filebase.io/ipfs/Qmb3XNDr9UtBNjKWmLALhaz7arg2d8ygZDNjtpsLBKYigT"
-              autoPlay
-              loop
-              playsInline
-              className="w-full max-w-md max-h-[50vh] object-contain rounded-xl mb-3"
-            />
-          )}
-          {/* Special video for 10K VBMS prize */}
-          {result.prize === 10000 && (
-            <video
-              src="https://ipfs.filebase.io/ipfs/QmYrLyWyeYccvowPdtdRp7BbhZLBRTkihFae3FaXcKKp38"
-              autoPlay
-              loop
-              playsInline
-              className="w-full max-w-md max-h-[50vh] object-contain rounded-xl mb-3"
-            />
-          )}
-          {/* Special video for 50K VBMS prize */}
-          {result.prize === 50000 && (
-            <video
-              src="https://ipfs.filebase.io/ipfs/QmcLDi8srKnwuTgBayiPzpgBbZFLFG8p8hdSy522EcKhnE"
-              autoPlay
-              loop
-              playsInline
-              className="w-full max-w-md max-h-[50vh] object-contain rounded-xl mb-3"
-            />
-          )}
-          <div className="bg-gradient-to-r from-vintage-gold/20 to-yellow-500/20 border-2 border-vintage-gold rounded-xl p-4">
-            <p className="text-vintage-ice text-sm mb-1">{t.youWon}</p>
-            <p className="text-vintage-gold text-3xl font-bold animate-pulse">
-              {result.prize.toLocaleString()} VBMS
-            </p>
+        <div className="flex flex-col items-center px-4 pt-4 pb-2 gap-3">
+          {[
+            [100,   "https://ipfs.filebase.io/ipfs/Qmf8tTdyMgeFSZJmYUSfKCUTtRFtsXgBzMD8WxJ1bAtyqq"],
+            [500,   "https://ipfs.filebase.io/ipfs/QmTTM6dmwWieeBWv6nA9NfY7qWq8Ckt8dqdB2T5Mvtc8yR"],
+            [1000,  "https://ipfs.filebase.io/ipfs/Qmb3XNDr9UtBNjKWmLALhaz7arg2d8ygZDNjtpsLBKYigT"],
+            [10000, "https://ipfs.filebase.io/ipfs/QmYrLyWyeYccvowPdtdRp7BbhZLBRTkihFae3FaXcKKp38"],
+            [50000, "https://ipfs.filebase.io/ipfs/QmcLDi8srKnwuTgBayiPzpgBbZFLFG8p8hdSy522EcKhnE"],
+          ].map(([prize, src]) => result.prize === prize && (
+            <video key={prize as number} src={src as string} autoPlay loop playsInline
+              className="w-full rounded-xl object-contain" style={{ maxHeight: '44vh' }} />
+          ))}
+          <div className="w-full rounded-xl p-4 text-center" style={{ background: 'rgba(255,215,0,0.08)', border: '2px solid rgba(255,215,0,0.4)' }}>
+            <p className="text-sm mb-1" style={{ color: 'rgba(255,215,0,0.6)' }}>{t.youWon}</p>
+            <p className="text-3xl font-bold" style={{ color: '#FFD700' }}>{result.prize.toLocaleString()} VBMS</p>
           </div>
-
-          {/* Claim Button */}
           <button
             onClick={handleClaim}
             disabled={isClaiming}
-            className={`w-full py-3 font-bold text-lg rounded-xl transition-all shadow-lg ${
-              isClaiming
-                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white'
-            }`}
+            className="w-full py-3 font-bold text-lg rounded-xl transition-all"
+            style={{ background: isClaiming ? '#374151' : 'linear-gradient(135deg,#16a34a,#15803d)', color: '#fff' }}
           >
             {isClaiming ? t.claiming : `${t.claim} ${result.prize.toLocaleString()} VBMS`}
           </button>
         </div>
       )}
 
-      {/* Spin Button - hide when showing result */}
+      {/* Draggable ball at bottom — replaces SPIN button */}
       {!showResult && (
-        <>
-          <button
-            onClick={handleSpin}
-            disabled={isSpinning || !canSpin}
-            className={`w-full py-4 rounded-xl font-bold text-xl transition-all ${
-              isSpinning || !canSpin
-                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-vintage-gold to-yellow-500 text-black hover:from-yellow-400 hover:to-vintage-gold shadow-gold hover:shadow-gold-lg transform hover:scale-105'
-            }`}
+        <div className="flex flex-col items-center mt-auto pt-2 pb-4">
+          {/* Hint arrow */}
+          {!isSpinning && canSpin && (
+            <div className="mb-1 flex flex-col items-center gap-0.5" style={{ animation: 'swipeHint 1.6s ease-in-out infinite' }}>
+              <span style={{ color: 'rgba(255,215,0,0.5)', fontSize: '16px', lineHeight: 1 }}>↑</span>
+              <span style={{ color: 'rgba(255,215,0,0.35)', fontSize: '10px', letterSpacing: '0.08em' }}>drag to throw</span>
+            </div>
+          )}
+          {isSpinning && (
+            <p style={{ color: 'rgba(255,215,0,0.5)', fontSize: '11px', marginBottom: '6px' }}>{t.spinning}</p>
+          )}
+
+          {/* The ball */}
+          <div
+            style={{
+              transform: `translateY(${ballY}px)`,
+              transition: isDraggingBall ? 'none' : 'transform 0.45s cubic-bezier(0.34,1.56,0.64,1)',
+              touchAction: 'none',
+              cursor: canSpin && !isSpinning ? 'grab' : 'default',
+            }}
+            onTouchStart={e => handleBallDragStart(e.touches[0].clientY)}
+            onTouchMove={e => { e.preventDefault(); handleBallDragMove(e.touches[0].clientY); }}
+            onTouchEnd={() => handleBallDragEnd()}
+            onMouseDown={e => {
+              handleBallDragStart(e.clientY);
+              const onMove = (ev: MouseEvent) => handleBallDragMove(ev.clientY);
+              const onUp   = () => { handleBallDragEnd(); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+              document.addEventListener('mousemove', onMove);
+              document.addEventListener('mouseup', onUp);
+            }}
           >
-            {isSpinning ? t.spinning : canSpin ? t.spin : t.noSpinsToday}
-          </button>
+            <div style={{
+              width: '52px', height: '52px',
+              borderRadius: '50%', overflow: 'hidden',
+              border: `3px solid ${Math.abs(ballY) > 55 ? '#FFD700' : 'rgba(255,255,255,0.75)'}`,
+              boxShadow: `0 0 ${14 + Math.abs(ballY)/3}px rgba(255,215,0,${0.25 + Math.abs(ballY)/140}), 0 4px 12px rgba(0,0,0,0.8)`,
+              opacity: isSpinning ? 0.35 : 1,
+            }}>
+              <img src={ballImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+          </div>
 
+          {/* hidden button for swipe-from-page compat */}
+          <button data-spin-button onClick={() => { if (canSpin && !isSpinning) handleSpin(); }} style={{ display:'none' }} />
 
-          {/* Paid Spin Button - show when no free spins left */}
-          {!canSpin && paidSpinCostData && canBuyPaidSpinData && (
-            <div className="mt-3 space-y-2">
+          {/* Paid spin — compact, below ball */}
+          {!canSpin && !isSpinning && paidSpinCostData && canBuyPaidSpinData && (
+            <div className="mt-4 space-y-1 text-center">
               <button
                 onClick={handlePaidSpin}
-                disabled={isSpinning || isBuyingPaidSpin || !canBuyPaidSpinData.canBuy}
-                className={`w-full py-3 rounded-xl font-bold text-lg transition-all ${
-                  isSpinning || isBuyingPaidSpin || !canBuyPaidSpinData.canBuy
-                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white hover:from-purple-500 hover:to-purple-400 shadow-lg'
-                }`}
+                disabled={isBuyingPaidSpin || !canBuyPaidSpinData.canBuy}
+                className="px-5 py-2 rounded-xl font-bold text-sm transition-all"
+                style={{ background: 'rgba(255,215,0,0.12)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.3)' }}
               >
                 {isBuyingPaidSpin ? t.buyingPaidSpin : `${t.paidSpin} (${paidSpinCostData.cost} VBMS)`}
               </button>
-              <p className="text-center text-vintage-ice/50 text-xs">
-                {canBuyPaidSpinData.remaining}/{canBuyPaidSpinData.maxPaidSpins} paid spins remaining today
+              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px' }}>
+                {canBuyPaidSpinData.remaining}/{canBuyPaidSpinData.maxPaidSpins} paid spins today
               </p>
             </div>
           )}
-
-        </>
+        </div>
       )}
+
     </div>
   );
 }

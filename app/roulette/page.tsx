@@ -76,6 +76,7 @@ export default function RoulettePage() {
 
   const [showFloating, setShowFloating] = useState(false);
   const [swiped, setSwiped] = useState(false);
+  const [chainMode, setChainMode] = useState<'base' | 'arbitrum'>('arbitrum');
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const rouletteRef = useRef<HTMLDivElement>(null);
@@ -131,7 +132,10 @@ export default function RoulettePage() {
 
       <div
         className="relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden overscroll-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 20%, #1a1020 0%, #090909 70%)' }}
+        style={{ background: chainMode === 'base'
+          ? 'radial-gradient(ellipse at 50% 20%, #00112b 0%, #060609 70%)'
+          : 'radial-gradient(ellipse at 50% 20%, #1a0a2e 0%, #060609 70%)',
+          transition: 'background 0.8s ease' }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -168,7 +172,7 @@ export default function RoulettePage() {
 
         {/* Roulette content */}
         <div ref={rouletteRef} className="relative z-10 flex-1 overflow-y-auto overscroll-contain">
-          <Roulette />
+          <Roulette pfpUrl={pfpUrl} onChainChange={setChainMode} />
         </div>
 
         {/* Swipe hint overlay — disappears after first swipe */}
