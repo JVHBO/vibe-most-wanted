@@ -115,12 +115,13 @@ export const getRaffleBuyers = query({
       .take(1000);
 
     // Aggregate by address
-    const map: Record<string, { address: string; username: string | null; tickets: number; chain: string }> = {};
+    const map: Record<string, { address: string; username: string | null; tickets: number; chain: string; chains: string[] }> = {};
     for (const e of entries) {
       if (!map[e.address]) {
-        map[e.address] = { address: e.address, username: e.username ?? null, tickets: 0, chain: e.chain };
+        map[e.address] = { address: e.address, username: e.username ?? null, tickets: 0, chain: e.chain, chains: [] };
       }
       map[e.address].tickets += e.tickets;
+      if (e.token !== 'BONUS' && !map[e.address].chains.includes(e.chain)) map[e.address].chains.push(e.chain);
       // Update username if we have one
       if (e.username && !map[e.address].username) map[e.address].username = e.username;
     }
@@ -1021,7 +1022,9 @@ export const patchDrawResult = mutation({
     if (winnerChain !== undefined) patch.winnerChain = winnerChain;
     if (winnerToken !== undefined) patch.winnerToken = winnerToken;
     if (prizeDescription !== undefined) patch.prizeDescription = prizeDescription;
+    const before = { winnerChain: rec.winnerChain, winnerToken: rec.winnerToken, prizeDescription: rec.prizeDescription };
     await ctx.db.patch(rec._id, patch);
+    console.warn(`[RAFFLE ADMIN] patchDrawResult epoch=${epoch} before=${JSON.stringify(before)} after=${JSON.stringify(patch)}`);
     return { ok: true, epoch, ...patch };
   },
 });
@@ -1041,6 +1044,10 @@ export const insertMissingEntry = mutation({
   handler: async (ctx, { adminKey, address, tickets, chain, token, txHash, epoch, blockNumber }) => {
     if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
     if (tickets < 1 || tickets > 500) throw new Error("Invalid tickets count");
+    if (!["base", "arb"].includes(chain)) throw new Error("Invalid chain: must be 'base' or 'arb'");
+    const VALID_TOKENS = ["VBMS", "USDC", "USND", "ETH", "BONUS"];
+    if (!VALID_TOKENS.includes(token)) throw new Error(`Invalid token: must be one of ${VALID_TOKENS.join(", ")}`);
+    if (!/^0x[0-9a-fA-F]{40}$/.test(address)) throw new Error("Invalid Ethereum address");
     const existing = await ctx.db
       .query("raffleEntries")
       .withIndex("by_txHash", (q: any) => q.eq("txHash", txHash))
@@ -1459,6 +1466,7 @@ export const withdrawRaffleFunds = action({
     error?: string;
   }> => {
     if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+    console.warn(`[RAFFLE ADMIN] withdrawRaffleFunds triggered at=${new Date().toISOString()}`);
 
     const privateKey = process.env.VBMS_SIGNER_PRIVATE_KEY;
     const arbAddr    = ARB_RAFFLE_CONTRACT();
@@ -1550,6 +1558,7 @@ export const purgeEpochEntries = mutation({
       .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch))
       .collect();
     await Promise.all(entries.map((e: any) => ctx.db.delete(e._id)));
+    console.warn(`[RAFFLE ADMIN] purgeEpochEntries epoch=${epoch} deleted=${entries.length} at=${new Date().toISOString()}`);
     return { deleted: entries.length };
   },
 });

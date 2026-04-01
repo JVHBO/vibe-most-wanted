@@ -353,14 +353,25 @@ export const adminSetTestMode = internalMutation({
  * 🔒 SECURITY: Marks spin as pending BEFORE signing to prevent double-claims
  */
 export const prepareRouletteClaim = action({
-  args: { address: v.string() },
-  handler: async (ctx, { address }): Promise<{
+  args: { address: v.string(), ownershipProof: v.string(), timestamp: v.number() },
+  handler: async (ctx, { address, ownershipProof, timestamp }): Promise<{
     amount: number;
     nonce: string;
     signature: string;
     spinId: string;
   }> => {
     const normalizedAddress = address.toLowerCase();
+
+    // 🔒 SECURITY: Verify caller owns the address (prevents DoS via pending-lock)
+    const nowMinute = Math.floor(Date.now() / 60000);
+    if (Math.abs(nowMinute - timestamp) > 5) {
+      throw new Error("Request expired, please try again");
+    }
+    const ownershipMessage = `VMW Roulette - ${normalizedAddress} - ${timestamp}`;
+    const recoveredAddress = ethers.verifyMessage(ownershipMessage, ownershipProof);
+    if (recoveredAddress.toLowerCase() !== normalizedAddress) {
+      throw new Error("Invalid ownership proof");
+    }
 
     // Find unclaimed spin (excludes pending spins)
     const unclaimed = await ctx.runQuery(internal.roulette.getUnclaimedSpin, { address: normalizedAddress });

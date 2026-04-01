@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { useAccount } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
 import { AudioManager } from '@/lib/audio-manager';
 import { useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
 import { toast } from 'sonner';
@@ -278,6 +278,7 @@ interface RouletteProps {
 
 export function Roulette({ onClose }: RouletteProps) {
   const { address } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const { lang } = useLanguage();
   const { validateOnArb } = useArbValidator();
   const t = rouletteTranslations[lang as keyof typeof rouletteTranslations] || rouletteTranslations.en;
@@ -417,8 +418,13 @@ export function Roulette({ onClose }: RouletteProps) {
         console.warn('[Roulette] Could not get provider address, using useAccount:', address);
       }
 
-      // 2. Get signature from backend using actual wallet address
-      const claimData = await prepareClaimAction({ address: signingAddress });
+      // 2. Prove wallet ownership before requesting signature (prevents DoS via pending-lock)
+      const timestamp = Math.floor(Date.now() / 60000);
+      const ownershipMessage = `VMW Roulette - ${signingAddress.toLowerCase()} - ${timestamp}`;
+      const ownershipProof = await signMessageAsync({ message: ownershipMessage });
+
+      // 3. Get signature from backend using actual wallet address
+      const claimData = await prepareClaimAction({ address: signingAddress, ownershipProof, timestamp });
 
       toast.info("🔐 Sign the transaction...");
 

@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { AudioManager } from "@/lib/audio-manager";
+
+const SOCIAL_TIP_KEY = 'navSocialTipSeen';
 
 interface InboxStatus {
   coins: number;
@@ -30,6 +33,20 @@ export function GameNavBar({
 }: GameNavBarProps) {
   const { t } = useLanguage();
   const router = useRouter();
+  const [showSocialTip, setShowSocialTip] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(SOCIAL_TIP_KEY)) {
+        setShowSocialTip(true);
+      }
+    } catch {}
+  }, []);
+
+  const dismissTip = () => {
+    setShowSocialTip(false);
+    try { localStorage.setItem(SOCIAL_TIP_KEY, '1'); } catch {}
+  };
 
   const baseBtn = `flex-1 min-w-0 ${isInFarcaster ? 'px-1 py-2 flex flex-col items-center justify-center gap-0.5' : 'px-2 md:px-6 py-2 md:py-3 flex items-center gap-2'} rounded-lg font-modern font-semibold transition-all ${isInFarcaster ? 'text-[10px] leading-tight' : 'text-xs md:text-base'}`;
   const activeClass = 'bg-vintage-gold text-vintage-black';
@@ -167,13 +184,21 @@ export function GameNavBar({
           )}
         </Link>
 
-        {/* Quests */}
+        {/* Quests / Social */}
         <Link
           href="/quests"
-          onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
+          onClick={() => { if (soundEnabled) AudioManager.buttonClick(); dismissTip(); }}
           onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
-          className={`tour-wanted-btn relative ${baseBtn} ${inactiveClass}`}
+          className={`tour-wanted-btn relative ${baseBtn} ${showSocialTip ? 'animate-pulse ring-2 ring-yellow-400 ring-offset-1 ring-offset-black ' : ''}${inactiveClass}`}
         >
+          {showSocialTip && (
+            <span className="absolute -top-8 left-1/2 -translate-x-1/2 z-[150] pointer-events-none flex flex-col items-center">
+              <span className="bg-yellow-400 text-black text-[9px] font-black rounded px-1.5 py-0.5 whitespace-nowrap shadow-lg">
+                {(t as (k: string) => string)('navSocialTip')}
+              </span>
+              <span className="w-0 h-0 border-l-[4px] border-r-[4px] border-t-[4px] border-l-transparent border-r-transparent border-t-yellow-400" />
+            </span>
+          )}
           {isInFarcaster ? (
             <>
               <span className="text-[10px] font-bold whitespace-nowrap">{(t as (k: string) => string)('navWanted')}</span>

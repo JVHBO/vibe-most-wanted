@@ -7,33 +7,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
-
-// Rate limiting: track last request time per address
-const rateLimitMap = new Map<string, number>();
-const RATE_LIMIT_MS = 5000; // 5 seconds between requests
+import { mintRateLimit, checkRateLimit as checkDistributedRateLimit } from '@/lib/security';
 
 // Roulette has no minimum, but cap at reasonable max
 const MAX_CLAIM_AMOUNT = 100000; // 100k max (biggest roulette prize)
-
-function checkRateLimit(address: string): boolean {
-  const now = Date.now();
-  const lastRequest = rateLimitMap.get(address.toLowerCase());
-
-  if (lastRequest && now - lastRequest < RATE_LIMIT_MS) {
-    return false;
-  }
-
-  rateLimitMap.set(address.toLowerCase(), now);
-
-  if (rateLimitMap.size > 1000) {
-    const cutoff = now - RATE_LIMIT_MS * 2;
-    for (const [key, time] of rateLimitMap.entries()) {
-      if (time < cutoff) rateLimitMap.delete(key);
-    }
-  }
-
-  return true;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,7 +47,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!checkRateLimit(address)) {
+    if (!(await checkDistributedRateLimit(address, mintRateLimit)).success) {
       return NextResponse.json(
         { error: 'Too many requests. Please wait.' },
         { status: 429 }
