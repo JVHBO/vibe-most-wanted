@@ -682,7 +682,7 @@ export default function RafflePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => { if (!isBusy) { setShowBuy(false); resetStatus(); } }}>
           <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
           <div
-            className="relative w-full max-w-sm border-2 border-black bg-[#1a1a1a] shadow-[6px_6px_0px_#FFD700]"
+            className="relative w-full max-w-sm border-2 border-black bg-[#1a1a1a] shadow-[6px_6px_0px_#FFD700] flex flex-col max-h-[90vh]"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -695,7 +695,7 @@ export default function RafflePage() {
             </div>
 
             {/* Body */}
-            <div className="px-3 py-3 space-y-3">
+            <div className="px-3 py-3 space-y-3 overflow-y-auto">
 
               {/* Status feedback */}
               {status === "success" && (
