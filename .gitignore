@@ -103,6 +103,8 @@ nul
 !public/images/og-cards/*.png
 !public/fid-assets/images/splash-200.png
 !public/fid-assets/images/vibefid-icon.png
+!public/tokens/*.png
+!public/tokens/*.avif
 *.webm
 *.html
 *.mp4
