@@ -1540,3 +1540,16 @@ export const withdrawRaffleFunds = action({
     }
   },
 });
+
+/** Delete all raffleEntries for a given epoch (admin only) */
+export const purgeEpochEntries = mutation({
+  args: { adminKey: v.string(), epoch: v.number() },
+  handler: async (ctx, { adminKey, epoch }) => {
+    if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+    const entries = await ctx.db.query("raffleEntries")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch))
+      .collect();
+    await Promise.all(entries.map((e: any) => ctx.db.delete(e._id)));
+    return { deleted: entries.length };
+  },
+});

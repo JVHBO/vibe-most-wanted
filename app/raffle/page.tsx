@@ -290,8 +290,8 @@ export default function RafflePage() {
     query: { refetchInterval: 30_000 },
   });
   const arbTotalTickets = arbTotalTicketsRaw !== undefined ? Number(arbTotalTicketsRaw) : null;
-  // Prefer on-chain value (live), fallback to Convex
-  const totalTickets = arbTotalTickets ?? totalTicketsConvex;
+  // Use Convex count (epoch-aware). ARB on-chain can be stale from prev epoch.
+  const totalTickets = totalTicketsConvex;
   const paidTickets  = Math.max(0, totalTickets - bonusTicketCount);
   const totalVBMS    = paidTickets * ticketPriceVBMS;
 
