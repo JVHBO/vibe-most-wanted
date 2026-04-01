@@ -789,59 +789,7 @@ export default function RafflePage() {
                 </div>
               </div>
 
-              {/* BASE options */}
-              <div className="border-2 border-black overflow-hidden">
-                <div className="bg-[#0052FF] px-3 py-1.5">
-                  <span className="text-white font-black text-[9px] uppercase tracking-widest">{t('raffleBaseMainnet')}</span>
-                </div>
-
-                {/* VBMS */}
-                <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5">
-                  <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#0052FF] flex items-center justify-center shadow-[1px_1px_0px_#000]">
-                    <span className="text-white font-black text-[7px]">VBMS</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-xs leading-none">{vbmsPriceLabel}</p>
-                    <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(vbmsBal as bigint | undefined, 18, "VBMS")}</p>
-                  </div>
-                  <button onClick={handleBuyVBMS} disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
-                    {vbmsNeedsApprove && !pendingApprove ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
-                  </button>
-                </div>
-
-                {/* USDC */}
-                <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5">
-                  <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#2775CA] flex items-center justify-center shadow-[1px_1px_0px_#000]">
-                    <span className="text-white font-black text-[7px]">USDC</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-xs leading-none">{usdcPriceLabel}</p>
-                    <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(usdcBal as bigint | undefined, 6, "USDC")}</p>
-                  </div>
-                  <button onClick={handleBuyUSDC} disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
-                    {usdcNeedsApprove && !pendingApprove ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
-                  </button>
-                </div>
-
-                {/* ETH Base */}
-                <div className="flex items-center gap-2 px-3 py-2">
-                  <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#627EEA] flex items-center justify-center shadow-[1px_1px_0px_#000]">
-                    <span className="text-white font-black text-[7px]">ETH</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white font-black text-xs leading-none">{ethPriceLabel}</p>
-                    <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(baseEthBal?.value, 18, "ETH")}</p>
-                  </div>
-                  <button onClick={handleBuyETHBase} disabled={!walletAddress || isBusy}
-                    className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
-                    {isBusy ? "…" : t('raffleBuy')}
-                  </button>
-                </div>
-              </div>
-
-              {/* ARB options */}
+              {/* ARB options — shown first */}
               <div className="border-2 border-black overflow-hidden">
                 <div className="bg-[#12AAFF] px-3 py-1">
                   <span className="text-black font-black text-[8px] uppercase tracking-widest">{t('raffleArbitrumOne')}</span>
@@ -849,9 +797,7 @@ export default function RafflePage() {
 
                 {/* USND */}
                 <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5">
-                  <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#12AAFF] flex items-center justify-center shadow-[1px_1px_0px_#000]">
-                    <span className="text-black font-black text-[7px]">USND</span>
-                  </div>
+                  <img src="/tokens/usnd.avif" alt="USND" className="w-8 h-8 shrink-0 rounded-full object-cover border-2 border-black shadow-[1px_1px_0px_#000]" />
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-black text-xs leading-none">
                       {costUSDN ? fmtBal(costUSDN as bigint, 18, "USND") : `$${(ticketPriceUSD * buyQty).toFixed(2)} USND`}
@@ -866,9 +812,7 @@ export default function RafflePage() {
 
                 {/* ETH ARB */}
                 <div className="flex items-center gap-2 px-3 py-2">
-                  <div className="w-8 h-8 shrink-0 border-2 border-black bg-[#627EEA] flex items-center justify-center shadow-[1px_1px_0px_#000]">
-                    <span className="text-white font-black text-[7px]">ETH</span>
-                  </div>
+                  <img src="/tokens/eth.png" alt="ETH" className="w-8 h-8 shrink-0 rounded-full object-cover border-2 border-black shadow-[1px_1px_0px_#000]" />
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-black text-xs leading-none">
                       {arbEthWeiCost ? fmtBal(arbEthWeiCost as bigint, 18, "ETH") : `≈${(0.000023 * buyQty).toFixed(6)} ETH`}
@@ -876,6 +820,52 @@ export default function RafflePage() {
                     <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(arbEthBal?.value, 18, "ETH")}</p>
                   </div>
                   <button onClick={handleBuyETHArb} disabled={!walletAddress || isBusy}
+                    className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
+                    {isBusy ? "…" : t('raffleBuy')}
+                  </button>
+                </div>
+              </div>
+
+              {/* BASE options */}
+              <div className="border-2 border-black overflow-hidden">
+                <div className="bg-[#0052FF] px-3 py-1.5">
+                  <span className="text-white font-black text-[9px] uppercase tracking-widest">{t('raffleBaseMainnet')}</span>
+                </div>
+
+                {/* VBMS */}
+                <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5">
+                  <img src="/tokens/vbms.png" alt="VBMS" className="w-8 h-8 shrink-0 rounded-full object-cover border-2 border-black shadow-[1px_1px_0px_#000]" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-black text-xs leading-none">{vbmsPriceLabel}</p>
+                    <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(vbmsBal as bigint | undefined, 18, "VBMS")}</p>
+                  </div>
+                  <button onClick={handleBuyVBMS} disabled={!walletAddress || isBusy}
+                    className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
+                    {vbmsNeedsApprove && !pendingApprove ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
+                  </button>
+                </div>
+
+                {/* USDC */}
+                <div className="flex items-center gap-2 px-3 py-2 border-b border-white/5">
+                  <img src="/tokens/usdc.png" alt="USDC" className="w-8 h-8 shrink-0 rounded-full object-cover border-2 border-black shadow-[1px_1px_0px_#000]" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-black text-xs leading-none">{usdcPriceLabel}</p>
+                    <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(usdcBal as bigint | undefined, 6, "USDC")}</p>
+                  </div>
+                  <button onClick={handleBuyUSDC} disabled={!walletAddress || isBusy}
+                    className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
+                    {usdcNeedsApprove && !pendingApprove ? t('raffleApprove') : isBusy ? "…" : t('raffleBuy')}
+                  </button>
+                </div>
+
+                {/* ETH Base */}
+                <div className="flex items-center gap-2 px-3 py-2">
+                  <img src="/tokens/eth.png" alt="ETH" className="w-8 h-8 shrink-0 rounded-full object-cover border-2 border-black shadow-[1px_1px_0px_#000]" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-black text-xs leading-none">{ethPriceLabel}</p>
+                    <p className="text-white/30 text-[8px]">{t('raffleBalance')} {fmtBal(baseEthBal?.value, 18, "ETH")}</p>
+                  </div>
+                  <button onClick={handleBuyETHBase} disabled={!walletAddress || isBusy}
                     className="border-2 border-black font-black text-xs px-4 py-2 uppercase shrink-0 bg-[#FFD700] text-black shadow-[3px_3px_0px_#000] hover:shadow-none hover:translate-x-[3px] hover:translate-y-[3px] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-x-0 disabled:translate-y-0 disabled:shadow-[3px_3px_0px_#000]">
                     {isBusy ? "…" : t('raffleBuy')}
                   </button>
