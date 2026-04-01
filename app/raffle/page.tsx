@@ -5,8 +5,9 @@ import { useConvex, useQuery, useMutation, useAction } from "convex/react";
 import Link from "next/link";
 import {
   useAccount, useBalance, useReadContract,
-  useWriteContract, useWaitForTransactionReceipt, useSwitchChain, useSignMessage,
+  useWaitForTransactionReceipt, useSwitchChain, useSignMessage,
 } from "wagmi";
+import { useWriteContractWithAttribution } from "@/lib/hooks/useWriteContractWithAttribution";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import { formatUnits, parseUnits } from "viem";
@@ -326,7 +327,7 @@ export default function RafflePage() {
   });
 
   // ── Write contract ──
-  const { writeContractAsync } = useWriteContract();
+  const { writeContractAsync } = useWriteContractWithAttribution();
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
   const { isSuccess: txConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
 
