@@ -17,10 +17,10 @@ import { encodeFunctionData, type Abi } from 'viem';
 // Your unique builder code from base.dev
 export const BUILDER_CODE = 'bc_j3oc0rlv';
 
-// ERC-8021 attribution suffix for bc_j3oc0rlv
-// Exact value from Base dashboard (base.dev/builders → Builder Code → Encoded String)
-// Format: [code_bytes_hex][0x00][8021 × 14]
-const ATTRIBUTION_SUFFIX_HEX = '62635f6a336f6330726c760080218021802180218021802180218021802180218021802180218021';
+// Precomputed ERC-8021 attribution suffix for bc_j3oc0rlv
+// Format: [code_bytes][code_length][0x00][8021 × 8 bytes]
+// Verified with: node -e "const {Attribution}=require('ox/erc8021'); console.log(Attribution.toDataSuffix({codes:['bc_j3oc0rlv']}))"
+const ATTRIBUTION_SUFFIX_HEX = '62635f6a336f6330726c760b0080218021802180218021802180218021';
 
 export const dataSuffix: `0x${string}` = `0x${ATTRIBUTION_SUFFIX_HEX}`;
 
