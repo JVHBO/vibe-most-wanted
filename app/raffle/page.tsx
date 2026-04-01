@@ -787,8 +787,12 @@ export default function RafflePage() {
                 <div className="flex items-center gap-2">
                   <button onClick={() => setBuyQty(q => Math.max(1, q - 1))} disabled={isBusy}
                     className="w-7 h-7 border-2 border-black bg-[#111] text-white font-black text-base flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40">−</button>
-                  <span className="text-[#FFD700] font-black text-xl w-8 text-center tabular-nums">{buyQty}</span>
-                  <button onClick={() => setBuyQty(q => Math.min(20, q + 1))} disabled={isBusy}
+                  <input
+                    type="number" min={1} max={50} value={buyQty} disabled={isBusy}
+                    onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v)) setBuyQty(Math.min(50, Math.max(1, v))); }}
+                    className="text-[#FFD700] font-black text-xl w-12 text-center tabular-nums bg-transparent border-0 outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                  <button onClick={() => setBuyQty(q => Math.min(50, q + 1))} disabled={isBusy}
                     className="w-7 h-7 border-2 border-black bg-[#111] text-white font-black text-base flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-40">+</button>
                 </div>
               </div>
