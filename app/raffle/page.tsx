@@ -226,6 +226,7 @@ export default function RafflePage() {
   const { d, h, m, ended } = useCountdown(endsAt);
   const raffleResult = useQuery(api.raffle.getRaffleResult, { epoch: config?.epoch ?? 1 });
   const totalTicketsConvex = entries.reduce((sum, e) => sum + e.tickets, 0);
+  const bonusTicketCount  = entries.filter(e => e.token === "BONUS").reduce((sum, e) => sum + e.tickets, 0);
   const ticketPriceVBMS = config?.ticketPriceVBMS ?? 10000;
   const ticketPriceUSD  = config?.ticketPriceUSD  ?? 0.06;
 
@@ -289,7 +290,8 @@ export default function RafflePage() {
   const arbTotalTickets = arbTotalTicketsRaw !== undefined ? Number(arbTotalTicketsRaw) : null;
   // Prefer on-chain value (live), fallback to Convex
   const totalTickets = arbTotalTickets ?? totalTicketsConvex;
-  const totalVBMS = totalTickets * ticketPriceVBMS;
+  const paidTickets  = Math.max(0, totalTickets - bonusTicketCount);
+  const totalVBMS    = paidTickets * ticketPriceVBMS;
 
   // ── ARB costs ──
   const { data: costUSDN } = useReadContract({
@@ -1019,28 +1021,34 @@ export default function RafflePage() {
             {/* Stats */}
             <div className="border-t-2 border-black grid grid-cols-3 bg-[#1a1a1a]">
               <div className="flex flex-col items-center py-3 border-r-2 border-black">
-                <span className="font-black text-xl text-white leading-none">{totalTickets}</span>
-                <span className="text-white/40 text-[9px] uppercase mt-0.5 font-bold">{t('raffleTicketsLabel')}</span>
+                <div className="flex items-center h-7">
+                  <span className="font-black text-xl text-white leading-none">{totalTickets}</span>
+                </div>
+                <span className="text-white/40 text-[9px] uppercase font-bold">{t('raffleTicketsLabel')}</span>
               </div>
               <div className="flex flex-col items-center py-3 border-r-2 border-black">
-                <span className="font-black text-sm text-[#FFD700] leading-none">
-                  {totalVBMS >= 1_000_000 ? `${(totalVBMS / 1_000_000).toFixed(1)}M`
-                    : totalVBMS >= 1_000 ? `${(totalVBMS / 1_000).toFixed(0)}k`
-                    : totalVBMS.toString()}
-                </span>
-                <span className="text-white/40 text-[9px] uppercase mt-0.5 font-bold">{t('raffleVbmsPool')}</span>
+                <div className="flex items-center h-7">
+                  <span className="font-black text-sm text-[#FFD700] leading-none">
+                    {totalVBMS >= 1_000_000 ? `${(totalVBMS / 1_000_000).toFixed(1)}M`
+                      : totalVBMS >= 1_000 ? `${(totalVBMS / 1_000).toFixed(0)}k`
+                      : totalVBMS.toString()}
+                  </span>
+                </div>
+                <span className="text-white/40 text-[9px] uppercase font-bold">{t('raffleVbmsPool')}</span>
               </div>
               <div className="flex flex-col items-center py-3">
-                {ended ? (
-                  <span className="font-black text-base text-red-400 leading-none">{t('raffleEnded')}</span>
-                ) : endsAt ? (
-                  <span className="font-mono font-black text-base text-[#FFD700] leading-none tabular-nums">
-                    {d > 0 ? `${d}d ${h}h` : `${h}h ${m}m`}
-                  </span>
-                ) : (
-                  <span className="font-mono font-black text-base text-white/30 leading-none">— —</span>
-                )}
-                <span className="text-white/40 text-[9px] uppercase mt-0.5 font-bold">{t('raffleLeft')}</span>
+                <div className="flex items-center h-7">
+                  {ended ? (
+                    <span className="font-black text-base text-red-400 leading-none">{t('raffleEnded')}</span>
+                  ) : endsAt ? (
+                    <span className="font-mono font-black text-base text-[#FFD700] leading-none tabular-nums">
+                      {d > 0 ? `${d}d ${h}h` : `${h}h ${m}m`}
+                    </span>
+                  ) : (
+                    <span className="font-mono font-black text-base text-white/30 leading-none">— —</span>
+                  )}
+                </div>
+                <span className="text-white/40 text-[9px] uppercase font-bold">{t('raffleLeft')}</span>
               </div>
             </div>
           </div>
