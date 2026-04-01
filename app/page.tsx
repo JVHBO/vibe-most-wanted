@@ -2690,8 +2690,8 @@ export default function TCGPage() {
               </button>
             )}
 
-            {/* 🎟️ RAFFLE — neobrutalism, admin only por ora */}
-            {isAdmin(address) && (
+            {/* 🎟️ RAFFLE */}
+            {raffleConfig && (
               <Link
                 href="/raffle"
                 onMouseEnter={() => soundEnabled && AudioManager.buttonHover()}
@@ -2711,7 +2711,6 @@ export default function TCGPage() {
                 <div className="flex-1 min-w-0 px-2.5 py-2">
                   <div className="flex items-center gap-1.5">
                     <span className="text-black font-display font-black text-xs uppercase tracking-widest leading-none">🎟️ Raffle</span>
-                    <span className="bg-black text-[#FFD700] text-[8px] font-bold px-1 py-px uppercase tracking-wider leading-none">ADMIN</span>
                   </div>
                   <p className="text-black/70 font-bold text-[10px] uppercase tracking-wide mt-0.5 leading-tight">Goofy Romero Legendary · ~$23</p>
                 </div>
@@ -2737,7 +2736,6 @@ export default function TCGPage() {
 
           </>
           )}
-
 
           {/* 🎯 Missions View */}
           {currentView === 'missions' && (
