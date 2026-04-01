@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useConvex, useQuery, useMutation } from "convex/react";
+import { useConvex, useQuery, useMutation, useAction } from "convex/react";
 import Link from "next/link";
 import {
   useAccount, useBalance, useReadContract,
-  useWriteContract, useWaitForTransactionReceipt, useSwitchChain,
+  useWriteContract, useWaitForTransactionReceipt, useSwitchChain, useSignMessage,
 } from "wagmi";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
@@ -175,7 +175,8 @@ export default function RafflePage() {
   const [pendingTxList,     setPendingTxList]     = useState<Array<{ txHash: string; chain: "base" | "arb"; qty: number; token: string }>>([]);
   const [shareClaimed,      setShareClaimed]      = useState(false);
   const [shareClaiming,     setShareClaiming]     = useState(false);
-  const claimShareBonus = useMutation(api.raffle.claimShareBonus);
+  const claimShareBonusAction = useAction(api.raffle.claimShareBonus);
+  const { signMessageAsync } = useSignMessage();
   const [showCardModal,     setShowCardModal]     = useState(false);
   const cardRotRef = useRef({ rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 });
   const cardInnerRef = useRef<HTMLDivElement>(null);
@@ -738,7 +739,11 @@ export default function RafflePage() {
                             shareToFarcaster(castText, "https://vibemostwanted.xyz/share/raffle");
                             setShareClaiming(true);
                             try {
-                              await claimShareBonus({ address: walletAddress! });
+                              const addr = walletAddress!.toLowerCase();
+                              const epoch = config?.epoch ?? 1;
+                              const message = `claim-share-bonus:${addr}:${epoch}`;
+                              const signature = await signMessageAsync({ message });
+                              await claimShareBonusAction({ address: addr, signature });
                               setShareClaimed(true);
                             } catch(e: any) {
                               if (e?.message?.includes("Already claimed")) setShareClaimed(true);
@@ -1072,8 +1077,10 @@ export default function RafflePage() {
                   </div>
                   <div className="w-px h-8 bg-white/10" />
                   <div className="text-center">
-                    <p className="text-white font-black text-sm">{(raffleResult as any).totalEntries}</p>
-                    <p className="text-white/40 text-[8px] uppercase">total</p>
+                    <p className="text-white font-black text-sm">
+                      {entries.find((e: any) => e.address === (raffleResult as any).winner)?.tickets ?? (raffleResult as any).totalEntries}
+                    </p>
+                    <p className="text-white/40 text-[8px] uppercase">tickets</p>
                   </div>
                   {(raffleResult as any).winnerChain && (
                     <>
@@ -1159,21 +1166,6 @@ export default function RafflePage() {
             </div>
           )}
 
-          {/* DEV: share test button — jvhbo only */}
-          {walletAddress?.toLowerCase() === "0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52" && (
-            <div className="border-2 border-dashed border-yellow-500/50 bg-[#1a1a1a] px-3 py-2 flex items-center gap-3">
-              <span className="text-yellow-400/60 text-[9px] font-mono uppercase">dev</span>
-              <button
-                onClick={() => {
-                  const castText = `Just entered the Goofy Romero ($23) raffle 🎟️\n\nTicket: $0.06 each — grab yours before it's gone!`;
-                  shareToFarcaster(castText, "https://vibemostwanted.xyz/share/raffle");
-                }}
-                className="bg-yellow-500/20 border border-yellow-500/50 text-yellow-400 text-[9px] font-mono px-2 py-1 hover:bg-yellow-500/30 transition-colors"
-              >
-                test share flow
-              </button>
-            </div>
-          )}
 
           {/* My Tickets */}
           {walletAddress && ((playerInfo && playerInfo.playerTotal > 0) || pendingTxList.length > 0) && (

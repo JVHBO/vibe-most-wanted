@@ -105,11 +105,14 @@ export const getRaffleConfig = query({
 export const getRaffleBuyers = query({
   args: { epoch: v.optional(v.number()) },
   handler: async (ctx, { epoch }) => {
-    const q = ctx.db.query("raffleEntries");
-    const entries = await (epoch !== undefined
-      ? q.withIndex("by_epoch", (i: any) => i.eq("epoch", epoch))
-      : q
-    ).take(1000);
+    let ep = epoch;
+    if (ep === undefined) {
+      const config = await ctx.db.query("raffleConfig").order("desc").first();
+      ep = config?.epoch ?? 1;
+    }
+    const entries = await ctx.db.query("raffleEntries")
+      .withIndex("by_epoch", (i: any) => i.eq("epoch", ep))
+      .take(1000);
 
     // Aggregate by address
     const map: Record<string, { address: string; username: string | null; tickets: number; chain: string }> = {};
@@ -372,6 +375,7 @@ export const recordBaseEntryPublic = mutation({
   },
   handler: async (ctx, { adminKey, buyer, count, txHash, epoch, blockNumber, token }) => {
     if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+    if (count < 1 || count > 500) throw new Error("Invalid count");
 
     const existing = await ctx.db
       .query("raffleEntries")
@@ -424,7 +428,7 @@ export const pollBaseEvents = internalAction({
     await ctx.runAction(internal.raffle.retryUnsyncedEntries, {});
 
     // Use Convex config epoch (same as ARB) — BASE contract epoch may differ after resets
-    const config = await ctx.runQuery(internal.raffle.getRaffleConfig, {});
+    const config = await ctx.runQuery(internal.raffle.getLatestConfigInternal, {});
     const configEpoch = (config as any)?.epoch ?? 3;
 
     // Checkpoint-based polling: start from last processed block so no gaps survive cron outages.
@@ -526,7 +530,7 @@ export const pollARBEvents = internalAction({
     if (!contractAddr) return;
 
     // Get current epoch from config
-    const config = await ctx.runQuery(internal.raffle.getRaffleConfig, {});
+    const config = await ctx.runQuery(internal.raffle.getLatestConfigInternal, {});
     const epoch = (config as any)?.epoch ?? 2;
 
     // Checkpoint-based polling: ARB 0.25s/block → ~480 blocks/2min cron
@@ -656,7 +660,7 @@ export const getUnsyncedEntries = internalQuery({
 export const retryUnsyncedEntries = internalAction({
   args: {},
   handler: async (ctx): Promise<void> => {
-    const config = await ctx.runQuery(internal.raffle.getRaffleConfig, {});
+    const config = await ctx.runQuery(internal.raffle.getLatestConfigInternal, {});
     const epoch = (config as any)?.epoch;
     if (!epoch) return;
     const staleBefore = Date.now() - 5 * 60 * 1000; // older than 5 min
@@ -692,12 +696,12 @@ export const autoCheckDraw = internalAction({
     const privateKey = process.env.VBMS_SIGNER_PRIVATE_KEY;
     if (!arbAddr || !privateKey) return;
 
-    const config = await ctx.runQuery(internal.raffle.getRaffleConfig, {});
+    const config = await ctx.runQuery(internal.raffle.getLatestConfigInternal, {});
     const epoch  = (config as any)?.epoch;
     if (!epoch) return;
 
     // Already have a winner stored → nothing to do
-    const existing = await ctx.runQuery(internal.raffle.getRaffleResult, { epoch });
+    const existing = await ctx.runQuery(internal.raffle.getRaffleResultInternal, { epoch });
     if (existing) return;
 
     try {
@@ -721,7 +725,7 @@ export const autoCheckDraw = internalAction({
 
       // VRF already fulfilled → record result
       if (winner && winner !== ZERO) {
-        await ctx.runAction(internal.raffle.checkAndRecordDraw, { epoch });
+        await ctx.runAction(internal.raffle.checkAndRecordDrawInternal, { epoch });
         return;
       }
 
@@ -765,13 +769,40 @@ export const updatePollCheckpoint = internalMutation({
 // SHARE BONUS — +1 ticket for sharing, requires ≥1 paid ticket
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export const claimShareBonus = mutation({
-  args: { address: v.string() },
-  handler: async (ctx, { address }) => {
-    const addr = address.toLowerCase();
-    const config = await ctx.db.query("raffleConfig").order("desc").first();
+export const getLatestConfigInternal = internalQuery({
+  args: {},
+  handler: async (ctx) => ctx.db.query("raffleConfig").order("desc").first(),
+});
+
+/**
+ * Claim share bonus (+1 ticket for sharing on Farcaster).
+ * Requires a wallet signature to prevent bots from claiming on behalf of other users.
+ * Message format: `claim-share-bonus:${address.toLowerCase()}:${epoch}`
+ */
+export const claimShareBonus = action({
+  args: { address: v.string(), signature: v.string() },
+  handler: async (ctx, { address, signature }): Promise<{ ok: boolean }> => {
+    const { ethers } = await import("ethers");
+
+    // Get current epoch
+    const config = await ctx.runQuery(internal.raffle.getLatestConfigInternal, {});
     if (!config) throw new Error("No raffle config");
     const epoch = config.epoch;
+
+    // Verify the caller owns this address
+    const addr = address.toLowerCase();
+    const message = `claim-share-bonus:${addr}:${epoch}`;
+    const recovered = ethers.verifyMessage(message, signature);
+    if (recovered.toLowerCase() !== addr) throw new Error("Invalid signature");
+
+    return await ctx.runMutation(internal.raffle.insertShareBonus, { address: addr, epoch });
+  },
+});
+
+export const insertShareBonus = internalMutation({
+  args: { address: v.string(), epoch: v.number() },
+  handler: async (ctx, { address, epoch }) => {
+    const addr = address.toLowerCase();
 
     // Block if raffle already has a winner (draw completed)
     const result = await ctx.db.query("raffleResults")
@@ -789,7 +820,6 @@ export const claimShareBonus = mutation({
     const hasPaid = existing.some((e: any) => e.token !== "BONUS");
     if (!hasPaid) throw new Error("Must buy at least 1 ticket first");
 
-    // Record in Convex immediately
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q: any) => q.eq("address", addr))
@@ -945,6 +975,16 @@ export const getRaffleResult = query({
   },
 });
 
+export const getRaffleResultInternal = internalQuery({
+  args: { epoch: v.number() },
+  handler: async (ctx, { epoch }) => {
+    return await ctx.db
+      .query("raffleResults")
+      .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch))
+      .first();
+  },
+});
+
 /** Admin: patch fields on existing result (e.g. stored before schema update) */
 export const patchDrawResult = mutation({
   args: {
@@ -982,6 +1022,7 @@ export const insertMissingEntry = mutation({
   },
   handler: async (ctx, { adminKey, address, tickets, chain, token, txHash, epoch, blockNumber }) => {
     if (adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
+    if (tickets < 1 || tickets > 500) throw new Error("Invalid tickets count");
     const existing = await ctx.db
       .query("raffleEntries")
       .withIndex("by_txHash", (q: any) => q.eq("txHash", txHash))
@@ -1116,6 +1157,47 @@ export const checkAndRecordDraw = action({
   },
 });
 
+/** Internal wrapper for autoCheckDraw to call checkAndRecordDraw without api import */
+export const checkAndRecordDrawInternal = internalAction({
+  args: { epoch: v.optional(v.number()) },
+  handler: async (ctx, { epoch }): Promise<{ hasWinner: boolean; winner?: string; winnerTicket?: number }> => {
+    const arbAddr = ARB_RAFFLE_CONTRACT();
+    if (!arbAddr) return { hasWinner: false };
+    try {
+      const { ethers } = await import("ethers");
+      const provider = new ethers.JsonRpcProvider(ARB_RPC);
+      const contract = new ethers.Contract(arbAddr, [
+        "function getDrawResult() view returns (address,uint256,uint256,uint256,string)",
+      ], provider);
+      const [winner, winnerIndex, vrfRandomWord, totalEntries, prizeDescription] = await contract.getDrawResult();
+      const ZERO = "0x0000000000000000000000000000000000000000";
+      if (!winner || winner === ZERO) return { hasWinner: false };
+      const ep = epoch ?? 1;
+      const winnerTicket = Number(winnerIndex) + 1;
+      let winnerChain: string | undefined;
+      let winnerToken: string | undefined;
+      try {
+        const allEntries = await ctx.runQuery(internal.raffle.getEntriesForEpoch, { epoch: ep });
+        const sorted = (allEntries as any[]).slice().sort((a: any, b: any) => a.blockNumber - b.blockNumber);
+        let running = 0;
+        for (const entry of sorted) {
+          running += entry.tickets;
+          if (winnerTicket <= running) { winnerChain = entry.chain; winnerToken = entry.token; break; }
+        }
+      } catch {}
+      await ctx.runMutation(internal.raffle.recordDrawResult, {
+        epoch: ep, winner: winner.toLowerCase(), winnerTicket, winnerIndex: Number(winnerIndex),
+        vrfRandomWord: vrfRandomWord.toString(), totalEntries: Number(totalEntries),
+        prizeDescription: prizeDescription || "", winnerChain, winnerToken,
+      });
+      return { hasWinner: true, winner: winner.toLowerCase(), winnerTicket };
+    } catch (e) {
+      console.error("[Raffle] checkAndRecordDrawInternal error:", e);
+      return { hasWinner: false };
+    }
+  },
+});
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // REDEPLOY ARB — Deploy new VBMSRaffleARB with correct keyHash, re-add entries,
 // then call requestDraw. Called after discovering original keyHash was invalid.
@@ -1206,6 +1288,7 @@ export const resetAndOpenNewRaffle = action({
     cardValueUSD:     v.optional(v.number()),
     cardValueVBMS:    v.optional(v.number()),
     ticketPriceVBMS:  v.optional(v.number()),
+    skipReset:        v.optional(v.boolean()),  // true if contract already reset (e.g. after manual withdraw)
   },
   handler: async (ctx, args): Promise<{ ok: boolean; error?: string }> => {
     if (args.adminKey !== process.env.VMW_INTERNAL_SECRET) throw new Error("Unauthorized");
@@ -1224,17 +1307,21 @@ export const resetAndOpenNewRaffle = action({
         "function createRaffle(string,string,uint256,uint256,uint256) external",
       ], signer);
 
-      // 1. confirmPrizeDelivered (releases funds to owner)
-      console.log("[resetRaffle] confirmPrizeDelivered...");
-      const tx1 = await contract.confirmPrizeDelivered();
-      await tx1.wait(1);
-      console.log("[resetRaffle] confirmPrizeDelivered:", tx1.hash);
+      if (!args.skipReset) {
+        // 1. confirmPrizeDelivered (releases funds to owner)
+        console.log("[resetRaffle] confirmPrizeDelivered...");
+        const tx1 = await contract.confirmPrizeDelivered();
+        await tx1.wait(1);
+        console.log("[resetRaffle] confirmPrizeDelivered:", tx1.hash);
 
-      // 2. resetRaffle (clears entries on-chain)
-      console.log("[resetRaffle] resetRaffle...");
-      const tx2 = await contract.resetRaffle();
-      await tx2.wait(1);
-      console.log("[resetRaffle] resetRaffle:", tx2.hash);
+        // 2. resetRaffle (clears entries on-chain)
+        console.log("[resetRaffle] resetRaffle...");
+        const tx2 = await contract.resetRaffle();
+        await tx2.wait(1);
+        console.log("[resetRaffle] resetRaffle:", tx2.hash);
+      } else {
+        console.log("[resetRaffle] skipReset=true — skipping confirmPrizeDelivered + resetRaffle");
+      }
 
       // 3. createRaffle (opens new epoch on-chain)
       console.log("[resetRaffle] createRaffle epoch", args.newEpoch, "...");
