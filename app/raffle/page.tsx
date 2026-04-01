@@ -795,8 +795,9 @@ export default function RafflePage() {
 
               {/* ARB options — shown first */}
               <div className="border-2 border-black overflow-hidden">
-                <div className="bg-[#12AAFF] px-3 py-1">
+                <div className="bg-[#12AAFF] px-3 py-1 flex items-center justify-between">
                   <span className="text-black font-black text-[8px] uppercase tracking-widest">{t('raffleArbitrumOne')}</span>
+                  <span className="text-black/70 text-[7px] font-bold uppercase tracking-wide">⚡ Instant on-chain</span>
                 </div>
 
                 {/* USND */}
@@ -832,8 +833,9 @@ export default function RafflePage() {
 
               {/* BASE options */}
               <div className="border-2 border-black overflow-hidden">
-                <div className="bg-[#0052FF] px-3 py-1.5">
+                <div className="bg-[#0052FF] px-3 py-1.5 flex items-center justify-between">
                   <span className="text-white font-black text-[9px] uppercase tracking-widest">{t('raffleBaseMainnet')}</span>
+                  <span className="text-white/60 text-[7px] font-bold uppercase tracking-wide">⏳ Syncs in ~2 min</span>
                 </div>
 
                 {/* VBMS */}
