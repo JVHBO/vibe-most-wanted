@@ -21,14 +21,15 @@ export function useFarcasterInit(isFrameMode: boolean) {
   const [safeAreaInsets, setSafeAreaInsets] = useState({ top: 0, bottom: 0, left: 0, right: 0 });
   const readyCalledRef = useRef(false);
 
-  // CRITICAL: Call ready() IMMEDIATELY - affects Farcaster ranking and daily user count
+  // Call ready() only inside actual Farcaster host (isMiniappMode confirms iframe context)
   useEffect(() => {
     if (readyCalledRef.current) return;
-    readyCalledRef.current = true;
     if (typeof window === 'undefined') return;
+    if (!isActualMiniapp) return; // Base app / plain browser — skip ready()
     if (!sdk || typeof sdk.actions?.ready !== 'function') return;
+    readyCalledRef.current = true;
     sdk.actions.ready().catch(() => {});
-  }, []);
+  }, [isActualMiniapp]);
 
   useEffect(() => {
     let cancelled = false;

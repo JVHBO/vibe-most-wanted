@@ -27,46 +27,58 @@ export function useAutoCreateProfile({
     const run = async () => {
       if (hasAutoCreatedProfile.current) return;
       if (!address) return;
-      if (!isInFarcaster) return;
-      if (!farcasterFidState) return;
       if (isCheckingFarcaster) return;
       if (isLoadingProfile) return;
-      if (userProfile && (userProfile as any).farcasterFid) return;
+      if (userProfile) return;
 
-      try {
-        const context = await sdk.context;
-        if (!context?.user) return;
+      hasAutoCreatedProfile.current = true;
 
-        const { fid, username, displayName, pfpUrl } = context.user;
-        if (!fid) return;
+      // Path A: Farcaster user — verify FID via Neynar and create full profile
+      if (isInFarcaster && farcasterFidState) {
+        try {
+          const context = await sdk.context;
+          if (!context?.user) { hasAutoCreatedProfile.current = false; return; }
 
-        const action = userProfile ? 'Updating' : 'Creating';
-        console.log(`[AutoCreate] 🆕 ${action} profile for Farcaster user:`, { fid, username, address });
-        hasAutoCreatedProfile.current = true;
+          const { fid, username, displayName, pfpUrl } = context.user;
+          if (!fid) { hasAutoCreatedProfile.current = false; return; }
 
-        const response = await fetch('/api/farcaster/profile-upsert', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            address,
-            fid,
-            username: username || `fid${fid}`,
-            displayName: displayName || undefined,
-            pfpUrl: pfpUrl || undefined,
-          }),
-        });
-
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(payload.error || 'Failed to create/update profile');
+          console.log('[AutoCreate] Creating Farcaster profile for FID:', fid);
+          const response = await fetch('/api/farcaster/profile-upsert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              address,
+              fid,
+              username: username || `fid${fid}`,
+              displayName: displayName || undefined,
+              pfpUrl: pfpUrl || undefined,
+            }),
+          });
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(payload.error || 'Failed to create profile');
+          console.log('[AutoCreate] ✅ Farcaster profile created');
+          await refreshProfile();
+        } catch (error) {
+          console.error('[AutoCreate] ❌ Farcaster profile failed:', error);
+          hasAutoCreatedProfile.current = false;
         }
+        return;
+      }
 
-        console.log(`[AutoCreate] ✅ Profile ${action.toLowerCase()}d successfully!`);
+      // Path B: Wallet-only user (Base app / web without Farcaster)
+      try {
+        console.log('[AutoCreate] Creating wallet-only profile for:', address);
+        const response = await fetch('/api/wallet/profile-upsert', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address }),
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'Failed to create profile');
+        console.log('[AutoCreate] ✅ Wallet profile created');
         await refreshProfile();
       } catch (error) {
-        console.error('[AutoCreate] ❌ Failed to auto-create/update profile:', error);
+        console.error('[AutoCreate] ❌ Wallet profile failed:', error);
         hasAutoCreatedProfile.current = false;
       }
     };

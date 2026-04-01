@@ -580,6 +580,53 @@ export const getProfileByUsername = query({
 // ============================================================================
 
 /**
+/**
+ * Create or update a wallet-only profile (no Farcaster required).
+ * Used for Base app / web users who don't have a Farcaster account.
+ * Only creates NEW profiles — never overwrites an existing Farcaster profile.
+ */
+export const upsertProfileFromWallet = mutation({
+  args: {
+    adminKey: v.string(),
+    address: v.string(),
+  },
+  handler: async (ctx, args) => {
+    requireInternalAdminKey(args.adminKey);
+
+    if (!isValidAddress(args.address)) {
+      throw new Error("Invalid Ethereum address format");
+    }
+
+    const address = normalizeAddress(args.address);
+    const now = Date.now();
+
+    const existing = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", address))
+      .first();
+
+    if (existing) {
+      // Profile already exists — nothing to do
+      return existing._id;
+    }
+
+    // Generate a short username from wallet address: 0x1234...abcd
+    const username = `${address.slice(0, 6)}${address.slice(-4)}`.toLowerCase();
+
+    const id = await ctx.db.insert("profiles", {
+      address,
+      username,
+      coins: 0,
+      coinsInbox: 0,
+      createdAt: now,
+      lastUpdated: now,
+    });
+
+    return id;
+  },
+});
+
+/**
  * 🔒 SECURE: Create or update profile with Farcaster verification
  *
  * This is the ONLY way to create a new account:
