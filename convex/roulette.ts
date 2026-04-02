@@ -47,12 +47,12 @@ function determinePrize(): { amount: number; index: number } {
 }
 // Aura XP → bonus roulette spins (matches lib/aura-levels.ts thresholds)
 function getAuraSpinBonus(aura: number): number {
-  if (aura >= 52000) return 10; // SSJ Blue
-  if (aura >= 28000) return 8;  // SSJ God
-  if (aura >= 14000) return 6;  // SSJ4
-  if (aura >= 6000)  return 4;  // SSJ3
-  if (aura >= 2500)  return 2;  // SSJ2
-  if (aura >= 800)   return 1;  // SSJ1
+  if (aura >= 52000) return 3; // SSJ Blue
+  if (aura >= 28000) return 2; // SSJ God
+  if (aura >= 14000) return 2; // SSJ4
+  if (aura >= 6000)  return 1; // SSJ3
+  if (aura >= 2500)  return 1; // SSJ2
+  if (aura >= 800)   return 1; // SSJ1
   return 0; // Human / Great Ape
 }
 
@@ -129,11 +129,12 @@ export const canSpin = query({
     const vibeFidCard = await findVibeFidByAddress(ctx, effectiveAddress);
 
     const isVibeFidHolder = !!vibeFidCard;
-    // 🔗 Arbitrum bonus: +1 spin (read from profile.preferredChain)
+    // 🔗 Arbitrum: 2× the total spin count (not just +1)
     const chain = (profile as any)?.preferredChain || "arbitrum";
-    const arbBonus = chain === "arbitrum" ? 1 : 0;
+    const isArb = chain === "arbitrum";
     const auraBonus = getAuraSpinBonus((profile as any)?.stats?.aura ?? 0);
-    const maxSpins = (isVibeFidHolder ? 3 : 1) + arbBonus + auraBonus;
+    const baseSpins = (isVibeFidHolder ? 3 : 1) + auraBonus;
+    const maxSpins = isArb ? baseSpins * 2 : baseSpins;
 
     // 🚀 BANDWIDTH FIX: Use .take(maxSpins) instead of .collect()
     // 🔒 SECURITY FIX: Query spins under effectiveAddress (primary)
@@ -156,7 +157,7 @@ export const canSpin = query({
       spinsRemaining,
       isVibeFidHolder,
       maxSpins,
-      isArbMode: arbBonus > 0,
+      isArbMode: isArb,
       auraBonus,
     };
   },
@@ -185,10 +186,11 @@ export const spin = mutation({
       const vibeFidCard = await findVibeFidByAddress(ctx, effectiveAddress);
 
       const isVibeFidHolder = !!vibeFidCard;
-      // 🔗 Arbitrum bonus: +1 spin
-      const arbBonus = chain === "arbitrum" ? 1 : 0;
+      // 🔗 Arbitrum: 2× the total spin count
+      const isArb = chain === "arbitrum";
       const auraBonus = getAuraSpinBonus((profile as any)?.stats?.aura ?? 0);
-      const maxSpins = (isVibeFidHolder ? 3 : 1) + arbBonus + auraBonus;
+      const baseSpins = (isVibeFidHolder ? 3 : 1) + auraBonus;
+      const maxSpins = isArb ? baseSpins * 2 : baseSpins;
 
       // 🚀 BANDWIDTH: take at most maxSpins + small buffer
       const existingSpins = await ctx.db
