@@ -1,10 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAccount } from "wagmi";
-import { useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
 import { Roulette } from "@/components/Roulette";
 
 // Prize images for floating background
@@ -16,7 +13,6 @@ const PRIZE_IMAGES = [
   "https://ipfs.filebase.io/ipfs/QmdjNEN5URcfQtyG4VWMBjGcsFm8FXYMm56uL3qyB6jZNF",
 ];
 
-const FALLBACK_BALL = "https://ipfs.filebase.io/ipfs/QmdjNEN5URcfQtyG4VWMBjGcsFm8FXYMm56uL3qyB6jZNF";
 
 interface FloatingItem {
   id: number;
@@ -67,19 +63,8 @@ function FloatingBackground({ win }: { win: boolean }) {
 }
 
 export default function RoulettePage() {
-  const { address } = useAccount();
-  const profile = useQuery(
-    api.profiles.getProfileDashboard,
-    address ? { address } : "skip"
-  );
-  const pfpUrl = (profile as any)?.farcasterPfpUrl || FALLBACK_BALL;
-
   const [showFloating, setShowFloating] = useState(false);
-  const [swiped, setSwiped] = useState(false);
   const [chainMode, setChainMode] = useState<'base' | 'arbitrum'>('arbitrum');
-  const touchStartX = useRef(0);
-  const touchStartY = useRef(0);
-  const rouletteRef = useRef<HTMLDivElement>(null);
 
   // Trigger floating on win (expose via custom event from Roulette)
   useEffect(() => {
@@ -89,23 +74,6 @@ export default function RoulettePage() {
     };
     window.addEventListener("roulette:win", onWin);
     return () => window.removeEventListener("roulette:win", onWin);
-  }, []);
-
-  // Swipe hint disappears after first swipe
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-  }, []);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    const dy = e.changedTouches[0].clientY - touchStartY.current;
-    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-      setSwiped(true);
-      // Forward a synthetic click to the spin button inside Roulette
-      const spinBtn = rouletteRef.current?.querySelector<HTMLButtonElement>('[data-spin-button]');
-      if (spinBtn && !spinBtn.disabled) spinBtn.click();
-    }
   }, []);
 
   return (
@@ -173,8 +141,6 @@ export default function RoulettePage() {
           ? 'radial-gradient(ellipse at 50% 20%, #00112b 0%, #060609 70%)'
           : 'radial-gradient(ellipse at 50% 20%, #1a0a2e 0%, #060609 70%)',
           transition: 'background 0.8s ease' }}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
       >
         {/* Floating background on win */}
         <FloatingBackground win={showFloating} />
@@ -200,34 +166,14 @@ export default function RoulettePage() {
               Daily Roulette
             </h1>
           </div>
-          {/* User ball preview */}
-          <div className="w-8 h-8 rounded-full overflow-hidden shrink-0"
-            style={{ border: '2px solid rgba(255,215,0,0.4)', boxShadow: '0 0 8px rgba(255,215,0,0.3)' }}>
-            <img src={pfpUrl} alt="" className="w-full h-full object-cover" />
-          </div>
+          <div className="w-8" />
         </div>
 
         {/* Roulette content */}
-        <div ref={rouletteRef} className="relative z-10 flex-1 min-h-0" style={{ display:'flex', flexDirection:'column' }}>
-          <Roulette pfpUrl={pfpUrl} onChainChange={setChainMode} />
+        <div className="relative z-10 flex-1 min-h-0" style={{ display:'flex', flexDirection:'column' }}>
+          <Roulette onChainChange={setChainMode} />
         </div>
 
-        {/* Swipe hint overlay — disappears after first swipe */}
-        {!swiped && (
-          <div className="pointer-events-none absolute bottom-24 left-0 right-0 z-20 flex flex-col items-center gap-2">
-            <div className="flex items-center gap-3 px-4 py-2 rounded-full"
-              style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,215,0,0.25)' }}>
-              <div className="w-8 h-8 rounded-full overflow-hidden shrink-0"
-                style={{ border: '2px solid rgba(255,215,0,0.5)', animation: 'swipeHint 1.6s ease-in-out infinite' }}>
-                <img src={pfpUrl} alt="" className="w-full h-full object-cover" />
-              </div>
-              <span className="text-xs font-medium" style={{ color: 'rgba(255,215,0,0.7)' }}>
-                Swipe to spin
-              </span>
-              <span style={{ color: 'rgba(255,215,0,0.5)', fontSize: 16 }}>&rarr;</span>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );

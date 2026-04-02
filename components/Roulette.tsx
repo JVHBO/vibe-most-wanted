@@ -974,7 +974,6 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
   }
 
   const FALLBACK_BALL_IMG = "https://ipfs.filebase.io/ipfs/QmdjNEN5URcfQtyG4VWMBjGcsFm8FXYMm56uL3qyB6jZNF";
-  const ballImg = pfpUrl || FALLBACK_BALL_IMG;
 
   return (
     <div className="relative flex flex-col flex-1" style={{ minHeight: '100%', paddingBottom: 'env(safe-area-inset-bottom)' }}>
