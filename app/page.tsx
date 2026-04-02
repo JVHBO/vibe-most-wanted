@@ -2650,7 +2650,7 @@ export default function TCGPage() {
                 disabled={!userProfile || (status !== 'loaded' && status !== 'failed' && (isInFarcaster ? contextStatus !== 'loaded' : true))}
                 onSelect={handleGameModeSelect}
                 userAddress={address}
-                onSpin={() => setShowRoulette(true)}
+                onSpin={() => { window.location.href = '/roulette'; }}
                 isInFarcaster={isInFarcaster}
               />
             </div>

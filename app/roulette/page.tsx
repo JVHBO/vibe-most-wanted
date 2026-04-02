@@ -27,22 +27,20 @@ interface FloatingItem {
   img: string;
 }
 
-function FloatingBackground({ active }: { active: boolean }) {
+function FloatingBackground({ win }: { win: boolean }) {
   const [items, setItems] = useState<FloatingItem[]>([]);
 
   useEffect(() => {
-    const generated: FloatingItem[] = Array.from({ length: 12 }, (_, i) => ({
+    const generated: FloatingItem[] = Array.from({ length: 14 }, (_, i) => ({
       id: i,
-      x: Math.random() * 90 + 5,
-      duration: 4 + Math.random() * 5,
-      delay: Math.random() * 4,
-      size: 32 + Math.random() * 32,
+      x: Math.random() * 88 + 4,
+      duration: 5 + Math.random() * 6,
+      delay: Math.random() * 5,
+      size: 36 + Math.random() * 36,
       img: PRIZE_IMAGES[i % PRIZE_IMAGES.length],
     }));
     setItems(generated);
   }, []);
-
-  if (!active) return null;
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -51,13 +49,15 @@ function FloatingBackground({ active }: { active: boolean }) {
           key={item.id}
           src={item.img}
           alt=""
-          className="absolute rounded-full opacity-20"
+          className="absolute rounded-full"
           style={{
             left: `${item.x}%`,
-            bottom: '-60px',
+            bottom: '-70px',
             width: item.size,
             height: item.size,
             objectFit: 'cover',
+            opacity: win ? 0.28 : 0.07,
+            transition: 'opacity 0.6s ease',
             animation: `floatUp ${item.duration}s ${item.delay}s infinite ease-in`,
           }}
         />
@@ -128,6 +128,43 @@ export default function RoulettePage() {
           60%  { transform: translateX(28px); opacity: 1; }
           100% { transform: translateX(0); opacity: 0.8; }
         }
+        .rlt-claim-btn {
+          background: linear-gradient(135deg,#16a34a,#15803d) !important;
+          color: #fff !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+        .rlt-claim-btn:disabled {
+          background: #374151 !important;
+          color: rgba(255,255,255,0.5) !important;
+        }
+        @keyframes ballBounce {
+          0%   { transform: translate(-50%,-50%) scale(1.5); }
+          12%  { transform: translate(calc(-50% + 9px), calc(-50% + 7px)) scale(0.7); }
+          24%  { transform: translate(calc(-50% - 6px), calc(-50% - 5px)) scale(1.2); }
+          38%  { transform: translate(calc(-50% + 4px), calc(-50% + 3px)) scale(0.85); }
+          52%  { transform: translate(calc(-50% - 2px), calc(-50% - 2px)) scale(1.08); }
+          65%  { transform: translate(calc(-50% + 1px), calc(-50% + 1px)) scale(0.95); }
+          78%  { transform: translate(-50%,-50%) scale(1.03); }
+          90%  { transform: translate(-50%,-50%) scale(0.98); }
+          100% { transform: translate(-50%,-50%) scale(1); }
+        }
+        /* Shine band sweeping across sphere to simulate rotation */
+        @keyframes sphereShine {
+          0%   { transform: translateX(-140%) skewX(-18deg); opacity: 0; }
+          20%  { opacity: 0.5; }
+          80%  { opacity: 0.3; }
+          100% { transform: translateX(240%) skewX(-18deg); opacity: 0; }
+        }
+        /* Logo spinning on ball's Y-axis — combined with perspective gives 3D coin-flip effect */
+        @keyframes innerSpin {
+          0%   { transform: rotateZ(0deg); }
+          100% { transform: rotateZ(360deg); }
+        }
+        @keyframes innerSpinLg {
+          0%   { transform: rotateZ(0deg); }
+          100% { transform: rotateZ(360deg); }
+        }
       `}</style>
 
       <div
@@ -140,7 +177,7 @@ export default function RoulettePage() {
         onTouchEnd={handleTouchEnd}
       >
         {/* Floating background on win */}
-        <FloatingBackground active={showFloating} />
+        <FloatingBackground win={showFloating} />
 
         {/* Ambient glow */}
         <div className="pointer-events-none absolute inset-0"
@@ -153,9 +190,9 @@ export default function RoulettePage() {
             paddingBottom: '0.75rem',
             borderBottom: '1px solid rgba(255,215,0,0.1)',
           }}>
-          <Link href="/casino" className="text-sm font-medium"
-            style={{ color: 'rgba(255,215,0,0.5)' }}>
-            &larr; Casino
+          <Link href="/" className="text-sm font-medium"
+            style={{ color: 'rgba(255,215,0,0.6)' }}>
+            &larr; Back
           </Link>
           <div className="flex-1 text-center">
             <h1 className="text-lg font-bold tracking-widest uppercase"
@@ -171,7 +208,7 @@ export default function RoulettePage() {
         </div>
 
         {/* Roulette content */}
-        <div ref={rouletteRef} className="relative z-10 flex-1 overflow-y-auto overscroll-contain">
+        <div ref={rouletteRef} className="relative z-10 flex-1 min-h-0" style={{ display:'flex', flexDirection:'column' }}>
           <Roulette pfpUrl={pfpUrl} onChainChange={setChainMode} />
         </div>
 

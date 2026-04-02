@@ -1339,3 +1339,18 @@ select.settings-select {
 .nav-btn-home-active { background-color: #1e40af !important; color: #ffffff !important; }
 .nav-btn-shop { background-color: #7c3aed !important; color: #ffffff !important; }
 .nav-btn-wanted { background-color: #dc2626 !important; color: #ffffff !important; }
+
+/* Roulette claim button — beat neobrutalism.css */
+button.rlt-claim-btn,
+.rlt-claim-btn {
+  background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(22,163,74,0.4) !important;
+}
+button.rlt-claim-btn:disabled,
+.rlt-claim-btn:disabled {
+  background: #374151 !important;
+  color: rgba(255,255,255,0.45) !important;
+  box-shadow: none !important;
+}

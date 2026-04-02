@@ -3154,3 +3154,19 @@ body.neobrutalism .settings-linked-desc { color: #FFD400 !important; }
 
 /* Nav HOME color override */
 body.neobrutalism .nav-btn-home-active { background-color: #1e40af !important; color: #ffffff !important; border-color: #3b82f6 !important; }
+
+/* Roulette claim button — must stay at end of file to override background-image: none */
+body.neobrutalism button.rlt-claim-btn:not(:disabled) {
+  background-image: linear-gradient(135deg, #16a34a, #15803d) !important;
+  background-color: #16a34a !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(22,163,74,0.4) !important;
+  color: #ffffff !important;
+}
+body.neobrutalism button.rlt-claim-btn:disabled {
+  background-image: none !important;
+  background-color: #374151 !important;
+  color: rgba(255,255,255,0.45) !important;
+  box-shadow: none !important;
+  border: none !important;
+}

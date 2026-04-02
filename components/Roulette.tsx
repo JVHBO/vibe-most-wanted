@@ -320,10 +320,19 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
   const isArbMode = canSpinData?.isArbMode ?? false;
   const [isClaiming, setIsClaiming] = useState(false);
   const [isBuyingPaidSpin, setIsBuyingPaidSpin] = useState(false);
+  const [ballSettling, setBallSettling] = useState(false);
+  const ballOrbitAngleRef = useRef(-90); // degrees; -90 = top of wheel
+  const ballOrbitRadiusRef = useRef(136); // pixels from center (300px wheel)
+  const ballFallStartAngleRef = useRef<number | null>(null); // angle recorded at fall-phase start
+  const [ballOrbit, setBallOrbit] = useState({ angle: -90, radius: 136 });
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
   const [ballY, setBallY] = useState(0);
   const [isDraggingBall, setIsDraggingBall] = useState(false);
   const dragStartYRef = useRef(0);
+  const isDraggingRef = useRef(false);
+  const ballYRef = useRef(0);
+  const canSpinRef = useRef(false);
+  const isSpinningRef = useRef(false);
   const [arbSupported, setArbSupported] = useState(false);
 
   const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('arbitrum');
@@ -527,33 +536,42 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
     return () => { if (idleRafRef.current) cancelAnimationFrame(idleRafRef.current); };
   }, [isSpinning, showResult]); // eslint-disable-line
 
-  // Ball drag handlers
+  // Keep refs updated every render (no stale closures in drag handlers)
+  canSpinRef.current = canSpin;
+  isSpinningRef.current = isSpinning;
+
+  // Ball drag handlers — all use refs so closures are always fresh
   const handleBallDragStart = useCallback((clientY: number) => {
-    if (!canSpin || isSpinning) return;
+    if (!canSpinRef.current || isSpinningRef.current) return;
     dragStartYRef.current = clientY;
+    isDraggingRef.current = true;
     setIsDraggingBall(true);
-  }, [canSpin, isSpinning]);
+  }, []); // eslint-disable-line
 
   const handleBallDragMove = useCallback((clientY: number) => {
-    if (!isDraggingBall) return;
+    if (!isDraggingRef.current) return;
     const dy = clientY - dragStartYRef.current;
-    setBallY(Math.min(0, dy)); // only upward
-  }, [isDraggingBall]);
+    const newY = Math.min(0, dy);
+    ballYRef.current = newY;
+    setBallY(newY);
+  }, []); // eslint-disable-line
+
+  const handleSpinRef = useRef<(() => void) | null>(null);
 
   const handleBallDragEnd = useCallback(() => {
-    if (!isDraggingBall) return;
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
     setIsDraggingBall(false);
-    if (ballY < -70 && canSpin && !isSpinning) {
+    if (ballYRef.current < -70 && canSpinRef.current && !isSpinningRef.current) {
+      ballYRef.current = -260;
       setBallY(-260);
-      setTimeout(() => setBallY(0), 900);
-      // trigger spin (read ref to access latest handleSpin)
+      setTimeout(() => { setBallY(0); ballYRef.current = 0; }, 900);
       handleSpinRef.current?.();
     } else {
       setBallY(0);
+      ballYRef.current = 0;
     }
-  }, [isDraggingBall, ballY, canSpin, isSpinning]); // eslint-disable-line
-
-  const handleSpinRef = useRef<(() => void) | null>(null);
+  }, []); // eslint-disable-line
 
   const handleSpin = async () => {
     if (!address || isSpinning || !canSpin) return;
@@ -604,10 +622,15 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
           match: Math.abs(expectedFinalAngle - targetFinalAngle) < 1 ? '✅' : '❌ BUG!'
         });
 
-        // Animate with physics
+        // Animate with physics + ball orbit
         const startRotation = rotation;
         const startTime = Date.now();
         const duration = 5000; // 5 seconds
+        // Ball starts counter-clockwise at rim
+        ballOrbitAngleRef.current = -90;
+        ballOrbitRadiusRef.current = 136;
+        ballFallStartAngleRef.current = null;
+        setBallOrbit({ angle: -90, radius: 136 });
 
         const animate = () => {
           const elapsed = Date.now() - startTime;
@@ -618,6 +641,28 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
 
           const currentRotation = startRotation + totalRotation * easeOut;
           setRotation(currentRotation);
+
+          // Ball orbit: counter-clockwise while spinning, steers to winning slot in fall phase
+          let r = 136;
+          if (progress <= 0.72) {
+            const speed = (1 - easeOut) * 14 + 0.8;
+            ballOrbitAngleRef.current -= speed;
+          } else {
+            if (ballFallStartAngleRef.current === null) {
+              ballFallStartAngleRef.current = ballOrbitAngleRef.current;
+              playTick();
+            }
+            const fallP = (progress - 0.72) / 0.28;
+            const easedFall = fallP * fallP;
+            r = 136 - easedFall * 80; // 136 → 56
+            // Steer toward -90° (top = winning slot)
+            const startA = ballFallStartAngleRef.current;
+            const n = Math.round((startA + 90) / 360);
+            const targetAbsolute = -90 + n * 360;
+            ballOrbitAngleRef.current = startA + (targetAbsolute - startA) * easedFall;
+          }
+          ballOrbitRadiusRef.current = r;
+          setBallOrbit({ angle: ballOrbitAngleRef.current, radius: r });
 
           // Play tick sound when crossing segment boundary
           const normalizedRotation = currentRotation % 360;
@@ -631,13 +676,21 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
           if (progress < 1) {
             animationRef.current = requestAnimationFrame(animate);
           } else {
-            // Animation complete
-            setResult({ prize: response.prize!, index: response.prizeIndex });
-            setShowResult(true);
-            setIsSpinning(false);
-            AudioManager.win();
-            haptics.spinResult(); // Heavy haptic on result
-            window.dispatchEvent(new CustomEvent('roulette:win'));
+            // Ball at winning slot — settle with bounce
+            ballFallStartAngleRef.current = null;
+            setBallOrbit({ angle: -90, radius: 56 });
+            setIsSpinning(false); // BEFORE setBallSettling so isSettling = true
+            setBallSettling(true);
+            spinActiveRef.current = false;
+            playTick();
+            setTimeout(() => {
+              setBallSettling(false);
+              setResult({ prize: response.prize!, index: response.prizeIndex });
+              setShowResult(true);
+              AudioManager.win();
+              haptics.spinResult();
+              window.dispatchEvent(new CustomEvent('roulette:win'));
+            }, 900);
           }
         };
 
@@ -755,10 +808,14 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
       if (additionalRotation < 0) additionalRotation += 360;
       const totalRotation = spins * 360 + additionalRotation;
 
-      // Animate
+      // Animate + ball orbit
       const startRotation = rotation;
       const startTime = Date.now();
       const duration = 5000;
+      ballOrbitAngleRef.current = -90;
+      ballOrbitRadiusRef.current = 136;
+      ballFallStartAngleRef.current = null;
+      setBallOrbit({ angle: -90, radius: 136 });
 
       const animate = () => {
         const elapsed = Date.now() - startTime;
@@ -766,6 +823,26 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
         const easeOut = 1 - Math.pow(1 - progress, 3);
         const currentRotation = startRotation + totalRotation * easeOut;
         setRotation(currentRotation);
+
+        let r = 136;
+        if (progress <= 0.72) {
+          const speed = (1 - easeOut) * 14 + 0.8;
+          ballOrbitAngleRef.current -= speed;
+        } else {
+          if (ballFallStartAngleRef.current === null) {
+            ballFallStartAngleRef.current = ballOrbitAngleRef.current;
+            playTick();
+          }
+          const fallP = (progress - 0.72) / 0.28;
+          const easedFall = fallP * fallP;
+          r = 136 - easedFall * 80;
+          const startA = ballFallStartAngleRef.current;
+          const n = Math.round((startA + 90) / 360);
+          const targetAbsolute = -90 + n * 360;
+          ballOrbitAngleRef.current = startA + (targetAbsolute - startA) * easedFall;
+        }
+        ballOrbitRadiusRef.current = r;
+        setBallOrbit({ angle: ballOrbitAngleRef.current, radius: r });
 
         const normalizedRotation = currentRotation % 360;
         const currentSegment = Math.floor(normalizedRotation / SEGMENT_ANGLE);
@@ -778,12 +855,20 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
         if (progress < 1) {
           animationRef.current = requestAnimationFrame(animate);
         } else {
-          setResult({ prize: response.prize!, index: response.prizeIndex! });
-          setShowResult(true);
+          ballFallStartAngleRef.current = null;
+          setBallOrbit({ angle: -90, radius: 56 });
           setIsSpinning(false);
-          AudioManager.win();
-          haptics.spinResult();
-          window.dispatchEvent(new CustomEvent('roulette:win'));
+          setBallSettling(true);
+          spinActiveRef.current = false;
+          playTick();
+          setTimeout(() => {
+            setBallSettling(false);
+            setResult({ prize: response.prize!, index: response.prizeIndex! });
+            setShowResult(true);
+            AudioManager.win();
+            haptics.spinResult();
+            window.dispatchEvent(new CustomEvent('roulette:win'));
+          }, 900);
         }
       };
 
@@ -834,35 +919,26 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
               </clipPath>
             </defs>
           )}
-          {/* Segment with image or color */}
-          {prize.image ? (
-            <>
-              <path
-                d={pathD}
-                fill={prize.color}
-                stroke="#1a1a1a"
-                strokeWidth="0.5"
-              />
-              <image
-                href={prize.image}
-                x="0"
-                y="0"
-                width="100"
-                height="100"
-                clipPath={`url(#segment-clip-${i})`}
-                preserveAspectRatio="xMidYMid slice"
-              />
-            </>
-          ) : (
-            <>
-              <path
-                d={pathD}
-                fill={prize.color}
-                stroke="#1a1a1a"
-                strokeWidth="0.5"
-              />
-            </>
+          {/* Segment */}
+          <path d={pathD} fill={prize.color} stroke="#1a1a1a" strokeWidth="0.5" />
+          {prize.image && (
+            <image href={prize.image} x="0" y="0" width="100" height="100"
+              clipPath={`url(#segment-clip-${i})`} preserveAspectRatio="xMidYMid slice" />
           )}
+          {/* Dark overlay on image */}
+          {prize.image && (
+            <path d={pathD} fill="rgba(0,0,0,0.52)" stroke="none" />
+          )}
+          {/* Prize label */}
+          <text
+            x={textX} y={textY}
+            textAnchor="middle" dominantBaseline="middle"
+            fontSize={prize.label.length > 2 ? 7 : 8}
+            fontWeight="bold"
+            fill="#FFD700"
+            style={{ filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.9))' }}
+            transform={`rotate(${midAngle + 90}, ${textX}, ${textY})`}
+          >{prize.label}</text>
         </g>
       );
     }
@@ -901,7 +977,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
   const ballImg = pfpUrl || FALLBACK_BALL_IMG;
 
   return (
-    <div className="relative flex flex-col" style={{ minHeight: '100%', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="relative flex flex-col flex-1" style={{ minHeight: '100%', paddingBottom: 'env(safe-area-inset-bottom)' }}>
 
       {/* Chain selector — Normal / Ultra */}
       {arbSupported && (
@@ -916,17 +992,23 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
                 background: currentChain === 'base' ? '#0052FF' : 'transparent',
                 color: currentChain === 'base' ? '#fff' : 'rgba(255,255,255,0.4)',
               }}
-            >Normal</button>
+            >
+              <img src="/images/base-logo.png" width="11" height="11" style={{ borderRadius:'50%', pointerEvents:'none' }} alt="" />
+              Normal
+            </button>
             <button
               onClick={() => handleSwitchChain('arbitrum')}
               style={{
                 display:'flex', alignItems:'center', gap:'4px',
-                padding:'5px 14px', borderRadius:'7px', fontSize:'11px', fontWeight:'700', letterSpacing:'0.06em',
+                padding:'5px 12px', borderRadius:'7px', fontSize:'11px', fontWeight:'700', letterSpacing:'0.06em',
                 cursor:'pointer', border:'none',
                 background: currentChain === 'arbitrum' ? '#12AAFF' : 'transparent',
                 color: currentChain === 'arbitrum' ? '#000' : 'rgba(255,255,255,0.4)',
               }}
-            >Ultra</button>
+            >
+              <img src="/images/arb-logo.png" width="11" height="11" style={{ borderRadius:'50%', pointerEvents:'none' }} alt="" />
+              Ultra
+            </button>
           </div>
         </div>
       )}
@@ -934,77 +1016,91 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
         <button onClick={onClose} className="absolute top-3 right-4 z-10 text-xl font-bold" style={{ color: 'rgba(255,215,0,0.5)' }}>×</button>
       )}
 
-      {/* Spins as PFP balls */}
-      {!showResult && (
-        <div className="flex justify-center pt-1 pb-2">
-          {canSpinData?.testMode ? (
-            <span style={{ color: '#FFD700', fontSize: '11px' }}>{t.testMode}</span>
-          ) : spinsRemaining > 0 ? (
-            <div className="flex gap-2">
-              {Array.from({ length: Math.min(spinsRemaining, 10) }).map((_, i) => (
-                <div key={i} style={{
-                  width: '26px', height: '26px', borderRadius: '50%', overflow: 'hidden',
-                  border: '2px solid #FFD700',
-                  boxShadow: '0 0 7px rgba(255,215,0,0.6)',
-                  flexShrink: 0,
-                }}>
-                  <img src={ballImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <span style={{ color: '#f87171', fontSize: '12px' }}>{t.noSpinsToday}</span>
-          )}
-        </div>
-      )}
 
-      {/* 3D Roulette wheel */}
+      {/* 3D Roulette wheel — just the inclined disc, no wooden container */}
       {!showResult && (
-        <div className="relative mx-auto" style={{ width: '290px', height: '216px' }}>
-          <div style={{ perspective: '560px', perspectiveOrigin: '50% -5%', width: '290px', height: '290px' }}>
+        <div className="relative mx-auto" style={{ width: '300px', height: '200px', marginTop: '8px' }}>
+          <div style={{ perspective: '500px', perspectiveOrigin: '50% 5%', width: '300px', height: '300px' }}>
+            {/* Clipped circle — no box-shadow (causes corner lines in 3D) */}
             <div className="relative" style={{
-              width: '290px', height: '290px',
-              transform: 'rotateX(50deg)',
-              transformStyle: 'preserve-3d',
+              width: '300px', height: '300px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              transform: 'rotateX(48deg)',
+              WebkitMaskImage: 'radial-gradient(circle at 50% 50%, black 97%, transparent 100%)',
+              maskImage: 'radial-gradient(circle at 50% 50%, black 97%, transparent 100%)',
             }}>
-              {/* Outer wooden bowl */}
-              <div className="absolute inset-0 rounded-full" style={{
-                background: 'conic-gradient(from 0deg, #5c2a0a, #8B4513 18%, #6B2D0A 36%, #3d1500 54%, #8B4513 72%, #5c2a0a 90%, #3d1500)',
-                boxShadow: '0 20px 0 #1a0600, 0 24px 32px rgba(0,0,0,0.95), inset 0 0 24px rgba(0,0,0,0.6)',
-              }} />
-              {/* Metal ball track ring */}
-              <div className="absolute rounded-full" style={{
-                inset: '14px',
-                background: 'radial-gradient(circle at 40% 35%, #1c1c1c 0%, #050505 100%)',
-                boxShadow: 'inset 0 0 16px rgba(0,0,0,0.95), 0 0 0 1px rgba(255,215,0,0.12)',
-              }} />
-              {/* Spinning segments */}
-              <div ref={wheelRef} className="absolute rounded-full overflow-hidden" style={{
-                inset: '32px',
-                transform: `rotate(${rotation}deg)`,
-              }}>
+              {/* Spinning segments fill the full circle */}
+              <div ref={wheelRef} className="absolute inset-0" style={{ transform: `rotate(${rotation}deg)` }}>
                 <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
-                  <circle cx="50" cy="50" r="49" fill="#0a0a0a" />
+                  <circle cx="50" cy="50" r="50" fill="#0a0a0a" />
                   {createWheelSegments()}
+                  {/* Gold outer ring — inside SVG, no corner artifacts */}
+                  <circle cx="50" cy="50" r="48.5" fill="none" stroke="rgba(255,215,0,0.45)" strokeWidth="1.2" />
                   <circle cx="50" cy="50" r="10" fill="#1A1A1A" stroke="#FFD700" strokeWidth="2.5" />
                   <circle cx="50" cy="50" r="6"  fill="#FFD700" />
                   <circle cx="50" cy="50" r="2.5" fill="#1A1A1A" />
                 </svg>
               </div>
-              <div className="absolute inset-0 rounded-full pointer-events-none" style={{ border: '2px solid rgba(255,215,0,0.2)' }} />
-              {/* Ball on track — only shows when spinning */}
-              {isSpinning && (
-                <div className="absolute z-20" style={{
-                  top: '9px', left: '50%',
-                  transform: 'translateX(-50%)',
-                  width: '18px', height: '18px',
-                  borderRadius: '50%', overflow: 'hidden',
-                  border: '2px solid #fff',
-                  boxShadow: '0 0 10px rgba(255,255,255,0.95), 0 3px 8px rgba(0,0,0,0.9)',
-                }}>
-                  <img src={ballImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
-              )}
+              {/* Ball orbiting the wheel — physics-based position */}
+              {(isSpinning || ballSettling) && (() => {
+                const rad = ballOrbit.angle * (Math.PI / 180);
+                const bx = 150 + ballOrbit.radius * Math.cos(rad); // px from left
+                const by = 150 + ballOrbit.radius * Math.sin(rad); // px from top
+                const isSettling = ballSettling && !isSpinning;
+                const isArb = currentChain === 'arbitrum';
+                const glowColor = isArb ? 'rgba(40,160,240,0.55)' : 'rgba(68,119,255,0.55)';
+                const sphereGrad = isArb
+                  ? 'radial-gradient(circle at 34% 28%, #d0f0ff 0%, #28a0f0 22%, #0060a8 56%, #000e1e 100%)'
+                  : 'radial-gradient(circle at 34% 28%, #ccd8ff 0%, #4477ff 22%, #0030b8 56%, #00021e 100%)';
+                return (
+                  <>
+                  {/* Segment glow — lights up the wheel where the ball is */}
+                  <div style={{
+                    position: 'absolute',
+                    left: `${bx}px`, top: `${by}px`,
+                    transform: 'translate(-50%, -50%)',
+                    width: '56px', height: '56px',
+                    borderRadius: '50%',
+                    background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
+                    mixBlendMode: 'screen',
+                    pointerEvents: 'none',
+                    zIndex: 15,
+                  }} />
+                  {/* Outer wrapper — handles bounce/position, no border-radius (so animation works) */}
+                  <div style={{
+                    position: 'absolute',
+                    left: `${bx}px`, top: `${by}px`,
+                    transform: 'translate(-50%, -50%)',
+                    width: '22px', height: '22px',
+                    zIndex: 20,
+                    animation: isSettling ? 'ballBounce 0.9s ease-out forwards' : 'none',
+                  }}>
+                    {/* Sphere body */}
+                    <div style={{
+                      width: '100%', height: '100%', borderRadius: '50%', position: 'relative',
+                      overflow: 'hidden',
+                      background: sphereGrad,
+                      boxShadow: `0 0 ${isSettling ? 22 : 10}px ${isArb ? 'rgba(40,160,240,0.9)' : 'rgba(68,119,255,0.9)'}, inset 0 2px 6px rgba(0,0,0,0.5)`,
+                    }}>
+                      {/* Spinning logo layer — rotateZ avoids foreshortening flicker */}
+                      <div style={{
+                        position: 'absolute', inset: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        animation: !isSettling ? 'innerSpin 0.9s linear infinite' : 'none',
+                        transformOrigin: 'center',
+                      }}>
+                        <img src={isArb ? '/images/arb-logo.png' : '/images/base-logo.png'}
+                             width="15" height="15"
+                             style={{ borderRadius: '50%', opacity: 0.88, pointerEvents: 'none' }} alt="" />
+                      </div>
+                      {/* Specular highlight — always static on top */}
+                      <div style={{ position: 'absolute', top: '8%', left: '12%', width: '30%', height: '24%', background: 'radial-gradient(ellipse, rgba(255,255,255,0.95) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+                    </div>
+                  </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -1030,22 +1126,89 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
           <button
             onClick={handleClaim}
             disabled={isClaiming}
-            className="w-full py-3 font-bold text-lg rounded-xl transition-all"
-            style={{ background: isClaiming ? '#374151' : 'linear-gradient(135deg,#16a34a,#15803d)', color: '#fff' }}
+            className="rlt-claim-btn w-full py-3 font-bold text-lg rounded-xl transition-all"
           >
             {isClaiming ? t.claiming : `${t.claim} ${result.prize.toLocaleString()} VBMS`}
           </button>
         </div>
       )}
 
-      {/* Draggable ball at bottom — replaces SPIN button */}
+      {/* Draggable ball — fixed at bottom of viewport */}
       {!showResult && (
-        <div className="flex flex-col items-center mt-auto pt-2 pb-4">
-          {/* Hint arrow */}
-          {!isSpinning && canSpin && (
-            <div className="mb-1 flex flex-col items-center gap-0.5" style={{ animation: 'swipeHint 1.6s ease-in-out infinite' }}>
-              <span style={{ color: 'rgba(255,215,0,0.5)', fontSize: '16px', lineHeight: 1 }}>↑</span>
-              <span style={{ color: 'rgba(255,215,0,0.35)', fontSize: '10px', letterSpacing: '0.08em' }}>drag to throw</span>
+        <div className="fixed left-1/2 z-50 flex flex-col items-center"
+          style={{ bottom: 'max(28px, env(safe-area-inset-bottom, 28px))', transform: 'translateX(-50%)' }}>
+          {/* Spin counter + hint */}
+          {!isSpinning && (
+            <div className="mb-1 flex flex-col items-center gap-0.5">
+              {(() => {
+                // Mirror Convex formula: base = (vibeFID?3:1) + auraBonus, arb = base×2
+                const freeBase = (isVibeFidHolder ? 3 : 1);
+                const freeCount = isArbMode ? freeBase * 2 : freeBase;
+                const paidCount = Math.max(0, spinsRemaining - freeCount);
+                const NetworkIcon = ({ size = 14 }: { size?: number }) => (
+                  <img src={currentChain === 'arbitrum' ? '/images/arb-logo.png' : '/images/base-logo.png'}
+                       width={size} height={size} style={{ borderRadius: '50%', pointerEvents: 'none' }} alt="" />
+                );
+                return (
+                  <>
+                    <div className="flex items-center gap-1 mb-0.5 flex-wrap justify-center">
+                      {/* Free spin balls — gold border */}
+                      {Array.from({ length: Math.min(freeCount, 5) }).map((_, i) => (
+                        <div key={`f${i}`} style={{
+                          width: '22px', height: '22px', borderRadius: '50%',
+                          border: '1.5px solid rgba(255,215,0,0.9)',
+                          background: '#120e00',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        }}>
+                          <NetworkIcon />
+                        </div>
+                      ))}
+                      {/* Paid spin balls — network color border, dimmer */}
+                      {Array.from({ length: Math.min(paidCount, 3) }).map((_, i) => (
+                        <div key={`p${i}`} style={{
+                          width: '22px', height: '22px', borderRadius: '50%',
+                          border: `1.5px solid ${currentChain === 'arbitrum' ? 'rgba(18,170,255,0.6)' : 'rgba(0,82,255,0.6)'}`,
+                          background: currentChain === 'arbitrum' ? '#0a1a2a' : '#0a1228',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: 0.75,
+                        }}>
+                          <NetworkIcon />
+                        </div>
+                      ))}
+                      {/* Total count */}
+                      <span style={{ color: '#FFD700', fontSize: '13px', fontWeight: '800', textShadow: '0 0 8px rgba(255,215,0,0.6)', marginLeft: '2px' }}>
+                        ×{spinsRemaining}
+                      </span>
+                      {/* ARB 2x badge */}
+                      {isArbMode && (
+                        <span style={{ fontSize: '9px', fontWeight: '700', color: '#12AAFF', background: 'rgba(18,170,255,0.15)', border: '1px solid rgba(18,170,255,0.4)', borderRadius: '4px', padding: '1px 4px' }}>2x</span>
+                      )}
+                      {/* Inline "+" buy button */}
+                      {canBuyPaidSpinData?.canBuy && (
+                        <button
+                          onClick={handlePaidSpin}
+                          disabled={isBuyingPaidSpin}
+                          style={{
+                            width: '22px', height: '22px', borderRadius: '50%', fontSize: '15px', fontWeight: '900',
+                            color: '#FFD700', background: 'rgba(255,215,0,0.12)', border: '1.5px solid rgba(255,215,0,0.45)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1, flexShrink: 0,
+                            cursor: isBuyingPaidSpin ? 'wait' : 'pointer',
+                          }}
+                        >
+                          {isBuyingPaidSpin ? '…' : '+'}
+                        </button>
+                      )}
+                    </div>
+                    {canSpin ? (
+                      <div style={{ animation: 'swipeHint 1.6s ease-in-out infinite' }} className="flex flex-col items-center gap-0.5">
+                        <span style={{ color: 'rgba(255,215,0,0.5)', fontSize: '16px', lineHeight: 1 }}>↑</span>
+                        <span style={{ color: 'rgba(255,215,0,0.35)', fontSize: '10px', letterSpacing: '0.08em' }}>drag to throw</span>
+                      </div>
+                    ) : (
+                      <span style={{ color: '#f87171', fontSize: '11px', marginBottom: '4px' }}>{t.noSpinsToday}</span>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
           {isSpinning && (
@@ -1055,51 +1218,68 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
           {/* The ball */}
           <div
             style={{
-              transform: `translateY(${ballY}px)`,
-              transition: isDraggingBall ? 'none' : 'transform 0.45s cubic-bezier(0.34,1.56,0.64,1)',
+              transform: `translateY(${ballY}px) translateX(0)`,
+              transition: isDraggingBall ? 'none' : 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1)',
               touchAction: 'none',
               cursor: canSpin && !isSpinning ? 'grab' : 'default',
             }}
-            onTouchStart={e => handleBallDragStart(e.touches[0].clientY)}
+            onTouchStart={e => { e.preventDefault(); handleBallDragStart(e.touches[0].clientY); }}
             onTouchMove={e => { e.preventDefault(); handleBallDragMove(e.touches[0].clientY); }}
-            onTouchEnd={() => handleBallDragEnd()}
+            onTouchEnd={e => { e.preventDefault(); handleBallDragEnd(); }}
             onMouseDown={e => {
+              e.preventDefault();
               handleBallDragStart(e.clientY);
-              const onMove = (ev: MouseEvent) => handleBallDragMove(ev.clientY);
+              const onMove = (ev: MouseEvent) => { ev.preventDefault(); handleBallDragMove(ev.clientY); };
               const onUp   = () => { handleBallDragEnd(); document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
               document.addEventListener('mousemove', onMove);
               document.addEventListener('mouseup', onUp);
             }}
+            onDragStart={e => e.preventDefault()}
           >
-            <div style={{
-              width: '52px', height: '52px',
-              borderRadius: '50%', overflow: 'hidden',
-              border: `3px solid ${Math.abs(ballY) > 55 ? '#FFD700' : 'rgba(255,255,255,0.75)'}`,
-              boxShadow: `0 0 ${14 + Math.abs(ballY)/3}px rgba(255,215,0,${0.25 + Math.abs(ballY)/140}), 0 4px 12px rgba(0,0,0,0.8)`,
-              opacity: isSpinning ? 0.35 : 1,
-            }}>
-              <img src={ballImg} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
+            {/* 3D sphere — gradient body + spinning logo + specular highlight */}
+            {(() => {
+              const isArb = currentChain === 'arbitrum';
+              const glow = Math.abs(ballY) > 55 ? 'rgba(255,215,0,0.9)' : (isArb ? `rgba(40,160,240,${0.4 + Math.abs(ballY)/120})` : `rgba(68,119,255,${0.4 + Math.abs(ballY)/120})`);
+              const border = Math.abs(ballY) > 55 ? '#FFD700' : (isArb ? 'rgba(40,160,240,0.95)' : 'rgba(68,119,255,0.95)');
+              return (
+                <div style={{
+                  width: '62px', height: '62px',
+                  borderRadius: '50%', position: 'relative',
+                  overflow: 'hidden',
+                  border: `3px solid ${border}`,
+                  boxShadow: `0 0 ${20 + Math.abs(ballY)/3}px ${glow}, 0 6px 20px rgba(0,0,0,0.9)`,
+                  opacity: (isSpinning || ballSettling) ? 0.22 : 1,
+                  background: isArb
+                    ? 'radial-gradient(circle at 34% 28%, #d0f0ff 0%, #28a0f0 20%, #0060a8 55%, #000e1e 100%)'
+                    : 'radial-gradient(circle at 34% 28%, #ccd8ff 0%, #4477ff 20%, #0030b8 55%, #00021e 100%)',
+                }}>
+                  {/* Logo spins on Y-axis — 3D perspective effect */}
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transformOrigin: 'center',
+                  }}>
+                    <img src={isArb ? '/images/arb-logo.png' : '/images/base-logo.png'}
+                         width="44" height="44"
+                         style={{ borderRadius: '50%', opacity: 0.9, pointerEvents: 'none' }} alt="" />
+                  </div>
+                  {/* Primary specular highlight (top-left bright spot) */}
+                  <div style={{ position: 'absolute', top: '6%', left: '12%', width: '34%', height: '26%', background: 'radial-gradient(ellipse, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.3) 45%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+                  {/* Secondary reflection (bottom-right subtle) */}
+                  <div style={{ position: 'absolute', bottom: '8%', right: '10%', width: '22%', height: '18%', background: 'radial-gradient(ellipse, rgba(255,255,255,0.22) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
+                </div>
+              );
+            })()}
           </div>
 
           {/* hidden button for swipe-from-page compat */}
           <button data-spin-button onClick={() => { if (canSpin && !isSpinning) handleSpin(); }} style={{ display:'none' }} />
 
-          {/* Paid spin — compact, below ball */}
-          {!canSpin && !isSpinning && paidSpinCostData && canBuyPaidSpinData && (
-            <div className="mt-4 space-y-1 text-center">
-              <button
-                onClick={handlePaidSpin}
-                disabled={isBuyingPaidSpin || !canBuyPaidSpinData.canBuy}
-                className="px-5 py-2 rounded-xl font-bold text-sm transition-all"
-                style={{ background: 'rgba(255,215,0,0.12)', color: '#FFD700', border: '1px solid rgba(255,215,0,0.3)' }}
-              >
-                {isBuyingPaidSpin ? t.buyingPaidSpin : `${t.paidSpin} (${paidSpinCostData.cost} VBMS)`}
-              </button>
-              <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px' }}>
-                {canBuyPaidSpinData.remaining}/{canBuyPaidSpinData.maxPaidSpins} paid spins today
-              </p>
-            </div>
+          {/* Paid spin cost hint — shows below ball when "+" is available */}
+          {!isSpinning && canBuyPaidSpinData?.canBuy && paidSpinCostData && (
+            <p style={{ color: 'rgba(255,255,255,0.25)', fontSize: '9px', marginTop: '2px' }}>
+              +spin = {paidSpinCostData.cost} VBMS · {canBuyPaidSpinData.remaining}/{canBuyPaidSpinData.maxPaidSpins} left
+            </p>
           )}
         </div>
       )}
