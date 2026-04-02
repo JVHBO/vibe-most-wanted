@@ -20,7 +20,9 @@ export async function GET(request: NextRequest) {
       completerFid: parseInt(fid),
       limit: 20,
     });
-    return NextResponse.json({ quests });
+    return NextResponse.json({ quests }, {
+      headers: { 'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=300' },
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

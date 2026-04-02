@@ -379,7 +379,9 @@ export async function GET(request: Request) {
         if (tokenIdsMatch) {
           trackStat("profile_nfts_cache_hit");
           console.log(`📦 [profile-nfts] Cache hit for ${address.slice(0, 10)}... (balance: ${totalBalance})`);
-          return NextResponse.json(cached.data);
+          return NextResponse.json(cached.data, {
+            headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600', 'X-Cache': 'HIT' },
+          });
         }
 
         profileCache.delete(cacheKey);
@@ -509,7 +511,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json(responseData, {
-      headers: { 'Cache-Control': 'private, max-age=300, stale-while-revalidate=600' },
+      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' },
     });
   } catch (error: any) {
     console.error("[profile-nfts] Error:", error);

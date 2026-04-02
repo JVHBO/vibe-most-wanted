@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { ConvexProfileService } from '@/lib/convex-profile';
 
 export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
