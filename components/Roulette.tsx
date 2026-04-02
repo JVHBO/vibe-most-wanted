@@ -1151,29 +1151,8 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
                 return (
                   <>
                     <div className="flex items-center gap-1 mb-0.5 flex-wrap justify-center">
-                      {/* Free spin balls — gold border */}
-                      {Array.from({ length: Math.min(freeCount, 5) }).map((_, i) => (
-                        <div key={`f${i}`} style={{
-                          width: '22px', height: '22px', borderRadius: '50%',
-                          border: '1.5px solid rgba(255,215,0,0.9)',
-                          background: '#120e00',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        }}>
-                          <NetworkIcon />
-                        </div>
-                      ))}
-                      {/* Paid spin balls — network color border, dimmer */}
-                      {Array.from({ length: Math.min(paidCount, 3) }).map((_, i) => (
-                        <div key={`p${i}`} style={{
-                          width: '22px', height: '22px', borderRadius: '50%',
-                          border: `1.5px solid ${currentChain === 'arbitrum' ? 'rgba(18,170,255,0.6)' : 'rgba(0,82,255,0.6)'}`,
-                          background: currentChain === 'arbitrum' ? '#0a1a2a' : '#0a1228',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: 0.75,
-                        }}>
-                          <NetworkIcon />
-                        </div>
-                      ))}
-                      {/* Total count */}
+                      {/* Spin count */}
+                      <NetworkIcon size={16} />
                       <span style={{ color: '#FFD700', fontSize: '13px', fontWeight: '800', textShadow: '0 0 8px rgba(255,215,0,0.6)', marginLeft: '2px' }}>
                         ×{spinsRemaining}
                       </span>
