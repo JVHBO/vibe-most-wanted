@@ -101,6 +101,8 @@ nul
 !public/images/baccarat/*.png
 !public/images/angry-angry-kid.png
 !public/images/og-cards/*.png
+!public/images/arb-logo.png
+!public/images/base-logo.png
 !public/fid-assets/images/splash-200.png
 !public/fid-assets/images/vibefid-icon.png
 !public/tokens/*.png
