@@ -992,7 +992,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
                 color: currentChain === 'base' ? '#fff' : 'rgba(255,255,255,0.4)',
               }}
             >
-              <img src="/images/base-logo.png" width="11" height="11" style={{ borderRadius:'50%', pointerEvents:'none' }} alt="" />
+              <img src="/images/base-chain.png" width="11" height="11" style={{ borderRadius:'50%', pointerEvents:'none' }} alt="" />
               Normal
             </button>
             <button
@@ -1005,7 +1005,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
                 color: currentChain === 'arbitrum' ? '#000' : 'rgba(255,255,255,0.4)',
               }}
             >
-              <img src="/images/arb-logo.png" width="11" height="11" style={{ borderRadius:'50%', pointerEvents:'none' }} alt="" />
+              <img src="/images/arb-chain.png" width="11" height="11" style={{ borderRadius:'50%', pointerEvents:'none' }} alt="" />
               Ultra
             </button>
           </div>
@@ -1089,7 +1089,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
                         animation: !isSettling ? 'innerSpin 0.9s linear infinite' : 'none',
                         transformOrigin: 'center',
                       }}>
-                        <img src={isArb ? '/images/arb-logo.png' : '/images/base-logo.png'}
+                        <img src={isArb ? '/images/arb-chain.png' : '/images/base-chain.png'}
                              width="15" height="15"
                              style={{ borderRadius: '50%', opacity: 0.88, pointerEvents: 'none' }} alt="" />
                       </div>
@@ -1145,7 +1145,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
                 const freeCount = isArbMode ? freeBase * 2 : freeBase;
                 const paidCount = Math.max(0, spinsRemaining - freeCount);
                 const NetworkIcon = ({ size = 14 }: { size?: number }) => (
-                  <img src={currentChain === 'arbitrum' ? '/images/arb-logo.png' : '/images/base-logo.png'}
+                  <img src={currentChain === 'arbitrum' ? '/images/arb-chain.png' : '/images/base-chain.png'}
                        width={size} height={size} style={{ borderRadius: '50%', pointerEvents: 'none' }} alt="" />
                 );
                 return (
@@ -1258,7 +1258,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     transformOrigin: 'center',
                   }}>
-                    <img src={isArb ? '/images/arb-logo.png' : '/images/base-logo.png'}
+                    <img src={isArb ? '/images/arb-chain.png' : '/images/base-chain.png'}
                          width="44" height="44"
                          style={{ borderRadius: '50%', opacity: 0.9, pointerEvents: 'none' }} alt="" />
                   </div>
