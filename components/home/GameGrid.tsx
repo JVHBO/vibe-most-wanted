@@ -62,7 +62,7 @@ export function GameGrid({ soundEnabled, disabled, onSelect, onSpin, isInFarcast
 
       {onSpin && (
         <button onClick={() => { if (soundEnabled) AudioManager.buttonClick(); onSpin(); }} onMouseEnter={() => soundEnabled && AudioManager.buttonHover()} className={`tour-spin-btn ${btn} bg-orange-600 border-black/20 hover:border-black/40 hover:bg-orange-500`} style={btnStyle}>
-          <svg className="w-7 h-7 text-white scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg className="w-9 h-9 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2.5"/>
             <line x1="12" y1="2" x2="12" y2="9.5"/><line x1="12" y1="14.5" x2="12" y2="22"/>
             <line x1="2" y1="12" x2="9.5" y2="12"/><line x1="14.5" y1="12" x2="22" y2="12"/>
