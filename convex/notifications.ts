@@ -711,25 +711,65 @@ function sleep(ms: number) {
 }
 
 const GAMING_TIPS = [
+  // Daily login / coins
   {
-    title: "🎯 Pro Tip",
-    body: "Attack players from the leaderboard to steal their coins! The higher their rank, the bigger the reward! 👑"
+    title: "💰 Daily Login Bonus!",
+    body: "Claim your free coins today! Don't let your daily reward expire 🎁"
   },
+  // Roulette
   {
-    title: "🛡️ Defense Strategy",
-    body: "Set up your Defense Deck to protect your coins when offline! Choose your 5 best cards wisely! 🃏"
+    title: "🎰 Free Spin Waiting!",
+    body: "Your Daily Roulette spin is ready! Win VBMS, cards & rare prizes. Spin now! 🍀"
   },
+  // VibeMail
   {
-    title: "⚡ Power Boost Tip",
-    body: "Open more packs to get stronger cards! Higher power = more wins = more coins! 💰"
+    title: "✉️ Send a VibeMail!",
+    body: "Drop a personalized message on the blockchain. Add music, colors & effects! 🎵"
   },
+  // Arena
   {
-    title: "🤖 Mecha Arena Tip",
-    body: "Build your Mecha and battle in the Arena! Bet $VBMS and crush your opponents with powerful combos! ⚔️"
+    title: "🎯 Attack & Steal Coins!",
+    body: "Attack leaderboard players to steal their VBMS! Higher rank = bigger reward! 👑"
   },
+  // Roulette ARB
   {
-    title: "🎁 Daily Free Card!",
-    body: "Visit the Shop to claim your FREE card every day! No VBMS needed - just tap and collect! 🃏"
+    title: "🎰 Double Spins on ARB!",
+    body: "Switch to Arbitrum for 2x daily roulette spins! More spins = more chances to win 🔥"
+  },
+  // VibeMail
+  {
+    title: "✉️ Got VibeMail?",
+    body: "Check your inbox! Someone may have sent you VBMS coins with a message 👀"
+  },
+  // Defense
+  {
+    title: "🛡️ Protect Your Coins!",
+    body: "Set up your Defense Deck before going offline. Leave it empty = easy target! 🃏"
+  },
+  // Roulette + Aura
+  {
+    title: "⚡ Level Up for More Spins!",
+    body: "Higher Aura level = more bonus roulette spins every day. Keep grinding! 🐉"
+  },
+  // Free card
+  {
+    title: "🎁 Free Card Today!",
+    body: "Grab your FREE card from the Shop every day. No VBMS needed — just tap! 🃏"
+  },
+  // Arena
+  {
+    title: "🤖 Mecha Arena is Live!",
+    body: "Build your deck and crush opponents in the Arena! Bet VBMS and win big ⚔️"
+  },
+  // Raid Boss
+  {
+    title: "👹 Raid Boss is Waiting!",
+    body: "Team up to defeat the Raid Boss! VibeFID holders deal bonus damage 💥"
+  },
+  // VibeMail power move
+  {
+    title: "✉️ VibeMail = On-Chain Flex",
+    body: "Send a VibeMail with $VBMS attached. Your message lives on the blockchain forever 🔗"
   },
 ];
 
