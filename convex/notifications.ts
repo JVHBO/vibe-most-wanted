@@ -766,10 +766,10 @@ const GAMING_TIPS = [
     title: "👹 Raid Boss is Waiting!",
     body: "Team up to defeat the Raid Boss! VibeFID holders deal bonus damage 💥"
   },
-  // VibeMail power move
+  // Baccarat
   {
-    title: "✉️ VibeMail = On-Chain Flex",
-    body: "Send a VibeMail with $VBMS attached. Your message lives on the blockchain forever 🔗"
+    title: "🃏 Baccarat is Live!",
+    body: "Bet VBMS on Player or Banker and double your coins! New round every minute 🎴"
   },
 ];
 
