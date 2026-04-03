@@ -1171,7 +1171,7 @@ export default function QuestsPage() {
                 const bgSrc = q.bannerUrl || q.pfpUrl;
                 const pfp = q.pfpUrl;
                 const displayName = (q as any).displayName || q.targetUsername;
-                const profileUrl = `https://base.app/${q.targetUsername}`;
+                const profileUrl = `https://warpcast.com/${q.targetUsername}`;
                 return (
                   <div key={questId}>
                     {/* Banner image area — same as VIBE CREATORS */}
