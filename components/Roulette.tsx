@@ -323,6 +323,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
   const isArbMode = canSpinData?.isArbMode ?? false;
   const [isClaiming, setIsClaiming] = useState(false);
   const [isClaimed, setIsClaimed] = useState(false);
+  const [showOdds, setShowOdds] = useState(false);
   const [isBuyingPaidSpin, setIsBuyingPaidSpin] = useState(false);
   const [ballSettling, setBallSettling] = useState(false);
   const ballOrbitAngleRef = useRef(-90); // degrees; -90 = top of wheel
@@ -1066,6 +1067,52 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
       )}
       {onClose && (
         <button onClick={onClose} className="absolute top-3 right-4 z-10 text-xl font-bold" style={{ color: 'rgba(255,215,0,0.5)' }}>×</button>
+      )}
+
+      {/* Odds info button */}
+      <button
+        onClick={() => setShowOdds(true)}
+        className="absolute top-3 left-4 z-10 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+        style={{ background: 'rgba(255,215,0,0.15)', color: 'rgba(255,215,0,0.6)', border: '1px solid rgba(255,215,0,0.3)' }}
+      >?</button>
+
+      {/* Odds modal */}
+      {showOdds && (
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.85)' }}
+          onClick={() => setShowOdds(false)}
+        >
+          <div
+            className="w-full max-w-xs rounded-2xl p-5"
+            style={{ background: '#1a1a1a', border: '2px solid rgba(255,215,0,0.4)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-base" style={{ color: '#FFD700' }}>Prize Odds</h3>
+              <button onClick={() => setShowOdds(false)} className="text-xl font-bold" style={{ color: 'rgba(255,215,0,0.5)' }}>×</button>
+            </div>
+            <div className="flex flex-col gap-2">
+              {[
+                { label: '100 VBMS',  prob: 88,   color: '#9CA3AF' },
+                { label: '500 VBMS',  prob: 8,    color: '#60A5FA' },
+                { label: '1K VBMS',   prob: 2.5,  color: '#34D399' },
+                { label: '10K VBMS',  prob: 1,    color: '#FBBF24' },
+                { label: '50K VBMS',  prob: 0.5,  color: '#F87171' },
+              ].map(({ label, prob, color }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+                  <span className="flex-1 text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>{label}</span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 rounded-full" style={{ width: `${Math.max(prob, 0.5) * 0.9}rem`, background: color, opacity: 0.7 }} />
+                    <span className="text-sm font-bold w-10 text-right" style={{ color }}>{prob}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs mt-4 text-center" style={{ color: 'rgba(255,255,255,0.35)' }}>Results determined server-side</p>
+          </div>
+        </div>
       )}
 
 
