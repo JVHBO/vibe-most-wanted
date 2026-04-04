@@ -31,19 +31,22 @@ function getTodayKey(): string {
 }
 
 // Determine prize based on weighted probability
+// Uses crypto.getRandomValues() for cryptographically secure randomness
 function determinePrize(): { amount: number; index: number } {
-  const random = Math.random() * 100;
-  let cumulative = 0;
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  const random = (buf[0] / 0x100000000) * 100; // uniform [0, 100)
 
+  let cumulative = 0;
   for (let i = 0; i < PRIZES.length; i++) {
     cumulative += PRIZES[i].probability;
-    if (random <= cumulative) {
+    if (random < cumulative) {
       return { amount: PRIZES[i].amount, index: i };
     }
   }
 
-  // Fallback to smallest prize
-  return { amount: PRIZES[0].amount, index: 0 };
+  // Fallback (should never reach here since probabilities sum to 100)
+  return { amount: PRIZES[PRIZES.length - 1].amount, index: PRIZES.length - 1 };
 }
 // Aura XP → bonus roulette spins (matches lib/aura-levels.ts thresholds)
 function getAuraSpinBonus(aura: number): number {
