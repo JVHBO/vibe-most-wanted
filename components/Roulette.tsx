@@ -322,6 +322,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
   const isVibeFidHolder = canSpinData?.isVibeFidHolder ?? false;
   const isArbMode = canSpinData?.isArbMode ?? false;
   const [isClaiming, setIsClaiming] = useState(false);
+  const [isClaimed, setIsClaimed] = useState(false);
   const [isBuyingPaidSpin, setIsBuyingPaidSpin] = useState(false);
   const [ballSettling, setBallSettling] = useState(false);
   const ballOrbitAngleRef = useRef(-90); // degrees; -90 = top of wheel
@@ -512,18 +513,16 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
       });
 
       toast.dismiss("claim-wait");
-      toast.success(`✅ ${claimData.amount.toLocaleString()} VBMS claimed!`);
 
-      if (onClose) {
-        setTimeout(() => {
-          setIsClaiming(false);
-          onClose();
-        }, 1500);
-      } else {
-        setIsClaiming(false);
+      setIsClaiming(false);
+      setIsClaimed(true);
+
+      setTimeout(() => {
+        setIsClaimed(false);
         setShowResult(false);
         setResult(null);
-      }
+        if (onClose) onClose();
+      }, 2000);
 
     } catch (error: any) {
       if (preparedSpinId && !txSubmitted) {
@@ -1178,10 +1177,10 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
           </div>
           <button
             onClick={handleClaim}
-            disabled={isClaiming}
-            className="rlt-claim-btn w-full py-3 font-bold text-lg rounded-xl transition-all"
+            disabled={isClaiming || isClaimed}
+            className={`rlt-claim-btn w-full py-3 font-bold text-lg rounded-xl transition-all ${isClaimed ? 'bg-green-500 text-white' : ''}`}
           >
-            {isClaiming ? t.claiming : `${t.claim} ${result.prize.toLocaleString()} VBMS`}
+            {isClaimed ? `✅ Claimed!` : isClaiming ? t.claiming : `${t.claim} ${result.prize.toLocaleString()} VBMS`}
           </button>
         </div>
       )}
