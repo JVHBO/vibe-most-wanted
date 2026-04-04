@@ -421,18 +421,25 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
       throw new Error("Base public client unavailable");
     }
 
-    const receipt = await publicClient.waitForTransactionReceipt({
-      hash: txHash as `0x${string}`,
-      confirmations: 1,
-      pollingInterval: 1000,
-      timeout: 60_000,
-    });
-
-    if (receipt.status !== 'success') {
-      throw new Error(errorMessage);
+    // Use getTransactionReceipt (one-shot HTTP) instead of waitForTransactionReceipt
+    // (which uses websocket polling that hangs indefinitely in Farcaster miniapp iframe)
+    const DEADLINE = Date.now() + 60_000;
+    while (Date.now() < DEADLINE) {
+      try {
+        const receipt = await Promise.race([
+          publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` }),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 5_000)),
+        ]);
+        if (receipt) {
+          if (receipt.status !== 'success') throw new Error(errorMessage);
+          return receipt;
+        }
+      } catch (e: any) {
+        if (e.message === errorMessage) throw e; // TX reverted — don't retry
+      }
+      await new Promise((r) => setTimeout(r, 2_000));
     }
-
-    return receipt;
+    throw new Error('Receipt check timed out');
   }, [publicClient]);
 
   // CLAIM handler - ALL prizes use blockchain TX
