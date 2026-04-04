@@ -122,11 +122,22 @@ export const getRaffleBuyers = query({
       }
       map[e.address].tickets += e.tickets;
       if (e.token !== 'BONUS' && !map[e.address].chains.includes(e.chain)) map[e.address].chains.push(e.chain);
-      // Update username if we have one
+      // Update username if we have one in this entry
       if (e.username && !map[e.address].username) map[e.address].username = e.username;
     }
 
-    return Object.values(map).sort((a, b) => b.tickets - a.tickets);
+    // Live-resolve missing usernames from profiles (handles buyers who had no profile at purchase time)
+    const buyers = Object.values(map);
+    await Promise.all(buyers.map(async (buyer) => {
+      if (buyer.username) return;
+      const profile = await ctx.db
+        .query("profiles")
+        .withIndex("by_address", (q: any) => q.eq("address", buyer.address))
+        .first();
+      if (profile?.username) buyer.username = profile.username;
+    }));
+
+    return buyers.sort((a, b) => b.tickets - a.tickets);
   },
 });
 

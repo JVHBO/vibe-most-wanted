@@ -593,13 +593,14 @@ export default function TCGPage() {
   // Demo account reset - always starts fresh on miniapp load
   const resetDemoProfile = useMutation(api.profiles.resetDemoProfile);
   useEffect(() => {
-    if (isActualMiniapp && address) {
+    // Wait for profile load to complete before resetting (avoids race with useAutoCreateProfile)
+    if (isActualMiniapp && address && !isLoadingProfile) {
       resetDemoProfile({ address }).then(() => {
         refreshProfile();
       }).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, isActualMiniapp]);
+  }, [address, isActualMiniapp, isLoadingProfile]);
 
   const pvpBattleStarted = useRef<boolean>(false); // PvP battle flag to prevent double-start (useRef for immediate sync access)
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
