@@ -363,16 +363,17 @@ export const prepareRouletteClaim = action({
     amount: number;
     nonce: string;
     signature: string;
-    spinId: string;
+    spinId: Id<"rouletteSpins">;
   }> => {
     const normalizedAddress = address.toLowerCase();
 
     // 🔒 SECURITY: Verify caller owns the address (prevents DoS via pending-lock)
-    const nowMinute = Math.floor(Date.now() / 60000);
-    if (Math.abs(nowMinute - timestamp) > 5) {
+    // Uses day-based timestamp so users only need to sign once per day
+    const nowDay = Math.floor(Date.now() / 86400000);
+    if (Math.abs(nowDay - timestamp) > 1) {
       throw new Error("Request expired, please try again");
     }
-    const ownershipMessage = `VMW Roulette - ${normalizedAddress} - ${timestamp}`;
+    const ownershipMessage = `VMW Roulette Daily - ${normalizedAddress} - ${timestamp}`;
     const recoveredAddress = ethers.verifyMessage(ownershipMessage, ownershipProof);
     if (recoveredAddress.toLowerCase() !== normalizedAddress) {
       throw new Error("Invalid ownership proof");
@@ -570,70 +571,44 @@ export const markSpinAsPending = internalMutation({
 export const recordRouletteClaim = mutation({
   args: {
     address: v.string(),
-    amount: v.number(),
+    spinId: v.id("rouletteSpins"),
     txHash: v.string(),
   },
-  handler: async (ctx, { address, amount, txHash }) => {
+  handler: async (ctx, { address, spinId, txHash }) => {
     const normalizedAddress = address.toLowerCase();
     // 🔒 SECURITY FIX: Resolve to primary so linked wallets find their spins
     const effectiveAddress = await resolveToPrimary(ctx, normalizedAddress);
-    const today = getTodayKey();
 
-    // Find all spins for today (stored under primary address)
-    const spins = await ctx.db
-      .query("rouletteSpins")
-      .withIndex("by_address_date", (q) =>
-        q.eq("address", effectiveAddress).eq("date", today)
-      )
-      .collect();
-
-    // Find unclaimed spin matching the amount (most recent first)
-    const unclaimedSpins = spins
-      .filter(s => !s.claimed && s.prizeAmount === amount)
-      .sort((a, b) => (b.spunAt || 0) - (a.spunAt || 0));
-
-    const spin = unclaimedSpins[0];
-
+    const spin = await ctx.db.get(spinId);
     if (!spin) {
-      // Fallback: find any unclaimed spin with this amount
-      const anyUnclaimed = spins.filter(s => !s.claimed);
-      if (anyUnclaimed.length === 0) {
-        throw new Error("No unclaimed spins found");
+      throw new Error("Spin not found");
+    }
+
+    if (spin.address !== effectiveAddress) {
+      throw new Error("Spin does not belong to this wallet");
+    }
+
+    if (spin.claimed) {
+      if (spin.txHash === txHash) {
+        return { success: true, amount: spin.prizeAmount, txHash };
       }
-      // Mark the most recent as claimed
-      const fallbackSpin = anyUnclaimed.sort((a, b) => (b.spunAt || 0) - (a.spunAt || 0))[0];
-      await ctx.db.patch(fallbackSpin._id, {
+      throw new Error("Spin already claimed");
+    }
+
+    const existingClaim = await ctx.db
+      .query("claimHistory")
+      .withIndex("by_txHash", (q) => q.eq("txHash", txHash))
+      .unique();
+
+    if (existingClaim) {
+      await ctx.db.patch(spin._id, {
         claimed: true,
-        claimedAt: Date.now(),
+        claimedAt: spin.claimedAt || existingClaim.timestamp,
         txHash,
+        claimPending: false,
+        claimPendingAt: undefined,
       });
-      console.log(`🎰 Roulette claimed (fallback): ${effectiveAddress} received ${amount} VBMS (tx: ${txHash})`);
-      await ctx.db.insert("claimHistory", {
-        playerAddress: effectiveAddress,
-        amount,
-        txHash,
-        timestamp: Date.now(),
-        type: "roulette",
-      });
-
-      // 🔒 SECURITY: Add audit log for fallback claims
-      const profileFallback = await findProfileByAddress(ctx, effectiveAddress);
-
-      if (profileFallback) {
-        await createAuditLog(
-          ctx,
-          effectiveAddress,
-          "earn",
-          amount,
-          profileFallback.coins || 0,
-          (profileFallback.coins || 0) + amount,
-          "roulette_claim_fallback",
-          txHash,
-          { spinId: fallbackSpin._id }
-        );
-      }
-
-      return { success: true, amount, txHash };
+      return { success: true, amount: spin.prizeAmount, txHash };
     }
 
     // Mark as claimed
@@ -641,12 +616,14 @@ export const recordRouletteClaim = mutation({
       claimed: true,
       claimedAt: Date.now(),
       txHash,
+      claimPending: false,
+      claimPendingAt: undefined,
     });
 
     // Save to claim history
     await ctx.db.insert("claimHistory", {
       playerAddress: effectiveAddress,
-      amount,
+      amount: spin.prizeAmount,
       txHash,
       timestamp: Date.now(),
       type: "roulette",
@@ -660,22 +637,61 @@ export const recordRouletteClaim = mutation({
         ctx,
         effectiveAddress,
         "earn",
-        amount,
+        spin.prizeAmount,
         profile.coins || 0,
-        (profile.coins || 0) + amount,
+        (profile.coins || 0) + spin.prizeAmount,
         "roulette_claim",
         txHash,
         { spinId: spin._id, prizeIndex: spin.prizeIndex }
       );
     }
 
-    console.log(`🎰 Roulette claimed: ${normalizedAddress} received ${amount} VBMS (tx: ${txHash})`);
+    console.log(`🎰 Roulette claimed: ${normalizedAddress} received ${spin.prizeAmount} VBMS (tx: ${txHash})`);
 
     return {
       success: true,
-      amount,
+      amount: spin.prizeAmount,
       txHash,
     };
+  },
+});
+
+/**
+ * Release a pending roulette claim lock when the wallet never submitted a TX.
+ * Safe to call only before a txHash exists.
+ */
+export const releaseRouletteClaimLock = mutation({
+  args: {
+    address: v.string(),
+    spinId: v.id("rouletteSpins"),
+  },
+  handler: async (ctx, { address, spinId }) => {
+    const normalizedAddress = address.toLowerCase();
+    const effectiveAddress = await resolveToPrimary(ctx, normalizedAddress);
+    const spin = await ctx.db.get(spinId);
+
+    if (!spin) {
+      throw new Error("Spin not found");
+    }
+
+    if (spin.address !== effectiveAddress) {
+      throw new Error("Spin does not belong to this wallet");
+    }
+
+    if (spin.claimed || spin.txHash) {
+      return { success: true, released: false };
+    }
+
+    if (!spin.claimPending) {
+      return { success: true, released: false };
+    }
+
+    await ctx.db.patch(spin._id, {
+      claimPending: false,
+      claimPendingAt: undefined,
+    });
+
+    return { success: true, released: true };
   },
 });
 

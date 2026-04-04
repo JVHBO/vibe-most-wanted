@@ -548,9 +548,9 @@ const convex = useConvex();
                       {!isCurrentUser(top3[1].address) && (
                         <button
                           onClick={() => handleAttackClick(top3[1])}
-                          disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
+                          disabled={!address || attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
                           className={`ldb-attack-btn px-2.5 py-1 text-[10px] font-black uppercase tracking-widest transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none border-4 border-black ${
-                            attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
+                            address && attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
                               ? 'bg-[#CC2222] hover:bg-[#AA1111] text-white'
                               : 'bg-gray-800 text-gray-600 cursor-not-allowed'
                           }`}
@@ -584,9 +584,9 @@ const convex = useConvex();
                       {!isCurrentUser(top3[0].address) && (
                         <button
                           onClick={() => handleAttackClick(top3[0])}
-                          disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
+                          disabled={!address || attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
                           className={`ldb-attack-btn px-4 py-1.5 text-xs font-black uppercase tracking-widest transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none border-4 border-black ${
-                            attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
+                            address && attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
                               ? 'bg-[#CC2222] hover:bg-[#AA1111] text-white'
                               : 'bg-gray-800 text-gray-600 cursor-not-allowed'
                           }`}
@@ -620,9 +620,9 @@ const convex = useConvex();
                       {!isCurrentUser(top3[2].address) && (
                         <button
                           onClick={() => handleAttackClick(top3[2])}
-                          disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
+                          disabled={!address || attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
                           className={`ldb-attack-btn px-2.5 py-1 text-[10px] font-black uppercase tracking-widest transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none border-4 border-black ${
-                            attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
+                            address && attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
                               ? 'bg-[#CC2222] hover:bg-[#AA1111] text-white'
                               : 'bg-gray-800 text-gray-600 cursor-not-allowed'
                           }`}
@@ -690,9 +690,9 @@ const convex = useConvex();
                             {!isYou && (
                               <button
                                 onClick={() => handleAttackClick(profile)}
-                                disabled={attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
+                                disabled={!address || attacksRemaining <= 0 || isLoadingCards || nfts.length === 0}
                                 className={`ldb-attack-btn px-2.5 py-1 text-[10px] font-black uppercase tracking-widest transition-all active:translate-x-[3px] active:translate-y-[3px] active:shadow-none border-4 border-black ${
-                                  attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
+                                  address && attacksRemaining > 0 && !isLoadingCards && nfts.length > 0
                                     ? 'bg-[#CC2222] hover:bg-[#AA1111] text-white'
                                     : 'bg-gray-800 text-gray-600 cursor-not-allowed'
                                 }`}

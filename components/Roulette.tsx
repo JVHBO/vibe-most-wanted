@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
-import { useAccount, useSignMessage } from 'wagmi';
+import { Id } from '@/convex/_generated/dataModel';
+import { useAccount, usePublicClient, useSignMessage } from 'wagmi';
 import { AudioManager } from '@/lib/audio-manager';
 import { useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
 import { toast } from 'sonner';
@@ -283,6 +284,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
   const { signMessageAsync } = useSignMessage();
   const { lang } = useLanguage();
   const { validateOnArb } = useArbValidator();
+  const publicClient = usePublicClient({ chainId: CONTRACTS.CHAIN_ID });
   const t = rouletteTranslations[lang as keyof typeof rouletteTranslations] || rouletteTranslations.en;
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -312,6 +314,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
   const paidSpinCostData = useQuery(api.roulette.getPaidSpinCost);
   const prepareClaimAction = useAction(api.roulette.prepareRouletteClaim);
   const recordClaimMutation = useMutation(api.roulette.recordRouletteClaim);
+  const releaseClaimLockMutation = useMutation(api.roulette.releaseRouletteClaimLock);
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
 
   const canSpin = canSpinData?.canSpin ?? false;
@@ -413,16 +416,38 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
     return txHash;
   };
 
+  const waitForBaseReceipt = useCallback(async (txHash: string, errorMessage: string) => {
+    if (!publicClient) {
+      throw new Error("Base public client unavailable");
+    }
+
+    const receipt = await publicClient.waitForTransactionReceipt({
+      hash: txHash as `0x${string}`,
+      confirmations: 1,
+      pollingInterval: 1000,
+      timeout: 60_000,
+    });
+
+    if (receipt.status !== 'success') {
+      throw new Error(errorMessage);
+    }
+
+    return receipt;
+  }, [publicClient]);
+
   // CLAIM handler - ALL prizes use blockchain TX
   const handleClaim = async () => {
     if (!address || !result || isClaiming) return;
+
+    let signingAddress = address;
+    let preparedSpinId: Id<"rouletteSpins"> | null = null;
+    let txSubmitted = false;
 
     setIsClaiming(true);
     try {
       toast.info("🔐 Preparing blockchain claim...");
 
       // 1. Get actual signing address — ALWAYS try eth_accounts first (works in miniapp AND browser)
-      let signingAddress = address;
       try {
         const provider = await sdk.wallet.getEthereumProvider();
         if (provider) {
@@ -436,13 +461,20 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
         console.warn('[Roulette] Could not get provider address, using useAccount:', address);
       }
 
-      // 2. Prove wallet ownership before requesting signature (prevents DoS via pending-lock)
-      const timestamp = Math.floor(Date.now() / 60000);
-      const ownershipMessage = `VMW Roulette - ${signingAddress.toLowerCase()} - ${timestamp}`;
-      const ownershipProof = await signMessageAsync({ message: ownershipMessage });
+      // 2. Prove wallet ownership — cached daily so user only signs once per day
+      const dayTimestamp = Math.floor(Date.now() / 86400000);
+      const proofCacheKey = `vmw_roulette_proof_${signingAddress.toLowerCase()}_${dayTimestamp}`;
+      let ownershipProof = localStorage.getItem(proofCacheKey);
+      if (!ownershipProof) {
+        toast.info("🔐 Prove wallet ownership (once per day)...");
+        const ownershipMessage = `VMW Roulette Daily - ${signingAddress.toLowerCase()} - ${dayTimestamp}`;
+        ownershipProof = await signMessageAsync({ message: ownershipMessage });
+        localStorage.setItem(proofCacheKey, ownershipProof);
+      }
 
       // 3. Get signature from backend using actual wallet address
-      const claimData = await prepareClaimAction({ address: signingAddress, ownershipProof, timestamp });
+      const claimData = await prepareClaimAction({ address: signingAddress, ownershipProof, timestamp: dayTimestamp });
+      preparedSpinId = claimData.spinId;
 
       toast.info("🔐 Sign the transaction...");
 
@@ -459,28 +491,44 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
             claimData.nonce as `0x${string}`,
             claimData.signature as `0x${string}`
           );
+      txSubmitted = true;
 
       toast.loading("⏳ Confirming on blockchain...", { id: "claim-wait" });
 
-      // 3. Wait for confirmation
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await waitForBaseReceipt(txHash as string, "Claim transaction reverted");
 
       // 4. Record claim in backend
       await recordClaimMutation({
-        address,
-        amount: claimData.amount,
+        address: signingAddress,
+        spinId: claimData.spinId,
         txHash: txHash as string,
       });
 
       toast.dismiss("claim-wait");
       toast.success(`✅ ${claimData.amount.toLocaleString()} VBMS claimed!`);
 
-      // Close modal
-      setTimeout(() => {
-        onClose?.();
-      }, 1500);
+      if (onClose) {
+        setTimeout(() => {
+          setIsClaiming(false);
+          onClose();
+        }, 1500);
+      } else {
+        setIsClaiming(false);
+        setShowResult(false);
+        setResult(null);
+      }
 
     } catch (error: any) {
+      if (preparedSpinId && !txSubmitted) {
+        try {
+          await releaseClaimLockMutation({
+            address: signingAddress,
+            spinId: preparedSpinId,
+          });
+        } catch (releaseError) {
+          console.error('Failed to release roulette claim lock:', releaseError);
+        }
+      }
       console.error('Claim error:', error);
       toast.dismiss("claim-wait");
       toast.error(error.message || "Claim failed");
@@ -774,8 +822,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
 
       toast.loading("⏳ Confirming transfer...", { id: "paid-spin-tx" });
 
-      // Wait for confirmation
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      await waitForBaseReceipt(txHash as string, "Paid spin transaction reverted");
 
       // 2. Record paid spin in backend
       const response = await recordPaidSpinMutation({
