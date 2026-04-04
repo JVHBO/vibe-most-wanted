@@ -1328,7 +1328,7 @@ const convex = useConvex();
               <select
                 value={defenseDeckCollection}
                 onChange={(e) => setDefenseDeckCollection(e.target.value as CollectionId | 'all')}
-                className="px-3 py-2 rounded-lg text-sm font-modern font-medium bg-vintage-charcoal border border-vintage-gold/30 text-vintage-gold hover:bg-vintage-gold/10 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
+                className="px-3 py-2 rounded-lg text-sm font-modern font-medium bg-vintage-gold border border-vintage-gold text-black font-bold hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-vintage-gold [&>option]:bg-vintage-charcoal [&>option]:text-vintage-gold"
               >
                 <option value="all">All Collections</option>
                 <option value="vibe">VBMS</option>

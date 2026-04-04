@@ -15,12 +15,14 @@ interface CardMediaProps {
  *
  * Renders video or image based on src URL
  * Uses native browser lazy loading - no complex JS
- * 
+ *
  * FIX: Removed useEffect that caused flash/flicker on re-renders
  */
 export function CardMedia({ src, alt, className, loading = "lazy", onClick }: CardMediaProps) {
   const [useImage, setUseImage] = useState(false);
   const [error, setError] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+  const retriedRef = useRef(false);
   const prevSrcRef = useRef(src);
 
   // Reset state when src ACTUALLY changes - using ref comparison avoids flash
@@ -29,6 +31,7 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
     prevSrcRef.current = src;
     if (useImage) setUseImage(false);
     if (error) setError(false);
+    retriedRef.current = false;
   }
 
   if (!src) {
@@ -42,15 +45,16 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
   const srcLower = src.toLowerCase();
   const hasVideoExtension = srcLower.includes('.mp4') || srcLower.includes('.webm') || srcLower.includes('.mov');
   const isIpfs = srcLower.includes('ipfs');
-  
-  // VibeFID specific: filebase.io URLs should NEVER fallback to image
+
+  // VibeFID specific: filebase.io URLs are always video
   const isVibeFID = srcLower.includes('filebase.io');
-  
-  const shouldTryVideo = !isDataUrl && (hasVideoExtension || (isIpfs && !useImage));
+
+  const shouldTryVideo = !isDataUrl && (hasVideoExtension || isVibeFID || (isIpfs && !useImage));
 
   if (shouldTryVideo && !error) {
     return (
       <video
+        key={retryKey}
         src={src}
         className={className}
         loop
@@ -60,13 +64,14 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
         preload="auto"
         onClick={onClick}
         style={{ objectFit: 'cover' }}
-        onError={(e) => {
-          console.error('Video failed to load:', src);
-          if (isVibeFID) {
-            // VibeFID: show error, NEVER fallback to image
+        onError={() => {
+          // Retry once after a short delay before giving up
+          if (isVibeFID && !retriedRef.current) {
+            retriedRef.current = true;
+            setTimeout(() => setRetryKey(k => k + 1), 1500);
+          } else if (isVibeFID) {
             setError(true);
           } else {
-            // Other collections: fallback to image
             setUseImage(true);
           }
         }}
@@ -74,13 +79,16 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
     );
   }
 
-  // VibeFID error state - show link instead of image fallback
+  // VibeFID error state - show dark placeholder (video unavailable)
   if (error && isVibeFID) {
     return (
-      <div className={className} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff', fontSize: '10px', padding: '10px', textAlign: 'center', flexDirection: 'column' }}>
-        <a href={src} target="_blank" rel="noopener noreferrer" style={{ color: '#ffd700' }}>
-          Open
-        </a>
+      <div
+        className={className}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a14', color: '#ffd700', fontSize: '10px', padding: '8px', textAlign: 'center', flexDirection: 'column', gap: '4px', cursor: 'pointer' }}
+        onClick={() => { if (src) window.open(src, '_blank'); }}
+      >
+        <span style={{ fontSize: '18px' }}>▶</span>
+        <span style={{ color: '#aaa', fontSize: '9px' }}>VibeFID</span>
       </div>
     );
   }

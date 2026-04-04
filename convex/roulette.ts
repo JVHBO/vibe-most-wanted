@@ -46,7 +46,7 @@ function determinePrize(): { amount: number; index: number } {
   }
 
   // Fallback (should never reach here since probabilities sum to 100)
-  return { amount: PRIZES[PRIZES.length - 1].amount, index: PRIZES.length - 1 };
+  return { amount: PRIZES[0].amount, index: 0 };
 }
 // Aura XP → bonus roulette spins (matches lib/aura-levels.ts thresholds)
 function getAuraSpinBonus(aura: number): number {

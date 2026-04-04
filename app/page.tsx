@@ -590,6 +590,17 @@ export default function TCGPage() {
   // Clean conflicting cards from defense deck on load
   const cleanConflictingDefense = useMutation(api.profiles.cleanConflictingDefenseCards);
 
+  // Demo account reset - always starts fresh on miniapp load
+  const resetDemoProfile = useMutation(api.profiles.resetDemoProfile);
+  useEffect(() => {
+    if (isActualMiniapp && address) {
+      resetDemoProfile({ address }).then(() => {
+        refreshProfile();
+      }).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address, isActualMiniapp]);
+
   const pvpBattleStarted = useRef<boolean>(false); // PvP battle flag to prevent double-start (useRef for immediate sync access)
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates
 

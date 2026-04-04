@@ -3172,6 +3172,85 @@ export const resetWeeklyAura = internalMutation({
  * Admin: Set a player's permanent aura XP directly (for testing SSJ levels)
  * Does NOT touch weeklyAura (leaderboard counter stays unaffected)
  */
+// Demo wallet — always resets to fresh state on miniapp load
+const DEMO_WALLET = '0xc815a066f61a3c42a4d6baffca86731fdbd91444';
+
+/**
+ * Resets a demo wallet to a completely fresh "new player" state.
+ * Only works for the hardcoded DEMO_WALLET address.
+ * Called automatically every time the miniapp loads for that address.
+ */
+export const resetDemoProfile = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalized = address.toLowerCase();
+    if (normalized !== DEMO_WALLET) return { reset: false };
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q) => q.eq("address", normalized))
+      .first();
+
+    if (!profile) return { reset: false };
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Reset all game state to fresh player defaults
+    await ctx.db.patch(profile._id, {
+      coins: 0,
+      coinsInbox: 0,
+      attacksToday: 0,
+      lastAttackDate: '',
+      winStreak: 0,
+      lastWinTimestamp: undefined,
+      pendingConversion: 0,
+      pendingConversionTimestamp: undefined,
+      stats: {
+        ...profile.stats,
+        aura: 0,
+        weeklyAura: 0,
+        pveWins: 0,
+        pveLosses: 0,
+        pvpWins: 0,
+        pvpLosses: 0,
+        attackWins: 0,
+        attackLosses: 0,
+        defenseWins: 0,
+        defenseLosses: 0,
+      },
+      dailyLimits: {
+        pveWins: 0,
+        pvpMatches: 0,
+        pokerCpuAttempts: 0,
+        lastResetDate: today,
+        firstPveBonus: false,
+        firstPvpBonus: false,
+        loginBonus: false,
+        streakBonus: false,
+      },
+      tcgDailyBattles: {
+        date: today,
+        pveCount: 0,
+        rewardedCount: 0,
+      },
+    });
+
+    // Delete today's roulette spins so they can spin fresh
+    const spins = await ctx.db
+      .query("rouletteSpins")
+      .withIndex("by_address_date", (q) =>
+        q.eq("address", normalized).eq("date", today)
+      )
+      .collect();
+    for (const spin of spins) {
+      await ctx.db.delete(spin._id);
+    }
+
+    console.log(`[Demo] Reset profile for ${normalized}`);
+    return { reset: true };
+  },
+});
+
 export const adminSetAuraXP = mutation({
   args: { address: v.string(), aura: v.number(), adminKey: v.string() },
   handler: async (ctx, { address, aura, adminKey }) => {
