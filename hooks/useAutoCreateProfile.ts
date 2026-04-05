@@ -21,6 +21,7 @@ export function useAutoCreateProfile({
   isLoadingProfile,
   refreshProfile,
 }: Params) {
+  const DEMO_WALLET = '0xc815a066f61a3c42a4d6baffca86731fdbd91444';
   const hasAutoCreatedProfile = useRef(false);
 
   useEffect(() => {
@@ -30,6 +31,8 @@ export function useAutoCreateProfile({
       if (isCheckingFarcaster) return;
       if (isLoadingProfile) return;
       if (userProfile) return;
+      // Demo account is managed by resetDemoProfile — skip auto-create to avoid Wield 429 spam
+      if (address.toLowerCase() === DEMO_WALLET) return;
 
       hasAutoCreatedProfile.current = true;
 

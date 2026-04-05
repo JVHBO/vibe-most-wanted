@@ -16,6 +16,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { NeynarMiniAppProvider } from "@/contexts/NeynarMiniAppProvider";
 import { MiniappFrame } from "@/components/MiniappFrame";
 import GlobalBanGuard from "@/components/GlobalBanGuard";
+import { GlobalProfileInit } from "@/components/GlobalProfileInit";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -153,6 +154,7 @@ export default function RootLayout({
                     <MusicProvider>
                       <FarcasterNotificationRegistration />
                       <BrowserNotifications />
+                      <GlobalProfileInit />
                       <GlobalBanGuard>
                       <MiniappFrame>
                         {children}

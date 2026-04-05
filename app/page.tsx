@@ -590,17 +590,21 @@ export default function TCGPage() {
   // Clean conflicting cards from defense deck on load
   const cleanConflictingDefense = useMutation(api.profiles.cleanConflictingDefenseCards);
 
-  // Demo account reset - always starts fresh on miniapp load
+  // Demo account reset - always starts fresh on miniapp load (runs ONCE per mount)
   const resetDemoProfile = useMutation(api.profiles.resetDemoProfile);
+  const hasResetDemoRef = useRef(false);
   useEffect(() => {
-    // Wait for profile load to complete before resetting (avoids race with useAutoCreateProfile)
-    if (isActualMiniapp && address && !isLoadingProfile) {
-      resetDemoProfile({ address }).then(() => {
-        refreshProfile();
-      }).catch(() => {});
-    }
+    if (!isActualMiniapp || !address || hasResetDemoRef.current) return;
+    hasResetDemoRef.current = true;
+    resetDemoProfile({ address }).then((result: any) => {
+      if (result?.reset) {
+        refreshProfile().then(() => {
+          setShowCreateProfile(true);
+        });
+      }
+    }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [address, isActualMiniapp, isLoadingProfile]);
+  }, [address, isActualMiniapp]);
 
   const pvpBattleStarted = useRef<boolean>(false); // PvP battle flag to prevent double-start (useRef for immediate sync access)
   const pvpProcessedBattles = useRef<Set<string>>(new Set()); // Track which battles have been processed to prevent duplicates

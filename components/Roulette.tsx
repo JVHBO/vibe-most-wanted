@@ -1032,6 +1032,31 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
   return (
     <div className="relative flex flex-col flex-1" style={{ minHeight: '100%', paddingBottom: 'env(safe-area-inset-bottom)' }}>
 
+      {/* Header — BACK + title + ? */}
+      <div className="border-b-4 border-black px-4 py-2 bg-[#1a1a1a] flex-shrink-0">
+        <div className="max-w-lg mx-auto flex items-center justify-between">
+          {onClose ? (
+            <button
+              onClick={onClose}
+              className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
+              style={{ boxShadow: '4px 4px 0px #000' }}
+            >
+              ← BACK
+            </button>
+          ) : <div className="w-16" />}
+
+          <h1 className="text-lg font-display font-bold text-vintage-gold tracking-wider uppercase">
+            {t.title}
+          </h1>
+
+          <button
+            onClick={() => setShowOdds(true)}
+            className="w-7 h-7 flex items-center justify-center font-bold text-sm border-2 border-black"
+            style={{ background: '#1a1a1a', color: '#FFD400', borderRadius: '50%' }}
+          >?</button>
+        </div>
+      </div>
+
       {/* Chain selector — Normal / Ultra */}
       {arbSupported && (
         <div className="flex justify-center pt-3 pb-1">
@@ -1065,16 +1090,6 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
           </div>
         </div>
       )}
-      {onClose && (
-        <button onClick={onClose} className="absolute top-3 right-4 z-10 text-xl font-bold" style={{ color: 'rgba(255,215,0,0.5)' }}>×</button>
-      )}
-
-      {/* Odds info button */}
-      <button
-        onClick={() => setShowOdds(true)}
-        className="absolute top-3 left-4 z-10 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-        style={{ background: 'rgba(255,215,0,0.15)', color: 'rgba(255,215,0,0.6)', border: '1px solid rgba(255,215,0,0.3)' }}
-      >?</button>
 
       {/* Odds modal */}
       {showOdds && (
@@ -1084,33 +1099,35 @@ export function Roulette({ onClose, pfpUrl, onChainChange }: RouletteProps) {
           onClick={() => setShowOdds(false)}
         >
           <div
-            className="w-full max-w-xs rounded-2xl p-5"
-            style={{ background: '#1a1a1a', border: '2px solid rgba(255,215,0,0.4)' }}
+            className="w-full max-w-xs border-4 border-black"
+            style={{ background: '#0C0C0C', boxShadow: '6px 6px 0px #FFD700' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-base" style={{ color: '#FFD700' }}>Prize Odds</h3>
-              <button onClick={() => setShowOdds(false)} className="text-xl font-bold" style={{ color: 'rgba(255,215,0,0.5)' }}>×</button>
+            {/* Modal header */}
+            <div className="bg-[#FFD700] border-b-4 border-black px-4 py-2 flex items-center justify-between">
+              <span className="font-black text-sm uppercase tracking-widest text-black">🎰 Prize Odds</span>
+              <button onClick={() => setShowOdds(false)} className="text-black font-black text-lg leading-none">×</button>
             </div>
-            <div className="flex flex-col gap-2">
+            {/* Rows */}
+            <div className="flex flex-col divide-y-2 divide-black">
               {[
-                { label: '100 VBMS',  prob: 88,   color: '#9CA3AF' },
-                { label: '500 VBMS',  prob: 8,    color: '#60A5FA' },
-                { label: '1K VBMS',   prob: 2.5,  color: '#34D399' },
-                { label: '10K VBMS',  prob: 1,    color: '#FBBF24' },
-                { label: '50K VBMS',  prob: 0.5,  color: '#F87171' },
-              ].map(({ label, prob, color }) => (
-                <div key={label} className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
-                  <span className="flex-1 text-sm" style={{ color: 'rgba(255,255,255,0.8)' }}>{label}</span>
+                { label: '100 VBMS',  prob: 88,   color: '#9CA3AF', bar: 88 },
+                { label: '500 VBMS',  prob: 8,    color: '#60A5FA', bar: 8 },
+                { label: '1K VBMS',   prob: 2.5,  color: '#34D399', bar: 2.5 },
+                { label: '10K VBMS',  prob: 1,    color: '#FBBF24', bar: 1 },
+                { label: '50K VBMS',  prob: 0.5,  color: '#F87171', bar: 0.5 },
+              ].map(({ label, prob, color, bar }) => (
+                <div key={label} className="flex items-center gap-3 px-4 py-2.5">
+                  <div className="w-3 h-3 rounded-full flex-shrink-0 border-2 border-black" style={{ background: color }} />
+                  <span className="flex-1 font-bold text-sm text-white">{label}</span>
                   <div className="flex items-center gap-2">
-                    <div className="h-1.5 rounded-full" style={{ width: `${Math.max(prob, 0.5) * 0.9}rem`, background: color, opacity: 0.7 }} />
-                    <span className="text-sm font-bold w-10 text-right" style={{ color }}>{prob}%</span>
+                    <div className="h-2 rounded-sm border border-black/40" style={{ width: `${Math.max(bar, 0.5) * 0.7}rem`, background: color }} />
+                    <span className="text-sm font-black w-12 text-right" style={{ color }}>{prob}%</span>
                   </div>
                 </div>
               ))}
             </div>
-            <p className="text-xs mt-4 text-center" style={{ color: 'rgba(255,255,255,0.35)' }}>Results determined server-side</p>
+            <p className="text-[10px] py-2 text-center border-t-2 border-black" style={{ color: 'rgba(255,255,255,0.3)' }}>Results determined server-side</p>
           </div>
         </div>
       )}

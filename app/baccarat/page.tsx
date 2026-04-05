@@ -810,7 +810,7 @@ export default function BaccaratPage() {
             className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
             style={{ boxShadow: '4px 4px 0px #000' }}
           >
-            ← {t('baccaratBack')}
+            {t('baccaratBack')}
           </Link>
           <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[50%]">
             <AutoFitText>{t('baccaratTitle')}</AutoFitText>
