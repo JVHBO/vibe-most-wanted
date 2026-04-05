@@ -16,6 +16,7 @@ import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import { CardMedia } from "@/components/CardMedia";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { PriceTicker } from "@/components/PriceTicker";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Link from "next/link";
 
