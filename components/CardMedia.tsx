@@ -49,7 +49,8 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
   // VibeFID specific: filebase.io URLs are always video
   const isVibeFID = srcLower.includes('filebase.io');
 
-  const shouldTryVideo = !isDataUrl && (hasVideoExtension || isVibeFID || (isIpfs && !useImage));
+  // useImage=true always forces image path, even for filebase.io (PNG fallback)
+  const shouldTryVideo = !isDataUrl && !useImage && (hasVideoExtension || isVibeFID || isIpfs);
 
   if (shouldTryVideo && !error) {
     return (
@@ -65,13 +66,12 @@ export function CardMedia({ src, alt, className, loading = "lazy", onClick }: Ca
         onClick={onClick}
         style={{ objectFit: 'cover' }}
         onError={() => {
-          // Retry once after a short delay before giving up
-          if (isVibeFID && !retriedRef.current) {
+          if (!retriedRef.current) {
+            // First failure: retry once after delay (transient network error)
             retriedRef.current = true;
             setTimeout(() => setRetryKey(k => k + 1), 1500);
-          } else if (isVibeFID) {
-            setError(true);
           } else {
+            // Second failure: fall back to image (handles PNG-on-filebase.io case)
             setUseImage(true);
           }
         }}
