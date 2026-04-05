@@ -25,17 +25,11 @@ crons.interval(
 // DAILY NOTIFICATIONS
 // ============================================================
 
-// Daily login reminder — 12:00 UTC (9am Brazil)
-crons.cron(
-  "daily-login-reminder",
-  "0 12 * * *",
-  internal.notifications.sendDailyLoginReminder,
-);
-
-// Rotating tip (VibeMail, Roulette, Arena, etc.) — 18:00 UTC (3pm Brazil)
+// Single daily notification — 15:00 UTC (noon Brazil)
+// Rotates through tips (Login Bonus, Roulette, Arena, VibeMail, etc.)
 crons.cron(
   "daily-gaming-tip",
-  "0 18 * * *",
+  "0 15 * * *",
   internal.notifications.sendPeriodicTip,
 );
 

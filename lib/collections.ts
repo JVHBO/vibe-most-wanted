@@ -131,7 +131,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     buttonText: 'BUY VBMS PACKS',
   },
 
-  // Coleção GM VBRS
+  // Coleção GM VBRS — REMOVIDA
   gmvbrs: {
     id: 'gmvbrs',
     name: 'gmvbrs',
@@ -139,8 +139,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Coleção GM VBRS NFT',
     contractAddress: '0xefe512e73ca7356c20a21aa9433bad5fc9342d46',
     chain: 'base-mainnet',
-    enabled: true,
-    marketplaceUrl: 'https://vibechain.com/market/gm-vbrs?ref=XCLR1DJ6LQTT',
+    enabled: false,
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
@@ -159,7 +158,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: VIBEFID_POWER_CONFIG,
   },
 
-  // Collection Viberuto
+  // Collection Viberuto — REMOVIDA
   viberuto: {
     id: 'viberuto',
     name: 'viberuto',
@@ -167,13 +166,11 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection Viberuto NFT',
     contractAddress: '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f',
     chain: 'base-mainnet',
-    enabled: true,
-    marketplaceUrl: 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
-    buttonText: 'BUY VBRTO PACKS',
+    enabled: false,
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-    // Collection Meowverse
+  // Collection Meowverse — REMOVIDA
   meowverse: {
     id: 'meowverse',
     name: 'meowverse',
@@ -181,9 +178,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection Meowverse NFT',
     contractAddress: '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150',
     chain: 'base-mainnet',
-    enabled: true,
-    marketplaceUrl: 'https://vibechain.com/market/meowverse?ref=XCLR1DJ6LQTT',
-    buttonText: 'BUY MEOVV PACKS',
+    enabled: false,
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
@@ -272,7 +267,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-    // Collection $CU-MI-OH!
+  // Collection $CU-MI-OH! — REMOVIDA
   cumioh: {
     id: 'cumioh',
     name: 'cumioh',
@@ -280,9 +275,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection $CU-MI-OH! NFT',
     contractAddress: '0xfeabae8bdb41b2ae507972180df02e70148b38e1',
     chain: 'base-mainnet',
-    enabled: true,
-    marketplaceUrl: 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
-    buttonText: 'BUY CUMIO PACKS',
+    enabled: false,
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
@@ -300,7 +293,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-    // Collection Vibe Rot Bangers
+  // Collection Vibe Rot Bangers — REMOVIDA
   viberotbangers: {
     id: 'viberotbangers',
     name: 'viberotbangers',
@@ -308,9 +301,7 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     description: 'Collection Vibe Rot Bangers NFT',
     contractAddress: '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a',
     chain: 'base-mainnet',
-    enabled: true,
-    marketplaceUrl: 'https://vibechain.com/market/vibe-rot-bangers?ref=XCLR1DJ6LQTT',
-    buttonText: 'BUY BANGER PACKS',
+    enabled: false,
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 

@@ -1602,10 +1602,10 @@ const CPU_BATTLE_NAMES = [
  * Generate a CPU deck from a collection (10 cards for poker battle)
  */
 function generateCpuPokerDeck(collection: string) {
-  const cards = COLLECTION_CARDS[collection] || COLLECTION_CARDS["gmvbrs"];
+  const cards = COLLECTION_CARDS[collection] || COLLECTION_CARDS["vibe"];
   if (!cards || cards.length < 10) {
-    // Fallback to gmvbrs if collection doesn't have enough cards
-    const fallbackCards = COLLECTION_CARDS["gmvbrs"] || [];
+    // Fallback to vibe if collection doesn't have enough cards
+    const fallbackCards = COLLECTION_CARDS["vibe"] || [];
     const shuffled = cryptoShuffle(fallbackCards);
     return shuffled.slice(0, 10).map((card) => ({
       tokenId: card.tokenId,
@@ -1614,7 +1614,7 @@ function generateCpuPokerDeck(collection: string) {
       imageUrl: card.imageUrl,
       power: card.power,
       rarity: card.rarity,
-      collection: "gmvbrs",
+      collection: "vibe",
     }));
   }
 
@@ -1776,14 +1776,10 @@ export const getCpuVsCpuRooms = query({
 export const getAvailableCollections = query({
   args: {},
   handler: async () => {
-    // Return all available collections (only active ones)
+    // Return active collections (VBMS, VibeFID only)
     return [
-      "gmvbrs",
       "vibe",
-      "viberuto",
-      "meowverse",
       "vibefid",
-      "viberotbangers",
     ];
   },
 });
@@ -2306,7 +2302,7 @@ export const cpuRestartGame = internalMutation({
     }
 
     // Generate new decks
-    const collection = room.cpuCollection || "gmvbrs";
+    const collection = room.cpuCollection || "vibe";
     const cpu1Deck = generateCpuPokerDeck(collection);
     const cpu2Deck = generateCpuPokerDeck(collection);
 
