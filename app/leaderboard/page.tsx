@@ -1332,18 +1332,7 @@ const convex = useConvex();
               >
                 <option value="all">All Collections</option>
                 <option value="vibe">VBMS</option>
-                <option value="viberotbangers">BANGER</option>
-                <option value="cumioh">CUMIO</option>
-                <option value="historyofcomputer">HSTR</option>
-                <option value="vibefx">VBFX</option>
-                <option value="baseballcabal">BBCL</option>
-                <option value="tarot">TRT</option>
-                <option value="teampothead">TMPT</option>
-                <option value="poorlydrawnpepes">PDP</option>
-                <option value="meowverse">MEOVV</option>
-                <option value="viberuto">VBRTO</option>
                 <option value="vibefid">VIBEFID</option>
-                <option value="gmvbrs">VBRS</option>
                 <option value="nothing">NOTHING</option>
               </select>
               <button

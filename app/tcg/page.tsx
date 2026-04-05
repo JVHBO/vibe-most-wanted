@@ -44,7 +44,7 @@ import { generateCpuDeck, cpuPlayCards } from "@/lib/tcg/cpu-ai";
 import { detectCombos, getComboBonus, getComboSteal, COMBO_TRANSLATION_KEYS } from "@/lib/tcg/combos";
 
 // Collections that can be played in TCG (with 50% power like nothing)
-const OTHER_TCG_COLLECTIONS = ["gmvbrs", "cumioh", "viberotbangers", "meowverse", "teampothead", "tarot", "baseballcabal", "poorlydrawnpepes", "viberuto", "vibefx", "historyofcomputer"];
+const OTHER_TCG_COLLECTIONS: string[] = []; // removed — only VBMS, VibeFID, Nothing active
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONSTANTS & GAME PHASES

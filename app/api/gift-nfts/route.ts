@@ -26,11 +26,7 @@ function trackStat(key: string) {
 
 // Collections that can be gifted via VibeMail (only active collections)
 const GIFTABLE_COLLECTIONS: CollectionId[] = [
-  'vibe',           // $VBMS
-  'gmvbrs',         // GM VBRS
-  'viberuto',       // Viberuto
-  'meowverse',      // Meowverse
-  'viberotbangers', // Vibe Rot Bangers
+  'vibe', // $VBMS
 ];
 
 // 🚀 SERVER-SIDE CACHE (5 min TTL)

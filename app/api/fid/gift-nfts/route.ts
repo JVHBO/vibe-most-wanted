@@ -8,20 +8,9 @@
 
 import { NextResponse } from "next/server";
 
-// Giftable collections with their contract addresses
+// Giftable collections with their contract addresses (only active collections)
 const GIFTABLE_COLLECTIONS = [
-  { id: 'vmw', name: 'Vibe Most Wanted', contract: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728' },
-  { id: 'gmvbrs', name: 'GM VBRS', contract: '0x3c781E5Ad1a2e994DC150849cCC0e91207845047' },
-  { id: 'viberuto', name: 'Viberuto', contract: '0xE2f420b10654d1b9e4a49AFc0fD8e81f0B72b36b' },
-  { id: 'meowverse', name: 'Meowverse', contract: '0x18eC55B9b8302DC00BF4cc5b40c5775c22a47c73' },
-  { id: 'poorlydrawnpepes', name: 'Poorly Drawn Pepes', contract: '0xbcc8c8b9b67dbca52db53fe944d61e10a40b4ba4' },
-  { id: 'teampothead', name: 'Team Pothead', contract: '0x91Fc5B0F10245AA7F9F9c43c88b03f5A61Addb65' },
-  { id: 'tarot', name: 'Tarot', contract: '0xD6fe6462AFF59cB1f2d002614bb23ebeb6a55917' },
-  { id: 'baseballcabal', name: 'Baseball Cabal', contract: '0xB9FA56b8803fC95aBB7C2e6E30E4a0C3F9ed2EBc' },
-  { id: 'vibefx', name: 'Vibe FX', contract: '0x28b5c04BC6d395a9f0F52D0A92BEDC08ca6Ae577' },
-  { id: 'historyofcomputer', name: 'History of Computer', contract: '0xC6beD1C230FC7537E09C4f1E22f07e2ED3B37C10' },
-  { id: 'cumioh', name: '$CU-MI-OH!', contract: '0x628bC5E5b7e55d2C66Ae8c66ef99c323c44E88f9' },
-  { id: 'viberotbangers', name: 'Vibe Rot Bangers', contract: '0x60F2c5a84155f08DB58c28d85fA3F36eEEd8B20F' },
+  { id: 'vibe', name: 'Vibe Most Wanted', contract: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728' },
 ];
 
 // OpenSea API key

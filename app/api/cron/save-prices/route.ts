@@ -54,10 +54,6 @@ const UNISWAP_V3_POOL_ABI = [
 // Collection contracts (only active collections)
 const COLLECTION_CONTRACTS: Record<string, `0x${string}`> = {
   vibe: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728',
-  gmvbrs: '0xefe512e73ca7356c20a21aa9433bad5fc9342d46',
-  viberuto: '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f',
-  meowverse: '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150',
-  viberotbangers: '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a',
 };
 
 // Uniswap V3 pools for closed mint collections (all disabled)

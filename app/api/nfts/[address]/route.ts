@@ -30,22 +30,11 @@ const CHAIN = process.env.NEXT_PUBLIC_ALCHEMY_CHAIN || "base-mainnet";
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 const VIBEFID_ALCHEMY_REFRESH_MS = 24 * 60 * 60 * 1000; // 24 hours - refresh Alchemy metadata once per day
 
-// Collections config
+// Collections config — only active collections (VBMS, VibeFID)
 const VIBEFID_ARB_CONTRACT = "0xC39DDd9E2798D5612C700B899d0c80707c542dB0";
 const COLLECTIONS: Record<string, { contract: string; name: string; arbContract?: string }> = {
   vibe: { contract: "0xF14C1dC8Ce5fE65413379F76c43fA1460C31E728", name: "VBMS" },
   vibefid: { contract: "0x60274A138d026E3cB337B40567100FdEC3127565", name: "VibeFID", arbContract: VIBEFID_ARB_CONTRACT },
-  gmvbrs: { contract: "0xefe512e73ca7356c20a21aa9433bad5fc9342d46", name: "GM VBRS" },
-  viberuto: { contract: "0x70b4005a83a0b39325d27cf31bd4a7a30b15069f", name: "Viberuto" },
-  meowverse: { contract: "0xF0BF71bcD1F1aeb1bA6BE0AfBc38A1ABe9aa9150", name: "Meowverse" },
-  viberotbangers: { contract: "0x120c612d79a3187a3b8b4f4bb924cebe41eb407a", name: "Vibe Rot Bangers" },
-  poorlydrawnpepes: { contract: "0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8", name: "Poorly Drawn Pepes" },
-  teampothead: { contract: "0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea", name: "Team Pothead" },
-  tarot: { contract: "0x34d639c63384a00a2d25a58f73bea73856aa0550", name: "Tarot" },
-  baseballcabal: { contract: "0x3ff41af61d092657189b1d4f7d74d994514724bb", name: "Baseball Cabal" },
-  vibefx: { contract: "0xc7f2d8c035b2505f30a5417c0374ac0299d88553", name: "Vibe FX" },
-  historyofcomputer: { contract: "0x319b12e8eba0be2eae1112b357ba75c2c178b567", name: "History of Computer" },
-  cumioh: { contract: "0xfeabae8bdb41b2ae507972180df02e70148b38e1", name: "$CU-MI-OH!" },
 };
 
 // Fire-and-forget stat tracking

@@ -28,12 +28,8 @@ interface CpuArenaModalProps {
 
 // Collection display names and emojis (only active collections)
 const COLLECTION_INFO: Record<string, { name: string; emoji: string; color: string }> = {
-  gmvbrs: { name: "GM VBRS", emoji: "🌅", color: "from-orange-600 to-yellow-600" },
   vibe: { name: "$VBMS", emoji: "🎭", color: "from-purple-600 to-pink-600" },
-  viberuto: { name: "Viberuto", emoji: "🍥", color: "from-orange-500 to-red-500" },
-  meowverse: { name: "Meowverse", emoji: "🐱", color: "from-blue-500 to-purple-500" },
   vibefid: { name: "VibeFID", emoji: "🆔", color: "from-cyan-500 to-blue-600" },
-  viberotbangers: { name: "Vibe Rot Bangers", emoji: "🧟", color: "from-red-600 to-purple-700" },
 };
 
 type ViewMode = "password" | "rooms" | "room-choice" | "spectator-entry" | "battle";

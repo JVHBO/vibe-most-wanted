@@ -2,7 +2,7 @@
 
 import { Modal } from '@/app/(game)/components/ui/Modal';
 
-export const CHANGELOG_VERSION = '0.3.8';
+export const CHANGELOG_VERSION = '0.3.9';
 export const CHANGELOG_STORAGE_KEY = 'vmw_changelog_seen';
 
 interface ChangelogEntry {
@@ -14,9 +14,20 @@ interface ChangelogEntry {
 
 const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.3.9',
+    date: 'Apr 4, 2026',
+    isNew: true,
+    features: [
+      { emoji: '🧹', text: 'App streamlined — only VBMS, VibeFID and Nothing collections active' },
+      { emoji: '🛡️', text: 'Defense deck, Raid Boss, and Mecha Arena updated to active collections only' },
+      { emoji: '🔔', text: 'Daily notifications reduced to one per day (no more duplicates)' },
+      { emoji: '🎰', text: 'Roulette redesigned — neobrutalist prize odds modal + cleaner header' },
+    ],
+  },
+  {
     version: '0.3.8',
     date: 'Mar 25, 2026',
-    isNew: true,
+    isNew: false,
     features: [
       { emoji: '🎰', text: 'SPIN icon updated to roulette wheel' },
       { emoji: '🟢', text: 'REDEEM button moved into content (bigger, green, easier to tap)' },
