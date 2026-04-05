@@ -522,6 +522,26 @@ const convex = useConvex();
             </div>
           ) : (
             <>
+              {/* ===== WEEKLY RESET INFO ===== */}
+              {(() => {
+                const now = new Date();
+                const day = now.getUTCDay(); // 0=Sun
+                const lastSunday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - day));
+                const nextSunday = new Date(lastSunday.getTime() + 7 * 24 * 60 * 60 * 1000);
+                const ms = nextSunday.getTime() - now.getTime();
+                const d = Math.floor(ms / 86400000);
+                const h = Math.floor((ms % 86400000) / 3600000);
+                const m = Math.floor((ms % 3600000) / 60000);
+                const fmt = (dt: Date) => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+                return (
+                  <div className="flex items-center justify-center gap-3 py-2 mb-2 text-[11px] text-vintage-burnt-gold/80">
+                    <span>🔄 Last reset: <strong className="text-vintage-gold">{fmt(lastSunday)}</strong></span>
+                    <span className="text-vintage-gold/20">|</span>
+                    <span>Next reset: <strong className="text-purple-400">{d}d {h}h {m}m</strong></span>
+                  </div>
+                );
+              })()}
+
               {/* ===== PODIUM SECTION (Top 3) ===== */}
               <div className="mb-8 pt-4">
                 <div className="flex items-end justify-center gap-4 md:gap-8">
