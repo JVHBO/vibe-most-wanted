@@ -301,21 +301,37 @@ export function CpuArenaModal({
                     <button
                       key={collection}
                       onClick={() => handleSelectRoom(collection)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border transition-all ${
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 transition-all active:scale-95 ${
                         isBuffed
-                          ? "bg-vintage-gold/10 border-vintage-gold/50 hover:bg-vintage-gold/20"
-                          : "bg-vintage-black/30 border-vintage-gold/20 hover:border-vintage-gold/40 hover:bg-vintage-black/50"
+                          ? "bg-gradient-to-r from-vintage-gold/20 to-vintage-gold/5 border-vintage-gold hover:from-vintage-gold/30 shadow-[0_0_10px_rgba(255,215,0,0.15)]"
+                          : "bg-vintage-black/40 border-vintage-gold/20 hover:border-vintage-gold/50 hover:bg-vintage-black/60"
                       }`}
                     >
-                      <div className="text-left">
-                        <p className={`font-bold text-sm ${isBuffed ? 'text-vintage-gold' : 'text-vintage-ice'}`}>
-                          {info.name}
-                        </p>
-                        {isBuffed && <span className="text-xs text-vintage-burnt-gold">+{BUFF_CONFIG.oddsBonus}x bonus</span>}
+                      {/* Emoji badge */}
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-shrink-0 bg-gradient-to-br ${info.color}`}>
+                        {info.emoji}
                       </div>
-                      <div className="flex items-center gap-2 text-vintage-ice/50 text-xs">
-                        <span>{spectatorCount} watching</span>
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      {/* Info */}
+                      <div className="flex-1 text-left">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className={`font-black text-sm ${isBuffed ? 'text-vintage-gold' : 'text-white'}`}>
+                            {info.name}
+                          </p>
+                          {isBuffed && (
+                            <span className="text-[10px] bg-vintage-gold text-vintage-black font-black px-1.5 py-0.5 rounded-full uppercase leading-none">
+                              🔥 +{BUFF_CONFIG.oddsBonus}x
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-vintage-ice/50 mt-0.5">
+                          {spectatorCount > 0 ? `${spectatorCount} watching` : 'Be the first to watch'}
+                        </p>
+                      </div>
+                      {/* Live + arrow */}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <span className="text-[10px] text-green-400 font-bold">LIVE</span>
+                        <span className="text-vintage-gold/40 text-sm">›</span>
                       </div>
                     </button>
                   );

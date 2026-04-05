@@ -13,6 +13,9 @@ export function GlobalProfileInit() {
   const { address } = useAccount();
   const { userProfile, isLoadingProfile, refreshProfile } = useProfile();
   const hasCreatedRef = useRef(false);
+  // Ref to always have latest userProfile value inside async callbacks
+  const userProfileRef = useRef(userProfile);
+  useEffect(() => { userProfileRef.current = userProfile; }, [userProfile]);
 
   useEffect(() => {
     const run = async () => {
@@ -20,6 +23,13 @@ export function GlobalProfileInit() {
       if (!address) return;
       if (isLoadingProfile) return;
       if (userProfile) return;
+
+      // Wait 2s for Convex to deliver the profile before assuming it doesn't exist.
+      // isLoadingProfile can go false before the WebSocket data arrives.
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Re-check using ref (not stale closure) — profile may have loaded during the wait
+      if (userProfileRef.current) return;
 
       hasCreatedRef.current = true;
 

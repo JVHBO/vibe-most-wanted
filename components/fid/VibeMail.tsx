@@ -422,20 +422,9 @@ export function proxyAudioUrl(url: string): string {
   return url;
 }
 
-// Get Vibe Market URL for a collection name
+// Get Vibe Market URL for a collection name (only active collections)
 const COLLECTION_MARKETPLACE_URLS: Record<string, string> = {
   'Vibe Most Wanted': 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
-  'GM VBRS': 'https://vibechain.com/market/gm-vbrs?ref=XCLR1DJ6LQTT',
-  'Viberuto': 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
-  'Meowverse': 'https://vibechain.com/market/meowverse?ref=XCLR1DJ6LQTT',
-  'Poorly Drawn Pepes': 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
-  'Team Pothead': 'https://vibechain.com/market/team-pothead?ref=XCLR1DJ6LQTT',
-  'Tarot': 'https://vibechain.com/market/tarot?ref=XCLR1DJ6LQTT',
-  'Baseball Cabal': 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
-  'Vibe FX': 'https://vibechain.com/market/vibe-fx?ref=XCLR1DJ6LQTT',
-  'History of Computer': 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
-  '$CU-MI-OH!': 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
-  'Vibe Rot Bangers': 'https://vibechain.com/market/vibe-rot-bangers?ref=XCLR1DJ6LQTT',
 };
 
 export function getMarketplaceUrl(collectionName: string | undefined): string | null {

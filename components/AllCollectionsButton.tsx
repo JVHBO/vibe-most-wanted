@@ -14,20 +14,9 @@ import { MINT_PRICE } from '@/lib/contracts/VibeFIDABI';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AudioManager } from '@/lib/audio-manager';
 
-// Marketplace URLs for each collection
+// Marketplace URLs for each collection (only active collections)
 const COLLECTION_MARKETPLACE: Record<string, string> = {
   vibe: 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
-  gmvbrs: 'https://vibechain.com/market/gm-vbrs?ref=XCLR1DJ6LQTT',
-  viberuto: 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
-  meowverse: 'https://vibechain.com/market/meowverse?ref=XCLR1DJ6LQTT',
-  poorlydrawnpepes: 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
-  teampothead: 'https://vibechain.com/market/team-pothead?ref=XCLR1DJ6LQTT',
-  tarot: 'https://vibechain.com/market/tarot?ref=XCLR1DJ6LQTT',
-  baseballcabal: 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
-  vibefx: 'https://vibechain.com/market/vibe-fx?ref=XCLR1DJ6LQTT',
-  historyofcomputer: 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
-  cumioh: 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
-  viberotbangers: 'https://vibechain.com/market/vibe-rot-bangers?ref=XCLR1DJ6LQTT',
 };
 
 interface AllCollectionsButtonProps {

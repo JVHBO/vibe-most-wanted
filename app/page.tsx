@@ -28,7 +28,6 @@ import { PvPPreviewModal } from "@/components/PvPPreviewModal";
 import { GameNavBar } from "@/components/GameNavBar";
 import { ConnectScreen } from "@/components/ConnectScreen";
 import { GameHeader } from "@/components/GameHeader";
-import { PriceTicker } from "@/components/PriceTicker";
 import { AllCollectionsButton } from "@/components/AllCollectionsButton";
 import BannedScreen from "@/components/BannedScreen";
 // New Home Components
@@ -2639,10 +2638,9 @@ export default function TCGPage() {
             style={isInFarcaster && safeAreaInsets.bottom > 0 ? { paddingBottom: 64 + safeAreaInsets.bottom } : undefined}
           >
 
-          {/* Price Ticker - TOP */}
+          {/* Collections Button - TOP */}
           {isInFarcaster && (
             <div className="flex flex-col items-center pt-0 pb-1 w-full max-w-[304px] mx-auto mt-[58px]">
-              <PriceTicker className="w-full" />
               <AllCollectionsButton className="mt-0.5" />
             </div>
           )}

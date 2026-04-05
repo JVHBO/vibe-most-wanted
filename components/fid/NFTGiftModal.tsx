@@ -106,36 +106,14 @@ export function NFTGiftModal({
   // Wagmi write contract hook
   const { writeContractAsync } = useWriteContractWithAttribution();
 
-  // Marketplace URLs for each collection
+  // Marketplace URLs for each collection (only active collections)
   const MARKETPLACE_URLS: Record<string, string> = {
-    'vmw': 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
-    'gmvbrs': 'https://vibechain.com/market/gm-vbrs?ref=XCLR1DJ6LQTT',
-    'viberuto': 'https://vibechain.com/market/viberuto-packs?ref=XCLR1DJ6LQTT',
-    'meowverse': 'https://vibechain.com/market/meowverse?ref=XCLR1DJ6LQTT',
-    'poorlydrawnpepes': 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
-    'teampothead': 'https://vibechain.com/market/team-pothead?ref=XCLR1DJ6LQTT',
-    'tarot': 'https://vibechain.com/market/tarot?ref=XCLR1DJ6LQTT',
-    'baseballcabal': 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
-    'vibefx': 'https://vibechain.com/market/vibe-fx?ref=XCLR1DJ6LQTT',
-    'historyofcomputer': 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
-    'cumioh': 'https://vibechain.com/market/cu-mi-oh?ref=XCLR1DJ6LQTT',
-    'viberotbangers': 'https://vibechain.com/market/vibe-rot-bangers?ref=XCLR1DJ6LQTT',
+    'vibe': 'https://vibechain.com/market/vibe-most-wanted?ref=XCLR1DJ6LQTT',
   };
 
   // Hardcoded giftable collections - show immediately, load NFTs on demand
   const GIFTABLE_COLLECTIONS: CollectionInfo[] = [
-    { id: 'vmw', name: 'Vibe Most Wanted', count: 0 },
-    { id: 'gmvbrs', name: 'GM VBRS', count: 0 },
-    { id: 'viberuto', name: 'Viberuto', count: 0 },
-    { id: 'meowverse', name: 'Meowverse', count: 0 },
-    { id: 'poorlydrawnpepes', name: 'Poorly Drawn Pepes', count: 0 },
-    { id: 'teampothead', name: 'Team Pothead', count: 0 },
-    { id: 'tarot', name: 'Tarot', count: 0 },
-    { id: 'baseballcabal', name: 'Baseball Cabal', count: 0 },
-    { id: 'vibefx', name: 'Vibe FX', count: 0 },
-    { id: 'historyofcomputer', name: 'History of Computer', count: 0 },
-    { id: 'cumioh', name: '$CU-MI-OH!', count: 0 },
-    { id: 'viberotbangers', name: 'Vibe Rot Bangers', count: 0 },
+    { id: 'vibe', name: 'Vibe Most Wanted', count: 0 },
   ];
 
   // Skip gift selection - go straight to confirm

@@ -16,7 +16,6 @@ import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
 import { CardMedia } from "@/components/CardMedia";
 import LoadingSpinner from "@/components/LoadingSpinner";
-import { PriceTicker } from "@/components/PriceTicker";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Link from "next/link";
 
@@ -594,7 +593,6 @@ function LeaderboardContent() {
   if (!address) {
     return (
       <div className="min-h-screen bg-vintage-deep-black text-white">
-        <PriceTicker />
         <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
           <div className="text-center">
             <div className="text-6xl mb-4">🏆</div>

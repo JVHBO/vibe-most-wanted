@@ -6,7 +6,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { AudioManager } from "@/lib/audio-manager";
 import { BadgeList } from "@/components/Badge";
 import { getUserBadges } from "@/lib/badges";
-import { PriceTicker } from "@/components/PriceTicker";
 
 interface UserProfile {
   username: string;
@@ -176,9 +175,6 @@ export function HomeHeader({
                   <span className="text-white/70 font-modern text-[7px] leading-none">VBMS</span>
                 </div>
               </div>
-            )}
-            {!isInFarcaster && (
-              <div className="hidden lg:block"><PriceTicker className="-mt-1" /></div>
             )}
           </div>
         </div>

@@ -10,7 +10,7 @@ import { getVbmsBaccaratImageUrl, getVbmsBaccaratImageUrlByTokenId } from "@/lib
 import { detectCombos } from "@/lib/tcg/combos";
 import type { SupportedLanguage } from "@/lib/translations";
 
-const OTHER_TCG_COLLECTIONS = ["gmvbrs", "cumioh", "viberotbangers", "meowverse", "teampothead", "tarot", "baseballcabal", "poorlydrawnpepes", "viberuto", "vibefx", "historyofcomputer"];
+const OTHER_TCG_COLLECTIONS: string[] = [];
 
 const RARITY_COLORS: Record<string, string> = {
   Common: "border-gray-500 text-gray-400",
