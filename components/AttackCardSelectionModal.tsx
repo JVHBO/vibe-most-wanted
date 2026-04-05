@@ -7,7 +7,7 @@
 
 import { Dispatch, SetStateAction, useState, useMemo } from 'react';
 import { AudioManager } from '@/lib/audio-manager';
-import { devLog, devError } from '@/lib/utils/logger';
+import { devLog, devError, productionError } from '@/lib/utils/logger';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { type UserProfile } from '@/lib/convex-profile';
 import FoilCardEffect from '@/components/FoilCardEffect';
@@ -191,8 +191,13 @@ export function AttackCardSelectionModal({
       targetAddress: targetPlayer?.address
     });
 
-    if (attackSelectedCards.length !== HAND_SIZE || !targetPlayer || isAttacking) {
+    if (attackSelectedCards.length !== HAND_SIZE || !targetPlayer || isAttacking || isLoadingPreview) {
       devLog('❌ Early return - conditions not met');
+      return;
+    }
+
+    if (!address) {
+      setErrorMessage('Wallet not connected. Please connect your wallet to attack.');
       return;
     }
 
@@ -214,8 +219,11 @@ export function AttackCardSelectionModal({
         return; // Stop here - battle only starts after confirming in modal
       } catch (error) {
         devError('❌ Error fetching PvP preview:', error);
+        productionError('❌ [ATTACK] previewPvPRewards failed:', error);
         setIsLoadingPreview(false);
-        // If preview fails, continue normally
+        // If preview fails, show error and abort (leaderboard attacks shouldn't fall through to payEntryFee)
+        setErrorMessage('Could not load battle preview. Please try again.');
+        return;
       }
     } else {
       devLog('⚠️ Skipping preview - missing address or targetPlayer.address');
@@ -623,15 +631,17 @@ export function AttackCardSelectionModal({
         <div className="space-y-1 flex-shrink-0">
           <button
             onClick={handleAttack}
-            disabled={attackSelectedCards.length !== HAND_SIZE || isAttacking}
+            disabled={attackSelectedCards.length !== HAND_SIZE || isAttacking || isLoadingPreview}
             className={`w-full px-4 py-2 rounded-lg font-display font-bold text-sm transition-all uppercase tracking-wide ${
-              attackSelectedCards.length === HAND_SIZE && !isAttacking
+              attackSelectedCards.length === HAND_SIZE && !isAttacking && !isLoadingPreview
                 ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/50 hover:scale-105'
                 : 'bg-vintage-black/50 text-vintage-gold/40 cursor-not-allowed border border-vintage-gold/20'
             }`}
           >
             {isAttacking
               ? '... ATTACKING'
+              : isLoadingPreview
+              ? '⏳ LOADING...'
               : attackSelectedCards.length === HAND_SIZE
               ? '† ATTACK!'
               : `SELECT ${HAND_SIZE - attackSelectedCards.length} MORE`}
