@@ -1039,7 +1039,7 @@ const convex = useConvex();
                             opponentCards: defenderCards,
                             entryFeePaid: 0,
                             language: lang,
-                          });
+                          }) as { coinsAwarded?: number; profile?: UserProfile | null };
 
                           coinsEarned = result.coinsAwarded || 0;
 

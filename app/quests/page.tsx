@@ -446,7 +446,7 @@ export default function QuestsPage() {
       const result = await verifyAndCompleteQuest({
         address: address.toLowerCase(),
         questId: quest.id,
-        userFid: parseInt(userFid as string) || 0,
+        userFid: userFid ?? 0,
       });
       if (result.completed) {
         setLocalCompleted((prev) => new Set([...prev, quest.id]));
@@ -493,7 +493,7 @@ export default function QuestsPage() {
       const result = await verifyAndCompleteQuest({
         address: address.toLowerCase(),
         questId: quest.id,
-        userFid: parseInt(userFid as string) || 0,
+        userFid: userFid ?? 0,
       });
       if (!result.completed) {
         // Not followed yet — reopen link
@@ -756,7 +756,7 @@ export default function QuestsPage() {
                   const isPlaceholder = mission._id.startsWith('placeholder_');
                   const isVibeBadge = mission.missionType === 'claim_vibe_badge';
                   const mAura = 5 * (vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1);
-                  const playerPfp = profileDashboard?.pfpUrl || (profileDashboard as any)?.pfp_url;
+                  const playerPfp = profileDashboard?.farcasterPfpUrl || profileDashboard?.twitterProfileImageUrl;
                   const isNeymarQuest = mission.missionType === 'neynar_score_cast';
                   const isShareQuest = mission.missionType === 'daily_share';
                   const missionCardClass = (mission.completed || isNeymarQuest || isShareQuest)

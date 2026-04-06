@@ -124,7 +124,7 @@ export function BrowserNotifications() {
             const lastWinnerTime = parseInt(localStorage.getItem(STORAGE_KEY_WINNER_TIME) ?? "0");
             if (now - lastWinnerTime > WINNER_COOLDOWN_MS) {
               const winner = latest.winnerUsername ? `@${latest.winnerUsername}` : "Someone";
-              const author = latest.castAuthor ?? "unknown";
+              const author = latest.castAuthorUsername ?? "unknown";
               new Notification(texts.winnerTitle, {
                 body: texts.winnerBody(author, winner),
                 icon: "/favicon-32x32.png",

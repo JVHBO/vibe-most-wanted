@@ -80,6 +80,19 @@ interface Card {
   wear?: string; // Optional for NFTs
 }
 
+function toDeckCard(card: Card) {
+  return {
+    tokenId: card.tokenId,
+    power: card.power ?? 0,
+    name: card.name,
+    imageUrl: card.imageUrl,
+    collection: card.collection,
+    rarity: card.rarity,
+    foil: card.foil,
+    wear: card.wear,
+  };
+}
+
 // Helper to get buffed power for display (VibeFID 5x, VBMS 2x, Nothing 0.5x)
 const getDisplayPower = (card: Card | null | undefined): number => {
   if (!card) return 0;
@@ -1927,8 +1940,8 @@ export function PokerBattleTable({
         result,
         playerPower: 0, // Poker doesn't use power
         opponentPower: 0,
-        playerCards: playerHand.slice(0, 3), // First 3 cards of hand as sample
-        opponentCards: opponentHand.slice(0, 3),
+        playerCards: playerHand.slice(0, 3).map(toDeckCard), // First 3 cards of hand as sample
+        opponentCards: opponentHand.slice(0, 3).map(toDeckCard),
         opponentAddress: isCPUMode ? undefined : (isHost ? room?.guestAddress : room?.hostAddress),
         opponentUsername: isCPUMode ? 'CPU' : (isHost ? room?.guestUsername : room?.hostUsername),
         coinsEarned: result === 'win' ? Math.round((selectedAnte * 2) * 0.95) : 0,

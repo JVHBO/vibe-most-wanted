@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       console.warn('⚠️ Blacklisted address tried to sign-claim:', address);
       return NextResponse.json({ error: 'Account banned' }, { status: 403 });
     }
-    const inboxBalance = economy?.coinsInbox ?? 0;
+    const inboxBalance = economy?.inbox ?? 0;
     if (inboxBalance < amountNum) {
       console.warn('⚠️ Insufficient inbox balance for sign-claim:', address, 'inbox:', inboxBalance, 'requested:', amountNum);
       return NextResponse.json({ error: 'Insufficient inbox balance' }, { status: 403 });

@@ -5,10 +5,11 @@ import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
 import { sendMissionTx } from '@/lib/utils/missionTx';
 import { ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
+import type { SupportedLanguage } from '@/lib/translations';
 
 interface Params {
   address: string | undefined;
-  lang: string;
+  lang: SupportedLanguage;
   effectiveChain: string;
   soundEnabled: boolean;
   loginBonusClaimed: boolean;

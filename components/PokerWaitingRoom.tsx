@@ -15,6 +15,32 @@ interface Card {
   rarity?: string; // Optional for NFTs
   foil?: string; // Optional for NFTs
   wear?: string; // Optional for NFTs
+  collection?: string;
+}
+
+function toDeckCard(card: Card) {
+  return {
+    tokenId: card.tokenId,
+    power: card.power ?? 0,
+    name: card.name,
+    imageUrl: card.imageUrl,
+    collection: card.collection,
+    rarity: card.rarity,
+    foil: card.foil,
+    wear: card.wear,
+  };
+}
+
+function toWagerCard(card: Card) {
+  return {
+    tokenId: card.tokenId,
+    power: card.power ?? 0,
+    name: card.name ?? `Card #${card.tokenId}`,
+    imageUrl: card.imageUrl,
+    collection: card.collection,
+    rarity: card.rarity,
+    contractAddress: undefined,
+  };
 }
 
 interface PokerWaitingRoomProps {
@@ -151,8 +177,8 @@ export function PokerWaitingRoom({
       await setPlayerReady({
         roomId,
         address: playerAddress,
-        deck: selectedDeck,
-        wagers: token === "VIBE_NFT" ? selectedWagers : undefined,
+        deck: selectedDeck.map(toDeckCard),
+        wagers: token === "VIBE_NFT" ? selectedWagers.map(toWagerCard) : undefined,
       });
     } catch (error) {
       console.error("Error setting ready:", error);

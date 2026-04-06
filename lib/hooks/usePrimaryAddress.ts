@@ -35,7 +35,7 @@ export function usePrimaryAddress() {
   const convex = useConvex();
 
   // 🚀 BANDWIDTH FIX: Use state instead of useQuery subscription
-  const [linkedData, setLinkedData] = useState<{ primary: string; linked: string[] } | null | undefined>(undefined);
+  const [linkedData, setLinkedData] = useState<{ primary: string | null; linked: string[] } | null | undefined>(undefined);
   const loadedRef = useRef<string | null>(null);
   const autoLinkedRef = useRef<string | null>(null);
 

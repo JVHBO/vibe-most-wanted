@@ -6,11 +6,12 @@ import { devLog, devError } from '@/lib/utils/logger';
 import { getMissionInfo, ALL_MISSION_TYPES, FALLBACK_MISSIONS } from '@/lib/missions/missionConfig';
 import { sendMissionTx } from '@/lib/utils/missionTx';
 import { ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
+import type { SupportedLanguage } from '@/lib/translations';
 
 interface UseMissionsManagerParams {
   address: string | undefined;
   soundEnabled: boolean;
-  lang: string;
+  lang: SupportedLanguage;
   effectiveChain: string;
   userProfile: any;
   setMissions: (m: any[]) => void;
