@@ -20,10 +20,12 @@ interface CacheEntry<T> {
 // Cache stores: key -> { data, expiresAt }
 const userCache = new Map<number, CacheEntry<any>>();
 const castCache = new Map<string, CacheEntry<any>>();
+const interactionCache = new Map<string, CacheEntry<CastInteractions>>();
 
 // Cache TTLs (in milliseconds)
 const USER_CACHE_TTL = 10 * 60 * 1000; // 10 minutes - user profiles rarely change
 const CAST_CACHE_TTL = 60 * 60 * 1000; // 1 hour - cast content never changes
+const INTERACTION_CACHE_TTL = 5 * 60 * 1000; // 5 minutes - interactions verified via Neynar
 
 // Helper to get from cache if not expired
 function getFromCache<T>(cache: Map<string | number, CacheEntry<T>>, key: string | number): T | null {
@@ -261,6 +263,11 @@ export interface NeynarCast {
   };
   replies: {
     count: number;
+  };
+  viewer_context?: {
+    liked?: boolean;
+    recasted?: boolean;
+    recast?: boolean;
   };
 }
 
@@ -506,94 +513,90 @@ export async function checkCastInteractions(
   castIdentifier: string,
   viewerFid: number
 ): Promise<CastInteractions> {
-  const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
-  const NEYNAR_API_BASE = 'https://api.neynar.com/v2';
-
-  if (!NEYNAR_API_KEY) {
-    console.error('NEYNAR_API_KEY is not configured');
-    return { liked: false, recasted: false, replied: false };
+  // 🚀 BANDWIDTH FIX: Check cache first
+  const cacheKey = `${castIdentifier}:${viewerFid}`;
+  const cached = getFromCache<CastInteractions>(interactionCache, cacheKey);
+  if (cached) {
+    return cached;
   }
 
-  // Determine if identifier is a URL or hash
-  const isUrl = castIdentifier.startsWith('http');
-  const identifierType = isUrl ? 'url' : 'hash';
-  const encodedIdentifier = isUrl ? encodeURIComponent(castIdentifier) : castIdentifier;
-
-  console.log(`[Neynar] Checking interactions: identifier=${castIdentifier}, type=${identifierType}, viewerFid=${viewerFid}`);
-
   try {
-    // Fetch cast with viewer context to check reactions
-    const response = await fetch(
-      `${NEYNAR_API_BASE}/farcaster/cast?identifier=${encodedIdentifier}&type=${identifierType}&viewer_fid=${viewerFid}`,
-      {
-        headers: {
-          'accept': 'application/json',
-          'api_key': NEYNAR_API_KEY,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Neynar API error: ${response.status}`, errorText);
-      return { liked: false, recasted: false, replied: false };
-    }
-
-    const data = await response.json();
-    const cast = data.cast;
-
-    console.log(`[Neynar] Cast found:`, cast?.hash, `viewer_context:`, cast?.viewer_context);
+    // Try to get cast from existing user/cast cache first
+    const cachedCast = getFromCache<NeynarCast>(castCache, castIdentifier);
+    let cast = cachedCast;
 
     if (!cast) {
-      console.log('[Neynar] No cast found in response');
-      return { liked: false, recasted: false, replied: false };
+      // Fetch cast with viewer context to check reactions
+      const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
+      if (!NEYNAR_API_KEY) {
+        console.error('NEYNAR_API_KEY is not configured');
+        return { liked: false, recasted: false, replied: false };
+      }
+
+      const NEYNAR_API_BASE = 'https://api.neynar.com/v2';
+      const isUrl = castIdentifier.startsWith('http');
+      const identifierType = isUrl ? 'url' : 'hash';
+      const encodedIdentifier = isUrl ? encodeURIComponent(castIdentifier) : castIdentifier;
+
+      const response = await fetch(
+        `${NEYNAR_API_BASE}/farcaster/cast?identifier=${encodedIdentifier}&type=${identifierType}&viewer_fid=${viewerFid}`,
+        {
+          headers: {
+            'accept': 'application/json',
+            'api_key': NEYNAR_API_KEY,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        console.error(`Neynar API error: ${response.status}`);
+        return { liked: false, recasted: false, replied: false };
+      }
+
+      const data = await response.json();
+      cast = data.cast;
+      if (!cast) return { liked: false, recasted: false, replied: false };
     }
 
     // Check viewer context for reactions
     const liked = cast.viewer_context?.liked === true;
     const recasted = cast.viewer_context?.recasted === true || cast.viewer_context?.recast === true;
 
-    // For replies, check user's recent casts to find replies to target cast
+    // For replies, check user's recent casts (skip if already liked+recasted to save API calls)
     let replied = false;
     const actualCastHash = cast.hash;
 
-    if (actualCastHash) {
+    if (actualCastHash && !(liked && recasted)) {
       try {
-        // Fetch user's recent casts (including replies)
-        const userCastsResponse = await fetch(
-          `${NEYNAR_API_BASE}/farcaster/feed/user/casts?fid=${viewerFid}&limit=50&include_replies=true`,
-          {
-            headers: {
-              'accept': 'application/json',
-              'api_key': NEYNAR_API_KEY,
-            },
-          }
-        );
-
-        if (userCastsResponse.ok) {
-          const userCastsData = await userCastsResponse.json();
-          const userCasts = userCastsData.casts || [];
-          console.log(`[Neynar] User casts count: ${userCasts.length}, looking for parent_hash: ${actualCastHash}`);
-          
-          // Check if any of user's casts is a reply to the target cast
-          replied = userCasts.some((userCast: { parent_hash?: string }) => 
-            userCast.parent_hash === actualCastHash
+        const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
+        if (NEYNAR_API_KEY) {
+          const userCastsResponse = await fetch(
+            `https://api.neynar.com/v2/farcaster/feed/user/casts?fid=${viewerFid}&limit=50&include_replies=true`,
+            {
+              headers: {
+                'accept': 'application/json',
+                'api_key': NEYNAR_API_KEY,
+              },
+            }
           );
-          
-          if (replied) {
-            console.log(`[Neynar] Found reply to target cast!`);
+
+          if (userCastsResponse.ok) {
+            const userCastsData = await userCastsResponse.json();
+            const userCasts = userCastsData.casts || [];
+            replied = userCasts.some((userCast: { parent_hash?: string }) =>
+              userCast.parent_hash === actualCastHash
+            );
           }
-        } else {
-          const errorText = await userCastsResponse.text();
-          console.error(`[Neynar] User casts API error: ${userCastsResponse.status}`, errorText);
         }
       } catch (e) {
         console.error('Error checking replies:', e);
       }
     }
 
-    console.log(`[Neynar] Interactions: liked=${liked}, recasted=${recasted}, replied=${replied}`);
-    return { liked, recasted, replied };
+    const result = { liked, recasted, replied };
+    // Cache for 5 minutes
+    setInCache(interactionCache, cacheKey, result, INTERACTION_CACHE_TTL);
+    return result;
   } catch (error) {
     console.error('Error checking cast interactions:', error);
     return { liked: false, recasted: false, replied: false };

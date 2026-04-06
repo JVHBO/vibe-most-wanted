@@ -4,6 +4,15 @@ import { NextRequest, NextResponse } from 'next/server';
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY!;
 const BOT_SIGNER_UUID = process.env.BOT_SIGNER_UUID!;
 
+// 🚀 BANDWIDTH FIX: Rate limit bot responses per user+target window
+// Prevents same user from triggering bot multiple times for same target in short window
+const botCooldownKey = new Map<string, number>();
+const BOT_COOLDOWN_MS = 5 * 60 * 1000; // 5 min cooldown per user+target combo
+
+// Cache Neynar score responses per FID
+const scoreCache = new Map<number, { expiresAt: number; score: number; rarity: string }>();
+const SCORE_TTL = 10 * 60 * 1000; // 10 min
+
 // Keywords that trigger the bot
 const TRIGGER_KEYWORDS = [
   'neynar score',
@@ -89,79 +98,106 @@ export async function POST(request: NextRequest) {
 
     console.log(`Bot triggered by @${authorUsername} for @${targetUsername} (FID: ${targetFid})`);
 
-    // Fetch all data in parallel for speed
-    const ac = new AbortController();
-    const timeout = setTimeout(() => ac.abort(), 5000);
-    const [userResponse, rankResponse, openRankResponse] = await Promise.all([
-      // Neynar score
-      fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${targetFid}`, {
-        headers: { api_key: NEYNAR_API_KEY },
-        signal: ac.signal,
-      }),
-      // VibeFID rank from Convex
-      fetch("https://scintillating-mandrill-101.convex.cloud/api/query", {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          path: 'farcasterCards:getVibeFIDRank',
-          args: { fid: targetFid },
-          format: 'json',
-        }),
-        signal: ac.signal,
-      }).catch(() => null),
-      // OpenRank global rank
-      fetch('https://graph.cast.k3l.io/scores/global/engagement/fids', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify([targetFid]),
-        signal: ac.signal,
-      }).catch(() => null),
-    ]);
-    clearTimeout(timeout);
+    // 🚀 BANDWIDTH FIX: Check cooldown for same user requesting same target
+    if (!isLookingUpOther) {
+      const cooldownEntry = botCooldownKey.get(`${authorFid}:${targetFid}`);
+      if (cooldownEntry && Date.now() - cooldownEntry < BOT_COOLDOWN_MS) {
+        console.log(`Bot cooldown: @${authorUsername} already checked @${targetUsername} recently`);
+        return NextResponse.json({ ok: true, message: 'Bot cooldown, try again later' });
+      }
+      botCooldownKey.set(`${authorFid}:${targetFid}`, Date.now());
 
-    let score = 0;
-    let rarity = 'Common';
-
-    if (userResponse.ok) {
-      const userData = await userResponse.json();
-      const user = userData.users?.[0];
-      if (user) {
-        score = user.experimental?.neynar_user_score || user.score || 0;
-        targetDisplayName = user.display_name || targetUsername;
-
-        if (score >= 0.99) rarity = 'Mythic';
-        else if (score >= 0.90) rarity = 'Legendary';
-        else if (score >= 0.79) rarity = 'Epic';
-        else if (score >= 0.70) rarity = 'Rare';
+      // Clean old entries when map grows
+      if (botCooldownKey.size > 500) {
+        const cutoff = Date.now() - BOT_COOLDOWN_MS;
+        for (const [key, time] of botCooldownKey.entries()) {
+          if (time < cutoff) botCooldownKey.delete(key);
+        }
       }
     }
 
-    let vibefidRank = '';
-    if (rankResponse?.ok) {
-      try {
-        const rankData = await rankResponse.json();
-        if (rankData.value?.rank) {
-          vibefidRank = `#${rankData.value.rank.toLocaleString()}`;
-        }
-      } catch (e) {}
-    }
+    // 🚀 BANDWIDTH FIX: Use cached score if available
+    const cachedScore = scoreCache.get(targetFid);
+    let score = cachedScore?.score ?? 0;
+    let rarity = cachedScore?.rarity ?? 'Common';
 
-    let globalRank = '';
-    let isEstimated = false;
-    if (openRankResponse?.ok) {
-      try {
-        const openRankData = await openRankResponse.json();
-        const results = openRankData.result || openRankData;
-        if (Array.isArray(results) && results.length > 0 && results[0].rank) {
-          globalRank = `#${results[0].rank.toLocaleString()}`;
+    if (cachedScore && Date.now() < cachedScore.expiresAt) {
+      // Cache hit — skip Neynar call
+      console.log(`[Bot] Score cache HIT for FID ${targetFid}: ${score}`);
+    } else {
+      // Cache miss — fetch from Neynar
+      const ac = new AbortController();
+      const timeout = setTimeout(() => ac.abort(), 5000);
+      const [userResponse, rankResponse, openRankResponse] = await Promise.all([
+        // Neynar score
+        fetch(`https://api.neynar.com/v2/farcaster/user/bulk?fids=${targetFid}`, {
+          headers: { api_key: NEYNAR_API_KEY },
+          signal: ac.signal,
+        }),
+        // VibeFID rank from Convex
+        fetch("https://scintillating-mandrill-101.convex.cloud/api/query", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            path: 'farcasterCards:getVibeFIDRank',
+            args: { fid: targetFid },
+            format: 'json',
+          }),
+          signal: ac.signal,
+        }).catch(() => null),
+        // OpenRank global rank
+        fetch('https://graph.cast.k3l.io/scores/global/engagement/fids', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify([targetFid]),
+          signal: ac.signal,
+        }).catch(() => null),
+      ]);
+      clearTimeout(timeout);
+
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        const user = userData.users?.[0];
+        if (user) {
+          score = user.experimental?.neynar_user_score || user.score || 0;
+          targetDisplayName = user.display_name || targetUsername;
+
+          if (score >= 0.99) rarity = 'Mythic';
+          else if (score >= 0.90) rarity = 'Legendary';
+          else if (score >= 0.79) rarity = 'Epic';
+          else if (score >= 0.70) rarity = 'Rare';
+
+          scoreCache.set(targetFid, { expiresAt: Date.now() + SCORE_TTL, score, rarity });
         }
-      } catch (e) {}
-    }
-    // Fallback: estimate rank based on Neynar Score
-    if (!globalRank && score > 0) {
-      const estimatedRank = Math.max(1, Math.round(800000 * (1 - score)));
-      globalRank = `~#${estimatedRank.toLocaleString()}`;
-      isEstimated = true;
+      }
+
+      let vibefidRank = '';
+      if (rankResponse?.ok) {
+        try {
+          const rankData = await rankResponse.json();
+          if (rankData.value?.rank) {
+            vibefidRank = `#${rankData.value.rank.toLocaleString()}`;
+          }
+        } catch (e) {}
+      }
+
+      let globalRank = '';
+      let isEstimated = false;
+      if (openRankResponse?.ok) {
+        try {
+          const openRankData = await openRankResponse.json();
+          const results = openRankData.result || openRankData;
+          if (Array.isArray(results) && results.length > 0 && results[0].rank) {
+            globalRank = `#${results[0].rank.toLocaleString()}`;
+          }
+        } catch (e) {}
+      }
+      // Fallback: estimate rank based on Neynar Score
+      if (!globalRank && score > 0) {
+        const estimatedRank = Math.max(1, Math.round(800000 * (1 - score)));
+        globalRank = `~#${estimatedRank.toLocaleString()}`;
+        isEstimated = true;
+      }
     }
 
     // Build the score text with all info
@@ -171,12 +207,6 @@ export async function POST(request: NextRequest) {
     }
     scoreText += `${targetDisplayName} @${targetUsername}\n\n`;
     scoreText += `Neynar Score: ${score.toFixed(3)} (${rarity})\n`;
-    if (vibefidRank) {
-      scoreText += `VibeFID Rank: ${vibefidRank}\n`;
-    }
-    if (globalRank) {
-      scoreText += `Global Rank: ${globalRank}${isEstimated ? ' (est.)' : ''}\n`;
-    }
     scoreText += `\nGet your playable VibeFID card:`;
 
     // Share page URL (the actual page with OG image)
@@ -192,9 +222,9 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         signer_uuid: BOT_SIGNER_UUID,
         text: scoreText,
-        parent: castHash,  // Reply to the original cast
+        parent: castHash,
         embeds: [
-          { url: shareUrl }  // Share page link with OG image
+          { url: shareUrl }
         ],
       }),
     });
