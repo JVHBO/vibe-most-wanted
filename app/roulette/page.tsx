@@ -14,9 +14,9 @@ const PRIZE_IMAGES = [
 ];
 
 const PRIZES = [
-  { label: '100 VBMS',  prob: 88,   color: '#9CA3AF' },
-  { label: '500 VBMS',  prob: 8,    color: '#60A5FA' },
-  { label: '1K VBMS',   prob: 2.5,  color: '#34D399' },
+  { label: '100 VBMS',  prob: 85,   color: '#9CA3AF' },
+  { label: '500 VBMS',  prob: 10,   color: '#60A5FA' },
+  { label: '1K VBMS',   prob: 3.5,  color: '#34D399' },
   { label: '10K VBMS',  prob: 1,    color: '#FBBF24' },
   { label: '50K VBMS',  prob: 0.5,  color: '#F87171' },
 ];
@@ -111,7 +111,7 @@ function PrizeOddsModal({ onClose }: { onClose: () => void }) {
         {/* Modal header */}
         <div className="bg-[#FFD700] border-b-4 border-black px-3 py-1.5 flex items-center justify-between">
           <span className="font-black text-[11px] uppercase tracking-widest text-black">Prize Odds</span>
-          <button onClick={onClose} className="font-black text-lg leading-none" style={{ color: '#DC2626' }}>×</button>
+          <button onClick={onClose} className="rounded-full flex items-center justify-center" style={{ background: '#DC2626', width: 24, height: 24, color: '#fff', fontSize: 16, lineHeight: 1, fontWeight: 700 }}>×</button>
         </div>
 
         <div className="px-3 pt-2 pb-2">
@@ -150,7 +150,7 @@ function PrizeOddsModal({ onClose }: { onClose: () => void }) {
               <span className="text-yellow-400 font-bold">Aura Level:</span> more spins + higher earn cap
             </p>
             <p className="text-white/70 text-[8px] leading-tight">
-              <span className="text-green-400 font-bold">Server-side:</span> results generated on Convex backend, cannot be manipulated
+              <span className="text-green-400 font-bold">Server-side:</span> results generated on Convex backend, cannot be manipulated client-side
             </p>
           </div>
         </div>
