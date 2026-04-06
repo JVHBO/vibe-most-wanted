@@ -550,7 +550,7 @@ export default function QuestsPage() {
     <div className="fixed inset-0 bg-[#1a1a1a] overflow-hidden">
 
       {/* Header */}
-      <div className={`absolute top-0 left-0 right-0 z-20 ${activeTab === 'messages' ? 'bg-[#111]' : 'bg-[#1a1a1a]'} border-b-4 border-black`}>
+      <div className={`absolute top-0 left-0 right-0 z-20 bg-[#1a1a1a] border-b-4 border-black`}>
         <div className="relative flex items-center justify-between px-3 py-1.5">
           <Link
             href="/"
