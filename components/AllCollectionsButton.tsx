@@ -35,6 +35,9 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
   const vibeFidPriceEth = parseFloat(MINT_PRICE);
   const vibeFidPriceUsd = vibeFidPriceEth * ethUsdPrice;
 
+  // Only show collections that are part of the game
+  const gameCollections = prices.filter((p) => p.id === 'vibe');
+
   const handleCollectionClick = (collectionId: string, displayName: string) => {
     const marketplaceUrl = COLLECTION_MARKETPLACE[collectionId];
     if (marketplaceUrl) {
@@ -119,29 +122,27 @@ export function AllCollectionsButton({ className = '' }: AllCollectionsButtonPro
               </button>
 
               {/* Regular Collections */}
-              {prices.map((priceData) => (
+              {gameCollections.map((priceData) => (
                 <button
                   key={priceData.id}
                   onClick={() => {
                     AudioManager.buttonClick();
-                    if (priceData.id === 'vibe') { setShowModal(false); router.push('/shop?slide=1'); }
-                    else handleCollectionClick(priceData.id, priceData.displayName);
+                    setShowModal(false);
+                    router.push('/shop?slide=1');
                   }}
                   onMouseEnter={() => AudioManager.buttonHover()}
                   className="w-full flex items-center justify-between p-3 bg-black hover:bg-vintage-charcoal rounded-xl transition-all group text-left border border-vintage-gold/30"
                 >
                   <span className="text-vintage-ice text-sm font-medium group-hover:text-vintage-gold truncate flex-1">
-                    {priceData.emoji} {priceData.displayName} {priceData.id === 'vibe' && <span className="text-green-400 text-xs">(2x power)</span>}
+                    {priceData.emoji} {priceData.displayName} <span className="text-green-400 text-xs">(2x power)</span>
                   </span>
                   <div className="flex items-center gap-2 ml-2">
                     <span className="text-green-400 text-sm font-bold">
                       {priceData.priceUsd}
                     </span>
-                    {priceData.id === 'vibe' && (
-                      <span className="px-2 py-1 bg-vintage-gold text-vintage-black text-xs font-bold rounded-lg">
-                        Shop →
-                      </span>
-                    )}
+                    <span className="px-2 py-1 bg-vintage-gold text-vintage-black text-xs font-bold rounded-lg">
+                      Shop →
+                    </span>
                   </div>
                 </button>
               ))}
