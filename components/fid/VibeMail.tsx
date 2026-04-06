@@ -2148,7 +2148,7 @@ export function VibeMailInboxWithClaim({
 
   return (
     <div className={
-      inline ? "flex-1 flex flex-col overflow-hidden bg-[#111]"
+      inline ? "flex-1 flex flex-col overflow-hidden bg-[#1a1a1a]"
       : asPage ? "min-h-screen bg-vintage-dark"
       : "fixed inset-0 z-[350] flex items-center justify-center bg-black/90 p-4"
     }>
@@ -2157,7 +2157,7 @@ export function VibeMailInboxWithClaim({
       <div
         style={{ colorScheme: 'dark' }}
         className={
-          inline ? "bg-[#111] flex-1 flex flex-col p-2 overflow-hidden"
+          inline ? "bg-vintage-charcoal flex-1 flex flex-col p-4 overflow-hidden overflow-y-auto"
           : asPage ? "bg-vintage-charcoal h-screen w-full flex flex-col"
           : "bg-vintage-charcoal border-2 border-black shadow-[4px_4px_0px_#000] p-4 w-full max-w-md max-h-[calc(100vh-120px)] overflow-hidden flex flex-col"
         }
