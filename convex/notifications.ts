@@ -774,8 +774,54 @@ const GAMING_TIPS = [
 ];
 
 /**
- * Send a periodic gaming tip to all users (called by cron job)
+ * Get FIDs of recently active users (used for notification targeting)
+ * 🚀 BANDWIDTH FIX: Only notify users who played in last N days
+ */
+export const getActiveUserFids = internalQuery({
+  args: {
+    daysAgo: v.optional(v.number()), // Default: 7 days
+  },
+  handler: async (ctx, { daysAgo = 7 }) => {
+    const cutoff = Date.now() - daysAgo * 24 * 60 * 60 * 1000;
+
+    // Get profiles that are active (have lastUpdated > cutoff)
+    // Also check coinTransactions for any activity
+    const activeProfiles = await ctx.db
+      .query("profiles")
+      .take(10000);
+
+    const fids = new Set<number>();
+
+    for (const profile of activeProfiles) {
+      // Check if profile has a FID and was recently active
+      if (profile.fid || profile.farcasterFid) {
+        const fidValue = parseInt(profile.fid || profile.farcasterFid!.toString());
+        if (!isNaN(fidValue)) {
+          // Check if user has any recent coin transaction
+          const recentTx = await ctx.db
+            .query("coinTransactions")
+            .withIndex("by_address", (q) => q.eq("address", profile.address.toLowerCase()))
+            .order("desc")
+            .take(1);
+
+          if (recentTx.length > 0 && recentTx[0].timestamp > cutoff) {
+            fids.add(fidValue);
+          } else if (profile.lastUpdated && profile.lastUpdated > cutoff) {
+            // Fallback: use lastUpdated on profile
+            fids.add(fidValue);
+          }
+        }
+      }
+    }
+
+    return [...fids];
+  },
+});
+
+/**
+ * Send a periodic gaming tip to active users only (called by cron job)
  * Rotates through tips to keep them fresh
+ * 🚀 BANDWIDTH FIX: Targets only users active in last 7 days instead of broadcast to all
  */
 /* @ts-ignore */
 export const sendPeriodicTip = internalAction({
@@ -796,8 +842,17 @@ export const sendPeriodicTip = internalAction({
 
       const currentTip = GAMING_TIPS[tipState.currentTipIndex % GAMING_TIPS.length];
 
-      // Send to ALL users with notifications enabled (empty array = broadcast)
-      const result = await sendViaNeynar([], currentTip.title, currentTip.body, "https://vibemostwanted.xyz");
+      // 🚀 BANDWIDTH FIX: Only notify users active in last 7 days
+      const targetFids = await ctx.runQuery(internal.notifications.getActiveUserFids, { daysAgo: 7 });
+
+      if (targetFids.length === 0) {
+        console.log("⚠️ No active users found for notification");
+        return { sent: 0, failed: 0, total: 0, tipIndex: tipState.currentTipIndex };
+      }
+
+      console.log(`📊 Targeting ${targetFids.length} active users (last 7 days)`);
+
+      const result = await sendViaNeynar(targetFids, currentTip.title, currentTip.body, "https://vibemostwanted.xyz");
 
       // Update tip rotation state
       const nextTipIndex = (tipState.currentTipIndex + 1) % GAMING_TIPS.length;

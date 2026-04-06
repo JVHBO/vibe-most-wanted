@@ -22,15 +22,15 @@ crons.interval(
 );
 
 // ============================================================
-// DAILY NOTIFICATIONS
+// DAILY NOTIFICATIONS — DISABLED (Neynar credits too expensive)
 // ============================================================
-
-// Single daily notification — 15:00 UTC (noon Brazil)
-// Rotates through tips (Login Bonus, Roulette, Arena, VibeMail, etc.)
-crons.cron(
-  "daily-gaming-tip",
-  "0 15 * * *",
-  internal.notifications.sendPeriodicTip,
-);
+// 741K credits spent in one cycle on broadcast notifications
+// Re-enable only if we switch to a cheaper notification system
+//
+// crons.cron(
+//   "daily-gaming-tip",
+//   "0 15 * * *",
+//   internal.notifications.sendPeriodicTip,
+// );
 
 export default crons;
