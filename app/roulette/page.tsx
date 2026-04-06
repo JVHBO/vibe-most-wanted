@@ -70,13 +70,11 @@ function FloatingBackground({ win }: { win: boolean }) {
 }
 
 /**
- * Prize Odds Modal — circular donut chart showing odds
+ * Prize Odds Modal — pie chart showing odds
  */
 function PrizeOddsModal({ onClose }: { onClose: () => void }) {
-  const [showBonus, setShowBonus] = useState(false);
-
-  // Build SVG donut chart segments
-  const cx = 150, cy = 150, outerR = 120, innerR = 70;
+  // Build SVG pie chart segments (solid filled wedges)
+  const cx = 80, cy = 80, r = 70;
 
   const segments = (() => {
     let cumulativeAngle = 0;
@@ -88,19 +86,15 @@ function PrizeOddsModal({ onClose }: { onClose: () => void }) {
 
       const startRad = ((startAngle - 90) * Math.PI) / 180;
       const endRad = ((endAngle - 90) * Math.PI) / 180;
-      const x1 = cx + outerR * Math.cos(startRad);
-      const y1 = cy + outerR * Math.sin(startRad);
-      const x2 = cx + outerR * Math.cos(endRad);
-      const y2 = cy + outerR * Math.sin(endRad);
-      const ix1 = cx + innerR * Math.cos(endRad);
-      const iy1 = cy + innerR * Math.sin(endRad);
-      const ix2 = cx + innerR * Math.cos(startRad);
-      const iy2 = cy + innerR * Math.sin(startRad);
+      const x1 = cx + r * Math.cos(startRad);
+      const y1 = cy + r * Math.sin(startRad);
+      const x2 = cx + r * Math.cos(endRad);
+      const y2 = cy + r * Math.sin(endRad);
       const largeArc = wedgeAngle > 180 ? 1 : 0;
 
       return {
         ...p,
-        pathD: `M ${x1} ${y1} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x2} ${y2} L ${ix1} ${iy1} A ${innerR} ${innerR} 0 ${largeArc} 0 ${ix2} ${iy2} Z`,
+        pathD: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`,
         startAngle,
         endAngle,
       };
@@ -110,82 +104,55 @@ function PrizeOddsModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85" onClick={onClose}>
       <div
-        className="w-full max-w-sm border-4 border-black rounded-2xl overflow-hidden"
-        style={{ background: '#0C0C0C', boxShadow: '6px 6px 0px #FFD700', maxHeight: '90vh' }}
+        className="w-full max-w-[280px] border-4 border-black rounded-2xl overflow-hidden"
+        style={{ background: '#0C0C0C', boxShadow: '4px 4px 0px #FFD700' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal header */}
-        <div className="bg-[#FFD700] border-b-4 border-black px-4 py-2 flex items-center justify-between">
-          <span className="font-black text-sm uppercase tracking-widest text-black">🎰 Prize Odds</span>
-          <button onClick={onClose} className="text-black font-black text-lg leading-none">×</button>
+        <div className="bg-[#FFD700] border-b-4 border-black px-3 py-1.5 flex items-center justify-between">
+          <span className="font-black text-[11px] uppercase tracking-widest text-black">Prize Odds</span>
+          <button onClick={onClose} className="font-black text-lg leading-none" style={{ color: '#DC2626' }}>×</button>
         </div>
 
-        <div className="overflow-y-auto" style={{ maxHeight: 'calc(90vh - 44px)' }}>
-          {/* Donut chart */}
-          <div className="flex justify-center py-4">
-            <div className="relative" style={{ width: 280, height: 280 }}>
-              <svg viewBox="0 0 300 300" style={{ width: '100%', height: '100%' }}>
-                <circle cx={cx} cy={cy} r={outerR} fill="none" stroke="#1a1a1a" strokeWidth="0.5" />
+        <div className="px-3 pt-2 pb-2">
+          {/* Pie chart + legend in compact row */}
+          <div className="flex items-start gap-3">
+            {/* Pie chart */}
+            <div className="shrink-0 relative" style={{ width: 120, height: 120 }}>
+              <svg viewBox="0 0 160 160" style={{ width: '100%', height: '100%' }}>
                 {segments.map(s => (
-                  <path key={s.label} d={s.pathD} fill="none" stroke={s.color} strokeWidth="2" />
+                  <path key={s.label} d={s.pathD} fill={s.color} stroke="#0C0C0C" strokeWidth="1.5" />
                 ))}
-                {/* Center text */}
-                <text x={cx} y={cy - 4} textAnchor="middle" fill="#FFD700" fontSize="13" fontWeight="bold" style={{ fontFamily: 'var(--font-cinzel, serif)' }}>
-                  Prize Odds
-                </text>
-                <text x={cx} y={cy + 14} textAnchor="middle" fill="white" fontSize="9" opacity="0.35">
-                  Tap legend for details
-                </text>
               </svg>
             </div>
-          </div>
 
-          {/* Legend with toggle */}
-          <div className="px-4 pb-3">
-            {PRIZES.map(p => (
-              <div key={p.label} className="flex items-center gap-3 py-1.5 border-b border-white/5 last:border-0">
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-black shrink-0" style={{ background: p.color }} />
-                <span className="text-white text-xs font-bold flex-1">{p.label}</span>
-                <span className="text-xs font-black" style={{ color: p.color }}>{p.prob}%</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Expandable bonus info */}
-          <button
-            onClick={() => setShowBonus(!showBonus)}
-            className="w-full text-center py-2 text-[#FFD700] text-xs font-bold hover:bg-[#2a2a1a] border-t-2 border-black"
-          >
-            ℹ️ Bonus Information {showBonus ? '▲' : '▼'}
-          </button>
-          {showBonus && (
-            <div className="px-4 py-3 bg-[#1a1a1a] border-t border-white/10 space-y-2">
-              <div className="flex items-start gap-2">
-                <span className="text-blue-400 text-sm"></span>
-                <p className="text-white/80 text-[10px] leading-relaxed">
-                  <strong className="text-blue-400">Ultra Mode (Arbitrum):</strong> Switch to Arbitrum chain for 2x balls — doubles your chance of landing on higher prizes. Toggle between Normal/Base and Ultra using the chain selector inside the roulette.
-                </p>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-purple-400 text-sm">💜</span>
-                <p className="text-white/80 text-[10px] leading-relaxed">
-                  <strong className="text-purple-400">VibeFID Holder:</strong> Owning any VibeFID NFT gives you +2 extra balls per spin, significantly increasing your odds.
-                </p>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-yellow-400 text-sm">⚡</span>
-                <p className="text-white/80 text-[10px] leading-relaxed">
-                  <strong className="text-yellow-400">Aura Level:</strong> Higher Aura levels from battles give you more daily roulette spins. SSJ1+ grants bonus spins, and your earn cap scales with level (100k at Human → 750k at SSJ Blue).
-                </p>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="text-green-400 text-sm">📊</span>
-                <p className="text-white/80 text-[10px] leading-relaxed">
-                  <strong className="text-green-400">Results determined server-side:</strong> All spin outcomes are generated on Convex backend and verified on-chain. Cannot be manipulated client-side.
-                </p>
-              </div>
+            {/* Legend */}
+            <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+              {PRIZES.map(p => (
+                <div key={p.label} className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: p.color }} />
+                  <span className="text-white text-[9px] font-bold truncate">{p.label}</span>
+                  <span className="text-[9px] font-black ml-auto" style={{ color: p.color }}>{p.prob}%</span>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
+
+          {/* Bonus info — inline, no dropdown */}
+          <div className="mt-2 pt-2 border-t border-white/10 space-y-1">
+            <p className="text-white/70 text-[8px] leading-tight">
+              <span className="text-blue-400 font-bold">Ultra (ARB):</span> 2× spins on Arbitrum chain
+            </p>
+            <p className="text-white/70 text-[8px] leading-tight">
+              <span className="text-purple-400 font-bold">VibeFID:</span> +2 spins per day
+            </p>
+            <p className="text-white/70 text-[8px] leading-tight">
+              <span className="text-yellow-400 font-bold">Aura Level:</span> more spins + higher earn cap
+            </p>
+            <p className="text-white/70 text-[8px] leading-tight">
+              <span className="text-green-400 font-bold">Server-side:</span> results generated on Convex backend, cannot be manipulated
+            </p>
+          </div>
         </div>
       </div>
     </div>
