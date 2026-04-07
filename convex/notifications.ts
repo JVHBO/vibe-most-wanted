@@ -1038,23 +1038,10 @@ export const sendPeriodicTip = internalAction({
 
       const currentTip = GAMING_TIPS[tipState.currentTipIndex % GAMING_TIPS.length];
 
-      // 🚀 BANDWIDTH FIX: Only notify users active in last 7 days
-      const targetFids = await ctx.runQuery(internal.notifications.getActiveUserFids, { daysAgo: 7 });
+      console.log("📣 Broadcasting to ALL users with notification tokens...");
 
-      if (targetFids.length === 0) {
-        console.log("⚠️ No active users found for notification");
-        return { sent: 0, failed: 0, total: 0, tipIndex: tipState.currentTipIndex };
-      }
-
-      console.log(`📊 Targeting ${targetFids.length} active users (last 7 days)`);
-
-      let totalSent = 0;
-      let totalFailed = 0;
-      for (const fid of targetFids) {
-        const r = await sendViaDirectUrlWithFidNumber(ctx, fid, currentTip.title, currentTip.body, "https://vibemostwanted.xyz");
-        totalSent += r.success_count;
-        totalFailed += r.failure_count;
-      }
+      // Send to ALL users via broadcast (zero Neynar credits)
+      const result = await sendBroadcastDirectUrl(ctx, currentTip.title, currentTip.body, "https://vibemostwanted.xyz");
 
       // Update tip rotation state
       const nextTipIndex = (tipState.currentTipIndex + 1) % GAMING_TIPS.length;
@@ -1063,10 +1050,10 @@ export const sendPeriodicTip = internalAction({
         currentTipIndex: nextTipIndex,
       });
 
-      console.log(`📊 Periodic tip: ${totalSent} sent, ${totalFailed} failed`);
+      console.log(`📊 Periodic tip: ${result.success_count} sent, ${result.failure_count} failed`);
       console.log(`📝 Sent tip ${tipState.currentTipIndex + 1}/${GAMING_TIPS.length}: "${currentTip.title}"`);
 
-      return { sent: totalSent, failed: totalFailed, total: totalSent + totalFailed, tipIndex: tipState.currentTipIndex };
+      return { sent: result.success_count, failed: result.failure_count, total: result.totalTokens, tipIndex: tipState.currentTipIndex };
 
     } catch (error: any) {
       console.error("❌ Error in sendPeriodicTip:", error);

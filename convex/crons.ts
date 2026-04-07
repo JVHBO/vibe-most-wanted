@@ -22,15 +22,15 @@ crons.interval(
 );
 
 // ============================================================
-// DAILY NOTIFICATIONS — DISABLED (Neynar credits too expensive)
+// DAILY NOTIFICATIONS — ATIVO (using direct Warpcast API - zero credits)
 // ============================================================
-// 741K credits spent in one cycle on broadcast notifications
-// Re-enable only if we switch to a cheaper notification system
-//
-// crons.cron(
-//   "daily-gaming-tip",
-//   "0 15 * * *",
-//   internal.notifications.sendPeriodicTip,
-// );
+// Executa diariamente às 15:00 UTC (12:00 horário Brasil)
+// Notifica apenas usuários ativos dos últimos 7 dias
+// Sistema gratuito: envia diretamente para Warpcast sem Neynar
+crons.cron(
+  "daily-gaming-tip",
+  "0 15 * * *",
+  internal.notifications.sendPeriodicTip,
+);
 
 export default crons;
