@@ -188,7 +188,7 @@ body.neobrutalism .tour-dex-btn [class*="rounded-full"] {
 }
 
 /* --- Buttons base --- */
-body.neobrutalism button:not([class*="tcg-btn"]),
+body.neobrutalism button:not([class*="tcg-btn"]):not([class*="tour-nav-btn"]):not([class*="tour-settings-btn"]):not([class*="tour-dex-btn"]):not([class*="tour-settings-gear"]),
 body.neobrutalism [role="button"],
 body.neobrutalism a[class*="bg-"] {
   background-image: none !important;
@@ -600,6 +600,7 @@ body.neobrutalism .tour-nav-bar {
 body.neobrutalism .tour-nav-bar button,
 body.neobrutalism .tour-nav-bar a,
 body.neobrutalism .tour-nav-bar > * {
+  background-image: none !important;
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
   border-radius: 4px !important;
@@ -953,23 +954,23 @@ body.neobrutalism .tour-dex-dropdown > div[style*="z-index"] a:hover * {
   color: #000 !important;
 }
 
-/* Settings gear button → solid red (high specificity to beat bg-vintage-charcoal/80 rule) */
+/* Settings gear button → gold (high specificity to beat bg-vintage-charcoal/80 rule) */
 body.neobrutalism [class*="bg-vintage-charcoal"] .tour-settings-gear,
 body.neobrutalism .tour-settings-gear {
-  background: #CC2222 !important;
-  background-color: #CC2222 !important;
+  background: #b8860b !important;
+  background-color: #b8860b !important;
   border: 3px solid #000 !important;
   box-shadow: 3px 3px 0px #000 !important;
   border-radius: 4px !important;
 }
 body.neobrutalism [class*="bg-vintage-charcoal"] .tour-settings-gear *,
 body.neobrutalism .tour-settings-gear * {
-  color: #FFD400 !important;
-  stroke: #FFD400 !important;
+  color: #000 !important;
+  stroke: #000 !important;
 }
 body.neobrutalism [class*="bg-vintage-charcoal"] .tour-settings-gear:hover,
 body.neobrutalism .tour-settings-gear:hover {
-  background: #AA1111 !important;
+  background: #a0780a !important;
   background-color: #AA1111 !important;
   transform: translate(2px, 2px) !important;
   box-shadow: 1px 1px 0px #000 !important;

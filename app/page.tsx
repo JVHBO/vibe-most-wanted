@@ -13,11 +13,15 @@ import { GameHeader } from "@/components/GameHeader";
 import { useRouter } from "next/navigation";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useQuery } from "convex/react";
+import { AudioManager } from "@/lib/audio-manager";
 
 import { api } from "@/convex/_generated/api";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
+import { CpuArenaModal } from "@/components/CpuArenaModal";
 
 const SettingsModal = dynamic(() => import("@/components/SettingsModal").then(m => m.SettingsModal), { ssr: false });
+const ChangelogModal = dynamic(() => import("@/components/ChangelogModal").then(m => m.ChangelogModal), { ssr: false });
+const ReportModal = dynamic(() => import("@/components/ReportModal").then(m => m.ReportModal), { ssr: false });
 const CoinsInboxModal = dynamic(() => import("@/components/CoinsInboxModal").then(m => m.CoinsInboxModal), { ssr: false });
 const MyCardsModal = dynamic(() => import("@/app/(game)/components/modals/MyCardsModal").then(m => m.MyCardsModal), { ssr: false });
 
@@ -47,6 +51,9 @@ export default function HomePage() {
   const [showChangeUsername, setShowChangeUsername] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [isChangingUsername, setIsChangingUsername] = useState(false);
+  const [showCpuArena, setShowCpuArena] = useState(false);
+  const [showChangelog, setShowChangelog] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   useEffect(() => {
     sdk?.context?.then((c) => setIsInFarcaster(!!c)).catch(() => setIsInFarcaster(false));
@@ -141,6 +148,7 @@ export default function HomePage() {
       @keyframes beamRL { 0%,50% { right:18%; width:0; opacity:0; } 55% { right:18%; width:0; opacity:0.35; } 85% { right:18%; width:64%; opacity:0.35; } 92%,100% { right:18%; width:64%; opacity:0; } }
       @keyframes pushRight { 0%,38%,55%,100% { transform:translateY(-50%) translateX(0); } 43%,50% { transform:translateY(-50%) translateX(28px); } }
       @keyframes pushLeft  { 0%,83%,98%,100% { transform:translateY(-50%) translateX(0); } 88%,95% { transform:translateY(-50%) translateX(-28px); } }
+      @keyframes dotPulse { 0%,80%,100% { opacity:0.2; transform:scale(0.8); } 40% { opacity:1; transform:scale(1); } }
     `}</style>
 
       <div id="th-hdr">
@@ -256,7 +264,7 @@ export default function HomePage() {
               </div>
             </Link>
 
-            <Link href="/tcg" style={{ borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #1E3A8A, #2563EB)', border: 'none', animation: 'fadeInUp 0.4s ease', minHeight: 72, textDecoration: 'none', position: 'relative' }}>
+            <div onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowCpuArena(true); }} style={{ borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #1E3A8A, #2563EB)', border: 'none', animation: 'fadeInUp 0.4s ease', minHeight: 72, cursor: 'pointer', position: 'relative' }}>
               {/* VibeFID cover — esquerda */}
               <img src="/covers/vibefid-cover.png" alt=""
                 style={{ position: 'absolute', left: -4, top: '50%', height: '88%', width: 'auto', objectFit: 'cover', borderRadius: 4, opacity: 0.12, animation: 'pushLeft 3s ease-in-out infinite' }}
@@ -272,7 +280,7 @@ export default function HomePage() {
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
                 <div style={{ fontSize: 11, fontWeight: 800, color: '#fff' }}>ARENA</div>
               </div>
-            </Link>
+            </div>
           </div>
 
           {/* NEED CARDS */}
@@ -282,91 +290,93 @@ export default function HomePage() {
               <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>Need Cards</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
-              <Link href="/raid" style={{
-                borderRadius: 10, overflow: 'hidden',
-                background: hasEnoughCards ? 'linear-gradient(135deg, #1F2937, #7F1D1D)' : 'linear-gradient(135deg, #1a1a1a, #111111)',
-                animation: 'fadeInUp 0.45s ease', minHeight: 72, textDecoration: 'none',
-                opacity: hasEnoughCards ? 1 : 0.5,
-                border: 'none',
-              }}>
-                <div style={{ padding: '10px 6px', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-                  {hasEnoughCards && (
-                    <div style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', opacity: 0.35 }}>
-                      <svg width="70" height="60" viewBox="0 0 70 60">
-                        {/* Boss — demon face */}
-                        <g style={{ animation: 'bossDestroy 6s ease-in-out infinite' }}>
-                          <circle cx="52" cy="30" r="14" fill="none" stroke="#ef4444" strokeWidth="1"/>
-                          <polygon points="44,18 41,11 47,17" fill="#ef4444"/>
-                          <polygon points="60,18 63,11 57,17" fill="#ef4444"/>
-                          <circle cx="47" cy="28" r="2" fill="#ef4444"/>
-                          <circle cx="57" cy="28" r="2" fill="#ef4444"/>
-                          <path d="M46,35 L48,38 L50,35 L52,39 L54,35 L56,38 L58,35" fill="none" stroke="#ef4444" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                        </g>
-                        {/* Static balls */}
-                        <circle cx="8" cy="8"  r="4" fill="none" stroke="#ef4444" strokeWidth="1"/>
-                        <circle cx="5" cy="28" r="3" fill="none" stroke="#ef4444" strokeWidth="1"/>
-                        <circle cx="8" cy="48" r="4" fill="none" stroke="#ef4444" strokeWidth="1"/>
-                        {/* Individual shots */}
-                        <line x1="12" y1="8"  x2="37" y2="20" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation:'shot1 6s ease-in-out infinite' }}/>
-                        <line x1="8"  y1="28" x2="37" y2="28" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation:'shot2 6s ease-in-out infinite' }}/>
-                        <line x1="12" y1="48" x2="37" y2="36" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation:'shot3 6s ease-in-out infinite' }}/>
-                        {/* Final combined shots */}
-                        <line x1="12" y1="8"  x2="37" y2="20" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation:'shotAll 6s ease-in-out infinite' }}/>
-                        <line x1="8"  y1="28" x2="37" y2="28" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation:'shotAll 6s ease-in-out infinite' }}/>
-                        <line x1="12" y1="48" x2="37" y2="36" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation:'shotAll 6s ease-in-out infinite' }}/>
-                      </svg>
-                    </div>
-                  )}
-                  <div style={{ position: 'relative', zIndex: 1 }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: hasEnoughCards ? '#fff' : '#555', textTransform: 'uppercase' }}>Boss Raid</div>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/leaderboard" style={{
-                borderRadius: 10, overflow: 'hidden',
-                background: 'linear-gradient(135deg, #3B1F00, #D97706)',
-                border: 'none',
-                animation: 'fadeInUp 0.5s ease', minHeight: 72, textDecoration: 'none',
-                opacity: hasEnoughCards ? 1 : 0.5,
-              }}>
-                <div style={{ padding: '10px 6px', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-                  {hasEnoughCards && (
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', padding: '4px 10px 6px', overflow: 'hidden' }}>
-                      {/* Card 1 */}
-                      <div style={{ animation: 'lbCard1 5s ease-in-out infinite', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                        <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: 'rank1on1 5s ease-in-out infinite', opacity: 0 }}>#1</span>
-                        <svg width="28" height="38" viewBox="0 0 28 38" opacity="0.25">
-                          <rect x="0" y="0" width="28" height="38" rx="3" fill="rgba(255,215,0,0.12)" stroke="#fbbf24" strokeWidth="1.2"/>
-                          <line x1="4" y1="10" x2="24" y2="10" stroke="#fbbf24" strokeWidth="1"/>
-                          <line x1="4" y1="15" x2="17" y2="15" stroke="#fbbf24" strokeWidth="1"/>
-                        </svg>
-                      </div>
-                      {/* Card 2 */}
-                      <div style={{ animation: 'lbCard2 5s ease-in-out infinite', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                        <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: 'rank1on2 5s ease-in-out infinite', opacity: 0 }}>#1</span>
-                        <svg width="28" height="38" viewBox="0 0 28 38" opacity="0.25">
-                          <rect x="0" y="0" width="28" height="38" rx="3" fill="rgba(255,215,0,0.12)" stroke="#fbbf24" strokeWidth="1.2"/>
-                          <line x1="4" y1="10" x2="24" y2="10" stroke="#fbbf24" strokeWidth="1"/>
-                          <line x1="4" y1="15" x2="17" y2="15" stroke="#fbbf24" strokeWidth="1"/>
-                        </svg>
-                      </div>
-                      {/* Card 3 */}
-                      <div style={{ animation: 'lbCard3 5s ease-in-out infinite', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                        <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: 'rank1on3 5s ease-in-out infinite', opacity: 0 }}>#1</span>
-                        <svg width="28" height="38" viewBox="0 0 28 38" opacity="0.25">
-                          <rect x="0" y="0" width="28" height="38" rx="3" fill="rgba(255,215,0,0.12)" stroke="#fbbf24" strokeWidth="1.2"/>
-                          <line x1="4" y1="10" x2="24" y2="10" stroke="#fbbf24" strokeWidth="1"/>
-                          <line x1="4" y1="15" x2="17" y2="15" stroke="#fbbf24" strokeWidth="1"/>
-                        </svg>
+              {(() => {
+                const raidStyle = {
+                  borderRadius: 10, overflow: 'hidden',
+                  background: hasEnoughCards ? 'linear-gradient(135deg, #1F2937, #7F1D1D)' : '#1F2937',
+                  animation: 'fadeInUp 0.45s ease', minHeight: 72,
+                  opacity: hasEnoughCards ? 1 : 0.4,
+                  border: 'none',
+                  cursor: hasEnoughCards ? 'pointer' : 'not-allowed',
+                };
+                const lbStyle = {
+                  borderRadius: 10, overflow: 'hidden',
+                  background: hasEnoughCards ? 'linear-gradient(135deg, #3B1F00, #D97706)' : '#1F2937',
+                  border: 'none',
+                  animation: 'fadeInUp 0.5s ease', minHeight: 72,
+                  opacity: hasEnoughCards ? 1 : 0.4,
+                  cursor: hasEnoughCards ? 'pointer' : 'not-allowed',
+                };
+                return (
+                  <>
+                  <Link href={hasEnoughCards ? '/raid' : '#'} style={raidStyle as any} onClick={(e) => { if (!hasEnoughCards) e.preventDefault(); }}>
+                    <div style={{ padding: '10px 6px', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', pointerEvents: hasEnoughCards ? 'auto' : 'none' }}>
+                      {hasEnoughCards && (
+                        <div style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', opacity: 0.35 }}>
+                          <svg width="70" height="60" viewBox="0 0 70 60">
+                            <g style={{ animation: 'bossDestroy 6s ease-in-out infinite' }}>
+                              <circle cx="52" cy="30" r="14" fill="none" stroke="#ef4444" strokeWidth="1"/>
+                              <polygon points="44,18 41,11 47,17" fill="#ef4444"/>
+                              <polygon points="60,18 63,11 57,17" fill="#ef4444"/>
+                              <circle cx="47" cy="28" r="2" fill="#ef4444"/>
+                              <circle cx="57" cy="28" r="2" fill="#ef4444"/>
+                              <path d="M46,35 L48,38 L50,35 L52,39 L54,35 L56,38 L58,35" fill="none" stroke="#ef4444" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                            </g>
+                            <circle cx="8" cy="8"  r="4" fill="none" stroke="#ef4444" strokeWidth="1"/>
+                            <circle cx="5" cy="28" r="3" fill="none" stroke="#ef4444" strokeWidth="1"/>
+                            <circle cx="8" cy="48" r="4" fill="none" stroke="#ef4444" strokeWidth="1"/>
+                            <line x1="12" y1="8"  x2="37" y2="20" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation:'shot1 6s ease-in-out infinite' }}/>
+                            <line x1="8"  y1="28" x2="37" y2="28" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation:'shot2 6s ease-in-out infinite' }}/>
+                            <line x1="12" y1="48" x2="37" y2="36" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation:'shot3 6s ease-in-out infinite' }}/>
+                            <line x1="12" y1="8"  x2="37" y2="20" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation:'shotAll 6s ease-in-out infinite' }}/>
+                            <line x1="8"  y1="28" x2="37" y2="28" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation:'shotAll 6s ease-in-out infinite' }}/>
+                            <line x1="12" y1="48" x2="37" y2="36" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation:'shotAll 6s ease-in-out infinite' }}/>
+                          </svg>
+                        </div>
+                      )}
+                      <div style={{ position: 'relative', zIndex: 1 }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: hasEnoughCards ? '#fff' : '#555', textTransform: 'uppercase' }}>Boss Raid</div>
                       </div>
                     </div>
-                  )}
-                  <div style={{ position: 'relative', zIndex: 1 }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: hasEnoughCards ? '#fff' : '#555', textTransform: 'uppercase' }}>Leaderboard</div>
-                  </div>
-                </div>
-              </Link>
+                  </Link>
+                  <Link href={hasEnoughCards ? '/leaderboard' : '#'} style={lbStyle as any} onClick={(e) => { if (!hasEnoughCards) e.preventDefault(); }}>
+                    <div style={{ padding: '10px 6px', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', pointerEvents: hasEnoughCards ? 'auto' : 'none' }}>
+                      {hasEnoughCards && (
+                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', padding: '4px 10px 6px', overflow: 'hidden' }}>
+                          <div style={{ animation: 'lbCard1 5s ease-in-out infinite', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                            <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: 'rank1on1 5s ease-in-out infinite', opacity: 0 }}>#1</span>
+                            <svg width="28" height="38" viewBox="0 0 28 38" opacity="0.25">
+                              <rect x="0" y="0" width="28" height="38" rx="3" fill="rgba(255,215,0,0.12)" stroke="#fbbf24" strokeWidth="1.2"/>
+                              <line x1="4" y1="10" x2="24" y2="10" stroke="#fbbf24" strokeWidth="1"/>
+                              <line x1="4" y1="15" x2="17" y2="15" stroke="#fbbf24" strokeWidth="1"/>
+                            </svg>
+                          </div>
+                          <div style={{ animation: 'lbCard2 5s ease-in-out infinite', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                            <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: 'rank1on2 5s ease-in-out infinite', opacity: 0 }}>#1</span>
+                            <svg width="28" height="38" viewBox="0 0 28 38" opacity="0.25">
+                              <rect x="0" y="0" width="28" height="38" rx="3" fill="rgba(255,215,0,0.12)" stroke="#fbbf24" strokeWidth="1.2"/>
+                              <line x1="4" y1="10" x2="24" y2="10" stroke="#fbbf24" strokeWidth="1"/>
+                              <line x1="4" y1="15" x2="17" y2="15" stroke="#fbbf24" strokeWidth="1"/>
+                            </svg>
+                          </div>
+                          <div style={{ animation: 'lbCard3 5s ease-in-out infinite', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                            <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: 'rank1on3 5s ease-in-out infinite', opacity: 0 }}>#1</span>
+                            <svg width="28" height="38" viewBox="0 0 28 38" opacity="0.25">
+                              <rect x="0" y="0" width="28" height="38" rx="3" fill="rgba(255,215,0,0.12)" stroke="#fbbf24" strokeWidth="1.2"/>
+                              <line x1="4" y1="10" x2="24" y2="10" stroke="#fbbf24" strokeWidth="1"/>
+                              <line x1="4" y1="15" x2="17" y2="15" stroke="#fbbf24" strokeWidth="1"/>
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                      <div style={{ position: 'relative', zIndex: 1 }}>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: hasEnoughCards ? '#fff' : '#555', textTransform: 'uppercase' }}>Leaderboard</div>
+                      </div>
+                    </div>
+                  </Link>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
@@ -383,7 +393,15 @@ export default function HomePage() {
             <div style={{ padding: '10px 14px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <span style={{ fontSize: 7, fontWeight: 600, color: 'rgba(156,163,175,0.5)', textTransform: 'uppercase', letterSpacing: 1.5 }}>Your Cards</span>
-                <span style={{ fontSize: 20, fontWeight: 900, color: '#FACC15', lineHeight: 1 }}>{cardsLoading ? '...' : cardCount}</span>
+                {cardsLoading ? (
+                  <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FACC15', animation: 'dotPulse 1.2s ease-in-out infinite 0s' }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FACC15', animation: 'dotPulse 1.2s ease-in-out infinite 0.2s' }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FACC15', animation: 'dotPulse 1.2s ease-in-out infinite 0.4s' }} />
+                  </div>
+                ) : (
+                  <span style={{ fontSize: 20, fontWeight: 900, color: '#FACC15', lineHeight: 1 }}>{cardCount}</span>
+                )}
               </div>
               <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(156,163,175,0.5)', flexShrink: 0, marginRight: 4 }}>View All &gt;</span>
             </div>
@@ -504,7 +522,13 @@ export default function HomePage() {
         pause={pause}
         play={play}
         disconnectWallet={disconnect}
+        onChangelogClick={() => { setShowSettingsModal(false); setShowChangelog(true); }}
+        onReportClick={() => { setShowSettingsModal(false); setShowReport(true); }}
+        isInFarcaster={isInFarcaster}
       />
+      {showChangelog && <ChangelogModal t={t} isOpen onReportBug={() => setShowReport(true)} onClose={() => setShowChangelog(false)} />}
+      {showReport && <ReportModal t={t} isOpen onClose={() => setShowReport(false)} address={address} fid={userProfile?.farcasterFid} username={userProfile?.username} currentView="home" farcasterDisplayName={userProfile?.farcasterDisplayName as string | null | undefined} />}
+      {showCpuArena && address && <CpuArenaModal isOpen onClose={() => setShowCpuArena(false)} address={address} soundEnabled={soundEnabled} t={t} isInFarcaster={isInFarcaster} />}
 
       {/* BOTTOM NAV */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, background: '#1E1E1E', borderTop: '2px solid #000', padding: '4px', display: 'flex', alignItems: 'stretch', gap: 0, height: 60 }}>

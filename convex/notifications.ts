@@ -456,8 +456,8 @@ export const sendLowEnergyNotifications = internalAction({
           const minutes = Math.round(LOW_ENERGY_THRESHOLD / 60000);
           const body = `${deck.lowEnergyCards} card${deck.lowEnergyCards > 1 ? 's' : ''} will run out of energy in less than ${minutes} minutes!`;
 
-          // Send via Neynar API (no need to fetch tokens from Convex)
-          const result = await sendViaNeynar([fidNumber], title, body, "https://vibemostwanted.xyz");
+          // Send via direct Warpcast API (zero credits)
+          const result = await sendViaDirectUrl(ctx, fidNumber.toString(), title, body, "https://vibemostwanted.xyz");
 
           if (result.success_count > 0) {
             sent++;
@@ -561,6 +561,108 @@ export const getProfilesByAddresses = internalQuery({
 // ============================================================================
 
 /**
+ * Get all notification tokens (public query for use by broadcast action)
+ * Returns unique tokens only (deduped) to avoid sending duplicates to same user/app
+ * 🚀 BANDWIDTH FIX: Limited to 5000 tokens max
+ */
+export const getUniqueTokens = query({
+  args: {},
+  handler: async (ctx) => {
+    const tokens = await ctx.db.query("notificationTokens").take(5000);
+    // Return unique token strings (dedup by token value)
+    const seen = new Set<string>();
+    const unique: Array<{ fid: string; token: string; url: string }> = [];
+    for (const t of tokens) {
+      if (!seen.has(t.token)) {
+        seen.add(t.token);
+        unique.push({ fid: t.fid, token: t.token, url: t.url || "https://api.warpcast.com/v1/frame-notifications" });
+      }
+    }
+    return unique;
+  },
+});
+
+/**
+ * Send notifications to ALL users directly (bypasses Neynar, zero credits)
+ * Used by broadcast functions like daily login, featured cast, custom notifications
+ */
+async function sendBroadcastDirectUrl(
+  ctx: any,
+  title: string,
+  body: string,
+  targetUrl: string = "https://vibemostwanted.xyz"
+): Promise<{ success_count: number; failure_count: number; details: string[]; totalTokens: number }> {
+  const { api } = await import("./_generated/api");
+
+  const allTokens = await ctx.runQuery(api.notifications.getUniqueTokens, {});
+  console.log(`[BroadcastDirect] Found ${allTokens.length} unique tokens to send`);
+
+  const details: string[] = [];
+  let successCount = 0;
+  let failCount = 0;
+  const DELAY_MS = 200;
+
+  for (let i = 0; i < allTokens.length; i++) {
+    const { fid, token, url } = allTokens[i];
+    const uuid = crypto.randomUUID();
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Frame-Token": token,
+        },
+        body: JSON.stringify({
+          title: title.slice(0, 32),
+          body: body.slice(0, 128),
+          targetUrl: targetUrl.slice(0, 256),
+          notificationId: uuid,
+          tokens: [token],
+        }),
+      });
+
+      if (response.ok) {
+        successCount++;
+      } else {
+        const errText = await response.text();
+        failCount++;
+        if (failCount <= 10) {
+          details.push(`FAIL FID:${fid} ${response.status} ${errText.slice(0, 100)}`);
+        }
+      }
+    } catch (error: any) {
+      failCount++;
+      if (failCount <= 10) {
+        details.push(`ERR FID:${fid} ${error?.message || "unknown"}`);
+      }
+    }
+
+    // Delay between sends to avoid rate limiting
+    if (i < allTokens.length - 1) {
+      await sleep(DELAY_MS);
+    }
+  }
+
+  console.log(`[BroadcastDirect] ✅ ${successCount} sent, ❌ ${failCount} failed out of ${allTokens.length} tokens`);
+  return { success_count: successCount, failure_count: failCount, details, totalTokens: allTokens.length };
+}
+
+/**
+ * Send notification directly to a specific FID (bypasses Neynar, zero credits)
+ * Uses sendViaDirectUrl helper which POSTs directly to saved Warpcast URLs
+ */
+async function sendViaDirectUrlWithFidNumber(
+  ctx: any,
+  fidNumber: number,
+  title: string,
+  body: string,
+  targetUrl: string = "https://vibemostwanted.xyz"
+): Promise<{ success_count: number; failure_count: number; details: string[] }> {
+  return sendViaDirectUrl(ctx, fidNumber.toString(), title, body, targetUrl);
+}
+
+/**
  * Send daily login reminder to all users with notification tokens
  * Called by scheduled function (cron job)
  */
@@ -570,16 +672,13 @@ export const sendDailyLoginReminder = internalAction({
   // @ts-ignore
   handler: async (ctx) => {
     try {
-      console.log("📬 Sending daily login reminder via Neynar...");
+      console.log("📬 Sending daily login reminder via direct Warpcast...");
 
       const title = "💰 Daily Login Bonus!";
       const body = "Claim your free coins! Don't miss today's reward 🎁";
-
-      // Send to ALL users with notifications enabled (empty array = broadcast)
-      const result = await sendViaNeynar([], title, body, "https://vibemostwanted.xyz");
-
+      const result = await sendBroadcastDirectUrl(ctx, title, body, "https://vibemostwanted.xyz");
       console.log(`📊 Daily login: ${result.success_count} sent, ${result.failure_count} failed`);
-      return { sent: result.success_count, failed: result.failure_count, total: result.success_count + result.failure_count + result.not_attempted_count };
+      return { sent: result.success_count, failed: result.failure_count, total: result.totalTokens };
 
     } catch (error: any) {
       console.error("❌ Error in sendDailyLoginReminder:", error);
@@ -605,18 +704,17 @@ export const sendFeaturedCastNotification = internalAction({
   // @ts-ignore
   handler: async (ctx, { castAuthor, warpcastUrl, winnerUsername }) => {
     try {
-      console.log("🎬 Sending featured cast notification via Neynar...");
+      console.log("🎬 Sending featured cast notification via direct Warpcast...");
 
       const title = "🎯 New Wanted Cast!";
       const body = winnerUsername
         ? `@${winnerUsername} won the auction! @${castAuthor} is now WANTED! Interact to earn VBMS 💰`
         : `@${castAuthor} is now WANTED! Interact to earn VBMS tokens! 💰`;
 
-      // Send to ALL users with notifications enabled (empty array = broadcast)
-      const result = await sendViaNeynar([], title, body, "https://vibemostwanted.xyz");
+      const result = await sendBroadcastDirectUrl(ctx, title, body, "https://vibemostwanted.xyz");
 
       console.log(`📊 Featured cast notification: ${result.success_count} sent, ${result.failure_count} failed`);
-      return { sent: result.success_count, failed: result.failure_count, total: result.success_count + result.failure_count + result.not_attempted_count };
+      return { sent: result.success_count, failed: result.failure_count, total: result.totalTokens };
 
     } catch (error: any) {
       console.error("❌ Error in sendFeaturedCastNotification:", error);
@@ -641,11 +739,109 @@ export const sendWinnerNotification = internalAction({
 
     console.log(`🏆 Sending winner notification to FID ${winnerFid} (@${winnerUsername})...`);
 
-    const result = await sendViaNeynar([winnerFid], title, body, "https://vibemostwanted.xyz");
+    const result = await sendViaDirectUrlWithFidNumber(ctx, winnerFid, title, body, "https://vibemostwanted.xyz");
 
     const sent = result.success_count > 0;
     console.log(`🏆 Winner notification: ${sent ? "sent" : "failed"}`);
-    return { sent, neynarSent: sent, warpcastSent: false };
+    return { sent, directSent: sent };
+  },
+});
+
+/**
+ * Send notification directly to saved Farcaster notification URLs
+ * BYPASSES Neynar - POSTs directly to Warpcast/Base App endpoints
+ * Uses the token + url saved in notificationTokens table
+ */
+async function sendViaDirectUrl(
+  ctx: any,
+  fid: string,
+  title: string,
+  body: string,
+  targetUrl: string = "https://vibemostwanted.xyz"
+): Promise<{ success_count: number; failure_count: number; details: string[] }> {
+  try {
+    const { api } = await import("./_generated/api");
+
+    // Get ALL tokens for this FID (warpcast, base app, etc.)
+    const tokens = await ctx.runQuery(internal.notifications.getAllTokensByFidInternal, { fid });
+
+    if (!tokens || tokens.length === 0) {
+      console.log(`[DirectSend] No notification tokens found for FID ${fid}`);
+      return { success_count: 0, failure_count: 0, details: [`No tokens for FID ${fid}`] };
+    }
+
+    const details: string[] = [];
+    let successCount = 0;
+    let failCount = 0;
+
+    // 🔒 SECURITY FIX: Use crypto.randomUUID() for idempotency
+    const uuid = crypto.randomUUID();
+
+    for (const tokenDoc of tokens) {
+      const { token, url, platform, app } = tokenDoc;
+      const notifUrl = url || "https://api.warpcast.com/v1/frame-notifications";
+
+      try {
+        const response = await fetch(notifUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Frame-Token": token,
+          },
+          body: JSON.stringify({
+            title: title.slice(0, 32),
+            body: body.slice(0, 128),
+            targetUrl: targetUrl.slice(0, 256),
+            notificationId: uuid,
+            tokens: [token],
+          }),
+        });
+
+        if (response.ok) {
+          successCount++;
+          details.push(`OK ${platform || "unknown"}/${app || "unknown"}`);
+          console.log(`[DirectSend] ✅ Sent to FID ${fid} via ${platform}/${app}`);
+        } else {
+          const errText = await response.text();
+          failCount++;
+          details.push(`FAIL ${platform}/${app}: ${response.status} ${errText.slice(0, 100)}`);
+          console.error(`[DirectSend] ❌ ${platform}/${app} failed: ${response.status}`, errText.slice(0, 200));
+        }
+      } catch (error: any) {
+        failCount++;
+        details.push(`ERR ${platform}/${app}: ${error?.message || "unknown"}`);
+        console.error(`[DirectSend] ❌ ${platform}/${app} fetch error:`, error?.message);
+      }
+
+      // Small delay between sends
+      await sleep(200);
+    }
+
+    return { success_count: successCount, failure_count: failCount, details };
+  } catch (error: any) {
+    console.error("[DirectSend] Error:", error?.message || error);
+    return { success_count: 0, failure_count: 1, details: [`Error: ${error?.message || "unknown"}`] };
+  }
+}
+
+/**
+ * TEST: Send notification to a SINGLE FID directly (bypasses Neynar, zero credits)
+ * Use this for testing notification delivery to Warpcast/Base App
+ */
+export const testDirectNotification = internalAction({
+  args: {
+    fid: v.number(),
+    title: v.string(),
+    body: v.string(),
+  },
+  handler: async (ctx, { fid, title, body }) => {
+    const fidStr = fid.toString();
+    console.log(`🧪 TEST: Sending direct notification to FID ${fid}...`);
+
+    const result = await sendViaDirectUrl(ctx, fidStr, title, body, "https://vibemostwanted.xyz");
+
+    console.log(`🧪 Result:`, JSON.stringify(result));
+    return result;
   },
 });
 
@@ -832,7 +1028,7 @@ export const sendPeriodicTip = internalAction({
     const { api } = await import("./_generated/api");
 
     try {
-      console.log("💡 Starting periodic tip notification via Neynar...");
+      console.log("💡 Starting periodic tip notification via direct Warpcast...");
 
       let tipState = await ctx.runQuery(internal.notificationsHelpers.getTipState);
       if (!tipState._id) {
@@ -852,7 +1048,13 @@ export const sendPeriodicTip = internalAction({
 
       console.log(`📊 Targeting ${targetFids.length} active users (last 7 days)`);
 
-      const result = await sendViaNeynar(targetFids, currentTip.title, currentTip.body, "https://vibemostwanted.xyz");
+      let totalSent = 0;
+      let totalFailed = 0;
+      for (const fid of targetFids) {
+        const r = await sendViaDirectUrlWithFidNumber(ctx, fid, currentTip.title, currentTip.body, "https://vibemostwanted.xyz");
+        totalSent += r.success_count;
+        totalFailed += r.failure_count;
+      }
 
       // Update tip rotation state
       const nextTipIndex = (tipState.currentTipIndex + 1) % GAMING_TIPS.length;
@@ -861,10 +1063,10 @@ export const sendPeriodicTip = internalAction({
         currentTipIndex: nextTipIndex,
       });
 
-      console.log(`📊 Periodic tip: ${result.success_count} sent, ${result.failure_count} failed`);
+      console.log(`📊 Periodic tip: ${totalSent} sent, ${totalFailed} failed`);
       console.log(`📝 Sent tip ${tipState.currentTipIndex + 1}/${GAMING_TIPS.length}: "${currentTip.title}"`);
 
-      return { sent: result.success_count, failed: result.failure_count, total: result.success_count + result.failure_count + result.not_attempted_count, tipIndex: tipState.currentTipIndex };
+      return { sent: totalSent, failed: totalFailed, total: totalSent + totalFailed, tipIndex: tipState.currentTipIndex };
 
     } catch (error: any) {
       console.error("❌ Error in sendPeriodicTip:", error);
@@ -919,17 +1121,43 @@ export const sendCustomNotification = action({
     requireInternalAdminKey(adminKey);
 
     try {
-      console.log(`📬 Sending custom notification via Neynar: "${title}"`);
+      console.log(`📬 Sending custom notification via direct Warpcast: "${title}"`);
 
-      // Send to ALL users with notifications enabled (empty array = broadcast)
-      const result = await sendViaNeynar([], title, body, "https://vibemostwanted.xyz");
+      const result = await sendBroadcastDirectUrl(ctx, title, body, "https://vibemostwanted.xyz");
 
       console.log(`📊 Custom notification: ${result.success_count} sent, ${result.failure_count} failed`);
-      return { sent: result.success_count, failed: result.failure_count, total: result.success_count + result.failure_count + result.not_attempted_count };
+      return { sent: result.success_count, failed: result.failure_count, total: result.totalTokens };
     } catch (error: any) {
       console.error("❌ Error in sendCustomNotification:", error);
       throw error;
     }
+  },
+});
+
+/**
+ * PUBLIC API: Test direct notification (zero Neynar credits) to a single FID
+ * Sends directly to saved Warpcast/Base App notification URLs
+ */
+export const triggerTestDirectNotification = mutation({
+  args: {
+    adminKey: v.string(),
+    fid: v.number(),
+    title: v.optional(v.string()),
+    body: v.optional(v.string()),
+  },
+  handler: async (ctx, { adminKey, fid, title, body }) => {
+    requireInternalAdminKey(adminKey);
+
+    const finalTitle = title || "🧪 Test Notification";
+    const finalBody = body || "This is a test notification sent directly to Warpcast — zero Neynar credits used!";
+
+    console.log(`🧪 Scheduling direct test notification to FID ${fid}...`);
+    await ctx.scheduler.runAfter(0, internal.notifications.testDirectNotification, {
+      fid,
+      title: finalTitle,
+      body: finalBody,
+    });
+    return { scheduled: true, fid };
   },
 });
 
@@ -993,11 +1221,17 @@ export const sendBossDefeatedNotifications = internalAction({
       const title = "🎉 Boss Defeated!";
       const body = rarityEmoji + " " + bossName + " was slain! Claim your reward now! 💰";
 
-      // Send to all contributors via Neynar
-      const result = await sendViaNeynar(contributorFids, title, body, "https://vibemostwanted.xyz");
+      // Send to all contributors via direct Warpcast
+      let totalSent = 0;
+      let totalFailed = 0;
+      for (const fid of contributorFids) {
+        const r = await sendViaDirectUrlWithFidNumber(ctx, fid, title, body, "https://vibemostwanted.xyz");
+        totalSent += r.success_count;
+        totalFailed += r.failure_count;
+      }
 
-      console.log("📊 Boss defeated notifications: " + result.success_count + " sent, " + result.failure_count + " failed out of " + totalContributors + " contributors");
-      return { sent: result.success_count, failed: result.failure_count, total: totalContributors };
+      console.log("📊 Boss defeated notifications: " + totalSent + " sent, " + totalFailed + " failed out of " + totalContributors + " contributors");
+      return { sent: totalSent, failed: totalFailed, total: totalContributors };
 
     } catch (error: any) {
       console.error("❌ Error in sendBossDefeatedNotifications:", error);

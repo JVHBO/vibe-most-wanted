@@ -526,30 +526,30 @@ export function SettingsModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#1A1A1A] rounded-xl border border-white/10 p-3 sm:p-5 max-w-md w-full max-h-[90%] overflow-y-auto"
+        className="bg-[#1A1A1A] rounded-xl border border-white/10 p-2 sm:p-3 max-w-md w-full max-h-[90%] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-2 sm:mb-3">
-          <h2 className="text-xl sm:text-2xl font-display font-bold text-vintage-gold flex items-center gap-2">
+        <div className="flex justify-between items-center mb-1.5 sm:mb-2">
+          <h2 className="text-base sm:text-lg font-display font-bold text-vintage-gold flex items-center gap-1">
             <span>§</span> {t('settings')}
           </h2>
           <button
             onClick={onClose}
-            className="text-vintage-gold hover:text-vintage-ice text-xl sm:text-2xl transition"
+            className="text-vintage-gold hover:text-vintage-ice text-lg sm:text-xl transition"
           >
             ×
           </button>
         </div>
 
-        <div className="space-y-2 sm:space-y-3">
+        <div className="space-y-1.5">
           {/* Music Toggle */}
-          <div className="bg-white/5 p-2 sm:p-3 rounded-lg border border-white/8">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
+          <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-lg sm:text-xl text-vintage-gold">♫</span>
                 <div>
-                  <p className="font-modern font-bold text-vintage-gold">{t('settingsMusic')}</p>
-                  <p className="text-xs text-vintage-burnt-gold">
+                  <p className="font-modern font-bold text-vintage-gold text-sm sm:text-base">{t('settingsMusic')}</p>
+                  <p className="text-[10px] text-vintage-burnt-gold">
                     {musicEnabled ? t('musicOn') : t('musicOff')}
                   </p>
                 </div>
@@ -593,10 +593,10 @@ export function SettingsModal({
           </div>
 
           {/* Language Selector */}
-          <div className="bg-white/5 p-2 sm:p-3 rounded-lg border border-white/8">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-2xl sm:text-3xl text-vintage-gold">◊</span>
-              <p className="font-modern font-bold text-vintage-gold">
+          <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg sm:text-xl text-vintage-gold">◊</span>
+              <p className="font-modern font-bold text-vintage-gold text-sm sm:text-base">
                 {t('language').toUpperCase()}
               </p>
             </div>
@@ -629,10 +629,10 @@ export function SettingsModal({
           </div>
 
           {/* Music Mode Selector */}
-          <div className="bg-white/5 p-2 sm:p-3 rounded-lg border border-white/8">
-            <div className="flex items-center gap-3 mb-3">
-              <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
-              <p className="font-modern font-bold text-vintage-gold">{t('settingsBackgroundMusic')}</p>
+          <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg sm:text-xl text-vintage-gold">♫</span>
+              <p className="font-modern font-bold text-vintage-gold text-sm sm:text-base">{t('settingsBackgroundMusic')}</p>
             </div>
             <select
               onChange={(e) => {
@@ -1210,7 +1210,7 @@ export function SettingsModal({
 
           {/* Disconnect Wallet — hidden in Farcaster miniapp */}
           {walletAddress && disconnectWallet && !isInFarcaster && (
-            <div className="bg-white/5 p-2 sm:p-3 rounded-lg border border-white/8">
+            <div className="bg-white/5 p-2 rounded-lg border border-white/5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-vintage-gold">
