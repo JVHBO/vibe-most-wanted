@@ -108,16 +108,12 @@ export default function TestHomePage() {
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', height: '100%', background: '#1E1E1E', overflow: 'hidden',
+      position: 'relative', width: '100%', height: '100%', background: '#1E1E1E',
     }}>
     <style>{`
       * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
       .bg-vintage-charcoal\\/80, .bg-vintage-charcoal\\/95 { background: #1E1E1E !important; backdrop-filter: none !important; }
       .border-vintage-gold\\/30 { border-color: transparent !important; }
-      /* Force header margin to 0 — flex handles all spacing */
-      .mb-3 { margin-bottom: 0 !important; }
-      .mb-6 { margin-bottom: 0 !important; }
-      .mb-6 { margin-bottom: 0 !important; }
       @keyframes spinCW { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
       @keyframes pulseGlow { 0%,100% { opacity: 0.08; } 50% { opacity: 0.16; } }
       @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -157,8 +153,8 @@ export default function TestHomePage() {
         onCreateProfileClick={() => {}}
       />
 
-      {/* CONTENT - scrollable middle area */}
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '8px 4px' }}>
+      {/* CONTENT - padding-top compensates for fixed header */}
+      <div style={{ padding: '72px 4px 60px 4px', display: 'flex', flexDirection: 'column', gap: 8 }}>
 
           {/* PLAY NOW */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -443,8 +439,8 @@ export default function TestHomePage() {
         <CoinsInboxModal inboxStatus={inboxStatus} onClose={() => setShowCoinsInbox(false)} userAddress={address} />
       )}
 
-      {/* BOTTOM NAV - flex child, always at bottom of flex container */}
-      <div style={{ flexShrink: 0, background: '#1E1E1E', padding: '4px 4px 4px 4px', display: 'flex', gap: 4 }}>
+      {/* BOTTOM NAV */}
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, background: '#1E1E1E', padding: '4px 4px 4px 4px', display: 'flex', gap: 4 }}>
           {[
             { label: 'HOME',   bg: '#1E1E1E', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, onClick: () => router.push('/test-home') },
             { label: 'REDEEM',  bg: '#1E1E1E', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="10" width="18" height="12" rx="2"/><path d="M12 10V4"/><path d="M12 4c-2 0-4 2-4 4h4"/><path d="M12 4c2 0 4 2 4 4h-4"/><line x1="12" y1="10" x2="12" y2="22"/><line x1="3" y1="15" x2="21" y2="15"/></svg>, onClick: () => setShowCoinsInbox(true) },
