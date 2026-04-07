@@ -21,6 +21,8 @@ interface GameHeaderProps {
   onSettingsClick: () => void;
   onCreateProfileClick: () => void;
   onVibeFidClick?: () => void;
+  onDexClick?: () => void;
+  onProfileClick?: () => void;
 }
 
 const getAvatarFallback = () => '/images/default-avatar.png';
@@ -36,19 +38,18 @@ export function GameHeader({
   onSettingsClick,
   onCreateProfileClick,
   onVibeFidClick,
+  onDexClick,
+  onProfileClick,
 }: GameHeaderProps) {
   const { t } = useLanguage();
   const bondingProgress = useBondingProgress();
 
-  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showDexDropdown, setShowDexDropdown] = useState(false);
-  const profileRef = useRef<HTMLDivElement>(null);
   const dexRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdowns on click outside
+  // Close dex dropdown on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setShowProfileDropdown(false);
       if (dexRef.current && !dexRef.current.contains(e.target as Node)) setShowDexDropdown(false);
     };
     document.addEventListener('mousedown', handler);
@@ -67,11 +68,11 @@ export function GameHeader({
                 <div className="w-20 h-4 bg-vintage-gold/20 rounded animate-pulse" />
               </div>
             ) : userProfile ? (
-              <div ref={profileRef} className="tour-profile-dropdown relative" style={{ overflow: 'visible' }}>
+              <div className="tour-profile-dropdown relative" style={{ overflow: 'visible' }}>
                 <button
-                  onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown((p) => !p); }}
-                  onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); setShowProfileDropdown(true); }}
-                  className="tour-settings-btn flex items-center gap-2 px-4 py-2 h-[52px] bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 rounded-lg transition cursor-pointer"
+                  onClick={() => { if (onProfileClick) { if (soundEnabled) AudioManager.buttonClick(); onProfileClick(); return; } if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown((p) => !p); }}
+                  onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); if (!onProfileClick) setShowProfileDropdown(true); }}
+                  className="tour-settings-btn flex items-center gap-2 px-4 py-2 h-[52px] bg-blue-600 hover:bg-blue-500 border-0 rounded-lg transition cursor-pointer"
                 >
                   {userProfile.farcasterPfpUrl ? (
                     <img
@@ -105,39 +106,6 @@ export function GameHeader({
                     <BadgeList badges={getUserBadges(userProfile.address, userProfile.userIndex ?? 9999, userProfile.hasVibeBadge)} size="sm" />
                   </div>
                 </button>
-                {showProfileDropdown && (
-                  <div
-                    className="absolute top-full left-0 mt-1 bg-vintage-charcoal border-2 border-vintage-gold/30 rounded-lg overflow-hidden min-w-[150px] shadow-xl"
-                    style={{ zIndex: 9999 }}
-                  >
-                    <Link
-                      href={`/profile/${userProfile.username}`}
-                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); }}
-                      className="flex items-center gap-2 px-3 py-2.5 hover:bg-vintage-gold/20 transition text-xs font-semibold w-full"
-                      style={{ color: '#FFD700' }}
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                      Profile
-                    </Link>
-                    <button
-                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); onSettingsClick(); }}
-                      className="flex items-center gap-2 px-3 py-2.5 hover:bg-vintage-gold/20 transition text-xs font-semibold w-full text-left"
-                      style={{ color: '#FFD700' }}
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.38.64 1 1.07 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
-                      Settings
-                    </button>
-                    <Link
-                      href="/docs"
-                      onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown(false); }}
-                      className="flex items-center gap-2 px-3 py-2.5 hover:bg-vintage-gold/20 transition text-xs font-semibold w-full"
-                      style={{ color: '#FFD700' }}
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#FFD700" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
-                      Docs
-                    </Link>
-                  </div>
-                )}
               </div>
             ) : (
               <button
@@ -154,9 +122,9 @@ export function GameHeader({
             {address && userProfile && (
               <div ref={dexRef} className="tour-dex-dropdown relative" style={{ overflow: 'visible' }}>
                 <button
-                  onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown((p) => !p); }}
-                  onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); setShowDexDropdown(true); }}
-                  className="tour-dex-btn bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 px-4 py-2 h-[52px] rounded-lg flex flex-col items-center justify-center gap-1 transition cursor-pointer min-w-[120px]"
+                  onClick={() => { if (onDexClick) { if (soundEnabled) AudioManager.buttonClick(); onDexClick(); return; } if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown((p) => !p); }}
+                  onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); if (!onDexClick) setShowDexDropdown(true); }}
+                  className="tour-dex-btn bg-purple-600 hover:bg-purple-500 border-0 px-4 py-2 h-[52px] rounded-lg flex flex-col items-center justify-center gap-1 transition cursor-pointer min-w-[120px]"
                 >
                   {(() => {
                     const formatted = Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
@@ -203,11 +171,22 @@ export function GameHeader({
               <button
                 onClick={() => { if (soundEnabled) AudioManager.buttonClick(); onSettingsClick(); }}
                 onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); }}
-                className="tour-settings-gear bg-vintage-black hover:bg-vintage-gold/10 border border-vintage-gold/30 h-[52px] w-[52px] flex items-center justify-center rounded-lg transition cursor-pointer"
+                className="tour-settings-gear bg-[#b8860b] hover:bg-[#a0780a] border-0 h-[52px] w-[52px] flex items-center justify-center rounded-lg transition cursor-pointer text-vintage-gold"
                 title="Settings"
               >
-                <svg className="w-5 h-5 text-vintage-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.38.64 1 1.07 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.38.64 1 1.07 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
               </button>
+            )}
+            {address && userProfile && (
+              <Link
+                href="/docs"
+                onClick={() => { if (soundEnabled) AudioManager.buttonClick(); }}
+                onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); }}
+                className="tour-docs-btn bg-[#b8860b] hover:bg-[#a0780a] border-0 h-[52px] w-[52px] flex items-center justify-center rounded-lg transition cursor-pointer text-vintage-gold"
+                title="Docs"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
+              </Link>
             )}
           </div>
 
