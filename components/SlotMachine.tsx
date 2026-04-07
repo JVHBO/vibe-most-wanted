@@ -114,7 +114,7 @@ const PAYOUTS: [string, string, string][] = [
 
 export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => void }) {
   const { isConnected, address } = useAccount();
-  const { profile } = useProfile();
+  const { userProfile } = useProfile();
   const spinMut = useMutation(api.slot.spinSlot);
   const statsQ  = useQuery(api.slot.getSlotDailyStats, { address: address || "" });
 
@@ -130,7 +130,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const ivs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
 
   const freeLeft = statsQ?.remainingFreeSpins ?? 0;
-  const coins    = profile?.coins ?? 0;
+  const coins    = userProfile?.coins ?? 0;
   const betMult  = BET_OPTIONS[betIdx];
   const betCost  = betMult;
   const bonusCost = betCost * BONUS_COST_MULT;

@@ -113,6 +113,9 @@ export interface UserProfile {
   linkedAddresses?: string[];
   // 🚀 BANDWIDTH FIX: Skip ensureWelcomeGift mutation if already received
   hasReceivedWelcomeGift?: boolean;
+  // 🔗 Chain preference
+  preferredChain?: 'base' | 'arbitrum';
+  chainModalSeen?: boolean;
 }
 
 export interface MatchHistory {

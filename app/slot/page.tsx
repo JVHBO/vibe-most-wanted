@@ -15,6 +15,7 @@ import { sdk } from "@farcaster/miniapp-sdk";
 import SlotMachine from "@/components/SlotMachine";
 
 type DepositStep = "amount" | "approving" | "transferring" | "done";
+type WithdrawStep = "amount" | "withdrawing" | "done";
 
 const DEPOSIT_PRESETS = [100, 500, 1000, 2500];
 
@@ -75,9 +76,9 @@ const translations = {
 };
 
 export default function SlotPage() {
-  const { t } = useLanguage();
+  const { lang } = useLanguage();
   const { isConnected, address } = useAccount();
-  const { profile } = useProfile();
+  const { userProfile } = useProfile();
 
   // VBMS hooks
   const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(address || '');
@@ -95,7 +96,7 @@ export default function SlotPage() {
   const [depositAmount, setDepositAmount] = useState("100");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [depositStep, setDepositStep] = useState<DepositStep>("amount");
-  const [withdrawStep, setWithdrawStep] = useState<DepositStep>("amount");
+  const [withdrawStep, setWithdrawStep] = useState<WithdrawStep>("amount");
   const [txStatus, setTxStatus] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showRules, setShowRules] = useState(false);
@@ -107,24 +108,24 @@ export default function SlotPage() {
   const currentVBMSBalance = vbmsBalance ? Number(vbmsBalance) / 1e18 : 0;
 
   const getVBMSContract = () => {
-    const chain = profile?.preferredChain || "base";
-    return CONTRACTS.VBMS[chain as keyof typeof CONTRACTS.VBMS];
+    // Slot machine uses VBMSPoolTroll contract on Base
+    return CONTRACTS.VBMSPoolTroll as `0x${string}`;
   };
 
   const handleDeposit = async () => {
     if (!isConnected || !address) {
-      toast.error(t("connectWallet"));
+      toast.error(tr("connectWallet"));
       return;
     }
 
     const amount = Number(depositAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error(t("error"));
+      toast.error(tr("error"));
       return;
     }
 
     if (amount > currentVBMSBalance) {
-      toast.error(t("insufficientBalance"));
+      toast.error(tr("insufficientBalance"));
       return;
     }
 
@@ -138,10 +139,7 @@ export default function SlotPage() {
       const amountWei = parseEther(depositAmount);
 
       // Call approve
-      await approve({
-        spender: contract,
-        amount: amountWei,
-      });
+      await approve(contract, amountWei);
 
       setDepositStep("transferring");
       setTxStatus("Transferring VBMS...");
@@ -156,14 +154,14 @@ export default function SlotPage() {
       // await convex.mutation(api.slot.depositVBMS, { address, amount });
 
       setDepositStep("done");
-      toast.success(t("depositSuccess"));
+      toast.success(tr("depositSuccess"));
       setShowDeposit(false);
       setDepositAmount("100");
 
       refetchVBMS();
     } catch (error: any) {
       console.error("Deposit error:", error);
-      setErrorMsg(error.message || t("error"));
+      setErrorMsg(error.message || tr("error"));
       setDepositStep("amount");
     } finally {
       setTxStatus("");
@@ -172,24 +170,24 @@ export default function SlotPage() {
 
   const handleWithdraw = async () => {
     if (!isConnected || !address) {
-      toast.error(t("connectWallet"));
+      toast.error(tr("connectWallet"));
       return;
     }
 
     const amount = Number(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error(t("error"));
+      toast.error(tr("error"));
       return;
     }
 
-    const credits = profile?.coins || 0;
+    const credits = userProfile?.coins || 0;
     if (amount > credits) {
-      toast.error(t("insufficientBalance"));
+      toast.error(tr("insufficientBalance"));
       return;
     }
 
     setWithdrawStep("withdrawing");
-    setTxStatus(t("withdrawing"));
+    setTxStatus(tr("withdrawing"));
     setErrorMsg(null);
 
     try {
@@ -204,25 +202,23 @@ export default function SlotPage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       setWithdrawStep("done");
-      toast.success(t("withdrawSuccess"));
+      toast.success(tr("withdrawSuccess"));
       setShowWithdraw(false);
       setWithdrawAmount("");
 
       refetchVBMS();
     } catch (error: any) {
       console.error("Withdraw error:", error);
-      setErrorMsg(error.message || t("error"));
+      setErrorMsg(error.message || tr("error"));
       setWithdrawStep("amount");
     } finally {
       setTxStatus("");
     }
   };
 
-  const tr = (key: string, fallback?: string) => {
-    const current = t(key);
-    if (current !== key) return current;
-    const dict = translations.en[key as keyof typeof translations.en] || translations.pt[key as keyof typeof translations.pt];
-    return dict || fallback || key;
+  const tr = (key: string) => {
+    const langTranslations = translations[lang as keyof typeof translations] || translations.en;
+    return (langTranslations as any)[key] || translations.en[key as keyof typeof translations.en] || key;
   };
 
   return (
@@ -383,7 +379,7 @@ export default function SlotPage() {
                         className="w-full bg-black border-2 border-blue-500/50 rounded px-3 py-2 text-white font-bold text-lg focus:outline-none focus:border-blue-500"
                         placeholder="100" min="1"
                       />
-                      <div className="text-gray-500 text-xs mt-1">Disponível: {(profile?.coins || 0).toLocaleString()} credits</div>
+                      <div className="text-gray-500 text-xs mt-1">Disponível: {(userProfile?.coins || 0).toLocaleString()} credits</div>
                     </div>
                     <div className="grid grid-cols-4 gap-2 mb-4">
                       {[100, 500, 1000, 2500].map(p => (
@@ -392,7 +388,7 @@ export default function SlotPage() {
                       ))}
                     </div>
                     <button onClick={handleWithdraw}
-                      disabled={!withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > (profile?.coins || 0)}
+                      disabled={!withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > (userProfile?.coins || 0)}
                       className="w-full py-3 font-black text-sm uppercase border-2 border-black disabled:opacity-50"
                       style={{ background:"linear-gradient(180deg,#3b82f6,#1d4ed8)", color:"#fff", textShadow:"1px 1px 0 #000" }}>
                       Sacar

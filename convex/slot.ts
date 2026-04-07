@@ -175,7 +175,7 @@ function checkWins(grid: typeof SLOT_CARDS): { winAmount: number; patterns: stri
       if (PAYOUTS[key]) {
         totalWin += PAYOUTS[key];
         patternsFound.push(`${label}: ${count}x ${char}`);
-        if (key === "4xmythic" || key === "4xspecial") maxWin = true;
+        if (key === "4xmythic") maxWin = true;
       }
     }
   };
@@ -205,7 +205,7 @@ function checkWins(grid: typeof SLOT_CARDS): { winAmount: number; patterns: stri
   }
 
   // Bonus: scattered mythics anywhere on the board
-  const mythicCount = rarities.filter(r => r === "mythic").length;
+  const mythicCount = grid.filter(c => c.rarity.toLowerCase() === "mythic").length;
   if (mythicCount >= 3) {
     totalWin += 500;
     patternsFound.push(`${mythicCount} mythics scattered!`);
