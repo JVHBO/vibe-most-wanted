@@ -91,6 +91,7 @@ export default function SlotPage() {
 
   const [showDeposit, setShowDeposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [walletTab, setWalletTab] = useState<"deposit" | "withdraw">("deposit");
   const [depositAmount, setDepositAmount] = useState("100");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [depositStep, setDepositStep] = useState<DepositStep>("amount");
@@ -242,7 +243,7 @@ export default function SlotPage() {
       <div
         className="relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden overscroll-none"
         style={{
-          background: 'radial-gradient(ellipse at 50% 30%, #1a1a2e 0%, #0a0a0f 70%)',
+          background: 'radial-gradient(ellipse at 50% 20%, #1a0800 0%, #080200 60%, #000 100%)',
         }}
       >
         {/* Header */}
@@ -292,184 +293,118 @@ export default function SlotPage() {
           </div>
         )}
 
-        {/* Balance Panel */}
-        <div className="relative z-10 px-4 py-3">
-          <div className="flex justify-between items-center max-w-lg mx-auto">
-            <div className="flex items-center gap-3">
-              {/* Coins Balance */}
-              <div className="bg-black border-2 border-yellow-500 rounded-lg px-3 py-2">
-                <div className="text-xs font-bold text-gray-400">{tr("credits")}</div>
-                <div className="text-xl font-black text-green-400">
-                  {(profile?.coins || 0).toLocaleString()}
-                </div>
-              </div>
-
-              {/* VBMS Balance */}
-              <div className="bg-black border-2 border-purple-500 rounded-lg px-3 py-2">
-                <div className="text-xs font-bold text-gray-400">{tr("vbms")}</div>
-                <div className="text-xl font-black text-purple-400">
-                  {currentVBMSBalance.toFixed(2)}
-                </div>
-              </div>
-            </div>
-
-            {/* Free Spins */}
-            {statsQuery && (
-              <div className="flex items-center gap-2">
-                <div className="text-right">
-                  <div className="text-xs font-bold text-blue-400">{tr("freeSpins")}</div>
-                  <div className="text-xl font-black text-blue-300">{statsQuery.remainingFreeSpins}</div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Deposit / Withdraw Buttons */}
-        <div className="relative z-10 px-4 pb-2">
-          <div className="flex gap-2 max-w-lg mx-auto">
-            <button
-              onClick={() => setShowDeposit(true)}
-              className="flex-1 py-2 px-3 border-2 border-green-500 bg-green-600/20 hover:bg-green-600/40 text-green-400 font-bold text-xs uppercase transition-all"
-            >
-              {tr("deposit")} VBMS
-            </button>
-            <button
-              onClick={() => setShowWithdraw(true)}
-              className="flex-1 py-2 px-3 border-2 border-blue-500 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 font-bold text-xs uppercase transition-all"
-            >
-              {tr("withdraw")} VBMS
-            </button>
-          </div>
-        </div>
-
-        {/* Slot Machine */}
+        {/* Slot Machine — fills all remaining height */}
         <div className="flex-1 flex flex-col min-h-0">
-          <SlotMachine onWin={handleWin} />
+          <SlotMachine onWalletOpen={() => { setShowDeposit(true); setWalletTab("deposit"); }} />
         </div>
       </div>
 
-      {/* Deposit Modal */}
+      {/* Unified Wallet Modal */}
       {showDeposit && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85" onClick={() => { if (depositStep === 'amount') setShowDeposit(false); }}>
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85"
+          onClick={() => { if (depositStep === 'amount' && withdrawStep === 'amount') setShowDeposit(false); }}
+        >
           <div
-            className="w-full max-w-sm border-4 border-green-500 rounded-2xl overflow-hidden bg-gray-900"
-            style={{ boxShadow: '4px 4px 0px #22c55e' }}
-            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm border-4 rounded-2xl overflow-hidden"
+            style={{ background:"#0d0500", borderColor:"#c87941", boxShadow:"4px 4px 0 #000" }}
+            onClick={e => e.stopPropagation()}
           >
-            <div className="bg-green-600 border-b-4 border-black px-3 py-1.5 flex items-center justify-between">
-              <span className="font-black text-xs uppercase tracking-widest text-white">Deposit VBMS</span>
-              {depositStep === 'amount' && (
-                <button onClick={() => setShowDeposit(false)} className="rounded-full flex items-center justify-center" style={{ background: '#DC2626', width: 24, height: 24, color: '#fff', fontSize: 16, lineHeight: 1, fontWeight: 700 }}>×</button>
-              )}
+            {/* Header */}
+            <div
+              className="px-4 py-2 border-b-4 border-[#c87941] flex items-center justify-between"
+              style={{ background:"linear-gradient(180deg,#7a4520,#3d1c02)" }}
+            >
+              <span className="font-black text-sm uppercase tracking-widest" style={{ color:"#FFD700", textShadow:"1px 1px 0 #000" }}>WALLET</span>
+              <button onClick={() => setShowDeposit(false)} className="w-6 h-6 rounded-full bg-red-600 border-2 border-black font-black text-white text-sm flex items-center justify-center">×</button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b-2 border-[#c87941]">
+              {(["deposit","withdraw"] as const).map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setWalletTab(tab)}
+                  className="flex-1 py-2 font-black text-xs uppercase tracking-widest transition-colors"
+                  style={{
+                    background: walletTab === tab ? (tab === "deposit" ? "#15803d" : "#1d4ed8") : "#100500",
+                    color: walletTab === tab ? "#fff" : "#6b7280",
+                    borderBottom: walletTab === tab ? "2px solid #FFD700" : "none",
+                    textShadow: walletTab === tab ? "1px 1px 0 #000" : "none",
+                  }}
+                >
+                  {tab === "deposit" ? "Deposit VBMS" : "Withdraw VBMS"}
+                </button>
+              ))}
             </div>
 
             <div className="p-4">
-              {depositStep === "amount" ? (
-                <>
-                  <div className="mb-3">
-                    <label className="text-white text-xs font-bold mb-1 block">Amount (VBMS)</label>
-                    <input
-                      type="number"
-                      value={depositAmount}
-                      onChange={(e) => setDepositAmount(e.target.value)}
-                      className="w-full bg-black border-2 border-green-500/50 rounded-lg px-3 py-2 text-white font-bold text-lg focus:outline-none focus:border-green-500"
-                      placeholder="100"
-                      min="1"
-                    />
-                    <div className="text-gray-400 text-xs mt-1">Available: {currentVBMSBalance.toFixed(2)} VBMS</div>
+              {walletTab === "deposit" ? (
+                depositStep === "amount" ? (
+                  <>
+                    <div className="mb-3">
+                      <label className="text-white text-xs font-bold mb-1 block">Quantidade (VBMS)</label>
+                      <input
+                        type="number" value={depositAmount}
+                        onChange={e => setDepositAmount(e.target.value)}
+                        className="w-full bg-black border-2 border-green-500/50 rounded px-3 py-2 text-white font-bold text-lg focus:outline-none focus:border-green-500"
+                        placeholder="100" min="1"
+                      />
+                      <div className="text-gray-500 text-xs mt-1">Disponível: {currentVBMSBalance.toFixed(2)} VBMS</div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2 mb-4">
+                      {DEPOSIT_PRESETS.map(p => (
+                        <button key={p} onClick={() => setDepositAmount(p.toString())}
+                          className="py-2 border border-green-500/30 rounded text-green-400 font-bold text-sm hover:bg-green-600/20">{p}</button>
+                      ))}
+                    </div>
+                    <button onClick={handleDeposit}
+                      disabled={!depositAmount || Number(depositAmount) <= 0 || Number(depositAmount) > currentVBMSBalance}
+                      className="w-full py-3 font-black text-sm uppercase border-2 border-black disabled:opacity-50"
+                      style={{ background:"linear-gradient(180deg,#22c55e,#15803d)", color:"#fff", textShadow:"1px 1px 0 #000" }}>
+                      Depositar
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-xl font-black text-[#c87941] mb-4">...</div>
+                    <div className="text-white font-bold">{txStatus}</div>
+                    {errorMsg && <div className="text-red-400 text-sm mt-2">{errorMsg}</div>}
                   </div>
-
-                  <div className="grid grid-cols-4 gap-2 mb-4">
-                    {DEPOSIT_PRESETS.map((preset) => (
-                      <button
-                        key={preset}
-                        onClick={() => setDepositAmount(preset.toString())}
-                        className="py-2 border border-green-500/30 rounded text-green-400 font-bold text-sm hover:bg-green-600/20"
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={handleDeposit}
-                    disabled={!depositAmount || Number(depositAmount) <= 0 || Number(depositAmount) > currentVBMSBalance}
-                    className="w-full py-3 bg-green-600 hover:bg-green-500 text-white font-black text-sm uppercase border-2 border-black disabled:opacity-50"
-                  >
-                    {tr("deposit")}
-                  </button>
-                </>
+                )
               ) : (
-                <div className="text-center py-8">
-                  <div className="text-4xl mb-4">⏳</div>
-                  <div className="text-white font-bold">{txStatus || tr("depositing")}</div>
-                  {errorMsg && <div className="text-red-500 text-sm mt-2">{errorMsg}</div>}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Withdraw Modal */}
-      {showWithdraw && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/85" onClick={() => { if (withdrawStep === 'amount') setShowWithdraw(false); }}>
-          <div
-            className="w-full max-w-sm border-4 border-blue-500 rounded-2xl overflow-hidden bg-gray-900"
-            style={{ boxShadow: '4px 4px 0px #3b82f6' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-blue-600 border-b-4 border-black px-3 py-1.5 flex items-center justify-between">
-              <span className="font-black text-xs uppercase tracking-widest text-white">Withdraw VBMS</span>
-              {withdrawStep === 'amount' && (
-                <button onClick={() => setShowWithdraw(false)} className="rounded-full flex items-center justify-center" style={{ background: '#DC2626', width: 24, height: 24, color: '#fff', fontSize: 16, lineHeight: 1, fontWeight: 700 }}>×</button>
-              )}
-            </div>
-
-            <div className="p-4">
-              {withdrawStep === "amount" ? (
-                <>
-                  <div className="mb-3">
-                    <label className="text-white text-xs font-bold mb-1 block">Amount (Credits)</label>
-                    <input
-                      type="number"
-                      value={withdrawAmount}
-                      onChange={(e) => setWithdrawAmount(e.target.value)}
-                      className="w-full bg-black border-2 border-blue-500/50 rounded-lg px-3 py-2 text-white font-bold text-lg focus:outline-none focus:border-blue-500"
-                      placeholder="100"
-                      min="1"
-                    />
-                    <div className="text-gray-400 text-xs mt-1">Convert to VBMS (1:1 rate)</div>
-                    <div className="text-gray-400 text-xs mt-1">Available: {(profile?.coins || 0).toLocaleString()} credits</div>
+                withdrawStep === "amount" ? (
+                  <>
+                    <div className="mb-3">
+                      <label className="text-white text-xs font-bold mb-1 block">Quantidade (Credits)</label>
+                      <input
+                        type="number" value={withdrawAmount}
+                        onChange={e => setWithdrawAmount(e.target.value)}
+                        className="w-full bg-black border-2 border-blue-500/50 rounded px-3 py-2 text-white font-bold text-lg focus:outline-none focus:border-blue-500"
+                        placeholder="100" min="1"
+                      />
+                      <div className="text-gray-500 text-xs mt-1">Disponível: {(profile?.coins || 0).toLocaleString()} credits</div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2 mb-4">
+                      {[100, 500, 1000, 2500].map(p => (
+                        <button key={p} onClick={() => setWithdrawAmount(p.toString())}
+                          className="py-2 border border-blue-500/30 rounded text-blue-400 font-bold text-sm hover:bg-blue-600/20">{p}</button>
+                      ))}
+                    </div>
+                    <button onClick={handleWithdraw}
+                      disabled={!withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > (profile?.coins || 0)}
+                      className="w-full py-3 font-black text-sm uppercase border-2 border-black disabled:opacity-50"
+                      style={{ background:"linear-gradient(180deg,#3b82f6,#1d4ed8)", color:"#fff", textShadow:"1px 1px 0 #000" }}>
+                      Sacar
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-xl font-black text-[#c87941] mb-4">...</div>
+                    <div className="text-white font-bold">{txStatus}</div>
+                    {errorMsg && <div className="text-red-400 text-sm mt-2">{errorMsg}</div>}
                   </div>
-
-                  <div className="grid grid-cols-4 gap-2 mb-4">
-                    {[100, 500, 1000, 2500].map((preset) => (
-                      <button
-                        key={preset}
-                        onClick={() => setWithdrawAmount(preset.toString())}
-                        className="py-2 border border-blue-500/30 rounded text-blue-400 font-bold text-sm hover:bg-blue-600/20"
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={handleWithdraw}
-                    disabled={!withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > (profile?.coins || 0)}
-                    className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-black text-sm uppercase border-2 border-black disabled:opacity-50"
-                  >
-                    {tr("withdraw")}
-                  </button>
-                </>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="text-4xl mb-4">⏳</div>
-                  <div className="text-white font-bold">{txStatus || tr("withdrawing")}</div>
-                  {errorMsg && <div className="text-red-500 text-sm mt-2">{errorMsg}</div>}
-                </div>
+                )
               )}
             </div>
           </div>

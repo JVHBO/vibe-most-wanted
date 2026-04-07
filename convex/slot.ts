@@ -33,91 +33,102 @@ async function getProfileByAddress(ctx: any, address: string) {
 }
 
 // Card symbols with weights
+// Total pool weight: ~1000 → approximate rarity %:
+//   Mythic    4×1  =   4  → ~0.4% each card, ~1.6% total
+//   Legendary 7×4  =  28  → ~0.4%/card per draw, ~2.8% total
+//   Epic      12×10= 120  → ~1.2% each, ~14.4% total
+//   Rare      8×20 = 160  → ~2% each, ~16% total
+//   Common    20×35= 700  → ~3.5% each, ~70% total
 const SLOT_CARDS = [
-  // Ultra rare (Mythic) - very low weight
-  { baccarat: "jesse", rarity: "Mythic", weight: 1 },
-  { baccarat: "anon", rarity: "Mythic", weight: 1 },
-  { baccarat: "linda xied", rarity: "Mythic", weight: 1 },
-  { baccarat: "vitalik jumpterin", rarity: "Mythic", weight: 1 },
+  // VBMS Special (scatter) — bonus if 2/3/4 appear anywhere on grid
+  { baccarat: "vbms_special",    rarity: "Special",   weight: 5 },
+
+  // Mythic — ultra-rare, jackpot symbols
+  { baccarat: "jesse",           rarity: "Mythic",    weight: 1 },
+  { baccarat: "anon",            rarity: "Mythic",    weight: 1 },
+  { baccarat: "linda xied",      rarity: "Mythic",    weight: 1 },
+  { baccarat: "vitalik jumpterin",rarity: "Mythic",   weight: 1 },
 
   // Legendary
-  { baccarat: "antonio", rarity: "Legendary", weight: 3 },
-  { baccarat: "goofy romero", rarity: "Legendary", weight: 3 },
-  { baccarat: "tukka", rarity: "Legendary", weight: 3 },
-  { baccarat: "chilipepper", rarity: "Legendary", weight: 3 },
-  { baccarat: "miguel", rarity: "Legendary", weight: 3 },
-  { baccarat: "ye", rarity: "Legendary", weight: 3 },
-  { baccarat: "nico", rarity: "Legendary", weight: 3 },
+  { baccarat: "antonio",         rarity: "Legendary", weight: 4 },
+  { baccarat: "goofy romero",    rarity: "Legendary", weight: 4 },
+  { baccarat: "tukka",           rarity: "Legendary", weight: 4 },
+  { baccarat: "chilipepper",     rarity: "Legendary", weight: 4 },
+  { baccarat: "miguel",          rarity: "Legendary", weight: 4 },
+  { baccarat: "ye",              rarity: "Legendary", weight: 4 },
+  { baccarat: "nico",            rarity: "Legendary", weight: 4 },
 
   // Epic
-  { baccarat: "sartocrates", rarity: "Epic", weight: 6 },
-  { baccarat: "0xdeployer", rarity: "Epic", weight: 6 },
-  { baccarat: "lombra jr", rarity: "Epic", weight: 6 },
-  { baccarat: "vibe intern", rarity: "Epic", weight: 6 },
-  { baccarat: "jack the sniper", rarity: "Epic", weight: 6 },
-  { baccarat: "beeper", rarity: "Epic", weight: 6 },
-  { baccarat: "horsefarts", rarity: "Epic", weight: 6 },
-  { baccarat: "jc denton", rarity: "Epic", weight: 6 },
-  { baccarat: "zurkchad", rarity: "Epic", weight: 6 },
-  { baccarat: "slaterg", rarity: "Epic", weight: 6 },
-  { baccarat: "brian armstrong", rarity: "Epic", weight: 6 },
-  { baccarat: "nftkid", rarity: "Epic", weight: 6 },
+  { baccarat: "sartocrates",     rarity: "Epic",      weight: 10 },
+  { baccarat: "0xdeployer",      rarity: "Epic",      weight: 10 },
+  { baccarat: "lombra jr",       rarity: "Epic",      weight: 10 },
+  { baccarat: "vibe intern",     rarity: "Epic",      weight: 10 },
+  { baccarat: "jack the sniper", rarity: "Epic",      weight: 10 },
+  { baccarat: "beeper",          rarity: "Epic",      weight: 10 },
+  { baccarat: "horsefarts",      rarity: "Epic",      weight: 10 },
+  { baccarat: "jc denton",       rarity: "Epic",      weight: 10 },
+  { baccarat: "zurkchad",        rarity: "Epic",      weight: 10 },
+  { baccarat: "slaterg",         rarity: "Epic",      weight: 10 },
+  { baccarat: "brian armstrong", rarity: "Epic",      weight: 10 },
+  { baccarat: "nftkid",          rarity: "Epic",      weight: 10 },
 
   // Rare
-  { baccarat: "smolemaru", rarity: "Rare", weight: 10 },
-  { baccarat: "ventra", rarity: "Rare", weight: 10 },
-  { baccarat: "bradymck", rarity: "Rare", weight: 10 },
-  { baccarat: "shills", rarity: "Rare", weight: 10 },
-  { baccarat: "betobutter", rarity: "Rare", weight: 10 },
-  { baccarat: "qrcodo", rarity: "Rare", weight: 10 },
-  { baccarat: "loground", rarity: "Rare", weight: 10 },
-  { baccarat: "melted", rarity: "Rare", weight: 10 },
+  { baccarat: "smolemaru",       rarity: "Rare",      weight: 20 },
+  { baccarat: "ventra",          rarity: "Rare",      weight: 20 },
+  { baccarat: "bradymck",        rarity: "Rare",      weight: 20 },
+  { baccarat: "shills",          rarity: "Rare",      weight: 20 },
+  { baccarat: "betobutter",      rarity: "Rare",      weight: 20 },
+  { baccarat: "qrcodo",          rarity: "Rare",      weight: 20 },
+  { baccarat: "loground",        rarity: "Rare",      weight: 20 },
+  { baccarat: "melted",          rarity: "Rare",      weight: 20 },
 
-  // Common - most frequent
-  { baccarat: "rachel", rarity: "Common", weight: 20 },
-  { baccarat: "claude", rarity: "Common", weight: 20 },
-  { baccarat: "gozaru", rarity: "Common", weight: 20 },
-  { baccarat: "ink", rarity: "Common", weight: 20 },
-  { baccarat: "casa", rarity: "Common", weight: 20 },
-  { baccarat: "groko", rarity: "Common", weight: 20 },
-  { baccarat: "rizkybegitu", rarity: "Common", weight: 20 },
-  { baccarat: "thosmur", rarity: "Common", weight: 20 },
-  { baccarat: "brainpasta", rarity: "Common", weight: 20 },
-  { baccarat: "gaypt", rarity: "Common", weight: 20 },
-  { baccarat: "dan romero", rarity: "Common", weight: 20 },
-  { baccarat: "morlacos", rarity: "Common", weight: 20 },
-  { baccarat: "landmine", rarity: "Common", weight: 20 },
-  { baccarat: "linux", rarity: "Common", weight: 20 },
-  { baccarat: "joonx", rarity: "Common", weight: 20 },
-  { baccarat: "don filthy", rarity: "Common", weight: 20 },
-  { baccarat: "pooster", rarity: "Common", weight: 20 },
-  { baccarat: "john porn", rarity: "Common", weight: 20 },
-  { baccarat: "scum", rarity: "Common", weight: 20 },
-  { baccarat: "vlady", rarity: "Common", weight: 20 },
+  // Common — most frequent
+  { baccarat: "rachel",          rarity: "Common",    weight: 35 },
+  { baccarat: "claude",          rarity: "Common",    weight: 35 },
+  { baccarat: "gozaru",          rarity: "Common",    weight: 35 },
+  { baccarat: "ink",             rarity: "Common",    weight: 35 },
+  { baccarat: "casa",            rarity: "Common",    weight: 35 },
+  { baccarat: "groko",           rarity: "Common",    weight: 35 },
+  { baccarat: "rizkybegitu",     rarity: "Common",    weight: 35 },
+  { baccarat: "thosmur",         rarity: "Common",    weight: 35 },
+  { baccarat: "brainpasta",      rarity: "Common",    weight: 35 },
+  { baccarat: "gaypt",           rarity: "Common",    weight: 35 },
+  { baccarat: "dan romero",      rarity: "Common",    weight: 35 },
+  { baccarat: "morlacos",        rarity: "Common",    weight: 35 },
+  { baccarat: "landmine",        rarity: "Common",    weight: 35 },
+  { baccarat: "linux",           rarity: "Common",    weight: 35 },
+  { baccarat: "joonx",           rarity: "Common",    weight: 35 },
+  { baccarat: "don filthy",      rarity: "Common",    weight: 35 },
+  { baccarat: "pooster",         rarity: "Common",    weight: 35 },
+  { baccarat: "john porn",       rarity: "Common",    weight: 35 },
+  { baccarat: "scum",            rarity: "Common",    weight: 35 },
+  { baccarat: "vlady",           rarity: "Common",    weight: 35 },
 ];
 
 // Payouts for winning patterns (4 in a row/col/diag)
+// Higher rarity = much harder to hit (lower weight), but much bigger reward.
+// Expected value per spin ≈ 0.7–0.9 coins (house edge ~10–30%)
 const PAYOUTS = {
-  // 4 matching rarities
-  "4xmythic": 10000,     // Jackpot!
-  "4xlegendary": 1000,
-  "4xepic": 200,
-  "4xrare": 50,
-  "4xcommon": 10,
+  // 4 matching rarities — grand combos
+  "4xmythic":    50000,  // Ultra jackpot (~1.6% × 4 draws chance)
+  "4xlegendary": 5000,
+  "4xepic":      800,
+  "4xrare":      120,
+  "4xcommon":    12,
 
-  // 3 matching (partial win)
-  "3xmythic": 500,
-  "3xlegendary": 100,
-  "3xepic": 50,
-  "3xrare": 15,
-  "3xcommon": 5,
+  // 3 matching — good win
+  "3xmythic":    2000,
+  "3xlegendary": 300,
+  "3xepic":      80,
+  "3xrare":      20,
+  "3xcommon":    4,
 
-  // 2 matching
-  "2xmythic": 25,
-  "2xlegendary": 10,
-  "2xepic": 5,
-  "2xrare": 2,
-  "2xcommon": 1,
+  // 2 matching — small consolation
+  "2xmythic":    100,
+  "2xlegendary": 20,
+  "2xepic":      6,
+  "2xrare":      2,
+  "2xcommon":    1,
 };
 
 const SPIN_COST = 1;
@@ -138,80 +149,65 @@ function getRandomCard(): typeof SLOT_CARDS[0] {
 }
 
 /**
- * Check winning patterns in 4x4 grid
- * Returns: { winAmount: number, patterns: string[], description: string }
+ * Check winning patterns in 4x4 grid — combos matched by CHARACTER NAME.
+ * Same character in a line = win. Payout determined by that character's rarity.
  */
 function checkWins(grid: typeof SLOT_CARDS): { winAmount: number; patterns: string[]; description: string; maxWin: boolean } {
-  const rarities = grid.map(c => c.rarity.toLowerCase());
   let totalWin = 0;
   const patternsFound: string[] = [];
   let maxWin = false;
 
-  // Helper to count matching rarities in a line
-  const countLine = (indices: number[]): { rarity: string; count: number } => {
-    const lineRarities = indices.map(i => rarities[i]);
+  // Count matching CHARACTER NAMES in a line; return the most frequent char + its rarity
+  const countLine = (indices: number[]): { rarity: string; count: number; char: string } => {
+    const lineCards = indices.map(i => grid[i]);
     const counts: Record<string, number> = {};
-    lineRarities.forEach(r => counts[r] = (counts[r] || 0) + 1);
+    lineCards.forEach(c => { counts[c.baccarat] = (counts[c.baccarat] || 0) + 1; });
     const maxCount = Math.max(...Object.values(counts));
-    const maxRarity = Object.keys(counts).find(r => counts[r] === maxCount);
-    return { rarity: maxRarity || "", count: maxCount };
+    const maxChar = Object.keys(counts).find(n => counts[n] === maxCount) ?? "";
+    const rarity = lineCards.find(c => c.baccarat === maxChar)?.rarity?.toLowerCase() ?? "common";
+    return { rarity, count: maxCount, char: maxChar };
+  };
+
+  const applyLine = (indices: number[], label: string) => {
+    const { rarity, count, char } = countLine(indices);
+    if (count >= 2 && char !== "") {
+      const key = `${count}x${rarity}` as keyof typeof PAYOUTS;
+      if (PAYOUTS[key]) {
+        totalWin += PAYOUTS[key];
+        patternsFound.push(`${label}: ${count}x ${char}`);
+        if (key === "4xmythic" || key === "4xspecial") maxWin = true;
+      }
+    }
   };
 
   // Check all 4 rows
   for (let row = 0; row < 4; row++) {
-    const indices = [row * 4, row * 4 + 1, row * 4 + 2, row * 4 + 3];
-    const { rarity, count } = countLine(indices);
-    if (count >= 2) {
-      const key = `${count}x${rarity}`;
-      if (PAYOUTS[key]) {
-        totalWin += PAYOUTS[key];
-        patternsFound.push(`Row ${row + 1}: ${count}x ${rarity}`);
-        if (key === "4xmythic") maxWin = true;
-      }
-    }
+    applyLine([row * 4, row * 4 + 1, row * 4 + 2, row * 4 + 3], `Row ${row + 1}`);
   }
 
   // Check all 4 columns
   for (let col = 0; col < 4; col++) {
-    const indices = [col, col + 4, col + 8, col + 12];
-    const { rarity, count } = countLine(indices);
-    if (count >= 2) {
-      const key = `${count}x${rarity}`;
-      if (PAYOUTS[key]) {
-        totalWin += PAYOUTS[key];
-        patternsFound.push(`Col ${col + 1}: ${count}x ${rarity}`);
-        if (key === "4xmythic") maxWin = true;
-      }
-    }
+    applyLine([col, col + 4, col + 8, col + 12], `Col ${col + 1}`);
   }
 
   // Check diagonals
-  const diag1 = [0, 5, 10, 15]; // top-left to bottom-right
-  const { rarity: r1, count: c1 } = countLine(diag1);
-  if (c1 >= 2) {
-    const key = `${c1}x${r1}`;
-    if (PAYOUTS[key]) {
-      totalWin += PAYOUTS[key];
-      patternsFound.push(`Diagonal \\: ${c1}x ${r1}`);
-      if (key === "4xmythic") maxWin = true;
-    }
+  applyLine([0, 5, 10, 15], `Diagonal \\`);
+  applyLine([3, 6, 9, 12], `Diagonal /`);
+
+  // VBMS Special scatter bonus — counts anywhere on the 4×4 grid
+  const specialCount = grid.filter(c => c.baccarat === "vbms_special").length;
+  if (specialCount >= 2) {
+    const specialPayouts: Record<number, number> = { 2: 100, 3: 1500, 4: 30000 };
+    const specialPayout = specialPayouts[Math.min(specialCount, 4)] ?? 0;
+    totalWin += specialPayout;
+    patternsFound.push(`VBMS Special x${specialCount}!`);
+    if (specialCount >= 4) maxWin = true;
   }
 
-  const diag2 = [3, 6, 9, 12]; // top-right to bottom-left
-  const { rarity: r2, count: c2 } = countLine(diag2);
-  if (c2 >= 2) {
-    const key = `${c2}x${r2}`;
-    if (PAYOUTS[key]) {
-      totalWin += PAYOUTS[key];
-      patternsFound.push(`Diagonal /: ${c2}x ${r2}`);
-      if (key === "4xmythic") maxWin = true;
-    }
-  }
-
-  // Bonus: if any 3 mythics appear anywhere, add extra 100
+  // Bonus: scattered mythics anywhere on the board
   const mythicCount = rarities.filter(r => r === "mythic").length;
   if (mythicCount >= 3) {
-    totalWin += 100;
+    totalWin += 500;
     patternsFound.push(`${mythicCount} mythics scattered!`);
   }
 
@@ -293,8 +289,9 @@ export const spinSlot = mutation({
     address: v.string(),
     isFreeSpin: v.boolean(),
     bonusMultiplier: v.optional(v.number()),
+    betMultiplier: v.optional(v.number()), // 1, 2, 5, 10 — scales cost AND win
   },
-  handler: async (ctx, { address, isFreeSpin, bonusMultiplier = 1 }) => {
+  handler: async (ctx, { address, isFreeSpin, bonusMultiplier = 1, betMultiplier = 1 }) => {
     const profile = await getProfileByAddress(ctx, address);
     if (!profile) {
       throw new Error("Profile not found");
@@ -305,14 +302,15 @@ export const spinSlot = mutation({
     }
 
     const today = new Date().toISOString().split('T')[0];
+    const normalizedAddress = address.toLowerCase();
     let stats = await ctx.db
       .query("slotDailyStats")
-      .withIndex("by_player_date", (q) => q.eq("playerAddress", address).eq("date", today))
+      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress).eq("date", today))
       .first();
 
     if (!stats) {
-      stats = await ctx.db.insert("slotDailyStats", {
-        playerAddress: address,
+      const newStatsId = await ctx.db.insert("slotDailyStats", {
+        playerAddress: normalizedAddress,
         date: today,
         freeSpinsUsed: 0,
         paidSpinsUsed: 0,
@@ -320,51 +318,50 @@ export const spinSlot = mutation({
         totalWon: 0,
         lastSpinTime: Date.now(),
       });
+      if (!newStatsId) {
+        throw new Error("Failed to create slot stats record");
+      }
+      const insertedStats = await ctx.db.get(newStatsId);
+      if (!insertedStats) {
+        throw new Error("Failed to fetch inserted slot stats");
+      }
+      stats = insertedStats;
     }
 
     // Validate spins
     if (isFreeSpin) {
       const hasVibeFIDBadge = profile.hasVibeBadge === true;
       const freeSpinsPerDay = hasVibeFIDBadge ? 10 : 5;
-      if (stats.freeSpinsUsed >= freeSpinsPerDay) {
+      if (stats!.freeSpinsUsed >= freeSpinsPerDay) {
         throw new Error("No free spins remaining today");
       }
-      await ctx.db.patch(stats._id, {
-        freeSpinsUsed: stats.freeSpinsUsed + 1,
-        totalSpins: stats.totalSpins + 1,
+      await ctx.db.patch(stats!._id, {
+        freeSpinsUsed: stats!.freeSpinsUsed + 1,
+        totalSpins: stats!.totalSpins + 1,
         lastSpinTime: Date.now(),
       });
-      // Re-fetch updated stats for return
-      const updatedStats = await ctx.db
-        .query("slotDailyStats")
-        .withIndex("by_player_date", (q) => q.eq("playerAddress", address).eq("date", today))
-        .first();
     } else {
+      const totalCost = Math.max(1, Math.floor(SPIN_COST * betMultiplier));
       const currentCoins = profile.coins || 0;
-      if (currentCoins < SPIN_COST) {
-        throw new Error(`Not enough coins. Need ${SPIN_COST} coins.`);
+      if (currentCoins < totalCost) {
+        throw new Error(`Not enough coins. Need ${totalCost} coins.`);
       }
       await ctx.db.patch(profile._id, {
-        coins: currentCoins - SPIN_COST,
+        coins: currentCoins - totalCost,
       });
-      await ctx.db.patch(stats._id, {
-        paidSpinsUsed: stats.paidSpinsUsed + 1,
-        totalSpins: stats.totalSpins + 1,
+      await ctx.db.patch(stats!._id, {
+        paidSpinsUsed: stats!.paidSpinsUsed + 1,
+        totalSpins: stats!.totalSpins + 1,
         lastSpinTime: Date.now(),
       });
-      // Re-fetch updated stats for return
-      const updatedStats = await ctx.db
-        .query("slotDailyStats")
-        .withIndex("by_player_date", (q) => q.eq("playerAddress", address).eq("date", today))
-        .first();
     }
 
     // Generate 4x4 grid (16 cards)
     const grid = Array.from({ length: 16 }, () => getRandomCard());
     const { winAmount, patterns, maxWin } = checkWins(grid);
 
-    // Apply bonus multiplier
-    const finalWin = Math.floor(winAmount * bonusMultiplier);
+    // Apply bonus + bet multipliers
+    const finalWin = Math.floor(winAmount * bonusMultiplier * betMultiplier);
 
     // Add winnings if any
     let winAdded = false;
@@ -373,15 +370,15 @@ export const spinSlot = mutation({
       await ctx.db.patch(profile._id, {
         coins: newBalance,
       });
-      await ctx.db.patch(stats._id, {
-        totalWon: stats.totalWon + finalWin,
+      await ctx.db.patch(stats!._id, {
+        totalWon: stats!.totalWon + finalWin,
       });
       winAdded = true;
     }
 
     // Record spin history
     await ctx.db.insert("slotSpins", {
-      playerAddress: address,
+      playerAddress: normalizedAddress,
       spinType: isFreeSpin ? "free" : "paid",
       spinCount: 1,
       cost: isFreeSpin ? 0 : SPIN_COST,
