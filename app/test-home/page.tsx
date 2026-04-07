@@ -114,6 +114,9 @@ export default function TestHomePage() {
       * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
       .bg-vintage-charcoal\\/80, .bg-vintage-charcoal\\/95 { background: #1E1E1E !important; backdrop-filter: none !important; }
       .border-vintage-gold\\/30 { border-color: transparent !important; }
+      /* Remove margin from GameHeader */
+      .mb-3 { margin-bottom: 0 !important; }
+      .mb-6 { margin-bottom: 0 !important; }
       @keyframes spinCW { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
       @keyframes pulseGlow { 0%,100% { opacity: 0.08; } 50% { opacity: 0.16; } }
       @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: translateY(0); } }
