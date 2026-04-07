@@ -42,7 +42,7 @@ interface SettingsModalProps {
   setUserProfile: (profile: UserProfile | null) => void;
   setErrorMessage: (message: string) => void;
   // Custom Music props
-  customMusicUrl: string;
+  customMusicUrl: string | null;
   setCustomMusicUrl: (url: string) => void;
   isCustomMusicLoading: boolean;
   customMusicError: string | null;
@@ -526,7 +526,7 @@ export function SettingsModal({
       onClick={onClose}
     >
       <div
-        className="bg-vintage-charcoal rounded-2xl border-2 border-vintage-gold p-3 sm:p-5 max-w-md w-full shadow-gold max-h-[90%] overflow-y-auto"
+        className="bg-[#1A1A1A] rounded-xl border border-white/10 p-3 sm:p-5 max-w-md w-full max-h-[90%] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-2 sm:mb-3">
@@ -543,7 +543,7 @@ export function SettingsModal({
 
         <div className="space-y-2 sm:space-y-3">
           {/* Music Toggle */}
-          <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
+          <div className="bg-white/5 p-2 sm:p-3 rounded-lg border border-white/8">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
@@ -556,15 +556,15 @@ export function SettingsModal({
               </div>
               <button
                 onClick={toggleMusic}
-                className={`relative w-16 h-8 rounded-full transition-all border-2 ${
+                className={`relative w-16 h-8 rounded-full transition-all border ${
                   musicEnabled
-                    ? 'bg-vintage-gold border-vintage-gold'
-                    : 'bg-vintage-black border-vintage-gold/50'
+                    ? 'bg-[#FACC15] border-[#FACC15]/50'
+                    : 'bg-white/10 border-white/15'
                 }`}
               >
                 <div
                   className={`absolute top-1 left-1 w-6 h-6 ${
-                    musicEnabled ? 'bg-vintage-black' : 'bg-vintage-gold'
+                    musicEnabled ? 'bg-[#1A1A1A]' : 'bg-[#FACC15]'
                   } rounded-full transition-transform ${
                     musicEnabled ? 'translate-x-7' : 'translate-x-0'
                   }`}
@@ -585,7 +585,7 @@ export function SettingsModal({
                   max="100"
                   value={musicVolume * 100}
                   onChange={(e) => setMusicVolume(Number(e.target.value) / 100)}
-                  className="w-full h-2 bg-vintage-black rounded-lg appearance-none cursor-pointer accent-vintage-gold border border-vintage-gold/30"
+                  className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#FACC15]"
                 />
               </div>
             )}
@@ -593,7 +593,7 @@ export function SettingsModal({
           </div>
 
           {/* Language Selector */}
-          <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
+          <div className="bg-white/5 p-2 sm:p-3 rounded-lg border border-white/8">
             <div className="flex items-center gap-3 mb-3">
               <span className="text-2xl sm:text-3xl text-vintage-gold">◊</span>
               <p className="font-modern font-bold text-vintage-gold">
@@ -629,7 +629,7 @@ export function SettingsModal({
           </div>
 
           {/* Music Mode Selector */}
-          <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
+          <div className="bg-white/5 p-2 sm:p-3 rounded-lg border border-white/8">
             <div className="flex items-center gap-3 mb-3">
               <span className="text-2xl sm:text-3xl text-vintage-gold">♫</span>
               <p className="font-modern font-bold text-vintage-gold">{t('settingsBackgroundMusic')}</p>
@@ -1210,7 +1210,7 @@ export function SettingsModal({
 
           {/* Disconnect Wallet — hidden in Farcaster miniapp */}
           {walletAddress && disconnectWallet && !isInFarcaster && (
-            <div className="bg-vintage-black/50 p-2 sm:p-3 rounded-xl border border-vintage-gold/50">
+            <div className="bg-white/5 p-2 sm:p-3 rounded-lg border border-white/8">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-vintage-gold">

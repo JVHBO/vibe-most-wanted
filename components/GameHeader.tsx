@@ -70,8 +70,8 @@ export function GameHeader({
             ) : userProfile ? (
               <div className="tour-profile-dropdown relative" style={{ overflow: 'visible' }}>
                 <button
-                  onClick={() => { if (onProfileClick) { if (soundEnabled) AudioManager.buttonClick(); onProfileClick(); return; } if (soundEnabled) AudioManager.buttonClick(); setShowProfileDropdown((p) => !p); }}
-                  onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); if (!onProfileClick) setShowProfileDropdown(true); }}
+                  onClick={() => { if (onProfileClick) { if (soundEnabled) AudioManager.buttonClick(); onProfileClick(); return; } if (soundEnabled) AudioManager.buttonClick(); }}
+                  onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); }}
                   className="tour-settings-btn flex items-center gap-2 px-4 py-2 h-[52px] bg-blue-600 hover:bg-blue-500 border-0 rounded-lg transition cursor-pointer"
                 >
                   {userProfile.farcasterPfpUrl ? (
