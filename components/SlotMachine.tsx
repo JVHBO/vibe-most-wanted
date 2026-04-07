@@ -126,7 +126,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const [winAmt, setWinAmt]       = useState<number | null>(null);
   const [isJackpot, setIsJackpot] = useState(false);
   const [betIdx, setBetIdx]       = useState(0);
-  const [showPayouts, setShowPayouts] = useState(false);
+  const [showBonusConfirm, setShowBonusConfirm] = useState(false);
 
   const ivs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
 
@@ -345,28 +345,38 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
         .subtitle-blink { animation: subtitle-blink 1.4s ease-in-out infinite; }
       `}</style>
 
-      {/* Payout Table Modal */}
-      {showPayouts && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80" onClick={() => setShowPayouts(false)}>
+
+      {/* Modal de confirmação BUY BONUS */}
+      {showBonusConfirm && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/85" onClick={() => setShowBonusConfirm(false)}>
           <div
-            className="w-full max-w-xs overflow-hidden rounded-xl border-4"
-            style={{ borderColor:"#c87941", background:"#0d0500", boxShadow:"4px 4px 0 #000" }}
+            className="w-full max-w-[280px] overflow-hidden rounded-xl border-4"
+            style={{ borderColor:"#7c3aed", background:"#0d0015", boxShadow:"4px 4px 0 #000" }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-2 border-b-2 border-[#c87941]" style={{ background: wood }}>
-              <span className="font-black text-sm uppercase tracking-widest" style={{ color:"#FFD700", textShadow:"1px 1px 0 #000" }}>
-                Tabela de Premios
-              </span>
-              <button onClick={() => setShowPayouts(false)} className="w-6 h-6 rounded-full bg-red-600 border-2 border-black font-black text-white text-sm flex items-center justify-center">x</button>
+            <div className="px-4 py-2 border-b-2 border-[#7c3aed] flex items-center justify-between" style={{ background:"linear-gradient(180deg,#4c1d95,#2e1065)" }}>
+              <span className="font-black text-sm uppercase tracking-widest" style={{ color:"#FFD700", textShadow:"1px 1px 0 #000" }}>BUY BONUS</span>
+              <button onClick={() => setShowBonusConfirm(false)} className="w-6 h-6 rounded-full bg-red-600 border-2 border-black font-black text-white text-sm flex items-center justify-center">×</button>
             </div>
-            <div className="p-3 space-y-1">
-              {PAYOUTS.map(([k, v, col]) => (
-                <div key={k} className="flex justify-between items-center px-2 py-1 rounded border border-[#c8794130]" style={{ background:"#100500" }}>
-                  <span className="text-[11px] font-bold" style={{ color: col }}>{k}</span>
-                  <span className="text-[11px] font-black text-yellow-400">{v} coins</span>
-                </div>
-              ))}
-              <p className="text-[9px] text-center text-gray-500 pt-1">Premios escalam com o valor da aposta (x{betMult})</p>
+            <div className="p-4 text-center space-y-3">
+              <div className="text-white text-sm">Custo: <span className="font-black text-purple-300">{bonusCost} coins</span></div>
+              <div className="text-gray-400 text-xs">Multiplicador de prêmio: <span className="font-black text-green-400">2×</span></div>
+              <div className="text-gray-500 text-[10px]">Saldo atual: <span className="text-white font-bold">{coins.toLocaleString()} coins</span></div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => setShowBonusConfirm(false)}
+                  className="flex-1 py-2 border-2 border-gray-600 font-black text-xs uppercase text-gray-400 hover:bg-gray-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => { setShowBonusConfirm(false); spin(false, true); }}
+                  className="flex-1 py-2 border-2 border-black font-black text-xs uppercase active:scale-95 transition-transform"
+                  style={{ background:"linear-gradient(180deg,#7c3aed,#4c1d95)", color:"#FFD700", textShadow:"1px 1px 0 #000", boxShadow:"0 3px 0 #000" }}
+                >
+                  Confirmar
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -382,37 +392,6 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
             background: wood,
           }}
         >
-          {/* HEADER */}
-          <div className="shrink-0 px-4 pt-2 pb-1.5 border-b-4 border-[#c87941]" style={{ background: dark }}>
-            <div className="flex items-center justify-between">
-              {/* Titulo centralizado */}
-              <div className="flex-1 text-center">
-                <div
-                  className="text-xl font-black uppercase leading-none"
-                  style={{
-                    color:"#FFD700",
-                    textShadow:"0 0 12px rgba(255,215,0,0.6),1px 2px 0 #000",
-                    fontFamily:"var(--font-cinzel,Georgia,serif)",
-                    letterSpacing:"0.08em",
-                  }}
-                >
-                  VIBE SLOTS
-                </div>
-                <div
-                  className="subtitle-blink text-[10px] font-bold uppercase tracking-[0.12em] mt-0.5"
-                  style={{ color:"#f59e0b" }}
-                >
-                  WIN UP TO 50.000 COINS
-                </div>
-              </div>
-              {/* Balance + Premios */}
-              <div className="text-right shrink-0">
-                <div className="text-[8px] font-bold uppercase text-gray-500">BALANCE</div>
-                <div className="text-base font-black text-green-400">{coins.toLocaleString()}</div>
-                <button onClick={() => setShowPayouts(true)} className="text-[8px] font-bold underline" style={{ color:"#c87941" }}>Premios</button>
-              </div>
-            </div>
-          </div>
 
           {/* REEL AREA — flex-1 preenche o espaço disponível */}
           <div
@@ -466,9 +445,17 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
             }}
           >
             {winAmt === null ? (
-              <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color:"#c87941" }}>
-                {freeLeft > 0 ? `${freeLeft} FREE SPIN${freeLeft > 1 ? "S" : ""} disponiveis` : "Match 4 em linha para ganhar"}
-              </span>
+              <div className="text-center">
+                {freeLeft > 0 ? (
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color:"#34d399" }}>
+                    {freeLeft} FREE SPIN{freeLeft > 1 ? "S" : ""} disponíveis
+                  </span>
+                ) : (
+                  <span className="subtitle-blink text-[10px] font-bold uppercase tracking-widest" style={{ color:"#f59e0b" }}>
+                    WIN UP TO 50.000 COINS
+                  </span>
+                )}
+              </div>
             ) : winAmt > 0 ? (
               <div>
                 <div className="text-lg font-black text-white" style={{ textShadow:"1px 1px 0 #000,0 0 10px #FFD700" }}>
@@ -481,11 +468,10 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
             )}
           </div>
 
-          {/* PLACE YOUR BETS */}
-          <div className="shrink-0 py-1 text-center border-b-2 border-[#c87941]" style={{ background: dark }}>
-            <span className="text-sm font-black uppercase tracking-[0.22em]" style={{ color:"#FFD700", textShadow:"1px 1px 0 #000,0 0 8px rgba(255,215,0,0.35)" }}>
-              PLACE YOUR BETS!
-            </span>
+          {/* BALANCE BAR — abaixo do grid */}
+          <div className="shrink-0 flex items-center justify-between px-4 py-1 border-b-2 border-[#c87941]" style={{ background: dark }}>
+            <span className="text-[8px] font-bold uppercase text-gray-500">BALANCE</span>
+            <span className="text-base font-black text-green-400">{coins.toLocaleString()} coins</span>
           </div>
 
           {/* CONTROLS */}
@@ -496,20 +482,23 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
             {/* Row 1: WALLET | SPIN | BONUS */}
             <div className="flex items-center gap-2 mb-2">
 
-              {/* WALLET */}
+              {/* BUY BONUS */}
               <button
-                onClick={onWalletOpen}
-                disabled={!onWalletOpen}
-                className="flex-1 h-10 border-2 border-black font-black text-[10px] uppercase tracking-wide active:scale-95 transition-transform disabled:opacity-40 flex items-center justify-center"
+                onClick={() => setShowBonusConfirm(true)}
+                disabled={isSpinning || coins < bonusCost || freeLeft > 0}
+                className="flex-1 h-10 border-2 border-black font-black uppercase tracking-wide active:scale-95 transition-transform disabled:opacity-40 flex flex-col items-center justify-center leading-none"
                 style={{
-                  background: "linear-gradient(180deg,#7a4520,#3d1c02)",
+                  background: isSpinning || coins < bonusCost || freeLeft > 0
+                    ? "linear-gradient(180deg,#374151,#1f2937)"
+                    : "linear-gradient(180deg,#7c3aed,#4c1d95)",
                   color: "#FFD700",
                   boxShadow: "0 3px 0 #000",
                   textShadow: "1px 1px 0 #000",
-                  borderColor: "#c87941",
+                  borderColor: "#7c3aed",
                 }}
               >
-                💰 WALLET
+                <span className="text-[9px]">BUY BONUS</span>
+                <span className="text-[8px] font-bold" style={{ color: "#c4b5fd" }}>{bonusCost}c · 2×</span>
               </button>
 
               {/* SPIN — centro */}
@@ -536,22 +525,21 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
                 )}
               </button>
 
-              {/* BONUS */}
+              {/* WALLET (DEP/WIT) */}
               <button
-                onClick={() => spin(false, true)}
-                disabled={isSpinning || coins < bonusCost}
-                className="flex-1 h-10 border-2 border-black font-black text-[10px] uppercase tracking-wide active:scale-95 transition-transform disabled:opacity-40 flex items-center justify-center"
+                onClick={onWalletOpen}
+                disabled={!onWalletOpen}
+                className="flex-1 h-10 border-2 border-black font-black uppercase tracking-wide active:scale-95 transition-transform disabled:opacity-40 flex flex-col items-center justify-center leading-none"
                 style={{
-                  background: isSpinning || coins < bonusCost
-                    ? "linear-gradient(180deg,#374151,#1f2937)"
-                    : "linear-gradient(180deg,#7c3aed,#4c1d95)",
+                  background: "linear-gradient(180deg,#7a4520,#3d1c02)",
                   color: "#FFD700",
                   boxShadow: "0 3px 0 #000",
                   textShadow: "1px 1px 0 #000",
-                  borderColor: "#7c3aed",
+                  borderColor: "#c87941",
                 }}
               >
-                ⚡ BONUS
+                <span className="text-[9px]">DEPOSIT</span>
+                <span className="text-[8px] font-bold" style={{ color: "#c87941" }}>WITHDRAW</span>
               </button>
             </div>
 
