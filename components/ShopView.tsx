@@ -148,13 +148,10 @@ export function ShopView({ address, initialSlide = 0 }: ShopViewProps) {
   // Not connected state
   if (!address) {
     return (
-      <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-black" />
-        <div className="relative z-10 flex items-center justify-center h-full">
-          <div className="text-center">
-            <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">SHOP</h2>
-            <p className="text-vintage-ice/70">Connect wallet to access</p>
-          </div>
+      <div className="fixed inset-0 bg-[#1A1A1A] overflow-hidden flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">SHOP</h2>
+          <p className="text-vintage-ice/70">Connect wallet to access</p>
         </div>
       </div>
     );
@@ -164,9 +161,9 @@ export function ShopView({ address, initialSlide = 0 }: ShopViewProps) {
   const totalUnopenedPacks = playerPacks?.reduce((sum: number, pack: any) => sum + (pack.unopened || 0), 0) || 0;
 
   return (
-    <div className="fixed inset-0 bg-vintage-deep-black">
+    <div className="fixed inset-0 bg-[#1A1A1A]">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black/90 to-vintage-charcoal/50" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1F1F1F] via-[#1A1A1A] to-[#111]" />
 
       {/* Notification */}
       {notification && (
@@ -184,8 +181,7 @@ export function ShopView({ address, initialSlide = 0 }: ShopViewProps) {
             href="/"
             onClick={() => AudioManager.buttonNav()}
             onMouseEnter={() => AudioManager.buttonHover()}
-            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
-            style={{ boxShadow: '4px 4px 0px #000' }}
+            className="px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
           >
             {(t as (k: string) => string)('raidBossBack')}
           </Link>
@@ -230,11 +226,11 @@ export function ShopView({ address, initialSlide = 0 }: ShopViewProps) {
               {/* Slide 1: Free Pack */}
               <div className="snap-start flex-none w-full px-6 h-full">
                 <div className="max-w-sm mx-auto h-full">
-                  <div className={`bg-vintage-charcoal/50 border ${isArb ? 'border-amber-400/50' : 'border-vintage-gold/30'} rounded-xl p-3 transition-all shadow-xl h-full flex flex-col`}>
+                  <div className={`bg-[#222] border ${isArb ? 'border-amber-400/30' : 'border-white/10'} rounded-xl p-3 h-full flex flex-col`}>
 
               {/* Pack Header */}
               <div className="flex items-center gap-3 mb-2">
-                <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className="w-12 h-12 object-contain drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]" />
+                <img src={getAssetUrl("/pack-cover.png")} alt="Pack" className="w-12 h-12 object-contain" />
                 <div className="flex-1">
                   <h3 className="text-base font-display font-bold text-vintage-gold">
                     Nothing Packs (non LTC)
@@ -247,14 +243,14 @@ export function ShopView({ address, initialSlide = 0 }: ShopViewProps) {
               </div>
 
               {/* Nothing Card Warning */}
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-3 py-1.5 mb-2 shadow-lg">
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-1.5 mb-2">
                 <p className="text-amber-300/80 text-xs text-center">
                   {t('shopNothingCardWarning')}
                 </p>
               </div>
 
               {/* Drop Rates */}
-              <div className="bg-vintage-black/30 border border-vintage-gold/20 rounded-lg p-1.5 mb-2 text-xs shadow-lg">
+              <div className="bg-white/5 rounded-lg p-1.5 mb-2 text-xs">
                 <div className="grid grid-cols-4 gap-1 text-center">
                   <div>
                     <span className="text-vintage-ice/50 block">Common</span>
@@ -277,21 +273,21 @@ export function ShopView({ address, initialSlide = 0 }: ShopViewProps) {
 
               {/* ARB Mode Toggle */}
               {arbSupported && (
-                <div className="flex items-center justify-between rounded-lg px-3 py-1.5 mb-2 border bg-vintage-black/30 border-vintage-gold/20 shadow-lg">
+                <div className="flex items-center justify-between rounded-lg px-3 py-1.5 mb-2 bg-white/5">
                   <div>
                     <p className="font-bold text-sm text-vintage-ice/70">
                       {t('shopArbMode' as any)}
                     </p>
                     <p className="text-vintage-ice/50 text-xs">{t('shopArbModeDesc' as any)}</p>
                   </div>
-                  <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.6)", padding:"4px", borderRadius:"8px" }}>
+                  <div style={{ display:"flex", gap:"4px", background:"rgba(0,0,0,0.5)", padding:"4px", borderRadius:"8px" }}>
                     <button
                       onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
-                      className={`px-3 py-1 font-bold text-xs uppercase cursor-pointer rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] ${effectiveChain === 'base' ? 'ct-base-active' : 'ct-base-inactive'}`}
+                      className={`px-3 py-1 font-bold text-xs uppercase cursor-pointer rounded ${effectiveChain === 'base' ? 'ct-base-active' : 'ct-base-inactive'}`}
                     >BASE</button>
                     <button
                       onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
-                      className={`px-3 py-1 font-bold text-xs uppercase cursor-pointer rounded shadow-[2px_2px_0px_rgba(0,0,0,0.5)] ${effectiveChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive'}`}
+                      className={`px-3 py-1 font-bold text-xs uppercase cursor-pointer rounded ${effectiveChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive'}`}
                     >ARB</button>
                   </div>
                 </div>
@@ -304,14 +300,14 @@ export function ShopView({ address, initialSlide = 0 }: ShopViewProps) {
                     onClick={() => { AudioManager.buttonClick(); handleClaimDailyFree(); }}
                     onMouseEnter={() => AudioManager.buttonHover()}
                     disabled={claimingDaily}
-                    className="shop-claim-btn w-full h-9 font-display font-bold rounded transition-all disabled:opacity-50 text-vintage-black active:translate-y-[4px] bg-vintage-gold bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500"
-                                      >
+                    className="w-full h-9 font-display font-bold rounded transition-all disabled:opacity-50 bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500 text-black"
+                  >
                     {claimingDaily ? "..." : isArb ? t('shopClaimFreePackArb' as any) : t('shopClaimFreePack' as any)}
                   </button>
                 ) : (
                   <button
                     disabled
-                    className="w-full h-9 bg-vintage-charcoal border-2 border-vintage-gold/50 text-vintage-gold/70 font-display font-bold rounded cursor-not-allowed"
+                    className="w-full h-9 bg-white/10 border border-white/10 text-vintage-gold/70 font-display font-bold rounded cursor-not-allowed"
                   >
                     {dailyFreeStatus?.timeRemaining
                       ? `${t('shopNextPackIn' as any)} ${formatTimeRemaining(dailyFreeStatus.timeRemaining)}`

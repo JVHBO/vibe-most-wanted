@@ -180,7 +180,7 @@ body.neobrutalism [style*="box-shadow"] {
 body.neobrutalism [class*="rounded-2xl"],
 body.neobrutalism [class*="rounded-3xl"] { border-radius: 4px !important; }
 body.neobrutalism [class*="rounded-xl"] { border-radius: 4px !important; }
-body.neobrutalism [class*="rounded-full"]:not(svg *):not([class*="w-72"]):not([class*="w-6"]):not([class*="w-3"]):not([class*="w-8"]):not([class*="w-12"]):not([class*="w-14"]):not([class*="w-full"]):not(img):not([class*="rounded-full"][class*="border-vintage-gold"]):not([class*="border-gray-500"]):not([class*="border-red-900"]):not([class*="border-blue-700"]):not([class*="border-emerald-700"]):not([class*="border-purple-600"]) { border-radius: 4px !important; }
+body.neobrutalism [class*="rounded-full"]:not(svg *):not([class*="w-72"]):not([class*="w-6"]):not([class*="w-3"]):not([class*="w-8"]):not([class*="w-12"]):not([class*="w-14"]):not([class*="w-full"]):not(img):not([class*="rounded-full"][class*="border-vintage-gold"]):not([class*="border-gray-500"]):not([class*="border-red-900"]):not([class*="border-blue-700"]):not([class*="border-emerald-700"]):not([class*="border-purple-600"]):not([class*="settings-toggle-btn"]):not([class*="settings-modal-close"]) { border-radius: 4px !important; }
 /* Keep circles for: roulette wheel, avatars, notification dots, SVG elements, progress track */
 /* Progress bar track → keep pill shape */
 body.neobrutalism .tour-dex-btn [class*="rounded-full"] {
@@ -188,7 +188,7 @@ body.neobrutalism .tour-dex-btn [class*="rounded-full"] {
 }
 
 /* --- Buttons base --- */
-body.neobrutalism button:not([class*="tcg-btn"]):not([class*="tour-nav-btn"]):not([class*="tour-settings-btn"]):not([class*="tour-dex-btn"]):not([class*="tour-settings-gear"]),
+body.neobrutalism button:not([class*="tcg-btn"]):not([class*="tour-nav-btn"]):not([class*="tour-settings-btn"]):not([class*="tour-dex-btn"]):not([class*="tour-settings-gear"]):not([class*="settings-toggle-btn"]),
 body.neobrutalism [role="button"],
 body.neobrutalism a[class*="bg-"] {
   background-image: none !important;

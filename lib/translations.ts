@@ -1754,6 +1754,17 @@ export const translations = {
     raffleTimeAgoDays: 'd atrás',
     raffleMine: 'Meus Tickets',
     raffleMyBuys: 'Minhas Compras',
+    // === HOME PAGE ===
+    playNow: 'JOGUE AGORA',
+    noCardsNeeded: 'Sem cartas necessárias',
+    spinText: 'ROLETA',
+    free: 'Grátis',
+    needCards: 'PRECISA DE CARTAS',
+    yourCards: 'Suas Cartas',
+    viewAll: 'Ver Todas >',
+    ticket: 'ticket',
+    timeLeft: 'restante',
+    ended: 'Encerrado',
   },
   en: {
     transactionInProgress: 'Transaction in progress',
@@ -3490,6 +3501,17 @@ export const translations = {
     raffleTimeAgoDays: 'd ago',
     raffleMine: 'My Tickets',
     raffleMyBuys: 'My Purchases',
+    // === HOME PAGE ===
+    playNow: 'PLAY NOW',
+    noCardsNeeded: 'No cards needed',
+    spinText: 'SPIN',
+    free: 'Free',
+    needCards: 'NEED CARDS',
+    yourCards: 'Your Cards',
+    viewAll: 'View All >',
+    ticket: 'ticket',
+    timeLeft: 'left',
+    ended: 'Ended',
   },
   es: {
     transactionInProgress: 'Transacción en progreso',
@@ -5229,6 +5251,18 @@ export const translations = {
     raffleTimeAgoDays: 'd atrás',
     raffleMine: 'Mis Tickets',
     raffleMyBuys: 'Mis Compras',
+
+    // === HOME PAGE ===
+    playNow: 'Juega',
+    noCardsNeeded: 'No necesitas cartas',
+    spinText: 'RUEDE',
+    free: 'Gratis',
+    needCards: 'CARTAS NECESARIAS',
+    yourCards: 'Tus Cartas',
+    viewAll: 'Ver Todas >',
+    ticket: 'boleto',
+    timeLeft: 'quedan',
+    ended: 'Terminado',
   },
   hi: {
     // Hindi translations (abbreviated for brevity - keeping it short for file size)
@@ -6968,6 +7002,18 @@ export const translations = {
     raffleTimeAgoDays: 'दिन पहले',
     raffleMine: 'मेरे टिकट',
     raffleMyBuys: 'मेरी खरीदारी',
+
+    // === HOME PAGE ===
+    playNow: 'खेलें',
+    noCardsNeeded: 'कोई कार्ड नहीं चाहिए',
+    spinText: 'स्पिन',
+    free: 'मुफ़्त',
+    needCards: 'कार्ड चाहिए',
+    yourCards: 'आपके कार्ड',
+    viewAll: 'सभी देखें >',
+    ticket: 'टिकट',
+    timeLeft: 'बाकी',
+    ended: 'समाप्त',
   },
   ru: {
     transactionInProgress: 'Транзакция в процессе',
@@ -8703,6 +8749,18 @@ export const translations = {
     raffleTimeAgoDays: 'д назад',
     raffleMine: 'Мои Билеты',
     raffleMyBuys: 'Мои Покупки',
+
+    // === HOME PAGE ===
+    playNow: 'Играй',
+    noCardsNeeded: 'Карты не нужны',
+    spinText: 'КРУТИ',
+    free: 'Бесплатно',
+    needCards: 'НУЖНЫ КАРТЫ',
+    yourCards: 'Ваши Карты',
+    viewAll: 'Все карты >',
+    ticket: 'билет',
+    timeLeft: 'осталось',
+    ended: 'Завершено',
   },
   "zh-CN": {
     transactionInProgress: '交易进行中',
@@ -10457,6 +10515,18 @@ export const translations = {
     raffleTimeAgoDays: '天前',
     raffleMine: '我的票',
     raffleMyBuys: '我的购买',
+
+    // === HOME PAGE ===
+    playNow: '立即玩乐',
+    noCardsNeeded: '无需卡牌',
+    spinText: '旋转',
+    free: '免费',
+    needCards: '需要卡牌',
+    yourCards: '您的卡牌',
+    viewAll: '查看全部 >',
+    ticket: '门票',
+    timeLeft: '剩余',
+    ended: '已结束',
   },
   id: {
     transactionInProgress: 'Transaksi sedang berlangsung',
@@ -12185,6 +12255,18 @@ export const translations = {
     raffleTimeAgoDays: 'h lalu',
     raffleMine: 'Tiket Saya',
     raffleMyBuys: 'Pembelian Saya',
+
+    // === HOME PAGE ===
+    playNow: 'Main',
+    noCardsNeeded: 'Tanpa kartu',
+    spinText: 'PUTAR',
+    free: 'Gratis',
+    needCards: 'PERLU KARTU',
+    yourCards: 'Kartu Anda',
+    viewAll: 'Lihat Semua >',
+    ticket: 'tiket',
+    timeLeft: 'tersisa',
+    ended: 'Selesai',
   },
   fr: {
     transactionInProgress: 'Transaction en cours',
@@ -13914,6 +13996,18 @@ export const translations = {
     raffleTimeAgoDays: 'j il y a',
     raffleMine: 'Mes Tickets',
     raffleMyBuys: 'Mes Achats',
+
+    // === HOME PAGE ===
+    playNow: 'JOUER',
+    noCardsNeeded: 'Aucune carte nécessaire',
+    spinText: 'TOURNE',
+    free: 'Gratuit',
+    needCards: 'CARTES NÉCESSAIRES',
+    yourCards: 'Vos Cartes',
+    viewAll: 'Voir tout >',
+    ticket: 'ticket',
+    timeLeft: 'restant',
+    ended: 'Terminé',
   },
   ja: {
     transactionInProgress: '取引処理中',
@@ -15641,6 +15735,18 @@ export const translations = {
     raffleTimeAgoDays: '日前',
     raffleMine: '私のチケット',
     raffleMyBuys: '私の購入',
+
+    // === HOME PAGE ===
+    playNow: '遊ぼう',
+    noCardsNeeded: 'カード不要',
+    spinText: 'スピン',
+    free: '無料',
+    needCards: 'カード必要',
+    yourCards: 'あなたのカード',
+    viewAll: 'すべて見る >',
+    ticket: 'チケット',
+    timeLeft: '残り',
+    ended: '終了',
   },
   it: {
     transactionInProgress: 'Transazione in corso',
@@ -17959,5 +18065,17 @@ export const translations = {
     raffleTimeAgoDays: 'g fa',
     raffleMine: 'I Miei Biglietti',
     raffleMyBuys: 'I Miei Acquisti',
+
+    // === HOME PAGE ===
+    playNow: 'Gioca',
+    noCardsNeeded: 'Nessuna carta necessaria',
+    spinText: 'GIRA',
+    free: 'Gratis',
+    needCards: 'CARTE NECESSARIE',
+    yourCards: 'Le Tue Carte',
+    viewAll: 'Vedi Tutte >',
+    ticket: 'biglietto',
+    timeLeft: 'rimasto',
+    ended: 'Terminato',
   }
 } as const;

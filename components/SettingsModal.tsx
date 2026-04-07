@@ -157,7 +157,6 @@ export function SettingsModal({
 
   // 🔀 MERGE ACCOUNT: Old accounts (no FID) can merge into FID accounts
   const [showMergeCode, setShowMergeCode] = useState(false);
-  const [linkedWalletOpen, setLinkedWalletOpen] = useState(false);
   const [showMergeWarning, setShowMergeWarning] = useState(false); // Warning modal before generating code
   const [generatedMergeCode, setGeneratedMergeCode] = useState<string | null>(null);
   const [mergeCodeExpiresAt, setMergeCodeExpiresAt] = useState<number | null>(null);
@@ -535,7 +534,7 @@ export function SettingsModal({
           </h2>
           <button
             onClick={onClose}
-            className="text-vintage-gold hover:text-vintage-ice text-lg sm:text-xl transition"
+            className="text-vintage-gold hover:text-vintage-ice text-lg sm:text-xl transition settings-modal-close"
           >
             ×
           </button>
@@ -543,7 +542,7 @@ export function SettingsModal({
 
         <div className="space-y-1.5">
           {/* Music Toggle */}
-          <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+          <div className="bg-[#252525] p-2 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <span className="text-lg sm:text-xl text-vintage-gold">♫</span>
@@ -556,15 +555,14 @@ export function SettingsModal({
               </div>
               <button
                 onClick={toggleMusic}
-                className={`relative w-11 h-6 rounded-full transition-all ${
-                  musicEnabled
-                    ? 'bg-[#FAF9F6]/80'
-                    : 'bg-white/10'
+                className={`relative w-10 h-5 rounded-full transition-colors settings-toggle-btn ${
+                  musicEnabled ? 'bg-[#FACC15]' : 'bg-[#555]'
                 }`}
+                aria-label={t('settingsMusic')}
               >
                 <div
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-[#1A1A1A] transition-transform ${
-                    musicEnabled ? 'translate-x-5' : 'translate-x-0'
+                  className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${
+                    musicEnabled ? 'left-[22px]' : 'left-0.5'
                   }`}
                 />
               </button>
@@ -591,7 +589,7 @@ export function SettingsModal({
           </div>
 
           {/* Language Selector */}
-          <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+          <div className="bg-[#252525] p-2 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-lg sm:text-xl text-vintage-gold">◊</span>
               <p className="font-modern font-bold text-vintage-gold text-sm sm:text-base">
@@ -627,7 +625,7 @@ export function SettingsModal({
           </div>
 
           {/* Music Mode Selector */}
-          <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+          <div className="bg-[#252525] p-2 rounded-lg">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-lg sm:text-xl text-vintage-gold">♫</span>
               <p className="font-modern font-bold text-vintage-gold text-sm sm:text-base">{t('settingsBackgroundMusic')}</p>
@@ -946,269 +944,9 @@ export function SettingsModal({
           </div>
 
 
-          {/* 🔗 Linked Wallets + Merge — collapsible */}
-          {walletAddress && (
-            <div className="bg-vintage-black/50 rounded-xl border border-vintage-gold/50 overflow-hidden">
-              {/* Header — always visible, click to toggle */}
-              <button
-                onClick={() => setLinkedWalletOpen((v) => !v)}
-                className="w-full flex items-center gap-3 p-2 sm:p-3 hover:bg-white/5 transition-colors"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <div className="flex-1 text-left">
-                  <p className="font-modern font-bold text-vintage-gold">{t('linkedWallets')}</p>
-                  <p className="text-xs text-[#C9A227]">{t('linkedWalletsDesc')}</p>
-                </div>
-                <svg
-                  width="18" height="18" viewBox="0 0 24 24" fill="none"
-                  className={`shrink-0 text-vintage-gold/60 transition-transform duration-200 ${linkedWalletOpen ? 'rotate-180' : ''}`}
-                >
-                  <path d="M6 9l6 6 6-6" stroke="#D4AF37" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-
-              {/* Expandable content */}
-              {linkedWalletOpen && (
-              <div className="px-2 sm:px-3 pb-3 border-t border-vintage-gold/20">
-
-              <div className="space-y-2">
-                {/* Primary wallet */}
-                {linkedAddresses?.primary ? (
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-400">●</span>
-                    <span className="text-vintage-gold font-mono">
-                      {linkedAddresses.primary.slice(0, 6)}...{linkedAddresses.primary.slice(-4)}
-                    </span>
-                    <span className="text-xs text-vintage-burnt-gold">{t('linkedWalletPrimary')}</span>
-                    {walletAddress?.toLowerCase() === linkedAddresses.primary && (
-                      <span className="text-xs bg-vintage-gold/20 text-vintage-gold px-2 py-0.5 rounded">{t('linkedWalletCurrent')}</span>
-                    )}
-                  </div>
-                ) : (
-                  /* Show current wallet if no profile yet */
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-400">●</span>
-                    <span className="text-vintage-gold font-mono">
-                      {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                    </span>
-                    <span className="text-xs bg-vintage-gold/20 text-vintage-gold px-2 py-0.5 rounded">{t('linkedWalletCurrent')}</span>
-                  </div>
-                )}
-
-                {/* Linked wallets */}
-                {linkedAddresses?.linked?.map((addr: string, i: number) => (
-                  <div key={addr} className="flex items-center gap-2 text-sm">
-                    <span className="text-blue-400">●</span>
-                    <span className="text-vintage-gold font-mono">
-                      {addr.slice(0, 6)}...{addr.slice(-4)}
-                    </span>
-                    <span className="text-xs text-vintage-burnt-gold">{t('linkedWalletLinked')}</span>
-                    {walletAddress?.toLowerCase() === addr && (
-                      <span className="text-xs bg-vintage-gold/20 text-vintage-gold px-2 py-0.5 rounded">{t('linkedWalletCurrent')}</span>
-                    )}
-                    {/* Unlink button - only show for FID owners */}
-                    {hasFarcaster && (
-                      <button
-                        onClick={() => handleUnlinkWallet(addr)}
-                        className="ml-auto text-red-400 hover:text-red-300 text-xs px-2 py-0.5 border border-red-400/30 rounded hover:border-red-400/50 transition"
-                      >
-                        {t('unlinkWallet')}
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* 🔗 UNIFIED: Enter Code to Link/Merge (Only for Farcaster users) */}
-              {hasFarcaster && (
-                <div className="mt-3 pt-3 border-t border-vintage-gold/10">
-                  <p className="text-vintage-burnt-gold text-xs mb-3">
-                    {t('enterCodeToLinkOrMerge') || 'Enter 6-digit code to link wallet or merge account'}
-                  </p>
-
-                  {/* Unified Code Input */}
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={unifiedCodeInput}
-                      onChange={(e) => {
-                        setUnifiedCodeInput(e.target.value.replace(/\D/g, ''));
-                        setCodeError(null);
-                        setCodeSuccess(null);
-                      }}
-                      placeholder="000000"
-                      className="w-full sm:flex-1 text-center text-2xl font-mono tracking-[0.3em] bg-vintage-black border-2 border-vintage-gold/30 rounded-lg py-2 text-vintage-gold placeholder:text-vintage-gold/30 focus:border-vintage-gold focus:outline-none"
-                    />
-                    <button
-                      onClick={handleUseUnifiedCode}
-                      disabled={isProcessingCode || unifiedCodeInput.length !== 6}
-                      className="w-full sm:w-auto px-4 py-2 bg-vintage-gold hover:bg-vintage-burnt-gold text-vintage-black rounded-lg font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                      {isProcessingCode ? '...' : (t('useCodeButton') || 'Use Code')}
-                    </button>
-                  </div>
-
-                  {/* Error */}
-                  {codeError && (
-                    <p className="text-red-400 text-xs text-center mt-2">{codeError}</p>
-                  )}
-
-                  {/* Success */}
-                  {codeSuccess && (
-                    <p className="text-green-400 text-xs text-center mt-2">{codeSuccess}</p>
-                  )}
-
-                </div>
-              )}
-
-              {/* 🔀 MERGE ACCOUNT - inside the same dropdown, for OLD accounts (no FID) */}
-              {userProfile && !hasFarcaster && (
-              <div className="mt-3 pt-3 border-t border-vintage-gold/10 bg-orange-900/20 rounded-lg p-2 sm:p-3">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-2xl">🔀</span>
-                <p className="font-modern font-bold text-orange-400">{t('mergeAccountTitle')}</p>
-              </div>
-              <p className="text-orange-300 text-xs mb-4">
-                {t('mergeAccountNoFidDesc')}
-              </p>
-
-              {showMergeCode ? (
-                generatedMergeCode ? (
-                  <div>
-                    <p className="text-center text-orange-300 text-xs mb-3">
-                      {t('mergeEnterCodePrompt')}
-                    </p>
-                    <p className="text-4xl font-mono font-bold text-center text-orange-400 tracking-[0.3em] my-4">
-                      {generatedMergeCode}
-                    </p>
-                    <p className="text-vintage-burnt-gold text-xs text-center mb-3">
-                      {t('mergeExpiresIn')} {getMergeCodeTimeRemaining() || '...'}
-                    </p>
-                    <p className="text-red-400 text-xs text-center mb-3">
-                      {t('mergeWarning')}
-                    </p>
-
-                    <div className="flex gap-2 mt-4">
-                      <button
-                        onClick={() => {
-                          setShowMergeCode(false);
-                          setGeneratedMergeCode(null);
-                          setMergeCodeExpiresAt(null);
-                          setMergeError(null);
-                        }}
-                        className="flex-1 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-burnt-gold rounded-lg text-sm"
-                      >
-                        {t('cancel')}
-                      </button>
-                      <button
-                        onClick={handleGenerateMergeCode}
-                        className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm"
-                      >
-                        {t('mergeNewCode')}
-                      </button>
-                    </div>
-                  </div>
-                ) : showMergeWarning ? (
-                  // 🔔 MERGE WARNING MODAL - Shows what will be lost/kept
-                  <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-4">
-                    <h3 className="text-lg font-bold text-red-400 mb-3">{t('mergeWarningTitle')}</h3>
-
-                    <div className="mb-3">
-                      <p className="text-red-300 font-semibold text-sm mb-2">{t('mergeWhatYouLose')}</p>
-                      <ul className="text-xs text-red-200 space-y-1 ml-2">
-                        <li>{t('mergeCoinsLose')}</li>
-                        <li>{t('mergeAchievementsLose')}</li>
-                        <li>{t('mergeMissionsLose')}</li>
-                      </ul>
-                    </div>
-
-                    <div className="mb-3">
-                      <p className="text-green-300 font-semibold text-sm mb-2">{t('mergeWhatYouKeep')}</p>
-                      <ul className="text-xs text-green-200 space-y-1 ml-2">
-                        <li>{t('mergeCardsKeep')}</li>
-                        <li>{t('mergeVbmsNote')}</li>
-                        <li>{t('mergeWalletLink')}</li>
-                      </ul>
-                    </div>
-
-                    <p className="text-yellow-400 text-xs mb-4">{t('mergeAccountDeletedAfter')}</p>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          setShowMergeWarning(false);
-                          handleGenerateMergeCode();
-                        }}
-                        disabled={isGeneratingMerge}
-                        className="flex-1 px-4 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50"
-                      >
-                        {isGeneratingMerge ? '...' : t('mergeConfirmGenerate')}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowMergeWarning(false);
-                          setShowMergeCode(false);
-                        }}
-                        className="px-4 py-3 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-burnt-gold rounded-lg text-sm"
-                      >
-                        {t('cancel')}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <button
-                      onClick={() => setShowMergeWarning(true)}
-                      disabled={isGeneratingMerge}
-                      className="w-full px-4 py-3 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-semibold text-sm disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                      {isGeneratingMerge ? (
-                        <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
-                      ) : (
-                        '🔀'
-                      )}
-                      {t('mergeGenerateCode')}
-                    </button>
-                    {mergeError && (
-                      <p className="text-red-400 text-xs text-center mt-2">{mergeError}</p>
-                    )}
-                    <button
-                      onClick={() => {
-                        setShowMergeCode(false);
-                        setMergeError(null);
-                      }}
-                      className="w-full mt-2 px-4 py-2 bg-vintage-charcoal border border-vintage-gold/30 text-vintage-burnt-gold rounded-lg text-sm"
-                    >
-                      {t('cancel')}
-                    </button>
-                  </div>
-                )
-              ) : (
-                <button
-                  onClick={() => {
-                    setShowMergeCode(true);
-                    if (soundEnabled) AudioManager.buttonNav();
-                  }}
-                  className="w-full px-4 py-3 bg-orange-600/20 hover:bg-orange-600/30 border border-orange-500/50 text-orange-400 rounded-lg font-semibold text-sm transition-all"
-                >
-                  {t('mergeWantToMerge')}
-                </button>
-              )}
-              </div>
-              )}
-
-              </div>
-              )}
-            </div>
-          )}
-
           {/* Disconnect Wallet — hidden in Farcaster miniapp */}
           {walletAddress && disconnectWallet && !isInFarcaster && (
-            <div className="bg-white/5 p-2 rounded-lg border border-white/5">
+            <div className="bg-[#252525] p-2 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-vintage-gold">

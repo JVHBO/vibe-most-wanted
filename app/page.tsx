@@ -173,7 +173,7 @@ export default function HomePage() {
           {/* PLAY NOW */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#4ade80', animation: 'pulseGlow 2s infinite' }} />
-            <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>Play Now</span>
+            <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>{t('playNow')}</span>
           </div>
 
           {/* SPIN */}
@@ -222,9 +222,9 @@ export default function HomePage() {
               </svg>
             </div>
             <div style={{ padding: '10px 14px', position: 'relative', zIndex: 1 }}>
-              <div style={{ fontSize: 6.5, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 1.5 }}>No Cards Needed</div>
-              <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', lineHeight: 1, marginTop: 2 }}>SPIN</div>
-              <div style={{ marginTop: 6, display: 'inline-block', padding: '2px 10px', background: '#22c55e', color: '#000', borderRadius: 4, fontSize: 9, fontWeight: 700 }}>Free</div>
+              <div style={{ fontSize: 6.5, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('noCardsNeeded')}</div>
+              <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', lineHeight: 1, marginTop: 2 }}>{t('spinText')}</div>
+              <div style={{ marginTop: 6, display: 'inline-block', padding: '2px 10px', background: '#22c55e', color: '#000', borderRadius: 4, fontSize: 9, fontWeight: 700 }}>{t('free')}</div>
             </div>
           </Link>
 
@@ -287,7 +287,7 @@ export default function HomePage() {
           <div style={{ marginTop: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
               <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#555', animation: 'lockPulse 2s infinite' }} />
-              <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>Need Cards</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>{t('needCards')}</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
               {(() => {
@@ -392,7 +392,7 @@ export default function HomePage() {
             })}
             <div style={{ padding: '10px 14px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ fontSize: 7, fontWeight: 600, color: 'rgba(156,163,175,0.5)', textTransform: 'uppercase', letterSpacing: 1.5 }}>Your Cards</span>
+                <span style={{ fontSize: 7, fontWeight: 600, color: 'rgba(156,163,175,0.5)', textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('yourCards')}</span>
                 {cardsLoading ? (
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FACC15', animation: 'dotPulse 1.2s ease-in-out infinite 0s' }} />
@@ -403,7 +403,7 @@ export default function HomePage() {
                   <span style={{ fontSize: 20, fontWeight: 900, color: '#FACC15', lineHeight: 1 }}>{cardCount}</span>
                 )}
               </div>
-              <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(156,163,175,0.5)', flexShrink: 0, marginRight: 4 }}>View All &gt;</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: 'rgba(156,163,175,0.5)', flexShrink: 0, marginRight: 4 }}>{t('viewAll')}</span>
             </div>
           </div>
 
@@ -452,10 +452,10 @@ export default function HomePage() {
                 {raffleTimeLeft ? (
                   <>
                     <span style={{ fontSize: 10, fontWeight: 800, color: '#000', lineHeight: 1, display: 'block', position: 'relative', zIndex: 1 }}>{raffleTimeLeft.h}h {raffleTimeLeft.m}m</span>
-                    <span style={{ fontSize: 7, color: 'rgba(0,0,0,0.5)', textTransform: 'uppercase', lineHeight: 1, display: 'block', marginTop: 1, position: 'relative', zIndex: 1 }}>left</span>
+                    <span style={{ fontSize: 7, color: 'rgba(0,0,0,0.5)', textTransform: 'uppercase', lineHeight: 1, display: 'block', marginTop: 1, position: 'relative', zIndex: 1 }}>{t('timeLeft')}</span>
                   </>
                 ) : (
-                  <span style={{ fontSize: 8, fontWeight: 800, color: 'rgba(0,0,0,0.5)', lineHeight: 1, display: 'block', position: 'relative', zIndex: 1 }}>Ended</span>
+                  <span style={{ fontSize: 8, fontWeight: 800, color: 'rgba(0,0,0,0.5)', lineHeight: 1, display: 'block', position: 'relative', zIndex: 1 }}>{t('ended')}</span>
                 )}
               </div>
             </div>
