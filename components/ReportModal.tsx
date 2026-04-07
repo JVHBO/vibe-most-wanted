@@ -173,7 +173,7 @@ export function ReportModal({ isOpen, onClose, t, address, fid, currentView, use
           </div>
           <button
             onClick={onClose}
-            className="text-vintage-gold/60 hover:text-vintage-gold text-xl leading-none transition-colors"
+            className="text-red-500 hover:text-red-400 text-xl leading-none transition-colors"
             aria-label="Close"
           >
             ✕

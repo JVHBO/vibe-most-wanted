@@ -188,9 +188,18 @@ body.neobrutalism .tour-dex-btn [class*="rounded-full"] {
 }
 
 /* --- Buttons base --- */
-body.neobrutalism button:not([class*="tcg-btn"]):not([class*="tour-nav-btn"]):not([class*="tour-settings-btn"]):not([class*="tour-dex-btn"]):not([class*="tour-settings-gear"]):not([class*="settings-toggle-btn"]),
-body.neobrutalism [role="button"],
-body.neobrutalism a[class*="bg-"] {
+
+/* Lock home page content scroll */
+body.neobrutalism .home-content-container,
+body.neobrutalism div[style*="overflowY:\s*'hidden'"],
+body.neobrutalism div[style*="overflow-y:\s*auto"][class*="flex-col"] {
+  overflow-y: hidden !important;
+}
+body.neobrutalism button:not([class*="tcg-btn"]):not([class*="tour-nav-btn"]):not([class*="tour-settings-btn"]):not([class*="tour-dex-btn"]):not([class*="tour-settings-gear"]):not([class*="settings-toggle-btn"]):not(.shop-container *):not(.settings-modal-container *),
+body.neobrutalism .shop-container > [role="button"],
+body.neobrutalism .settings-modal-container > [role="button"],
+body.neobrutalism a.shop-container > a[class*="bg-"],
+body.neobrutalism a.settings-modal-container > a[class*="bg-"] {
   background-image: none !important;
   border: 4px solid #000 !important;
   box-shadow: 4px 4px 0px #000 !important;
@@ -225,6 +234,19 @@ body.neobrutalism a[class*="bg-"]:active {
   --tw-scale-x: 1 !important;
   --tw-scale-y: 1 !important;
 }
+/* Close/Back buttons - no neobrutalism border/shadow, red color */
+body.neobrutalism button.close-btn,
+body.neobrutalism button.back-btn {
+  border: none !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+/* Force red on close/back buttons */
+body.neobrutalism .close-btn,
+body.neobrutalism .back-btn {
+  color: #ef4444 !important;
+}
+
 body.neobrutalism button:disabled {
   background-color: #333 !important;
   color: #666 !important;
@@ -992,6 +1014,12 @@ body.neobrutalism .tour-dex-btn span,
 body.neobrutalism .tour-dex-btn [class*="text-"] {
   color: #FFD400 !important;
   font-weight: 800 !important;
+}
+/* in-wallet label → igual ao SSJ BLUE: peso 700, 8px */
+body.neobrutalism .tour-dex-btn .dex-inwallet-label,
+.tour-dex-btn .dex-inwallet-label {
+  font-size: 8px !important;
+  font-weight: 700 !important;
 }
 /* Bonding progress bar → restore colors */
 body.neobrutalism .tour-dex-btn .h-1 {
@@ -3170,4 +3198,23 @@ body.neobrutalism button.rlt-claim-btn:disabled {
   color: rgba(255,255,255,0.45) !important;
   box-shadow: none !important;
   border: none !important;
+}
+
+/* ========== NO NEOBRUTALISM: Settings & Shop ========== */
+body.neobrutalism .settings-modal-container,
+body.neobrutalism .settings-modal-container * {
+  border: none !important;
+  box-shadow: none !important;
+  background-image: none !important;
+}
+body.neobrutalism .settings-modal-container {
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 12px !important;
+}
+
+body.neobrutalism .shop-container,
+body.neobrutalism .shop-container * {
+  border: none !important;
+  box-shadow: none !important;
+  background-image: none !important;
 }

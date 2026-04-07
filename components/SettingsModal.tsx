@@ -525,7 +525,8 @@ export function SettingsModal({
       onClick={onClose}
     >
       <div
-        className="bg-[#1A1A1A] rounded-xl border border-white/10 p-2 sm:p-3 max-w-md w-full max-h-[90%] overflow-y-auto"
+        className="bg-[#1A1A1A] rounded-xl border border-white/10 p-2 sm:p-3 max-w-md w-full max-h-[90%] overflow-y-auto settings-modal-container"
+        style={{ overflowX: 'hidden' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-1.5 sm:mb-2">
@@ -534,7 +535,7 @@ export function SettingsModal({
           </h2>
           <button
             onClick={onClose}
-            className="text-vintage-gold hover:text-vintage-ice text-lg sm:text-xl transition settings-modal-close"
+            className="text-red-500 hover:text-red-400 text-lg sm:text-xl transition settings-modal-close"
           >
             ×
           </button>
@@ -996,14 +997,6 @@ export function SettingsModal({
               </button>
             )}
           </div>
-
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            className="w-full px-6 py-3 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold hover:shadow-gold-lg transition-all"
-          >
-            {t('understood')}
-          </button>
         </div>
       </div>
     </div>

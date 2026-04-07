@@ -59,7 +59,7 @@ export function GameHeader({
   return (
     <div className={`mb-3 md:mb-6 ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100] m-0' : ''}`} style={{ overflow: 'visible' }}>
       <div className={`bg-vintage-charcoal/80 backdrop-blur-lg p-1 md:p-3 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30`} style={{ overflow: 'visible' }}>
-        <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3" style={{ overflow: 'visible' }}>
+        <div className="flex flex-wrap items-center justify-between gap-2 md:gap-3 border-b-2 border-black pb-2 mb-2" style={{ overflow: 'visible' }}>
 
           {/* Left: Profile */}
           <div className="flex items-center gap-2" style={{ overflow: 'visible' }}>
@@ -130,7 +130,7 @@ export function GameHeader({
                     <span className="text-sm font-semibold text-vintage-gold leading-none truncate">
                       {Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} $VBMS
                     </span>
-                    <span style={{ fontSize: '7px', fontWeight: 700, color: '#FFD700', lineHeight: 1, marginTop: '2px', letterSpacing: '0.05em' }}>in-wallet</span>
+                    <span className="dex-inwallet-label text-[9px] font-bold text-vintage-gold leading-none mt-0.5 tracking-wide">in-wallet</span>
                   </div>
                   <div className="absolute bottom-1.5 left-2 right-2 h-1 bg-vintage-deep-black rounded-full overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-vintage-gold to-green-400 transition-all" style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }} />

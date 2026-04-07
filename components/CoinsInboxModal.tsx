@@ -510,7 +510,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
             {/* Close button */}
             <button
               onClick={onClose}
-              className="w-9 h-9 bg-[#FF3B3B] text-black font-bold border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_#000] transition-all text-base leading-none"
+              className="w-9 h-9 text-red-500 hover:text-red-400 font-bold flex items-center justify-center transition-all text-base leading-none"
             >
               ✕
             </button>

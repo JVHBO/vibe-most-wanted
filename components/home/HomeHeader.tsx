@@ -64,7 +64,7 @@ export function HomeHeader({
 
   return (
     <div className={`tour-header ${isInFarcaster ? 'fixed top-0 left-0 right-0 z-[100]' : 'mb-3 md:mb-4'}`}>
-      <div className={`bg-vintage-charcoal/95 backdrop-blur-lg p-1.5 ${isInFarcaster ? 'rounded-none border-b-2' : 'rounded-xl border-2'} border-vintage-gold/30 overflow-visible`}>
+      <div className={`bg-vintage-charcoal/95 backdrop-blur-lg p-1.5 overflow-visible ${isInFarcaster ? 'rounded-none border-t-2 border-t-vintage-gold/30' : 'rounded-xl border-2 border-vintage-gold/30'}`} style={isInFarcaster ? { borderBottom: '1px solid rgba(255,255,255,0.12)' } : {}}>
         <div className="flex items-center justify-between gap-1 overflow-visible">
           <div className="flex items-center">
             {userProfile ? (

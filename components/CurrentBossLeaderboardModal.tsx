@@ -159,7 +159,7 @@ export function CurrentBossLeaderboardModal({
 
           <button
             onClick={onClose}
-            className="w-full px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition"
+            className="w-full px-4 py-3 text-red-500 hover:text-red-400 rounded-lg font-bold transition"
           >
             {t('raidBossClose')}
           </button>

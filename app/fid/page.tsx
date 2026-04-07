@@ -2083,7 +2083,7 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
                       AudioManager.buttonClick();
                       setShowAboutModal(false);
                     }}
-                    className="text-vintage-ice hover:text-vintage-gold text-2xl sm:text-3xl leading-none bg-vintage-black/70 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"
+                    className="text-red-500 hover:text-red-400 text-2xl sm:text-3xl leading-none bg-vintage-black/70 rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center"
                   >
                     ×
                   </button>

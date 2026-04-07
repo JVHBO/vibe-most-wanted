@@ -470,6 +470,33 @@ export default defineSchema({
     .index("by_addedBy", ["addedBy"])
     .index("by_targetFid", ["targetFid"]),
 
+  // Slot Machine - Player Spins History
+  slotSpins: defineTable({
+    playerAddress: v.string(),
+    spinType: v.union(v.literal("free"), v.literal("paid")), // free = daily bonus, paid = bought with coins
+    spinCount: v.number(), // 1-3 for regular, bonus multiplier for free spins
+    cost: v.number(), // coins cost (0 for free spins)
+    reels: v.array(v.string()), // Array of 3 card baccarat names
+    winAmount: v.number(), // coins won
+    multiplier: v.number(), // prize multiplier applied
+    timestamp: v.number(),
+    claimed: v.boolean(), // if prize was added to coins balance
+  })
+    .index("by_player_time", ["playerAddress", "timestamp"])
+    .index("by_date", ["timestamp"]),
+
+  // Slot Machine - Daily Stats
+  slotDailyStats: defineTable({
+    playerAddress: v.string(),
+    date: v.string(), // "2026-04-07" format
+    freeSpinsUsed: v.number(), // daily free spins claimed
+    paidSpinsUsed: v.number(), // paid spins bought
+    totalSpins: v.number(), // total spins today
+    totalWon: v.number(), // total coins won today
+    lastSpinTime: v.optional(v.number()),
+  })
+    .index("by_player_date", ["playerAddress", "date"]),
+
   // Personal Missions (daily bonuses that need to be claimed)
   personalMissions: defineTable({
     playerAddress: v.string(),

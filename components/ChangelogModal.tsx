@@ -160,7 +160,7 @@ export function ChangelogModal({ isOpen, onClose, t, onReportBug }: ChangelogMod
           </div>
           <button
             onClick={onClose}
-            className="text-vintage-gold/60 hover:text-vintage-gold text-xl leading-none transition-colors"
+            className="text-red-500 hover:text-red-400 text-xl leading-none transition-colors"
             aria-label="Close"
           >
             ✕
@@ -210,7 +210,7 @@ export function ChangelogModal({ isOpen, onClose, t, onReportBug }: ChangelogMod
           )}
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl font-display font-bold text-sm transition-all"
+            className="flex-1 px-4 py-2 text-red-500 hover:text-red-400 rounded-xl font-display font-bold text-sm transition-all"
           >
             {t('changelogClose')}
           </button>

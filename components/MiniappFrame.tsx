@@ -240,7 +240,7 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
         top: `${frameY ?? 0}px`,
         borderRadius: "44px",
         border: "1px solid rgba(255,255,255,0.08)",
-        boxShadow: "0 0 0 100px #090a0a, 0 0 60px 20px rgba(0,0,0,0.6)",
+        boxShadow: "none",
         display: "flex",
         flexDirection: "column",
         overflow: "hidden",

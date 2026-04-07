@@ -946,7 +946,7 @@ export default function DexPage() {
       {/* Header */}
       <div className="bg-gradient-to-r from-vintage-gold/20 to-vintage-orange/20 border-b-2 border-vintage-gold/50 p-4 flex-shrink-0">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-vintage-gold hover:text-vintage-orange transition">
+          <Link href="/" className="text-red-500 hover:text-red-400 transition">
             &larr; {t.back}
           </Link>
           <h1 className="text-2xl font-display font-bold text-vintage-gold">
@@ -1187,7 +1187,7 @@ export default function DexPage() {
                 <span>💎</span>
                 <h3 className="text-sm font-bold text-vintage-gold">{t.bondingInfoTitle}</h3>
               </div>
-              <button onClick={() => setShowBondingInfo(false)} className="text-vintage-ice/40 hover:text-vintage-ice text-xl leading-none">×</button>
+              <button onClick={() => setShowBondingInfo(false)} className="text-red-500 hover:text-red-400 text-xl leading-none">×</button>
             </div>
 
             {/* Descriptions */}

@@ -1479,7 +1479,7 @@ export default function QuestsPage() {
               <VibeMailInboxWithClaim
                 cardFid={userFid}
                 username={profileDashboard?.username}
-                onClose={() => setActiveTab('missions')}
+                onClose={() => { setActiveTab('missions'); }}
                 pendingVbms={0}
                 address={address}
                 myFid={userFid}
@@ -1492,7 +1492,7 @@ export default function QuestsPage() {
             ) : (
               <div className="px-4 py-8 text-center">
                 <p className="text-white/50 mb-4">Connect Farcaster to view messages</p>
-                <button onClick={() => setActiveTab('missions')} className="text-white/50 text-sm">← Back</button>
+                <button onClick={() => setActiveTab('missions')} className="text-red-500 hover:text-red-400 text-sm">← Back</button>
               </div>
             )}
             </div>

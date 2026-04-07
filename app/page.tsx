@@ -168,7 +168,7 @@ export default function HomePage() {
       </div>
 
       {/* CONTENT — preso entre header e nav */}
-      <div style={{ position: 'fixed', top: 48, bottom: 60, left: 0, right: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch' as any, padding: '20px 4px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div className="home-content-container" style={{ position: 'fixed', top: 48, bottom: 60, left: 0, right: 0, overflowY: 'hidden', padding: '36px 4px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
 
           {/* PLAY NOW */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>

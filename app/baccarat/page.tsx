@@ -807,8 +807,8 @@ export default function BaccaratPage() {
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <Link
             href="/"
-            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
-            style={{ boxShadow: '4px 4px 0px #000' }}
+            className="px-2 py-1 text-red-500 hover:text-red-400 border-2 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#000] transition-all"
+            style={{ boxShadow: '2px 2px 0px #000' }}
           >
             {t('baccaratBack')}
           </Link>
@@ -1267,7 +1267,7 @@ export default function BaccaratPage() {
 
             <button
               onClick={() => setShowLimitModal(false)}
-              className="w-full py-2 text-vintage-burnt-gold hover:text-vintage-gold text-sm font-modern transition-all"
+              className="w-full py-2 text-red-500 hover:text-red-400 text-sm font-modern transition-all"
             >
               Close
             </button>
@@ -1345,7 +1345,7 @@ export default function BaccaratPage() {
                 <p className="text-vintage-burnt-gold text-sm font-modern mb-4">{cashoutError}</p>
                 <button
                   onClick={handleCashoutClose}
-                  className="px-6 py-2 bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black rounded-lg font-display font-bold text-sm transition-all"
+                  className="px-6 py-2 text-red-500 hover:text-red-400 rounded-lg font-display font-bold text-sm transition-all"
                 >
                   Close
                 </button>
@@ -1425,10 +1425,10 @@ export default function BaccaratPage() {
                 {/* Close button */}
                 <button
                   onClick={handleCashoutClose}
-                  className={`w-full py-3 rounded-lg font-display font-bold shadow-lg transition-all hover:scale-105 ${
+                  className={`w-full py-3 text-red-500 hover:text-red-400 font-display font-bold transition-all rounded-lg ${
                     cashoutResult.profit >= 0
-                      ? 'bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black'
-                      : 'bg-vintage-silver hover:bg-vintage-burnt-gold text-vintage-black'
+                      ? 'hover:bg-red-400/10'
+                      : 'hover:bg-red-400/10'
                   }`}
                 >
                   {t('baccaratContinue')}

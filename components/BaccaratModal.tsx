@@ -340,7 +340,7 @@ export function BaccaratModal({
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center text-vintage-gold hover:text-vintage-burnt-gold text-xl rounded-full hover:bg-vintage-gold/10"
+              className="w-8 h-8 flex items-center justify-center text-red-500 hover:text-red-400 text-xl rounded-full hover:bg-red-500/10"
             >
               ✕
             </button>

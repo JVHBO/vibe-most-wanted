@@ -257,7 +257,7 @@ export function CpuArenaModal({
 
               <button
                 onClick={onClose}
-                className="w-full mt-3 py-2 text-vintage-ice/50 hover:text-vintage-ice text-sm transition-colors"
+                className="w-full mt-3 py-2 text-red-500 hover:text-red-400 text-sm transition-colors"
               >
                 {t('mechaCancel')}
               </button>
@@ -420,7 +420,7 @@ export function CpuArenaModal({
                   setViewMode("rooms");
                   setSelectedCollection(null);
                 }}
-                className="w-full py-2 text-vintage-ice/50 hover:text-vintage-ice text-sm transition-colors"
+                className="w-full py-2 text-red-500 hover:text-red-400 text-sm transition-colors"
               >
                 {t('mechaBackToArenas')}
               </button>

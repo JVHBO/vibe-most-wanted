@@ -166,7 +166,7 @@ export default function CoinsHistoryModal({ isOpen, onClose, address }: CoinsHis
             onClick={onClose}
             className="p-1.5 hover:bg-vintage-gold/10 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5 text-vintage-gold" />
+            <X className="w-5 h-5 text-red-500" />
           </button>
         </div>
 

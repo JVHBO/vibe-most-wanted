@@ -193,7 +193,7 @@ export function ShopView({ address, initialSlide = 0 }: ShopViewProps) {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="absolute inset-0 pt-14 pb-14 overflow-y-auto flex flex-col">
+      <div className="shop-container absolute inset-0 pt-14 pb-14 overflow-y-auto flex flex-col">
         <div className="relative z-10 px-4 py-1 flex-1 flex flex-col justify-center">
 
           {/* ── Pack Carousel ── */}

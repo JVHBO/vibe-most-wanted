@@ -101,7 +101,7 @@ export default function VibeMailPage() {
               ? 'No FID linked to this wallet. Link your Farcaster in your profile.'
               : 'Connect your wallet or open in Farcaster miniapp.'}
           </p>
-          <Link href="/fid" className="text-vintage-gold hover:text-vintage-gold/80">
+          <Link href="/fid" className="text-red-500 hover:text-red-400">
             ← Voltar
           </Link>
         </div>
