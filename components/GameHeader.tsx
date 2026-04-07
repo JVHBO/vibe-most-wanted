@@ -124,21 +124,15 @@ export function GameHeader({
                 <button
                   onClick={() => { if (onDexClick) { if (soundEnabled) AudioManager.buttonClick(); onDexClick(); return; } if (soundEnabled) AudioManager.buttonClick(); setShowDexDropdown((p) => !p); }}
                   onPointerEnter={(e) => { if (e.pointerType !== 'mouse') return; if (soundEnabled) AudioManager.buttonHover(); if (!onDexClick) setShowDexDropdown(true); }}
-                  className="tour-dex-btn bg-purple-600 hover:bg-purple-500 border-0 px-4 py-2 h-[52px] rounded-lg flex flex-col items-center justify-center gap-1 transition cursor-pointer min-w-[120px]"
+                  className="tour-dex-btn bg-purple-600 hover:bg-purple-500 border-0 px-4 py-2 h-[52px] rounded-lg relative flex items-center gap-2 transition cursor-pointer min-w-[120px]"
                 >
-                  {(() => {
-                    const formatted = Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
-                    const fontSize = formatted.length <= 7 ? 'text-2xl' : formatted.length <= 9 ? 'text-xl' : 'text-base';
-                    return (
-                      <div className="flex items-baseline justify-center gap-0 w-full overflow-hidden">
-                        <span className={`text-vintage-gold ${fontSize} font-bold leading-none`}>$</span>
-                        <span className={`text-vintage-gold font-display font-bold ${fontSize} leading-none ml-0.5 truncate`}>
-                          {formatted}
-                        </span>
-                      </div>
-                    );
-                  })()}
-                  <div className="w-full h-1 bg-vintage-deep-black rounded-full overflow-hidden">
+                  <div className="flex flex-col items-start justify-center min-w-0">
+                    <span className="text-sm font-semibold text-vintage-gold leading-none truncate">
+                      {Number(vbmsBlockchainBalance || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} $VBMS
+                    </span>
+                    <span style={{ fontSize: '7px', fontWeight: 700, color: '#FFD700', lineHeight: 1, marginTop: '2px', letterSpacing: '0.05em' }}>in-wallet</span>
+                  </div>
+                  <div className="absolute bottom-1.5 left-2 right-2 h-1 bg-vintage-deep-black rounded-full overflow-hidden">
                     <div className="h-full bg-gradient-to-r from-vintage-gold to-green-400 transition-all" style={{ width: `${Math.min(bondingProgress.progress, 100)}%` }} />
                   </div>
                 </button>
