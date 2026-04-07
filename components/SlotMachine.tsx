@@ -15,9 +15,10 @@ const TOTAL_CELLS = COLS * ROWS;
 const BET_OPTIONS = [10, 20, 30, 40, 50, 60];
 const BONUS_COST_MULT = 5; // BUY BONUS = 5× bet atual
 
-// Todos os wallets linkados do dono do projeto
+// Todos os wallets linkados do dono do projeto (fid 214746)
 const ALLOWED_ADDRESSES = [
-  "0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52",
+  "0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52", // principal
+  "0x9604fb9a88daef5f38681d7518092bd2a8508a65",
   "0xe167bfc5c8f6167fdb7a6667122418e026a4ce26",
   "0x1d7d4da72a32b0ab37b92c773c15412381c7203a",
   "0xd453151b8f811186bbe7b9a62e6537cd68abca3d",
@@ -371,10 +372,10 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
         </div>
       )}
 
-      <div className="flex flex-col w-full max-w-[420px] mx-auto select-none h-full">
+      <div className="flex flex-col h-full w-full max-w-[420px] mx-auto select-none">
         {/* MACHINE FRAME */}
         <div
-          className="flex-1 flex flex-col w-full overflow-hidden border-4"
+          className="flex flex-col flex-1 min-h-0 w-full overflow-hidden border-4"
           style={{
             borderColor: "#c87941",
             boxShadow: "0 0 0 2px #0d0500, inset 0 1px 0 rgba(255,200,100,0.2)",
@@ -413,9 +414,9 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
             </div>
           </div>
 
-          {/* REEL AREA — flex-1, cards preenchem o espaco */}
+          {/* REEL AREA — flex-1 preenche o espaço disponível */}
           <div
-            className="relative flex-1 min-h-0"
+            className="flex-1 min-h-0 relative overflow-hidden"
             style={{
               background: "linear-gradient(180deg,#000 0%,#100500 40%,#080200 70%,#000 100%)",
               boxShadow: "inset 0 12px 28px rgba(0,0,0,0.98), inset 0 -12px 28px rgba(0,0,0,0.98)",
@@ -488,109 +489,99 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
           </div>
 
           {/* CONTROLS */}
-          <div className="shrink-0 px-3 py-2.5" style={{ background: wood }}>
-            <div className="flex items-center gap-2">
+          <div
+            className="shrink-0 px-3 pt-2 pb-2"
+            style={{ background: wood, paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+          >
+            {/* Row 1: WALLET | SPIN | BONUS */}
+            <div className="flex items-center gap-2 mb-2">
 
               {/* WALLET */}
-              <div className="flex flex-col items-center gap-0.5">
-                <button
-                  onClick={onWalletOpen}
-                  disabled={!onWalletOpen}
-                  className="px-2 py-1.5 border-2 border-black font-black text-[10px] uppercase tracking-tight active:scale-95 transition-transform disabled:opacity-40"
-                  style={{
-                    background: "linear-gradient(180deg,#7a4520,#3d1c02)",
-                    color: "#FFD700",
-                    boxShadow: "0 3px 0 #000",
-                    textShadow: "1px 1px 0 #000",
-                    minWidth: "60px",
-                    borderColor: "#c87941",
-                  }}
-                >
-                  WALLET
-                </button>
-                <div className="text-[7px] font-bold text-center" style={{ color:"#c87941" }}>DEP/WIT</div>
-              </div>
+              <button
+                onClick={onWalletOpen}
+                disabled={!onWalletOpen}
+                className="flex-1 h-10 border-2 border-black font-black text-[10px] uppercase tracking-wide active:scale-95 transition-transform disabled:opacity-40 flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(180deg,#7a4520,#3d1c02)",
+                  color: "#FFD700",
+                  boxShadow: "0 3px 0 #000",
+                  textShadow: "1px 1px 0 #000",
+                  borderColor: "#c87941",
+                }}
+              >
+                💰 WALLET
+              </button>
 
-              {/* BUY BONUS */}
-              <div className="flex flex-col items-center gap-0.5">
-                <button
-                  onClick={() => spin(false, true)}
-                  disabled={isSpinning || coins < bonusCost}
-                  className="px-2 py-1.5 border-2 border-black font-black text-[9px] uppercase tracking-tight active:scale-95 transition-transform disabled:opacity-40"
-                  style={{
-                    background: isSpinning || coins < bonusCost
-                      ? "linear-gradient(180deg,#374151,#1f2937)"
-                      : "linear-gradient(180deg,#7c3aed,#4c1d95)",
-                    color: "#FFD700",
-                    boxShadow: "0 3px 0 #000",
-                    textShadow: "1px 1px 0 #000",
-                    minWidth: "60px",
-                    borderColor: "#7c3aed",
-                  }}
-                >
-                  BONUS
-                </button>
-                <div className="text-[7px] font-bold text-center" style={{ color:"#7c3aed" }}>{bonusCost}c 2x</div>
-              </div>
+              {/* SPIN — centro */}
+              <button
+                onClick={() => spin(freeLeft > 0)}
+                disabled={isSpinning || (!freeLeft && coins < betCost)}
+                className="w-14 h-14 rounded-full border-4 border-black font-black flex-none flex flex-col items-center justify-center disabled:opacity-40 active:scale-95 transition-transform"
+                style={{
+                  background: isSpinning
+                    ? "linear-gradient(180deg,#6b7280,#4b5563)"
+                    : freeLeft > 0
+                      ? "linear-gradient(180deg,#34d399 0%,#059669 50%,#047857 100%)"
+                      : "linear-gradient(180deg,#fbbf24 0%,#f59e0b 50%,#d97706 100%)",
+                  boxShadow: isSpinning ? "0 2px 0 #000" : "0 5px 0 #000, 0 0 18px rgba(251,191,36,0.55)",
+                  color: "#000",
+                  transform: isSpinning ? "translateY(3px)" : undefined,
+                }}
+              >
+                <span className={`text-[10px] font-black leading-none tracking-widest ${isSpinning ? "animate-spin" : ""}`}>
+                  {freeLeft > 0 ? "FREE" : "SPIN"}
+                </span>
+                {freeLeft > 0 && !isSpinning && (
+                  <span className="text-[8px] font-black mt-0.5 text-green-900">{freeLeft}x</span>
+                )}
+              </button>
 
-              {/* SPIN (center) */}
-              <div className="flex flex-col items-center gap-0.5 flex-1">
-                <button
-                  onClick={() => spin(freeLeft > 0)}
-                  disabled={isSpinning || (!freeLeft && coins < betCost)}
-                  className="w-14 h-14 rounded-full border-4 border-black font-black flex flex-col items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition-transform"
-                  style={{
-                    background: isSpinning
-                      ? "linear-gradient(180deg,#6b7280,#4b5563)"
-                      : freeLeft > 0
-                        ? "linear-gradient(180deg,#34d399 0%,#059669 50%,#047857 100%)"
-                        : "linear-gradient(180deg,#fbbf24 0%,#f59e0b 50%,#d97706 100%)",
-                    boxShadow: isSpinning ? "0 2px 0 #000" : "0 5px 0 #000,0 0 18px rgba(251,191,36,0.55)",
-                    color: "#000",
-                    transform: isSpinning ? "translateY(3px)" : undefined,
-                  }}
-                >
-                  <span className={`text-[10px] font-black leading-none tracking-widest ${isSpinning ? "animate-spin" : ""}`}>
-                    {freeLeft > 0 ? "FREE" : "SPIN"}
-                  </span>
-                  {freeLeft > 0 && !isSpinning && (
-                    <span className="text-[8px] font-black mt-0.5 text-green-900">{freeLeft}x</span>
-                  )}
-                </button>
-                <div className="text-[7px] font-bold uppercase text-center" style={{ color:"#c87941" }}>
-                  {freeLeft > 0 ? "APOSTAS BLOQUEADAS" : "GIRAR"}
+              {/* BONUS */}
+              <button
+                onClick={() => spin(false, true)}
+                disabled={isSpinning || coins < bonusCost}
+                className="flex-1 h-10 border-2 border-black font-black text-[10px] uppercase tracking-wide active:scale-95 transition-transform disabled:opacity-40 flex items-center justify-center"
+                style={{
+                  background: isSpinning || coins < bonusCost
+                    ? "linear-gradient(180deg,#374151,#1f2937)"
+                    : "linear-gradient(180deg,#7c3aed,#4c1d95)",
+                  color: "#FFD700",
+                  boxShadow: "0 3px 0 #000",
+                  textShadow: "1px 1px 0 #000",
+                  borderColor: "#7c3aed",
+                }}
+              >
+                ⚡ BONUS
+              </button>
+            </div>
+
+            {/* Row 2: BET SELECTOR */}
+            <div
+              className="flex items-center gap-3 px-3 py-1.5 border-2 border-black rounded"
+              style={{
+                background: freeLeft > 0
+                  ? "linear-gradient(180deg,#1a2e1a,#0d1a0d)"
+                  : "linear-gradient(180deg,#1e3a5f,#172554)",
+                opacity: freeLeft > 0 ? 0.65 : 1,
+              }}
+            >
+              <button
+                onClick={() => setBetIdx(i => Math.max(0, i - 1))}
+                disabled={betIdx === 0 || isSpinning || freeLeft > 0}
+                className="w-7 h-7 rounded border-2 border-blue-400 bg-blue-900 font-black text-blue-300 text-base flex items-center justify-center disabled:opacity-30 flex-none"
+              >−</button>
+              <div className="flex-1 text-center">
+                <div className="text-[8px] font-bold uppercase text-blue-300 leading-none">BET PER SPIN</div>
+                <div className="text-lg font-black text-white leading-tight">{betCost}</div>
+                <div className="text-[8px] font-bold leading-none" style={{ color: freeLeft > 0 ? "#34d399" : "#6b7280" }}>
+                  {freeLeft > 0 ? "FREE MODE" : "coins"}
                 </div>
               </div>
-
-              {/* BET SELECTOR */}
-              <div className="flex flex-col items-center gap-0.5">
-                <div
-                  className="border-2 border-black px-2 py-1 text-center"
-                  style={{
-                    background: freeLeft > 0
-                      ? "linear-gradient(180deg,#1a2e1a,#0d1a0d)"
-                      : "linear-gradient(180deg,#1e3a5f,#172554)",
-                    minWidth:"66px",
-                    opacity: freeLeft > 0 ? 0.55 : 1,
-                  }}
-                >
-                  <div className="text-[8px] font-bold uppercase text-blue-300">BET</div>
-                  <div className="text-sm font-black text-white leading-none">{betCost}</div>
-                  <div className="flex items-center justify-center gap-1 mt-1">
-                    <button
-                      onClick={() => setBetIdx(i => Math.max(0, i - 1))}
-                      disabled={betIdx === 0 || isSpinning || freeLeft > 0}
-                      className="w-5 h-5 rounded border border-blue-400 bg-blue-900 font-black text-blue-300 text-sm flex items-center justify-center disabled:opacity-30"
-                    >-</button>
-                    <button
-                      onClick={() => setBetIdx(i => Math.min(BET_OPTIONS.length - 1, i + 1))}
-                      disabled={betIdx === BET_OPTIONS.length - 1 || isSpinning || freeLeft > 0}
-                      className="w-5 h-5 rounded border border-blue-400 bg-blue-900 font-black text-blue-300 text-sm flex items-center justify-center disabled:opacity-30"
-                    >+</button>
-                  </div>
-                </div>
-                <div className="text-[7px] font-bold text-center" style={{ color:"#c87941" }}>coins/spin</div>
-              </div>
+              <button
+                onClick={() => setBetIdx(i => Math.min(BET_OPTIONS.length - 1, i + 1))}
+                disabled={betIdx === BET_OPTIONS.length - 1 || isSpinning || freeLeft > 0}
+                className="w-7 h-7 rounded border-2 border-blue-400 bg-blue-900 font-black text-blue-300 text-base flex items-center justify-center disabled:opacity-30 flex-none"
+              >+</button>
             </div>
           </div>
         </div>

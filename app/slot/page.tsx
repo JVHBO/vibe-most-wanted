@@ -90,6 +90,15 @@ export default function SlotPage() {
     address: address || "",
   });
 
+  // Altura real do viewport (window.innerHeight é confiável em WebViews/Farcaster)
+  const [vh, setVh] = useState(0);
+  useEffect(() => {
+    const update = () => setVh(window.innerHeight);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
   const [showDeposit, setShowDeposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [walletTab, setWalletTab] = useState<"deposit" | "withdraw">("deposit");
@@ -237,8 +246,9 @@ export default function SlotPage() {
       `}</style>
 
       <div
-        className="relative flex h-[100dvh] min-h-[100dvh] flex-col overflow-hidden overscroll-none"
+        className="relative flex flex-col overflow-hidden overscroll-none"
         style={{
+          height: vh ? `${vh}px` : '100svh',
           background: 'radial-gradient(ellipse at 50% 20%, #1a0800 0%, #080200 60%, #000 100%)',
         }}
       >
@@ -289,8 +299,8 @@ export default function SlotPage() {
           </div>
         )}
 
-        {/* Slot Machine — fills all remaining height */}
-        <div className="flex-1 flex flex-col min-h-0">
+        {/* Slot machine preenche espaço restante */}
+        <div className="flex-1 min-h-0 overflow-hidden">
           <SlotMachine onWalletOpen={() => { setShowDeposit(true); setWalletTab("deposit"); }} />
         </div>
       </div>
