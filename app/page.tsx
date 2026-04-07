@@ -287,7 +287,7 @@ export default function HomePage() {
           <div style={{ marginTop: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
               <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#555', animation: 'lockPulse 2s infinite' }} />
-              <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>{t('needCards')}</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>{t('homeNeedCards')}</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
               {(() => {
