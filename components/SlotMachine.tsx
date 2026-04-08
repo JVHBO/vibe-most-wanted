@@ -260,22 +260,41 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
         for (let r = 0; r < ROWS; r++) n[r * COLS + col] = pick();
         return n;
       });
-    }, 75);
+    }, 55); // velocidade do shuffle: quanto menor mais cartas passam
   }, []);
 
-  const stopCol = useCallback((col: number, c0: SlotCard, c1: SlotCard) => {
+  // Para coluna com desaceleração gradual antes de travar na carta final
+  const slowAndStopCol = useCallback((col: number, c0: SlotCard, c1: SlotCard) => {
     clearInterval(ivs.current[col]);
     delete ivs.current[col];
-    setCells(prev => {
-      const n = [...prev];
-      // Parar primeira linha (col) e segunda linha (COLS + col)
-      n[col] = c0;
-      if (COLS + col < n.length) {
-        n[COLS + col] = c1;
+
+    // Sequência de delays crescentes: cada passo mostra uma carta aleatória,
+    // o último trava na carta do resultado
+    const slowSteps = [90, 130, 180, 240, 320, 420];
+    let step = 0;
+
+    const tick = () => {
+      if (step >= slowSteps.length) {
+        // Trava na carta final
+        setCells(prev => {
+          const n = [...prev];
+          n[col] = c0;
+          if (COLS + col < n.length) n[COLS + col] = c1;
+          return n;
+        });
+        setStopped(prev => new Set([...prev, col]));
+        return;
       }
-      return n;
-    });
-    setStopped(prev => new Set([...prev, col]));
+      // Ainda mostra cartas aleatórias (desacelerando)
+      setCells(prev => {
+        const n = [...prev];
+        for (let r = 0; r < ROWS; r++) n[r * COLS + col] = pick();
+        return n;
+      });
+      setTimeout(tick, slowSteps[step++]);
+    };
+
+    setTimeout(tick, slowSteps[step++]);
   }, []);
 
   const parseWin = (patterns: string[]): Set<number> => {
@@ -323,7 +342,9 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     setIsJackpot(false);
     setStopped(new Set());
     setShowBonusAnimation(false);
+    setComboDisplay(null);
 
+    const spinStartTime = Date.now();
     for (let c = 0; c < COLS; c++) startCol(c);
 
     try {
@@ -351,16 +372,24 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
       // Aplicar grid resultante
       const grid = res.grid;
 
-      // Parar colunas sequencialmente
+      // Tempo mínimo de giro para criar suspense (1.8s desde o início)
+      const MIN_SPIN_MS = 1800;
+      const COL_GAP_MS = 500; // gap entre cada coluna parar
+      const elapsed = Date.now() - spinStartTime;
+      const baseDelay = Math.max(0, MIN_SPIN_MS - elapsed);
+
+      // Parar colunas sequencialmente com desaceleração
       for (let col = 0; col < COLS; col++) {
-        const delay = col * 260;
+        const delay = baseDelay + col * COL_GAP_MS;
         setTimeout(() => {
           const rowCount = ROWS;
           const bc = Math.min(col, grid.length / rowCount - 1);
           const idx0 = bc;
           const idx1 = Math.floor(grid.length / rowCount) + bc;
-          stopCol(col, grid[idx0] ?? pick(), grid[idx1] ?? pick());
+          slowAndStopCol(col, grid[idx0] ?? pick(), grid[idx1] ?? pick());
           if (col === COLS - 1) {
+            // Aguardar fim da desaceleração da última coluna (soma dos slowSteps)
+            const lastColSlowTime = 90+130+180+240+320+420 + 150;
             setTimeout(() => {
               setIsSpinning(false);
               setWinAmt(res.winAmount);
@@ -376,7 +405,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
                   setTimeout(() => setComboDisplay(null), 2800);
                 }
               }
-            }, 120);
+            }, lastColSlowTime);
           }
         }, delay);
       }
@@ -456,7 +485,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
               alt={label}
               fill
               sizes="80px"
-              className={`object-cover object-top ${isVBMSspecial || isWildcard ? 'animate-pulse' : ''}`}
+              className={`object-contain ${isVBMSspecial || isWildcard ? 'animate-pulse' : ''}`}
               unoptimized
             />
           ) : (
@@ -635,17 +664,17 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
           >
             {/* Payline dots */}
             <div className="absolute left-0.5 top-0 bottom-0 z-20 flex flex-col justify-around pointer-events-none">
-              <div className="w-4 h-4 rounded-full bg-[#FFD700] border-2 border-black shadow-lg" />
-              <div className="w-4 h-4 rounded-full bg-[#FFD700] border-2 border-black shadow-lg" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FFD700] border border-black shadow-lg" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FFD700] border border-black shadow-lg" />
             </div>
             <div className="absolute right-0.5 top-0 bottom-0 z-20 flex flex-col justify-around pointer-events-none">
-              <div className="w-4 h-4 rounded-full bg-[#FFD700] border-2 border-black shadow-lg" />
-              <div className="w-4 h-4 rounded-full bg-[#FFD700] border-2 border-black shadow-lg" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FFD700] border border-black shadow-lg" />
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FFD700] border border-black shadow-lg" />
             </div>
 
             {/* Cards grid — preenche todo o espaco disponivel */}
             <div
-              className="absolute inset-0 mx-6 my-2"
+              className="absolute inset-0 mx-3 my-1"
               style={{
                 display: "grid",
                 gridTemplateColumns: `repeat(${COLS}, 1fr)`,
