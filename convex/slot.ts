@@ -1,11 +1,14 @@
 /**
- * SLOT MACHINE SYSTEM - 4x4 GRID
+ * SLOT MACHINE SYSTEM - 5x2 GRID (casino style)
  *
  * Uses TCG cards from baccarat as slot symbols
- * - 4x4 grid (16 positions) - spin all at once
- * - Winning patterns: rows, columns, diagonals
- * - Free spins: 10 daily for VibeFID holders
- * - Paid spins: 1 coin each (low values)
+ * - 5x2 grid (10 positions) - casino slot layout
+ * - VBMS Special card: occupies 2 columns (full width) with animated GIF
+ * - Foil mechanic: cards can have foil effect (shimmer)
+ * - Bonus: 4+ foil cards in a spin → 10 free spins + increased rare card chance during bonus
+ * - Winning patterns: rows (2 rows), columns (5 cols), special combinations
+ * - Free spins: 10 daily for VibeFID holders + bonus spins
+ * - Paid spins: cost scales with bet multiplier
  */
 
 import { v } from "convex/values";
@@ -131,46 +134,93 @@ const PAYOUTS = {
   "2xcommon":    1,
 };
 
+// Bonus free spins for hitting foil combo
+const FOIL_BONUS_SPINS = 10;
+
 const SPIN_COST = 1;
-const GRID_SIZE = 4;
+const COLS = 5;
+const ROWS = 2;
+const GRID_SIZE = COLS * ROWS; // 5x2 grid = 10 cards
+const BONUS_FOIL_COUNT = 2; // 2+ foil cards triggers bonus (TESTING: easier to trigger)
+const BONUS_FREE_SPINS = 10;
+const WILDCARD_CARDS = ["gen4_turbo", "idle_breathing"]; // Special animated cards that act as wild
+const WILDCARD_BACCARAT = "gen4_turbo"; // Special animated card that acts as wild
 
 /**
- * Get weighted random card
+ * Get weighted random card with optional bonus weight boost
  */
-function getRandomCard(): typeof SLOT_CARDS[0] {
-  const totalWeight = SLOT_CARDS.reduce((sum, card) => sum + card.weight, 0);
+function getRandomCard(bonusWeightMultiplier = 1): typeof SLOT_CARDS[0] {
+  // Apply weight boost for higher rarity during bonus mode
+  const adjustedPool = SLOT_CARDS.map(card => ({
+    ...card,
+    adjustedWeight: card.rarity === "Mythic" || card.rarity === "Legendary"
+      ? card.weight * bonusWeightMultiplier * 2
+      : card.rarity === "Epic"
+      ? card.weight * bonusWeightMultiplier * 1.5
+      : card.weight
+  }));
+
+  const totalWeight = adjustedPool.reduce((sum, c) => sum + c.adjustedWeight, 0);
   let random = Math.random() * totalWeight;
 
-  for (const card of SLOT_CARDS) {
-    random -= card.weight;
+  for (const card of adjustedPool) {
+    random -= card.adjustedWeight;
     if (random <= 0) return card;
   }
-  return SLOT_CARDS[0];
+  return adjustedPool[0];
 }
 
 /**
- * Check winning patterns in 4x4 grid — combos matched by CHARACTER NAME.
+ * Check winning patterns in 5x2 grid — combos matched by CHARACTER NAME.
  * Same character in a line = win. Payout determined by that character's rarity.
+ * Also count foil cards for bonus trigger.
  */
-function checkWins(grid: typeof SLOT_CARDS): { winAmount: number; patterns: string[]; description: string; maxWin: boolean } {
+function checkWins(grid: (typeof SLOT_CARDS[0] & { hasFoil?: boolean })[]): {
+  winAmount: number;
+  patterns: string[];
+  description: string;
+  maxWin: boolean;
+  foilCount: number;
+} {
   let totalWin = 0;
   const patternsFound: string[] = [];
   let maxWin = false;
 
-  // Count matching CHARACTER NAMES in a line; return the most frequent char + its rarity
+  // Count foil cards in the grid
+  const foilCount = grid.filter(c => c.hasFoil).length;
+
+  // Count matching CHARACTER NAMES in a line; wildcards (gen4_turbo, idle_breathing) act as jokers
   const countLine = (indices: number[]): { rarity: string; count: number; char: string } => {
     const lineCards = indices.map(i => grid[i]);
     const counts: Record<string, number> = {};
-    lineCards.forEach(c => { counts[c.baccarat] = (counts[c.baccarat] || 0) + 1; });
+    const isWildcard = (baccarat: string) => WILDCARD_CARDS.includes(baccarat);
+
+    // Se há wildcards, eles se combinam com a carta mais frequente (ou criam uma combinação própria se todos são wildcards)
+    const nonWildcards = lineCards.filter(c => !isWildcard(c.baccarat));
+    const wildcardCount = lineCards.filter(c => isWildcard(c.baccarat)).length;
+
+    if (nonWildcards.length === 0) {
+      // Todos são wildcards - conta como uma combinação de wildcards
+      const wildRarity = lineCards[0]?.rarity?.toLowerCase() ?? "mythic";
+      return { rarity: wildRarity, count: wildcardCount, char: "wildcard_combo" };
+    }
+
+    // Contar cartas normais
+    nonWildcards.forEach(c => { counts[c.baccarat] = (counts[c.baccarat] || 0) + 1; });
+
+    // Adicionar wildcards à carta mais frequente
+    const maxChar = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+    counts[maxChar] += wildcardCount;
+
     const maxCount = Math.max(...Object.values(counts));
-    const maxChar = Object.keys(counts).find(n => counts[n] === maxCount) ?? "";
-    const rarity = lineCards.find(c => c.baccarat === maxChar)?.rarity?.toLowerCase() ?? "common";
+    const rarity = nonWildcards.find(c => c.baccarat === maxChar)?.rarity?.toLowerCase() ?? "common";
     return { rarity, count: maxCount, char: maxChar };
   };
 
-  const applyLine = (indices: number[], label: string) => {
+  const applyLine = (indices: number[], label: string, requiredCount?: number) => {
     const { rarity, count, char } = countLine(indices);
-    if (count >= 2 && char !== "") {
+    const needed = requiredCount || count;
+    if (count >= needed && char !== "") {
       const key = `${count}x${rarity}` as keyof typeof PAYOUTS;
       if (PAYOUTS[key]) {
         totalWin += PAYOUTS[key];
@@ -180,28 +230,26 @@ function checkWins(grid: typeof SLOT_CARDS): { winAmount: number; patterns: stri
     }
   };
 
-  // Check all 4 rows
-  for (let row = 0; row < 4; row++) {
-    applyLine([row * 4, row * 4 + 1, row * 4 + 2, row * 4 + 3], `Row ${row + 1}`);
+  // Check all 2 rows (5 cells each)
+  for (let row = 0; row < ROWS; row++) {
+    const idx = Array.from({ length: COLS }, (_, c) => row * COLS + c);
+    applyLine(idx, `Row ${row + 1}`);
   }
 
-  // Check all 4 columns
-  for (let col = 0; col < 4; col++) {
-    applyLine([col, col + 4, col + 8, col + 12], `Col ${col + 1}`);
+  // Check all 5 columns (2 cells each) — need both cells equal to count
+  for (let col = 0; col < COLS; col++) {
+    const idx = [col, col + COLS];
+    applyLine(idx, `Col ${col + 1}`, 2);
   }
 
-  // Check diagonals
-  applyLine([0, 5, 10, 15], `Diagonal \\`);
-  applyLine([3, 6, 9, 12], `Diagonal /`);
-
-  // VBMS Special scatter bonus — counts anywhere on the 4×4 grid
+  // VBMS Special scatter bonus — counts anywhere on the 5×2 grid
   const specialCount = grid.filter(c => c.baccarat === "vbms_special").length;
   if (specialCount >= 2) {
-    const specialPayouts: Record<number, number> = { 2: 100, 3: 1500, 4: 30000 };
-    const specialPayout = specialPayouts[Math.min(specialCount, 4)] ?? 0;
+    const specialPayouts: Record<number, number> = { 2: 100, 3: 1500, 4: 30000, 5: 50000 };
+    const specialPayout = specialPayouts[Math.min(specialCount, 5)] ?? 0;
     totalWin += specialPayout;
     patternsFound.push(`VBMS Special x${specialCount}!`);
-    if (specialCount >= 4) maxWin = true;
+    if (specialCount >= 5) maxWin = true;
   }
 
   // Bonus: scattered mythics anywhere on the board
@@ -213,7 +261,7 @@ function checkWins(grid: typeof SLOT_CARDS): { winAmount: number; patterns: stri
 
   const description = patternsFound.length > 0 ? patternsFound.join(" | ") : "No win";
 
-  return { winAmount: totalWin, patterns: patternsFound, description, maxWin };
+  return { winAmount: totalWin, patterns: patternsFound, description, maxWin, foilCount };
 }
 
 /**
@@ -269,6 +317,8 @@ export const getSlotDailyStats = query({
 
     const hasVibeFIDBadge = profile.hasVibeBadge === true;
     const freeSpinsPerDay = hasVibeFIDBadge ? 10 : 5;
+    const bonusSpinsAvailable = profile.slotBonusSpins || 0;
+    const totalBonusSpins = bonusSpinsAvailable; // Already accumulated
 
     return {
       freeSpinsUsed: stats.freeSpinsUsed,
@@ -277,6 +327,7 @@ export const getSlotDailyStats = query({
       totalWon: stats.totalWon,
       remainingFreeSpins: Math.max(0, freeSpinsPerDay - stats.freeSpinsUsed),
       totalSpentToday: stats.paidSpinsUsed * SPIN_COST,
+      bonusSpinsAvailable: totalBonusSpins,
     };
   },
 });
@@ -290,8 +341,9 @@ export const spinSlot = mutation({
     isFreeSpin: v.boolean(),
     bonusMultiplier: v.optional(v.number()),
     betMultiplier: v.optional(v.number()), // 1, 2, 5, 10 — scales cost AND win
+    isBonusMode: v.optional(v.boolean()), // true when triggered from 4+ foil combo
   },
-  handler: async (ctx, { address, isFreeSpin, bonusMultiplier = 1, betMultiplier = 1 }) => {
+  handler: async (ctx, { address, isFreeSpin, bonusMultiplier = 1, betMultiplier = 1, isBonusMode = false }) => {
     const profile = await getProfileByAddress(ctx, address);
     if (!profile) {
       throw new Error("Profile not found");
@@ -328,15 +380,29 @@ export const spinSlot = mutation({
       stats = insertedStats;
     }
 
+    // Check bonus free spins from foil combo
+    const bonusSpinsAvailable = profile.slotBonusSpins || 0;
+    const isBonusSpin = isBonusMode || (bonusSpinsAvailable > 0 && isFreeSpin);
+
+    // Deduct bonus spins if used
+    if (isBonusSpin && bonusSpinsAvailable > 0) {
+      await ctx.db.patch(profile._id, {
+        slotBonusSpins: Math.max(0, bonusSpinsAvailable - 1),
+      });
+    }
+
+    // Calculate total free spins available (daily + bonus)
+    const hasVibeFIDBadge = profile.hasVibeBadge === true;
+    const dailyFreeSpins = hasVibeFIDBadge ? 10 : 5;
+    const totalFreeSpinsAvailable = dailyFreeSpins - stats.freeSpinsUsed + (isBonusSpin ? 0 : (bonusSpinsAvailable));
+
     // Validate spins
     if (isFreeSpin) {
-      const hasVibeFIDBadge = profile.hasVibeBadge === true;
-      const freeSpinsPerDay = hasVibeFIDBadge ? 10 : 5;
-      if (stats!.freeSpinsUsed >= freeSpinsPerDay) {
+      if (totalFreeSpinsAvailable <= 0) {
         throw new Error("No free spins remaining today");
       }
       await ctx.db.patch(stats!._id, {
-        freeSpinsUsed: stats!.freeSpinsUsed + 1,
+        freeSpinsUsed: stats!.freeSpinsUsed + (isBonusSpin ? 0 : 1), // Don't count bonus spins against daily limit
         totalSpins: stats!.totalSpins + 1,
         lastSpinTime: Date.now(),
       });
@@ -356,9 +422,38 @@ export const spinSlot = mutation({
       });
     }
 
-    // Generate 4x4 grid (16 cards)
-    const grid = Array.from({ length: 16 }, () => getRandomCard());
-    const { winAmount, patterns, maxWin } = checkWins(grid);
+    // Determine weight multiplier for bonus mode (increases chance of rare cards)
+    const weightMultiplier = isBonusMode ? 5 : 1; // 5x weight for Mythic/Legendary during bonus (TEST)
+
+    // Generate 5x2 grid (10 cells) with foil chance and wildcard specials during bonus
+    const grid = Array.from({ length: GRID_SIZE }, (idx) => {
+      let card;
+      const foilChance = isBonusMode ? 0.6 : 0.4; // Higher foil chance for testing (40% normal, 60% bonus)
+      const hasFoil = Math.random() < foilChance;
+
+      // During bonus mode, have a chance to spawn wildcard animated cards
+      if (isBonusMode && Math.random() < 0.3) {
+        // 30% chance for wildcard in bonus mode (TESTING: higher)
+        const wildCardName = WILDCARD_CARDS[Math.floor(Math.random() * WILDCARD_CARDS.length)];
+        card = {
+          baccarat: wildCardName,
+          rarity: "Mythic", // Treat as mythic for payouts
+          hasFoil: true,    // All wildcards have foil effect
+          weight: 0,        // Not part of normal pool
+        };
+      } else {
+        card = getRandomCard(weightMultiplier);
+        card = { ...card, hasFoil };
+      }
+
+      return card;
+    });
+
+    const { winAmount, patterns, maxWin, foilCount } = checkWins(grid);
+
+    // Check if this spin triggered the foil bonus (4+ foil cards)
+    // Only count non-bonus mode spins to avoid infinite recursion
+    const triggeredBonus = !isBonusMode && foilCount >= BONUS_FOIL_COUNT;
 
     // Apply bonus + bet multipliers
     const finalWin = Math.floor(winAmount * bonusMultiplier * betMultiplier);
@@ -376,10 +471,18 @@ export const spinSlot = mutation({
       winAdded = true;
     }
 
+    // Grant bonus free spins if foil bonus triggered
+    if (triggeredBonus) {
+      const currentBonusSpins = profile.slotBonusSpins || 0;
+      await ctx.db.patch(profile._id, {
+        slotBonusSpins: currentBonusSpins + BONUS_FREE_SPINS,
+      });
+    }
+
     // Record spin history
     await ctx.db.insert("slotSpins", {
       playerAddress: normalizedAddress,
-      spinType: isFreeSpin ? "free" : "paid",
+      spinType: isFreeSpin ? (isBonusSpin ? "bonus" : "free") : "paid",
       spinCount: 1,
       cost: isFreeSpin ? 0 : SPIN_COST,
       reels: grid.map(c => c.baccarat), // 16 cards
@@ -387,6 +490,8 @@ export const spinSlot = mutation({
       multiplier: bonusMultiplier,
       timestamp: Date.now(),
       claimed: winAdded,
+      foilCount,
+      triggeredBonus,
     });
 
     return {
@@ -394,9 +499,12 @@ export const spinSlot = mutation({
       winAmount: finalWin,
       patterns,
       maxWin,
-      newCoinsBalance: profile.coins && winAdded ? (profile.coins + finalWin) : profile.coins,
+      newCoinsBalance: profile.coins && winAdded ? (profile.coins + finalWin) : (profile.coins || 0),
       isFreeSpin,
       bonusMultiplier,
+      foilCount,
+      triggeredBonus,
+      bonusSpinsRemaining: profile.slotBonusSpins || 0,
     };
   },
 });
@@ -474,5 +582,56 @@ export const withdrawVBMS = mutation({
     // TODO: Implement actual VBMS minting to user wallet
     // For now, return success
     return { success: true, vbmsMinted: amount, newBalance: profile.coins - coinCost };
+  },
+});
+
+/**
+ * ADMIN: Reset daily slot stats for testing
+ */
+export const resetDailyStats = mutation({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+    const today = new Date().toISOString().split('T')[0];
+
+    // Find and delete today's stats
+    const stats = await ctx.db
+      .query("slotDailyStats")
+      .withIndex("by_player_date", (q) => q.eq("playerAddress", normalizedAddress).eq("date", today))
+      .first();
+
+    if (stats) {
+      await ctx.db.delete(stats._id);
+    }
+
+    // Reset bonus spins on profile
+    const profile = await getProfileByAddress(ctx, address);
+    if (profile) {
+      await ctx.db.patch(profile._id, {
+        slotBonusSpins: 0,
+      });
+    }
+
+    return { success: true, message: "Stats resetados" };
+  },
+});
+
+/**
+ * ADMIN: Add bonus spins to player (for testing/giveaways)
+ */
+export const adminAddBonusSpins = mutation({
+  args: { address: v.string(), count: v.number() },
+  handler: async (ctx, { address, count }) => {
+    const profile = await getProfileByAddress(ctx, address);
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const currentBonus = profile.slotBonusSpins || 0;
+    await ctx.db.patch(profile._id, {
+      slotBonusSpins: currentBonus + count,
+    });
+
+    return { success: true, newBonusSpins: currentBonus + count };
   },
 });
