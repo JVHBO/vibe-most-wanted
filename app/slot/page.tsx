@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { sdk } from "@farcaster/miniapp-sdk";
 import SlotMachine from "@/components/SlotMachine";
 import { useMiniappFrameContext } from "@/components/MiniappFrame";
+import { useMusic } from "@/contexts/MusicContext";
 
 type DepositStep = "amount" | "approving" | "transferring" | "done";
 type WithdrawStep = "amount" | "withdrawing" | "done";
@@ -103,6 +104,18 @@ export default function SlotPage() {
     return () => window.removeEventListener('resize', update);
   }, []);
 
+  // Pausar BGM do miniapp enquanto estamos na página do slot
+  const { pause: pauseMusic, play: playMusic, isPaused: musicWasPaused } = useMusic();
+  const musicWasPausedRef = useRef(false);
+  useEffect(() => {
+    musicWasPausedRef.current = musicWasPaused;
+    pauseMusic();
+    return () => {
+      if (!musicWasPausedRef.current) playMusic();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [showDeposit, setShowDeposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [walletTab, setWalletTab] = useState<"deposit" | "withdraw">("deposit");
@@ -113,6 +126,36 @@ export default function SlotPage() {
   const [txStatus, setTxStatus] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showRules, setShowRules] = useState(false);
+  const [bgmMuted, setBgmMuted] = useState(false);
+  const [bgmReady, setBgmReady] = useState(false);
+  const bgmRef = useRef<HTMLAudioElement | null>(null);
+
+  // Casino BGM — toca apenas nesta página, para ao sair
+  useEffect(() => {
+    const audio = new Audio('/sounds/casino-bgm.mp3');
+    audio.loop = true;
+    audio.volume = 0.18; // baixinho no fundo
+    bgmRef.current = audio;
+    audio.play().then(() => setBgmReady(true)).catch(() => {
+      // Autoplay bloqueado — aguarda clique do usuário
+      const unlock = () => {
+        audio.play().then(() => setBgmReady(true)).catch(() => {});
+        window.removeEventListener('click', unlock);
+        window.removeEventListener('touchstart', unlock);
+      };
+      window.addEventListener('click', unlock, { once: true });
+      window.addEventListener('touchstart', unlock, { once: true });
+    });
+    return () => {
+      audio.pause();
+      audio.src = '';
+    };
+  }, []);
+
+  // Sincronizar mute
+  useEffect(() => {
+    if (bgmRef.current) bgmRef.current.muted = bgmMuted;
+  }, [bgmMuted]);
 
   const handleWin = (amount: number) => {
     console.log("Player won:", amount);
@@ -277,11 +320,22 @@ export default function SlotPage() {
               {tr("title")}
             </h1>
           </div>
-          <button
-            onClick={() => setShowRules(true)}
-            className="w-7 h-7 flex items-center justify-center font-bold text-sm border-2 border-black rounded-full"
-            style={{ background: '#1a1a1a', color: '#FFD400' }}
-          >?</button>
+          <div className="flex items-center gap-2">
+            {/* Mute BGM */}
+            <button
+              onClick={() => setBgmMuted(m => !m)}
+              className="w-7 h-7 flex items-center justify-center text-base border-2 border-black rounded-full"
+              style={{ background: '#1a1a1a', color: bgmMuted ? '#6b7280' : '#FFD400' }}
+              title={bgmMuted ? "Ligar música" : "Mutar música"}
+            >
+              {bgmMuted ? "🔇" : "🎵"}
+            </button>
+            <button
+              onClick={() => setShowRules(true)}
+              className="w-7 h-7 flex items-center justify-center font-bold text-sm border-2 border-black rounded-full"
+              style={{ background: '#1a1a1a', color: '#FFD400' }}
+            >?</button>
+          </div>
         </div>
 
         {/* Rules + Payouts Modal */}

@@ -108,30 +108,36 @@ const SLOT_CARDS = [
   { baccarat: "vlady",           rarity: "Common",    weight: 35 },
 ];
 
-// Payouts for winning patterns (4 in a row/col/diag)
-// Higher rarity = much harder to hit (lower weight), but much bigger reward.
-// Expected value per spin ≈ 0.7–0.9 coins (house edge ~10–30%)
+// 5 paylines: 3 horizontal rows + 2 zigzag diagonals
+// Grid indices: row * 5 + col (row 0 = top, row 2 = bottom)
+const PAYLINES = [
+  { name: "Row 1",      cells: [0, 1, 2, 3, 4]    },
+  { name: "Row 2",      cells: [5, 6, 7, 8, 9]    },
+  { name: "Row 3",      cells: [10, 11, 12, 13, 14] },
+  { name: "Diagonal V", cells: [0, 6, 12, 8, 4]   }, // V-shape: top→mid→bot→mid→top
+  { name: "Diagonal N", cells: [10, 6, 2, 8, 14]  }, // N-shape: bot→mid→top→mid→bot
+];
+
+// Payouts by count × rarity (consecutive from left in a payline)
 const PAYOUTS = {
-  // 4 matching rarities — grand combos
-  "4xmythic":    50000,  // Ultra jackpot (~1.6% × 4 draws chance)
+  // 5 in a row (jackpot)
+  "5xmythic":    200000,
+  "5xlegendary": 25000,
+  "5xepic":      4000,
+  "5xrare":      600,
+  "5xcommon":    60,
+  // 4 in a row
+  "4xmythic":    50000,
   "4xlegendary": 5000,
   "4xepic":      800,
   "4xrare":      120,
   "4xcommon":    12,
-
-  // 3 matching — good win
+  // 3 in a row (minimum win)
   "3xmythic":    2000,
   "3xlegendary": 300,
   "3xepic":      80,
   "3xrare":      20,
   "3xcommon":    4,
-
-  // 2 matching — small consolation
-  "2xmythic":    100,
-  "2xlegendary": 20,
-  "2xepic":      6,
-  "2xrare":      2,
-  "2xcommon":    1,
 };
 
 // Bonus free spins for hitting foil combo
@@ -139,8 +145,8 @@ const FOIL_BONUS_SPINS = 10;
 
 const SPIN_COST = 1;
 const COLS = 5;
-const ROWS = 2;
-const GRID_SIZE = COLS * ROWS; // 5x2 grid = 10 cards
+const ROWS = 3;
+const GRID_SIZE = COLS * ROWS; // 5x3 grid = 15 cards
 const BONUS_FOIL_COUNT = 2; // 2+ foil cards triggers bonus (TESTING: easier to trigger)
 const BONUS_FREE_SPINS = 10;
 const WILDCARD_CARDS = ["gen4_turbo", "idle_breathing"]; // Special animated cards that act as wild
@@ -170,98 +176,92 @@ function getRandomCard(bonusWeightMultiplier = 1): typeof SLOT_CARDS[0] {
   return adjustedPool[0];
 }
 
+type GridCard = { baccarat: string; rarity: string; hasFoil?: boolean; weight?: number };
+
 /**
- * Check winning patterns in 5x2 grid — combos matched by CHARACTER NAME.
- * Same character in a line = win. Payout determined by that character's rarity.
- * Also count foil cards for bonus trigger.
+ * Count consecutive matching symbols from LEFT of a payline.
+ * Wildcards (gen4_turbo) match anything.
  */
-function checkWins(grid: (typeof SLOT_CARDS[0] & { hasFoil?: boolean })[]): {
+function countConsecutive(lineCards: GridCard[]): { count: number; char: string; rarity: string } {
+  const isWild = (baccarat: string) => WILDCARD_CARDS.includes(baccarat);
+  let baseChar = "", baseRarity = "common";
+  for (const card of lineCards) {
+    if (!isWild(card.baccarat)) { baseChar = card.baccarat; baseRarity = card.rarity.toLowerCase(); break; }
+  }
+  if (!baseChar) return { count: lineCards.length, char: "wildcard_combo", rarity: "mythic" };
+  let count = 0;
+  for (const card of lineCards) {
+    if (card.baccarat === baseChar || isWild(card.baccarat)) count++;
+    else break;
+  }
+  return { count, char: baseChar, rarity: baseRarity };
+}
+
+/**
+ * Check all 5 paylines + VBMS scatter. Returns winning cell indices + payout.
+ */
+function checkWinningPaylines(grid: GridCard[]): {
+  winningIndices: number[];
   winAmount: number;
   patterns: string[];
-  description: string;
   maxWin: boolean;
-  foilCount: number;
 } {
+  const winSet = new Set<number>();
   let totalWin = 0;
-  const patternsFound: string[] = [];
+  const patterns: string[] = [];
   let maxWin = false;
 
-  // Count foil cards in the grid
-  const foilCount = grid.filter(c => c.hasFoil).length;
-
-  // Count matching CHARACTER NAMES in a line; wildcards (gen4_turbo, idle_breathing) act as jokers
-  const countLine = (indices: number[]): { rarity: string; count: number; char: string } => {
-    const lineCards = indices.map(i => grid[i]);
-    const counts: Record<string, number> = {};
-    const isWildcard = (baccarat: string) => WILDCARD_CARDS.includes(baccarat);
-
-    // Se há wildcards, eles se combinam com a carta mais frequente (ou criam uma combinação própria se todos são wildcards)
-    const nonWildcards = lineCards.filter(c => !isWildcard(c.baccarat));
-    const wildcardCount = lineCards.filter(c => isWildcard(c.baccarat)).length;
-
-    if (nonWildcards.length === 0) {
-      // Todos são wildcards - conta como uma combinação de wildcards
-      const wildRarity = lineCards[0]?.rarity?.toLowerCase() ?? "mythic";
-      return { rarity: wildRarity, count: wildcardCount, char: "wildcard_combo" };
-    }
-
-    // Contar cartas normais
-    nonWildcards.forEach(c => { counts[c.baccarat] = (counts[c.baccarat] || 0) + 1; });
-
-    // Adicionar wildcards à carta mais frequente
-    const maxChar = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
-    counts[maxChar] += wildcardCount;
-
-    const maxCount = Math.max(...Object.values(counts));
-    const rarity = nonWildcards.find(c => c.baccarat === maxChar)?.rarity?.toLowerCase() ?? "common";
-    return { rarity, count: maxCount, char: maxChar };
-  };
-
-  const applyLine = (indices: number[], label: string, requiredCount?: number) => {
-    const { rarity, count, char } = countLine(indices);
-    const needed = requiredCount || count;
-    if (count >= needed && char !== "") {
-      const key = `${count}x${rarity}` as keyof typeof PAYOUTS;
+  for (const payline of PAYLINES) {
+    const lineCards = payline.cells.map(i => grid[i]);
+    const { count, char, rarity } = countConsecutive(lineCards);
+    if (count >= 3) {
+      const key = `${Math.min(count, 5)}x${rarity}` as keyof typeof PAYOUTS;
       if (PAYOUTS[key]) {
         totalWin += PAYOUTS[key];
-        patternsFound.push(`${label}: ${count}x ${char}`);
-        if (key === "4xmythic") maxWin = true;
+        patterns.push(`${payline.name}: ${count}x ${char}`);
+        payline.cells.slice(0, count).forEach(idx => winSet.add(idx));
+        if (PAYOUTS[key] >= 50000) maxWin = true;
       }
     }
-  };
-
-  // Check all 2 rows (5 cells each)
-  for (let row = 0; row < ROWS; row++) {
-    const idx = Array.from({ length: COLS }, (_, c) => row * COLS + c);
-    applyLine(idx, `Row ${row + 1}`);
   }
 
-  // Check all 5 columns (2 cells each) — need both cells equal to count
+  // VBMS Special scatter: 2+ anywhere = bonus payout
+  const specials = grid.reduce<number[]>((a, c, i) => { if (c.baccarat === "vbms_special") a.push(i); return a; }, []);
+  if (specials.length >= 2) {
+    const spPay: Record<number, number> = { 2: 100, 3: 1500, 4: 30000, 5: 100000 };
+    totalWin += spPay[Math.min(specials.length, 5)] ?? 0;
+    patterns.push(`VBMS Special x${specials.length}!`);
+    specials.forEach(i => winSet.add(i));
+    if (specials.length >= 4) maxWin = true;
+  }
+
+  return { winningIndices: Array.from(winSet), winAmount: totalWin, patterns, maxWin };
+}
+
+/**
+ * Remove winning cells from each column and fill top with new random cards (cascade).
+ */
+function cascadeGrid(grid: GridCard[], winningIndices: number[], isBonusMode: boolean): GridCard[] {
+  const newGrid = [...grid];
+  const winSet = new Set(winningIndices);
   for (let col = 0; col < COLS; col++) {
-    const idx = [col, col + COLS];
-    applyLine(idx, `Col ${col + 1}`, 2);
+    const survivors: GridCard[] = [];
+    for (let row = 0; row < ROWS; row++) {
+      const idx = row * COLS + col;
+      if (!winSet.has(idx)) survivors.push(grid[idx]);
+    }
+    const newCount = ROWS - survivors.length;
+    const newCards: GridCard[] = Array.from({ length: newCount }, () => {
+      if (isBonusMode && Math.random() < 0.35) {
+        return { baccarat: "gen4_turbo", rarity: "Mythic", hasFoil: true, weight: 0 };
+      }
+      const card = getRandomCard(isBonusMode ? 5 : 1);
+      return { ...card, hasFoil: isBonusMode ? Math.random() < 0.5 : Math.random() < 0.15 };
+    });
+    // New cards fall from top, survivors stay at bottom
+    [...newCards, ...survivors].forEach((card, row) => { newGrid[row * COLS + col] = card; });
   }
-
-  // VBMS Special scatter bonus — counts anywhere on the 5×2 grid
-  const specialCount = grid.filter(c => c.baccarat === "vbms_special").length;
-  if (specialCount >= 2) {
-    const specialPayouts: Record<number, number> = { 2: 100, 3: 1500, 4: 30000, 5: 50000 };
-    const specialPayout = specialPayouts[Math.min(specialCount, 5)] ?? 0;
-    totalWin += specialPayout;
-    patternsFound.push(`VBMS Special x${specialCount}!`);
-    if (specialCount >= 5) maxWin = true;
-  }
-
-  // Bonus: scattered mythics anywhere on the board
-  const mythicCount = grid.filter(c => c.rarity.toLowerCase() === "mythic").length;
-  if (mythicCount >= 3) {
-    totalWin += 500;
-    patternsFound.push(`${mythicCount} mythics scattered!`);
-  }
-
-  const description = patternsFound.length > 0 ? patternsFound.join(" | ") : "No win";
-
-  return { winAmount: totalWin, patterns: patternsFound, description, maxWin, foilCount };
+  return newGrid;
 }
 
 /**
@@ -425,38 +425,42 @@ export const spinSlot = mutation({
     // Determine weight multiplier for bonus mode (increases chance of rare cards)
     const weightMultiplier = isBonusMode ? 5 : 1; // 5x weight for Mythic/Legendary during bonus (TEST)
 
-    // Generate 5x2 grid (10 cells) with foil chance and wildcard specials during bonus
-    const grid = Array.from({ length: GRID_SIZE }, (idx) => {
-      let card;
-      const foilChance = isBonusMode ? 0.6 : 0.4; // Higher foil chance for testing (40% normal, 60% bonus)
-      const hasFoil = Math.random() < foilChance;
-
-      // During bonus mode, have a chance to spawn wildcard animated cards
+    // Generate initial 5x3 grid (15 cells)
+    const initialGrid: GridCard[] = Array.from({ length: GRID_SIZE }, () => {
       if (isBonusMode && Math.random() < 0.3) {
-        // 30% chance for wildcard in bonus mode (TESTING: higher)
-        const wildCardName = WILDCARD_CARDS[Math.floor(Math.random() * WILDCARD_CARDS.length)];
-        card = {
-          baccarat: wildCardName,
-          rarity: "Mythic", // Treat as mythic for payouts
-          hasFoil: true,    // All wildcards have foil effect
-          weight: 0,        // Not part of normal pool
-        };
-      } else {
-        card = getRandomCard(weightMultiplier);
-        card = { ...card, hasFoil };
+        return { baccarat: "gen4_turbo", rarity: "Mythic", hasFoil: true, weight: 0 };
       }
-
-      return card;
+      const card = getRandomCard(weightMultiplier);
+      const foilChance = isBonusMode ? 0.55 : 0.15;
+      return { ...card, hasFoil: Math.random() < foilChance };
     });
 
-    const { winAmount, patterns, maxWin, foilCount } = checkWins(grid);
-
-    // Check if this spin triggered the foil bonus (4+ foil cards)
-    // Only count non-bonus mode spins to avoid infinite recursion
+    // Count foil in initial grid (for bonus trigger)
+    const foilCount = initialGrid.filter(c => c.hasFoil).length;
     const triggeredBonus = !isBonusMode && foilCount >= BONUS_FOIL_COUNT;
 
-    // Apply bonus + bet multipliers
-    const finalWin = Math.floor(winAmount * bonusMultiplier * betMultiplier);
+    // Run cascade: find wins → remove → fill → repeat until no more wins
+    interface CascStep {
+      grid: GridCard[];
+      winningIndices: number[];
+      winAmount: number;
+      patterns: string[];
+    }
+    const cascadeSteps: CascStep[] = [];
+    let currentGrid = [...initialGrid];
+    let totalBaseWin = 0;
+    let maxWin = false;
+
+    for (let iter = 0; iter < 10; iter++) {
+      const { winningIndices, winAmount, patterns, maxWin: mw } = checkWinningPaylines(currentGrid);
+      if (winAmount === 0) break;
+      cascadeSteps.push({ grid: [...currentGrid], winningIndices, winAmount, patterns });
+      totalBaseWin += winAmount;
+      if (mw) maxWin = true;
+      currentGrid = cascadeGrid(currentGrid, winningIndices, isBonusMode);
+    }
+
+    const finalWin = Math.floor(totalBaseWin * bonusMultiplier * betMultiplier);
 
     // Add winnings if any
     let winAdded = false;
@@ -485,7 +489,7 @@ export const spinSlot = mutation({
       spinType: isFreeSpin ? (isBonusSpin ? "bonus" : "free") : "paid",
       spinCount: 1,
       cost: isFreeSpin ? 0 : SPIN_COST,
-      reels: grid.map(c => c.baccarat), // 16 cards
+      reels: initialGrid.map(c => c.baccarat),
       winAmount: finalWin,
       multiplier: bonusMultiplier,
       timestamp: Date.now(),
@@ -495,13 +499,20 @@ export const spinSlot = mutation({
     });
 
     return {
-      grid,
+      // Initial grid shown during spin (before cascade)
+      initialGrid,
+      // Each cascade step: grid before cascade, winning indices, payout, patterns
+      cascadeSteps: cascadeSteps.map(s => ({
+        grid: s.grid,
+        winningIndices: s.winningIndices,
+        winAmount: Math.floor(s.winAmount * bonusMultiplier * betMultiplier),
+        patterns: s.patterns,
+      })),
+      // Final grid after all cascades (no more wins)
+      finalGrid: currentGrid,
       winAmount: finalWin,
-      patterns,
+      patterns: cascadeSteps.flatMap(s => s.patterns),
       maxWin,
-      newCoinsBalance: profile.coins && winAdded ? (profile.coins + finalWin) : (profile.coins || 0),
-      isFreeSpin,
-      bonusMultiplier,
       foilCount,
       triggeredBonus,
       bonusSpinsRemaining: profile.slotBonusSpins || 0,
