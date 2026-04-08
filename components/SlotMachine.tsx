@@ -6,7 +6,6 @@ import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "sonner";
-import Image from "next/image";
 import { getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
 import { playTrackedAudio } from "@/lib/tcg/audio";
 
@@ -483,32 +482,27 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
         </div>
 
         {/* Card image */}
-        <div className="flex-1 overflow-hidden min-h-0" style={{ position: "relative" }}>
-          {/* Wrapper absoluto garante parent com altura definida para o Image fill */}
-          <div className="absolute inset-0">
-            {img ? (
-              <Image
-                src={img}
-                alt={label}
-                fill
-                sizes="80px"
-                className={`object-contain ${isVBMSspecial || isWildcard ? 'animate-pulse' : ''}`}
-                unoptimized
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-[9px] font-black text-gray-300 px-0.5 text-center leading-tight">
-                {label.toUpperCase()}
-              </div>
-            )}
-            {!spinning && (card.rarity === "Mythic" || card.rarity === "Legendary" || isWildcard) && (
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{ background: `linear-gradient(135deg, ${s.glow}22 0%, transparent 50%, ${s.glow}11 100%)` }}
-              />
-            )}
-            {isWin   && <div className="absolute inset-0 bg-yellow-300/20 animate-pulse pointer-events-none" />}
-            {spinning && <div className="absolute inset-0 bg-black/55 pointer-events-none" />}
-          </div>
+        <div className="relative flex-1 min-h-0 overflow-hidden">
+          {img ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={img}
+              alt={label}
+              className={`w-full h-full object-contain ${isVBMSspecial || isWildcard ? 'animate-pulse' : ''}`}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-[9px] font-black text-gray-300 px-0.5 text-center leading-tight">
+              {label.toUpperCase()}
+            </div>
+          )}
+          {!spinning && (card.rarity === "Mythic" || card.rarity === "Legendary" || isWildcard) && (
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: `linear-gradient(135deg, ${s.glow}22 0%, transparent 50%, ${s.glow}11 100%)` }}
+            />
+          )}
+          {isWin   && <div className="absolute inset-0 bg-yellow-300/20 animate-pulse pointer-events-none" />}
+          {spinning && <div className="absolute inset-0 bg-black/55 pointer-events-none" />}
         </div>
 
         {/* Name label — full name, auto-shrink font */}
