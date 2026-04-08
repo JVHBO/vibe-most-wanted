@@ -483,29 +483,32 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
         </div>
 
         {/* Card image */}
-        <div className="relative flex-1 overflow-hidden min-h-0">
-          {img ? (
-            <Image
-              src={img}
-              alt={label}
-              fill
-              sizes="80px"
-              className={`object-contain ${isVBMSspecial || isWildcard ? 'animate-pulse' : ''}`}
-              unoptimized
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-[9px] font-black text-gray-300 px-0.5 text-center leading-tight">
-              {label.toUpperCase()}
-            </div>
-          )}
-          {!spinning && (card.rarity === "Mythic" || card.rarity === "Legendary" || isWildcard) && (
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: `linear-gradient(135deg, ${s.glow}22 0%, transparent 50%, ${s.glow}11 100%)` }}
-            />
-          )}
-          {isWin   && <div className="absolute inset-0 bg-yellow-300/20 animate-pulse pointer-events-none" />}
-          {spinning && <div className="absolute inset-0 bg-black/55 pointer-events-none" />}
+        <div className="flex-1 overflow-hidden min-h-0" style={{ position: "relative" }}>
+          {/* Wrapper absoluto garante parent com altura definida para o Image fill */}
+          <div className="absolute inset-0">
+            {img ? (
+              <Image
+                src={img}
+                alt={label}
+                fill
+                sizes="80px"
+                className={`object-contain ${isVBMSspecial || isWildcard ? 'animate-pulse' : ''}`}
+                unoptimized
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-[9px] font-black text-gray-300 px-0.5 text-center leading-tight">
+                {label.toUpperCase()}
+              </div>
+            )}
+            {!spinning && (card.rarity === "Mythic" || card.rarity === "Legendary" || isWildcard) && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: `linear-gradient(135deg, ${s.glow}22 0%, transparent 50%, ${s.glow}11 100%)` }}
+              />
+            )}
+            {isWin   && <div className="absolute inset-0 bg-yellow-300/20 animate-pulse pointer-events-none" />}
+            {spinning && <div className="absolute inset-0 bg-black/55 pointer-events-none" />}
+          </div>
         </div>
 
         {/* Name label — full name, auto-shrink font */}
