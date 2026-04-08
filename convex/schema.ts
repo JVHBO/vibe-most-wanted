@@ -484,6 +484,8 @@ export default defineSchema({
     multiplier: v.number(), // prize multiplier applied
     timestamp: v.number(),
     claimed: v.boolean(), // if prize was added to coins balance
+    foilCount: v.optional(v.number()),       // foil cards in this spin
+    triggeredBonus: v.optional(v.boolean()), // did this spin trigger bonus free spins
   })
     .index("by_player_time", ["playerAddress", "timestamp"])
     .index("by_date", ["timestamp"]),
