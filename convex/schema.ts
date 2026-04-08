@@ -197,6 +197,9 @@ export default defineSchema({
     createdAt: v.number(), // timestamp
     lastUpdated: v.number(), // timestamp
     updatedAt: v.optional(v.number()), // legacy field
+
+    // Slot Machine - Bonus Free Spins (from 4+ foil combo)
+    slotBonusSpins: v.optional(v.number()), // Extra free spins earned (stackable)
   })
     .index("by_address", ["address"])
     .index("by_username", ["username"])
@@ -473,7 +476,7 @@ export default defineSchema({
   // Slot Machine - Player Spins History
   slotSpins: defineTable({
     playerAddress: v.string(),
-    spinType: v.union(v.literal("free"), v.literal("paid")), // free = daily bonus, paid = bought with coins
+    spinType: v.union(v.literal("free"), v.literal("paid"), v.literal("bonus")), // free = daily, paid = coins, bonus = foil bonus spins
     spinCount: v.number(), // 1-3 for regular, bonus multiplier for free spins
     cost: v.number(), // coins cost (0 for free spins)
     reels: v.array(v.string()), // Array of 3 card baccarat names
