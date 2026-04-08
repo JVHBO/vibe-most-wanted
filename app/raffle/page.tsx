@@ -1165,11 +1165,26 @@ export default function RafflePage() {
 
                     {/* Math Verification */}
                     {(raffleResult as any).vrfRandomWord && (
-                      <div className="bg-green-950/40 border border-green-900/40 px-2 py-1.5">
-                        <p className="text-white/40 text-[9px] mb-1">{t('raffleVrfVerif')}</p>
-                        <p className="text-green-400/80 font-mono text-[8px] leading-relaxed">
-                          vrfWord % {(raffleResult as any).totalEntries} = {(raffleResult as any).winnerIndex} → ticket #{(raffleResult as any).winnerTicket}
-                        </p>
+                      <div className="bg-green-950/40 border border-green-900/40 px-2 py-2 space-y-1.5">
+                        <p className="text-white/50 text-[9px] font-black uppercase tracking-wider">{t('raffleVrfVerif')}</p>
+                        <div className="space-y-1 text-[8px] font-mono">
+                          <div className="flex justify-between gap-2">
+                            <span className="text-white/30">{t('raffleVrfStep1')}</span>
+                            <span className="text-white/60">{(raffleResult as any).totalEntries} {t('raffleVrfParticipants')}</span>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <span className="text-white/30">{t('raffleVrfStep2')}</span>
+                            <span className="text-white/60">{(raffleResult as any).vrfRandomWord.slice(0,12)}…</span>
+                          </div>
+                          <div className="flex justify-between gap-2">
+                            <span className="text-white/30">{t('raffleVrfStep3')}</span>
+                            <span className="text-white/60">{(raffleResult as any).vrfRandomWord.slice(0,12)}… % {(raffleResult as any).totalEntries} = <span className="text-green-400 font-black">{(raffleResult as any).winnerIndex}</span></span>
+                          </div>
+                          <div className="flex justify-between gap-2 border-t border-green-900/40 pt-1">
+                            <span className="text-white/30">{t('raffleVrfResult')}</span>
+                            <span className="text-green-400 font-black">ticket #{(raffleResult as any).winnerTicket} ✓</span>
+                          </div>
+                        </div>
                       </div>
                     )}
 
