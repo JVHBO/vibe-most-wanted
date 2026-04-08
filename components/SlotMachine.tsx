@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
@@ -8,12 +8,23 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "sonner";
 import Image from "next/image";
 import { getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
+import { playTrackedAudio } from "@/lib/tcg/audio";
 
 const COLS = 5;
 const ROWS = 2;
 const TOTAL_CELLS = COLS * ROWS;
-const BET_OPTIONS = [10, 20, 30, 40, 50, 60];
+const BET_OPTIONS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 const BONUS_COST_MULT = 5; // BUY BONUS = 5× bet atual
+const BONUS_FREE_SPINS = 5;
+const BONUS_FOIL_COUNT = 4;
+
+// GIF de cassino para VBMS Special (slot animation)
+// Coloque os arquivos em public/slot-gifs/
+const CASINO_SLOT_GIF = "/slot-gifs/casino-slot-animation.gif"; // GIF de cassino para a carta especial
+const WILDCARD_GIFS = {
+  "gen4_turbo": "/slot-gifs/gen4-turbo-idle-breathing.gif",
+  "idle_breathing": "/slot-gifs/gen4-turbo-idle-breathing.gif", // alias
+};
 
 // Todos os wallets linkados do dono do projeto (fid 214746)
 const ALLOWED_ADDRESSES = [
@@ -28,12 +39,15 @@ const ALLOWED_ADDRESSES = [
   "0x247116c752420ec7fe870d1549a1c2e8d44675c6",
 ];
 
-interface SlotCard { baccarat: string; rarity: string; }
+interface SlotCard { baccarat: string; rarity: string; hasFoil?: boolean; }
 interface SpinResult {
   grid: SlotCard[];
   winAmount: number;
   patterns: string[];
   maxWin: boolean;
+  foilCount: number;
+  triggeredBonus: boolean;
+  bonusSpinsRemaining: number;
 }
 
 const VBMS_SPECIAL_IMG = "https://nft-cdn.alchemy.com/base-mainnet/511915cc9b6f20839e2bf2999760530f";
@@ -104,6 +118,88 @@ function pick(): SlotCard {
   return { baccarat: "claude", rarity: "Common" };
 }
 
+// Combo names + audio for each character (reuses TCG combo voice files)
+const SLOT_COMBOS: Record<string, { name: string; audio: string; color: string }> = {
+  // Special
+  "_vbms":            { name: "GOLDEN MACHINE!",      audio: "/sounds/combos/money_makers.mp3",      color: "#FFD700" },
+  "_mythics":         { name: "MYTHIC ASSEMBLY!",     audio: "/sounds/combos/mythic.mp3",            color: "#a855f7" },
+  "_legendaries":     { name: "LEGENDS UNITE!",       audio: "/sounds/combos/legends_unite.mp3",     color: "#f59e0b" },
+  // Mythics
+  "jesse":            { name: "JESSE'S BACK!",        audio: "/sounds/combos/chaos_agents.mp3",      color: "#a855f7" },
+  "anon":             { name: "ANON STRIKES!",        audio: "/sounds/combos/shadow_network.mp3",    color: "#a855f7" },
+  "linda xied":       { name: "LINDA XIED WINS!",     audio: "/sounds/combos/mythic.mp3",            color: "#a855f7" },
+  "vitalik jumpterin":{ name: "VITALIK WINS!",        audio: "/sounds/combos/scaling_masters.mp3",   color: "#a855f7" },
+  // Legendaries
+  "antonio":          { name: "ANTONIO PARTY!",       audio: "/sounds/combos/chaos_agents.mp3",      color: "#f59e0b" },
+  "goofy romero":     { name: "ROMERO FAMILY!",       audio: "/sounds/combos/romero.mp3",            color: "#f59e0b" },
+  "dan romero":       { name: "ROMERO FAMILY!",       audio: "/sounds/combos/romero.mp3",            color: "#f59e0b" },
+  "tukka":            { name: "TUKKA POWER!",         audio: "/sounds/combos/degen_trio.mp3",        color: "#f59e0b" },
+  "chilipepper":      { name: "CHILLI HEAT!",         audio: "/sounds/combos/chaos_agents.mp3",      color: "#f59e0b" },
+  "miguel":           { name: "MIGUEL MODO!",         audio: "/sounds/combos/degen_trio.mp3",        color: "#f59e0b" },
+  "ye":               { name: "YE SUPREMACY!",        audio: "/sounds/combos/royal_brothers.mp3",    color: "#f59e0b" },
+  "nico":             { name: "NICO ATTACK!",         audio: "/sounds/combos/scam_squad.mp3",        color: "#f59e0b" },
+  // Epics
+  "sartocrates":      { name: "PHILOSOPHER'S WIN!",   audio: "/sounds/combos/philosopher_chad.mp3",  color: "#ec4899" },
+  "0xdeployer":       { name: "0xDEPLOYER RISES!",    audio: "/sounds/combos/code_masters.mp3",      color: "#ec4899" },
+  "lombra jr":        { name: "LOMBRA JR LANDS!",     audio: "/sounds/combos/underdog_uprising.mp3", color: "#ec4899" },
+  "vibe intern":      { name: "VIBE INTERN WINS!",    audio: "/sounds/combos/vibe_team.mp3",         color: "#ec4899" },
+  "jack the sniper":  { name: "SNIPER ELITE!",        audio: "/sounds/combos/sniper_elite.mp3",      color: "#ec4899" },
+  "beeper":           { name: "BEEPER BLOWS UP!",     audio: "/sounds/combos/chaos_agents.mp3",      color: "#ec4899" },
+  "horsefarts":       { name: "HORSEFARTS HOT!",      audio: "/sounds/combos/dirty_duo.mp3",         color: "#ec4899" },
+  "jc denton":        { name: "JC DENTON HACKS!",     audio: "/sounds/combos/ai_takeover.mp3",       color: "#ec4899" },
+  "zurkchad":         { name: "ZURKCHAD WINS!",       audio: "/sounds/combos/cryptokings.mp3",       color: "#ec4899" },
+  "slaterg":          { name: "SLATERG SCORES!",      audio: "/sounds/combos/pixel_artists.mp3",     color: "#ec4899" },
+  "brian armstrong":  { name: "COINBASE WIN!",        audio: "/sounds/combos/cryptokings.mp3",       color: "#ec4899" },
+  "nftkid":           { name: "NFT KID GANG!",        audio: "/sounds/combos/content_creators.mp3",  color: "#ec4899" },
+  // Rares
+  "smolemaru":        { name: "SMOLEMARU COMBO!",     audio: "/sounds/combos/degen_trio.mp3",        color: "#3b82f6" },
+  "ventra":           { name: "VENTRA VIBES!",        audio: "/sounds/combos/vibe_team.mp3",         color: "#3b82f6" },
+  "bradymck":         { name: "BRADYMCK BLAST!",      audio: "/sounds/combos/content_creators.mp3",  color: "#3b82f6" },
+  "shills":           { name: "SHILLS ARMY!",         audio: "/sounds/combos/scam_squad.mp3",        color: "#3b82f6" },
+  "betobutter":       { name: "BETO BUTTER!",         audio: "/sounds/combos/money_makers.mp3",      color: "#3b82f6" },
+  "qrcodo":           { name: "QRCODO CODES!",        audio: "/sounds/combos/code_masters.mp3",      color: "#3b82f6" },
+  "loground":         { name: "LOGROUND WINS!",       audio: "/sounds/combos/underdog_uprising.mp3", color: "#3b82f6" },
+  "melted":           { name: "MELTED MELTS!",        audio: "/sounds/combos/chaos_agents.mp3",      color: "#3b82f6" },
+  // Commons
+  "rachel":           { name: "RACHEL RULES!",        audio: "/sounds/combos/content_creators.mp3",  color: "#9ca3af" },
+  "claude":           { name: "AI TAKEOVER!",         audio: "/sounds/combos/ai_takeover.mp3",       color: "#9ca3af" },
+  "gozaru":           { name: "GOZARU GRINDS!",       audio: "/sounds/combos/degen_trio.mp3",        color: "#9ca3af" },
+  "ink":              { name: "INK DROPS!",           audio: "/sounds/combos/pixel_artists.mp3",     color: "#9ca3af" },
+  "casa":             { name: "CASA WINS!",           audio: "/sounds/combos/vibe_team.mp3",         color: "#9ca3af" },
+  "groko":            { name: "GROKO GANG!",          audio: "/sounds/combos/chaos_agents.mp3",      color: "#9ca3af" },
+  "rizkybegitu":      { name: "RIZKY RISES!",         audio: "/sounds/combos/underdog_uprising.mp3", color: "#9ca3af" },
+  "thosmur":          { name: "THOSMUR HITS!",        audio: "/sounds/combos/degen_trio.mp3",        color: "#9ca3af" },
+  "brainpasta":       { name: "BRAIN PASTA!",         audio: "/sounds/combos/philosopher_chad.mp3",  color: "#9ca3af" },
+  "gaypt":            { name: "GAYPT GANG!",          audio: "/sounds/combos/scam_squad.mp3",        color: "#9ca3af" },
+  "morlacos":         { name: "MORLACOS SMASH!",      audio: "/sounds/combos/chaos_agents.mp3",      color: "#9ca3af" },
+  "landmine":         { name: "LANDMINE DEGENS!",     audio: "/sounds/combos/dirty_money.mp3",       color: "#9ca3af" },
+  "linux":            { name: "LINUX LORDS!",         audio: "/sounds/combos/code_masters.mp3",      color: "#9ca3af" },
+  "joonx":            { name: "JOONX JACKPOT!",      audio: "/sounds/combos/money_makers.mp3",      color: "#9ca3af" },
+  "don filthy":       { name: "DON FILTHY WINS!",     audio: "/sounds/combos/dirty_money.mp3",       color: "#9ca3af" },
+  "pooster":          { name: "POOSTER POPS!",        audio: "/sounds/combos/content_creators.mp3",  color: "#9ca3af" },
+  "john porn":        { name: "JOHN P. HITS!",        audio: "/sounds/combos/dirty_duo.mp3",         color: "#9ca3af" },
+  "scum":             { name: "SCUM WINS!",           audio: "/sounds/combos/shadow_network.mp3",    color: "#9ca3af" },
+  "vlady":            { name: "VLADY VIBES!",         audio: "/sounds/combos/royal_brothers.mp3",    color: "#9ca3af" },
+};
+
+function getComboFromPatterns(patterns: string[]): { name: string; audio: string; color: string } | null {
+  // Priority 1: VBMS Special scatter
+  if (patterns.some(p => /VBMS Special/i.test(p))) return SLOT_COMBOS["_vbms"];
+  // Priority 2: Mythics scattered
+  if (patterns.some(p => /mythic/i.test(p))) return SLOT_COMBOS["_mythics"];
+  // Priority 3: Legendaries scattered
+  if (patterns.some(p => /legendary|legend/i.test(p) && /scatter/i.test(p))) return SLOT_COMBOS["_legendaries"];
+  // Priority 4: Named character match (e.g. "Row 1: 4x rachel")
+  for (const p of patterns) {
+    const m = p.match(/\d+x\s+(.+)/i);
+    if (m) {
+      const char = m[1].trim().toLowerCase();
+      if (SLOT_COMBOS[char]) return SLOT_COMBOS[char];
+    }
+  }
+  return null;
+}
+
 const PAYOUTS: [string, string, string][] = [
   ["4× Mythic",   "50.000","#a855f7"],["4× Legendary","5.000", "#f59e0b"],
   ["4× Epic",     "800",   "#ec4899"],["4× Rare",     "120",   "#3b82f6"],["4× Common","12","#6b7280"],
@@ -127,6 +223,10 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const [isJackpot, setIsJackpot] = useState(false);
   const [betIdx, setBetIdx]       = useState(0);
   const [showBonusConfirm, setShowBonusConfirm] = useState(false);
+  const [bonusSpinsRemaining, setBonusSpinsRemaining] = useState(statsQ?.bonusSpinsAvailable || 0);
+  const [foilCountDisplay, setFoilCountDisplay] = useState(0);
+  const [showBonusAnimation, setShowBonusAnimation] = useState(false);
+  const [comboDisplay, setComboDisplay] = useState<{ name: string; audio: string; color: string; winAmt: number } | null>(null);
 
   const ivs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
 
@@ -135,6 +235,20 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const betMult  = BET_OPTIONS[betIdx];
   const betCost  = betMult;
   const bonusCost = betCost * BONUS_COST_MULT;
+
+  // Sincronizar bonus spins da query
+  useEffect(() => {
+    if (statsQ?.bonusSpinsAvailable !== undefined) {
+      setBonusSpinsRemaining(statsQ.bonusSpinsAvailable);
+    }
+  }, [statsQ?.bonusSpinsAvailable]);
+
+  // Sincronizar bonus spins da query
+  useEffect(() => {
+    if (statsQ?.bonusSpinsAvailable !== undefined) {
+      setBonusSpinsRemaining(statsQ.bonusSpinsAvailable);
+    }
+  }, [statsQ?.bonusSpinsAvailable]);
 
   // Access control — apenas wallets autorizados
   const isAllowed = !address || ALLOWED_ADDRESSES.includes(address.toLowerCase());
@@ -152,7 +266,15 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const stopCol = useCallback((col: number, c0: SlotCard, c1: SlotCard) => {
     clearInterval(ivs.current[col]);
     delete ivs.current[col];
-    setCells(prev => { const n = [...prev]; n[col] = c0; n[COLS + col] = c1; return n; });
+    setCells(prev => {
+      const n = [...prev];
+      // Parar primeira linha (col) e segunda linha (COLS + col)
+      n[col] = c0;
+      if (COLS + col < n.length) {
+        n[COLS + col] = c1;
+      }
+      return n;
+    });
     setStopped(prev => new Set([...prev, col]));
   }, []);
 
@@ -175,46 +297,94 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     return s;
   };
 
-  const spin = async (isFree: boolean, bonusMode = false) => {
+  const spin = async (isFree: boolean, forceBonusMode = false) => {
     if (!isConnected || !address) { toast.error("Conecte a carteira!"); return; }
     if (!isAllowed) { toast.error("Acesso restrito!"); return; }
     if (isSpinning) return;
-    if (isFree && freeLeft <= 0) { toast.error("Sem free spins hoje!"); return; }
-    const cost = bonusMode ? bonusCost : betCost;
-    if (!isFree && coins < cost) { toast.error(`Precisa de ${cost} coins!`); return; }
 
-    setIsSpinning(true); setWinCells(new Set()); setWinAmt(null); setIsJackpot(false);
+    // Check if using bonus spins
+    const totalBonusSpins = bonusSpinsRemaining + (freeLeft > 0 ? 0 : 0);
+    const isUsingBonus = forceBonusMode || (isFree && bonusSpinsRemaining > 0 && freeLeft <= 0);
+
+    if (isFree && freeLeft <= 0 && !isUsingBonus) {
+      toast.error("Sem free spins hoje!");
+      return;
+    }
+
+    const cost = forceBonusMode || isUsingBonus ? 0 : betCost;
+    if (!isFree && !forceBonusMode && coins < cost) {
+      toast.error(`Precisa de ${cost} coins!`);
+      return;
+    }
+
+    setIsSpinning(true);
+    setWinCells(new Set());
+    setWinAmt(null);
+    setIsJackpot(false);
     setStopped(new Set());
+    setShowBonusAnimation(false);
+
     for (let c = 0; c < COLS; c++) startCol(c);
 
     try {
       const res = await spinMut({
         address,
-        isFreeSpin: isFree,
-        bonusMultiplier: bonusMode ? 2 : 1,
+        isFreeSpin: isFree || isUsingBonus,
+        bonusMultiplier: forceBonusMode || isUsingBonus ? 2 : 1,
         betMultiplier: isFree ? 1 : betMult,
+        isBonusMode: forceBonusMode || isUsingBonus,
       }) as SpinResult;
+
+      // Atualizar bonus spins restantes
+      setBonusSpinsRemaining(res.bonusSpinsRemaining);
+
+      // Mostrar contagem de foil
+      setFoilCountDisplay(res.foilCount);
+
+      // Se o bônus foi ativado (4+ foil), mostrar animação
+      if (res.triggeredBonus) {
+        setShowBonusAnimation(true);
+        toast.success(`+${BONUS_FREE_SPINS} FREE SPINS BÔNUS! (${res.foilCount} foil)`);
+        setTimeout(() => setShowBonusAnimation(false), 3000);
+      }
+
+      // Aplicar grid resultante
       const grid = res.grid;
 
+      // Parar colunas sequencialmente
       for (let col = 0; col < COLS; col++) {
         const delay = col * 260;
         setTimeout(() => {
-          const bc = Math.min(col, grid.length / 2 - 1);
-          stopCol(col, grid[bc] ?? pick(), grid[Math.floor(grid.length / 2) + bc] ?? pick());
+          const rowCount = ROWS;
+          const bc = Math.min(col, grid.length / rowCount - 1);
+          const idx0 = bc;
+          const idx1 = Math.floor(grid.length / rowCount) + bc;
+          stopCol(col, grid[idx0] ?? pick(), grid[idx1] ?? pick());
           if (col === COLS - 1) {
             setTimeout(() => {
-              setIsSpinning(false); setWinAmt(res.winAmount); setIsJackpot(res.maxWin);
+              setIsSpinning(false);
+              setWinAmt(res.winAmount);
+              setIsJackpot(res.maxWin);
               if (res.winAmount > 0) {
                 setWinCells(parseWin(res.patterns));
                 toast.success(`+${res.winAmount.toLocaleString()} coins!`);
+                // Combo name overlay + audio
+                const combo = getComboFromPatterns(res.patterns);
+                if (combo) {
+                  setComboDisplay({ ...combo, winAmt: res.winAmount });
+                  playTrackedAudio(combo.audio, 0.55);
+                  setTimeout(() => setComboDisplay(null), 2800);
+                }
               }
             }, 120);
           }
         }, delay);
       }
     } catch (err: any) {
-      Object.values(ivs.current).forEach(clearInterval); ivs.current = {};
-      setIsSpinning(false); setStopped(new Set([0,1,2,3,4]));
+      Object.values(ivs.current).forEach(clearInterval);
+      ivs.current = {};
+      setIsSpinning(false);
+      setStopped(new Set([0,1,2,3,4]));
       toast.error(err.data?.message || err.message || "Erro no spin");
     }
   };
@@ -224,29 +394,47 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     const spinning  = !stopped.has(col);
     const isWin = !spinning && winCells.has(idx);
     const s     = RS[card.rarity] ?? RS.Common;
-    const img   = card.baccarat === "vbms_special"
-      ? VBMS_SPECIAL_IMG
-      : getVbmsBaccaratImageUrl(card.baccarat);
+
+    // Determinar imagem:VBMS Special → GIF de cassino | Wildcards → GIFs animados | Outras → imagens normais
+    const isVBMSspecial = card.baccarat === "vbms_special";
+    const isWildcard = ["gen4_turbo", "idle_breathing"].includes(card.baccarat);
+
+    const img = isVBMSspecial
+      ? CASINO_SLOT_GIF
+      : isWildcard
+        ? WILDCARD_GIFS[card.baccarat as keyof typeof WILDCARD_GIFS] || getVbmsBaccaratImageUrl(card.baccarat)
+        : getVbmsBaccaratImageUrl(card.baccarat);
+
     const label = LABELS[card.baccarat] ?? card.baccarat;
 
     const borderColor = isWin ? "#FFD700" : s.border;
     const borderW     = isWin ? 3 : s.borderW;
 
-    const rarityAnim = !spinning && !isWin
-      ? card.rarity === "Mythic"    ? "mythic-border 1.6s ease-in-out infinite"
-      : card.rarity === "Legendary" ? "legendary-border 1.8s ease-in-out infinite"
-      : undefined
-      : undefined;
+    // Efeito de foil: shimmer animado + borda brilhante
+    const foilEffect = card.hasFoil ? {
+      animation: "foil-shimmer 2s ease-in-out infinite",
+      border: `${borderW + 1}px solid ${isWin ? '#FFD700' : '#FFA500'}`,
+      boxShadow: `0 0 15px ${isWin ? '#FFD700' : '#FFA500'}88, inset 0 0 20px ${isWin ? '#FFD70033' : '#FFA50022'}`
+    } : {};
+
+    let rarityAnim: string | undefined = undefined;
+    if (!spinning && !isWin && !card.hasFoil) {
+      if (card.rarity === "Mythic") {
+        rarityAnim = "mythic-border 1.6s ease-in-out infinite";
+      } else if (card.rarity === "Legendary") {
+        rarityAnim = "legendary-border 1.8s ease-in-out infinite";
+      }
+    }
 
     return (
       <div
-        className={`absolute inset-0 flex flex-col overflow-hidden ${spinning ? "slot-spin" : "transition-all duration-150"}`}
+        className={`absolute inset-0 flex flex-col overflow-hidden ${spinning ? "slot-spin" : "transition-all duration-150"} ${card.hasFoil ? "foil-card" : ""}`}
         style={{
-          border: `${borderW}px solid ${borderColor}`,
-          boxShadow: isWin
+          border: foilEffect.border || `${borderW}px solid ${borderColor}`,
+          boxShadow: foilEffect.boxShadow || (isWin
             ? `0 0 20px #FFD700, 0 0 8px #FFD700, inset 0 0 16px #FFD70033`
-            : undefined,
-          animation: rarityAnim,
+            : undefined),
+          animation: `${rarityAnim || foilEffect.animation || ''}`.trim(),
           background: s.bg,
         }}
       >
@@ -263,13 +451,20 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
         {/* Card image */}
         <div className="relative flex-1 overflow-hidden min-h-0">
           {img ? (
-            <Image src={img} alt={label} fill sizes="80px" className="object-cover object-top" unoptimized />
+            <Image
+              src={img}
+              alt={label}
+              fill
+              sizes="80px"
+              className={`object-cover object-top ${isVBMSspecial || isWildcard ? 'animate-pulse' : ''}`}
+              unoptimized
+            />
           ) : (
             <div className="flex items-center justify-center h-full text-[9px] font-black text-gray-300 px-0.5 text-center leading-tight">
               {label.toUpperCase()}
             </div>
           )}
-          {!spinning && (card.rarity === "Mythic" || card.rarity === "Legendary") && (
+          {!spinning && (card.rarity === "Mythic" || card.rarity === "Legendary" || isWildcard) && (
             <div
               className="absolute inset-0 pointer-events-none"
               style={{ background: `linear-gradient(135deg, ${s.glow}22 0%, transparent 50%, ${s.glow}11 100%)` }}
@@ -343,6 +538,43 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
           100%    { opacity:1; }
         }
         .subtitle-blink { animation: subtitle-blink 1.4s ease-in-out infinite; }
+        @keyframes foil-shimmer {
+          0%   { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .foil-card {
+          position: relative;
+        }
+        .foil-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255,255,255,0.4) 25%,
+            rgba(255,255,255,0.1) 50%,
+            rgba(255,255,255,0.4) 75%,
+            transparent 100%
+          );
+          background-size: 200% 100%;
+          animation: foil-shimmer 2s ease-in-out infinite;
+          pointer-events: none;
+          z-index: 5;
+        }
+        @keyframes combo-reveal {
+          0%   { opacity:0; transform:scale(0.4) translateY(30px); }
+          18%  { opacity:1; transform:scale(1.12) translateY(-4px); }
+          28%  { transform:scale(1); }
+          68%  { opacity:1; transform:scale(1); }
+          100% { opacity:0; transform:scale(0.85) translateY(-24px); }
+        }
+        .combo-overlay { animation: combo-reveal 2.8s cubic-bezier(.34,1.56,.64,1) forwards; }
+        @keyframes combo-shimmer {
+          0%,100% { text-shadow: 0 0 12px var(--cc), 0 0 30px var(--cc); }
+          50%     { text-shadow: 0 0 24px var(--cc), 0 0 60px var(--cc), 0 0 90px var(--cc); }
+        }
+        .combo-text { animation: combo-shimmer 0.6s ease-in-out infinite; }
       `}</style>
 
 
@@ -426,6 +658,8 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
                   key={i}
                   className="relative"
                   style={{
+                    // Se for VBMS Special e está nas posições 2-3 (colunas centrais), ocupar 2 colunas
+                    gridColumn: card.baccarat === "vbms_special" && (i % COLS === 2 || i % COLS === 3) ? "span 2" : "auto",
                     borderRight: i % COLS < COLS - 1 ? "1px solid rgba(200,121,65,0.18)" : "none",
                   }}
                 >
@@ -434,6 +668,54 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
               ))}
             </div>
           </div>
+
+          {/* COMBO NAME OVERLAY */}
+          {comboDisplay && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center pointer-events-none">
+              <div
+                className="combo-overlay flex flex-col items-center gap-1 px-5 py-3 rounded-xl border-4 border-black"
+                style={{
+                  background: `linear-gradient(160deg,rgba(0,0,0,0.88) 0%,rgba(0,0,0,0.95) 100%)`,
+                  boxShadow: `0 0 40px ${comboDisplay.color}88, 0 0 80px ${comboDisplay.color}44, 4px 4px 0 #000`,
+                }}
+              >
+                <div
+                  className="combo-text font-black uppercase tracking-widest text-center leading-none"
+                  style={{
+                    fontSize: "clamp(16px,5vw,26px)",
+                    color: comboDisplay.color,
+                    ["--cc" as string]: comboDisplay.color,
+                  }}
+                >
+                  {comboDisplay.name}
+                </div>
+                <div
+                  className="font-black text-white text-center"
+                  style={{ fontSize: "clamp(12px,3.5vw,18px)", textShadow: `1px 1px 0 #000, 0 0 10px ${comboDisplay.color}` }}
+                >
+                  +{comboDisplay.winAmt.toLocaleString()} COINS
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* FOIL COUNTER & BONUS INDICATOR */}
+          {(foilCountDisplay > 0 || showBonusAnimation) && (
+            <div className="absolute top-2 right-2 z-30 px-2 py-1 rounded text-xs font-black border-2"
+              style={{
+                background: showBonusAnimation ? "#7c3aed" : foilCountDisplay >= 4 ? "#10b981" : "#f59e0b",
+                color: "#fff",
+                borderColor: "#000",
+                boxShadow: "0 2px 0 #000",
+              }}
+            >
+              {showBonusAnimation ? (
+                <span className="animate-pulse">🎰 BONUS +{BONUS_FREE_SPINS}!</span>
+              ) : (
+                <span>FOIL {foilCountDisplay}/{BONUS_FOIL_COUNT}</span>
+              )}
+            </div>
+          )}
 
           {/* WIN BAR */}
           <div
@@ -503,25 +785,38 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
 
               {/* SPIN — centro */}
               <button
-                onClick={() => spin(freeLeft > 0)}
-                disabled={isSpinning || (!freeLeft && coins < betCost)}
+                onClick={() => {
+                  // Priorizar bonus spins sobre free spins
+                  if (bonusSpinsRemaining > 0 && freeLeft <= 0) {
+                    spin(true, true); // Usar bonus spin (força modo bônus)
+                  } else if (freeLeft > 0) {
+                    spin(true); // Usar free spin diário
+                  } else {
+                    spin(false); // Spin pago
+                  }
+                }}
+                disabled={isSpinning || (bonusSpinsRemaining <= 0 && freeLeft <= 0 && coins < betCost)}
                 className="w-14 h-14 rounded-full border-4 border-black font-black flex-none flex flex-col items-center justify-center disabled:opacity-40 active:scale-95 transition-transform"
                 style={{
                   background: isSpinning
                     ? "linear-gradient(180deg,#6b7280,#4b5563)"
-                    : freeLeft > 0
-                      ? "linear-gradient(180deg,#34d399 0%,#059669 50%,#047857 100%)"
-                      : "linear-gradient(180deg,#fbbf24 0%,#f59e0b 50%,#d97706 100%)",
+                    : bonusSpinsRemaining > 0
+                      ? "linear-gradient(180deg,#a855f7 0%,#7c3aed 50%,#6d28d9 100%)" //roxo para bonus
+                      : freeLeft > 0
+                        ? "linear-gradient(180deg,#34d399 0%,#059669 50%,#047857 100%)"
+                        : "linear-gradient(180deg,#fbbf24 0%,#f59e0b 50%,#d97706 100%)",
                   boxShadow: isSpinning ? "0 2px 0 #000" : "0 5px 0 #000, 0 0 18px rgba(251,191,36,0.55)",
                   color: "#000",
                   transform: isSpinning ? "translateY(3px)" : undefined,
                 }}
               >
                 <span className={`text-[10px] font-black leading-none tracking-widest ${isSpinning ? "animate-spin" : ""}`}>
-                  {freeLeft > 0 ? "FREE" : "SPIN"}
+                  {bonusSpinsRemaining > 0 ? "BONUS" : freeLeft > 0 ? "FREE" : "SPIN"}
                 </span>
-                {freeLeft > 0 && !isSpinning && (
-                  <span className="text-[8px] font-black mt-0.5 text-green-900">{freeLeft}x</span>
+                {(bonusSpinsRemaining > 0 || freeLeft > 0) && !isSpinning && (
+                  <span className="text-[8px] font-black mt-0.5 text-green-900">
+                    {bonusSpinsRemaining > 0 ? bonusSpinsRemaining : freeLeft}x
+                  </span>
                 )}
               </button>
 
