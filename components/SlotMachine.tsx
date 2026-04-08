@@ -227,6 +227,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const [foilCountDisplay, setFoilCountDisplay] = useState(0);
   const [showBonusAnimation, setShowBonusAnimation] = useState(false);
   const [comboDisplay, setComboDisplay] = useState<{ name: string; audio: string; color: string; winAmt: number } | null>(null);
+  const [deceleratingCols, setDeceleratingCols] = useState<Set<number>>(new Set());
 
   const ivs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
 
@@ -263,14 +264,16 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     }, 55); // velocidade do shuffle: quanto menor mais cartas passam
   }, []);
 
-  // Para coluna com desaceleração gradual antes de travar na carta final
-  const slowAndStopCol = useCallback((col: number, c0: SlotCard, c1: SlotCard) => {
+  // Para coluna com desaceleração visual + callback quando termina
+  const slowAndStopCol = useCallback((col: number, c0: SlotCard, c1: SlotCard, onDone?: () => void) => {
     clearInterval(ivs.current[col]);
     delete ivs.current[col];
 
-    // Sequência de delays crescentes: cada passo mostra uma carta aleatória,
-    // o último trava na carta do resultado
-    const slowSteps = [90, 130, 180, 240, 320, 420];
+    // Marcar como desacelerando (CSS diferente)
+    setDeceleratingCols(prev => new Set([...prev, col]));
+
+    // Passos de desaceleração: delays crescentes, cada um mostra carta aleatória
+    const slowSteps = [85, 130, 190, 270, 370];
     let step = 0;
 
     const tick = () => {
@@ -283,9 +286,10 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
           return n;
         });
         setStopped(prev => new Set([...prev, col]));
+        setDeceleratingCols(prev => { const s = new Set(prev); s.delete(col); return s; });
+        onDone?.();
         return;
       }
-      // Ainda mostra cartas aleatórias (desacelerando)
       setCells(prev => {
         const n = [...prev];
         for (let r = 0; r < ROWS; r++) n[r * COLS + col] = pick();
@@ -343,6 +347,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     setStopped(new Set());
     setShowBonusAnimation(false);
     setComboDisplay(null);
+    setDeceleratingCols(new Set());
 
     const spinStartTime = Date.now();
     for (let c = 0; c < COLS; c++) startCol(c);
@@ -372,43 +377,42 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
       // Aplicar grid resultante
       const grid = res.grid;
 
-      // Tempo mínimo de giro para criar suspense (1.8s desde o início)
-      const MIN_SPIN_MS = 1800;
-      const COL_GAP_MS = 500; // gap entre cada coluna parar
+      // Tempo mínimo de giro antes de começar a parar (suspense)
+      const MIN_SPIN_MS = 1600;
       const elapsed = Date.now() - spinStartTime;
       const baseDelay = Math.max(0, MIN_SPIN_MS - elapsed);
 
-      // Parar colunas sequencialmente com desaceleração
-      for (let col = 0; col < COLS; col++) {
-        const delay = baseDelay + col * COL_GAP_MS;
-        setTimeout(() => {
-          const rowCount = ROWS;
-          const bc = Math.min(col, grid.length / rowCount - 1);
-          const idx0 = bc;
-          const idx1 = Math.floor(grid.length / rowCount) + bc;
-          slowAndStopCol(col, grid[idx0] ?? pick(), grid[idx1] ?? pick());
-          if (col === COLS - 1) {
-            // Aguardar fim da desaceleração da última coluna (soma dos slowSteps)
-            const lastColSlowTime = 90+130+180+240+320+420 + 150;
-            setTimeout(() => {
-              setIsSpinning(false);
-              setWinAmt(res.winAmount);
-              setIsJackpot(res.maxWin);
-              if (res.winAmount > 0) {
-                setWinCells(parseWin(res.patterns));
-                toast.success(`+${res.winAmount.toLocaleString()} coins!`);
-                // Combo name overlay + audio
-                const combo = getComboFromPatterns(res.patterns);
-                if (combo) {
-                  setComboDisplay({ ...combo, winAmt: res.winAmount });
-                  playTrackedAudio(combo.audio, 0.55);
-                  setTimeout(() => setComboDisplay(null), 2800);
-                }
+      // Parar colunas em cascata verdadeira: col N só começa depois que col N-1 travou
+      const stopSequential = (col: number) => {
+        if (col >= COLS) {
+          // Todas colunas travadas — mostrar resultado
+          setTimeout(() => {
+            setIsSpinning(false);
+            setWinAmt(res.winAmount);
+            setIsJackpot(res.maxWin);
+            if (res.winAmount > 0) {
+              setWinCells(parseWin(res.patterns));
+              toast.success(`+${res.winAmount.toLocaleString()} coins!`);
+              const combo = getComboFromPatterns(res.patterns);
+              if (combo) {
+                setComboDisplay({ ...combo, winAmt: res.winAmount });
+                playTrackedAudio(combo.audio, 0.55);
+                setTimeout(() => setComboDisplay(null), 2800);
               }
-            }, lastColSlowTime);
-          }
-        }, delay);
-      }
+            }
+          }, 100);
+          return;
+        }
+        const bc = Math.min(col, grid.length / ROWS - 1);
+        slowAndStopCol(
+          col,
+          grid[bc] ?? pick(),
+          grid[Math.floor(grid.length / ROWS) + bc] ?? pick(),
+          () => setTimeout(() => stopSequential(col + 1), 80), // pequena pausa entre colunas
+        );
+      };
+
+      setTimeout(() => stopSequential(0), baseDelay);
     } catch (err: any) {
       Object.values(ivs.current).forEach(clearInterval);
       ivs.current = {};
@@ -421,6 +425,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const renderCard = (card: SlotCard, idx: number) => {
     const col   = idx % COLS;
     const spinning  = !stopped.has(col);
+    const decelerating = spinning && deceleratingCols.has(col);
     const isWin = !spinning && winCells.has(idx);
     const s     = RS[card.rarity] ?? RS.Common;
 
@@ -457,7 +462,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
 
     return (
       <div
-        className={`absolute inset-0 flex flex-col overflow-hidden ${spinning ? "slot-spin" : "transition-all duration-150"} ${card.hasFoil ? "foil-card" : ""}`}
+        className={`absolute inset-0 flex flex-col overflow-hidden ${decelerating ? "slot-decel" : spinning ? "slot-spin" : "transition-all duration-150"} ${card.hasFoil ? "foil-card" : ""}`}
         style={{
           border: foilEffect.border || `${borderW}px solid ${borderColor}`,
           boxShadow: foilEffect.boxShadow || (isWin
@@ -538,11 +543,17 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     <>
       <style jsx global>{`
         @keyframes slot-blur {
-          0%   { transform:translateY(-5px); filter:blur(2px) brightness(1.15); }
-          50%  { transform:translateY(5px);  filter:blur(3px) brightness(0.85); }
-          100% { transform:translateY(-5px); filter:blur(2px) brightness(1.15); }
+          0%   { transform:translateY(-6px); filter:blur(2.5px) brightness(1.1); }
+          50%  { transform:translateY(6px);  filter:blur(3px) brightness(0.85); }
+          100% { transform:translateY(-6px); filter:blur(2.5px) brightness(1.1); }
         }
-        .slot-spin { animation: slot-blur 0.1s ease-in-out infinite; }
+        .slot-spin { animation: slot-blur 0.08s ease-in-out infinite; }
+        @keyframes slot-blur-slow {
+          0%   { transform:translateY(-3px); filter:blur(1px) brightness(1.05); }
+          50%  { transform:translateY(3px);  filter:blur(1.5px) brightness(0.9); }
+          100% { transform:translateY(-3px); filter:blur(1px) brightness(1.05); }
+        }
+        .slot-decel { animation: slot-blur-slow 0.18s ease-in-out infinite; }
         @keyframes win-pulse {
           0%,100%{ opacity:1; transform:scale(1); }
           50%    { opacity:0.75; transform:scale(1.015); }
