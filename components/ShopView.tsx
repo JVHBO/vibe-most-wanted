@@ -94,9 +94,9 @@ export function ShopView({ address }: ShopViewProps) {
             <button
               onMouseEnter={() => AudioManager.buttonHover()}
               onClick={() => { AudioManager.buttonClick(); router.push('/shop/burn?filter=nothing'); }}
-              className="shop-burn-btn py-1.5 px-5 border-4 border-black font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white active:translate-x-[3px] active:translate-y-[3px]"
+              className="shop-burn-btn py-2 px-4 border-[1.5px] border-black font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#1E1E1E] hover:bg-[#CC2222] text-[#FACC15] hover:text-white"
             >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 6h18" />
                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
                 <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -110,11 +110,11 @@ export function ShopView({ address }: ShopViewProps) {
       </div>
 
       {/* BOTTOM BAR */}
-      <div className="absolute bottom-0 left-0 right-0 z-10 bg-vintage-charcoal/90 border-t border-vintage-gold/20">
+      <div className="absolute bottom-0 left-0 right-0 z-10 bg-[#1E1E1E] border-t border-black">
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => setShowHelpModal(true)}
-            className="text-vintage-ice/60 hover:text-vintage-gold transition-colors text-sm"
+            className="px-3 py-1 border-[1.5px] border-black font-bold text-xs uppercase tracking-widest transition-all bg-[#1E1E1E] hover:bg-[#CC2222] text-[#FACC15] hover:text-white"
           >
             Help
           </button>

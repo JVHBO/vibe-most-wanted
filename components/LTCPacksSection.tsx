@@ -207,7 +207,7 @@ export function VMWPackCard({ address, onMintSuccess }: { address: string | unde
       {/* Buy button */}
       <div className="mt-auto">
         <button onClick={handleMint} disabled={minting || !priceWei || !address}
-          className="shop-claim-btn w-full h-10 font-display font-bold rounded transition-all disabled:opacity-50 text-vintage-black active:translate-y-[4px] bg-vintage-gold bg-gradient-to-b from-vintage-gold to-vintage-burnt-gold hover:from-yellow-400 hover:to-amber-500">
+          className="shop-claim-btn w-full h-10 font-bold disabled:opacity-50 text-black bg-[#FACC15] hover:bg-[#FACC15]">
           {minting ? "Minting…" : `Buy ${qty > 1 ? qty + "× " : ""}Pack`}
         </button>
       </div>
@@ -304,7 +304,7 @@ function OpenModal({ address, onClose, onRevealed, preSelectedIds }: {
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center" style={{ padding: '56px 16px 64px' }} onClick={onClose}>
-      <div className="bg-vintage-charcoal border border-vintage-gold/50 rounded-2xl w-full max-w-sm p-4 flex flex-col overflow-hidden" style={{ maxHeight: '100%' }}
+      <div className="bg-[#1E1E1E] border border-black w-full max-w-sm p-4 flex flex-col overflow-hidden" style={{ maxHeight: '100%' }}
         onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-vintage-gold">Open VMW Packs</h3>
@@ -358,11 +358,11 @@ function OpenModal({ address, onClose, onRevealed, preSelectedIds }: {
 
                 <div className="space-y-2">
                   <button onClick={() => setSelected(new Set(unopened.map((b) => b.tokenId)))}
-                    className="w-full py-2 text-xs font-bold text-black bg-vintage-gold/80 hover:bg-vintage-gold rounded-lg transition-all active:scale-95">
+                    className="w-full py-2 text-xs font-bold text-black bg-[#FACC15] hover:bg-[#FACC15] transition-all">
                     Select All ({unopened.length})
                   </button>
                   <button onClick={handleOpen} disabled={selected.size === 0 || !entropyFee}
-                    className="w-full py-3 font-black text-sm uppercase tracking-widest bg-[#FFD400] hover:bg-[#ECC200] text-black rounded-xl disabled:opacity-40 active:scale-95 transition-all shadow-[0_4px_0px_#000]">
+                    className="w-full py-3 font-bold text-sm uppercase tracking-widest bg-[#FACC15] hover:bg-[#FACC15] text-black disabled:opacity-40 transition-all">
                     Open {selected.size > 0 ? `${selected.size} ` : ""}Pack{selected.size !== 1 ? "s" : ""}
                     {entropyFee && selected.size > 0 ? ` · ${parseFloat(formatEther(entropyFee * BigInt(selected.size))).toFixed(5)} ETH` : ""}
                   </button>
@@ -645,7 +645,7 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center" style={{ padding: '56px 16px 64px' }} onClick={onClose}>
-      <div className="bg-vintage-charcoal border border-vintage-gold/50 rounded-2xl w-full max-w-sm p-4 flex flex-col overflow-hidden" style={{ maxHeight: '100%' }}
+      <div className="bg-[#1E1E1E] border border-black w-full max-w-sm p-4 flex flex-col overflow-hidden" style={{ maxHeight: '100%' }}
         onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-display font-bold text-vintage-gold">Burn VMW Cards</h3>
@@ -830,7 +830,7 @@ export function VMWActionButtons({ address, autoOpenTrigger, mintQty = 1, onModa
       <div className="max-w-sm mx-auto grid grid-cols-2 gap-2 mb-2 mt-6">
         {/* Open Packs */}
         <button onClick={() => setShowOpen(true)} disabled={!address}
-          className="shop-open-btn py-2 px-3 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#FFD400] hover:bg-[#ECC200] text-black active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50">
+          className="shop-open-btn py-2 px-3 border-[1.5px] border-black font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-2 bg-[#FACC15] hover:bg-[#FACC15] text-black disabled:opacity-50">
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20 12v10H4V12" /><path d="M2 7h20v5H2z" /><path d="M12 22V7" />
             <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
@@ -840,7 +840,7 @@ export function VMWActionButtons({ address, autoOpenTrigger, mintQty = 1, onModa
 
         {/* Burn */}
         <button onClick={() => setShowBurn(true)} disabled={!address}
-          className="shop-burn-btn py-2 px-3 border-4 border-black font-black text-sm uppercase tracking-widest transition-all flex items-center justify-center gap-2 bg-[#CC2222] hover:bg-[#AA1111] text-white active:translate-x-[3px] active:translate-y-[3px] disabled:opacity-50">
+          className="shop-burn-btn py-2 px-3 border-[1.5px] border-black font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-2 bg-[#CC2222] hover:bg-[#CC2222] text-[#FACC15] disabled:opacity-50">
           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
             <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
@@ -851,26 +851,26 @@ export function VMWActionButtons({ address, autoOpenTrigger, mintQty = 1, onModa
       </div>
 
       {/* Burn values */}
-      <div className="max-w-sm mx-auto mt-1">
-        <p className="text-xs text-vintage-ice/40 text-center mb-1">Burn Values (VBMS)</p>
+      <div className="max-w-sm mx-auto mt-2">
+        <p className="text-xs text-vintage-ice/50 text-center mb-1">Burn Values (VBMS)</p>
         <div className="grid grid-cols-5 gap-1 text-xs text-center">
-          <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+          <div className="rounded p-2 bg-[#1E1E1E] border border-black">
             <span className="text-vintage-ice/50 block">Common</span>
             <BurnValueDisplay rarityIndex={0} />
           </div>
-          <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+          <div className="rounded p-2 bg-[#1E1E1E] border border-black">
             <span className="text-blue-400/70 block">Rare</span>
             <BurnValueDisplay rarityIndex={1} />
           </div>
-          <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+          <div className="rounded p-2 bg-[#1E1E1E] border border-black">
             <span className="text-purple-400/70 block">Epic</span>
             <BurnValueDisplay rarityIndex={2} />
           </div>
-          <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+          <div className="rounded p-2 bg-[#1E1E1E] border border-black">
             <span className="text-yellow-400/70 block">Legend</span>
             <BurnValueDisplay rarityIndex={3} />
           </div>
-          <div className="rounded p-2 bg-vintage-charcoal/30 border border-[#D4A843]/20">
+          <div className="rounded p-2 bg-[#1E1E1E] border border-black">
             <span className="text-pink-400/70 block">Mythic</span>
             <BurnValueDisplay rarityIndex={4} />
           </div>
