@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Id } from "@/convex/_generated/dataModel";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
@@ -50,8 +50,10 @@ const RARITY_TEXT: Record<string, string> = {
 
 export default function BurnCardsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { address, isConnecting } = useAccount();
   const { refreshUserProfile, forceReloadNFTs } = usePlayerCards();
+  const filterNothing = searchParams.get('filter') === 'nothing';
 
   const playerCards = useQuery(api.cardPacks.getPlayerCards, address ? { address } : "skip");
   const lockedCardIds = useQuery(api.cardPacks.getLockedFreeCardIds, address ? { address } : "skip") || [];
@@ -59,19 +61,33 @@ export default function BurnCardsPage() {
 
   const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
   const [isBurning, setIsBurning] = useState(false);
-  const [filter, setFilter] = useState<string>("all");
+  const [filter, setFilter] = useState<string>(filterNothing ? "all" : "all");
 
   const cards = playerCards || [];
+
+  // Filter Nothing packs (non-VMW) - these come from free packs (dailyFree, starter, mission, achievement)
+  const nothingPackTypes = ['dailyFree', 'starter', 'mission', 'achievement'];
+
+  const filteredCards = useMemo(() => {
+    // First filter by Nothing pack type if filterNothing is active
+    let result = cards;
+    if (filterNothing) {
+      result = result.filter((c: any) => {
+        const sourcePackType = c.sourcePackType || 'unknown';
+        return nothingPackTypes.includes(sourcePackType);
+      });
+    }
+    // Then filter by rarity if selected
+    if (filter !== "all") {
+      result = result.filter((c: any) => c.rarity === filter);
+    }
+    return result;
+  }, [cards, filter, filterNothing]);
 
   // Calculate total quantity (including stacked duplicates)
   const totalQuantity = useMemo(() => {
     return cards.reduce((sum: number, card: any) => sum + (card.quantity || 1), 0);
   }, [cards]);
-
-  const filteredCards = useMemo(() => {
-    if (filter === "all") return cards;
-    return cards.filter((c: any) => c.rarity === filter);
-  }, [cards, filter]);
 
   // Calculate filtered quantity
   const filteredQuantity = useMemo(() => {
@@ -190,7 +206,9 @@ export default function BurnCardsPage() {
             <span className="group-hover:-translate-x-0.5 inline-block transition-transform">←</span> Shop
           </button>
 
-          <h1 className="text-xl font-display font-bold text-red-400">BURN CARDS</h1>
+          <h1 className="text-xl font-display font-bold text-red-400">
+            {filterNothing ? "BURN NOTHING PACKS" : "BURN CARDS"}
+          </h1>
 
           <div className="text-right">
             <p className="text-xs text-vintage-ice/50">{totalQuantity} cards</p>
