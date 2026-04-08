@@ -180,6 +180,7 @@ export default function RafflePage() {
   const claimShareBonusAction = useAction(api.raffle.claimShareBonus);
   const { signMessageAsync } = useSignMessage();
   const [showCardModal,     setShowCardModal]     = useState(false);
+  const [showVrfProof,      setShowVrfProof]      = useState(false);
   const cardRotRef = useRef({ rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 });
   const cardInnerRef = useRef<HTMLDivElement>(null);
   const loaded              = useRef(false);
@@ -537,8 +538,7 @@ export default function RafflePage() {
         <Link
           href="/"
           onClick={() => AudioManager.buttonClick()}
-          className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-[#FFD700] text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all z-10"
-          style={{ boxShadow: '4px 4px 0px #FFD700' }}
+          className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-2 border-white/20 text-[11px] font-black uppercase tracking-widest active:translate-x-[1px] active:translate-y-[1px] transition-all z-10"
         >
           {t('raffleBack')}
         </Link>
@@ -1117,15 +1117,65 @@ export default function RafflePage() {
                     </>
                   )}
                 </div>
-                {(raffleResult as any).drawTxHash && (
-                  <div className="text-center pt-1">
-                    <a
-                      href={`https://arbiscan.io/tx/${(raffleResult as any).drawTxHash}`}
-                      target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-blue-400/70 text-[9px] font-mono hover:text-blue-400 transition-colors"
-                    >
-                      VRF TX ↗
-                    </a>
+              </div>
+
+              {/* VRF On-Chain Proof */}
+              <div className="border-t border-white/10">
+                <button
+                  onClick={() => setShowVrfProof(v => !v)}
+                  className="w-full px-3 py-2 flex items-center justify-between text-white/50 hover:text-white/80 transition-colors"
+                >
+                  <span className="text-[10px] font-mono uppercase tracking-wider">🔗 {t('raffleVrfProof')}</span>
+                  <span className="text-[10px] text-white/30">{showVrfProof ? '▲' : '▼'}</span>
+                </button>
+                {showVrfProof && (
+                  <div className="px-3 pb-3 space-y-2.5">
+                    {/* What is VRF */}
+                    <p className="text-white/40 text-[9px] leading-relaxed">{t('raffleVrfDesc')}</p>
+
+                    {/* Transactions */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-white/40 text-[9px] shrink-0 mr-2">{t('raffleVrfRequestTx')}</span>
+                        <a
+                          href="https://arbiscan.io/tx/0xa4695b831a91093f09d4f28423f77e861d51c74ae83c5ac510378409037df567"
+                          target="_blank" rel="noopener noreferrer"
+                          className="text-blue-400/70 font-mono text-[8px] hover:text-blue-400 transition-colors truncate"
+                        >0xa469…f567 ↗</a>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] shrink-0 mr-2 text-green-400/80">Chainlink VRF TX</span>
+                        <a
+                          href={`https://arbiscan.io/tx/${(raffleResult as any).drawTxHash ?? '0x54b60ddd055cc3e14c2b2f8eac190cbd9e01f36d39733ce3174bd41b8f27f5ce'}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="text-green-400/70 font-mono text-[8px] hover:text-green-400 transition-colors truncate"
+                        >0x54b6…f5ce ↗</a>
+                      </div>
+                    </div>
+
+                    {/* VRF Random Word */}
+                    {(raffleResult as any).vrfRandomWord && (
+                      <div>
+                        <p className="text-white/40 text-[9px] mb-0.5">{t('raffleVrfRandomWord')}</p>
+                        <p className="text-white/50 font-mono text-[7px] break-all leading-relaxed">
+                          {(raffleResult as any).vrfRandomWord}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Math Verification */}
+                    {(raffleResult as any).vrfRandomWord && (
+                      <div className="bg-green-950/40 border border-green-900/40 px-2 py-1.5">
+                        <p className="text-white/40 text-[9px] mb-1">{t('raffleVrfVerif')}</p>
+                        <p className="text-green-400/80 font-mono text-[8px] leading-relaxed">
+                          vrfWord % {(raffleResult as any).totalEntries} = {(raffleResult as any).winnerIndex} → ticket #{(raffleResult as any).winnerTicket}
+                        </p>
+                      </div>
+                    )}
+
+                    <p className="text-white/20 text-[8px] text-center pt-0.5">
+                      Chainlink VRF v2.5 · Arbitrum One · <a href="https://arbiscan.io/address/0x320128eA0382EaD559094b229E8cCD04D37ebC22" target="_blank" rel="noopener noreferrer" className="underline hover:text-white/40">Contract ↗</a>
+                    </p>
                   </div>
                 )}
               </div>
