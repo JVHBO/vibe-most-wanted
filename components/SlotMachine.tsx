@@ -580,7 +580,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
             <img
               src={img}
               alt={label}
-              className={`w-full h-full ${isVBMSspecial || isWildcard ? 'object-contain animate-pulse' : 'object-cover object-center'}`}
+              className={`w-full h-full ${isVBMSspecial || isWildcard ? 'object-contain' : 'object-cover object-center'}`}
             />
           ) : (
             <div className="flex items-center justify-center h-full text-[9px] font-black text-gray-300 px-0.5 text-center leading-tight">
@@ -595,8 +595,8 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
           )}
           {isWin   && <div className="absolute inset-0 bg-yellow-300/20 animate-pulse pointer-events-none" />}
           {spinning && <div className="absolute inset-0 bg-black/55 pointer-events-none" />}
-          {/* Prize foil rainbow overlay */}
-          {!spinning && effectiveCard.hasFoil && <div className="prize-foil" />}
+          {/* Prize foil rainbow overlay — não aplica em GIFs (fica bugado) */}
+          {!spinning && effectiveCard.hasFoil && !isVBMSspecial && !isWildcard && <div className="prize-foil" />}
           {/* Dev index overlay */}
           {showIndices && !spinning && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
