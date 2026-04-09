@@ -30,7 +30,7 @@ export const docsTranslations = {
 
     howToEarnCoins: "Como Ganhar Moedas",
     earnPve: "PvE (Jogador vs IA)",
-    earnPveDesc: "Até 30 vitórias/dia. Dificuldades: GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
+    earnPveDesc: "Dificuldades: GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
     earnPvp: "PvP (Jogador vs Jogador)",
     earnPvpDesc: "Vitória: +100 moedas (bônus por ranking). Derrota: -20 moedas. Empate: 0 moedas",
     earnAttack: "Modo Ataque",
@@ -53,7 +53,7 @@ export const docsTranslations = {
     battlesIntro: "Escolha entre 3 modos de batalha, cada um com suas próprias regras e recompensas.",
 
     pveMode: "PvE - Jogador vs IA",
-    pveModeDesc: "Batalhe contra a IA (Dealer) em 5 níveis de dificuldade. Sem taxa de entrada. Limite de 30 vitórias por dia para ganhar moedas.",
+    pveModeDesc: "Batalhe contra a IA (Dealer) em 5 níveis de dificuldade. Sem taxa de entrada.",
     pveDifficulties: "Dificuldades",
     pveGey: "GEY (+2 moedas)",
     pveTop: "GOOFY (+5 moedas)",
@@ -323,7 +323,7 @@ export const docsTranslations = {
 
     howToEarnCoins: "How to Earn Coins",
     earnPve: "PvE (Player vs AI)",
-    earnPveDesc: "Up to 30 wins/day. Difficulties: GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
+    earnPveDesc: "Difficulties: GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
     earnPvp: "PvP (Player vs Player)",
     earnPvpDesc: "Win: +100 coins (rank bonus). Loss: -20 coins. Tie: 0 coins",
     earnAttack: "Attack Mode",
@@ -346,7 +346,7 @@ export const docsTranslations = {
     battlesIntro: "Choose from 3 battle modes, each with its own rules and rewards.",
 
     pveMode: "PvE - Player vs AI",
-    pveModeDesc: "Battle against AI (Dealer) in 5 difficulty levels. No entry fee. Limit of 30 wins per day to earn coins.",
+    pveModeDesc: "Battle against AI (Dealer) in 5 difficulty levels. No entry fee.",
     pveDifficulties: "Difficulties",
     pveGey: "GEY (+2 coins)",
     pveTop: "GOOFY (+5 coins)",
@@ -610,7 +610,7 @@ export const docsTranslations = {
 
     howToEarnCoins: "Cómo Ganar Monedas",
     earnPve: "PvE (Jugador vs IA)",
-    earnPveDesc: "Hasta 30 victorias/día. Dificultades: GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
+    earnPveDesc: "Dificultades: GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
     earnPvp: "PvP (Jugador vs Jugador)",
     earnPvpDesc: "Victoria: +100 monedas (bono por ranking). Derrota: -20 monedas. Empate: 0 monedas",
     earnAttack: "Modo Ataque",
@@ -633,7 +633,7 @@ export const docsTranslations = {
     battlesIntro: "Elige entre 3 modos de batalla, cada uno con sus propias reglas y recompensas.",
 
     pveMode: "PvE - Jugador vs IA",
-    pveModeDesc: "Batalla contra la IA (Dealer) en 5 niveles de dificultad. Sin tarifa de entrada. Límite de 30 victorias por día para ganar monedas.",
+    pveModeDesc: "Batalla contra la IA (Dealer) en 5 niveles de dificultad. Sin tarifa de entrada.",
     pveDifficulties: "Dificultades",
     pveGey: "GEY (+2 monedas)",
     pveTop: "GOOFY (+5 monedas)",
@@ -1741,7 +1741,7 @@ export const docsTranslations = {
 
     howToEarnCoins: "Comment Gagner des Pièces",
     earnPve: "PvE (Joueur vs IA)",
-    earnPveDesc: "Jusqu'à 30 victoires/jour. Difficultés : GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
+    earnPveDesc: "Difficultés : GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
     earnPvp: "PvP (Joueur vs Joueur)",
     earnPvpDesc: "Victoire : +100 pièces (bonus de rang). Défaite : -20 pièces. Égalité : 0 pièce",
     earnAttack: "Mode Attaque",
@@ -1764,7 +1764,7 @@ export const docsTranslations = {
     battlesIntro: "Choisissez parmi 3 modes de combat, chacun avec ses propres règles et récompenses.",
 
     pveMode: "PvE - Joueur vs IA",
-    pveModeDesc: "Combattez l'IA (Dealer) sur 5 niveaux de difficulté. Pas de frais d'entrée. Limite de 30 victoires par jour pour gagner des pièces.",
+    pveModeDesc: "Combattez l'IA (Dealer) sur 5 niveaux de difficulté. Pas de frais d'entrée.",
     pveDifficulties: "Difficultés",
     pveGey: "GEY (+2 pièces)",
     pveTop: "GOOFY (+5 pièces)",
@@ -1972,7 +1972,7 @@ export const docsTranslations = {
 
     howToEarnCoins: "Come Guadagnare Monete",
     earnPve: "PvE (Giocatore vs IA)",
-    earnPveDesc: "Fino a 30 vittorie/giorno. Difficoltà: GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
+    earnPveDesc: "Difficoltà: GEY (+2), GOOFY (+5), GOONER (+10), GANGSTER (+20), GIGACHAD (+40)",
     earnPvp: "PvP (Giocatore vs Giocatore)",
     earnPvpDesc: "Vittoria: +100 monete (bonus classifica). Sconfitta: -20 monete. Pareggio: 0 monete",
     earnAttack: "Modalità Attacco",
@@ -1995,7 +1995,7 @@ export const docsTranslations = {
     battlesIntro: "Scegli tra 3 modalità di battaglia, ognuna con le proprie regole e ricompense.",
 
     pveMode: "PvE - Giocatore vs IA",
-    pveModeDesc: "Combatti contro l'IA (Dealer) in 5 livelli di difficoltà. Nessuna quota d'ingresso. Limite di 30 vittorie al giorno per guadagnare monete.",
+    pveModeDesc: "Combatti contro l'IA (Dealer) in 5 livelli di difficoltà. Nessuna quota d'ingresso.",
     pveDifficulties: "Difficoltà",
     pveGey: "GEY (+2 monete)",
     pveTop: "GOOFY (+5 monete)",

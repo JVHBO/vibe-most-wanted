@@ -126,7 +126,6 @@ export default function DocsPage() {
                   <li><strong>{t("earnPve")}:</strong> {t("earnPveDesc")}</li>
                   <li><strong>{t("earnPvp")}:</strong> {t("earnPvpDesc")}</li>
                   <li><strong>{t("earnAttack")}:</strong> {t("earnAttackDesc")}</li>
-                  <li><strong>{t("earnAchievements")}:</strong> {t("earnAchievementsDesc")}</li>
                   <li><strong>{t("earnQuests")}:</strong> {t("earnQuestsDesc")}</li>
                 </ul>
                 <h3 className="text-base font-bold text-vintage-gold mt-4">{t("entryFees")}</h3>
