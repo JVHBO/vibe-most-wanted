@@ -118,7 +118,7 @@ See [docs/setup/](docs/setup/) for detailed setup guides and configuration.
 ```
 vibe-most-wanted/
 ├── app/                    # Next.js App Router
-│   ├── page.tsx           # Main game page (~5,480 lines, being refactored)
+│   ├── page.tsx           # Main game page (~3,400 lines after Mar/2026 refactor)
 │   ├── (game)/            # Game route group
 │   │   ├── components/    # Extracted game components
 │   │   │   ├── battle/    # BattleArena, BattleResults, PowerDisplay
@@ -127,11 +127,11 @@ vibe-most-wanted/
 │   │   └── hooks/         # Game-specific hooks
 │   │       ├── battle/    # usePowerCalculation
 │   │       └── game/      # useCardSelection
-│   ├── tcg/               # TCG card game mode
+│   ├── tcg/               # TCG card game mode (~5,300 lines)
 │   ├── profile/           # User profiles
 │   ├── shop/              # Card shop
 │   ├── share/             # Match sharing
-│   └── api/               # API routes
+│   └── api/               # API routes (50+ routes)
 ├── components/            # Shared React components
 │   ├── cards/             # CardDisplay
 │   ├── game/              # CardSelector
@@ -148,22 +148,22 @@ vibe-most-wanted/
 │   ├── useCardCalculations.ts
 │   └── ...
 ├── convex/                # Backend (Convex)
-│   ├── economy.ts         # Economy system
+│   ├── economy.ts         # Economy system (74KB)
 │   ├── missions.ts        # Daily missions
 │   ├── quests.ts          # Daily/weekly quests
 │   ├── profiles.ts        # User profiles
 │   ├── matches.ts         # Match history
 │   ├── achievements.ts    # Achievement system
-│   ├── tcg.ts             # TCG game logic
+│   ├── tcg.ts             # TCG game logic (131KB)
 │   ├── weeklyRewards.ts   # Automated reward distribution
 │   └── rooms.ts           # PvP rooms
 ├── lib/                   # Utilities & services
-│   ├── config.ts          # Centralized configuration
-│   ├── power-utils.ts     # Power calculations with collection multipliers
+│   ├── config/keys.ts     # TODAS as API keys (centralizado)
+│   ├── power-utils.ts     # Power calculations with collection multipliers (FONTE)
 │   ├── collections/       # NFT collection configs (14 collections)
 │   ├── nft/               # NFT fetcher, attributes, card logic
 │   ├── audio-manager.ts   # Sound effects system
-│   ├── translations.ts    # i18n (4 languages)
+│   ├── translations.ts    # i18n (880KB)
 │   └── hooks/             # useSessionLock, useVBMSContracts, etc.
 ├── tests/                 # Test suite
 │   ├── unit/              # Unit tests (Vitest + Testing Library)
@@ -285,11 +285,20 @@ Built with ❤️ by the Vibe team
 
 ---
 
-**Version**: 2.0.0
-**Last Updated**: 2026-02-03
+**Version**: 2.1.0
+**Last Updated**: 2026-04-08
 
-## 🎉 Recent Updates (Feb 2026)
+## 🎉 Recent Updates (Mar/Apr 2026)
 
+- ✅ **Aura XP Levels** (v0.3.6) - Dragon Ball inspired tiers with weeklyAura reset, aura spin bonuses, and daily limits
+- ✅ **Social Quests Carousel** - Auto-rotating VBMS (gold) and arb_creators (blue) quest groups
+- ✅ **ARB TX Flow** - wallet_switchEthereumChain before eth_sendTransaction with useArbValidator hook
+- ✅ **VibeMail Fixes** - Myinstants proxy, color tag regex with spaces, voice recording in design editor, hidden /img= /sound= commands
+- ✅ **neobrutalism.css Animações** - Removed global rules killing animations, TCG card flip now working
+- ✅ **MiniappFrame Desktop Detection** - Threshold 480px → 1440px, force miniapp mode, Farcaster SDK integration
+- ✅ **Pending Conversion Recovery** - recoverPendingConversion mutation (awaits 30min) and adminRecoverPendingByUsername
+- ✅ **TCG Refactor Phase 1-3** - tcg/page.tsx: 9454 → 5298 linhas, app/page.tsx: 4110 → 3404 linhas
+- ✅ **Security Fixes Mar/26** - Removed hardcoded WIELD_API_KEY from 4 arquivos, centralized in lib/config/keys.ts
 - ✅ **Component Architecture** - Extracted BattleArena, modals, hooks from monolithic page.tsx (~1,000 lines removed)
 - ✅ **Test Infrastructure** - 377 unit tests, 92%+ coverage (Vitest + React Testing Library)
 - ✅ **CI Pipeline** - GitHub Actions with lint, typecheck, unit tests, and e2e

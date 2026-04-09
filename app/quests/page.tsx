@@ -17,11 +17,9 @@ import { isMiniappMode, isWarpcastClient } from "@/lib/utils/miniapp";
 import { CONTRACTS, ERC20_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
 import { dataSuffix as ATTRIBUTION_SUFFIX } from "@/lib/hooks/useWriteContractWithAttribution";
-import { WantedCastsTab } from "@/components/fid/WantedCastsTab";
 import { VibeMailInboxWithClaim } from "@/components/fid/VibeMail";
 import { VibeFIDConvexProvider, vibefidConvex } from "@/contexts/VibeFIDConvexProvider";
 import { api as fidApi } from "@/lib/fid/convex-generated/api";
-import { AutoFitText } from "@/components/AutoFitText";
 
 
 export default function QuestsPage() {
@@ -31,14 +29,7 @@ export default function QuestsPage() {
   const { t } = useLanguage();
   const { refreshProfile } = useProfile();
   const { validateOnArb } = useArbValidator();
-  const [activeTab, setActiveTab] = useState<'missions' | 'wanted' | 'messages'>('missions');
-  // Open vibemail tab if navigated with ?tab=vibemail
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const tab = new URLSearchParams(window.location.search).get('tab');
-      if (tab === 'vibemail' || tab === 'messages') setActiveTab('messages');
-    }
-  }, []);
+  const [activeTab, setActiveTab] = useState<'missions' | 'messages'>('missions');
 
   // Social Quests
   const socialQuestProgress = useQuery(
@@ -560,17 +551,16 @@ export default function QuestsPage() {
           >
             ← BACK
           </Link>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[55%]"><AutoFitText>QUESTS</AutoFitText></h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider max-w-[55%] truncate">QUESTS</h1>
           <div className="w-20" />
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - simplified */}
         <div className="flex px-2 pb-1.5 pt-1 gap-1">
           {[
-            { key: 'missions' as const, label: t('questsMissions'), activeClass: 'qt-missions-active', inactiveClass: 'qt-missions-inactive' },
-            { key: 'wanted' as const, label: t('questsWantedCasts'), activeClass: 'qt-wanted-active', inactiveClass: 'qt-wanted-inactive' },
-            { key: 'messages' as const, label: 'VibeMail', activeClass: 'qt-messages-active', inactiveClass: 'qt-messages-inactive' },
-          ].map(({ key, label, activeClass, inactiveClass }) => {
+            { key: 'missions' as const, label: t('questsMissions') },
+            { key: 'messages' as const, label: 'VibeMail' },
+          ].map(({ key, label }) => {
             const u = profileDashboard?.username?.toLowerCase();
             const locked = key === 'messages' && u !== 'jvhbo' && u !== 'vibefid';
             return (
@@ -578,12 +568,15 @@ export default function QuestsPage() {
                 key={key}
                 onClick={() => { if (locked) return; AudioManager.buttonClick(); setActiveTab(key); }}
                 disabled={locked}
-                className={`relative flex-1 py-1.5 font-black uppercase border-4 border-black transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none ${locked ? 'qt-messages-locked opacity-40 cursor-not-allowed' : activeTab === key ? `${activeClass} shadow-none` : `${inactiveClass} shadow-[3px_3px_0px_#000]`}`}
-                style={{ fontSize: 'clamp(8px, 2.8vw, 11px)', lineHeight: 1.2 }}
+                className={`relative flex-1 py-2 text-xs font-bold uppercase transition-all border ${
+                  activeTab === key
+                    ? 'bg-vintage-gold text-black border-black'
+                    : 'bg-[#1a1a1a] text-white/60 border-white/20'
+                }`}
               >
                 {label}
                 {key === 'messages' && vibeMailUnread > 0 && activeTab !== 'messages' && (
-                  <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black animate-pulse z-10" />
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-black" />
                 )}
               </button>
             );
@@ -592,301 +585,209 @@ export default function QuestsPage() {
       </div>
 
       {/* Main Content */}
-      <div className={`absolute inset-0 pt-[84px] ${activeTab === 'messages' ? 'flex flex-col overflow-hidden' : 'pb-4 overflow-y-auto'}`}>
+      <div className={`absolute inset-0 pt-[90px] ${activeTab === 'messages' ? 'flex flex-col overflow-hidden' : 'pb-4 overflow-y-auto'}`}>
         {activeTab === 'missions' && (
         <div className="relative z-10 px-3 py-2 max-w-md mx-auto space-y-3 overflow-x-hidden">
 
-          {/* Chain toggle + 2x bonus row */}
-          <div className="flex items-center gap-2 mt-2">
-            {/* 2x bonus indicator */}
-            {(() => {
-              const _has2x = vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge;
-              const _src = profileDashboard?.hasVibeBadge ? "VIBE Badge" : vibeBadgeEligibility?.hasVibeFIDCards ? "VibeFID" : "";
-              return _has2x ? (
-                <div className="flex-1 px-2 py-1 bg-vintage-gold/15 border border-vintage-gold/50 flex items-center gap-1.5">
-                  <span className="text-vintage-gold font-bold text-[10px]">{_src} {t('questsBonus2xActive')}</span>
-                  {effectiveChain === "arbitrum" && (
-                    <span className="ml-auto px-1.5 py-0.5 bg-blue-900/40 border border-blue-500/50 text-blue-400 font-bold text-[9px]">ARB 2x</span>
-                  )}
-                </div>
-              ) : (
-                <div className="flex-1 px-2 py-1 bg-vintage-gold/10 border border-vintage-gold/30 flex items-center justify-between gap-1">
-                  <span className="text-vintage-ice/70 text-[10px]">{t('questsGet2x')}</span>
-                  <div className="flex items-center gap-1">
-                    {effectiveChain === "arbitrum" && (
-                      <span className="px-1.5 py-0.5 bg-blue-900/40 border border-blue-500/50 text-blue-400 font-bold text-[9px]">ARB 2x</span>
-                    )}
-                    <button onClick={() => router.push('/fid')}
-                      className="px-2 py-0.5 bg-vintage-gold text-black font-bold text-[9px] animate-pulse border border-black">
-                      {t('questsMintVibeFID')}
-                    </button>
-                  </div>
-                </div>
-              );
-            })()}
-            {/* Chain toggle */}
-            {arbSupported && (
-              <div className="flex gap-1 shrink-0">
-                <button
-                  onClick={() => { AudioManager.buttonClick(); handleSwitchChain('base'); }}
-                  className={`flex items-center gap-1 px-3 py-0.5 font-bold text-[10px] uppercase tracking-wide border border-black/60 transition-all ${effectiveChain === 'base' ? 'ct-base-active' : 'ct-base-inactive opacity-50'}`}
-                >
-                  <svg width="10" height="10" viewBox="0 0 111 111" fill="none">
-                    <circle cx="55.5" cy="55.5" r="55.5" fill={effectiveChain === 'base' ? 'white' : '#6b7280'}/>
-                    <path d="M55.4999 11.5C31.0225 11.5 11 31.5225 11 55.9999C11 80.4773 31.0225 100.5 55.4999 100.5C79.9773 100.5 99.9998 80.4773 99.9998 55.9999C99.9998 31.5225 79.9773 11.5 55.4999 11.5Z" fill={effectiveChain === 'base' ? '#0052FF' : 'none'}/>
-                  </svg>
-                  BASE
-                </button>
-                <button
-                  onClick={() => { AudioManager.buttonClick(); handleSwitchChain('arbitrum'); }}
-                  className={`flex items-center gap-1 px-3 py-0.5 font-bold text-[10px] uppercase tracking-wide border border-black/60 transition-all ${effectiveChain === 'arbitrum' ? 'ct-arb-active' : 'ct-arb-inactive opacity-50'}`}
-                >
-                  <svg width="10" height="10" viewBox="0 0 50 50" fill="none">
-                    <circle cx="25" cy="25" r="25" fill={effectiveChain === 'arbitrum' ? '#12AAFF' : '#6b7280'}/>
-                    <path d="M25 8L11 17V33L25 42L39 33V17L25 8Z" fill="white" fillOpacity="0.2" stroke="white" strokeWidth="1.5"/>
-                    <path d="M19 31L25 20L31 31" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M21.5 27H28.5" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
-                  ARB
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Chain toggle - subtle */}
 
           {/* Missions */}
           <div className="space-y-3">
-              {/* 🎁 BONUS QUESTS - Hide if all claimed */}
+              {/* Simple Bonus Quests */}
               {SOCIAL_QUESTS.filter(q => (q.type === 'notification' || q.type === 'miniapp') && getQuestStatus(q) !== 'claimed').length > 0 && (
-              <div className="bg-gradient-to-b from-vintage-gold/30 to-vintage-charcoal/90 rounded-xl border-2 border-vintage-gold/50 p-3 shadow-lg">
-                <p className="text-vintage-gold text-sm font-bold mb-2 flex items-center gap-2">
-                  🎁 BONUS QUESTS (+2000 VBMS)
-                </p>
-                <div className="space-y-2">
-                  {SOCIAL_QUESTS
-                  .filter(q => (q.type === 'notification' || q.type === 'miniapp') && getQuestStatus(q) !== 'claimed')
-                  .sort((a, b) => {
-                    const statusA = getQuestStatus(a);
-                    const statusB = getQuestStatus(b);
-                    if (statusA === 'completed' && statusB !== 'completed') return -1;
-                    if (statusB === 'completed' && statusA !== 'completed') return 1;
-                    return 0;
-                  })
-                  .map((quest) => {
-                    const status = getQuestStatus(quest);
-                    const isVerifying = verifying === quest.id;
-                    const isClaimingSocial = claiming === quest.id;
+                <div className="bg-white/5 border border-white/10 rounded-lg p-3">
+                  <p className="text-white/60 text-xs font-bold mb-2 uppercase tracking-wider">Bonus Quests</p>
+                  <div className="space-y-2">
+                    {SOCIAL_QUESTS
+                      .filter(q => (q.type === 'notification' || q.type === 'miniapp') && getQuestStatus(q) !== 'claimed')
+                      .sort((a, b) => {
+                        const statusA = getQuestStatus(a);
+                        const statusB = getQuestStatus(b);
+                        if (statusA === 'completed' && statusB !== 'completed') return -1;
+                        if (statusB === 'completed' && statusA !== 'completed') return 1;
+                        return 0;
+                      })
+                      .map((quest) => {
+                        const status = getQuestStatus(quest);
+                        const isVerifying = verifying === quest.id;
+                        const isClaimingSocial = claiming === quest.id;
 
-                    return (
-                      <div
-                        key={quest.id}
-                        className={`p-2 rounded-lg border transition-all ${
-                          status === "claimed"
-                            ? "bg-green-900/20 border-green-500/30 opacity-60"
-                            : status === "completed"
-                            ? "bg-vintage-gold/10 border-vintage-gold/50 animate-pulse"
-                            : "bg-vintage-black/30 border-vintage-gold/30"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="text-xl">{quest.type === 'notification' ? '🔔' : '⭐'}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-vintage-gold font-bold text-xs truncate">{quest.displayName}</p>
+                        return (
+                          <div key={quest.id} className="flex items-center justify-between gap-2 p-2 bg-white/5 rounded border border-white/10">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <span className="text-sm">{quest.type === 'notification' ? '🔔' : '⭐'}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-white text-xs font-bold truncate">{quest.displayName}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-vintage-gold text-xs font-bold">
+                                +{effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward}
+                              </span>
+                              {status === "claimed" ? (
+                                <span className="text-green-400 text-xs">Done</span>
+                              ) : status === "completed" ? (
+                                <button
+                                  onClick={() => { AudioManager.buttonClick(); handleClaimSocial(quest); }}
+                                  disabled={isClaimingSocial}
+                                  className="px-2 py-1 bg-vintage-gold text-black text-xs font-bold border-2 border-black"
+                                  style={{ boxShadow: '2px 2px 0px #000' }}
+                                >
+                                  {isClaimingSocial ? "..." : 'CLAIM'}
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => { AudioManager.buttonClick(); verifyQuest(quest); }}
+                                  disabled={isVerifying}
+                                  className="px-2 py-1 bg-white/10 text-white text-xs font-bold border border-white/20 hover:bg-white/20"
+                                >
+                                  {isVerifying ? "..." : quest.type === 'notification' ? 'Activate' : 'Add'}
+                                </button>
+                              )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-vintage-gold font-bold text-xs">
-                              +{effectiveChain === "arbitrum" ? quest.reward * 2 : quest.reward}
-                              {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">ARB 2x</span>}
-                            </span>
-                            {status === "claimed" ? (
-                              <span className="text-green-400 text-[10px]">{t('questsDone')}</span>
-                            ) : status === "completed" ? (
-                              <button
-                                onClick={() => { AudioManager.buttonClick(); handleClaimSocial(quest); }}
-                                onMouseEnter={() => AudioManager.buttonHover()}
-                                disabled={isClaimingSocial}
-                                className="px-2 py-1 rounded border-2 border-black bg-vintage-gold text-black font-bold text-[10px]"
-                                style={{ boxShadow: "2px 2px 0px #000" }}
-                              >
-                                {isClaimingSocial ? "..." : t('questsClaim')}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => { AudioManager.buttonClick(); verifyQuest(quest); }}
-                                onMouseEnter={() => AudioManager.buttonHover()}
-                                disabled={isVerifying}
-                                className="px-2.5 py-1 rounded border-2 border-vintage-gold/50 bg-vintage-charcoal text-vintage-gold font-bold text-[10px] hover:border-vintage-gold transition-all"
-                              >
-                                {isVerifying ? "..." : quest.type === 'notification' ? 'Ativar' : 'Adicionar'}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                  </div>
                 </div>
-              </div>
               )}
 
-              {/* Personal Missions (Welcome, VibeFID, etc) */}
-              <div className="bg-vintage-charcoal/80 border-2 border-vintage-gold/40 rounded-xl overflow-hidden" style={{ boxShadow: "3px 3px 0px rgba(0,0,0,0.5)" }}>
+              {/* Personal Missions - compact carousel */}
+              <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
                 {isLoadingMissions ? (
-                  <div className="flex items-center justify-center py-6">
-                    <div className="animate-spin w-5 h-5 border-2 border-vintage-gold border-t-transparent rounded-full" />
+                  <div className="flex items-center justify-center py-3">
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                   </div>
                 ) : (() => {
                   const missionList = missions
                     .filter((m: any) => !m.claimed)
                     .sort((a: any, b: any) => {
-                      // Neymar score quest first, then share quest
                       if (a.missionType === 'neynar_score_cast') return -1;
                       if (b.missionType === 'neynar_score_cast') return 1;
-                      if (a.missionType === 'daily_share') return -1;
-                      if (b.missionType === 'daily_share') return 1;
                       if (a.completed && !b.completed) return -1;
                       if (b.completed && !a.completed) return 1;
                       return 0;
                     });
-                  if (missionList.length === 0) return <p className="text-vintage-ice/40 text-xs text-center py-4">{t('questsAllClaimed')}</p>;
+                  if (missionList.length === 0) return <p className="text-white/40 text-sm text-center py-3">All claims completed</p>;
                   const mIdx = Math.min(missionCarouselIdx, missionList.length - 1);
                   const mission = missionList[mIdx];
                   const isClaiming = claimingMission === mission._id;
                   const isPlaceholder = mission._id.startsWith('placeholder_');
                   const isVibeBadge = mission.missionType === 'claim_vibe_badge';
                   const mAura = 5 * (vibeBadgeEligibility?.hasVibeFIDCards || profileDashboard?.hasVibeBadge ? 2 : 1) * (effectiveChain === "arbitrum" ? 2 : 1);
-                  const playerPfp = profileDashboard?.farcasterPfpUrl || profileDashboard?.twitterProfileImageUrl;
                   const isNeymarQuest = mission.missionType === 'neynar_score_cast';
                   const isShareQuest = mission.missionType === 'daily_share';
-                  const missionCardClass = (mission.completed || isNeymarQuest || isShareQuest)
-                    ? "flex items-center gap-3 p-2.5 border-2 transition-all border-yellow-400/30 bg-yellow-400/5"
-                    : "flex items-center gap-3 p-2.5 border-2 transition-all border-white/10 opacity-60";
-                  const missionBarClass = (mission.completed || isNeymarQuest || isShareQuest) ? "w-1 self-stretch flex-shrink-0 bg-yellow-400" : "w-1 self-stretch flex-shrink-0 bg-white/10";
-                  const missionTitleClass = (mission.completed || isNeymarQuest || isShareQuest) ? "text-xs font-bold truncate text-vintage-ice" : "text-xs font-bold truncate text-vintage-ice/50";
+
                   return (
-                    <div className="relative overflow-hidden">
-                      {playerPfp && (
-                        <img src={playerPfp} className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'blur(12px)', transform: 'scale(1.4)', opacity: 0.15 }} alt="" />
-                      )}
-                      <div className="relative px-3 py-2">
-                        <div className={missionCardClass}>
-                        <div className={missionBarClass} />
+                    <div className="p-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <button
+                          onClick={() => setMissionCarouselIdx(i => Math.max(0, i - 1))}
+                          disabled={mIdx === 0}
+                          className="w-5 h-5 bg-black/40 border border-white/20 flex items-center justify-center disabled:opacity-30"
+                        >
+                          <span className="text-white/60 text-[10px]">‹</span>
+                        </button>
                         <div className="flex-1 min-w-0">
-                          <p className={missionTitleClass}>
-                            {t(mission.titleKey)}
-                          </p>
-                          <p className="text-[10px] text-vintage-ice/40 truncate">{t(mission.descKey)}</p>
+                          <p className="text-white text-xs font-bold truncate">{t(mission.titleKey)}</p>
+                          <p className="text-white/30 text-[10px] truncate">{t(mission.descKey)}</p>
                           {mission.reward > 0 && (
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-vintage-gold font-bold text-[10px]">
-                                +{effectiveChain === "arbitrum" ? mission.reward * 2 : mission.reward} VBMS
-                                {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
-                              </span>
-                              <span className="text-purple-400 text-[9px] font-bold">
-                                +{mAura} aura
-                              </span>
+                            <div className="flex items-center gap-2 mt-1 text-[10px]">
+                              <span className="text-vintage-gold font-bold">+{effectiveChain === "arbitrum" ? mission.reward * 2 : mission.reward} VBMS</span>
+                              <span className="text-purple-400">+{mAura} aura</span>
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          {mission.completed && !isPlaceholder ? (
-                            <button
-                              onClick={async () => {
-                                AudioManager.buttonClick();
-                                if (!address) return;
-                                setClaimingMission(mission._id);
-                                try {
-                                  if (isVibeBadge) {
-                                    await claimVibeBadge({ playerAddress: address.toLowerCase() });
-                                    await refreshProfile();
-                                  } else {
-                                    const chain = effectiveChain;
-                                    await claimMission({ playerAddress: address.toLowerCase(), missionId: mission._id, chain });
-                                    if (chain === "arbitrum" && mission.reward > 0) await validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
-                                  }
-                                  AudioManager.buttonSuccess();
-                                  await refreshMissions();
-                                } catch (e) { console.error(e); }
-                                finally { setClaimingMission(null); }
-                              }}
-                              disabled={isClaiming}
-                              className={`relative px-2 py-1 border-2 border-black font-bold text-xs ${isVibeBadge ? "bg-purple-500 text-white" : "bg-vintage-gold text-black"}`}
-                              style={{ boxShadow: "2px 2px 0px #000" }}
-                            >
-                              <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                              {isClaiming ? "..." : t('mission_claim')}
-                            </button>
-                          ) : isNeymarQuest ? (
-                            <button
-                              onClick={async () => {
-                                if (!address || castingNeynarScore) return;
-                                AudioManager.buttonClick();
-                                setCastingNeynarScore(true);
-                                try {
-                                  const { sdk } = await import('@farcaster/miniapp-sdk');
-                                  await sdk.actions.composeCast({ text: "@vibefid what's my neymar score" });
-                                  await markAndClaimNeynarScoreCast({ playerAddress: address.toLowerCase(), chain: effectiveChain });
-                                  AudioManager.buttonSuccess();
-                                  await refreshMissions();
-                                } catch (e: any) {
-                                  if (!e?.message?.includes('Already claimed')) console.error(e);
-                                } finally { setCastingNeynarScore(false); }
-                              }}
-                              disabled={castingNeynarScore}
-                              className="px-2 py-1 border-2 border-black bg-cyan-500 text-black font-bold text-xs"
-                              style={{ boxShadow: "2px 2px 0px #000" }}
-                            >
-                              {castingNeynarScore ? '...' : '🎙️ Cast'}
-                            </button>
-                          ) : isShareQuest ? (
-                            <button
-                              onClick={async () => {
-                                if (!address || sharingDaily) return;
-                                AudioManager.buttonClick();
-                                setSharingDaily(true);
-                                try {
-                                  const { sdk } = await import('@farcaster/miniapp-sdk');
-                                  const shareUrl = `https://vibemostwanted.xyz/share/vibe/${address}`;
-                                  const power = profileDashboard?.stats?.totalPower || 0;
-                                  const aura = profileDashboard?.stats?.aura || 0;
-                                  await sdk.actions.composeCast({
-                                    text: `⚔️ Playing Vibe Most Wanted!\n\nPower: ${power} | Aura: ${aura}\nCollect cards, earn $VBMS, battle for glory!`,
-                                    embeds: [shareUrl],
-                                  });
-                                  await markAndClaimDailyShare({ playerAddress: address.toLowerCase(), chain: effectiveChain });
-                                  AudioManager.buttonSuccess();
-                                  await refreshMissions();
-                                } catch (e: any) {
-                                  if (!e?.message?.includes('Already claimed')) console.error(e);
-                                } finally { setSharingDaily(false); }
-                              }}
-                              disabled={sharingDaily}
-                              className="px-2 py-1 border-2 border-black bg-cyan-500 text-black font-bold text-xs"
-                              style={{ boxShadow: "2px 2px 0px #000" }}
-                            >
-                              {sharingDaily ? '...' : '📤 Share'}
-                            </button>
-                          ) : (
-                            <span className="text-vintage-ice/20 text-[10px]">{t('mission_locked')}</span>
-                          )}
-                          <button onClick={() => setMissionCarouselIdx(i => Math.max(0, i - 1))} disabled={mIdx === 0}
-                            className="w-6 h-6 bg-black border border-[#FFD700]/50 flex items-center justify-center disabled:opacity-20">
-                            <span className="text-[#FFD700] font-black text-xs leading-none">‹</span>
-                          </button>
-                          <span className="text-white/30 text-[9px]">{mIdx + 1}/{missionList.length}</span>
-                          <button onClick={() => setMissionCarouselIdx(i => Math.min(missionList.length - 1, i + 1))} disabled={mIdx >= missionList.length - 1}
-                            className="w-6 h-6 bg-black border border-[#FFD700]/50 flex items-center justify-center disabled:opacity-20">
-                            <span className="text-[#FFD700] font-black text-xs leading-none">›</span>
-                          </button>
-                          <button onClick={() => { AudioManager.buttonClick(); setShowAllQuestsModal(true); }}
-                            className="px-2 h-6 bg-vintage-gold border-2 border-black text-black font-bold text-[9px]"
-                            style={{ boxShadow: "2px 2px 0px #000" }}>
-                            All
-                          </button>
-                        </div>
+                        <span className="text-white/30 text-[10px]">{mIdx + 1}/{missionList.length}</span>
+                        <button
+                          onClick={() => setMissionCarouselIdx(i => Math.min(missionList.length - 1, i + 1))}
+                          disabled={mIdx >= missionList.length - 1}
+                          className="w-5 h-5 bg-black/40 border border-white/20 flex items-center justify-center disabled:opacity-30"
+                        >
+                          <span className="text-white/60 text-[10px]">›</span>
+                        </button>
                       </div>
-                    </div>
+                      <div className="flex items-center justify-end gap-2 mt-1">
+                        {mission.completed && !isPlaceholder && (
+                          <button
+                            onClick={async () => {
+                              AudioManager.buttonClick();
+                              if (!address) return;
+                              setClaimingMission(mission._id);
+                              try {
+                                if (isVibeBadge) {
+                                  await claimVibeBadge({ playerAddress: address.toLowerCase() });
+                                  await refreshProfile();
+                                } else {
+                                  const chain = effectiveChain;
+                                  await claimMission({ playerAddress: address.toLowerCase(), missionId: mission._id, chain });
+                                  if (chain === "arbitrum" && mission.reward > 0) await validateOnArb(mission.reward, ARB_CLAIM_TYPE.MISSION);
+                                }
+                                AudioManager.buttonSuccess();
+                                await refreshMissions();
+                              } catch (e) { console.error(e); }
+                              finally { setClaimingMission(null); }
+                            }}
+                            disabled={isClaiming}
+                            className="px-3 py-1 bg-vintage-gold text-black text-[10px] font-bold border-2 border-black"
+                            style={{ boxShadow: '2px 2px 0px #000' }}
+                          >
+                            {isClaiming ? "..." : 'CLAIM'}
+                          </button>
+                        )}
+                        {isNeymarQuest && !mission.completed && (
+                          <button
+                            onClick={async () => {
+                              if (!address || castingNeynarScore) return;
+                              AudioManager.buttonClick();
+                              setCastingNeynarScore(true);
+                              try {
+                                const { sdk } = await import('@farcaster/miniapp-sdk');
+                                await sdk.actions.composeCast({ text: "@vibefid what's my neymar score" });
+                                await markAndClaimNeynarScoreCast({ playerAddress: address.toLowerCase(), chain: effectiveChain });
+                                AudioManager.buttonSuccess();
+                                await refreshMissions();
+                              } catch (e: any) {
+                                if (!e?.message?.includes('Already claimed')) console.error(e);
+                              } finally { setCastingNeynarScore(false); }
+                            }}
+                            disabled={castingNeynarScore}
+                            className="px-3 py-1 bg-cyan-500 text-black text-[10px] font-bold border-2 border-black"
+                            style={{ boxShadow: '2px 2px 0px #000' }}
+                          >
+                            {castingNeynarScore ? '...' : '🎙️ CAST'}
+                          </button>
+                        )}
+                        {isShareQuest && !mission.completed && (
+                          <button
+                            onClick={async () => {
+                              if (!address || sharingDaily) return;
+                              AudioManager.buttonClick();
+                              setSharingDaily(true);
+                              try {
+                                const { sdk } = await import('@farcaster/miniapp-sdk');
+                                const shareUrl = `https://vibemostwanted.xyz/share/vibe/${address}`;
+                                const power = profileDashboard?.stats?.totalPower || 0;
+                                const aura = profileDashboard?.stats?.aura || 0;
+                                await sdk.actions.composeCast({
+                                  text: `⚔️ Playing Vibe Most Wanted!\n\nPower: ${power} | Aura: ${aura}\nCollect cards, earn $VBMS, battle for glory!`,
+                                  embeds: [shareUrl],
+                                });
+                                await markAndClaimDailyShare({ playerAddress: address.toLowerCase(), chain: effectiveChain });
+                                AudioManager.buttonSuccess();
+                                await refreshMissions();
+                              } catch (e: any) {
+                                if (!e?.message?.includes('Already claimed')) console.error(e);
+                              } finally { setSharingDaily(false); }
+                            }}
+                            disabled={sharingDaily}
+                            className="px-3 py-1 bg-cyan-500 text-black text-[10px] font-bold border-2 border-black"
+                            style={{ boxShadow: '2px 2px 0px #000' }}
+                          >
+                            {sharingDaily ? '...' : '📤 SHARE'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })()}
@@ -990,277 +891,246 @@ export default function QuestsPage() {
                 }
               `}</style>
 
-            {/* ── CUSTOM FOLLOW QUESTS ─────────────────────────────── */}
-            <div className="border-4 overflow-hidden" style={{ borderColor: '#A855F7', boxShadow: '3px 3px 0px #A855F780' }}>
-              {/* Single compact row: label + input + button + count */}
-              {/* Modal overlay */}
-              {customModalOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70" onClick={() => { setCustomModalOpen(false); setCustomQuestUsername(''); setCustomQuestPreview(null); setCustomSearchResults([]); setCustomQuestError(''); }}>
-                  <div className="border-4 overflow-hidden w-72 bg-[#0d0d0d]" style={{ borderColor: '#A855F7', boxShadow: '4px 4px 0px #A855F780' }} onClick={e => e.stopPropagation()}>
-                    {/* Modal header */}
-                    <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: '2px solid #A855F740' }}>
-                      <span className="font-black text-xs uppercase tracking-wider" style={{ color: '#A855F7' }}>ADD TO FOLLOW COMMUNITY</span>
-                      <button onClick={() => { setCustomModalOpen(false); setCustomQuestUsername(''); setCustomQuestPreview(null); setCustomSearchResults([]); setCustomQuestError(''); }} className="text-white/40 hover:text-white text-sm font-black">✕</button>
-                    </div>
 
-                    {/* Preview banner */}
-                    {customQuestPreview && (
-                      <div className="relative h-16 overflow-hidden bg-[#1a0a2e]">
-                        {(customQuestPreview as any).banner_url
-                          ? <img src={(customQuestPreview as any).banner_url} className="absolute inset-0 w-full h-full object-cover opacity-70" alt="" />
-                          : customQuestPreview.pfp_url
-                            ? <img src={customQuestPreview.pfp_url} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.4, transform: 'scale(1.6)', filter: 'blur(6px)' }} alt="" />
-                            : null
-                        }
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-                        <div className="absolute bottom-1.5 left-2 flex items-center gap-1.5">
-                          {customQuestPreview.pfp_url && <img src={customQuestPreview.pfp_url} className="w-8 h-8 rounded-full border border-[#A855F7]" alt="" />}
-                          <div>
-                            <p className="text-white font-black text-xs drop-shadow">{customQuestPreview.display_name}</p>
-                            <p className="text-[#A855F7] text-[8px]">@{customQuestPreview.username} · FID {customQuestPreview.fid}</p>
+            {/* Custom Follow Quests - same style as Vibe Creators */}
+            {(customFollowQuests?.length ?? 0) > 0 && (
+              <div className="border-4 overflow-hidden" style={{ borderColor: '#A855F7', boxShadow: '3px 3px 0px #A855F780' }}>
+                {/* Header */}
+                <div className="px-3 py-1.5 bg-[#111] border-b-2 flex items-center justify-between" style={{ borderColor: '#A855F7' }}>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-black uppercase tracking-widest" style={{ color: '#A855F7' }}>Follow Community</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {(customFollowQuests?.length ?? 0) > 1 && (
+                      <>
+                        <button onClick={() => setCustomCarouselIdx(i => Math.max(0, i - 1))} disabled={customCarouselIdx === 0}
+                          className="w-7 h-7 bg-black flex items-center justify-center disabled:opacity-30" style={{ borderColor: '#A855F780', borderWidth: '2px', borderStyle: 'solid' }}>
+                          <span className="font-black text-sm leading-none" style={{ color: '#A855F7' }}>‹</span>
+                        </button>
+                        <span className="text-white/40 text-[10px]">{Math.min(customCarouselIdx, (customFollowQuests?.length ?? 1) - 1) + 1}/{customFollowQuests?.length}</span>
+                        <button onClick={() => setCustomCarouselIdx(i => Math.min((customFollowQuests?.length ?? 0) - 1, i + 1))} disabled={customCarouselIdx >= (customFollowQuests?.length ?? 0) - 1}
+                          className="w-7 h-7 bg-black flex items-center justify-center disabled:opacity-30" style={{ borderColor: '#A855F780', borderWidth: '2px', borderStyle: 'solid' }}>
+                          <span className="font-black text-sm leading-none" style={{ color: '#A855F7' }}>›</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Carousel content */}
+                {(() => {
+                  if (!customFollowQuests || customFollowQuests.length === 0) return null;
+                  const q = customFollowQuests[customCarouselIdx];
+                  const questId = q._id;
+                  const isClaimed = claimedCustom.has(questId);
+                  const isClaiming = claimingCustom === questId;
+                  const pfp = q.pfpUrl;
+                  const banner = q.bannerUrl || pfp;
+                  const displayName = (q as any).displayName || q.targetUsername;
+                  const profileUrl = `https://warpcast.com/${q.targetUsername}`;
+
+                  return (
+                    <div key={questId}>
+                      {/* Banner image area */}
+                      <div className="relative h-28 bg-[#111] flex items-center justify-center overflow-hidden">
+                        {banner && (
+                          <img src={banner} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.8, filter: 'none' }} alt="" />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/10" />
+                        <span className="absolute top-2 left-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider border bg-[#A855F7]/80 text-white border-[#A855F7]/60">
+                          COMMUNITY
+                        </span>
+                        {isClaimed && (
+                          <div className="absolute inset-0 bg-green-900/60 flex items-center justify-center z-10">
+                            <span className="text-green-400 font-black text-lg">DONE</span>
                           </div>
+                        )}
+                        {pfp ? (
+                          <img src={pfp} alt={displayName} className="relative z-10 w-16 h-16 rounded-full object-cover border-4 shadow-lg" style={{ borderColor: '#A855F7' }} />
+                        ) : (
+                          <div className="relative z-10 w-16 h-16 rounded-full bg-[#222] border-4 flex items-center justify-center" style={{ borderColor: '#A855F740' }}>
+                            <span className="font-black text-xl" style={{ color: '#A855F799' }}>@</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info row */}
+                      <div className="px-3 pt-2 pb-1 bg-[#111]">
+                        <p className="text-white font-black text-xs truncate">{displayName}</p>
+                      </div>
+
+                      {/* Buttons row */}
+                      <div className="px-3 pb-3 bg-[#111] flex items-center justify-between gap-2">
+                        <div className="flex flex-col">
+                          <span className="text-[#FFD700] font-bold text-xs">+{q.reward} VBMS</span>
+                          <span className="text-purple-400 text-[9px] font-bold">+50 aura</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => { AudioManager.buttonClick(); openExternalUrl(profileUrl); }}
+                            className="px-2 py-1.5 bg-[#111] border-2 font-black text-[10px] transition-all"
+                            style={{ borderColor: '#A855F7', color: '#A855F7', boxShadow: '2px 2px 0px #000' }}>
+                            {t('questsFollow')}
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!address || isClaimed || isClaiming) return;
+                              setClaimingCustom(questId);
+                              try {
+                                await claimCustomFollowReward({ address: address.toLowerCase(), questId });
+                                setClaimedCustom(prev => new Set([...prev, questId]));
+                              } catch (e: any) {
+                                const msg = e.data || e.message || 'Error';
+                                if (msg === 'Already claimed') {
+                                  setClaimedCustom(prev => new Set([...prev, questId]));
+                                } else {
+                                  setCustomQuestError(msg);
+                                }
+                              }
+                              finally { setClaimingCustom(null); }
+                            }}
+                            disabled={isClaimed || isClaiming || !address}
+                            className="px-2 py-1.5 font-black text-[10px] border-2 border-black transition-all disabled:opacity-60"
+                            style={{
+                              backgroundColor: isClaimed ? '#1a2a1a' : '#FFD700',
+                              color: isClaimed ? '#22C55E' : '#000',
+                              boxShadow: isClaimed ? 'none' : '2px 2px 0px #000',
+                            }}>
+                            {isClaimed ? (t('questsDone') || 'Done') : isClaiming ? '...' : (t('questsVerify') || 'Verify')}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Add custom quest button */}
+            {address && (
+              <button
+                onClick={() => setCustomModalOpen(true)}
+                className="w-full py-2 bg-[#A855F7]/20 border border-[#A855F7]/50 text-[#A855F7] text-xs font-bold uppercase rounded hover:bg-[#A855F7]/30 transition-all"
+              >
+                + Add to Follow Community (100k VBMS)
+              </button>
+            )}
+
+            {/* Custom Modal */}
+            {customModalOpen && (
+              <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70" onClick={() => { setCustomModalOpen(false); setCustomQuestUsername(''); setCustomQuestPreview(null); setCustomSearchResults([]); setCustomQuestError(''); }}>
+                <div className="w-72 max-w-[90%] bg-[#0d0d0d] border-4 border-[#A855F7] rounded-xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-[#A855F7]/30">
+                    <span className="font-black text-xs uppercase" style={{ color: '#A855F7' }}>Add to Follow Community</span>
+                    <button onClick={() => { setCustomModalOpen(false); setCustomQuestUsername(''); setCustomQuestPreview(null); setCustomSearchResults([]); setCustomQuestError(''); }} className="text-white/40 hover:text-white text-sm">✕</button>
+                  </div>
+                  <div className="p-3 space-y-3">
+                    {customQuestPreview && customQuestPreview.pfp_url && (
+                      <div className="flex items-center gap-2">
+                        <img src={customQuestPreview.pfp_url} className="w-10 h-10 rounded-full border-2 border-[#A855F7]" alt="" />
+                        <div>
+                          <p className="text-white text-sm font-bold">{customQuestPreview.display_name}</p>
+                          <p className="text-[#A855F7] text-xs">@{customQuestPreview.username}</p>
                         </div>
                       </div>
                     )}
-
-                    {/* Search input */}
-                    <div className="px-3 py-2">
-                      <input
-                        autoFocus
-                        value={customQuestUsername}
-                        onChange={e => {
-                          const val = e.target.value.replace(/^@/, '');
-                          setCustomQuestUsername(val);
-                          setCustomQuestError('');
-                          setCustomQuestPreview(null);
-                          if (customSearchTimer.current) clearTimeout(customSearchTimer.current);
-                          if (val.length < 2) { setCustomSearchResults([]); return; }
-                          customSearchTimer.current = setTimeout(async () => {
-                            const r = await fetch(`/api/fid/neynar-user-search?q=${encodeURIComponent(val)}`);
-                            const d = await r.json();
-                            setCustomSearchResults(d.users || []);
-                          }, 300);
-                        }}
-                        placeholder="Search @username or FID..."
-                        className="w-full bg-[#111] border-2 border-[#A855F740] text-white text-xs px-2 py-1.5 focus:outline-none focus:border-[#A855F7]"
-                      />
-
-                      {/* Results list */}
-                      {customSearchResults.length > 0 && !customQuestPreview && (
-                        <div className="mt-1 border-2 border-[#A855F740] bg-[#0a0a0a] max-h-36 overflow-y-auto">
-                          {customSearchResults.map(u => (
-                            <button
-                              key={u.fid}
-                              onClick={() => {
-                                setCustomQuestUsername(u.username);
-                                setCustomQuestPreview({ fid: u.fid, username: u.username, display_name: u.display_name, pfp_url: u.pfp_url });
-                                setCustomSearchResults([]);
-                              }}
-                              className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-[#A855F720] text-left border-b border-[#A855F720] last:border-0"
-                            >
-                              {u.pfp_url && <img src={u.pfp_url} className="w-6 h-6 rounded-full shrink-0" alt="" />}
-                              <div className="min-w-0 flex-1">
-                                <p className="text-white text-[10px] font-bold truncate">{u.display_name}</p>
-                                <p className="text-[#A855F7] text-[8px] truncate">@{u.username} · {u.fid}</p>
-                              </div>
-                              {customFollowQuests?.some((q: any) => q.targetFid === u.fid) && (
-                                <span className="text-[8px] text-white/40 shrink-0 ml-1">already added</span>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {customQuestError && <p className="text-red-400 text-[9px] mt-1">{customQuestError}</p>}
-
-                      <button
-                        disabled={isAddingCustom || !customQuestUsername.trim() || !!(customQuestPreview && customFollowQuests?.some((q: any) => q.targetFid === customQuestPreview.fid))}
-                        onClick={async () => {
-                          if (!address || !customQuestUsername.trim()) return;
-                          if (customQuestPreview && customFollowQuests?.some((q: any) => q.targetFid === customQuestPreview.fid)) {
-                            setCustomQuestError('This user is already in Follow Community');
-                            return;
-                          }
-                          setIsAddingCustom(true);
-                          setCustomQuestError('');
-                          try {
-                            let data = customQuestPreview as any;
-                            if (!data?.fid) throw new Error('Select a user first');
-                            // Step 1: on-chain 100k VBMS transfer to pool (exact same pattern as leaderboard claim)
-                            const { sdk } = await import('@farcaster/miniapp-sdk');
-                            const provider = await sdk.wallet.getEthereumProvider();
-                            if (!provider) throw new Error('Wallet not available');
-                            try {
-                              await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
-                            } catch {}
-                            const txCallData = encodeFunctionData({
-                              abi: ERC20_ABI,
-                              functionName: 'transfer',
-                              args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther('100000')],
-                            });
-                            const txData = (txCallData + ATTRIBUTION_SUFFIX.slice(2)) as `0x${string}`;
-                            const txHash = await provider!.request({
-                              method: 'eth_sendTransaction',
-                              params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken, data: txData }],
-                            }) as string;
-                            if (!txHash) throw new Error('TX failed');
-                            // Step 2: record quest in Convex with txHash
-                            await addCustomFollowQuest({
-                              address: address.toLowerCase(),
-                              targetUsername: data.username || customQuestUsername.trim(),
-                              displayName: data.display_name || undefined,
-                              targetFid: data.fid,
-                              pfpUrl: data.pfp_url || undefined,
-                              bannerUrl: data.banner_url || undefined,
-                              txHash,
-                            });
-                            setCustomQuestUsername('');
-                            setCustomQuestPreview(null);
-                            setCustomModalOpen(false);
-                          } catch (e: any) {
-                            setCustomQuestError(e.data || e.shortMessage || e.message || 'Error');
-                          } finally {
-                            setIsAddingCustom(false);
-                          }
-                        }}
-                        className="w-full mt-2 py-1.5 border-2 border-black font-black text-xs uppercase disabled:opacity-40"
-                        style={{ background: '#A855F7', color: '#fff', boxShadow: '2px 2px 0px #000' }}
-                      >
-                        {isAddingCustom ? 'CONFIRM IN WALLET...' : 'PAY 100K VBMS & ADD'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Header — fixed, same pattern as VIBE CREATORS */}
-              <div className="px-3 py-1.5 bg-[#111] border-b-2 flex items-center justify-between" style={{ borderColor: '#A855F7' }}>
-                <span className="text-xs font-black uppercase tracking-widest" style={{ color: '#A855F7' }}>
-                  {(t as any)('questsCustomFollows') || 'FOLLOW COMMUNITY'}
-                </span>
-                <div className="flex items-center gap-1.5">
-                  {address && (
+                    <input
+                      autoFocus
+                      value={customQuestUsername}
+                      onChange={e => {
+                        const val = e.target.value.replace(/^@/, '');
+                        setCustomQuestUsername(val);
+                        setCustomQuestError('');
+                        setCustomQuestPreview(null);
+                        if (customSearchTimer.current) clearTimeout(customSearchTimer.current);
+                        if (val.length < 2) { setCustomSearchResults([]); return; }
+                        customSearchTimer.current = setTimeout(async () => {
+                          const r = await fetch(`/api/fid/neynar-user-search?q=${encodeURIComponent(val)}`);
+                          const d = await r.json();
+                          setCustomSearchResults(d.users || []);
+                        }, 300);
+                      }}
+                      placeholder="Search @username or FID..."
+                      className="w-full bg-[#111] border border-white/20 text-white text-xs px-2 py-2 rounded focus:outline-none focus:border-[#A855F7]"
+                    />
+                    {customSearchResults.length > 0 && !customQuestPreview && (
+                      <div className="border border-white/20 bg-[#0a0a0a] max-h-32 overflow-y-auto rounded">
+                        {customSearchResults.map(u => (
+                          <button
+                            key={u.fid}
+                            onClick={() => {
+                              setCustomQuestUsername(u.username);
+                              setCustomQuestPreview({ fid: u.fid, username: u.username, display_name: u.display_name, pfp_url: u.pfp_url });
+                              setCustomSearchResults([]);
+                            }}
+                            className="w-full flex items-center gap-2 px-2 py-1.5 hover:bg-white/10 text-left border-b border-white/5 last:border-0"
+                          >
+                            {u.pfp_url && <img src={u.pfp_url} className="w-6 h-6 rounded-full shrink-0" alt="" />}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-white text-xs font-bold truncate">{u.display_name}</p>
+                              <p className="text-[#A855F7] text-[10px] truncate">@{u.username} · {u.fid}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {customQuestError && <p className="text-red-400 text-xs">{customQuestError}</p>}
                     <button
-                      onClick={() => setCustomModalOpen(true)}
-                      className="px-2 py-0.5 border border-black font-black text-[9px] uppercase"
-                      style={{ background: '#A855F7', color: '#fff', boxShadow: '1px 1px 0px #000' }}
+                      disabled={isAddingCustom || !customQuestUsername.trim() || !!(customQuestPreview && customFollowQuests?.some((q: any) => q.targetFid === customQuestPreview.fid))}
+                      onClick={async () => {
+                        if (!address || !customQuestUsername.trim()) return;
+                        if (customQuestPreview && customFollowQuests?.some((q: any) => q.targetFid === customQuestPreview.fid)) {
+                          setCustomQuestError('This user is already in Follow Community');
+                          return;
+                        }
+                        setIsAddingCustom(true);
+                        setCustomQuestError('');
+                        try {
+                          let data = customQuestPreview as any;
+                          if (!data?.fid) throw new Error('Select a user first');
+                          const { sdk } = await import('@farcaster/miniapp-sdk');
+                          const provider = await sdk.wallet.getEthereumProvider();
+                          if (!provider) throw new Error('Wallet not available');
+                          try {
+                            await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
+                          } catch {}
+                          const txCallData = encodeFunctionData({
+                            abi: ERC20_ABI,
+                            functionName: 'transfer',
+                            args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther('100000')],
+                          });
+                          const txData = (txCallData + ATTRIBUTION_SUFFIX.slice(2)) as `0x${string}`;
+                          const txHash = await provider!.request({
+                            method: 'eth_sendTransaction',
+                            params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken, data: txData }],
+                          }) as string;
+                          if (!txHash) throw new Error('TX failed');
+                          await addCustomFollowQuest({
+                            address: address.toLowerCase(),
+                            targetUsername: data.username || customQuestUsername.trim(),
+                            displayName: data.display_name || undefined,
+                            targetFid: data.fid,
+                            pfpUrl: data.pfp_url || undefined,
+                            bannerUrl: data.banner_url || undefined,
+                            txHash,
+                          });
+                          setCustomQuestUsername('');
+                          setCustomQuestPreview(null);
+                          setCustomModalOpen(false);
+                        } catch (e: any) {
+                          setCustomQuestError(e.data || e.shortMessage || e.message || 'Error');
+                        } finally {
+                          setIsAddingCustom(false);
+                        }
+                      }}
+                      className="w-full py-2 bg-[#A855F7] text-white text-xs font-bold border-2 border-black rounded disabled:opacity-40"
+                      style={{ boxShadow: '2px 2px 0px #000' }}
                     >
-                      + ADD
+                      {isAddingCustom ? 'CONFIRM IN WALLET...' : 'Pay 100k VBMS & Add'}
                     </button>
-                  )}
-                  {(customFollowQuests?.length ?? 0) > 0 && (
-                    <p className="text-white/40 text-[10px]">{Math.min(customCarouselIdx, (customFollowQuests?.length ?? 1) - 1) + 1}/{customFollowQuests?.length}</p>
-                  )}
+                  </div>
                 </div>
               </div>
-
-              {/* Custom quest carousel — same structure as VIBE CREATORS */}
-              {(() => {
-                const quests = customFollowQuests || [];
-                if (quests.length === 0) return (
-                  <div className="flex flex-col items-center justify-center h-28 bg-[#111] text-white/20 text-xs">
-                    <span>No quests yet</span>
-                    <span className="text-[9px] mt-0.5">Pay 100K VBMS to add a profile</span>
-                  </div>
-                );
-                const idx = Math.min(customCarouselIdx, quests.length - 1);
-                const q = quests[idx];
-                const questId = q._id;
-                const isClaimed = claimedCustom.has(questId);
-                const isClaiming = claimingCustom === questId;
-                const bgSrc = q.bannerUrl || q.pfpUrl;
-                const pfp = q.pfpUrl;
-                const displayName = (q as any).displayName || q.targetUsername;
-                const profileUrl = `https://warpcast.com/${q.targetUsername}`;
-                return (
-                  <div key={questId}>
-                    {/* Banner image area — same as VIBE CREATORS */}
-                    <div className="relative h-28 bg-[#111] flex items-center justify-center overflow-hidden">
-                      {bgSrc && (
-                        <img src={bgSrc} className="absolute inset-0 w-full h-full object-cover" style={{ opacity: 0.8, filter: 'none' }} alt="" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/10" />
-                      <span className="absolute top-2 left-2 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider border bg-[#A855F7]/80 text-white border-[#A855F7]/60">
-                        CUSTOM
-                      </span>
-                      {isClaimed && (
-                        <div className="absolute inset-0 bg-green-900/60 flex items-center justify-center z-10">
-                          <span className="text-green-400 font-black text-lg">DONE</span>
-                        </div>
-                      )}
-                      {pfp ? (
-                        <img src={pfp} alt={displayName} className="relative z-10 w-16 h-16 rounded-full object-cover border-4 shadow-lg" style={{ borderColor: '#A855F7' }} />
-                      ) : (
-                        <div className="relative z-10 w-16 h-16 rounded-full bg-[#222] border-4 flex items-center justify-center" style={{ borderColor: '#A855F740' }}>
-                          <span className="font-black text-xl" style={{ color: '#A855F799' }}>@</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Info row */}
-                    <div className="px-3 pt-2 pb-1 bg-[#111]">
-                      <p className="text-white font-black text-xs truncate">{displayName}</p>
-                    </div>
-
-                    {/* Buttons row — same layout as VIBE CREATORS */}
-                    <div className="px-3 pb-3 bg-[#111] flex items-center justify-between gap-2">
-                      <div className="flex flex-col">
-                        <span className="text-[#FFD700] font-bold text-xs">+{q.reward} VBMS</span>
-                        <span className="text-[#A855F7] text-[9px] font-bold">for following</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {quests.length > 1 && (
-                          <>
-                            <button onClick={() => setCustomCarouselIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
-                              className="w-7 h-7 bg-black border-2 flex items-center justify-center disabled:opacity-30"
-                              style={{ borderColor: '#A855F780' }}>
-                              <span className="font-black text-sm leading-none" style={{ color: '#A855F7' }}>‹</span>
-                            </button>
-                            <button onClick={() => setCustomCarouselIdx(i => Math.min(quests.length - 1, i + 1))} disabled={idx >= quests.length - 1}
-                              className="w-7 h-7 bg-black border-2 flex items-center justify-center disabled:opacity-30"
-                              style={{ borderColor: '#A855F780' }}>
-                              <span className="font-black text-sm leading-none" style={{ color: '#A855F7' }}>›</span>
-                            </button>
-                          </>
-                        )}
-                        <button onClick={() => { AudioManager.buttonClick(); openExternalUrl(profileUrl); }}
-                          className="px-2 py-1.5 bg-[#111] border-2 font-black text-[10px] transition-all"
-                          style={{ borderColor: '#A855F7', color: '#A855F7', boxShadow: '2px 2px 0px #000' }}>
-                          {t('questsFollow')}
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!address || isClaimed || isClaiming) return;
-                            setClaimingCustom(questId);
-                            try {
-                              if (effectiveChain === 'arbitrum') await validateOnArb(q.reward, ARB_CLAIM_TYPE.QUEST);
-                              await claimCustomFollowReward({ address: address.toLowerCase(), questId });
-                              setClaimedCustom(prev => new Set([...prev, questId]));
-                            } catch (e: any) {
-                              const msg = e.data || e.message || 'Error';
-                              if (msg === 'Already claimed') {
-                                setClaimedCustom(prev => new Set([...prev, questId]));
-                              } else {
-                                setCustomQuestError(msg);
-                              }
-                            }
-                            finally { setClaimingCustom(null); }
-                          }}
-                          disabled={isClaimed || isClaiming || !address}
-                          className="px-2 py-1.5 font-black text-[10px] border-2 border-black transition-all disabled:opacity-60"
-                          style={{
-                            backgroundColor: isClaimed ? '#1a2a1a' : '#FFD700',
-                            color: isClaimed ? '#22C55E' : '#000',
-                            boxShadow: isClaimed ? 'none' : '2px 2px 0px #000',
-                          }}>
-                          {isClaimed ? (t('questsDone') || 'Done') : isClaiming ? '...' : (t('questsVerify') || 'Verify')}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
+            )}
 
               {/* Social Quests - Carousel by group */}
               {(() => {
@@ -1318,9 +1188,6 @@ export default function QuestsPage() {
                               )}
                             </div>
                             <div className="flex items-center gap-1.5">
-                              {groupId === 'vbms' && effectiveChain === 'arbitrum' && (
-                                <span className="px-1.5 py-0.5 bg-blue-900/60 border border-blue-500/60 text-[#12AAFF] font-black text-[9px] uppercase tracking-wider">ARB 2x</span>
-                              )}
                               <p className="text-white/40 text-[10px]">{idx + 1}/{groupQuests.length}</p>
                             </div>
                           </div>
@@ -1383,11 +1250,9 @@ export default function QuestsPage() {
                             <div className="flex flex-col">
                               <span className="text-[#FFD700] font-bold text-xs">
                                 +{displayReward} VBMS
-                                {effectiveChain === "arbitrum" && <span className="text-blue-400 text-[8px] ml-0.5">2x</span>}
                               </span>
                               <span className="text-purple-400 text-[9px] font-bold">
                                 +{auraReward} aura
-                                {hasVibeFID2x && <span className="text-blue-400 text-[8px] ml-0.5">×2</span>}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1461,15 +1326,6 @@ export default function QuestsPage() {
 
         </div>
         )} {/* end activeTab === 'missions' */}
-
-        {activeTab === 'wanted' && (
-          <WantedCastsTab
-            myFid={userFid}
-            myAddress={address}
-            hasVibeBadge={profileDashboard?.hasVibeBadge || vibeBadgeEligibility?.hasVibeFIDCards || false}
-            soundEnabled={true}
-          />
-        )}
 
         {/* Messages Tab - inline, no modal */}
         {activeTab === 'messages' && (

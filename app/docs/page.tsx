@@ -6,7 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { docsTranslations, type DocsSupportedLanguage, type DocsTranslationKey } from "@/lib/docs-translations";
 import { AudioManager } from "@/lib/audio-manager";
 
-type DocSection = "economy" | "battles" | "poker" | "mecha" | "raidboss" | "vibefid" | "quests" | "cards" | "faq" | "baccarat";
+type DocSection = "economy" | "battles" | "poker" | "mecha" | "raidboss" | "vibefid" | "quests" | "cards" | "faq" | "baccarat" | "aura" | "socialquests" | "arbitrum" | "vibemail";
 
 const languages = [
   { code: 'en', label: 'EN' },
@@ -33,13 +33,18 @@ export default function DocsPage() {
   const sections: { id: DocSection; label: string }[] = [
     { id: "economy", label: t("economy") },
     { id: "battles", label: t("battles") },
-    { id: "mecha", label: "Mecha Arena" },
-    { id: "raidboss", label: "Raid Boss" },
-    { id: "vibefid", label: "VibeFID" },
+    { id: "poker", label: t("pokerBattle") },
+    { id: "mecha", label: t("mechaArena") },
+    { id: "raidboss", label: t("raidBoss") },
+    { id: "vibefid", label: t("vibeFID") },
     { id: "quests", label: t("quests") },
     { id: "cards", label: t("cards") },
     { id: "baccarat", label: "Baccarat" },
     { id: "faq", label: t("faq") },
+    { id: "aura", label: t("aura") },
+    { id: "socialquests", label: t("socialquests") },
+    { id: "arbitrum", label: t("arbitrum") },
+    { id: "vibemail", label: t("vibemail") },
   ];
 
   return (
@@ -341,6 +346,134 @@ export default function DocsPage() {
               </div>
             </div>
           )}
+
+          {/* Poker Battle */}
+          {activeSection === "poker" && (
+            <div>
+              <h2 className="text-xl font-display font-bold text-vintage-gold mb-3 uppercase">{t("pokerBattle")}</h2>
+              <div className="space-y-3 text-sm text-white/90">
+                <p>{t("pokerIntro")}</p>
+                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("pokerStakes")}</h3>
+                <p>{t("pokerRules")}</p>
+                <ul className="list-disc list-inside space-y-1.5">
+                  <li>{t("pokerRule1")}</li>
+                  <li>{t("pokerRule2")}</li>
+                  <li>{t("pokerRule3")}</li>
+                  <li>{t("pokerRule4")}</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Aura XP */}
+          {activeSection === "aura" && (
+            <div>
+              <h2 className="text-xl font-display font-bold text-vintage-gold mb-3 uppercase">{t("aura")}</h2>
+              <div className="space-y-3 text-sm text-white/90">
+                <p>{t("auraIntro")}</p>
+                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("auraHowItWorks")}</h3>
+                <ul className="list-disc list-inside space-y-1.5">
+                  <li>{t("auraStep1")}</li>
+                  <li>{t("auraStep2")}</li>
+                  <li>{t("auraStep3")}</li>
+                  <li>{t("auraStep4")}</li>
+                </ul>
+                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("auraTiers")}</h3>
+                <div className="grid grid-cols-2 gap-1.5 mt-2">
+                  {[
+                    { label: t("auraHuman"), value: "0", color: "text-gray-400" },
+                    { label: t("auraGreatApe"), value: "200", color: "text-amber-300" },
+                    { label: t("auraSSJ1"), value: "800", color: "text-yellow-400" },
+                    { label: t("auraSSJ2"), value: "2500", color: "text-orange-400" },
+                    { label: t("auraSSJ3"), value: "6000", color: "text-red-500" },
+                    { label: t("auraSSJ4"), value: "14000", color: "text-red-700" },
+                    { label: t("auraSSJGod"), value: "28000", color: "text-purple-600" },
+                    { label: t("auraSSJBlue"), value: "52000", color: "text-blue-500" },
+                  ].map((tier, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <div className="w-4 h-4 bg-black/50 border-2 border-black rounded">{tier.label}</div>
+                      <span className={`font-mono ${tier.color}`}>{tier.value} XP</span>
+                    </div>
+                  ))}
+                </div>
+                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("auraBenefits")}</h3>
+                <ul className="list-disc list-inside space-y-1.5">
+                  <li>{t("auraBenefit1")}</li>
+                  <li>{t("auraBenefit2")}</li>
+                  <li>{t("auraBenefit3")}</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Social Quests */}
+          {activeSection === "socialquests" && (
+            <div>
+              <h2 className="text-xl font-display font-bold text-vintage-gold mb-3 uppercase">{t("socialquests")}</h2>
+              <div className="space-y-3 text-sm text-white/90">
+                <p>{t("socialquestsIntro")}</p>
+                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("socialquestsHowItWorks")}</h3>
+                <ul className="list-disc list-inside space-y-1.5">
+                  <li>{t("socialquestsStep1")}</li>
+                  <li>{t("socialquestsStep2")}</li>
+                  <li>{t("socialquestsStep3")}</li>
+                </ul>
+                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("socialquestsRewards")}</h3>
+                <ul className="list-disc list-inside space-y-1.5">
+                  <li>{t("socialquestsReward1")}</li>
+                  <li>{t("socialquestsReward2")}</li>
+                  <li>{t("socialquestsReward3")}</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Arbitrum */}
+          {activeSection === "arbitrum" && (
+            <div>
+              <h2 className="text-xl font-display font-bold text-vintage-gold mb-3 uppercase">{t("arbitrum")}</h2>
+              <div className="space-y-3 text-sm text-white/90">
+                <p>{t("arbitrumIntro")}</p>
+                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("arbitrumHowItWorks")}</h3>
+                <ul className="list-disc list-inside space-y-1.5">
+                  <li>{t("arbitrumStep1")}</li>
+                  <li>{t("arbitrumStep2")}</li>
+                  <li>{t("arbitrumStep3")}</li>
+                </ul>
+                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("arbitrumBenefits")}</h3>
+                <ul className="list-disc list-inside space-y-1.5">
+                  <li>{t("arbitrumBenefit1")}</li>
+                  <li>{t("arbitrumBenefit2")}</li>
+                  <li>{t("arbitrumBenefit3")}</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* VibeMail */}
+          {activeSection === "vibemail" && (
+            <div>
+              <h2 className="text-xl font-display font-bold text-vintage-gold mb-3 uppercase">{t("vibemail")}</h2>
+              <div className="space-y-3 text-sm text-white/90">
+                <p>{t("vibemailIntro")}</p>
+                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("vibemailHowItWorks")}</h3>
+                <ul className="list-disc list-inside space-y-1.5">
+                  <li>{t("vibemailStep1")}</li>
+                  <li>{t("vibemailStep2")}</li>
+                  <li>{t("vibemailStep3")}</li>
+                  <li>{t("vibemailStep4")}</li>
+                </ul>
+                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("vibemailFeatures")}</h3>
+                <ul className="list-disc list-inside space-y-1.5">
+                  <li>{t("vibemailFeature1")}</li>
+                  <li>{t("vibemailFeature2")}</li>
+                  <li>{t("vibemailFeature3")}</li>
+                  <li>{t("vibemailFeature4")}</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* Social links */}

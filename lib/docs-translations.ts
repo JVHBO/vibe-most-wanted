@@ -17,6 +17,12 @@ export const docsTranslations = {
     quests: "Missões",
     cards: "Cartas",
     faq: "FAQ",
+    aura: "Aura XP",
+    socialquests: "Missões Sociais",
+    arbitrum: "Arbitrum",
+    vibemail: "VibeMail",
+    miniappframe: "Miniapp Frame",
+    pendingrecovery: "Recuperação Pendente",
 
     // Economy section
     economyTitle: "Sistema de Economia",
@@ -248,6 +254,12 @@ export const docsTranslations = {
     quests: "Quests",
     cards: "Cards",
     faq: "FAQ",
+    aura: "Aura XP",
+    socialquests: "Social Quests",
+    arbitrum: "Arbitrum",
+    vibemail: "VibeMail",
+    miniappframe: "Miniapp Frame",
+    pendingrecovery: "Pending Recovery",
 
     // Economy section
     economyTitle: "Economy System",
