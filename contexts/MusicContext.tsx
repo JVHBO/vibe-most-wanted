@@ -145,6 +145,8 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
   const [currentTrackName, setCurrentTrackName] = useState<string | null>(null);
   const [currentTrackThumbnail, setCurrentTrackThumbnail] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  // Ref síncrono para evitar stale closure no click handler
+  const isPausedRef = useRef(false);
 
   // Audio references
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -552,6 +554,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    * Pause playback
    */
   const pause = useCallback(() => {
+    isPausedRef.current = true;
     setIsPaused(true);
     if (audioRef.current && !audioRef.current.paused) {
       audioRef.current.pause();
@@ -565,6 +568,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    * Resume playback
    */
   const play = useCallback(() => {
+    isPausedRef.current = false;
     setIsPaused(false);
     if (audioRef.current && audioRef.current.paused) {
       audioRef.current.play().catch(() => {
@@ -948,7 +952,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    */
   useEffect(() => {
     const handleClick = () => {
-      if (!isMusicEnabled || isPaused) return;
+      if (!isMusicEnabled || isPausedRef.current) return;
 
       // Audio lost (e.g. returned from miniapp) — restart using loadAndFadeIn
       // (avoids crossfade's same-track early-return guard)
@@ -994,7 +998,7 @@ export function MusicProvider({ children }: { children: React.ReactNode }) {
    */
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && isMusicEnabled && !isPaused) {
+      if (document.visibilityState === 'visible' && isMusicEnabled && !isPausedRef.current) {
         // Try to resume YouTube if it exists
         if (youtubePlayerRef.current && typeof youtubePlayerRef.current.playVideo === 'function') {
           try {
