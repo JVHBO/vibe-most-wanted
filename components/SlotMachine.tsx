@@ -288,6 +288,12 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const [showBonusAnimation, setShowBonusAnimation] = useState(false);
   const [comboDisplay, setComboDisplay] = useState<{ name: string; audio: string; color: string; winAmt: number } | null>(null);
   const [deceleratingCols, setDeceleratingCols] = useState<Set<number>>(new Set());
+  const [foilSuspenseCols, setFoilSuspenseCols]   = useState<Set<number>>(new Set()); // cols glowing with foil suspense
+  const [epicFoilCards, setEpicFoilCards]         = useState<Array<{idx:number; card:SlotCard; img:string; row:number; col:number}>|null>(null);
+  const [epicFoilPhase, setEpicFoilPhase]         = useState<'fly'|'spin'|null>(null);
+  const [lockedGifIdx, setLockedGifIdx]           = useState<number|null>(null);   // index of locked GIF card in grid
+  const [gifScale, setGifScale]                   = useState(1);                    // 1..4 grow multiplier
+  const [isBonusActive, setIsBonusActive]         = useState(false);
   const [showGallery, setShowGallery]           = useState(false);
   const [showIndices, setShowIndices]           = useState(false);
   const [devFoilAll, setDevFoilAll]             = useState(false);
@@ -298,6 +304,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const card3DInnerRef = useRef<HTMLDivElement | null>(null);
   const ivs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const foilsFoundRef = useRef(0);
 
   const freeLeft = statsQ?.remainingFreeSpins ?? 0;
   const coins    = userProfile?.coins ?? 0;
@@ -379,11 +386,24 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     for (let si = 0; si < steps.length; si++) {
       const step = steps[si];
       setCells(step.grid);
+      // If GIF card is locked, override its position in every cascade step
+      if (lockedGifIdx !== null) {
+        const lockedCard: SlotCard = { baccarat: 'vbms_special', rarity: 'Special' };
+        setCells(prev => {
+          const n = [...prev];
+          n[lockedGifIdx] = lockedCard;
+          return n;
+        });
+      }
       await sleep(180);
 
       // Highlight winning cells + draw payline
       setWinCells(new Set(step.winningIndices));
       setActivePaylines(computeActivePaylines(step.patterns));
+      // If locked GIF is in winning combo, grow it (max 4x)
+      if (lockedGifIdx !== null && step.winningIndices.includes(lockedGifIdx)) {
+        setGifScale(prev => Math.min(4, prev + 1));
+      }
 
       // Play cascade hit sound + combo
       playTrackedAudio('/sounds/hit.mp3', 0.35);
@@ -439,7 +459,30 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     if (totalWin > 0) {
       toast.success(`+${totalWin.toLocaleString()} coins!`);
     }
+    // Check if finalGrid has a GIF card — lock it
+    const gifCellIdx = finalGrid.findIndex(c => c.baccarat === 'vbms_special');
+    if (gifCellIdx >= 0) {
+      setLockedGifIdx(gifCellIdx);
+    }
   };
+
+  const triggerEpicFoil = useCallback((
+    foilCells: Array<{idx:number;card:SlotCard;img:string;row:number;col:number}>,
+    onComplete: () => void
+  ) => {
+    setEpicFoilCards(foilCells);
+    setEpicFoilPhase('fly');
+    playTrackedAudio('/sounds/evolution.mp3', 0.8);
+    // After 1.4s of flying in, switch to spin phase
+    setTimeout(() => setEpicFoilPhase('spin'), 1400);
+    // After 3.4s total: close overlay, start bonus cascade
+    setTimeout(() => {
+      setEpicFoilCards(null);
+      setEpicFoilPhase(null);
+      setIsBonusActive(true);
+      onComplete();
+    }, 3400);
+  }, []);
 
   const spin = async (isFree: boolean, forceBonusMode = false) => {
     if (!isConnected || !address) { toast.error("Conecte a carteira!"); return; }
@@ -460,6 +503,12 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     setShowBonusAnimation(false);
     setComboDisplay(null);
     setDeceleratingCols(new Set());
+    setFoilSuspenseCols(new Set());
+    setEpicFoilCards(null);
+    setEpicFoilPhase(null);
+    setLockedGifIdx(null);
+    setGifScale(1);
+    foilsFoundRef.current = 0;
 
     // (sem som contínuo de giro — apenas cliques ao parar cada coluna)
 
@@ -492,13 +541,42 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
       // Stop columns sequentially using initialGrid
       const stopSequential = (col: number) => {
         if (col >= COLS) {
-          playCascade(res.cascadeSteps, res.finalGrid, res.winAmount);
+          // All columns stopped — check for 4 foil epic
+          const allFoilCells = res.initialGrid
+            .map((card, idx) => ({
+              idx,
+              card,
+              img: card.baccarat === 'vbms_special' ? CASINO_SLOT_GIF : (getVbmsBaccaratImageUrl(card.baccarat) || ''),
+              row: Math.floor(idx / COLS),
+              col: idx % COLS,
+            }))
+            .filter(c => c.card.hasFoil);
+
+          if (allFoilCells.length >= 4) {
+            triggerEpicFoil(allFoilCells, () => playCascade(res.cascadeSteps, res.finalGrid, res.winAmount));
+          } else {
+            playCascade(res.cascadeSteps, res.finalGrid, res.winAmount);
+          }
           return;
         }
+
         const colCards = Array.from({ length: ROWS }, (_, row) =>
           res.initialGrid[row * COLS + col] ?? pick()
         );
-        slowAndStopCol(col, colCards, () => setTimeout(() => stopSequential(col + 1), 80));
+
+        slowAndStopCol(col, colCards, () => {
+          // Count foils just revealed in this column
+          const colFoils = colCards.filter(c => c.hasFoil).length;
+          foilsFoundRef.current += colFoils;
+
+          // If 2+ foils found and next column still pending → glow with suspense
+          if (foilsFoundRef.current >= 2 && col + 1 < COLS) {
+            setFoilSuspenseCols(prev => new Set([...prev, col + 1]));
+            playTick(220, 0.09, 0.12);
+          }
+
+          setTimeout(() => stopSequential(col + 1), 80);
+        });
       };
 
       setTimeout(() => stopSequential(0), baseDelay);
@@ -519,6 +597,8 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     const isNew      = !spinning && newCells.has(idx);
     const effectiveCard = devFoilAll ? { ...card, hasFoil: true } : card;
     const s          = RS[effectiveCard.rarity] ?? RS.Common;
+    const isLockedGif = lockedGifIdx === idx && effectiveCard.baccarat === 'vbms_special';
+    const cardScale = isLockedGif ? gifScale : 1;
 
     // Determinar imagem:VBMS Special → GIF de cassino | Wildcards → GIFs animados | Outras → imagens normais
     const isVBMSspecial = effectiveCard.baccarat === "vbms_special";
@@ -561,6 +641,9 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
             : undefined),
           animation: `${rarityAnim || foilEffect.animation || ''}`.trim(),
           background: s.bg,
+          transform: cardScale > 1 ? `scale(${cardScale})` : undefined,
+          transformOrigin: 'center center',
+          zIndex: cardScale > 1 ? 20 : undefined,
         }}
       >
         {/* Rarity corner triangle */}
@@ -597,6 +680,11 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
           {spinning && <div className="absolute inset-0 bg-black/55 pointer-events-none" />}
           {/* Prize foil rainbow overlay — não aplica em GIFs (fica bugado) */}
           {!spinning && effectiveCard.hasFoil && !isVBMSspecial && !isWildcard && <div className="prize-foil" />}
+          {/* Locked GIF indicator */}
+          {isLockedGif && (
+            <div className="absolute top-0 right-0 z-30 px-1 py-0.5 text-[7px] font-black text-black rounded-bl"
+              style={{ background: '#FFD700' }}>LOCKED</div>
+          )}
           {/* Dev index overlay */}
           {showIndices && !spinning && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
@@ -710,6 +798,33 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
           100% { stroke-dashoffset: 0; opacity: 0; }
         }
         .payline-draw { stroke-dasharray: 350; stroke-dashoffset: 350; animation: payline-draw 0.85s ease-out forwards; }
+        /* Foil suspense column glow */
+        @keyframes foil-suspense-pulse {
+          0%,100% { box-shadow: 0 0 8px #FFA500, 0 0 16px #FFD700; filter: brightness(1.15) saturate(1.2); }
+          50%     { box-shadow: 0 0 24px #FFD700, 0 0 48px #FF8C00, 0 0 72px #FF6B00; filter: brightness(1.5) saturate(1.6); }
+        }
+        .foil-suspense-col { animation: foil-suspense-pulse 0.38s ease-in-out infinite; z-index: 5; }
+        /* Epic foil fly-in from grid position */
+        @keyframes epic-fly {
+          0%   { transform: translate(var(--sx), var(--sy)) scale(0.5); opacity:0; }
+          60%  { opacity:1; }
+          100% { transform: translate(0,0) scale(1); opacity:1; }
+        }
+        .epic-foil-fly { animation: epic-fly 1.1s cubic-bezier(.34,1.56,.64,1) both; animation-delay: var(--delay); }
+        /* Epic foil group spin */
+        @keyframes epic-spin {
+          0%   { transform: translate(0,0) scale(1) rotateY(0deg); }
+          40%  { transform: translate(0,0) scale(1.15) rotateY(180deg); }
+          100% { transform: translate(0,0) scale(1) rotateY(360deg); }
+        }
+        .epic-foil-spin { animation: epic-spin 1.8s cubic-bezier(.34,1.2,.64,1) both; animation-delay: var(--delay); }
+        /* Bonus text pop */
+        @keyframes epic-bonus-pop {
+          0%   { transform: scale(0); opacity:0; }
+          60%  { transform: scale(1.2); opacity:1; }
+          100% { transform: scale(1); opacity:1; }
+        }
+        .epic-bonus-text { animation: epic-bonus-pop 0.6s cubic-bezier(.34,1.56,.64,1) both; }
         @keyframes card-3d-fly-in {
           0%   { opacity:0; transform:perspective(900px) rotateY(-120deg) translateY(-160px) scale(0.4); }
           55%  { opacity:1; transform:perspective(900px) rotateY(18deg) translateY(8px) scale(1.06); }
@@ -886,6 +1001,57 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
         </div>
       )}
 
+      {/* EPIC FOIL OVERLAY — 4 foil cards fly to center and spin */}
+      {epicFoilCards && epicFoilPhase && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center overflow-hidden pointer-events-none"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}>
+          <div className="relative flex items-center justify-center" style={{ width: 320, height: 400 }}>
+            {epicFoilCards.map((fc, i) => {
+              // Start position: spread from grid positions relative to center
+              const startX = ((fc.col + 0.5) / COLS - 0.5) * 280;
+              const startY = ((fc.row + 0.5) / ROWS - 0.5) * 280;
+              const rs = RS[fc.card.rarity] ?? RS.Common;
+              return (
+                <div
+                  key={fc.idx}
+                  className={epicFoilPhase === 'fly' ? 'epic-foil-fly' : 'epic-foil-spin'}
+                  style={{
+                    position: 'absolute',
+                    width: 72, height: 108,
+                    borderRadius: 8,
+                    overflow: 'hidden',
+                    border: `3px solid ${rs.border}`,
+                    boxShadow: `0 0 20px ${rs.border}88, 0 0 40px #FFA50055`,
+                    background: rs.bg,
+                    '--sx': `${startX}px`,
+                    '--sy': `${startY}px`,
+                    '--delay': `${i * 0.08}s`,
+                  } as React.CSSProperties}
+                >
+                  {fc.img && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={fc.img} alt="" draggable={false} style={{ width:'100%', height:'100%', objectFit:'cover', pointerEvents:'none' }} />
+                  )}
+                  <div className="prize-foil" />
+                </div>
+              );
+            })}
+            {epicFoilPhase === 'spin' && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center epic-bonus-text">
+                  <div className="font-black uppercase tracking-widest" style={{ fontSize: 32, color:'#FFD700', textShadow:'0 0 20px #FFD700, 0 0 40px #FFA500' }}>
+                    BONUS!
+                  </div>
+                  <div className="font-black text-white text-sm uppercase tracking-widest mt-1" style={{ textShadow:'0 0 10px #a855f7' }}>
+                    FREE SPINS
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Modal de confirmação BUY BONUS */}
       {showBonusConfirm && (
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-black/85" onClick={() => setShowBonusConfirm(false)}>
@@ -937,8 +1103,12 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
           <div
             className="flex-1 min-h-0 relative overflow-hidden"
             style={{
-              background: "linear-gradient(180deg,#000 0%,#100500 40%,#080200 70%,#000 100%)",
-              boxShadow: "inset 0 12px 28px rgba(0,0,0,0.98), inset 0 -12px 28px rgba(0,0,0,0.98)",
+              background: isBonusActive
+                ? "linear-gradient(180deg,#1a0040 0%,#0d001f 40%,#050010 70%,#000 100%)"
+                : "linear-gradient(180deg,#000 0%,#100500 40%,#080200 70%,#000 100%)",
+              boxShadow: isBonusActive
+                ? "inset 0 12px 28px rgba(168,85,247,0.4), inset 0 -12px 28px rgba(168,85,247,0.4)"
+                : "inset 0 12px 28px rgba(0,0,0,0.98), inset 0 -12px 28px rgba(0,0,0,0.98)",
             }}
           >
             {/* Payline dots — one per row */}
@@ -962,7 +1132,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
                     return (
                       <div
                         key={col}
-                        className="relative min-w-0"
+                        className={`relative min-w-0 ${foilSuspenseCols.has(col) && !stopped.has(col) ? 'foil-suspense-col' : ''}`}
                         style={{
                           flex: 1,
                           borderRight: col < COLS - 1 ? "1px solid rgba(200,121,65,0.18)" : "none",
