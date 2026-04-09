@@ -181,7 +181,7 @@ export const docsTranslations = {
     pokerRule4: "Partidas PvP são ao vivo - ambos jogam simultaneamente",
 
     // Mecha Arena section
-    mechaArena: "🤖 Mecha Arena",
+    mechaArena: "Mecha Arena",
     mechaIntro: "Assista batalhas CPU vs CPU e aposte no resultado! Espetale batalhas épicas entre oponentes de IA.",
     mechaHowItWorks: "Como Funciona",
     mechaStep1: "Escolha entre 13 coleções diferentes de arena",
@@ -199,7 +199,7 @@ export const docsTranslations = {
     mechaCollections: "Coleções",
 
     // Raid Boss section
-    raidBoss: "👹 Raid Boss",
+    raidBoss: "Raid Boss",
     raidBossIntro: "Junte-se a outros jogadores para derrotar chefes poderosos e ganhar recompensas exclusivas!",
     raidHowItWorks: "Como Funciona",
     raidStep1: "Chefes aparecem em um cronograma rotativo",
@@ -474,7 +474,7 @@ export const docsTranslations = {
     pokerRule4: "PvP matches are live - both players play simultaneously",
 
     // Mecha Arena section
-    mechaArena: "🤖 Mecha Arena",
+    mechaArena: "Mecha Arena",
     mechaIntro: "Watch CPU vs CPU battles and bet on the outcome! Spectate epic card battles between AI opponents.",
     mechaHowItWorks: "How It Works",
     mechaStep1: "Choose from 13 different arena collections",
@@ -492,7 +492,7 @@ export const docsTranslations = {
     mechaCollections: "Collections",
 
     // Raid Boss section
-    raidBoss: "👹 Raid Boss",
+    raidBoss: "Raid Boss",
     raidBossIntro: "Team up with other players to defeat powerful bosses and earn exclusive rewards!",
     raidHowItWorks: "How It Works",
     raidStep1: "Bosses appear on a rotating schedule",
@@ -761,7 +761,7 @@ export const docsTranslations = {
     pokerRule4: "Las partidas PvP son en vivo - ambos juegan simultáneamente",
 
     // Mecha Arena section
-    mechaArena: "🤖 Mecha Arena",
+    mechaArena: "Mecha Arena",
     mechaIntro: "¡Mira batallas CPU vs CPU y apuesta en el resultado! Espectea batallas épicas entre oponentes de IA.",
     mechaHowItWorks: "Cómo Funciona",
     mechaStep1: "Elige entre 13 colecciones de arena diferentes",
@@ -779,7 +779,7 @@ export const docsTranslations = {
     mechaCollections: "Colecciones",
 
     // Raid Boss section
-    raidBoss: "👹 Raid Boss",
+    raidBoss: "Raid Boss",
     raidBossIntro: "¡Únete a otros jugadores para derrotar jefes poderosos y ganar recompensas exclusivas!",
     raidHowItWorks: "Cómo Funciona",
     raidStep1: "Los jefes aparecen en un horario rotativo",
@@ -969,7 +969,7 @@ export const docsTranslations = {
     pokerRule4: "PvP मैच लाइव हैं - दोनों खिलाड़ी एक साथ खेलते हैं",
 
     // Mecha Arena section
-    mechaArena: "🤖 मेका अरीना",
+    mechaArena: "मेका अरीना",
     mechaIntro: "CPU vs CPU बैटल देखें और परिणाम पर दांव लगाएं! AI विरोधियों के बीच महाकाव्य कार्ड बैटल देखें।",
     mechaHowItWorks: "यह कैसे काम करता है",
     mechaStep1: "13 विभिन्न अरीना संग्रहों में से चुनें",
@@ -987,7 +987,7 @@ export const docsTranslations = {
     mechaCollections: "संग्रह",
 
     // Raid Boss section
-    raidBoss: "👹 रेड बॉस",
+    raidBoss: "रेड बॉस",
     raidBossIntro: "शक्तिशाली बॉस को हराने और विशेष पुरस्कार अर्जित करने के लिए अन्य खिलाड़ियों के साथ टीम बनाएं!",
     raidHowItWorks: "यह कैसे काम करता है",
     raidStep1: "बॉस घूर्णन शेड्यूल पर दिखाई देते हैं",
@@ -1200,7 +1200,7 @@ export const docsTranslations = {
     pokerRule4: "PvP матчи живые - оба игрока играют одновременно",
 
     // Mecha Arena section
-    mechaArena: "🤖 Меха Арена",
+    mechaArena: "Меха Арена",
     mechaIntro: "Смотрите битвы CPU против CPU и делайте ставки на результат! Наблюдайте за эпическими карточными сражениями между AI противниками.",
     mechaHowItWorks: "Как это работает",
     mechaStep1: "Выберите одну из 13 различных коллекций арены",
@@ -1218,7 +1218,7 @@ export const docsTranslations = {
     mechaCollections: "Коллекции",
 
     // Raid Boss section
-    raidBoss: "👹 Рейд Босс",
+    raidBoss: "Рейд Босс",
     raidBossIntro: "Объединяйтесь с другими игроками, чтобы победить могущественных боссов и получить эксклюзивные награды!",
     raidHowItWorks: "Как это работает",
     raidStep1: "Боссы появляются по ротационному расписанию",
@@ -1430,7 +1430,7 @@ export const docsTranslations = {
     pokerRule4: "PvP比赛实时进行 - 双方同时游戏",
 
     // Mecha Arena section
-    mechaArena: "🤖 机甲竞技场",
+    mechaArena: "机甲竞技场",
     mechaIntro: "观看CPU对战CPU的战斗并下注结果！观看AI对手之间史诗般的卡牌战斗。",
     mechaHowItWorks: "如何运作",
     mechaStep1: "从13个不同的竞技场收藏中选择",
@@ -1448,7 +1448,7 @@ export const docsTranslations = {
     mechaCollections: "收藏",
 
     // Raid Boss section
-    raidBoss: "👹 突袭Boss",
+    raidBoss: "突袭Boss",
     raidBossIntro: "与其他玩家组队击败强大的Boss并赚取独家奖励！",
     raidHowItWorks: "如何运作",
     raidStep1: "Boss按轮换时间表出现",
@@ -1661,7 +1661,7 @@ export const docsTranslations = {
     pokerRule4: "Pertandingan PvP live - kedua pemain main bersamaan",
 
     // Mecha Arena section
-    mechaArena: "🤖 Arena Mecha",
+    mechaArena: "Arena Mecha",
     mechaIntro: "Tonton pertempuran CPU vs CPU dan taruhan hasilnya! Saksikan pertempuran kartu epik antara lawan AI.",
     mechaHowItWorks: "Cara Kerja",
     mechaStep1: "Pilih dari 13 koleksi arena berbeda",
@@ -1679,7 +1679,7 @@ export const docsTranslations = {
     mechaCollections: "Koleksi",
 
     // Raid Boss section
-    raidBoss: "👹 Raid Boss",
+    raidBoss: "Raid Boss",
     raidBossIntro: "Bekerja sama dengan pemain lain untuk kalahkan bos kuat dan dapat hadiah eksklusif!",
     raidHowItWorks: "Cara Kerja",
     raidStep1: "Bos muncul sesuai jadwal rotasi",
@@ -1892,7 +1892,7 @@ export const docsTranslations = {
     pokerRule4: "Les matchs PvP sont en direct - les deux joueurs jouent simultanément",
 
     // Mecha Arena section
-    mechaArena: "🤖 Arène Mecha",
+    mechaArena: "Arène Mecha",
     mechaIntro: "Regardez des combats CPU vs CPU et pariez sur le résultat ! Assistez à des combats de cartes épiques entre adversaires IA.",
     mechaHowItWorks: "Comment ça marche",
     mechaStep1: "Choisissez parmi 13 collections d'arène différentes",
@@ -1910,7 +1910,7 @@ export const docsTranslations = {
     mechaCollections: "Collections",
 
     // Raid Boss section
-    raidBoss: "👹 Raid Boss",
+    raidBoss: "Raid Boss",
     raidBossIntro: "Faites équipe avec d'autres joueurs pour vaincre des boss puissants et gagner des récompenses exclusives !",
     raidHowItWorks: "Comment ça marche",
     raidStep1: "Les boss apparaissent selon un calendrier rotatif",
@@ -2123,7 +2123,7 @@ export const docsTranslations = {
     pokerRule4: "Le partite PvP sono dal vivo - entrambi i giocatori giocano simultaneamente",
 
     // Mecha Arena section
-    mechaArena: "🤖 Arena Mecha",
+    mechaArena: "Arena Mecha",
     mechaIntro: "Guarda battaglie CPU vs CPU e scommetti sul risultato! Osserva epiche battaglie di carte tra avversari IA.",
     mechaHowItWorks: "Come Funziona",
     mechaStep1: "Scegli tra 13 diverse collezioni dell'arena",
@@ -2141,7 +2141,7 @@ export const docsTranslations = {
     mechaCollections: "Collezioni",
 
     // Raid Boss section
-    raidBoss: "👹 Raid Boss",
+    raidBoss: "Raid Boss",
     raidBossIntro: "Unisci le forze con altri giocatori per sconfiggere potenti boss e guadagnare ricompense esclusive!",
     raidHowItWorks: "Come Funziona",
     raidStep1: "I boss appaiono secondo una programmazione rotante",
