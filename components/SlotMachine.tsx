@@ -293,7 +293,6 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const [epicFoilPhase, setEpicFoilPhase]         = useState<'fly'|'spin'|null>(null);
   const [lockedGifIdx, setLockedGifIdx]           = useState<number|null>(null);   // index of locked GIF card in grid
   const [gifScale, setGifScale]                   = useState(1);                    // 1..4 grow multiplier
-  const [isBonusActive, setIsBonusActive]         = useState(false);
   const [showGallery, setShowGallery]           = useState(false);
   const [showIndices, setShowIndices]           = useState(false);
   const [devFoilAll, setDevFoilAll]             = useState(false);
@@ -305,19 +304,16 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const ivs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const foilsFoundRef = useRef(0);
+  const lockedGifRef  = useRef<number|null>(null); // ref para leitura síncrona em playCascade
+
+  // isBonusActive: derivado — verdadeiro enquanto há bonus spins ou animação épica ativa
+  const isBonusActive = bonusSpinsRemaining > 0 || epicFoilCards !== null;
 
   const freeLeft = statsQ?.remainingFreeSpins ?? 0;
   const coins    = userProfile?.coins ?? 0;
   const betMult  = BET_OPTIONS[betIdx];
   const betCost  = betMult;
   const bonusCost = betCost * BONUS_COST_MULT;
-
-  // Sincronizar bonus spins da query
-  useEffect(() => {
-    if (statsQ?.bonusSpinsAvailable !== undefined) {
-      setBonusSpinsRemaining(statsQ.bonusSpinsAvailable);
-    }
-  }, [statsQ?.bonusSpinsAvailable]);
 
   // Sincronizar bonus spins da query
   useEffect(() => {
@@ -385,23 +381,21 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     let runningWin = 0;
     for (let si = 0; si < steps.length; si++) {
       const step = steps[si];
-      setCells(step.grid);
-      // If GIF card is locked, override its position in every cascade step
-      if (lockedGifIdx !== null) {
-        const lockedCard: SlotCard = { baccarat: 'vbms_special', rarity: 'Special' };
-        setCells(prev => {
-          const n = [...prev];
-          n[lockedGifIdx] = lockedCard;
-          return n;
-        });
-      }
+      // Combinar em um único setCells: aplica o grid do cascade + mantém GIF locked no lugar
+      setCells(() => {
+        const n = [...step.grid];
+        if (lockedGifRef.current !== null) {
+          n[lockedGifRef.current] = { baccarat: 'vbms_special', rarity: 'Special' };
+        }
+        return n;
+      });
       await sleep(180);
 
       // Highlight winning cells + draw payline
       setWinCells(new Set(step.winningIndices));
       setActivePaylines(computeActivePaylines(step.patterns));
-      // If locked GIF is in winning combo, grow it (max 4x)
-      if (lockedGifIdx !== null && step.winningIndices.includes(lockedGifIdx)) {
+      // GIF locked em combo → cresce (max 4x)
+      if (lockedGifRef.current !== null && step.winningIndices.includes(lockedGifRef.current)) {
         setGifScale(prev => Math.min(4, prev + 1));
       }
 
@@ -459,9 +453,10 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     if (totalWin > 0) {
       toast.success(`+${totalWin.toLocaleString()} coins!`);
     }
-    // Check if finalGrid has a GIF card — lock it
+    // Se o GIF apareceu no finalGrid e ainda não está locked, lock agora
     const gifCellIdx = finalGrid.findIndex(c => c.baccarat === 'vbms_special');
-    if (gifCellIdx >= 0) {
+    if (gifCellIdx >= 0 && lockedGifRef.current === null) {
+      lockedGifRef.current = gifCellIdx;
       setLockedGifIdx(gifCellIdx);
     }
   };
@@ -479,8 +474,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     setTimeout(() => {
       setEpicFoilCards(null);
       setEpicFoilPhase(null);
-      setIsBonusActive(true);
-      onComplete();
+      onComplete(); // isBonusActive agora é derivado de bonusSpinsRemaining > 0
     }, 3400);
   }, []);
 
@@ -506,9 +500,13 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     setFoilSuspenseCols(new Set());
     setEpicFoilCards(null);
     setEpicFoilPhase(null);
-    setLockedGifIdx(null);
-    setGifScale(1);
     foilsFoundRef.current = 0;
+    // GIF lock persiste durante bonus; reseta só quando sai do bonus
+    if (bonusSpinsRemaining <= 0 && !forceBonusMode && !isUsingBonus) {
+      lockedGifRef.current = null;
+      setLockedGifIdx(null);
+      setGifScale(1);
+    }
 
     // (sem som contínuo de giro — apenas cliques ao parar cada coluna)
 
@@ -527,7 +525,9 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
       setBonusSpinsRemaining(res.bonusSpinsRemaining);
       setFoilCountDisplay(res.foilCount);
 
-      if (res.triggeredBonus) {
+      // Bonus sem epic foil (< 4 foils): mostra animação padrão
+      // Com 4+ foils: triggerEpicFoil cuida do áudio e visual — não duplicar
+      if (res.triggeredBonus && res.foilCount < 4) {
         setShowBonusAnimation(true);
         playTrackedAudio('/sounds/evolution.mp3', 0.6);
         toast.success(`🎰 +${BONUS_FREE_SPINS} FREE SPINS BÔNUS! (${res.foilCount} foil)`);
@@ -541,7 +541,14 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
       // Stop columns sequentially using initialGrid
       const stopSequential = (col: number) => {
         if (col >= COLS) {
-          // All columns stopped — check for 4 foil epic
+          // Detectar GIF card no grid ANTES de iniciar cascade (para ref síncrona funcionar)
+          const gifInGrid = res.initialGrid.findIndex(c => c.baccarat === 'vbms_special');
+          if (gifInGrid >= 0) {
+            lockedGifRef.current = gifInGrid;
+            setLockedGifIdx(gifInGrid);
+          }
+
+          // Check for 4 foil epic
           const allFoilCells = res.initialGrid
             .map((card, idx) => ({
               idx,
