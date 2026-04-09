@@ -194,7 +194,7 @@ export const docsTranslations = {
     mechaRounds45: "Rodadas 4-5: 1.8x odds",
     mechaRounds67: "Rodadas 6-7: 2.0x odds",
     mechaTieBet: "Aposta em Empate: 3.5x odds",
-    mechaDailyBoost: "🔥 Boost Diário",
+    mechaDailyBoost: "Boost Diário",
     mechaDailyBoostDesc: "Todo dia, uma coleção recebe +0.5x bônus nas odds! Procure o emblema HOT.",
     mechaCollections: "Coleções",
 
@@ -223,7 +223,7 @@ export const docsTranslations = {
     vibeFIDStep1: "Conecte sua conta Farcaster",
     vibeFIDStep2: "Seu Neynar Score determina a raridade (baseado em seguidores, casts, reações)",
     vibeFIDStep3: "Seu número FID determina naipe, foil e condição",
-    vibeFIDStep4: "Pague 0.0004 ETH para mintar sua carta VibeFID única na Base",
+    vibeFIDStep4: "Pague 0.0003 ETH para mintar sua carta VibeFID única na Base",
     vibeFIDNeynarScore: "Neynar Score → Raridade",
     vibeFIDMythic: "Mythic (≥ 0.99): 800 poder base - Top 1% usuários Farcaster",
     vibeFIDLegendary: "Legendary (≥ 0.90): 240 poder base - Top 10%",
@@ -236,9 +236,9 @@ export const docsTranslations = {
     vibeFIDTier3: "20,001 - 100,000: Chances mistas para traits raros",
     vibeFIDTier4: "> 100,000: Distribuição padrão de traits",
     vibeFIDBenefits: "Benefícios para Holders VibeFID",
-    vibeFIDBenefit1: "⚡ Boost de Poder: Cartas VibeFID recebem multiplicadores de poder bônus em batalhas",
-    vibeFIDBenefit2: "♾️ Energia Infinita: Sua carta VibeFID nunca fica sem energia - sempre pronta para batalhar",
-    vibeFIDBenefit3: "🃏 Sem Restrição de Deck: Pode ser usada em qualquer deck independente de restrições de coleção",
+    vibeFIDBenefit1: "Boost de Poder: Cartas VibeFID recebem multiplicadores de poder bônus em batalhas",
+    vibeFIDBenefit2: "Energia Infinita: Sua carta VibeFID nunca fica sem energia - sempre pronta para batalhar",
+    vibeFIDBenefit3: "Sem Restrição de Deck: Pode ser usada em qualquer deck independente de restrições de coleção",
 
     // Aura XP section
     auraIntro: "Aura XP é o sistema de experiência permanente do VMW. Cada ação no jogo ganha Aura XP que nunca reseta. Quanto mais XP você acumula, mais benefícios e limites maiores você desbloqueia.",
@@ -487,7 +487,7 @@ export const docsTranslations = {
     mechaRounds45: "Rounds 4-5: 1.8x odds",
     mechaRounds67: "Rounds 6-7: 2.0x odds",
     mechaTieBet: "Tie Bet: 3.5x odds",
-    mechaDailyBoost: "🔥 Daily Boost",
+    mechaDailyBoost: "Daily Boost",
     mechaDailyBoostDesc: "Every day, one arena collection gets +0.5x bonus odds! Look for the HOT badge.",
     mechaCollections: "Collections",
 
@@ -516,7 +516,7 @@ export const docsTranslations = {
     vibeFIDStep1: "Connect your Farcaster account",
     vibeFIDStep2: "Your Neynar Score determines card rarity (based on followers, casts, reactions)",
     vibeFIDStep3: "Your FID number determines suit, foil, and wear traits",
-    vibeFIDStep4: "Pay 0.0004 ETH to mint your unique VibeFID card on Base",
+    vibeFIDStep4: "Pay 0.0003 ETH to mint your unique VibeFID card on Base",
     vibeFIDNeynarScore: "Neynar Score → Rarity",
     vibeFIDMythic: "Mythic (≥ 0.99): 800 base power - Top 1% Farcaster users",
     vibeFIDLegendary: "Legendary (≥ 0.90): 240 base power - Top 10%",
@@ -529,9 +529,9 @@ export const docsTranslations = {
     vibeFIDTier3: "20,001 - 100,000: Mixed chances for rare traits",
     vibeFIDTier4: "> 100,000: Standard trait distribution",
     vibeFIDBenefits: "VibeFID Holder Benefits",
-    vibeFIDBenefit1: "⚡ Power Boost: VibeFID cards receive bonus power multipliers in battles",
-    vibeFIDBenefit2: "♾️ Infinite Energy: Your VibeFID card never runs out of energy - always ready to battle",
-    vibeFIDBenefit3: "🃏 No Deck Restriction: Can be used in any deck regardless of collection restrictions",
+    vibeFIDBenefit1: "Power Boost: VibeFID cards receive bonus power multipliers in battles",
+    vibeFIDBenefit2: "Infinite Energy: Your VibeFID card never runs out of energy - always ready to battle",
+    vibeFIDBenefit3: "No Deck Restriction: Can be used in any deck regardless of collection restrictions",
 
     // Aura XP section
     auraIntro: "Aura XP is VMW's permanent experience system. Every in-game action earns Aura XP that never resets. The more XP you accumulate, the more benefits and higher limits you unlock.",
@@ -774,7 +774,7 @@ export const docsTranslations = {
     mechaRounds45: "Rondas 4-5: 1.8x probabilidades",
     mechaRounds67: "Rondas 6-7: 2.0x probabilidades",
     mechaTieBet: "Apuesta de Empate: 3.5x probabilidades",
-    mechaDailyBoost: "🔥 Boost Diario",
+    mechaDailyBoost: "Boost Diario",
     mechaDailyBoostDesc: "¡Cada día, una colección de arena recibe +0.5x bonus en probabilidades! Busca la insignia HOT.",
     mechaCollections: "Colecciones",
 
@@ -803,7 +803,7 @@ export const docsTranslations = {
     vibeFIDStep1: "Conecta tu cuenta de Farcaster",
     vibeFIDStep2: "Tu Neynar Score determina la rareza (basado en seguidores, casts, reacciones)",
     vibeFIDStep3: "Tu número FID determina el palo, foil y condición",
-    vibeFIDStep4: "Paga 0.0004 ETH para mintear tu carta VibeFID única en Base",
+    vibeFIDStep4: "Paga 0.0003 ETH para mintear tu carta VibeFID única en Base",
     vibeFIDNeynarScore: "Neynar Score → Rareza",
     vibeFIDMythic: "Mítico (≥ 0.99): 800 poder base - Top 1% usuarios Farcaster",
     vibeFIDLegendary: "Legendario (≥ 0.90): 240 poder base - Top 10%",
@@ -816,9 +816,9 @@ export const docsTranslations = {
     vibeFIDTier3: "20,001 - 100,000: Probabilidades mixtas para rasgos raros",
     vibeFIDTier4: "> 100,000: Distribución estándar de rasgos",
     vibeFIDBenefits: "Beneficios para Holders de VibeFID",
-    vibeFIDBenefit1: "⚡ Boost de Poder: Las cartas VibeFID reciben multiplicadores de poder bonus en batallas",
-    vibeFIDBenefit2: "♾️ Energía Infinita: Tu carta VibeFID nunca se queda sin energía - siempre lista para batallar",
-    vibeFIDBenefit3: "🃏 Sin Restricción de Mazo: Puede usarse en cualquier mazo sin importar restricciones de colección",
+    vibeFIDBenefit1: "Boost de Poder: Las cartas VibeFID reciben multiplicadores de poder bonus en batallas",
+    vibeFIDBenefit2: "Energía Infinita: Tu carta VibeFID nunca se queda sin energía - siempre lista para batallar",
+    vibeFIDBenefit3: "Sin Restricción de Mazo: Puede usarse en cualquier mazo sin importar restricciones de colección",
   },
   "hi": {
     // Navigation
@@ -982,7 +982,7 @@ export const docsTranslations = {
     mechaRounds45: "राउंड 4-5: 1.8x ऑड्स",
     mechaRounds67: "राउंड 6-7: 2.0x ऑड्स",
     mechaTieBet: "टाई बेट: 3.5x ऑड्स",
-    mechaDailyBoost: "🔥 डेली बूस्ट",
+    mechaDailyBoost: "डेली बूस्ट",
     mechaDailyBoostDesc: "हर दिन, एक अरीना संग्रह को +0.5x बोनस ऑड्स मिलता है! HOT बैज देखें।",
     mechaCollections: "संग्रह",
 
@@ -1008,7 +1008,7 @@ export const docsTranslations = {
     vibeFID: "🆔 VibeFID",
     vibeFIDIntro: "अपने Farcaster ID के आधार पर अद्वितीय ट्रेडिंग कार्ड बनाएं! आपका Neynar Score आपके कार्ड की दुर्लभता निर्धारित करता है।",
     vibeFIDHowItWorks: "यह कैसे काम करता है",
-    vibeFIDStep1: "अपना VibeFID कार्ड मिंट करने के लिए Farcaster से कनेक्ट करें (0.0004 ETH)",
+    vibeFIDStep1: "अपना VibeFID कार्ड मिंट करने के लिए Farcaster से कनेक्ट करें (0.0003 ETH)",
     vibeFIDStep2: "आपका Neynar Score कार्ड की दुर्लभता निर्धारित करता है",
     vibeFIDStep3: "उच्च स्कोर = उच्च दुर्लभता और अधिक शक्ति",
     vibeFIDStep4: "तुरंत बैटल में उपयोग करें और विशेष लाभ प्राप्त करें",
@@ -1024,9 +1024,9 @@ export const docsTranslations = {
     vibeFIDTier3: "≥ 0.79 (महाकाव्य): दुर्लभ गुणों के लिए मिश्रित संभावनाएं",
     vibeFIDTier4: "< 0.79: मानक गुण वितरण",
     vibeFIDBenefits: "VibeFID धारकों के लाभ",
-    vibeFIDBenefit1: "⚡ पावर बूस्ट: VibeFID कार्ड बैटल में बोनस पावर गुणक प्राप्त करते हैं",
-    vibeFIDBenefit2: "♾️ अनंत ऊर्जा: आपका VibeFID कार्ड कभी भी ऊर्जा से बाहर नहीं होता - हमेशा बैटल के लिए तैयार",
-    vibeFIDBenefit3: "🃏 कोई डेक प्रतिबंध नहीं: संग्रह प्रतिबंधों की परवाह किए बिना किसी भी डेक में उपयोग किया जा सकता है",
+    vibeFIDBenefit1: "पावर बूस्ट: VibeFID कार्ड बैटल में बोनस पावर गुणक प्राप्त करते हैं",
+    vibeFIDBenefit2: "अनंत ऊर्जा: आपका VibeFID कार्ड कभी भी ऊर्जा से बाहर नहीं होता - हमेशा बैटल के लिए तैयार",
+    vibeFIDBenefit3: "कोई डेक प्रतिबंध नहीं: संग्रह प्रतिबंधों की परवाह किए बिना किसी भी डेक में उपयोग किया जा सकता है",
   },
   "ru": {
     // Navigation
@@ -1213,7 +1213,7 @@ export const docsTranslations = {
     mechaRounds45: "Раунды 4-5: коэффициент 1.8x",
     mechaRounds67: "Раунды 6-7: коэффициент 2.0x",
     mechaTieBet: "Ставка на ничью: коэффициент 3.5x",
-    mechaDailyBoost: "🔥 Ежедневный бонус",
+    mechaDailyBoost: "Ежедневный бонус",
     mechaDailyBoostDesc: "Каждый день одна коллекция арены получает +0.5x бонус к коэффициентам! Ищите значок HOT.",
     mechaCollections: "Коллекции",
 
@@ -1242,7 +1242,7 @@ export const docsTranslations = {
     vibeFIDStep1: "Подключите свой аккаунт Farcaster",
     vibeFIDStep2: "Ваш Neynar Score определяет редкость карты (на основе подписчиков, постов, реакций)",
     vibeFIDStep3: "Ваш номер FID определяет масть, фольгу и состояние",
-    vibeFIDStep4: "Заплатите 0.0004 ETH для чеканки уникальной карты VibeFID на Base",
+    vibeFIDStep4: "Заплатите 0.0003 ETH для чеканки уникальной карты VibeFID на Base",
     vibeFIDNeynarScore: "Neynar Score → Редкость",
     vibeFIDMythic: "Мифический (≥ 0.99): 800 базовой силы - Топ 1% пользователей Farcaster",
     vibeFIDLegendary: "Легендарный (≥ 0.90): 240 базовой силы - Топ 10%",
@@ -1255,9 +1255,9 @@ export const docsTranslations = {
     vibeFIDTier3: "20,001 - 100,000: Смешанные шансы на редкие характеристики",
     vibeFIDTier4: "> 100,000: Стандартное распределение характеристик",
     vibeFIDBenefits: "Преимущества владельца VibeFID",
-    vibeFIDBenefit1: "⚡ Бонус силы: Карты VibeFID получают бонусные множители силы в битвах",
-    vibeFIDBenefit2: "♾️ Бесконечная энергия: Ваша карта VibeFID никогда не теряет энергию - всегда готова к битве",
-    vibeFIDBenefit3: "🃏 Без ограничений колоды: Может использоваться в любой колоде независимо от ограничений коллекции",
+    vibeFIDBenefit1: "Бонус силы: Карты VibeFID получают бонусные множители силы в битвах",
+    vibeFIDBenefit2: "Бесконечная энергия: Ваша карта VibeFID никогда не теряет энергию - всегда готова к битве",
+    vibeFIDBenefit3: "Без ограничений колоды: Может использоваться в любой колоде независимо от ограничений коллекции",
   },
   "zh-CN": {
     // Navigation
@@ -1443,7 +1443,7 @@ export const docsTranslations = {
     mechaRounds45: "第4-5轮：1.8倍赔率",
     mechaRounds67: "第6-7轮：2.0倍赔率",
     mechaTieBet: "平局投注：3.5倍赔率",
-    mechaDailyBoost: "🔥 每日加成",
+    mechaDailyBoost: "每日加成",
     mechaDailyBoostDesc: "每天，一个竞技场收藏获得+0.5倍赔率加成！寻找HOT标志。",
     mechaCollections: "收藏",
 
@@ -1467,7 +1467,7 @@ export const docsTranslations = {
 
     // VibeFID section
     vibeFID: "🆔 VibeFID",
-    vibeFIDIntro: "铸造您独特的Farcaster身份卡！您的Neynar分数决定稀有度，铸造价格0.0004 ETH。",
+    vibeFIDIntro: "铸造您独特的Farcaster身份卡！您的Neynar分数决定稀有度，铸造价格0.0003 ETH。",
     vibeFIDHowItWorks: "如何运作",
     vibeFIDStep1: "通过Farcaster连接以铸造您的VibeFID卡",
     vibeFIDStep2: "您的Neynar分数决定卡牌稀有度",
@@ -1485,9 +1485,9 @@ export const docsTranslations = {
     vibeFIDTier3: "20,001 - 100,000: 混合机会",
     vibeFIDTier4: "> 100,000: 较低的稀有特性机会",
     vibeFIDBenefits: "VibeFID福利",
-    vibeFIDBenefit1: "⚡ 力量加成: 所有卡牌+10%力量",
-    vibeFIDBenefit2: "♾️ 无限能量: 战斗无能量限制",
-    vibeFIDBenefit3: "🃏 无卡组限制: 在卡组中使用任何卡牌",
+    vibeFIDBenefit1: "力量加成: 所有卡牌+10%力量",
+    vibeFIDBenefit2: "无限能量: 战斗无能量限制",
+    vibeFIDBenefit3: "无卡组限制: 在卡组中使用任何卡牌",
   },
   "id": {
     // Navigation
@@ -1674,7 +1674,7 @@ export const docsTranslations = {
     mechaRounds45: "Ronde 4-5: odds 1.8x",
     mechaRounds67: "Ronde 6-7: odds 2.0x",
     mechaTieBet: "Taruhan Seri: odds 3.5x",
-    mechaDailyBoost: "🔥 Boost Harian",
+    mechaDailyBoost: "Boost Harian",
     mechaDailyBoostDesc: "Setiap hari, satu koleksi arena dapat bonus odds +0.5x! Cari badge HOT.",
     mechaCollections: "Koleksi",
 
@@ -1703,7 +1703,7 @@ export const docsTranslations = {
     vibeFIDStep1: "Hubungkan akun Farcaster kamu",
     vibeFIDStep2: "Neynar Score menentukan kelangkaan kartu (berdasarkan followers, casts, reactions)",
     vibeFIDStep3: "Nomor FID menentukan suit, foil, dan traits kondisi",
-    vibeFIDStep4: "Bayar 0.0004 ETH untuk mint kartu VibeFID unik di Base",
+    vibeFIDStep4: "Bayar 0.0003 ETH untuk mint kartu VibeFID unik di Base",
     vibeFIDNeynarScore: "Neynar Score → Kelangkaan",
     vibeFIDMythic: "Mythic (≥ 0.99): 800 power dasar - Top 1% pengguna Farcaster",
     vibeFIDLegendary: "Legendary (≥ 0.90): 240 power dasar - Top 10%",
@@ -1716,9 +1716,9 @@ export const docsTranslations = {
     vibeFIDTier3: "20,001 - 100,000: Peluang campuran untuk traits langka",
     vibeFIDTier4: "> 100,000: Distribusi trait standar",
     vibeFIDBenefits: "Manfaat Pemilik VibeFID",
-    vibeFIDBenefit1: "⚡ Boost Power: Kartu VibeFID dapat bonus pengali power di pertempuran",
-    vibeFIDBenefit2: "♾️ Energi Tak Terbatas: Kartu VibeFID tidak pernah kehabisan energi - selalu siap bertempur",
-    vibeFIDBenefit3: "🃏 Tanpa Batasan Deck: Bisa digunakan di deck manapun tanpa batasan koleksi",
+    vibeFIDBenefit1: "Boost Power: Kartu VibeFID dapat bonus pengali power di pertempuran",
+    vibeFIDBenefit2: "Energi Tak Terbatas: Kartu VibeFID tidak pernah kehabisan energi - selalu siap bertempur",
+    vibeFIDBenefit3: "Tanpa Batasan Deck: Bisa digunakan di deck manapun tanpa batasan koleksi",
   },
   "fr": {
     // Navigation
@@ -1905,7 +1905,7 @@ export const docsTranslations = {
     mechaRounds45: "Rounds 4-5 : cotes 1.8x",
     mechaRounds67: "Rounds 6-7 : cotes 2.0x",
     mechaTieBet: "Pari Égalité : cotes 3.5x",
-    mechaDailyBoost: "🔥 Boost Quotidien",
+    mechaDailyBoost: "Boost Quotidien",
     mechaDailyBoostDesc: "Chaque jour, une collection d'arène obtient +0.5x bonus de cotes ! Cherchez le badge HOT.",
     mechaCollections: "Collections",
 
@@ -1934,7 +1934,7 @@ export const docsTranslations = {
     vibeFIDStep1: "Connectez votre compte Farcaster",
     vibeFIDStep2: "Votre Score Neynar détermine la rareté de la carte (basé sur followers, casts, réactions)",
     vibeFIDStep3: "Votre numéro FID détermine les traits de couleur, foil et usure",
-    vibeFIDStep4: "Payez 0.0004 ETH pour mint votre carte VibeFID unique sur Base",
+    vibeFIDStep4: "Payez 0.0003 ETH pour mint votre carte VibeFID unique sur Base",
     vibeFIDNeynarScore: "Score Neynar → Rareté",
     vibeFIDMythic: "Mythic (≥ 0.99) : 800 puissance de base - Top 1% des utilisateurs Farcaster",
     vibeFIDLegendary: "Legendary (≥ 0.90) : 240 puissance de base - Top 10%",
@@ -1947,9 +1947,9 @@ export const docsTranslations = {
     vibeFIDTier3: "20,001 - 100,000 : Chances mixtes pour traits rares",
     vibeFIDTier4: "> 100,000 : Distribution standard des traits",
     vibeFIDBenefits: "Avantages des Détenteurs VibeFID",
-    vibeFIDBenefit1: "⚡ Boost de Puissance : Les cartes VibeFID reçoivent des multiplicateurs de puissance bonus en combat",
-    vibeFIDBenefit2: "♾️ Énergie Infinie : Votre carte VibeFID ne manque jamais d'énergie - toujours prête à combattre",
-    vibeFIDBenefit3: "🃏 Sans Restriction de Deck : Peut être utilisée dans n'importe quel deck sans restriction de collection",
+    vibeFIDBenefit1: "Boost de Puissance : Les cartes VibeFID reçoivent des multiplicateurs de puissance bonus en combat",
+    vibeFIDBenefit2: "Énergie Infinie : Votre carte VibeFID ne manque jamais d'énergie - toujours prête à combattre",
+    vibeFIDBenefit3: "Sans Restriction de Deck : Peut être utilisée dans n'importe quel deck sans restriction de collection",
   },
   "it": {
     // Navigation
@@ -2136,7 +2136,7 @@ export const docsTranslations = {
     mechaRounds45: "Round 4-5: quote 1.8x",
     mechaRounds67: "Round 6-7: quote 2.0x",
     mechaTieBet: "Scommessa Pareggio: quote 3.5x",
-    mechaDailyBoost: "🔥 Boost Giornaliero",
+    mechaDailyBoost: "Boost Giornaliero",
     mechaDailyBoostDesc: "Ogni giorno, una collezione dell'arena ottiene +0.5x quote bonus! Cerca il badge HOT.",
     mechaCollections: "Collezioni",
 
@@ -2165,7 +2165,7 @@ export const docsTranslations = {
     vibeFIDStep1: "Connetti il tuo account Farcaster",
     vibeFIDStep2: "Il tuo Punteggio Neynar determina la rarità della carta (basato su follower, cast, reazioni)",
     vibeFIDStep3: "Il tuo numero FID determina i tratti di seme, foil e usura",
-    vibeFIDStep4: "Paga 0.0004 ETH per mintare la tua carta VibeFID unica su Base",
+    vibeFIDStep4: "Paga 0.0003 ETH per mintare la tua carta VibeFID unica su Base",
     vibeFIDNeynarScore: "Punteggio Neynar → Rarità",
     vibeFIDMythic: "Mitica (≥ 0.99): 800 potenza base - Top 1% utenti Farcaster",
     vibeFIDLegendary: "Leggendaria (≥ 0.90): 240 potenza base - Top 10%",
@@ -2178,9 +2178,9 @@ export const docsTranslations = {
     vibeFIDTier3: "20.001 - 100.000: Probabilità miste per tratti rari",
     vibeFIDTier4: "> 100.000: Distribuzione tratti standard",
     vibeFIDBenefits: "Vantaggi Possessori VibeFID",
-    vibeFIDBenefit1: "⚡ Boost Potenza: Le carte VibeFID ricevono moltiplicatori bonus di potenza in battaglia",
-    vibeFIDBenefit2: "♾️ Energia Infinita: La tua carta VibeFID non esaurisce mai l'energia - sempre pronta a combattere",
-    vibeFIDBenefit3: "🃏 Nessuna Restrizione Mazzo: Può essere usata in qualsiasi mazzo senza restrizioni di collezione",
+    vibeFIDBenefit1: "Boost Potenza: Le carte VibeFID ricevono moltiplicatori bonus di potenza in battaglia",
+    vibeFIDBenefit2: "Energia Infinita: La tua carta VibeFID non esaurisce mai l'energia - sempre pronta a combattere",
+    vibeFIDBenefit3: "Nessuna Restrizione Mazzo: Può essere usata in qualsiasi mazzo senza restrizioni di collezione",
   },
 };
 

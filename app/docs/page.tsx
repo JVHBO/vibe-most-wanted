@@ -6,7 +6,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { docsTranslations, type DocsSupportedLanguage, type DocsTranslationKey } from "@/lib/docs-translations";
 import { AudioManager } from "@/lib/audio-manager";
 
-type DocSection = "economy" | "battles" | "poker" | "mecha" | "raidboss" | "vibefid" | "quests" | "cards" | "faq" | "baccarat" | "aura" | "socialquests" | "arbitrum" | "vibemail";
+type DocSection = "economy" | "battles" | "poker" | "mecha" | "raidboss" | "vibefid" | "quests" | "cards" | "faq" | "baccarat" | "aura" | "socialquests" | "vibemail";
 
 const languages = [
   { code: 'en', label: 'EN' },
@@ -43,7 +43,6 @@ export default function DocsPage() {
     { id: "faq", label: t("faq") },
     { id: "aura", label: t("aura") },
     { id: "socialquests", label: t("socialquests") },
-    { id: "arbitrum", label: t("arbitrum") },
     { id: "vibemail", label: t("vibemail") },
   ];
 
@@ -428,27 +427,6 @@ export default function DocsPage() {
             </div>
           )}
 
-          {/* Arbitrum */}
-          {activeSection === "arbitrum" && (
-            <div>
-              <h2 className="text-xl font-display font-bold text-vintage-gold mb-3 uppercase">{t("arbitrum")}</h2>
-              <div className="space-y-3 text-sm text-white/90">
-                <p>{t("arbitrumIntro")}</p>
-                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("arbitrumHowItWorks")}</h3>
-                <ul className="list-disc list-inside space-y-1.5">
-                  <li>{t("arbitrumStep1")}</li>
-                  <li>{t("arbitrumStep2")}</li>
-                  <li>{t("arbitrumStep3")}</li>
-                </ul>
-                <h3 className="text-base font-bold text-vintage-gold mt-4">{t("arbitrumBenefits")}</h3>
-                <ul className="list-disc list-inside space-y-1.5">
-                  <li>{t("arbitrumBenefit1")}</li>
-                  <li>{t("arbitrumBenefit2")}</li>
-                  <li>{t("arbitrumBenefit3")}</li>
-                </ul>
-              </div>
-            </div>
-          )}
 
           {/* VibeMail */}
           {activeSection === "vibemail" && (
