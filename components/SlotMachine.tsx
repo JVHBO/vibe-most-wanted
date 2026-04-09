@@ -850,40 +850,28 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
                 ref={card3DInnerRef}
                 style={{ width: '100%', height: '100%', position: 'relative', transformStyle: 'preserve-3d', transform: 'rotateY(0deg) rotateX(0deg)', transition: 'transform 0.05s ease-out' }}
               >
-                {/* FRONT — imagem da carta com borda de raridade */}
+                {/* FRONT — igual ao raffle: imagem preenchendo tudo, sem label */}
                 <div style={{
                   position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' as any,
                   borderRadius: 12, overflow: 'hidden',
-                  border: `${(RS[card3D.card.rarity] ?? RS.Common).borderW + 1}px solid ${(RS[card3D.card.rarity] ?? RS.Common).border}`,
-                  boxShadow: `0 0 30px ${(RS[card3D.card.rarity] ?? RS.Common).border}88, 0 0 60px ${(RS[card3D.card.rarity] ?? RS.Common).border}44`,
-                  background: (RS[card3D.card.rarity] ?? RS.Common).bg,
-                  display: 'flex', flexDirection: 'column',
+                  boxShadow: `0 0 40px ${(RS[card3D.card.rarity] ?? RS.Common).border}88`,
+                  background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}>
-                  <div style={{ position: 'relative', flex: 1, overflow: 'hidden', background: '#111' }}>
-                    {card3D.img && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={card3D.img} alt={card3D.label} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', pointerEvents: 'none' }} />
-                    )}
-                    {card3D.card.hasFoil && <div className="prize-foil" />}
-                    {/* Rarity corner */}
-                    <div style={{ position: 'absolute', top: 0, left: 0, width: 28, height: 28, background: (RS[card3D.card.rarity] ?? RS.Common).cornerGrad }}>
-                      <span style={{ position: 'absolute', top: 2, left: 3, fontSize: 10, fontWeight: 900, color: (RS[card3D.card.rarity] ?? RS.Common).border }}>
-                        {(RS[card3D.card.rarity] ?? RS.Common).icon}
-                      </span>
-                    </div>
-                  </div>
-                  <div style={{ padding: '4px 8px', background: (RS[card3D.card.rarity] ?? RS.Common).labelBg, textAlign: 'center' }}>
-                    <span style={{ fontSize: 11, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>{card3D.label}</span>
-                  </div>
+                  {card3D.img && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={card3D.img} alt={card3D.label} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                  )}
+                  {card3D.card.hasFoil && <div className="prize-foil" style={{ borderRadius: 12 }} />}
                 </div>
-                {/* BACK */}
+                {/* BACK — igual ao raffle: scale(1.13) para cobrir bordas do formato */}
                 <div style={{
                   position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' as any,
                   transform: 'rotateY(180deg)', borderRadius: 12, overflow: 'hidden',
-                  boxShadow: '0 0 40px rgba(255,215,0,0.4)',
+                  boxShadow: '0 0 40px rgba(255,215,0,0.5)',
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/images/card-back.png" alt="Card Back" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', pointerEvents: 'none' }}
+                  <img src="/images/card-back.png" alt="Card Back" draggable={false}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.13) translateY(1.3%)', transformOrigin: 'center', pointerEvents: 'none' }}
                     onError={e => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }} />
                 </div>
               </div>
