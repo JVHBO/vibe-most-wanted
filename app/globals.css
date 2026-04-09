@@ -4,6 +4,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Bloqueia drag nativo de imagem em toda a app */
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-user-select: none;
+}
+
 /* Raffle card shine sweep */
 @keyframes card-shine {
   0%   { transform: translateX(-120%); }

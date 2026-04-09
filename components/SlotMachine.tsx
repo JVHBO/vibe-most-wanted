@@ -862,7 +862,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
                   <div style={{ position: 'relative', flex: 1, overflow: 'hidden', background: '#111' }}>
                     {card3D.img && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={card3D.img} alt={card3D.label} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }} />
+                      <img src={card3D.img} alt={card3D.label} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', pointerEvents: 'none' }} />
                     )}
                     {card3D.card.hasFoil && <div className="prize-foil" />}
                     {/* Rarity corner */}
@@ -883,7 +883,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
                   boxShadow: '0 0 40px rgba(255,215,0,0.4)',
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/images/card-back.png" alt="Card Back" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+                  <img src="/images/card-back.png" alt="Card Back" draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', pointerEvents: 'none' }}
                     onError={e => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }} />
                 </div>
               </div>
