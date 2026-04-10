@@ -7,6 +7,7 @@
 
 const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY || process.env.NEXT_PUBLIC_NEYNAR_API_KEY;
 const NEYNAR_API_BASE = 'https://api.neynar.com/v2';
+const HAATZ_BASE = 'https://haatz.quilibrium.com/v2';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 🚀 BANDWIDTH FIX: In-memory cache for API responses
@@ -69,18 +70,55 @@ export interface NeynarUserResponse {
 }
 
 /**
+ * Fetch user data by FID from Haatz (free, no API key required)
+ * Used as primary source to save Neynar credits.
+ * NOTE: Does NOT include neynar_user_score — use Neynar directly when score is needed.
+ */
+async function getUserByFidFromHaatz(fid: number): Promise<NeynarUser | null> {
+  try {
+    const response = await fetch(
+      `${HAATZ_BASE}/farcaster/user/bulk?fids=${fid}`,
+      {
+        headers: { 'accept': 'application/json' },
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+    if (!response.ok) return null;
+    const data = await response.json();
+    const user = data.users?.[0];
+    if (!user) return null;
+    return {
+      ...user,
+      power_badge: user.power_badge ?? false,
+      experimental: { neynar_user_score: 0 },
+    } as NeynarUser;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Fetch user data by FID
+ * 🚀 Tries Haatz first (free), falls back to Neynar.
  * 🚀 BANDWIDTH FIX: Uses 10-minute cache for user data
  */
 export async function getUserByFid(fid: number): Promise<NeynarUser | null> {
-  if (!NEYNAR_API_KEY) {
-    throw new Error('NEYNAR_API_KEY is not configured');
-  }
-
-  // 🚀 BANDWIDTH FIX: Check cache first
+  // Check cache first
   const cached = getFromCache<NeynarUser>(userCache, fid);
   if (cached) {
     return cached;
+  }
+
+  // Try Haatz first (free, no API key)
+  const haatzUser = await getUserByFidFromHaatz(fid);
+  if (haatzUser) {
+    setInCache(userCache, fid, haatzUser, USER_CACHE_TTL);
+    return haatzUser;
+  }
+
+  // Fallback to Neynar
+  if (!NEYNAR_API_KEY) {
+    throw new Error('NEYNAR_API_KEY is not configured');
   }
 
   try {
@@ -107,7 +145,6 @@ export async function getUserByFid(fid: number): Promise<NeynarUser | null> {
     }
 
     const user = data.users[0];
-    // 🚀 BANDWIDTH FIX: Cache for 10 minutes
     setInCache(userCache, fid, user, USER_CACHE_TTL);
     return user;
   } catch (error) {

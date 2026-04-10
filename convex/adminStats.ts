@@ -129,15 +129,15 @@ export const getOverview = query({
   },
 });
 
-// ─── Top Neynar Users ────────────────────────────────────────────────────────
+// ─── All Neynar Users (ordered by score desc) ────────────────────────────────
 
 export const getTopNeynarUsers = query({
   args: {},
   handler: async (ctx) => {
     return ctx.db.query("farcasterCards")
-      .withIndex("by_score", q => q.gte("neynarScore", 0.9))
+      .withIndex("by_score")
       .order("desc")
-      .take(100);
+      .take(2000);
   },
 });
 

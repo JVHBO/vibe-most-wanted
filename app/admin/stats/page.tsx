@@ -427,7 +427,7 @@ export default function AdminStatsPage() {
         </Section>
 
         {/* ── Neynar Score Table ───────────────────────────────────────────── */}
-        <Section title={`Top Neynar Score ≥ 0.9 (${neynar.length} users)`}>
+        <Section title={`Todos os usuários VibeFID por Neynar Score (${neynar.length} users)`}>
           {neynarLoading ? (
             <div className="border-2 border-black p-8 text-center text-sm text-gray-500">Carregando scores...</div>
           ) : neynar.length === 0 ? (
@@ -516,9 +516,9 @@ export default function AdminStatsPage() {
               </div>
             </div>
 
-            <div className="p-4 space-y-6">
+            <div className="p-4 space-y-6 bg-white">
               {devLoading ? (
-                <div className="text-sm text-gray-400 text-center py-8">Carregando dados do dev panel...</div>
+                <div className="text-sm text-gray-600 text-center py-8">Carregando dados do dev panel...</div>
               ) : (
                 <>
 
@@ -526,7 +526,7 @@ export default function AdminStatsPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                     {/* CONVEX */}
-                    <ServiceCard name="Convex" accent="bg-[#1a1a2e]" status={apiStats.length > 0 ? "ok" : "unknown"}>
+                    <ServiceCard name="Convex" accent="bg-indigo-50" status={apiStats.length > 0 ? "ok" : "unknown"}>
                       <KV k="Deployment" v="prod:agile-orca-761" />
                       <KV k="Schema tables" v="50+ tabelas" />
                       <KV k="Plan" v="Pro (pay per use)" />
@@ -544,7 +544,7 @@ export default function AdminStatsPage() {
                       </div>
                       {/* API Stats summary */}
                       <div className="mt-2 border border-gray-700 rounded overflow-hidden">
-                        <div className="bg-gray-800 text-gray-300 text-[9px] font-black uppercase px-2 py-1 flex justify-between">
+                        <div className="bg-gray-200 text-gray-700 text-[9px] font-black uppercase px-2 py-1 flex justify-between">
                           <span>API Counters ({apiStats.length} chaves)</span>
                           <span>Valor</span>
                         </div>
@@ -555,10 +555,10 @@ export default function AdminStatsPage() {
                             apiStats.map((s, i) => (
                               <div
                                 key={s._id}
-                                className={`flex justify-between px-2 py-1 text-[10px] ${i % 2 === 0 ? "bg-[#111]" : "bg-[#1a1a1a]"} ${s.value === 0 ? "opacity-30" : ""}`}
+                                className={`flex justify-between px-2 py-1 text-[10px] ${i % 2 === 0 ? "bg-white" : "bg-gray-50"} ${s.value === 0 ? "opacity-30" : ""}`}
                               >
-                                <span className="font-mono text-gray-400">{s.key}</span>
-                                <span className={`font-black font-mono ${s.value > 5000 ? "text-red-400" : s.value > 1000 ? "text-orange-400" : s.value > 100 ? "text-yellow-400" : "text-green-400"}`}>
+                                <span className="font-mono text-gray-600">{s.key}</span>
+                                <span className={`font-black font-mono ${s.value > 5000 ? "text-red-600" : s.value > 1000 ? "text-orange-500" : s.value > 100 ? "text-yellow-600" : "text-green-700"}`}>
                                   {s.value.toLocaleString()}
                                 </span>
                               </div>
@@ -569,7 +569,7 @@ export default function AdminStatsPage() {
                     </ServiceCard>
 
                     {/* VERCEL */}
-                    <ServiceCard name="Vercel" accent="bg-[#0d0d0d]" status="ok">
+                    <ServiceCard name="Vercel" accent="bg-gray-50" status="ok">
                       <KV k="Project" v="vibemostwanted.xyz" />
                       <KV k="Framework" v="Next.js 15" />
                       <KV k="Plan" v="Verificar dashboard" mono={false} />
@@ -624,7 +624,7 @@ export default function AdminStatsPage() {
                     {/* NEYNAR */}
                     <ServiceCard
                       name="Neynar API"
-                      accent="bg-[#1a1000]"
+                      accent="bg-amber-50"
                       status={
                         liveData?.neynar?.error ? "error" :
                         liveData?.neynar?.remaining && parseInt(liveData.neynar.remaining) < 10 ? "warn" :
@@ -664,7 +664,7 @@ export default function AdminStatsPage() {
                     </ServiceCard>
 
                     {/* ALCHEMY */}
-                    <ServiceCard name="Alchemy RPC" accent="bg-[#0a0a1a]" status="ok">
+                    <ServiceCard name="Alchemy RPC" accent="bg-blue-50" status="ok">
                       <KV k="Chain" v={liveData?.alchemy?.chain ?? "base-mainnet"} />
                       <KV k="API Key" v={liveData?.alchemy?.hasKey ? "✓ Configurada" : "✗ Faltando"} />
                       <KV k="Webhook Key" v={liveData?.alchemy?.hasKey ? "✓ Configurada" : "—"} />
@@ -697,7 +697,7 @@ export default function AdminStatsPage() {
                     {/* FILEBASE */}
                     <ServiceCard
                       name="Filebase (IPFS Storage)"
-                      accent="bg-[#0a1a0a]"
+                      accent="bg-green-50"
                       status={
                         liveData?.filebase?.error ? "error" :
                         (liveData?.filebase?.totalObjects ?? 0) > 900 ? "warn" : "ok"
@@ -743,7 +743,7 @@ export default function AdminStatsPage() {
                     <div className="space-y-4">
                       <ServiceCard
                         name="Wield API"
-                        accent="bg-[#1a0a1a]"
+                        accent="bg-purple-50"
                         status={liveData?.wield?.error ? "error" : liveData?.wield?.ok ? "ok" : "unknown"}
                       >
                         {liveData?.wield?.error ? (
@@ -761,7 +761,7 @@ export default function AdminStatsPage() {
 
                       <ServiceCard
                         name="OpenSea API"
-                        accent="bg-[#0a0a1a]"
+                        accent="bg-cyan-50"
                         status={liveData?.opensea?.error ? "error" : liveData?.opensea?.ok ? "ok" : "unknown"}
                       >
                         {liveData?.opensea?.error ? (
@@ -780,8 +780,8 @@ export default function AdminStatsPage() {
                   </div>
 
                   {/* ── ROW 4: Resumo de limites críticos ────────────────────────── */}
-                  <div className="border border-red-800 rounded-sm p-3 bg-[#1a0000]">
-                    <div className="text-red-400 font-black text-xs uppercase mb-3 flex items-center gap-2">
+                  <div className="border-2 border-red-500 rounded-sm p-3 bg-red-50">
+                    <div className="text-red-700 font-black text-xs uppercase mb-3 flex items-center gap-2">
                       <span>⚠</span>
                       <span>Resumo de Limites — Alertas</span>
                     </div>
@@ -829,20 +829,20 @@ export default function AdminStatsPage() {
                         <div
                           key={service}
                           className={`p-2 rounded border ${
-                            risk === "alto"   ? "border-red-600 bg-red-950" :
-                            risk === "médio"  ? "border-yellow-700 bg-yellow-950" :
-                            "border-gray-700 bg-gray-900"
+                            risk === "alto"   ? "border-red-400 bg-red-100" :
+                            risk === "médio"  ? "border-yellow-400 bg-yellow-50" :
+                            "border-gray-300 bg-white"
                           }`}
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-black text-white">{service}</span>
+                            <span className="font-black text-gray-900">{service}</span>
                             <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
                               risk === "alto"  ? "bg-red-500 text-white" :
-                              risk === "médio" ? "bg-yellow-500 text-black" :
-                              "bg-gray-600 text-gray-300"
+                              risk === "médio" ? "bg-yellow-400 text-black" :
+                              "bg-gray-200 text-gray-700"
                             }`}>{risk.toUpperCase()}</span>
                           </div>
-                          <div className="text-gray-400 text-[10px]">{limit}</div>
+                          <div className="text-gray-600 text-[10px]">{limit}</div>
                           <div className="text-gray-500 text-[9px] mt-0.5 italic">{action}</div>
                         </div>
                       ))}
