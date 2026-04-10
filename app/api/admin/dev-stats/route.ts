@@ -119,8 +119,7 @@ export async function GET(req: NextRequest) {
         totalSizeBytes,
         totalSizeMB: Math.round(totalSizeBytes / 1024 / 1024),
         estimatedMints,
-        // Filebase free: 1TB storage. Warn at 800GB.
-        storageLimitBytes: 1_000_000_000_000,
+        storageLimitBytes: 1_000_000_000_000, // 1TB free
       };
     } else {
       results.filebase = { error: "Missing Filebase credentials" };

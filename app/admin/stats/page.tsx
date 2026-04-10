@@ -210,6 +210,9 @@ export default function AdminStatsPage() {
   const [neynarLoading, setNeynarLoading] = useState(true);
   const [devLoading,    setDevLoading]    = useState(true);
   const [liveLoading,   setLiveLoading]   = useState(false);
+  const [neynarPage,    setNeynarPage]    = useState(0);
+
+  const PAGE_SIZE = 100;
 
   const resetStats = useMutation(api.adminStats.resetApiStats);
   const [resetting, setResetting] = useState(false);
@@ -427,59 +430,129 @@ export default function AdminStatsPage() {
         </Section>
 
         {/* ── Neynar Score Table ───────────────────────────────────────────── */}
-        <Section title={`Todos os usuários VibeFID por Neynar Score (${neynar.length} users)`}>
+        <Section title={`Todos os usuários VibeFID por Neynar Score (${neynar.length} total)`}>
           {neynarLoading ? (
-            <div className="border-2 border-black p-8 text-center text-sm text-gray-500">Carregando scores...</div>
+            <div className="border-2 border-black p-8 text-center text-sm text-gray-500">Carregando...</div>
           ) : neynar.length === 0 ? (
-            <div className="border-2 border-black p-8 text-center text-sm text-gray-500">Nenhum usuário com score ≥ 0.9</div>
-          ) : (
-            <div className="border-2 border-black shadow-[4px_4px_0px_#000] overflow-x-auto">
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="bg-black text-yellow-400 uppercase">
-                    <th className="px-3 py-2 text-left font-black w-8">#</th>
-                    <th className="px-3 py-2 text-left font-black">User</th>
-                    <th className="px-3 py-2 text-left font-black">FID</th>
-                    <th className="px-3 py-2 text-right font-black">Score</th>
-                    <th className="px-3 py-2 text-left font-black">Rarity</th>
-                    <th className="px-3 py-2 text-right font-black">Followers</th>
-                    <th className="px-3 py-2 text-center font-black">Badge</th>
-                    <th className="px-3 py-2 text-left font-black">Chain</th>
-                    <th className="px-3 py-2 text-left font-black">Minted</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {neynar.map((u, i) => (
-                    <tr key={u._id} className={`border-t border-gray-200 hover:bg-yellow-50 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
-                      <td className="px-3 py-2 font-black text-gray-400">{i + 1}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          {u.pfpUrl && <img src={u.pfpUrl} alt="" className="w-5 h-5 rounded-full border border-black" />}
-                          <div>
-                            <div className="font-black">{u.username}</div>
-                            <div className="text-gray-400 text-[10px]">{u.displayName}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 font-mono text-gray-600">{u.fid}</td>
-                      <td className="px-3 py-2 text-right font-black text-green-700">{u.neynarScore.toFixed(4)}</td>
-                      <td className="px-3 py-2">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black ${RARITY_COLOR[u.rarity] ?? "bg-gray-100"}`}>
-                          {u.rarity}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 text-right font-mono">{fmt(u.followerCount)}</td>
-                      <td className="px-3 py-2 text-center">
-                        {u.powerBadge ? <span className="text-yellow-500 font-black">★</span> : <span className="text-gray-300">—</span>}
-                      </td>
-                      <td className="px-3 py-2 text-gray-500 uppercase text-[10px]">{u.chain || "base"}</td>
-                      <td className="px-3 py-2 text-gray-400 text-[10px]">{fmtDate(u.mintedAt)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+            <div className="border-2 border-black p-8 text-center text-sm text-gray-500">Nenhum usuário encontrado</div>
+          ) : (() => {
+            const totalPages = Math.ceil(neynar.length / PAGE_SIZE);
+            const pageUsers  = neynar.slice(neynarPage * PAGE_SIZE, (neynarPage + 1) * PAGE_SIZE);
+            const startIdx   = neynarPage * PAGE_SIZE;
+            return (
+              <>
+                {/* Pagination controls — top */}
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-gray-500 font-mono">
+                    Mostrando {startIdx + 1}–{Math.min(startIdx + PAGE_SIZE, neynar.length)} de {neynar.length}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => setNeynarPage(0)}
+                      disabled={neynarPage === 0}
+                      className="text-[10px] font-black border-2 border-black px-2 py-1 bg-white shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >«</button>
+                    <button
+                      onClick={() => setNeynarPage(p => Math.max(0, p - 1))}
+                      disabled={neynarPage === 0}
+                      className="text-[10px] font-black border-2 border-black px-2 py-1 bg-white shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >‹</button>
+                    {/* Page numbers — show up to 7 around current */}
+                    {Array.from({ length: totalPages }, (_, i) => i)
+                      .filter(i => Math.abs(i - neynarPage) <= 3)
+                      .map(i => (
+                        <button
+                          key={i}
+                          onClick={() => setNeynarPage(i)}
+                          className={`text-[10px] font-black border-2 border-black px-2 py-1 transition-all ${
+                            i === neynarPage
+                              ? "bg-black text-yellow-400 shadow-none"
+                              : "bg-white shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
+                          }`}
+                        >{i + 1}</button>
+                      ))}
+                    <button
+                      onClick={() => setNeynarPage(p => Math.min(totalPages - 1, p + 1))}
+                      disabled={neynarPage >= totalPages - 1}
+                      className="text-[10px] font-black border-2 border-black px-2 py-1 bg-white shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >›</button>
+                    <button
+                      onClick={() => setNeynarPage(totalPages - 1)}
+                      disabled={neynarPage >= totalPages - 1}
+                      className="text-[10px] font-black border-2 border-black px-2 py-1 bg-white shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >»</button>
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className="border-2 border-black shadow-[4px_4px_0px_#000] overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="bg-black text-yellow-400 uppercase">
+                        <th className="px-3 py-2 text-left font-black w-8">#</th>
+                        <th className="px-3 py-2 text-left font-black">User</th>
+                        <th className="px-3 py-2 text-left font-black">FID</th>
+                        <th className="px-3 py-2 text-right font-black">Score</th>
+                        <th className="px-3 py-2 text-left font-black">Rarity</th>
+                        <th className="px-3 py-2 text-right font-black">Followers</th>
+                        <th className="px-3 py-2 text-center font-black">Badge</th>
+                        <th className="px-3 py-2 text-left font-black">Chain</th>
+                        <th className="px-3 py-2 text-left font-black">Minted</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pageUsers.map((u, i) => (
+                        <tr key={u._id} className={`border-t border-gray-200 hover:bg-yellow-50 ${i % 2 === 0 ? "bg-white" : "bg-gray-50"}`}>
+                          <td className="px-3 py-2 font-black text-gray-400">{startIdx + i + 1}</td>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              {u.pfpUrl && <img src={u.pfpUrl} alt="" className="w-5 h-5 rounded-full border border-black" />}
+                              <div>
+                                <div className="font-black">{u.username}</div>
+                                <div className="text-gray-400 text-[10px]">{u.displayName}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 font-mono text-gray-600">{u.fid}</td>
+                          <td className="px-3 py-2 text-right font-black text-green-700">{u.neynarScore.toFixed(4)}</td>
+                          <td className="px-3 py-2">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-black ${RARITY_COLOR[u.rarity] ?? "bg-gray-100"}`}>
+                              {u.rarity}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2 text-right font-mono">{fmt(u.followerCount)}</td>
+                          <td className="px-3 py-2 text-center">
+                            {u.powerBadge ? <span className="text-yellow-500 font-black">★</span> : <span className="text-gray-300">—</span>}
+                          </td>
+                          <td className="px-3 py-2 text-gray-500 uppercase text-[10px]">{u.chain || "base"}</td>
+                          <td className="px-3 py-2 text-gray-400 text-[10px]">{fmtDate(u.mintedAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Pagination controls — bottom */}
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-500 font-mono">
+                    Página {neynarPage + 1} de {totalPages} · 100 por página
+                  </span>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setNeynarPage(p => Math.max(0, p - 1))}
+                      disabled={neynarPage === 0}
+                      className="text-[10px] font-black border-2 border-black px-3 py-1 bg-white shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >← Anterior</button>
+                    <button
+                      onClick={() => setNeynarPage(p => Math.min(totalPages - 1, p + 1))}
+                      disabled={neynarPage >= totalPages - 1}
+                      className="text-[10px] font-black border-2 border-black px-3 py-1 bg-white shadow-[2px_2px_0px_#000] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    >Próxima →</button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </Section>
 
         {/* ════════════════════════════════════════════════════════════════════ */}
@@ -526,9 +599,14 @@ export default function AdminStatsPage() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
                     {/* CONVEX */}
-                    <ServiceCard name="Convex" accent="bg-indigo-50" status={apiStats.length > 0 ? "ok" : "unknown"}>
+                    <ServiceCard name="Convex (2 deployments)" accent="bg-indigo-50" status={apiStats.length > 0 ? "ok" : "unknown"}>
+                      <div className="text-[9px] font-black uppercase text-indigo-600 mb-1">VMW — Principal</div>
                       <KV k="Deployment" v="prod:agile-orca-761" />
-                      <KV k="Schema tables" v="50+ tabelas" />
+                      <KV k="URL" v="agile-orca-761.convex.cloud" />
+                      <div className="text-[9px] font-black uppercase text-purple-600 mb-1 mt-2 border-t border-indigo-200 pt-2">VibeFID — Secundário</div>
+                      <KV k="Deployment" v="prod:scintillating-mandrill-101" />
+                      <KV k="URL" v="scintillating-mandrill-101.convex.cloud" />
+                      <KV k="Arquivos ativos" v="convex/farcasterCards.ts" />
                       <KV k="Plan" v="Pro (pay per use)" />
                       <div className="pt-1 space-y-2">
                         <UsageBar
@@ -733,7 +811,7 @@ export default function AdminStatsPage() {
                             <KV k="Capacidade restante" v={`~${Math.floor(((3000 - (liveData?.filebase?.totalObjects ?? 0)) / 3))} mints`} mono={false} />
                           </div>
                           <div className="mt-2 text-[9px] text-gray-500 italic">
-                            4 contas total (490/490/462/0) · Novos mints → test33 · card-* NUNCA DELETAR
+                            card-* NUNCA DELETAR
                           </div>
                         </>
                       )}
