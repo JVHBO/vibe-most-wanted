@@ -137,7 +137,7 @@ export const getTopNeynarUsers = query({
     return ctx.db.query("farcasterCards")
       .withIndex("by_score")
       .order("desc")
-      .take(2000);
+      .take(10000);
   },
 });
 
