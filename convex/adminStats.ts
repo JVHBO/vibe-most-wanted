@@ -5,6 +5,7 @@
  */
 
 import { mutation, query } from "./_generated/server";
+import { v } from "convex/values";
 
 // ─── Overview ────────────────────────────────────────────────────────────────
 
@@ -150,9 +151,14 @@ export const getApiStats = query({
   },
 });
 
+const OWNER = "0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52";
+
 export const resetApiStats = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: { callerAddress: v.string() },
+  handler: async (ctx, args) => {
+    if (args.callerAddress.toLowerCase() !== OWNER) {
+      throw new Error("Unauthorized");
+    }
     const stats = await ctx.db.query("apiStats").collect();
     for (const stat of stats) {
       await ctx.db.patch(stat._id, { value: 0, lastUpdated: Date.now() });

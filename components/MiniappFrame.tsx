@@ -173,7 +173,11 @@ export function MiniappFrame({ children }: { children: React.ReactNode }) {
   };
 
   // Pages that should never be wrapped in the phone frame
-  if (pathname === '/device-test' || pathname === '/design-test') {
+  if (
+    pathname === '/device-test' ||
+    pathname === '/design-test' ||
+    pathname.startsWith('/admin/')
+  ) {
     return <MiniappFrameContext.Provider value={false}>{children}</MiniappFrameContext.Provider>;
   }
 
