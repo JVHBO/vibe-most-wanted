@@ -25,7 +25,7 @@ const DEPOSIT_MAX = 1000;
 // Translations
 const translations = {
   en: {
-    title: "Vibe Slots",
+    title: "Tukka Slots",
     back: "Back",
     credits: "Credits",
     vbms: "VBMS",
@@ -51,7 +51,7 @@ const translations = {
     ],
   },
   pt: {
-    title: "Vibe Slots",
+    title: "Tukka Slots",
     back: "Voltar",
     credits: "Créditos",
     vbms: "VBMS",
@@ -315,8 +315,21 @@ export default function SlotPage() {
           <Link href="/" className="text-sm font-medium" style={{ color: 'rgba(255,215,0,0.7)' }}>
             ← {tr("back")}
           </Link>
-          <div className="flex-1 text-center">
-            <h1 className="text-lg font-bold tracking-widest uppercase" style={{ fontFamily: 'var(--font-cinzel)', color: '#FFD700', letterSpacing: '0.2em' }}>
+          <div className="flex-1 text-center relative">
+            <h1 className="text-2xl font-extrabold tracking-tighter" style={{
+              fontFamily: 'var(--font-cinzel)',
+              color: 'transparent',
+              letterSpacing: '-0.05em',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundImage: 'url("/slot-gifs/gen4-turbo-idle-breathing.gif")',
+              backgroundSize: '80% 80%', /* Decreased zoom - shows more of the GIF with spacing */
+              backgroundPosition: 'center top',
+              backgroundRepeat: 'no-repeat',
+              backgroundBlendMode: 'overlay',
+              textShadow: '0 0 2px rgba(0,0,0,0.5)',
+              transform: 'scaleY(1.2)' /* Vertically stretch the text */
+            }}>
               {tr("title")}
             </h1>
           </div>
