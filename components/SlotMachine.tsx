@@ -8,13 +8,14 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "sonner";
 import { getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
 import { playTrackedAudio } from "@/lib/tcg/audio";
+import { useMusic } from "@/contexts/MusicContext";
 
 const COLS = 5;
 const ROWS = 3;
 const TOTAL_CELLS = COLS * ROWS;
 const BET_OPTIONS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 const BONUS_COST_MULT = 5; // BUY BONUS = 5× bet atual
-const BONUS_FREE_SPINS = 5;
+const BONUS_FREE_SPINS = 10;
 const BONUS_FOIL_COUNT = 4;
 
 // GIF de cassino para VBMS Special (slot animation)
@@ -287,6 +288,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const [foilCountDisplay, setFoilCountDisplay] = useState(0);
   const [showBonusAnimation, setShowBonusAnimation] = useState(false);
   const [comboDisplay, setComboDisplay] = useState<{ name: string; audio: string; color: string; winAmt: number } | null>(null);
+  const { pause: pauseBgm, play: playBgm, isPaused: bgmIsPaused } = useMusic();
   const [deceleratingCols, setDeceleratingCols] = useState<Set<number>>(new Set());
   const [foilSuspenseCols, setFoilSuspenseCols]   = useState<Set<number>>(new Set()); // cols glowing with foil suspense
   const [epicFoilCards, setEpicFoilCards]         = useState<Array<{idx:number; card:SlotCard; img:string; row:number; col:number}>|null>(null);
@@ -404,7 +406,14 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
       const combo = getComboFromPatterns(step.patterns);
       if (combo) {
         setComboDisplay({ ...combo, winAmt: step.winAmount });
+
+        // Duck BGM during combo narration
+        pauseBgm();
         playTrackedAudio(combo.audio, 0.55);
+        // Restore BGM after combo audio finishes (estimate duration)
+        setTimeout(() => {
+          if (!bgmIsPaused) playBgm();
+        }, 2000); // Adjust based on typical combo audio length
       }
 
       await sleep(850); // hold highlight
@@ -428,6 +437,14 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
       const nextGrid = si + 1 < steps.length ? steps[si + 1].grid : finalGrid;
       setCells(nextGrid);
       setNewCells(newCellSet);
+
+      // Play cascade drop sound for falling cards
+      if (newCellSet.size > 0) {
+        // Create a cascade sound based on number of falling cards
+        const cascadeFreq = 200 + (newCellSet.size * 20); // Higher pitch for more cards
+        playTick(cascadeFreq, 0.15, 0.1);
+      }
+
       await sleep(550);
       setNewCells(new Set());
       setComboDisplay(null);
@@ -467,9 +484,16 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   ) => {
     setEpicFoilCards(foilCells);
     setEpicFoilPhase('fly');
+
+    // Duck BGM during evolution audio
+    pauseBgm();
     playTrackedAudio('/sounds/evolution.mp3', 0.8);
     // After 1.4s of flying in, switch to spin phase
     setTimeout(() => setEpicFoilPhase('spin'), 1400);
+    // Restore BGM after evolution audio finishes
+    setTimeout(() => {
+      if (!bgmIsPaused) playBgm();
+    }, 2000);
     // After 3.4s total: close overlay, start bonus cascade
     setTimeout(() => {
       setEpicFoilCards(null);
@@ -529,9 +553,16 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
       // Com 4+ foils: triggerEpicFoil cuida do áudio e visual — não duplicar
       if (res.triggeredBonus && res.foilCount < 4) {
         setShowBonusAnimation(true);
+
+        // Duck BGM during bonus animation
+        pauseBgm();
         playTrackedAudio('/sounds/evolution.mp3', 0.6);
         toast.success(`🎰 +${BONUS_FREE_SPINS} FREE SPINS BÔNUS! (${res.foilCount} foil)`);
         setTimeout(() => setShowBonusAnimation(false), 3500);
+        // Restore BGM after bonus audio finishes
+        setTimeout(() => {
+          if (!bgmIsPaused) playBgm();
+        }, 2000);
       }
 
       const MIN_SPIN_MS = 1600;
@@ -772,6 +803,15 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
         .subtitle-blink { animation: subtitle-blink 1.4s ease-in-out infinite; }
         /* foil-card usa .prize-foil de globals.css (mais colorido) */
         .foil-card { position: relative; }
+        /* Foil breathing animation */
+        @keyframes foil-breathe {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.03); }
+        }
+        .foil-card {
+          position: relative;
+          animation: foil-breathe 3s ease-in-out infinite;
+        }
         @keyframes combo-reveal {
           0%   { opacity:0; transform:scale(0.4) translateY(30px); }
           18%  { opacity:1; transform:scale(1.12) translateY(-4px); }
@@ -1008,15 +1048,15 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
         </div>
       )}
 
-      {/* EPIC FOIL OVERLAY — 4 foil cards fly to center and spin */}
+      {/* EPIC FOIL OVERLAY — 4 foil cards flip 3D in-place side by side */}
       {epicFoilCards && epicFoilPhase && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center overflow-hidden pointer-events-none"
           style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}>
-          <div className="relative flex items-center justify-center" style={{ width: 320, height: 400 }}>
+          <div className="relative flex items-center justify-center" style={{ width: 320, height: 120 }}>
             {epicFoilCards.map((fc, i) => {
-              // Start position: spread from grid positions relative to center
-              const startX = ((fc.col + 0.5) / COLS - 0.5) * 280;
-              const startY = ((fc.row + 0.5) / ROWS - 0.5) * 280;
+              // Position cards side by side with equal spacing
+              const spacing = 320 / (epicFoilCards.length + 1);
+              const xPos = spacing * (i + 1) - 36; // Center each card
               const rs = RS[fc.card.rarity] ?? RS.Common;
               return (
                 <div
@@ -1030,8 +1070,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
                     border: `3px solid ${rs.border}`,
                     boxShadow: `0 0 20px ${rs.border}88, 0 0 40px #FFA50055`,
                     background: rs.bg,
-                    '--sx': `${startX}px`,
-                    '--sy': `${startY}px`,
+                    transform: `translate(${xPos}px, 0px)`,
                     '--delay': `${i * 0.08}s`,
                   } as React.CSSProperties}
                 >
@@ -1216,8 +1255,8 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
             </div>
           )}
 
-          {/* FOIL COUNTER & BONUS INDICATOR */}
-          {(foilCountDisplay > 0 || showBonusAnimation) && (
+          {/* FOIL COUNTER & BONUS INDICATOR - Removed per user request */}
+          {/* {(foilCountDisplay > 0 || showBonusAnimation) && (
             <div className="absolute top-2 right-2 z-30 px-2 py-1 rounded text-xs font-black border-2"
               style={{
                 background: showBonusAnimation ? "#7c3aed" : foilCountDisplay >= 4 ? "#10b981" : "#f59e0b",
@@ -1232,7 +1271,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
                 <span>FOIL {foilCountDisplay}/{BONUS_FOIL_COUNT}</span>
               )}
             </div>
-          )}
+          )} */}
 
           {/* WIN BAR */}
           <div
@@ -1245,10 +1284,25 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
           >
             {winAmt === null ? (
               <div className="text-center">
-                {freeLeft > 0 ? (
-                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color:"#34d399" }}>
-                    {freeLeft} FREE SPIN{freeLeft > 1 ? "S" : ""} disponíveis
-                  </span>
+                {/* Prominent bonus spins banner */}
+                {(bonusSpinsRemaining > 0 && freeLeft <= 0) || freeLeft > 0 ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    {bonusSpinsRemaining > 0 && freeLeft <= 0 ? (
+                      <span className="text-[12px] font-black uppercase tracking-widest" style={{
+                        background: "linear-gradient(180deg,#a855f7 0%,#7c3aed 50%,#6d28d9 100%)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                        padding: "2px 6px",
+                        borderRadius: "4px"
+                      }}>
+                        🎰 {bonusSpinsRemaining} BONUS SPINS
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color:"#34d399" }}>
+                        {freeLeft} FREE SPIN{freeLeft > 1 ? "S" : ""} disponíveis
+                      </span>
+                    )}
+                  </div>
                 ) : (
                   <span className="subtitle-blink text-[10px] font-bold uppercase tracking-widest" style={{ color:"#f59e0b" }}>
                     WIN UP TO 50.000 COINS
