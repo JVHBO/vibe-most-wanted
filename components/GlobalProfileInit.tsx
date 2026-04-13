@@ -34,14 +34,20 @@ export function GlobalProfileInit() {
       hasCreatedRef.current = true;
 
       try {
-        // Tenta Farcaster SDK primeiro (timeout 2s)
-        const context = await Promise.race([
-          sdk.context,
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),
-        ]);
+        // Farcaster miniapp always runs in an iframe — skip SDK entirely outside iframe
+        const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+        let fidContext: any = null;
 
-        if (context && (context as any)?.user?.fid) {
-          const { fid, username, displayName, pfpUrl } = (context as any).user;
+        if (isInIframe) {
+          fidContext = await Promise.race([
+            sdk.context,
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),
+          ]);
+        }
+
+        if (fidContext && (fidContext as any)?.user?.fid) {
+          const context = fidContext;
+          const { fid, username, displayName, pfpUrl } = context.user;
           const res = await fetch('/api/farcaster/profile-upsert', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
