@@ -63,7 +63,7 @@ export function GameHeader({
 
           {/* Left: Profile */}
           <div className="flex items-center gap-2" style={{ overflow: 'visible' }}>
-            {isLoadingProfile ? (
+            {isLoadingProfile && address ? (
               <div className="px-4 py-2 bg-vintage-black/50 border border-vintage-gold/20 rounded-lg">
                 <div className="w-20 h-4 bg-vintage-gold/20 rounded animate-pulse" />
               </div>
@@ -107,14 +107,14 @@ export function GameHeader({
                   </div>
                 </button>
               </div>
-            ) : (
+            ) : address ? (
               <button
                 onClick={() => { if (soundEnabled) AudioManager.buttonClick(); onCreateProfileClick(); }}
                 className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold/80 text-vintage-black rounded-lg text-sm font-semibold"
               >
                 {t('createProfile')}
               </button>
-            )}
+            ) : null}
           </div>
 
           {/* Right: VBMS Balance */}

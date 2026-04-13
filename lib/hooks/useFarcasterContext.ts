@@ -72,12 +72,13 @@ export function useFarcasterContext(): FarcasterContext {
           return;
         }
 
-        if (!sdkContext?.user) {
+        // Base App and normal web users should fall back to wallet-first mode.
+        if (!sdkContext?.user?.fid) {
           setContext({
             isReady: true,
-            isInMiniapp: true,
+            isInMiniapp: false,
             user: null,
-            error: 'No user context available',
+            error: 'No Farcaster user context available',
           });
           return;
         }

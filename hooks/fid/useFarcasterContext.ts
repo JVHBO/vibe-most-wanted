@@ -51,9 +51,10 @@ export function useFarcasterContext(): FarcasterContext {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Already have a valid cached context with user — no need to re-init
+    // Only trust cached contexts that either have a real Farcaster user
+    // or already resolved to standard web/Base App mode.
     const existing = getCachedContext();
-    if (existing?.isReady) {
+    if (existing?.isReady && (!!existing.user || !existing.isInMiniapp)) {
       setContext(existing);
       return;
     }
@@ -80,8 +81,10 @@ export function useFarcasterContext(): FarcasterContext {
           return;
         }
 
-        if (!sdkContext?.user) {
-          const ctx = { isReady: true, isInMiniapp: true, user: null, error: 'No user' };
+        // Base App and standard web users do not provide a Farcaster FID.
+        // Treat that as normal web mode, not as a Farcaster miniapp host.
+        if (!sdkContext?.user?.fid) {
+          const ctx = { isReady: true, isInMiniapp: false, user: null, error: 'No Farcaster user context' };
           setContext(ctx);
           setCachedContext(ctx);
           return;

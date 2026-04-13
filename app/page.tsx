@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -8,12 +8,13 @@ import { useMusic } from "@/contexts/MusicContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useAccount, useDisconnect } from "wagmi";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS";
-import { sdk } from "@farcaster/miniapp-sdk";
 import { GameHeader } from "@/components/GameHeader";
+import { ConnectScreen } from "@/components/ConnectScreen";
 import { useRouter } from "next/navigation";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useQuery } from "convex/react";
 import { AudioManager } from "@/lib/audio-manager";
+import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
 
 import { api } from "@/convex/_generated/api";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
@@ -30,6 +31,7 @@ export default function HomePage() {
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
   const { userProfile, isLoadingProfile, setUserProfile } = useProfile();
+  const farcasterContext = useFarcasterContext();
   const { balance: vbmsBlockchainBalance } = useFarcasterVBMSBalance(address);
   const {
     musicMode, setMusicMode, isMusicEnabled, setIsMusicEnabled, setVolume: syncMusicVolume,
@@ -40,7 +42,7 @@ export default function HomePage() {
 
   const router = useRouter();
   const [soundEnabled] = useState(true);
-  const [isInFarcaster, setIsInFarcaster] = useState(false);
+  const [isConnectingWallet, setIsConnectingWallet] = useState(false);
   const [showMyCardsModal, setShowMyCardsModal] = useState(false);
   const [showCoinsInbox, setShowCoinsInbox] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -54,10 +56,11 @@ export default function HomePage() {
   const [showCpuArena, setShowCpuArena] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [showReport, setShowReport] = useState(false);
-
-  useEffect(() => {
-    sdk?.context?.then((c) => setIsInFarcaster(!!c)).catch(() => setIsInFarcaster(false));
-  }, []);
+  const lastAutoPromptAddressRef = useRef<string | null>(null);
+  const getProfilePromptSeenKey = (walletAddress: string) => `vmw_profile_prompt_seen_${walletAddress.toLowerCase()}`;
+  const showWalletGate = !address;
+  const isInFarcaster = farcasterContext.isInMiniapp;
+  const isCheckingWalletAccess = !farcasterContext.isReady || isConnectingWallet;
 
   const { nfts, status: cardsStatus } = usePlayerCards();
 
@@ -96,8 +99,47 @@ export default function HomePage() {
     return profile.twitterProfileImageUrl || null;
   };
 
+  const getDefaultUsernameFromAddress = (walletAddress: string): string => {
+    const normalized = walletAddress.toLowerCase();
+    return `user_${normalized.slice(2, 6)}${normalized.slice(-4)}`;
+  };
+
+  // Wallet-first onboarding (no FID): open create profile modal with a suggested username.
+  useEffect(() => {
+    if (!address) {
+      lastAutoPromptAddressRef.current = null;
+      return;
+    }
+
+    if (isLoadingProfile || userProfile) return;
+
+    const normalizedAddress = address.toLowerCase();
+    const promptSeenKey = getProfilePromptSeenKey(normalizedAddress);
+    const hasSeenPrompt = typeof window !== "undefined" && localStorage.getItem(promptSeenKey) === "1";
+
+    const farcasterSuggestedUsername = farcasterContext.user?.username?.trim();
+    const sanitizedFarcasterUsername = farcasterSuggestedUsername
+      ? farcasterSuggestedUsername.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 20)
+      : "";
+    const hasWalletDefaultUsername = profileUsername.startsWith("user_");
+
+    if (sanitizedFarcasterUsername && (!profileUsername.trim() || hasWalletDefaultUsername)) {
+      setProfileUsername(sanitizedFarcasterUsername);
+    } else if (!profileUsername.trim()) {
+      setProfileUsername(getDefaultUsernameFromAddress(normalizedAddress));
+    }
+
+    if (!hasSeenPrompt && lastAutoPromptAddressRef.current !== normalizedAddress) {
+      setShowCreateProfileModal(true);
+      lastAutoPromptAddressRef.current = normalizedAddress;
+      if (typeof window !== "undefined") {
+        localStorage.setItem(promptSeenKey, "1");
+      }
+    }
+  }, [address, isLoadingProfile, userProfile, profileUsername, farcasterContext.user?.username]);
+
   return (
-    <div style={{ minHeight: '100dvh', background: '#1E1E1E' }}>
+    <div style={{ minHeight: '100dvh', background: '#1E1E1E', overflow: showWalletGate ? 'hidden' : undefined }}>
     <style>{`
       * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
       .bg-vintage-charcoal\\/80 { background: #1E1E1E !important; backdrop-filter: none !important; border: none !important; border-bottom: 2px solid #000 !important; border-radius: 0 !important; }
@@ -151,6 +193,7 @@ export default function HomePage() {
       @keyframes dotPulse { 0%,80%,100% { opacity:0.2; transform:scale(0.8); } 40% { opacity:1; transform:scale(1); } }
     `}</style>
 
+      {!showWalletGate && (
       <div id="th-hdr">
         <GameHeader
           isInFarcaster={isInFarcaster}
@@ -166,10 +209,44 @@ export default function HomePage() {
           onProfileClick={() => userProfile && router.push(`/profile/${userProfile.username}`)}
         />
       </div>
+      )}
 
       {/* CONTENT — preso entre header e nav */}
-      <div className="home-content-container" style={{ position: 'fixed', top: 48, bottom: 60, left: 0, right: 0, overflowY: 'hidden', padding: '36px 4px 8px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-
+      <div
+        className="home-content-container"
+        style={showWalletGate
+          ? {
+              position: 'fixed',
+              inset: 0,
+              overflow: 'hidden',
+              padding: '24px 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }
+          : {
+              position: 'fixed',
+              top: 48,
+              bottom: 60,
+              left: 0,
+              right: 0,
+              overflowY: 'hidden',
+              padding: '36px 4px 8px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+      >
+        {showWalletGate ? (
+          <ConnectScreen
+            isCheckingFarcaster={isCheckingWalletAccess}
+            setIsCheckingFarcaster={setIsConnectingWallet}
+            isInFarcaster={isInFarcaster}
+            isFrameMode={false}
+            soundEnabled={soundEnabled}
+          />
+        ) : (
+          <>
           {/* PLAY NOW */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#4ade80', animation: 'pulseGlow 2s infinite' }} />
@@ -463,6 +540,8 @@ export default function HomePage() {
 
           {/* Spacer */}
           <div style={{ height: '10px' }} />
+          </>
+        )}
       </div>
 
       <MyCardsModal isOpen={showMyCardsModal} onClose={() => setShowMyCardsModal(false)} nfts={nfts} soundEnabled={soundEnabled} />
@@ -481,6 +560,13 @@ export default function HomePage() {
         setCurrentView={() => {}}
         soundEnabled={soundEnabled}
         t={t}
+        isInFarcaster={isInFarcaster}
+        farcasterUser={farcasterContext.user ? {
+          fid: farcasterContext.user.fid,
+          username: farcasterContext.user.username || `fid${farcasterContext.user.fid}`,
+          displayName: farcasterContext.user.displayName,
+          pfpUrl: farcasterContext.user.pfpUrl,
+        } : null}
       />
       <SettingsModal
         isOpen={showSettingsModal}
@@ -531,6 +617,7 @@ export default function HomePage() {
       {showCpuArena && address && <CpuArenaModal isOpen onClose={() => setShowCpuArena(false)} address={address} soundEnabled={soundEnabled} t={t} isInFarcaster={isInFarcaster} />}
 
       {/* BOTTOM NAV */}
+      {!showWalletGate && (
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, background: '#1E1E1E', borderTop: '2px solid #000', padding: '4px', display: 'flex', alignItems: 'stretch', gap: 0, height: 60 }}>
         {[
           { label: 'HOME',   icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, onClick: () => router.push('/') },
@@ -553,6 +640,7 @@ export default function HomePage() {
           return acc;
         }, [])}
       </div>
+      )}
     </div>
   );
 }

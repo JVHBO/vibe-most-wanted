@@ -2,6 +2,7 @@
 
 import { http, createConfig, createStorage } from 'wagmi';
 import { base, arbitrum } from 'wagmi/chains';
+import { baseAccount } from 'wagmi/connectors';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import {
   coinbaseWallet,
@@ -30,8 +31,12 @@ const connectors = connectorsForWallets(
   }
 );
 
-// Add Farcaster miniapp connector
-const allConnectors = [...connectors, farcasterMiniApp()];
+// Support both Base App users (no FID required) and Farcaster miniapp users.
+const allConnectors = [
+  baseAccount({ appName: '$VBMS' }),
+  ...connectors,
+  farcasterMiniApp(),
+];
 
 // Use sessionStorage so wallet connections don't persist across new tabs/sessions.
 // The user must explicitly connect on each new browser session.
