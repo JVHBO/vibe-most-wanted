@@ -143,6 +143,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased`}
       >
+        {/* DEBUG: static marker — if this text appears, HTML/CSS loaded but React didn't hydrate */}
+        <div id="__static_debug" style={{ position:'fixed', top:0, left:0, right:0, background:'#ff4444', color:'#fff', fontSize:12, padding:'4px 8px', zIndex:99999, textAlign:'center' }}>
+          Loading... (if you see this stuck, React did not hydrate)
+        </div>
+        <script dangerouslySetInnerHTML={{ __html: `document.getElementById('__static_debug').style.display='none';` }} />
+
         {/* DEBUG: temporary error overlay — remove after Base App issue is identified */}
         <script dangerouslySetInnerHTML={{ __html: `
           window.__errs=[];
