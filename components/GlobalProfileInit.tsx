@@ -34,11 +34,12 @@ export function GlobalProfileInit() {
       hasCreatedRef.current = true;
 
       try {
-        // Farcaster miniapp always runs in an iframe — skip SDK entirely outside iframe
-        const isInIframe = typeof window !== 'undefined' && window.self !== window.top;
+        // Skip SDK only when definitely not in any miniapp host (iframe or RN WebView)
+        const isRNWebView = typeof (window as any).ReactNativeWebView !== 'undefined';
+        const isInMiniappHost = window.self !== window.top || isRNWebView;
         let fidContext: any = null;
 
-        if (isInIframe) {
+        if (isInMiniappHost) {
           fidContext = await Promise.race([
             sdk.context,
             new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000)),

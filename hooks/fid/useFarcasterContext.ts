@@ -61,10 +61,12 @@ export function useFarcasterContext(): FarcasterContext {
 
     const initializeSdk = async () => {
       try {
-        // Farcaster miniapp always runs inside an iframe.
-        // Base App (standard browser mode) and regular web do not.
-        // Skip SDK entirely when not in iframe — resolves instantly.
-        if (window.self === window.top) {
+        // Skip SDK only when definitely NOT in any miniapp host:
+        // - Not in an iframe (window.self === window.top)
+        // - AND not in a React Native WebView (Base App uses RN WebView)
+        // If either is true, we might be in a miniapp host and must call ready().
+        const isRNWebView = typeof (window as any).ReactNativeWebView !== 'undefined';
+        if (window.self === window.top && !isRNWebView) {
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: null };
           setContext(ctx);
           setCachedContext(ctx);
