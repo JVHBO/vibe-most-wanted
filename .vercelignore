@@ -1,5 +1,5 @@
-# Hardhat contracts — not needed for Next.js deployment
-contracts/
+# Hardhat contracts — not needed for Next.js deployment (root level only)
+/contracts/
 
 # Documentation — not needed for deployment
 docs/
