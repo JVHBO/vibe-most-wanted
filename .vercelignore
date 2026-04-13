@@ -1,0 +1,18 @@
+# Hardhat contracts — not needed for Next.js deployment
+contracts/
+
+# Documentation — not needed for deployment
+docs/
+internal-docs/
+backups/
+prints/
+README.md
+
+# Test files
+tests/
+synpress.config.ts
+wallet-setup/
+.cache-synpress/
+
+# Skills lock (dev tooling)
+skills-lock.json
