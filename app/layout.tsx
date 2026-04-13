@@ -143,6 +143,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased`}
       >
+        {/* DEBUG: temporary error overlay — remove after Base App issue is identified */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.__errs=[];
+          window.onerror=function(m,s,l,c,e){
+            window.__errs.push(m+' '+s+':'+l);
+            var d=document.getElementById('__dbg');
+            if(!d){d=document.createElement('div');d.id='__dbg';d.style='position:fixed;bottom:0;left:0;right:0;background:#ff0;color:#000;font-size:11px;padding:4px;z-index:99999;word-break:break-all;max-height:40vh;overflow:auto';document.body.appendChild(d);}
+            d.innerHTML=window.__errs.map(function(x){return '<div>'+x+'</div>'}).join('');
+          };
+          window.addEventListener('unhandledrejection',function(e){window.onerror(e.reason&&e.reason.message||String(e.reason),'promise',0,0,e.reason);});
+        ` }} />
         <ErrorBoundary>
           <ThemeProvider>
           <NeynarMiniAppProvider>
