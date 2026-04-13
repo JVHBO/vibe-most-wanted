@@ -129,12 +129,13 @@ export default function SlotPage() {
   const [bgmMuted, setBgmMuted] = useState(false);
   const [bgmReady, setBgmReady] = useState(false);
   const bgmRef = useRef<HTMLAudioElement | null>(null);
+  const bgmBaseVolume = 0.18;
 
   // Casino BGM — toca apenas nesta página, para ao sair
   useEffect(() => {
     const audio = new Audio('/sounds/casino-bgm.mp3');
     audio.loop = true;
-    audio.volume = 0.18; // baixinho no fundo
+    audio.volume = bgmBaseVolume; // baixinho no fundo
     bgmRef.current = audio;
     audio.play().then(() => setBgmReady(true)).catch(() => {
       // Autoplay bloqueado — aguarda clique do usuário
@@ -154,8 +155,20 @@ export default function SlotPage() {
 
   // Sincronizar mute
   useEffect(() => {
-    if (bgmRef.current) bgmRef.current.muted = bgmMuted;
+    if (!bgmRef.current) return;
+    bgmRef.current.muted = bgmMuted;
+    bgmRef.current.volume = bgmMuted ? 0 : bgmBaseVolume;
   }, [bgmMuted]);
+
+  const duckSlotBgm = (reason: "combo" | "bonus" = "combo") => {
+    if (!bgmRef.current || bgmMuted) return;
+    bgmRef.current.volume = reason === "bonus" ? 0.03 : 0.05;
+  };
+
+  const restoreSlotBgm = () => {
+    if (!bgmRef.current || bgmMuted) return;
+    bgmRef.current.volume = bgmBaseVolume;
+  };
 
   const handleWin = (amount: number) => {
     console.log("Player won:", amount);
@@ -322,13 +335,13 @@ export default function SlotPage() {
               letterSpacing: '-0.05em',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              backgroundImage: 'url("/slot-gifs/gen4-turbo-idle-breathing.gif")',
-              backgroundSize: '80% 80%', /* Decreased zoom - shows more of the GIF with spacing */
-              backgroundPosition: 'center top',
+              backgroundImage: 'url("/slot-gifs/casino-slot-animation.gif")',
+              backgroundSize: '70% 70%', /* Further decreased zoom - shows even more of the GIF with spacing */
+              backgroundPosition: 'bottom', /* Show more of the bottom portion of the GIF */
               backgroundRepeat: 'no-repeat',
               backgroundBlendMode: 'overlay',
               textShadow: '0 0 2px rgba(0,0,0,0.5)',
-              transform: 'scaleY(1.2)' /* Vertically stretch the text */
+              transform: 'scaleY(3.0)' /* Vertically stretch the text even more to show maximum of the GIF */
             }}>
               {tr("title")}
             </h1>
@@ -403,7 +416,11 @@ export default function SlotPage() {
 
         {/* Slot machine preenche espaço restante */}
         <div className="flex-1 min-h-0 overflow-hidden">
-          <SlotMachine onWalletOpen={() => { setShowDeposit(true); setWalletTab("deposit"); }} />
+          <SlotMachine
+            onWalletOpen={() => { setShowDeposit(true); setWalletTab("deposit"); }}
+            duckBgm={duckSlotBgm}
+            restoreBgm={restoreSlotBgm}
+          />
         </div>
       </div>
 

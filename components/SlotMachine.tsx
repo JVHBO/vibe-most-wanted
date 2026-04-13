@@ -8,15 +8,33 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "sonner";
 import { getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
 import { playTrackedAudio } from "@/lib/tcg/audio";
-import { useMusic } from "@/contexts/MusicContext";
+import type { SlotCard } from "@/lib/slot/config";
+import {
+  SLOT_BET_OPTIONS,
+  SLOT_BONUS_COST_MULT,
+  SLOT_BONUS_FREE_SPINS,
+  SLOT_CARD_LABELS,
+  SLOT_CARD_POOL,
+  SLOT_COLS,
+  SLOT_ROWS,
+  SLOT_TOTAL_CELLS,
+  createSlotCard,
+  getSlotCardRarity,
+  isDeveloperSlotAddress,
+  pickSlotCard,
+} from "@/lib/slot/config";
+import type {
+  SlotBonusState,
+  SlotComboStep,
+  SlotPhase,
+} from "@/lib/slot/engine";
 
-const COLS = 5;
-const ROWS = 3;
-const TOTAL_CELLS = COLS * ROWS;
-const BET_OPTIONS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-const BONUS_COST_MULT = 5; // BUY BONUS = 5× bet atual
-const BONUS_FREE_SPINS = 10;
-const BONUS_FOIL_COUNT = 4;
+const COLS = SLOT_COLS;
+const ROWS = SLOT_ROWS;
+const TOTAL_CELLS = SLOT_TOTAL_CELLS;
+const BET_OPTIONS = [...SLOT_BET_OPTIONS];
+const BONUS_COST_MULT = SLOT_BONUS_COST_MULT;
+const BONUS_FREE_SPINS = SLOT_BONUS_FREE_SPINS;
 
 // GIF de cassino para VBMS Special (slot animation)
 // Coloque os arquivos em public/slot-gifs/
@@ -26,36 +44,17 @@ const WILDCARD_GIFS = {
   "idle_breathing": "/slot-gifs/gen4-turbo-idle-breathing.gif", // alias
 };
 
-// Todos os wallets linkados do dono do projeto (fid 214746)
-const ALLOWED_ADDRESSES = [
-  "0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52", // principal
-  "0x9604fb9a88daef5f38681d7518092bd2a8508a65",
-  "0xe167bfc5c8f6167fdb7a6667122418e026a4ce26",
-  "0x1d7d4da72a32b0ab37b92c773c15412381c7203a",
-  "0xd453151b8f811186bbe7b9a62e6537cd68abca3d",
-  "0x02d50610393e528c381420c868200eff50f167d7",
-  "0xddc754417cae5cd97b00b8fc7fcbae5f573216dd",
-  "0xcf60075a449dec39843309c74ff7693baa35b824",
-  "0x247116c752420ec7fe870d1549a1c2e8d44675c6",
-];
-
-interface SlotCard { baccarat: string; rarity: string; hasFoil?: boolean; }
-interface CascadeStep {
-  grid: SlotCard[];
-  winningIndices: number[];
-  winAmount: number;
-  patterns: string[];
-}
 interface SpinResult {
   initialGrid: SlotCard[];
-  cascadeSteps: CascadeStep[];
+  comboSteps: SlotComboStep[];
   finalGrid: SlotCard[];
   winAmount: number;
-  patterns: string[];
   maxWin: boolean;
   foilCount: number;
   triggeredBonus: boolean;
+  bonusSpinsAwarded: number;
   bonusSpinsRemaining: number;
+  bonusState: SlotBonusState;
 }
 interface ActivePayline { name: string; d: string; color: string; }
 
@@ -68,9 +67,20 @@ const PAYLINE_PATHS: Record<string, string> = {
   "Diagonal N": "M10,83 L30,50 L50,17 L70,50 L90,83",
 };
 const RARITY_COLORS: Record<string, string> = {
-  "mythic":"#a855f7","legendary":"#f59e0b","epic":"#ec4899",
-  "rare":"#3b82f6","common":"#6b7280","special":"#FFD700",
+  "mythic":"#6D28D9","legendary":"#6D28D9","epic":"#6D28D9",
+  "rare":"#6D28D9","common":"#6B28D9","special":"#FACC15",
 };
+
+function getRarityColorForCombo(comboCards: string[]): string {
+  for (const cardName of comboCards) {
+    const rarity = getSlotCardRarity(cardName);
+    if (rarity) {
+      return RARITY_COLORS[rarity.toLowerCase()] || "#FFD700";
+    }
+  }
+  return "#FFD700";
+}
+
 function computeActivePaylines(patterns: string[]): ActivePayline[] {
   const result: ActivePayline[] = [];
   for (const p of patterns) {
@@ -115,160 +125,46 @@ const RS: Record<string, {
   border: string; glow: string; bg: string; labelBg: string; label: string;
   borderW: number; icon: string; cornerGrad: string;
 }> = {
-  Special:   { border:"#FFD700", glow:"#FFD700", bg:"#1a1400", labelBg:"#92400e", label:"SPECIAL",   borderW:3, icon:"S", cornerGrad:"linear-gradient(135deg,#FFD700 0%,transparent 60%)" },
-  Mythic:    { border:"#a855f7", glow:"#a855f7", bg:"#160028", labelBg:"#6d28d9", label:"MYTHIC",    borderW:3, icon:"M", cornerGrad:"linear-gradient(135deg,#a855f7 0%,transparent 60%)" },
-  Legendary: { border:"#f59e0b", glow:"#f59e0b", bg:"#1a0e00", labelBg:"#b45309", label:"LEGEND",    borderW:3, icon:"L", cornerGrad:"linear-gradient(135deg,#f59e0b 0%,transparent 60%)" },
-  Epic:      { border:"#ec4899", glow:"#ec4899", bg:"#1a0015", labelBg:"#9d174d", label:"EPIC",      borderW:2, icon:"E", cornerGrad:"linear-gradient(135deg,#ec4899 0%,transparent 60%)" },
-  Rare:      { border:"#3b82f6", glow:"#3b82f6", bg:"#051530", labelBg:"#1d4ed8", label:"RARE",      borderW:2, icon:"R", cornerGrad:"linear-gradient(135deg,#3b82f6 0%,transparent 60%)" },
-  Common:    { border:"#6b7280", glow:"#6b7280", bg:"#0f1117", labelBg:"#374151", label:"COMMON",    borderW:1, icon:"C", cornerGrad:"linear-gradient(135deg,#6b7280 0%,transparent 60%)" },
+  Special:   { border:"#FACC15", glow:"#FACC15", bg:"#111827", labelBg:"#4C1D95", label:"SPECIAL",   borderW:3, icon:"S", cornerGrad:"linear-gradient(135deg,#FACC15 0%,transparent 60%)" },
+  Mythic:    { border:"#6D28D9", glow:"#6D28D9", bg:"#111827", labelBg:"#4C1D95", label:"MYTHIC",    borderW:3, icon:"M", cornerGrad:"linear-gradient(135deg,#6D28D9 0%,transparent 60%)" },
+  Legendary: { border:"#6D28D9", glow:"#6D28D9", bg:"#111827", labelBg:"#4C1D95", label:"LEGEND",    borderW:3, icon:"L", cornerGrad:"linear-gradient(135deg,#6D28D9 0%,transparent 60%)" },
+  Epic:      { border:"#6D28D9", glow:"#6D28D9", bg:"#111827", labelBg:"#4C1D95", label:"EPIC",      borderW:2, icon:"E", cornerGrad:"linear-gradient(135deg,#6D28D9 0%,transparent 60%)" },
+  Rare:      { border:"#6D28D9", glow:"#6D28D9", bg:"#111827", labelBg:"#4C1D95", label:"RARE",      borderW:2, icon:"R", cornerGrad:"linear-gradient(135deg,#6D28D9 0%,transparent 60%)" },
+  Common:    { border:"#6D28D9", glow:"#6D28D9", bg:"#111827", labelBg:"#4C1D95", label:"COMMON",    borderW:1, icon:"C", cornerGrad:"linear-gradient(135deg,#6D28D9 0%,transparent 60%)" },
 };
 
-const LABELS: Record<string, string> = {
-  "vbms_special":"VBMS Special",
-  "jesse":"Jesse","anon":"Anon","linda xied":"Linda Xied","vitalik jumpterin":"Vitalik",
-  "antonio":"Antonio","goofy romero":"Goofy Romero","tukka":"Tukka","chilipepper":"Chilli Pepper",
-  "miguel":"Miguel","ye":"Ye","nico":"Nico","sartocrates":"Sartocrates",
-  "0xdeployer":"0xDeployer","lombra jr":"Lombra Jr","vibe intern":"Vibe Intern",
-  "jack the sniper":"Jack Sniper","beeper":"Beeper","horsefarts":"Horsefarts","jc denton":"JC Denton",
-  "zurkchad":"Zurkchad","slaterg":"Slaterg","brian armstrong":"B. Armstrong","nftkid":"NFTKid",
-  "smolemaru":"Smolemaru","ventra":"Ventra","bradymck":"Bradymck","shills":"Shills",
-  "betobutter":"Betobutter","qrcodo":"Qrcodo","loground":"Loground","melted":"Melted",
-  "rachel":"Rachel","claude":"Claude","gozaru":"Gozaru","ink":"Ink",
-  "casa":"Casa","groko":"Groko","rizkybegitu":"Rizkybegitu","thosmur":"Thosmur",
-  "brainpasta":"Brainpasta","gaypt":"Gaypt","dan romero":"Dan Romero","morlacos":"Morlacos",
-  "landmine":"Landmine","linux":"Linux","joonx":"Joonx","don filthy":"Don Filthy",
-  "pooster":"Pooster","john porn":"John Porn","scum":"Scum","vlady":"Vlady",
-};
-
-const POOL: Array<{ baccarat: string; rarity: string; weight: number }> = [
-  { baccarat:"vbms_special",rarity:"Special",weight:5 },
-  { baccarat:"jesse",rarity:"Mythic",weight:1 },{ baccarat:"anon",rarity:"Mythic",weight:1 },
-  { baccarat:"linda xied",rarity:"Mythic",weight:1 },{ baccarat:"vitalik jumpterin",rarity:"Mythic",weight:1 },
-  { baccarat:"antonio",rarity:"Legendary",weight:3 },{ baccarat:"goofy romero",rarity:"Legendary",weight:3 },
-  { baccarat:"tukka",rarity:"Legendary",weight:3 },{ baccarat:"chilipepper",rarity:"Legendary",weight:3 },
-  { baccarat:"miguel",rarity:"Legendary",weight:3 },{ baccarat:"ye",rarity:"Legendary",weight:3 },
-  { baccarat:"nico",rarity:"Legendary",weight:3 },
-  { baccarat:"sartocrates",rarity:"Epic",weight:6 },{ baccarat:"0xdeployer",rarity:"Epic",weight:6 },
-  { baccarat:"lombra jr",rarity:"Epic",weight:6 },{ baccarat:"vibe intern",rarity:"Epic",weight:6 },
-  { baccarat:"jack the sniper",rarity:"Epic",weight:6 },{ baccarat:"beeper",rarity:"Epic",weight:6 },
-  { baccarat:"horsefarts",rarity:"Epic",weight:6 },{ baccarat:"jc denton",rarity:"Epic",weight:6 },
-  { baccarat:"zurkchad",rarity:"Epic",weight:6 },{ baccarat:"slaterg",rarity:"Epic",weight:6 },
-  { baccarat:"brian armstrong",rarity:"Epic",weight:6 },{ baccarat:"nftkid",rarity:"Epic",weight:6 },
-  { baccarat:"smolemaru",rarity:"Rare",weight:10 },{ baccarat:"ventra",rarity:"Rare",weight:10 },
-  { baccarat:"bradymck",rarity:"Rare",weight:10 },{ baccarat:"shills",rarity:"Rare",weight:10 },
-  { baccarat:"betobutter",rarity:"Rare",weight:10 },{ baccarat:"qrcodo",rarity:"Rare",weight:10 },
-  { baccarat:"loground",rarity:"Rare",weight:10 },{ baccarat:"melted",rarity:"Rare",weight:10 },
-  { baccarat:"rachel",rarity:"Common",weight:20 },{ baccarat:"claude",rarity:"Common",weight:20 },
-  { baccarat:"gozaru",rarity:"Common",weight:20 },{ baccarat:"ink",rarity:"Common",weight:20 },
-  { baccarat:"casa",rarity:"Common",weight:20 },{ baccarat:"groko",rarity:"Common",weight:20 },
-  { baccarat:"rizkybegitu",rarity:"Common",weight:20 },{ baccarat:"thosmur",rarity:"Common",weight:20 },
-  { baccarat:"brainpasta",rarity:"Common",weight:20 },{ baccarat:"gaypt",rarity:"Common",weight:20 },
-  { baccarat:"dan romero",rarity:"Common",weight:20 },{ baccarat:"morlacos",rarity:"Common",weight:20 },
-  { baccarat:"landmine",rarity:"Common",weight:20 },{ baccarat:"linux",rarity:"Common",weight:20 },
-  { baccarat:"joonx",rarity:"Common",weight:20 },{ baccarat:"don filthy",rarity:"Common",weight:20 },
-  { baccarat:"pooster",rarity:"Common",weight:20 },{ baccarat:"john porn",rarity:"Common",weight:20 },
-  { baccarat:"scum",rarity:"Common",weight:20 },{ baccarat:"vlady",rarity:"Common",weight:20 },
-];
-const TOTAL_W = POOL.reduce((s, c) => s + c.weight, 0);
+const LABELS = SLOT_CARD_LABELS;
+const POOL = SLOT_CARD_POOL;
 
 function pick(): SlotCard {
-  let r = Math.random() * TOTAL_W;
-  for (const c of POOL) { r -= c.weight; if (r <= 0) return { baccarat: c.baccarat, rarity: c.rarity }; }
-  return { baccarat: "claude", rarity: "Common" };
+  const card = pickSlotCard();
+  return createSlotCard({ baccarat: card.baccarat, rarity: card.rarity });
 }
 
-// Combo names + audio for each character (reuses TCG combo voice files)
-const SLOT_COMBOS: Record<string, { name: string; audio: string; color: string }> = {
-  // Special
-  "_vbms":            { name: "GOLDEN MACHINE!",      audio: "/sounds/combos/money_makers.mp3",      color: "#FFD700" },
-  "_mythics":         { name: "MYTHIC ASSEMBLY!",     audio: "/sounds/combos/mythic.mp3",            color: "#a855f7" },
-  "_legendaries":     { name: "LEGENDS UNITE!",       audio: "/sounds/combos/legends_unite.mp3",     color: "#f59e0b" },
-  // Mythics
-  "jesse":            { name: "JESSE'S BACK!",        audio: "/sounds/combos/chaos_agents.mp3",      color: "#a855f7" },
-  "anon":             { name: "ANON STRIKES!",        audio: "/sounds/combos/shadow_network.mp3",    color: "#a855f7" },
-  "linda xied":       { name: "LINDA XIED WINS!",     audio: "/sounds/combos/mythic.mp3",            color: "#a855f7" },
-  "vitalik jumpterin":{ name: "VITALIK WINS!",        audio: "/sounds/combos/scaling_masters.mp3",   color: "#a855f7" },
-  // Legendaries
-  "antonio":          { name: "ANTONIO PARTY!",       audio: "/sounds/combos/chaos_agents.mp3",      color: "#f59e0b" },
-  "goofy romero":     { name: "ROMERO FAMILY!",       audio: "/sounds/combos/romero.mp3",            color: "#f59e0b" },
-  "dan romero":       { name: "ROMERO FAMILY!",       audio: "/sounds/combos/romero.mp3",            color: "#f59e0b" },
-  "tukka":            { name: "TUKKA POWER!",         audio: "/sounds/combos/degen_trio.mp3",        color: "#f59e0b" },
-  "chilipepper":      { name: "CHILLI HEAT!",         audio: "/sounds/combos/chaos_agents.mp3",      color: "#f59e0b" },
-  "miguel":           { name: "MIGUEL MODO!",         audio: "/sounds/combos/degen_trio.mp3",        color: "#f59e0b" },
-  "ye":               { name: "YE SUPREMACY!",        audio: "/sounds/combos/royal_brothers.mp3",    color: "#f59e0b" },
-  "nico":             { name: "NICO ATTACK!",         audio: "/sounds/combos/scam_squad.mp3",        color: "#f59e0b" },
-  // Epics
-  "sartocrates":      { name: "PHILOSOPHER'S WIN!",   audio: "/sounds/combos/philosopher_chad.mp3",  color: "#ec4899" },
-  "0xdeployer":       { name: "0xDEPLOYER RISES!",    audio: "/sounds/combos/code_masters.mp3",      color: "#ec4899" },
-  "lombra jr":        { name: "LOMBRA JR LANDS!",     audio: "/sounds/combos/underdog_uprising.mp3", color: "#ec4899" },
-  "vibe intern":      { name: "VIBE INTERN WINS!",    audio: "/sounds/combos/vibe_team.mp3",         color: "#ec4899" },
-  "jack the sniper":  { name: "SNIPER ELITE!",        audio: "/sounds/combos/sniper_elite.mp3",      color: "#ec4899" },
-  "beeper":           { name: "BEEPER BLOWS UP!",     audio: "/sounds/combos/chaos_agents.mp3",      color: "#ec4899" },
-  "horsefarts":       { name: "HORSEFARTS HOT!",      audio: "/sounds/combos/dirty_duo.mp3",         color: "#ec4899" },
-  "jc denton":        { name: "JC DENTON HACKS!",     audio: "/sounds/combos/ai_takeover.mp3",       color: "#ec4899" },
-  "zurkchad":         { name: "ZURKCHAD WINS!",       audio: "/sounds/combos/cryptokings.mp3",       color: "#ec4899" },
-  "slaterg":          { name: "SLATERG SCORES!",      audio: "/sounds/combos/pixel_artists.mp3",     color: "#ec4899" },
-  "brian armstrong":  { name: "COINBASE WIN!",        audio: "/sounds/combos/cryptokings.mp3",       color: "#ec4899" },
-  "nftkid":           { name: "NFT KID GANG!",        audio: "/sounds/combos/content_creators.mp3",  color: "#ec4899" },
-  // Rares
-  "smolemaru":        { name: "SMOLEMARU COMBO!",     audio: "/sounds/combos/degen_trio.mp3",        color: "#3b82f6" },
-  "ventra":           { name: "VENTRA VIBES!",        audio: "/sounds/combos/vibe_team.mp3",         color: "#3b82f6" },
-  "bradymck":         { name: "BRADYMCK BLAST!",      audio: "/sounds/combos/content_creators.mp3",  color: "#3b82f6" },
-  "shills":           { name: "SHILLS ARMY!",         audio: "/sounds/combos/scam_squad.mp3",        color: "#3b82f6" },
-  "betobutter":       { name: "BETO BUTTER!",         audio: "/sounds/combos/money_makers.mp3",      color: "#3b82f6" },
-  "qrcodo":           { name: "QRCODO CODES!",        audio: "/sounds/combos/code_masters.mp3",      color: "#3b82f6" },
-  "loground":         { name: "LOGROUND WINS!",       audio: "/sounds/combos/underdog_uprising.mp3", color: "#3b82f6" },
-  "melted":           { name: "MELTED MELTS!",        audio: "/sounds/combos/chaos_agents.mp3",      color: "#3b82f6" },
-  // Commons
-  "rachel":           { name: "RACHEL RULES!",        audio: "/sounds/combos/content_creators.mp3",  color: "#9ca3af" },
-  "claude":           { name: "AI TAKEOVER!",         audio: "/sounds/combos/ai_takeover.mp3",       color: "#9ca3af" },
-  "gozaru":           { name: "GOZARU GRINDS!",       audio: "/sounds/combos/degen_trio.mp3",        color: "#9ca3af" },
-  "ink":              { name: "INK DROPS!",           audio: "/sounds/combos/pixel_artists.mp3",     color: "#9ca3af" },
-  "casa":             { name: "CASA WINS!",           audio: "/sounds/combos/vibe_team.mp3",         color: "#9ca3af" },
-  "groko":            { name: "GROKO GANG!",          audio: "/sounds/combos/chaos_agents.mp3",      color: "#9ca3af" },
-  "rizkybegitu":      { name: "RIZKY RISES!",         audio: "/sounds/combos/underdog_uprising.mp3", color: "#9ca3af" },
-  "thosmur":          { name: "THOSMUR HITS!",        audio: "/sounds/combos/degen_trio.mp3",        color: "#9ca3af" },
-  "brainpasta":       { name: "BRAIN PASTA!",         audio: "/sounds/combos/philosopher_chad.mp3",  color: "#9ca3af" },
-  "gaypt":            { name: "GAYPT GANG!",          audio: "/sounds/combos/scam_squad.mp3",        color: "#9ca3af" },
-  "morlacos":         { name: "MORLACOS SMASH!",      audio: "/sounds/combos/chaos_agents.mp3",      color: "#9ca3af" },
-  "landmine":         { name: "LANDMINE DEGENS!",     audio: "/sounds/combos/dirty_money.mp3",       color: "#9ca3af" },
-  "linux":            { name: "LINUX LORDS!",         audio: "/sounds/combos/code_masters.mp3",      color: "#9ca3af" },
-  "joonx":            { name: "JOONX JACKPOT!",      audio: "/sounds/combos/money_makers.mp3",      color: "#9ca3af" },
-  "don filthy":       { name: "DON FILTHY WINS!",     audio: "/sounds/combos/dirty_money.mp3",       color: "#9ca3af" },
-  "pooster":          { name: "POOSTER POPS!",        audio: "/sounds/combos/content_creators.mp3",  color: "#9ca3af" },
-  "john porn":        { name: "JOHN P. HITS!",        audio: "/sounds/combos/dirty_duo.mp3",         color: "#9ca3af" },
-  "scum":             { name: "SCUM WINS!",           audio: "/sounds/combos/shadow_network.mp3",    color: "#9ca3af" },
-  "vlady":            { name: "VLADY VIBES!",         audio: "/sounds/combos/royal_brothers.mp3",    color: "#9ca3af" },
-};
+// Combo info will be retrieved from TCG combos using detectCombos
 
-function getComboFromPatterns(patterns: string[]): { name: string; audio: string; color: string } | null {
-  // Priority 1: VBMS Special scatter
-  if (patterns.some(p => /VBMS Special/i.test(p))) return SLOT_COMBOS["_vbms"];
-  // Priority 2: Mythics scattered
-  if (patterns.some(p => /mythic/i.test(p))) return SLOT_COMBOS["_mythics"];
-  // Priority 3: Legendaries scattered
-  if (patterns.some(p => /legendary|legend/i.test(p) && /scatter/i.test(p))) return SLOT_COMBOS["_legendaries"];
-  // Priority 4: Named character match (e.g. "Row 1: 4x rachel")
-  for (const p of patterns) {
-    const m = p.match(/\d+x\s+(.+)/i);
-    if (m) {
-      const char = m[1].trim().toLowerCase();
-      if (SLOT_COMBOS[char]) return SLOT_COMBOS[char];
-    }
-  }
-  return null;
-}
+// Combo info will be retrieved from detectCombos result
 
 const PAYOUTS: [string, string, string][] = [
-  ["4× Mythic",   "50.000","#a855f7"],["4× Legendary","5.000", "#f59e0b"],
-  ["4× Epic",     "800",   "#ec4899"],["4× Rare",     "120",   "#3b82f6"],["4× Common","12","#6b7280"],
-  ["3× Mythic",   "2.000", "#a855f7"],["3× Legendary","300",   "#f59e0b"],
-  ["3× Epic",     "80",    "#ec4899"],["3× Rare",     "20",    "#3b82f6"],["3× Common","4", "#6b7280"],
-  ["2× Mythic",   "100",   "#a855f7"],["2× Legendary","20",    "#f59e0b"],
-  ["VBMS ×4 (scatter)","30.000","#FFD700"],["VBMS ×3","1.500","#FFD700"],["VBMS ×2","100","#FFD700"],
+  ["4× Mythic",   "50.000","#6D28D9"],["4× Legendary","5.000", "#6D28D9"],
+  ["4× Epic",     "800",   "#6D28D9"],["4× Rare",     "120",   "#6D28D9"],["4× Common","12","#6B28D9"],
+  ["3× Mythic",   "2.000", "#6D28D9"],["3× Legendary","300",   "#6D28D9"],
+  ["3× Epic",     "80",    "#6D28D9"],["3× Rare",     "20",    "#6D28D9"],["3× Common","4", "#6B28D9"],
+  ["2× Mythic",   "100",   "#6D28D9"],["2× Legendary","20",    "#6D28D9"],
+  ["VBMS ×4 (scatter)","30.000","#FACC15"],["VBMS ×3","1.500","#FACC15"],["VBMS ×2","100","#FACC15"],
 ];
 
-export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => void }) {
+type SlotMachineProps = {
+  onWalletOpen?: () => void;
+  duckBgm?: (reason?: "combo" | "bonus") => void;
+  restoreBgm?: () => void;
+};
+
+export default function SlotMachine({
+  onWalletOpen,
+  duckBgm,
+  restoreBgm,
+}: SlotMachineProps) {
   const { isConnected, address } = useAccount();
   const { userProfile } = useProfile();
   const spinMut = useMutation(api.slot.spinSlot);
@@ -285,10 +181,8 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const [betIdx, setBetIdx]         = useState(0);
   const [showBonusConfirm, setShowBonusConfirm] = useState(false);
   const [bonusSpinsRemaining, setBonusSpinsRemaining] = useState(statsQ?.bonusSpinsAvailable || 0);
-  const [foilCountDisplay, setFoilCountDisplay] = useState(0);
   const [showBonusAnimation, setShowBonusAnimation] = useState(false);
-  const [comboDisplay, setComboDisplay] = useState<{ name: string; audio: string; color: string; winAmt: number } | null>(null);
-  const { pause: pauseBgm, play: playBgm, isPaused: bgmIsPaused } = useMusic();
+  const [comboDisplay, setComboDisplay] = useState<{ name: string; color: string; winAmt: number } | null>(null);
   const [deceleratingCols, setDeceleratingCols] = useState<Set<number>>(new Set());
   const [foilSuspenseCols, setFoilSuspenseCols]   = useState<Set<number>>(new Set()); // cols glowing with foil suspense
   const [epicFoilCards, setEpicFoilCards]         = useState<Array<{idx:number; card:SlotCard; img:string; row:number; col:number}>|null>(null);
@@ -300,16 +194,20 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
   const [devFoilAll, setDevFoilAll]             = useState(false);
   const [lastWinDetails, setLastWinDetails]     = useState<string[]>([]);
   const [card3D, setCard3D]                     = useState<{ card: SlotCard; img: string; label: string; flyIn: boolean } | null>(null);
+  const [phase, setPhase]                       = useState<SlotPhase>("IDLE");
+  const [bonusState, setBonusState]             = useState<SlotBonusState>({ persistentWildcards: [] });
+  const [autoBonusMode, setAutoBonusMode]       = useState(false);
 
   const card3DRotRef  = useRef({ rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 });
   const card3DInnerRef = useRef<HTMLDivElement | null>(null);
   const ivs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
-  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const foilsFoundRef = useRef(0);
   const lockedGifRef  = useRef<number|null>(null); // ref para leitura síncrona em playCascade
+  const spinSequenceRef = useRef(0);
+  const bonusStateRef = useRef<SlotBonusState>({ persistentWildcards: [] });
 
   // isBonusActive: derivado — verdadeiro enquanto há bonus spins ou animação épica ativa
-  const isBonusActive = bonusSpinsRemaining > 0 || epicFoilCards !== null;
+  const isBonusActive = bonusSpinsRemaining > 0 || autoBonusMode || epicFoilCards !== null || phase === "BONUS";
 
   const freeLeft = statsQ?.remainingFreeSpins ?? 0;
   const coins    = userProfile?.coins ?? 0;
@@ -324,8 +222,12 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     }
   }, [statsQ?.bonusSpinsAvailable]);
 
+  useEffect(() => {
+    bonusStateRef.current = bonusState;
+  }, [bonusState]);
+
   // Access control — apenas wallets autorizados
-  const isAllowed = !address || ALLOWED_ADDRESSES.includes(address.toLowerCase());
+  const isAllowed = !address || isDeveloperSlotAddress(address);
 
   const startCol = useCallback((col: number) => {
     ivs.current[col] = setInterval(() => {
@@ -378,140 +280,157 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
 
   const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms));
 
-  // Cascade animation: plays through each step sequentially
-  const playCascade = async (steps: CascadeStep[], finalGrid: SlotCard[], totalWin: number) => {
-    let runningWin = 0;
-    for (let si = 0; si < steps.length; si++) {
-      const step = steps[si];
-      // Combinar em um único setCells: aplica o grid do cascade + mantém GIF locked no lugar
-      setCells(() => {
-        const n = [...step.grid];
-        if (lockedGifRef.current !== null) {
-          n[lockedGifRef.current] = { baccarat: 'vbms_special', rarity: 'Special' };
-        }
-        return n;
-      });
-      await sleep(180);
-
-      // Highlight winning cells + draw payline
-      setWinCells(new Set(step.winningIndices));
-      setActivePaylines(computeActivePaylines(step.patterns));
-      // GIF locked em combo → cresce (max 4x)
-      if (lockedGifRef.current !== null && step.winningIndices.includes(lockedGifRef.current)) {
-        setGifScale(prev => Math.min(4, prev + 1));
-      }
-
-      // Play cascade hit sound + combo
-      playTrackedAudio('/sounds/hit.mp3', 0.35);
-      const combo = getComboFromPatterns(step.patterns);
-      if (combo) {
-        setComboDisplay({ ...combo, winAmt: step.winAmount });
-
-        // Duck BGM during combo narration
-        pauseBgm();
-        playTrackedAudio(combo.audio, 0.55);
-        // Restore BGM after combo audio finishes (estimate duration)
-        setTimeout(() => {
-          if (!bgmIsPaused) playBgm();
-        }, 2000); // Adjust based on typical combo audio length
-      }
-
-      await sleep(850); // hold highlight
-
-      // Clear payline visual
-      setActivePaylines([]);
-      runningWin += step.winAmount;
-
-      // Pop winning cells out
-      setWinCells(new Set());
-      await sleep(300);
-
-      // Calculate which cells are "new" (falling in from top)
-      const newCellSet = new Set<number>();
-      for (let col = 0; col < COLS; col++) {
-        const colWins = step.winningIndices.filter(i => i % COLS === col).length;
-        for (let r = 0; r < colWins; r++) newCellSet.add(r * COLS + col);
-      }
-
-      // Show next grid (or final) with falling-in animation
-      const nextGrid = si + 1 < steps.length ? steps[si + 1].grid : finalGrid;
-      setCells(nextGrid);
-      setNewCells(newCellSet);
-
-      // Play cascade drop sound for falling cards
-      if (newCellSet.size > 0) {
-        // Create a cascade sound based on number of falling cards
-        const cascadeFreq = 200 + (newCellSet.size * 20); // Higher pitch for more cards
-        playTick(cascadeFreq, 0.15, 0.1);
-      }
-
-      await sleep(550);
-      setNewCells(new Set());
-      setComboDisplay(null);
-      await sleep(120);
+  const waitForTrackedAudio = useCallback(async (audio: HTMLAudioElement | null, fallbackMs: number) => {
+    if (!audio) {
+      await sleep(fallbackMs);
+      return;
     }
 
-    // Final state
+    await new Promise<void>((resolve) => {
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        audio.removeEventListener("ended", finish);
+        audio.removeEventListener("error", finish);
+        resolve();
+      };
+
+      audio.addEventListener("ended", finish, { once: true });
+      audio.addEventListener("error", finish, { once: true });
+      window.setTimeout(finish, fallbackMs);
+    });
+  }, []);
+
+  const playNarration = useCallback(async (src: string | null, reason: "combo" | "bonus", volume = 0.65) => {
+    duckBgm?.(reason);
+    const audio = src ? playTrackedAudio(src, volume) : null;
+    await waitForTrackedAudio(audio, reason === "bonus" ? 2400 : 2200);
+    restoreBgm?.();
+  }, [duckBgm, restoreBgm, waitForTrackedAudio]);
+
+  const finishSpinVisuals = useCallback((finalGrid: SlotCard[], totalWin: number, maxWin: boolean, details: string[]) => {
+    setPhase("END");
     setCells(finalGrid);
     setIsSpinning(false);
     setWinAmt(totalWin);
-    setIsJackpot(totalWin >= 50000);
-    setLastWinDetails(steps.flatMap(s => s.patterns.map(p => `${p} → +${s.winAmount}`)));
-    if (totalWin >= 50000) {
-      // Jackpot — mostra a carta de maior raridade em 3D com fly-in
+    setIsJackpot(maxWin);
+    setLastWinDetails(details);
+    setWinCells(new Set());
+    setNewCells(new Set());
+    setActivePaylines([]);
+    setComboDisplay(null);
+
+    if (maxWin) {
       const rarityOrder = ["Special","Mythic","Legendary","Epic","Rare","Common"];
       const topCard = [...finalGrid].sort((a, b) => rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity))[0];
       if (topCard) {
         const img = topCard.baccarat === "vbms_special" ? CASINO_SLOT_GIF : getVbmsBaccaratImageUrl(topCard.baccarat);
         const label = LABELS[topCard.baccarat] ?? topCard.baccarat;
-        setTimeout(() => setCard3D({ card: topCard, img: img || '', label, flyIn: true }), 600);
+        setTimeout(() => setCard3D({ card: topCard, img: img || "", label, flyIn: true }), 600);
       }
     }
+
     if (totalWin > 0) {
       toast.success(`+${totalWin.toLocaleString()} coins!`);
     }
-    // Se o GIF apareceu no finalGrid e ainda não está locked, lock agora
-    const gifCellIdx = finalGrid.findIndex(c => c.baccarat === 'vbms_special');
+
+    const gifCellIdx = finalGrid.findIndex((card) => card.baccarat === "vbms_special");
     if (gifCellIdx >= 0 && lockedGifRef.current === null) {
       lockedGifRef.current = gifCellIdx;
       setLockedGifIdx(gifCellIdx);
     }
-  };
 
-  const triggerEpicFoil = useCallback((
-    foilCells: Array<{idx:number;card:SlotCard;img:string;row:number;col:number}>,
-    onComplete: () => void
-  ) => {
-    setEpicFoilCards(foilCells);
-    setEpicFoilPhase('fly');
-
-    // Duck BGM during evolution audio
-    pauseBgm();
-    playTrackedAudio('/sounds/evolution.mp3', 0.8);
-    // After 1.4s of flying in, switch to spin phase
-    setTimeout(() => setEpicFoilPhase('spin'), 1400);
-    // Restore BGM after evolution audio finishes
-    setTimeout(() => {
-      if (!bgmIsPaused) playBgm();
-    }, 2000);
-    // After 3.4s total: close overlay, start bonus cascade
-    setTimeout(() => {
-      setEpicFoilCards(null);
-      setEpicFoilPhase(null);
-      onComplete(); // isBonusActive agora é derivado de bonusSpinsRemaining > 0
-    }, 3400);
+    setTimeout(() => setPhase("IDLE"), 80);
   }, []);
+
+  const playComboResolution = useCallback(async (
+    steps: SlotComboStep[],
+    finalGrid: SlotCard[],
+    totalWin: number,
+    sequenceId: number,
+  ): Promise<string[]> => {
+    let runningWin = 0;
+    const details: string[] = [];
+
+    for (const step of steps) {
+      if (spinSequenceRef.current !== sequenceId) {
+        return details;
+      }
+
+      setPhase("COMBO");
+      setCells(step.beforeGrid);
+      setWinCells(new Set([...step.matchedIndices, ...step.wildcardIndices]));
+      setActivePaylines([]);
+      setComboDisplay({
+        name: step.combo.name,
+        color: getRarityColorForCombo(step.combo.cards),
+        winAmt: step.reward,
+      });
+
+      await sleep(140);
+      await playNarration(step.combo.audioPath, "combo", 0.7);
+
+      runningWin += step.reward;
+      details.push(`${step.combo.name} -> +${step.reward}`);
+      setWinAmt(runningWin);
+
+      setPhase("CASCADE");
+      playTrackedAudio("/sounds/hit.mp3", 0.35);
+      await sleep(220);
+      setWinCells(new Set());
+      setCells(step.afterGrid);
+      setNewCells(new Set(step.fillIndices));
+
+      if (step.fillIndices.length > 0) {
+        const cascadeFreq = 200 + step.fillIndices.length * 20;
+        playTick(cascadeFreq, 0.15, 0.1);
+      }
+
+      await sleep(520);
+      setNewCells(new Set());
+      setComboDisplay(null);
+      await sleep(120);
+    }
+
+    setCells(finalGrid);
+    setWinAmt(totalWin);
+    return details;
+  }, [playNarration]);
+
+  const triggerEpicFoil = useCallback(async (
+    foilCells: Array<{idx:number;card:SlotCard;img:string;row:number;col:number}>,
+  ) => {
+    setPhase("BONUS");
+    setShowBonusAnimation(true);
+    setEpicFoilCards(foilCells);
+    setEpicFoilPhase("fly");
+    window.setTimeout(() => setEpicFoilPhase("spin"), 1400);
+    await playNarration("/sounds/evolution.mp3", "bonus", 0.8);
+    await sleep(1200);
+    setEpicFoilCards(null);
+    setEpicFoilPhase(null);
+    setShowBonusAnimation(false);
+  }, [playNarration]);
 
   const spin = async (isFree: boolean, forceBonusMode = false) => {
     if (!isConnected || !address) { toast.error("Conecte a carteira!"); return; }
     if (!isAllowed) { toast.error("Acesso restrito!"); return; }
     if (isSpinning) return;
 
-    const isUsingBonus = forceBonusMode || (isFree && bonusSpinsRemaining > 0 && freeLeft <= 0);
-    if (isFree && freeLeft <= 0 && !isUsingBonus) { toast.error("Sem free spins hoje!"); return; }
-    if (!isFree && !forceBonusMode && coins < betCost) { toast.error(`Precisa de ${betCost} coins!`); return; }
+    if (isAllowed) {
+      isFree = true;
+    }
+
+    const isUsingBonus = forceBonusMode || (isFree && bonusSpinsRemaining > 0 && (autoBonusMode || freeLeft <= 0));
+    if (isFree && freeLeft <= 0 && !isUsingBonus && !isAllowed) { toast.error("Sem free spins hoje!"); return; }
+    if (!isFree && !forceBonusMode && coins < betCost && !isAllowed) { toast.error(`Precisa de ${betCost} coins!`); return; }
+
+    const sequenceId = spinSequenceRef.current + 1;
+    spinSequenceRef.current = sequenceId;
 
     setIsSpinning(true);
+    setPhase("SPIN");
     setWinCells(new Set());
     setNewCells(new Set());
     setActivePaylines([]);
@@ -525,14 +444,16 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     setEpicFoilCards(null);
     setEpicFoilPhase(null);
     foilsFoundRef.current = 0;
-    // GIF lock persiste durante bonus; reseta só quando sai do bonus
-    if (bonusSpinsRemaining <= 0 && !forceBonusMode && !isUsingBonus) {
+    if (!isUsingBonus) {
+      setBonusState({ persistentWildcards: [] });
+      setAutoBonusMode(false);
+    }
+
+    if (bonusSpinsRemaining <= 0 && !isUsingBonus) {
       lockedGifRef.current = null;
       setLockedGifIdx(null);
       setGifScale(1);
     }
-
-    // (sem som contínuo de giro — apenas cliques ao parar cada coluna)
 
     const spinStartTime = Date.now();
     for (let c = 0; c < COLS; c++) startCol(c);
@@ -540,61 +461,81 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     try {
       const res = await spinMut({
         address,
-        isFreeSpin: isFree || isUsingBonus,
-        bonusMultiplier: forceBonusMode || isUsingBonus ? 2 : 1,
+        isFreeSpin: isFree,
+        bonusMultiplier: isUsingBonus ? 2 : 1,
         betMultiplier: isFree ? 1 : betMult,
-        isBonusMode: forceBonusMode || isUsingBonus,
+        isBonusMode: isUsingBonus,
+        bonusState: isUsingBonus ? bonusStateRef.current : undefined,
       }) as SpinResult;
 
-      setBonusSpinsRemaining(res.bonusSpinsRemaining);
-      setFoilCountDisplay(res.foilCount);
-
-      // Bonus sem epic foil (< 4 foils): mostra animação padrão
-      // Com 4+ foils: triggerEpicFoil cuida do áudio e visual — não duplicar
-      if (res.triggeredBonus && res.foilCount < 4) {
-        setShowBonusAnimation(true);
-
-        // Duck BGM during bonus animation
-        pauseBgm();
-        playTrackedAudio('/sounds/evolution.mp3', 0.6);
-        toast.success(`🎰 +${BONUS_FREE_SPINS} FREE SPINS BÔNUS! (${res.foilCount} foil)`);
-        setTimeout(() => setShowBonusAnimation(false), 3500);
-        // Restore BGM after bonus audio finishes
-        setTimeout(() => {
-          if (!bgmIsPaused) playBgm();
-        }, 2000);
+      if (spinSequenceRef.current !== sequenceId) {
+        return;
       }
+
+      setBonusSpinsRemaining(res.bonusSpinsRemaining);
+      setBonusState(res.bonusState);
 
       const MIN_SPIN_MS = 1600;
       const elapsed = Date.now() - spinStartTime;
       const baseDelay = Math.max(0, MIN_SPIN_MS - elapsed);
 
-      // Stop columns sequentially using initialGrid
       const stopSequential = (col: number) => {
         if (col >= COLS) {
-          // Detectar GIF card no grid ANTES de iniciar cascade (para ref síncrona funcionar)
-          const gifInGrid = res.initialGrid.findIndex(c => c.baccarat === 'vbms_special');
+          const gifInGrid = res.initialGrid.findIndex(c => c.baccarat === "vbms_special");
           if (gifInGrid >= 0) {
             lockedGifRef.current = gifInGrid;
             setLockedGifIdx(gifInGrid);
           }
 
-          // Check for 4 foil epic
-          const allFoilCells = res.initialGrid
-            .map((card, idx) => ({
-              idx,
-              card,
-              img: card.baccarat === 'vbms_special' ? CASINO_SLOT_GIF : (getVbmsBaccaratImageUrl(card.baccarat) || ''),
-              row: Math.floor(idx / COLS),
-              col: idx % COLS,
-            }))
-            .filter(c => c.card.hasFoil);
+          (async () => {
+            const details = await playComboResolution(
+              res.comboSteps,
+              res.finalGrid,
+              res.winAmount,
+              sequenceId,
+            );
 
-          if (allFoilCells.length >= 4) {
-            triggerEpicFoil(allFoilCells, () => playCascade(res.cascadeSteps, res.finalGrid, res.winAmount));
-          } else {
-            playCascade(res.cascadeSteps, res.finalGrid, res.winAmount);
-          }
+            if (spinSequenceRef.current !== sequenceId) {
+              return;
+            }
+
+            if (res.triggeredBonus && res.foilCount >= 4) {
+              const finalFoils = res.finalGrid
+                .map((card, idx) => ({
+                  idx,
+                  card,
+                  img: card.baccarat === "vbms_special" ? CASINO_SLOT_GIF : (getVbmsBaccaratImageUrl(card.baccarat) || ""),
+                  row: Math.floor(idx / COLS),
+                  col: idx % COLS,
+                }))
+                .filter((entry) => entry.card.hasFoil);
+
+              await triggerEpicFoil(finalFoils);
+              toast.success(`BONUS SPINS +${res.bonusSpinsAwarded}`);
+            }
+
+            finishSpinVisuals(res.finalGrid, res.winAmount, res.maxWin, details);
+
+            const shouldContinueBonus = res.bonusSpinsRemaining > 0 && (autoBonusMode || isUsingBonus || res.triggeredBonus);
+
+            if (shouldContinueBonus) {
+              setAutoBonusMode(true);
+              window.setTimeout(() => {
+                if (spinSequenceRef.current === sequenceId) {
+                  spin(true, true);
+                }
+              }, 900);
+            } else {
+              setAutoBonusMode(false);
+              if (res.bonusSpinsRemaining <= 0) {
+                setBonusState({ persistentWildcards: [] });
+              }
+            }
+          })().catch(() => {
+            setIsSpinning(false);
+            setPhase("IDLE");
+          });
+
           return;
         }
 
@@ -622,6 +563,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
       Object.values(ivs.current).forEach(clearInterval);
       ivs.current = {};
       setIsSpinning(false);
+      setPhase("IDLE");
       setStopped(new Set([0,1,2,3,4]));
       toast.error(err.data?.message || err.message || "Erro no spin");
     }
@@ -636,7 +578,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
     const effectiveCard = devFoilAll ? { ...card, hasFoil: true } : card;
     const s          = RS[effectiveCard.rarity] ?? RS.Common;
     const isLockedGif = lockedGifIdx === idx && effectiveCard.baccarat === 'vbms_special';
-    const cardScale = isLockedGif ? gifScale : 1;
+    const cardScale = Math.max(isLockedGif ? gifScale : 1, effectiveCard.wildcardLevel ?? 1);
 
     // Determinar imagem:VBMS Special → GIF de cassino | Wildcards → GIFs animados | Outras → imagens normais
     const isVBMSspecial = effectiveCard.baccarat === "vbms_special";
@@ -655,7 +597,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
 
     // Efeito de foil: shimmer animado + borda brilhante
     const foilEffect = effectiveCard.hasFoil ? {
-      animation: "foil-shimmer 2s ease-in-out infinite",
+      animation: "prizeFoilShine 3s linear infinite",
       border: `${borderW}px solid ${isWin ? '#FFD700' : '#FFA500'}`,
       boxShadow: `0 0 15px ${isWin ? '#FFD700' : '#FFA500'}88, inset 0 0 20px ${isWin ? '#FFD70033' : '#FFA50022'}`
     } : {};
@@ -802,14 +744,13 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
         }
         .subtitle-blink { animation: subtitle-blink 1.4s ease-in-out infinite; }
         /* foil-card usa .prize-foil de globals.css (mais colorido) */
-        .foil-card { position: relative; }
+        .foil-card { }
         /* Foil breathing animation */
         @keyframes foil-breathe {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.03); }
+          0%, 100% { box-shadow: 0 0 15px #FFA500, inset 0 0 20px #FFA50022; }
+          50% { box-shadow: 0 0 25px #FACC15, inset 0 0 30px #FACC1533; }
         }
         .foil-card {
-          position: relative;
           animation: foil-breathe 3s ease-in-out infinite;
         }
         @keyframes combo-reveal {
@@ -1052,25 +993,26 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
       {epicFoilCards && epicFoilPhase && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center overflow-hidden pointer-events-none"
           style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}>
-          <div className="relative flex items-center justify-center" style={{ width: 320, height: 120 }}>
+          <div className="relative" style={{ width: 'min(86vw, 360px)', aspectRatio: '5 / 3' }}>
             {epicFoilCards.map((fc, i) => {
-              // Position cards side by side with equal spacing
-              const spacing = 320 / (epicFoilCards.length + 1);
-              const xPos = spacing * (i + 1) - 36; // Center each card
               const rs = RS[fc.card.rarity] ?? RS.Common;
+              const cellWidth = 100 / COLS;
+              const cellHeight = 100 / ROWS;
               return (
                 <div
                   key={fc.idx}
                   className={epicFoilPhase === 'fly' ? 'epic-foil-fly' : 'epic-foil-spin'}
                   style={{
                     position: 'absolute',
-                    width: 72, height: 108,
+                    left: `calc(${fc.col * cellWidth}% + 4px)`,
+                    top: `calc(${fc.row * cellHeight}% + 4px)`,
+                    width: `calc(${cellWidth}% - 8px)`,
+                    height: `calc(${cellHeight}% - 8px)`,
                     borderRadius: 8,
                     overflow: 'hidden',
                     border: `3px solid ${rs.border}`,
                     boxShadow: `0 0 20px ${rs.border}88, 0 0 40px #FFA50055`,
                     background: rs.bg,
-                    transform: `translate(${xPos}px, 0px)`,
                     '--delay': `${i * 0.08}s`,
                   } as React.CSSProperties}
                 >
@@ -1357,7 +1299,14 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
               {/* SPIN — centro */}
               <button
                 onClick={() => {
-                  // Priorizar bonus spins sobre free spins
+                  // Dev mode: ALLOWED_ADDRESSES get infinite free spins
+                  if (isAllowed) {
+                    // Always allow spinning for dev addresses - use free spin mode
+                    spin(true);
+                    return;
+                  }
+
+                  // Priorizar bonus spins sobre free spins (normal mode)
                   if (bonusSpinsRemaining > 0 && freeLeft <= 0) {
                     spin(true, true); // Usar bonus spin (força modo bônus)
                   } else if (freeLeft > 0) {
@@ -1366,7 +1315,7 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
                     spin(false); // Spin pago
                   }
                 }}
-                disabled={isSpinning || (bonusSpinsRemaining <= 0 && freeLeft <= 0 && coins < betCost)}
+                disabled={isSpinning || ((bonusSpinsRemaining <= 0 && freeLeft <= 0 && coins < betCost) && !isAllowed)}
                 className="w-14 h-14 rounded-full border-4 border-black font-black flex-none flex flex-col items-center justify-center disabled:opacity-40 active:scale-95 transition-transform"
                 style={{
                   background: isSpinning
@@ -1375,18 +1324,20 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
                       ? "linear-gradient(180deg,#a855f7 0%,#7c3aed 50%,#6d28d9 100%)" //roxo para bonus
                       : freeLeft > 0
                         ? "linear-gradient(180deg,#34d399 0%,#059669 50%,#047857 100%)"
-                        : "linear-gradient(180deg,#fbbf24 0%,#f59e0b 50%,#d97706 100%)",
+                        : isAllowed
+                          ? "linear-gradient(180deg,#34d399 0%,#059669 50%,#047857 100%)" // Dev mode: always show free
+                          : "linear-gradient(180deg,#fbbf24 0%,#f59e0b 50%,#d97706 100%)",
                   boxShadow: isSpinning ? "0 2px 0 #000" : "0 5px 0 #000, 0 0 18px rgba(251,191,36,0.55)",
                   color: "#000",
                   transform: isSpinning ? "translateY(3px)" : undefined,
                 }}
               >
                 <span className={`text-[10px] font-black leading-none tracking-widest ${isSpinning ? "animate-spin" : ""}`}>
-                  {bonusSpinsRemaining > 0 ? "BONUS" : freeLeft > 0 ? "FREE" : "SPIN"}
+                  {isAllowed ? "FREE" : (bonusSpinsRemaining > 0 ? "BONUS" : freeLeft > 0 ? "FREE" : "SPIN")}
                 </span>
-                {(bonusSpinsRemaining > 0 || freeLeft > 0) && !isSpinning && (
+                {(isAllowed || bonusSpinsRemaining > 0 || freeLeft > 0) && !isSpinning && (
                   <span className="text-[8px] font-black mt-0.5 text-green-900">
-                    {bonusSpinsRemaining > 0 ? bonusSpinsRemaining : freeLeft}x
+                    {isAllowed ? "∞" : (bonusSpinsRemaining > 0 ? bonusSpinsRemaining : freeLeft)}x
                   </span>
                 )}
               </button>
@@ -1438,48 +1389,6 @@ export default function SlotMachine({ onWalletOpen }: { onWalletOpen?: () => voi
               >+</button>
             </div>
 
-            {/* DEV TOOLS — só para wallets autorizadas */}
-            {isAllowed && (
-              <div className="mt-2 pt-2 border-t border-gray-700">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[8px] font-black uppercase text-gray-600">DEV:</span>
-                  <button
-                    onClick={() => setShowGallery(true)}
-                    className="px-2 py-0.5 rounded border border-gray-600 text-[8px] font-black uppercase text-gray-400 hover:bg-gray-800 hover:text-gray-200 transition-colors"
-                  >🃏 Gallery</button>
-                  <button
-                    onClick={() => setDevFoilAll(f => !f)}
-                    className="px-2 py-0.5 rounded border text-[8px] font-black uppercase transition-colors"
-                    style={{
-                      borderColor: devFoilAll ? "#FFA500" : "#4b5563",
-                      color: devFoilAll ? "#FFA500" : "#6b7280",
-                      background: devFoilAll ? "#1a0e00" : "transparent",
-                    }}
-                  >✨ {devFoilAll ? "FOIL ON" : "Foil"}</button>
-                  <button
-                    onClick={() => setShowIndices(s => !s)}
-                    className="px-2 py-0.5 rounded border text-[8px] font-black uppercase transition-colors"
-                    style={{
-                      borderColor: showIndices ? "#60a5fa" : "#4b5563",
-                      color: showIndices ? "#60a5fa" : "#6b7280",
-                      background: showIndices ? "#050f1a" : "transparent",
-                    }}
-                  >#idx</button>
-                  <button
-                    onClick={() => { setCells(Array.from({ length: TOTAL_CELLS }, pick)); setWinCells(new Set()); setWinAmt(null); setLastWinDetails([]); }}
-                    disabled={isSpinning}
-                    className="px-2 py-0.5 rounded border border-gray-600 text-[8px] font-black uppercase text-gray-400 hover:bg-gray-800 transition-colors disabled:opacity-30"
-                  >↺ Shuffle</button>
-                </div>
-                {lastWinDetails.length > 0 && (
-                  <div className="mt-1.5 bg-black/60 rounded p-1.5 space-y-0.5 max-h-16 overflow-y-auto">
-                    {lastWinDetails.map((d, i) => (
-                      <div key={i} className="text-[8px] font-mono text-green-400 leading-tight">{d}</div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
       </div>

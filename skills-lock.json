@@ -1,6 +1,31 @@
 {
   "version": 1,
   "skills": {
+    "adding-builder-codes": {
+      "source": "base/skills",
+      "sourceType": "github",
+      "computedHash": "cd33183be61d89903b8cad746677e1c010fe6955c0181744e65d9a8ae4d2c8a5"
+    },
+    "building-with-base-account": {
+      "source": "base/skills",
+      "sourceType": "github",
+      "computedHash": "31b29db0ead7dd9fa35a814f9427bee72569f57cff6c1ab415bc1ea7ed843186"
+    },
+    "connecting-to-base-network": {
+      "source": "base/skills",
+      "sourceType": "github",
+      "computedHash": "e75f867ba4a1810b819e2923240b17e64977e564106f3683da7cb1d4c301e249"
+    },
+    "convert-farcaster-miniapp-to-app": {
+      "source": "base/skills",
+      "sourceType": "github",
+      "computedHash": "317ec4530f9f6f2bfcd697acd60dce198c96ff29010f8ea9f1e6355053062669"
+    },
+    "converting-minikit-to-farcaster": {
+      "source": "base/skills",
+      "sourceType": "github",
+      "computedHash": "e81e6565fc62db8ad76724baf0fe30b7c8d0546dfeeff28b44fe75a13030ecd7"
+    },
     "convex-create-component": {
       "source": "get-convex/agent-skills",
       "sourceType": "github",
@@ -25,6 +50,31 @@
       "source": "get-convex/agent-skills",
       "sourceType": "github",
       "computedHash": "7cc29991c446d2ea574dc9abb5fb85c0c9a7f3ef3af4c94454eef45017bda794"
+    },
+    "deploying-contracts-on-base": {
+      "source": "base/skills",
+      "sourceType": "github",
+      "computedHash": "0491327aec9f8d842821f14548426a302e4f1d5e13f16d5af4042ff41c945250"
+    },
+    "migrating-an-onchainkit-app": {
+      "source": "base/skills",
+      "sourceType": "github",
+      "computedHash": "1adfcf7d64cd658cc0fa51bbeaaf4ebdc4dd9060104bfc6284a144ddb85fb091"
+    },
+    "registering-agent-base-dev": {
+      "source": "base/skills",
+      "sourceType": "github",
+      "computedHash": "0b4bd204f4642efa336c89c1aa43189f36e52cbf22d61fd02ee69a40a9df6521"
+    },
+    "running-a-base-node": {
+      "source": "base/skills",
+      "sourceType": "github",
+      "computedHash": "e2270507040a9ca27758aded6a73ecdeaa809b236500df008ee059a2395480af"
+    },
+    "skill-creator": {
+      "source": "base/skills",
+      "sourceType": "github",
+      "computedHash": "fb809ebaed1af2f9cfa4ba19100e4ca9fe753c45ecb739a9dd91f12d12f9693a"
     }
   }
 }

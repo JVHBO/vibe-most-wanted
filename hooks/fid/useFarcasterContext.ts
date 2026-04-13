@@ -61,10 +61,21 @@ export function useFarcasterContext(): FarcasterContext {
 
     const initializeSdk = async () => {
       try {
+        // Farcaster miniapp always runs inside an iframe.
+        // Base App (standard browser mode) and regular web do not.
+        // Skip SDK entirely when not in iframe — resolves instantly.
+        if (window.self === window.top) {
+          const ctx = { isReady: true, isInMiniapp: false, user: null, error: null };
+          setContext(ctx);
+          setCachedContext(ctx);
+          return;
+        }
+
         if (!sdk || typeof sdk.wallet === 'undefined') {
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: null };
           setContext(ctx);
           setCachedContext(ctx);
+          try { await sdk.actions.ready(); } catch {}
           return;
         }
 
@@ -78,6 +89,7 @@ export function useFarcasterContext(): FarcasterContext {
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: 'SDK timeout' };
           setContext(ctx);
           setCachedContext(ctx);
+          try { await sdk.actions.ready(); } catch {}
           return;
         }
 
@@ -87,6 +99,7 @@ export function useFarcasterContext(): FarcasterContext {
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: 'No Farcaster user context' };
           setContext(ctx);
           setCachedContext(ctx);
+          try { await sdk.actions.ready(); } catch {}
           return;
         }
 
@@ -100,10 +113,12 @@ export function useFarcasterContext(): FarcasterContext {
         const ctx = { isReady: true, isInMiniapp: true, user, error: null };
         setContext(ctx);
         setCachedContext(ctx);
+        try { await sdk.actions.ready(); } catch {}
       } catch (err) {
         const ctx = { isReady: true, isInMiniapp: false, user: null, error: String(err) };
         setContext(ctx);
         setCachedContext(ctx);
+        try { await sdk.actions.ready(); } catch {}
       }
     };
 

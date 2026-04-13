@@ -3,6 +3,9 @@
  * Fix Issue #7: All new Audio() instances are tracked in allBgmAudios for proper cleanup
  */
 import { getAssetUrl } from '@/lib/ipfs-assets';
+import { COMBO_VOICE_FILES } from './comboMeta';
+
+export { COMBO_VOICE_FILES, getComboVoicePath } from "./comboMeta";
 
 export type SoundType = "card" | "turn" | "ability" | "victory" | "defeat" | "select" | "combo" | "error" | "tick" | "buff" | "debuff" | "destroy" | "steal" | "draw" | "energy" | "shuffle" | "heal" | "shield" | "bomb" | "hit" | "damage";
 export type MemeSound = "mechaArena" | "ggez" | "bruh" | "emotional" | "wow";
@@ -418,33 +421,6 @@ export const playSound = (type: SoundType) => {
   }
 };
 
-// Mapping from combo ID to audio file name
-export const COMBO_VOICE_FILES: Record<string, string> = {
-  romero_family: "romero.mp3",
-  crypto_kings: "cryptokings.mp3",
-  mythic_assembly: "mythic.mp3",
-  legends_unite: "legends_unite.mp3",
-  ai_bros: "ai_takeover.mp3",
-  scam_squad: "scam_squad.mp3",
-  degen_trio: "degen_trio.mp3",
-  vibe_team: "vibe_team.mp3",
-  dirty_duo: "dirty_duo.mp3",
-  code_masters: "code_masters.mp3",
-  content_creators: "content_creators.mp3",
-  chaos_agents: "chaos_agents.mp3",
-  sniper_support: "sniper_elite.mp3",
-  money_makers: "money_makers.mp3",
-  underdog_uprising: "underdog_uprising.mp3",
-  parallel: "PARALLEL.mp3",
-  royal_brothers: "royal_brothers.mp3",
-  philosopher_chad: "philosopher_chad.mp3",
-  scaling_masters: "scaling_masters.mp3",
-  christmas_spirit: "christmas_spirit.mp3",
-  shadow_network: "shadow_network.mp3",
-  pixel_artists: "pixel_artists.mp3",
-  dirty_money: "dirty_money.mp3",
-};
-
 // Play combo voice announcement
 export const playComboVoice = (comboId: string) => {
   if (typeof window === "undefined") return;
@@ -463,13 +439,16 @@ export const playComboVoice = (comboId: string) => {
 };
 
 /** Play a one-shot audio file with tracking for cleanup. FIX Issue #7 */
-export const playTrackedAudio = (src: string, volume = 0.5) => {
-  if (typeof window === "undefined") return;
+export const playTrackedAudio = (src: string, volume = 0.5): HTMLAudioElement | null => {
+  if (typeof window === "undefined") return null;
   try {
     const audio = trackAudio(new Audio(src));
     audio.volume = volume;
     audio.play().catch(() => {});
-  } catch {}
+    return audio;
+  } catch {
+    return null;
+  }
 };
 
 /** Play 5-second warning sound. FIX Issue #7: tracked for cleanup */
