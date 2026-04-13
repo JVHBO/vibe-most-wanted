@@ -97,6 +97,9 @@ body {
   /* Smoother text on mobile */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Dark background before React hydrates — prevents white flash in Base App and WebViews */
+  background-color: #1E1E1E;
+  color: #ffffff;
 }
 
 /* Remove 300ms tap delay on all interactive elements */
