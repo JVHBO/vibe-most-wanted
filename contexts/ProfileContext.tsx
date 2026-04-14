@@ -33,10 +33,21 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     try {
       const profile = await ConvexProfileService.getProfile(addr);
-      setUserProfile(profile);
-      setHasLoaded(true);
+      if (profile) {
+        // Profile found — mark as checked
+        setUserProfile(profile);
+        setHasLoaded(true);
+      } else {
+        // null could mean profile doesn't exist OR a transient network error.
+        // Retry once after 2s before declaring the profile absent.
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const retry = await ConvexProfileService.getProfile(addr);
+        setUserProfile(retry);
+        setHasLoaded(true);
+      }
     } catch (error) {
       console.error("[ProfileContext] Error loading profile:", error);
+      // Don't set hasLoaded on error — let the next address change retry
     } finally {
       setIsLoadingProfile(false);
     }

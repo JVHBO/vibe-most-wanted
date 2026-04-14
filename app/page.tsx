@@ -15,6 +15,7 @@ import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useQuery } from "convex/react";
 import { AudioManager } from "@/lib/audio-manager";
 import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
+import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 
 import { api } from "@/convex/_generated/api";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
@@ -29,6 +30,7 @@ const MyCardsModal = dynamic(() => import("@/app/(game)/components/modals/MyCard
 export default function HomePage() {
   const { t, lang, setLang } = useLanguage();
   const { address } = useAccount();
+  const { isLinkedWallet, primaryAddress } = usePrimaryAddress();
   const { disconnect } = useDisconnect();
   const { userProfile, isLoadingProfile, hasCheckedProfile, setUserProfile } = useProfile();
   const farcasterContext = useFarcasterContext();
@@ -146,9 +148,13 @@ export default function HomePage() {
       return;
     }
 
+    // Linked wallet = user definitely has a profile under primary address — never prompt
+    if (isLinkedWallet) return;
+
     if (!hasCheckedProfile || isLoadingProfile || userProfile) return;
 
-    const normalizedAddress = address.toLowerCase();
+    // Use primary address for the prompt-seen key so it persists across linked wallets
+    const normalizedAddress = (primaryAddress || address).toLowerCase();
     const promptSeenKey = getProfilePromptSeenKey(normalizedAddress);
     const hasSeenPrompt = typeof window !== "undefined" && localStorage.getItem(promptSeenKey) === "1";
 
