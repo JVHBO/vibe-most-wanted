@@ -78,35 +78,13 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   useEscapeKey(onClose);
 
     // Check if we should use Farcaster SDK for transactions
-  // ONLY enable if we have a valid SDK context with user - this is the ONLY reliable miniapp detection
+  // Only in actual Farcaster iframe (Warpcast), never in Base App
   useEffect(() => {
     const checkFarcasterSDK = async () => {
       try {
-        // Check if SDK is available first
-        if (!sdk || typeof sdk.wallet === 'undefined') {
-          console.log('[CoinsInboxModal] SDK not available, using wagmi');
-          setUseFarcasterSDK(false);
-          return;
-        }
-
-        // REQUIRE valid SDK context with user - this ONLY works inside Farcaster miniapp
-        let sdkContext;
-        try {
-          const contextPromise = sdk.context;
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('SDK context timeout')), 3000)
-          );
-          sdkContext = await Promise.race([contextPromise, timeoutPromise]);
-          console.log('[CoinsInboxModal] SDK context received:', sdkContext ? 'valid' : 'null');
-        } catch (contextError) {
-          console.log('[CoinsInboxModal] SDK context timeout - NOT in miniapp');
-          setUseFarcasterSDK(false);
-          return;
-        }
-
-        // Must have valid context with user to be in miniapp
-        if (!sdkContext || !(sdkContext as { user?: unknown }).user) {
-          console.log('[CoinsInboxModal] No valid SDK context/user - NOT in miniapp');
+        // Base App and plain browsers never use Farcaster SDK for TXs
+        const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
+        if (!shouldUseFarcasterSDK()) {
           setUseFarcasterSDK(false);
           return;
         }
@@ -115,9 +93,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         const provider = await sdk.wallet.getEthereumProvider();
         if (provider) {
           setUseFarcasterSDK(true);
-          console.log('[CoinsInboxModal] Valid miniapp context + provider - using Farcaster SDK');
         } else {
-          console.log('[CoinsInboxModal] No provider available, using wagmi');
           setUseFarcasterSDK(false);
         }
       } catch (error) {

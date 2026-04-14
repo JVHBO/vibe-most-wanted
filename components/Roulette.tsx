@@ -288,6 +288,13 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   const { validateOnArb } = useArbValidator();
   const publicClient = usePublicClient({ chainId: CONTRACTS.CHAIN_ID });
   const t = rouletteTranslations[lang as keyof typeof rouletteTranslations] || rouletteTranslations.en;
+  // If wagmi is reconnecting for more than 3s, stop waiting and render normally
+  const [reconnectTimedOut, setReconnectTimedOut] = useState(false);
+  useEffect(() => {
+    if (wagmiStatus !== 'reconnecting') { setReconnectTimedOut(false); return; }
+    const t = setTimeout(() => setReconnectTimedOut(true), 3000);
+    return () => clearTimeout(t);
+  }, [wagmiStatus]);
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const rotationRef = useRef(0); // tracks current angle without triggering re-renders
@@ -1036,7 +1043,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     return segments;
   };
 
-  if (wagmiStatus === 'reconnecting' || wagmiStatus === 'connecting') {
+  if ((wagmiStatus === 'reconnecting' || wagmiStatus === 'connecting') && !reconnectTimedOut) {
     return (
       <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-6 text-center">
         <div className="animate-spin w-8 h-8 border-2 border-vintage-gold border-t-transparent rounded-full mx-auto mb-2"></div>

@@ -1078,22 +1078,28 @@ export default function QuestsPage() {
                         try {
                           let data = customQuestPreview as any;
                           if (!data?.fid) throw new Error('Select a user first');
-                          const { sdk } = await import('@farcaster/miniapp-sdk');
-                          const provider = await sdk.wallet.getEthereumProvider();
-                          if (!provider) throw new Error('Wallet not available');
-                          try {
-                            await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
-                          } catch {}
                           const txCallData = encodeFunctionData({
                             abi: ERC20_ABI,
                             functionName: 'transfer',
                             args: [CONTRACTS.VBMSPoolTroll as `0x${string}`, parseEther('100000')],
                           });
                           const txData = (txCallData + ATTRIBUTION_SUFFIX.slice(2)) as `0x${string}`;
-                          const txHash = await provider!.request({
-                            method: 'eth_sendTransaction',
-                            params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken, data: txData }],
-                          }) as string;
+                          let txHash: string;
+                          const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
+                          if (shouldUseFarcasterSDK()) {
+                            const { sdk } = await import('@farcaster/miniapp-sdk');
+                            const provider = await sdk.wallet.getEthereumProvider();
+                            if (!provider) throw new Error('Wallet not available');
+                            try { await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] }); } catch {}
+                            txHash = await provider.request({
+                              method: 'eth_sendTransaction',
+                              params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken, data: txData }],
+                            }) as string;
+                          } else {
+                            const { sendTransaction } = await import('wagmi/actions');
+                            const { config } = await import('@/lib/wagmi');
+                            txHash = await sendTransaction(config, { to: CONTRACTS.VBMSToken as `0x${string}`, data: txData, chainId: CONTRACTS.CHAIN_ID });
+                          }
                           if (!txHash) throw new Error('TX failed');
                           await addCustomFollowQuest({
                             address: address.toLowerCase(),

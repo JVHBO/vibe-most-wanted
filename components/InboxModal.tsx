@@ -45,14 +45,14 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   useEscapeKey(onClose);
 
   // Check if we should use Farcaster SDK for transactions
+  // Only in Warpcast iframe, never in Base App
   useEffect(() => {
     const checkFarcasterSDK = async () => {
+      const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
+      if (!shouldUseFarcasterSDK()) return;
       if (sdk && typeof sdk.wallet !== 'undefined') {
         const provider = await sdk.wallet.getEthereumProvider();
-        if (provider) {
-          setUseFarcasterSDK(true);
-          console.log('[InboxModal] Using Farcaster SDK for transactions');
-        }
+        if (provider) setUseFarcasterSDK(true);
       }
     };
     checkFarcasterSDK();

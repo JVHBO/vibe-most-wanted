@@ -172,11 +172,12 @@ function ProfilePageContent() {
     return false;
   });
 
-  // Auto-detect and connect Farcaster wallet if in miniapp
+  // Auto-detect and connect Farcaster wallet if in miniapp (not Base App)
   useEffect(() => {
     const initFarcasterWallet = async () => {
       try {
-        if (sdk && typeof sdk.wallet !== 'undefined') {
+        const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
+        if (shouldUseFarcasterSDK() && sdk && typeof sdk.wallet !== 'undefined') {
           const provider = await sdk.wallet.getEthereumProvider();
           if (provider) {
             try {

@@ -21,13 +21,16 @@ export async function sendMissionTx(
     const data = (callData + dataSuffix.slice(2)) as `0x${string}`;
 
     try {
-      const provider = await sdk.wallet.getEthereumProvider();
-      if (provider) {
-        await provider.request({
-          method: 'eth_sendTransaction',
-          params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken as `0x${string}`, data }],
-        });
-        return;
+      const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
+      if (shouldUseFarcasterSDK()) {
+        const provider = await sdk.wallet.getEthereumProvider();
+        if (provider) {
+          await provider.request({
+            method: 'eth_sendTransaction',
+            params: [{ from: address as `0x${string}`, to: CONTRACTS.VBMSToken as `0x${string}`, data }],
+          });
+          return;
+        }
       }
     } catch {}
 

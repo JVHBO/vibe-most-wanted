@@ -7,9 +7,17 @@
 
 export function isMiniappMode(): boolean {
   if (typeof window === 'undefined') return false;
+  return window.self !== window.top;
+}
 
-  // Simple check: are we in an iframe?
-  // This is reliable for Farcaster miniapps
+/**
+ * Returns true only when Farcaster SDK should be used for wallet transactions.
+ * Base App (RN WebView) injects window.ethereum but is NOT a Farcaster miniapp.
+ * Always use wagmi for TXs in Base App.
+ */
+export function shouldUseFarcasterSDK(): boolean {
+  if (typeof window === 'undefined') return false;
+  if (typeof (window as any).ReactNativeWebView !== 'undefined') return false;
   return window.self !== window.top;
 }
 

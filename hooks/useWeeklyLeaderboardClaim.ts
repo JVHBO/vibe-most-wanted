@@ -35,13 +35,6 @@ export function useWeeklyLeaderboardClaim({
 
       toast.info('Sign transaction to receive VBMS...');
 
-      const provider = await sdk.wallet.getEthereumProvider();
-      if (!provider) throw new Error('Wallet not available');
-
-      try {
-        await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] });
-      } catch {}
-
       const { encodeFunctionData, parseEther } = await import('viem');
       const { POOL_ABI } = await import('@/lib/contracts');
       const callData = encodeFunctionData({
@@ -51,10 +44,26 @@ export function useWeeklyLeaderboardClaim({
       });
       const data = (callData + ATTRIBUTION_SUFFIX.slice(2)) as `0x${string}`;
 
-      const txHash = await provider.request({
-        method: 'eth_sendTransaction',
-        params: [{ from: address as `0x${string}`, to: '0x062b914668f3fd35c3ae02e699cb82e1cf4be18b', data }],
-      }) as string;
+      let txHash: string;
+
+      const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
+      if (shouldUseFarcasterSDK()) {
+        const provider = await sdk.wallet.getEthereumProvider();
+        if (!provider) throw new Error('Wallet not available');
+        try { await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] }); } catch {}
+        txHash = await provider.request({
+          method: 'eth_sendTransaction',
+          params: [{ from: address as `0x${string}`, to: '0x062b914668f3fd35c3ae02e699cb82e1cf4be18b', data }],
+        }) as string;
+      } else {
+        const { sendTransaction } = await import('wagmi/actions');
+        const { config } = await import('@/lib/wagmi');
+        txHash = await sendTransaction(config, {
+          to: '0x062b914668f3fd35c3ae02e699cb82e1cf4be18b',
+          data,
+          chainId: 8453,
+        });
+      }
 
       await recordWeeklyLeaderboardClaim({ address, txHash });
       setShowWeeklyLeaderboardPopup(false);

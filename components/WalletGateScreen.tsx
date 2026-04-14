@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
 import { ConnectScreen } from "@/components/ConnectScreen";
 import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
@@ -14,12 +14,18 @@ export function WalletGateScreen({ soundEnabled = true }: WalletGateScreenProps)
   const farcasterContext = useFarcasterContext();
   const { status } = useAccount();
   const [isConnectingWallet, setIsConnectingWallet] = useState(false);
+  const [reconnectTimedOut, setReconnectTimedOut] = useState(false);
   const isInFarcaster = farcasterContext.isInMiniapp;
   const isCheckingWalletAccess = !farcasterContext.isReady || isConnectingWallet;
 
-  // While wagmi is reconnecting (page navigation in Base App), show a spinner
-  // instead of the connect screen so the user doesn't have to press connect
-  if (status === 'reconnecting' || status === 'connecting') {
+  // After 3s of reconnecting with no result, stop waiting
+  useEffect(() => {
+    if (status !== 'reconnecting') { setReconnectTimedOut(false); return; }
+    const t = setTimeout(() => setReconnectTimedOut(true), 3000);
+    return () => clearTimeout(t);
+  }, [status]);
+
+  if ((status === 'reconnecting' || status === 'connecting') && !reconnectTimedOut) {
     return (
       <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
         <LoadingSpinner />
