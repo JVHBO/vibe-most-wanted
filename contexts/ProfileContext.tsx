@@ -5,6 +5,7 @@ import { useAccount } from "wagmi";
 import { ConvexProfileService, UserProfile } from "@/lib/convex-profile";
 import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 
+
 interface ProfileContextType {
   userProfile: UserProfile | null;
   isLoadingProfile: boolean;
@@ -17,6 +18,7 @@ const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
 
 export function ProfileProvider({ children }: { children: ReactNode }) {
   const { primaryAddress: address } = usePrimaryAddress();
+  const { status: wagmiStatus } = useAccount();
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -53,12 +55,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       if (!hasLoaded || userProfile?.address?.toLowerCase() !== address.toLowerCase()) {
         loadProfile(address);
       }
-    } else {
-      // Clear profile when disconnected
+    } else if (wagmiStatus === 'disconnected') {
+      // Only clear profile when explicitly disconnected, not during reconnecting
       setUserProfile(null);
       setHasLoaded(false);
     }
-  }, [address]);
+    // If wagmiStatus is 'reconnecting' or 'connecting', keep the existing profile cached
+  }, [address, wagmiStatus]);
 
   return (
     <ProfileContext.Provider value={{
