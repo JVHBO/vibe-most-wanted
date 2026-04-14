@@ -30,7 +30,7 @@ export default function HomePage() {
   const { t, lang, setLang } = useLanguage();
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
-  const { userProfile, isLoadingProfile, setUserProfile } = useProfile();
+  const { userProfile, isLoadingProfile, hasCheckedProfile, setUserProfile } = useProfile();
   const farcasterContext = useFarcasterContext();
   const { balance: vbmsBlockchainBalance } = useFarcasterVBMSBalance(address);
   const {
@@ -138,7 +138,7 @@ export default function HomePage() {
       return;
     }
 
-    if (isLoadingProfile || userProfile) return;
+    if (!hasCheckedProfile || isLoadingProfile || userProfile) return;
 
     const normalizedAddress = address.toLowerCase();
     const promptSeenKey = getProfilePromptSeenKey(normalizedAddress);
@@ -163,7 +163,7 @@ export default function HomePage() {
         localStorage.setItem(promptSeenKey, "1");
       }
     }
-  }, [address, isLoadingProfile, userProfile, profileUsername, farcasterContext.user?.username]);
+  }, [address, hasCheckedProfile, isLoadingProfile, userProfile, profileUsername, farcasterContext.user?.username]);
 
   return (
     <div style={{ minHeight: '100dvh', background: '#1E1E1E', overflow: showWalletGate ? 'hidden' : undefined }}>

@@ -8,6 +8,7 @@ import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 interface ProfileContextType {
   userProfile: UserProfile | null;
   isLoadingProfile: boolean;
+  hasCheckedProfile: boolean;
   refreshProfile: () => Promise<void>;
   setUserProfile: Dispatch<SetStateAction<UserProfile | null>>;
 }
@@ -63,6 +64,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     <ProfileContext.Provider value={{
       userProfile,
       isLoadingProfile: isLoadingProfile && !userProfile, // Only show loading if no cached profile
+      hasCheckedProfile: hasLoaded,
       refreshProfile,
       setUserProfile
     }}>
