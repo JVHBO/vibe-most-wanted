@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useQuery, useMutation, useAction } from 'convex/react';
@@ -13,7 +13,7 @@ import { sdk } from '@farcaster/miniapp-sdk';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useProfile } from '@/contexts/ProfileContext';
 
-export default function VibeQuestPage() {
+function VibeQuestPageContent() {
   const { lang } = useLanguage();
   const t = fidTranslations[lang];
   const farcasterContext = useFarcasterContext();
@@ -150,5 +150,22 @@ export default function VibeQuestPage() {
       onClaim={handleClaim}
       asPage={true}
     />
+  );
+}
+
+export default function VibeQuestPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-vintage-dark flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin w-12 h-12 border-4 border-vintage-gold border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-vintage-ice">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <VibeQuestPageContent />
+    </Suspense>
   );
 }

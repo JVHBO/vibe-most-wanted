@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useAccount, useWaitForTransactionReceipt, useConnect, useSendTransaction, useSwitchChain } from "wagmi";
 import { useWriteContractWithAttribution, dataSuffix, BUILDER_CODE } from "@/hooks/fid/useWriteContractWithAttribution";
 import { encodeFunctionData, createPublicClient, http } from "viem";
@@ -61,7 +61,7 @@ interface GeneratedTraits {
   power: number;
 }
 
-export default function FidPage() {
+function FidPageContent() {
   const { address, chain: connectedChain } = useAccount();
   const { connect, connectors } = useConnect();
   const { switchChainAsync } = useSwitchChain();
@@ -2317,5 +2317,22 @@ ${shareT.shareTextMintYours || 'Mint yours at'} @jvhbo`;
         }
       `}</style>
     </div>
+  );
+}
+
+export default function FidPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-vintage-dark flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin w-12 h-12 border-4 border-vintage-gold border-t-transparent rounded-full mx-auto mb-4" />
+            <p className="text-vintage-ice">Loading...</p>
+          </div>
+        </div>
+      }
+    >
+      <FidPageContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { Suspense, useState, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -48,7 +48,7 @@ const RARITY_TEXT: Record<string, string> = {
   Legendary: "text-yellow-400",
 };
 
-export default function BurnCardsPage() {
+function BurnCardsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { address, isConnecting } = useAccount();
@@ -368,5 +368,19 @@ export default function BurnCardsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BurnCardsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      }
+    >
+      <BurnCardsPageContent />
+    </Suspense>
   );
 }

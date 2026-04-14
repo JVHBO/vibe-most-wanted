@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ConvexProfileService, type UserProfile, type MatchHistory } from '@/lib/convex-profile';
@@ -57,7 +57,7 @@ const devError = (...args: any[]) => {
 // Use the shared isUnrevealed function (aliased as isUnrevealedShared in imports)
 const isUnrevealed = isUnrevealedShared;
 
-export default function ProfilePage() {
+function ProfilePageContent() {
   const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1372,5 +1372,13 @@ export default function ProfilePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-vintage-black" />}>
+      <ProfilePageContent />
+    </Suspense>
   );
 }
