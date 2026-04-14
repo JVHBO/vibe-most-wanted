@@ -64,10 +64,6 @@ export default function HomePage() {
   const isInFarcaster = farcasterContext.isInMiniapp;
   const isRNWebView = typeof window !== "undefined" && typeof (window as any).ReactNativeWebView !== "undefined";
   const safeNavigate = (path: string) => {
-    if (isRNWebView) {
-      window.location.assign(path);
-      return;
-    }
     router.push(path);
   };
   const isCheckingWalletAccess = !farcasterContext.isReady || isConnectingWallet;
