@@ -3,16 +3,17 @@
 import { useEffect } from 'react';
 
 /**
- * Component to prompt user to add miniapp and enable notifications
- * Runs automatically when user opens the app in Farcaster
- *
- * NOTE: Tokens are managed by Neynar via webhook (configured in farcaster.json)
- * We don't need to save tokens ourselves - just call addMiniApp() to prompt user
+ * Prompt "Save app + enable notifications" only inside Farcaster iframe host.
+ * Base App (RN WebView) uses Base notifications by wallet and does not need addMiniApp.
  */
 export function FarcasterNotificationRegistration() {
   useEffect(() => {
     async function promptAddMiniApp() {
       try {
+        const isRNWebView = typeof (window as any).ReactNativeWebView !== 'undefined';
+        const isIframe = window.self !== window.top;
+        if (isRNWebView || !isIframe) return;
+
         const { sdk } = await import('@farcaster/miniapp-sdk');
 
         const context = await sdk.context;
@@ -24,13 +25,12 @@ export function FarcasterNotificationRegistration() {
         const sessionKey = `vbms_miniapp_${fid}`;
         if (sessionStorage.getItem(sessionKey)) return;
 
-        // Request to add miniapp (includes notification permission)
-        // Neynar receives the token via webhook configured in farcaster.json
+        // Request to add miniapp (includes notification permission in Farcaster host)
         const result = await sdk.actions.addMiniApp();
         console.log('[FarcasterNotification] addMiniApp result:', result);
 
         if (result?.notificationDetails) {
-          console.log('[FarcasterNotification] Notifications enabled for FID:', fid, '(token managed by Neynar)');
+          console.log('[FarcasterNotification] Notifications enabled for FID:', fid);
         }
 
         sessionStorage.setItem(sessionKey, '1');

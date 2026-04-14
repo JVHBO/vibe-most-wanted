@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { broadcastNeynarNotification, sendNeynarNotification } from "@/lib/neynar";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
+import { listBaseNotificationUsers, sendBaseNotifications } from "@/lib/base-notifications";
 
 /**
  * POST /api/notifications/broadcast
  *
- * Send notifications via Neynar API
+ * Send notifications via Base Notifications API
  *
  * Body:
  * - title: string (max 32 chars)
  * - body: string (max 128 chars)
- * - targetFids?: number[] (optional, empty = all users)
- * - targetUrl?: string (optional, default = https://vibemostwanted.xyz)
+ * - targetFids?: number[] (optional)
+ * - targetAddresses?: string[] (optional)
+ * - targetPath?: string (optional, default = /)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, body, targetFids, targetUrl } = await request.json();
+    const { title, body, targetFids, targetAddresses, targetPath } = await request.json();
 
     if (!title || !body) {
       return NextResponse.json(
@@ -30,37 +33,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[Notifications API] Broadcasting: "${title}"`);
+    console.log(`[Notifications API] Broadcasting via Base: "${title}"`);
 
-    // If specific FIDs provided, use sendNeynarNotification
-    // Otherwise use broadcastNeynarNotification for all users
-    if (targetFids && Array.isArray(targetFids) && targetFids.length > 0) {
-      const result = await sendNeynarNotification(
-        title,
-        body,
-        targetFids,
-        targetUrl || "https://vibemostwanted.xyz"
-      );
+    const walletSet = new Set<string>();
 
-      return NextResponse.json({
-        success: result.success,
-        deliveries: result.deliveries,
-        error: result.error,
-      });
-    } else {
-      const result = await broadcastNeynarNotification(
-        title,
-        body,
-        targetUrl || "https://vibemostwanted.xyz"
-      );
-
-      return NextResponse.json({
-        success: result.success,
-        successCount: result.successCount,
-        failedCount: result.failedCount,
-        error: result.error,
-      });
+    if (Array.isArray(targetAddresses)) {
+      for (const address of targetAddresses) {
+        if (typeof address === "string" && address.startsWith("0x")) {
+          walletSet.add(address.toLowerCase());
+        }
+      }
     }
+
+    if (Array.isArray(targetFids) && targetFids.length > 0) {
+      const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+      for (const fid of targetFids.slice(0, 1000)) {
+        if (!Number.isFinite(fid)) continue;
+        const profile = await convex.query(api.profiles.getProfileByFid, { fid: Number(fid) });
+        if (profile?.address && typeof profile.address === "string") {
+          walletSet.add(profile.address.toLowerCase());
+        }
+      }
+    }
+
+    if (walletSet.size === 0) {
+      const users = await listBaseNotificationUsers({ notificationsEnabled: true, limit: 100 });
+      for (const address of users) {
+        walletSet.add(address.toLowerCase());
+      }
+    }
+
+    const result = await sendBaseNotifications({
+      walletAddresses: [...walletSet],
+      title,
+      message: body,
+      targetPath: typeof targetPath === "string" ? targetPath : "/",
+    });
+
+    return NextResponse.json({
+      success: result.success,
+      sentCount: result.sentCount,
+      failedCount: result.failedCount,
+      results: result.results,
+      targetCount: walletSet.size,
+    });
   } catch (error) {
     console.error("[Notifications API] Error:", error);
     return NextResponse.json(
