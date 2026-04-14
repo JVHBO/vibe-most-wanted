@@ -32,9 +32,6 @@ function checkRateLimit(key: string): boolean {
 export async function POST(request: NextRequest) {
   try {
     const internalSecret = process.env.VMW_INTERNAL_SECRET;
-    if (!internalSecret) {
-      return NextResponse.json({ error: "VMW_INTERNAL_SECRET not configured" }, { status: 500 });
-    }
 
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
     if (!convexUrl) {
@@ -85,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     const convex = new ConvexHttpClient(convexUrl);
     const profileId = await convex.mutation(api.profiles.upsertProfileFromFarcaster, {
-      adminKey: internalSecret,
+      adminKey: internalSecret || undefined,
       address: normalizedAddress,
       fid: parsedFid,
       username: user.username || `fid${parsedFid}`,

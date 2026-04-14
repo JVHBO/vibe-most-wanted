@@ -280,3 +280,30 @@ export async function verifyNonce(
     return false;
   }
 }
+
+/**
+ * Consume a nonce after a successful authenticated HTTP action.
+ * Returns true when nonce was consumed; throws on mismatch.
+ */
+export const consumeNonce = mutation({
+  args: {
+    address: v.string(),
+    nonce: v.number(),
+  },
+  handler: async (ctx, { address, nonce }) => {
+    const normalizedAddress = address.toLowerCase();
+
+    const existing = await ctx.db
+      .query("nonces")
+      .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+      .first();
+
+    const currentNonce = existing ? existing.nonce : 0;
+    if (nonce !== currentNonce) {
+      throw new Error(`Invalid nonce: expected ${currentNonce}, got ${nonce}`);
+    }
+
+    await incrementNonce(ctx, normalizedAddress);
+    return true;
+  },
+});

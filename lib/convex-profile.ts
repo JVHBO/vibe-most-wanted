@@ -274,7 +274,11 @@ export class ConvexProfileService {
    */
   static async createProfile(
     address: string,
-    username: string
+    username: string,
+    auth?: {
+      signature: string;
+      message: string;
+    }
   ): Promise<void> {
     try {
       const normalizedAddress = address.toLowerCase();
@@ -282,7 +286,12 @@ export class ConvexProfileService {
       const res = await fetch('/api/wallet/profile-upsert', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address: normalizedAddress, username }),
+        body: JSON.stringify({
+          address: normalizedAddress,
+          username,
+          signature: auth?.signature,
+          message: auth?.message,
+        }),
       });
 
       if (!res.ok) {

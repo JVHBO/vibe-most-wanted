@@ -6,11 +6,12 @@
  */
 
 import { useState } from 'react';
+import { useSignMessage } from 'wagmi';
 import { ConvexProfileService } from '@/lib/convex-profile';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { SupportedLanguage } from '@/lib/translations';
 
@@ -80,6 +81,8 @@ export function CreateProfileModal({
   const [linkSuccess, setLinkSuccess] = useState<string | null>(null);
 
   const generateLinkCodeMutation = useMutation(api.profiles.generateLinkCode);
+  const { signMessageAsync } = useSignMessage();
+  const currentNonce = useQuery(api.auth.getNonce, address ? { address } : "skip");
 
   // Generate link code for this wallet
   const handleGenerateLinkCode = async () => {
@@ -166,10 +169,16 @@ export function CreateProfileModal({
 
         devLog('✓ Profile created from Farcaster! FID:', farcasterUser.fid);
       } else {
+        const nonce = currentNonce ?? 0;
+        const timestamp = Date.now();
+        const message = `Create profile: ${address.toLowerCase()} nonce:${nonce} at ${timestamp}`;
+        const signature = await signMessageAsync({ message });
+
         // Create standard profile using wallet address and manual username
         await ConvexProfileService.createProfile(
           address,
-          profileUsername.trim()
+          profileUsername.trim(),
+          { signature, message }
         );
 
         devLog('✓ Standard profile created for address:', address);
