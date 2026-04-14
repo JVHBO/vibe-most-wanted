@@ -611,8 +611,30 @@ export const upsertProfileFromWallet = mutation({
       return existing._id;
     }
 
-    // Use provided username or generate from wallet address: 0x1234...abcd
-    const username = args.username?.toLowerCase() || `${address.slice(0, 6)}${address.slice(-4)}`.toLowerCase();
+    // Use provided username or generate from wallet address.
+    // Also guarantee uniqueness to avoid 500s from username index collisions.
+    const normalizeUsername = (value: string) =>
+      value.toLowerCase().replace(/[^a-z0-9_]/g, "_").slice(0, 20);
+    const fallbackBase = `user_${address.slice(2, 6)}${address.slice(-4)}`;
+    const baseUsername = normalizeUsername(args.username || fallbackBase) || fallbackBase;
+
+    let username = baseUsername;
+    let suffix = 1;
+    while (true) {
+      const existingByUsername = await ctx.db
+        .query("profiles")
+        .withIndex("by_username", (q) => q.eq("username", username))
+        .first();
+
+      if (!existingByUsername || existingByUsername.address === address) break;
+
+      const candidate = `${baseUsername.slice(0, Math.max(1, 20 - (`_${suffix}`.length)))}_${suffix}`;
+      username = candidate;
+      suffix += 1;
+      if (suffix > 999) {
+        throw new Error("Unable to generate unique username");
+      }
+    }
 
     const id = await ctx.db.insert("profiles", {
       address,
@@ -1910,6 +1932,21 @@ export const upsertProfile = mutation({
 
     const now = Date.now();
 
+    const defaultStats = {
+      totalPower: 0,
+      totalCards: 0,
+      openedCards: 0,
+      unopenedCards: 0,
+      pveWins: 0,
+      pveLosses: 0,
+      pvpWins: 0,
+      pvpLosses: 0,
+      attackWins: 0,
+      attackLosses: 0,
+      defenseWins: 0,
+      defenseLosses: 0,
+    };
+
     if (existing) {
       // Update existing profile (allowed for legacy accounts)
       await ctx.db.patch(existing._id, {
@@ -1920,9 +1957,42 @@ export const upsertProfile = mutation({
       });
       return existing._id;
     } else {
-      // 🔒 SECURITY: Block new account creation without Farcaster
-      console.log(`🚫 [SECURITY] Blocked legacy account creation for ${address} - must use Farcaster`);
-      throw new Error("🔒 Account creation requires Farcaster authentication. Please use the miniapp.");
+      // New wallet profile creation (Base App / web users without Farcaster FID).
+      let uniqueUsername = username;
+      let suffix = 1;
+      while (true) {
+        const existingByUsername = await ctx.db
+          .query("profiles")
+          .withIndex("by_username", (q) => q.eq("username", uniqueUsername))
+          .first();
+
+        if (!existingByUsername || existingByUsername.address === address) break;
+
+        uniqueUsername = `${username.slice(0, Math.max(1, 20 - (`_${suffix}`.length)))}_${suffix}`;
+        suffix += 1;
+        if (suffix > 999) {
+          throw new Error("Unable to generate unique username");
+        }
+      }
+
+      const profileId = await ctx.db.insert("profiles", {
+        address,
+        username: uniqueUsername,
+        stats: args.stats || defaultStats,
+        defenseDeck: args.defenseDeck,
+        twitter: args.twitter,
+        twitterHandle: args.twitterHandle,
+        twitterProfileImageUrl: args.twitterProfileImageUrl,
+        fid: args.fid,
+        coins: 0,
+        coinsInbox: 0,
+        attacksToday: 0,
+        rematchesToday: 0,
+        createdAt: now,
+        lastUpdated: now,
+      });
+
+      return profileId;
     }
   },
 });
