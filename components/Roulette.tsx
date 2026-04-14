@@ -284,6 +284,10 @@ interface RouletteProps {
 
 export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, onHelpClick }: RouletteProps) {
   const { address, status: wagmiStatus } = useAccount();
+  // Keep last known address — wagmi returns undefined during reconnecting in Base App
+  const lastAddressRef = useRef<`0x${string}` | undefined>(undefined);
+  useEffect(() => { if (address) lastAddressRef.current = address; }, [address]);
+  const stableAddress = address || lastAddressRef.current;
   const { signMessageAsync } = useSignMessage();
   const { lang } = useLanguage();
   const { validateOnArb } = useArbValidator();
@@ -459,9 +463,9 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
   // CLAIM handler - ALL prizes use blockchain TX
   const handleClaim = async () => {
-    if (!address || !result || isClaiming) return;
+    if (!stableAddress || !result || isClaiming) return;
 
-    let signingAddress = address;
+    let signingAddress = stableAddress;
     let preparedSpinId: Id<"rouletteSpins"> | null = null;
     let txSubmitted = false;
 
@@ -661,7 +665,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   }, []); // eslint-disable-line
 
   const handleSpin = async () => {
-    if (!address || isSpinning || !canSpin) return;
+    if (!stableAddress || isSpinning || !canSpin) return;
     spinActiveRef.current = true;
     if (idleRafRef.current) { cancelAnimationFrame(idleRafRef.current); idleRafRef.current = null; }
     // rotationRef is already in sync (updated by setRotation in idle interval)
@@ -681,7 +685,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
       if (chain === "arbitrum") {
         await validateOnArb(0, ARB_CLAIM_TYPE.ROULETTE_SPIN);
       }
-      const response = await spinMutation({ address, chain });
+      const response = await spinMutation({ address: stableAddress, chain });
 
       if (response.success && response.prizeIndex !== null) {
         // Calculate final rotation
@@ -803,7 +807,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
   // Handle paid spin with VBMS token transfer
   const handlePaidSpin = async () => {
-    if (!address || isSpinning || isBuyingPaidSpin) return;
+    if (!stableAddress || isSpinning || isBuyingPaidSpin) return;
     if (!canBuyPaidSpinData?.canBuy) {
       toast.error(t.notEnoughCoins || 'Daily limit reached');
       return;
@@ -871,7 +875,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
       // 2. Record paid spin in backend
       const response = await recordPaidSpinMutation({
-        address,
+        address: stableAddress,
         txHash: txHash as string,
       });
 

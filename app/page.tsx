@@ -31,6 +31,10 @@ const MyCardsModal = dynamic(() => import("@/app/(game)/components/modals/MyCard
 export default function HomePage() {
   const { t, lang, setLang } = useLanguage();
   const { address } = useAccount();
+  // Keep last known address — wagmi returns undefined during reconnecting in Base App
+  const lastAddressRef = useRef<`0x${string}` | undefined>(undefined);
+  useEffect(() => { if (address) lastAddressRef.current = address; }, [address]);
+  const stableAddress = address || lastAddressRef.current;
   const { isLinkedWallet, primaryAddress, isLoading: isPrimaryAddressLoading } = usePrimaryAddress();
   const { disconnect } = useDisconnect();
   const { userProfile, isLoadingProfile, hasCheckedProfile, setUserProfile } = useProfile();
@@ -596,7 +600,7 @@ export default function HomePage() {
 
       <MyCardsModal isOpen={showMyCardsModal} onClose={() => setShowMyCardsModal(false)} nfts={nfts} soundEnabled={soundEnabled} />
       {showCoinsInbox && inboxStatus && (
-        <CoinsInboxModal inboxStatus={inboxStatus} onClose={() => setShowCoinsInbox(false)} userAddress={address} />
+        <CoinsInboxModal inboxStatus={inboxStatus} onClose={() => setShowCoinsInbox(false)} userAddress={stableAddress} />
       )}
       <CreateProfileModal
         isOpen={showCreateProfileModal}
