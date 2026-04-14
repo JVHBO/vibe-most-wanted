@@ -144,9 +144,9 @@ export default function HomePage() {
       return;
     }
 
-    // profileDashboard is a real-time Convex query that resolves linked wallets.
-    // If it returned a profile, this address already has one — never show the create modal.
-    if (profileDashboard) return;
+    // profileDashboard: undefined = still loading, null = no profile, object = found.
+    // Only proceed if explicitly null (no profile). Skip while loading or when found.
+    if (profileDashboard !== null) return;
 
     // Still resolving primary address or linked wallet — don't show yet
     if (isPrimaryAddressLoading || isLinkedWallet) return;
