@@ -71,7 +71,9 @@ export default function HomePage() {
 
   const { nfts, status: cardsStatus } = usePlayerCards();
 
-  const profileDashboard = useQuery(api.profiles.getProfileDashboard, address ? { address } : "skip");
+  // Use primaryAddress when available (avoids false null for linked wallets before autoLink runs)
+  const dashboardQueryAddress = !isPrimaryAddressLoading ? (primaryAddress || address) : undefined;
+  const profileDashboard = useQuery(api.profiles.getProfileDashboard, dashboardQueryAddress ? { address: dashboardQueryAddress } : "skip");
   const inboxStatus = profileDashboard ? {
     coinsInbox: profileDashboard.coinsInbox,
     coins: profileDashboard.coins,
@@ -144,8 +146,6 @@ export default function HomePage() {
       lastAutoPromptAddressRef.current = null;
       return;
     }
-
-    toast(`${address?.slice(0,10)} d:${profileDashboard===undefined?'…':profileDashboard===null?'∅':'✓'} lnk:${isLinkedWallet} ldg:${isPrimaryAddressLoading} prf:${userProfile?.username??'∅'}`, {duration: 8000});
 
     // profileDashboard: undefined = still loading, null = no profile, object = found.
     // Only proceed if explicitly null (no profile). Skip while loading or when found.
