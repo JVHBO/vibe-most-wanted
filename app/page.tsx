@@ -191,7 +191,7 @@ export default function HomePage() {
   return (
     <div style={{ minHeight: '100dvh', background: '#1E1E1E', overflow: showWalletGate ? 'hidden' : undefined }}>
     {/* DEBUG OVERLAY - REMOVE AFTER FIX */}
-    <div style={{position:'fixed',bottom:80,right:8,zIndex:9999,background:'rgba(0,0,0,0.85)',color:'#0f0',fontSize:10,padding:'4px 6px',borderRadius:6,fontFamily:'monospace',lineHeight:1.4,pointerEvents:'none'}}>
+    <div style={{position:'fixed',top:60,left:8,zIndex:99999,background:'rgba(0,0,0,0.95)',color:'#0f0',fontSize:11,padding:'6px 8px',borderRadius:6,fontFamily:'monospace',lineHeight:1.5,border:'1px solid #0f0'}}>
       addr:{address?.slice(0,8)??'∅'}<br/>
       prim:{primaryAddress?.slice(0,8)??'∅'}<br/>
       ldg:{isPrimaryAddressLoading?'T':'F'} lnk:{isLinkedWallet?'T':'F'}<br/>
