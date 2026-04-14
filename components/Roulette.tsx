@@ -704,8 +704,10 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           match: Math.abs(expectedFinalAngle - targetFinalAngle) < 1 ? '✅' : '❌ BUG!'
         });
 
+        // Target ball angle on the STATIC wheel: segment i center = -90 + (i + 0.5) * SEGMENT_ANGLE
+        const targetBallAngle = -90 + (targetIndex + offset) * SEGMENT_ANGLE;
+
         // Animate with physics + ball orbit
-        const startRotation = rotationRef.current;
         const startTime = Date.now();
         const duration = 5000; // 5 seconds
         // Ball starts counter-clockwise at rim
@@ -737,8 +739,9 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
             const easedFall = fallP * fallP;
             r = 136 - easedFall * 80;
             const startA = ballFallStartAngleRef.current;
-            const n = Math.round((startA + 90) / 360);
-            const targetAbsolute = -90 + n * 360;
+            // Find targetBallAngle equivalent closest to startA (counter-clockwise)
+            const k = Math.floor((startA - targetBallAngle) / 360);
+            const targetAbsolute = targetBallAngle + k * 360;
             ballOrbitAngleRef.current = startA + (targetAbsolute - startA) * easedFall;
           }
           ballOrbitRadiusRef.current = r;
@@ -756,9 +759,9 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           if (progress < 1) {
             animationRef.current = requestAnimationFrame(animate);
           } else {
-            // Ball at winning slot — settle with bounce (wheel already positioned via DOM)
+            // Ball at winning slot — settle
             ballFallStartAngleRef.current = null;
-            updateBallDOM(-90, 56);
+            updateBallDOM(targetBallAngle, 56);
             setIsSpinning(false);
             setBallSettling(true);
             spinActiveRef.current = false;
@@ -889,6 +892,9 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
       if (additionalRotation < 0) additionalRotation += 360;
       const totalRotation = spins * 360 + additionalRotation;
 
+      // Target ball angle on the STATIC wheel: segment i center = -90 + (i + 0.5) * SEGMENT_ANGLE
+      const targetBallAngle2 = -90 + (targetIndex + offset) * SEGMENT_ANGLE;
+
       // Animate + ball orbit (wheel stays static — ball only via direct DOM)
       const startTime = Date.now();
       const duration = 5000;
@@ -920,8 +926,9 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           const easedFall = fallP * fallP;
           r = 136 - easedFall * 80;
           const startA = ballFallStartAngleRef.current;
-          const n = Math.round((startA + 90) / 360);
-          const targetAbsolute = -90 + n * 360;
+          // Find targetBallAngle2 equivalent closest to startA (counter-clockwise)
+          const k = Math.floor((startA - targetBallAngle2) / 360);
+          const targetAbsolute = targetBallAngle2 + k * 360;
           ballOrbitAngleRef.current = startA + (targetAbsolute - startA) * easedFall;
         }
         ballOrbitRadiusRef.current = r;
@@ -940,7 +947,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           animationRef.current = requestAnimationFrame(animate);
         } else {
           ballFallStartAngleRef.current = null;
-          updateBallDOM(-90, 56);
+          updateBallDOM(targetBallAngle2, 56);
           setIsSpinning(false);
           setBallSettling(true);
           spinActiveRef.current = false;
