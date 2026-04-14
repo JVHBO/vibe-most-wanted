@@ -62,13 +62,9 @@ export function GlobalProfileInit() {
           });
           if (!res.ok) throw new Error('farcaster upsert failed');
         } else {
-          // Wallet sem Farcaster
-          const res = await fetch('/api/wallet/profile-upsert', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ address }),
-          });
-          if (!res.ok) throw new Error('wallet upsert failed');
+          // Wallet-only profile creation now requires explicit signed consent
+          // in the onboarding modal. Do not auto-create silently here.
+          return;
         }
 
         await refreshProfile();
