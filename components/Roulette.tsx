@@ -590,18 +590,15 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     }
   }, []);
 
-  // Idle slow rotation — 10fps setInterval (not 60fps RAF) to avoid freezing Base App
-  // setRotation keeps React in sync so re-renders don't reset the wheel position
+  // Idle slow rotation — direct DOM at 10fps, zero React re-renders
+  // JSX wheel has static style="rotate(0deg)" so React never overwrites ref mutations
   useEffect(() => {
     if (isSpinning || showResult) return;
     const interval = setInterval(() => {
       if (spinActiveRef.current) return;
-      setRotation(r => {
-        const next = (r + 1.5) % 36000;
-        rotationRef.current = next;
-        return next;
-      });
-    }, 100); // 10fps × 1.5deg = 15deg/sec idle speed
+      rotationRef.current = (rotationRef.current + 1.5) % 36000;
+      if (wheelRef.current) wheelRef.current.style.transform = `rotate(${rotationRef.current}deg)`;
+    }, 100); // 10fps idle
     return () => clearInterval(interval);
   }, [isSpinning, showResult]);
 
@@ -678,13 +675,13 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         const targetFinalAngle = (SEGMENT_COUNT - targetIndex - offset) * SEGMENT_ANGLE;
 
         // Calculate rotation needed from current position to reach target
-        const currentMod = ((rotation % 360) + 360) % 360; // Current position (0-360)
+        const currentMod = ((rotationRef.current % 360) + 360) % 360; // Current position (0-360)
         let additionalRotation = targetFinalAngle - currentMod;
         if (additionalRotation < 0) additionalRotation += 360; // Ensure positive
 
         const totalRotation = spins * 360 + additionalRotation;
 
-        const expectedFinalAngle = (rotation + totalRotation) % 360;
+        const expectedFinalAngle = (rotationRef.current + totalRotation) % 360;
         console.log('🎰 Roulette Debug:', {
           targetIndex,
           targetPrize: PRIZES[targetIndex].amount + ' VBMS',
@@ -695,7 +692,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         });
 
         // Animate with physics + ball orbit
-        const startRotation = rotation;
+        const startRotation = rotationRef.current;
         const startTime = Date.now();
         const duration = 5000; // 5 seconds
         // Ball starts counter-clockwise at rim
@@ -760,8 +757,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           if (progress < 1) {
             animationRef.current = requestAnimationFrame(animate);
           } else {
-            // Ball at winning slot — settle with bounce; sync React wheel state once
-            setRotation(currentRotation);
+            // Ball at winning slot — settle with bounce (wheel already positioned via DOM)
             ballFallStartAngleRef.current = null;
             setBallOrbit({ angle: -90, radius: 56 });
             setIsSpinning(false); // BEFORE setBallSettling so isSettling = true
@@ -948,7 +944,6 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           animationRef.current = requestAnimationFrame(animate);
         } else {
           // Sync React wheel state once at end
-          setRotation(currentRotation);
           ballFallStartAngleRef.current = null;
           setBallOrbit({ angle: -90, radius: 56 });
           setIsSpinning(false);
@@ -1198,7 +1193,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
               maskImage: 'radial-gradient(circle at 50% 50%, black 97%, transparent 100%)',
             }}>
               {/* Spinning segments fill the full circle */}
-              <div ref={wheelRef} className="absolute inset-0" style={{ transform: `rotate(${rotation}deg)` }}>
+              <div ref={wheelRef} className="absolute inset-0" style={{ transform: `rotate(0deg)` }}>
                 <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
                   <circle cx="50" cy="50" r="50" fill="#0a0a0a" />
                   {createWheelSegments()}
