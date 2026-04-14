@@ -555,7 +555,7 @@ export default function RafflePage() {
       {showCardModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(12px)' }}
+          style={{ background: 'rgba(0,0,0,0.92)' }}
           onClick={() => { setShowCardModal(false); cardRotRef.current = { rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 }; if (cardInnerRef.current) cardInnerRef.current.style.transform = 'rotateY(0deg) rotateX(0deg)'; }}
         >
           <div className="flex flex-col items-center gap-4" onClick={e => e.stopPropagation()}>
