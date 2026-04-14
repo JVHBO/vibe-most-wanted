@@ -516,14 +516,6 @@ export default function QuestsPage() {
     return "pending";
   };
 
-  if (status === 'reconnecting' || status === 'connecting') {
-    return (
-      <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
   if (!address) {
     return <WalletGateScreen />;
   }

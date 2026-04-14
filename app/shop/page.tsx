@@ -12,14 +12,6 @@ function ShopPageInner() {
   const searchParams = useSearchParams();
   const initialSlide = searchParams.get('slide') === '1' ? 1 : 0;
 
-  if (status === 'reconnecting' || status === 'connecting') {
-    return (
-      <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
   if (!address) {
     return <WalletGateScreen />;
   }
