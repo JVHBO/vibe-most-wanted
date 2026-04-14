@@ -26,8 +26,9 @@ export interface FarcasterContext {
  * Hook to get Farcaster context from miniapp SDK
  */
 export function useFarcasterContext(): FarcasterContext {
+  const isRNWebView = typeof window !== 'undefined' && typeof (window as any).ReactNativeWebView !== 'undefined';
   const [context, setContext] = useState<FarcasterContext>({
-    isReady: false,
+    isReady: isRNWebView,
     isInMiniapp: false,
     user: null,
     error: null,

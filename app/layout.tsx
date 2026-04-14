@@ -143,16 +143,6 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} ${playfair.variable} ${rajdhani.variable} antialiased`}
       >
-        {/* DBG: remove after Base App diagnosis */}
-        <noscript><div style={{color:'#fff',padding:8}}>JS disabled</div></noscript>
-        <script dangerouslySetInnerHTML={{__html:`
-          var d=document.createElement('div');
-          d.id='_dbg';d.style='position:fixed;top:0;left:0;right:0;background:#00f;color:#fff;font-size:11px;padding:4px;z-index:99999';
-          d.textContent='JS OK - React loading...';
-          document.body.appendChild(d);
-          window.onerror=function(m){d.style.background='#f00';d.textContent='ERR: '+m;};
-          window.addEventListener('unhandledrejection',function(e){d.style.background='#f80';d.textContent='REJECT: '+(e.reason&&e.reason.message||String(e.reason));});
-        `}} />
         <ErrorBoundary>
           <ThemeProvider>
           <NeynarMiniAppProvider>

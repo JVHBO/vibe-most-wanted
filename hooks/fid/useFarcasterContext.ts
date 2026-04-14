@@ -43,9 +43,10 @@ function setCachedContext(ctx: FarcasterContext) {
 
 export function useFarcasterContext(): FarcasterContext {
   const cached = typeof window !== 'undefined' ? getCachedContext() : null;
+  const isRNWebView = typeof window !== 'undefined' && typeof (window as any).ReactNativeWebView !== 'undefined';
 
   const [context, setContext] = useState<FarcasterContext>(
-    cached ?? { isReady: false, isInMiniapp: false, user: null, error: null }
+    cached ?? { isReady: isRNWebView, isInMiniapp: false, user: null, error: null }
   );
 
   useEffect(() => {
@@ -60,13 +61,24 @@ export function useFarcasterContext(): FarcasterContext {
     }
 
     const initializeSdk = async () => {
+      const dbg = (typeof window !== 'undefined' && (window as any).__dbgAppend) || (() => {});
       try {
-        // Skip SDK only when definitely NOT in any miniapp host:
-        // - Not in an iframe (window.self === window.top)
-        // - AND not in a React Native WebView (Base App uses RN WebView)
-        // If either is true, we might be in a miniapp host and must call ready().
         const isRNWebView = typeof (window as any).ReactNativeWebView !== 'undefined';
+        dbg('ctx: isRN='+isRNWebView+' iframe='+(window.self!==window.top));
+
         if (window.self === window.top && !isRNWebView) {
+          dbg('ctx: plain browser → ready');
+          const ctx = { isReady: true, isInMiniapp: false, user: null, error: null };
+          setContext(ctx);
+          setCachedContext(ctx);
+          return;
+        }
+
+        // RN WebView (Base App) or iframe: resolve immediately without SDK
+        // so page renders right away. If in a real Farcaster iframe, SDK
+        // context will still be fetched below to get FID.
+        if (isRNWebView) {
+          dbg('ctx: RN WebView → ready (no SDK)');
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: null };
           setContext(ctx);
           setCachedContext(ctx);
@@ -74,6 +86,7 @@ export function useFarcasterContext(): FarcasterContext {
         }
 
         if (!sdk || typeof sdk.wallet === 'undefined') {
+          dbg('ctx: no sdk.wallet → ready');
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: null };
           setContext(ctx);
           setCachedContext(ctx);
@@ -81,6 +94,7 @@ export function useFarcasterContext(): FarcasterContext {
           return;
         }
 
+        dbg('ctx: iframe, fetching sdk.context...');
         let sdkContext;
         try {
           sdkContext = await Promise.race([
@@ -88,6 +102,7 @@ export function useFarcasterContext(): FarcasterContext {
             new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
           ]) as any;
         } catch {
+          dbg('ctx: sdk.context timeout');
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: 'SDK timeout' };
           setContext(ctx);
           setCachedContext(ctx);
@@ -95,9 +110,8 @@ export function useFarcasterContext(): FarcasterContext {
           return;
         }
 
-        // Base App and standard web users do not provide a Farcaster FID.
-        // Treat that as normal web mode, not as a Farcaster miniapp host.
         if (!sdkContext?.user?.fid) {
+          dbg('ctx: no FID → ready');
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: 'No Farcaster user context' };
           setContext(ctx);
           setCachedContext(ctx);
