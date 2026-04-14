@@ -144,7 +144,11 @@ export default function HomePage() {
       return;
     }
 
-    // Still resolving primary address (linked wallet lookup in progress) — don't show yet
+    // profileDashboard is a real-time Convex query that resolves linked wallets.
+    // If it returned a profile, this address already has one — never show the create modal.
+    if (profileDashboard) return;
+
+    // Still resolving primary address or linked wallet — don't show yet
     if (isPrimaryAddressLoading || isLinkedWallet) return;
 
     if (!hasCheckedProfile || isLoadingProfile || userProfile) return;
@@ -173,7 +177,7 @@ export default function HomePage() {
         localStorage.setItem(promptSeenKey, "1");
       }
     }
-  }, [address, hasCheckedProfile, isLoadingProfile, userProfile, profileUsername, farcasterContext.user?.username]);
+  }, [address, hasCheckedProfile, isLoadingProfile, userProfile, profileUsername, farcasterContext.user?.username, profileDashboard, isPrimaryAddressLoading, isLinkedWallet]);
 
   return (
     <div style={{ minHeight: '100dvh', background: '#1E1E1E', overflow: showWalletGate ? 'hidden' : undefined }}>
