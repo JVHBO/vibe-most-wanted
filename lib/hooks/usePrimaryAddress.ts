@@ -72,9 +72,13 @@ export function usePrimaryAddress() {
       }
 
       // 🔗 FID FALLBACK: Get FID from Farcaster SDK for custody wallet resolution
+      // Timeout of 1.5s — sdk.context hangs in Base App / regular browsers
       let fid: number | undefined;
       try {
-        const ctx = await sdk?.context;
+        const ctx = await Promise.race([
+          sdk?.context,
+          new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 1500)),
+        ]);
         if (ctx?.user?.fid) fid = ctx.user.fid;
       } catch (_) {}
 

@@ -30,7 +30,7 @@ const MyCardsModal = dynamic(() => import("@/app/(game)/components/modals/MyCard
 export default function HomePage() {
   const { t, lang, setLang } = useLanguage();
   const { address } = useAccount();
-  const { isLinkedWallet, primaryAddress } = usePrimaryAddress();
+  const { isLinkedWallet, primaryAddress, isLoading: isPrimaryAddressLoading } = usePrimaryAddress();
   const { disconnect } = useDisconnect();
   const { userProfile, isLoadingProfile, hasCheckedProfile, setUserProfile } = useProfile();
   const farcasterContext = useFarcasterContext();
@@ -144,8 +144,8 @@ export default function HomePage() {
       return;
     }
 
-    // Linked wallet = user definitely has a profile under primary address — never prompt
-    if (isLinkedWallet) return;
+    // Still resolving primary address (linked wallet lookup in progress) — don't show yet
+    if (isPrimaryAddressLoading || isLinkedWallet) return;
 
     if (!hasCheckedProfile || isLoadingProfile || userProfile) return;
 
