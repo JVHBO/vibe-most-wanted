@@ -39,9 +39,9 @@ export function usePrimaryAddress() {
   const loadedRef = useRef<string | null>(null);
   const autoLinkedRef = useRef<string | null>(null);
 
-  // 🚀 BANDWIDTH FIX: Manual query with sessionStorage cache
+  // 🚀 BANDWIDTH FIX: Manual query with localStorage cache
   useEffect(() => {
-    if (!connectedAddress || !isConnected) {
+    if (!connectedAddress) {
       setLinkedData(null);
       loadedRef.current = null;
       return;
@@ -121,11 +121,11 @@ export function usePrimaryAddress() {
     };
 
     fetchLinkedAddresses();
-  }, [connectedAddress, isConnected, convex]);
+  }, [connectedAddress, convex]);
 
   const result = useMemo(() => {
-    // Not connected
-    if (!isConnected || !connectedAddress) {
+    // Not connected (no address at all)
+    if (!connectedAddress) {
       return {
         primaryAddress: undefined,
         connectedAddress: undefined,
