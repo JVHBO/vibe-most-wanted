@@ -107,7 +107,7 @@ export function GameHeader({
                   </div>
                 </button>
               </div>
-            ) : address ? (
+            ) : address && !isLoadingProfile ? (
               <button
                 onClick={() => { if (soundEnabled) AudioManager.buttonClick(); onCreateProfileClick(); }}
                 className="px-4 py-2 bg-vintage-gold hover:bg-vintage-gold/80 text-vintage-black rounded-lg text-sm font-semibold"

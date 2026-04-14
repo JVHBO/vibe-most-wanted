@@ -249,7 +249,7 @@ export default function HomePage() {
           isInFarcaster={isInFarcaster}
           soundEnabled={soundEnabled}
           userProfile={userProfile}
-          isLoadingProfile={isLoadingProfile}
+          isLoadingProfile={isLoadingProfile || isPrimaryAddressLoading}
           address={address}
           vbmsBlockchainBalance={vbmsBlockchainBalance}
           getAvatarUrl={getAvatarUrl}
