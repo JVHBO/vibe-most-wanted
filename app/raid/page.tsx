@@ -24,6 +24,7 @@ import { CardReplacementModal } from '@/components/CardReplacementModal';
 import { DamageNumber } from '@/components/DamageNumber';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePlayerCards } from '@/contexts/PlayerCardsContext';
+import { WalletGateScreen } from '@/components/WalletGateScreen';
 import type { Card } from '@/lib/types/card';
 import { useFarcasterTransferVBMS } from '@/lib/hooks/useFarcasterVBMS';
 import { CONTRACTS } from '@/lib/contracts';
@@ -493,25 +494,14 @@ export default function RaidPage() {
   };
 
   // Loading states
-  if (!isMounted || isConnecting) {
+  if (!address) {
+    return <WalletGateScreen />;
+  }
+
+  if (!isMounted || (isConnecting && !!address)) {
     return (
       <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
         <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (!address) {
-    return (
-      <div className="fixed inset-0 bg-vintage-deep-black text-white flex flex-col items-center justify-center">
-        <div className="text-center">
-          <div className="text-8xl mb-6">💀</div>
-          <h1 className="text-3xl font-display font-bold text-vintage-gold mb-4">Boss Raid</h1>
-          <p className="text-vintage-burnt-gold text-lg mb-6">Connect your wallet to access Boss Raid</p>
-          <Link href="/" className="inline-block px-6 py-3 bg-vintage-gold text-vintage-black rounded-lg font-bold hover:bg-vintage-ice transition-colors">
-            Go to Home
-          </Link>
-        </div>
       </div>
     );
   }

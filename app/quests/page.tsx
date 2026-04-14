@@ -9,6 +9,7 @@ import Link from "next/link";
 import { SOCIAL_QUESTS, type SocialQuest } from "@/lib/socialQuests";
 import { AudioManager } from "@/lib/audio-manager";
 import LoadingSpinner from "@/components/LoadingSpinner";
+import { WalletGateScreen } from "@/components/WalletGateScreen";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -515,24 +516,14 @@ export default function QuestsPage() {
     return "pending";
   };
 
-  if (isConnecting) {
+  if (!address) {
+    return <WalletGateScreen />;
+  }
+
+  if (isConnecting && address) {
     return (
       <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
         <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (!address) {
-    return (
-      <div className="fixed inset-0 bg-vintage-deep-black overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-vintage-charcoal/50" />
-        <div className="relative z-10 flex items-center justify-center h-full">
-          <div className="text-center">
-            <h2 className="text-3xl font-display font-bold text-vintage-gold mb-4">{t('questsTitle')}</h2>
-            <p className="text-vintage-ice/70">{t('questsConnectWallet')}</p>
-          </div>
-        </div>
       </div>
     );
   }
