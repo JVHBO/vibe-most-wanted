@@ -371,8 +371,13 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
   useEffect(() => { onChainChange?.(currentChain); }, [currentChain]); // eslint-disable-line
 
-  // Check for Farcaster SDK
+  // Check for Farcaster SDK — only in actual Farcaster miniapp (iframe), NOT Base App
   useEffect(() => {
+    const isBaseApp = typeof (window as any).ReactNativeWebView !== 'undefined';
+    const isIframe = window.self !== window.top;
+    // Base App injects window.ethereum but is NOT a Farcaster miniapp
+    // Only use Farcaster SDK if we're actually in an iframe (Warpcast)
+    if (isBaseApp || !isIframe) return;
     const checkFarcasterSDK = async () => {
       if (sdk && typeof sdk.wallet !== 'undefined') {
         const provider = await sdk.wallet.getEthereumProvider();
