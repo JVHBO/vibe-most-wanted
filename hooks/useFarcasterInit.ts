@@ -19,17 +19,7 @@ export function useFarcasterInit(isFrameMode: boolean) {
   const [farcasterClientFid, setFarcasterClientFid] = useState<number | undefined>(undefined);
   const [isCheckingFarcaster, setIsCheckingFarcaster] = useState(true);
   const [safeAreaInsets, setSafeAreaInsets] = useState({ top: 0, bottom: 0, left: 0, right: 0 });
-  const readyCalledRef = useRef(false);
-
-  // Call ready() only inside actual Farcaster host (isMiniappMode confirms iframe context)
-  useEffect(() => {
-    if (readyCalledRef.current) return;
-    if (typeof window === 'undefined') return;
-    if (!isActualMiniapp) return; // Base app / plain browser — skip ready()
-    if (!sdk || typeof sdk.actions?.ready !== 'function') return;
-    readyCalledRef.current = true;
-    sdk.actions.ready().catch(() => {});
-  }, [isActualMiniapp]);
+  // sdk.actions.ready() is called by NeynarMiniAppProvider (unconditionally with timeout)
 
   useEffect(() => {
     let cancelled = false;

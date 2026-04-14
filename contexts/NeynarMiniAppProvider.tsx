@@ -17,11 +17,11 @@ interface NeynarMiniAppProviderProps {
 // iframe — which is what Farcaster needs to dismiss the loading spinner.
 export function NeynarMiniAppProvider({ children }: NeynarMiniAppProviderProps) {
   useEffect(() => {
-    const isIframe = window.self !== window.top;
-    const isForced = (() => { try { return localStorage.getItem('vbms_force_miniapp') === '1'; } catch { return false; } })();
-    if (isIframe || isForced) {
-      sdk.actions.ready().catch(() => {});
-    }
+    // Call ready() unconditionally — Farcaster (iframe or native WebView) resolves it
+    // immediately; regular browsers / Base App just timeout and we ignore it.
+    // Do NOT gate on window.self !== window.top: native Warpcast mobile is top-level.
+    const timeout = new Promise<void>(resolve => setTimeout(resolve, 1500));
+    Promise.race([sdk.actions.ready(), timeout]).catch(() => {});
   }, []);
 
   return <>{children}</>;
