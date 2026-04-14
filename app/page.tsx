@@ -190,6 +190,14 @@ export default function HomePage() {
 
   return (
     <div style={{ minHeight: '100dvh', background: '#1E1E1E', overflow: showWalletGate ? 'hidden' : undefined }}>
+    {/* DEBUG OVERLAY - REMOVE AFTER FIX */}
+    <div style={{position:'fixed',bottom:80,right:8,zIndex:9999,background:'rgba(0,0,0,0.85)',color:'#0f0',fontSize:10,padding:'4px 6px',borderRadius:6,fontFamily:'monospace',lineHeight:1.4,pointerEvents:'none'}}>
+      addr:{address?.slice(0,8)??'∅'}<br/>
+      prim:{primaryAddress?.slice(0,8)??'∅'}<br/>
+      ldg:{isPrimaryAddressLoading?'T':'F'} lnk:{isLinkedWallet?'T':'F'}<br/>
+      prf:{userProfile?.username??'∅'} chk:{hasCheckedProfile?'T':'F'}<br/>
+      dash:{profileDashboard===undefined?'…':profileDashboard===null?'∅':'✓'}
+    </div>
     <style>{`
       * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
       .bg-vintage-charcoal\\/80 { background: #1E1E1E !important; backdrop-filter: none !important; border: none !important; border-bottom: 2px solid #000 !important; border-radius: 0 !important; }
