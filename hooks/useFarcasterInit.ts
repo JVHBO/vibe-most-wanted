@@ -55,6 +55,14 @@ export function useFarcasterInit(isFrameMode: boolean) {
         // Don't return — still run SDK check below to get FID for VibeFID button
       }
 
+      // Base App = React Native WebView. It's mobile but NOT a Farcaster miniapp host.
+      // Calling sdk.context here would cause a 5s timeout. Skip early.
+      const isRNWebView = typeof (window as any).ReactNativeWebView !== 'undefined';
+      if (isRNWebView && !isActualMiniapp) {
+        if (!cancelled) setIsCheckingFarcaster(false);
+        return;
+      }
+
       console.log('[Farcaster] Initializing wallet connection...');
       try {
         if (!sdk) {

@@ -589,6 +589,7 @@ export const upsertProfileFromWallet = mutation({
   args: {
     adminKey: v.string(),
     address: v.string(),
+    username: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     requireInternalAdminKey(args.adminKey);
@@ -610,8 +611,8 @@ export const upsertProfileFromWallet = mutation({
       return existing._id;
     }
 
-    // Generate a short username from wallet address: 0x1234...abcd
-    const username = `${address.slice(0, 6)}${address.slice(-4)}`.toLowerCase();
+    // Use provided username or generate from wallet address: 0x1234...abcd
+    const username = args.username?.toLowerCase() || `${address.slice(0, 6)}${address.slice(-4)}`.toLowerCase();
 
     const id = await ctx.db.insert("profiles", {
       address,

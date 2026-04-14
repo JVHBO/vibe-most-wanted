@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { address } = body as { address?: string };
+    const { address, username } = body as { address?: string; username?: string };
 
     if (!address) {
       return NextResponse.json({ error: "address is required" }, { status: 400 });
@@ -51,13 +51,14 @@ export async function POST(request: NextRequest) {
     const profileId = await convex.mutation(api.profiles.upsertProfileFromWallet, {
       adminKey: internalSecret,
       address: address.toLowerCase(),
+      ...(username ? { username } : {}),
     });
 
     return NextResponse.json({ success: true, profileId });
   } catch (error: any) {
-    console.error("[wallet/profile-upsert] Error:", error);
+    console.error("[wallet/profile-upsert] Error:", error, "data:", error?.data, "cause:", error?.cause);
     return NextResponse.json(
-      { error: error?.message || "Failed to create profile" },
+      { error: error?.data || error?.message || "Failed to create profile" },
       { status: 500 }
     );
   }

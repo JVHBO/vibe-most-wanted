@@ -270,8 +270,7 @@ export class ConvexProfileService {
   }
 
   /**
-   * @deprecated Use createProfileFromFarcaster instead
-   * Legacy profile creation - will fail for new accounts
+   * Create wallet-only profile via API route (works without Farcaster)
    */
   static async createProfile(
     address: string,
@@ -279,41 +278,17 @@ export class ConvexProfileService {
   ): Promise<void> {
     try {
       const normalizedAddress = address.toLowerCase();
-      const normalizedUsername = username.toLowerCase();
 
-      // Check if profile already exists
-      const existingProfile = await this.getProfile(normalizedAddress);
-      if (existingProfile) {
-        throw new Error(
-          "Esta wallet já possui um perfil. Use o perfil existente."
-        );
-      }
-
-      // Check if username is taken
-      const exists = await this.usernameExists(normalizedUsername);
-      if (exists) {
-        throw new Error("Username já está em uso");
-      }
-
-      // Create profile (will fail for new accounts - use createProfileFromFarcaster)
-      await getConvex().mutation(api.profiles.upsertProfile, {
-        address: normalizedAddress,
-        username,
-        stats: {
-          totalPower: 0,
-          totalCards: 0,
-          openedCards: 0,
-          unopenedCards: 0,
-          pveWins: 0,
-          pveLosses: 0,
-          pvpWins: 0,
-          pvpLosses: 0,
-          attackWins: 0,
-          attackLosses: 0,
-          defenseWins: 0,
-          defenseLosses: 0,
-        },
+      const res = await fetch('/api/wallet/profile-upsert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: normalizedAddress, username }),
       });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
 
       devLog("✅ Profile created successfully:", username);
     } catch (error: any) {
