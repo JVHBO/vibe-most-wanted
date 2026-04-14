@@ -289,8 +289,8 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   const { validateOnArb } = useArbValidator();
   const publicClient = usePublicClient({ chainId: CONTRACTS.CHAIN_ID });
   const t = rouletteTranslations[lang as keyof typeof rouletteTranslations] || rouletteTranslations.en;
-  // If wagmi is reconnecting/connecting for more than 3s, stop waiting and render normally
-  const isReconnecting = useReconnectTimeout(wagmiStatus, 3000);
+  // If wagmi is reconnecting/connecting, stop waiting after 1s and render normally
+  const isReconnecting = useReconnectTimeout(wagmiStatus, 1000);
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const rotationRef = useRef(0); // tracks current angle without triggering re-renders
@@ -704,6 +704,11 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         ballFallStartAngleRef.current = null;
         setBallOrbit({ angle: -90, radius: 136 });
 
+        // Throttle React state updates to 20fps to avoid freezing Base App
+        // Wheel uses direct DOM (0 re-renders); ball uses setState at 20fps (3x less)
+        let lastBallUpdate = 0;
+        const BALL_UPDATE_INTERVAL = 50; // 20fps
+
         const animate = () => {
           const elapsed = Date.now() - startTime;
           const progress = Math.min(elapsed / duration, 1);
@@ -713,7 +718,8 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
           const currentRotation = startRotation + totalRotation * easeOut;
           rotationRef.current = currentRotation;
-          setRotation(currentRotation);
+          // Wheel: direct DOM (no React re-render)
+          if (wheelRef.current) wheelRef.current.style.transform = `rotate(${currentRotation}deg)`;
 
           // Ball orbit: counter-clockwise while spinning, steers to winning slot in fall phase
           let r = 136;
@@ -735,7 +741,12 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
             ballOrbitAngleRef.current = startA + (targetAbsolute - startA) * easedFall;
           }
           ballOrbitRadiusRef.current = r;
-          setBallOrbit({ angle: ballOrbitAngleRef.current, radius: r });
+          // Ball: throttled React state at 20fps
+          const now = Date.now();
+          if (now - lastBallUpdate >= BALL_UPDATE_INTERVAL) {
+            lastBallUpdate = now;
+            setBallOrbit({ angle: ballOrbitAngleRef.current, radius: r });
+          }
 
           // Play tick sound when crossing segment boundary
           const normalizedRotation = currentRotation % 360;
@@ -749,7 +760,8 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           if (progress < 1) {
             animationRef.current = requestAnimationFrame(animate);
           } else {
-            // Ball at winning slot — settle with bounce
+            // Ball at winning slot — settle with bounce; sync React wheel state once
+            setRotation(currentRotation);
             ballFallStartAngleRef.current = null;
             setBallOrbit({ angle: -90, radius: 56 });
             setIsSpinning(false); // BEFORE setBallSettling so isSettling = true
@@ -889,13 +901,15 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
       ballFallStartAngleRef.current = null;
       setBallOrbit({ angle: -90, radius: 136 });
 
+      let lastBallUpdate2 = 0;
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const easeOut = 1 - Math.pow(1 - progress, 3);
         const currentRotation = startRotation + totalRotation * easeOut;
         rotationRef.current = currentRotation;
-        setRotation(currentRotation);
+        // Wheel: direct DOM (no React re-render)
+        if (wheelRef.current) wheelRef.current.style.transform = `rotate(${currentRotation}deg)`;
 
         let r = 136;
         if (progress <= 0.72) {
@@ -915,7 +929,12 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           ballOrbitAngleRef.current = startA + (targetAbsolute - startA) * easedFall;
         }
         ballOrbitRadiusRef.current = r;
-        setBallOrbit({ angle: ballOrbitAngleRef.current, radius: r });
+        // Ball: throttled React state at 20fps
+        const now2 = Date.now();
+        if (now2 - lastBallUpdate2 >= 50) {
+          lastBallUpdate2 = now2;
+          setBallOrbit({ angle: ballOrbitAngleRef.current, radius: r });
+        }
 
         const normalizedRotation = currentRotation % 360;
         const currentSegment = Math.floor(normalizedRotation / SEGMENT_ANGLE);
@@ -928,6 +947,8 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         if (progress < 1) {
           animationRef.current = requestAnimationFrame(animate);
         } else {
+          // Sync React wheel state once at end
+          setRotation(currentRotation);
           ballFallStartAngleRef.current = null;
           setBallOrbit({ angle: -90, radius: 56 });
           setIsSpinning(false);
