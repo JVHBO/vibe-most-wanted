@@ -51,23 +51,33 @@ export function useFarcasterContext(): FarcasterContext {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const debugEnabled =
+      params.get('debug') === '1' ||
+      params.get('degub') === '1' ||
+      params.get('debug_init') === '1' ||
+      localStorage.getItem('vmw_debug_init') === '1';
+    const debugLog = (...args: any[]) => {
+      if (!debugEnabled) return;
+      console.log('[FarcasterCtx]', ...args);
+    };
 
     // Only trust cached contexts that either have a real Farcaster user
     // or already resolved to standard web/Base App mode.
     const existing = getCachedContext();
     if (existing?.isReady && (!!existing.user || !existing.isInMiniapp)) {
+      debugLog('using cached context', existing);
       setContext(existing);
       return;
     }
 
     const initializeSdk = async () => {
-      const dbg = (typeof window !== 'undefined' && (window as any).__dbgAppend) || (() => {});
       try {
         const isRNWebView = typeof (window as any).ReactNativeWebView !== 'undefined';
-        dbg('ctx: isRN='+isRNWebView+' iframe='+(window.self!==window.top));
+        debugLog('init start', { isRNWebView, isIframe: window.self !== window.top });
 
         if (window.self === window.top && !isRNWebView) {
-          dbg('ctx: plain browser → ready');
+          debugLog('plain browser -> ready');
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: null };
           setContext(ctx);
           setCachedContext(ctx);
@@ -78,7 +88,7 @@ export function useFarcasterContext(): FarcasterContext {
         // so page renders right away. If in a real Farcaster iframe, SDK
         // context will still be fetched below to get FID.
         if (isRNWebView) {
-          dbg('ctx: RN WebView → ready (no SDK)');
+          debugLog('RN WebView -> ready (skip SDK wait)');
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: null };
           setContext(ctx);
           setCachedContext(ctx);
@@ -86,7 +96,7 @@ export function useFarcasterContext(): FarcasterContext {
         }
 
         if (!sdk || typeof sdk.wallet === 'undefined') {
-          dbg('ctx: no sdk.wallet → ready');
+          debugLog('no sdk.wallet -> ready');
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: null };
           setContext(ctx);
           setCachedContext(ctx);
@@ -94,7 +104,7 @@ export function useFarcasterContext(): FarcasterContext {
           return;
         }
 
-        dbg('ctx: iframe, fetching sdk.context...');
+        debugLog('iframe host, fetching sdk.context');
         let sdkContext;
         try {
           sdkContext = await Promise.race([
@@ -102,7 +112,7 @@ export function useFarcasterContext(): FarcasterContext {
             new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
           ]) as any;
         } catch {
-          dbg('ctx: sdk.context timeout');
+          debugLog('sdk.context timeout');
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: 'SDK timeout' };
           setContext(ctx);
           setCachedContext(ctx);
@@ -111,7 +121,7 @@ export function useFarcasterContext(): FarcasterContext {
         }
 
         if (!sdkContext?.user?.fid) {
-          dbg('ctx: no FID → ready');
+          debugLog('sdk.context without fid -> web/base mode');
           const ctx = { isReady: true, isInMiniapp: false, user: null, error: 'No Farcaster user context' };
           setContext(ctx);
           setCachedContext(ctx);
@@ -127,10 +137,12 @@ export function useFarcasterContext(): FarcasterContext {
         };
 
         const ctx = { isReady: true, isInMiniapp: true, user, error: null };
+        debugLog('farcaster user resolved', { fid: user.fid, username: user.username });
         setContext(ctx);
         setCachedContext(ctx);
         try { await sdk.actions.ready(); } catch {}
       } catch (err) {
+        debugLog('init error', err);
         const ctx = { isReady: true, isInMiniapp: false, user: null, error: String(err) };
         setContext(ctx);
         setCachedContext(ctx);

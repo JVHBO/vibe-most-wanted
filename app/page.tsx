@@ -104,6 +104,33 @@ export default function HomePage() {
     return `user_${normalized.slice(2, 6)}${normalized.slice(-4)}`;
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const debugEnabled =
+      params.get("debug") === "1" ||
+      params.get("degub") === "1" ||
+      params.get("debug_init") === "1" ||
+      localStorage.getItem("vmw_debug_init") === "1";
+    if (!debugEnabled) return;
+
+    console.log("[AccessDebug] state", {
+      isReady: farcasterContext.isReady,
+      isInMiniapp: farcasterContext.isInMiniapp,
+      fid: farcasterContext.user?.fid ?? null,
+      address: address ?? null,
+      showWalletGate,
+      isCheckingWalletAccess,
+    });
+  }, [
+    farcasterContext.isReady,
+    farcasterContext.isInMiniapp,
+    farcasterContext.user?.fid,
+    address,
+    showWalletGate,
+    isCheckingWalletAccess,
+  ]);
+
   // Wallet-first onboarding (no FID): open create profile modal with a suggested username.
   useEffect(() => {
     if (!address) {
