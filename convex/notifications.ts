@@ -253,64 +253,49 @@ export const importTokens = mutation({
 });
 
 // ============================================================================
-// NEYNAR NOTIFICATION HELPER
+// BASE NOTIFICATIONS HELPER (Base App users by wallet address)
 // ============================================================================
 
 /**
- * Send notification via Neynar API
- * @param targetFids - Array of FIDs to notify (empty = all users with notifications enabled)
- * @param title - Notification title (max 32 chars)
- * @param body - Notification body (max 128 chars)
- * @param targetUrl - URL to open when clicked
- * @returns { success_count, failure_count, not_attempted_count }
+ * Send Base Notifications to all opted-in Base App users
+ * Called from cron alongside Farcaster broadcast
  */
-async function sendViaNeynar(
-  targetFids: number[],
+async function sendBaseNotificationsBroadcast(
   title: string,
   body: string,
-  targetUrl: string = "https://vibemostwanted.xyz"
-): Promise<{ success_count: number; failure_count: number; not_attempted_count: number }> {
-  const apiKey = process.env.NEYNAR_API_KEY;
-  if (!apiKey) {
-    console.error("❌ NEYNAR_API_KEY not configured");
-    return { success_count: 0, failure_count: targetFids.length || 0, not_attempted_count: 0 };
+  targetPath: string = "/"
+): Promise<{ sentCount: number; failedCount: number }> {
+  const appUrl = process.env.NEXT_PUBLIC_URL || "https://vibemostwanted.xyz";
+  const baseUrl = process.env.NEXT_PUBLIC_URL || "https://vibemostwanted.xyz";
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret) {
+    console.error("❌ CRON_SECRET not configured — skipping Base notifications");
+    return { sentCount: 0, failedCount: 0 };
   }
 
   try {
-    const payload = {
-      target_fids: targetFids,
-      notification: {
-        title: title.slice(0, 32),
-        body: body.slice(0, 128),
-        target_url: targetUrl,
-        uuid: crypto.randomUUID(),
-      },
-    };
-
-    const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
+    const response = await fetch(`${baseUrl}/api/notifications/broadcast`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": apiKey,
+        "Authorization": `Bearer ${cronSecret}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ title, body, targetPath }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Neynar API error: ${response.status} - ${errorText}`);
-      return { success_count: 0, failure_count: targetFids.length || 0, not_attempted_count: 0 };
+      const errText = await response.text();
+      console.error(`❌ Base notifications broadcast failed: ${response.status} ${errText.slice(0, 200)}`);
+      return { sentCount: 0, failedCount: 0 };
     }
 
     const result = await response.json();
-    return {
-      success_count: result.success_count || 0,
-      failure_count: result.failure_count || 0,
-      not_attempted_count: result.not_attempted_count || 0,
-    };
+    console.log(`[BaseNotif] ✅ ${result.sentCount} sent, ❌ ${result.failedCount} failed`);
+    return { sentCount: result.sentCount || 0, failedCount: result.failedCount || 0 };
   } catch (error: any) {
-    console.error(`❌ Neynar fetch error: ${error.message}`);
-    return { success_count: 0, failure_count: targetFids.length || 0, not_attempted_count: 0 };
+    console.error(`❌ Base notifications fetch error: ${error.message}`);
+    return { sentCount: 0, failedCount: 0 };
   }
 }
 
@@ -845,56 +830,6 @@ export const testDirectNotification = internalAction({
   },
 });
 
-/**
- * TEST: Send notification to a SINGLE FID via Neynar only (for debugging Base App)
- */
-export const testNeynarNotification = internalAction({
-  args: {
-    fid: v.number(),
-    title: v.string(),
-    body: v.string(),
-  },
-  handler: async (ctx, { fid, title, body }) => {
-    if (!process.env.NEYNAR_API_KEY) {
-      return { error: "NEYNAR_API_KEY not set" };
-    }
-
-    // 🔒 SECURITY FIX: Use crypto.randomUUID() instead of Math.random()
-    const uuid = crypto.randomUUID();
-
-    const payload = {
-      target_fids: [fid],
-      notification: {
-        title,
-        body,
-        target_url: "https://vibemostwanted.xyz",
-        uuid
-      }
-    };
-
-    console.log(`🧪 TEST: Sending to FID ${fid} via Neynar...`);
-    console.log(`🧪 Payload:`, JSON.stringify(payload));
-
-    try {
-      const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": process.env.NEYNAR_API_KEY
-        },
-        body: JSON.stringify(payload)
-      });
-
-      const result = await response.json();
-      console.log(`🧪 Response (${response.status}):`, JSON.stringify(result));
-
-      return { status: response.status, result };
-    } catch (error: any) {
-      console.log(`🧪 Error:`, error?.message || error);
-      return { error: error?.message || "Unknown error" };
-    }
-  },
-});
 
 // ============================================================================
 // PERIODIC GAMING TIPS
@@ -1038,10 +973,13 @@ export const sendPeriodicTip = internalAction({
 
       const currentTip = GAMING_TIPS[tipState.currentTipIndex % GAMING_TIPS.length];
 
-      console.log("📣 Broadcasting to ALL users with notification tokens...");
+      console.log("📣 Broadcasting to ALL users with Farcaster tokens...");
 
-      // Send to ALL users via broadcast (zero Neynar credits)
-      const result = await sendBroadcastDirectUrl(ctx, currentTip.title, currentTip.body, "https://vibemostwanted.xyz");
+      // Channel 1: Farcaster (Hypersnap-compatible direct URL protocol)
+      const farcasterResult = await sendBroadcastDirectUrl(ctx, currentTip.title, currentTip.body, "https://vibemostwanted.xyz");
+
+      // Channel 2: Base App (Base Notifications API by wallet address)
+      const baseResult = await sendBaseNotificationsBroadcast(currentTip.title, currentTip.body, "/");
 
       // Update tip rotation state
       const nextTipIndex = (tipState.currentTipIndex + 1) % GAMING_TIPS.length;
@@ -1050,10 +988,14 @@ export const sendPeriodicTip = internalAction({
         currentTipIndex: nextTipIndex,
       });
 
-      console.log(`📊 Periodic tip: ${result.success_count} sent, ${result.failure_count} failed`);
+      console.log(`📊 Periodic tip — Farcaster: ${farcasterResult.success_count} sent, ${farcasterResult.failure_count} failed | Base: ${baseResult.sentCount} sent, ${baseResult.failedCount} failed`);
       console.log(`📝 Sent tip ${tipState.currentTipIndex + 1}/${GAMING_TIPS.length}: "${currentTip.title}"`);
 
-      return { sent: result.success_count, failed: result.failure_count, total: result.totalTokens, tipIndex: tipState.currentTipIndex };
+      return {
+        farcaster: { sent: farcasterResult.success_count, failed: farcasterResult.failure_count, total: farcasterResult.totalTokens },
+        base: { sent: baseResult.sentCount, failed: baseResult.failedCount },
+        tipIndex: tipState.currentTipIndex,
+      };
 
     } catch (error: any) {
       console.error("❌ Error in sendPeriodicTip:", error);
@@ -1234,7 +1176,7 @@ export const sendBossDefeatedNotifications = internalAction({
 
 /**
  * Send notification when someone receives a VibeMail (anonymous message with vote)
- * 🔧 Uses VibeFID's Neynar API key so notifications show in VibeFID's base.dev panel
+ * Uses direct Farcaster notification URL (Hypersnap-compatible, zero credits)
  */
 export const sendVibemailNotification = internalAction({
   args: {
@@ -1247,41 +1189,9 @@ export const sendVibemailNotification = internalAction({
       ? "Someone sent you a message with a sound! 🎵 Check your inbox"
       : "Someone sent you an anonymous message! Check your inbox";
 
-    // Use VibeFID's API key for VibeMail notifications
-    const apiKey = process.env.NEYNAR_API_KEY_VIBEFID || process.env.NEYNAR_API_KEY;
-
-    if (!apiKey) {
-      console.log("📱 No NEYNAR_API_KEY_VIBEFID configured");
-      return { sent: false };
-    }
-
-    try {
-      const uuid = crypto.randomUUID();
-      const payload = {
-        target_fids: [recipientFid],
-        notification: { title, body, target_url: "https://vibemostwanted.xyz", uuid }
-      };
-
-      const response = await fetch("https://api.neynar.com/v2/farcaster/frame/notifications/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        console.log(`✅ VibeMail notification sent to FID ${recipientFid}`);
-        return { sent: true };
-      } else {
-        const errorText = await response.text();
-        console.log(`❌ VibeMail notification failed: ${errorText}`);
-        return { sent: false };
-      }
-    } catch (error: any) {
-      console.log(`❌ VibeMail notification error: ${error.message}`);
-      return { sent: false };
-    }
+    const result = await sendViaDirectUrl(ctx, recipientFid.toString(), title, body, "https://vibemostwanted.xyz");
+    const sent = result.success_count > 0;
+    console.log(`${sent ? "✅" : "❌"} VibeMail notification to FID ${recipientFid}: ${sent ? "sent" : "failed"}`);
+    return { sent };
   },
 });
