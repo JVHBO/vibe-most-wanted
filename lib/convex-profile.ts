@@ -274,11 +274,7 @@ export class ConvexProfileService {
    */
   static async createProfile(
     address: string,
-    username: string,
-    auth?: {
-      signature: string;
-      message: string;
-    }
+    username: string
   ): Promise<void> {
     try {
       const normalizedAddress = address.toLowerCase();
@@ -289,8 +285,6 @@ export class ConvexProfileService {
         body: JSON.stringify({
           address: normalizedAddress,
           username,
-          signature: auth?.signature,
-          message: auth?.message,
         }),
       });
 
