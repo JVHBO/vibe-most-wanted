@@ -335,7 +335,6 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   const ballOrbitAngleRef = useRef(-90); // degrees; -90 = top of wheel
   const ballOrbitRadiusRef = useRef(136); // pixels from center (300px wheel)
   const ballFallStartAngleRef = useRef<number | null>(null); // angle recorded at fall-phase start
-  const [ballOrbit, setBallOrbit] = useState({ angle: -90, radius: 136 });
   // Direct DOM refs for ball — avoids React re-renders during spin animation
   const ballGlowRef = useRef<HTMLDivElement>(null);
   const ballElemRef = useRef<HTMLDivElement>(null);
@@ -593,6 +592,17 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     }
   }, []);
 
+  // Helper: update ball position via DOM refs (zero React re-renders)
+  const updateBallDOM = (angle: number, radius: number) => {
+    const rad = angle * (Math.PI / 180);
+    const bx = 150 + radius * Math.cos(rad);
+    const by = 150 + radius * Math.sin(rad);
+    const pos = `${bx}px`;
+    const posY = `${by}px`;
+    if (ballGlowRef.current) { ballGlowRef.current.style.left = pos; ballGlowRef.current.style.top = posY; }
+    if (ballElemRef.current) { ballElemRef.current.style.left = pos; ballElemRef.current.style.top = posY; }
+  };
+
   // Idle rotation via CSS animation — GPU-accelerated, zero JS/main-thread work
   // When spin starts: remove CSS animation and take over with RAF
   useEffect(() => {
@@ -702,26 +712,18 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         ballOrbitAngleRef.current = -90;
         ballOrbitRadiusRef.current = 136;
         ballFallStartAngleRef.current = null;
-        setBallOrbit({ angle: -90, radius: 136 });
+        updateBallDOM(-90, 136);
 
-        // Throttle React state updates to 20fps to avoid freezing Base App
-        // Wheel uses direct DOM (0 re-renders); ball uses setState at 20fps (3x less)
-        let lastBallUpdate = 0;
-        const BALL_UPDATE_INTERVAL = 50; // 20fps
+        // Show ball
+        if (ballGlowRef.current) ballGlowRef.current.style.display = 'block';
+        if (ballElemRef.current) ballElemRef.current.style.display = 'block';
 
         const animate = () => {
           const elapsed = Date.now() - startTime;
           const progress = Math.min(elapsed / duration, 1);
-
-          // Easing: cubic-bezier like deceleration
           const easeOut = 1 - Math.pow(1 - progress, 3);
 
-          const currentRotation = startRotation + totalRotation * easeOut;
-          rotationRef.current = currentRotation;
-          // Wheel: direct DOM (no React re-render)
-          if (wheelRef.current) wheelRef.current.style.transform = `rotate(${currentRotation}deg)`;
-
-          // Ball orbit: counter-clockwise while spinning, steers to winning slot in fall phase
+          // Ball orbit only — wheel stays static (CSS animation stopped)
           let r = 136;
           if (progress <= 0.72) {
             const speed = (1 - easeOut) * 14 + 0.8;
@@ -733,27 +735,21 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
             }
             const fallP = (progress - 0.72) / 0.28;
             const easedFall = fallP * fallP;
-            r = 136 - easedFall * 80; // 136 → 56
-            // Steer toward -90° (top = winning slot)
+            r = 136 - easedFall * 80;
             const startA = ballFallStartAngleRef.current;
             const n = Math.round((startA + 90) / 360);
             const targetAbsolute = -90 + n * 360;
             ballOrbitAngleRef.current = startA + (targetAbsolute - startA) * easedFall;
           }
           ballOrbitRadiusRef.current = r;
-          // Ball: throttled React state at 20fps
-          const now = Date.now();
-          if (now - lastBallUpdate >= BALL_UPDATE_INTERVAL) {
-            lastBallUpdate = now;
-            setBallOrbit({ angle: ballOrbitAngleRef.current, radius: r });
-          }
+          // Ball: direct DOM — zero React re-renders
+          updateBallDOM(ballOrbitAngleRef.current, r);
 
-          // Play tick sound when crossing segment boundary
-          const normalizedRotation = currentRotation % 360;
-          const currentSegment = Math.floor(normalizedRotation / SEGMENT_ANGLE);
+          // Play tick sound when crossing segment boundary (based on ball position)
+          const currentSegment = Math.floor(((ballOrbitAngleRef.current % 360) + 360) % 360 / SEGMENT_ANGLE);
           if (currentSegment !== lastTickSegment.current) {
             playTick();
-            haptics.tick(); // Haptic on each segment
+            haptics.tick();
             lastTickSegment.current = currentSegment;
           }
 
@@ -762,13 +758,15 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           } else {
             // Ball at winning slot — settle with bounce (wheel already positioned via DOM)
             ballFallStartAngleRef.current = null;
-            setBallOrbit({ angle: -90, radius: 56 });
-            setIsSpinning(false); // BEFORE setBallSettling so isSettling = true
+            updateBallDOM(-90, 56);
+            setIsSpinning(false);
             setBallSettling(true);
             spinActiveRef.current = false;
             playTick();
             setTimeout(() => {
               setBallSettling(false);
+              if (ballGlowRef.current) ballGlowRef.current.style.display = 'none';
+              if (ballElemRef.current) ballElemRef.current.style.display = 'none';
               setResult({ prize: response.prize!, index: response.prizeIndex });
               setShowResult(true);
               AudioManager.win();
@@ -891,25 +889,24 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
       if (additionalRotation < 0) additionalRotation += 360;
       const totalRotation = spins * 360 + additionalRotation;
 
-      // Animate + ball orbit
-      const startRotation = rotation;
+      // Animate + ball orbit (wheel stays static — ball only via direct DOM)
       const startTime = Date.now();
       const duration = 5000;
       ballOrbitAngleRef.current = -90;
       ballOrbitRadiusRef.current = 136;
       ballFallStartAngleRef.current = null;
-      setBallOrbit({ angle: -90, radius: 136 });
+      updateBallDOM(-90, 136);
 
-      let lastBallUpdate2 = 0;
+      // Show ball
+      if (ballGlowRef.current) ballGlowRef.current.style.display = 'block';
+      if (ballElemRef.current) ballElemRef.current.style.display = 'block';
+
       const animate = () => {
         const elapsed = Date.now() - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const easeOut = 1 - Math.pow(1 - progress, 3);
-        const currentRotation = startRotation + totalRotation * easeOut;
-        rotationRef.current = currentRotation;
-        // Wheel: direct DOM (no React re-render)
-        if (wheelRef.current) wheelRef.current.style.transform = `rotate(${currentRotation}deg)`;
 
+        // Ball orbit only — wheel stays static
         let r = 136;
         if (progress <= 0.72) {
           const speed = (1 - easeOut) * 14 + 0.8;
@@ -928,33 +925,30 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           ballOrbitAngleRef.current = startA + (targetAbsolute - startA) * easedFall;
         }
         ballOrbitRadiusRef.current = r;
-        // Ball: throttled React state at 20fps
-        const now2 = Date.now();
-        if (now2 - lastBallUpdate2 >= 50) {
-          lastBallUpdate2 = now2;
-          setBallOrbit({ angle: ballOrbitAngleRef.current, radius: r });
-        }
+        // Ball: direct DOM — zero React re-renders
+        updateBallDOM(ballOrbitAngleRef.current, r);
 
-        const normalizedRotation = currentRotation % 360;
-        const currentSegment = Math.floor(normalizedRotation / SEGMENT_ANGLE);
-        if (currentSegment !== lastTickSegment.current) {
+        // Tick sound based on ball angle
+        const ballSeg = Math.floor(((ballOrbitAngleRef.current % 360) + 360) % 360 / SEGMENT_ANGLE);
+        if (ballSeg !== lastTickSegment.current) {
           playTick();
           haptics.tick();
-          lastTickSegment.current = currentSegment;
+          lastTickSegment.current = ballSeg;
         }
 
         if (progress < 1) {
           animationRef.current = requestAnimationFrame(animate);
         } else {
-          // Sync React wheel state once at end
           ballFallStartAngleRef.current = null;
-          setBallOrbit({ angle: -90, radius: 56 });
+          updateBallDOM(-90, 56);
           setIsSpinning(false);
           setBallSettling(true);
           spinActiveRef.current = false;
           playTick();
           setTimeout(() => {
             setBallSettling(false);
+            if (ballGlowRef.current) ballGlowRef.current.style.display = 'none';
+            if (ballElemRef.current) ballElemRef.current.style.display = 'none';
             setResult({ prize: response.prize!, index: response.prizeIndex! });
             setShowResult(true);
             AudioManager.win();
@@ -1207,59 +1201,44 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
                   <circle cx="50" cy="50" r="2.5" fill="#1A1A1A" />
                 </svg>
               </div>
-              {/* Ball orbiting the wheel — physics-based position */}
-              {(isSpinning || ballSettling) && (() => {
-                const rad = ballOrbit.angle * (Math.PI / 180);
-                const bx = 150 + ballOrbit.radius * Math.cos(rad); // px from left
-                const by = 150 + ballOrbit.radius * Math.sin(rad); // px from top
-                const isSettling = ballSettling && !isSpinning;
+              {/* Ball — always rendered, positioned via DOM refs (zero React re-renders during animation) */}
+              {(() => {
                 const isArb = currentChain === 'arbitrum';
                 const glowColor = isArb ? 'rgba(40,160,240,0.55)' : 'rgba(68,119,255,0.55)';
                 const sphereGrad = isArb
                   ? 'radial-gradient(circle at 34% 28%, #d0f0ff 0%, #28a0f0 22%, #0060a8 56%, #000e1e 100%)'
                   : 'radial-gradient(circle at 34% 28%, #ccd8ff 0%, #4477ff 22%, #0030b8 56%, #00021e 100%)';
+                const isSettling = ballSettling && !isSpinning;
                 return (
                   <>
-                  {/* Segment glow — lights up the wheel where the ball is */}
-                  <div style={{
-                    position: 'absolute',
-                    left: `${bx}px`, top: `${by}px`,
+                  <div ref={ballGlowRef} style={{
+                    display: 'none',
+                    position: 'absolute', left: '150px', top: '150px',
                     transform: 'translate(-50%, -50%)',
-                    width: '56px', height: '56px',
-                    borderRadius: '50%',
+                    width: '56px', height: '56px', borderRadius: '50%',
                     background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
-                    mixBlendMode: 'screen',
-                    pointerEvents: 'none',
-                    zIndex: 15,
+                    mixBlendMode: 'screen', pointerEvents: 'none', zIndex: 15,
                   }} />
-                  {/* Outer wrapper — handles bounce/position, no border-radius (so animation works) */}
-                  <div style={{
-                    position: 'absolute',
-                    left: `${bx}px`, top: `${by}px`,
+                  <div ref={ballElemRef} style={{
+                    display: 'none',
+                    position: 'absolute', left: '150px', top: '150px',
                     transform: 'translate(-50%, -50%)',
-                    width: '22px', height: '22px',
-                    zIndex: 20,
+                    width: '22px', height: '22px', zIndex: 20,
                     animation: isSettling ? 'ballBounce 0.9s ease-out forwards' : 'none',
                   }}>
-                    {/* Sphere body */}
                     <div style={{
                       width: '100%', height: '100%', borderRadius: '50%', position: 'relative',
-                      overflow: 'hidden',
-                      background: sphereGrad,
+                      overflow: 'hidden', background: sphereGrad,
                       boxShadow: `0 0 ${isSettling ? 22 : 10}px ${isArb ? 'rgba(40,160,240,0.9)' : 'rgba(68,119,255,0.9)'}, inset 0 2px 6px rgba(0,0,0,0.5)`,
                     }}>
-                      {/* Spinning logo layer — rotateZ avoids foreshortening flicker */}
                       <div style={{
-                        position: 'absolute', inset: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
                         animation: !isSettling ? 'innerSpin 0.9s linear infinite' : 'none',
                         transformOrigin: 'center',
                       }}>
-                        <img src={isArb ? '/images/arb-chain.png' : '/images/base-chain.png'}
-                             width="15" height="15"
+                        <img src={isArb ? '/images/arb-chain.png' : '/images/base-chain.png'} width="15" height="15"
                              style={{ borderRadius: '50%', opacity: 0.88, pointerEvents: 'none' }} alt="" />
                       </div>
-                      {/* Specular highlight — always static on top */}
                       <div style={{ position: 'absolute', top: '8%', left: '12%', width: '30%', height: '24%', background: 'radial-gradient(ellipse, rgba(255,255,255,0.95) 0%, transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
                     </div>
                   </div>
