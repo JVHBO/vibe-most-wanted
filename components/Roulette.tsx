@@ -336,6 +336,9 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   const ballOrbitRadiusRef = useRef(136); // pixels from center (300px wheel)
   const ballFallStartAngleRef = useRef<number | null>(null); // angle recorded at fall-phase start
   const [ballOrbit, setBallOrbit] = useState({ angle: -90, radius: 136 });
+  // Direct DOM refs for ball — avoids React re-renders during spin animation
+  const ballGlowRef = useRef<HTMLDivElement>(null);
+  const ballElemRef = useRef<HTMLDivElement>(null);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
   const [ballY, setBallY] = useState(0);
   const [isDraggingBall, setIsDraggingBall] = useState(false);
@@ -590,16 +593,16 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     }
   }, []);
 
-  // Idle slow rotation — direct DOM at 10fps, zero React re-renders
-  // JSX wheel has static style="rotate(0deg)" so React never overwrites ref mutations
+  // Idle rotation via CSS animation — GPU-accelerated, zero JS/main-thread work
+  // When spin starts: remove CSS animation and take over with RAF
   useEffect(() => {
-    if (isSpinning || showResult) return;
-    const interval = setInterval(() => {
-      if (spinActiveRef.current) return;
-      rotationRef.current = (rotationRef.current + 1.5) % 36000;
-      if (wheelRef.current) wheelRef.current.style.transform = `rotate(${rotationRef.current}deg)`;
-    }, 100); // 10fps idle
-    return () => clearInterval(interval);
+    if (!wheelRef.current) return;
+    if (isSpinning || showResult) {
+      wheelRef.current.style.animation = 'none';
+    } else {
+      wheelRef.current.style.animation = 'wheel-idle-spin 8s linear infinite';
+      rotationRef.current = 0; // reset ref so spin starts from known position
+    }
   }, [isSpinning, showResult]);
 
   // Keep refs updated every render (no stale closures in drag handlers)

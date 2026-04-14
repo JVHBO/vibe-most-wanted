@@ -229,6 +229,10 @@ export default function RoulettePage() {
           0%   { transform: rotateZ(0deg); }
           100% { transform: rotateZ(360deg); }
         }
+        @keyframes wheel-idle-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
       `}</style>
 
       <div
