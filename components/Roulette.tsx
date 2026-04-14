@@ -469,18 +469,26 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     try {
       toast.info("🔐 Preparing blockchain claim...");
 
-      // 1. Get actual signing address — ALWAYS try eth_accounts first (works in miniapp AND browser)
-      try {
-        const provider = await sdk.wallet.getEthereumProvider();
-        if (provider) {
-          const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
-          if (accounts && accounts.length > 0) {
-            signingAddress = accounts[0] as `0x${string}`;
-            console.log('[Roulette] Using provider address:', signingAddress, '(useAccount was:', address, ')');
+      // 1. Get actual signing address
+      // Skip sdk.wallet in Base App — it hangs forever without resolving
+      const isBaseApp = typeof (window as any).ReactNativeWebView !== 'undefined';
+      const isIframe = window.self !== window.top;
+      if (!isBaseApp && isIframe) {
+        try {
+          const provider = await Promise.race([
+            sdk.wallet.getEthereumProvider(),
+            new Promise<null>(resolve => setTimeout(() => resolve(null), 1500)),
+          ]);
+          if (provider) {
+            const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
+            if (accounts && accounts.length > 0) {
+              signingAddress = accounts[0] as `0x${string}`;
+              console.log('[Roulette] Using provider address:', signingAddress, '(useAccount was:', address, ')');
+            }
           }
+        } catch (e) {
+          console.warn('[Roulette] Could not get provider address, using useAccount:', address);
         }
-      } catch (e) {
-        console.warn('[Roulette] Could not get provider address, using useAccount:', address);
       }
 
       // 2. Prove wallet ownership — cached daily so user only signs once per day
