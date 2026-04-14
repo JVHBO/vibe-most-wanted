@@ -144,6 +144,16 @@ export default function HomePage() {
       return;
     }
 
+    console.log('[CreateProfileModal] check', {
+      address,
+      profileDashboard: profileDashboard === undefined ? 'undefined' : profileDashboard === null ? 'null' : profileDashboard?.username,
+      isPrimaryAddressLoading,
+      isLinkedWallet,
+      hasCheckedProfile,
+      isLoadingProfile,
+      userProfile: userProfile?.username ?? null,
+    });
+
     // profileDashboard: undefined = still loading, null = no profile, object = found.
     // Only proceed if explicitly null (no profile). Skip while loading or when found.
     if (profileDashboard !== null) return;
