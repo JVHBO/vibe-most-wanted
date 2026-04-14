@@ -55,10 +55,11 @@ export function usePrimaryAddress() {
     const fetchLinkedAddresses = async () => {
       const cacheKey = `vbms_linked_${connectedAddress.toLowerCase()}`;
 
-      // Check sessionStorage cache (1 hour TTL)
+      // Check localStorage cache (1 hour TTL)
+      // localStorage persists across F5/page reloads (unlike sessionStorage in WebView)
       // Only use cache if it has a valid primary — skip null results so FID fallback can retry
       try {
-        const cached = sessionStorage.getItem(cacheKey);
+        const cached = localStorage.getItem(cacheKey);
         if (cached) {
           const parsed = JSON.parse(cached);
           if (Date.now() - parsed.timestamp < 60 * 60 * 1000 && parsed.data?.primary) {
@@ -91,9 +92,9 @@ export function usePrimaryAddress() {
         setLinkedData(result);
         loadedRef.current = connectedAddress.toLowerCase();
 
-        // Cache result
+        // Cache result in localStorage (persists across F5 in WebView)
         try {
-          sessionStorage.setItem(cacheKey, JSON.stringify({ data: result, timestamp: Date.now() }));
+          localStorage.setItem(cacheKey, JSON.stringify({ data: result, timestamp: Date.now() }));
         } catch (e) {
           // Ignore cache write errors
         }
@@ -102,13 +103,13 @@ export function usePrimaryAddress() {
         // permanently create the addressLinks entry so future loads work without FID
         if (fid && result?.primary && result.primary.toLowerCase() !== connectedAddress.toLowerCase()) {
           const autoLinkKey = `vbms_autolinked_${connectedAddress.toLowerCase()}`;
-          const alreadyAutoLinked = sessionStorage.getItem(autoLinkKey);
+          const alreadyAutoLinked = localStorage.getItem(autoLinkKey);
           if (!alreadyAutoLinked) {
             convex.mutation(api.profiles.autoLinkByFid, {
               address: connectedAddress,
               fid,
             }).then(() => {
-              sessionStorage.setItem(autoLinkKey, '1');
+              localStorage.setItem(autoLinkKey, '1');
             }).catch(() => {});
           }
         }
