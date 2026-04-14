@@ -590,20 +590,20 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     }
   }, []);
 
-  // Idle slow rotation — directly mutates DOM to avoid 60 React re-renders/sec
+  // Idle slow rotation — 10fps setInterval (not 60fps RAF) to avoid freezing Base App
+  // setRotation keeps React in sync so re-renders don't reset the wheel position
   useEffect(() => {
     if (isSpinning || showResult) return;
-    const step = () => {
+    const interval = setInterval(() => {
       if (spinActiveRef.current) return;
-      rotationRef.current = (rotationRef.current + 0.15) % 36000; // prevent unbounded growth
-      if (wheelRef.current) {
-        wheelRef.current.style.transform = `rotate(${rotationRef.current}deg)`;
-      }
-      idleRafRef.current = requestAnimationFrame(step);
-    };
-    idleRafRef.current = requestAnimationFrame(step);
-    return () => { if (idleRafRef.current) cancelAnimationFrame(idleRafRef.current); };
-  }, [isSpinning, showResult]); // eslint-disable-line
+      setRotation(r => {
+        const next = (r + 1.5) % 36000;
+        rotationRef.current = next;
+        return next;
+      });
+    }, 100); // 10fps × 1.5deg = 15deg/sec idle speed
+    return () => clearInterval(interval);
+  }, [isSpinning, showResult]);
 
   // Keep refs updated every render (no stale closures in drag handlers)
   canSpinRef.current = canSpin;
@@ -646,8 +646,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     if (!address || isSpinning || !canSpin) return;
     spinActiveRef.current = true;
     if (idleRafRef.current) { cancelAnimationFrame(idleRafRef.current); idleRafRef.current = null; }
-    // Sync React state from ref so spin animation starts from the correct angle
-    setRotation(rotationRef.current);
+    // rotationRef is already in sync (updated by setRotation in idle interval)
 
     AudioManager.buttonClick();
     haptics.action(); // Haptic on spin start
