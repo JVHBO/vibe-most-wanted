@@ -20,6 +20,7 @@ import { AudioManager } from '@/lib/audio-manager';
 import haptics from '@/lib/haptics';
 import { CardMedia } from '@/components/CardMedia';
 import LoadingSpinner from '@/components/LoadingSpinner';
+import { useReconnectTimeout } from '@/hooks/useReconnectTimeout';
 import { CardReplacementModal } from '@/components/CardReplacementModal';
 import { DamageNumber } from '@/components/DamageNumber';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -44,6 +45,7 @@ type NFT = Card | any;
 export default function RaidPage() {
   const router = useRouter();
   const { address, isConnecting, status } = useAccount();
+  const isReconnecting = useReconnectTimeout(status);
   const { t } = useLanguage();
   const { nfts: allNfts, refreshUserProfile } = usePlayerCards();
   const [soundEnabled] = useState<boolean>(true);
@@ -492,6 +494,14 @@ export default function RaidPage() {
       setIsClearingDeck(false);
     }
   };
+
+  if (isReconnecting) {
+    return (
+      <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (!address) {
     return <WalletGateScreen />;

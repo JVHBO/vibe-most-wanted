@@ -13,6 +13,7 @@ import { parseEther } from "viem";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useAccount, useSignMessage } from "wagmi";
+import { useReconnectTimeout } from "@/hooks/useReconnectTimeout";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { openMarketplace } from "@/lib/marketplace-utils";
 import { getAssetUrl } from "@/lib/ipfs-assets";
@@ -249,6 +250,7 @@ export default function BaccaratPage() {
   const { t, lang } = useLanguage();
   const { userProfile } = useProfile();
   const { address, status: wagmiStatus } = useAccount();
+  const isReconnecting = useReconnectTimeout(wagmiStatus);
   const { signMessageAsync } = useSignMessage();
   const soundEnabled = true;
   const [isInFarcaster, setIsInFarcaster] = useState(false);
@@ -789,7 +791,7 @@ export default function BaccaratPage() {
     }
   };
 
-  if (wagmiStatus === 'reconnecting' || wagmiStatus === 'connecting' || (!address && wagmiStatus !== 'disconnected')) {
+  if (isReconnecting) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-black flex items-center justify-center">
         <div className="text-vintage-gold text-center">

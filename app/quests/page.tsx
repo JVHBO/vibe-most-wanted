@@ -21,11 +21,13 @@ import { dataSuffix as ATTRIBUTION_SUFFIX } from "@/lib/hooks/useWriteContractWi
 import { VibeMailInboxWithClaim } from "@/components/fid/VibeMail";
 import { VibeFIDConvexProvider, vibefidConvex } from "@/contexts/VibeFIDConvexProvider";
 import { api as fidApi } from "@/lib/fid/convex-generated/api";
+import { useReconnectTimeout } from "@/hooks/useReconnectTimeout";
 
 
 export default function QuestsPage() {
   const router = useRouter();
   const { isConnecting, status } = useAccount();
+  const isReconnecting = useReconnectTimeout(status);
   const { primaryAddress: address } = usePrimaryAddress(); // 🔗 MULTI-WALLET: Use primary address
   const { t } = useLanguage();
   const { refreshProfile } = useProfile();
@@ -515,6 +517,14 @@ export default function QuestsPage() {
     if (progress?.completed || localCompleted.has(quest.id)) return "completed";
     return "pending";
   };
+
+  if (isReconnecting) {
+    return (
+      <div className="fixed inset-0 bg-[#1a1a1a] flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (!address) {
     return <WalletGateScreen />;
