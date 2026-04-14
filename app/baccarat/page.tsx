@@ -248,7 +248,7 @@ export default function BaccaratPage() {
   const router = useRouter();
   const { t, lang } = useLanguage();
   const { userProfile } = useProfile();
-  const { address } = useAccount();
+  const { address, status: wagmiStatus } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const soundEnabled = true;
   const [isInFarcaster, setIsInFarcaster] = useState(false);
@@ -789,7 +789,30 @@ export default function BaccaratPage() {
     }
   };
 
-  if (!userProfile || !address) {
+  if (wagmiStatus === 'reconnecting' || wagmiStatus === 'connecting' || (!address && wagmiStatus !== 'disconnected')) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-black flex items-center justify-center">
+        <div className="text-vintage-gold text-center">
+          <div className="animate-spin w-10 h-10 border-2 border-vintage-gold border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="font-display">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!address) {
+    // Not connected and not reconnecting — show connect prompt
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-black flex items-center justify-center">
+        <div className="text-vintage-gold text-center">
+          <p className="font-display mb-4">Connect your wallet to play</p>
+          <Link href="/" className="px-4 py-2 bg-vintage-gold text-black font-black border-2 border-black">Go Home</Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!userProfile) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-black flex items-center justify-center">
         <div className="text-vintage-gold text-center">

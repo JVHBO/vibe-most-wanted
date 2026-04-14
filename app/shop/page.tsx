@@ -8,20 +8,20 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { WalletGateScreen } from "@/components/WalletGateScreen";
 
 function ShopPageInner() {
-  const { address, isConnecting } = useAccount();
+  const { address, status } = useAccount();
   const searchParams = useSearchParams();
   const initialSlide = searchParams.get('slide') === '1' ? 1 : 0;
 
-  if (!address) {
-    return <WalletGateScreen />;
-  }
-
-  if (isConnecting && address) {
+  if (status === 'reconnecting' || status === 'connecting') {
     return (
       <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
+  }
+
+  if (!address) {
+    return <WalletGateScreen />;
   }
 
   return <ShopView address={address} initialSlide={initialSlide} />;

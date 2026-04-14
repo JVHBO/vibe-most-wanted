@@ -48,11 +48,13 @@ const allConnectors = [
   farcasterMiniApp(),
 ];
 
-// Use sessionStorage so wallet connections don't persist across new tabs/sessions.
-// The user must explicitly connect on each new browser session.
-// Farcaster miniapp is unaffected — it auto-connects via SDK regardless of storage.
+// Base App (RN WebView) requires localStorage — sessionStorage is wiped between navigations.
+// Regular browsers use sessionStorage so connections don't persist across new tabs.
+const isBaseApp = typeof window !== 'undefined' && typeof (window as any).ReactNativeWebView !== 'undefined';
 const sessionStorageAdapter = createStorage({
-  storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
+  storage: typeof window !== 'undefined'
+    ? (isBaseApp ? window.localStorage : window.sessionStorage)
+    : undefined,
 });
 
 export const config = createConfig({

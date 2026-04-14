@@ -282,7 +282,7 @@ interface RouletteProps {
 }
 
 export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, onHelpClick }: RouletteProps) {
-  const { address } = useAccount();
+  const { address, status: wagmiStatus } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { lang } = useLanguage();
   const { validateOnArb } = useArbValidator();
@@ -1020,6 +1020,15 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
     return segments;
   };
+
+  if (wagmiStatus === 'reconnecting' || wagmiStatus === 'connecting') {
+    return (
+      <div className="bg-vintage-charcoal border-2 border-vintage-gold rounded-2xl p-6 text-center">
+        <div className="animate-spin w-8 h-8 border-2 border-vintage-gold border-t-transparent rounded-full mx-auto mb-2"></div>
+        <p className="text-vintage-gold text-sm">Loading...</p>
+      </div>
+    );
+  }
 
   if (!address) {
     return (

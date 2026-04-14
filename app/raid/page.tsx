@@ -43,7 +43,7 @@ type NFT = Card | any;
 
 export default function RaidPage() {
   const router = useRouter();
-  const { address, isConnecting } = useAccount();
+  const { address, isConnecting, status } = useAccount();
   const { t } = useLanguage();
   const { nfts: allNfts, refreshUserProfile } = usePlayerCards();
   const [soundEnabled] = useState<boolean>(true);
@@ -494,6 +494,14 @@ export default function RaidPage() {
   };
 
   // Loading states
+  if (status === 'reconnecting' || status === 'connecting') {
+    return (
+      <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
   if (!address) {
     return <WalletGateScreen />;
   }

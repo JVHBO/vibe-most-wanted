@@ -25,7 +25,7 @@ import { api as fidApi } from "@/lib/fid/convex-generated/api";
 
 export default function QuestsPage() {
   const router = useRouter();
-  const { isConnecting } = useAccount();
+  const { isConnecting, status } = useAccount();
   const { primaryAddress: address } = usePrimaryAddress(); // 🔗 MULTI-WALLET: Use primary address
   const { t } = useLanguage();
   const { refreshProfile } = useProfile();
@@ -516,16 +516,16 @@ export default function QuestsPage() {
     return "pending";
   };
 
-  if (!address) {
-    return <WalletGateScreen />;
-  }
-
-  if (isConnecting && address) {
+  if (status === 'reconnecting' || status === 'connecting') {
     return (
       <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
+  }
+
+  if (!address) {
+    return <WalletGateScreen />;
   }
 
   return (
