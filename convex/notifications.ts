@@ -258,42 +258,67 @@ export const importTokens = mutation({
 
 /**
  * Send Base Notifications to all opted-in Base App users
- * Called from cron alongside Farcaster broadcast
+ * Calls Base Notifications API directly using BASE_NOTIFICATIONS_API_KEY
  */
 async function sendBaseNotificationsBroadcast(
   title: string,
   body: string,
   targetPath: string = "/"
 ): Promise<{ sentCount: number; failedCount: number }> {
-  const baseUrl = process.env.NEXT_PUBLIC_URL || "https://vibemostwanted.xyz";
-  const secret = process.env.VMW_INTERNAL_SECRET;
+  const apiKey = process.env.BASE_NOTIFICATIONS_API_KEY;
+  const appUrl = process.env.NEXT_PUBLIC_URL || "https://vibemostwanted.xyz";
 
-  if (!secret) {
-    console.error("❌ VMW_INTERNAL_SECRET not configured — skipping Base notifications");
+  if (!apiKey) {
+    console.error("❌ BASE_NOTIFICATIONS_API_KEY not configured — skipping Base notifications");
     return { sentCount: 0, failedCount: 0 };
   }
 
   try {
-    const response = await fetch(`${baseUrl}/api/notifications/broadcast`, {
+    // Step 1: Get all opted-in users
+    const usersResponse = await fetch(
+      `https://dashboard.base.org/api/v1/notifications/app/users?app_url=${encodeURIComponent(appUrl)}&notification_enabled=true&limit=100`,
+      { headers: { "x-api-key": apiKey } }
+    );
+
+    if (!usersResponse.ok) {
+      console.error(`❌ Base users fetch failed: ${usersResponse.status}`);
+      return { sentCount: 0, failedCount: 0 };
+    }
+
+    const usersData = await usersResponse.json();
+    const addresses: string[] = (usersData.users || [])
+      .map((u: any) => u?.address?.toLowerCase())
+      .filter(Boolean);
+
+    if (addresses.length === 0) {
+      console.log("[BaseNotif] No opted-in Base users found");
+      return { sentCount: 0, failedCount: 0 };
+    }
+
+    // Step 2: Send notification to all
+    const response = await fetch("https://dashboard.base.org/api/v1/notifications/send", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${secret}`,
-      },
-      body: JSON.stringify({ title, body, targetPath }),
+      headers: { "Content-Type": "application/json", "x-api-key": apiKey },
+      body: JSON.stringify({
+        app_url: appUrl,
+        wallet_addresses: addresses,
+        title: title.slice(0, 30),
+        message: body.slice(0, 200),
+        ...(targetPath?.startsWith("/") ? { target_path: targetPath } : {}),
+      }),
     });
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error(`❌ Base notifications broadcast failed: ${response.status} ${errText.slice(0, 200)}`);
-      return { sentCount: 0, failedCount: 0 };
+      console.error(`❌ Base notifications send failed: ${response.status} ${errText.slice(0, 200)}`);
+      return { sentCount: 0, failedCount: addresses.length };
     }
 
     const result = await response.json();
-    console.log(`[BaseNotif] ✅ ${result.sentCount} sent, ❌ ${result.failedCount} failed`);
+    console.log(`[BaseNotif] ✅ ${result.sentCount} sent, ❌ ${result.failedCount} failed out of ${addresses.length} users`);
     return { sentCount: result.sentCount || 0, failedCount: result.failedCount || 0 };
   } catch (error: any) {
-    console.error(`❌ Base notifications fetch error: ${error.message}`);
+    console.error(`❌ Base notifications error: ${error.message}`);
     return { sentCount: 0, failedCount: 0 };
   }
 }
