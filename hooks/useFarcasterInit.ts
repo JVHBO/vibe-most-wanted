@@ -55,10 +55,11 @@ export function useFarcasterInit(isFrameMode: boolean) {
         // Don't return — still run SDK check below to get FID for VibeFID button
       }
 
-      // Base App = React Native WebView. It's mobile but NOT a Farcaster miniapp host.
-      // Calling sdk.context here would cause a 5s timeout. Skip early.
-      const isRNWebView = typeof (window as any).ReactNativeWebView !== 'undefined';
-      if (isRNWebView && !isActualMiniapp) {
+      // Only call SDK if actually inside a Farcaster miniapp iframe.
+      // Base App (RN WebView), regular mobile Chrome, Safari — all return
+      // window.self === window.top, so isActualMiniapp is false for them.
+      // Calling sdk.context outside an iframe causes a 5s hang.
+      if (!isActualMiniapp) {
         if (!cancelled) setIsCheckingFarcaster(false);
         return;
       }
