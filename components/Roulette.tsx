@@ -290,6 +290,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   const t = rouletteTranslations[lang as keyof typeof rouletteTranslations] || rouletteTranslations.en;
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const rotationRef = useRef(0); // tracks current angle without triggering re-renders
   const [result, setResult] = useState<{ prize: number; index: number } | null>(null);
   const [showResult, setShowResult] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
@@ -581,12 +582,15 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     }
   }, []);
 
-  // Idle slow rotation
+  // Idle slow rotation — directly mutates DOM to avoid 60 React re-renders/sec
   useEffect(() => {
     if (isSpinning || showResult) return;
     const step = () => {
       if (spinActiveRef.current) return;
-      setRotation(r => r + 0.15);
+      rotationRef.current = (rotationRef.current + 0.15) % 36000; // prevent unbounded growth
+      if (wheelRef.current) {
+        wheelRef.current.style.transform = `rotate(${rotationRef.current}deg)`;
+      }
       idleRafRef.current = requestAnimationFrame(step);
     };
     idleRafRef.current = requestAnimationFrame(step);
@@ -634,6 +638,8 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     if (!address || isSpinning || !canSpin) return;
     spinActiveRef.current = true;
     if (idleRafRef.current) { cancelAnimationFrame(idleRafRef.current); idleRafRef.current = null; }
+    // Sync React state from ref so spin animation starts from the correct angle
+    setRotation(rotationRef.current);
 
     AudioManager.buttonClick();
     haptics.action(); // Haptic on spin start
@@ -643,7 +649,9 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     lastTickSegment.current = -1;
 
     try {
-      const chain = (profileDashboard as any)?.preferredChain || "arbitrum";
+      // Base App (RN WebView) doesn't support ARB — default to base chain
+      const isBaseApp = typeof window !== 'undefined' && typeof (window as any).ReactNativeWebView !== 'undefined';
+      const chain = (profileDashboard as any)?.preferredChain || (isBaseApp ? "base" : "arbitrum");
       // Arb: validation TX before spin (Base doesn't need TX on spin, only on claim)
       if (chain === "arbitrum") {
         await validateOnArb(0, ARB_CLAIM_TYPE.ROULETTE_SPIN);
@@ -697,6 +705,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           const easeOut = 1 - Math.pow(1 - progress, 3);
 
           const currentRotation = startRotation + totalRotation * easeOut;
+          rotationRef.current = currentRotation;
           setRotation(currentRotation);
 
           // Ball orbit: counter-clockwise while spinning, steers to winning slot in fall phase
@@ -878,6 +887,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         const progress = Math.min(elapsed / duration, 1);
         const easeOut = 1 - Math.pow(1 - progress, 3);
         const currentRotation = startRotation + totalRotation * easeOut;
+        rotationRef.current = currentRotation;
         setRotation(currentRotation);
 
         let r = 136;
