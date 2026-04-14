@@ -83,11 +83,13 @@ export const getAllTokens = internalQuery({
 // ============================================================================
 
 /**
- * Determine platform from notification URL
+ * Determine platform label from notification URL
  */
 function getPlatformFromUrl(url: string): string {
-  if (url.includes("neynar")) return "neynar";
-  return "warpcast";
+  if (url.includes("warpcast")) return "warpcast";
+  if (url.includes("farcaster.xyz")) return "farcaster";
+  if (url.includes("neynar")) return "neynar"; // legacy Neynar-hosted tokens (still valid)
+  return "farcaster";
 }
 
 /**
@@ -274,21 +276,23 @@ async function sendBaseNotificationsBroadcast(
   }
 
   try {
-    // Step 1: Get all opted-in users
-    const usersResponse = await fetch(
-      `https://dashboard.base.org/api/v1/notifications/app/users?app_url=${encodeURIComponent(appUrl)}&notification_enabled=true&limit=100`,
-      { headers: { "x-api-key": apiKey } }
-    );
-
-    if (!usersResponse.ok) {
-      console.error(`❌ Base users fetch failed: ${usersResponse.status}`);
-      return { sentCount: 0, failedCount: 0 };
-    }
-
-    const usersData = await usersResponse.json();
-    const addresses: string[] = (usersData.users || [])
-      .map((u: any) => u?.address?.toLowerCase())
-      .filter(Boolean);
+    // Step 1: Get all opted-in users (paginated)
+    const addresses: string[] = [];
+    let cursor: string | undefined;
+    do {
+      const url = `https://dashboard.base.org/api/v1/notifications/app/users?app_url=${encodeURIComponent(appUrl)}&notification_enabled=true&limit=100${cursor ? `&cursor=${cursor}` : ""}`;
+      const usersResponse = await fetch(url, { headers: { "x-api-key": apiKey } });
+      if (!usersResponse.ok) {
+        console.error(`❌ Base users fetch failed: ${usersResponse.status}`);
+        break;
+      }
+      const usersData = await usersResponse.json();
+      const batch: string[] = (usersData.users || [])
+        .map((u: any) => u?.address?.toLowerCase())
+        .filter(Boolean);
+      addresses.push(...batch);
+      cursor = usersData.nextCursor || undefined;
+    } while (cursor && addresses.length < 10000);
 
     if (addresses.length === 0) {
       console.log("[BaseNotif] No opted-in Base users found");
