@@ -15,6 +15,7 @@ import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useQuery } from "convex/react";
 import { AudioManager } from "@/lib/audio-manager";
 import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
+import { toast } from "sonner";
 import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 
 import { api } from "@/convex/_generated/api";
@@ -144,15 +145,9 @@ export default function HomePage() {
       return;
     }
 
-    console.log('[CreateProfileModal] check', {
-      address,
-      profileDashboard: profileDashboard === undefined ? 'undefined' : profileDashboard === null ? 'null' : profileDashboard?.username,
-      isPrimaryAddressLoading,
-      isLinkedWallet,
-      hasCheckedProfile,
-      isLoadingProfile,
-      userProfile: userProfile?.username ?? null,
-    });
+    if (isRNWebView) {
+      toast(`addr:${address?.slice(0,10)} dash:${profileDashboard === undefined ? 'loading' : profileDashboard === null ? 'null' : 'found'} linked:${isLinkedWallet} loading:${isPrimaryAddressLoading}`);
+    }
 
     // profileDashboard: undefined = still loading, null = no profile, object = found.
     // Only proceed if explicitly null (no profile). Skip while loading or when found.
