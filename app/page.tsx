@@ -145,9 +145,7 @@ export default function HomePage() {
       return;
     }
 
-    if (isRNWebView) {
-      toast(`addr:${address?.slice(0,10)} dash:${profileDashboard === undefined ? 'loading' : profileDashboard === null ? 'null' : 'found'} linked:${isLinkedWallet} loading:${isPrimaryAddressLoading}`);
-    }
+    toast(`${address?.slice(0,10)} d:${profileDashboard===undefined?'…':profileDashboard===null?'∅':'✓'} lnk:${isLinkedWallet} ldg:${isPrimaryAddressLoading} prf:${userProfile?.username??'∅'}`, {duration: 8000});
 
     // profileDashboard: undefined = still loading, null = no profile, object = found.
     // Only proceed if explicitly null (no profile). Skip while loading or when found.
