@@ -78,6 +78,7 @@ export function CreateProfileModal({
   const [isGenerating, setIsGenerating] = useState(false);
   const [linkError, setLinkError] = useState<string | null>(null);
   const [linkSuccess, setLinkSuccess] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const generateLinkCodeMutation = useMutation(api.profiles.generateLinkCode);
 
@@ -132,16 +133,19 @@ export function CreateProfileModal({
 
   const handleCreateProfile = async () => {
     if (isCreatingProfile) return;
+    setCreateError(null);
 
     if (!address) {
       if (soundEnabled) AudioManager.buttonError();
       devError('❌ Cannot create profile: No wallet address');
+      setCreateError(tx('walletNotConnected', 'Wallet not connected.'));
       return;
     }
 
     if (!profileUsername || profileUsername.trim() === '') {
       if (soundEnabled) AudioManager.buttonError();
       devError('❌ Cannot create profile: Username is required');
+      setCreateError(tx('usernameRequired', 'Username is required.'));
       return;
     }
 
@@ -192,6 +196,19 @@ export function CreateProfileModal({
     } catch (error: any) {
       if (soundEnabled) AudioManager.buttonError();
       devError('✗ Error creating profile:', error.code, error.message);
+      const rawMessage = error?.message || '';
+      const normalized = rawMessage.toLowerCase();
+      let friendly = tx('createProfileGenericError', 'Could not create account. Please try again.');
+      if (normalized.includes('unauthorized')) {
+        friendly = tx('createProfileUnauthorized', 'Access denied. Please reconnect your wallet.');
+      } else if (normalized.includes('too many requests') || normalized.includes('429')) {
+        friendly = tx('createProfileRateLimit', 'Too many attempts. Wait a few seconds and try again.');
+      } else if (normalized.includes('username') && normalized.includes('use')) {
+        friendly = tx('createProfileUsernameTaken', 'Username already in use. Choose another one.');
+      } else if (rawMessage) {
+        friendly = rawMessage;
+      }
+      setCreateError(friendly);
     } finally {
       setIsCreatingProfile(false);
     }
@@ -232,7 +249,10 @@ export function CreateProfileModal({
               <input
                 type="text"
                 value={profileUsername}
-                onChange={(e) => setProfileUsername(e.target.value)}
+                onChange={(e) => {
+                  setProfileUsername(e.target.value);
+                  if (createError) setCreateError(null);
+                }}
                 className="w-full px-3 py-2 bg-vintage-charcoal border border-vintage-gold/30 rounded-lg text-vintage-gold focus:border-vintage-gold focus:outline-none"
                 placeholder={tx('enterUsername', 'Choose a username')}
                 maxLength={20}
@@ -295,6 +315,9 @@ export function CreateProfileModal({
               >
                 {isCreatingProfile ? '...' : tx('createAccount', tx('createAccountFarcaster', 'Create account'))}
               </button>
+              {createError && (
+                <p className="text-xs text-red-400 text-center px-1">{createError}</p>
+              )}
 
               <button
                 onClick={handleCancel}
