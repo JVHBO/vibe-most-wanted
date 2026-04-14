@@ -22,6 +22,11 @@ function checkRateLimit(key: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    const internalSecret = process.env.VMW_INTERNAL_SECRET;
+    if (!internalSecret) {
+      return NextResponse.json({ error: "VMW_INTERNAL_SECRET not configured" }, { status: 500 });
+    }
+
     const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
     if (!convexUrl) {
       return NextResponse.json({ error: "NEXT_PUBLIC_CONVEX_URL not configured" }, { status: 500 });
@@ -85,24 +90,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: `Invalid nonce (expected ${currentNonce}, got ${signedNonce})` }, { status: 401 });
     }
 
-    const profileId = await convex.mutation(api.profiles.upsertProfile, {
+    const profileId = await convex.mutation(api.profiles.upsertProfileFromWallet, {
+      adminKey: internalSecret,
       address: normalizedAddress,
-      username: (username || "").trim() || `user_${normalizedAddress.slice(2, 6)}${normalizedAddress.slice(-4)}`,
+      ...(username ? { username } : {}),
     });
     await convex.mutation(api.auth.consumeNonce, { address: normalizedAddress, nonce: signedNonce });
 
     return NextResponse.json({ success: true, profileId });
   } catch (error: any) {
     console.error("[wallet/profile-upsert] Error:", error, "data:", error?.data, "cause:", error?.cause);
-    const message = String(error?.data || error?.message || "Failed to create profile");
-    const status =
-      message.includes("Too many requests") ? 429 :
-      message.includes("Unauthorized") ? 401 :
-      message.includes("Invalid") ? 400 :
-      500;
     return NextResponse.json(
-      { error: message },
-      { status }
+      { error: error?.data || error?.message || "Failed to create profile" },
+      { status: 500 }
     );
   }
 }
