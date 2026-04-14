@@ -158,8 +158,12 @@ export default function HomePage() {
 
     // Use primary address for the prompt-seen key so it persists across linked wallets
     const normalizedAddress = (primaryAddress || address).toLowerCase();
-    const promptSeenKey = getProfilePromptSeenKey(normalizedAddress);
-    const hasSeenPrompt = typeof window !== "undefined" && localStorage.getItem(promptSeenKey) === "1";
+    // Check prompt-seen for BOTH connected and primary addresses
+    // (key can differ based on whether primaryAddress resolved at time of writing)
+    const connectedKey = getProfilePromptSeenKey(address.toLowerCase());
+    const primaryKey = primaryAddress ? getProfilePromptSeenKey(primaryAddress.toLowerCase()) : connectedKey;
+    const hasSeenPrompt = typeof window !== "undefined" &&
+      (localStorage.getItem(connectedKey) === "1" || localStorage.getItem(primaryKey) === "1");
 
     const farcasterSuggestedUsername = farcasterContext.user?.username?.trim();
     const sanitizedFarcasterUsername = farcasterSuggestedUsername
@@ -177,7 +181,9 @@ export default function HomePage() {
       setShowCreateProfileModal(true);
       lastAutoPromptAddressRef.current = normalizedAddress;
       if (typeof window !== "undefined") {
-        localStorage.setItem(promptSeenKey, "1");
+        // Save for both addresses so it persists regardless of primaryAddress resolution order
+        localStorage.setItem(connectedKey, "1");
+        localStorage.setItem(primaryKey, "1");
       }
     }
   }, [address, hasCheckedProfile, isLoadingProfile, userProfile, profileUsername, farcasterContext.user?.username, profileDashboard, isPrimaryAddressLoading, isLinkedWallet]);
