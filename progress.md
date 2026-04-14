@@ -72,3 +72,38 @@
   - Farcaster (com FID/contexto real)
   - Base App / web padrão (sem depender de FID)
 - Mudanças de slot/TCG estão fora deste documento e seguem em trilha separada.
+
+---
+
+## Fixes Base App - Roulette & TXs (Abr/2026)
+
+### Contexto
+- `wagmi.isConnected` fica `false` durante reconnecting mesmo com `address` presente
+- `sdk.wallet.getEthereumProvider()` **trava para sempre** sem throw no Base App
+- `sessionStorage` limpa no F5 em WebView (usar `localStorage`)
+
+### ✅ Create Profile button para linked wallet
+**Arquivo:** `lib/hooks/usePrimaryAddress.ts` — removido `isConnected` das condições
+
+### ✅ Roulette idle rotation travando
+**Fix:** CSS @keyframes compositor (zero JS)
+
+### ✅ Roulette spin animation travando (setBallOrbit)
+**Fix:** Ball position via direct DOM refs (`updateBallDOM`), zero setState durante 5s de spin
+
+### ✅ Bola caindo em segmento errado
+**Fix:** `targetBallAngle = -90 + (targetIndex + offset) * SEGMENT_ANGLE`
+
+### ✅ Claim roulette travado em "Claiming" no Base App
+**Causa:** `sdk.wallet.getEthereumProvider()` em `handleClaim` trava para sempre no Base App  
+**Fix:** `isBaseApp` check + `Promise.race(1500ms)` — Base App usa `address` direto
+
+### ✅ Raffle 3D card travando
+**Fix:** Removido `backdropFilter: blur(12px)`
+
+### Auditoria TXs sdk.wallet
+`shouldUseFarcasterSDK()` em `lib/utils/miniapp.ts` retorna `false` no Base App via `ReactNativeWebView` check. Todos os outros fluxos de TX (InboxModal, CoinsInboxModal, VibeMail, quests, missionTx, useWeeklyLeaderboardClaim) estão protegidos.
+
+### Pendentes
+- [ ] Testar claim roulette no Base App
+- [ ] Testar animação bolinha no Base App
