@@ -265,12 +265,11 @@ async function sendBaseNotificationsBroadcast(
   body: string,
   targetPath: string = "/"
 ): Promise<{ sentCount: number; failedCount: number }> {
-  const appUrl = process.env.NEXT_PUBLIC_URL || "https://vibemostwanted.xyz";
   const baseUrl = process.env.NEXT_PUBLIC_URL || "https://vibemostwanted.xyz";
-  const cronSecret = process.env.CRON_SECRET;
+  const secret = process.env.VMW_INTERNAL_SECRET;
 
-  if (!cronSecret) {
-    console.error("❌ CRON_SECRET not configured — skipping Base notifications");
+  if (!secret) {
+    console.error("❌ VMW_INTERNAL_SECRET not configured — skipping Base notifications");
     return { sentCount: 0, failedCount: 0 };
   }
 
@@ -279,7 +278,7 @@ async function sendBaseNotificationsBroadcast(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${cronSecret}`,
+        "Authorization": `Bearer ${secret}`,
       },
       body: JSON.stringify({ title, body, targetPath }),
     });

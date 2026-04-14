@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import { useProfile } from '@/contexts/ProfileContext';
 import { sdk } from '@farcaster/miniapp-sdk';
+import { usePathname } from 'next/navigation';
 
 /**
  * Garante que todo usuário que acessa qualquer página tem um perfil criado.
@@ -12,6 +13,7 @@ import { sdk } from '@farcaster/miniapp-sdk';
 export function GlobalProfileInit() {
   const { address } = useAccount();
   const { userProfile, isLoadingProfile, refreshProfile } = useProfile();
+  const pathname = usePathname();
   const hasCreatedRef = useRef(false);
   // Ref to always have latest userProfile value inside async callbacks
   const userProfileRef = useRef(userProfile);
@@ -23,6 +25,9 @@ export function GlobalProfileInit() {
       if (!address) return;
       if (isLoadingProfile) return;
       if (userProfile) return;
+      // Home has explicit onboarding/create-profile flow. Skipping auto-upsert
+      // here avoids rate-limit races with manual account creation.
+      if (pathname === "/") return;
 
       // Wait 2s for Convex to deliver the profile before assuming it doesn't exist.
       // isLoadingProfile can go false before the WebSocket data arrives.
@@ -80,7 +85,7 @@ export function GlobalProfileInit() {
     };
 
     run();
-  }, [address, isLoadingProfile, userProfile, refreshProfile]);
+  }, [address, isLoadingProfile, userProfile, refreshProfile, pathname]);
 
   return null;
 }

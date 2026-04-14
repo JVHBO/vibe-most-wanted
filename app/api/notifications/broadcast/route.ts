@@ -17,10 +17,10 @@ import { listBaseNotificationUsers, sendBaseNotifications } from "@/lib/base-not
  */
 export async function POST(request: NextRequest) {
   try {
-    // SECURITY: Only internal callers with CRON_SECRET can broadcast
+    // SECURITY: Only internal callers with VMW_INTERNAL_SECRET can broadcast
     const authHeader = request.headers.get('authorization');
-    const cronSecret = process.env.CRON_SECRET;
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    const secret = process.env.VMW_INTERNAL_SECRET;
+    if (!secret || authHeader !== `Bearer ${secret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

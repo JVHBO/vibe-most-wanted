@@ -12,13 +12,17 @@ import { sendBaseNotifications } from "@/lib/base-notifications";
  * - address?: string (wallet address — for Base channel)
  */
 export async function POST(request: NextRequest) {
-  const secret = process.env.CRON_SECRET || process.env.VMW_INTERNAL_SECRET;
+  const body = await request.json().catch(() => ({}));
+
+  const secret = process.env.VMW_INTERNAL_SECRET;
   const authHeader = request.headers.get("authorization");
-  if (!secret || authHeader !== `Bearer ${secret}`) {
+  const bodyKey: string | undefined = typeof body.adminKey === "string" ? body.adminKey : undefined;
+  const authorized = secret && (authHeader === `Bearer ${secret}` || bodyKey === secret);
+
+  if (!authorized) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => ({}));
   const fid: number | undefined = typeof body.fid === "number" ? body.fid : undefined;
   const address: string | undefined = typeof body.address === "string" ? body.address : undefined;
 
