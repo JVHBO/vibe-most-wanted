@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
-import { useAccount, usePublicClient, useSignMessage } from 'wagmi';
+import { useAccount, usePublicClient } from 'wagmi';
 import { useReconnectTimeout } from '@/hooks/useReconnectTimeout';
 import { AudioManager } from '@/lib/audio-manager';
 import { useClaimVBMS } from '@/lib/hooks/useVBMSContracts';
@@ -288,7 +288,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   const lastAddressRef = useRef<`0x${string}` | undefined>(undefined);
   useEffect(() => { if (address) lastAddressRef.current = address; }, [address]);
   const stableAddress = address || lastAddressRef.current;
-  const { signMessageAsync } = useSignMessage();
+
   const { lang } = useLanguage();
   const { validateOnArb } = useArbValidator();
   const publicClient = usePublicClient({ chainId: CONTRACTS.CHAIN_ID });
@@ -495,19 +495,8 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         }
       }
 
-      // 2. Prove wallet ownership — cached daily so user only signs once per day
-      const dayTimestamp = Math.floor(Date.now() / 86400000);
-      const proofCacheKey = `vmw_roulette_proof_${signingAddress.toLowerCase()}_${dayTimestamp}`;
-      let ownershipProof = localStorage.getItem(proofCacheKey);
-      if (!ownershipProof) {
-        toast.info("🔐 Prove wallet ownership (once per day)...");
-        const ownershipMessage = `VMW Roulette Daily - ${signingAddress.toLowerCase()} - ${dayTimestamp}`;
-        ownershipProof = await signMessageAsync({ message: ownershipMessage });
-        localStorage.setItem(proofCacheKey, ownershipProof);
-      }
-
-      // 3. Get signature from backend using actual wallet address
-      const claimData = await prepareClaimAction({ address: signingAddress, ownershipProof, timestamp: dayTimestamp });
+      // 2. Get signature from backend
+      const claimData = await prepareClaimAction({ address: signingAddress });
       preparedSpinId = claimData.spinId;
 
       toast.info("🔐 Sign the transaction...");
