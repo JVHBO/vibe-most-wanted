@@ -14,10 +14,15 @@ import {
   resolveSlotSpin,
   type SlotBonusState,
 } from "../lib/slot/engine";
+import { createAuditLog } from "./coinAudit";
 import {
-  SLOT_BONUS_FREE_SPINS,
   SLOT_SPIN_BASE_COST,
+  SLOT_BONUS_COST_MULT,
   SLOT_TOTAL_CELLS,
+  SLOT_BONUS_FOIL_COUNT,
+  SLOT_BONUS_FREE_SPINS,
+  SLOT_DEV_ALLOWED_ADDRESSES,
+  SLOT_FREE_SPINS_PER_DAY,
 } from "../lib/slot/config";
 
 const bonusStateValidator = v.object({
@@ -27,6 +32,7 @@ const bonusStateValidator = v.object({
       growthLevel: v.number(),
     }),
   ),
+  spinsRemaining: v.number(),
 });
 
 // Helper to get profile by address (supports multi-wallet via addressLinks)
@@ -109,7 +115,7 @@ export const getSlotDailyStats = query({
         paidSpinsUsed: 0,
         totalSpins: 0,
         totalWon: 0,
-        remainingFreeSpins: 10,
+        remainingFreeSpins: SLOT_FREE_SPINS_PER_DAY,
         totalSpentToday: 0,
         bonusSpinsAvailable: 0,
       };
@@ -124,9 +130,7 @@ export const getSlotDailyStats = query({
       )
       .first();
 
-    const hasVibeFIDBadge = profile.hasVibeBadge === true;
-    const freeSpinsPerDay = hasVibeFIDBadge ? 10 : 5;
-    const bonusSpinsAvailable = profile.slotBonusSpins || 0;
+    const bonusSpinsAvailable = profile.slotBonusSpins ?? 0;
 
     if (!stats) {
       return {
@@ -134,7 +138,7 @@ export const getSlotDailyStats = query({
         paidSpinsUsed: 0,
         totalSpins: 0,
         totalWon: 0,
-        remainingFreeSpins: freeSpinsPerDay,
+        remainingFreeSpins: SLOT_FREE_SPINS_PER_DAY,
         totalSpentToday: 0,
         bonusSpinsAvailable,
       };
@@ -145,7 +149,7 @@ export const getSlotDailyStats = query({
       paidSpinsUsed: stats.paidSpinsUsed,
       totalSpins: stats.totalSpins,
       totalWon: stats.totalWon,
-      remainingFreeSpins: Math.max(0, freeSpinsPerDay - stats.freeSpinsUsed),
+      remainingFreeSpins: Math.max(0, SLOT_FREE_SPINS_PER_DAY - stats.freeSpinsUsed),
       totalSpentToday: stats.paidSpinsUsed * SLOT_SPIN_BASE_COST,
       bonusSpinsAvailable,
     };
@@ -159,6 +163,7 @@ export const spinSlot = mutation({
   args: {
     address: v.string(),
     isFreeSpin: v.boolean(),
+    buyBonusEntry: v.optional(v.boolean()),
     bonusMultiplier: v.optional(v.number()),
     betMultiplier: v.optional(v.number()),
     isBonusMode: v.optional(v.boolean()),
@@ -169,6 +174,7 @@ export const spinSlot = mutation({
     {
       address,
       isFreeSpin,
+      buyBonusEntry = false,
       bonusMultiplier = 1,
       betMultiplier = 1,
       isBonusMode = false,
@@ -186,76 +192,124 @@ export const spinSlot = mutation({
 
     const normalizedAddress = address.toLowerCase();
     const { stats } = await getOrCreateDailyStats(ctx, normalizedAddress);
-    const storedBonusSpins = profile.slotBonusSpins || 0;
-    const hasVibeFIDBadge = profile.hasVibeBadge === true;
-    const dailyFreeSpins = hasVibeFIDBadge ? 10 : 5;
-    const isStoredBonusSpin = isFreeSpin && isBonusMode && storedBonusSpins > 0;
-    const dailyFreeSpinsRemaining = Math.max(0, dailyFreeSpins - stats.freeSpinsUsed);
 
-    if (isFreeSpin && !isStoredBonusSpin && dailyFreeSpinsRemaining <= 0) {
-      throw new Error("No free spins remaining today");
+    // Only dev wallets can spin — all spins are free
+    if (!SLOT_DEV_ALLOWED_ADDRESSES.includes(normalizedAddress as typeof SLOT_DEV_ALLOWED_ADDRESSES[number])) {
+      throw new Error("Access denied: slot restricted to developer wallets");
     }
 
-    const spinCost = isFreeSpin
-      ? 0
-      : Math.max(1, Math.floor(SLOT_SPIN_BASE_COST * betMultiplier));
+    // BUY BONUS: charge 20× once on entry; bonus spins are free (already paid for)
+    // Normal spin: charge betMultiplier coins
+    // Free daily spin: charge 0 coins
+    let spinCost = betMultiplier;
+    if (isBonusMode && buyBonusEntry) {
+      spinCost = Math.round(betMultiplier * SLOT_BONUS_COST_MULT);
+    } else if (isBonusMode) {
+      spinCost = 0; // bonus spins are free after entry
+    } else if (isFreeSpin) {
+      spinCost = 0; // daily free spin
+    }
 
     const currentCoins = profile.coins || 0;
-    if (!isFreeSpin && currentCoins < spinCost) {
-      throw new Error(`Not enough coins. Need ${spinCost} coins.`);
+
+    if (currentCoins < spinCost) {
+      throw new Error(`Insufficient coins. Need ${spinCost} coins to spin.`);
     }
 
     const resolution = resolveSlotSpin(
       isBonusMode,
       isBonusMode ? ((bonusState as SlotBonusState | undefined) ?? undefined) : undefined,
+      buyBonusEntry && !isBonusMode ? SLOT_BONUS_FOIL_COUNT : 0, // BUY BONUS: force 4 foils to trigger bonus; bonus spins: natural
     );
 
+    const effectiveBonusMult = isBonusMode ? 1.5 : (bonusMultiplier ?? 1);
     const comboSteps = resolution.comboSteps.map((step) => ({
       ...step,
-      reward: Math.floor(step.reward * bonusMultiplier * betMultiplier),
+      reward: Math.floor(step.reward * effectiveBonusMult * betMultiplier / 100),
     }));
 
     const finalWin = comboSteps.reduce((sum, step) => sum + step.reward, 0);
     const winAdded = finalWin > 0;
 
     let nextCoins = currentCoins;
-    if (!isFreeSpin) {
+    if (spinCost > 0) {
       nextCoins -= spinCost;
     }
     if (finalWin > 0) {
       nextCoins += finalWin;
     }
 
-    let nextBonusSpins = storedBonusSpins;
-    if (isStoredBonusSpin) {
-      nextBonusSpins = Math.max(0, nextBonusSpins - 1);
-    }
-    if (resolution.triggeredBonus) {
-      nextBonusSpins += resolution.bonusSpinsAwarded;
-    }
-
     const profileUpdates: Record<string, number> = {};
-    if (!isFreeSpin || finalWin > 0) {
+    if (nextCoins !== currentCoins) {
       profileUpdates.coins = nextCoins;
-    }
-    if (isStoredBonusSpin || resolution.triggeredBonus) {
-      profileUpdates.slotBonusSpins = nextBonusSpins;
     }
     if (Object.keys(profileUpdates).length > 0) {
       await ctx.db.patch(profile._id, profileUpdates);
     }
 
-    await ctx.db.patch(stats._id, {
-      freeSpinsUsed: stats.freeSpinsUsed + (isFreeSpin && !isStoredBonusSpin ? 1 : 0),
-      paidSpinsUsed: stats.paidSpinsUsed + (!isFreeSpin ? 1 : 0),
-      totalSpins: stats.totalSpins + 1,
-      totalWon: stats.totalWon + finalWin,
-      lastSpinTime: Date.now(),
-    });
+    // Audit log + transaction history
+    if (spinCost > 0) {
+      await createAuditLog(ctx, normalizedAddress, "spend", spinCost, currentCoins, nextCoins - finalWin, "slot_spin");
+      await ctx.db.insert("coinTransactions", {
+        address: normalizedAddress,
+        type: "spend",
+        amount: spinCost,
+        source: "slot",
+        description: `Slot spin -${spinCost}`,
+        balanceBefore: currentCoins,
+        balanceAfter: nextCoins - finalWin,
+        timestamp: Date.now(),
+      });
+    }
+    if (finalWin > 0) {
+      await createAuditLog(ctx, normalizedAddress, "earn", finalWin, nextCoins - finalWin, nextCoins, "slot_win");
+      await ctx.db.insert("coinTransactions", {
+        address: normalizedAddress,
+        type: "earn",
+        amount: finalWin,
+        source: "slot",
+        description: `Slot win +${finalWin}`,
+        balanceBefore: nextCoins - finalWin,
+        balanceAfter: nextCoins,
+        timestamp: Date.now(),
+      });
+    }
+
+    // Track stats: free daily spins vs paid spins vs bonus spins
+    if (isFreeSpin && !isBonusMode) {
+      // Daily free spin
+      await ctx.db.patch(stats._id, {
+        freeSpinsUsed: stats.freeSpinsUsed + 1,
+        paidSpinsUsed: stats.paidSpinsUsed,
+        totalSpins: stats.totalSpins + 1,
+        totalWon: stats.totalWon + finalWin,
+        lastSpinTime: Date.now(),
+      });
+    } else if (spinCost === 0 && isBonusMode) {
+      // Bonus spin (already paid for via BUY BONUS entry)
+      await ctx.db.patch(stats._id, {
+        freeSpinsUsed: stats.freeSpinsUsed,
+        paidSpinsUsed: stats.paidSpinsUsed,
+        totalSpins: stats.totalSpins + 1,
+        totalWon: stats.totalWon + finalWin,
+        lastSpinTime: Date.now(),
+      });
+    } else {
+      // Paid spin (normal or BUY BONUS entry)
+      await ctx.db.patch(stats._id, {
+        freeSpinsUsed: stats.freeSpinsUsed,
+        paidSpinsUsed: stats.paidSpinsUsed + 1,
+        totalSpins: stats.totalSpins + 1,
+        totalWon: stats.totalWon + finalWin,
+        lastSpinTime: Date.now(),
+      });
+    }
+
+    const spinType = spinCost === 0 ? "free" : "paid";
 
     await ctx.db.insert("slotSpins", {
       playerAddress: normalizedAddress,
-      spinType: isStoredBonusSpin ? "bonus" : isFreeSpin ? "free" : "paid",
+      spinType,
       spinCount: 1,
       cost: spinCost,
       reels: resolution.initialGrid.map((card) => card.baccarat),
@@ -276,8 +330,9 @@ export const spinSlot = mutation({
       foilCount: resolution.finalFoilCount,
       triggeredBonus: resolution.triggeredBonus,
       bonusSpinsAwarded: resolution.bonusSpinsAwarded,
-      bonusSpinsRemaining: nextBonusSpins,
+      bonusSpinsRemaining: resolution.bonusSpinsRemaining,
       bonusState: resolution.bonusState,
+      nearMiss: resolution.nearMiss,
     };
   },
 });
