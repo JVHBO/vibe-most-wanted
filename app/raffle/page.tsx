@@ -745,8 +745,15 @@ export default function RafflePage() {
                             try {
                               const addr = walletAddress!.toLowerCase();
                               const epoch = config?.epoch ?? 1;
-                              const message = `claim-share-bonus:${addr}:${epoch}`;
-                              const signature = await signMessageAsync({ message });
+                              // Try signature (Farcaster miniapp), skip in Base App
+                              let signature: string | undefined;
+                              try {
+                                const isBaseApp = typeof (window as any).ReactNativeWebView !== 'undefined';
+                                if (!isBaseApp) {
+                                  const message = `claim-share-bonus:${addr}:${epoch}`;
+                                  signature = await signMessageAsync({ message });
+                                }
+                              } catch (_) {}
                               await claimShareBonusAction({ address: addr, signature });
                               setShareClaimed(true);
                             } catch(e: any) {

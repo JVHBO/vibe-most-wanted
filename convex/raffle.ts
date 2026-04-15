@@ -810,22 +810,22 @@ export const getLatestConfigInternal = internalQuery({
  * Message format: `claim-share-bonus:${address.toLowerCase()}:${epoch}`
  */
 export const claimShareBonus = action({
-  args: { address: v.string(), signature: v.string() },
+  args: { address: v.string(), signature: v.optional(v.string()) },
   handler: async (ctx, { address, signature }): Promise<{ ok: boolean }> => {
-    const { ethers } = await import("ethers");
-
-    // Get current epoch
-    const config = await ctx.runQuery(internal.raffle.getLatestConfigInternal, {});
-    if (!config) throw new Error("No raffle config");
-    const epoch = config.epoch;
-
-    // Verify the caller owns this address
     const addr = address.toLowerCase();
-    const message = `claim-share-bonus:${addr}:${epoch}`;
-    const recovered = ethers.verifyMessage(message, signature);
-    if (recovered.toLowerCase() !== addr) throw new Error("Invalid signature");
 
-    return await ctx.runMutation(internal.raffle.insertShareBonus, { address: addr, epoch });
+    // Verify signature if provided (Farcaster miniapp path)
+    if (signature) {
+      const { ethers } = await import("ethers");
+      const config = await ctx.runQuery(internal.raffle.getLatestConfigInternal, {});
+      if (!config) throw new Error("No raffle config");
+      const epoch = config.epoch;
+      const message = `claim-share-bonus:${addr}:${epoch}`;
+      const recovered = ethers.verifyMessage(message, signature);
+      if (recovered.toLowerCase() !== addr) throw new Error("Invalid signature");
+    }
+
+    return await ctx.runMutation(internal.raffle.insertShareBonus, { address: addr, epoch: (await ctx.runQuery(internal.raffle.getLatestConfigInternal, {}))?.epoch ?? 1 });
   },
 });
 

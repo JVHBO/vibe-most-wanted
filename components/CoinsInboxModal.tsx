@@ -136,18 +136,15 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
   // Helper function to get actual wallet address from Farcaster SDK
   const getFarcasterWalletAddress = async (): Promise<string> => {
-    const provider = await sdk.wallet.getEthereumProvider();
-    if (!provider) {
-      throw new Error("Farcaster wallet not available");
-    }
-
-    // Get the actual address from the provider
+    const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
+    if (!shouldUseFarcasterSDK()) throw new Error("Not in Farcaster miniapp");
+    const provider = await Promise.race([
+      sdk.wallet.getEthereumProvider(),
+      new Promise<null>(resolve => setTimeout(() => resolve(null), 1500)),
+    ]);
+    if (!provider) throw new Error("Farcaster wallet not available");
     const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
-    if (!accounts || accounts.length === 0) {
-      throw new Error("No accounts found in Farcaster wallet");
-    }
-
-    console.log('[CoinsInboxModal] Farcaster wallet address:', accounts[0]);
+    if (!accounts || accounts.length === 0) throw new Error("No accounts found in Farcaster wallet");
     return accounts[0];
   };
 
@@ -299,9 +296,9 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       return;
     }
 
-    // 🔒 SECURITY: Require FID for conversion
+    // FID from profile fallback — Base App users have FID in their profile
     if (!userFid) {
-      toast.error("🔒 Farcaster authentication required. Please use the miniapp.");
+      toast.error("Profile not loaded yet. Please wait a moment and try again.");
       console.error('[CoinsInboxModal] ❌ No FID available for conversion');
       return;
     }
