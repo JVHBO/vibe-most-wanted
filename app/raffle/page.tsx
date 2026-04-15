@@ -5,7 +5,7 @@ import { useConvex, useQuery, useMutation, useAction } from "convex/react";
 import Link from "next/link";
 import {
   useAccount, useBalance, useReadContract,
-  useWaitForTransactionReceipt, useSwitchChain, useSignMessage,
+  useWaitForTransactionReceipt, useSwitchChain,
 } from "wagmi";
 import { useWriteContractWithAttribution } from "@/lib/hooks/useWriteContractWithAttribution";
 import { api } from "@/convex/_generated/api";
@@ -178,7 +178,6 @@ export default function RafflePage() {
   const [shareClaimed,      setShareClaimed]      = useState(false);
   const [shareClaiming,     setShareClaiming]     = useState(false);
   const claimShareBonusAction = useAction(api.raffle.claimShareBonus);
-  const { signMessageAsync } = useSignMessage();
   const [showCardModal,     setShowCardModal]     = useState(false);
   const [showVrfProof,      setShowVrfProof]      = useState(false);
   const cardRotRef = useRef({ rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 });
@@ -744,17 +743,7 @@ export default function RafflePage() {
                             setShareClaiming(true);
                             try {
                               const addr = walletAddress!.toLowerCase();
-                              const epoch = config?.epoch ?? 1;
-                              // Try signature (Farcaster miniapp), skip in Base App
-                              let signature: string | undefined;
-                              try {
-                                const isBaseApp = typeof (window as any).ReactNativeWebView !== 'undefined';
-                                if (!isBaseApp) {
-                                  const message = `claim-share-bonus:${addr}:${epoch}`;
-                                  signature = await signMessageAsync({ message });
-                                }
-                              } catch (_) {}
-                              await claimShareBonusAction({ address: addr, signature });
+                              await claimShareBonusAction({ address: addr });
                               setShareClaimed(true);
                             } catch(e: any) {
                               if (e?.message?.includes("Already claimed")) setShareClaimed(true);
