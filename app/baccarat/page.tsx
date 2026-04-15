@@ -12,7 +12,7 @@ import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
 import { parseEther } from "viem";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { useAccount, useSignMessage } from "wagmi";
+import { useAccount } from "wagmi";
 import { useReconnectTimeout } from "@/hooks/useReconnectTimeout";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { openMarketplace } from "@/lib/marketplace-utils";
@@ -251,7 +251,7 @@ export default function BaccaratPage() {
   const { userProfile } = useProfile();
   const { address, status: wagmiStatus } = useAccount();
   const isReconnecting = useReconnectTimeout(wagmiStatus);
-  const { signMessageAsync } = useSignMessage();
+
   const soundEnabled = true;
   const [isInFarcaster, setIsInFarcaster] = useState(false);
 
@@ -682,16 +682,11 @@ export default function BaccaratPage() {
     setShowCashoutModal(true);
 
     try {
-      // Step 1: Prove wallet ownership via signed message
-      const timestamp = Math.floor(Date.now() / 60000); // rounds to current minute
-      const ownershipMessage = `VMW Cashout - ${address} - ${timestamp}`;
-      const ownershipProof = await signMessageAsync({ message: ownershipMessage });
-
-      // Step 2: Get signature from API
+      // Get signature from API
       const response = await fetch('/api/betting/withdraw', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, ownershipProof, timestamp }),
+        body: JSON.stringify({ address }),
       });
 
       const data = await response.json();
