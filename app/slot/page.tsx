@@ -126,6 +126,7 @@ export default function SlotPage() {
   const [txStatus, setTxStatus] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showRules, setShowRules] = useState(false);
+  const slotHelpOpenRef = useRef<(() => void) | null>(null);
   const [bgmMuted, setBgmMuted] = useState(false);
   const [bgmReady, setBgmReady] = useState(false);
   const bgmRef = useRef<HTMLAudioElement | null>(null);
@@ -170,8 +171,9 @@ export default function SlotPage() {
     bgmRef.current.volume = bgmBaseVolume;
   };
 
-  const handleWin = (amount: number) => {
-    console.log("Player won:", amount);
+  const handleWin = async (amount: number) => {
+    // Saldo já é atualizado pelo Convex no spinSlot mutation,
+    // o useQuery em userProfile coins refetch automatico
   };
 
   const currentVBMSBalance = vbmsBalance ? Number(vbmsBalance) / 1e18 : 0;
@@ -224,8 +226,8 @@ export default function SlotPage() {
 
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // After successful deposit, we would call a Convex mutation to add credits
-      // await convex.mutation(api.slot.depositVBMS, { address, amount });
+      // After successful deposit, call Convex mutation to add credits
+      await convex.mutation(api.slot.depositVBMS, { address, amount });
 
       setDepositStep("done");
       toast.success(tr("depositSuccess"));
@@ -357,7 +359,7 @@ export default function SlotPage() {
               {bgmMuted ? "🔇" : "🎵"}
             </button>
             <button
-              onClick={() => setShowRules(true)}
+              onClick={() => slotHelpOpenRef.current?.()}
               className="w-7 h-7 flex items-center justify-center font-bold text-sm border-2 border-black rounded-full"
               style={{ background: '#1a1a1a', color: '#FFD400' }}
             >?</button>
@@ -420,6 +422,7 @@ export default function SlotPage() {
             onWalletOpen={() => { setShowDeposit(true); setWalletTab("deposit"); }}
             duckBgm={duckSlotBgm}
             restoreBgm={restoreSlotBgm}
+            onHelpOpen={(fn) => { slotHelpOpenRef.current = fn; }}
           />
         </div>
       </div>

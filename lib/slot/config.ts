@@ -6,9 +6,14 @@ export type SlotRarity =
   | "Rare"
   | "Common";
 
+export type SlotSuit = "hearts" | "diamonds" | "clubs" | "spades";
+export type SlotRank = "A" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K";
+
 export type SlotCard = {
   baccarat: string;
   rarity: SlotRarity;
+  suit?: SlotSuit;
+  rank?: SlotRank;
   hasFoil?: boolean;
   wildcardLevel?: number;
   persistentWildcard?: boolean;
@@ -20,16 +25,95 @@ export type SlotCardDefinition = {
   weight: number;
 };
 
+// Suit/rank data from vmw-tcg-cards.json
+export const SLOT_CARD_SUIT_RANK: Record<string, { suit: SlotSuit; rank: SlotRank }> = {
+  "anon":             { suit: "hearts",   rank: "A" },
+  "linda xied":       { suit: "diamonds", rank: "A" },
+  "vitalik jumpterin":{ suit: "clubs",    rank: "A" },
+  "jesse":            { suit: "spades",   rank: "A" },
+  "rachel":           { suit: "hearts",   rank: "2" },
+  "claude":           { suit: "diamonds", rank: "2" },
+  "gozaru":           { suit: "clubs",    rank: "2" },
+  "ink":              { suit: "spades",   rank: "2" },
+  "casa":             { suit: "hearts",   rank: "3" },
+  "groko":            { suit: "diamonds", rank: "3" },
+  "rizkybegitu":      { suit: "clubs",    rank: "3" },
+  "thosmur":          { suit: "spades",   rank: "3" },
+  "brainpasta":       { suit: "hearts",   rank: "4" },
+  "gaypt":            { suit: "diamonds", rank: "4" },
+  "dan romero":       { suit: "clubs",    rank: "4" },
+  "morlacos":         { suit: "spades",   rank: "4" },
+  "landmine":         { suit: "hearts",   rank: "5" },
+  "linux":            { suit: "diamonds", rank: "5" },
+  "joonx":            { suit: "clubs",    rank: "5" },
+  "don filthy":       { suit: "spades",   rank: "5" },
+  "pooster":          { suit: "hearts",   rank: "6" },
+  "john porn":        { suit: "diamonds", rank: "6" },
+  "scum":             { suit: "clubs",    rank: "6" },
+  "vlady":            { suit: "spades",   rank: "6" },
+  "smolemaru":        { suit: "hearts",   rank: "7" },
+  "ventra":           { suit: "diamonds", rank: "7" },
+  "bradymck":         { suit: "clubs",    rank: "7" },
+  "shills":           { suit: "spades",   rank: "7" },
+  "betobutter":       { suit: "hearts",   rank: "8" },
+  "qrcodo":           { suit: "diamonds", rank: "8" },
+  "loground":         { suit: "clubs",    rank: "8" },
+  "melted":           { suit: "spades",   rank: "8" },
+  "sartocrates":      { suit: "hearts",   rank: "9" },
+  "0xdeployer":       { suit: "diamonds", rank: "9" },
+  "lombra jr":        { suit: "clubs",    rank: "9" },
+  "vibe intern":      { suit: "spades",   rank: "9" },
+  "jack the sniper":  { suit: "hearts",   rank: "10" },
+  "beeper":           { suit: "diamonds", rank: "10" },
+  "horsefarts":       { suit: "clubs",    rank: "10" },
+  "jc denton":        { suit: "spades",   rank: "10" },
+  "zurkchad":         { suit: "hearts",   rank: "J" },
+  "slaterg":          { suit: "diamonds", rank: "J" },
+  "brian armstrong":  { suit: "clubs",    rank: "J" },
+  "nftkid":           { suit: "spades",   rank: "J" },
+  "antonio":          { suit: "hearts",   rank: "Q" },
+  "goofy romero":     { suit: "diamonds", rank: "Q" },
+  "tukka":            { suit: "clubs",    rank: "Q" },
+  "chilipepper":      { suit: "spades",   rank: "Q" },
+  "miguel":           { suit: "hearts",   rank: "K" },
+  "naughty santa":    { suit: "diamonds", rank: "K" },
+  "ye":               { suit: "clubs",    rank: "K" },
+  "nico":             { suit: "spades",   rank: "K" },
+};
+
+export const SLOT_RANK_ORDER: SlotRank[] = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
+
+export const SLOT_SUIT_EMOJI: Record<SlotSuit, string> = {
+  hearts: "♥",
+  diamonds: "♦",
+  clubs: "♣",
+  spades: "♠",
+};
+
+export const SLOT_SUIT_COLOR: Record<SlotSuit, string> = {
+  hearts: "#ef4444",
+  diamonds: "#f97316",
+  clubs: "#22c55e",
+  spades: "#3b82f6",
+};
+
 export const SLOT_COLS = 5;
 export const SLOT_ROWS = 3;
 export const SLOT_TOTAL_CELLS = SLOT_COLS * SLOT_ROWS;
 
 export const SLOT_SPIN_BASE_COST = 1;
 export const SLOT_BET_OPTIONS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100] as const;
-export const SLOT_BONUS_COST_MULT = 5;
+export const SLOT_BONUS_COST_MULT = 20;
 export const SLOT_BONUS_FREE_SPINS = 10;
 export const SLOT_BONUS_FOIL_COUNT = 4;
-export const SLOT_BONUS_WILDCARD = "gen4_turbo";
+export const SLOT_FREE_SPINS_PER_DAY = 10;
+export const SLOT_WILDCARD_CARDS: string[] = [
+  "dragukka",
+  "neymar",
+  "clawdmoltopenbot",
+];
+
+export const SLOT_BONUS_WILDCARD = "dragukka";
 
 export const SLOT_DEV_ALLOWED_ADDRESSES = [
   "0x2a9585da40de004d6ff0f5f12cfe726bd2f98b52",
@@ -44,7 +128,9 @@ export const SLOT_DEV_ALLOWED_ADDRESSES = [
 ] as const;
 
 export const SLOT_CARD_POOL: SlotCardDefinition[] = [
-  { baccarat: "vbms_special", rarity: "Special", weight: 5 },
+  { baccarat: "dragukka", rarity: "Special", weight: 5 },
+  { baccarat: "neymar", rarity: "Special", weight: 5 },
+  { baccarat: "clawdmoltopenbot", rarity: "Special", weight: 5 },
   { baccarat: "jesse", rarity: "Mythic", weight: 1 },
   { baccarat: "anon", rarity: "Mythic", weight: 1 },
   { baccarat: "linda xied", rarity: "Mythic", weight: 1 },
@@ -54,6 +140,7 @@ export const SLOT_CARD_POOL: SlotCardDefinition[] = [
   { baccarat: "tukka", rarity: "Legendary", weight: 4 },
   { baccarat: "chilipepper", rarity: "Legendary", weight: 4 },
   { baccarat: "miguel", rarity: "Legendary", weight: 4 },
+  { baccarat: "naughty santa", rarity: "Legendary", weight: 4 },
   { baccarat: "ye", rarity: "Legendary", weight: 4 },
   { baccarat: "nico", rarity: "Legendary", weight: 4 },
   { baccarat: "sartocrates", rarity: "Epic", weight: 10 },
@@ -76,7 +163,7 @@ export const SLOT_CARD_POOL: SlotCardDefinition[] = [
   { baccarat: "qrcodo", rarity: "Rare", weight: 20 },
   { baccarat: "loground", rarity: "Rare", weight: 20 },
   { baccarat: "melted", rarity: "Rare", weight: 20 },
-  { baccarat: "rachel", rarity: "Common", weight: 35 },
+  { baccarat: "rachel", rarity: "Common", weight: 0 },
   { baccarat: "claude", rarity: "Common", weight: 35 },
   { baccarat: "gozaru", rarity: "Common", weight: 35 },
   { baccarat: "ink", rarity: "Common", weight: 35 },
@@ -88,19 +175,18 @@ export const SLOT_CARD_POOL: SlotCardDefinition[] = [
   { baccarat: "gaypt", rarity: "Common", weight: 35 },
   { baccarat: "dan romero", rarity: "Common", weight: 35 },
   { baccarat: "morlacos", rarity: "Common", weight: 35 },
-  { baccarat: "landmine", rarity: "Common", weight: 35 },
+  { baccarat: "landmine", rarity: "Common", weight: 0 },
   { baccarat: "linux", rarity: "Common", weight: 35 },
   { baccarat: "joonx", rarity: "Common", weight: 35 },
   { baccarat: "don filthy", rarity: "Common", weight: 35 },
-  { baccarat: "pooster", rarity: "Common", weight: 35 },
+  { baccarat: "pooster", rarity: "Common", weight: 0 },
   { baccarat: "john porn", rarity: "Common", weight: 35 },
   { baccarat: "scum", rarity: "Common", weight: 35 },
   { baccarat: "vlady", rarity: "Common", weight: 35 },
 ] as const;
 
 export const SLOT_CARD_LABELS: Record<string, string> = {
-  vbms_special: "VBMS Special",
-  gen4_turbo: "Gen4 Turbo",
+  dragukka: "Dragukka",
   jesse: "Jesse",
   anon: "Anon",
   "linda xied": "Linda Xied",
@@ -110,6 +196,7 @@ export const SLOT_CARD_LABELS: Record<string, string> = {
   tukka: "Tukka",
   chilipepper: "Chilli Pepper",
   miguel: "Miguel",
+  "naughty santa": "Naughty Santa",
   ye: "Ye",
   nico: "Nico",
   sartocrates: "Sartocrates",
@@ -216,13 +303,25 @@ export function pickSlotCard(bonusWeightMultiplier = 1): SlotCardDefinition {
 }
 
 export function createSlotCard(input: SlotCard): SlotCard {
+  const suitRank = SLOT_CARD_SUIT_RANK[input.baccarat];
   return {
     baccarat: input.baccarat,
     rarity: input.rarity,
+    ...(suitRank ? { suit: suitRank.suit, rank: suitRank.rank } : {}),
+    ...(input.suit ? { suit: input.suit } : {}),
+    ...(input.rank ? { rank: input.rank } : {}),
     ...(input.hasFoil ? { hasFoil: true } : {}),
     ...(input.wildcardLevel ? { wildcardLevel: input.wildcardLevel } : {}),
     ...(input.persistentWildcard ? { persistentWildcard: true } : {}),
   };
+}
+
+export function getSlotCardSuit(name: string): SlotSuit | undefined {
+  return SLOT_CARD_SUIT_RANK[name]?.suit;
+}
+
+export function getSlotCardRank(name: string): SlotRank | undefined {
+  return SLOT_CARD_SUIT_RANK[name]?.rank;
 }
 
 export function getBasePoolProbability(name: string): number {
