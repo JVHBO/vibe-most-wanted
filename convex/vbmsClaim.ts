@@ -859,7 +859,7 @@ export const sendPvpRewardToInbox = internalMutation({
 export const convertTESTVBMStoVBMS = action({
   args: {
     address: v.string(),
-    fid: v.number(), // 🔒 REQUIRED - Must provide valid FID
+    fid: v.optional(v.number()),
     amount: v.optional(v.number()),
   },
   handler: async (ctx, { address, fid, amount }): Promise<{
@@ -875,12 +875,6 @@ export const convertTESTVBMStoVBMS = action({
       requestedAmount: amount,
       timestamp: new Date().toISOString(),
     });
-
-    // 🔒 SECURITY: FID is required
-    if (!fid || fid <= 0) {
-      console.log(`[VBMS] ⛔ BLOCKED - No valid FID provided for ${address}`);
-      throw new Error("[CLAIM_FID_REQUIRED]");
-    }
 
     // 🔒 Generate nonce FIRST so we can store it for on-chain verification
     const nonce = generateNonce();
@@ -969,7 +963,7 @@ function getAuraDailyConversionLimit(aura: number): number {
 export const convertTESTVBMSInternal = internalMutation({
   args: {
     address: v.string(),
-    fid: v.number(), // 🔒 Required for FID verification
+    fid: v.optional(v.number()),
     amount: v.optional(v.number()),
     nonce: v.string(), // 🔒 Store for on-chain verification (anti double-spend)
   },
@@ -1001,20 +995,18 @@ export const convertTESTVBMSInternal = internalMutation({
       pendingConversion: profile.pendingConversion || 0,
     });
 
-    // 🔒 SECURITY: Verify FID matches the profile
-    // This prevents direct API calls with fake/stolen FIDs
-    // Support both old `fid` (string) and new `farcasterFid` (number) fields
+    // 🔒 SECURITY: If FID provided, verify it matches profile (prevents fake FID injection)
     const profileFid = profile.farcasterFid || (profile.fid ? Number(profile.fid) : null);
-    if (profileFid && profileFid !== fid) {
-      // Profile has a FID but it doesn't match - block
-      console.log(`🚫 [SECURITY] FID mismatch! Provided: ${fid}, Profile FID: ${profileFid}, Address: ${address}`);
-      throw new Error("[CLAIM_FID_MISMATCH]");
-    }
-
-    // Auto-link FID if profile has none (e.g. created via wallet connect before Farcaster)
-    if (!profileFid) {
-      console.log(`🔗 [AUTO-LINK] Setting farcasterFid=${fid} on profile ${address} (was null)`);
-      await ctx.db.patch(profile._id, { farcasterFid: fid });
+    if (fid && fid > 0) {
+      if (profileFid && profileFid !== fid) {
+        console.log(`🚫 [SECURITY] FID mismatch! Provided: ${fid}, Profile FID: ${profileFid}, Address: ${address}`);
+        throw new Error("[CLAIM_FID_MISMATCH]");
+      }
+      // Auto-link FID if profile has none
+      if (!profileFid) {
+        console.log(`🔗 [AUTO-LINK] Setting farcasterFid=${fid} on profile ${address}`);
+        await ctx.db.patch(profile._id, { farcasterFid: fid });
+      }
     }
 
     console.log(`✅ [SECURITY] FID verified: ${fid} for address ${address}`);

@@ -296,13 +296,6 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       return;
     }
 
-    // FID from profile fallback — Base App users have FID in their profile
-    if (!userFid) {
-      toast.error("Profile not loaded yet. Please wait a moment and try again.");
-      console.error('[CoinsInboxModal] ❌ No FID available for conversion');
-      return;
-    }
-
     if (!canConvertTESTVBMS) {
       if (selectedAmount < 100) {
         console.warn('[CoinsInboxModal] ⚠️ Amount too low:', selectedAmount);
