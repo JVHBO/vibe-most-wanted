@@ -345,6 +345,18 @@ async function getPastResults() {
 
 const SNAP_CONTENT_TYPE = "application/vnd.farcaster.snap+json";
 
+const SNAP_HEADERS = {
+  "Content-Type": SNAP_CONTENT_TYPE,
+  "Cache-Control": "no-store",
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Accept",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: SNAP_HEADERS });
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const view = searchParams.get("view") ?? "main";
@@ -367,7 +379,7 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(snap, {
-    headers: { "Content-Type": SNAP_CONTENT_TYPE, "Cache-Control": "no-store" },
+    headers: SNAP_HEADERS,
   });
 }
 
@@ -388,6 +400,6 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(snap, {
-    headers: { "Content-Type": SNAP_CONTENT_TYPE, "Cache-Control": "no-store" },
+    headers: SNAP_HEADERS,
   });
 }
