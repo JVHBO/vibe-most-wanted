@@ -2258,6 +2258,8 @@ export default defineSchema({
     lastPolledARBBlock:  v.optional(v.number()),
     // Draw state — prevents duplicate requestDraw() gas spend
     drawRequested:       v.optional(v.boolean()),
+    // Tier notification tracking — last tier threshold notified (tickets count)
+    lastNotifiedTier:    v.optional(v.number()),
   })
     .index("by_epoch", ["epoch"]),
 

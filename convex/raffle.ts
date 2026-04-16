@@ -579,6 +579,9 @@ export const pollBaseEvents = internalAction({
       await ctx.runMutation(internal.raffle.updatePollCheckpoint, {
         lastPolledBaseBlock: latest,
       });
+
+      // Check if a new tier was unlocked and notify
+      await ctx.runAction(internal.raffle.checkAndNotifyTier, {});
     } catch (e) {
       console.error("[raffle/poll] Error:", e);
     }
@@ -664,6 +667,9 @@ export const pollARBEvents = internalAction({
       await ctx.runMutation(internal.raffle.updatePollCheckpoint, {
         lastPolledARBBlock: latest,
       });
+
+      // Check if a new tier was unlocked and notify
+      await ctx.runAction(internal.raffle.checkAndNotifyTier, {});
 
       // Auto-trigger draw if time expired and no winner yet
       await ctx.runAction(internal.raffle.autoCheckDraw, {});
@@ -812,6 +818,69 @@ export const autoCheckDraw = internalAction({
       // Swallow errors (contract may revert if already requested, or if called too early)
       console.error("[raffle/auto] autoCheckDraw error:", e?.shortMessage ?? e?.message ?? e);
     }
+  },
+});
+
+// Tier milestones (mirrors frontend TIER_MILESTONES)
+const RAFFLE_TIER_MILESTONES = [
+  { tickets: 1,   cards: 1,  winners: 1, label: "1 card" },
+  { tickets: 20,  cards: 2,  winners: 1, label: "2 cards" },
+  { tickets: 50,  cards: 4,  winners: 2, label: "4 cards" },
+  { tickets: 100, cards: 6,  winners: 2, label: "6 cards" },
+  { tickets: 150, cards: 8,  winners: 2, label: "8 cards" },
+  { tickets: 200, cards: 10, winners: 2, label: "10 cards" },
+];
+
+export const checkAndNotifyTier = internalAction({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    try {
+      const config = await ctx.runQuery(internal.raffle.getLatestConfigInternal, {}) as any;
+      if (!config) return;
+
+      // Get total tickets from ARB contract
+      const arbAddr = ARB_RAFFLE_CONTRACT();
+      if (!arbAddr) return;
+      const { ethers } = await import("ethers");
+      const provider = new ethers.JsonRpcProvider(ARB_RPC);
+      const contract = new ethers.Contract(arbAddr, ["function totalTickets() view returns (uint256)"], provider);
+      const total = Number(await contract.totalTickets());
+
+      // Find highest tier reached
+      const reachedTiers = RAFFLE_TIER_MILESTONES.filter(t => total >= t.tickets);
+      if (reachedTiers.length === 0) return;
+      const highestReached = reachedTiers[reachedTiers.length - 1];
+
+      const lastNotified = config.lastNotifiedTier ?? 0;
+      if (highestReached.tickets <= lastNotified) return; // already notified
+
+      // New tier unlocked — send notification
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://vibemostwanted.xyz";
+      const secret = process.env.VMW_INTERNAL_SECRET;
+      if (!secret) return;
+
+      const title = `🎰 Raffle Tier Unlocked!`;
+      const body = `${total} tickets sold → ${highestReached.winners} winner${highestReached.winners > 1 ? "s" : ""} · ${highestReached.label} · Join now!`;
+
+      await fetch(`${appUrl}/api/notifications/broadcast`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
+        body: JSON.stringify({ title, body, targetPath: "/raffle" }),
+      });
+
+      await ctx.runMutation(internal.raffle.updateNotifiedTier, { tier: highestReached.tickets });
+      console.log(`[raffle/tier] Notified tier ${highestReached.tickets} (total=${total})`);
+    } catch (e: any) {
+      console.error("[raffle/tier] checkAndNotifyTier error:", e?.message ?? e);
+    }
+  },
+});
+
+export const updateNotifiedTier = internalMutation({
+  args: { tier: v.number() },
+  handler: async (ctx, { tier }) => {
+    const config = await ctx.db.query("raffleConfig").order("desc").first();
+    if (config) await ctx.db.patch(config._id, { lastNotifiedTier: tier });
   },
 });
 
