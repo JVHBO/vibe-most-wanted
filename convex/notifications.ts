@@ -674,6 +674,25 @@ export const sendCustomNotification = action({
   },
 });
 
+/** Send to Farcaster only — schedules as background job to avoid CLI timeout */
+export const sendFarcasterNotification = mutation({
+  args: { adminKey: v.string(), title: v.string(), body: v.string(), targetUrl: v.optional(v.string()) },
+  handler: async (ctx, { adminKey, title, body, targetUrl }) => {
+    requireInternalAdminKey(adminKey);
+    await ctx.scheduler.runAfter(0, internal.notifications.sendFarcasterNotificationInternal, { title, body, targetUrl });
+    return { scheduled: true };
+  },
+});
+
+export const sendFarcasterNotificationInternal = internalAction({
+  args: { title: v.string(), body: v.string(), targetUrl: v.optional(v.string()) },
+  handler: async (ctx, { title, body, targetUrl }) => {
+    const result = await broadcastFarcaster(ctx, title, body, targetUrl ?? APP_URL);
+    console.log(`[sendFarcasterNotification] ✅${result.success_count} ❌${result.failure_count} / ${result.totalTokens} tokens`);
+    return result;
+  },
+});
+
 /** Get all tokens (internal) */
 export const getAllTokens = internalQuery({
   args: {},
