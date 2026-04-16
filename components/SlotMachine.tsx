@@ -9,6 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
 import { playTrackedAudio } from "@/lib/tcg/audio";
+import { sdk } from "@farcaster/miniapp-sdk";
 import type { SlotCard } from "@/lib/slot/config";
 import {
   SLOT_BET_OPTIONS,
@@ -559,6 +560,8 @@ export default function SlotMachine({
     let isBuyBonusEntry = forceBonusMode; // true só na primeira rodada do buy bonus
     let bonusEntryPaid = false;
     let currentBonusState = bonusState;
+    let sessionTotalWin = 0; // acumulado de toda a sessão (spin + bonus)
+    const maxWinCap = betMult * 100; // Max Win = 100× bet
 
     // Auto-bonus loop: continua enquanto há spins de bônus restantes
     do {
@@ -655,8 +658,24 @@ export default function SlotMachine({
                   setBonusWinDisplay(bonusWinTotalRef.current);
                 }
 
+                // Acumular total da sessão e checar max win cap
+                sessionTotalWin += res.winAmount;
+                if (sessionTotalWin >= maxWinCap) {
+                  // Max Win atingido — encerrar bonus spins imediatamente
+                  bonusMode = false;
+                  lockedCellsRef.current = new Set();
+                  setLockedCells(new Set());
+                  if (bonusWinTotalRef.current > 0) {
+                    setBonusSummaryAmount(bonusWinTotalRef.current);
+                    setShowBonusSummary(true);
+                    bonusWinTotalRef.current = 0;
+                    setBonusWinTotal(0);
+                    setBonusWinDisplay(null);
+                  }
+                }
+
                 // Big win overlay para spins com ganho alto
-                showBigWinOverlay(res.winAmount, betMult);
+                showBigWinOverlay(sessionTotalWin, betMult);
 
                 if (res.triggeredBonus && res.foilCount >= 4) {
                   const finalFoils = res.finalGrid
@@ -718,7 +737,8 @@ export default function SlotMachine({
       });
 
       // Track bonus spins: decrement and continue while spins remain
-      if (bonusMode) {
+      // Max win cap já pode ter setado bonusMode=false — respeitar
+      if (bonusMode && sessionTotalWin < maxWinCap) {
         const spinsLeft = res.bonusSpinsRemaining;
         bonusMode = spinsLeft > 0;
         currentBonusState = res.bonusState;
@@ -1279,42 +1299,57 @@ export default function SlotMachine({
           great: { label: 'GREAT WIN!', color: '#4ade80', shadow: '0 0 20px #4ade80, 0 0 40px #22c55e', size: 40 },
           nice:  { label: 'NICE WIN!',  color: '#38bdf8', shadow: '0 0 16px #38bdf8, 0 0 30px #0ea5e9', size: 34 },
         }[bigWinType];
-        const ogParams = new URLSearchParams({ amount: String(bigWinAmount), x: String(bigWinMultX), type: bigWinType });
-        const ogUrl = `https://vibemostwanted.xyz/api/og/slot-win?${ogParams}`;
-        const castText = `🎰 ${cfg.label} +${bigWinAmount.toLocaleString()} coins${bigWinMultX >= 2 ? ` (${bigWinMultX}×)` : ''} on Tukka Slots!\n\nPlay at vibemostwanted.xyz/slot 🎴`;
+        const playerName = userProfile?.username ?? (address ? address.slice(0, 6) + '…' : '');
+        const ogParams = new URLSearchParams({ amount: String(bigWinAmount), x: String(bigWinMultX), type: bigWinType, ...(playerName ? { user: playerName } : {}) });
+        const castText = `🎰 ${cfg.label} +${bigWinAmount.toLocaleString()} coins${bigWinMultX >= 2 ? ` (${bigWinMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!\n\nPlay at vibemostwanted.xyz/slot 🎴`;
         return (
           <div
-            className="fixed inset-0 z-[640] flex flex-col items-center justify-center gap-4"
-            style={{ background: 'rgba(0,0,0,0.72)' }}
+            className="fixed inset-0 z-[640] flex flex-col items-center justify-center gap-3"
+            style={{ background: 'rgba(0,0,0,0.82)' }}
             onClick={() => setBigWinType(null)}
           >
+            {/* Win label */}
             <div className="font-black uppercase tracking-widest text-center pointer-events-none" style={{
               fontSize: cfg.size, color: cfg.color, textShadow: cfg.shadow,
               animation: 'epic-bonus-pop 0.5s cubic-bezier(.34,1.56,.64,1) both',
             }}>
               {cfg.label}
             </div>
+
+            {/* Multiplier */}
             {bigWinMultX >= 2 && (
               <div className="font-black text-white text-2xl pointer-events-none" style={{ textShadow: `0 0 12px ${cfg.color}` }}>
                 {bigWinMultX}×
               </div>
             )}
+
+            {/* Amount */}
             <div className="font-black pointer-events-none" style={{ fontSize: 28, color: cfg.color }}>
               +{bigWinAmount.toLocaleString()} coins
             </div>
+
+            {/* Player name */}
+            {playerName && (
+              <div className="pointer-events-none text-base font-bold" style={{ color: '#ffffff88' }}>
+                @{playerName}
+              </div>
+            )}
+
+            {/* Share button */}
             <button
               onClick={e => {
                 e.stopPropagation();
                 const embedUrl = `https://vibemostwanted.xyz/slot`;
                 const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(embedUrl)}`;
-                try { await sdk.actions.openUrl(composeUrl); } catch { window.open(composeUrl, '_blank'); }
+                sdk.actions.openUrl(composeUrl).catch(() => window.open(composeUrl, '_blank'));
                 setBigWinType(null);
               }}
-              className="mt-2 px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest border-2 border-black"
-              style={{ background: 'linear-gradient(180deg,#7c3aed,#4c1d95)', color: '#fff', boxShadow: '0 4px 0 #000' }}
+              className="mt-1 px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest border-2 border-black"
+              style={{ background: `linear-gradient(180deg,${cfg.color}cc,${cfg.color}88)`, color: '#000', boxShadow: '0 4px 0 #000' }}
             >
               🔗 Share Win
             </button>
+
             <div className="text-[10px] text-gray-500 pointer-events-none">tap anywhere to dismiss</div>
           </div>
         );
