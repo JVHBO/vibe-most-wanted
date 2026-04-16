@@ -376,7 +376,8 @@ function detectQuadCombo(
     const stillNeeded = needed - bonusToUse;
     const normalToUse = Math.min(stillNeeded, normalJokerIndices.length);
     const total = indices.length + bonusToUse + normalToUse;
-    if (total >= 4 && indices.length >= 2 && indices.length > bestIndices.length) {
+    // Wildcards fill at most 1 slot — requires 3 real copies minimum
+    if (total >= 4 && indices.length >= 3 && indices.length > bestIndices.length) {
       bestName = name;
       bestIndices = indices;
       bestBonusNeeded = bonusToUse;
@@ -503,7 +504,8 @@ function detectRankCombo(
     const normalToUse = Math.min(stillNeeded, normalJokerIndices.length);
     const total = indices.length + bonusToUse + normalToUse;
 
-    if (total >= 4 && indices.length >= 2) {
+    // Requires 4 total AND minimum 3 real cards — wildcards can fill at most 1 slot
+    if (total >= 4 && indices.length >= 3) {
       return {
         combo: createRankCombo(rank),
         matchedIndices: [...indices, ...normalJokerIndices.slice(0, normalToUse)],
