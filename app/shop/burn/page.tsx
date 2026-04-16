@@ -66,7 +66,7 @@ function BurnCardsPageContent() {
   const cards = playerCards || [];
 
   // Filter Nothing packs (non-VMW) - these come from free packs (dailyFree, starter, mission, achievement)
-  const nothingPackTypes = ['dailyFree', 'starter', 'mission', 'achievement'];
+  const nothingPackTypes = ['dailyFree', 'starter', 'mission', 'achievement', 'basic', 'boosted'];
 
   const filteredCards = useMemo(() => {
     // First filter by Nothing pack type if filterNothing is active
