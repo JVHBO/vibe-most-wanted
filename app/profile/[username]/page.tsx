@@ -484,7 +484,7 @@ function ProfilePageContent() {
           <p className="text-red-400 text-2xl mb-4">❌ {error || t('profileNotFound')}</p>
           <button
             onClick={() => router.push('/')}
-            className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg font-bold transition-all"
+            className="px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
           >
             {t('profileBackToGame')}
           </button>
@@ -754,7 +754,7 @@ function ProfilePageContent() {
           {/* Back button */}
           <button
             onClick={() => router.push('/')}
-            className="mt-3 inline-flex items-center gap-1 px-3 py-1 bg-vintage-gold text-black text-xs font-bold border-2 border-black shadow-[3px_3px_0px_#000] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_#000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
+            className="mt-3 px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
           >
             {t('profileBack')}
           </button>

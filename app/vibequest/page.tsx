@@ -88,9 +88,9 @@ function VibeQuestPageContent() {
           </p>
           <button
             onClick={() => router.push('/')}
-            className="text-vintage-gold hover:text-vintage-gold/80"
+            className="px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
           >
-            ← Back
+            ← BACK
           </button>
         </div>
       </div>

@@ -314,10 +314,9 @@ export default function RaidDeckPage() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <button
             onClick={handleCancel}
-            className="raid-deck-btn-back px-3 py-1.5 bg-red-700 hover:bg-red-600 text-white border-2 border-black text-[11px] font-bold uppercase tracking-[0.15em] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all"
-            style={{ boxShadow: '3px 3px 0px #000' }}
+            className="raid-deck-btn-back px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
           >
-            ← Back
+            ← BACK
           </button>
           <h1 className="text-lg md:text-2xl font-display font-bold text-vintage-gold whitespace-nowrap">
             {showVibeFIDStep ? 'VibeFID Card?' : 'Raid Deck'}
@@ -419,9 +418,9 @@ export default function RaidDeckPage() {
                   if (soundEnabled) AudioManager.buttonClick();
                 }}
                 disabled={isSettingDeck}
-                className="flex-1 px-4 py-3 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-bold transition disabled:opacity-50"
+                className="flex-1 px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md disabled:opacity-50"
               >
-                ← Back
+                ← BACK
               </button>
               <button
                 onClick={() => {
