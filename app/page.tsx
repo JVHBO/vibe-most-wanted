@@ -103,6 +103,24 @@ export default function HomePage() {
   const playerMissions = useQuery(api.missions.getPlayerMissions, address ? { playerAddress: address } : "skip");
   const hasClaimableMissions = (playerMissions ?? []).some((m: any) => m.completed && !m.claimed);
 
+  const RAFFLE_PRIZE_IMGS = [
+    "/images/baccarat/10%20clubs%2C%20horsefarts.png",
+    "/images/baccarat/10%20spades%2C%20jc%20denton.png",
+    "/images/baccarat/10%20diamonds%2C%20beeper.png",
+    "/images/baccarat/9%20spades%2C%20vibe%20intern.png",
+    "/images/baccarat/9%20hearts%2C%20sartocrates.png",
+    "/images/baccarat/jack%20clubs%2C%20brian%20armstrong.png",
+    "/images/baccarat/10%20hearts%2C%20jack%20the%20sniper.png",
+    "/images/baccarat/jack%20spades%2C%20nftkid.png",
+    "/images/baccarat/jack%20diamonds%2C%20slaterg.png",
+    "/images/baccarat/jack%20hearts%2C%20zurkchad.png",
+  ];
+  const [rafflePrizeIdx, setRafflePrizeIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setRafflePrizeIdx(i => (i + 1) % RAFFLE_PRIZE_IMGS.length), 2500);
+    return () => clearInterval(t);
+  }, []);
+
   const cardCount = nfts.length;
   const hasEnoughCards = cardCount >= 5;
   const cardsLoading = cardsStatus === 'idle' || cardsStatus === 'fetching';
@@ -563,8 +581,10 @@ export default function HomePage() {
             </div>
             <div style={{ padding: '12px 12px', position: 'relative', display: 'flex', alignItems: 'center', height: '100%' }}>
               {/* Image */}
-              <div style={{ flex: 'none', width: 54, alignSelf: 'stretch', borderRadius: 6, overflow: 'hidden', background: '#111', flexShrink: 0, zIndex: 1 }}>
-                <img src="/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center' }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+              <div style={{ flex: 'none', width: 54, height: 72, borderRadius: 6, overflow: 'hidden', background: '#111', flexShrink: 0, zIndex: 1, position: 'relative' }}>
+                {RAFFLE_PRIZE_IMGS.map((src, i) => (
+                  <img key={src} src={src} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', transition: 'opacity 0.5s ease', opacity: i === rafflePrizeIdx ? 1 : 0 }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                ))}
               </div>
               {/* Prize info */}
               <div style={{ flex: 1, minWidth: 0, padding: '0 8px', zIndex: 1 }}>

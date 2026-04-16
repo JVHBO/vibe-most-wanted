@@ -1549,15 +1549,11 @@ export const resetAndOpenNewRaffle = action({
 export const clearEpochData = internalMutation({
   args: { epoch: v.number() },
   handler: async (ctx, { epoch }) => {
-    // Delete raffleEntries for this epoch
+    // Delete raffleEntries for this epoch (keep raffleResults for history)
     const entries = await ctx.db.query("raffleEntries")
       .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch)).collect();
     for (const e of entries) await ctx.db.delete(e._id);
-    // Delete raffleResults for this epoch
-    const results = await ctx.db.query("raffleResults")
-      .withIndex("by_epoch", (q: any) => q.eq("epoch", epoch)).collect();
-    for (const r of results) await ctx.db.delete(r._id);
-    console.log(`[clearEpochData] Cleared ${entries.length} entries, ${results.length} results for epoch ${epoch}`);
+    console.log(`[clearEpochData] Cleared ${entries.length} entries for epoch ${epoch} (results kept for history)`);
   },
 });
 

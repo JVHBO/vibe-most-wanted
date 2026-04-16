@@ -32,13 +32,14 @@ const PRIZE_POOL = [
   { tokenId: 15164, name: "Zurkchad" },
 ] as const;
 
-// Tier milestones — how many cards are active at each level
+// Tier milestones — how many cards are active at each level (max 1000 tickets on-chain this epoch)
 const TIER_MILESTONES = [
   { tickets: 1,   cards: 1,  winners: 1, label: "Start" },
-  { tickets: 50,  cards: 3,  winners: 1, label: "50 tickets" },
-  { tickets: 100, cards: 6,  winners: 2, label: "100 tickets" },
-  { tickets: 200, cards: 10, winners: 2, label: "200 tickets" },
-  { tickets: 500, cards: 10, winners: 3, label: "500 tickets" },
+  { tickets: 20,  cards: 2,  winners: 1, label: "20 tickets" },
+  { tickets: 50,  cards: 4,  winners: 2, label: "50 tickets" },
+  { tickets: 75,  cards: 6,  winners: 2, label: "75 tickets" },
+  { tickets: 100, cards: 8,  winners: 2, label: "100 tickets" },
+  { tickets: 150, cards: 10, winners: 2, label: "150 tickets" },
 ] as const;
 
 // ─── Addresses ────────────────────────────────────────────────────────────────
@@ -209,6 +210,7 @@ export default function RafflePage() {
   const [showCardModal,     setShowCardModal]     = useState(false);
   const [showVrfProof,      setShowVrfProof]      = useState(false);
   const [prizeCardImages,   setPrizeCardImages]   = useState<Record<number, string>>({});
+  const [selectedCard,      setSelectedCard]      = useState<{ img: string; name: string; tokenId: number } | null>(null);
   const cardRotRef = useRef({ rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 });
   const cardInnerRef = useRef<HTMLDivElement>(null);
   const loaded              = useRef(false);
@@ -679,8 +681,8 @@ export default function RafflePage() {
                 {/* Front — carta inteira visível */}
                 <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', borderRadius: 12, overflow: 'hidden', boxShadow: '0 0 40px rgba(255,215,0,0.5)', background: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <img
-                    src="/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png"
-                    alt="Goofy Romero"
+                    src={selectedCard?.img || "/images/baccarat/queen%20diamonds%2C%20goofy%20romero.png"}
+                    alt={selectedCard?.name || "Card"}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 </div>
@@ -692,10 +694,13 @@ export default function RafflePage() {
                     style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.13) translateY(1.3%)', transformOrigin: 'center' }}
                     onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }}
                   />
-                  <a
-                    href={OPENSEA_URL} target="_blank" rel="noopener noreferrer"
-                    style={{ position: 'absolute', bottom: 10, left: 0, right: 0, textAlign: 'center', color: '#000', fontSize: 11, fontFamily: 'monospace', fontWeight: 900, textDecoration: 'none', letterSpacing: 1 }}
-                  >#13384 ↗</a>
+                  {selectedCard && (
+                    <a
+                      href={`https://opensea.io/assets/base/0xf14c1dc8ce5fe65413379f76c43fa1460c31e728/${selectedCard.tokenId}`}
+                      target="_blank" rel="noopener noreferrer"
+                      style={{ position: 'absolute', bottom: 10, left: 0, right: 0, textAlign: 'center', color: '#000', fontSize: 11, fontFamily: 'monospace', fontWeight: 900, textDecoration: 'none', letterSpacing: 1 }}
+                    >#{selectedCard.tokenId} ↗</a>
+                  )}
                 </div>
               </div>
             </div>
@@ -1030,7 +1035,7 @@ export default function RafflePage() {
         <div className="max-w-sm mx-auto px-4 py-5 space-y-4">
 
           {/* ── Prize Pool + Tier Milestones ── */}
-          {(() => {
+          {(isRaffleActive || raffleActive === undefined) && (() => {
             const currentTierIdx = TIER_MILESTONES.reduce((best, tier, i) =>
               totalTickets >= tier.tickets ? i : best, 0);
             const currentTier = TIER_MILESTONES[currentTierIdx];
@@ -1041,7 +1046,7 @@ export default function RafflePage() {
               <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
                 {/* Header */}
                 <div className="bg-[#FFD700] border-b-2 border-black px-3 py-2 flex items-center justify-between">
-                  <span className="text-black font-black text-xs uppercase tracking-widest">🎁 Prize Pool</span>
+                  <span className="text-black font-black text-xs uppercase tracking-widest">🎁 10 Epic VBMS Cards · $2.50 each · $25 total</span>
                   <span className="text-black/60 text-[10px] font-bold">{activeCards} of {PRIZE_POOL.length} cards unlocked</span>
                 </div>
 
@@ -1051,12 +1056,28 @@ export default function RafflePage() {
                     const locked = i >= activeCards;
                     const img = prizeCardImages[card.tokenId];
                     return (
-                      <div key={card.tokenId} className={`relative aspect-[2/3] rounded overflow-hidden border border-white/10 ${locked ? 'opacity-30 grayscale' : ''}`}>
+                      <div
+                        key={card.tokenId}
+                        className={`relative aspect-[2/3] rounded overflow-hidden border border-white/10 ${locked ? 'opacity-30 grayscale' : 'cursor-pointer hover:border-yellow-400/60 transition-colors'}`}
+                        onClick={() => {
+                          if (!locked && img) {
+                            setSelectedCard({ img, name: card.name, tokenId: card.tokenId });
+                            setShowCardModal(true);
+                            cardRotRef.current = { rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 };
+                            if (cardInnerRef.current) cardInnerRef.current.style.transform = 'rotateY(0deg) rotateX(0deg)';
+                          }
+                        }}
+                      >
                         {img ? (
                           <img src={img} alt={card.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-black/60 flex items-center justify-center">
                             <span className="text-white/20 text-xs">🃏</span>
+                          </div>
+                        )}
+                        {!locked && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-center py-0.5">
+                            <span className="text-[#FFD700] font-black text-[8px]">$2.50</span>
                           </div>
                         )}
                         {locked && (
@@ -1082,7 +1103,7 @@ export default function RafflePage() {
                         <span className={`font-bold ${reached ? 'text-white' : 'text-white/60'}`}>{tier.tickets === 1 ? 'Start' : `${tier.tickets} tickets`}</span>
                         <span className="text-white/30 flex-1">—</span>
                         <span className={`font-black ${reached ? 'text-[#FFD700]' : 'text-white/40'}`}>
-                          {tier.winners} winner{tier.winners > 1 ? 's' : ''} · {tier.cards} cards
+                          {tier.winners} winner{tier.winners > 1 ? 's' : ''} · {tier.cards / tier.winners} cards each
                         </span>
                       </div>
                     );
@@ -1111,6 +1132,7 @@ export default function RafflePage() {
           })()}
 
           {/* Prize card (old — hidden, kept for card modal) */}
+
           <div className="hidden border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
             <div className="flex">
               <div
@@ -1213,12 +1235,15 @@ export default function RafflePage() {
                     return <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />;
                   })()}
                 </div>
+                <p className="text-white/25 text-[8px] mt-1.5 text-center">
+                  Closes in <span className="text-white/50 font-bold">7 days</span> or when <span className="text-white/50 font-bold">{config.maxTickets.toLocaleString()} tickets</span> sold — whichever comes first
+                </p>
               </div>
             )}
           </div>
 
-          {/* Winner banner — shown when draw completed */}
-          {raffleResult && (
+          {/* Winner banner — shown when draw completed AND raffle still active (same epoch) */}
+          {raffleResult && isRaffleActive && (
             <div className="border-2 border-[#FFD700] bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
               <div className="bg-[#FFD700] px-3 py-2 text-center">
                 <span className="text-black font-black text-xs uppercase tracking-widest">🏆 Winner</span>
