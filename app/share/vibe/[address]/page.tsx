@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ address: 
       description: 'Collect cards, earn $VBMS, and battle for glory!',
       type: 'website',
       siteName: '$VBMS',
-      images: [{ url: imageUrl, width: 1200, height: 630, alt: 'Vibe Most Wanted' }],
+      images: [{ url: imageUrl, width: 1200, height: 800, alt: 'Vibe Most Wanted' }],
     },
     twitter: {
       card: 'summary_large_image',

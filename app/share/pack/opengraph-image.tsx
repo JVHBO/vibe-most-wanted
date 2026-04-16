@@ -4,7 +4,7 @@ export const runtime = 'edge';
 export const alt = 'Pack Opening - $VBMS';
 export const size = {
   width: 1200,
-  height: 630,
+  height: 800,
 };
 export const contentType = 'image/png';
 

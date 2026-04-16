@@ -36,17 +36,21 @@ export const getVbmsBaccaratImageUrl = (cardName: string): string | null => {
   const allCards = tcgCardsData.cards || [];
   const aliases = (tcgCardsData as any).aliases || {};
 
+  // Map dragukka → vbms_special (renamed wildcard card)
+  const resolvedFromDragukka = nameLower === "dragukka" ? "vbms_special" : nameLower;
+
   // Check if name is an alias first (e.g., "deployer" -> "0xdeployer")
   const resolvedName = Object.entries(aliases).find(
-    ([alias]) => alias.toLowerCase() === nameLower
-  )?.[1] as string || nameLower;
+    ([alias]) => alias.toLowerCase() === resolvedFromDragukka.toLowerCase()
+  )?.[1] as string || resolvedFromDragukka;
 
   // Find card by onChainName or baccarat name (using resolved name)
   const cardData = allCards.find((c: any) =>
     c.onChainName?.toLowerCase() === resolvedName.toLowerCase() ||
     c.baccarat?.toLowerCase() === resolvedName.toLowerCase() ||
     c.onChainName?.toLowerCase() === nameLower ||
-    c.baccarat?.toLowerCase() === nameLower
+    c.baccarat?.toLowerCase() === nameLower ||
+    c.baccarat?.toLowerCase() === resolvedFromDragukka.toLowerCase()
   );
 
   if (!cardData || !cardData.suit || !cardData.rank) return null;

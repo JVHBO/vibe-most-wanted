@@ -61,7 +61,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       url: `${baseUrl}/share/pack`,
       type: 'website',
       siteName: '$VBMS',
-      images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
+      images: [{ url: imageUrl, width: 1200, height: 800, alt: title }],
     },
     twitter: {
       card: 'summary_large_image',

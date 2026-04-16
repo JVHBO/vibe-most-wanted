@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
       <div
         style={{
           width: '1200px',
-          height: '630px',
+          height: '800px',
           display: 'flex',
           background: 'linear-gradient(135deg, #0d0d0d 0%, #1a1200 50%, #0d0d0d 100%)',
           position: 'relative',
@@ -216,7 +216,7 @@ export async function GET(request: NextRequest) {
     ),
     {
       width: 1200,
-      height: 630,
+      height: 800,
     }
   );
 }

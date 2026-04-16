@@ -6,6 +6,7 @@
   "cards": [
     { "onChainName": "neymar", "baccarat": "neymar", "suit": "???", "rank": "???", "rarity": "Mythic", "minted": false, "tokenId": null, "crime": "Farcaster's new king saved everyone from Goofy Romero's kingdom" },
     { "onChainName": "ClawdMoltOpenbot", "baccarat": "clawdmoltopenbot", "suit": "???", "rank": "???", "rarity": "Mythic", "minted": false, "tokenId": null, "crime": "Hacked every system on the chain with a single protocol override" },
+    { "onChainName": "vbms_special", "baccarat": "dragukka", "suit": "???", "rank": "???", "rarity": "Special", "minted": false, "tokenId": null },
 
     { "onChainName": "anon", "baccarat": "anon", "suit": "hearts", "rank": "A", "rarity": "Mythic", "minted": false, "tokenId": null },
     { "onChainName": "Linda Xied", "baccarat": "linda xied", "suit": "diamonds", "rank": "A", "rarity": "Mythic", "minted": false, "tokenId": null },

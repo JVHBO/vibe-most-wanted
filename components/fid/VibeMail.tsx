@@ -4547,11 +4547,18 @@ export function VibeMailInboxWithClaim({
                       args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
                     });
                     const data = (callData + ATTRIBUTION_SUFFIX.slice(2)) as `0x${string}`;
-                    const provider = await sdk.wallet.getEthereumProvider();
-                    await provider!.request({
-                      method: 'eth_sendTransaction',
-                      params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data }],
-                    });
+                    const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
+                    if (shouldUseFarcasterSDK()) {
+                      const provider = await sdk.wallet.getEthereumProvider();
+                      await provider!.request({
+                        method: 'eth_sendTransaction',
+                        params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data }],
+                      });
+                    } else {
+                      const { sendTransaction } = await import('wagmi/actions');
+                      const { config } = await import('@/lib/wagmi');
+                      await sendTransaction(config, { to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data, chainId: 8453 });
+                    }
                     setClaimedQuestItems(prev => new Set([...prev, claimKey]));
                     // Refresh DB claims so state survives re-renders
                     setQuestMailClaims(prev => [...(prev || []), { questIndex: idx, claimerFid: myFid }]);
@@ -4878,11 +4885,18 @@ export function VibeMailInboxWithClaim({
                             args: [parseEther(result.amount.toString()), result.nonce as `0x${string}`, result.signature as `0x${string}`],
                           });
                           const txData = (txCallData + ATTRIBUTION_SUFFIX.slice(2)) as `0x${string}`;
-                          const provider = await sdk.wallet.getEthereumProvider();
-                          await provider!.request({
-                            method: 'eth_sendTransaction',
-                            params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data: txData }],
-                          });
+                          const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
+                          if (shouldUseFarcasterSDK()) {
+                            const provider = await sdk.wallet.getEthereumProvider();
+                            await provider!.request({
+                              method: 'eth_sendTransaction',
+                              params: [{ from: myAddress as `0x${string}`, to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data: txData }],
+                            });
+                          } else {
+                            const { sendTransaction } = await import('wagmi/actions');
+                            const { config } = await import('@/lib/wagmi');
+                            await sendTransaction(config, { to: CONTRACTS.VBMSPoolTroll as `0x${string}`, data: txData, chainId: 8453 });
+                          }
                           setClaimedMailVbms(prev => new Set([...prev, mailId]));
                         } catch (e) {
                           console.error('Receipt claim failed:', e);

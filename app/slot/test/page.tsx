@@ -6,9 +6,8 @@ import { getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
 
 // Todas as cartas do slot (igual ao POOL em SlotMachine.tsx + especiais)
 const ALL_CARDS: Array<{ baccarat: string; rarity: string; special?: boolean }> = [
-  // Especial (wildcard / GIFs)
-  { baccarat: "vbms_special",       rarity: "Special",   special: true },
-  { baccarat: "gen4_turbo",         rarity: "Wildcard",  special: true },
+  // Especial (wildcard / GIFs) — só aparece no bonus
+  { baccarat: "dragukka",           rarity: "Special",   special: true },
   // Mythic
   { baccarat: "jesse",              rarity: "Mythic" },
   { baccarat: "anon",               rarity: "Mythic" },
@@ -68,7 +67,7 @@ const ALL_CARDS: Array<{ baccarat: string; rarity: string; special?: boolean }> 
 ];
 
 const LABELS: Record<string, string> = {
-  "vbms_special": "VBMS Special", "gen4_turbo": "Gen4 Turbo",
+  "vbms_special": "VBMS Special",
   "jesse": "Jesse", "anon": "Anon", "linda xied": "Linda Xied", "vitalik jumpterin": "Vitalik",
   "antonio": "Antonio", "goofy romero": "Goofy Romero", "tukka": "Tukka", "chilipepper": "Chilli Pepper",
   "miguel": "Miguel", "ye": "Ye", "nico": "Nico",
@@ -98,7 +97,6 @@ const RARITY_STYLES: Record<string, { border: string; bg: string; label: string;
 
 const SPECIAL_IMGS: Record<string, string> = {
   "vbms_special": "/slot-gifs/casino-slot-animation.gif",
-  "gen4_turbo":   "/slot-gifs/gen4-turbo-idle-breathing.gif",
 };
 
 const GROUPS = ["Special", "Wildcard", "Mythic", "Legendary", "Epic", "Rare", "Common"] as const;

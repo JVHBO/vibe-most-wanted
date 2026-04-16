@@ -159,8 +159,9 @@ export function NFTGiftModal({
         setStatusText('Transferring NFT...');
 
         try {
-          // Try Farcaster SDK first
-          if (sdk?.wallet) {
+          // Try Farcaster SDK first (only in Farcaster iframe, never in Base App)
+          const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
+          if (sdk?.wallet && shouldUseFarcasterSDK()) {
             try {
               const provider = await sdk.wallet.getEthereumProvider();
               if (provider) {

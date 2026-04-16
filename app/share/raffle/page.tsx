@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     url: `${BASE_URL}/share/raffle`,
     type: 'website',
     siteName: '$VBMS',
-    images: [{ url: IMAGE_URL, width: 1200, height: 630, alt: TITLE }],
+    images: [{ url: IMAGE_URL, width: 1200, height: 800, alt: TITLE }],
   },
   twitter: {
     card: 'summary_large_image',

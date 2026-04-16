@@ -1,109 +1,91 @@
-# Progresso das Mudanças - Fluxo de Acesso e Criação de Conta
+# Progress — Sessão Abr/2026
 
-## Estado Atual
-
-✅ Atualizado e publicado no `main`  
-- Commit: `1ebdb54c`  
-- Escopo: fluxo de conexão wallet + criação de perfil (Base App/web + Farcaster)
-
-## Entregas Concluídas
-
-### 1) Fluxo de conexão (home)
-- Arquivos:
-  - `C:\Users\zoboo\vibe-most-wanted\app\page.tsx`
-  - `C:\Users\zoboo\vibe-most-wanted\components\ConnectScreen.tsx`
-- Implementado:
-  - Tela de conexão centralizada, sem navbar e sem header no estado desconectado
-  - Removido excesso de opções de wallet
-  - Dedupe de conectores e lista curada:
-    - Continue with Base
-    - Connect Coinbase Wallet
-    - Connect MetaMask
-    - Connect WalletConnect
-  - Fluxo Farcaster mantido separado quando há contexto/FID real
-
-### 2) Compatibilidade Base App (standard web app)
-- Arquivo:
-  - `C:\Users\zoboo\vibe-most-wanted\lib\wagmi.ts`
-- Implementado:
-  - Adicionado conector `baseAccount` no config do wagmi
-  - Mantido `farcasterMiniApp()` para o host Farcaster
-
-### 3) Detecção Farcaster vs Base/web
-- Arquivos:
-  - `C:\Users\zoboo\vibe-most-wanted\hooks\fid\useFarcasterContext.ts`
-  - `C:\Users\zoboo\vibe-most-wanted\lib\hooks\useFarcasterContext.ts`
-- Implementado:
-  - Só considera Farcaster quando existe contexto com `user.fid`
-  - Sem FID/contexto real => cai no fluxo web/Base (wallet-first)
-
-### 4) Modal de criação de perfil
-- Arquivo:
-  - `C:\Users\zoboo\vibe-most-wanted\components\CreateProfileModal.tsx`
-- Implementado:
-  - Botões de criar/cancelar sempre visíveis (inclusive no fluxo Farcaster)
-  - Idiomas: mostra todas as opções (sem corte)
-  - Corrigido texto hardcoded/chave crua (`createAccount`)
-  - Fallback de tradução para labels ausentes
-  - Farcaster: respeita username digitado pelo player na criação
-
-### 5) Username padrão e auto-abertura
-- Arquivo:
-  - `C:\Users\zoboo\vibe-most-wanted\app\page.tsx`
-- Implementado:
-  - Sem FID: username inicial por abreviação da wallet (`user_xxxx...`)
-  - Com Farcaster: username inicial do Farcaster (sanitizado)
-  - Modal autoabre só no primeiro acesso por wallet no device (`localStorage`)
-
-## Verificações Técnicas
-
-✅ `npm run type:check`  
-✅ `npm run build`
-
-## Pendências Reais (Próximo Ciclo)
-
-- [ ] Revisar UX final de idioma no modal para telas muito pequenas (compactação visual)
-- [ ] Unificar e limpar pontos legados de Farcaster fora do fluxo da home (escopo maior)
-- [ ] Decidir estratégia de persistência de "primeiro acesso" (hoje está local por navegador/device)
-
-## Observações
-
-- O fluxo principal agora está funcional para:
-  - Farcaster (com FID/contexto real)
-  - Base App / web padrão (sem depender de FID)
-- Mudanças de slot/TCG estão fora deste documento e seguem em trilha separada.
+> Atualizado: 2026-04-16
 
 ---
 
-## Fixes Base App - Roulette & TXs (Abr/2026)
+## Slot Machine (Tukka Slots)
 
-### Contexto
-- `wagmi.isConnected` fica `false` durante reconnecting mesmo com `address` presente
-- `sdk.wallet.getEthereumProvider()` **trava para sempre** sem throw no Base App
-- `sessionStorage` limpa no F5 em WebView (usar `localStorage`)
+### Música
+- [x] Remover modo "custom" — manter só **default** e **playlist**
+- [x] Mostrar nome da faixa na playlist
+- [x] Controle de volume (barra de 10 + botões − / +) para todos os modos
 
-### ✅ Create Profile button para linked wallet
-**Arquivo:** `lib/hooks/usePrimaryAddress.ts` — removido `isConnected` das condições
+### Performance
+- [x] `isFrameMode` prop — animações leves sem `filter:blur/brightness` para BaseApp WebView
 
-### ✅ Roulette idle rotation travando
-**Fix:** CSS @keyframes compositor (zero JS)
+### Spin ID + Recovery
+- [x] Cada giro recebe `spinId` único
+- [x] Resultado salvo server-side antes da animação (padrão cassino)
+- [x] SessionStorage — se o player der F5, recupera o giro pendente (toast de aviso)
 
-### ✅ Roulette spin animation travando (setBallOrbit)
-**Fix:** Ball position via direct DOM refs (`updateBallDOM`), zero setState durante 5s de spin
+### Win Screens
+- [x] Nice Win (≥150×) overlay
+- [x] Great Win (≥500×) overlay
+- [x] Big Win (≥2000×) overlay
+- [x] Max Win (≥10000×) overlay
+- [x] Mostra multiplicador (X) e quantidade de coins
+- [x] Auto-fecha em 4s, dispensável por clique
 
-### ✅ Bola caindo em segmento errado
-**Fix:** `targetBallAngle = -90 + (targetIndex + offset) * SEGMENT_ANGLE`
+### Share Win
+- [x] Botão de share aparece após big win
+- [x] OG image gerada via `app/api/og/slot-win/route.tsx` (mostra label, X, amount)
+- [x] Compose URL para Warpcast com texto + embed
+- [x] Usa `sdk.actions.openUrl` com fallback `window.open`
+- [ ] **Landing page do link compartilhado** — quem abre o link vê a OG image e escolhe:
+  - "Jogar" → vai para `/slot`
+  - "Ver a win" → reproduz a animação da win (replay do resultado)
 
-### ✅ Claim roulette travado em "Claiming" no Base App
-**Causa:** `sdk.wallet.getEthereumProvider()` em `handleClaim` trava para sempre no Base App  
-**Fix:** `isBaseApp` check + `Promise.race(1500ms)` — Base App usa `address` direto
+### Limpeza de código
+- [x] Remover `bonusMultiplier`, `nearMiss`, cascade multiplier (dead code)
+- [x] Fix Server Error: `winAdded`/`bonusMultiplier` undefined em `convex/slot.ts`
+- [x] Texto PLAY BONUS: "A Wildcard permanece no grid durante todo o bônus!"
+- [ ] **Remover bloqueio dev-only** antes do launch:
+  - `convex/slot.ts:196` — remove guard de dev
+  - `SlotMachine.tsx:264` — remove guard de dev
 
-### ✅ Raffle 3D card travando
-**Fix:** Removido `backdropFilter: blur(12px)`
+---
 
-### Auditoria TXs sdk.wallet
-`shouldUseFarcasterSDK()` em `lib/utils/miniapp.ts` retorna `false` no Base App via `ReactNativeWebView` check. Todos os outros fluxos de TX (InboxModal, CoinsInboxModal, VibeMail, quests, missionTx, useWeeklyLeaderboardClaim) estão protegidos.
+## Notificações
 
-### Pendentes
-- [ ] Testar claim roulette no Base App
-- [ ] Testar animação bolinha no Base App
+- [x] Refatorar `convex/notifications.ts` — dois canais: **Farcaster (Hypersnap)** + **BaseApp**
+- [x] Cron diário envia para ambos os canais via `sendDailyTip`
+- [x] Notificação quando recebe VibeMailm
+- [x] Notificação quando boss de raid morre
+- [x] Notificação semanal de leaderboard (domingo 23:50 UTC)
+- [x] Cron de reset semanal de aura (segunda 00:00 UTC)
+- [x] Remover todo código morto / confusão de métodos
+
+---
+
+## Wallet Gate (todas as páginas)
+
+- [x] `/slot` — WalletGateScreen + LoadingSpinner
+- [x] `/roulette` — WalletGateScreen + LoadingSpinner
+- [x] `/baccarat` — WalletGateScreen
+- [x] `/tcg` — WalletGateScreen + LoadingSpinner
+- [x] `/raid` — WalletGateScreen (já existia)
+- [x] `/quests` — WalletGateScreen (já existia)
+- [x] `/shop` — WalletGateScreen (já existia)
+- [x] `/raffle` — WalletGateScreen + LoadingSpinner
+
+---
+
+## Pendentes / A fazer
+
+- [ ] **Landing page share win** — `/slot/win/[spinId]` ou `/share/slot/[spinId]`
+  - Buscar resultado pelo spinId via `getSpinById`
+  - Mostrar OG image + botões "Jogar" / "Ver a win"
+  - Replay da animação vencedora
+
+- [ ] **Remover guards dev-only do slot** antes de ir para produção
+
+- [ ] **Slot puxa perfil/wallet do contexto da home** — verificar se usa os mesmos providers (ProfileContext, PlayerCardsContext)
+
+---
+
+## Commits desta sessão
+
+| Hash | Descrição |
+|------|-----------|
+| `6c90622e` | feat: Tukka Slots overhaul + notification refactor + wallet gates |
