@@ -2,12 +2,14 @@ import {
   SLOT_BONUS_FOIL_COUNT,
   SLOT_BONUS_FREE_SPINS,
   SLOT_BONUS_WILDCARD,
+  SLOT_CARD_POOL,
   SLOT_COLS,
   SLOT_ROWS,
   SLOT_TOTAL_CELLS,
   createSlotCard,
   pickSlotCard,
   type SlotCard,
+  type SlotCardDefinition,
   type SlotRank,
   SLOT_RANK_ORDER,
 } from "./config";
@@ -885,12 +887,74 @@ export function extractBonusState(grid: SlotCard[], spinsRemaining = 0, prevSpin
   };
 }
 
+/** Force a combo by completing the rank that already has the most cards in the grid.
+ *  Replaces non-rank cells with the missing suit(s) of the best candidate rank. */
+function forceNearestRankCombo(grid: SlotCard[]): void {
+  // Tally how many distinct suits of each rank are present
+  const rankSuits = new Map<SlotRank, Set<string>>();
+  for (const card of grid) {
+    if (card.rank && card.suit) {
+      if (!rankSuits.has(card.rank)) rankSuits.set(card.rank, new Set());
+      rankSuits.get(card.rank)!.add(card.suit);
+    }
+  }
+
+  // Find rank with most suits present (best candidate)
+  let bestRank: SlotRank | null = null;
+  let bestCount = 0;
+  for (const [rank, suits] of rankSuits) {
+    if (suits.size > bestCount && suits.size < 4) {
+      bestCount = suits.size;
+      bestRank = rank;
+    }
+  }
+  // If no rank started, pick a random common one
+  if (!bestRank) {
+    const commons: SlotRank[] = ["2", "3", "4", "5", "6"];
+    bestRank = commons[Math.floor(Math.random() * commons.length)]!;
+  }
+
+  const info = RANK_COMBO_INFO[bestRank];
+  const allSuits: Array<"hearts" | "diamonds" | "clubs" | "spades"> = ["hearts", "diamonds", "clubs", "spades"];
+  const presentSuits = rankSuits.get(bestRank) ?? new Set<string>();
+  const missingSuits = allSuits.filter(s => !presentSuits.has(s));
+
+  // Replace non-rank cells with the missing suits
+  const nonRankIndices = grid
+    .map((c, i) => ({ c, i }))
+    .filter(({ c }) => !(c.rank === bestRank))
+    .map(({ i }) => i)
+    .sort(() => Math.random() - 0.5);
+
+  for (let m = 0; m < missingSuits.length && m < nonRankIndices.length; m++) {
+    const suit = missingSuits[m]!;
+    const cardName = info.suits[suit];
+    const def = SLOT_CARD_POOL.find((d: SlotCardDefinition) => d.baccarat.toLowerCase() === cardName.toLowerCase());
+    if (!def || nonRankIndices[m] === undefined) continue;
+    const idx = nonRankIndices[m]!;
+    grid[idx] = {
+      baccarat: def.baccarat,
+      rarity: def.rarity,
+      rank: bestRank,
+      suit,
+      hasFoil: false,
+    };
+  }
+}
+
 export function resolveSlotSpin(
   isBonusMode: boolean,
   bonusState?: SlotBonusState | null,
   forceFoilCount = 0,
+  comboBoostChance = 0, // 0–1: probability of forcing a rank combo this spin
 ): SlotSpinResolution {
   const initialGrid = createInitialSlotGrid(isBonusMode, bonusState, forceFoilCount);
+
+  // Combo boost: replace cells to force the highest-progress rank to complete
+  if (comboBoostChance > 0 && Math.random() < comboBoostChance) {
+    forceNearestRankCombo(initialGrid);
+  }
+
   const comboSteps: SlotComboStep[] = [];
   let currentGrid = cloneGrid(initialGrid);
   let totalWin = 0;

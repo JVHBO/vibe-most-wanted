@@ -217,10 +217,21 @@ export const spinSlot = mutation({
       throw new Error(`Insufficient coins. Need ${spinCost} coins to spin.`);
     }
 
+    // Combo boost: higher chance on first spins of the day, decays as player spins more
+    // Spin 1-3: 60% | Spin 4-6: 40% | Spin 7-10: 25% | Spin 11-20: 15% | Spin 21+: 8%
+    const totalSpinsToday = stats.totalSpins ?? 0;
+    const comboBoostChance = isBonusMode ? 0 : (
+      totalSpinsToday < 3  ? 0.60 :
+      totalSpinsToday < 6  ? 0.40 :
+      totalSpinsToday < 10 ? 0.25 :
+      totalSpinsToday < 20 ? 0.15 : 0.08
+    );
+
     const resolution = resolveSlotSpin(
       isBonusMode,
       isBonusMode ? ((bonusState as SlotBonusState | undefined) ?? undefined) : undefined,
-      buyBonusEntry ? SLOT_BONUS_FOIL_COUNT : 0, // BUY BONUS: força 4 foils para garantir trigger do bonus
+      buyBonusEntry ? SLOT_BONUS_FOIL_COUNT : 0,
+      comboBoostChance,
     );
 
     // Flat payout — no bonus multiplier, no cascade multiplier
