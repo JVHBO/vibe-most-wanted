@@ -35,6 +35,15 @@ const translations = {
     insufficientBalance: "Insufficient balance", approveFirst: "Approve VBMS first",
     connectWallet: "Connect wallet", rulesTitle: "Slot Rules",
     rules: ["Match 4 cards of the same rank to win!","Higher rank combos = bigger prizes","Quad (4 identical) pays 3× more","10 free spins daily","Foil cards survive combos and accumulate"],
+    settings: "Settings", language: "Language",
+    musicBg: "Background Music", musicBgDesc: "Casino BGM during gameplay",
+    volume: "Volume", musicSource: "Music Source",
+    defaultMode: "🎰 Default", playlistMode: "🎵 Playlist",
+    comboNarration: "Combo Narration", comboNarrationDesc: "Exclusive voice for each combo",
+    on: "🔊 On", off: "🔇 Mute",
+    addTrack: "MP3 or YouTube URL...", noTracks: "No tracks added",
+    trackCount: (n: number) => `${n} track${n !== 1 ? "s" : ""} • plays in sequence`,
+    rulesAndPrizes: "Rules & Prizes", prizes: "Prizes",
   },
   "pt-BR": {
     title: "Tukka Slots", back: "Voltar", credits: "Créditos", vbms: "VBMS",
@@ -44,6 +53,15 @@ const translations = {
     insufficientBalance: "Saldo insuficiente", approveFirst: "Aprove VBMS primeiro",
     connectWallet: "Conecte a carteira", rulesTitle: "Regras do Slot",
     rules: ["Combine 4 cartas do mesmo rank para ganhar!","Ranks maiores = prêmios maiores","Quad (4 idênticas) paga 3× mais","10 giros grátis por dia","Cartas foil sobrevivem aos combos e acumulam"],
+    settings: "Configurações", language: "Idioma",
+    musicBg: "Música de Fundo", musicBgDesc: "BGM do cassino durante o jogo",
+    volume: "Volume", musicSource: "Fonte da música",
+    defaultMode: "🎰 Padrão", playlistMode: "🎵 Playlist",
+    comboNarration: "Narração dos Combos", comboNarrationDesc: "Voz exclusiva ao ativar cada combo",
+    on: "🔊 Ligado", off: "🔇 Mudo",
+    addTrack: "URL MP3 ou YouTube...", noTracks: "Nenhuma faixa adicionada",
+    trackCount: (n: number) => `${n} faixa${n !== 1 ? "s" : ""} • toca em sequência`,
+    rulesAndPrizes: "Regras & Prêmios", prizes: "Prêmios",
   },
   es: {
     title: "Tukka Slots", back: "Volver", credits: "Créditos", vbms: "VBMS",
@@ -53,6 +71,15 @@ const translations = {
     insufficientBalance: "Saldo insuficiente", approveFirst: "Aprueba VBMS primero",
     connectWallet: "Conecta la billetera", rulesTitle: "Reglas del Slot",
     rules: ["¡Combina 4 cartas del mismo rango para ganar!","Rangos más altos = premios mayores","Quad (4 idénticas) paga 3× más","10 giros gratis por día","Las cartas foil sobreviven a los combos"],
+    settings: "Configuración", language: "Idioma",
+    musicBg: "Música de Fondo", musicBgDesc: "BGM del casino durante el juego",
+    volume: "Volumen", musicSource: "Fuente de música",
+    defaultMode: "🎰 Por defecto", playlistMode: "🎵 Playlist",
+    comboNarration: "Narración de Combos", comboNarrationDesc: "Voz exclusiva al activar cada combo",
+    on: "🔊 Activado", off: "🔇 Mudo",
+    addTrack: "URL MP3 o YouTube...", noTracks: "Sin pistas añadidas",
+    trackCount: (n: number) => `${n} pista${n !== 1 ? "s" : ""} • reproduce en secuencia`,
+    rulesAndPrizes: "Reglas y Premios", prizes: "Premios",
   },
   hi: {
     title: "Tukka Slots", back: "वापस", credits: "क्रेडिट", vbms: "VBMS",
@@ -62,6 +89,15 @@ const translations = {
     insufficientBalance: "अपर्याप्त शेष", approveFirst: "पहले VBMS स्वीकृत करें",
     connectWallet: "वॉलेट कनेक्ट करें", rulesTitle: "स्लॉट नियम",
     rules: ["जीतने के लिए एक ही रैंक के 4 कार्ड मिलाएं!","उच्च रैंक = बड़े पुरस्कार","क्वाड (4 समान) 3× अधिक देता है","प्रतिदिन 10 मुफ्त स्पिन","फॉइल कार्ड कॉम्बो में बचते हैं"],
+    settings: "सेटिंग्स", language: "भाषा",
+    musicBg: "बैकग्राउंड संगीत", musicBgDesc: "गेमप्ले के दौरान कैसीनो BGM",
+    volume: "वॉल्यूम", musicSource: "संगीत स्रोत",
+    defaultMode: "🎰 डिफ़ॉल्ट", playlistMode: "🎵 प्लेलिस्ट",
+    comboNarration: "कॉम्बो नैरेशन", comboNarrationDesc: "प्रत्येक कॉम्बो पर एक्सक्लूसिव वॉइस",
+    on: "🔊 चालू", off: "🔇 म्यूट",
+    addTrack: "MP3 या YouTube URL...", noTracks: "कोई ट्रैक नहीं जोड़ा",
+    trackCount: (n: number) => `${n} ट्रैक • क्रम में चलता है`,
+    rulesAndPrizes: "नियम और पुरस्कार", prizes: "पुरस्कार",
   },
   ru: {
     title: "Tukka Slots", back: "Назад", credits: "Кредиты", vbms: "VBMS",
@@ -71,6 +107,15 @@ const translations = {
     insufficientBalance: "Недостаточно средств", approveFirst: "Сначала одобрите VBMS",
     connectWallet: "Подключить кошелёк", rulesTitle: "Правила слота",
     rules: ["Собери 4 карты одного ранга!","Высший ранг = большие призы","Квад (4 одинаковых) платит 3×","10 бесплатных спинов в день","Фойл-карты выживают в комбо"],
+    settings: "Настройки", language: "Язык",
+    musicBg: "Фоновая музыка", musicBgDesc: "BGM казино во время игры",
+    volume: "Громкость", musicSource: "Источник музыки",
+    defaultMode: "🎰 По умолчанию", playlistMode: "🎵 Плейлист",
+    comboNarration: "Озвучка комбо", comboNarrationDesc: "Эксклюзивный голос при каждом комбо",
+    on: "🔊 Вкл", off: "🔇 Выкл",
+    addTrack: "URL MP3 или YouTube...", noTracks: "Треки не добавлены",
+    trackCount: (n: number) => `${n} трек${n > 4 ? "ов" : n > 1 ? "а" : ""} • воспроизводится по очереди`,
+    rulesAndPrizes: "Правила и призы", prizes: "Призы",
   },
   "zh-CN": {
     title: "Tukka 老虎机", back: "返回", credits: "积分", vbms: "VBMS",
@@ -80,6 +125,15 @@ const translations = {
     insufficientBalance: "余额不足", approveFirst: "请先授权VBMS",
     connectWallet: "连接钱包", rulesTitle: "老虎机规则",
     rules: ["组合4张同等级牌获胜！","等级越高奖励越大","四同（4张相同）奖励3×","每天10次免费旋转","闪卡在组合后保留"],
+    settings: "设置", language: "语言",
+    musicBg: "背景音乐", musicBgDesc: "游戏过程中的赌场BGM",
+    volume: "音量", musicSource: "音乐来源",
+    defaultMode: "🎰 默认", playlistMode: "🎵 播放列表",
+    comboNarration: "连击解说", comboNarrationDesc: "每次连击的专属配音",
+    on: "🔊 开", off: "🔇 静音",
+    addTrack: "MP3或YouTube链接...", noTracks: "未添加曲目",
+    trackCount: (n: number) => `${n}首 • 顺序播放`,
+    rulesAndPrizes: "规则与奖励", prizes: "奖励",
   },
   id: {
     title: "Tukka Slots", back: "Kembali", credits: "Kredit", vbms: "VBMS",
@@ -89,6 +143,15 @@ const translations = {
     insufficientBalance: "Saldo tidak cukup", approveFirst: "Setujui VBMS dulu",
     connectWallet: "Hubungkan dompet", rulesTitle: "Aturan Slot",
     rules: ["Cocokkan 4 kartu rank sama untuk menang!","Rank lebih tinggi = hadiah lebih besar","Quad (4 identik) bayar 3×","10 putaran gratis per hari","Kartu foil bertahan setelah kombo"],
+    settings: "Pengaturan", language: "Bahasa",
+    musicBg: "Musik Latar", musicBgDesc: "BGM kasino selama bermain",
+    volume: "Volume", musicSource: "Sumber musik",
+    defaultMode: "🎰 Bawaan", playlistMode: "🎵 Playlist",
+    comboNarration: "Narasi Kombo", comboNarrationDesc: "Suara eksklusif saat kombo aktif",
+    on: "🔊 Aktif", off: "🔇 Bisu",
+    addTrack: "URL MP3 atau YouTube...", noTracks: "Belum ada trek",
+    trackCount: (n: number) => `${n} trek • diputar berurutan`,
+    rulesAndPrizes: "Aturan & Hadiah", prizes: "Hadiah",
   },
   fr: {
     title: "Tukka Slots", back: "Retour", credits: "Crédits", vbms: "VBMS",
@@ -98,6 +161,15 @@ const translations = {
     insufficientBalance: "Solde insuffisant", approveFirst: "Approuvez VBMS d'abord",
     connectWallet: "Connecter le portefeuille", rulesTitle: "Règles du Slot",
     rules: ["Combinez 4 cartes de même rang pour gagner !","Rang plus élevé = prix plus grand","Quad (4 identiques) paie 3×","10 tours gratuits par jour","Les cartes foil survivent aux combos"],
+    settings: "Paramètres", language: "Langue",
+    musicBg: "Musique de fond", musicBgDesc: "BGM casino pendant le jeu",
+    volume: "Volume", musicSource: "Source musicale",
+    defaultMode: "🎰 Défaut", playlistMode: "🎵 Playlist",
+    comboNarration: "Narration des combos", comboNarrationDesc: "Voix exclusive à chaque combo",
+    on: "🔊 Activé", off: "🔇 Muet",
+    addTrack: "URL MP3 ou YouTube...", noTracks: "Aucune piste ajoutée",
+    trackCount: (n: number) => `${n} piste${n !== 1 ? "s" : ""} • lecture séquentielle`,
+    rulesAndPrizes: "Règles & Prix", prizes: "Prix",
   },
   ja: {
     title: "Tukkaスロット", back: "戻る", credits: "クレジット", vbms: "VBMS",
@@ -107,6 +179,15 @@ const translations = {
     insufficientBalance: "残高不足", approveFirst: "先にVBMSを承認してください",
     connectWallet: "ウォレットを接続", rulesTitle: "スロットルール",
     rules: ["同じランクの4枚でコンボ！","ランクが高いほど賞金大","クワッド（4枚同一）は3×","毎日フリースピン10回","フォイルカードはコンボ後も残る"],
+    settings: "設定", language: "言語",
+    musicBg: "バックグラウンドミュージック", musicBgDesc: "ゲーム中のカジノBGM",
+    volume: "音量", musicSource: "音楽ソース",
+    defaultMode: "🎰 デフォルト", playlistMode: "🎵 プレイリスト",
+    comboNarration: "コンボナレーション", comboNarrationDesc: "各コンボの専用ボイス",
+    on: "🔊 オン", off: "🔇 ミュート",
+    addTrack: "MP3またはYouTube URL...", noTracks: "トラックなし",
+    trackCount: (n: number) => `${n}曲 • 順番に再生`,
+    rulesAndPrizes: "ルールと賞品", prizes: "賞品",
   },
   it: {
     title: "Tukka Slots", back: "Indietro", credits: "Crediti", vbms: "VBMS",
@@ -116,11 +197,20 @@ const translations = {
     insufficientBalance: "Saldo insufficiente", approveFirst: "Approva prima VBMS",
     connectWallet: "Collega portafoglio", rulesTitle: "Regole dello Slot",
     rules: ["Abbina 4 carte dello stesso rango per vincere!","Rango più alto = premi maggiori","Quad (4 identiche) paga 3×","10 giri gratuiti al giorno","Le carte foil sopravvivono ai combo"],
+    settings: "Impostazioni", language: "Lingua",
+    musicBg: "Musica di sottofondo", musicBgDesc: "BGM casinò durante il gioco",
+    volume: "Volume", musicSource: "Fonte musicale",
+    defaultMode: "🎰 Predefinito", playlistMode: "🎵 Playlist",
+    comboNarration: "Narrazione Combo", comboNarrationDesc: "Voce esclusiva per ogni combo",
+    on: "🔊 Attivo", off: "🔇 Muto",
+    addTrack: "URL MP3 o YouTube...", noTracks: "Nessuna traccia aggiunta",
+    trackCount: (n: number) => `${n} tracc${n !== 1 ? "e" : "ia"} • riproduzione sequenziale`,
+    rulesAndPrizes: "Regole e Premi", prizes: "Premi",
   },
 };
 
 export default function SlotPage() {
-  const { lang } = useLanguage();
+  const { lang, setLang } = useLanguage();
   const { isConnected, address, status } = useAccount();
   const isReconnecting = useReconnectTimeout(status);
   const { userProfile } = useProfile();
@@ -486,17 +576,41 @@ export default function SlotPage() {
             >
               {/* Header */}
               <div className="px-4 py-2.5 border-b-2 border-[#c87941] flex items-center justify-between shrink-0" style={{ background: 'linear-gradient(180deg,#3a1800,#1a0800)' }}>
-                <span className="font-black text-sm uppercase tracking-widest" style={{ color: '#FFD700' }}>⚙️ Configurações de Áudio</span>
+                <span className="font-black text-sm uppercase tracking-widest" style={{ color: '#FFD700' }}>⚙️ {tr("settings")}</span>
                 <button onClick={() => setShowSlotSettings(false)} className="w-6 h-6 rounded-full bg-red-600 border-2 border-black font-black text-white text-sm flex items-center justify-center">×</button>
               </div>
 
               <div className="overflow-y-auto flex-1 p-4 space-y-5">
+                {/* ── Idioma ── */}
+                <div className="flex items-center justify-between rounded-lg px-3 py-2" style={{ background: '#1a0800', border: '1px solid #3a2000' }}>
+                  <span className="text-sm font-black text-yellow-300">🌐 {tr("language")}</span>
+                  <select
+                    value={lang}
+                    onChange={e => setLang(e.target.value as any)}
+                    className="text-[11px] font-bold rounded border-2 border-[#c87941] px-2 py-1 outline-none cursor-pointer"
+                    style={{ background: '#0d0500', color: '#FFD700' }}
+                  >
+                    <option value="en">🇺🇸 English</option>
+                    <option value="pt-BR">🇧🇷 Português</option>
+                    <option value="es">🇪🇸 Español</option>
+                    <option value="hi">🇮🇳 हिन्दी</option>
+                    <option value="ru">🇷🇺 Русский</option>
+                    <option value="zh-CN">🇨🇳 中文</option>
+                    <option value="id">🇮🇩 Indonesia</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="ja">🇯🇵 日本語</option>
+                    <option value="it">🇮🇹 Italiano</option>
+                  </select>
+                </div>
+
+                <div style={{ height: 1, background: '#3a2000' }} />
+
                 {/* ── Música ── */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm font-black text-yellow-300">🎵 Música de Fundo</div>
-                      <div className="text-[10px] text-gray-500 mt-0.5">BGM do cassino durante o jogo</div>
+                      <div className="text-sm font-black text-yellow-300">🎵 {tr("musicBg")}</div>
+                      <div className="text-[10px] text-gray-500 mt-0.5">{tr("musicBgDesc")}</div>
                     </div>
                     <button
                       onClick={() => {
@@ -509,12 +623,12 @@ export default function SlotPage() {
                         background: !slotMusicEnabled ? '#374151' : 'linear-gradient(180deg,#22c55e,#15803d)',
                         color: !slotMusicEnabled ? '#9ca3af' : '#000',
                       }}
-                    >{!slotMusicEnabled ? "🔇 Mudo" : "🔊 Ligado"}</button>
+                    >{!slotMusicEnabled ? tr("off") : tr("on")}</button>
                   </div>
 
                   {/* Volume */}
                   <div className="flex items-center justify-between gap-3 rounded-lg px-3 py-2" style={{ background: '#1a0800', border: '1px solid #3a2000' }}>
-                    <span className="text-[11px] font-bold text-yellow-300">🔉 Volume</span>
+                    <span className="text-[11px] font-bold text-yellow-300">🔉 {tr("volume")}</span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => {
@@ -564,7 +678,7 @@ export default function SlotPage() {
 
                   {/* Modo de música */}
                   <div className="rounded-lg p-3 space-y-2" style={{ background: '#1a0800', border: '1px solid #3a2000' }}>
-                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Fonte da música</div>
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">{tr("musicSource")}</div>
                     <div className="flex gap-2">
                       {(["default","playlist"] as const).map(mode => (
                         <button
@@ -576,7 +690,7 @@ export default function SlotPage() {
                             color: slotMusicMode === mode ? '#000' : '#9ca3af',
                             borderColor: slotMusicMode === mode ? '#000' : '#3a2000',
                           }}
-                        >{mode === "default" ? "🎰 Padrão" : "🎵 Playlist"}</button>
+                        >{mode === "default" ? tr("defaultMode") : tr("playlistMode")}</button>
                       ))}
                     </div>
 
@@ -587,7 +701,7 @@ export default function SlotPage() {
                         <div className="flex gap-2">
                           <input
                             type="url"
-                            placeholder="URL MP3 ou YouTube..."
+                            placeholder={tr("addTrack")}
                             value={playlistUrlInput}
                             onChange={e => setPlaylistUrlInput(e.target.value)}
                             onKeyDown={e => {
@@ -632,7 +746,7 @@ export default function SlotPage() {
 
                         {/* Track list */}
                         {slotPlaylist.length === 0 ? (
-                          <div className="text-center text-[10px] text-gray-600 py-2">Nenhuma faixa adicionada</div>
+                          <div className="text-center text-[10px] text-gray-600 py-2">{tr("noTracks")}</div>
                         ) : (
                           <div className="space-y-1 max-h-36 overflow-y-auto pr-0.5">
                             {slotPlaylist.map((url, i) => {
@@ -686,7 +800,7 @@ export default function SlotPage() {
                         )}
                         {slotPlaylist.length > 0 && (
                           <div className="text-[9px] text-gray-600 text-center">
-                            {slotPlaylist.length} faixa{slotPlaylist.length > 1 ? "s" : ""} • toca em sequência
+                            {(tr("trackCount") as any)(slotPlaylist.length)}
                           </div>
                         )}
                       </div>
@@ -700,8 +814,8 @@ export default function SlotPage() {
                 {/* ── Narração ── */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm font-black text-yellow-300">🎙️ Narração dos Combos</div>
-                    <div className="text-[10px] text-gray-500 mt-0.5">Voz exclusiva ao ativar cada combo</div>
+                    <div className="text-sm font-black text-yellow-300">🎙️ {tr("comboNarration")}</div>
+                    <div className="text-[10px] text-gray-500 mt-0.5">{tr("comboNarrationDesc")}</div>
                   </div>
                   <button
                     onClick={() => {
@@ -716,7 +830,7 @@ export default function SlotPage() {
                       background: narrationMuted ? '#374151' : 'linear-gradient(180deg,#22c55e,#15803d)',
                       color: narrationMuted ? '#9ca3af' : '#000',
                     }}
-                  >{narrationMuted ? "🔇 Mudo" : "🔊 Ligado"}</button>
+                  >{narrationMuted ? tr("off") : tr("on")}</button>
                 </div>
               </div>
             </div>
@@ -732,13 +846,13 @@ export default function SlotPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="bg-[#FFD700] border-b-4 border-black px-3 py-1.5 flex items-center justify-between shrink-0">
-                <span className="font-black text-xs uppercase tracking-widest text-black">Regras & Prêmios</span>
+                <span className="font-black text-xs uppercase tracking-widest text-black">{tr("rulesAndPrizes")}</span>
                 <button onClick={() => setShowRules(false)} className="rounded-full flex items-center justify-center" style={{ background: '#DC2626', width: 24, height: 24, color: '#fff', fontSize: 16, lineHeight: 1, fontWeight: 700 }}>×</button>
               </div>
               <div className="overflow-y-auto p-4 space-y-4">
                 {/* Rules */}
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-yellow-400 mb-2">Regras</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-yellow-400 mb-2">{tr("rulesTitle")}</div>
                   <ul className="space-y-1.5">
                     {(translations[lang as keyof typeof translations] ?? translations.en).rules.map((rule, i) => (
                       <li key={i} className="text-white text-xs flex items-start gap-2">
@@ -750,7 +864,7 @@ export default function SlotPage() {
                 </div>
                 {/* Payout Table */}
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-yellow-400 mb-2">Tabela de Prêmios</div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-yellow-400 mb-2">{tr("prizes")}</div>
                   <div className="space-y-1">
                     {[
                       ["4× Mythic",   "50.000","#a855f7"],["4× Legendary","5.000", "#f59e0b"],
@@ -766,7 +880,7 @@ export default function SlotPage() {
                       </div>
                     ))}
                   </div>
-                  <p className="text-[9px] text-center text-gray-500 pt-2">Prêmios multiplicam pelo valor da aposta</p>
+                  <p className="text-[9px] text-center text-gray-500 pt-2">{tr("prizesNote") || "Prizes multiply by bet amount"}</p>
                 </div>
               </div>
             </div>

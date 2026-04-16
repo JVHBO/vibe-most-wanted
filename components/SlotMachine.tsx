@@ -275,6 +275,10 @@ export default function SlotMachine({
   const [bigWinType, setBigWinType]             = useState<'nice' | 'great' | 'big' | 'max' | null>(null);
   const [bigWinAmount, setBigWinAmount]         = useState(0);
   const [bigWinMultX, setBigWinMultX]           = useState(0);
+  // Spin history log
+  type SpinLog = { bet: number; win: number; combo: string | null; bonus: boolean; ts: number };
+  const [spinLog, setSpinLog]                   = useState<SpinLog[]>([]);
+  const [showSpinLog, setShowSpinLog]           = useState(false);
 
   // Auto-open tutorial na primeira visita
   useEffect(() => {
@@ -660,6 +664,15 @@ export default function SlotMachine({
                   setBonusWinDisplay(bonusWinTotalRef.current);
                 }
 
+                // Registrar no log de spins
+                setSpinLog(prev => [{
+                  bet: betMult,
+                  win: res.winAmount,
+                  combo: res.comboSteps.length > 0 ? res.comboSteps[0]!.combo.name : null,
+                  bonus: bonusMode,
+                  ts: Date.now(),
+                }, ...prev].slice(0, 50));
+
                 // Acumular total da sessão e checar max win cap
                 sessionTotalWin += res.winAmount;
                 if (sessionTotalWin >= maxWinCap) {
@@ -683,7 +696,8 @@ export default function SlotMachine({
                   showBigWinOverlay(sessionTotalWin, betMult);
                 }
 
-                if (res.triggeredBonus && res.foilCount >= 4) {
+                if (res.triggeredBonus && res.foilCount >= 4 && !bonusMode) {
+                  // Primeiro trigger: animação épica + tela "PLAY BONUS"
                   const finalFoils = res.finalGrid
                     .map((card, idx) => ({
                       idx,
@@ -708,6 +722,9 @@ export default function SlotMachine({
                   bonusWinTotalRef.current = 0;
                   setBonusWinTotal(0);
                   setBonusWinDisplay(null);
+                } else if (res.triggeredBonus && bonusMode) {
+                  // Re-trigger durante bonus: apenas adiciona spins silenciosamente
+                  setBonusState(res.bonusState);
                 } else {
                   setBonusState(res.bonusState);
                 }
@@ -815,7 +832,7 @@ export default function SlotMachine({
 
     return (
       <div
-        className={`absolute inset-0 flex flex-col overflow-hidden ${isLocked ? "" : decelerating ? "slot-decel" : spinning ? "slot-spin" : isNew ? "card-fall-in" : isWin ? "win-flash" : "transition-all duration-150"} ${effectiveCard.hasFoil ? "foil-card" : ""}`}
+        className={`absolute inset-0 flex flex-col overflow-hidden ${isLocked ? (isWin ? "win-flash" : "") : decelerating ? "slot-decel" : spinning ? "slot-spin" : isNew ? "card-fall-in" : isWin ? "win-flash" : "transition-all duration-150"} ${effectiveCard.hasFoil ? "foil-card" : ""}`}
         style={{
           border: isLocked
             ? "2px solid #FACC15"
@@ -1974,31 +1991,82 @@ export default function SlotMachine({
               </button>
             </div>
 
-            {/* Row 2: BET SELECTOR */}
-            <div
-              className="flex items-center gap-3 px-3 py-1.5 border-2 border-black rounded"
-              style={{
-                background: "linear-gradient(180deg,#1e3a5f,#172554)",
-              }}
-            >
+            {/* Row 2: BET SELECTOR + LOG */}
+            <div className="flex items-center gap-2">
+              <div
+                className="flex-1 flex items-center gap-3 px-3 py-1.5 border-2 border-black rounded"
+                style={{ background: "linear-gradient(180deg,#1e3a5f,#172554)" }}
+              >
+                <button
+                  onClick={() => setBetIdx(i => Math.max(0, i - 1))}
+                  disabled={betIdx === 0 || isSpinning}
+                  className="w-7 h-7 rounded border-2 border-blue-400 bg-blue-900 font-black text-blue-300 text-base flex items-center justify-center disabled:opacity-30 flex-none"
+                >−</button>
+                <div className="flex-1 text-center">
+                  <div className="text-[8px] font-bold uppercase text-blue-300 leading-none">{t.bet}</div>
+                  <div className="text-lg font-black text-white leading-tight">{betCost}</div>
+                  <div className="text-[8px] font-bold leading-none text-gray-500">coins</div>
+                </div>
+                <button
+                  onClick={() => setBetIdx(i => Math.min(BET_OPTIONS.length - 1, i + 1))}
+                  disabled={betIdx === BET_OPTIONS.length - 1 || isSpinning}
+                  className="w-7 h-7 rounded border-2 border-blue-400 bg-blue-900 font-black text-blue-300 text-base flex items-center justify-center disabled:opacity-30 flex-none"
+                >+</button>
+              </div>
+              {/* LOG button */}
               <button
-                onClick={() => setBetIdx(i => Math.max(0, i - 1))}
-                disabled={betIdx === 0 || isSpinning}
-                className="w-7 h-7 rounded border-2 border-blue-400 bg-blue-900 font-black text-blue-300 text-base flex items-center justify-center disabled:opacity-30 flex-none"
-              >−</button>
-              <div className="flex-1 text-center">
-                <div className="text-[8px] font-bold uppercase text-blue-300 leading-none">{t.bet}</div>
-                <div className="text-lg font-black text-white leading-tight">{betCost}</div>
-                <div className="text-[8px] font-bold leading-none text-gray-500">
-                  coins
+                onClick={() => setShowSpinLog(true)}
+                className="w-9 h-full min-h-[40px] rounded border-2 border-black font-black text-sm flex items-center justify-center flex-none"
+                style={{ background: "linear-gradient(180deg,#1e3a5f,#172554)", color: "#60a5fa", borderColor: "#3b82f6" }}
+                title="Spin Log"
+              >📋</button>
+            </div>
+
+            {/* Spin Log Modal */}
+            {showSpinLog && (
+              <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/75" onClick={() => setShowSpinLog(false)}>
+                <div
+                  className="w-full max-w-[400px] rounded-t-2xl border-t-4 border-x-4 border-black overflow-hidden flex flex-col"
+                  style={{ background: '#0d0814', borderColor: '#3b82f6', maxHeight: '70vh' }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className="px-4 py-2.5 flex items-center justify-between border-b-2 border-blue-900" style={{ background: 'linear-gradient(180deg,#1e3a5f,#0f1f3d)' }}>
+                    <span className="font-black text-sm uppercase tracking-widest text-blue-300">📋 Spin Log</span>
+                    <button onClick={() => setShowSpinLog(false)} className="w-6 h-6 rounded-full bg-red-600 border-2 border-black font-black text-white text-sm flex items-center justify-center">×</button>
+                  </div>
+                  <div className="overflow-y-auto flex-1 p-2 space-y-1">
+                    {spinLog.length === 0 ? (
+                      <div className="text-center text-gray-500 text-xs py-8">No spins yet</div>
+                    ) : spinLog.map((entry, i) => {
+                      const isWin = entry.win > 0;
+                      const mult = entry.bet > 0 ? Math.round(entry.win / entry.bet) : 0;
+                      const timeStr = new Date(entry.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                      return (
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 rounded-lg px-3 py-1.5"
+                          style={{
+                            background: isWin ? 'linear-gradient(90deg,#0f2a0f,#0a1a0a)' : '#0d0814',
+                            border: `1px solid ${isWin ? '#16a34a' : '#1e3a5f'}`,
+                          }}
+                        >
+                          <span className="text-[10px] font-mono text-gray-600 shrink-0 w-16">{timeStr}</span>
+                          <span className="text-[10px] font-bold text-blue-400 shrink-0">bet {entry.bet}</span>
+                          {entry.bonus && <span className="text-[9px] bg-purple-900 text-purple-300 px-1 rounded shrink-0">BONUS</span>}
+                          <span className="flex-1 text-[10px] truncate" style={{ color: isWin ? '#4ade80' : '#6b7280' }}>
+                            {entry.combo ?? '—'}
+                          </span>
+                          <span className="text-[11px] font-black shrink-0" style={{ color: isWin ? '#4ade80' : '#6b7280' }}>
+                            {isWin ? `+${entry.win}` : '0'}
+                            {mult >= 2 ? <span className="text-yellow-400 text-[9px] ml-1">{mult}×</span> : null}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-              <button
-                onClick={() => setBetIdx(i => Math.min(BET_OPTIONS.length - 1, i + 1))}
-                disabled={betIdx === BET_OPTIONS.length - 1 || isSpinning}
-                className="w-7 h-7 rounded border-2 border-blue-400 bg-blue-900 font-black text-blue-300 text-base flex items-center justify-center disabled:opacity-30 flex-none"
-              >+</button>
-            </div>
+            )}
 
           </div>
         </div>
