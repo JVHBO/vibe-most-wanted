@@ -436,8 +436,8 @@ export function detectNearMiss(grid: SlotCard[], isBonusMode: boolean): SlotNear
     const g = rankGroups.get(rank);
     if (!g) continue;
     const total = g.indices.length + jokerIndices.length;
-    // Near miss: exactly 2 real cards (can't reach 3 even with jokers)
-    if (g.indices.length === 2 && total < 3) {
+    // Near miss: exactly 3 real cards (no joker fill needed to reach 3), can't reach 4
+    if (g.indices.length === 3 && total < 4) {
       const info = RANK_COMBO_INFO[rank];
       const allSuits: Array<"hearts"|"diamonds"|"clubs"|"spades"> = ["hearts","diamonds","clubs","spades"];
       const missingSuit = allSuits.find(s => !g.suits.has(s))!;
@@ -501,8 +501,7 @@ function detectRankCombo(
     const normalToUse = Math.min(stillNeeded, normalJokerIndices.length);
     const total = indices.length + bonusToUse + normalToUse;
 
-    // 3-card combo: requires 3 cards total with min 2 real cards (no rank dupes allowed)
-    if (total >= 3 && indices.length >= 2) {
+    if (total >= 4 && indices.length >= 2) {
       return {
         combo: createRankCombo(rank),
         matchedIndices: [...indices, ...normalJokerIndices.slice(0, normalToUse)],
