@@ -226,7 +226,8 @@ export const spinSlot = mutation({
     // Flat payout — no bonus multiplier, no cascade multiplier
     const comboSteps = resolution.comboSteps.map((step) => ({
       ...step,
-      reward: Math.floor(step.reward * betMultiplier / 100),
+      // Minimum 1× bet per combo so small ranks always pay something
+      reward: Math.max(betMultiplier, Math.floor(step.reward * betMultiplier / 100)),
     }));
 
     let finalWin = comboSteps.reduce((sum, step) => sum + step.reward, 0);
