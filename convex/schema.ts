@@ -2280,7 +2280,7 @@ export default defineSchema({
 
   raffleResults: defineTable({
     epoch:          v.number(),
-    winner:         v.string(),           // winner address (lowercase)
+    winner:         v.string(),           // primary winner address (lowercase)
     username:       v.optional(v.string()), // resolved from profiles
     winnerTicket:   v.number(),           // winnerIndex + 1 (1-based)
     winnerIndex:    v.number(),           // raw (vrfRandomWord % totalEntries)
@@ -2291,6 +2291,19 @@ export default defineSchema({
     winnerChain:    v.optional(v.string()), // "base" | "arb"
     winnerToken:    v.optional(v.string()), // "VBMS" | "USDC" | "ETH" | "USND" | "BONUS"
     timestamp:      v.number(),
+    // Multi-winner fields (derived off-chain from vrfRandomWord)
+    winners:        v.optional(v.array(v.string())),                          // all winner addresses
+    winnerUsernames: v.optional(v.array(v.union(v.string(), v.null()))),      // resolved usernames
+    winnerTickets:  v.optional(v.array(v.number())),                          // ticket numbers (1-based)
+    winnerChains:   v.optional(v.array(v.union(v.string(), v.null()))),       // chain per winner
+    winnerTokens:   v.optional(v.array(v.union(v.string(), v.null()))),       // token per winner
+    prizeCards:     v.optional(v.array(v.object({              // cards awarded
+      winnerAddress: v.string(),
+      cardName: v.string(),
+      cardDescription: v.optional(v.string()),
+      imageUrl: v.optional(v.string()),
+    }))),
+    prizeTier:      v.optional(v.number()),   // number of winners (1, 2, or 3)
   })
     .index("by_epoch", ["epoch"]),
 });

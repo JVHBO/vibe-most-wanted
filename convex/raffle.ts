@@ -37,6 +37,42 @@ const RAFFLE_BASE_ABI = [
   "function getBuyerAt(uint256) view returns (address,uint256)",
 ];
 
+// ─── Multi-Winner Prize Tiers ─────────────────────────────────────────────────
+export const PRIZE_TIERS = [
+  { min: 1,   max: 49,       winners: 1 },
+  { min: 50,  max: 99,       winners: 1 },
+  { min: 100, max: 199,      winners: 2 },
+  { min: 200, max: 499,      winners: 2 },
+  { min: 500, max: Infinity, winners: 3 },
+] as const;
+
+export function getPrizeTier(totalTickets: number): { min: number; max: number; winners: number } {
+  return (PRIZE_TIERS.find(t => totalTickets >= t.min && totalTickets <= t.max) ?? PRIZE_TIERS[0]) as { min: number; max: number; winners: number };
+}
+
+/**
+ * Derive multiple winners from a single VRF random word.
+ * Formula (publicly verifiable): keccak256(abi.encodePacked(vrfRandomWord, index)) % totalEntries
+ * Deduplicates: if same index drawn twice, advance to next.
+ */
+async function deriveWinners(vrfRandomWord: bigint, totalEntries: number, numWinners: number): Promise<number[]> {
+  const { ethers } = await import("ethers");
+  const winners: number[] = [];
+  const seen = new Set<number>();
+  let i = 0;
+  while (winners.length < numWinners && i < 10000) {
+    const encoded = ethers.solidityPacked(["uint256", "uint256"], [vrfRandomWord, BigInt(i)]);
+    const hash = ethers.keccak256(encoded);
+    const idx = Number(BigInt(hash) % BigInt(totalEntries));
+    if (!seen.has(idx)) {
+      seen.add(idx);
+      winners.push(idx);
+    }
+    i++;
+  }
+  return winners;
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // QUERIES — for UI
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -983,6 +1019,22 @@ export const setDrawTxHash = mutation({
 });
 
 /** Get recorded draw result for an epoch */
+/** Returns the PRIZE_TIERS config for the frontend */
+export const getPrizeTiers = query({
+  args: {},
+  handler: async () => {
+    return PRIZE_TIERS.map(t => ({ ...t, max: t.max === Infinity ? null : t.max }));
+  },
+});
+
+/** Returns all raffle results (for history page) */
+export const getAllRaffleResults = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("raffleResults").order("desc").take(20);
+  },
+});
+
 export const getRaffleResult = query({
   args: { epoch: v.optional(v.number()) },
   handler: async (ctx, { epoch }) => {
@@ -1096,6 +1148,12 @@ export const recordDrawResult = internalMutation({
     drawTxHash:     v.optional(v.string()),
     winnerChain:    v.optional(v.string()),
     winnerToken:    v.optional(v.string()),
+    // Multi-winner fields
+    winners:        v.optional(v.array(v.string())),
+    winnerTickets:  v.optional(v.array(v.number())),
+    winnerChains:   v.optional(v.array(v.union(v.string(), v.null()))),
+    winnerTokens:   v.optional(v.array(v.union(v.string(), v.null()))),
+    prizeTier:      v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     // Idempotent: skip if already recorded for this epoch
@@ -1105,16 +1163,30 @@ export const recordDrawResult = internalMutation({
       .first();
     if (existing) return { skipped: true };
 
-    // Resolve winner username from profiles
+    // Resolve primary winner username
     const profile = await ctx.db
       .query("profiles")
       .withIndex("by_address", (q: any) => q.eq("address", args.winner.toLowerCase()))
       .first();
 
+    // Resolve usernames for all winners
+    let winnerUsernames: (string | null)[] | undefined;
+    if (args.winners && args.winners.length > 0) {
+      winnerUsernames = [];
+      for (const addr of args.winners) {
+        const p = await ctx.db
+          .query("profiles")
+          .withIndex("by_address", (q: any) => q.eq("address", addr.toLowerCase()))
+          .first();
+        winnerUsernames.push(p?.username ?? null);
+      }
+    }
+
     await ctx.db.insert("raffleResults", {
       ...args,
       winner:    args.winner.toLowerCase(),
       username:  profile?.username,
+      winnerUsernames,
       timestamp: Date.now(),
     });
     return { recorded: true };
@@ -1143,38 +1215,86 @@ export const checkAndRecordDraw = action({
       if (!winner || winner === ZERO) return { hasWinner: false };
 
       const ep = epoch ?? 1;
-      const winnerTicket = Number(winnerIndex) + 1; // 1-based
+      const primaryIndex = Number(winnerIndex);
+      const primaryTicket = primaryIndex + 1; // 1-based
+      const total = Number(totalEntries);
 
-      // Determine which chain/token the winning ticket was purchased with
-      let winnerChain: string | undefined;
-      let winnerToken: string | undefined;
+      // Determine prize tier (how many winners)
+      const tier = getPrizeTier(total);
+      const numWinners = tier.winners;
+
+      // Derive all winner indices from VRF random word
+      const vrfBigInt = BigInt(vrfRandomWord.toString());
+      const winnerIndices = await deriveWinners(vrfBigInt, total, numWinners);
+
+      // Resolve chain/token for each winner ticket
+      let allEntries: any[] = [];
       try {
-        const allEntries = await ctx.runQuery(internal.raffle.getEntriesForEpoch, { epoch: ep });
-        const sorted = (allEntries as any[]).slice().sort((a: any, b: any) => a.blockNumber - b.blockNumber);
+        allEntries = (await ctx.runQuery(internal.raffle.getEntriesForEpoch, { epoch: ep }) as any[])
+          .slice().sort((a: any, b: any) => a.blockNumber - b.blockNumber);
+      } catch {}
+
+      function resolveChainToken(ticketNum: number) {
         let running = 0;
-        for (const entry of sorted) {
+        for (const entry of allEntries) {
           running += entry.tickets;
-          if (winnerTicket <= running) {
-            winnerChain = entry.chain;
-            winnerToken = entry.token;
+          if (ticketNum <= running) return { chain: entry.chain as string, token: entry.token as string };
+        }
+        return { chain: undefined, token: undefined };
+      }
+
+      // Build multi-winner arrays
+      const winners: string[] = [];
+      const winnerTickets: number[] = [];
+      const winnerChains: (string | null)[] = [];
+      const winnerTokens: (string | null)[] = [];
+
+      for (const idx of winnerIndices) {
+        const ticket = idx + 1;
+        const { chain, token } = resolveChainToken(ticket);
+        // Placeholder address — real address resolved when we lookup entries
+        winners.push(ZERO); // will be patched below
+        winnerTickets.push(ticket);
+        winnerChains.push(chain ?? null);
+        winnerTokens.push(token ?? null);
+      }
+
+      // Resolve actual winner addresses from entries
+      for (let i = 0; i < winnerIndices.length; i++) {
+        const ticket = winnerTickets[i];
+        let running = 0;
+        for (const entry of allEntries) {
+          running += entry.tickets;
+          if (ticket <= running) {
+            winners[i] = (entry.address as string).toLowerCase();
             break;
           }
         }
-      } catch {}
+        // Primary winner (index 0) = on-chain winner address
+        if (i === 0) winners[0] = winner.toLowerCase();
+      }
+
+      // Primary winner (from on-chain result)
+      const { chain: winnerChain, token: winnerToken } = resolveChainToken(primaryTicket);
 
       await ctx.runMutation(internal.raffle.recordDrawResult, {
         epoch:           ep,
         winner:          winner.toLowerCase(),
-        winnerTicket,
-        winnerIndex:     Number(winnerIndex),
+        winnerTicket:    primaryTicket,
+        winnerIndex:     primaryIndex,
         vrfRandomWord:   vrfRandomWord.toString(),
-        totalEntries:    Number(totalEntries),
-        prizeDescription: prizeDescription || "Goofy Romero – Queen of Diamonds",
+        totalEntries:    total,
+        prizeDescription: prizeDescription || "VBMS Card Pack",
         winnerChain,
         winnerToken,
+        winners,
+        winnerTickets,
+        winnerChains,
+        winnerTokens,
+        prizeTier: numWinners,
       });
 
-      return { hasWinner: true, winner: winner.toLowerCase(), winnerTicket };
+      return { hasWinner: true, winner: winner.toLowerCase(), winnerTicket: primaryTicket };
     } catch (e) {
       console.error("[Raffle] checkAndRecordDraw error:", e);
       return { hasWinner: false };
@@ -1197,25 +1317,67 @@ export const checkAndRecordDrawInternal = internalAction({
       const [winner, winnerIndex, vrfRandomWord, totalEntries, prizeDescription] = await contract.getDrawResult();
       const ZERO = "0x0000000000000000000000000000000000000000";
       if (!winner || winner === ZERO) return { hasWinner: false };
+
       const ep = epoch ?? 1;
-      const winnerTicket = Number(winnerIndex) + 1;
-      let winnerChain: string | undefined;
-      let winnerToken: string | undefined;
+      const primaryIndex = Number(winnerIndex);
+      const primaryTicket = primaryIndex + 1;
+      const total = Number(totalEntries);
+
+      const tier = getPrizeTier(total);
+      const numWinners = tier.winners;
+      const vrfBigInt = BigInt(vrfRandomWord.toString());
+      const winnerIndices = await deriveWinners(vrfBigInt, total, numWinners);
+
+      let allEntries: any[] = [];
       try {
-        const allEntries = await ctx.runQuery(internal.raffle.getEntriesForEpoch, { epoch: ep });
-        const sorted = (allEntries as any[]).slice().sort((a: any, b: any) => a.blockNumber - b.blockNumber);
-        let running = 0;
-        for (const entry of sorted) {
-          running += entry.tickets;
-          if (winnerTicket <= running) { winnerChain = entry.chain; winnerToken = entry.token; break; }
-        }
+        allEntries = (await ctx.runQuery(internal.raffle.getEntriesForEpoch, { epoch: ep }) as any[])
+          .slice().sort((a: any, b: any) => a.blockNumber - b.blockNumber);
       } catch {}
+
+      function resolveChainToken(ticketNum: number) {
+        let running = 0;
+        for (const entry of allEntries) {
+          running += entry.tickets;
+          if (ticketNum <= running) return { chain: entry.chain as string, token: entry.token as string };
+        }
+        return { chain: undefined, token: undefined };
+      }
+
+      const winners: string[] = [];
+      const winnerTickets: number[] = [];
+      const winnerChains: (string | null)[] = [];
+      const winnerTokens: (string | null)[] = [];
+
+      for (const idx of winnerIndices) {
+        const ticket = idx + 1;
+        const { chain, token } = resolveChainToken(ticket);
+        winners.push(ZERO);
+        winnerTickets.push(ticket);
+        winnerChains.push(chain ?? null);
+        winnerTokens.push(token ?? null);
+      }
+
+      for (let i = 0; i < winnerIndices.length; i++) {
+        const ticket = winnerTickets[i];
+        let running = 0;
+        for (const entry of allEntries) {
+          running += entry.tickets;
+          if (ticket <= running) { winners[i] = (entry.address as string).toLowerCase(); break; }
+        }
+        if (i === 0) winners[0] = winner.toLowerCase();
+      }
+
+      const { chain: winnerChain, token: winnerToken } = resolveChainToken(primaryTicket);
+
       await ctx.runMutation(internal.raffle.recordDrawResult, {
-        epoch: ep, winner: winner.toLowerCase(), winnerTicket, winnerIndex: Number(winnerIndex),
-        vrfRandomWord: vrfRandomWord.toString(), totalEntries: Number(totalEntries),
-        prizeDescription: prizeDescription || "", winnerChain, winnerToken,
+        epoch: ep, winner: winner.toLowerCase(), winnerTicket: primaryTicket,
+        winnerIndex: primaryIndex, vrfRandomWord: vrfRandomWord.toString(),
+        totalEntries: total, prizeDescription: prizeDescription || "",
+        winnerChain, winnerToken,
+        winners, winnerTickets, winnerChains, winnerTokens,
+        prizeTier: numWinners,
       });
-      return { hasWinner: true, winner: winner.toLowerCase(), winnerTicket };
+      return { hasWinner: true, winner: winner.toLowerCase(), winnerTicket: primaryTicket };
     } catch (e) {
       console.error("[Raffle] checkAndRecordDrawInternal error:", e);
       return { hasWinner: false };

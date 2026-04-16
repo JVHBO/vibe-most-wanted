@@ -16,6 +16,30 @@ import { AudioManager } from "@/lib/audio-manager";
 import { formatUnits, parseUnits } from "viem";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { shareToFarcaster } from "@/lib/share-utils";
+import { getVbmsBaccaratImageUrlByTokenId, getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
+
+// ─── Prize Pool (Epoch 5) ─────────────────────────────────────────────────────
+const PRIZE_POOL = [
+  { tokenId: 15173, name: "Horsefarts" },
+  { tokenId: 15199, name: "JC Denton" },
+  { tokenId: 15172, name: "Beeper" },
+  { tokenId: 14106, name: "Vibe Intern" },
+  { tokenId: 15156, name: "Sartocrates" },
+  { tokenId: 15161, name: "Brian Armstrong" },
+  { tokenId: 14768, name: "Jack the Sniper" },
+  { tokenId: 15218, name: "NFTKid" },
+  { tokenId: 14440, name: "Slaterg / Proxy" },
+  { tokenId: 15164, name: "Zurkchad" },
+] as const;
+
+// Tier milestones — how many cards are active at each level
+const TIER_MILESTONES = [
+  { tickets: 1,   cards: 1,  winners: 1, label: "Start" },
+  { tickets: 50,  cards: 3,  winners: 1, label: "50 tickets" },
+  { tickets: 100, cards: 6,  winners: 2, label: "100 tickets" },
+  { tickets: 200, cards: 10, winners: 2, label: "200 tickets" },
+  { tickets: 500, cards: 10, winners: 3, label: "500 tickets" },
+] as const;
 
 // ─── Addresses ────────────────────────────────────────────────────────────────
 const RAFFLE_BASE   = "0x54ac4e3782a21341440c418e7c37b26f937095e4" as const;
@@ -184,6 +208,7 @@ export default function RafflePage() {
   const claimShareBonusAction = useAction(api.raffle.claimShareBonus);
   const [showCardModal,     setShowCardModal]     = useState(false);
   const [showVrfProof,      setShowVrfProof]      = useState(false);
+  const [prizeCardImages,   setPrizeCardImages]   = useState<Record<number, string>>({});
   const cardRotRef = useRef({ rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 });
   const cardInnerRef = useRef<HTMLDivElement>(null);
   const loaded              = useRef(false);
@@ -227,6 +252,28 @@ export default function RafflePage() {
     document.body.style.overflow = open ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [showBuy, showInfo]);
+
+  // ── Fetch prize pool card images from Wield ──
+  useEffect(() => {
+    const PACK_COVER = "54f04f3d-8d29-420e-aaeb-ba6b17e45e00";
+    PRIZE_POOL.forEach(card => {
+      if (prizeCardImages[card.tokenId]) return;
+      const local = getVbmsBaccaratImageUrlByTokenId(card.tokenId);
+      if (local) { setPrizeCardImages(p => ({ ...p, [card.tokenId]: local })); return; }
+      fetch(`https://build.wield.xyz/vibe/boosterbox/metadata/vibe-most-wanted/${card.tokenId}`)
+        .then(r => r.json())
+        .then(d => {
+          const attrs: any[] = d.attributes || [];
+          const get = (t: string) => attrs.find((a: any) => a.trait_type === t)?.value;
+          const charName = get("name") || get("Name") || get("Character");
+          const byName = charName ? getVbmsBaccaratImageUrl(charName) : null;
+          const safeCdn = d.image?.includes(PACK_COVER) ? undefined : d.image;
+          const img = byName || safeCdn;
+          if (img) setPrizeCardImages(p => ({ ...p, [card.tokenId]: img }));
+        })
+        .catch(() => {});
+    });
+  }, []);
 
   const endsAt      = config ? config.updatedAt + config.durationDays * 86400000 : null;
   const { d, h, m, s, ended } = useCountdown(endsAt);
@@ -551,10 +598,18 @@ export default function RafflePage() {
         <h1 className="absolute left-1/2 -translate-x-1/2 font-display font-black text-[#FFD700] text-base uppercase tracking-widest pointer-events-none">
           Raffle
         </h1>
-        <button
-          onClick={() => setShowInfo(true)}
-          className="w-8 h-8 border-2 border-[#FFD700] bg-[#FFD700]/10 text-[#FFD700] font-black text-sm flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all ml-auto z-10"
-        >?</button>
+        <div className="ml-auto flex items-center gap-2 z-10">
+          <Link
+            href="/raffle/history"
+            className="px-2 py-1 border-2 border-[#FFD700] bg-[#FFD700]/10 text-[#FFD700] text-[10px] font-black uppercase tracking-widest hover:bg-[#FFD700]/20 transition-colors"
+          >
+            📜 History
+          </Link>
+          <button
+            onClick={() => setShowInfo(true)}
+            className="w-8 h-8 border-2 border-[#FFD700] bg-[#FFD700]/10 text-[#FFD700] font-black text-sm flex items-center justify-center shadow-[2px_2px_0px_#FFD700] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all"
+          >?</button>
+        </div>
       </div>
 
       {/* ── Card flip 3D modal ── */}
@@ -974,8 +1029,89 @@ export default function RafflePage() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-sm mx-auto px-4 py-5 space-y-4">
 
-          {/* Prize card */}
-          <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
+          {/* ── Prize Pool + Tier Milestones ── */}
+          {(() => {
+            const currentTierIdx = TIER_MILESTONES.reduce((best, tier, i) =>
+              totalTickets >= tier.tickets ? i : best, 0);
+            const currentTier = TIER_MILESTONES[currentTierIdx];
+            const nextTier = TIER_MILESTONES[currentTierIdx + 1];
+            const activeCards = currentTier?.cards ?? 1;
+
+            return (
+              <div className="border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
+                {/* Header */}
+                <div className="bg-[#FFD700] border-b-2 border-black px-3 py-2 flex items-center justify-between">
+                  <span className="text-black font-black text-xs uppercase tracking-widest">🎁 Prize Pool</span>
+                  <span className="text-black/60 text-[10px] font-bold">{activeCards} of {PRIZE_POOL.length} cards unlocked</span>
+                </div>
+
+                {/* Cards grid */}
+                <div className="p-3 grid grid-cols-5 gap-1.5">
+                  {PRIZE_POOL.map((card, i) => {
+                    const locked = i >= activeCards;
+                    const img = prizeCardImages[card.tokenId];
+                    return (
+                      <div key={card.tokenId} className={`relative aspect-[2/3] rounded overflow-hidden border border-white/10 ${locked ? 'opacity-30 grayscale' : ''}`}>
+                        {img ? (
+                          <img src={img} alt={card.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full bg-black/60 flex items-center justify-center">
+                            <span className="text-white/20 text-xs">🃏</span>
+                          </div>
+                        )}
+                        {locked && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                            <span className="text-white/40 text-base">🔒</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Tier milestones */}
+                <div className="border-t-2 border-black px-3 py-2 space-y-1.5">
+                  {TIER_MILESTONES.map((tier, i) => {
+                    const reached = totalTickets >= tier.tickets;
+                    const isNext = !reached && TIER_MILESTONES[i - 1] && totalTickets >= TIER_MILESTONES[i - 1].tickets;
+                    return (
+                      <div key={tier.tickets} className={`flex items-center gap-2 text-[10px] ${reached ? 'opacity-100' : 'opacity-40'}`}>
+                        <span className={`font-black text-sm ${reached ? 'text-green-400' : isNext ? 'text-[#FFD700]' : 'text-white/30'}`}>
+                          {reached ? '✓' : isNext ? '→' : '○'}
+                        </span>
+                        <span className={`font-bold ${reached ? 'text-white' : 'text-white/60'}`}>{tier.tickets === 1 ? 'Start' : `${tier.tickets} tickets`}</span>
+                        <span className="text-white/30 flex-1">—</span>
+                        <span className={`font-black ${reached ? 'text-[#FFD700]' : 'text-white/40'}`}>
+                          {tier.winners} winner{tier.winners > 1 ? 's' : ''} · {tier.cards} cards
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Next tier progress */}
+                {nextTier && isRaffleActive && (
+                  <div className="border-t-2 border-black bg-black/40 px-3 py-2">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[#FFD700] text-[8px] font-black uppercase tracking-widest">
+                        Next: {nextTier.tickets} tickets → {nextTier.winners} winners
+                      </span>
+                      <span className="text-white/50 text-[8px] font-mono">{totalTickets} / {nextTier.tickets}</span>
+                    </div>
+                    <div className="h-2 bg-black/60 border border-white/10 overflow-hidden">
+                      <div
+                        className="h-full transition-all duration-500 bg-[#FFD700]"
+                        style={{ width: `${Math.min(100, (totalTickets / nextTier.tickets) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Prize card (old — hidden, kept for card modal) */}
+          <div className="hidden border-2 border-black bg-[#1a1a1a] shadow-[4px_4px_0px_#FFD700] overflow-hidden">
             <div className="flex">
               <div
                 className="shrink-0 border-r-2 border-black flex items-center justify-center overflow-hidden relative p-2 cursor-pointer"
