@@ -4,7 +4,7 @@
  * Set these in .env.local (dev) or Vercel dashboard (prod).
  */
 
-export const WIELD_API_KEY = process.env.WIELD_API_KEY ?? '';
+export const WIELD_API_KEY = process.env.NEXT_PUBLIC_WIELD_API_KEY || process.env.WIELD_API_KEY || '';
 export const ALCHEMY_API_KEY = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY ?? '';
 export const OPENSEA_API_KEY = process.env.OPENSEA_API_KEY ?? '';
 export const NEYNAR_API_KEY = process.env.NEYNAR_API_KEY ?? '';
