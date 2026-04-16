@@ -250,9 +250,13 @@ export async function fetchWieldTokens(
       saveOwnerCache(ownerCache);
     } catch (e) {
       console.warn(`Wield fetch failed for ${collection}:`, e);
-      // Invalidate stale owner cache on API failure to prevent phantom
-      // NFTs on next load. The cached tokenIds may belong to a different
-      // wallet state (e.g., demo wallet used for testing, cards sold/burned).
+      // Re-throw 429/401 so the caller (PlayerCardsContext) can trigger Alchemy fallback.
+      // Without this, the caller sees [] and assumes 0 NFTs, never trying Alchemy.
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes('429') || msg.includes('401') || msg.includes('403')) {
+        throw e;
+      }
+      // Other errors (network, etc.): clear stale cache and return []
       if (cached) {
         delete ownerCache[addrLower][collection];
         if (Object.keys(ownerCache[addrLower]).length === 0) {
