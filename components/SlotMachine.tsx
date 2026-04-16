@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { getVbmsBaccaratImageUrl } from "@/lib/tcg/images";
 import { playTrackedAudio } from "@/lib/tcg/audio";
@@ -29,7 +30,31 @@ import type {
   SlotComboStep,
   SlotPhase,
 } from "@/lib/slot/engine";
-import { getSlotComboCatalog } from "@/lib/slot/engine";
+import { getSlotComboCatalog, resolveComboAudio } from "@/lib/slot/engine";
+
+const SLOT_UI_TRANSLATIONS: Record<string, {
+  spin: string; deposit: string; withdraw: string; buyBonus: string;
+  bet: string; balance: string; freeSpins: string; bonusMode: string;
+  bonusSpin: string; bonusRemaining: string; winUpTo: string;
+  connectWallet: string; accessDenied: string; welcome: string;
+  howToPlay: string; combos: string; mechanics: string; howToDeposit: string;
+  prev: string; next: string; play: string; missing: string;
+  freeSpinsDay: string; noDeposit: string;
+}> = {
+  en:      { spin:"SPIN",deposit:"DEPOSIT",withdraw:"WITHDRAW",buyBonus:"BUY BONUS",bet:"BET",balance:"BALANCE",freeSpins:"FREE SPINS",bonusMode:"BONUS MODE",bonusSpin:"BONUS SPIN",bonusRemaining:"remaining",winUpTo:"WIN UP TO",connectWallet:"Connect wallet!",accessDenied:"Access restricted!",welcome:"Welcome",howToPlay:"How to play →",combos:"Combos",mechanics:"Mechanics",howToDeposit:"How to Deposit",prev:"← Prev",next:"Next →",play:"Play! 🎰",missing:"Missing",freeSpinsDay:"10 free spins per day!",noDeposit:"No deposit needed to start" },
+  "pt-BR": { spin:"GIRAR",deposit:"DEPOSITAR",withdraw:"SACAR",buyBonus:"COMPRAR BÔNUS",bet:"APOSTA",balance:"SALDO",freeSpins:"GIROS GRÁTIS",bonusMode:"MODO BÔNUS",bonusSpin:"GIRO BÔNUS",bonusRemaining:"restantes",winUpTo:"GANHE ATÉ",connectWallet:"Conecte a carteira!",accessDenied:"Acesso restrito!",welcome:"Bem-vindo",howToPlay:"Ver como jogar →",combos:"Combos",mechanics:"Mecânicas",howToDeposit:"Como Depositar",prev:"← Anterior",next:"Próximo →",play:"Jogar! 🎰",missing:"Faltou",freeSpinsDay:"10 giros grátis por dia!",noDeposit:"Não precisa depositar para começar" },
+  es:      { spin:"GIRAR",deposit:"DEPOSITAR",withdraw:"RETIRAR",buyBonus:"COMPRAR BONO",bet:"APUESTA",balance:"SALDO",freeSpins:"GIROS GRATIS",bonusMode:"MODO BONO",bonusSpin:"GIRO BONO",bonusRemaining:"restantes",winUpTo:"GANA HASTA",connectWallet:"¡Conecta la billetera!",accessDenied:"¡Acceso restringido!",welcome:"Bienvenido",howToPlay:"Ver cómo jugar →",combos:"Combos",mechanics:"Mecánicas",howToDeposit:"Cómo Depositar",prev:"← Anterior",next:"Siguiente →",play:"¡Jugar! 🎰",missing:"Faltó",freeSpinsDay:"¡10 giros gratis por día!",noDeposit:"No necesitas depositar para empezar" },
+  hi:      { spin:"घुमाएं",deposit:"जमा",withdraw:"निकालें",buyBonus:"बोनस खरीदें",bet:"दांव",balance:"शेष",freeSpins:"मुफ्त स्पिन",bonusMode:"बोनस मोड",bonusSpin:"बोनस स्पिन",bonusRemaining:"शेष",winUpTo:"तक जीतें",connectWallet:"वॉलेट कनेक्ट करें!",accessDenied:"पहुँच प्रतिबंधित!",welcome:"स्वागत",howToPlay:"खेलना सीखें →",combos:"कॉम्बो",mechanics:"यांत्रिकी",howToDeposit:"जमा कैसे करें",prev:"← पिछला",next:"अगला →",play:"खेलें! 🎰",missing:"कमी",freeSpinsDay:"प्रतिदिन 10 मुफ्त स्पिन!",noDeposit:"शुरू करने के लिए जमा की जरूरत नहीं" },
+  ru:      { spin:"КРУТИТЬ",deposit:"ПОПОЛНИТЬ",withdraw:"ВЫВЕСТИ",buyBonus:"КУПИТЬ БОНУС",bet:"СТАВКА",balance:"БАЛАНС",freeSpins:"БЕСПЛАТНЫЕ",bonusMode:"БОНУС РЕЖИМ",bonusSpin:"БОНУС СПИН",bonusRemaining:"осталось",winUpTo:"ВЫИГРАЙ ДО",connectWallet:"Подключи кошелёк!",accessDenied:"Доступ закрыт!",welcome:"Добро пожаловать",howToPlay:"Как играть →",combos:"Комбо",mechanics:"Механики",howToDeposit:"Как пополнить",prev:"← Назад",next:"Далее →",play:"Играть! 🎰",missing:"Не хватает",freeSpinsDay:"10 бесплатных спинов в день!",noDeposit:"Депозит не нужен для старта" },
+  "zh-CN": { spin:"旋转",deposit:"存入",withdraw:"提取",buyBonus:"购买奖励",bet:"投注",balance:"余额",freeSpins:"免费旋转",bonusMode:"奖励模式",bonusSpin:"奖励旋转",bonusRemaining:"剩余",winUpTo:"最多赢",connectWallet:"连接钱包！",accessDenied:"访问受限！",welcome:"欢迎",howToPlay:"了解玩法 →",combos:"组合",mechanics:"机制",howToDeposit:"如何存入",prev:"← 上一页",next:"下一页 →",play:"开始！🎰",missing:"缺少",freeSpinsDay:"每天10次免费旋转！",noDeposit:"无需存款即可开始" },
+  id:      { spin:"PUTAR",deposit:"SETOR",withdraw:"TARIK",buyBonus:"BELI BONUS",bet:"TARUHAN",balance:"SALDO",freeSpins:"PUTARAN GRATIS",bonusMode:"MODE BONUS",bonusSpin:"PUTARAN BONUS",bonusRemaining:"tersisa",winUpTo:"MENANGKAN HINGGA",connectWallet:"Hubungkan dompet!",accessDenied:"Akses dibatasi!",welcome:"Selamat Datang",howToPlay:"Cara bermain →",combos:"Kombo",mechanics:"Mekanisme",howToDeposit:"Cara Setor",prev:"← Sebelumnya",next:"Berikutnya →",play:"Main! 🎰",missing:"Kurang",freeSpinsDay:"10 putaran gratis per hari!",noDeposit:"Tidak perlu setor untuk mulai" },
+  fr:      { spin:"TOURNER",deposit:"DÉPOSER",withdraw:"RETIRER",buyBonus:"ACHETER BONUS",bet:"MISE",balance:"SOLDE",freeSpins:"TOURS GRATUITS",bonusMode:"MODE BONUS",bonusSpin:"TOUR BONUS",bonusRemaining:"restants",winUpTo:"GAGNER JUSQU'À",connectWallet:"Connectez le portefeuille!",accessDenied:"Accès restreint!",welcome:"Bienvenue",howToPlay:"Comment jouer →",combos:"Combos",mechanics:"Mécaniques",howToDeposit:"Comment Déposer",prev:"← Précédent",next:"Suivant →",play:"Jouer! 🎰",missing:"Manque",freeSpinsDay:"10 tours gratuits par jour!",noDeposit:"Pas besoin de dépôt pour commencer" },
+  ja:      { spin:"回す",deposit:"入金",withdraw:"出金",buyBonus:"ボーナス購入",bet:"ベット",balance:"残高",freeSpins:"フリースピン",bonusMode:"ボーナスモード",bonusSpin:"ボーナススピン",bonusRemaining:"残り",winUpTo:"最大で獲得",connectWallet:"ウォレットを接続！",accessDenied:"アクセス制限！",welcome:"ようこそ",howToPlay:"遊び方を見る →",combos:"コンボ",mechanics:"仕組み",howToDeposit:"入金方法",prev:"← 前へ",next:"次へ →",play:"プレイ！🎰",missing:"不足",freeSpinsDay:"毎日10回フリースピン！",noDeposit:"開始に入金不要" },
+  it:      { spin:"GIRA",deposit:"DEPOSITA",withdraw:"PRELEVA",buyBonus:"COMPRA BONUS",bet:"PUNTATA",balance:"SALDO",freeSpins:"GIRI GRATUITI",bonusMode:"MODALITÀ BONUS",bonusSpin:"GIRO BONUS",bonusRemaining:"rimasti",winUpTo:"VINCI FINO A",connectWallet:"Connetti il portafoglio!",accessDenied:"Accesso limitato!",welcome:"Benvenuto",howToPlay:"Come giocare →",combos:"Combo",mechanics:"Meccaniche",howToDeposit:"Come Depositare",prev:"← Precedente",next:"Successivo →",play:"Gioca! 🎰",missing:"Manca",freeSpinsDay:"10 giri gratuiti al giorno!",noDeposit:"Nessun deposito per iniziare" },
+};
+function getSlotT(lang: string) {
+  return SLOT_UI_TRANSLATIONS[lang] ?? SLOT_UI_TRANSLATIONS["en"]!;
+}
 
 const COLS = SLOT_COLS;
 const ROWS = SLOT_ROWS;
@@ -43,6 +68,7 @@ const BONUS_FREE_SPINS = SLOT_BONUS_FREE_SPINS;
 const CASINO_SLOT_GIF = "/slot-gifs/casino-slot-animation.gif"; // GIF de cassino para a carta especial
 
 interface SpinResult {
+  spinId: string;
   initialGrid: SlotCard[];
   comboSteps: SlotComboStep[];
   finalGrid: SlotCard[];
@@ -190,17 +216,23 @@ type SlotMachineProps = {
   onWalletOpen?: () => void;
   duckBgm?: (reason?: "combo" | "bonus") => void;
   restoreBgm?: () => void;
+  narrationMuted?: boolean;
   onHelpOpen?: (openFn: () => void) => void;
+  isFrameMode?: boolean;
 };
 
 export default function SlotMachine({
   onWalletOpen,
   duckBgm,
   restoreBgm,
+  narrationMuted = false,
   onHelpOpen,
+  isFrameMode = false,
 }: SlotMachineProps) {
   const { isConnected, address } = useAccount();
   const { userProfile, refreshProfile } = useProfile();
+  const { lang } = useLanguage();
+  const t = getSlotT(lang);
   const spinMut = useMutation(api.slot.spinSlot);
   const statsQ  = useQuery(api.slot.getSlotDailyStats, { address: address || "" });
 
@@ -233,16 +265,55 @@ export default function SlotMachine({
   const [autoBonusMode, setAutoBonusMode]       = useState(false);
   const [showHelp, setShowHelp]                 = useState(false);
   const [helpPage, setHelpPage]                 = useState(0);
+  // Bonus win tracking
+  const [bonusWinTotal, setBonusWinTotal]       = useState(0);
+  const [bonusWinDisplay, setBonusWinDisplay]   = useState<number | null>(null); // +X durante bonus
+  const [showPlayBonus, setShowPlayBonus]       = useState(false);
+  const [showBonusSummary, setShowBonusSummary] = useState(false);
+  const [bonusSummaryAmount, setBonusSummaryAmount] = useState(0);
+  const [bigWinType, setBigWinType]             = useState<'nice' | 'great' | 'big' | 'max' | null>(null);
+  const [bigWinAmount, setBigWinAmount]         = useState(0);
+  const [bigWinMultX, setBigWinMultX]           = useState(0);
+
+  // Auto-open tutorial na primeira visita
+  useEffect(() => {
+    const seen = localStorage.getItem("slot_tutorial_seen");
+    if (!seen) {
+      setHelpPage(0);
+      setShowHelp(true);
+    }
+  }, []);
 
   useEffect(() => { onHelpOpen?.(() => { setShowHelp(true); setHelpPage(0); }); }, [onHelpOpen]);
 
+  // Recuperação de spin após F5 — mostra resultado pendente se ainda recente (< 2 min)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("slot_pending_spin");
+      if (!raw) return;
+      const { spinId, winAmount, timestamp } = JSON.parse(raw);
+      if (Date.now() - timestamp > 2 * 60 * 1000) { sessionStorage.removeItem("slot_pending_spin"); return; }
+      sessionStorage.removeItem("slot_pending_spin");
+      if (winAmount > 0) {
+        toast.success(`🎰 Spin recuperado! Você ganhou +${winAmount.toLocaleString()} coins (ID: ${String(spinId).slice(-6)})`);
+      } else {
+        toast(`🎰 Spin anterior concluído sem ganhos (ID: ${String(spinId).slice(-6)})`);
+      }
+    } catch {}
+  }, []);
+
   const card3DRotRef  = useRef({ rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 });
   const card3DInnerRef = useRef<HTMLDivElement | null>(null);
+  const playBonusReadyRef = useRef<(() => void) | null>(null);
+  const bonusWinTotalRef = useRef(0);
   const ivs = useRef<Record<number, ReturnType<typeof setInterval>>>({});
   const foilsFoundRef = useRef(0);
-  const lockedGifRef  = useRef<number|null>(null); // ref para leitura síncrona em playCascade
+  const lockedGifRef  = useRef<number|null>(null);
   const spinSequenceRef = useRef(0);
   const bonusStateRef = useRef<SlotBonusState>({ persistentWildcards: [], spinsRemaining: 0 });
+  // Células com dragukka persistente — não animam durante bonus spins
+  const lockedCellsRef = useRef<Set<number>>(new Set());
+  const [lockedCells, setLockedCells] = useState<Set<number>>(new Set());
 
   // isBonusActive: derivado — verdadeiro enquanto há animação épica ativa ou phase BONUS
   const isBonusActive = epicFoilCards !== null || phase === "BONUS";
@@ -264,14 +335,18 @@ export default function SlotMachine({
   const isAllowed = isConnected && isDeveloperSlotAddress(address);
 
   const startCol = useCallback((col: number) => {
+    const intervalMs = isFrameMode ? 100 : 55;
     ivs.current[col] = setInterval(() => {
       setCells(prev => {
         const n = [...prev];
-        for (let r = 0; r < ROWS; r++) n[r * COLS + col] = pick();
+        for (let r = 0; r < ROWS; r++) {
+          const idx = r * COLS + col;
+          if (!lockedCellsRef.current.has(idx)) n[idx] = pick();
+        }
         return n;
       });
-    }, 55);
-  }, []);
+    }, intervalMs);
+  }, [isFrameMode]);
 
   // Para coluna com desaceleração visual + callback quando termina
   const slowAndStopCol = useCallback((col: number, cards: SlotCard[], onDone?: () => void) => {
@@ -303,7 +378,10 @@ export default function SlotMachine({
       }
       setCells(prev => {
         const n = [...prev];
-        for (let r = 0; r < ROWS; r++) n[r * COLS + col] = pick();
+        for (let r = 0; r < ROWS; r++) {
+          const idx = r * COLS + col;
+          if (!lockedCellsRef.current.has(idx)) n[idx] = pick();
+        }
         return n;
       });
       setTimeout(tick, slowSteps[step++]);
@@ -337,13 +415,16 @@ export default function SlotMachine({
   }, []);
 
   const playNarration = useCallback(async (src: string | null, reason: "combo" | "bonus", volume = 0.65) => {
+    if (narrationMuted) return;
     duckBgm?.(reason);
     const audio = src ? playTrackedAudio(src, volume) : null;
     await waitForTrackedAudio(audio, reason === "bonus" ? 2400 : 2200);
     restoreBgm?.();
-  }, [duckBgm, restoreBgm, waitForTrackedAudio]);
+  }, [narrationMuted, duckBgm, restoreBgm, waitForTrackedAudio]);
 
   const finishSpinVisuals = useCallback((finalGrid: SlotCard[], totalWin: number, maxWin: boolean, details: string[], keepSpinning = false) => {
+    // Spin concluído — limpar spin pendente do sessionStorage
+    try { sessionStorage.removeItem("slot_pending_spin"); } catch {}
     setPhase("END");
     setCells(finalGrid);
     if (!keepSpinning) setIsSpinning(false);
@@ -403,7 +484,11 @@ export default function SlotMachine({
       });
 
       await sleep(140);
-      await playNarration(step.combo.audioPath, "combo", 0.7);
+      // Resolve audio client-side (fallback garante que funciona mesmo sem redeploy do Convex)
+      const comboAudio = step.combo.audioPath
+        ? { audioPath: step.combo.audioPath, audioVolume: step.combo.audioVolume ?? 0.7 }
+        : resolveComboAudio(step.combo.id);
+      await playNarration(comboAudio.audioPath, "combo", comboAudio.audioVolume);
 
       runningWin += step.reward;
       details.push(`${step.combo.name} -> +${step.reward}`);
@@ -447,16 +532,31 @@ export default function SlotMachine({
     setShowBonusAnimation(false);
   }, [playNarration]);
 
+  // Detectar categoria de vitória para overlay
+  const showBigWinOverlay = useCallback((amount: number, bet: number) => {
+    if (amount <= 0) return;
+    const multiplierX = bet > 0 ? Math.round(amount / bet) : 0;
+    const type = amount >= 10000 ? 'max' : amount >= 2000 ? 'big' : amount >= 500 ? 'great' : amount >= 150 ? 'nice' : null;
+    if (!type) return;
+    setBigWinType(type);
+    setBigWinAmount(amount);
+    setBigWinMultX(multiplierX);
+    // auto-close after 4s — user can also dismiss by tapping
+    setTimeout(() => setBigWinType(null), 4000);
+  }, []);
+
   const spin = async (isFree: boolean, forceBonusMode = false) => {
-    if (!isConnected || !address) { toast.error("Conecte a carteira!"); return; }
-    if (!isAllowed) { toast.error("Acesso restrito!"); return; }
+    if (!isConnected || !address) { toast.error(t.connectWallet); return; }
+    if (!isAllowed) { toast.error(t.accessDenied); return; }
     if (isSpinning) return;
 
-    // isFreeOnly: true = free daily spin (costs 0), false = normal paid spin
     const isFreeOnly = isFree;
 
-    let bonusMode = forceBonusMode;
-    let bonusEntryPaid = false; // only charge once for BUY BONUS entry
+    // BUY BONUS: primeira rodada é spin normal com foils forçados (isBonusMode=false, buyBonusEntry=true)
+    // O backend força 4 foils → dispara o bonus. Rodadas seguintes são isBonusMode=true.
+    let bonusMode = false;            // começa false — bonus entra depois do trigger
+    let isBuyBonusEntry = forceBonusMode; // true só na primeira rodada do buy bonus
+    let bonusEntryPaid = false;
     let currentBonusState = bonusState;
 
     // Auto-bonus loop: continua enquanto há spins de bônus restantes
@@ -477,6 +577,16 @@ export default function SlotMachine({
       setDeceleratingCols(new Set());
       setFoilSuspenseCols(new Set());
       setEpicFoilCards(null);
+
+      // Células com dragukka persistente ficam travadas durante bonus spins
+      if (bonusMode && currentBonusState.persistentWildcards.length > 0) {
+        const locked = new Set(currentBonusState.persistentWildcards.map(w => w.index));
+        lockedCellsRef.current = locked;
+        setLockedCells(locked);
+      } else {
+        lockedCellsRef.current = new Set();
+        setLockedCells(new Set());
+      }
       setEpicFoilPhase(null);
       foilsFoundRef.current = 0;
 
@@ -485,24 +595,28 @@ export default function SlotMachine({
 
       const res = await spinMut({
         address,
-        isFreeSpin: isFreeOnly && !bonusMode, // free daily spin only when not in bonus mode
-        buyBonusEntry: bonusMode && !bonusEntryPaid,
-        bonusMultiplier: bonusMode ? 2 : 1,
+        isFreeSpin: isFreeOnly && !bonusMode && !isBuyBonusEntry,
+        buyBonusEntry: isBuyBonusEntry && !bonusEntryPaid,
         betMultiplier: betMult,
         isBonusMode: bonusMode,
         ...(bonusMode ? { bonusState: currentBonusState } : {}),
       }) as SpinResult;
 
-      // Mark that we paid for bonus entry on first bonus spin
-      if (bonusMode && !bonusEntryPaid) {
+      // Salvar spinId imediatamente — permite recuperação se o player recarregar a página
+      // O resultado já está salvo no servidor; se houver F5 agora, ainda é possível ver o resultado
+      try { sessionStorage.setItem("slot_pending_spin", JSON.stringify({ spinId: res.spinId, winAmount: res.winAmount, timestamp: Date.now() })); } catch {}
+
+      // Após enviar a entry do buy bonus, marcar como pago
+      if (isBuyBonusEntry && !bonusEntryPaid) {
         bonusEntryPaid = true;
+        isBuyBonusEntry = false;
       }
 
       if (spinSequenceRef.current !== sequenceId) {
         return;
       }
 
-      setBonusState(res.bonusState);
+      // NÃO atualiza bonusState ainda — o contador apareceria antes das foils animarem
       await refreshProfile();
 
       const MIN_SPIN_MS = 1600;
@@ -533,6 +647,16 @@ export default function SlotMachine({
                   return;
                 }
 
+                // Acumular ganhos do bonus
+                if (bonusMode && res.winAmount > 0) {
+                  bonusWinTotalRef.current += res.winAmount;
+                  setBonusWinTotal(bonusWinTotalRef.current);
+                  setBonusWinDisplay(bonusWinTotalRef.current);
+                }
+
+                // Big win overlay para spins com ganho alto
+                showBigWinOverlay(res.winAmount, betMult);
+
                 if (res.triggeredBonus && res.foilCount >= 4) {
                   const finalFoils = res.finalGrid
                     .map((card, idx) => ({
@@ -545,7 +669,21 @@ export default function SlotMachine({
                     .filter((entry) => entry.card.hasFoil);
 
                   await triggerEpicFoil(finalFoils);
-                  toast.success(`BONUS MODE +${res.bonusSpinsAwarded} spins`);
+
+                  // Pausar e mostrar "PLAY BONUS" antes de entrar no bonus
+                  await new Promise<void>(playResolve => {
+                    playBonusReadyRef.current = playResolve;
+                    setShowPlayBonus(true);
+                  });
+
+                  // Só agora mostra o contador — foils já voaram
+                  setBonusState(res.bonusState);
+                  // Resetar acumulador de ganhos do bonus
+                  bonusWinTotalRef.current = 0;
+                  setBonusWinTotal(0);
+                  setBonusWinDisplay(null);
+                } else {
+                  setBonusState(res.bonusState);
                 }
 
                 finishSpinVisuals(res.finalGrid, res.winAmount, res.maxWin, details, res.triggeredBonus);
@@ -584,23 +722,32 @@ export default function SlotMachine({
         bonusMode = spinsLeft > 0;
         currentBonusState = res.bonusState;
 
-        // Visual feedback during bonus spins
-        if (spinsLeft > 0) {
-          toast.success(`🎰 BONUS SPIN ${spinsLeft} restantes!`);
+        if (!bonusMode) {
+          // Último spin de bonus — mostrar summary
+          const totalBonusWin = bonusWinTotalRef.current;
+          setBonusSummaryAmount(totalBonusWin);
+          setShowBonusSummary(true);
+          bonusWinTotalRef.current = 0;
+          setBonusWinTotal(0);
+          setBonusWinDisplay(null);
+          lockedCellsRef.current = new Set();
+          setLockedCells(new Set());
         }
       } else if (res.triggeredBonus) {
         bonusMode = true;
         currentBonusState = res.bonusState;
-        toast.success(`🎰 BONUS MODE +${res.bonusSpinsAwarded} spins!`);
       } else {
         bonusMode = false;
+        lockedCellsRef.current = new Set();
+        setLockedCells(new Set());
       }
     } while (bonusMode);
   };
 
   const renderCard = (card: SlotCard, idx: number) => {
     const col        = idx % COLS;
-    const spinning   = !stopped.has(col);
+    const isLocked   = lockedCells.has(idx); // dragukka persistente — não anima
+    const spinning   = !stopped.has(col) && !isLocked;
     const decelerating = spinning && deceleratingCols.has(col);
     const isWin      = !spinning && winCells.has(idx);
     const isNew      = !spinning && newCells.has(idx);
@@ -640,16 +787,22 @@ export default function SlotMachine({
 
     return (
       <div
-        className={`absolute inset-0 flex flex-col overflow-hidden ${decelerating ? "slot-decel" : spinning ? "slot-spin" : isNew ? "card-fall-in" : isWin ? "win-flash" : "transition-all duration-150"} ${effectiveCard.hasFoil ? "foil-card" : ""}`}
+        className={`absolute inset-0 flex flex-col overflow-hidden ${isLocked ? "" : decelerating ? "slot-decel" : spinning ? "slot-spin" : isNew ? "card-fall-in" : isWin ? "win-flash" : "transition-all duration-150"} ${effectiveCard.hasFoil ? "foil-card" : ""}`}
         style={{
-          border: foilEffect.border || `${borderW}px solid ${borderColor}`,
-          boxShadow: foilEffect.boxShadow || (isWin
-            ? `0 0 20px #FFD700, 0 0 8px #FFD700, inset 0 0 16px #FFD70033`
-            : undefined),
-          animation: `${rarityAnim || foilEffect.animation || ''}`.trim(),
+          border: isLocked
+            ? "2px solid #FACC15"
+            : foilEffect.border || `${borderW}px solid ${borderColor}`,
+          boxShadow: isLocked
+            ? "0 0 12px #FACC1588, inset 0 0 10px #FACC1522"
+            : foilEffect.boxShadow || (isWin ? `0 0 20px #FFD700, 0 0 8px #FFD700, inset 0 0 16px #FFD70033` : undefined),
+          animation: isLocked ? undefined : `${rarityAnim || foilEffect.animation || ''}`.trim(),
           background: s.bg,
         }}
       >
+        {/* Ícone de cadeado para dragukka travada */}
+        {isLocked && (
+          <div className="absolute top-0.5 right-0.5 z-20 text-[8px] leading-none">🔒</div>
+        )}
         {/* Rarity corner triangle */}
         <div
           className="absolute top-0 left-0 w-5 h-5 z-10 pointer-events-none"
@@ -736,13 +889,24 @@ export default function SlotMachine({
           50%  { transform:translateY(6px);  filter:blur(3px) brightness(0.85); }
           100% { transform:translateY(-6px); filter:blur(2.5px) brightness(1.1); }
         }
-        .slot-spin { animation: slot-blur 0.08s ease-in-out infinite; }
+        /* Frame mode: sem filter (GPU-heavy), só opacity */
+        @keyframes slot-blur-lite {
+          0%   { transform:translateY(-5px); opacity:0.7; }
+          50%  { transform:translateY(5px);  opacity:0.85; }
+          100% { transform:translateY(-5px); opacity:0.7; }
+        }
+        @keyframes slot-blur-slow-lite {
+          0%   { transform:translateY(-3px); opacity:0.85; }
+          50%  { transform:translateY(3px);  opacity:1; }
+          100% { transform:translateY(-3px); opacity:0.85; }
+        }
+        .slot-spin { animation: ${isFrameMode ? 'slot-blur-lite 0.12s' : 'slot-blur 0.08s'} ease-in-out infinite; }
         @keyframes slot-blur-slow {
           0%   { transform:translateY(-3px); filter:blur(1px) brightness(1.05); }
           50%  { transform:translateY(3px);  filter:blur(1.5px) brightness(0.9); }
           100% { transform:translateY(-3px); filter:blur(1px) brightness(1.05); }
         }
-        .slot-decel { animation: slot-blur-slow 0.18s ease-in-out infinite; }
+        .slot-decel { animation: ${isFrameMode ? 'slot-blur-slow-lite 0.22s' : 'slot-blur-slow 0.18s'} ease-in-out infinite; }
         @keyframes win-pulse {
           0%,100%{ opacity:1; }
           50%    { opacity:0.75; }
@@ -1060,6 +1224,101 @@ export default function SlotMachine({
         </div>
       ); })()}
 
+      {/* PLAY BONUS overlay — aparece após 4 foils, antes de entrar no bonus */}
+      {showPlayBonus && (
+        <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.88)', backdropFilter:'blur(8px)' }}>
+          <div className="flex flex-col items-center gap-6 text-center px-8">
+            <div className="font-black text-5xl" style={{ color:'#FFD700', textShadow:'0 0 30px #FFD700, 0 0 60px #FFA500', animation:'epic-bonus-pop 0.6s cubic-bezier(.34,1.56,.64,1) both' }}>
+              BONUS!
+            </div>
+            <div className="font-black text-xl text-white uppercase tracking-widest">
+              {BONUS_FREE_SPINS} Free Spins
+            </div>
+            <div className="text-gray-400 text-sm">A Wildcard permanece no grid durante todo o bônus!</div>
+            <button
+              onClick={() => {
+                setShowPlayBonus(false);
+                playBonusReadyRef.current?.();
+                playBonusReadyRef.current = null;
+              }}
+              className="px-10 py-4 rounded-2xl font-black text-xl uppercase tracking-widest border-4 border-black active:scale-95 transition-transform"
+              style={{ background:'linear-gradient(180deg,#FFD700,#c87941)', color:'#000', boxShadow:'0 6px 0 #000, 0 0 30px #FFD700' }}
+            >
+              🎰 PLAY BONUS
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* BONUS SUMMARY — aparece após os 10 bonus spins */}
+      {showBonusSummary && (
+        <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.92)', backdropFilter:'blur(8px)' }}>
+          <div className="flex flex-col items-center gap-5 text-center px-8 max-w-[320px]">
+            <div className="font-black text-2xl uppercase tracking-widest text-yellow-300">Bonus Concluído!</div>
+            <div className="font-black leading-none" style={{ fontSize: 52, color: bonusSummaryAmount > 0 ? '#4ade80' : '#6b7280', textShadow: bonusSummaryAmount > 0 ? '0 0 20px #4ade80' : undefined }}>
+              +{bonusSummaryAmount.toLocaleString()}
+            </div>
+            <div className="text-gray-400 text-sm uppercase tracking-wider">coins ganhos no bonus</div>
+            <button
+              onClick={() => setShowBonusSummary(false)}
+              className="px-8 py-3 rounded-xl font-black text-base uppercase tracking-widest border-2 border-black active:scale-95 transition-transform"
+              style={{ background:'linear-gradient(180deg,#7c3aed,#4c1d95)', color:'#FFD700', boxShadow:'0 4px 0 #000' }}
+            >
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* BIG WIN overlay */}
+      {bigWinType && (() => {
+        const cfg = {
+          max:   { label: 'MAX WIN!',   color: '#a855f7', shadow: '0 0 20px #a855f7, 0 0 60px #c084fc', size: 52 },
+          big:   { label: 'BIG WIN!',   color: '#FFD700', shadow: '0 0 20px #FFD700, 0 0 50px #FFA500', size: 46 },
+          great: { label: 'GREAT WIN!', color: '#4ade80', shadow: '0 0 20px #4ade80, 0 0 40px #22c55e', size: 40 },
+          nice:  { label: 'NICE WIN!',  color: '#38bdf8', shadow: '0 0 16px #38bdf8, 0 0 30px #0ea5e9', size: 34 },
+        }[bigWinType];
+        const ogParams = new URLSearchParams({ amount: String(bigWinAmount), x: String(bigWinMultX), type: bigWinType });
+        const ogUrl = `https://vibemostwanted.xyz/api/og/slot-win?${ogParams}`;
+        const castText = `🎰 ${cfg.label} +${bigWinAmount.toLocaleString()} coins${bigWinMultX >= 2 ? ` (${bigWinMultX}×)` : ''} on Tukka Slots!\n\nPlay at vibemostwanted.xyz/slot 🎴`;
+        return (
+          <div
+            className="fixed inset-0 z-[640] flex flex-col items-center justify-center gap-4"
+            style={{ background: 'rgba(0,0,0,0.72)' }}
+            onClick={() => setBigWinType(null)}
+          >
+            <div className="font-black uppercase tracking-widest text-center pointer-events-none" style={{
+              fontSize: cfg.size, color: cfg.color, textShadow: cfg.shadow,
+              animation: 'epic-bonus-pop 0.5s cubic-bezier(.34,1.56,.64,1) both',
+            }}>
+              {cfg.label}
+            </div>
+            {bigWinMultX >= 2 && (
+              <div className="font-black text-white text-2xl pointer-events-none" style={{ textShadow: `0 0 12px ${cfg.color}` }}>
+                {bigWinMultX}×
+              </div>
+            )}
+            <div className="font-black pointer-events-none" style={{ fontSize: 28, color: cfg.color }}>
+              +{bigWinAmount.toLocaleString()} coins
+            </div>
+            <button
+              onClick={e => {
+                e.stopPropagation();
+                const embedUrl = `https://vibemostwanted.xyz/slot`;
+                const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(embedUrl)}`;
+                try { await sdk.actions.openUrl(composeUrl); } catch { window.open(composeUrl, '_blank'); }
+                setBigWinType(null);
+              }}
+              className="mt-2 px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest border-2 border-black"
+              style={{ background: 'linear-gradient(180deg,#7c3aed,#4c1d95)', color: '#fff', boxShadow: '0 4px 0 #000' }}
+            >
+              🔗 Share Win
+            </button>
+            <div className="text-[10px] text-gray-500 pointer-events-none">tap anywhere to dismiss</div>
+          </div>
+        );
+      })()}
+
       {/* EPIC FOIL OVERLAY — 4 foil cards flip 3D in-place side by side */}
       {epicFoilCards && epicFoilPhase && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center overflow-hidden pointer-events-none"
@@ -1102,7 +1361,7 @@ export default function SlotMachine({
                     BONUS!
                   </div>
                   <div className="font-black text-white text-sm uppercase tracking-widest mt-1" style={{ textShadow:'0 0 10px #a855f7' }}>
-                    FREE SPINS
+                    {t.freeSpins}
                   </div>
                 </div>
               </div>
@@ -1120,7 +1379,7 @@ export default function SlotMachine({
             onClick={e => e.stopPropagation()}
           >
             <div className="px-4 py-2 border-b-2 border-[#7c3aed] flex items-center justify-between" style={{ background:"linear-gradient(180deg,#4c1d95,#2e1065)" }}>
-              <span className="font-black text-sm uppercase tracking-widest" style={{ color:"#FFD700", textShadow:"1px 1px 0 #000" }}>BUY BONUS</span>
+              <span className="font-black text-sm uppercase tracking-widest" style={{ color:"#FFD700", textShadow:"1px 1px 0 #000" }}>{t.buyBonus}</span>
               <button onClick={() => setShowBonusConfirm(false)} className="w-6 h-6 rounded-full bg-red-600 border-2 border-black font-black text-white text-sm flex items-center justify-center">×</button>
             </div>
             <div className="p-4 text-center space-y-3">
@@ -1148,138 +1407,264 @@ export default function SlotMachine({
       )}
 
       {/* HELP MODAL */}
-      {showHelp && (
-        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/90" onClick={() => setShowHelp(false)}>
-          <div
-            className="w-full max-w-[320px] rounded-xl border-4 overflow-hidden"
-            style={{ borderColor:"#c87941", background:"#1a1a1a", boxShadow:"0 8px 32px rgba(0,0,0,0.8)" }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="px-4 py-2 border-b-2 border-[#c87941] flex items-center justify-between" style={{ background:"#0d0500" }}>
-              <span className="font-black text-sm uppercase tracking-widest" style={{ color:"#FFD700" }}>HELP</span>
-              <button onClick={() => setShowHelp(false)} className="w-6 h-6 rounded-full bg-red-600 border-2 border-black font-black text-white text-sm flex items-center justify-center">×</button>
-            </div>
+      {showHelp && (() => {
+        const TOTAL_PAGES = 4;
+        const closeHelp = () => {
+          localStorage.setItem("slot_tutorial_seen", "1");
+          setShowHelp(false);
+        };
+        return (
+          <div className="fixed inset-0 z-[400] flex items-center justify-center p-3 bg-black/92" onClick={closeHelp}>
+            <div
+              className="w-full max-w-[340px] rounded-2xl border-4 overflow-hidden flex flex-col"
+              style={{ borderColor:"#c87941", background:"#0d0500", boxShadow:"0 0 60px #c8794144, 4px 4px 0 #000", maxHeight:"90vh" }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-4 py-2.5 border-b-2 border-[#c87941] flex items-center justify-between shrink-0" style={{ background:"linear-gradient(180deg,#3a1800,#1a0800)" }}>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🎰</span>
+                  <span className="font-black text-sm uppercase tracking-widest" style={{ color:"#FFD700" }}>
+                    {helpPage === 0 ? t.welcome : helpPage === 1 ? t.combos : helpPage === 2 ? t.mechanics : t.howToDeposit}
+                  </span>
+                </div>
+                <button onClick={closeHelp} className="w-6 h-6 rounded-full bg-red-600 border-2 border-black font-black text-white text-sm flex items-center justify-center">×</button>
+              </div>
 
-            {/* Pages */}
-            <div className="p-4 min-h-[220px]">
-              {helpPage === 0 && (
-                <div className="space-y-3">
-                  <div className="text-center text-yellow-400 font-black text-sm uppercase tracking-wider">Combos</div>
-                  <div className="text-gray-300 text-xs leading-relaxed">
-                    4 cartas do mesmo rank = <span className="text-yellow-300 font-bold">COMBO!</span><br/>
-                    4 cartas idênticas = <span className="text-red-400 font-bold">QUAD! (3× mais forte)</span><br/>
-                    🃏 Dragukka (Bonus) substitui qualquer rank.
+              {/* Content */}
+              <div className="overflow-y-auto flex-1 p-4">
+
+                {/* PAGE 0 — Bem-vindo */}
+                {helpPage === 0 && (
+                  <div className="space-y-4">
+                    <div className="text-center py-2">
+                      <div className="text-5xl mb-2">🃏</div>
+                      <div className="font-black text-xl text-yellow-400 tracking-tight">Tukka Slots</div>
+                      <div className="text-gray-400 text-xs mt-1">Slot de cartas com combos em cascata</div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { icon:"🎲", title:"10 giros grátis", desc:"Todo dia, sem custo" },
+                        { icon:"⚡", title:"Cascata", desc:"Combos encadeiam e pagam mais" },
+                        { icon:"✨", title:"Foils", desc:"Cartas douradas que acumulam" },
+                        { icon:"🎰", title:"Bonus Mode", desc:"4+ foils = 10 giros bônus 2×" },
+                      ].map(item => (
+                        <div key={item.title} className="rounded-lg p-2.5 text-center" style={{ background:"#1a0800", border:"1px solid #3a2000" }}>
+                          <div className="text-2xl mb-1">{item.icon}</div>
+                          <div className="font-black text-[11px] text-yellow-300">{item.title}</div>
+                          <div className="text-gray-500 text-[10px] mt-0.5 leading-tight">{item.desc}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-center">
+                      <button
+                        onClick={() => setHelpPage(1)}
+                        className="px-6 py-2 rounded-lg font-black text-sm border-2 border-black"
+                        style={{ background:"linear-gradient(180deg,#FFD700,#c87941)", color:"#000" }}
+                      >
+                        {t.howToPlay}
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-1">
+                )}
+
+                {/* PAGE 1 — Combos */}
+                {helpPage === 1 && (
+                  <div className="space-y-3">
+                    {/* Tipo 1 */}
+                    <div className="rounded-xl overflow-hidden border-2" style={{ borderColor:"#3a2000" }}>
+                      <div className="px-3 py-1.5 flex items-center gap-2" style={{ background:"#1a0800" }}>
+                        <span className="text-base">🃏</span>
+                        <span className="font-black text-xs text-yellow-300 uppercase tracking-wider">Rank Combo</span>
+                        <span className="ml-auto text-[10px] text-gray-500">mais comum</span>
+                      </div>
+                      <div className="px-3 py-2 space-y-1.5" style={{ background:"#100500" }}>
+                        <div className="text-gray-300 text-[11px] leading-relaxed">
+                          4 cartas do <span className="text-yellow-300 font-bold">mesmo rank</span>, cada uma de um naipe diferente (♥♦♣♠), em <span className="text-white font-bold">qualquer posição</span> do grid.
+                        </div>
+                        <div className="flex gap-1 mt-1">
+                          {["♥A","♦A","♣A","♠A"].map(c => (
+                            <div key={c} className="flex-1 rounded text-center py-1 font-black text-[11px]" style={{ background:"#1a0800", color:"#a855f7", border:"1px solid #a855f766" }}>{c}</div>
+                          ))}
+                        </div>
+                        <div className="text-purple-400 font-black text-[10px] text-center">= "The Anon Council" 🔥</div>
+                      </div>
+                    </div>
+
+                    {/* Tipo 2 */}
+                    <div className="rounded-xl overflow-hidden border-2" style={{ borderColor:"#3a2000" }}>
+                      <div className="px-3 py-1.5 flex items-center gap-2" style={{ background:"#1a0800" }}>
+                        <span className="text-base">💀</span>
+                        <span className="font-black text-xs text-red-400 uppercase tracking-wider">Quad Combo</span>
+                        <span className="ml-auto text-[10px] text-gray-500">3× mais forte</span>
+                      </div>
+                      <div className="px-3 py-2 space-y-1.5" style={{ background:"#100500" }}>
+                        <div className="text-gray-300 text-[11px] leading-relaxed">
+                          4 cartas <span className="text-red-400 font-bold">idênticas</span> (mesma carta exata). Muito mais raro, paga <span className="text-red-400 font-bold">3×</span> o rank combo.
+                        </div>
+                        <div className="flex gap-1 mt-1">
+                          {["Tukka","Tukka","Tukka","Tukka"].map((c,i) => (
+                            <div key={i} className="flex-1 rounded text-center py-1 font-black text-[9px]" style={{ background:"#1a0800", color:"#ec4899", border:"1px solid #ec489966" }}>{c}</div>
+                          ))}
+                        </div>
+                        <div className="text-pink-400 font-black text-[10px] text-center">= "Tukka Takeover" 💀</div>
+                      </div>
+                    </div>
+
+                    {/* Tabela de payouts */}
+                    <div className="rounded-lg overflow-hidden" style={{ border:"1px solid #2a2a2a" }}>
+                      <div className="px-3 py-1 text-[10px] font-black uppercase tracking-wider text-gray-500" style={{ background:"#111" }}>Pagamentos (% da aposta)</div>
+                      <div className="px-2 py-1.5 space-y-0.5" style={{ background:"#0d0d0d" }}>
+                        {[
+                          { label:"Ás (A)",   color:"#a855f7", payout:"1000%" },
+                          { label:"Rei (K)",  color:"#f59e0b", payout:"500%"  },
+                          { label:"Rainha (Q)",color:"#ec4899",payout:"400%"  },
+                          { label:"Valete (J)",color:"#3b82f6", payout:"300%" },
+                          { label:"10",       color:"#06b6d4", payout:"250%"  },
+                          { label:"9",        color:"#10b981", payout:"200%"  },
+                          { label:"8",        color:"#84cc16", payout:"150%"  },
+                          { label:"7",        color:"#eab308", payout:"100%"  },
+                          { label:"2 – 6",    color:"#6b7280", payout:"15–60%"},
+                        ].map(r => (
+                          <div key={r.label} className="flex items-center justify-between">
+                            <span className="font-black text-[10px]" style={{ color:r.color }}>{r.label}</span>
+                            <span className="text-[10px] px-1.5 rounded font-bold" style={{ color:"#e5e5e5", background:"#1a1a1a" }}>{r.payout}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* PAGE 2 — Mecânicas */}
+                {helpPage === 2 && (
+                  <div className="space-y-2.5">
                     {[
-                      { label: "Quad (4 idênticas)", color: "#ef4444", payout: "3× rank" },
-                      { label: "Four Aces (A)", color: "#a855f7", payout: "1000%" },
-                      { label: "Four Kings (K)", color: "#f59e0b", payout: "500%" },
-                      { label: "Four Queens (Q)", color: "#ec4899", payout: "400%" },
-                      { label: "Four Jacks (J)", color: "#3b82f6", payout: "300%" },
-                      { label: "Four Tens (10)", color: "#06b6d4", payout: "250%" },
-                      { label: "Four Nines (9)", color: "#10b981", payout: "200%" },
-                      { label: "Four Eights (8)", color: "#84cc16", payout: "150%" },
-                      { label: "Four Sevens (7)", color: "#eab308", payout: "100%" },
-                      { label: "6 → 2", color: "#6b7280", payout: "15–60%" },
-                    ].map(r => (
-                      <div key={r.label} className="flex items-center justify-between">
-                        <span className="font-black text-[10px]" style={{ color: r.color }}>{r.label}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ color: "#e5e5e5", background: "#222" }}>{r.payout}</span>
+                      {
+                        icon:"⚡", color:"#22c55e", title:"CASCADE",
+                        desc:"Quando um combo ocorre, as cartas somem e novas caem. Se formar outro combo, ele paga mais: 1× → 2× → 3× → 5× → 8×",
+                      },
+                      {
+                        icon:"✨", color:"#FFA500", title:"FOIL (carta dourada)",
+                        desc:"Cartas foil NÃO são destruídas no combo — ficam no grid e acumulam. Quanto mais foils, maior a chance de Bonus Mode.",
+                      },
+                      {
+                        icon:"🎰", color:"#a855f7", title:"BONUS MODE",
+                        desc:"4+ foils no grid final ativam 10 giros bônus com 2× de multiplicador. Durante o bônus, mais foils = mais giros extras.",
+                      },
+                      {
+                        icon:"🐉", color:"#FACC15", title:"DRAGUKKA (Joker)",
+                        desc:"Aparece só no Bonus Mode. Fica no grid por todas as 10 rodadas e pode substituir qualquer carta — mas só 1 vez por rodada.",
+                      },
+                      {
+                        icon:"🃏", color:"#38bdf8", title:"NEYMAR & CLAWD (Coringa)",
+                        desc:"Aparecem no modo normal. Podem completar qualquer combo no lugar faltando, mas somem após serem usados.",
+                      },
+                    ].map(item => (
+                      <div key={item.title} className="rounded-lg p-2.5 flex gap-2.5" style={{ background:"#111", border:`1px solid ${item.color}33` }}>
+                        <span className="text-xl shrink-0 mt-0.5">{item.icon}</span>
+                        <div>
+                          <div className="font-black text-[11px] uppercase tracking-wider mb-0.5" style={{ color:item.color }}>{item.title}</div>
+                          <div className="text-gray-400 text-[10px] leading-relaxed">{item.desc}</div>
+                        </div>
                       </div>
                     ))}
                   </div>
-                  <div className="text-gray-500 text-[10px]">Valores são % da aposta multiplicada</div>
-                </div>
-              )}
-              {helpPage === 1 && (
-                <div className="space-y-3">
-                  <div className="text-center text-yellow-400 font-black text-sm uppercase tracking-wider">Mecânicas Especiais</div>
-                  <div className="rounded-lg p-3 space-y-2" style={{ background:"#111", border:"1px solid #2a2a2a" }}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">✨</span>
-                      <div>
-                        <div className="text-orange-300 font-black text-xs">FOIL (Dourada)</div>
-                        <div className="text-gray-400 text-[10px]">Cartas foil não são destruídas no combo — acumulam!</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-lg p-3 space-y-2" style={{ background:"#111", border:"1px solid #2a2a2a" }}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🎰</span>
-                      <div>
-                        <div className="text-purple-300 font-black text-xs">BONUS MODE</div>
-                        <div className="text-gray-400 text-[10px]">4+ foils ativam 10 giros grátis com 2x multiplicador</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-lg p-3 space-y-2" style={{ background:"#111", border:"1px solid #2a2a2a" }}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">🃏</span>
-                      <div>
-                        <div className="text-cyan-300 font-black text-xs">JOKER (Dragukka)</div>
-                        <div className="text-gray-400 text-[10px]">Substitui qualquer rank ou naipe em combos</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-lg p-3 space-y-2" style={{ background:"#111", border:"1px solid #2a2a2a" }}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">⚡</span>
-                      <div>
-                        <div className="text-green-300 font-black text-xs">CASCADE</div>
-                        <div className="text-gray-400 text-[10px]">Combos consecutivos pagam mais: 1x, 2x, 3x, 5x, 8x</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {helpPage === 2 && (
-                <div className="space-y-3">
-                  <div className="text-center text-yellow-400 font-black text-sm uppercase tracking-wider">Dicas</div>
-                  <div className="space-y-2 text-gray-300 text-xs">
-                    <div>• Clique nas cartas para ver detalhes em 3D</div>
-                    <div>• Foils acumulam entre combos — quanto mais, melhor!</div>
-                    <div>• Buy Bonus custa 20x a aposta mas dá 2x nos prêmios</div>
-                    <div>• 10 giros grátis por dia</div>
-                    <div>• No bonus mode, wildcards crescem a cada combo</div>
-                  </div>
-                  <div className="text-center mt-4">
-                    <div className="text-4xl">🍀</div>
-                    <div className="text-gray-500 text-[10px] mt-1">Boa sorte!</div>
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
 
-            {/* Page dots */}
-            <div className="flex items-center justify-center gap-2 px-4 pb-2">
-              <button
-                onClick={() => setHelpPage(Math.max(0, helpPage - 1))}
-                disabled={helpPage === 0}
-                className="px-3 py-1 rounded text-xs font-bold disabled:opacity-30"
-                style={{ color:"#FFD700", background:"#222", border:"1px solid #333" }}
-              >
-                ←
-              </button>
-              {[0, 1, 2].map(p => (
-                <button key={p} onClick={() => setHelpPage(p)}
-                  className="w-2 h-2 rounded-full transition-all"
-                  style={{ background: p === helpPage ? "#FFD700" : "#444" }}
-                />
-              ))}
-              <button
-                onClick={() => setHelpPage(Math.min(2, helpPage + 1))}
-                disabled={helpPage === 2}
-                className="px-3 py-1 rounded text-xs font-bold disabled:opacity-30"
-                style={{ color:"#FFD700", background:"#222", border:"1px solid #333" }}
-              >
-                →
-              </button>
+                {/* PAGE 3 — Como Depositar */}
+                {helpPage === 3 && (
+                  <div className="space-y-3">
+                    <div className="text-center text-yellow-400 font-black text-xs uppercase tracking-wider mb-1">Precisa de VBMS para jogar?</div>
+
+                    {[
+                      {
+                        step:"1", color:"#22c55e",
+                        title:"Consiga VBMS",
+                        desc:'Compre VBMS na Uniswap ou ganhe jogando no site. Contract: 0xF14C1...728 (Base)',
+                        icon:"💰",
+                      },
+                      {
+                        step:"2", color:"#3b82f6",
+                        title:'Clique em "Deposit"',
+                        desc:"No topo da tela do slot, clique no botão Deposit. Escolha o valor (100, 250, 500 ou 1000 VBMS).",
+                        icon:"👆",
+                      },
+                      {
+                        step:"3", color:"#f59e0b",
+                        title:"Aprovar e Transferir",
+                        desc:"Duas transações na sua carteira: 1ª Approve (autoriza o gasto), 2ª Transfer (envia os VBMS).",
+                        icon:"✅",
+                      },
+                      {
+                        step:"4", color:"#a855f7",
+                        title:"Receba Coins",
+                        desc:"1 VBMS = 10 Coins para jogar. Coins ficam na sua conta e podem ser sacados de volta a qualquer hora.",
+                        icon:"🎮",
+                      },
+                    ].map(item => (
+                      <div key={item.step} className="flex gap-3 items-start">
+                        <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center font-black text-sm border-2" style={{ background:`${item.color}22`, borderColor:item.color, color:item.color }}>
+                          {item.step}
+                        </div>
+                        <div className="flex-1 rounded-lg p-2.5" style={{ background:"#111", border:`1px solid ${item.color}33` }}>
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span>{item.icon}</span>
+                            <span className="font-black text-[11px]" style={{ color:item.color }}>{item.title}</span>
+                          </div>
+                          <div className="text-gray-400 text-[10px] leading-relaxed">{item.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="rounded-lg p-2.5 text-center" style={{ background:"#1a0800", border:"1px solid #c87941" }}>
+                      <div className="text-yellow-400 font-black text-[11px]">{t.freeSpinsDay}</div>
+                      <div className="text-gray-500 text-[10px] mt-0.5">{t.noDeposit}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer nav */}
+              <div className="shrink-0 px-4 py-2.5 border-t-2 border-[#2a1000] flex items-center justify-between" style={{ background:"#080200" }}>
+                <button
+                  onClick={() => setHelpPage(p => Math.max(0, p - 1))}
+                  disabled={helpPage === 0}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold disabled:opacity-20 transition-opacity"
+                  style={{ color:"#FFD700", background:"#1a0800", border:"1px solid #3a2000" }}
+                >{t.prev}</button>
+
+                <div className="flex gap-1.5">
+                  {Array.from({ length: TOTAL_PAGES }).map((_, p) => (
+                    <button key={p} onClick={() => setHelpPage(p)}
+                      className="rounded-full transition-all"
+                      style={{
+                        width: p === helpPage ? 18 : 7,
+                        height: 7,
+                        background: p === helpPage ? "#FFD700" : "#333",
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {helpPage < TOTAL_PAGES - 1 ? (
+                  <button
+                    onClick={() => setHelpPage(p => p + 1)}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold transition-opacity"
+                    style={{ color:"#000", background:"linear-gradient(180deg,#FFD700,#c87941)", border:"1px solid #000" }}
+                  >{t.next}</button>
+                ) : (
+                  <button
+                    onClick={closeHelp}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold"
+                    style={{ color:"#000", background:"linear-gradient(180deg,#22c55e,#15803d)", border:"1px solid #000" }}
+                  >{t.play}</button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div className="flex flex-col h-full w-full max-w-[420px] mx-auto select-none">
         {/* MACHINE FRAME */}
@@ -1404,18 +1789,23 @@ export default function SlotMachine({
 
           {/* BONUS SPINS REMAINING INDICATOR */}
           {(bonusState.spinsRemaining > 0 || showBonusAnimation) && (
-            <div className="absolute top-2 right-2 z-30 px-2 py-1 rounded text-xs font-black border-2"
-              style={{
-                background: showBonusAnimation ? "#7c3aed" : "#7c3aed",
-                color: "#fff",
-                borderColor: "#000",
-                boxShadow: "0 2px 0 #000",
-              }}
-            >
-              {showBonusAnimation ? (
-                <span className="animate-pulse">🎰 BONUS +{BONUS_FREE_SPINS}!</span>
-              ) : (
-                <span>🎰 BONUS: {bonusState.spinsRemaining} spins</span>
+            <div className="absolute top-2 right-2 z-30 flex flex-col gap-1 items-end">
+              <div className="px-2 py-1 rounded text-xs font-black border-2"
+                style={{ background:"#7c3aed", color:"#fff", borderColor:"#000", boxShadow:"0 2px 0 #000" }}
+              >
+                {showBonusAnimation ? (
+                  <span className="animate-pulse">🎰 {t.bonusMode} +{BONUS_FREE_SPINS}!</span>
+                ) : (
+                  <span>🎰 {bonusState.spinsRemaining} {t.bonusRemaining}</span>
+                )}
+              </div>
+              {/* Acumulador de ganhos do bonus */}
+              {bonusWinDisplay !== null && bonusWinDisplay > 0 && (
+                <div className="px-2 py-0.5 rounded text-xs font-black border-2"
+                  style={{ background:"#166534", color:"#4ade80", borderColor:"#000", boxShadow:"0 2px 0 #000" }}
+                >
+                  +{bonusWinDisplay.toLocaleString()} coins
+                </div>
               )}
             </div>
           )}
@@ -1432,7 +1822,7 @@ export default function SlotMachine({
             {winAmt === null ? (
               <div className="text-center">
                 <span className="subtitle-blink text-[10px] font-bold uppercase tracking-widest" style={{ color:"#f59e0b" }}>
-                  WIN UP TO {MAX_POSSIBLE_WIN.toLocaleString()} COINS
+                  {t.winUpTo} {MAX_POSSIBLE_WIN.toLocaleString()} COINS
                 </span>
               </div>
             ) : winAmt > 0 ? (
@@ -1449,7 +1839,7 @@ export default function SlotMachine({
 
           {/* BALANCE BAR — abaixo do grid */}
           <div className="shrink-0 flex items-center justify-between px-4 py-1 border-b-2 border-[#c87941]" style={{ background: dark }}>
-            <span className="text-[8px] font-bold uppercase text-gray-500">BALANCE</span>
+            <span className="text-[8px] font-bold uppercase text-gray-500">{t.balance}</span>
             <span className="text-base font-black text-green-400">{coins.toLocaleString()} coins</span>
           </div>
 
@@ -1474,8 +1864,8 @@ export default function SlotMachine({
                   borderColor: "#c87941",
                 }}
               >
-                <span className="text-[9px]">DEPOSIT</span>
-                <span className="text-[8px] font-bold" style={{ color: "#c87941" }}>WITHDRAW</span>
+                <span className="text-[9px]">{t.deposit}</span>
+                <span className="text-[8px] font-bold" style={{ color: "#c87941" }}>{t.withdraw}</span>
               </button>
 
               {/* SPIN — center */}
@@ -1495,7 +1885,7 @@ export default function SlotMachine({
                 }}
               >
                 <span className={`text-[10px] font-black leading-none tracking-widest ${isSpinning ? "animate-spin" : ""}`}>
-                  SPIN
+                  {t.spin}
                 </span>
               </button>
 
@@ -1514,7 +1904,7 @@ export default function SlotMachine({
                   borderColor: "#7c3aed",
                 }}
               >
-                <span className="text-[9px]">BUY BONUS</span>
+                <span className="text-[9px]">{t.buyBonus}</span>
                 <span className="text-[8px] font-bold" style={{ color: "#c4b5fd" }}>{bonusCost}c · 20×</span>
               </button>
             </div>
@@ -1532,7 +1922,7 @@ export default function SlotMachine({
                 className="w-7 h-7 rounded border-2 border-blue-400 bg-blue-900 font-black text-blue-300 text-base flex items-center justify-center disabled:opacity-30 flex-none"
               >−</button>
               <div className="flex-1 text-center">
-                <div className="text-[8px] font-bold uppercase text-blue-300 leading-none">BET PER SPIN</div>
+                <div className="text-[8px] font-bold uppercase text-blue-300 leading-none">{t.bet}</div>
                 <div className="text-lg font-black text-white leading-tight">{betCost}</div>
                 <div className="text-[8px] font-bold leading-none text-gray-500">
                   coins

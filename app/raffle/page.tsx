@@ -7,6 +7,9 @@ import {
   useAccount, useBalance, useReadContract,
   useWaitForTransactionReceipt, useSwitchChain,
 } from "wagmi";
+import { useReconnectTimeout } from "@/hooks/useReconnectTimeout";
+import { WalletGateScreen } from "@/components/WalletGateScreen";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { useWriteContractWithAttribution } from "@/lib/hooks/useWriteContractWithAttribution";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
@@ -157,7 +160,8 @@ function fmtBal(raw: bigint | undefined, decimals: number, symbol: string) {
 export default function RafflePage() {
   const convex = useConvex();
   const { t } = useLanguage();
-  const { address: walletAddress, chainId } = useAccount();
+  const { address: walletAddress, chainId, status: wagmiStatus } = useAccount();
+  const isReconnecting = useReconnectTimeout(wagmiStatus);
   const { switchChainAsync } = useSwitchChain();
 
   const [showInfo, setShowInfo] = useState(false);
@@ -528,6 +532,9 @@ export default function RafflePage() {
   const ethPriceLabel = ethWeiCost
     ? fmtBal(ethWeiCost as bigint, 18, "ETH")
     : `≈${(0.000023 * buyQty).toFixed(6)} ETH`;
+
+  if (isReconnecting) return <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center"><LoadingSpinner /></div>;
+  if (!walletAddress) return <WalletGateScreen />;
 
   return (
     <div className="min-h-screen bg-[#111] text-white flex flex-col">

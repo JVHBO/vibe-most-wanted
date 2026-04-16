@@ -14,6 +14,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useAccount } from "wagmi";
 import { useReconnectTimeout } from "@/hooks/useReconnectTimeout";
+import { WalletGateScreen } from "@/components/WalletGateScreen";
 import { sdk } from "@farcaster/miniapp-sdk";
 import { openMarketplace } from "@/lib/marketplace-utils";
 import { getAssetUrl } from "@/lib/ipfs-assets";
@@ -798,15 +799,7 @@ export default function BaccaratPage() {
   }
 
   if (!address) {
-    // Not connected and not reconnecting — show connect prompt
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal to-vintage-black flex items-center justify-center">
-        <div className="text-vintage-gold text-center">
-          <p className="font-display mb-4">Connect your wallet to play</p>
-          <Link href="/" className="px-4 py-2 bg-vintage-gold text-black font-black border-2 border-black">Go Home</Link>
-        </div>
-      </div>
-    );
+    return <WalletGateScreen />;
   }
 
   if (!userProfile) {

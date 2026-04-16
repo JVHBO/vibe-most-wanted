@@ -33,21 +33,26 @@ type CardCombo = {
 // In bonus mode: only dragukka acts as joker
 const BONUS_MODE_EXCLUDED = new Set(["neymar", "clawdmoltopenbot"]);
 
-// Payout % of bet for each rank
+// Normal mode wildcards: neymar + clawdmoltopenbot can complete any rank combo
+// but are REMOVED after use (one-time use per combo step)
+const NORMAL_WILDCARDS = new Set(["neymar", "clawdmoltopenbot"]);
+
+// Payout em % da aposta (rank combo = 4 cartas diferentes do mesmo rank)
+// Quad (4 idênticas) paga 3x esses valores
 const RANK_COMBO_PAYOUT: Record<SlotRank, number> = {
-  "A":  1000,
-  "K":  500,
-  "Q":  400,
-  "J":  300,
-  "10": 250,
-  "9":  200,
-  "8":  150,
-  "7":  100,
-  "6":  60,
-  "5":  40,
-  "4":  30,
-  "3":  20,
-  "2":  15,
+  "A":  400,   // Ás — raro, paga 4x a aposta
+  "K":  200,   // Rei
+  "Q":  160,
+  "J":  120,
+  "10": 100,
+  "9":  80,
+  "8":  60,
+  "7":  40,
+  "6":  25,
+  "5":  18,
+  "4":  14,
+  "3":  10,
+  "2":  8,
 };
 
 // Each rank has:
@@ -154,6 +159,79 @@ const RANK_COMBO_INFO: Record<SlotRank, {
   },
 };
 
+// Audio paths for rank combos (4 different suits of same rank)
+export const RANK_COMBO_AUDIO: Record<string, { path: string; volume: number }> = {
+  "A":   { path: "/sounds/slot/the_anon_council.mp3",   volume: 0.7 },
+  "K":   { path: "/sounds/slot/kings_of_vibe.mp3",      volume: 0.7 },
+  "Q":   { path: "/sounds/slot/goofy_revenge.mp3",      volume: 0.7 },
+  "J":   { path: "/sounds/slot/the_degens.mp3",         volume: 0.7 },
+  "10":  { path: "/sounds/slot/snipers_and_bots.mp3",   volume: 0.65 },
+  "9":   { path: "/sounds/slot/chain_breakers.mp3",     volume: 0.7 },
+  "8":   { path: "/sounds/slot/the_melted_gang.mp3",    volume: 0.7 },
+  "7":   { path: "/sounds/slot/shill_squad.mp3",        volume: 0.65 },
+  "6":   { path: "/sounds/slot/scum_of_the_chain.mp3",  volume: 0.65 },
+  "5":   { path: "/sounds/slot/off_grid_crew.mp3",      volume: 0.7 },
+  "4":   { path: "/sounds/slot/romero_soldiers.mp3",    volume: 0.7 },
+  "3":   { path: "/sounds/slot/common_suspects.mp3",    volume: 0.7 },
+  "2":   { path: "/sounds/slot/bottom_of_the_deck.mp3", volume: 0.6 },
+};
+
+// Audio paths for quad combos (4 identical cards)
+export const CARD_QUAD_AUDIO: Record<string, { path: string; volume: number }> = {
+  "anon":              { path: "/sounds/slot/anon_dominance.mp3",    volume: 0.8 },
+  "linda xied":        { path: "/sounds/slot/diamond_authority.mp3", volume: 0.75 },
+  "vitalik jumpterin": { path: "/sounds/slot/protocol_override.mp3", volume: 0.75 },
+  "jesse":             { path: "/sounds/slot/kings_arrival.mp3",     volume: 0.75 },
+  "miguel":            { path: "/sounds/slot/miguel_dynasty.mp3",    volume: 0.75 },
+  "naughty santa":     { path: "/sounds/slot/santas_wrath.mp3",      volume: 0.7 },
+  "ye":                { path: "/sounds/slot/ye_universe.mp3",       volume: 0.7 },
+  "nico":              { path: "/sounds/slot/nico_supremacy.mp3",    volume: 0.7 },
+  "antonio":           { path: "/sounds/slot/antonio_empire.mp3",    volume: 0.7 },
+  "goofy romero":      { path: "/sounds/slot/goofy_kingdom.mp3",     volume: 0.7 },
+  "tukka":             { path: "/sounds/slot/tukka_takeover.mp3",    volume: 0.75 },
+  "chilipepper":       { path: "/sounds/slot/chilli_overdose.mp3",   volume: 0.7 },
+  "zurkchad":          { path: "/sounds/slot/chad_overload.mp3",     volume: 0.7 },
+  "slaterg":           { path: "/sounds/slot/slaterg_protocol.mp3",  volume: 0.7 },
+  "brian armstrong":   { path: "/sounds/slot/armstrong_lock.mp3",    volume: 0.7 },
+  "nftkid":            { path: "/sounds/slot/nft_flood.mp3",         volume: 0.65 },
+  "jack the sniper":   { path: "/sounds/slot/no_escape.mp3",         volume: 0.7 },
+  "beeper":            { path: "/sounds/slot/all_bots_online.mp3",   volume: 0.7 },
+  "horsefarts":        { path: "/sounds/slot/unstoppable.mp3",       volume: 0.7 },
+  "jc denton":         { path: "/sounds/slot/denton_order.mp3",      volume: 0.7 },
+  "sartocrates":       { path: "/sounds/slot/socratic_method.mp3",   volume: 0.65 },
+  "0xdeployer":        { path: "/sounds/slot/deploy_everything.mp3", volume: 0.7 },
+  "lombra jr":         { path: "/sounds/slot/lombra_smoke.mp3",      volume: 0.7 },
+  "vibe intern":       { path: "/sounds/slot/intern_revolt.mp3",     volume: 0.7 },
+  "betobutter":        { path: "/sounds/slot/butter_overflow.mp3",   volume: 0.65 },
+  "qrcodo":            { path: "/sounds/slot/scan_everything.mp3",   volume: 0.65 },
+  "loground":          { path: "/sounds/slot/ground_zero.mp3",       volume: 0.65 },
+  "melted":            { path: "/sounds/slot/fully_melted.mp3",      volume: 0.65 },
+  "smolemaru":         { path: "/sounds/slot/smole_army.mp3",        volume: 0.65 },
+  "ventra":            { path: "/sounds/slot/ventra_gay.mp3",        volume: 0.65 },
+  "bradymck":          { path: "/sounds/slot/brady_run.mp3",         volume: 0.65 },
+  "shills":            { path: "/sounds/slot/shill_storm.mp3",       volume: 0.65 },
+  "pooster":           { path: "/sounds/slot/pooster_parade.mp3",    volume: 0.6 },
+  "john porn":         { path: "/sounds/slot/full_send.mp3",         volume: 0.6 },
+  "scum":              { path: "/sounds/slot/pure_scum.mp3",         volume: 0.6 },
+  "vlady":             { path: "/sounds/slot/vlady_rule.mp3",        volume: 0.6 },
+  "landmine":          { path: "/sounds/slot/field_of_mines.mp3",    volume: 0.6 },
+  "linux":             { path: "/sounds/slot/root_access.mp3",       volume: 0.6 },
+  "joonx":             { path: "/sounds/slot/joon_cascade.mp3",      volume: 0.6 },
+  "don filthy":        { path: "/sounds/slot/filthy_rich.mp3",       volume: 0.6 },
+  "brainpasta":        { path: "/sounds/slot/brain_overflow.mp3",    volume: 0.6 },
+  "gaypt":             { path: "/sounds/slot/gaypt_spiral.mp3",      volume: 0.6 },
+  "dan romero":        { path: "/sounds/slot/romero_army.mp3",       volume: 0.65 },
+  "morlacos":          { path: "/sounds/slot/morlacos_invasion.mp3", volume: 0.6 },
+  "casa":              { path: "/sounds/slot/home_invasion.mp3",     volume: 0.6 },
+  "groko":             { path: "/sounds/slot/groko_mob.mp3",         volume: 0.6 },
+  "rizkybegitu":       { path: "/sounds/slot/rizky_business.mp3",    volume: 0.6 },
+  "thosmur":           { path: "/sounds/slot/thosmur_flood.mp3",     volume: 0.6 },
+  "rachel":            { path: "/sounds/slot/rachel_revenge.mp3",    volume: 0.6 },
+  "claude":            { path: "/sounds/slot/ai_takeover.mp3",       volume: 0.7 },
+  "gozaru":            { path: "/sounds/slot/gozaru_storm.mp3",      volume: 0.6 },
+  "ink":               { path: "/sounds/slot/ink_everywhere.mp3",    volume: 0.6 },
+};
+
 // Quad names: short, dramatic, narration-ready — style inspired by TCG (Romero Dynasty, AI Takeover)
 const CARD_QUAD_NAMES: Record<string, string> = {
   // Aces (Mythic)
@@ -184,7 +262,7 @@ const CARD_QUAD_NAMES: Record<string, string> = {
   // Nines (Epic)
   "sartocrates":       "Socratic Method",
   "0xdeployer":        "Deploy Everything",
-  "lombra jr":         "Lombra's Shadow",
+  "lombra jr":         "Lombra's Smoke",
   "vibe intern":       "Intern Revolt",
   // Eights (Rare)
   "betobutter":        "Butter Overflow",
@@ -193,7 +271,7 @@ const CARD_QUAD_NAMES: Record<string, string> = {
   "melted":            "Fully Melted",
   // Sevens (Rare)
   "smolemaru":         "Smole Army",
-  "ventra":            "Ventra Surge",
+  "ventra":            "Ventra Gay",
   "bradymck":          "Brady's Run",
   "shills":            "Shill Storm",
   // Sixes (Common)
@@ -237,21 +315,48 @@ function createRankCombo(rank: SlotRank): CardCombo {
 }
 
 /** Detect quad combo: 4+ identical cards (same baccarat name) anywhere in grid — pays 3× rank payout */
-function detectQuadCombo(grid: SlotCard[], isBonusMode: boolean): {
+function detectQuadCombo(
+  grid: SlotCard[],
+  isBonusMode: boolean,
+  usedWildcardIndices: Set<number> = new Set(),
+): {
   combo: CardCombo;
   matchedIndices: number[];
   wildcardIndices: number[];
 } | null {
   const nameGroups = new Map<string, number[]>();
-  const jokerIndices: number[] = [];
+  // bonusJokerIndices: dragukka in bonus mode — persistent, excluded once used this spin
+  const bonusJokerIndices: number[] = [];
+  // normalJokerIndices: neymar/clawdmoltopenbot in normal mode — removed after use
+  const normalJokerIndices: number[] = [];
+
+  // First pass: count special wildcards to detect if any have 4+ (quad special)
+  const specialCounts = new Map<string, number[]>();
+  for (let i = 0; i < grid.length; i++) {
+    const card = grid[i]!;
+    if (!isBonusMode && NORMAL_WILDCARDS.has(card.baccarat)) {
+      if (!specialCounts.has(card.baccarat)) specialCounts.set(card.baccarat, []);
+      specialCounts.get(card.baccarat)!.push(i);
+    }
+  }
 
   for (let i = 0; i < grid.length; i++) {
     const card = grid[i]!;
-    const isJoker = card.baccarat === SLOT_BONUS_WILDCARD && isBonusMode;
-    if (isJoker) {
-      jokerIndices.push(i);
+    const isBonusJoker = card.baccarat === SLOT_BONUS_WILDCARD && isBonusMode && !usedWildcardIndices.has(i);
+    const isNormalJoker = !isBonusMode && NORMAL_WILDCARDS.has(card.baccarat);
+    if (isBonusJoker) {
+      bonusJokerIndices.push(i);
+    } else if (isNormalJoker) {
+      // If 4+ of this special exist → treat as regular card (can form special quad)
+      // Otherwise → treat as wildcard joker
+      const count = specialCounts.get(card.baccarat)?.length ?? 0;
+      if (count >= 4) {
+        if (!nameGroups.has(card.baccarat)) nameGroups.set(card.baccarat, []);
+        nameGroups.get(card.baccarat)!.push(i);
+      } else {
+        normalJokerIndices.push(i);
+      }
     } else if (card.rank) {
-      // Only cards with rank qualify (excludes neymar, clawdmoltopenbot)
       if (!nameGroups.has(card.baccarat)) nameGroups.set(card.baccarat, []);
       nameGroups.get(card.baccarat)!.push(i);
     }
@@ -260,37 +365,50 @@ function detectQuadCombo(grid: SlotCard[], isBonusMode: boolean): {
   // Find card name with most duplicates — at least 2 real copies needed
   let bestName = "";
   let bestIndices: number[] = [];
+  let bestBonusNeeded = 0;
+  let bestNormalNeeded = 0;
 
   for (const [name, indices] of nameGroups) {
     const needed = Math.max(0, 4 - indices.length);
-    const jokersToUse = Math.min(needed, jokerIndices.length);
-    const total = indices.length + jokersToUse;
+    const bonusToUse = Math.min(needed, bonusJokerIndices.length);
+    const stillNeeded = needed - bonusToUse;
+    const normalToUse = Math.min(stillNeeded, normalJokerIndices.length);
+    const total = indices.length + bonusToUse + normalToUse;
     if (total >= 4 && indices.length >= 2 && indices.length > bestIndices.length) {
       bestName = name;
       bestIndices = indices;
+      bestBonusNeeded = bonusToUse;
+      bestNormalNeeded = normalToUse;
     }
   }
 
   if (!bestName) return null;
 
-  const needed = Math.max(0, 4 - bestIndices.length);
-  const jokersToUse = Math.min(needed, jokerIndices.length);
   const card = grid[bestIndices[0]!]!;
-  const rank = card.rank!;
-  const info = RANK_COMBO_INFO[rank];
+  const rank = card.rank;
   const label = card.baccarat.split(" ").map(w => w[0]!.toUpperCase() + w.slice(1)).join(" ");
+
+  // Special cards (neymar, clawd) have no rank — use fixed ultra-rare payout
+  const SPECIAL_QUAD_NAMES: Record<string, string> = {
+    "neymar":            "Neymar's Miracle",
+    "clawdmoltopenbot":  "Bot Singularity",
+  };
+  const specialName = SPECIAL_QUAD_NAMES[bestName];
+  const payoutValue = rank ? RANK_COMBO_PAYOUT[rank] * 3 : 5000; // specials pay 5000%
 
   return {
     combo: {
       id: `quad_${bestName}`,
-      name: `Quad ${label}!`,
-      emoji: "💀",
+      name: specialName ?? `Quad ${label}!`,
+      emoji: specialName ? "🌟" : "💀",
       cards: [],
-      bonus: { type: "power", value: RANK_COMBO_PAYOUT[rank] * 3, target: "self" },
-      description: `4x ${label} — ultra rare!`,
+      bonus: { type: "power", value: payoutValue, target: "self" },
+      description: specialName ? `4x ${label} — lendário!` : `4x ${label} — ultra rare!`,
     },
-    matchedIndices: bestIndices,
-    wildcardIndices: jokerIndices.slice(0, jokersToUse),
+    // normal jokers (neymar/clawd) go into matchedIndices → will be removed
+    matchedIndices: [...bestIndices, ...normalJokerIndices.slice(0, bestNormalNeeded)],
+    // bonus joker (dragukka) goes into wildcardIndices → persists
+    wildcardIndices: bonusJokerIndices.slice(0, bestBonusNeeded),
   };
 }
 
@@ -336,37 +454,60 @@ export function detectNearMiss(grid: SlotCard[], isBonusMode: boolean): SlotNear
   return null;
 }
 
-/** Detect rank combo (4-of-a-kind by rank, one per suit) anywhere in the 5×3 grid */
-function detectRankCombo(grid: SlotCard[], isBonusMode: boolean): {
+/** Detect rank combo (4-of-a-kind by rank, one per suit) anywhere in the 5×3 grid.
+ *  RULE: exactly 1 card per suit (♥♦♣♠) — duplicates of the same suit are ignored.
+ *  Always 4 cards total: real cards fill suit slots, dragukka fills remaining slots. */
+function detectRankCombo(
+  grid: SlotCard[],
+  isBonusMode: boolean,
+  usedWildcardIndices: Set<number> = new Set(),
+): {
   combo: CardCombo;
   matchedIndices: number[];
   wildcardIndices: number[];
 } | null {
-  const rankGroups = new Map<SlotRank, number[]>();
-  const jokerIndices: number[] = [];
+  // rankGroups: only 1 card per suit per rank (first occurrence wins)
+  const rankGroups = new Map<SlotRank, { indices: number[]; suits: Set<string> }>();
+  // bonusJokerIndices: dragukka — persistent, once per spin
+  const bonusJokerIndices: number[] = [];
+  // normalJokerIndices: neymar/clawdmoltopenbot — removed after use
+  const normalJokerIndices: number[] = [];
 
   for (let i = 0; i < grid.length; i++) {
     const card = grid[i]!;
-    const isJoker = card.baccarat === SLOT_BONUS_WILDCARD && isBonusMode;
-    if (isJoker) {
-      jokerIndices.push(i);
-    } else if (card.rank) {
-      if (!rankGroups.has(card.rank)) rankGroups.set(card.rank, []);
-      rankGroups.get(card.rank)!.push(i);
+    const isBonusJoker = card.baccarat === SLOT_BONUS_WILDCARD && isBonusMode && !usedWildcardIndices.has(i);
+    const isNormalJoker = !isBonusMode && NORMAL_WILDCARDS.has(card.baccarat);
+    if (isBonusJoker) {
+      bonusJokerIndices.push(i);
+    } else if (isNormalJoker) {
+      normalJokerIndices.push(i);
+    } else if (card.rank && card.suit) {
+      if (!rankGroups.has(card.rank)) rankGroups.set(card.rank, { indices: [], suits: new Set() });
+      const g = rankGroups.get(card.rank)!;
+      // Only first card of each suit counts — no duplicate suits allowed
+      if (!g.suits.has(card.suit)) {
+        g.indices.push(i);
+        g.suits.add(card.suit);
+      }
     }
   }
 
   for (const rank of SLOT_RANK_ORDER) {
-    const indices = rankGroups.get(rank) ?? [];
+    const g = rankGroups.get(rank);
+    const indices = g?.indices ?? [];
     const needed = Math.max(0, 4 - indices.length);
-    const jokersToUse = Math.min(needed, jokerIndices.length);
-    const total = indices.length + jokersToUse;
+    const bonusToUse = Math.min(needed, bonusJokerIndices.length);
+    const stillNeeded = needed - bonusToUse;
+    const normalToUse = Math.min(stillNeeded, normalJokerIndices.length);
+    const total = indices.length + bonusToUse + normalToUse;
 
     if (total >= 4 && indices.length >= 2) {
       return {
         combo: createRankCombo(rank),
-        matchedIndices: indices,
-        wildcardIndices: jokerIndices.slice(0, jokersToUse),
+        // normal jokers (neymar/clawd) go into matchedIndices → removed
+        matchedIndices: [...indices, ...normalJokerIndices.slice(0, normalToUse)],
+        // bonus joker (dragukka) goes into wildcardIndices → persists
+        wildcardIndices: bonusJokerIndices.slice(0, bonusToUse),
       };
     }
   }
@@ -375,10 +516,12 @@ function detectRankCombo(grid: SlotCard[], isBonusMode: boolean): {
 }
 
 const NORMAL_FOIL_CHANCE = 0.15;
-const BONUS_FOIL_CHANCE = 0.15;
-const BONUS_WEIGHT_MULTIPLIER = 3.5;
-const BONUS_WILDCARD_SPAWN_CHANCE = 0.12;
-const BONUS_WILDCARD_FORCE_SPAWN_CHANCE = 0.4;
+const BONUS_FOIL_CHANCE = 0.07;                  // reduzido de 0.15 — menos foils no bonus
+const BONUS_WEIGHT_MULTIPLIER = 2.0;
+const BONUS_WILDCARD_SPAWN_CHANCE = 0.02;        // 2% por célula
+const BONUS_WILDCARD_FORCE_SPAWN_CHANCE = 0.08;  // 8% de forçar uma dragukka se nenhuma existe
+const BONUS_WILDCARD_GUARANTEED_AFTER = 5;       // garantir 1 dragukka após X spins sem aparecer
+const BONUS_WILDCARD_MAX_PER_GRID = 1;           // máx 1 nova dragukka por spin
 const MAX_CHAIN_STEPS = 20;
 
 export type SlotPhase =
@@ -395,6 +538,7 @@ export type SlotBonusState = {
     growthLevel: number;
   }>;
   spinsRemaining: number;
+  spinsSinceLastDragukka?: number; // contador para garantia de dragukka
 };
 
 export type SlotComboPresentation = {
@@ -404,6 +548,7 @@ export type SlotComboPresentation = {
   description: string;
   translationKey: string | null;
   audioPath: string | null;
+  audioVolume?: number;
   cards: string[];
   minCards: number;
 };
@@ -542,7 +687,8 @@ export function createInitialSlotGrid(
   );
 
   const grid: SlotCard[] = [];
-  let hasWildcard = persistentWildcards.size > 0;
+  // Persistent dragukkas already count as wildcards
+  let newWildcardCount = 0;
 
   for (let index = 0; index < SLOT_TOTAL_CELLS; index += 1) {
     const persistentLevel = persistentWildcards.get(index);
@@ -551,9 +697,11 @@ export function createInitialSlotGrid(
       continue;
     }
 
-    const card = createRandomSlotCard(isBonusMode, isBonusMode);
+    // Limit new dragukka spawns to BONUS_WILDCARD_MAX_PER_GRID per spin
+    const allowSpawn = isBonusMode && newWildcardCount < BONUS_WILDCARD_MAX_PER_GRID;
+    const card = createRandomSlotCard(isBonusMode, allowSpawn);
     if (isSlotBonusWildcard(card, isBonusMode)) {
-      hasWildcard = true;
+      newWildcardCount++;
     }
     grid.push(card);
   }
@@ -568,9 +716,25 @@ export function createInitialSlotGrid(
     }
   }
 
-  if (isBonusMode && !hasWildcard && Math.random() < BONUS_WILDCARD_FORCE_SPAWN_CHANCE) {
-    const replaceIndex = Math.floor(Math.random() * SLOT_TOTAL_CELLS);
-    grid[replaceIndex] = createBonusWildcard(1);
+  if (isBonusMode) {
+    const spinsSince = bonusState?.spinsSinceLastDragukka ?? 0;
+    const hasNewWildcard = newWildcardCount > 0;
+    // Force spawn if: no new dragukka this spin AND (spinsSince >= GUARANTEED or random force)
+    if (!hasNewWildcard) {
+      const shouldForce =
+        spinsSince >= BONUS_WILDCARD_GUARANTEED_AFTER ||
+        Math.random() < BONUS_WILDCARD_FORCE_SPAWN_CHANCE;
+      if (shouldForce) {
+        // Replace a non-persistent, non-foil cell
+        const candidates = grid
+          .map((c, i) => i)
+          .filter(i => !persistentWildcards.has(i) && !grid[i]!.hasFoil);
+        if (candidates.length > 0) {
+          const replaceIndex = candidates[Math.floor(Math.random() * candidates.length)]!;
+          grid[replaceIndex] = createBonusWildcard(1);
+        }
+      }
+    }
   }
 
   return grid;
@@ -578,14 +742,42 @@ export function createInitialSlotGrid(
 
 
 
+/** Resolve audioPath/audioVolume from a combo ID — usable on client AND server */
+export function resolveComboAudio(comboId: string): { audioPath: string | null; audioVolume: number } {
+  if (comboId.startsWith("rank_")) {
+    const rank = comboId.slice(5);
+    const a = RANK_COMBO_AUDIO[rank];
+    if (a) return { audioPath: a.path, audioVolume: a.volume };
+  } else if (comboId.startsWith("quad_")) {
+    const cardName = comboId.slice(5);
+    const a = CARD_QUAD_AUDIO[cardName];
+    if (a) return { audioPath: a.path, audioVolume: a.volume };
+  }
+  return { audioPath: null, audioVolume: 0.7 };
+}
+
 export function getSlotComboPresentation(combo: CardCombo): SlotComboPresentation {
+  let audioPath: string | null = null;
+  let audioVolume: number | undefined;
+
+  if (combo.id.startsWith("rank_")) {
+    const rank = combo.id.slice(5) as SlotRank;
+    const a = RANK_COMBO_AUDIO[rank];
+    if (a) { audioPath = a.path; audioVolume = a.volume; }
+  } else if (combo.id.startsWith("quad_")) {
+    const cardName = combo.id.slice(5);
+    const a = CARD_QUAD_AUDIO[cardName];
+    if (a) { audioPath = a.path; audioVolume = a.volume; }
+  }
+
   return {
     id: combo.id,
     name: combo.name,
     emoji: combo.emoji ?? '',
     description: combo.description,
     translationKey: null,
-    audioPath: null,
+    audioPath,
+    audioVolume,
     cards: combo.cards,
     minCards: combo.minCards ?? combo.cards.length,
   };
@@ -596,29 +788,22 @@ function getSlotComboReward(
   _matchedIndices: number[],
   _wildcardIndices: number[],
   _grid: SlotCard[],
-  cascadeStep: number,
+  _cascadeStep: number,
 ): number {
   // combo.bonus.value is the payout percentage of bet (e.g., 10 = 10% of bet)
-  const basePercent = combo.bonus.value;
-
-  // Cascade multiplier: each successive combo pays more (1x, 2x, 3x, 5x, 8x...)
-  const cascadeMult = cascadeStep === 0 ? 1
-    : cascadeStep === 1 ? 2
-    : cascadeStep === 2 ? 3
-    : cascadeStep <= 5 ? 5
-    : 8;
-
-  return Math.max(1, Math.round(basePercent * cascadeMult));
+  // No cascade multiplier, no bonus multiplier — flat payout
+  return Math.max(1, combo.bonus.value);
 }
 
 function findNextCombo(
   grid: SlotCard[],
   skippedStaticCombos: Set<string>,
   isBonusMode: boolean,
+  usedWildcardIndices: Set<number> = new Set(),
 ): SlotComboMatch | null {
   // Priority 1: Quad (4 identical cards) — strongest combo
   // Priority 2: Four-of-a-kind (4 same rank, different suits)
-  const match = detectQuadCombo(grid, isBonusMode) ?? detectRankCombo(grid, isBonusMode);
+  const match = detectQuadCombo(grid, isBonusMode, usedWildcardIndices) ?? detectRankCombo(grid, isBonusMode, usedWildcardIndices);
   if (!match) return null;
 
   const { combo, matchedIndices, wildcardIndices } = match;
@@ -688,7 +873,7 @@ function makeGridSignature(grid: SlotCard[]): string {
     .join("|");
 }
 
-export function extractBonusState(grid: SlotCard[], spinsRemaining = 0): SlotBonusState {
+export function extractBonusState(grid: SlotCard[], spinsRemaining = 0, prevSpinsSince = 0, hadNewDragukka = false): SlotBonusState {
   return {
     persistentWildcards: grid
       .map((card, index) =>
@@ -698,6 +883,7 @@ export function extractBonusState(grid: SlotCard[], spinsRemaining = 0): SlotBon
       )
       .filter(Boolean) as SlotBonusState["persistentWildcards"],
     spinsRemaining,
+    spinsSinceLastDragukka: hadNewDragukka ? 0 : prevSpinsSince + 1,
   };
 }
 
@@ -711,14 +897,20 @@ export function resolveSlotSpin(
   let currentGrid = cloneGrid(initialGrid);
   let totalWin = 0;
   let skippedStaticCombos = new Set<string>();
+  // Track dragukka indices already used this spin (once per round rule)
+  const usedWildcardIndices = new Set<number>();
 
   for (let guard = 0; guard < MAX_CHAIN_STEPS; guard += 1) {
-    const comboMatch = findNextCombo(currentGrid, skippedStaticCombos, isBonusMode);
+    const comboMatch = findNextCombo(currentGrid, skippedStaticCombos, isBonusMode, usedWildcardIndices);
     if (!comboMatch) {
       break;
     }
 
-    // Apply cascade multiplier to reward
+    // Mark dragukka wildcards used this spin so they can't contribute again
+    for (const idx of comboMatch.wildcardIndices) {
+      usedWildcardIndices.add(idx);
+    }
+
     comboMatch.reward = getSlotComboReward(
       comboMatch.combo,
       comboMatch.matchedIndices,
@@ -778,6 +970,12 @@ export function resolveSlotSpin(
     ? detectNearMiss(currentGrid, isBonusMode)
     : null;
 
+  // Detect if a new dragukka appeared this spin (wasn't in the initial persistent wildcards)
+  const persistentIndices = new Set((bonusState?.persistentWildcards ?? []).map(w => w.index));
+  const hadNewDragukka = isBonusMode && initialGrid.some(
+    (c, i) => c.baccarat === SLOT_BONUS_WILDCARD && !persistentIndices.has(i)
+  );
+
   return {
     initialGrid,
     comboSteps,
@@ -787,7 +985,7 @@ export function resolveSlotSpin(
     triggeredBonus: bonusSpinsAwarded > 0 || (isBonusMode && spinsRemaining > 0),
     bonusSpinsAwarded,
     bonusSpinsRemaining: spinsRemaining,
-    bonusState: extractBonusState(currentGrid, spinsRemaining),
+    bonusState: extractBonusState(currentGrid, spinsRemaining, bonusState?.spinsSinceLastDragukka ?? 0, hadNewDragukka),
     nearMiss,
   };
 }

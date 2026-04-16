@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
+import { useReconnectTimeout } from "@/hooks/useReconnectTimeout";
+import { WalletGateScreen } from "@/components/WalletGateScreen";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS";
 import { usePlayerCards } from "@/contexts/PlayerCardsContext";
@@ -80,7 +82,8 @@ const LANE_NAMES = [
 export default function TCGPage() {
   const router = useRouter();
   const convex = useConvex();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, status: wagmiStatus } = useAccount();
+  const isReconnecting = useReconnectTimeout(wagmiStatus);
   const { userProfile } = useProfile();
   const { nfts, isLoading: cardsLoading, loadNFTs, status } = usePlayerCards();
   const { t, lang } = useLanguage();
@@ -5316,8 +5319,10 @@ export default function TCGPage() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════════
-  // RENDER: LOADING
+  // RENDER: LOADING / NO WALLET
   // ═══════════════════════════════════════════════════════════════════════════════
+
+  if (!address && !isReconnecting) return <WalletGateScreen />;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-black flex items-center justify-center">

@@ -37,16 +37,8 @@ export function ConnectScreen({
     }
   }
 
-  const preferredConnectorIds = [
-    "baseAccount",
-    "coinbaseWalletSDK",
-    "metaMaskSDK",
-    "walletConnect",
-  ];
-
-  const standardConnectors = preferredConnectorIds
-    .map((id) => connectorById.get(id))
-    .filter((connector): connector is Connector => !!connector);
+  const baseConnector = connectors.find(c => c.id === 'baseAccount' || c.id === 'base');
+  const metamaskConnector = connectors.find(c => c.id === 'io.metamask' || c.id === 'metaMask' || c.id === 'injected');
 
   const handleConnectorConnect = async (connector: Connector, label = connector.name) => {
     try {
@@ -80,51 +72,36 @@ export function ConnectScreen({
         </div>
       ) : (
         <div className="bg-vintage-charcoal backdrop-blur-lg p-8 rounded-2xl border-2 border-vintage-gold text-center w-full shadow-gold">
-          <div className="text-6xl mb-4 text-vintage-gold font-display">♠</div>
-          <h2 className="text-2xl font-bold mb-4 text-vintage-gold">{t('connectTitle')}</h2>
-          <p className="text-vintage-burnt-gold mb-6">{t('connectDescription')}</p>
+          <div className="text-6xl mb-6 text-vintage-gold font-display">♠</div>
+          <h2 className="text-2xl font-bold mb-6 text-vintage-gold">{t('connectTitle')}</h2>
 
           <div className="flex justify-center">
-            {isInFarcaster && !isFrameMode ? (
-              <button
-                onClick={() => {
-                  if (!farcasterConnector) {
-                    toast.error('Farcaster connector not found. Please reload.');
-                    return;
-                  }
-                  handleConnectorConnect(farcasterConnector, 'Farcaster Wallet');
-                }}
-                className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
-              >
-                Connect Farcaster Wallet
-              </button>
-            ) : (
-              <div className="w-full flex flex-col gap-3">
-                {standardConnectors.length > 0 ? (
-                  standardConnectors.map((connector) => (
-                    <button
-                      key={connector.uid}
-                      onClick={() => handleConnectorConnect(connector)}
-                      className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
-                    >
-                      {connector.id === 'baseAccount' ? 'Continue with Base' : `Connect ${connector.name}`}
-                    </button>
-                  ))
-                ) : (
-                  <div className="w-full px-6 py-4 bg-vintage-gold/10 text-vintage-burnt-gold rounded-xl border border-vintage-gold/30 text-sm">
-                    No compatible wallet connector is available.
-                  </div>
-                )}
-                {farcasterConnector && (
-                  <button
-                    onClick={() => handleConnectorConnect(farcasterConnector, 'Farcaster Wallet')}
-                    className="w-full px-6 py-3 bg-transparent hover:bg-vintage-gold/10 text-vintage-gold rounded-xl border border-vintage-gold/30 transition-all font-display font-semibold"
-                  >
-                    Connect Farcaster Wallet
-                  </button>
-                )}
-              </div>
-            )}
+            <div className="w-full flex flex-col gap-3">
+              {baseConnector && (
+                <button
+                  onClick={() => handleConnectorConnect(baseConnector)}
+                  className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
+                >
+                  Continue with Base
+                </button>
+              )}
+              {metamaskConnector && (
+                <button
+                  onClick={() => handleConnectorConnect(metamaskConnector)}
+                  className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
+                >
+                  Continue with MetaMask
+                </button>
+              )}
+              {farcasterConnector && (
+                <button
+                  onClick={() => handleConnectorConnect(farcasterConnector)}
+                  className="w-full px-6 py-4 bg-vintage-gold hover:bg-vintage-gold-dark text-vintage-black rounded-xl shadow-gold hover:shadow-gold-lg transition-all font-display font-semibold"
+                >
+                  Continue with Farcaster
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -2,10 +2,9 @@
 
 import { http, createConfig, createStorage } from 'wagmi';
 import { base, arbitrum } from 'wagmi/chains';
-import { baseAccount } from 'wagmi/connectors';
+import { baseAccount, injected } from 'wagmi/connectors';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 import {
-  coinbaseWallet,
   metaMaskWallet,
   rainbowWallet,
   walletConnectWallet,
@@ -25,8 +24,8 @@ const connectors = connectorsForWallets(
     {
       groupName: 'Recommended',
       wallets: hasValidWalletConnectProjectId
-        ? [metaMaskWallet, rainbowWallet, coinbaseWallet, walletConnectWallet]
-        : [metaMaskWallet, coinbaseWallet],
+        ? [metaMaskWallet, rainbowWallet, walletConnectWallet]
+        : [metaMaskWallet],
     },
   ],
   {
@@ -41,11 +40,15 @@ if (!hasValidWalletConnectProjectId && typeof window !== 'undefined') {
   console.warn('[wagmi] Invalid NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID; WalletConnect/Rainbow connectors disabled.');
 }
 
+// MetaMask injected connector (always available when extension is installed)
+const metamaskConnector = injected({ target: 'metaMask' });
+
 // Support both Base App users (no FID required) and Farcaster miniapp users.
 const allConnectors = [
   baseAccount({ appName: '$VBMS' }),
   ...connectors,
   farcasterMiniApp(),
+  metamaskConnector,
 ];
 
 // Base App (RN WebView) requires localStorage — sessionStorage is wiped between navigations.

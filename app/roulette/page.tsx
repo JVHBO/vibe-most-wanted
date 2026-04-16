@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAccount } from "wagmi";
+import { useReconnectTimeout } from "@/hooks/useReconnectTimeout";
+import { WalletGateScreen } from "@/components/WalletGateScreen";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { Roulette } from "@/components/Roulette";
 
 // Prize images for floating background
@@ -160,6 +164,8 @@ function PrizeOddsModal({ onClose }: { onClose: () => void }) {
 }
 
 export default function RoulettePage() {
+  const { address, status } = useAccount();
+  const isReconnecting = useReconnectTimeout(status);
   const [showFloating, setShowFloating] = useState(false);
   const [showOdds, setShowOdds] = useState(false);
   const [chainMode, setChainMode] = useState<'base' | 'arbitrum'>('arbitrum');
@@ -173,6 +179,16 @@ export default function RoulettePage() {
     window.addEventListener("roulette:win", onWin);
     return () => window.removeEventListener("roulette:win", onWin);
   }, []);
+
+  if (isReconnecting) {
+    return (
+      <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!address) return <WalletGateScreen />;
 
   return (
     <>

@@ -22,15 +22,28 @@ crons.interval(
 );
 
 // ============================================================
-// DAILY NOTIFICATIONS — ATIVO (using direct Warpcast API - zero credits)
+// DAILY NOTIFICATION — Farcaster (Hypersnap) + Base App
 // ============================================================
-// Executa diariamente às 15:00 UTC (12:00 horário Brasil)
-// Notifica apenas usuários ativos dos últimos 7 dias
-// Sistema gratuito: envia diretamente para Warpcast sem Neynar
+// 15:00 UTC = 12:00 horário Brasil
 crons.cron(
   "daily-gaming-tip",
   "0 15 * * *",
-  internal.notifications.sendPeriodicTip,
+  internal.notifications.sendDailyTip,
+);
+
+// ============================================================
+// WEEKLY — Domingo 23:50 UTC: notifica top 10, depois reseta aura
+// ============================================================
+crons.cron(
+  "weekly-leaderboard-notification",
+  "50 23 * * 0", // Sunday 23:50 UTC (10 min before reset)
+  internal.notifications.sendWeeklyLeaderboardNotification,
+);
+
+crons.cron(
+  "weekly-aura-reset",
+  "0 0 * * 1", // Monday 00:00 UTC
+  internal.profiles.resetWeeklyAura,
 );
 
 export default crons;

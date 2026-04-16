@@ -33,6 +33,7 @@ const bonusStateValidator = v.object({
     }),
   ),
   spinsRemaining: v.number(),
+  spinsSinceLastDragukka: v.optional(v.number()),
 });
 
 // Helper to get profile by address (supports multi-wallet via addressLinks)
@@ -164,7 +165,6 @@ export const spinSlot = mutation({
     address: v.string(),
     isFreeSpin: v.boolean(),
     buyBonusEntry: v.optional(v.boolean()),
-    bonusMultiplier: v.optional(v.number()),
     betMultiplier: v.optional(v.number()),
     isBonusMode: v.optional(v.boolean()),
     bonusState: v.optional(bonusStateValidator),
@@ -175,7 +175,6 @@ export const spinSlot = mutation({
       address,
       isFreeSpin,
       buyBonusEntry = false,
-      bonusMultiplier = 1,
       betMultiplier = 1,
       isBonusMode = false,
       bonusState,
@@ -198,16 +197,18 @@ export const spinSlot = mutation({
       throw new Error("Access denied: slot restricted to developer wallets");
     }
 
-    // BUY BONUS: charge 20× once on entry; bonus spins are free (already paid for)
-    // Normal spin: charge betMultiplier coins
-    // Free daily spin: charge 0 coins
+    // BUY BONUS entry: spin normal com 4 foils forçados, cobra 20× a aposta
+    // Bonus spin (isBonusMode): free — já foi pago na entry
+    // Free daily spin: free
+    // Normal spin: cobra betMultiplier
     let spinCost = betMultiplier;
-    if (isBonusMode && buyBonusEntry) {
+    if (buyBonusEntry) {
+      // Entry do Buy Bonus — cobra 20× independente de isBonusMode
       spinCost = Math.round(betMultiplier * SLOT_BONUS_COST_MULT);
     } else if (isBonusMode) {
-      spinCost = 0; // bonus spins are free after entry
+      spinCost = 0; // bonus spins são free após a entry
     } else if (isFreeSpin) {
-      spinCost = 0; // daily free spin
+      spinCost = 0; // free daily spin
     }
 
     const currentCoins = profile.coins || 0;
@@ -219,17 +220,22 @@ export const spinSlot = mutation({
     const resolution = resolveSlotSpin(
       isBonusMode,
       isBonusMode ? ((bonusState as SlotBonusState | undefined) ?? undefined) : undefined,
-      buyBonusEntry && !isBonusMode ? SLOT_BONUS_FOIL_COUNT : 0, // BUY BONUS: force 4 foils to trigger bonus; bonus spins: natural
+      buyBonusEntry ? SLOT_BONUS_FOIL_COUNT : 0, // BUY BONUS: força 4 foils para garantir trigger do bonus
     );
 
-    const effectiveBonusMult = isBonusMode ? 1.5 : (bonusMultiplier ?? 1);
+    // Flat payout — no bonus multiplier, no cascade multiplier
     const comboSteps = resolution.comboSteps.map((step) => ({
       ...step,
-      reward: Math.floor(step.reward * effectiveBonusMult * betMultiplier / 100),
+      reward: Math.floor(step.reward * betMultiplier / 100),
     }));
 
-    const finalWin = comboSteps.reduce((sum, step) => sum + step.reward, 0);
-    const winAdded = finalWin > 0;
+    let finalWin = comboSteps.reduce((sum, step) => sum + step.reward, 0);
+
+    // Max win cap: 100x betMultiplier
+    const maxWin = betMultiplier * 100;
+    if (finalWin > maxWin) {
+      finalWin = maxWin;
+    }
 
     let nextCoins = currentCoins;
     if (spinCost > 0) {
@@ -307,21 +313,22 @@ export const spinSlot = mutation({
 
     const spinType = spinCost === 0 ? "free" : "paid";
 
-    await ctx.db.insert("slotSpins", {
+    const spinId = await ctx.db.insert("slotSpins", {
       playerAddress: normalizedAddress,
       spinType,
       spinCount: 1,
       cost: spinCost,
       reels: resolution.initialGrid.map((card) => card.baccarat),
       winAmount: finalWin,
-      multiplier: bonusMultiplier,
+      multiplier: 1,
       timestamp: Date.now(),
-      claimed: winAdded,
+      claimed: finalWin > 0,
       foilCount: resolution.finalFoilCount,
       triggeredBonus: resolution.triggeredBonus,
     });
 
     return {
+      spinId,
       initialGrid: resolution.initialGrid,
       comboSteps,
       finalGrid: resolution.finalGrid,
@@ -332,7 +339,52 @@ export const spinSlot = mutation({
       bonusSpinsAwarded: resolution.bonusSpinsAwarded,
       bonusSpinsRemaining: resolution.bonusSpinsRemaining,
       bonusState: resolution.bonusState,
-      nearMiss: resolution.nearMiss,
+    };
+  },
+});
+
+/**
+ * Get a single spin result by ID (for spin recovery after page reload)
+ */
+export const getSpinById = query({
+  args: { spinId: v.id("slotSpins") },
+  handler: async (ctx, { spinId }) => {
+    const spin = await ctx.db.get(spinId);
+    if (!spin) return null;
+    return {
+      spinId: spin._id,
+      reels: spin.reels,
+      winAmount: spin.winAmount,
+      foilCount: spin.foilCount ?? 0,
+      triggeredBonus: spin.triggeredBonus ?? false,
+      timestamp: spin.timestamp,
+      spinType: spin.spinType,
+    };
+  },
+});
+
+/**
+ * Get last spin result for a player (for recovery on page reload)
+ * Returns spins from the last 2 minutes only
+ */
+export const getLastSpinResult = query({
+  args: { address: v.string() },
+  handler: async (ctx, { address }) => {
+    const normalizedAddress = address.toLowerCase();
+    const cutoff = Date.now() - 2 * 60 * 1000; // 2 minutes
+    const spin = await ctx.db
+      .query("slotSpins")
+      .withIndex("by_player_time", (q) => q.eq("playerAddress", normalizedAddress))
+      .order("desc")
+      .first();
+    if (!spin || spin.timestamp < cutoff) return null;
+    return {
+      spinId: spin._id,
+      reels: spin.reels,
+      winAmount: spin.winAmount,
+      foilCount: spin.foilCount ?? 0,
+      triggeredBonus: spin.triggeredBonus ?? false,
+      timestamp: spin.timestamp,
     };
   },
 });

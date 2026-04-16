@@ -250,12 +250,18 @@ export async function fetchWieldTokens(
       saveOwnerCache(ownerCache);
     } catch (e) {
       console.warn(`Wield fetch failed for ${collection}:`, e);
-      // If cache exists (even stale), use it
+      // Invalidate stale owner cache on API failure to prevent phantom
+      // NFTs on next load. The cached tokenIds may belong to a different
+      // wallet state (e.g., demo wallet used for testing, cards sold/burned).
       if (cached) {
-        tokenIds = cached.tokenIds;
-      } else {
-        return []; // No data available
+        delete ownerCache[addrLower][collection];
+        if (Object.keys(ownerCache[addrLower]).length === 0) {
+          delete ownerCache[addrLower];
+        }
+        saveOwnerCache(ownerCache);
+        console.log(`[Wield] Cleared stale owner cache for ${addrLower.slice(0, 8)}.../${collection}`);
       }
+      return [];
     }
   }
 
