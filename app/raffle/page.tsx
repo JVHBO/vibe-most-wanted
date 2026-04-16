@@ -583,7 +583,6 @@ export default function RafflePage() {
     : `≈${(0.000023 * buyQty).toFixed(6)} ETH`;
 
   if (isReconnecting) return <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center"><LoadingSpinner /></div>;
-  if (!walletAddress) return <WalletGateScreen />;
 
   return (
     <div className="min-h-screen bg-[#111] text-white flex flex-col">
