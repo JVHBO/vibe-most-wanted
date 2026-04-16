@@ -597,10 +597,37 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
   const [selling, setSelling] = useState(false);
   const [sellMode, setSellMode] = useState<"vbms" | "eth" | null>(null);
   const [burnPage, setBurnPage] = useState(0);
+  const [cardMeta, setCardMeta] = useState<Record<string, { image: string; name?: string }>>({});
   const BURN_PAGE_SIZE = 5;
   const offers = useOfferAmounts();
   const { writeContractAsync } = useWriteContractWithAttribution();
   const { chainId } = useAccount();
+
+  // Fetch Wield metadata for cards without a local image
+  useEffect(() => {
+    if (!opened.length) return;
+    const PACK_COVER_FRAGMENT = "54f04f3d-8d29-420e-aaeb-ba6b17e45e00";
+    opened.forEach(box => {
+      if (cardMeta[box.tokenId]) return; // already fetched
+      const localImg = getVbmsBaccaratImageUrlByTokenId(box.tokenId);
+      if (localImg) {
+        setCardMeta(prev => ({ ...prev, [box.tokenId]: { image: localImg } }));
+        return;
+      }
+      fetch(`https://build.wield.xyz/vibe/boosterbox/metadata/vibe-most-wanted/${box.tokenId}`)
+        .then(r => r.json())
+        .then(d => {
+          const attrs: any[] = d.attributes || [];
+          const get = (t: string) => attrs.find((a: any) => a.trait_type === t)?.value;
+          const charName = get("name") || get("Name") || get("Character");
+          const byName = charName ? getVbmsBaccaratImageUrl(charName) : null;
+          const safeCdn = d.image?.includes(PACK_COVER_FRAGMENT) ? undefined : d.image;
+          const image = byName || safeCdn || localImg;
+          if (image) setCardMeta(prev => ({ ...prev, [box.tokenId]: { image, name: charName } }));
+        })
+        .catch(() => {});
+    });
+  }, [opened]);
 
   const selectedBox = opened.find((b) => b.tokenId === selected);
   const offerVbms = selectedBox?.rarity !== undefined ? offers[selectedBox.rarity] : undefined;
@@ -677,7 +704,8 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
               {opened.slice(burnPage * BURN_PAGE_SIZE, (burnPage + 1) * BURN_PAGE_SIZE).map((box) => {
                 const rarityIdx = box.rarity ?? 0;
                 const offer = offers[rarityIdx];
-                const cardImg = getVbmsBaccaratImageUrlByTokenId(box.tokenId);
+                const meta = cardMeta[box.tokenId];
+                const cardImg = meta?.image || null;
                 return (
                   <button key={box.tokenId} onClick={() => setSelected(box.tokenId)}
                     className={`w-full flex items-center gap-3 p-2 rounded-xl border transition-all ${selected === box.tokenId ? "border-vintage-gold bg-vintage-gold/10" : "border-white/10 bg-white/5 hover:border-white/20"}`}>
@@ -686,7 +714,7 @@ function BurnModal({ address, onClose }: { address: string; onClose: () => void 
                       : <div className={`w-10 h-14 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${RARITY_BG[rarityIdx] ?? RARITY_BG[0]}`}><span className={`text-[10px] font-black ${RARITY_COLORS[rarityIdx] ?? RARITY_COLORS[0]}`}>{(RARITY_NAMES[rarityIdx] ?? "C").slice(0,1)}</span></div>}
                     <div className="text-left flex-1">
                       <p className={`text-sm font-bold ${RARITY_COLORS[rarityIdx] ?? RARITY_COLORS[0]}`}>
-                        {RARITY_NAMES[rarityIdx] ?? "Common"}
+                        {meta?.name || RARITY_NAMES[rarityIdx] || "Common"}
                       </p>
                       <p className="text-xs text-vintage-ice/40">#{box.tokenId}</p>
                     </div>
