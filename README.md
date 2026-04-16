@@ -81,38 +81,6 @@ See [ECONOMY-GUIDE.md](docs/ECONOMY-GUIDE.md) for complete details.
 - **Profile System** - Username, stats, defense deck
 - **Internationalization** - Multi-language support (Portuguese, English, Spanish, Hindi)
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-```bash
-Node.js >= 18
-npm or yarn
-```
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/JVHBO/vibe-most-wanted.git
-cd vibe-most-wanted
-
-# Install dependencies
-npm install
-
-# Setup environment variables
-cp .env.example .env.local
-
-# Run development server
-npm run dev
-```
-
-### Environment Variables
-
-Create `.env.local` with the required environment variables.
-
-See [docs/setup/](docs/setup/) for detailed setup guides and configuration.
-
 ## 📁 Project Structure
 
 ```
@@ -188,29 +156,6 @@ vibe-most-wanted/
 - **CI/CD**: GitHub Actions (lint, typecheck, unit tests, e2e)
 - **Deployment**: Vercel (frontend) + Convex Cloud (backend)
 
-## 📊 Game Balance
-
-### PvE Rewards
-| Difficulty | Coins/Win | Max Power |
-|-----------|-----------|-----------|
-| Gey       | 5         | 200       |
-| Goofy     | 15        | 400       |
-| Gooner    | 30        | 600       |
-| Gangster  | 60        | 800       |
-| Gigachad  | 120       | 1,000     |
-
-### Daily Limits
-- **PvE**: 30 wins/day, 3,500 coins cap
-- **PvP**: 10 matches/day, no cap
-- **Attack**: 5 attacks/day, no cap
-
-### Max Daily Earnings
-- PvE: 3,500 coins
-- Attack: 1,000+ coins (with bonuses)
-- PvP: 800+ coins
-- Bonuses: 1,425 coins
-- **Total**: ~6,725 coins/day (theoretical max)
-
 ## 📚 Documentation
 
 - [Economy Guide](docs/ECONOMY-GUIDE.md) - Complete economy system breakdown
@@ -221,41 +166,6 @@ vibe-most-wanted/
 - [Farcaster Setup](docs/setup/FARCASTER-MINIAPP-CHECKLIST.md) - Integration guide
 - [Performance Hooks](hooks/README.md) - Optimized React hooks library
 - [Technical Debt](docs/TECHNICAL-DEBT.md) - Refactoring status and plans
-
-## 🚧 Development
-
-### Available Scripts
-
-```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run start        # Start production server
-npm run lint         # Run ESLint
-npm run typecheck    # TypeScript type checking
-npm run test         # Run unit tests (watch mode)
-npm run test:ci      # Run unit tests (CI mode)
-npm run test:coverage # Run tests with coverage report
-npm run test:e2e     # Run Playwright e2e tests
-```
-
-### Testing
-
-The project uses **Vitest** for unit testing with **React Testing Library** for component tests.
-
-```bash
-# Run all 377 tests
-npm run test:ci
-
-# Run with coverage (current: 92%+ statements)
-npm run test:coverage
-```
-
-**Test structure:**
-- `tests/unit/components/` - Component tests (BattleArena, PowerDisplay, Modal, etc.)
-- `tests/unit/hooks/` - Hook tests (usePowerCalculation, useCardSelection)
-- `lib/utils/__tests__/` - Utility function tests (card calculations, economy, quests)
-
-See [docs/setup/](docs/setup/) for detailed development guides.
 
 ## 🔒 Security
 
@@ -277,11 +187,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🔗 Links
 
 - **Live App**: [https://vibemostwanted.xyz](https://vibemostwanted.xyz)
-- **Farcaster**: [https://warpcast.com/vibegame](https://warpcast.com/vibegame)
+- **Farcaster**: [https://warpcast.com/vibegame](https://warpcast.com/jvhbo)
 
 ## 👥 Team
 
-Built with ❤️ by the Vibe team
+Built with vy jvhbo and claude code
 
 ---
 
