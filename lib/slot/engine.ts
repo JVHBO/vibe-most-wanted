@@ -397,16 +397,17 @@ function detectQuadCombo(
     "clawdmoltopenbot":  "Bot Singularity",
   };
   const specialName = SPECIAL_QUAD_NAMES[bestName];
+  const quadName = specialName ?? CARD_QUAD_NAMES[bestName] ?? `Quad ${label}!`;
   const payoutValue = rank ? RANK_COMBO_PAYOUT[rank] * 3 : 5000; // specials pay 5000%
 
   return {
     combo: {
       id: `quad_${bestName}`,
-      name: specialName ?? `Quad ${label}!`,
+      name: quadName,
       emoji: specialName ? "🌟" : "💀",
       cards: [],
       bonus: { type: "power", value: payoutValue, target: "self" },
-      description: specialName ? `4x ${label} — lendário!` : `4x ${label} — ultra rare!`,
+      description: `4x ${label} — ultra rare!`,
     },
     // normal jokers (neymar/clawd) go into matchedIndices → will be removed
     matchedIndices: [...bestIndices, ...normalJokerIndices.slice(0, bestNormalNeeded)],

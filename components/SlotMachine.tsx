@@ -543,6 +543,8 @@ export default function SlotMachine({
     setBigWinType(type);
     setBigWinAmount(amount);
     setBigWinMultX(multiplierX);
+    // Som de lvlup ao aparecer win screen
+    try { const a = new Audio('/sounds/lvlup.wav'); a.volume = 0.55; a.play().catch(() => {}); } catch {}
     // auto-close after 4s — user can also dismiss by tapping
     setTimeout(() => setBigWinType(null), 4000);
   }, []);
@@ -668,6 +670,7 @@ export default function SlotMachine({
                   if (bonusWinTotalRef.current > 0) {
                     setBonusSummaryAmount(bonusWinTotalRef.current);
                     setShowBonusSummary(true);
+                    try { const a = new Audio('/sounds/lvlup.wav'); a.volume = 0.55; a.play().catch(() => {}); } catch {}
                     bonusWinTotalRef.current = 0;
                     setBonusWinTotal(0);
                     setBonusWinDisplay(null);
@@ -751,6 +754,7 @@ export default function SlotMachine({
           const totalBonusWin = bonusWinTotalRef.current;
           setBonusSummaryAmount(totalBonusWin);
           setShowBonusSummary(true);
+          try { const a = new Audio('/sounds/lvlup.wav'); a.volume = 0.55; a.play().catch(() => {}); } catch {}
           bonusWinTotalRef.current = 0;
           setBonusWinTotal(0);
           setBonusWinDisplay(null);
