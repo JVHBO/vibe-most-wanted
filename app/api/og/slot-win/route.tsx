@@ -98,10 +98,7 @@ export async function GET(request: Request) {
             borderRadius: 30,
             background: 'rgba(0,0,0,0.55)',
           }}>
-            <span style={{ fontSize: 20 }}>🎴</span>
             <span style={{ color: c.accent, fontSize: 17, fontWeight: 700, letterSpacing: 3 }}>TUKKA SLOTS</span>
-            <span style={{ color: '#ffffff44', fontSize: 15 }}>·</span>
-            <span style={{ color: '#ffffff66', fontSize: 15 }}>vibemostwanted.xyz</span>
           </div>
         </div>
 
@@ -122,7 +119,7 @@ export async function GET(request: Request) {
             borderRadius: 8,
             padding: '4px 18px',
           }}>
-            <span style={{ color: '#fff', fontSize: 15, fontWeight: 900, letterSpacing: 4 }}>🎰 Tukka Slots</span>
+            <span style={{ color: '#fff', fontSize: 15, fontWeight: 900, letterSpacing: 4 }}>Tukka Slots</span>
           </div>
 
           {/* WIN LABEL */}
@@ -173,18 +170,6 @@ export async function GET(request: Request) {
               <span style={{ color: '#ffffffaa', fontSize: 20, fontWeight: 600 }}>@{username}</span>
             </div>
           )}
-
-          {/* CTA */}
-          <div style={{
-            marginTop: 4,
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '9px 28px',
-            background: c.badge,
-            borderRadius: 12,
-            color: '#fff', fontSize: 20, fontWeight: 900, letterSpacing: 2,
-          }}>
-            🎮 TAP TO PLAY
-          </div>
         </div>
       </div>
     ),
