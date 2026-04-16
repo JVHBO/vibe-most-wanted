@@ -1339,7 +1339,7 @@ export default function SlotMachine({
             <button
               onClick={e => {
                 e.stopPropagation();
-                const embedUrl = `https://vibemostwanted.xyz/slot`;
+                const embedUrl = `https://vibemostwanted.xyz/share/slot?${ogParams}`;
                 const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(embedUrl)}`;
                 sdk.actions.openUrl(composeUrl).catch(() => window.open(composeUrl, '_blank'));
                 setBigWinType(null);
