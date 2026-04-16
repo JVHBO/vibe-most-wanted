@@ -60,23 +60,6 @@ export async function GET(request: Request) {
           )}
         </div>
 
-        {/* CENTER — CONGRATS */}
-        <div style={{
-          position: 'absolute',
-          top: '52%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          display: 'flex',
-          fontFamily: '"Arial Black", Arial, sans-serif',
-          fontSize: 120,
-          fontWeight: 900,
-          color: '#ffffff',
-          textShadow: '5px 5px 0 #000, -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000',
-          whiteSpace: 'nowrap',
-          letterSpacing: 2,
-        }}>
-          CONGRATS
-        </div>
-
         {/* BOTTOM CENTER — @username */}
         {username && (
           <div style={{
