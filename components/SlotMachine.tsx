@@ -674,8 +674,9 @@ export default function SlotMachine({
                   }
                 }
 
-                // Big win overlay só fora do bonus mode (no bonus, share aparece no summary)
-                if (!bonusMode && !isBuyBonusEntry) {
+                // Win overlay só aparece se: não está em bonus, não triggou bonus agora, não é buy bonus entry
+                // Se triggou bonus → share espera o bonus terminar (aparece no BonusSummary)
+                if (!bonusMode && !isBuyBonusEntry && !res.triggeredBonus) {
                   showBigWinOverlay(sessionTotalWin, betMult);
                 }
 
@@ -1357,20 +1358,22 @@ export default function SlotMachine({
               </div>
             )}
 
-            {/* Share button */}
-            <button
-              onClick={e => {
-                e.stopPropagation();
-                const embedUrl = `https://vibemostwanted.xyz/share/slot?${ogParams}`;
-                const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(embedUrl)}`;
-                sdk.actions.openUrl(composeUrl).catch(() => window.open(composeUrl, '_blank'));
-                setBigWinType(null);
-              }}
-              className="mt-1 px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest border-2 border-black"
-              style={{ background: `linear-gradient(180deg,${cfg.color}cc,${cfg.color}88)`, color: '#000', boxShadow: '0 4px 0 #000' }}
-            >
-              🔗 Share Win
-            </button>
+            {/* Share button — só para ≥ 5× (Great Win+) */}
+            {bigWinMultX >= 5 && (
+              <button
+                onClick={e => {
+                  e.stopPropagation();
+                  const embedUrl = `https://vibemostwanted.xyz/share/slot?${ogParams}`;
+                  const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(embedUrl)}`;
+                  sdk.actions.openUrl(composeUrl).catch(() => window.open(composeUrl, '_blank'));
+                  setBigWinType(null);
+                }}
+                className="mt-1 px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest border-2 border-black"
+                style={{ background: `linear-gradient(180deg,${cfg.color}cc,${cfg.color}88)`, color: '#000', boxShadow: '0 4px 0 #000' }}
+              >
+                🔗 Share Win
+              </button>
+            )}
 
             <div className="text-[10px] text-gray-500 pointer-events-none">tap anywhere to dismiss</div>
           </div>
