@@ -537,8 +537,8 @@ export default function SlotMachine({
   const showBigWinOverlay = useCallback((amount: number, bet: number) => {
     if (amount <= 0) return;
     const multiplierX = bet > 0 ? Math.round(amount / bet) : 0;
-    // Thresholds based on bet multiplier — Nice Win fires on any positive win
-    const type = multiplierX >= 100 ? 'max' : multiplierX >= 20 ? 'big' : multiplierX >= 5 ? 'great' : amount > 0 ? 'nice' : null;
+    // Thresholds based on bet multiplier
+    const type = multiplierX >= 100 ? 'max' : multiplierX >= 20 ? 'big' : multiplierX >= 5 ? 'great' : multiplierX >= 2 ? 'nice' : null;
     if (!type) return;
     setBigWinType(type);
     setBigWinAmount(amount);
