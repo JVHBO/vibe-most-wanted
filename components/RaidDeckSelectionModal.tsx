@@ -422,9 +422,9 @@ export function RaidDeckSelectionModal({
                   if (soundEnabled) AudioManager.buttonClick();
                 }}
                 disabled={isSettingDeck}
-                className="flex-1 px-3 py-2 bg-vintage-black hover:bg-vintage-gold/10 text-vintage-gold border border-vintage-gold/50 rounded-lg font-modern font-semibold text-xs transition disabled:opacity-50"
+                className="flex-1 px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md disabled:opacity-50"
               >
-                ← Back
+                ← BACK
               </button>
               <button
                 onClick={() => {

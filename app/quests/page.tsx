@@ -1347,7 +1347,7 @@ export default function QuestsPage() {
             ) : (
               <div className="px-4 py-8 text-center">
                 <p className="text-white/50 mb-4">Connect Farcaster to view messages</p>
-                <button onClick={() => setActiveTab('missions')} className="text-red-500 hover:text-red-400 text-sm">← Back</button>
+                <button onClick={() => setActiveTab('missions')} className="px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md">← BACK</button>
               </div>
             )}
             </div>

@@ -479,9 +479,9 @@ export function BaccaratModal({
 
                 <button
                   onClick={() => setViewMode("lobby")}
-                  className="w-full py-2 mt-2 text-vintage-ice/50 hover:text-vintage-ice text-sm transition-all"
+                  className="w-full py-2 mt-2 px-3 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
                 >
-                  ← Back
+                  ← BACK
                 </button>
               </>
             )}

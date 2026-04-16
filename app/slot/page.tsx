@@ -529,7 +529,7 @@ export default function SlotPage() {
           paddingBottom: '0.75rem',
           borderBottom: '1px solid rgba(255,215,0,0.2)',
         }}>
-          <Link href="/" className="text-sm font-medium" style={{ color: 'rgba(255,215,0,0.7)' }}>
+          <Link href="/" className="px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md">
             ← {tr("back")}
           </Link>
           <div className="flex-1 text-center relative">

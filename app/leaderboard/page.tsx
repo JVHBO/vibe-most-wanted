@@ -936,9 +936,9 @@ const convex = useConvex();
                   setPvpPreviewData(null);
                   setShowAttackCardSelection(true);
                 }}
-                className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-500 text-white rounded-lg font-bold transition"
+                className="flex-1 px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
               >
-                ← Back
+                ← BACK
               </button>
               <button
                 onClick={async () => {
