@@ -674,8 +674,10 @@ export default function SlotMachine({
                   }
                 }
 
-                // Big win overlay para spins com ganho alto
-                showBigWinOverlay(sessionTotalWin, betMult);
+                // Big win overlay só fora do bonus mode (no bonus, share aparece no summary)
+                if (!bonusMode && !isBuyBonusEntry) {
+                  showBigWinOverlay(sessionTotalWin, betMult);
+                }
 
                 if (res.triggeredBonus && res.foilCount >= 4) {
                   const finalFoils = res.finalGrid
@@ -1272,24 +1274,44 @@ export default function SlotMachine({
       )}
 
       {/* BONUS SUMMARY — aparece após os 10 bonus spins */}
-      {showBonusSummary && (
-        <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.92)', backdropFilter:'blur(8px)' }}>
-          <div className="flex flex-col items-center gap-5 text-center px-8 max-w-[320px]">
-            <div className="font-black text-2xl uppercase tracking-widest text-yellow-300">Bonus Concluído!</div>
-            <div className="font-black leading-none" style={{ fontSize: 52, color: bonusSummaryAmount > 0 ? '#4ade80' : '#6b7280', textShadow: bonusSummaryAmount > 0 ? '0 0 20px #4ade80' : undefined }}>
-              +{bonusSummaryAmount.toLocaleString()}
+      {showBonusSummary && (() => {
+        const playerName = userProfile?.username ?? (address ? address.slice(0, 6) + '…' : '');
+        const bonusMultX = betMult > 0 ? Math.round(bonusSummaryAmount / betMult) : 0;
+        const winType = bonusMultX >= 100 ? 'max' : bonusMultX >= 20 ? 'big' : bonusMultX >= 5 ? 'great' : 'nice';
+        const ogParams = new URLSearchParams({ amount: String(bonusSummaryAmount), x: String(bonusMultX), type: winType, ...(playerName ? { user: playerName } : {}) });
+        const castText = `🎰 Bonus Round: +${bonusSummaryAmount.toLocaleString()} coins${bonusMultX >= 2 ? ` (${bonusMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!\n\nPlay at vibemostwanted.xyz/slot 🎴`;
+        return (
+          <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.92)', backdropFilter:'blur(8px)' }}>
+            <div className="flex flex-col items-center gap-5 text-center px-8 max-w-[320px]">
+              <div className="font-black text-2xl uppercase tracking-widest text-yellow-300">Bonus Concluído!</div>
+              <div className="font-black leading-none" style={{ fontSize: 52, color: bonusSummaryAmount > 0 ? '#4ade80' : '#6b7280', textShadow: bonusSummaryAmount > 0 ? '0 0 20px #4ade80' : undefined }}>
+                +{bonusSummaryAmount.toLocaleString()}
+              </div>
+              <div className="text-gray-400 text-sm uppercase tracking-wider">coins ganhos no bonus</div>
+              {bonusSummaryAmount > 0 && (
+                <button
+                  onClick={() => {
+                    const embedUrl = `https://vibemostwanted.xyz/share/slot?${ogParams}`;
+                    const composeUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(castText)}&embeds[]=${encodeURIComponent(embedUrl)}`;
+                    sdk.actions.openUrl(composeUrl).catch(() => window.open(composeUrl, '_blank'));
+                  }}
+                  className="px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest border-2 border-black active:scale-95 transition-transform"
+                  style={{ background:'linear-gradient(180deg,#22c55e,#15803d)', color:'#fff', boxShadow:'0 4px 0 #000' }}
+                >
+                  🔗 Share Win
+                </button>
+              )}
+              <button
+                onClick={() => setShowBonusSummary(false)}
+                className="px-8 py-3 rounded-xl font-black text-base uppercase tracking-widest border-2 border-black active:scale-95 transition-transform"
+                style={{ background:'linear-gradient(180deg,#7c3aed,#4c1d95)', color:'#FFD700', boxShadow:'0 4px 0 #000' }}
+              >
+                Continuar
+              </button>
             </div>
-            <div className="text-gray-400 text-sm uppercase tracking-wider">coins ganhos no bonus</div>
-            <button
-              onClick={() => setShowBonusSummary(false)}
-              className="px-8 py-3 rounded-xl font-black text-base uppercase tracking-widest border-2 border-black active:scale-95 transition-transform"
-              style={{ background:'linear-gradient(180deg,#7c3aed,#4c1d95)', color:'#FFD700', boxShadow:'0 4px 0 #000' }}
-            >
-              Continuar
-            </button>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* BIG WIN overlay */}
       {bigWinType && (() => {
