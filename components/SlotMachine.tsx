@@ -536,7 +536,8 @@ export default function SlotMachine({
   const showBigWinOverlay = useCallback((amount: number, bet: number) => {
     if (amount <= 0) return;
     const multiplierX = bet > 0 ? Math.round(amount / bet) : 0;
-    const type = amount >= 10000 ? 'max' : amount >= 2000 ? 'big' : amount >= 500 ? 'great' : amount >= 150 ? 'nice' : null;
+    // Thresholds based on bet multiplier (relative to current bet)
+    const type = multiplierX >= 100 ? 'max' : multiplierX >= 20 ? 'big' : multiplierX >= 5 ? 'great' : multiplierX >= 2 ? 'nice' : null;
     if (!type) return;
     setBigWinType(type);
     setBigWinAmount(amount);
