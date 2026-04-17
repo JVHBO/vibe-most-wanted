@@ -9,7 +9,7 @@ import {
 } from "wagmi";
 import { useReconnectTimeout } from "@/hooks/useReconnectTimeout";
 import { WalletGateScreen } from "@/components/WalletGateScreen";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadingSpinner, { PageLoadingSpinner } from "@/components/LoadingSpinner";
 import { useWriteContractWithAttribution } from "@/lib/hooks/useWriteContractWithAttribution";
 import { api } from "@/convex/_generated/api";
 import { AudioManager } from "@/lib/audio-manager";
@@ -582,7 +582,7 @@ export default function RafflePage() {
     ? fmtBal(ethWeiCost as bigint, 18, "ETH")
     : `≈${(0.000023 * buyQty).toFixed(6)} ETH`;
 
-  if (isReconnecting) return <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center"><LoadingSpinner /></div>;
+  if (isReconnecting) return <PageLoadingSpinner />;
 
   return (
     <div className="min-h-screen bg-[#111] text-white flex flex-col">

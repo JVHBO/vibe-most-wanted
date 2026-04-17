@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { SOCIAL_QUESTS, type SocialQuest } from "@/lib/socialQuests";
 import { AudioManager } from "@/lib/audio-manager";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadingSpinner, { PageLoadingSpinner } from "@/components/LoadingSpinner";
 import { WalletGateScreen } from "@/components/WalletGateScreen";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
@@ -518,13 +518,7 @@ export default function QuestsPage() {
     return "pending";
   };
 
-  if (isReconnecting) {
-    return (
-      <div className="fixed inset-0 bg-[#1a1a1a] flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+  if (isReconnecting) return <PageLoadingSpinner />;
 
   if (!address) {
     return <WalletGateScreen />;

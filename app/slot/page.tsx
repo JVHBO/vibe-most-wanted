@@ -7,7 +7,7 @@ import { api } from "@/convex/_generated/api";
 import { useAccount, useChainId, useReadContract, useWriteContract } from "wagmi";
 import { useReconnectTimeout } from "@/hooks/useReconnectTimeout";
 import { WalletGateScreen } from "@/components/WalletGateScreen";
-import LoadingSpinner from "@/components/LoadingSpinner";
+import LoadingSpinner, { PageLoadingSpinner } from "@/components/LoadingSpinner";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFarcasterVBMSBalance, useFarcasterTransferVBMS, useFarcasterApproveVBMS } from "@/lib/hooks/useFarcasterVBMS";
@@ -571,13 +571,7 @@ export default function SlotPage() {
     return (langTranslations as any)[key] ?? (translations.en as any)[key] ?? key;
   };
 
-  if (isReconnecting) {
-    return (
-      <div className="fixed inset-0 bg-vintage-deep-black flex items-center justify-center">
-        <LoadingSpinner />
-      </div>
-    );
-  }
+  if (isReconnecting) return <PageLoadingSpinner />;
 
   if (!address) return <WalletGateScreen />;
 

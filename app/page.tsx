@@ -125,6 +125,12 @@ export default function HomePage() {
     return () => clearInterval(t);
   }, [isBaseApp]);
 
+  // Prefetch most-visited pages so Base App navigation feels instant
+  useEffect(() => {
+    const routes = ['/raffle', '/slot', '/tcg', '/baccarat', '/leaderboard', '/quests'];
+    routes.forEach(r => router.prefetch(r));
+  }, []); // eslint-disable-line
+
   const cardCount = nfts.length;
   const hasEnoughCards = cardCount >= 5;
   const cardsLoading = cardsStatus === 'idle' || cardsStatus === 'fetching';
