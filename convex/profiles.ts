@@ -1916,9 +1916,40 @@ export const upsertProfile = mutation({
       });
       return existing._id;
     } else {
-      // 🔒 SECURITY: Block new account creation without Farcaster
-      console.log(`🚫 [SECURITY] Blocked legacy account creation for ${address} - must use Farcaster`);
-      throw new Error("🔒 Account creation requires Farcaster authentication. Please use the miniapp.");
+      // Create new wallet-only profile
+      const newId = await ctx.db.insert("profiles", {
+        address,
+        username,
+        stats: {
+          totalPower: 0, totalCards: 0, openedCards: 0, unopenedCards: 0,
+          aura: 0, weeklyAura: 0,
+          pveWins: 0, pveLosses: 0, pvpWins: 0, pvpLosses: 0,
+          attackWins: 0, attackLosses: 0, defenseWins: 0, defenseLosses: 0,
+        },
+        attacksToday: 0,
+        rematchesToday: 0,
+        createdAt: now,
+        lastUpdated: now,
+      });
+
+      await ctx.scheduler.runAfter(0, internal.economy.addCoins, {
+        address,
+        amount: 100,
+        reason: "Welcome bonus"
+      });
+
+      await ctx.db.insert("personalMissions", {
+        playerAddress: address,
+        date: "once",
+        missionType: "welcome_gift",
+        completed: true,
+        claimed: false,
+        reward: 500,
+        completedAt: now,
+      });
+
+      console.log(`✅ Wallet-only profile created for ${address} (@${username})`);
+      return newId;
     }
   },
 });
