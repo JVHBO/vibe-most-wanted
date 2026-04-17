@@ -321,6 +321,10 @@ function getLang(raw: string | null): Lang {
   return "en";
 }
 
+function langKey(lang: Lang) {
+  return lang.replace(/[^a-zA-Z0-9]/g, "_");
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getTier(total: number) {
@@ -369,17 +373,17 @@ function buildLangView(): object {
     row1: {
       type: "stack",
       props: { direction: "horizontal", gap: "sm", justify: "center" },
-      children: row1.map(l => `btn_${l}`),
+      children: row1.map(l => `btn_${langKey(l)}`),
     },
     row2: {
       type: "stack",
       props: { direction: "horizontal", gap: "sm", justify: "center" },
-      children: row2.map(l => `btn_${l}`),
+      children: row2.map(l => `btn_${langKey(l)}`),
     },
   };
 
   for (const lang of VALID_LANGS) {
-    elements[`btn_${lang}`] = {
+    elements[`btn_${langKey(lang)}`] = {
       type: "button",
       props: { label: LANG_LABELS[lang], variant: "secondary" },
       on: {
