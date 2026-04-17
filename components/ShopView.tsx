@@ -62,12 +62,12 @@ export function ShopView({ address }: ShopViewProps) {
             href="/"
             onClick={() => AudioManager.buttonNav()}
             onMouseEnter={() => AudioManager.buttonHover()}
-            className="px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10"
           >
             {(t as (k: string) => string)('raidBossBack')}
           </Link>
 
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[50%]"><AutoFitText>{t('shopTitle') as string}</AutoFitText></h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 font-display font-black text-[#FFD700] text-base uppercase tracking-widest pointer-events-none">{t('shopTitle') as string}</h1>
 
           <div className="w-10" />
         </div>
