@@ -36,16 +36,16 @@ type Lang = "en" | "pt-BR" | "es" | "hi" | "ru" | "zh-CN" | "id" | "fr" | "ja" |
 const VALID_LANGS: Lang[] = ["en", "pt-BR", "es", "hi", "ru", "zh-CN", "id", "fr", "ja", "it"];
 
 const LANG_LABELS: Record<Lang, string> = {
-  "en":    "🇺🇸 English",
-  "pt-BR": "🇧🇷 Português",
-  "es":    "🇪🇸 Español",
-  "hi":    "🇮🇳 हिन्दी",
-  "ru":    "🇷🇺 Русский",
-  "zh-CN": "🇨🇳 中文",
-  "id":    "🇮🇩 Bahasa",
-  "fr":    "🇫🇷 Français",
-  "ja":    "🇯🇵 日本語",
-  "it":    "🇮🇹 Italiano",
+  "en":    "English",
+  "pt-BR": "Portugues",
+  "es":    "Espanol",
+  "hi":    "Hindi",
+  "ru":    "Ruskiy",
+  "zh-CN": "Zhongwen",
+  "id":    "Bahasa",
+  "fr":    "Francais",
+  "ja":    "Nihongo",
+  "it":    "Italiano",
 };
 
 interface Strings {
@@ -364,7 +364,7 @@ function buildLangView(): object {
     header: {
       type: "text",
       props: {
-        content: "🎰 Vibe Most Wanted\n$25 Prize Pool · 10 Epic Cards · $0.06/ticket\n\n🌐 Choose your language",
+        content: "Vibe Most Wanted — $25 Pool · 10 Cards · $0.06/ticket — Choose language:",
         weight: "bold",
         size: "md",
         align: "center",
