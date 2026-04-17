@@ -489,7 +489,7 @@ function buildPrizeView(page: number, lang: Lang): object {
     root: {
       type: "stack",
       props: { direction: "vertical", gap: "md" },
-      children: ["header", "card_img", "card_name", "card_counter", "links_row", "nav_btns"],
+      children: ["header", "card_img", "card_name", "links_row", "nav_btns"],
     },
     header: {
       type: "text",
@@ -497,15 +497,11 @@ function buildPrizeView(page: number, lang: Lang): object {
     },
     card_img: {
       type: "image",
-      props: { url: imgUrl, aspect: "1:1", alt: card.name },
+      props: { url: imgUrl, aspect: "3:2", alt: card.name },
     },
     card_name: {
       type: "text",
-      props: { content: `#${page + 1} — ${card.name}`, weight: "bold", size: "md", align: "center" },
-    },
-    card_counter: {
-      type: "text",
-      props: { content: s.cardCounter(page + 1, total), size: "sm", align: "center" },
+      props: { content: `#${page + 1} — ${card.name} · ${s.cardCounter(page + 1, total)}`, weight: "bold", size: "sm", align: "center" },
     },
     links_row: {
       type: "stack",
