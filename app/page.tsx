@@ -33,7 +33,7 @@ const MyCardsModal = dynamic(() => import("@/app/(game)/components/modals/MyCard
 export default function HomePage() {
   const { t, lang, setLang } = useLanguage();
   const isBaseApp = isBaseAppWebView();
-  const allowHomeMotion = !isBaseApp;
+  const allowHomeMotion = true;
   const { address } = useAccount();
   // Keep last known address — wagmi returns undefined during reconnecting in Base App
   const lastAddressRef = useRef<`0x${string}` | undefined>(undefined);
@@ -340,7 +340,7 @@ export default function HomePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
           <Link href="/roulette" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #6D28D9, #9333EA)', border: 'none', animation: allowHomeMotion ? 'fadeInUp 0.3s ease' : undefined, minHeight: 80, textDecoration: 'none', position: 'relative' }}>
             {/* Roulette wheel — full height, right side */}
-            <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translate3d(0, -50%, 0)', animation: allowHomeMotion ? 'spinCW 6s linear infinite' : undefined, opacity: 0.2, willChange: 'transform' }}>
+            <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translate3d(0, -50%, 0)', animation: isBaseApp ? 'spinCW 14s linear infinite' : 'spinCW 6s linear infinite', opacity: 0.2, willChange: 'transform' }}>
               <svg width="90" height="90" viewBox="0 0 110 110">
                 {/* Outer ring */}
                 <circle cx="55" cy="55" r="52" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2"/>
