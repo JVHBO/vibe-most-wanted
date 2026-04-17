@@ -40,5 +40,12 @@
   },
   "baseBuilder": {
     "ownerAddress": "0x89b0E4670c44246CC9c2d86D04c34D91064311Ed"
+  },
+  "snap": {
+    "version": "2.0",
+    "name": "Vibe Most Wanted Raffle",
+    "description": "$25 prize pool · 10 Epic VBMS Cards · $0.06/ticket",
+    "iconUrl": "https://vibemostwanted.xyz/icon-new.png",
+    "homeUrl": "https://vibemostwanted.xyz/api/snap/raffle"
   }
 }
