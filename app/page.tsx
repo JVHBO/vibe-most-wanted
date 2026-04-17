@@ -269,8 +269,8 @@ export default function HomePage() {
       @keyframes cardDown2 { 0%,100%{transform:translateY(-2px) rotate(1deg)} 50%{transform:translateY(12px) rotate(1deg)} }
       @keyframes cardDown3 { 0%,100%{transform:translateY(-5px) rotate(8deg)} 50%{transform:translateY(9px) rotate(8deg)} }
       @keyframes tickerScroll { 0%{transform:translateY(0)} 100%{transform:translateY(-50%)} }
-      @keyframes beamLR { 0%,5% { left:18%; width:0; opacity:0.35; } 35% { left:18%; width:64%; opacity:0.35; } 42%,100% { left:18%; width:64%; opacity:0; } }
-      @keyframes beamRL { 0%,50% { right:18%; width:0; opacity:0; } 55% { right:18%; width:0; opacity:0.35; } 85% { right:18%; width:64%; opacity:0.35; } 92%,100% { right:18%; width:64%; opacity:0; } }
+      @keyframes beamLR { 0%,5% { transform:scaleX(0); transform-origin:left; opacity:0.35; } 35% { transform:scaleX(1); transform-origin:left; opacity:0.35; } 42%,100% { transform:scaleX(1); transform-origin:left; opacity:0; } }
+      @keyframes beamRL { 0%,50% { transform:scaleX(0); transform-origin:right; opacity:0; } 55% { transform:scaleX(0); transform-origin:right; opacity:0.35; } 85% { transform:scaleX(1); transform-origin:right; opacity:0.35; } 92%,100% { transform:scaleX(1); transform-origin:right; opacity:0; } }
       @keyframes pushRight { 0%,38%,55%,100% { transform:translateY(-50%) translateX(0); } 43%,50% { transform:translateY(-50%) translateX(28px); } }
       @keyframes pushLeft  { 0%,83%,98%,100% { transform:translateY(-50%) translateX(0); } 88%,95% { transform:translateY(-50%) translateX(-28px); } }
       @keyframes dotPulse { 0%,80%,100% { opacity:0.2; transform:scale(0.8); } 40% { opacity:1; transform:scale(1); } }
@@ -340,7 +340,7 @@ export default function HomePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
           <Link href="/roulette" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #6D28D9, #9333EA)', border: 'none', animation: allowHomeMotion ? 'fadeInUp 0.3s ease' : undefined, minHeight: 80, textDecoration: 'none', position: 'relative' }}>
             {/* Roulette wheel — full height, right side */}
-            <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translate3d(0, -50%, 0)', animation: isBaseApp ? 'spinCW 14s linear infinite' : 'spinCW 6s linear infinite', opacity: 0.2, willChange: 'transform' }}>
+            <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translate3d(0, -50%, 0)', animation: isBaseApp ? 'spinCW 20s linear infinite' : 'spinCW 6s linear infinite', opacity: 0.2, willChange: 'transform', contain: 'layout style' }}>
               <svg width="90" height="90" viewBox="0 0 110 110">
                 {/* Outer ring */}
                 <circle cx="55" cy="55" r="52" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2"/>
@@ -418,7 +418,7 @@ export default function HomePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
             <Link href="/baccarat" style={{ borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #064E3B, #059669)', border: 'none', animation: allowHomeMotion ? 'fadeInUp 0.35s ease' : undefined, minHeight: 72, textDecoration: 'none', position: 'relative' }}>
               {/* Chip grande — direita */}
-              <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translate3d(0, -50%, 0)', animation: isBaseApp ? undefined : 'chipFlip 2.4s ease-in-out infinite', transformOrigin: 'center', willChange: isBaseApp ? undefined : 'transform' }}>
+              <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translate3d(0, -50%, 0)', animation: 'chipFlip 2.4s ease-in-out infinite', transformOrigin: 'center', willChange: 'transform', contain: 'layout style' }}>
                 <svg width="80" height="80" viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r="38" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" strokeWidth="2"/>
                   {Array.from({ length: 12 }).map((_, i) => { const a=(i*30*Math.PI)/180; return <line key={i} x1={40+32*Math.cos(a)} y1={40+32*Math.sin(a)} x2={40+38*Math.cos(a)} y2={40+38*Math.sin(a)} stroke="rgba(255,255,255,0.2)" strokeWidth="4" strokeLinecap="round"/>; })}
@@ -429,7 +429,7 @@ export default function HomePage() {
                 </svg>
               </div>
               {/* Chip pequeno — esquerda alta */}
-              <div style={{ position: 'absolute', left: 6, top: 4, animation: isBaseApp ? undefined : 'chipFlip 3.1s ease-in-out infinite 0.8s', transformOrigin: 'center', willChange: isBaseApp ? undefined : 'transform' }}>
+              <div style={{ position: 'absolute', left: 6, top: 4, animation: 'chipFlip 3.1s ease-in-out infinite 0.8s', transformOrigin: 'center', willChange: 'transform' }}>
                 <svg width="30" height="30" viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r="38" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.12)" strokeWidth="2"/>
                   {Array.from({ length: 12 }).map((_, i) => { const a=(i*30*Math.PI)/180; return <line key={i} x1={40+32*Math.cos(a)} y1={40+32*Math.sin(a)} x2={40+38*Math.cos(a)} y2={40+38*Math.sin(a)} stroke="rgba(255,255,255,0.15)" strokeWidth="4" strokeLinecap="round"/>; })}
@@ -438,7 +438,7 @@ export default function HomePage() {
                 </svg>
               </div>
               {/* Chip pequeno — esquerda baixa */}
-              <div style={{ position: 'absolute', left: 14, bottom: 4, animation: isBaseApp ? undefined : 'chipFlip 2.8s ease-in-out infinite 0.4s', transformOrigin: 'center', willChange: isBaseApp ? undefined : 'transform' }}>
+              <div style={{ position: 'absolute', left: 14, bottom: 4, animation: 'chipFlip 2.8s ease-in-out infinite 0.4s', transformOrigin: 'center', willChange: 'transform' }}>
                 <svg width="22" height="22" viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r="38" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.12)" strokeWidth="2"/>
                   {Array.from({ length: 8 }).map((_, i) => { const a=(i*45*Math.PI)/180; return <line key={i} x1={40+32*Math.cos(a)} y1={40+32*Math.sin(a)} x2={40+38*Math.cos(a)} y2={40+38*Math.sin(a)} stroke="rgba(255,255,255,0.15)" strokeWidth="5" strokeLinecap="round"/>; })}
@@ -473,9 +473,9 @@ export default function HomePage() {
                 </svg>
               </div>
               {/* Beam L→R */}
-              <div style={{ position: 'absolute', top: '50%', height: 1.5, background: 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,215,0,0.6))', borderRadius: 2, animation: allowHomeMotion ? 'beamLR 3s ease-in-out infinite' : undefined, marginTop: -0.75 }} />
+              <div style={{ position: 'absolute', top: '50%', left: '18%', width: '64%', height: 1.5, background: 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,215,0,0.6))', borderRadius: 2, animation: allowHomeMotion ? 'beamLR 3s ease-in-out infinite' : undefined, marginTop: -0.75, willChange: 'transform, opacity' }} />
               {/* Beam R→L */}
-              <div style={{ position: 'absolute', top: '50%', height: 1.5, background: 'linear-gradient(to left, rgba(255,255,255,0.9), rgba(255,215,0,0.6))', borderRadius: 2, animation: allowHomeMotion ? 'beamRL 3s ease-in-out infinite' : undefined, marginTop: -0.75 }} />
+              <div style={{ position: 'absolute', top: '50%', right: '18%', width: '64%', height: 1.5, background: 'linear-gradient(to left, rgba(255,255,255,0.9), rgba(255,215,0,0.6))', borderRadius: 2, animation: allowHomeMotion ? 'beamRL 3s ease-in-out infinite' : undefined, marginTop: -0.75, willChange: 'transform, opacity' }} />
               <div style={{ padding: '10px 14px', position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1 }}>
                 <div style={{ fontSize: 6.5, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('noCardsNeeded')}</div>
                 <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', lineHeight: 1, marginTop: 2 }}>ARENA</div>

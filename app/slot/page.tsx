@@ -609,22 +609,35 @@ export default function SlotPage() {
             ← {tr("back")}
           </Link>
           <div className="flex-1 text-center relative">
-            <h1 className="text-2xl font-extrabold tracking-tighter" style={{
-              fontFamily: 'var(--font-cinzel)',
-              color: 'transparent',
-              letterSpacing: '-0.05em',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundImage: 'url("/slot-gifs/casino-slot-animation.gif")',
-              backgroundSize: '70% 70%', /* Further decreased zoom - shows even more of the GIF with spacing */
-              backgroundPosition: 'bottom', /* Show more of the bottom portion of the GIF */
-              backgroundRepeat: 'no-repeat',
-              backgroundBlendMode: 'overlay',
-              textShadow: '0 0 2px rgba(0,0,0,0.5)',
-              transform: 'scaleY(3.0)' /* Vertically stretch the text even more to show maximum of the GIF */
-            }}>
-              {tr("title")}
-            </h1>
+            <div className="relative inline-block">
+              {/* GIF behind the title text */}
+              <img
+                src="/slot-gifs/casino-slot-animation.gif"
+                alt=""
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  inset: '-8px -16px',
+                  width: 'calc(100% + 32px)',
+                  height: 'calc(100% + 16px)',
+                  objectFit: 'cover',
+                  opacity: 0.85,
+                  borderRadius: 4,
+                  pointerEvents: 'none',
+                  zIndex: 0,
+                }}
+              />
+              <h1 className="relative text-2xl font-extrabold tracking-tighter" style={{
+                fontFamily: 'var(--font-cinzel)',
+                color: '#FFD400',
+                letterSpacing: '-0.05em',
+                textShadow: '0 0 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
+                zIndex: 1,
+                mixBlendMode: 'screen',
+              }}>
+                {tr("title")}
+              </h1>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {/* Slot Settings */}
