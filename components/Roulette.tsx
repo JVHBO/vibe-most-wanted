@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
@@ -16,7 +16,7 @@ import { encodeFunctionData, parseEther, erc20Abi } from 'viem';
 import { dataSuffix as ATTRIBUTION_SUFFIX, BUILDER_CODE } from '@/lib/hooks/useWriteContractWithAttribution';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
-import { isMiniappMode, isWarpcastClient } from '@/lib/utils/miniapp';
+import { isBaseAppWebView, isMiniappMode, isWarpcastClient, shouldUseFarcasterSDK } from '@/lib/utils/miniapp';
 
 
 // Roulette translations
@@ -292,11 +292,11 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   const { lang } = useLanguage();
   const { validateOnArb } = useArbValidator();
   const publicClient = usePublicClient({ chainId: CONTRACTS.CHAIN_ID });
+  const isBaseApp = isBaseAppWebView();
   const t = rouletteTranslations[lang as keyof typeof rouletteTranslations] || rouletteTranslations.en;
   // If wagmi is reconnecting/connecting, stop waiting after 1s and render normally
   const isReconnecting = useReconnectTimeout(wagmiStatus, 1000);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [rotation, setRotation] = useState(0);
   const rotationRef = useRef(0); // tracks current angle without triggering re-renders
   const [result, setResult] = useState<{ prize: number; index: number } | null>(null);
   const [showResult, setShowResult] = useState(false);
@@ -382,7 +382,6 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
   // Check for Farcaster SDK — only in actual Farcaster miniapp (iframe), NOT Base App
   useEffect(() => {
-    const isBaseApp = typeof (window as any).ReactNativeWebView !== 'undefined';
     const isIframe = window.self !== window.top;
     // Base App injects window.ethereum but is NOT a Farcaster miniapp
     // Only use Farcaster SDK if we're actually in an iframe (Warpcast)
@@ -400,7 +399,10 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
   // Helper function to claim via Farcaster SDK
   const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string, walletAddress?: string) => {
-    const provider = await sdk.wallet.getEthereumProvider();
+    const provider = await Promise.race([
+      sdk.wallet.getEthereumProvider(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+    ]);
     if (!provider) throw new Error("Farcaster wallet not available");
 
     const data = encodeFunctionData({
@@ -475,13 +477,12 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
       // 1. Get actual signing address
       // Skip sdk.wallet in Base App — it hangs forever without resolving
-      const isBaseApp = typeof (window as any).ReactNativeWebView !== 'undefined';
       const isIframe = window.self !== window.top;
       if (!isBaseApp && isIframe) {
         try {
           const provider = await Promise.race([
             sdk.wallet.getEthereumProvider(),
-            new Promise<null>(resolve => setTimeout(() => resolve(null), 1500)),
+            new Promise<null>(resolve => setTimeout(() => resolve(null), 5000)),
           ]);
           if (provider) {
             const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
@@ -502,7 +503,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
       toast.info("🔐 Sign the transaction...");
 
       // 3. Send blockchain TX
-      const txHash = useFarcasterSDK
+      const txHash = shouldUseFarcasterSDK()
         ? await claimViaFarcasterSDK(
             claimData.amount.toString(),
             claimData.nonce,
@@ -594,15 +595,14 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   }, []);
 
   // Helper: update ball position via DOM refs (zero React re-renders)
-  const updateBallDOM = (angle: number, radius: number) => {
+  const updateBallDOM = useCallback((angle: number, radius: number) => {
     const rad = angle * (Math.PI / 180);
-    const bx = 150 + radius * Math.cos(rad);
-    const by = 150 + radius * Math.sin(rad);
-    const pos = `${bx}px`;
-    const posY = `${by}px`;
-    if (ballGlowRef.current) { ballGlowRef.current.style.left = pos; ballGlowRef.current.style.top = posY; }
-    if (ballElemRef.current) { ballElemRef.current.style.left = pos; ballElemRef.current.style.top = posY; }
-  };
+    const offsetX = `${radius * Math.cos(rad)}px`;
+    const offsetY = `${radius * Math.sin(rad)}px`;
+    const transform = `translate3d(${offsetX}, ${offsetY}, 0) translate(-50%, -50%)`;
+    if (ballGlowRef.current) ballGlowRef.current.style.transform = transform;
+    if (ballElemRef.current) ballElemRef.current.style.transform = transform;
+  }, []);
 
   // Idle rotation via CSS animation — GPU-accelerated, zero JS/main-thread work
   // When spin starts: remove CSS animation and take over with RAF
@@ -668,7 +668,6 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
     try {
       // Base App (RN WebView) doesn't support ARB — default to base chain
-      const isBaseApp = typeof window !== 'undefined' && typeof (window as any).ReactNativeWebView !== 'undefined';
       const chain = (profileDashboard as any)?.preferredChain || (isBaseApp ? "base" : "arbitrum");
       // Arb: validation TX before spin (Base doesn't need TX on spin, only on claim)
       if (chain === "arbitrum") {
@@ -709,8 +708,10 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         const targetBallAngle = -90 + (targetIndex + offset) * SEGMENT_ANGLE;
 
         // Animate with physics + ball orbit
-        const startTime = Date.now();
+        const startTime = performance.now();
         const duration = 5000; // 5 seconds
+        const frameBudgetMs = isBaseApp ? 1000 / 30 : 0;
+        let lastFrameTime = 0;
         // Ball starts counter-clockwise at rim
         ballOrbitAngleRef.current = -90;
         ballOrbitRadiusRef.current = 136;
@@ -721,8 +722,14 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         if (ballGlowRef.current) ballGlowRef.current.style.display = 'block';
         if (ballElemRef.current) ballElemRef.current.style.display = 'block';
 
-        const animate = () => {
-          const elapsed = Date.now() - startTime;
+        const animate = (now: number) => {
+          if (frameBudgetMs > 0 && now - lastFrameTime < frameBudgetMs) {
+            animationRef.current = requestAnimationFrame(animate);
+            return;
+          }
+          lastFrameTime = now;
+
+          const elapsed = now - startTime;
           const progress = Math.min(elapsed / duration, 1);
           const easeOut = 1 - Math.pow(1 - progress, 3);
 
@@ -825,8 +832,11 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
       let txHash: string;
 
-      if (useFarcasterSDK) {
-        const provider = await sdk.wallet.getEthereumProvider();
+      if (shouldUseFarcasterSDK()) {
+        const provider = await Promise.race([
+          sdk.wallet.getEthereumProvider(),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+        ]);
         if (!provider) throw new Error("Farcaster wallet not available");
 
         // Force Base chain — VBMS token and pool are on Base only
@@ -888,7 +898,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
       const spins = Math.floor(5 + Math.random() * 3);
       const offset = 0.3 + Math.random() * 0.4;
       const targetFinalAngle = (SEGMENT_COUNT - targetIndex - offset) * SEGMENT_ANGLE;
-      const currentMod = ((rotation % 360) + 360) % 360;
+      const currentMod = ((rotationRef.current % 360) + 360) % 360;
       let additionalRotation = targetFinalAngle - currentMod;
       if (additionalRotation < 0) additionalRotation += 360;
       const totalRotation = spins * 360 + additionalRotation;
@@ -897,8 +907,10 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
       const targetBallAngle2 = -90 + (targetIndex + offset) * SEGMENT_ANGLE;
 
       // Animate + ball orbit (wheel stays static — ball only via direct DOM)
-      const startTime = Date.now();
+      const startTime = performance.now();
       const duration = 5000;
+      const frameBudgetMs = isBaseApp ? 1000 / 30 : 0;
+      let lastFrameTime = 0;
       ballOrbitAngleRef.current = -90;
       ballOrbitRadiusRef.current = 136;
       ballFallStartAngleRef.current = null;
@@ -908,8 +920,14 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
       if (ballGlowRef.current) ballGlowRef.current.style.display = 'block';
       if (ballElemRef.current) ballElemRef.current.style.display = 'block';
 
-      const animate = () => {
-        const elapsed = Date.now() - startTime;
+      const animate = (now: number) => {
+        if (frameBudgetMs > 0 && now - lastFrameTime < frameBudgetMs) {
+          animationRef.current = requestAnimationFrame(animate);
+          return;
+        }
+        lastFrameTime = now;
+
+        const elapsed = now - startTime;
         const progress = Math.min(elapsed / duration, 1);
         const easeOut = 1 - Math.pow(1 - progress, 3);
 
@@ -1058,6 +1076,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
     return segments;
   };
+  const wheelSegments = useMemo(() => createWheelSegments(), []);
 
   if (isReconnecting) {
     return (
@@ -1198,10 +1217,14 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
               maskImage: 'radial-gradient(circle at 50% 50%, black 97%, transparent 100%)',
             }}>
               {/* Spinning segments fill the full circle */}
-              <div ref={wheelRef} className="absolute inset-0" style={{ transform: `rotate(0deg)` }}>
+              <div
+                ref={wheelRef}
+                className="absolute inset-0"
+                style={{ transform: 'translate3d(0,0,0)', willChange: 'transform' }}
+              >
                 <svg viewBox="0 0 100 100" style={{ width: '100%', height: '100%' }}>
                   <circle cx="50" cy="50" r="50" fill="#0a0a0a" />
-                  {createWheelSegments()}
+                  {wheelSegments}
                   {/* Gold outer ring — inside SVG, no corner artifacts */}
                   <circle cx="50" cy="50" r="48.5" fill="none" stroke="rgba(255,215,0,0.45)" strokeWidth="1.2" />
                   <circle cx="50" cy="50" r="10" fill="#1A1A1A" stroke="#FFD700" strokeWidth="2.5" />
@@ -1221,23 +1244,26 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
                   <>
                   <div ref={ballGlowRef} style={{
                     display: 'none',
-                    position: 'absolute', left: '150px', top: '150px',
-                    transform: 'translate(-50%, -50%)',
+                    position: 'absolute', left: '50%', top: '50%',
+                    transform: 'translate3d(0,0,0) translate(-50%, -50%)',
                     width: '56px', height: '56px', borderRadius: '50%',
                     background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
                     mixBlendMode: 'screen', pointerEvents: 'none', zIndex: 15,
+                    willChange: 'transform',
                   }} />
                   <div ref={ballElemRef} style={{
                     display: 'none',
-                    position: 'absolute', left: '150px', top: '150px',
-                    transform: 'translate(-50%, -50%)',
+                    position: 'absolute', left: '50%', top: '50%',
+                    transform: 'translate3d(0,0,0) translate(-50%, -50%)',
                     width: '22px', height: '22px', zIndex: 20,
-                    animation: isSettling ? 'ballBounce 0.9s ease-out forwards' : 'none',
+                    willChange: 'transform',
                   }}>
                     <div style={{
                       width: '100%', height: '100%', borderRadius: '50%', position: 'relative',
                       overflow: 'hidden', background: sphereGrad,
                       boxShadow: `0 0 ${isSettling ? 22 : 10}px ${isArb ? 'rgba(40,160,240,0.9)' : 'rgba(68,119,255,0.9)'}, inset 0 2px 6px rgba(0,0,0,0.5)`,
+                      animation: isSettling ? 'ballBounce 0.9s ease-out forwards' : 'none',
+                      willChange: isSettling ? 'transform' : undefined,
                     }}>
                       <div style={{
                         position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1349,10 +1375,11 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
           {/* The ball */}
           <div
             style={{
-              transform: `translateY(${ballY}px) translateX(0)`,
+              transform: `translate3d(0, ${ballY}px, 0)`,
               transition: isDraggingBall ? 'none' : 'transform 0.5s cubic-bezier(0.34,1.56,0.64,1)',
               touchAction: 'none',
               cursor: canSpin && !isSpinning ? 'grab' : 'default',
+              willChange: isDraggingBall || isBaseApp ? 'transform' : undefined,
             }}
             onTouchStart={e => { e.preventDefault(); handleBallDragStart(e.touches[0].clientY); }}
             onTouchMove={e => { e.preventDefault(); handleBallDragMove(e.touches[0].clientY); }}

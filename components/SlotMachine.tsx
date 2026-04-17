@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { memo, useState, useCallback, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAccount } from "wagmi";
@@ -32,6 +32,7 @@ import type {
   SlotPhase,
 } from "@/lib/slot/engine";
 import { getSlotComboCatalog, resolveComboAudio } from "@/lib/slot/engine";
+import { getBaseAppBlur, getBaseAppImageSrc, isBaseAppWebView } from "@/lib/utils/miniapp";
 
 const SLOT_UI_TRANSLATIONS: Record<string, {
   spin: string; deposit: string; withdraw: string; buyBonus: string;
@@ -222,6 +223,156 @@ type SlotMachineProps = {
   isFrameMode?: boolean;
 };
 
+type SlotGridCardProps = {
+  card: SlotCard;
+  idx: number;
+  isLocked: boolean;
+  spinning: boolean;
+  decelerating: boolean;
+  isWin: boolean;
+  isNew: boolean;
+  devFoilAll: boolean;
+  lockedGifIdx: number | null;
+  showIndices: boolean;
+  baseAppLiteMode: boolean;
+};
+
+const SlotGridCard = memo(function SlotGridCard({
+  card,
+  idx,
+  isLocked,
+  spinning,
+  decelerating,
+  isWin,
+  isNew,
+  devFoilAll,
+  lockedGifIdx,
+  showIndices,
+  baseAppLiteMode,
+}: SlotGridCardProps) {
+  const effectiveCard = devFoilAll ? { ...card, hasFoil: true } : card;
+  const s = RS[effectiveCard.rarity] ?? RS.Common;
+  const isLockedGif = lockedGifIdx === idx && effectiveCard.baccarat === "dragukka";
+  const isDragukka = effectiveCard.baccarat === "dragukka";
+  const rawImg = isDragukka ? CASINO_SLOT_GIF : getVbmsBaccaratImageUrl(effectiveCard.baccarat);
+  const img = rawImg ? getBaseAppImageSrc(rawImg, 256, 60) : null;
+  const label = LABELS[effectiveCard.baccarat] ?? effectiveCard.baccarat;
+  const borderColor = isWin ? "#FFD700" : s.border;
+  const borderW = isWin ? 3 : s.borderW;
+
+  const foilEffect = effectiveCard.hasFoil ? {
+    animation: "prizeFoilShine 3s linear infinite",
+    border: `${borderW}px solid ${isWin ? "#FFD700" : "#FFA500"}`,
+    boxShadow: `0 0 15px ${isWin ? "#FFD700" : "#FFA500"}88, inset 0 0 20px ${isWin ? "#FFD70033" : "#FFA50022"}`,
+  } : {};
+
+  let rarityAnim: string | undefined;
+  if (!spinning && !isWin && !effectiveCard.hasFoil) {
+    if (effectiveCard.rarity === "Mythic") {
+      rarityAnim = "mythic-border 1.6s ease-in-out infinite";
+    } else if (effectiveCard.rarity === "Legendary") {
+      rarityAnim = "legendary-border 1.8s ease-in-out infinite";
+    }
+  }
+
+  const isAnimated = spinning || decelerating || isNew || isWin;
+
+  return (
+    <div
+      className={`absolute inset-0 flex flex-col overflow-hidden ${isLocked ? (isWin ? "win-flash" : "") : decelerating ? "slot-decel" : spinning ? "slot-spin" : isNew ? "card-fall-in" : isWin ? "win-flash" : "transition-all duration-150"} ${effectiveCard.hasFoil ? "foil-card" : ""}`}
+      style={{
+        border: isLocked
+          ? "2px solid #FACC15"
+          : foilEffect.border || `${borderW}px solid ${borderColor}`,
+        boxShadow: isLocked
+          ? "0 0 12px #FACC1588, inset 0 0 10px #FACC1522"
+          : foilEffect.boxShadow || (isWin ? "0 0 20px #FFD700, 0 0 8px #FFD700, inset 0 0 16px #FFD70033" : undefined),
+        animation: isLocked ? undefined : `${rarityAnim || foilEffect.animation || ""}`.trim(),
+        background: s.bg,
+        willChange: isAnimated ? "transform, filter, opacity" : undefined,
+        transform: isAnimated ? "translate3d(0,0,0)" : undefined,
+        backfaceVisibility: isAnimated ? "hidden" : undefined,
+      }}
+    >
+      {isLocked && (
+        <div className="absolute top-0.5 right-0.5 z-20 text-[8px] leading-none">🔒</div>
+      )}
+
+      <div
+        className="absolute top-0 left-0 w-5 h-5 z-10 pointer-events-none"
+        style={{ background: s.cornerGrad }}
+      >
+        <span className="absolute top-0 left-0.5 text-[7px] font-black leading-none" style={{ color: s.border }}>
+          {s.icon}
+        </span>
+      </div>
+
+      <div className="relative flex-1 min-h-0 overflow-hidden" style={{ background: "#111" }}>
+        {img ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={baseAppLiteMode ? img : rawImg!}
+            alt={label}
+            className="w-full h-full object-cover object-center"
+            decoding="async"
+            draggable={false}
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-[9px] font-black text-gray-300 px-0.5 text-center leading-tight">
+            {label.toUpperCase()}
+          </div>
+        )}
+        {!spinning && (effectiveCard.rarity === "Mythic" || effectiveCard.rarity === "Legendary" || isDragukka) && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: `linear-gradient(135deg, ${s.glow}22 0%, transparent 50%, ${s.glow}11 100%)` }}
+          />
+        )}
+        {isWin && <div className="absolute inset-0 bg-yellow-300/20 animate-pulse pointer-events-none" />}
+        {spinning && <div className="absolute inset-0 bg-black/55 pointer-events-none" />}
+        {!spinning && effectiveCard.hasFoil && !isDragukka && <div className="prize-foil" />}
+        {isLockedGif && (
+          <div className="absolute top-0 right-0 z-30 px-1 py-0.5 text-[7px] font-black text-black rounded-bl" style={{ background: "#FFD700" }}>
+            LOCKED
+          </div>
+        )}
+        {showIndices && !spinning && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+            <span className="text-[10px] font-black text-white" style={{ textShadow: "0 0 4px #000,0 0 8px #000" }}>{idx}</span>
+          </div>
+        )}
+      </div>
+
+      <div
+        className="shrink-0 flex items-center gap-0.5 px-0.5 py-[2px]"
+        style={{ background: isWin ? "#92400e" : s.labelBg }}
+      >
+        <span className="text-[5px] font-black leading-none shrink-0" style={{ color: s.border }}>{s.icon}</span>
+        <span
+          className="text-[5px] font-black text-white truncate leading-none flex-1 text-center"
+          style={{ fontSize: label.length > 12 ? "4px" : "5px" }}
+        >
+          {label.toUpperCase()}
+        </span>
+      </div>
+    </div>
+  );
+}, (prev, next) => (
+  prev.idx === next.idx &&
+  prev.isLocked === next.isLocked &&
+  prev.spinning === next.spinning &&
+  prev.decelerating === next.decelerating &&
+  prev.isWin === next.isWin &&
+  prev.isNew === next.isNew &&
+  prev.devFoilAll === next.devFoilAll &&
+  prev.lockedGifIdx === next.lockedGifIdx &&
+  prev.showIndices === next.showIndices &&
+  prev.baseAppLiteMode === next.baseAppLiteMode &&
+  prev.card.baccarat === next.card.baccarat &&
+  prev.card.rarity === next.card.rarity &&
+  prev.card.hasFoil === next.card.hasFoil
+));
+
 export default function SlotMachine({
   onWalletOpen,
   duckBgm,
@@ -233,6 +384,8 @@ export default function SlotMachine({
   const { isConnected, address } = useAccount();
   const { userProfile, refreshProfile } = useProfile();
   const { lang } = useLanguage();
+  const isBaseApp = isBaseAppWebView();
+  const liteMotion = isFrameMode || isBaseApp;
   const t = getSlotT(lang);
   const spinMut = useMutation(api.slot.spinSlot);
   const statsQ  = useQuery(api.slot.getSlotDailyStats, { address: address || "" });
@@ -340,7 +493,7 @@ export default function SlotMachine({
   const isAllowed = isConnected && isDeveloperSlotAddress(address);
 
   const startCol = useCallback((col: number) => {
-    const intervalMs = isFrameMode ? 100 : 55;
+    const intervalMs = liteMotion ? 100 : 55;
     ivs.current[col] = setInterval(() => {
       setCells(prev => {
         const n = [...prev];
@@ -351,7 +504,7 @@ export default function SlotMachine({
         return n;
       });
     }, intervalMs);
-  }, [isFrameMode]);
+  }, [liteMotion]);
 
   // Para coluna com desaceleração visual + callback quando termina
   const slowAndStopCol = useCallback((col: number, cards: SlotCard[], onDone?: () => void) => {
@@ -790,125 +943,23 @@ export default function SlotMachine({
   };
 
   const renderCard = (card: SlotCard, idx: number) => {
-    const col        = idx % COLS;
-    const isLocked   = lockedCells.has(idx); // dragukka persistente — não anima
-    const spinning   = !stopped.has(col) && !isLocked;
-    const decelerating = spinning && deceleratingCols.has(col);
-    const isWin      = !spinning && winCells.has(idx);
-    const isNew      = !spinning && newCells.has(idx);
-    const effectiveCard = devFoilAll ? { ...card, hasFoil: true } : card;
-    const s          = RS[effectiveCard.rarity] ?? RS.Common;
-    const isLockedGif = lockedGifIdx === idx && effectiveCard.baccarat === 'dragukka';
-
-    // Determinar imagem: dragukka → GIF de cassino | Outras → imagens normais
-    const isDragukka = effectiveCard.baccarat === "dragukka";
-
-    const img = isDragukka
-      ? CASINO_SLOT_GIF
-      : getVbmsBaccaratImageUrl(effectiveCard.baccarat);
-
-    const imgObjectFit = isDragukka ? 'object-cover object-center' : 'object-cover object-center';
-
-    const label = LABELS[effectiveCard.baccarat] ?? effectiveCard.baccarat;
-
-    const borderColor = isWin ? "#FFD700" : s.border;
-    const borderW     = isWin ? 3 : s.borderW;
-
-    // Efeito de foil: shimmer animado + borda brilhante
-    const foilEffect = effectiveCard.hasFoil ? {
-      animation: "prizeFoilShine 3s linear infinite",
-      border: `${borderW}px solid ${isWin ? '#FFD700' : '#FFA500'}`,
-      boxShadow: `0 0 15px ${isWin ? '#FFD700' : '#FFA500'}88, inset 0 0 20px ${isWin ? '#FFD70033' : '#FFA50022'}`
-    } : {};
-
-    let rarityAnim: string | undefined = undefined;
-    if (!spinning && !isWin && !effectiveCard.hasFoil) {
-      if (effectiveCard.rarity === "Mythic") {
-        rarityAnim = "mythic-border 1.6s ease-in-out infinite";
-      } else if (effectiveCard.rarity === "Legendary") {
-        rarityAnim = "legendary-border 1.8s ease-in-out infinite";
-      }
-    }
-
+    const col = idx % COLS;
+    const isLocked = lockedCells.has(idx);
+    const spinning = !stopped.has(col) && !isLocked;
     return (
-      <div
-        className={`absolute inset-0 flex flex-col overflow-hidden ${isLocked ? (isWin ? "win-flash" : "") : decelerating ? "slot-decel" : spinning ? "slot-spin" : isNew ? "card-fall-in" : isWin ? "win-flash" : "transition-all duration-150"} ${effectiveCard.hasFoil ? "foil-card" : ""}`}
-        style={{
-          border: isLocked
-            ? "2px solid #FACC15"
-            : foilEffect.border || `${borderW}px solid ${borderColor}`,
-          boxShadow: isLocked
-            ? "0 0 12px #FACC1588, inset 0 0 10px #FACC1522"
-            : foilEffect.boxShadow || (isWin ? `0 0 20px #FFD700, 0 0 8px #FFD700, inset 0 0 16px #FFD70033` : undefined),
-          animation: isLocked ? undefined : `${rarityAnim || foilEffect.animation || ''}`.trim(),
-          background: s.bg,
-        }}
-      >
-        {/* Ícone de cadeado para dragukka travada */}
-        {isLocked && (
-          <div className="absolute top-0.5 right-0.5 z-20 text-[8px] leading-none">🔒</div>
-        )}
-        {/* Rarity corner triangle */}
-        <div
-          className="absolute top-0 left-0 w-5 h-5 z-10 pointer-events-none"
-          style={{ background: s.cornerGrad }}
-        >
-          <span className="absolute top-0 left-0.5 text-[7px] font-black leading-none" style={{ color: s.border }}>
-            {s.icon}
-          </span>
-        </div>
-
-        {/* Card image */}
-        <div className="relative flex-1 min-h-0 overflow-hidden" style={{ background: "#111" }}>
-          {img ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={img}
-              alt={label}
-              className={`w-full h-full ${isDragukka ? 'object-cover object-center' : 'object-cover object-center'}`}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-[9px] font-black text-gray-300 px-0.5 text-center leading-tight">
-              {label.toUpperCase()}
-            </div>
-          )}
-          {!spinning && (effectiveCard.rarity === "Mythic" || effectiveCard.rarity === "Legendary" || isDragukka) && (
-            <div
-              className="absolute inset-0 pointer-events-none"
-              style={{ background: `linear-gradient(135deg, ${s.glow}22 0%, transparent 50%, ${s.glow}11 100%)` }}
-            />
-          )}
-          {isWin   && <div className="absolute inset-0 bg-yellow-300/20 animate-pulse pointer-events-none" />}
-          {spinning && <div className="absolute inset-0 bg-black/55 pointer-events-none" />}
-          {/* Prize foil rainbow overlay — não aplica em GIFs (fica bugado) */}
-          {!spinning && effectiveCard.hasFoil && !isDragukka && <div className="prize-foil" />}
-          {/* Locked GIF indicator */}
-          {isLockedGif && (
-            <div className="absolute top-0 right-0 z-30 px-1 py-0.5 text-[7px] font-black text-black rounded-bl"
-              style={{ background: '#FFD700' }}>LOCKED</div>
-          )}
-          {/* Dev index overlay */}
-          {showIndices && !spinning && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-              <span className="text-[10px] font-black text-white" style={{ textShadow:"0 0 4px #000,0 0 8px #000" }}>{idx}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Name label — full name, auto-shrink font */}
-        <div
-          className="shrink-0 flex items-center gap-0.5 px-0.5 py-[2px]"
-          style={{ background: isWin ? "#92400e" : s.labelBg }}
-        >
-          <span className="text-[5px] font-black leading-none shrink-0" style={{ color: s.border }}>{s.icon}</span>
-          <span
-            className="text-[5px] font-black text-white truncate leading-none flex-1 text-center"
-            style={{ fontSize: label.length > 12 ? "4px" : "5px" }}
-          >
-            {label.toUpperCase()}
-          </span>
-        </div>
-      </div>
+      <SlotGridCard
+        card={card}
+        idx={idx}
+        isLocked={isLocked}
+        spinning={spinning}
+        decelerating={spinning && deceleratingCols.has(col)}
+        isWin={!spinning && winCells.has(idx)}
+        isNew={!spinning && newCells.has(idx)}
+        devFoilAll={devFoilAll}
+        lockedGifIdx={lockedGifIdx}
+        showIndices={showIndices}
+        baseAppLiteMode={liteMotion}
+      />
     );
   };
 
@@ -945,13 +996,13 @@ export default function SlotMachine({
           50%  { transform:translateY(3px);  opacity:1; }
           100% { transform:translateY(-3px); opacity:0.85; }
         }
-        .slot-spin { animation: ${isFrameMode ? 'slot-blur-lite 0.12s' : 'slot-blur 0.08s'} ease-in-out infinite; }
+        .slot-spin { animation: ${liteMotion ? 'slot-blur-lite 0.12s' : 'slot-blur 0.08s'} ease-in-out infinite; will-change: transform, filter; transform: translate3d(0,0,0); backface-visibility: hidden; }
         @keyframes slot-blur-slow {
           0%   { transform:translateY(-3px); filter:blur(1px) brightness(1.05); }
           50%  { transform:translateY(3px);  filter:blur(1.5px) brightness(0.9); }
           100% { transform:translateY(-3px); filter:blur(1px) brightness(1.05); }
         }
-        .slot-decel { animation: ${isFrameMode ? 'slot-blur-slow-lite 0.22s' : 'slot-blur-slow 0.18s'} ease-in-out infinite; }
+        .slot-decel { animation: ${liteMotion ? 'slot-blur-slow-lite 0.22s' : 'slot-blur-slow 0.18s'} ease-in-out infinite; will-change: transform, filter; transform: translate3d(0,0,0); backface-visibility: hidden; }
         @keyframes win-pulse {
           0%,100%{ opacity:1; }
           50%    { opacity:0.75; }
@@ -1092,7 +1143,7 @@ export default function SlotMachine({
                           <div className="relative flex-1 overflow-hidden" style={{ background:"#111" }}>
                             {cImg ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={cImg} alt={cLabel} className="w-full h-full object-cover object-center" />
+                              <img src={getBaseAppImageSrc(cImg, 256, 60)} alt={cLabel} className="w-full h-full object-cover object-center" decoding="async" />
                             ) : (
                               <div className="flex items-center justify-center h-full text-[8px] text-gray-300 text-center px-0.5">{cLabel.toUpperCase()}</div>
                             )}
@@ -1118,7 +1169,7 @@ export default function SlotMachine({
                   return (
                     <div key={c.baccarat+"_foil"} className="relative foil-card flex flex-col overflow-hidden rounded" style={{ border:`${rs.borderW}px solid #FFA500`, background: rs.bg, aspectRatio:"3/4", boxShadow:`0 0 15px #FFA50088` }}>
                       <div className="relative flex-1 overflow-hidden" style={{ background:"#111" }}>
-                        {cImg && <img src={cImg} alt={cLabel} className="w-full h-full object-cover object-center" />}
+                        {cImg && <img src={getBaseAppImageSrc(cImg, 256, 60)} alt={cLabel} className="w-full h-full object-cover object-center" decoding="async" />}
                         <div className="prize-foil" />
                       </div>
                       <div className="px-0.5 py-0.5 text-center" style={{ background: rs.labelBg }}>
@@ -1144,7 +1195,7 @@ export default function SlotMachine({
         <div
           key="card3d-viewer"
           className="fixed inset-0 z-[500] flex flex-col items-center justify-center"
-          style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)' }}
+          style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: `blur(${getBaseAppBlur(12)}px)` }}
         >
           <div className="flex flex-col items-center gap-4">
             {/* Rarity tag + Combos button */}
@@ -1203,7 +1254,7 @@ export default function SlotMachine({
             {/* 3D card wrapper — drag to spin */}
             <div
               className={`select-none ${card3D.flyIn ? "card-3d-fly-in" : ""}`}
-              style={{ perspective: '900px', width: 204, height: 310, cursor: 'grab' }}
+              style={{ perspective: '900px', width: 204, height: 310, cursor: 'grab', willChange: 'transform', transform: 'translate3d(0,0,0)' }}
               onMouseDown={e => { card3DRotRef.current.dragging = true; card3DRotRef.current.lastX = e.clientX; card3DRotRef.current.lastY = e.clientY; (e.currentTarget as HTMLDivElement).style.cursor = 'grabbing'; }}
               onMouseMove={e => {
                 if (!card3DRotRef.current.dragging) return;
@@ -1231,7 +1282,7 @@ export default function SlotMachine({
             >
               <div
                 ref={card3DInnerRef}
-                style={{ width: '100%', height: '100%', position: 'relative', transformStyle: 'preserve-3d', transform: 'rotateY(0deg) rotateX(0deg)', transition: 'transform 0.05s ease-out' }}
+                style={{ width: '100%', height: '100%', position: 'relative', transformStyle: 'preserve-3d', transform: 'translate3d(0,0,0) rotateY(0deg) rotateX(0deg)', transition: 'transform 0.05s ease-out', willChange: 'transform' }}
               >
                 {/* FRONT — igual ao raffle: imagem preenchendo tudo, sem label */}
                 <div style={{
@@ -1242,7 +1293,7 @@ export default function SlotMachine({
                 }}>
                   {card3D.img && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={card3D.img} alt={card3D.label} draggable={false} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
+                    <img src={getBaseAppImageSrc(card3D.img, 512, 70)} alt={card3D.label} draggable={false} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                   )}
                   {card3D.card.hasFoil && <div className="prize-foil" style={{ borderRadius: 12 }} />}
                 </div>
@@ -1253,7 +1304,7 @@ export default function SlotMachine({
                   boxShadow: '0 0 40px rgba(255,215,0,0.5)',
                 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/images/card-back.png" alt="Card Back" draggable={false}
+                  <img src={getBaseAppImageSrc("/images/card-back.png", 512, 70)} alt="Card Back" draggable={false} decoding="async"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.13) translateY(1.3%)', transformOrigin: 'center', pointerEvents: 'none' }}
                     onError={e => { (e.currentTarget as HTMLImageElement).src = '/images/gif-background.png'; }} />
                 </div>
@@ -1271,7 +1322,7 @@ export default function SlotMachine({
 
       {/* PLAY BONUS overlay — aparece após 4 foils, antes de entrar no bonus */}
       {showPlayBonus && (
-        <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.88)', backdropFilter:'blur(8px)' }}>
+        <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.88)', backdropFilter:`blur(${getBaseAppBlur(8)}px)` }}>
           <div className="flex flex-col items-center gap-6 text-center px-8">
             <div className="font-black text-5xl" style={{ color:'#FFD700', textShadow:'0 0 30px #FFD700, 0 0 60px #FFA500', animation:'epic-bonus-pop 0.6s cubic-bezier(.34,1.56,.64,1) both' }}>
               BONUS!
@@ -1303,7 +1354,7 @@ export default function SlotMachine({
         const ogParams = new URLSearchParams({ amount: String(bonusSummaryAmount), x: String(bonusMultX), type: winType, ...(playerName ? { user: playerName } : {}) });
         const castText = `🎰 Bonus Round: +${bonusSummaryAmount.toLocaleString()} coins${bonusMultX >= 2 ? ` (${bonusMultX}×)` : ''}${playerName ? ` by @${playerName}` : ''} on Tukka Slots!\n\nPlay at vibemostwanted.xyz/slot 🎴`;
         return (
-          <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.92)', backdropFilter:'blur(8px)' }}>
+          <div className="fixed inset-0 z-[650] flex items-center justify-center" style={{ background:'rgba(0,0,0,0.92)', backdropFilter:`blur(${getBaseAppBlur(8)}px)` }}>
             <div className="flex flex-col items-center gap-5 text-center px-8 max-w-[320px]">
               <div className="font-black text-2xl uppercase tracking-widest text-yellow-300">Bonus Concluído!</div>
               <div className="font-black leading-none" style={{ fontSize: 52, color: bonusSummaryAmount > 0 ? '#4ade80' : '#6b7280', textShadow: bonusSummaryAmount > 0 ? '0 0 20px #4ade80' : undefined }}>
@@ -1404,7 +1455,7 @@ export default function SlotMachine({
       {/* EPIC FOIL OVERLAY — 4 foil cards flip 3D in-place side by side */}
       {epicFoilCards && epicFoilPhase && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center overflow-hidden pointer-events-none"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}>
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: `blur(${getBaseAppBlur(4)}px)` }}>
           <div className="relative" style={{ width: 'min(86vw, 360px)', aspectRatio: '5 / 3' }}>
             {epicFoilCards.map((fc, i) => {
               const rs = RS[fc.card.rarity] ?? RS.Common;

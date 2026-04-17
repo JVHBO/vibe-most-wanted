@@ -11,6 +11,20 @@ export function isMiniappMode(): boolean {
 }
 
 /**
+ * Lightweight Base App / Coinbase WebView detection.
+ * Keeps the check local to client environments and mirrors the requested UA logic.
+ */
+export function isBaseAppWebView(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  return (
+    typeof (window as any).ReactNativeWebView !== 'undefined' ||
+    ua.includes('Coinbase') ||
+    ua.includes('Base')
+  );
+}
+
+/**
  * Returns true only when Farcaster SDK should be used for wallet transactions.
  * Base App (RN WebView) injects window.ethereum but is NOT a Farcaster miniapp.
  * Always use wagmi for TXs in Base App.
@@ -19,6 +33,23 @@ export function shouldUseFarcasterSDK(): boolean {
   if (typeof window === 'undefined') return false;
   if (typeof (window as any).ReactNativeWebView !== 'undefined') return false;
   return window.self !== window.top;
+}
+
+export function getBaseAppBlur(blurPx: number): number {
+  return isBaseAppWebView() ? Math.max(2, Math.round(blurPx * 0.45)) : blurPx;
+}
+
+export function getBaseAppImageSrc(src: string, width = 256, quality = 60): string {
+  if (!isBaseAppWebView()) return src;
+  if (!src || !src.startsWith('/') || src.toLowerCase().endsWith('.gif')) return src;
+
+  const params = new URLSearchParams({
+    url: src,
+    w: String(width),
+    q: String(quality),
+  });
+
+  return `/_next/image?${params.toString()}`;
 }
 
 export function shouldSkipHeavyQueries(): boolean {
