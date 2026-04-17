@@ -9,8 +9,8 @@ import { privateKeyToAccount } from 'viem/accounts';
  * Auth: Bearer CRON_SECRET
  */
 
-const SLOT_SHOP_BASE = '0xFE3d768829b15146719CD4AeCa94c617D4B51C06' as const;
-const SLOT_SHOP_ARB  = '0x3479E9304175cDdCE327CF16b1e928194d61e7b0' as const;
+const SLOT_SHOP_BASE = '0x9D7e843F2c096434747B453381105f85D1cf2E9e' as const;
+const SLOT_SHOP_ARB  = '0x3736a48Bd8CE9BeE0602052B48254Fc44ffC0daA' as const;
 const USDC_BASE      = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const;
 const USDN_ARB       = '0x4ecf61a6c2fab8a047ceb3b3b263b401763e9d49' as const;
 
@@ -18,9 +18,9 @@ const WIELD_PRICE_API = 'https://build.wield.xyz/vibe/boosterbox/price-chart/0xf
 const ETH_USD_API     = 'https://build.wield.xyz/utils/eth-to-usd?eth=1';
 
 const SHOP_ABI = [
-  { name: 'setETHPrice',   type: 'function', stateMutability: 'nonpayable', inputs: [{ name: '_packPriceETH', type: 'uint256' }], outputs: [] },
-  { name: 'setTokenPrice', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'token', type: 'address' }, { name: 'pricePerPack', type: 'uint256' }], outputs: [] },
-  { name: 'packPriceETH',  type: 'function', stateMutability: 'view',       inputs: [], outputs: [{ type: 'uint256' }] },
+  { name: 'setETHPrice',       type: 'function', stateMutability: 'nonpayable', inputs: [{ name: '_pricePerHundredETH', type: 'uint256' }], outputs: [] },
+  { name: 'setTokenPrice',     type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'token', type: 'address' }, { name: 'pricePer100', type: 'uint256' }], outputs: [] },
+  { name: 'pricePerHundredETH', type: 'function', stateMutability: 'view',      inputs: [], outputs: [{ type: 'uint256' }] },
 ] as const;
 
 // Tolerance: only update if price changed >2% to avoid unnecessary gas
@@ -52,8 +52,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to fetch prices', ethUsd, priceEth }, { status: 500 });
     }
 
-    const packPriceETH_wei  = BigInt(Math.round(priceEth * 1e18));           // wei
-    const packPriceUSDC_u6  = BigInt(Math.round(priceEth * ethUsd * 1e6));   // USDC 6 dec
+    // v2: price per 100 coins
+    // 1M coins = 1 pack = priceEth ETH  →  per 100 coins = priceEth / 10000
+    const packPriceETH_wei  = BigInt(Math.round(priceEth * 1e18 / 10000));           // wei per 100 coins
+    const packPriceUSDC_u6  = BigInt(Math.round(priceEth * ethUsd * 1e6 / 10000));   // USDC units per 100 coins
 
     const account = privateKeyToAccount(signerKey);
 
@@ -61,7 +63,7 @@ export async function GET(request: Request) {
     const basePublic = createPublicClient({ chain: base, transport: http() });
     const baseWallet = createWalletClient({ account, chain: base, transport: http() });
 
-    const currentBaseETH = await basePublic.readContract({ address: SLOT_SHOP_BASE, abi: SHOP_ABI, functionName: 'packPriceETH' }) as bigint;
+    const currentBaseETH = await basePublic.readContract({ address: SLOT_SHOP_BASE, abi: SHOP_ABI, functionName: 'pricePerHundredETH' }) as bigint;
     const baseETHDiff = Math.abs(Number(packPriceETH_wei - currentBaseETH)) / Number(currentBaseETH);
 
     const baseUpdates: string[] = [];
@@ -75,7 +77,7 @@ export async function GET(request: Request) {
     const arbPublic = createPublicClient({ chain: arbitrum, transport: http() });
     const arbWallet = createWalletClient({ account, chain: arbitrum, transport: http() });
 
-    const currentArbETH = await arbPublic.readContract({ address: SLOT_SHOP_ARB, abi: SHOP_ABI, functionName: 'packPriceETH' }) as bigint;
+    const currentArbETH = await arbPublic.readContract({ address: SLOT_SHOP_ARB, abi: SHOP_ABI, functionName: 'pricePerHundredETH' }) as bigint;
     const arbETHDiff = Math.abs(Number(packPriceETH_wei - currentArbETH)) / Number(currentArbETH);
 
     const arbUpdates: string[] = [];

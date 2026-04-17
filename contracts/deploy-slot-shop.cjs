@@ -13,10 +13,12 @@ const path = require('path');
 const PRIVATE_KEY = '0xae6b2ed121d89cd2115e4d8adfadbb960b6264d041479c1f21e1d7531182c895';
 const DEV_ADDRESS = '0x81CE8c5168895Be0a75C653571ba929941faC16d'; // same signer = dev
 
-// Current prices from Wield (update periodically via setPrice)
-// 1 pack = 100k VBMS = 1M coins
-const PACK_PRICE_ETH  = '307277179952346'; // 0.000307 ETH in wei (~$0.72 at $2355/ETH)
-const PACK_PRICE_USDC = '720000';          // $0.72 USDC (6 decimals)
+// v2: price per 100 coins
+// 0.000307 ETH / 1M coins → per 100 coins = 0.000307 / 10000 = 0.0000000307 ETH = 30727 wei
+// $0.72 USDC / 1M coins → per 100 coins = $0.000000072 USDC = 0.072 units (6 dec) → 1 unit min
+// Use 1 unit USDC per 100 coins (minimum representable amount = $0.000001)
+const PRICE_PER_100_ETH  = '30727717995';  // ~30727 wei per 100 coins (~$0.000072 at $2355/ETH)
+const PRICE_PER_100_USDC = '72';           // 72 micro-USDC per 100 coins ($0.000072)
 
 const CHAINS = {
   base: {
@@ -55,7 +57,7 @@ async function deploy(chainKey) {
 
   const factory = new ethers.ContractFactory(artifact.abi, artifact.bytecode, wallet);
   const contract = await factory.deploy(
-    PACK_PRICE_ETH,
+    PRICE_PER_100_ETH,
     DEV_ADDRESS,
     { gasLimit: 1_500_000 }
   );
@@ -63,12 +65,19 @@ async function deploy(chainKey) {
   console.log('TX hash:', contract.deploymentTransaction()?.hash);
   await contract.waitForDeployment();
   const address = await contract.getAddress();
-  console.log(`✅ SlotCoinShop deployed on ${chain.name}: ${address}`);
+  console.log(`✅ SlotCoinShop v2 deployed on ${chain.name}: ${address}`);
   console.log(`   ${chain.explorerUrl}${address}`);
+
+  // Add stablecoin after deploy
+  const shopContract = new ethers.Contract(address, artifact.abi, wallet);
+  console.log(`\nAdding stablecoin ${chain.stablecoin}...`);
+  const tx = await shopContract.addToken(chain.stablecoin, PRICE_PER_100_USDC, { gasLimit: 100_000 });
+  await tx.wait();
+  console.log('✅ Stablecoin added');
 
   // Save to deployed addresses
   const deployedPath = path.join(__dirname, 'DEPLOYED_ADDRESSES.md');
-  const entry = `\n## SlotCoinShop (${chain.name})\n- Address: \`${address}\`\n- USDC: \`${chain.usdc}\`\n- packPriceETH: ${PACK_PRICE_ETH} wei\n- packPriceUSDC: ${PACK_PRICE_USDC}\n`;
+  const entry = `\n## SlotCoinShop v2 (${chain.name})\n- Address: \`${address}\`\n- pricePerHundredETH: ${PRICE_PER_100_ETH} wei\n- pricePerHundredUSDC/USDN: ${PRICE_PER_100_USDC}\n`;
   fs.appendFileSync(deployedPath, entry);
 
   return address;

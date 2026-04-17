@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId, useReadContract, useWriteContract } from "wagmi";
 import { useReconnectTimeout } from "@/hooks/useReconnectTimeout";
 import { WalletGateScreen } from "@/components/WalletGateScreen";
 import LoadingSpinner from "@/components/LoadingSpinner";
@@ -21,8 +21,25 @@ import { useMusic } from "@/contexts/MusicContext";
 
 type DepositStep = "amount" | "approving" | "transferring" | "done";
 type WithdrawStep = "amount" | "withdrawing" | "done";
+type DepositMode = "vbms" | "buy";
 
 const DEPOSIT_PRESETS = [100, 250, 500, 1000];
+
+const SLOT_SHOP_BASE  = '0x9D7e843F2c096434747B453381105f85D1cf2E9e' as const;
+const SLOT_SHOP_ARB   = '0x3736a48Bd8CE9BeE0602052B48254Fc44ffC0daA' as const;
+const USDC_BASE       = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913' as const;
+const USDN_ARB        = '0x4ecf61a6c2fab8a047ceb3b3b263b401763e9d49' as const;
+
+const SHOP_ABI = [
+  { name: 'buyCoins',          type: 'function', stateMutability: 'payable',    inputs: [{ name: 'coinAmount', type: 'uint256' }], outputs: [] },
+  { name: 'buyCoinsWithToken', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'token', type: 'address' }, { name: 'coinAmount', type: 'uint256' }], outputs: [] },
+  { name: 'pricePerHundredETH', type: 'function', stateMutability: 'view',      inputs: [], outputs: [{ type: 'uint256' }] },
+  { name: 'tokenPricePer100',   type: 'function', stateMutability: 'view',      inputs: [{ name: 'token', type: 'address' }], outputs: [{ type: 'uint256' }] },
+] as const;
+
+const ERC20_APPROVE_ABI = [
+  { name: 'approve', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }] },
+] as const;
 const DEPOSIT_MAX = 1000;
 
 // Translations
@@ -212,6 +229,7 @@ const translations = {
 export default function SlotPage() {
   const { lang, setLang } = useLanguage();
   const { isConnected, address, status } = useAccount();
+  const chainId = useChainId();
   const isReconnecting = useReconnectTimeout(status);
   const { userProfile } = useProfile();
   // Detecta se está dentro do MiniappFrame do site (desktop)
@@ -221,6 +239,87 @@ export default function SlotPage() {
   const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(address || '');
   const { approve } = useFarcasterApproveVBMS();
   const { transfer } = useFarcasterTransferVBMS();
+
+  // SlotCoinShop state (must be declared before hooks that use them)
+  const [buyCoinsAmount, setBuyCoinsAmount] = useState("1000");
+  const [buyOption, setBuyOption] = useState<"vbms-deposit"|"base-eth"|"base-usdc"|"arb-eth"|"arb-usdn">("base-eth");
+  const [buyDropOpen, setBuyDropOpen] = useState(false);
+  const [buyStep, setBuyStep] = useState<"idle" | "approving" | "buying" | "done">("idle");
+
+  // SlotCoinShop hooks
+  const buyIsBase     = buyOption.startsWith("base");
+  const buyIsETH      = buyOption.endsWith("eth");
+  const buyShopAddr   = buyIsBase ? SLOT_SHOP_BASE : SLOT_SHOP_ARB;
+  const buyStableAddr = buyIsBase ? USDC_BASE : USDN_ARB;
+  const buyStableSym  = buyIsBase ? "USDC" : "USDN";
+  const buyChainId    = buyIsBase ? 8453 : 42161;
+
+  const { data: per100ETHRaw } = useReadContract({
+    address: buyShopAddr,
+    abi: SHOP_ABI,
+    functionName: 'pricePerHundredETH',
+    chainId: buyChainId,
+    query: { staleTime: 30_000 },
+  });
+  const { data: per100StableRaw } = useReadContract({
+    address: buyShopAddr,
+    abi: SHOP_ABI,
+    functionName: 'tokenPricePer100',
+    args: [buyStableAddr],
+    chainId: buyChainId,
+    query: { staleTime: 30_000 },
+  });
+
+  // price per 100 coins in human units
+  const per100ETH    = per100ETHRaw    ? Number(per100ETHRaw    as bigint) / 1e18 : 0;
+  const per100Stable = per100StableRaw ? Number(per100StableRaw as bigint) / 1e6  : 0;
+
+  const { writeContractAsync } = useWriteContract();
+
+  const handleBuyCoins = async () => {
+    if (!isConnected || !address) { toast.error(tr("connectWallet")); return; }
+    if (buyStep !== "idle") return;
+
+    const coins = Math.ceil((Number(buyCoinsAmount) || 0) / 100) * 100;
+    if (coins < 100) { toast.error("Mínimo 100 coins"); return; }
+    const hundreds = coins / 100;
+
+    try {
+      if (buyIsETH) {
+        // add 1% slippage buffer
+        const totalWei = BigInt(Math.round(per100ETH * hundreds * 1e18 * 1.01));
+        setBuyStep("buying");
+        setTxStatus(`Comprando com ETH...`);
+        await writeContractAsync({
+          address: buyShopAddr, abi: SHOP_ABI, functionName: 'buyCoins',
+          args: [BigInt(coins)], value: totalWei, chainId: buyChainId,
+        });
+      } else {
+        const totalStable = BigInt(Math.round(per100Stable * hundreds * 1e6));
+        setBuyStep("approving");
+        setTxStatus(`Aprovando ${buyStableSym}...`);
+        await writeContractAsync({
+          address: buyStableAddr, abi: ERC20_APPROVE_ABI, functionName: 'approve',
+          args: [buyShopAddr, totalStable], chainId: buyChainId,
+        });
+        setBuyStep("buying");
+        setTxStatus(`Comprando com ${buyStableSym}...`);
+        await writeContractAsync({
+          address: buyShopAddr, abi: SHOP_ABI, functionName: 'buyCoinsWithToken',
+          args: [buyStableAddr, BigInt(coins)], chainId: buyChainId,
+        });
+      }
+      setBuyStep("done");
+      toast.success(`${coins.toLocaleString()} coins chegando!`);
+      setTimeout(() => { setBuyStep("idle"); setShowDeposit(false); }, 2500);
+    } catch (err: any) {
+      console.error("[handleBuyCoins]", err);
+      toast.error(err?.shortMessage || err?.message || tr("error"));
+      setBuyStep("idle");
+    } finally {
+      setTxStatus("");
+    }
+  };
 
   const convex = useConvex();
   const statsQuery = useQuery(api.slot.getSlotDailyStats, {
@@ -254,7 +353,7 @@ export default function SlotPage() {
 
   const [showDeposit, setShowDeposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
-  const [walletTab, setWalletTab] = useState<"deposit" | "withdraw">("deposit");
+  const [walletTab, setWalletTab] = useState<"deposit" | "withdraw" | "vbms">("deposit");
   const [depositAmount, setDepositAmount] = useState("100");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [depositStep, setDepositStep] = useState<DepositStep>("amount");
@@ -368,7 +467,7 @@ export default function SlotPage() {
     // o useQuery em userProfile coins refetch automatico
   };
 
-  const currentVBMSBalance = vbmsBalance ? Number(vbmsBalance) / 1e18 : 0;
+  const currentVBMSBalance = vbmsBalance ? Number(vbmsBalance) : 0;
 
   const getVBMSContract = () => {
     // Slot machine uses VBMSPoolTroll contract on Base
@@ -923,58 +1022,173 @@ export default function SlotPage() {
             {/* Tabs */}
             <div className="flex border-b-2 border-[#c87941]">
               {(["deposit","withdraw"] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setWalletTab(tab)}
+                <button key={tab} onClick={() => setWalletTab(tab)}
                   className="flex-1 py-2 font-black text-xs uppercase tracking-widest transition-colors"
                   style={{
-                    background: walletTab === tab ? (tab === "deposit" ? "#15803d" : "#1d4ed8") : "#100500",
+                    background: walletTab === tab ? (tab === "deposit" ? "#7c3aed" : "#1d4ed8") : "#100500",
                     color: walletTab === tab ? "#fff" : "#6b7280",
                     borderBottom: walletTab === tab ? "2px solid #FFD700" : "none",
                     textShadow: walletTab === tab ? "1px 1px 0 #000" : "none",
                   }}
                 >
-                  {tab === "deposit" ? "Depositar VBMS" : "Sacar VBMS"}
+                  {tab === "deposit" ? "Depositar" : "Sacar VBMS"}
                 </button>
               ))}
             </div>
 
             <div className="p-4">
               {walletTab === "deposit" ? (
-                depositStep === "amount" ? (
-                  <>
-                    <div className="mb-3">
-                      <label className="text-white text-xs font-bold mb-1 block">Quantidade (VBMS)</label>
-                      <input
-                        type="number" value={depositAmount}
-                        onChange={e => setDepositAmount(e.target.value)}
-                        className="w-full bg-black border-2 border-green-500/50 rounded px-3 py-2 text-white font-bold text-lg focus:outline-none focus:border-green-500"
-                        placeholder="100" min="1" max={DEPOSIT_MAX}
-                      />
-                      <div className="flex justify-between text-xs mt-1">
-                        <span className="text-gray-500">Saldo VBMS: <span className="text-green-400 font-bold">{currentVBMSBalance.toFixed(2)}</span></span>
-                        <span className="text-gray-600">Máx: {DEPOSIT_MAX}</span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 gap-2 mb-4">
-                      {DEPOSIT_PRESETS.map(p => (
-                        <button key={p} onClick={() => setDepositAmount(p.toString())}
-                          className="py-2 border border-green-500/30 rounded text-green-400 font-bold text-sm hover:bg-green-600/20">{p}</button>
-                      ))}
-                    </div>
-                    <button onClick={handleDeposit}
-                      disabled={!depositAmount || Number(depositAmount) <= 0 || Number(depositAmount) > Math.min(currentVBMSBalance, DEPOSIT_MAX)}
-                      className="w-full py-3 font-black text-sm uppercase border-2 border-black disabled:opacity-50"
-                      style={{ background:"linear-gradient(180deg,#22c55e,#15803d)", color:"#fff", textShadow:"1px 1px 0 #000" }}>
-                      Depositar
-                    </button>
-                  </>
-                ) : (
+                /* ── Depositar: dropdown com VBMS + cripto ── */
+                buyStep === "done" ? (
                   <div className="text-center py-8">
-                    <div className="text-xl font-black text-[#c87941] mb-4">...</div>
-                    <div className="text-white font-bold">{txStatus}</div>
+                    <div className="text-4xl mb-2">🎰</div>
+                    <div className="font-black text-green-400 text-lg">Coins chegando!</div>
+                    <div className="text-gray-400 text-xs mt-1">Crédito em instantes via blockchain</div>
+                  </div>
+                ) : buyStep !== "idle" || depositStep !== "amount" ? (
+                  <div className="text-center py-8">
+                    <div className="text-xl font-black text-[#FFD700] mb-4">⏳</div>
+                    <div className="text-white font-bold text-sm">{txStatus}</div>
                     {errorMsg && <div className="text-red-400 text-sm mt-2">{errorMsg}</div>}
                   </div>
+                ) : (
+                  <>
+                    {/* Dropdown customizado com logos de rede */}
+                    {(() => {
+                      const PAY_OPTS = [
+                        { key:"vbms-deposit", label:"VBMS", sub:"da carteira",  logo: <img src="/tokens/vbms.png"  alt="VBMS" className="w-5 h-5 rounded-full object-cover border border-black shrink-0" /> },
+                        { key:"base-eth",     label:"ETH",  sub:"Base",         logo: <img src="/tokens/eth.png"   alt="ETH"  className="w-5 h-5 rounded-full object-cover border border-black shrink-0" /> },
+                        { key:"base-usdc",    label:"USDC", sub:"Base",         logo: <img src="/tokens/usdc.png"  alt="USDC" className="w-5 h-5 rounded-full object-cover border border-black shrink-0" /> },
+                        { key:"arb-eth",      label:"ETH",  sub:"Arbitrum",     logo: <img src="/tokens/eth.png"   alt="ETH"  className="w-5 h-5 rounded-full object-cover border border-black shrink-0" /> },
+                        { key:"arb-usdn",     label:"USDN", sub:"Arbitrum",     logo: <img src="/tokens/usnd.avif" alt="USDN" className="w-5 h-5 rounded-full object-cover border border-black shrink-0" /> },
+                      ] as const;
+                      const selected = PAY_OPTS.find(o => o.key === buyOption)!;
+                      return (
+                        <div className="mb-3 relative">
+                          <label className="text-gray-400 text-xs font-bold mb-1.5 block">Trocar por coins</label>
+                          <button
+                            onClick={() => setBuyDropOpen(v => !v)}
+                            className="w-full flex items-center gap-2.5 px-3 py-2.5 bg-[#0a0a0a] border-2 border-[#c87941]/60 rounded text-left"
+                          >
+                            {selected.logo}
+                            <span className="font-black text-white text-sm">{selected.label}</span>
+                            <span className="text-gray-500 text-xs">{selected.sub}</span>
+                            <span className="ml-auto text-gray-400 text-xs">{buyDropOpen ? "▲" : "▼"}</span>
+                          </button>
+                          {buyDropOpen && (
+                            <div className="absolute z-10 w-full mt-1 bg-[#0a0a0a] border-2 border-[#c87941]/40 rounded overflow-hidden shadow-xl">
+                              {PAY_OPTS.map(opt => (
+                                <button key={opt.key}
+                                  onClick={() => { setBuyOption(opt.key); setBuyDropOpen(false); }}
+                                  className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-white/5 transition-colors"
+                                  style={{ background: opt.key === buyOption ? "#1a1a0a" : undefined }}>
+                                  {opt.logo}
+                                  <span className="font-black text-white text-sm">{opt.label}</span>
+                                  <span className="text-gray-500 text-xs">{opt.sub}</span>
+                                  {opt.key === buyOption && <span className="ml-auto text-yellow-400 text-xs">✓</span>}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {/* Exchange rate */}
+                          {buyOption !== "vbms-deposit" && (
+                            <div className="text-xs text-gray-500 mt-1.5 pl-1">
+                              {per100ETH > 0 || per100Stable > 0 ? (
+                                <>
+                                  <span>100K coins ≈ </span>
+                                  <span className="text-yellow-400 font-bold">
+                                    {buyIsETH
+                                      ? `${(per100ETH * 1000).toFixed(6)} ETH`
+                                      : `$${(per100Stable * 1000).toFixed(4)}`}
+                                  </span>
+                                  {buyIsETH && per100Stable > 0 && (
+                                    <span className="text-gray-600 ml-1">(≈ ${(per100Stable * 1000).toFixed(2)})</span>
+                                  )}
+                                </>
+                              ) : <span>carregando taxa...</span>}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Input de quantidade */}
+                    <div className="mb-3">
+                      <label className="text-white text-xs font-bold mb-1.5 block">
+                        {buyOption === "vbms-deposit" ? "Quantidade (VBMS)" : "Quantidade de Coins"}
+                      </label>
+                      {buyOption === "vbms-deposit" ? (
+                        <>
+                          <input
+                            type="number" value={depositAmount}
+                            onChange={e => setDepositAmount(e.target.value)}
+                            className="w-full bg-black border-2 border-green-500/50 rounded px-3 py-2.5 text-white font-bold text-lg focus:outline-none focus:border-green-500"
+                            placeholder="100" min="1" max={DEPOSIT_MAX}
+                          />
+                          <div className="flex justify-between text-xs mt-1">
+                            <span className="text-gray-500">Saldo: <span className="text-green-400 font-bold">{currentVBMSBalance.toFixed(2)} VBMS</span></span>
+                            <span className="text-gray-600">Máx: {DEPOSIT_MAX}</span>
+                          </div>
+                          <div className="grid grid-cols-4 gap-2 mt-2">
+                            {DEPOSIT_PRESETS.map(p => (
+                              <button key={p} onClick={() => setDepositAmount(p.toString())}
+                                className="py-1.5 border border-green-500/30 rounded text-green-400 font-bold text-sm hover:bg-green-600/20">{p}</button>
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <input
+                          type="number" value={buyCoinsAmount}
+                          onChange={e => setBuyCoinsAmount(e.target.value)}
+                          className="w-full bg-black border-2 border-[#c87941]/50 rounded px-3 py-2.5 text-white font-bold text-lg focus:outline-none focus:border-[#c87941]"
+                          placeholder="1000" min="100" step="100"
+                        />
+                      )}
+                    </div>
+
+                    {/* Summary para cripto */}
+                    {buyOption !== "vbms-deposit" && (() => {
+                      const coins = Math.ceil((Number(buyCoinsAmount) || 0) / 100) * 100;
+                      const hundreds = coins / 100;
+                      const total = buyIsETH ? per100ETH * hundreds : per100Stable * hundreds;
+                      return coins > 0 ? (
+                        <div className="bg-[#0a0a0a] rounded-lg p-3 mb-3 border border-[#c87941]/20 text-xs">
+                          <div className="flex justify-between text-gray-400 mb-1.5">
+                            <span>Você recebe</span>
+                            <span className="text-yellow-400 font-black">{coins.toLocaleString()} coins</span>
+                          </div>
+                          <div className="flex justify-between font-black text-sm border-t border-[#c87941]/20 pt-1.5">
+                            <span className="text-gray-300">Total</span>
+                            <div className="text-right">
+                              <div className="text-white">
+                                {buyIsETH ? `${total.toFixed(6)} ETH` : `$${total.toFixed(4)} ${buyStableSym}`}
+                              </div>
+                              {buyIsETH && per100Stable > 0 && (
+                                <div className="text-gray-500 text-xs font-normal">≈ ${(per100Stable * hundreds).toFixed(4)} USD</div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Botão */}
+                    {buyOption === "vbms-deposit" ? (
+                      <button onClick={handleDeposit}
+                        disabled={!depositAmount || Number(depositAmount) <= 0 || Number(depositAmount) > Math.min(currentVBMSBalance, DEPOSIT_MAX)}
+                        className="w-full py-3 font-black text-sm uppercase border-2 border-black disabled:opacity-50"
+                        style={{ background:"linear-gradient(180deg,#22c55e,#15803d)", color:"#fff", textShadow:"1px 1px 0 #000" }}>
+                        Depositar VBMS
+                      </button>
+                    ) : (
+                      <button onClick={handleBuyCoins}
+                        disabled={buyIsETH ? per100ETH === 0 : per100Stable === 0}
+                        className="w-full py-3 font-black text-sm uppercase border-2 border-black disabled:opacity-50"
+                        style={{ background:"linear-gradient(180deg,#c87941,#7a4520)", color:"#fff", textShadow:"1px 1px 0 #000" }}>
+                        Comprar Coins
+                      </button>
+                    )}
+                  </>
                 )
               ) : (
                 withdrawStep === "amount" ? (

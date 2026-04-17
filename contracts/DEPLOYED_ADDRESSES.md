@@ -121,3 +121,8 @@ NEXT_PUBLIC_VBMS_BETTING=0x668c8d288b8670fdb9005fa91be046e4c2585af4
 - USDC: `undefined`
 - packPriceETH: 307277179952346 wei
 - packPriceUSDC: 720000
+
+## SlotCoinShop v2 (Arbitrum One)
+- Address: `0x3736a48Bd8CE9BeE0602052B48254Fc44ffC0daA`
+- pricePerHundredETH: 30727717995 wei
+- pricePerHundredUSDC/USDN: 72

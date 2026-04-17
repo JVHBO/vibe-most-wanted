@@ -37,7 +37,7 @@ const SLOT_UI_TRANSLATIONS: Record<string, {
   spin: string; deposit: string; withdraw: string; buyBonus: string;
   bet: string; balance: string; freeSpins: string; bonusMode: string;
   bonusSpin: string; bonusRemaining: string; winUpTo: string;
-  connectWallet: string; accessDenied: string; welcome: string;
+  connectWallet: string; accessDenied: string; accessDeniedDesc: string; welcome: string;
   howToPlay: string; combos: string; mechanics: string; howToDeposit: string;
   prev: string; next: string; play: string; missing: string;
   freeSpinsDay: string; noDeposit: string;
