@@ -40,7 +40,7 @@ const SHOP_ABI = [
 const ERC20_APPROVE_ABI = [
   { name: 'approve', type: 'function', stateMutability: 'nonpayable', inputs: [{ name: 'spender', type: 'address' }, { name: 'amount', type: 'uint256' }], outputs: [{ type: 'bool' }] },
 ] as const;
-const DEPOSIT_MAX = 1000;
+const DEPOSIT_MAX = 10000;
 
 // Translations
 const translations = {
@@ -496,29 +496,19 @@ export default function SlotPage() {
       return;
     }
 
-    setDepositStep("approving");
-    setTxStatus("Approving VBMS...");
+    setDepositStep("transferring");
+    setTxStatus("Transferring VBMS...");
     setErrorMsg(null);
 
     try {
-      // Approve VBMS transfer
       const contract = getVBMSContract();
       const amountWei = parseEther(depositAmount);
 
-      // Call approve
-      await approve(contract, amountWei);
+      // Real ERC20 transfer to VBMSPoolTroll contract
+      const txHash = await transfer(contract, amountWei);
 
-      setDepositStep("transferring");
-      setTxStatus("Transferring VBMS...");
-
-      // Transfer VBMS to game contract
-      // Note: The actual transfer would happen here, but we'll need the game contract address
-      // For now, we'll simulate
-
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // After successful deposit, call Convex mutation to add credits
-      await convex.mutation(api.slot.depositVBMS, { address, amount });
+      // Credit coins in Convex after real tx confirmed
+      await convex.mutation(api.slot.depositVBMS, { address, amount, txHash });
 
       setDepositStep("done");
       toast.success(tr("depositSuccess"));
@@ -558,15 +548,8 @@ export default function SlotPage() {
     setErrorMsg(null);
 
     try {
-      // Withdraw: spend credits in-game and mint VBMS
-      // The Convex mutation would:
-      // 1. Validate user has enough coins
-      // 2. Deduct coins from profile
-      // 3. Trigger VBMS mint to user wallet
-      // await convex.mutation(api.slot.withdrawVBMS, { address, amount });
-
-      // Simulate
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Deduct coins and record withdrawal (VBMS transfer handled off-chain by admin)
+      await convex.mutation(api.slot.withdrawVBMS, { address, amount });
 
       setWithdrawStep("done");
       toast.success(tr("withdrawSuccess"));

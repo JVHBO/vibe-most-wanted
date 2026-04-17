@@ -429,11 +429,19 @@ export const getSlotHistory = query({
  * Deposit VBMS tokens to get coins (1 VBMS = 1 coin)
  */
 export const depositVBMS = mutation({
-  args: { address: v.string(), amount: v.number() },
-  handler: async (ctx, { address, amount }) => {
+  args: { address: v.string(), amount: v.number(), txHash: v.optional(v.string()) },
+  handler: async (ctx, { address, amount, txHash }) => {
     const profile = await getProfileByAddress(ctx, address);
     if (!profile) {
       throw new Error("Profile not found");
+    }
+
+    // Idempotency: don't double-credit the same tx
+    if (txHash) {
+      const existing = await ctx.db.query("coinTransactions")
+        .withIndex("by_txHash", (q) => q.eq("txHash", txHash))
+        .first();
+      if (existing) return { success: true, coinsAdded: 0, newBalance: profile.coins || 0, duplicate: true };
     }
 
     const currentCoins = profile.coins || 0;
@@ -453,6 +461,7 @@ export const depositVBMS = mutation({
       balanceBefore: currentCoins,
       balanceAfter: currentCoins + coinAmount,
       timestamp: Date.now(),
+      ...(txHash ? { txHash } : {}),
     });
 
     return {
@@ -464,7 +473,7 @@ export const depositVBMS = mutation({
 });
 
 /**
- * Withdraw coins to mint VBMS tokens (10 coins = 1 VBMS)
+ * Withdraw coins to get VBMS tokens back (1 coin = 1 VBMS)
  */
 export const withdrawVBMS = mutation({
   args: { address: v.string(), amount: v.number() },
@@ -474,7 +483,7 @@ export const withdrawVBMS = mutation({
       throw new Error("Profile not found");
     }
 
-    const coinCost = amount * 10;
+    const coinCost = amount; // 1:1
     const currentCoins = profile.coins || 0;
 
     if (currentCoins < coinCost) {

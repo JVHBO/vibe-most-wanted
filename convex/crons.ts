@@ -62,4 +62,13 @@ crons.cron(
   internal.profiles.resetWeeklyAura,
 );
 
+// ============================================================
+// SLOT CLEANUP — delete slotSpins > 30 days (daily at 03:00 UTC)
+// ============================================================
+crons.cron(
+  "clean-old-slot-spins",
+  "0 3 * * *",
+  internal.cleanup.cleanOldSlotSpinsBatch,
+);
+
 export default crons;
