@@ -352,6 +352,9 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
   const canSpinRef = useRef(false);
   const isSpinningRef = useRef(false);
   const [arbSupported, setArbSupported] = useState(false);
+  // Pre-fetched claim data — loaded as soon as result appears so mobile doesn't block wallet popup
+  const [preFetchedClaim, setPreFetchedClaim] = useState<{ amount: number; nonce: string; signature: string; spinId: any } | null>(null);
+  const [isPreFetching, setIsPreFetching] = useState(false);
 
   const [localChain, setLocalChain] = useState<'base' | 'arbitrum'>('arbitrum');
   useEffect(() => {
@@ -390,8 +393,27 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
     if (!isBaseApp) checkFarcasterSDK();
   }, [isBaseApp]);
 
-  // Use FC SDK when available — in native Farcaster app, wagmi/Privy can't open popups
-  const shouldUseFarcasterTx = useFarcasterSDK;
+  // Use FC SDK only when wagmi signer is not available
+  const shouldUseFarcasterTx = useFarcasterSDK && !hasWagmiSigner;
+
+  // Pre-fetch claim data as soon as result appears so mobile wallet popup fires immediately on click
+  useEffect(() => {
+    if (!showResult || !stableAddress) return;
+    setPreFetchedClaim(null);
+    setIsPreFetching(true);
+    fetch('/api/roulette/prepare-claim', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: stableAddress }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.nonce) setPreFetchedClaim(data);
+        else console.warn('[Roulette] Pre-fetch claim failed:', data.error);
+      })
+      .catch((e) => console.warn('[Roulette] Pre-fetch claim error:', e))
+      .finally(() => setIsPreFetching(false));
+  }, [showResult, stableAddress]); // eslint-disable-line
 
   // Helper function to claim via Farcaster SDK
   const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string, walletAddress?: string) => {
@@ -487,8 +509,21 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         throw new Error('Wallet signer unavailable. Reconnect the wallet and try again.');
       }
 
-      // 2. Get signature from backend
-      const claimData = await prepareClaimAction({ address: signingAddress });
+      // 2. Get signature — use pre-fetched data if available (avoids async delay on mobile)
+      let claimData: { amount: number; nonce: string; signature: string; spinId: any };
+      if (preFetchedClaim) {
+        claimData = preFetchedClaim;
+      } else {
+        // Fallback: fetch via REST API (same pattern as baccarat)
+        const res = await fetch('/api/roulette/prepare-claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: signingAddress }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Failed to prepare claim');
+        claimData = json;
+      }
       preparedSpinId = claimData.spinId;
 
       toast.info("🔐 Sign the transaction...");

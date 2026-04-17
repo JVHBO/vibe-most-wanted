@@ -92,8 +92,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     checkFarcasterSDK();
   }, []);
 
-  // Use FC SDK when available — in native Farcaster app, wagmi/Privy can't open popups
-  const shouldUseFarcasterTx = useFarcasterSDK;
+  // Use FC SDK only when wagmi signer is not available
+  const shouldUseFarcasterTx = useFarcasterSDK && !hasWagmiSigner;
 
   const claimInboxAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
@@ -324,8 +324,14 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       }
 
       console.log('[CoinsInboxModal] Converting TESTVBMS to VBMS...', { amount: selectedAmount, fid: userFid });
-      // 🔒 SECURITY: Pass FID for server-side verification
-      const result = await convertTESTVBMS({ address: signingAddress, fid: userFid, amount: selectedAmount });
+      // 🔒 Use REST API (not Convex useAction) so mobile wallet popup fires immediately after
+      const convertRes = await fetch('/api/vbms/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: signingAddress, fid: userFid, amount: selectedAmount }),
+      });
+      const result = await convertRes.json();
+      if (!convertRes.ok) throw Object.assign(new Error(result.error || 'Conversion failed'), { data: result.error });
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 

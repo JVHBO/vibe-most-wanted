@@ -55,8 +55,8 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
     checkFarcasterSDK();
   }, []);
 
-  // Use FC SDK when available — in native Farcaster app, wagmi/Privy can't open popups
-  const shouldUseFarcasterTx = useFarcasterSDK;
+  // Use FC SDK only when wagmi signer is not available
+  const shouldUseFarcasterTx = useFarcasterSDK && !hasWagmiSigner;
 
   const getFarcasterProvider = async () => {
     const provider = await getFarcasterSdkProvider();
@@ -190,7 +190,14 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       }
 
       console.log('[InboxModal] Step 1: Preparing inbox claim...');
-      const result = await prepareInboxClaimVBMS({ address: signingAddress });
+      // Use REST API so mobile wallet popup fires immediately after
+      const prepRes = await fetch('/api/vbms/prepare-inbox-claim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: signingAddress }),
+      });
+      const result = await prepRes.json();
+      if (!prepRes.ok) throw Object.assign(new Error(result.error || 'Failed to prepare claim'), { data: result.error });
 
       console.log('[InboxModal] Step 2: Got signature:', result);
 
@@ -282,8 +289,14 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       }
 
       console.log('[InboxModal] Step 1: Getting signature...', { address: signingAddress, fid: userFid });
-      // 🔒 SECURITY: Pass FID for server-side verification
-      const result = await convertTESTVBMS({ address: signingAddress, fid: userFid });
+      // 🔒 Use REST API (not Convex useAction) so mobile wallet popup fires immediately after
+      const convertRes = await fetch('/api/vbms/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address: signingAddress, fid: userFid }),
+      });
+      const result = await convertRes.json();
+      if (!convertRes.ok) throw Object.assign(new Error(result.error || 'Conversion failed'), { data: result.error });
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 
