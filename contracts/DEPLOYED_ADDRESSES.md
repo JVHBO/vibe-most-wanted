@@ -109,3 +109,15 @@ NEXT_PUBLIC_VBMS_BETTING=0x668c8d288b8670fdb9005fa91be046e4c2585af4
 ---
 
 **LETS FUCKING GO! 🚀**
+
+## SlotCoinShop (Base)
+- Address: `0xFE3d768829b15146719CD4AeCa94c617D4B51C06`
+- USDC: `undefined`
+- packPriceETH: 307277179952346 wei
+- packPriceUSDC: 720000
+
+## SlotCoinShop (Arbitrum One)
+- Address: `0x3479E9304175cDdCE327CF16b1e928194d61e7b0`
+- USDC: `undefined`
+- packPriceETH: 307277179952346 wei
+- packPriceUSDC: 720000
