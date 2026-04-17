@@ -93,8 +93,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, profileId });
   } catch (error: any) {
     console.error("[farcaster/profile-upsert] Error:", error);
+    // ConvexError stores real message in error.data, not error.message
+    const errorMessage = error?.data ?? error?.message ?? "Failed to create/update profile";
     return NextResponse.json(
-      { error: error?.message || "Failed to create/update profile" },
+      { error: errorMessage },
       { status: 500 }
     );
   }
