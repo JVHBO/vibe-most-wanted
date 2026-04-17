@@ -56,12 +56,12 @@ export function SlotPreview() {
             }}>
               <svg width="22" height="26" viewBox="0 0 22 26">
                 <rect x="0.5" y="0.5" width="21" height="25" rx="2.5"
-                  fill={(isWin && isWinPhase) ? `${combo.color}15` : "rgba(255,255,255,0.05)"}
-                  stroke={(isWin && isWinPhase) ? `${combo.color}99` : "rgba(255,255,255,0.13)"}
-                  strokeWidth={(isWin && isWinPhase) ? "1.5" : "0.7"}
+                  fill={(isWin && isWinPhase) ? `${combo.color}30` : "rgba(255,255,255,0.06)"}
+                  stroke={(isWin && isWinPhase) ? combo.color : "rgba(255,255,255,0.15)"}
+                  strokeWidth={(isWin && isWinPhase) ? "2" : "0.8"}
                 />
                 {(isWin && isWinPhase)
-                  ? <text x="11" y="16" textAnchor="middle" fontSize="10" fontWeight="900" fill={`${combo.color}cc`}>{combo.rank}</text>
+                  ? <text x="11" y="16" textAnchor="middle" fontSize="10" fontWeight="900" fill={combo.color}>{combo.rank}</text>
                   : <>
                     <line x1="3" y1="11" x2="19" y2="11" stroke="rgba(255,255,255,0.09)" strokeWidth="0.8"/>
                     <line x1="3" y1="16" x2="14" y2="16" stroke="rgba(255,255,255,0.06)" strokeWidth="0.8"/>
@@ -80,7 +80,7 @@ export function SlotPreview() {
           transition:"opacity 0.2s",
         }}>
           <span style={{
-            fontSize:5.5, fontWeight:700, color:`${combo.color}99`,
+            fontSize:6, fontWeight:800, color:`${combo.color}bb`,
             textTransform:"uppercase", letterSpacing:0.3,
             textAlign:"center", whiteSpace:"nowrap",
           }}>{combo.name}</span>

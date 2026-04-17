@@ -9,10 +9,12 @@ import { useState } from 'react';
 import { ConvexProfileService } from '@/lib/convex-profile';
 import { AudioManager } from '@/lib/audio-manager';
 import { devLog, devError } from '@/lib/utils/logger';
+import { logAppError } from '@/lib/log-buffer';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useMutation } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import type { SupportedLanguage } from '@/lib/translations';
+import { ErrorModal } from '@/components/ErrorModal';
 
 const LANGUAGE_OPTIONS: { value: SupportedLanguage; label: string; flag: string }[] = [
   { value: 'en', label: 'English', flag: '🇺🇸' },
@@ -196,6 +198,7 @@ export function CreateProfileModal({
     } catch (error: any) {
       if (soundEnabled) AudioManager.buttonError();
       devError('✗ Error creating profile:', error.code, error.message);
+      logAppError(error, 'account_creation');
       const rawMessage = error?.message || '';
       const normalized = rawMessage.toLowerCase();
       let friendly = tx('createProfileGenericError', 'Could not create account. Please try again.');
@@ -315,9 +318,12 @@ export function CreateProfileModal({
               >
                 {isCreatingProfile ? '...' : tx('createAccount', tx('createAccountFarcaster', 'Create account'))}
               </button>
-              {createError && (
-                <p className="text-xs text-red-400 text-center px-1">{createError}</p>
-              )}
+              <ErrorModal
+                error={createError}
+                context="account_creation"
+                onClose={() => setCreateError(null)}
+                t={t as (key: any) => string}
+              />
 
               <button
                 onClick={handleCancel}

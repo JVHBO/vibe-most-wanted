@@ -16,6 +16,8 @@ interface ReportModalProps {
   currentView?: string;
   username?: string | null;
   farcasterDisplayName?: string | null;
+  initialDescription?: string;
+  initialCategory?: Category;
 }
 
 type Category = 'bug' | 'ux' | 'suggestion' | 'other';
@@ -65,9 +67,9 @@ async function resizeImageToBlob(file: File): Promise<Blob> {
   });
 }
 
-export function ReportModal({ isOpen, onClose, t, address, fid, currentView, username, farcasterDisplayName }: ReportModalProps) {
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState<Category>('bug');
+export function ReportModal({ isOpen, onClose, t, address, fid, currentView, username, farcasterDisplayName, initialDescription, initialCategory }: ReportModalProps) {
+  const [description, setDescription] = useState(initialDescription ?? '');
+  const [category, setCategory] = useState<Category>(initialCategory ?? 'bug');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');

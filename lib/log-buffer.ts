@@ -5,9 +5,11 @@
  */
 
 export interface LogEntry {
-  type: 'error' | 'warn' | 'unhandled';
+  type: 'error' | 'warn' | 'unhandled' | 'app';
   message: string;
   timestamp: string;
+  context?: string;
+  stack?: string;
 }
 
 const MAX_ENTRIES = 30;
@@ -32,22 +34,37 @@ export function initLogBuffer() {
   };
 
   window.addEventListener('error', (e) => {
-    pushLog('unhandled', [e.message, e.filename ? `@ ${e.filename}:${e.lineno}` : '']);
+    pushLog('unhandled', [e.message, e.filename ? `@ ${e.filename}:${e.lineno}` : ''], undefined, e.error?.stack);
   });
 
   window.addEventListener('unhandledrejection', (e) => {
-    pushLog('unhandled', ['UnhandledPromise:', String(e.reason)]);
+    const reason = e.reason;
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    const stack = reason instanceof Error ? reason.stack : undefined;
+    pushLog('unhandled', ['UnhandledPromise:', msg], undefined, stack);
   });
 }
 
-function pushLog(type: LogEntry['type'], args: any[]) {
+function pushLog(type: LogEntry['type'], args: any[], context?: string, stack?: string) {
   const message = args
     .map((a) => (typeof a === 'object' ? JSON.stringify(a, null, 0).slice(0, 200) : String(a)))
     .join(' ')
     .slice(0, 500);
 
-  logBuffer.push({ type, message, timestamp: new Date().toISOString() });
+  logBuffer.push({
+    type, message,
+    timestamp: new Date().toISOString(),
+    ...(context ? { context } : {}),
+    ...(stack ? { stack: stack.slice(0, 400) } : {}),
+  });
   if (logBuffer.length > MAX_ENTRIES) logBuffer.shift();
+}
+
+/** Registra erro de app com contexto (ex: "account_creation") */
+export function logAppError(error: unknown, context: string) {
+  const message = error instanceof Error ? error.message : String(error);
+  const stack = error instanceof Error ? error.stack : undefined;
+  pushLog('app', [message], context, stack);
 }
 
 export function getLogBuffer(): LogEntry[] {
