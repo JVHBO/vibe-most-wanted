@@ -395,7 +395,7 @@ function buildLangView(): object {
     };
   }
 
-  return { version: "2.0", theme: { accent: "yellow" }, ui: { root: "root", elements } };
+  return { version: "2.0", theme: { accent: "amber" }, ui: { root: "root", elements } };
 }
 
 function buildMainView(totalTickets: number, epoch: number, timeLeftHours: number | null, lang: Lang): object {
@@ -476,7 +476,7 @@ function buildMainView(totalTickets: number, epoch: number, timeLeftHours: numbe
     },
   };
 
-  return { version: "2.0", theme: { accent: "yellow" }, ui: { root: "root", elements } };
+  return { version: "2.0", theme: { accent: "amber" }, ui: { root: "root", elements } };
 }
 
 function buildPrizeView(page: number, lang: Lang): object {
@@ -560,7 +560,7 @@ function buildPrizeView(page: number, lang: Lang): object {
     };
   }
 
-  return { version: "2.0", theme: { accent: "yellow" }, ui: { root: "root", elements } };
+  return { version: "2.0", theme: { accent: "amber" }, ui: { root: "root", elements } };
 }
 
 function buildWinnersView(results: any[], lang: Lang): object {
@@ -601,7 +601,7 @@ function buildWinnersView(results: any[], lang: Lang): object {
     };
   });
 
-  return { version: "2.0", theme: { accent: "yellow" }, ui: { root: "root", elements } };
+  return { version: "2.0", theme: { accent: "amber" }, ui: { root: "root", elements } };
 }
 
 // ── Data fetching ─────────────────────────────────────────────────────────────
