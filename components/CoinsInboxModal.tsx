@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { useClaimVBMS, useDailyClaimInfo } from "@/lib/hooks/useVBMSContracts";
 import { useFarcasterVBMSBalance } from "@/lib/hooks/useFarcasterVBMS"; // Miniapp-compatible
 import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext"; // 🔒 For FID verification
-import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
 import { BUILDER_CODE, dataSuffix } from "@/lib/hooks/useWriteContractWithAttribution";
@@ -22,6 +21,7 @@ import { usePlayerCards } from "@/contexts/PlayerCardsContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { translateClaimError, isClaimErrorCode, getSupportText, SupportLink } from "@/lib/claimErrorTranslator";
 import { SupportedLanguage } from "@/lib/translations";
+import { getFarcasterProvider as getFarcasterSdkProvider } from "@/lib/utils/miniapp";
 
 const NextImage = Image;
 
@@ -42,6 +42,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const { address: wagmiAddress } = useAccount();
   // Use userAddress prop if provided (Farcaster mobile), otherwise wagmi
   const address = userAddress || wagmiAddress;
+  const hasWagmiSigner = Boolean(wagmiAddress);
 
   // 🔄 Get refresh functions from both contexts
   const { refreshUserProfile } = usePlayerCards();
@@ -59,7 +60,6 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   const userFid = farcasterContext.user?.fid
     || userProfile?.farcasterFid
     || (userProfile?.fid ? parseInt(userProfile.fid) : undefined);
-
   // Cooldown countdown timer
   useEffect(() => {
     setCooldown(inboxStatus.cooldownRemaining || 0);
@@ -82,20 +82,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
   useEffect(() => {
     const checkFarcasterSDK = async () => {
       try {
-        // Base App and plain browsers never use Farcaster SDK for TXs
-        const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
-        if (!shouldUseFarcasterSDK()) {
-          setUseFarcasterSDK(false);
-          return;
-        }
-
-        // Only now check for provider
-        const provider = await sdk.wallet.getEthereumProvider();
-        if (provider) {
-          setUseFarcasterSDK(true);
-        } else {
-          setUseFarcasterSDK(false);
-        }
+        const provider = await getFarcasterSdkProvider();
+        setUseFarcasterSDK(Boolean(provider));
       } catch (error) {
         console.log('[CoinsInboxModal] Farcaster SDK not available, using wagmi:', error);
         setUseFarcasterSDK(false);
@@ -103,6 +91,9 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
     };
     checkFarcasterSDK();
   }, []);
+
+  // Use FC SDK when available — in native Farcaster app, wagmi/Privy can't open popups
+  const shouldUseFarcasterTx = useFarcasterSDK;
 
   const claimInboxAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
   const convertTESTVBMS = useAction(api.vbmsClaim.convertTESTVBMStoVBMS);
@@ -136,27 +127,25 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
   // Helper function to get actual wallet address from Farcaster SDK
   const getFarcasterWalletAddress = async (): Promise<string> => {
-    const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
-    if (!shouldUseFarcasterSDK()) throw new Error("Not in Farcaster miniapp");
-    const provider = await Promise.race([
-      sdk.wallet.getEthereumProvider(),
-      new Promise<null>(resolve => setTimeout(() => resolve(null), 1500)),
-    ]);
+    const provider = await getFarcasterSdkProvider();
     if (!provider) throw new Error("Farcaster wallet not available");
     const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
     if (!accounts || accounts.length === 0) throw new Error("No accounts found in Farcaster wallet");
     return accounts[0];
   };
 
+  const getFarcasterProvider = async () => {
+    const provider = await getFarcasterSdkProvider();
+    if (!provider) {
+      throw new Error("Farcaster wallet not available");
+    }
+
+    return provider;
+  };
+
   // Helper function to claim via Farcaster SDK
   const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string, walletAddress: string) => {
-    const provider = await sdk.wallet.getEthereumProvider();
-    if (!provider) {
-      const error = "Farcaster wallet not available";
-      console.error('[CoinsInboxModal]', error);
-      toast.error(error);
-      throw new Error(error);
-    }
+    const provider = await getFarcasterProvider();
 
     console.log('[CoinsInboxModal] Claiming via Farcaster SDK:', {
       amount,
@@ -288,6 +277,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       cooldown,
       canConvertTESTVBMS,
       useFarcasterSDK,
+      shouldUseFarcasterTx,
     });
 
     if (!address) {
@@ -324,12 +314,13 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
       // It may differ from the address prop (which comes from userProfile)
       // ALWAYS try to get actual wallet address from provider (works in miniapp AND browser)
       let signingAddress = address as string;
-      try {
-        const actualAddr = await getFarcasterWalletAddress();
-        signingAddress = actualAddr;
+      if (shouldUseFarcasterTx) {
+        signingAddress = await getFarcasterWalletAddress();
         console.log('[CoinsInboxModal] Using provider address:', signingAddress, '(prop was:', address, ')');
-      } catch (e) {
-        console.warn('[CoinsInboxModal] Could not get provider address, using prop address:', address);
+      } else if (wagmiAddress) {
+        signingAddress = wagmiAddress;
+      } else {
+        throw new Error("Wallet signer unavailable. Reconnect the wallet and try again.");
       }
 
       console.log('[CoinsInboxModal] Converting TESTVBMS to VBMS...', { amount: selectedAmount, fid: userFid });
@@ -338,8 +329,8 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 
-      // Use Farcaster SDK if available, otherwise wagmi
-      const txHash = useFarcasterSDK
+      // Prefer the live wagmi signer when available. Farcaster SDK is fallback-only.
+      const txHash = shouldUseFarcasterTx
         ? await claimViaFarcasterSDK(
             result.amount.toString(),
             result.nonce,
@@ -387,6 +378,7 @@ export function CoinsInboxModal({ inboxStatus, onClose, userAddress }: CoinsInbo
         dailyRemaining: dailyRemainingNum,
         address,
         useFarcasterSDK,
+        shouldUseFarcasterTx,
       });
 
       toast.dismiss("conversion-wait");

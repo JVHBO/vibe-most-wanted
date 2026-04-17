@@ -7,7 +7,6 @@ import { useAccount } from "wagmi";
 import { toast } from "sonner";
 import { createPortal } from "react-dom";
 import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
-import { sdk } from "@farcaster/miniapp-sdk";
 import { CONTRACTS, POOL_ABI } from "@/lib/contracts";
 import { encodeFunctionData, parseEther } from "viem";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -16,6 +15,7 @@ import Image from "next/image";
 import { useBodyScrollLock, useEscapeKey } from "@/hooks";
 import { Z_INDEX } from "@/lib/z-index";
 import { useFarcasterContext } from "@/lib/hooks/useFarcasterContext";
+import { getFarcasterProvider as getFarcasterSdkProvider } from "@/lib/utils/miniapp";
 
 const NextImage = Image;
 
@@ -33,6 +33,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   const { t } = useLanguage();
   const T = t as (k: string) => string;
   const { address } = useAccount();
+  const hasWagmiSigner = Boolean(address);
   const [isProcessing, setIsProcessing] = useState(false);
   const [useFarcasterSDK, setUseFarcasterSDK] = useState(false);
 
@@ -48,15 +49,32 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   // Only in Warpcast iframe, never in Base App
   useEffect(() => {
     const checkFarcasterSDK = async () => {
-      const { shouldUseFarcasterSDK } = await import('@/lib/utils/miniapp');
-      if (!shouldUseFarcasterSDK()) return;
-      if (sdk && typeof sdk.wallet !== 'undefined') {
-        const provider = await sdk.wallet.getEthereumProvider();
-        if (provider) setUseFarcasterSDK(true);
-      }
+      const provider = await getFarcasterSdkProvider();
+      if (provider) setUseFarcasterSDK(true);
     };
     checkFarcasterSDK();
   }, []);
+
+  // Use FC SDK when available — in native Farcaster app, wagmi/Privy can't open popups
+  const shouldUseFarcasterTx = useFarcasterSDK;
+
+  const getFarcasterProvider = async () => {
+    const provider = await getFarcasterSdkProvider();
+    if (!provider) {
+      throw new Error("Farcaster wallet not available");
+    }
+
+    return provider;
+  };
+
+  const getFarcasterWalletAddress = async () => {
+    const provider = await getFarcasterProvider();
+    const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
+    if (!accounts || accounts.length === 0) {
+      throw new Error("No accounts found in Farcaster wallet");
+    }
+    return accounts[0];
+  };
 
   const claimAsTESTVBMS = useMutation(api.vbmsClaim.claimInboxAsTESTVBMS);
   const prepareInboxClaimVBMS = useAction(api.vbmsClaim.prepareInboxClaim);
@@ -66,19 +84,13 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
   const { claimVBMS, isPending: isClaimPending } = useClaimVBMS();
 
   // Helper function to claim via Farcaster SDK
-  const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string) => {
-    const provider = await sdk.wallet.getEthereumProvider();
-    if (!provider) {
-      const error = "Farcaster wallet not available";
-      console.error('[InboxModal]', error);
-      toast.error(error);
-      throw new Error(error);
-    }
+  const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string, walletAddress: string) => {
+    const provider = await getFarcasterProvider();
 
     console.log('[InboxModal] Claiming via Farcaster SDK:', {
       amount,
       nonce,
-      from: address,
+      from: walletAddress,
       to: CONTRACTS.VBMSPoolTroll,
       chainId: CONTRACTS.CHAIN_ID
     });
@@ -112,7 +124,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       const txHash = await provider.request({
         method: 'eth_sendTransaction',
         params: [{
-          from: address as `0x${string}`,
+          from: walletAddress as `0x${string}`,
           to: CONTRACTS.VBMSPoolTroll,
           data: dataWithBuilderCode,
         }],
@@ -170,8 +182,15 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
     setIsProcessing(true);
 
     try {
+      const signingAddress = shouldUseFarcasterTx
+        ? await getFarcasterWalletAddress()
+        : address;
+      if (!signingAddress) {
+        throw new Error("Wallet signer unavailable. Reconnect the wallet and try again.");
+      }
+
       console.log('[InboxModal] Step 1: Preparing inbox claim...');
-      const result = await prepareInboxClaimVBMS({ address });
+      const result = await prepareInboxClaimVBMS({ address: signingAddress });
 
       console.log('[InboxModal] Step 2: Got signature:', result);
 
@@ -186,11 +205,12 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
 
       console.log('[InboxModal] Step 3: Calling blockchain claimVBMS...');
       // Use Farcaster SDK if available, otherwise wagmi
-      const txHash = useFarcasterSDK
+      const txHash = shouldUseFarcasterTx
         ? await claimViaFarcasterSDK(
             result.amount.toString(),
             result.nonce,
-            result.signature
+            result.signature,
+            signingAddress
           )
         : await claimVBMS(
             result.amount.toString(),
@@ -207,7 +227,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       // Record the claim in backend to zero inbox
       console.log('[InboxModal] Step 5: Recording inbox claim to zero balance...');
       await recordInboxClaim({
-        address,
+        address: signingAddress,
         amount: result.amount,
         txHash: txHash as unknown as string,
       });
@@ -254,19 +274,27 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
         return;
       }
 
-      console.log('[InboxModal] Step 1: Getting signature...', { address, fid: userFid });
+      const signingAddress = shouldUseFarcasterTx
+        ? await getFarcasterWalletAddress()
+        : address;
+      if (!signingAddress) {
+        throw new Error("Wallet signer unavailable. Reconnect the wallet and try again.");
+      }
+
+      console.log('[InboxModal] Step 1: Getting signature...', { address: signingAddress, fid: userFid });
       // 🔒 SECURITY: Pass FID for server-side verification
-      const result = await convertTESTVBMS({ address, fid: userFid });
+      const result = await convertTESTVBMS({ address: signingAddress, fid: userFid });
 
       toast.info("🔐 Aguardando assinatura da carteira...");
 
       console.log('[InboxModal] Step 2: Sending blockchain TX...');
       // Use Farcaster SDK if available, otherwise wagmi
-      const txHash = useFarcasterSDK
+      const txHash = shouldUseFarcasterTx
         ? await claimViaFarcasterSDK(
             result.amount.toString(),
             result.nonce,
-            result.signature
+            result.signature,
+            signingAddress
           )
         : await claimVBMS(
             result.amount.toString(),
@@ -283,7 +311,7 @@ export function InboxModal({ economy, onClose }: InboxModalProps) {
       console.log('[InboxModal] Step 4: Zeroing TESTVBMS balance...');
       // Zero TESTVBMS balance after TX is sent
       await recordTESTVBMSConversion({
-        address,
+        address: signingAddress,
         amount: result.amount,
         txHash: txHash as unknown as string,
       });

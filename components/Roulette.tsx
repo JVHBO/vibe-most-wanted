@@ -16,7 +16,7 @@ import { encodeFunctionData, parseEther, erc20Abi } from 'viem';
 import { dataSuffix as ATTRIBUTION_SUFFIX, BUILDER_CODE } from '@/lib/hooks/useWriteContractWithAttribution';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useArbValidator, ARB_CLAIM_TYPE } from '@/lib/hooks/useArbValidator';
-import { isBaseAppWebView, isMiniappMode, isWarpcastClient, shouldUseFarcasterSDK } from '@/lib/utils/miniapp';
+import { getFarcasterProvider as getFarcasterSdkProvider, isBaseAppWebView, isMiniappMode, isWarpcastClient } from '@/lib/utils/miniapp';
 
 
 // Roulette translations
@@ -284,6 +284,7 @@ interface RouletteProps {
 
 export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, onHelpClick }: RouletteProps) {
   const { address, status: wagmiStatus } = useAccount();
+  const hasWagmiSigner = Boolean(address);
   // Keep last known address — wagmi returns undefined during reconnecting in Base App
   const lastAddressRef = useRef<`0x${string}` | undefined>(undefined);
   useEffect(() => { if (address) lastAddressRef.current = address; }, [address]);
@@ -382,27 +383,19 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
   // Check for Farcaster SDK — only in actual Farcaster miniapp (iframe), NOT Base App
   useEffect(() => {
-    const isIframe = window.self !== window.top;
-    // Base App injects window.ethereum but is NOT a Farcaster miniapp
-    // Only use Farcaster SDK if we're actually in an iframe (Warpcast)
-    if (isBaseApp || !isIframe) return;
     const checkFarcasterSDK = async () => {
-      if (sdk && typeof sdk.wallet !== 'undefined') {
-        const provider = await sdk.wallet.getEthereumProvider();
-        if (provider) {
-          setUseFarcasterSDK(true);
-        }
-      }
+      const provider = await getFarcasterSdkProvider();
+      setUseFarcasterSDK(Boolean(provider));
     };
-    checkFarcasterSDK();
-  }, []);
+    if (!isBaseApp) checkFarcasterSDK();
+  }, [isBaseApp]);
+
+  // Use FC SDK when available — in native Farcaster app, wagmi/Privy can't open popups
+  const shouldUseFarcasterTx = useFarcasterSDK;
 
   // Helper function to claim via Farcaster SDK
   const claimViaFarcasterSDK = async (amount: string, nonce: string, signature: string, walletAddress?: string) => {
-    const provider = await Promise.race([
-      sdk.wallet.getEthereumProvider(),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
-    ]);
+    const provider = await getFarcasterSdkProvider();
     if (!provider) throw new Error("Farcaster wallet not available");
 
     const data = encodeFunctionData({
@@ -477,13 +470,9 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
       // 1. Get actual signing address
       // Skip sdk.wallet in Base App — it hangs forever without resolving
-      const isIframe = window.self !== window.top;
-      if (!isBaseApp && isIframe) {
+      if (shouldUseFarcasterTx) {
         try {
-          const provider = await Promise.race([
-            sdk.wallet.getEthereumProvider(),
-            new Promise<null>(resolve => setTimeout(() => resolve(null), 5000)),
-          ]);
+          const provider = await getFarcasterSdkProvider();
           if (provider) {
             const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
             if (accounts && accounts.length > 0) {
@@ -494,6 +483,8 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         } catch (e) {
           console.warn('[Roulette] Could not get provider address, using useAccount:', address);
         }
+      } else if (!address) {
+        throw new Error('Wallet signer unavailable. Reconnect the wallet and try again.');
       }
 
       // 2. Get signature from backend
@@ -503,7 +494,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
       toast.info("🔐 Sign the transaction...");
 
       // 3. Send blockchain TX
-      const txHash = shouldUseFarcasterSDK()
+      const txHash = shouldUseFarcasterTx
         ? await claimViaFarcasterSDK(
             claimData.amount.toString(),
             claimData.nonce,
@@ -831,13 +822,16 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
       console.log('[Roulette] Paid spin with builder code:', BUILDER_CODE);
 
       let txHash: string;
+      let signingAddress = stableAddress;
 
-      if (shouldUseFarcasterSDK()) {
-        const provider = await Promise.race([
-          sdk.wallet.getEthereumProvider(),
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
-        ]);
+      if (shouldUseFarcasterTx) {
+        const provider = await getFarcasterSdkProvider();
         if (!provider) throw new Error("Farcaster wallet not available");
+        const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
+        if (!accounts || accounts.length === 0) {
+          throw new Error("No accounts found in Farcaster wallet");
+        }
+        signingAddress = accounts[0] as `0x${string}`;
 
         // Force Base chain — VBMS token and pool are on Base only
         try {
@@ -852,12 +846,16 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
         txHash = await provider.request({
           method: 'eth_sendTransaction',
           params: [{
-            from: address as `0x${string}`,
+            from: signingAddress as `0x${string}`,
             to: CONTRACTS.VBMSToken as `0x${string}`,
             data: dataWithBuilderCode,
           }],
         }) as string;
       } else {
+        if (!address) {
+          throw new Error("Wallet signer unavailable. Reconnect the wallet and try again.");
+        }
+        signingAddress = address;
         // Use wagmi/viem for non-Farcaster with builder code
         const { sendTransaction } = await import('wagmi/actions');
         const { config } = await import('@/lib/wagmi');
@@ -874,7 +872,7 @@ export function Roulette({ onClose, pfpUrl, onChainChange, showHeader = true, on
 
       // 2. Record paid spin in backend
       const response = await recordPaidSpinMutation({
-        address: stableAddress,
+        address: signingAddress,
         txHash: txHash as string,
       });
 
