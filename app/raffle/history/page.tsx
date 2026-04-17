@@ -20,15 +20,15 @@ export default function RaffleHistoryPage() {
 
       {/* TOP HUD */}
       <div className="absolute top-0 left-0 right-0 z-20 p-3 bg-vintage-charcoal/80 border-b border-vintage-gold/20 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
+        <div className="relative flex items-center justify-between">
           <Link
             href="/raffle"
             onClick={() => AudioManager.buttonClick()}
-            className="px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10"
           >
             ← BACK
           </Link>
-          <h1 className="text-xl font-display font-bold text-vintage-gold tracking-wider">PAST RAFFLES</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 font-display font-black text-[#FFD700] text-base uppercase tracking-widest pointer-events-none">PAST RAFFLES</h1>
           <div className="w-16" />
         </div>
       </div>

@@ -311,14 +311,14 @@ export default function RaidDeckPage() {
 
       {/* Header */}
       <div className="raid-deck-header flex-shrink-0 bg-vintage-charcoal border-b-2 border-vintage-gold/30 px-4 py-3">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+        <div className="max-w-6xl mx-auto relative flex items-center justify-between">
           <button
             onClick={handleCancel}
-            className="raid-deck-btn-back px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
+            className="raid-deck-btn-back px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10"
           >
             ← BACK
           </button>
-          <h1 className="text-lg md:text-2xl font-display font-bold text-vintage-gold whitespace-nowrap">
+          <h1 className="absolute left-1/2 -translate-x-1/2 font-display font-black text-[#FFD700] text-base uppercase tracking-widest pointer-events-none">
             {showVibeFIDStep ? 'VibeFID Card?' : 'Raid Deck'}
           </h1>
           <div className="w-20" />
