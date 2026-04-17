@@ -429,15 +429,14 @@ const convex = useConvex();
           <Link
             href="/"
             onClick={() => AudioManager.buttonClick()}
-            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
-            style={{ boxShadow: '4px 4px 0px #000' }}
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10"
           >
             ← BACK
           </Link>
 
           {/* Center: Title */}
-          <div className="flex items-center gap-2">
-            <h1 className="text-base md:text-xl font-display font-bold text-vintage-gold uppercase tracking-widest">
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 pointer-events-none">
+            <h1 className="font-display font-black text-[#FFD700] text-base uppercase tracking-widest">
               Aura Ranking
             </h1>
             <button

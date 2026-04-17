@@ -272,12 +272,11 @@ export default function RoulettePage() {
             paddingBottom: '0.75rem',
             borderBottom: '1px solid rgba(255,215,0,0.1)',
           }}>
-          <Link href="/" className="px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md">
+          <Link href="/" className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10">
             ← BACK
           </Link>
           <div className="flex-1 text-center">
-            <h1 className="text-lg font-bold tracking-widest uppercase"
-              style={{ color: '#FFD700', fontFamily: 'var(--font-cinzel)', letterSpacing: '0.2em' }}>
+            <h1 className="font-display font-black text-[#FFD700] text-base uppercase tracking-widest">
               Daily Roulette
             </h1>
           </div>

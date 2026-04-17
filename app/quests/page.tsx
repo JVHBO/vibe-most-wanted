@@ -539,12 +539,11 @@ export default function QuestsPage() {
           <Link
             href="/"
             onClick={() => AudioManager.buttonClick()}
-            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-4 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[3px] active:translate-y-[3px] active:shadow-none transition-all"
-            style={{ boxShadow: '4px 4px 0px #000' }}
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10"
           >
             ← BACK
           </Link>
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-2xl font-display font-bold text-vintage-gold tracking-wider max-w-[55%] truncate">QUESTS</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 font-display font-black text-[#FFD700] text-base uppercase tracking-widest pointer-events-none">QUESTS</h1>
           <div className="w-20" />
         </div>
 

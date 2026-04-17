@@ -592,7 +592,7 @@ export default function RafflePage() {
         <Link
           href="/"
           onClick={() => AudioManager.buttonClick()}
-          className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white border-2 border-white/20 text-[11px] font-black uppercase tracking-widest active:translate-x-[1px] active:translate-y-[1px] transition-all z-10"
+          className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10"
         >
           {t('raffleBack')}
         </Link>
@@ -604,7 +604,7 @@ export default function RafflePage() {
             href="/raffle/history"
             className="px-2 py-1 border-2 border-[#FFD700] bg-[#FFD700]/10 text-[#FFD700] text-[10px] font-black uppercase tracking-widest hover:bg-[#FFD700]/20 transition-colors"
           >
-            📜 History
+            Log
           </Link>
           <button
             onClick={() => setShowInfo(true)}
