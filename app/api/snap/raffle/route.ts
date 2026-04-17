@@ -643,6 +643,7 @@ const SNAP_CONTENT_TYPE = "application/vnd.farcaster.snap+json";
 const SNAP_HEADERS = {
   "Content-Type": SNAP_CONTENT_TYPE,
   "Cache-Control": "no-store",
+  "Vary": "Accept",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Accept",
