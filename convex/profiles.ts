@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { ConvexError } from "convex/values";
 import { query, mutation, internalMutation, internalQuery, QueryCtx, MutationCtx } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { normalizeAddress, isValidAddress } from "./utils";
@@ -669,12 +670,12 @@ export const upsertProfileFromFarcaster = mutation({
 
     // 🔒 SECURITY: Validate FID
     if (!args.fid || args.fid <= 0) {
-      throw new Error("🔒 Valid Farcaster FID required to create account");
+      throw new ConvexError("🔒 Valid Farcaster FID required to create account");
     }
 
     // Validate address format
     if (!isValidAddress(args.address)) {
-      throw new Error('Invalid Ethereum address format');
+      throw new ConvexError('Invalid Ethereum address format');
     }
 
     const address = normalizeAddress(args.address);
