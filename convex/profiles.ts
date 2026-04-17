@@ -3173,7 +3173,6 @@ export const resetWeeklyAura = internalMutation({
  * Admin: Set a player's permanent aura XP directly (for testing SSJ levels)
  * Does NOT touch weeklyAura (leaderboard counter stays unaffected)
  */
-// Demo wallet — always resets to fresh state on miniapp load
 
 export const adminSetAuraXP = mutation({
   args: { address: v.string(), aura: v.number(), adminKey: v.string() },
