@@ -20,6 +20,7 @@ import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
 
 import { api } from "@/convex/_generated/api";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
+import { SlotPreview } from "@/components/SlotPreview";
 import { CpuArenaModal } from "@/components/CpuArenaModal";
 
 const SettingsModal = dynamic(() => import("@/components/SettingsModal").then(m => m.SettingsModal), { ssr: false });
@@ -236,7 +237,8 @@ export default function HomePage() {
       #th-hdr .tour-settings-btn { padding: 4px 8px !important; }
       #th-hdr [class*="max-w-\\[120px\\]"] { max-width: 80px !important; }
       #th-hdr [class*="flex-wrap"] { flex-wrap: nowrap !important; gap: 4px !important; }
-      @keyframes spinCW { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      @keyframes spinCW    { 0% { transform: rotate(0deg); }    100% { transform: rotate(360deg); } }
+      @keyframes slotWinPop { 0%{opacity:0;transform:scale(0.8)} 100%{opacity:1;transform:scale(1)} }
       @keyframes pulseGlow { 0%,100% { opacity: 0.08; } 50% { opacity: 0.16; } }
       @keyframes redDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.3); } }
       @keyframes fadeInUp { 0% { opacity: 0; transform: translateY(4px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -325,11 +327,12 @@ export default function HomePage() {
             <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>{t('playNow')}</span>
           </div>
 
-          {/* SPIN */}
-          <Link href="/roulette" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #6D28D9, #9333EA)', border: '1px solid #A78BFA', animation: 'fadeInUp 0.3s ease', minHeight: 80, textDecoration: 'none', position: 'relative' }}>
+          {/* SPIN + SLOT row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+          <Link href="/roulette" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #6D28D9, #9333EA)', border: 'none', animation: 'fadeInUp 0.3s ease', minHeight: 80, textDecoration: 'none', position: 'relative' }}>
             {/* Roulette wheel — full height, right side */}
-            <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', animation: 'spinCW 6s linear infinite' }}>
-              <svg width="110" height="110" viewBox="0 0 110 110">
+            <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)', animation: 'spinCW 6s linear infinite', opacity: 0.2 }}>
+              <svg width="90" height="90" viewBox="0 0 110 110">
                 {/* Outer ring */}
                 <circle cx="55" cy="55" r="52" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2"/>
                 {/* Colored segments */}
@@ -342,7 +345,7 @@ export default function HomePage() {
                   const y1 = 55 + r * Math.sin(rad);
                   const x2 = 55 + r * Math.cos(rad2);
                   const y2 = 55 + r * Math.sin(rad2);
-                  const colors = ['rgba(220,38,38,0.5)', 'rgba(0,0,0,0.4)'];
+                  const colors = ['rgba(220,38,38,0.25)', 'rgba(0,0,0,0.3)'];
                   return (
                     <path key={i}
                       d={`M55,55 L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z`}
@@ -368,6 +371,17 @@ export default function HomePage() {
                 })}
                 {/* Center dot */}
                 <circle cx="55" cy="55" r="4" fill="#FFD700"/>
+                {/* Bolinha na trilha — orbita independente da roda (counter-rotate) */}
+                <g>
+                  <animateTransform attributeName="transform" type="rotate" from="360 55 55" to="0 55 55" dur="1.6s" repeatCount="indefinite"/>
+                  <circle cx="55" cy="8" r="3.5" fill="white" opacity="0.95" filter="url(#ballGlow)"/>
+                </g>
+                <defs>
+                  <filter id="ballGlow" x="-100%" y="-100%" width="300%" height="300%">
+                    <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
               </svg>
             </div>
             <div style={{ padding: '10px 14px', position: 'relative', zIndex: 1 }}>
@@ -376,6 +390,18 @@ export default function HomePage() {
               <div style={{ marginTop: 6, display: 'inline-block', padding: '2px 10px', background: '#22c55e', color: '#000', borderRadius: 4, fontSize: 9, fontWeight: 700 }}>{t('free')}</div>
             </div>
           </Link>
+
+          {/* SLOT */}
+          <Link href="/slot" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #92400E, #D97706)', border: 'none', animation: 'fadeInUp 0.3s ease', minHeight: 80, textDecoration: 'none', position: 'relative' }}>
+              <SlotPreview />
+            <div style={{ padding: '10px 14px', position: 'relative', zIndex: 1 }}>
+              <div style={{ fontSize: 6.5, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('noCardsNeeded')}</div>
+              <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', lineHeight: 1, marginTop: 2 }}>SLOTS</div>
+              <div style={{ marginTop: 6, display: 'inline-block', padding: '2px 10px', background: '#22c55e', color: '#000', borderRadius: 4, fontSize: 9, fontWeight: 700 }}>{t('free')}</div>
+            </div>
+          </Link>
+
+          </div>{/* end SPIN+SLOT row */}
 
           {/* Baccarat + Arena row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
@@ -408,26 +434,40 @@ export default function HomePage() {
                   <circle cx="40" cy="40" r="16" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5"/>
                 </svg>
               </div>
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-                <div style={{ fontSize: 10, fontWeight: 800, color: '#fff' }}>BACCARAT</div>
+              <div style={{ padding: '10px 14px', position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1 }}>
+                <div style={{ fontSize: 6.5, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('noCardsNeeded')}</div>
+                <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', lineHeight: 1, marginTop: 2 }}>BACCARAT</div>
               </div>
             </Link>
 
             <div onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowCpuArena(true); }} style={{ borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #1E3A8A, #2563EB)', border: 'none', animation: 'fadeInUp 0.4s ease', minHeight: 72, cursor: 'pointer', position: 'relative' }}>
-              {/* VibeFID cover — esquerda */}
-              <img src="/covers/vibefid-cover.png" alt=""
-                style={{ position: 'absolute', left: -4, top: '50%', height: '88%', width: 'auto', objectFit: 'cover', borderRadius: 4, opacity: 0.12, animation: 'pushLeft 3s ease-in-out infinite' }}
-              />
-              {/* VMW cover — direita */}
-              <img src="https://vibechain.com/api/proxy?url=https%3A%2F%2Fimagedelivery.net%2Fg4iQ0bIzMZrjFMgjAnSGfw%2F54f04f3d-8d29-420e-aaeb-ba6b17e45e00%2Fpublic" alt=""
-                style={{ position: 'absolute', right: -4, top: '50%', height: '88%', width: 'auto', objectFit: 'cover', borderRadius: 4, opacity: 0.12, animation: 'pushRight 3s ease-in-out infinite' }}
-              />
+              {/* Card SVG — esquerda */}
+              <div style={{ position: 'absolute', left: 6, top: '50%', transform: 'translateY(-50%)', opacity: 0.28, animation: 'pushLeft 3s ease-in-out infinite' }}>
+                <svg width="32" height="44" viewBox="0 0 32 44">
+                  <rect x="0.5" y="0.5" width="31" height="43" rx="4" fill="rgba(96,165,250,0.12)" stroke="#60a5fa" strokeWidth="1.2"/>
+                  <text x="16" y="16" textAnchor="middle" fontSize="10" fontWeight="900" fill="#60a5fa">VF</text>
+                  <line x1="5" y1="24" x2="27" y2="24" stroke="#60a5fa" strokeWidth="1"/>
+                  <line x1="5" y1="29" x2="19" y2="29" stroke="#60a5fa" strokeWidth="1"/>
+                  <line x1="5" y1="34" x2="22" y2="34" stroke="#60a5fa" strokeWidth="1"/>
+                </svg>
+              </div>
+              {/* Card SVG — direita */}
+              <div style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', opacity: 0.28, animation: 'pushRight 3s ease-in-out infinite' }}>
+                <svg width="32" height="44" viewBox="0 0 32 44">
+                  <rect x="0.5" y="0.5" width="31" height="43" rx="4" fill="rgba(167,139,250,0.12)" stroke="#a78bfa" strokeWidth="1.2"/>
+                  <text x="16" y="16" textAnchor="middle" fontSize="10" fontWeight="900" fill="#a78bfa">VM</text>
+                  <line x1="5" y1="24" x2="27" y2="24" stroke="#a78bfa" strokeWidth="1"/>
+                  <line x1="5" y1="29" x2="19" y2="29" stroke="#a78bfa" strokeWidth="1"/>
+                  <line x1="5" y1="34" x2="22" y2="34" stroke="#a78bfa" strokeWidth="1"/>
+                </svg>
+              </div>
               {/* Beam L→R */}
               <div style={{ position: 'absolute', top: '50%', height: 1.5, background: 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,215,0,0.6))', borderRadius: 2, animation: 'beamLR 3s ease-in-out infinite', marginTop: -0.75 }} />
               {/* Beam R→L */}
               <div style={{ position: 'absolute', top: '50%', height: 1.5, background: 'linear-gradient(to left, rgba(255,255,255,0.9), rgba(255,215,0,0.6))', borderRadius: 2, animation: 'beamRL 3s ease-in-out infinite', marginTop: -0.75 }} />
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
-                <div style={{ fontSize: 11, fontWeight: 800, color: '#fff' }}>ARENA</div>
+              <div style={{ padding: '10px 14px', position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1 }}>
+                <div style={{ fontSize: 6.5, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('noCardsNeeded')}</div>
+                <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', lineHeight: 1, marginTop: 2 }}>ARENA</div>
               </div>
             </div>
           </div>
@@ -461,8 +501,8 @@ export default function HomePage() {
                   <Link href={hasEnoughCards ? '/raid' : '#'} style={raidStyle as any} onClick={(e) => { if (!hasEnoughCards) e.preventDefault(); }}>
                     <div style={{ padding: '10px 6px', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', pointerEvents: hasEnoughCards ? 'auto' : 'none' }}>
                       {hasEnoughCards && (
-                        <div style={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', opacity: 0.35 }}>
-                          <svg width="70" height="60" viewBox="0 0 70 60">
+                        <div style={{ position: 'absolute', inset: 0, opacity: 0.22 }}>
+                          <svg width="100%" height="100%" viewBox="0 0 70 60" preserveAspectRatio="xMidYMid meet">
                             <g style={{ animation: 'bossDestroy 6s ease-in-out infinite' }}>
                               <circle cx="52" cy="30" r="14" fill="none" stroke="#ef4444" strokeWidth="1"/>
                               <polygon points="44,18 41,11 47,17" fill="#ef4444"/>
@@ -484,7 +524,7 @@ export default function HomePage() {
                         </div>
                       )}
                       <div style={{ position: 'relative', zIndex: 1 }}>
-                        <div style={{ fontSize: 11, fontWeight: 800, color: hasEnoughCards ? '#fff' : '#555', textTransform: 'uppercase' }}>Boss Raid</div>
+                        <div style={{ fontSize: 24, fontWeight: 900, color: hasEnoughCards ? '#fff' : '#555', lineHeight: 1, textTransform: 'uppercase' }}>Boss Raid</div>
                       </div>
                     </div>
                   </Link>
@@ -519,7 +559,7 @@ export default function HomePage() {
                         </div>
                       )}
                       <div style={{ position: 'relative', zIndex: 1 }}>
-                        <div style={{ fontSize: 11, fontWeight: 800, color: hasEnoughCards ? '#fff' : '#555', textTransform: 'uppercase' }}>Leaderboard</div>
+                        <div style={{ fontSize: 24, fontWeight: 900, color: hasEnoughCards ? '#fff' : '#555', lineHeight: 1, textTransform: 'uppercase' }}>Leaderboard</div>
                       </div>
                     </div>
                   </Link>
