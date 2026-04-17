@@ -656,7 +656,6 @@ export const upsertProfileFromWallet = mutation({
  */
 export const upsertProfileFromFarcaster = mutation({
   args: {
-    adminKey: v.optional(v.string()),
     address: v.string(),
     fid: v.number(), // 🔒 REQUIRED - Must be valid Farcaster FID
     username: v.string(), // From Farcaster SDK, not user input
@@ -664,10 +663,6 @@ export const upsertProfileFromFarcaster = mutation({
     pfpUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    if (args.adminKey !== undefined) {
-      requireInternalAdminKey(args.adminKey);
-    }
-
     // 🔒 SECURITY: Validate FID
     if (!args.fid || args.fid <= 0) {
       throw new ConvexError("🔒 Valid Farcaster FID required to create account");

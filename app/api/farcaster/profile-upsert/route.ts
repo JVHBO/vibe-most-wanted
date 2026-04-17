@@ -82,7 +82,6 @@ export async function POST(request: NextRequest) {
 
     const convex = new ConvexHttpClient(convexUrl);
     const profileId = await convex.mutation(api.profiles.upsertProfileFromFarcaster, {
-      adminKey: internalSecret || undefined,
       address: normalizedAddress,
       fid: parsedFid,
       username: user.username || `fid${parsedFid}`,
