@@ -201,6 +201,8 @@ export function CreateProfileModal({
       logAppError(error, 'account_creation');
       const rawMessage = error?.message || '';
       const normalized = rawMessage.toLowerCase();
+      // Remove Convex noise: "[Request ID: xxx] Server Error" → generic message
+      const isConvexServerError = normalized.includes('server error') || normalized.includes('request id');
       let friendly = tx('createProfileGenericError', 'Could not create account. Please try again.');
       if (normalized.includes('unauthorized')) {
         friendly = tx('createProfileUnauthorized', 'Access denied. Please reconnect your wallet.');
@@ -208,7 +210,7 @@ export function CreateProfileModal({
         friendly = tx('createProfileRateLimit', 'Too many attempts. Wait a few seconds and try again.');
       } else if (normalized.includes('username') && normalized.includes('use')) {
         friendly = tx('createProfileUsernameTaken', 'Username already in use. Choose another one.');
-      } else if (rawMessage) {
+      } else if (rawMessage && !isConvexServerError) {
         friendly = rawMessage;
       }
       setCreateError(friendly);
