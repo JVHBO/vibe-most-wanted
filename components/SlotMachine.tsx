@@ -64,6 +64,11 @@ const TOTAL_CELLS = SLOT_TOTAL_CELLS;
 const BET_OPTIONS = [...SLOT_BET_OPTIONS];
 const BONUS_COST_MULT = SLOT_BONUS_COST_MULT;
 const BONUS_FREE_SPINS = SLOT_BONUS_FREE_SPINS;
+const REEL_ROW_GAP_PX = 3;
+const REEL_LOOP_CARD_COUNT = 12;
+const REEL_LOOP_REPEAT_COUNT = 3;
+const REEL_SETTLE_LEAD_COUNT = 5;
+const REEL_SETTLE_BUFFER_COUNT = 4;
 
 // GIF de cassino para VBMS Special (slot animation)
 // Coloque os arquivos em public/slot-gifs/
@@ -235,6 +240,7 @@ type SlotGridCardProps = {
   lockedGifIdx: number | null;
   showIndices: boolean;
   baseAppLiteMode: boolean;
+  stripMode?: boolean;
 };
 
 const SlotGridCard = memo(function SlotGridCard({
@@ -249,13 +255,16 @@ const SlotGridCard = memo(function SlotGridCard({
   lockedGifIdx,
   showIndices,
   baseAppLiteMode,
+  stripMode = false,
 }: SlotGridCardProps) {
   const effectiveCard = devFoilAll ? { ...card, hasFoil: true } : card;
   const s = RS[effectiveCard.rarity] ?? RS.Common;
   const isLockedGif = lockedGifIdx === idx && effectiveCard.baccarat === "dragukka";
   const isDragukka = effectiveCard.baccarat === "dragukka";
   const rawImg = isDragukka ? CASINO_SLOT_GIF : getVbmsBaccaratImageUrl(effectiveCard.baccarat);
-  const img = rawImg ? getBaseAppImageSrc(rawImg, 256, 60) : null;
+  const img = rawImg
+    ? getBaseAppImageSrc(rawImg, stripMode ? 192 : 256, stripMode ? 50 : 60)
+    : null;
   const label = LABELS[effectiveCard.baccarat] ?? effectiveCard.baccarat;
   const borderColor = isWin ? "#FFD700" : s.border;
   const borderW = isWin ? 3 : s.borderW;
@@ -267,7 +276,7 @@ const SlotGridCard = memo(function SlotGridCard({
   } : {};
 
   let rarityAnim: string | undefined;
-  if (!spinning && !isWin && !effectiveCard.hasFoil) {
+  if (!stripMode && !spinning && !decelerating && !isWin && !effectiveCard.hasFoil) {
     if (effectiveCard.rarity === "Mythic") {
       rarityAnim = "mythic-border 1.6s ease-in-out infinite";
     } else if (effectiveCard.rarity === "Legendary") {
@@ -275,11 +284,55 @@ const SlotGridCard = memo(function SlotGridCard({
     }
   }
 
-  const isAnimated = spinning || decelerating || isNew || isWin;
+  const isAnimated = !stripMode && (spinning || decelerating || isNew || isWin);
+
+  if (stripMode) {
+    return (
+      <div
+        className="absolute inset-0 flex flex-col overflow-hidden"
+        style={{
+          border: `${borderW}px solid ${borderColor}`,
+          background: s.bg,
+        }}
+      >
+        <div className="relative flex-1 min-h-0 overflow-hidden" style={{ background: "#111" }}>
+          {img ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={baseAppLiteMode ? img : rawImg!}
+              alt={label}
+              className="w-full h-full object-cover object-center"
+              decoding="async"
+              draggable={false}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-[9px] font-black text-gray-300 px-0.5 text-center leading-tight">
+              {label.toUpperCase()}
+            </div>
+          )}
+          <div
+            className="absolute inset-x-0 bottom-0 h-5 pointer-events-none"
+            style={{ background: "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%)" }}
+          />
+        </div>
+        <div
+          className="shrink-0 px-0.5 py-[2px] text-center"
+          style={{ background: s.labelBg }}
+        >
+          <span
+            className="text-[5px] font-black text-white leading-none block truncate"
+            style={{ fontSize: label.length > 12 ? "4px" : "5px" }}
+          >
+            {label.toUpperCase()}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
-      className={`absolute inset-0 flex flex-col overflow-hidden ${isLocked ? (isWin ? "win-flash" : "") : decelerating ? "slot-decel" : spinning ? "slot-spin" : isNew ? "card-fall-in" : isWin ? "win-flash" : "transition-all duration-150"} ${effectiveCard.hasFoil ? "foil-card" : ""}`}
+      className={`absolute inset-0 flex flex-col overflow-hidden ${stripMode ? "" : isLocked ? (isWin ? "win-flash" : "") : decelerating ? "slot-decel" : spinning ? "slot-spin" : isNew ? "card-fall-in" : isWin ? "win-flash" : "transition-all duration-150"} ${effectiveCard.hasFoil && !stripMode ? "foil-card" : ""}`}
       style={{
         border: isLocked
           ? "2px solid #FACC15"
@@ -287,7 +340,7 @@ const SlotGridCard = memo(function SlotGridCard({
         boxShadow: isLocked
           ? "0 0 12px #FACC1588, inset 0 0 10px #FACC1522"
           : foilEffect.boxShadow || (isWin ? "0 0 20px #FFD700, 0 0 8px #FFD700, inset 0 0 16px #FFD70033" : undefined),
-        animation: isLocked ? undefined : `${rarityAnim || foilEffect.animation || ""}`.trim(),
+        animation: isLocked || stripMode ? undefined : `${rarityAnim || foilEffect.animation || ""}`.trim(),
         background: s.bg,
         willChange: isAnimated ? "transform, filter, opacity" : undefined,
         transform: isAnimated ? "translate3d(0,0,0)" : undefined,
@@ -329,8 +382,8 @@ const SlotGridCard = memo(function SlotGridCard({
           />
         )}
         {isWin && <div className="absolute inset-0 bg-yellow-300/20 animate-pulse pointer-events-none" />}
-        {spinning && <div className="absolute inset-0 bg-black/55 pointer-events-none" />}
-        {!spinning && effectiveCard.hasFoil && !isDragukka && <div className="prize-foil" />}
+        {spinning && !stripMode && <div className="absolute inset-0 bg-black/55 pointer-events-none" />}
+        {!spinning && !stripMode && effectiveCard.hasFoil && !isDragukka && <div className="prize-foil" />}
         {isLockedGif && (
           <div className="absolute top-0 right-0 z-30 px-1 py-0.5 text-[7px] font-black text-black rounded-bl" style={{ background: "#FFD700" }}>
             LOCKED
@@ -368,10 +421,233 @@ const SlotGridCard = memo(function SlotGridCard({
   prev.lockedGifIdx === next.lockedGifIdx &&
   prev.showIndices === next.showIndices &&
   prev.baseAppLiteMode === next.baseAppLiteMode &&
+  prev.stripMode === next.stripMode &&
   prev.card.baccarat === next.card.baccarat &&
   prev.card.rarity === next.card.rarity &&
   prev.card.hasFoil === next.card.hasFoil
 ));
+
+type SlotReelStripProps = {
+  col: number;
+  liteMotion: boolean;
+  stopCards: SlotCard[] | null;
+  onStopComplete: (col: number) => void;
+};
+
+function createLoopStripCards() {
+  return Array.from({ length: REEL_LOOP_CARD_COUNT }, () => pick());
+}
+
+function repeatStripCards(cards: SlotCard[]) {
+  return Array.from({ length: REEL_LOOP_REPEAT_COUNT }, () => cards).flat();
+}
+
+const SlotReelStrip = memo(function SlotReelStrip({
+  col,
+  liteMotion,
+  stopCards,
+  onStopComplete,
+}: SlotReelStripProps) {
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const stripRef = useRef<HTMLDivElement | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fallbackTimeoutRef = useRef<number | null>(null);
+  const baseCardsRef = useRef<SlotCard[]>([]);
+  const offsetRef = useRef(0);
+  const stepPxRef = useRef(0);
+  const completionRef = useRef(false);
+  const [cellHeightPx, setCellHeightPx] = useState(0);
+  const [stripCards, setStripCards] = useState<SlotCard[]>(() => {
+    const base = createLoopStripCards();
+    baseCardsRef.current = base;
+    return repeatStripCards(base);
+  });
+
+  const applyOffset = useCallback((offsetPx: number) => {
+    if (!stripRef.current) return;
+    stripRef.current.style.transform = `translate3d(0, ${offsetPx}px, 0)`;
+  }, []);
+
+  const clearTimers = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (fallbackTimeoutRef.current) {
+      clearTimeout(fallbackTimeoutRef.current);
+      fallbackTimeoutRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const updateMetrics = () => {
+      const height = viewport.clientHeight;
+      if (!height) return;
+      const cellHeight = (height - REEL_ROW_GAP_PX * (ROWS - 1)) / ROWS;
+      stepPxRef.current = cellHeight + REEL_ROW_GAP_PX;
+      setCellHeightPx(cellHeight);
+    };
+
+    updateMetrics();
+
+    const observer = new ResizeObserver(updateMetrics);
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!cellHeightPx) return;
+
+    clearTimers();
+    completionRef.current = false;
+
+    const base = createLoopStripCards();
+    baseCardsRef.current = base;
+    setStripCards(repeatStripCards(base));
+    offsetRef.current = 0;
+
+    const startLoop = () => {
+      if (!stripRef.current) return;
+      stripRef.current.style.transition = "none";
+      applyOffset(0);
+      intervalRef.current = setInterval(() => {
+        const stepPx = stepPxRef.current;
+        const loopHeight = baseCardsRef.current.length * stepPx;
+        if (!stepPx || !loopHeight) return;
+
+        let nextOffset = offsetRef.current - stepPx;
+        if (-nextOffset >= loopHeight * 2) {
+          nextOffset += loopHeight;
+        }
+
+        offsetRef.current = nextOffset;
+        applyOffset(nextOffset);
+      }, liteMotion ? 100 : 55);
+    };
+
+    const rafId = window.requestAnimationFrame(startLoop);
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      clearTimers();
+    };
+  }, [applyOffset, cellHeightPx, clearTimers, liteMotion]);
+
+  useEffect(() => {
+    if (!stopCards || !cellHeightPx) return;
+
+    clearTimers();
+
+    const base = baseCardsRef.current.length ? baseCardsRef.current : createLoopStripCards();
+    const stepPx = stepPxRef.current;
+    const traveledSteps = stepPx > 0 ? Math.max(0, Math.round(-offsetRef.current / stepPx)) : 0;
+    const startIndex = base.length > 0 ? traveledSteps % base.length : 0;
+    const leadCards = Array.from(
+      { length: REEL_SETTLE_LEAD_COUNT },
+      (_, idx) => base[(startIndex + idx) % base.length] ?? pick(),
+    );
+    const settleBuffer = Array.from({ length: REEL_SETTLE_BUFFER_COUNT }, () => pick());
+    const settleCards = [...leadCards, ...settleBuffer, ...stopCards];
+
+    setStripCards(settleCards);
+
+    const finalizeStop = () => {
+      if (completionRef.current) return;
+      completionRef.current = true;
+      if (stripRef.current) {
+        stripRef.current.style.transition = "none";
+      }
+      onStopComplete(col);
+    };
+
+    const settle = () => {
+      if (!stripRef.current) return;
+      stripRef.current.style.transition = "none";
+      offsetRef.current = 0;
+      applyOffset(0);
+
+      window.requestAnimationFrame(() => {
+        if (!stripRef.current) return;
+        const settleSteps = leadCards.length + settleBuffer.length;
+        const targetOffset = -(settleSteps * stepPxRef.current);
+        stripRef.current.style.transition = `transform ${liteMotion ? 680 : 820}ms cubic-bezier(0.22, 1, 0.36, 1)`;
+        offsetRef.current = targetOffset;
+        applyOffset(targetOffset);
+
+        const handleTransitionEnd = (event: TransitionEvent) => {
+          if (event.propertyName !== "transform") return;
+          stripRef.current?.removeEventListener("transitionend", handleTransitionEnd);
+          finalizeStop();
+        };
+
+        stripRef.current.addEventListener("transitionend", handleTransitionEnd);
+        fallbackTimeoutRef.current = window.setTimeout(() => {
+          stripRef.current?.removeEventListener("transitionend", handleTransitionEnd);
+          finalizeStop();
+        }, liteMotion ? 780 : 920);
+      });
+    };
+
+    const rafId = window.requestAnimationFrame(settle);
+    return () => window.cancelAnimationFrame(rafId);
+  }, [applyOffset, cellHeightPx, clearTimers, col, liteMotion, onStopComplete, stopCards]);
+
+  return (
+    <div
+      ref={viewportRef}
+      className="absolute inset-0 overflow-hidden pointer-events-none"
+      style={{ contain: "layout paint size" }}
+    >
+      <div
+        ref={stripRef}
+        className="flex flex-col"
+        style={{
+          gap: `${REEL_ROW_GAP_PX}px`,
+          willChange: "transform",
+          transform: "translate3d(0, 0, 0)",
+          backfaceVisibility: "hidden",
+        }}
+      >
+        {stripCards.map((card, idx) => (
+          <div
+            key={`${col}-${idx}`}
+            className="relative shrink-0"
+            style={{ height: `${cellHeightPx}px` }}
+          >
+            <SlotGridCard
+              card={card}
+              idx={idx}
+              isLocked={false}
+              spinning={false}
+              decelerating={false}
+              isWin={false}
+              isNew={false}
+              devFoilAll={false}
+              lockedGifIdx={null}
+              showIndices={false}
+              baseAppLiteMode={liteMotion}
+              stripMode
+            />
+          </div>
+        ))}
+      </div>
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: liteMotion
+            ? "linear-gradient(180deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.04) 18%, rgba(0,0,0,0.04) 82%, rgba(0,0,0,0.12) 100%)"
+            : "linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0.06) 18%, rgba(0,0,0,0.06) 82%, rgba(0,0,0,0.18) 100%)",
+        }}
+      />
+    </div>
+  );
+});
+
+function createEmptyStripStopTargets() {
+  return Array.from({ length: COLS }, () => null as SlotCard[] | null);
+}
 
 export default function SlotMachine({
   onWalletOpen,
@@ -419,6 +695,7 @@ export default function SlotMachine({
   const [autoBonusMode, setAutoBonusMode]       = useState(false);
   const [showHelp, setShowHelp]                 = useState(false);
   const [helpPage, setHelpPage]                 = useState(0);
+  const [stripStopTargets, setStripStopTargets] = useState<Array<SlotCard[] | null>>(() => createEmptyStripStopTargets());
   // Bonus win tracking
   const [bonusWinTotal, setBonusWinTotal]       = useState(0);
   const [bonusWinDisplay, setBonusWinDisplay]   = useState<number | null>(null); // +X durante bonus
@@ -469,6 +746,7 @@ export default function SlotMachine({
   const lockedGifRef  = useRef<number|null>(null);
   const spinSequenceRef = useRef(0);
   const bonusStateRef = useRef<SlotBonusState>({ persistentWildcards: [], spinsRemaining: 0 });
+  const stripStopMetaRef = useRef<Record<number, { cards: SlotCard[]; onDone?: () => void }>>({});
   // Células com dragukka persistente — não animam durante bonus spins
   const lockedCellsRef = useRef<Set<number>>(new Set());
   const [lockedCells, setLockedCells] = useState<Set<number>>(new Set());
@@ -492,7 +770,15 @@ export default function SlotMachine({
   // Access control — apenas wallets autorizados
   const isAllowed = isConnected && isDeveloperSlotAddress(address);
 
+  const columnHasLockedCells = useCallback((col: number) => {
+    for (let row = 0; row < ROWS; row += 1) {
+      if (lockedCellsRef.current.has(row * COLS + col)) return true;
+    }
+    return false;
+  }, []);
+
   const startCol = useCallback((col: number) => {
+    if (!columnHasLockedCells(col)) return;
     const intervalMs = liteMotion ? 100 : 55;
     ivs.current[col] = setInterval(() => {
       setCells(prev => {
@@ -504,7 +790,36 @@ export default function SlotMachine({
         return n;
       });
     }, intervalMs);
-  }, [liteMotion]);
+  }, [columnHasLockedCells, liteMotion]);
+
+  const handleStripStopComplete = useCallback((col: number) => {
+    const meta = stripStopMetaRef.current[col];
+    if (!meta) return;
+
+    setCells(prev => {
+      const next = [...prev];
+      meta.cards.forEach((card, row) => {
+        const idx = row * COLS + col;
+        if (idx < next.length) next[idx] = card;
+      });
+      return next;
+    });
+    setStopped(prev => new Set([...prev, col]));
+    setDeceleratingCols(prev => {
+      const next = new Set(prev);
+      next.delete(col);
+      return next;
+    });
+    setStripStopTargets(prev => {
+      const next = [...prev];
+      next[col] = null;
+      return next;
+    });
+
+    delete stripStopMetaRef.current[col];
+    playTick(90 + col * 10, 0.07, 0.08);
+    meta.onDone?.();
+  }, []);
 
   // Para coluna com desaceleração visual + callback quando termina
   const slowAndStopCol = useCallback((col: number, cards: SlotCard[], onDone?: () => void) => {
@@ -513,6 +828,16 @@ export default function SlotMachine({
 
     // Marcar como desacelerando (CSS diferente)
     setDeceleratingCols(prev => new Set([...prev, col]));
+
+    if (!columnHasLockedCells(col)) {
+      stripStopMetaRef.current[col] = { cards, onDone };
+      setStripStopTargets(prev => {
+        const next = [...prev];
+        next[col] = cards;
+        return next;
+      });
+      return;
+    }
 
     // Passos de desaceleração: delays crescentes, cada um mostra carta aleatória
     const slowSteps = [85, 130, 190, 270, 370];
@@ -546,7 +871,7 @@ export default function SlotMachine({
     };
 
     setTimeout(tick, slowSteps[step++]);
-  }, []);
+  }, [columnHasLockedCells]);
 
   const sleep = (ms: number) => new Promise<void>(res => setTimeout(res, ms));
 
@@ -740,6 +1065,8 @@ export default function SlotMachine({
       setDeceleratingCols(new Set());
       setFoilSuspenseCols(new Set());
       setEpicFoilCards(null);
+      setStripStopTargets(createEmptyStripStopTargets());
+      stripStopMetaRef.current = {};
 
       // Células com dragukka persistente ficam travadas durante bonus spins
       if (bonusMode && currentBonusState.persistentWildcards.length > 0) {
@@ -1834,35 +2161,57 @@ export default function SlotMachine({
               <div className="w-2.5 h-2.5 rounded-full bg-[#FFD700] border border-black shadow-lg" />
             </div>
 
-            {/* Cards grid — flex layout para rows/cols iguais garantidos */}
-            <div className="absolute inset-0 mx-3 my-1 flex flex-col" style={{ gap: "3px" }}>
-              {Array.from({ length: ROWS }, (_, row) => (
-                <div key={row} className="flex min-h-0" style={{ flex: 1, gap: "3px" }}>
-                  {Array.from({ length: COLS }, (_, col) => {
-                    const i = row * COLS + col;
-                    return (
-                      <div
-                        key={col}
-                        className={`relative min-w-0 ${foilSuspenseCols.has(col) && !stopped.has(col) ? 'foil-suspense-col' : ''}`}
-                        style={{
-                          flex: 1,
-                          borderRight: col < COLS - 1 ? "1px solid rgba(200,121,65,0.18)" : "none",
-                          cursor: !isSpinning && stopped.has(col) ? 'pointer' : 'default',
-                        }}
-                        onClick={() => {
-                          if (isSpinning || !stopped.has(col)) return;
-                          const c = cells[i];
-                          const img = c.baccarat === "dragukka" ? CASINO_SLOT_GIF : getVbmsBaccaratImageUrl(c.baccarat);
-                          card3DRotRef.current = { rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 };
-                          setCard3D({ card: c, img: img || '', label: LABELS[c.baccarat] ?? c.baccarat, flyIn: true });
-                        }}
-                      >
-                        {renderCard(cells[i], i)}
+            {/* Cards grid — renderizado por coluna para permitir strip animation sem rerender do grid inteiro */}
+            <div className="absolute inset-0 mx-3 my-1 flex" style={{ gap: `${REEL_ROW_GAP_PX}px` }}>
+              {Array.from({ length: COLS }, (_, col) => {
+                const columnStopped = stopped.has(col);
+                const useStrip = !columnStopped && !columnHasLockedCells(col);
+                const isSuspenseCol = foilSuspenseCols.has(col) && !columnStopped;
+
+                return (
+                  <div
+                    key={col}
+                    className={`relative min-w-0 flex-1 ${isSuspenseCol ? 'foil-suspense-col' : ''}`}
+                    style={{
+                      borderRight: col < COLS - 1 ? "1px solid rgba(200,121,65,0.18)" : "none",
+                    }}
+                  >
+                    {useStrip ? (
+                      <SlotReelStrip
+                        col={col}
+                        liteMotion={liteMotion}
+                        stopCards={stripStopTargets[col]}
+                        onStopComplete={handleStripStopComplete}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex flex-col" style={{ gap: `${REEL_ROW_GAP_PX}px` }}>
+                        {Array.from({ length: ROWS }, (_, row) => {
+                          const i = row * COLS + col;
+                          return (
+                            <div
+                              key={row}
+                              className="relative min-h-0"
+                              style={{
+                                flex: 1,
+                                cursor: !isSpinning && columnStopped ? 'pointer' : 'default',
+                              }}
+                              onClick={() => {
+                                if (isSpinning || !columnStopped) return;
+                                const c = cells[i];
+                                const img = c.baccarat === "dragukka" ? CASINO_SLOT_GIF : getVbmsBaccaratImageUrl(c.baccarat);
+                                card3DRotRef.current = { rotY: 0, rotX: 0, dragging: false, lastX: 0, lastY: 0 };
+                                setCard3D({ card: c, img: img || '', label: LABELS[c.baccarat] ?? c.baccarat, flyIn: true });
+                              }}
+                            >
+                              {renderCard(cells[i], i)}
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
-              ))}
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Payline SVG overlay — draws winning lines */}

@@ -1,3 +1,5 @@
+import { sdk } from '@farcaster/miniapp-sdk';
+
 /**
  * Miniapp Detection Utility
  *
@@ -33,6 +35,22 @@ export function shouldUseFarcasterSDK(): boolean {
   if (typeof window === 'undefined') return false;
   if (typeof (window as any).ReactNativeWebView !== 'undefined') return false;
   return window.self !== window.top;
+}
+
+export async function getFarcasterProvider(timeoutMs = 5000) {
+  if (typeof window === 'undefined') return null;
+  if (typeof (window as any).ReactNativeWebView !== 'undefined') return null;
+  if (!sdk || typeof sdk.wallet === 'undefined') return null;
+
+  try {
+    const provider = await Promise.race([
+      sdk.wallet.getEthereumProvider(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs)),
+    ]);
+    return provider ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function getBaseAppBlur(blurPx: number): number {

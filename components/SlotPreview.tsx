@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { memo, useState, useEffect } from "react";
+import { isBaseAppWebView } from "@/lib/utils/miniapp";
 
 const COMBOS = [
   { name: "Snipers & Bots", rank: "10", color: "#ec4899", win: [0,1,2] },
@@ -9,12 +10,14 @@ const COMBOS = [
 
 type Phase = "fall" | "show" | "win" | "vanish";
 
-export function SlotPreview() {
+export const SlotPreview = memo(function SlotPreview() {
+  const isBaseApp = isBaseAppWebView();
   const [phase, setPhase] = useState<Phase>("fall");
   const [ci, setCi] = useState(0);
   const [landed, setLanded] = useState([false,false,false]);
 
   useEffect(() => {
+    if (isBaseApp) return;
     const t: ReturnType<typeof setTimeout>[] = [];
     if (phase === "fall") {
       setLanded([false,false,false]);
@@ -30,10 +33,11 @@ export function SlotPreview() {
       t.push(setTimeout(() => { setCi(i => (i+1) % COMBOS.length); setPhase("fall"); }, 350));
     }
     return () => t.forEach(clearTimeout);
-  }, [phase]);
+  }, [isBaseApp, phase]);
 
-  const combo = COMBOS[ci];
-  const isWinPhase = phase === "win";
+  const combo = COMBOS[isBaseApp ? 0 : ci];
+  const isWinPhase = isBaseApp ? true : phase === "win";
+  const landedState = isBaseApp ? [true, true, true] : landed;
 
   return (
     <div style={{ position:"absolute", right:0, top:0, bottom:0, width:"55%", display:"flex", alignItems:"center", justifyContent:"center", padding:"4px 6px", opacity: 0.75 }}>
@@ -42,15 +46,15 @@ export function SlotPreview() {
         {Array.from({length:9}, (_,i) => {
           const col = i % 3;
           const isWin = combo.win.includes(i);
-          const isLanded = landed[col];
-          const isVanish = phase==="vanish";
+          const isLanded = landedState[col];
+          const isVanish = !isBaseApp && phase==="vanish";
 
           return (
             <div key={i} style={{
               width:22, height:26,
               transform: isVanish ? "translateY(-12px)" : isLanded ? "translateY(0)" : "translateY(-20px)",
               opacity: isVanish ? 0 : isLanded ? 1 : 0,
-              transition: isVanish
+              transition: isBaseApp ? undefined : isVanish
                 ? `transform 0.22s ease-in, opacity 0.22s ease-in`
                 : `transform 0.2s cubic-bezier(.34,1.56,.64,1) ${col*0.05}s, opacity 0.15s ease ${col*0.05}s`,
             }}>
@@ -88,4 +92,4 @@ export function SlotPreview() {
       </div>
     </div>
   );
-}
+});

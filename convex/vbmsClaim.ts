@@ -1592,6 +1592,52 @@ export const recoverPendingConversion = mutation({
   },
 });
 
+/**
+ * ADMIN: Remove orphan pending conversion artifacts from transaction history.
+ * Use when the profile is already restored but the `pending_conversion` rows
+ * were not deleted by the confirmation/recovery flow.
+ */
+export const adminClearPendingConversionArtifacts = mutation({
+  args: {
+    address: v.string(),
+    adminKey: v.string(),
+  },
+  handler: async (ctx, { address, adminKey }) => {
+    requireInternalAdminKey(adminKey);
+
+    const normalizedAddress = address.toLowerCase();
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", (q: any) => q.eq("address", normalizedAddress))
+      .first();
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    if ((profile.pendingConversion || 0) > 0) {
+      throw new Error("[PENDING_STILL_ACTIVE]");
+    }
+
+    const txs = await ctx.db
+      .query("coinTransactions")
+      .withIndex("by_address_timestamp", (q: any) => q.eq("address", normalizedAddress))
+      .order("desc")
+      .take(500);
+
+    let deleted = 0;
+    for (const tx of txs) {
+      if (tx.source === "pending_conversion") {
+        await ctx.db.delete(tx._id);
+        deleted++;
+      }
+    }
+
+    console.log(`[ADMIN CLEANUP] ${normalizedAddress}: removed ${deleted} orphan pending conversion records`);
+    return { deleted };
+  },
+});
+
 
 /**
  * ADMIN: Recover stuck pending conversion by username (no time restriction).

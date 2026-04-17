@@ -14,7 +14,7 @@ import { connectorsForWallets } from '@rainbow-me/rainbowkit';
 // Use Alchemy RPC if available for better reliability
 const BASE_RPC_URL = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY
   ? `https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_API_KEY}`
-  : process.env.NEXT_PUBLIC_BASE_RPC_URL || undefined; // undefined = use default
+  : process.env.NEXT_PUBLIC_BASE_RPC_URL || 'https://mainnet.base.org';
 const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '';
 const hasValidWalletConnectProjectId = /^[a-f0-9]{32}$/i.test(walletConnectProjectId);
 

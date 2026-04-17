@@ -19,6 +19,13 @@ export function useBondingProgress() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const isBaseApp =
+      typeof window !== 'undefined' && (
+        typeof (window as any).ReactNativeWebView !== 'undefined' ||
+        navigator.userAgent.includes('Coinbase') ||
+        navigator.userAgent.includes('Base')
+      );
+
     // Load cached value immediately
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -91,7 +98,7 @@ export function useBondingProgress() {
     }
 
     fetchProgress();
-    const interval = setInterval(fetchProgress, 30000);
+    const interval = setInterval(fetchProgress, isBaseApp ? 120000 : 30000);
     return () => clearInterval(interval);
   }, []);
 

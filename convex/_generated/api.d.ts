@@ -27,6 +27,7 @@ import type * as cardSchema from "../cardSchema.js";
 import type * as cardValidation from "../cardValidation.js";
 import type * as cardVotes from "../cardVotes.js";
 import type * as castAuctions from "../castAuctions.js";
+import type * as cleanup from "../cleanup.js";
 import type * as coinAudit from "../coinAudit.js";
 import type * as coinsInbox from "../coinsInbox.js";
 import type * as crons from "../crons.js";
@@ -105,6 +106,7 @@ declare const fullApi: ApiFromModules<{
   cardValidation: typeof cardValidation;
   cardVotes: typeof cardVotes;
   castAuctions: typeof castAuctions;
+  cleanup: typeof cleanup;
   coinAudit: typeof coinAudit;
   coinsInbox: typeof coinsInbox;
   crons: typeof crons;

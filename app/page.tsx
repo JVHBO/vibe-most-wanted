@@ -17,6 +17,7 @@ import { AudioManager } from "@/lib/audio-manager";
 import { useFarcasterContext } from "@/hooks/fid/useFarcasterContext";
 import { toast } from "sonner";
 import { usePrimaryAddress } from "@/lib/hooks/usePrimaryAddress";
+import { isBaseAppWebView } from "@/lib/utils/miniapp";
 
 import { api } from "@/convex/_generated/api";
 import { CreateProfileModal } from "@/components/CreateProfileModal";
@@ -31,6 +32,8 @@ const MyCardsModal = dynamic(() => import("@/app/(game)/components/modals/MyCard
 
 export default function HomePage() {
   const { t, lang, setLang } = useLanguage();
+  const isBaseApp = isBaseAppWebView();
+  const allowHomeMotion = !isBaseApp;
   const { address } = useAccount();
   // Keep last known address — wagmi returns undefined during reconnecting in Base App
   const lastAddressRef = useRef<`0x${string}` | undefined>(undefined);
@@ -118,9 +121,9 @@ export default function HomePage() {
   ];
   const [rafflePrizeIdx, setRafflePrizeIdx] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setRafflePrizeIdx(i => (i + 1) % RAFFLE_PRIZE_IMGS.length), 2500);
+    const t = setInterval(() => setRafflePrizeIdx(i => (i + 1) % RAFFLE_PRIZE_IMGS.length), isBaseApp ? 4000 : 2500);
     return () => clearInterval(t);
-  }, []);
+  }, [isBaseApp]);
 
   const cardCount = nfts.length;
   const hasEnoughCards = cardCount >= 5;
@@ -323,15 +326,15 @@ export default function HomePage() {
           <>
           {/* PLAY NOW */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#4ade80', animation: 'pulseGlow 2s infinite' }} />
+            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#4ade80', animation: allowHomeMotion ? 'pulseGlow 2s infinite' : undefined }} />
             <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>{t('playNow')}</span>
           </div>
 
           {/* SPIN + SLOT row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
-          <Link href="/roulette" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #6D28D9, #9333EA)', border: 'none', animation: 'fadeInUp 0.3s ease', minHeight: 80, textDecoration: 'none', position: 'relative' }}>
+          <Link href="/roulette" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #6D28D9, #9333EA)', border: 'none', animation: allowHomeMotion ? 'fadeInUp 0.3s ease' : undefined, minHeight: 80, textDecoration: 'none', position: 'relative' }}>
             {/* Roulette wheel — full height, right side */}
-            <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translateY(-50%)', animation: 'spinCW 6s linear infinite', opacity: 0.2 }}>
+            <div style={{ position: 'absolute', right: -8, top: '50%', transform: 'translate3d(0, -50%, 0)', animation: isBaseApp ? 'spinCW 14s linear infinite' : 'spinCW 6s linear infinite', opacity: 0.2, willChange: 'transform' }}>
               <svg width="90" height="90" viewBox="0 0 110 110">
                 {/* Outer ring */}
                 <circle cx="55" cy="55" r="52" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2"/>
@@ -373,7 +376,9 @@ export default function HomePage() {
                 <circle cx="55" cy="55" r="4" fill="#FFD700"/>
                 {/* Bolinha na trilha — orbita independente da roda (counter-rotate) */}
                 <g>
-                  <animateTransform attributeName="transform" type="rotate" from="360 55 55" to="0 55 55" dur="1.6s" repeatCount="indefinite"/>
+                  {!isBaseApp && (
+                    <animateTransform attributeName="transform" type="rotate" from="360 55 55" to="0 55 55" dur="1.6s" repeatCount="indefinite"/>
+                  )}
                   <circle cx="55" cy="8" r="3.5" fill="white" opacity="0.95" filter="url(#ballGlow)"/>
                 </g>
                 <defs>
@@ -392,7 +397,7 @@ export default function HomePage() {
           </Link>
 
           {/* SLOT */}
-          <Link href="/slot" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #92400E, #D97706)', border: 'none', animation: 'fadeInUp 0.3s ease', minHeight: 80, textDecoration: 'none', position: 'relative' }}>
+          <Link href="/slot" style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #92400E, #D97706)', border: 'none', animation: allowHomeMotion ? 'fadeInUp 0.3s ease' : undefined, minHeight: 80, textDecoration: 'none', position: 'relative' }}>
               <SlotPreview />
             <div style={{ padding: '10px 14px', position: 'relative', zIndex: 1 }}>
               <div style={{ fontSize: 6.5, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('noCardsNeeded')}</div>
@@ -405,9 +410,9 @@ export default function HomePage() {
 
           {/* Baccarat + Arena row */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
-            <Link href="/baccarat" style={{ borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #064E3B, #059669)', border: 'none', animation: 'fadeInUp 0.35s ease', minHeight: 72, textDecoration: 'none', position: 'relative' }}>
+            <Link href="/baccarat" style={{ borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #064E3B, #059669)', border: 'none', animation: allowHomeMotion ? 'fadeInUp 0.35s ease' : undefined, minHeight: 72, textDecoration: 'none', position: 'relative' }}>
               {/* Chip grande — direita */}
-              <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', animation: 'chipFlip 2.4s ease-in-out infinite', transformOrigin: 'center' }}>
+              <div style={{ position: 'absolute', right: -10, top: '50%', transform: 'translate3d(0, -50%, 0)', animation: isBaseApp ? undefined : 'chipFlip 2.4s ease-in-out infinite', transformOrigin: 'center', willChange: isBaseApp ? undefined : 'transform' }}>
                 <svg width="80" height="80" viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r="38" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.15)" strokeWidth="2"/>
                   {Array.from({ length: 12 }).map((_, i) => { const a=(i*30*Math.PI)/180; return <line key={i} x1={40+32*Math.cos(a)} y1={40+32*Math.sin(a)} x2={40+38*Math.cos(a)} y2={40+38*Math.sin(a)} stroke="rgba(255,255,255,0.2)" strokeWidth="4" strokeLinecap="round"/>; })}
@@ -418,7 +423,7 @@ export default function HomePage() {
                 </svg>
               </div>
               {/* Chip pequeno — esquerda alta */}
-              <div style={{ position: 'absolute', left: 6, top: 4, animation: 'chipFlip 3.1s ease-in-out infinite 0.8s', transformOrigin: 'center' }}>
+              <div style={{ position: 'absolute', left: 6, top: 4, animation: isBaseApp ? undefined : 'chipFlip 3.1s ease-in-out infinite 0.8s', transformOrigin: 'center', willChange: isBaseApp ? undefined : 'transform' }}>
                 <svg width="30" height="30" viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r="38" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.12)" strokeWidth="2"/>
                   {Array.from({ length: 12 }).map((_, i) => { const a=(i*30*Math.PI)/180; return <line key={i} x1={40+32*Math.cos(a)} y1={40+32*Math.sin(a)} x2={40+38*Math.cos(a)} y2={40+38*Math.sin(a)} stroke="rgba(255,255,255,0.15)" strokeWidth="4" strokeLinecap="round"/>; })}
@@ -427,7 +432,7 @@ export default function HomePage() {
                 </svg>
               </div>
               {/* Chip pequeno — esquerda baixa */}
-              <div style={{ position: 'absolute', left: 14, bottom: 4, animation: 'chipFlip 2.8s ease-in-out infinite 0.4s', transformOrigin: 'center' }}>
+              <div style={{ position: 'absolute', left: 14, bottom: 4, animation: isBaseApp ? undefined : 'chipFlip 2.8s ease-in-out infinite 0.4s', transformOrigin: 'center', willChange: isBaseApp ? undefined : 'transform' }}>
                 <svg width="22" height="22" viewBox="0 0 80 80">
                   <circle cx="40" cy="40" r="38" fill="rgba(255,255,255,0.05)" stroke="rgba(255,255,255,0.12)" strokeWidth="2"/>
                   {Array.from({ length: 8 }).map((_, i) => { const a=(i*45*Math.PI)/180; return <line key={i} x1={40+32*Math.cos(a)} y1={40+32*Math.sin(a)} x2={40+38*Math.cos(a)} y2={40+38*Math.sin(a)} stroke="rgba(255,255,255,0.15)" strokeWidth="5" strokeLinecap="round"/>; })}
@@ -440,9 +445,9 @@ export default function HomePage() {
               </div>
             </Link>
 
-            <div onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowCpuArena(true); }} style={{ borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #1E3A8A, #2563EB)', border: 'none', animation: 'fadeInUp 0.4s ease', minHeight: 72, cursor: 'pointer', position: 'relative' }}>
+            <div onClick={() => { if (soundEnabled) AudioManager.buttonClick(); setShowCpuArena(true); }} style={{ borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #1E3A8A, #2563EB)', border: 'none', animation: allowHomeMotion ? 'fadeInUp 0.4s ease' : undefined, minHeight: 72, cursor: 'pointer', position: 'relative' }}>
               {/* Card SVG — esquerda */}
-              <div style={{ position: 'absolute', left: 6, top: '50%', transform: 'translateY(-50%)', opacity: 0.28, animation: 'pushLeft 3s ease-in-out infinite' }}>
+              <div style={{ position: 'absolute', left: 6, top: '50%', transform: 'translate3d(0, -50%, 0)', opacity: 0.28, animation: isBaseApp ? undefined : 'pushLeft 3s ease-in-out infinite', willChange: isBaseApp ? undefined : 'transform' }}>
                 <svg width="32" height="44" viewBox="0 0 32 44">
                   <rect x="0.5" y="0.5" width="31" height="43" rx="4" fill="rgba(96,165,250,0.12)" stroke="#60a5fa" strokeWidth="1.2"/>
                   <text x="16" y="16" textAnchor="middle" fontSize="10" fontWeight="900" fill="#60a5fa">VF</text>
@@ -452,7 +457,7 @@ export default function HomePage() {
                 </svg>
               </div>
               {/* Card SVG — direita */}
-              <div style={{ position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)', opacity: 0.28, animation: 'pushRight 3s ease-in-out infinite' }}>
+              <div style={{ position: 'absolute', right: 6, top: '50%', transform: 'translate3d(0, -50%, 0)', opacity: 0.28, animation: isBaseApp ? undefined : 'pushRight 3s ease-in-out infinite', willChange: isBaseApp ? undefined : 'transform' }}>
                 <svg width="32" height="44" viewBox="0 0 32 44">
                   <rect x="0.5" y="0.5" width="31" height="43" rx="4" fill="rgba(167,139,250,0.12)" stroke="#a78bfa" strokeWidth="1.2"/>
                   <text x="16" y="16" textAnchor="middle" fontSize="10" fontWeight="900" fill="#a78bfa">VM</text>
@@ -462,9 +467,9 @@ export default function HomePage() {
                 </svg>
               </div>
               {/* Beam L→R */}
-              <div style={{ position: 'absolute', top: '50%', height: 1.5, background: 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,215,0,0.6))', borderRadius: 2, animation: 'beamLR 3s ease-in-out infinite', marginTop: -0.75 }} />
+              <div style={{ position: 'absolute', top: '50%', height: 1.5, background: 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,215,0,0.6))', borderRadius: 2, animation: allowHomeMotion ? 'beamLR 3s ease-in-out infinite' : undefined, marginTop: -0.75 }} />
               {/* Beam R→L */}
-              <div style={{ position: 'absolute', top: '50%', height: 1.5, background: 'linear-gradient(to left, rgba(255,255,255,0.9), rgba(255,215,0,0.6))', borderRadius: 2, animation: 'beamRL 3s ease-in-out infinite', marginTop: -0.75 }} />
+              <div style={{ position: 'absolute', top: '50%', height: 1.5, background: 'linear-gradient(to left, rgba(255,255,255,0.9), rgba(255,215,0,0.6))', borderRadius: 2, animation: allowHomeMotion ? 'beamRL 3s ease-in-out infinite' : undefined, marginTop: -0.75 }} />
               <div style={{ padding: '10px 14px', position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', zIndex: 1 }}>
                 <div style={{ fontSize: 6.5, fontWeight: 600, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('noCardsNeeded')}</div>
                 <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', lineHeight: 1, marginTop: 2 }}>ARENA</div>
@@ -475,7 +480,7 @@ export default function HomePage() {
           {/* NEED CARDS */}
           <div style={{ marginTop: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}>
-              <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#555', animation: 'lockPulse 2s infinite' }} />
+              <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#555', animation: allowHomeMotion ? 'lockPulse 2s infinite' : undefined }} />
               <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>{t('homeNeedCards')}</span>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
@@ -483,7 +488,7 @@ export default function HomePage() {
                 const raidStyle = {
                   borderRadius: 10, overflow: 'hidden',
                   background: hasEnoughCards ? 'linear-gradient(135deg, #1F2937, #7F1D1D)' : '#1F2937',
-                  animation: 'fadeInUp 0.45s ease', minHeight: 72,
+                  animation: allowHomeMotion ? 'fadeInUp 0.45s ease' : undefined, minHeight: 72,
                   opacity: hasEnoughCards ? 1 : 0.4,
                   border: 'none',
                   cursor: hasEnoughCards ? 'pointer' : 'not-allowed',
@@ -492,7 +497,7 @@ export default function HomePage() {
                   borderRadius: 10, overflow: 'hidden',
                   background: hasEnoughCards ? 'linear-gradient(135deg, #3B1F00, #D97706)' : '#1F2937',
                   border: 'none',
-                  animation: 'fadeInUp 0.5s ease', minHeight: 72,
+                  animation: allowHomeMotion ? 'fadeInUp 0.5s ease' : undefined, minHeight: 72,
                   opacity: hasEnoughCards ? 1 : 0.4,
                   cursor: hasEnoughCards ? 'pointer' : 'not-allowed',
                 };
@@ -503,7 +508,7 @@ export default function HomePage() {
                       {hasEnoughCards && (
                         <div style={{ position: 'absolute', inset: 0, opacity: 0.22 }}>
                           <svg width="100%" height="100%" viewBox="0 0 70 60" preserveAspectRatio="xMidYMid meet">
-                            <g style={{ animation: 'bossDestroy 6s ease-in-out infinite' }}>
+                            <g style={{ animation: allowHomeMotion ? 'bossDestroy 6s ease-in-out infinite' : undefined }}>
                               <circle cx="52" cy="30" r="14" fill="none" stroke="#ef4444" strokeWidth="1"/>
                               <polygon points="44,18 41,11 47,17" fill="#ef4444"/>
                               <polygon points="60,18 63,11 57,17" fill="#ef4444"/>
@@ -514,12 +519,12 @@ export default function HomePage() {
                             <circle cx="8" cy="8"  r="4" fill="none" stroke="#ef4444" strokeWidth="1"/>
                             <circle cx="5" cy="28" r="3" fill="none" stroke="#ef4444" strokeWidth="1"/>
                             <circle cx="8" cy="48" r="4" fill="none" stroke="#ef4444" strokeWidth="1"/>
-                            <line x1="12" y1="8"  x2="37" y2="20" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation:'shot1 6s ease-in-out infinite' }}/>
-                            <line x1="8"  y1="28" x2="37" y2="28" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation:'shot2 6s ease-in-out infinite' }}/>
-                            <line x1="12" y1="48" x2="37" y2="36" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation:'shot3 6s ease-in-out infinite' }}/>
-                            <line x1="12" y1="8"  x2="37" y2="20" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation:'shotAll 6s ease-in-out infinite' }}/>
-                            <line x1="8"  y1="28" x2="37" y2="28" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation:'shotAll 6s ease-in-out infinite' }}/>
-                            <line x1="12" y1="48" x2="37" y2="36" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation:'shotAll 6s ease-in-out infinite' }}/>
+                            <line x1="12" y1="8"  x2="37" y2="20" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation: allowHomeMotion ? 'shot1 6s ease-in-out infinite' : undefined }}/>
+                            <line x1="8"  y1="28" x2="37" y2="28" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation: allowHomeMotion ? 'shot2 6s ease-in-out infinite' : undefined }}/>
+                            <line x1="12" y1="48" x2="37" y2="36" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round" style={{ opacity:0, animation: allowHomeMotion ? 'shot3 6s ease-in-out infinite' : undefined }}/>
+                            <line x1="12" y1="8"  x2="37" y2="20" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation: allowHomeMotion ? 'shotAll 6s ease-in-out infinite' : undefined }}/>
+                            <line x1="8"  y1="28" x2="37" y2="28" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation: allowHomeMotion ? 'shotAll 6s ease-in-out infinite' : undefined }}/>
+                            <line x1="12" y1="48" x2="37" y2="36" stroke="#ff9999" strokeWidth="2.5" strokeLinecap="round" style={{ opacity:0, animation: allowHomeMotion ? 'shotAll 6s ease-in-out infinite' : undefined }}/>
                           </svg>
                         </div>
                       )}
@@ -532,24 +537,24 @@ export default function HomePage() {
                     <div style={{ padding: '10px 6px', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', pointerEvents: hasEnoughCards ? 'auto' : 'none' }}>
                       {hasEnoughCards && (
                         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', padding: '4px 10px 6px', overflow: 'hidden' }}>
-                          <div style={{ animation: 'lbCard1 5s ease-in-out infinite', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                            <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: 'rank1on1 5s ease-in-out infinite', opacity: 0 }}>#1</span>
+                          <div style={{ animation: allowHomeMotion ? 'lbCard1 5s ease-in-out infinite' : undefined, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                            <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: allowHomeMotion ? 'rank1on1 5s ease-in-out infinite' : undefined, opacity: allowHomeMotion ? 0 : 1 }}>#1</span>
                             <svg width="28" height="38" viewBox="0 0 28 38" opacity="0.25">
                               <rect x="0" y="0" width="28" height="38" rx="3" fill="rgba(255,215,0,0.12)" stroke="#fbbf24" strokeWidth="1.2"/>
                               <line x1="4" y1="10" x2="24" y2="10" stroke="#fbbf24" strokeWidth="1"/>
                               <line x1="4" y1="15" x2="17" y2="15" stroke="#fbbf24" strokeWidth="1"/>
                             </svg>
                           </div>
-                          <div style={{ animation: 'lbCard2 5s ease-in-out infinite', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                            <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: 'rank1on2 5s ease-in-out infinite', opacity: 0 }}>#1</span>
+                          <div style={{ animation: allowHomeMotion ? 'lbCard2 5s ease-in-out infinite' : undefined, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                            <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: allowHomeMotion ? 'rank1on2 5s ease-in-out infinite' : undefined, opacity: allowHomeMotion ? 0 : 1 }}>#1</span>
                             <svg width="28" height="38" viewBox="0 0 28 38" opacity="0.25">
                               <rect x="0" y="0" width="28" height="38" rx="3" fill="rgba(255,215,0,0.12)" stroke="#fbbf24" strokeWidth="1.2"/>
                               <line x1="4" y1="10" x2="24" y2="10" stroke="#fbbf24" strokeWidth="1"/>
                               <line x1="4" y1="15" x2="17" y2="15" stroke="#fbbf24" strokeWidth="1"/>
                             </svg>
                           </div>
-                          <div style={{ animation: 'lbCard3 5s ease-in-out infinite', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                            <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: 'rank1on3 5s ease-in-out infinite', opacity: 0 }}>#1</span>
+                          <div style={{ animation: allowHomeMotion ? 'lbCard3 5s ease-in-out infinite' : undefined, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                            <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,215,0,0.55)', animation: allowHomeMotion ? 'rank1on3 5s ease-in-out infinite' : undefined, opacity: allowHomeMotion ? 0 : 1 }}>#1</span>
                             <svg width="28" height="38" viewBox="0 0 28 38" opacity="0.25">
                               <rect x="0" y="0" width="28" height="38" rx="3" fill="rgba(255,215,0,0.12)" stroke="#fbbf24" strokeWidth="1.2"/>
                               <line x1="4" y1="10" x2="24" y2="10" stroke="#fbbf24" strokeWidth="1"/>
@@ -570,13 +575,13 @@ export default function HomePage() {
           </div>
 
           {/* YOUR CARDS */}
-          <div onClick={() => setShowMyCardsModal(true)} style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: '#1F2937', border: '1px solid #374151', animation: 'fadeInUp 0.4s ease', minHeight: 56, cursor: 'pointer', position: 'relative' }}>
+          <div onClick={() => setShowMyCardsModal(true)} style={{ display: 'block', borderRadius: 10, overflow: 'hidden', background: '#1F2937', border: '1px solid #374151', animation: allowHomeMotion ? 'fadeInUp 0.4s ease' : undefined, minHeight: 56, cursor: 'pointer', position: 'relative' }}>
             {/* Card images background — só a cabeça, descendo */}
             {nfts.slice(0, 5).map((card, i) => {
               const anims = ['cardDown1 3.2s','cardDown2 3.8s','cardDown3 3.5s','cardDown1 4s','cardDown2 4.3s'];
               const lefts = ['8%','26%','44%','62%','78%'];
               return card.imageUrl ? (
-                <img key={i} src={card.imageUrl} alt="" style={{ position: 'absolute', left: lefts[i], top: 0, height: 74, width: 'auto', objectFit: 'cover', objectPosition: 'top', opacity: 0.14, animation: `${anims[i]} ease-in-out infinite`, borderRadius: 3, pointerEvents: 'none' }} />
+                <img key={i} src={card.imageUrl} alt="" loading="lazy" decoding="async" fetchPriority="low" style={{ position: 'absolute', left: lefts[i], top: 0, height: 74, width: 'auto', objectFit: 'cover', objectPosition: 'top', opacity: 0.14, animation: allowHomeMotion ? `${anims[i]} ease-in-out infinite` : undefined, borderRadius: 3, pointerEvents: 'none' }} />
               ) : null;
             })}
             <div style={{ padding: '10px 14px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 1 }}>
@@ -584,9 +589,9 @@ export default function HomePage() {
                 <span style={{ fontSize: 7, fontWeight: 600, color: 'rgba(156,163,175,0.5)', textTransform: 'uppercase', letterSpacing: 1.5 }}>{t('yourCards')}</span>
                 {cardsLoading ? (
                   <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FACC15', animation: 'dotPulse 1.2s ease-in-out infinite 0s' }} />
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FACC15', animation: 'dotPulse 1.2s ease-in-out infinite 0.2s' }} />
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FACC15', animation: 'dotPulse 1.2s ease-in-out infinite 0.4s' }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FACC15', animation: allowHomeMotion ? 'dotPulse 1.2s ease-in-out infinite 0s' : undefined }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FACC15', animation: allowHomeMotion ? 'dotPulse 1.2s ease-in-out infinite 0.2s' : undefined }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#FACC15', animation: allowHomeMotion ? 'dotPulse 1.2s ease-in-out infinite 0.4s' : undefined }} />
                   </div>
                 ) : (
                   <span style={{ fontSize: 20, fontWeight: 900, color: '#FACC15', lineHeight: 1 }}>{cardCount}</span>
@@ -598,17 +603,17 @@ export default function HomePage() {
 
           {/* RAFFLE CATEGORY */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 16 }}>
-            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#FFD700', animation: 'pulseGlow 2s infinite' }} />
+            <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#FFD700', animation: allowHomeMotion ? 'pulseGlow 2s infinite' : undefined }} />
             <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: 1 }}>Raffle</span>
           </div>
 
           {/* RAFFLE */}
-          <Link href="/raffle" style={{ borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #FACC15, #B45309)', animation: 'fadeInUp 0.5s ease', minHeight: 50, textDecoration: 'none', position: 'relative' }}>
+          <Link href="/raffle" style={{ borderRadius: 10, overflow: 'hidden', background: 'linear-gradient(135deg, #FACC15, #B45309)', animation: allowHomeMotion ? 'fadeInUp 0.5s ease' : undefined, minHeight: 50, textDecoration: 'none', position: 'relative' }}>
             {/* Background ticker - pure decoration */}
             <div style={{ position: 'absolute', right: 3, top: 0, bottom: 0, width: 140, overflow: 'hidden', opacity: 0.30, zIndex: 0 }}>
 
-              <div style={{ animation: 'tickerScroll 18s linear infinite', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {((raffleEntries || []) as any[]).map((e) => {
+              <div style={{ animation: allowHomeMotion ? 'tickerScroll 18s linear infinite' : undefined, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {((allowHomeMotion ? raffleEntries : ((raffleEntries || []) as any[]).slice(0, 6)) || [] as any[]).map((e) => {
                   const u = e.username || e.address.slice(0, 6);
                   const c = e.chain === 'base' ? 'BASE' : 'ARB';
                   return (
@@ -623,7 +628,7 @@ export default function HomePage() {
               {/* Image */}
               <div style={{ flex: 'none', width: 54, height: 72, borderRadius: 6, overflow: 'hidden', background: '#111', flexShrink: 0, zIndex: 1, position: 'relative' }}>
                 {RAFFLE_PRIZE_IMGS.map((src, i) => (
-                  <img key={src} src={src} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', transition: 'opacity 0.5s ease', opacity: i === rafflePrizeIdx ? 1 : 0 }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
+                  <img key={src} src={src} alt="" loading="lazy" decoding="async" fetchPriority="low" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', transition: allowHomeMotion ? 'opacity 0.5s ease' : undefined, opacity: i === rafflePrizeIdx ? 1 : 0 }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
                 ))}
               </div>
               {/* Prize info */}
@@ -743,7 +748,7 @@ export default function HomePage() {
             <div key={label} onClick={onClick}
               style={{ flex: 1, position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, cursor: 'pointer', color: '#FACC15', padding: '4px 2px' }}
             >
-              {hasDot && <span style={{ position: 'absolute', top: 4, right: '12%', width: 7, height: 7, borderRadius: '50%', background: '#ef4444', animation: 'redDot 1.2s ease-in-out infinite', zIndex: 10, border: '1px solid #fff' }} />}
+              {hasDot && <span style={{ position: 'absolute', top: 4, right: '12%', width: 7, height: 7, borderRadius: '50%', background: '#ef4444', animation: allowHomeMotion ? 'redDot 1.2s ease-in-out infinite' : undefined, zIndex: 10, border: '1px solid #fff' }} />}
               <span style={{ fontSize: 8, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</span>
               {icon}
             </div>
