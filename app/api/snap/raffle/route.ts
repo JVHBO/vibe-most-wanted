@@ -658,11 +658,6 @@ export async function GET(request: NextRequest) {
   const page = Math.max(0, Math.min(9, parseInt(searchParams.get("page") ?? "0")));
   const lang = getLang(searchParams.get("lang"));
 
-  const accept = request.headers.get("accept") ?? "";
-  if (!accept.includes("application/vnd.farcaster.snap")) {
-    return NextResponse.redirect(APP_URL + "/raffle");
-  }
-
   let snap: object;
   if (view === "lang") {
     snap = buildLangView();
