@@ -613,7 +613,7 @@ export default function HomePage() {
             <div style={{ position: 'absolute', right: 3, top: 0, bottom: 0, width: 140, overflow: 'hidden', opacity: 0.30, zIndex: 0 }}>
 
               <div style={{ animation: allowHomeMotion ? 'tickerScroll 18s linear infinite' : undefined, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {((allowHomeMotion ? raffleEntries : ((raffleEntries || []) as any[]).slice(0, 6)) || [] as any[]).map((e) => {
+                {((allowHomeMotion ? raffleEntries : ((raffleEntries || []) as any[]).slice(0, 6)) || [] as any[]).map((e: any) => {
                   const u = e.username || e.address.slice(0, 6);
                   const c = e.chain === 'base' ? 'BASE' : 'ARB';
                   return (
