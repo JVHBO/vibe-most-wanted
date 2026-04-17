@@ -9,7 +9,8 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation, internalAction, internalQuery } from "./_generated/server";
+import { internal } from "./_generated/api";
 import {
   resolveSlotSpin,
   type SlotBonusState,
@@ -425,7 +426,7 @@ export const getSlotHistory = query({
 });
 
 /**
- * Deposit VBMS tokens to get coins (1 VBMS = 10 coins)
+ * Deposit VBMS tokens to get coins (1 VBMS = 1 coin)
  */
 export const depositVBMS = mutation({
   args: { address: v.string(), amount: v.number() },
@@ -436,11 +437,22 @@ export const depositVBMS = mutation({
     }
 
     const currentCoins = profile.coins || 0;
-    const coinAmount = amount * 10;
+    const coinAmount = amount; // 1:1
 
     await ctx.db.patch(profile._id, {
       coins: currentCoins + coinAmount,
       lifetimeEarned: (profile.lifetimeEarned || 0) + coinAmount,
+    });
+
+    await ctx.db.insert("coinTransactions", {
+      address,
+      type: "earn",
+      amount: coinAmount,
+      source: "vbms_deposit",
+      description: `Depositou ${amount} VBMS → ${coinAmount} coins`,
+      balanceBefore: currentCoins,
+      balanceAfter: currentCoins + coinAmount,
+      timestamp: Date.now(),
     });
 
     return {
@@ -474,11 +486,238 @@ export const withdrawVBMS = mutation({
       lifetimeSpent: (profile.lifetimeSpent || 0) + coinCost,
     });
 
+    await ctx.db.insert("coinTransactions", {
+      address,
+      type: "convert",
+      amount: coinCost,
+      source: "vbms_withdraw",
+      description: `Sacou ${amount} VBMS (${coinCost} coins)`,
+      balanceBefore: currentCoins,
+      balanceAfter: currentCoins - coinCost,
+      timestamp: Date.now(),
+    });
+
     return {
       success: true,
       vbmsMinted: amount,
       newBalance: currentCoins - coinCost,
     };
+  },
+});
+
+// ─── SlotCoinShop Event Polling ────────────────────────────────────────────
+
+const SLOT_SHOP_BASE = "0x9d7e843f2c096434747b453381105f85d1cf2e9e";
+const SLOT_SHOP_ARB  = "0x3736a48bd8ce9bee0602052b48254fc44ffc0daa";
+const BASE_RPC = "https://mainnet.base.org";
+const ARB_RPC  = "https://arb1.arbitrum.io/rpc";
+const MAX_LOOKBACK_BASE = 3600;  // ~2h on Base @2s/block
+const MAX_LOOKBACK_ARB  = 30000; // ~2h on ARB @0.25s/block
+
+// CoinsPurchased(address indexed buyer, uint256 coinAmount, uint256 amountPaid, address indexed token)
+const COINS_PURCHASED_TOPIC = "0x5842507407eb471873bd7ff006130a225e67e34dbb1249d9f15f80d797da0238";
+
+/**
+ * Internal mutation: credit coins for a SlotCoinShop purchase (idempotent via txHash)
+ */
+export const creditSlotPurchase = internalMutation({
+  args: {
+    buyer:      v.string(),
+    coinAmount: v.number(),
+    txHash:     v.string(),
+    chain:      v.string(), // "base" | "arb"
+    token:      v.string(), // "ETH" | "USDC" | "USDN"
+    amountPaid: v.string(), // hex string of wei/units paid
+  },
+  handler: async (ctx, args) => {
+    // Idempotency: skip if already processed
+    const existing = await ctx.db
+      .query("coinTransactions")
+      .withIndex("by_txHash", q => q.eq("txHash", args.txHash))
+      .first();
+    if (existing) return { alreadyProcessed: true };
+
+    const profile = await ctx.db
+      .query("profiles")
+      .withIndex("by_address", q => q.eq("address", args.buyer))
+      .first();
+    if (!profile) {
+      console.warn(`[slotShop] No profile for buyer ${args.buyer}`);
+      return { noProfile: true };
+    }
+
+    const currentCoins = profile.coins || 0;
+    const newCoins = currentCoins + args.coinAmount;
+
+    await ctx.db.patch(profile._id, {
+      coins: newCoins,
+      lifetimeEarned: (profile.lifetimeEarned || 0) + args.coinAmount,
+    });
+
+    const chainLabel = args.chain === "base" ? "Base" : "ARB";
+    await ctx.db.insert("coinTransactions", {
+      address:      args.buyer,
+      type:         "earn",
+      amount:       args.coinAmount,
+      source:       "slot_shop",
+      description:  `Comprou ${args.coinAmount.toLocaleString()} coins com ${args.token} (${chainLabel})`,
+      balanceBefore: currentCoins,
+      balanceAfter:  newCoins,
+      timestamp:    Date.now(),
+      txHash:       args.txHash,
+    });
+
+    console.log(`[slotShop] Credited ${args.coinAmount} coins to ${args.buyer} (${args.chain} tx=${args.txHash})`);
+    return { success: true, coinsAdded: args.coinAmount };
+  },
+});
+
+/**
+ * Internal mutation: save poller checkpoint
+ */
+export const saveSlotPollerState = internalMutation({
+  args: { lastBaseBlock: v.optional(v.number()), lastArbBlock: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db.query("slotShopPollerState").first();
+    if (existing) {
+      const patch: Record<string, number> = {};
+      if (args.lastBaseBlock !== undefined) patch.lastBaseBlock = args.lastBaseBlock;
+      if (args.lastArbBlock  !== undefined) patch.lastArbBlock  = args.lastArbBlock;
+      await ctx.db.patch(existing._id, patch);
+    } else {
+      await ctx.db.insert("slotShopPollerState", {
+        lastBaseBlock: args.lastBaseBlock,
+        lastArbBlock:  args.lastArbBlock,
+      });
+    }
+  },
+});
+
+/**
+ * Internal action: polls Base for CoinsPurchased events
+ */
+export const pollSlotShopBase = internalAction({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    try {
+      const state = await ctx.runQuery(internal.slot.getSlotPollerStateQuery, {});
+      const savedBlock: number | undefined = (state as any)?.lastBaseBlock;
+
+      const blockResp = await fetch(BASE_RPC, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_blockNumber", params: [] }),
+      });
+      const { result: latestHex } = await blockResp.json() as any;
+      const latest = parseInt(latestHex, 16);
+
+      const fromBlockNum = savedBlock
+        ? Math.max(savedBlock + 1, latest - MAX_LOOKBACK_BASE)
+        : latest - MAX_LOOKBACK_BASE;
+      if (fromBlockNum > latest) return;
+
+      const fromBlock = "0x" + fromBlockNum.toString(16);
+
+      const logsResp = await fetch(BASE_RPC, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0", id: 2,
+          method: "eth_getLogs",
+          params: [{ address: SLOT_SHOP_BASE, topics: [COINS_PURCHASED_TOPIC], fromBlock, toBlock: latestHex }],
+        }),
+      });
+      const { result: logs } = await logsResp.json() as any;
+
+      if (Array.isArray(logs)) {
+        for (const log of logs) {
+          const txHash = log.transactionHash as string;
+          if (!txHash) continue;
+          // topics[1]=buyer (indexed), topics[2]=token (indexed)
+          // data = coinAmount (uint256) + amountPaid (uint256)
+          const buyer = ("0x" + (log.topics[1] as string).slice(26)).toLowerCase();
+          const tokenAddr = ("0x" + (log.topics[2] as string).slice(26)).toLowerCase();
+          const data = (log.data as string).startsWith("0x") ? (log.data as string).slice(2) : (log.data as string);
+          const coinAmount = parseInt(data.slice(0, 64), 16);
+          const amountPaid = data.slice(64, 128);
+          const token = tokenAddr === "0x0000000000000000000000000000000000000000" ? "ETH" : "USDC";
+          if (!buyer || !coinAmount) continue;
+          await ctx.runMutation(internal.slot.creditSlotPurchase, { buyer, coinAmount, txHash, chain: "base", token, amountPaid });
+        }
+      }
+
+      await ctx.runMutation(internal.slot.saveSlotPollerState, { lastBaseBlock: latest });
+    } catch (e) {
+      console.error("[slotShop/pollBase] Error:", e);
+    }
+  },
+});
+
+/**
+ * Internal action: polls ARB for CoinsPurchased events
+ */
+export const pollSlotShopArb = internalAction({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    try {
+      const state = await ctx.runQuery(internal.slot.getSlotPollerStateQuery, {});
+      const savedBlock: number | undefined = (state as any)?.lastArbBlock;
+
+      const blockResp = await fetch(ARB_RPC, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_blockNumber", params: [] }),
+      });
+      const { result: latestHex } = await blockResp.json() as any;
+      const latest = parseInt(latestHex, 16);
+
+      const fromBlockNum = savedBlock
+        ? Math.max(savedBlock + 1, latest - MAX_LOOKBACK_ARB)
+        : latest - MAX_LOOKBACK_ARB;
+      if (fromBlockNum > latest) return;
+
+      const fromBlock = "0x" + fromBlockNum.toString(16);
+
+      const logsResp = await fetch(ARB_RPC, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jsonrpc: "2.0", id: 2,
+          method: "eth_getLogs",
+          params: [{ address: SLOT_SHOP_ARB, topics: [COINS_PURCHASED_TOPIC], fromBlock, toBlock: latestHex }],
+        }),
+      });
+      const { result: logs } = await logsResp.json() as any;
+
+      if (Array.isArray(logs)) {
+        for (const log of logs) {
+          const txHash = log.transactionHash as string;
+          if (!txHash) continue;
+          const buyer = ("0x" + (log.topics[1] as string).slice(26)).toLowerCase();
+          const tokenAddr = ("0x" + (log.topics[2] as string).slice(26)).toLowerCase();
+          const data = (log.data as string).startsWith("0x") ? (log.data as string).slice(2) : (log.data as string);
+          const coinAmount = parseInt(data.slice(0, 64), 16);
+          const amountPaid = data.slice(64, 128);
+          const token = tokenAddr === "0x0000000000000000000000000000000000000000" ? "ETH" : "USDN";
+          if (!buyer || !coinAmount) continue;
+          await ctx.runMutation(internal.slot.creditSlotPurchase, { buyer, coinAmount, txHash, chain: "arb", token, amountPaid });
+        }
+      }
+
+      await ctx.runMutation(internal.slot.saveSlotPollerState, { lastArbBlock: latest });
+    } catch (e) {
+      console.error("[slotShop/pollArb] Error:", e);
+    }
+  },
+});
+
+/**
+ * Internal query: get poller state
+ */
+export const getSlotPollerStateQuery = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("slotShopPollerState").first();
   },
 });
 

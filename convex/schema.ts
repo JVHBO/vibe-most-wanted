@@ -2308,4 +2308,10 @@ export default defineSchema({
     prizeTier:      v.optional(v.number()),   // number of winners (1, 2, or 3)
   })
     .index("by_epoch", ["epoch"]),
+
+  // SlotCoinShop poller state — checkpoint blocks for Base + ARB
+  slotShopPollerState: defineTable({
+    lastBaseBlock: v.optional(v.number()),
+    lastArbBlock:  v.optional(v.number()),
+  }),
 });

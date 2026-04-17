@@ -22,6 +22,22 @@ crons.interval(
 );
 
 // ============================================================
+// SLOT SHOP POLLING
+// ============================================================
+
+crons.interval(
+  "poll-slot-shop-base",
+  { minutes: 2 },
+  internal.slot.pollSlotShopBase,
+);
+
+crons.interval(
+  "poll-slot-shop-arb",
+  { minutes: 2 },
+  internal.slot.pollSlotShopArb,
+);
+
+// ============================================================
 // DAILY NOTIFICATION — Farcaster (Hypersnap) + Base App
 // ============================================================
 // 15:00 UTC = 12:00 horário Brasil
