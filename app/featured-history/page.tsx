@@ -181,17 +181,14 @@ export default function FeaturedHistoryPage() {
     <div className="h-screen flex flex-col bg-vintage-deep-black overflow-hidden">
       {/* Header */}
       <div className="flex-shrink-0 border-b-2 border-vintage-gold/30" style={{ background: "#1A1A1A", zIndex: 50 }}>
-        <div className="max-w-2xl mx-auto px-3 py-2.5 flex items-center justify-between">
+        <div className="max-w-2xl mx-auto px-3 py-2.5 relative flex items-center justify-between">
           <Link
             href="/"
-            className="px-3 py-1.5 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-bold uppercase tracking-wider transition-colors rounded-md"
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10"
           >
             ← BACK
           </Link>
-          <div className="text-center">
-            <h1 className="text-vintage-gold font-bold text-base tracking-wider leading-tight">Hall of Fame</h1>
-            <p className="text-vintage-gold/50 text-[10px] tracking-widest uppercase">Wanted Casts</p>
-          </div>
+          <h1 className="absolute left-1/2 -translate-x-1/2 font-display font-black text-[#FFD700] text-base uppercase tracking-widest pointer-events-none">Hall of Fame</h1>
           <div className="w-16" />
         </div>
       </div>

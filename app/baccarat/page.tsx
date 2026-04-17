@@ -817,16 +817,15 @@ export default function BaccaratPage() {
     <div className="min-h-screen bg-gradient-to-b from-vintage-charcoal via-vintage-deep-black to-vintage-black flex flex-col">
       {/* Header */}
       <div className="bacc-header border-b-4 border-black px-4 py-2 bg-[#1a1a1a]">
-        <div className="max-w-lg mx-auto flex items-center justify-between">
+        <div className="max-w-lg mx-auto relative flex items-center justify-between">
           <Link
             href="/"
-            className="px-2 py-1 text-red-500 hover:text-red-400 border-2 border-black text-[11px] font-black uppercase tracking-widest active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#000] transition-all"
-            style={{ boxShadow: '2px 2px 0px #000' }}
+            className="px-2 py-1 bg-[#CC2222] hover:bg-[#AA1111] text-white text-[11px] font-black uppercase tracking-widest transition-all z-10"
           >
             {t('baccaratBack')}
           </Link>
-          <h1 className="text-2xl font-display font-bold text-vintage-gold tracking-wider overflow-hidden max-w-[50%]">
-            <AutoFitText>{t('baccaratTitle')}</AutoFitText>
+          <h1 className="absolute left-1/2 -translate-x-1/2 font-display font-black text-[#FFD700] text-base uppercase tracking-widest pointer-events-none">
+            {t('baccaratTitle') as string}
           </h1>
           <div className="flex items-center gap-2">
             <button
