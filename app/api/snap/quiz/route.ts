@@ -463,7 +463,7 @@ function viewQ1(score: number, lang: Lang) {
       root:     { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["prog", "bar", "img", "question", "sub", "btn_a", "btn_b"] },
       prog:     { type: "text", props: { content: s.qof(1, TOTAL_STEPS), size: "xs", color: "muted", align: "center" } },
       bar:      { type: "text", props: { content: dotBar(1, TOTAL_STEPS), size: "sm", align: "center" } },
-      img:      { type: "image", props: { url: IMG_Q1, aspect: "16:9", alt: "Quiz intro image" } },
+      img:      { type: "image", props: { url: IMG_Q1, aspect: "1:1", alt: "Quiz intro image" } },
       question: { type: "text", props: { content: q.q, weight: "bold", size: "md", align: "center" } },
       sub:      { type: "text", props: { content: q.sub, size: "xs", color: "muted", align: "center" } },
       btn_a:    { type: "button", props: { label: q.a, variant: "primary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=qn&s=${score + q.scoreA}&lang=${lang}` } } } },
@@ -481,7 +481,7 @@ function viewQNeynar(score: number, lang: Lang) {
     elements: {
       root:     { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["meta", "img", "question", "sub", "btn_a", "btn_b"] },
       meta:     { type: "text", props: { content: `${s.qof(2, TOTAL_STEPS)}\n${dotBar(2, TOTAL_STEPS)}`, size: "xs", color: "muted", align: "center" } },
-      img:      { type: "image", props: { url: IMG_NEYNAR, aspect: "16:9", alt: "Neynar" } },
+      img:      { type: "image", props: { url: IMG_NEYNAR, aspect: "1:1", alt: "Neynar" } },
       question: { type: "text", props: { content: s.neynarQ, weight: "bold", size: "md", align: "center" } },
       sub:      { type: "text", props: { content: `${s.neynarSub}\n${s.basedOnPrevious(percent)}`, size: "xs", color: "muted", align: "center" } },
       btn_a:    { type: "button", props: { label: s.neynarA, variant: "primary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=q&qi=1&s=${score}&lang=${lang}` } } } },
@@ -515,7 +515,7 @@ function viewQGeneric(qi: number, score: number, lang: Lang) {
     btn_a:    { type: "button", props: { label: q.a, variant: "primary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreA) } } } },
     btn_b:    { type: "button", props: { label: q.b, variant: "secondary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreB) } } } },
   };
-  if (hasImage) els["img"] = { type: "image", props: { url: q.imageUrl!, aspect: "16:9", alt: q.q } };
+  if (hasImage) els["img"] = { type: "image", props: { url: q.imageUrl!, aspect: "1:1", alt: q.q } };
   if (hasC)    els["btn_c"] = { type: "button", props: { label: q.c!, variant: "secondary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreC ?? 0) } } } };
 
   return snap({ root: "root", elements: els });
