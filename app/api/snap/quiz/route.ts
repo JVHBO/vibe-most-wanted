@@ -76,7 +76,7 @@ const STRINGS: Record<Lang, T> = {
     qof: (n, t) => `Question ${n} of ${t}`,
     changeLang: "Change Language",
     share: "🔁 Share this quiz",
-    retry: "↩ Try again (gay x2)",
+    retry: "↩ Try again",
     seeResults: "🏆 See others' results",
     basedOnPrevious: (p) => `Based on your previous answer: you are ${p}% gay.`,
     congrats: "🎉 Congratulate me!",
@@ -95,9 +95,9 @@ const STRINGS: Record<Lang, T> = {
       ? "Science has spoken. The rainbow has claimed you. Welcome to the team."
       : `You came back ${a} times. Every attempt doubles your gayness. Science is relentless.`,
     shareText: (a, u) => a === 1
-      ? `I just took the 'Are You Gay?' quiz on @vibemostwanted and I AM GAY 🏳️‍🌈 (confirmed by science). Take it yourself:`
-      : `I took the 'Are You Gay?' quiz on @vibemostwanted ${a} times. I am GAY x${a} 🏳️‍🌈. The more I try, the gayer I get. Take it:`,
-    congratsText: (u) => `🎉 Congratulations to @${u} for coming out! 🏳️‍🌈 Science has confirmed it — you are officially GAY. We're proud of you! Take the quiz:`,
+      ? `I just took the 'Are You Gay?' quiz from @jvhbo and I AM GAY 🏳️‍🌈 (confirmed by science). Take it yourself:`
+      : `I took the 'Are You Gay?' quiz from @jvhbo ${a} times. I am GAY x${a} 🏳️‍🌈. The more I try, the gayer I get. Take it:`,
+    congratsText: () => `🎉 Congratulations to me for coming out! 🏳️‍🌈 Science has confirmed it — I am officially GAY. Take the quiz:\n${SNAP_URL}`,
     leaderboardTitle: "🏳️‍🌈 Hall of Gay",
     leaderboardBack: "← Back",
     heteroLabel: "Hetero (unique)",
@@ -113,7 +113,7 @@ const STRINGS: Record<Lang, T> = {
     qof: (n, t) => `Pergunta ${n} de ${t}`,
     changeLang: "Mudar Idioma",
     share: "🔁 Compartilhar o quiz",
-    retry: "↩ Tentar de novo (gay x2)",
+    retry: "↩ Tentar de novo",
     seeResults: "🏆 Ver resultados",
     basedOnPrevious: (p) => `Baseado na resposta anterior: voce e ${p}% gay.`,
     congrats: "🎉 Parabéns p/ mim!",
@@ -122,7 +122,7 @@ const STRINGS: Record<Lang, T> = {
     neynarA: "Ele é icônico",
     neynarB: "Sem comentários",
     questions: [
-      { q: "Você já teve relações com pessoas do mesmo sexo?", sub: "Sem julgamentos. Isso é ciência.", a: "Absolutamente não", scoreA: 0, b: "Tipo... talvez", scoreB: 1 },
+      { q: "Você já teve relações com pessoas do mesmo sexo?", sub: "Sem julgamentos. Isso é ciência.", a: "Absolutamente não", scoreA: 0, b: "Apenas com meu tio", scoreB: 1 },
       { q: "Você segue esse homem, @jvhbo?", sub: "Responda com cuidado.", a: "Sim", scoreA: 1, b: "Não", scoreB: 0, c: "Agora sigo", scoreC: 1, imageUrl: IMG_JVHBO },
       { q: "Você acha o Dan Romero mais hot, mais gostoso que o Rish?", sub: "Pensa bem antes de responder.", a: "Muito mais", scoreA: 1, b: "Mais ou menos igual", scoreB: 0, c: "Nem ferrando", scoreC: 0, imageUrl: IMG_DAN },
       { q: "Você numa festa de p*nis e bunda. O que você prefere levar?", sub: "Escolha com sabedoria.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Bunda", scoreB: 1, c: "👩 Sua mãe", scoreC: 0, imageUrl: IMG_PARTY },
@@ -132,9 +132,9 @@ const STRINGS: Record<Lang, T> = {
       ? "A ciência falou. O arco-íris te reivindicou. Bem-vindo ao time."
       : `Você voltou ${a} vezes. Cada tentativa dobra a sua gayness. A ciência é implacável.`,
     shareText: (a, u) => a === 1
-      ? `Fiz o quiz 'Você Seria Gay?' no @vibemostwanted e EU SOU GAY 🏳️‍🌈 (confirmado pela ciência). Faça o seu:`
-      : `Fiz o quiz 'Você Seria Gay?' no @vibemostwanted ${a} vezes. Sou GAY x${a} 🏳️‍🌈. Quanto mais tento, mais gay fico. Faça o seu:`,
-    congratsText: (u) => `🎉 Parabéns para @${u} por se assumir! 🏳️‍🌈 A ciência confirmou — você é oficialmente GAY. Estamos orgulhosos! Faça o quiz:`,
+      ? `Fiz o quiz 'Você Seria Gay?' do @jvhbo e EU SOU GAY 🏳️‍🌈 (confirmado pela ciência). Faça o seu:`
+      : `Fiz o quiz 'Você Seria Gay?' do @jvhbo ${a} vezes. Sou GAY x${a} 🏳️‍🌈. Quanto mais tento, mais gay fico. Faça o seu:`,
+    congratsText: () => `🎉 Parabéns para mim por me assumir! 🏳️‍🌈 A ciência confirmou — eu sou oficialmente GAY. Faça o quiz:\n${SNAP_URL}`,
     leaderboardTitle: "🏳️‍🌈 Hall of Gay",
     leaderboardBack: "← Voltar",
     heteroLabel: "Hétero (único)",
@@ -150,7 +150,7 @@ const STRINGS: Record<Lang, T> = {
     qof: (n, t) => `Pregunta ${n} de ${t}`,
     changeLang: "Cambiar Idioma",
     share: "🔁 Compartir el quiz",
-    retry: "↩ Intentar de nuevo (gay x2)",
+    retry: "↩ Intentar de nuevo",
     seeResults: "🏆 Ver resultados",
     basedOnPrevious: (p) => `Basado en tu respuesta anterior: eres ${p}% gay.`,
     congrats: "🎉 ¡Felicítame!",
@@ -169,9 +169,9 @@ const STRINGS: Record<Lang, T> = {
       ? "La ciencia ha hablado. El arcoíris te ha reclamado. Bienvenido al equipo."
       : `Volviste ${a} veces. Cada intento duplica tu gayness. La ciencia es implacable.`,
     shareText: (a, u) => a === 1
-      ? `Hice el quiz '¿Eres Gay?' en @vibemostwanted y SOY GAY 🏳️‍🌈 (confirmado por la ciencia). Pruébalo:`
-      : `Hice el quiz '¿Eres Gay?' en @vibemostwanted ${a} veces. Soy GAY x${a} 🏳️‍🌈. Cuanto más intento, más gay soy. Pruébalo:`,
-    congratsText: (u) => `🎉 ¡Felicidades a @${u} por salir del clóset! 🏳️‍🌈 La ciencia lo ha confirmado — eres oficialmente GAY. ¡Estamos orgullosos! Haz el quiz:`,
+      ? `Hice el quiz '¿Eres Gay?' de @jvhbo y SOY GAY 🏳️‍🌈 (confirmado por la ciencia). Pruébalo:`
+      : `Hice el quiz '¿Eres Gay?' de @jvhbo ${a} veces. Soy GAY x${a} 🏳️‍🌈. Cuanto más intento, más gay soy. Pruébalo:`,
+    congratsText: () => `🎉 ¡Felicidades a mí por salir del clóset! 🏳️‍🌈 La ciencia lo ha confirmado — soy oficialmente GAY. Haz el quiz:\n${SNAP_URL}`,
     leaderboardTitle: "🏳️‍🌈 Hall of Gay",
     leaderboardBack: "← Volver",
     heteroLabel: "Hetero (único)",
@@ -187,7 +187,7 @@ const STRINGS: Record<Lang, T> = {
     qof: (n, t) => `Question ${n} sur ${t}`,
     changeLang: "Changer la Langue",
     share: "🔁 Partager le quiz",
-    retry: "↩ Réessayer (gay x2)",
+    retry: "↩ Réessayer",
     seeResults: "🏆 Voir les résultats",
     basedOnPrevious: (p) => `Selon ta reponse precedente : tu es gay a ${p}%.`,
     congrats: "🎉 Félicitez-moi!",
@@ -206,9 +206,9 @@ const STRINGS: Record<Lang, T> = {
       ? "La science a parlé. L'arc-en-ciel t'a réclamé. Bienvenue dans l'équipe."
       : `Tu es revenu ${a} fois. Chaque tentative double ta gayness. La science est implacable.`,
     shareText: (a, u) => a === 1
-      ? `Je viens de faire le quiz 'Es-tu Gay?' sur @vibemostwanted et JE SUIS GAY 🏳️‍🌈 (confirmé par la science). Essaie le tien:`
-      : `J'ai fait le quiz 'Es-tu Gay?' sur @vibemostwanted ${a} fois. Je suis GAY x${a} 🏳️‍🌈. Plus j'essaie, plus je suis gay. Essaie:`,
-    congratsText: (u) => `🎉 Félicitations à @${u} pour être sorti du placard! 🏳️‍🌈 La science le confirme — tu es officiellement GAY. Nous sommes fiers de toi! Fais le quiz:`,
+      ? `Je viens de faire le quiz 'Es-tu Gay?' de @jvhbo et JE SUIS GAY 🏳️‍🌈 (confirmé par la science). Essaie le tien:`
+      : `J'ai fait le quiz 'Es-tu Gay?' de @jvhbo ${a} fois. Je suis GAY x${a} 🏳️‍🌈. Plus j'essaie, plus je suis gay. Essaie:`,
+    congratsText: () => `🎉 Félicitations à moi d'être sorti du placard ! 🏳️‍🌈 La science le confirme — je suis officiellement GAY. Fais le quiz :\n${SNAP_URL}`,
     leaderboardTitle: "🏳️‍🌈 Hall of Gay",
     leaderboardBack: "← Retour",
     heteroLabel: "Hétéro (unique)",
@@ -224,7 +224,7 @@ const STRINGS: Record<Lang, T> = {
     qof: (n, t) => `Domanda ${n} di ${t}`,
     changeLang: "Cambia Lingua",
     share: "🔁 Condividi il quiz",
-    retry: "↩ Riprova (gay x2)",
+    retry: "↩ Riprova",
     seeResults: "🏆 Vedi i risultati",
     basedOnPrevious: (p) => `In base alla risposta precedente: sei gay al ${p}%.`,
     congrats: "🎉 Congratulami!",
@@ -243,9 +243,9 @@ const STRINGS: Record<Lang, T> = {
       ? "La scienza ha parlato. L'arcobaleno ti ha rivendicato. Benvenuto nella squadra."
       : `Sei tornato ${a} volte. Ogni tentativo raddoppia la tua gayness. La scienza è implacabile.`,
     shareText: (a, u) => a === 1
-      ? `Ho appena fatto il quiz 'Sei Gay?' su @vibemostwanted e SONO GAY 🏳️‍🌈 (confermato dalla scienza). Provalo:`
-      : `Ho fatto il quiz 'Sei Gay?' su @vibemostwanted ${a} volte. Sono GAY x${a} 🏳️‍🌈. Più ci provo, più sono gay. Provalo:`,
-    congratsText: (u) => `🎉 Congratulazioni a @${u} per essersi dichiarato! 🏳️‍🌈 La scienza lo conferma — sei ufficialmente GAY. Siamo orgogliosi! Fai il quiz:`,
+      ? `Ho appena fatto il quiz 'Sei Gay?' di @jvhbo e SONO GAY 🏳️‍🌈 (confermato dalla scienza). Provalo:`
+      : `Ho fatto il quiz 'Sei Gay?' di @jvhbo ${a} volte. Sono GAY x${a} 🏳️‍🌈. Più ci provo, più sono gay. Provalo:`,
+    congratsText: () => `🎉 Congratulazioni a me per essermi dichiarato! 🏳️‍🌈 La scienza lo conferma — sono ufficialmente GAY. Fai il quiz:\n${SNAP_URL}`,
     leaderboardTitle: "🏳️‍🌈 Hall of Gay",
     leaderboardBack: "← Indietro",
     heteroLabel: "Etero (unico)",
@@ -515,12 +515,11 @@ function viewResult(score: number, lang: Lang, attempts: number, username: strin
   return snap({
     root: "root",
     elements: {
-      root:       { type: "stack", props: { direction: "vertical", gap: 2, padding: 4 }, children: ["emoji", "title", "desc", "btn_share", "btn_congrats", "btn_retry", "btn_lb"] },
+      root:       { type: "stack", props: { direction: "vertical", gap: 2, padding: 4 }, children: ["emoji", "title", "desc", "btn_congrats", "btn_retry", "btn_lb"] },
       emoji:      { type: "text", props: { content: "🏳️‍🌈", size: "xl", align: "center" } },
       title:      { type: "text", props: { content: title, weight: "bold", size: "xl", align: "center" } },
       desc:       { type: "text", props: { content: desc, size: "sm", align: "center", color: "muted" } },
-      btn_share:  { type: "button", props: { label: s.share, variant: "primary" }, on: { press: { action: "compose_cast", params: { text: shareMsg } } } },
-      btn_congrats: { type: "button", props: { label: s.congrats, variant: "secondary" }, on: { press: { action: "compose_cast", params: { text: congrats } } } },
+      btn_congrats: { type: "button", props: { label: s.congrats, variant: "primary" }, on: { press: { action: "compose_cast", params: { text: congrats } } } },
       btn_retry:  { type: "button", props: { label: s.retry, variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=intro&lang=${lang}` } } } },
       btn_lb:     { type: "button", props: { label: s.seeResults, variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=lb&lang=${lang}` } } } },
     },
