@@ -408,6 +408,17 @@ function extractSnapUser(body: unknown) {
 
 // ── Views ─────────────────────────────────────────────────────────────────────
 
+function viewTroll() {
+  return snap({
+    root: "root",
+    elements: {
+      root:    { type: "stack", props: { direction: "vertical", gap: 4, padding: 5 }, children: ["msg", "btn"] },
+      msg:     { type: "text", props: { content: "Click here for a big surprise 🎁", weight: "bold", size: "xl", align: "center" } },
+      btn:     { type: "button", props: { label: "$", variant: "primary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=intro` } } } },
+    },
+  });
+}
+
 function viewLang(returnTarget: string) {
   const els: Record<string, object> = {
     root: { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["hdr", ...LANGS.map(l => `btn_${l}`)] },
@@ -620,7 +631,9 @@ async function handleRequest(req: NextRequest) {
     return viewResult(score, lang, attempts, username);
   }
 
-  return viewIntro(lang);
+  if (view === "intro") return viewIntro(lang);
+
+  return viewTroll();
 }
 
 export async function GET(req: NextRequest)  { return handleRequest(req); }
