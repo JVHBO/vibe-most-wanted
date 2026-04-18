@@ -31,10 +31,10 @@ type MaybeRecord = Record<string, unknown>;
 
 // ── Languages ─────────────────────────────────────────────────────────────────
 
-type Lang = "en" | "pt" | "es" | "fr" | "it";
-const LANGS: Lang[] = ["en", "pt", "es", "fr", "it"];
+type Lang = "en" | "pt" | "es" | "fr" | "ja";
+const LANGS: Lang[] = ["en", "pt", "es", "fr", "ja"];
 const LANG_LABELS: Record<Lang, string> = {
-  en: "English", pt: "Portugues", es: "Espanol", fr: "Francais", it: "Italiano",
+  en: "English", pt: "Portugues", es: "Espanol", fr: "Francais", ja: "日本語",
 };
 
 // ── Translations ──────────────────────────────────────────────────────────────
@@ -217,42 +217,42 @@ const STRINGS: Record<Lang, T> = {
     prevPage: "← Précédent",
     nextPage: "Suivant →",
   },
-  it: {
-    title: "Sei Gay? 🏳️‍🌈",
-    sub: "Un quiz scientifico di 5 domande per rivelare il tuo vero io.",
-    start: "Scopri la verità",
-    qof: (n, t) => `Domanda ${n} di ${t}`,
-    changeLang: "Cambia Lingua",
-    share: "🔁 Condividi il quiz",
-    retry: "↩ Riprova",
-    seeResults: "🏆 Vedi i risultati",
-    basedOnPrevious: (p) => `In base alla risposta precedente: sei gay al ${p}%.`,
-    congrats: "🎉 Congratulami!",
-    neynarQ: "Cosa pensi di Neynar?",
-    neynarSub: "La risposta non cambia il risultato. O sì? 👀",
-    neynarA: "E iconico",
-    neynarB: "Nessun commento",
+  ja: {
+    title: "あなたはゲイ? 🏳️‍🌈",
+    sub: "真実を明かす5問の科学的クイズ。",
+    start: "真実を発見する",
+    qof: (n, t) => `質問 ${n}/${t}`,
+    changeLang: "言語を変更",
+    share: "🔁 クイズをシェア",
+    retry: "↩ もう一度",
+    seeResults: "🏆 他の結果を見る",
+    basedOnPrevious: (p) => `前回の回答：あなたは${p}%ゲイです。`,
+    congrats: "🎉 おめでとう！",
+    neynarQ: "Neynarについてどう思いますか？",
+    neynarSub: "答えは結果に影響しません。本当に？ 👀",
+    neynarA: "彼は伝説的だ",
+    neynarB: "ノーコメント",
     questions: [
-      { q: "Hai mai avuto relazioni con qualcuno dello stesso sesso?", sub: "Senza giudizi. Questa è scienza.", a: "Assolutamente no", scoreA: 0, b: "Tipo... forse", scoreB: 1 },
-      { q: "Segui quest'uomo, @jvhbo?", sub: "Rispondi con attenzione.", a: "Si", scoreA: 1, b: "No", scoreB: 0, c: "Adesso si", scoreC: 1, imageUrl: IMG_JVHBO },
-      { q: "Dan Romero e piu hot di Rish?", sub: "Pensaci bene.", a: "Molto di piu", scoreA: 1, b: "Piu o meno uguale", scoreB: 0, c: "Neanche per sogno", scoreC: 0, imageUrl: IMG_DAN },
-      { q: "Sei a una festa di p*nis e sedere. Cosa preferisci portare?", sub: "Scegli con saggezza.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Sedere", scoreB: 1, c: "👩 Tua madre", scoreC: 0, imageUrl: IMG_PARTY },
+      { q: "同性と性的関係を持ったことがありますか？", sub: "判断しません。これは科学です。", a: "絶対にない", scoreA: 0, b: "まあ...もしかして", scoreB: 1 },
+      { q: "@jvhboをフォローしていますか？", sub: "慎重に答えてください。", a: "はい", scoreA: 1, b: "いいえ", scoreB: 0, c: "今フォローした", scoreC: 1, imageUrl: IMG_JVHBO },
+      { q: "Dan RomeroはRishよりホットですか？", sub: "よく考えてください。", a: "ずっとホット", scoreA: 1, b: "だいたい同じ", scoreB: 0, c: "まさか", scoreC: 0, imageUrl: IMG_DAN },
+      { q: "ソーセージパーティーに何を持参しますか？", sub: "賢く選んでください。", a: "🌭 ソーセージ", scoreA: 1, b: "🥖 バンズ", scoreB: 1, c: "👩 あなたのお母さん", scoreC: 0, imageUrl: IMG_PARTY },
     ],
-    resultTitle: (a) => a === 1 ? "Sei Gay 🏳️‍🌈" : `Sei Gay x${a} 🏳️‍🌈`,
+    resultTitle: (a) => a === 1 ? "あなたはゲイです 🏳️‍🌈" : `あなたはゲイ x${a} 🏳️‍🌈`,
     resultDesc: (a) => a === 1
-      ? "La scienza ha parlato. L'arcobaleno ti ha rivendicato. Benvenuto nella squadra."
-      : `Sei tornato ${a} volte. Ogni tentativo raddoppia la tua gayness. La scienza è implacabile.`,
+      ? "科学が証明しました。虹があなたを呼んでいます。チームへようこそ。"
+      : `あなたは${a}回戻ってきました。試みるたびにゲイ度が倍増します。科学は容赦ない。`,
     shareText: (a, u) => a === 1
-      ? `Ho appena fatto il quiz 'Sei Gay?' di @jvhbo e SONO GAY 🏳️‍🌈 (confermato dalla scienza). Provalo:`
-      : `Ho fatto il quiz 'Sei Gay?' di @jvhbo ${a} volte. Sono GAY x${a} 🏳️‍🌈. Più ci provo, più sono gay. Provalo:`,
-    congratsText: () => `🎉 Congratulazioni a me per essermi dichiarato! 🏳️‍🌈 La scienza lo conferma — sono ufficialmente GAY. Fai il quiz:\n${SNAP_URL}`,
-    leaderboardTitle: "🏳️‍🌈 Hall of Gay",
-    leaderboardBack: "← Indietro",
-    heteroLabel: "Etero (unico)",
-    gayLabel: (a) => a > 1 ? `Gay x${a}` : "Gay",
-    leaderboardEmpty: "Nessun altro ha ancora fatto il quiz. Sii il primo! 🏳️‍🌈",
-    prevPage: "← Precedente",
-    nextPage: "Successivo →",
+      ? `@jvhboの「あなたはゲイ?」クイズをやったらゲイでした 🏳️‍🌈（科学的に証明済み）。やってみて:`
+      : `@jvhboのクイズを${a}回やりました。ゲイ x${a} 🏳️‍🌈。やればやるほどゲイになる。やってみて:`,
+    congratsText: () => `🎉 カミングアウトおめでとう！🏳️‍🌈 科学が証明しました — 私は公式にゲイです。クイズをやってみて:\n${SNAP_URL}`,
+    leaderboardTitle: "🏳️‍🌈 ゲイの殿堂",
+    leaderboardBack: "← 戻る",
+    heteroLabel: "ヘテロ（唯一）",
+    gayLabel: (a) => a > 1 ? `ゲイ x${a}` : "ゲイ",
+    leaderboardEmpty: "まだ誰もクイズをやっていません。最初になって！🏳️‍🌈",
+    prevPage: "← 前へ",
+    nextPage: "次へ →",
   },
 };
 
