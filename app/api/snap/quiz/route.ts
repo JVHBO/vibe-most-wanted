@@ -51,7 +51,7 @@ interface T {
   qof: (n: number, t: number) => string;
   changeLang: string; share: string; retry: string; seeResults: string;
   basedOnPrevious: (percent: number) => string;
-  neynarQ: string; neynarSub: string; neynarPlaceholder: string; neynarNext: string;
+  neynarQ: string; neynarSub: string; neynarA: string; neynarB: string; neynarNext: string;
   questions: Question[];
   resultTitle: (attempts: number) => string;
   resultDesc: (attempts: number) => string;
@@ -78,8 +78,9 @@ const STRINGS: Record<Lang, T> = {
     congrats: "🎉 Congratulate me!",
     neynarQ: "What do you think about Neynar?",
     neynarSub: "Your answer won't change the result. Or will it? 👀",
-    neynarPlaceholder: "Type your opinion...",
-    neynarNext: "Submit →",
+    neynarA: "He is iconic",
+    neynarB: "No comment",
+    neynarNext: "Continue →",
     questions: [
       { q: "Have you ever had sexual relations with someone of the same sex?", sub: "No judgment. This is science.", a: "Absolutely not", scoreA: 0, b: "I mean... maybe", scoreB: 1 },
       { q: "Do you organize your wardrobe by color?", sub: "This one reveals everything.", a: "I just throw stuff in", scoreA: 0, b: "By color AND texture", scoreB: 1 },
@@ -113,8 +114,9 @@ const STRINGS: Record<Lang, T> = {
     congrats: "🎉 Parabéns p/ mim!",
     neynarQ: "O que você pensa do Neynar?",
     neynarSub: "Sua resposta não muda o resultado. Ou muda? 👀",
-    neynarPlaceholder: "Digite sua opinião...",
-    neynarNext: "Enviar →",
+    neynarA: "Ele é icônico",
+    neynarB: "Sem comentários",
+    neynarNext: "Continuar →",
     questions: [
       { q: "Você já teve relações com pessoas do mesmo sexo?", sub: "Sem julgamentos. Isso é ciência.", a: "Absolutamente não", scoreA: 0, b: "Tipo... talvez", scoreB: 1 },
       { q: "Você organiza seu guarda-roupa por cor?", sub: "Essa revela tudo.", a: "Jogo tudo dentro e fecho", scoreA: 0, b: "Por cor E textura", scoreB: 1 },
@@ -148,8 +150,9 @@ const STRINGS: Record<Lang, T> = {
     congrats: "🎉 ¡Felicítame!",
     neynarQ: "¿Qué piensas de Neynar?",
     neynarSub: "Tu respuesta no cambia el resultado. ¿O sí? 👀",
-    neynarPlaceholder: "Escribe tu opinión...",
-    neynarNext: "Enviar →",
+    neynarA: "Es icónico",
+    neynarB: "Sin comentarios",
+    neynarNext: "Continuar →",
     questions: [
       { q: "¿Has tenido relaciones con alguien del mismo sexo?", sub: "Sin juicios. Esto es ciencia.", a: "Absolutamente no", scoreA: 0, b: "Bueno... quizás", scoreB: 1 },
       { q: "¿Organizas tu armario por colores?", sub: "Esta lo revela todo.", a: "Tiro todo y cierro", scoreA: 0, b: "Por color Y textura", scoreB: 1 },
@@ -183,8 +186,9 @@ const STRINGS: Record<Lang, T> = {
     congrats: "🎉 Félicitez-moi!",
     neynarQ: "Que penses-tu de Neynar?",
     neynarSub: "Ta réponse ne changera pas le résultat. Ou si? 👀",
-    neynarPlaceholder: "Donne ton avis...",
-    neynarNext: "Envoyer →",
+    neynarA: "Il est iconique",
+    neynarB: "Sans commentaire",
+    neynarNext: "Continuer →",
     questions: [
       { q: "As-tu eu des relations avec quelqu'un du même sexe?", sub: "Sans jugement. C'est de la science.", a: "Absolument pas", scoreA: 0, b: "Disons... peut-être", scoreB: 1 },
       { q: "Organises-tu ta garde-robe par couleur?", sub: "Celle-ci révèle tout.", a: "Je jette tout dedans", scoreA: 0, b: "Par couleur ET texture", scoreB: 1 },
@@ -218,8 +222,9 @@ const STRINGS: Record<Lang, T> = {
     congrats: "🎉 Congratulami!",
     neynarQ: "Cosa pensi di Neynar?",
     neynarSub: "La risposta non cambia il risultato. O sì? 👀",
-    neynarPlaceholder: "Scrivi la tua opinione...",
-    neynarNext: "Invia →",
+    neynarA: "E iconico",
+    neynarB: "Nessun commento",
+    neynarNext: "Continua →",
     questions: [
       { q: "Hai mai avuto relazioni con qualcuno dello stesso sesso?", sub: "Senza giudizi. Questa è scienza.", a: "Assolutamente no", scoreA: 0, b: "Tipo... forse", scoreB: 1 },
       { q: "Organizzi il tuo armadio per colore?", sub: "Questa la rivela tutto.", a: "Butto tutto dentro", scoreA: 0, b: "Per colore E texture", scoreB: 1 },
@@ -434,7 +439,7 @@ function viewQ1(score: number, lang: Lang) {
       root:     { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["prog", "bar", "img", "question", "sub", "btn_a", "btn_b"] },
       prog:     { type: "text", props: { content: s.qof(1, TOTAL_STEPS), size: "xs", color: "muted", align: "center" } },
       bar:      { type: "text", props: { content: dotBar(1, TOTAL_STEPS), size: "sm", align: "center" } },
-      img:      { type: "image", props: { url: IMG_Q1, aspect: "2:1", alt: "Quiz intro image" } },
+      img:      { type: "image", props: { url: IMG_Q1, aspect: "4:5", alt: "Quiz intro image" } },
       question: { type: "text", props: { content: q.q, weight: "bold", size: "md", align: "center" } },
       sub:      { type: "text", props: { content: q.sub, size: "xs", color: "muted", align: "center" } },
       btn_a:    { type: "button", props: { label: q.a, variant: "primary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=qn&s=${score + q.scoreA}&lang=${lang}` } } } },
@@ -450,13 +455,13 @@ function viewQNeynar(score: number, lang: Lang) {
   return snap({
     root: "root",
     elements: {
-      root:     { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["meta", "img", "question", "sub", "input", "btn_next"] },
+      root:     { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["meta", "img", "question", "sub", "btn_a", "btn_b"] },
       meta:     { type: "text", props: { content: `${s.qof(2, TOTAL_STEPS)}\n${dotBar(2, TOTAL_STEPS)}`, size: "xs", color: "muted", align: "center" } },
-      img:      { type: "image", props: { url: IMG_NEYNAR, aspect: "3:2", alt: "Neynar" } },
+      img:      { type: "image", props: { url: IMG_NEYNAR, aspect: "4:5", alt: "Neynar" } },
       question: { type: "text", props: { content: s.neynarQ, weight: "bold", size: "md", align: "center" } },
       sub:      { type: "text", props: { content: `${s.neynarSub}\n${s.basedOnPrevious(percent)}`, size: "xs", color: "muted", align: "center" } },
-      input:    { type: "text_input", props: { placeholder: s.neynarPlaceholder, id: "neynar_opinion" } },
-      btn_next: { type: "button", props: { label: s.neynarNext, variant: "primary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=q&qi=1&s=${score}&lang=${lang}` } } } },
+      btn_a:    { type: "button", props: { label: s.neynarA, variant: "primary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=q&qi=1&s=${score}&lang=${lang}` } } } },
+      btn_b:    { type: "button", props: { label: s.neynarB, variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=q&qi=1&s=${score}&lang=${lang}` } } } },
     },
   });
 }
@@ -486,7 +491,7 @@ function viewQGeneric(qi: number, score: number, lang: Lang) {
     btn_a:    { type: "button", props: { label: q.a, variant: "primary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreA) } } } },
     btn_b:    { type: "button", props: { label: q.b, variant: "secondary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreB) } } } },
   };
-  if (hasImage) els["img"] = { type: "image", props: { url: q.imageUrl!, aspect: "3:2", alt: q.q } };
+  if (hasImage) els["img"] = { type: "image", props: { url: q.imageUrl!, aspect: "4:5", alt: q.q } };
   if (hasC)    els["btn_c"] = { type: "button", props: { label: q.c!, variant: "secondary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreC ?? 0) } } } };
 
   return snap({ root: "root", elements: els });
@@ -515,39 +520,46 @@ function viewResult(score: number, lang: Lang, attempts: number, username: strin
   });
 }
 
-async function viewLeaderboard(lang: Lang) {
+async function viewLeaderboard(lang: Lang, page: number) {
   const s = STRINGS[lang];
   const convex = new ConvexHttpClient(CONVEX_URL);
   const results = await convex.query(api.gayQuiz.getLeaderboard, {});
 
-  const rows: string[] = [];
+  const perPage = 4;
+  const filtered = results.filter((r: { fid: number }) => r.fid !== JVHBO_FID);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const safePage = Math.max(0, Math.min(page, totalPages - 1));
+  const start = safePage * perPage;
+  const pageItems = filtered.slice(start, start + perPage);
+  const lines: string[] = [`👑 @jvhbo — ${s.heteroLabel}`];
   const els: Record<string, object> = {};
 
-  // Always add @jvhbo as the unique hetero at top
-  els["jvhbo"] = { type: "text", props: { content: `👑 @jvhbo — ${s.heteroLabel}`, size: "sm", weight: "bold" } };
-  rows.push("jvhbo");
-
-  let shown = 0;
-  for (const r of results) {
-    if (r.fid === JVHBO_FID) continue; // skip jvhbo from DB results
-    const key = `row_${shown}`;
-    els[key] = { type: "text", props: { content: `🏳️‍🌈 @${r.username} — ${s.gayLabel(r.attempts)}`, size: "sm" } };
-    rows.push(key);
-    shown++;
-    if (shown >= 6) break;
+  for (const r of pageItems as Array<{ username: string; attempts: number }>) {
+    lines.push(`🏳️‍🌈 @${r.username} — ${s.gayLabel(r.attempts)}`);
   }
 
-  if (rows.length === 1) {
-    // only jvhbo, no one else yet
-    els["empty"] = { type: "text", props: { content: "No one else has taken the quiz yet. Be the first! 🏳️‍🌈", size: "sm", color: "muted", align: "center" } };
-    rows.push("empty");
+  if (lines.length === 1) {
+    lines.push("No one else has taken the quiz yet. Be the first! 🏳️‍🌈");
   }
 
-  rows.push("btn_back");
-  els["btn_back"] = { type: "button", props: { label: s.leaderboardBack, variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=intro&lang=${lang}` } } } };
+  const navChildren = [
+    ...(safePage > 0 ? ["btn_prev"] : []),
+    "page_info",
+    ...(safePage < totalPages - 1 ? ["btn_next"] : []),
+  ];
 
-  els["root"] = { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["hdr", ...rows] };
+  els["root"] = { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["hdr", "rows", "nav", "btn_back"] };
   els["hdr"]  = { type: "text", props: { content: s.leaderboardTitle, weight: "bold", size: "lg", align: "center" } };
+  els["rows"] = { type: "text", props: { content: lines.join("\n"), size: "sm", align: "center" } };
+  els["nav"] = { type: "stack", props: { direction: "horizontal", gap: "sm", justify: "center" }, children: navChildren };
+  els["page_info"] = { type: "text", props: { content: `${safePage + 1}/${totalPages}`, size: "xs", color: "muted", align: "center" } };
+  if (safePage > 0) {
+    els["btn_prev"] = { type: "button", props: { label: "← Prev", variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=lb&lang=${lang}&page=${safePage - 1}` } } } };
+  }
+  if (safePage < totalPages - 1) {
+    els["btn_next"] = { type: "button", props: { label: "Next →", variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=lb&lang=${lang}&page=${safePage + 1}` } } } };
+  }
+  els["btn_back"] = { type: "button", props: { label: s.leaderboardBack, variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=intro&lang=${lang}` } } } };
 
   return snap({ root: "root", elements: els });
 }
@@ -568,6 +580,7 @@ async function handleRequest(req: NextRequest) {
   const lang  = (LANGS.includes(searchParams.get("lang") as Lang) ? searchParams.get("lang") : "en") as Lang;
   const score = Math.max(0, parseInt(searchParams.get("s") ?? "0", 10));
   const qi    = Math.max(0, parseInt(searchParams.get("qi") ?? "1", 10));
+  const page  = Math.max(0, parseInt(searchParams.get("page") ?? "0", 10));
 
   // Extract FID + username from POST body if present
   let fid = 0;
@@ -583,7 +596,7 @@ async function handleRequest(req: NextRequest) {
     const ret = searchParams.get("ret") ?? `${SNAP_URL}?view=intro`;
     return viewLang(ret);
   }
-  if (view === "lb")  return viewLeaderboard(lang);
+  if (view === "lb")  return viewLeaderboard(lang, page);
   if (view === "q1")  return viewQ1(score, lang);
   if (view === "qn")  return viewQNeynar(score, lang);
   if (view === "q")   return viewQGeneric(qi, score, lang);
