@@ -5,10 +5,13 @@ import { api } from "@/convex/_generated/api";
 const APP_URL   = "https://vibemostwanted.xyz";
 const SNAP_URL  = `${APP_URL}/api/snap/quiz`;
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL!;
+const ALTERNATE_LINK = `<${SNAP_URL}>; rel="alternate"; type="application/vnd.farcaster.snap+json", <${SNAP_URL}>; rel="alternate"; type="text/html"`;
 
 const SNAP_HEADERS = {
   "Content-Type": "application/vnd.farcaster.snap+json",
   "Cache-Control": "no-store",
+  "Vary": "Accept",
+  "Link": ALTERNATE_LINK,
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Accept",
@@ -232,6 +235,66 @@ const TOTAL_STEPS = 5;
 
 function snap(ui: object) {
   return NextResponse.json({ version: "2.0", ui }, { headers: SNAP_HEADERS });
+}
+
+function htmlFallback() {
+  const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Are You Gay? | Vibe Most Wanted</title>
+    <meta name="description" content="A highly scientific 5-question quiz to reveal your true self." />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #111111;
+        color: #f5f5f5;
+        font-family: Arial, sans-serif;
+      }
+      main {
+        max-width: 520px;
+        padding: 32px 24px;
+        text-align: center;
+      }
+      a {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 18px;
+        background: #facc15;
+        color: #111111;
+        text-decoration: none;
+        font-weight: 700;
+      }
+      p {
+        color: #d4d4d4;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Are You Gay? 🏳️‍🌈</h1>
+      <p>A highly scientific 5-question quiz to reveal your true self.</p>
+      <a href="${APP_URL}/">Open Vibe Most Wanted</a>
+    </main>
+  </body>
+</html>`;
+
+  return new NextResponse(html, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "Vary": "Accept",
+      "Link": ALTERNATE_LINK,
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Accept",
+    },
+  });
 }
 
 function dotBar(filled: number, total: number) {
@@ -462,7 +525,7 @@ async function handleRequest(req: NextRequest) {
   const accept = req.headers.get("accept") ?? "";
 
   if (!accept.includes("application/vnd.farcaster.snap")) {
-    return NextResponse.redirect(`${APP_URL}/`);
+    return htmlFallback();
   }
 
   const view  = searchParams.get("view") ?? "intro";
