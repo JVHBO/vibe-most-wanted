@@ -505,11 +505,12 @@ function viewQGeneric(qi: number, score: number, lang: Lang) {
 
   const hasC = q.c !== undefined;
   const hasImage = !!q.imageUrl;
-  const children = ["meta", ...(hasImage ? ["img"] : []), "question", "sub", "btn_a", "btn_b", ...(hasC ? ["btn_c"] : [])];
+  const compact = hasImage && hasC;
+  const children = ["meta", ...(hasImage ? ["img"] : []), "question", ...(compact ? [] : ["sub"]), "btn_a", "btn_b", ...(hasC ? ["btn_c"] : [])];
 
   const els: Record<string, object> = {
-    root:     { type: "stack", props: { direction: "vertical", gap: hasImage ? 1 : 3, padding: hasImage ? 2 : 3 }, children },
-    meta:     { type: "text", props: { content: `${s.qof(step, TOTAL_STEPS)}\n${dotBar(step, TOTAL_STEPS)}`, size: "xs", color: "muted", align: "center" } },
+    root:     { type: "stack", props: { direction: "vertical", gap: compact ? 1 : hasImage ? 1 : 3, padding: compact ? 1 : hasImage ? 2 : 3 }, children },
+    meta:     { type: "text", props: { content: `${s.qof(step, TOTAL_STEPS)} ${dotBar(step, TOTAL_STEPS)}`, size: "xs", color: "muted", align: "center" } },
     question: { type: "text", props: { content: q.q, weight: "bold", size: "sm", align: "center" } },
     sub:      { type: "text", props: { content: `${q.sub}\n${s.basedOnPrevious(percent)}`, size: "xs", color: "muted", align: "center" } },
     btn_a:    { type: "button", props: { label: q.a, variant: "primary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreA) } } } },
