@@ -21,10 +21,11 @@ const SNAP_HEADERS = {
 const JVHBO_FID = 214746; // @jvhbo
 
 // Images
-const IMG_Q1     = `${APP_URL}/profile-bg.jpg`;
-const IMG_NEYNAR = `${APP_URL}/vibemail/neymar.png`;
-const IMG_PARTY  = `${APP_URL}/easteregg-background.png`;
-const IMG_DAN    = `${APP_URL}/vibemail/dan-buttero.png`;
+const IMG_Q1     = `${APP_URL}/snap/quiz-q1.jpg`;
+const IMG_NEYNAR = `${APP_URL}/snap/quiz-neynar.png`;
+const IMG_JVHBO  = `${APP_URL}/snap/quiz-jvhbo.jpg`;
+const IMG_PARTY  = `${APP_URL}/snap/quiz-party.png`;
+const IMG_DAN    = `${APP_URL}/snap/quiz-dan.png`;
 
 type MaybeRecord = Record<string, unknown>;
 
@@ -70,7 +71,7 @@ interface T {
 const STRINGS: Record<Lang, T> = {
   en: {
     title: "Are You Gay? 🏳️‍🌈",
-    sub: "A highly scientific 6-question quiz to reveal your true self.",
+    sub: "A highly scientific 5-question quiz to reveal your true self.",
     start: "Find out the truth",
     qof: (n, t) => `Question ${n} of ${t}`,
     changeLang: "Change Language",
@@ -85,10 +86,9 @@ const STRINGS: Record<Lang, T> = {
     neynarB: "No comment",
     questions: [
       { q: "Have you ever had sexual relations with someone of the same sex?", sub: "No judgment. This is science.", a: "Absolutely not", scoreA: 0, b: "I mean... maybe", scoreB: 1 },
-      { q: "Do you organize your wardrobe by color?", sub: "This one reveals everything.", a: "I just throw stuff in", scoreA: 0, b: "By color AND texture", scoreB: 1 },
+      { q: "Do you follow this man, @jvhbo?", sub: "Answer carefully.", a: "Yes", scoreA: 1, b: "No", scoreB: 0, c: "I do now", scoreC: 1, imageUrl: IMG_JVHBO },
       { q: "Is Dan Romero hotter than Rish?", sub: "Careful now.", a: "Way hotter", scoreA: 1, b: "About the same", scoreB: 0, c: "No chance", scoreC: 0, imageUrl: IMG_DAN },
       { q: "At a sausage party, do you bring sausages... or buns?", sub: "Choose wisely.", a: "🌭 Sausages", scoreA: 1, b: "🥖 Buns", scoreB: 1, c: "👩 My mom", scoreC: 0, imageUrl: IMG_PARTY },
-      { q: "At a BBQ, how do you eat the sausage?", sub: "No wrong answers... or are there?", a: "Normal, with bread", scoreA: 0, b: "I refuse to answer that", scoreB: 1 },
     ],
     resultTitle: (a) => a === 1 ? "You are Gay 🏳️‍🌈" : `You are Gay x${a} 🏳️‍🌈`,
     resultDesc: (a) => a === 1
@@ -108,7 +108,7 @@ const STRINGS: Record<Lang, T> = {
   },
   pt: {
     title: "Você Seria Gay? 🏳️‍🌈",
-    sub: "Um questionário científico com 6 perguntas para revelar sua verdadeira essência.",
+    sub: "Um questionário científico com 5 perguntas para revelar sua verdadeira essência.",
     start: "Descobrir minha verdade",
     qof: (n, t) => `Pergunta ${n} de ${t}`,
     changeLang: "Mudar Idioma",
@@ -123,10 +123,9 @@ const STRINGS: Record<Lang, T> = {
     neynarB: "Sem comentários",
     questions: [
       { q: "Você já teve relações com pessoas do mesmo sexo?", sub: "Sem julgamentos. Isso é ciência.", a: "Absolutamente não", scoreA: 0, b: "Tipo... talvez", scoreB: 1 },
-      { q: "Você organiza seu guarda-roupa por cor?", sub: "Essa revela tudo.", a: "Jogo tudo dentro e fecho", scoreA: 0, b: "Por cor E textura", scoreB: 1 },
+      { q: "Você segue esse homem, @jvhbo?", sub: "Responda com cuidado.", a: "Sim", scoreA: 1, b: "Não", scoreB: 0, c: "Agora sigo", scoreC: 1, imageUrl: IMG_JVHBO },
       { q: "Você acha o Dan Romero mais hot, mais gostoso que o Rish?", sub: "Pensa bem antes de responder.", a: "Muito mais", scoreA: 1, b: "Mais ou menos igual", scoreB: 0, c: "Nem ferrando", scoreC: 0, imageUrl: IMG_DAN },
       { q: "Você numa festa de p*nis e bunda. O que você prefere levar?", sub: "Escolha com sabedoria.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Bunda", scoreB: 1, c: "👩 A minha mãe", scoreC: 0, imageUrl: IMG_PARTY },
-      { q: "No churrasco, você come a linguiça de qual jeito?", sub: "Não tem resposta errada... ou tem.", a: "Normal, com pão", scoreA: 0, b: "Não vou responder isso", scoreB: 1 },
     ],
     resultTitle: (a) => a === 1 ? "Você é Gay 🏳️‍🌈" : `Você é Gay x${a} 🏳️‍🌈`,
     resultDesc: (a) => a === 1
@@ -146,7 +145,7 @@ const STRINGS: Record<Lang, T> = {
   },
   es: {
     title: "¿Eres Gay? 🏳️‍🌈",
-    sub: "Un cuestionario científico de 6 preguntas para revelar tu verdadero yo.",
+    sub: "Un cuestionario científico de 5 preguntas para revelar tu verdadero yo.",
     start: "Descubrir la verdad",
     qof: (n, t) => `Pregunta ${n} de ${t}`,
     changeLang: "Cambiar Idioma",
@@ -161,10 +160,9 @@ const STRINGS: Record<Lang, T> = {
     neynarB: "Sin comentarios",
     questions: [
       { q: "¿Has tenido relaciones con alguien del mismo sexo?", sub: "Sin juicios. Esto es ciencia.", a: "Absolutamente no", scoreA: 0, b: "Bueno... quizás", scoreB: 1 },
-      { q: "¿Organizas tu armario por colores?", sub: "Esta lo revela todo.", a: "Tiro todo y cierro", scoreA: 0, b: "Por color Y textura", scoreB: 1 },
+      { q: "¿Sigues a este hombre, @jvhbo?", sub: "Responde con cuidado.", a: "Sí", scoreA: 1, b: "No", scoreB: 0, c: "Ahora sí", scoreC: 1, imageUrl: IMG_JVHBO },
       { q: "¿Dan Romero está más hot que Rish?", sub: "Piénsalo bien.", a: "Mucho más", scoreA: 1, b: "Más o menos igual", scoreB: 0, c: "Ni de broma", scoreC: 0, imageUrl: IMG_DAN },
       { q: "Estás en una fiesta de p*nis y traseros. ¿Qué prefieres llevar?", sub: "Elige sabiamente.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Trasero", scoreB: 1, c: "👩 Mi mamá", scoreC: 0, imageUrl: IMG_PARTY },
-      { q: "En un asado, ¿cómo comes la salchicha?", sub: "No hay respuesta incorrecta... ¿o sí?", a: "Normal, con pan", scoreA: 0, b: "Me niego a responder", scoreB: 1 },
     ],
     resultTitle: (a) => a === 1 ? "Eres Gay 🏳️‍🌈" : `Eres Gay x${a} 🏳️‍🌈`,
     resultDesc: (a) => a === 1
@@ -184,7 +182,7 @@ const STRINGS: Record<Lang, T> = {
   },
   fr: {
     title: "Es-tu Gay? 🏳️‍🌈",
-    sub: "Un quiz scientifique de 6 questions pour révéler ta vraie nature.",
+    sub: "Un quiz scientifique de 5 questions pour révéler ta vraie nature.",
     start: "Découvrir la vérité",
     qof: (n, t) => `Question ${n} sur ${t}`,
     changeLang: "Changer la Langue",
@@ -199,10 +197,9 @@ const STRINGS: Record<Lang, T> = {
     neynarB: "Sans commentaire",
     questions: [
       { q: "As-tu eu des relations avec quelqu'un du même sexe?", sub: "Sans jugement. C'est de la science.", a: "Absolument pas", scoreA: 0, b: "Disons... peut-être", scoreB: 1 },
-      { q: "Organises-tu ta garde-robe par couleur?", sub: "Celle-ci révèle tout.", a: "Je jette tout dedans", scoreA: 0, b: "Par couleur ET texture", scoreB: 1 },
+      { q: "Tu suis cet homme, @jvhbo ?", sub: "Réponds avec soin.", a: "Oui", scoreA: 1, b: "Non", scoreB: 0, c: "Maintenant oui", scoreC: 1, imageUrl: IMG_JVHBO },
       { q: "Dan Romero est plus hot que Rish ?", sub: "Reflechis bien.", a: "Beaucoup plus", scoreA: 1, b: "A peu pres pareil", scoreB: 0, c: "Pas du tout", scoreC: 0, imageUrl: IMG_DAN },
       { q: "Tu es à une soirée de p*nis et fesses. Que préfères-tu apporter?", sub: "Choisis bien.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Fesses", scoreB: 1, c: "👩 Ma maman", scoreC: 0, imageUrl: IMG_PARTY },
-      { q: "Au barbecue, comment manges-tu la saucisse?", sub: "Il n'y a pas de mauvaise réponse... ou si?", a: "Normalement, avec du pain", scoreA: 0, b: "Je refuse de répondre", scoreB: 1 },
     ],
     resultTitle: (a) => a === 1 ? "Tu es Gay 🏳️‍🌈" : `Tu es Gay x${a} 🏳️‍🌈`,
     resultDesc: (a) => a === 1
@@ -222,7 +219,7 @@ const STRINGS: Record<Lang, T> = {
   },
   it: {
     title: "Sei Gay? 🏳️‍🌈",
-    sub: "Un quiz scientifico di 6 domande per rivelare il tuo vero io.",
+    sub: "Un quiz scientifico di 5 domande per rivelare il tuo vero io.",
     start: "Scopri la verità",
     qof: (n, t) => `Domanda ${n} di ${t}`,
     changeLang: "Cambia Lingua",
@@ -237,10 +234,9 @@ const STRINGS: Record<Lang, T> = {
     neynarB: "Nessun commento",
     questions: [
       { q: "Hai mai avuto relazioni con qualcuno dello stesso sesso?", sub: "Senza giudizi. Questa è scienza.", a: "Assolutamente no", scoreA: 0, b: "Tipo... forse", scoreB: 1 },
-      { q: "Organizzi il tuo armadio per colore?", sub: "Questa la rivela tutto.", a: "Butto tutto dentro", scoreA: 0, b: "Per colore E texture", scoreB: 1 },
+      { q: "Segui quest'uomo, @jvhbo?", sub: "Rispondi con attenzione.", a: "Si", scoreA: 1, b: "No", scoreB: 0, c: "Adesso si", scoreC: 1, imageUrl: IMG_JVHBO },
       { q: "Dan Romero e piu hot di Rish?", sub: "Pensaci bene.", a: "Molto di piu", scoreA: 1, b: "Piu o meno uguale", scoreB: 0, c: "Neanche per sogno", scoreC: 0, imageUrl: IMG_DAN },
       { q: "Sei a una festa di p*nis e sedere. Cosa preferisci portare?", sub: "Scegli con saggezza.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Sedere", scoreB: 1, c: "👩 Mia mamma", scoreC: 0, imageUrl: IMG_PARTY },
-      { q: "Al barbecue, come mangi la salsiccia?", sub: "Non c'è risposta sbagliata... o sì?", a: "Normalmente, col pane", scoreA: 0, b: "Rifiuto di rispondere", scoreB: 1 },
     ],
     resultTitle: (a) => a === 1 ? "Sei Gay 🏳️‍🌈" : `Sei Gay x${a} 🏳️‍🌈`,
     resultDesc: (a) => a === 1
@@ -260,7 +256,7 @@ const STRINGS: Record<Lang, T> = {
   },
 };
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 5;
 
 // ── Snap builder ──────────────────────────────────────────────────────────────
 
@@ -275,7 +271,7 @@ function htmlFallback() {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Are You Gay? | Vibe Most Wanted</title>
-    <meta name="description" content="A highly scientific 6-question quiz to reveal your true self." />
+    <meta name="description" content="A highly scientific 5-question quiz to reveal your true self." />
     <style>
       body {
         margin: 0;
@@ -309,7 +305,7 @@ function htmlFallback() {
   <body>
     <main>
       <h1>Are You Gay? 🏳️‍🌈</h1>
-      <p>A highly scientific 6-question quiz to reveal your true self.</p>
+      <p>A highly scientific 5-question quiz to reveal your true self.</p>
       <a href="${APP_URL}/">Open Vibe Most Wanted</a>
     </main>
   </body>
@@ -333,20 +329,18 @@ function dotBar(filled: number, total: number) {
 }
 
 function getGayPercentForStep(step: number, score: number) {
-  const safeScore = Math.max(0, Math.min(score, 5));
+  const safeScore = Math.max(0, Math.min(score, 4));
   const stepBase = {
     2: 14,
-    3: 34,
-    4: 52,
-    5: 41,
-    6: 78,
+    3: 36,
+    4: 28,
+    5: 72,
   } as const;
   const scoreBoost = {
     2: 22,
-    3: 15,
-    4: 10,
-    5: 8,
-    6: 4,
+    3: 16,
+    4: 9,
+    5: 5,
   } as const;
   const base = stepBase[step as keyof typeof stepBase] ?? 50;
   const boost = scoreBoost[step as keyof typeof scoreBoost] ?? 0;
@@ -452,7 +446,7 @@ function viewQ1(score: number, lang: Lang) {
       root:     { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["prog", "bar", "img", "question", "sub", "btn_a", "btn_b"] },
       prog:     { type: "text", props: { content: s.qof(1, TOTAL_STEPS), size: "xs", color: "muted", align: "center" } },
       bar:      { type: "text", props: { content: dotBar(1, TOTAL_STEPS), size: "sm", align: "center" } },
-      img:      { type: "image", props: { url: IMG_Q1, aspect: "4:5", alt: "Quiz intro image" } },
+      img:      { type: "image", props: { url: IMG_Q1, aspect: "16:9", alt: "Quiz intro image" } },
       question: { type: "text", props: { content: q.q, weight: "bold", size: "md", align: "center" } },
       sub:      { type: "text", props: { content: q.sub, size: "xs", color: "muted", align: "center" } },
       btn_a:    { type: "button", props: { label: q.a, variant: "primary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=qn&s=${score + q.scoreA}&lang=${lang}` } } } },
@@ -470,7 +464,7 @@ function viewQNeynar(score: number, lang: Lang) {
     elements: {
       root:     { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["meta", "img", "question", "sub", "btn_a", "btn_b"] },
       meta:     { type: "text", props: { content: `${s.qof(2, TOTAL_STEPS)}\n${dotBar(2, TOTAL_STEPS)}`, size: "xs", color: "muted", align: "center" } },
-      img:      { type: "image", props: { url: IMG_NEYNAR, aspect: "4:5", alt: "Neynar" } },
+      img:      { type: "image", props: { url: IMG_NEYNAR, aspect: "16:9", alt: "Neynar" } },
       question: { type: "text", props: { content: s.neynarQ, weight: "bold", size: "md", align: "center" } },
       sub:      { type: "text", props: { content: `${s.neynarSub}\n${s.basedOnPrevious(percent)}`, size: "xs", color: "muted", align: "center" } },
       btn_a:    { type: "button", props: { label: s.neynarA, variant: "primary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=q&qi=1&s=${score}&lang=${lang}` } } } },
@@ -504,7 +498,7 @@ function viewQGeneric(qi: number, score: number, lang: Lang) {
     btn_a:    { type: "button", props: { label: q.a, variant: "primary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreA) } } } },
     btn_b:    { type: "button", props: { label: q.b, variant: "secondary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreB) } } } },
   };
-  if (hasImage) els["img"] = { type: "image", props: { url: q.imageUrl!, aspect: "4:5", alt: q.q } };
+  if (hasImage) els["img"] = { type: "image", props: { url: q.imageUrl!, aspect: "16:9", alt: q.q } };
   if (hasC)    els["btn_c"] = { type: "button", props: { label: q.c!, variant: "secondary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreC ?? 0) } } } };
 
   return snap({ root: "root", elements: els });
