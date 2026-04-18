@@ -88,7 +88,7 @@ const STRINGS: Record<Lang, T> = {
       { q: "Have you ever had sexual relations with someone of the same sex?", sub: "No judgment. This is science.", a: "Absolutely not", scoreA: 0, b: "I mean... maybe", scoreB: 1 },
       { q: "Do you follow this man, @jvhbo?", sub: "Answer carefully.", a: "Yes", scoreA: 1, b: "No", scoreB: 0, c: "I do now", scoreC: 1, imageUrl: IMG_JVHBO },
       { q: "Is Dan Romero hotter than Rish?", sub: "Careful now.", a: "Way hotter", scoreA: 1, b: "About the same", scoreB: 0, c: "No chance", scoreC: 0, imageUrl: IMG_DAN },
-      { q: "At a sausage party, do you bring sausages... or buns?", sub: "Choose wisely.", a: "🌭 Sausages", scoreA: 1, b: "🥖 Buns", scoreB: 1, c: "👩 My mom", scoreC: 0, imageUrl: IMG_PARTY },
+      { q: "At a sausage party, do you bring sausages... or buns?", sub: "Choose wisely.", a: "🌭 Sausages", scoreA: 1, b: "🥖 Buns", scoreB: 1, c: "👩 Your mother", scoreC: 0, imageUrl: IMG_PARTY },
     ],
     resultTitle: (a) => a === 1 ? "You are Gay 🏳️‍🌈" : `You are Gay x${a} 🏳️‍🌈`,
     resultDesc: (a) => a === 1
@@ -125,7 +125,7 @@ const STRINGS: Record<Lang, T> = {
       { q: "Você já teve relações com pessoas do mesmo sexo?", sub: "Sem julgamentos. Isso é ciência.", a: "Absolutamente não", scoreA: 0, b: "Tipo... talvez", scoreB: 1 },
       { q: "Você segue esse homem, @jvhbo?", sub: "Responda com cuidado.", a: "Sim", scoreA: 1, b: "Não", scoreB: 0, c: "Agora sigo", scoreC: 1, imageUrl: IMG_JVHBO },
       { q: "Você acha o Dan Romero mais hot, mais gostoso que o Rish?", sub: "Pensa bem antes de responder.", a: "Muito mais", scoreA: 1, b: "Mais ou menos igual", scoreB: 0, c: "Nem ferrando", scoreC: 0, imageUrl: IMG_DAN },
-      { q: "Você numa festa de p*nis e bunda. O que você prefere levar?", sub: "Escolha com sabedoria.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Bunda", scoreB: 1, c: "👩 A minha mãe", scoreC: 0, imageUrl: IMG_PARTY },
+      { q: "Você numa festa de p*nis e bunda. O que você prefere levar?", sub: "Escolha com sabedoria.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Bunda", scoreB: 1, c: "👩 Sua mãe", scoreC: 0, imageUrl: IMG_PARTY },
     ],
     resultTitle: (a) => a === 1 ? "Você é Gay 🏳️‍🌈" : `Você é Gay x${a} 🏳️‍🌈`,
     resultDesc: (a) => a === 1
@@ -162,7 +162,7 @@ const STRINGS: Record<Lang, T> = {
       { q: "¿Has tenido relaciones con alguien del mismo sexo?", sub: "Sin juicios. Esto es ciencia.", a: "Absolutamente no", scoreA: 0, b: "Bueno... quizás", scoreB: 1 },
       { q: "¿Sigues a este hombre, @jvhbo?", sub: "Responde con cuidado.", a: "Sí", scoreA: 1, b: "No", scoreB: 0, c: "Ahora sí", scoreC: 1, imageUrl: IMG_JVHBO },
       { q: "¿Dan Romero está más hot que Rish?", sub: "Piénsalo bien.", a: "Mucho más", scoreA: 1, b: "Más o menos igual", scoreB: 0, c: "Ni de broma", scoreC: 0, imageUrl: IMG_DAN },
-      { q: "Estás en una fiesta de p*nis y traseros. ¿Qué prefieres llevar?", sub: "Elige sabiamente.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Trasero", scoreB: 1, c: "👩 Mi mamá", scoreC: 0, imageUrl: IMG_PARTY },
+      { q: "Estás en una fiesta de p*nis y traseros. ¿Qué prefieres llevar?", sub: "Elige sabiamente.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Trasero", scoreB: 1, c: "👩 Tu mamá", scoreC: 0, imageUrl: IMG_PARTY },
     ],
     resultTitle: (a) => a === 1 ? "Eres Gay 🏳️‍🌈" : `Eres Gay x${a} 🏳️‍🌈`,
     resultDesc: (a) => a === 1
@@ -199,7 +199,7 @@ const STRINGS: Record<Lang, T> = {
       { q: "As-tu eu des relations avec quelqu'un du même sexe?", sub: "Sans jugement. C'est de la science.", a: "Absolument pas", scoreA: 0, b: "Disons... peut-être", scoreB: 1 },
       { q: "Tu suis cet homme, @jvhbo ?", sub: "Réponds avec soin.", a: "Oui", scoreA: 1, b: "Non", scoreB: 0, c: "Maintenant oui", scoreC: 1, imageUrl: IMG_JVHBO },
       { q: "Dan Romero est plus hot que Rish ?", sub: "Reflechis bien.", a: "Beaucoup plus", scoreA: 1, b: "A peu pres pareil", scoreB: 0, c: "Pas du tout", scoreC: 0, imageUrl: IMG_DAN },
-      { q: "Tu es à une soirée de p*nis et fesses. Que préfères-tu apporter?", sub: "Choisis bien.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Fesses", scoreB: 1, c: "👩 Ma maman", scoreC: 0, imageUrl: IMG_PARTY },
+      { q: "Tu es à une soirée de p*nis et fesses. Que préfères-tu apporter?", sub: "Choisis bien.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Fesses", scoreB: 1, c: "👩 Ta mère", scoreC: 0, imageUrl: IMG_PARTY },
     ],
     resultTitle: (a) => a === 1 ? "Tu es Gay 🏳️‍🌈" : `Tu es Gay x${a} 🏳️‍🌈`,
     resultDesc: (a) => a === 1
@@ -236,7 +236,7 @@ const STRINGS: Record<Lang, T> = {
       { q: "Hai mai avuto relazioni con qualcuno dello stesso sesso?", sub: "Senza giudizi. Questa è scienza.", a: "Assolutamente no", scoreA: 0, b: "Tipo... forse", scoreB: 1 },
       { q: "Segui quest'uomo, @jvhbo?", sub: "Rispondi con attenzione.", a: "Si", scoreA: 1, b: "No", scoreB: 0, c: "Adesso si", scoreC: 1, imageUrl: IMG_JVHBO },
       { q: "Dan Romero e piu hot di Rish?", sub: "Pensaci bene.", a: "Molto di piu", scoreA: 1, b: "Piu o meno uguale", scoreB: 0, c: "Neanche per sogno", scoreC: 0, imageUrl: IMG_DAN },
-      { q: "Sei a una festa di p*nis e sedere. Cosa preferisci portare?", sub: "Scegli con saggezza.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Sedere", scoreB: 1, c: "👩 Mia mamma", scoreC: 0, imageUrl: IMG_PARTY },
+      { q: "Sei a una festa di p*nis e sedere. Cosa preferisci portare?", sub: "Scegli con saggezza.", a: "🍆 P*nis", scoreA: 1, b: "🍑 Sedere", scoreB: 1, c: "👩 Tua madre", scoreC: 0, imageUrl: IMG_PARTY },
     ],
     resultTitle: (a) => a === 1 ? "Sei Gay 🏳️‍🌈" : `Sei Gay x${a} 🏳️‍🌈`,
     resultDesc: (a) => a === 1
