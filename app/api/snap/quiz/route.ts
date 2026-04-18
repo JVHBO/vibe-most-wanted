@@ -389,24 +389,25 @@ function extractSnapUser(body: unknown) {
   const contextUser = asRecord(context.user);
   const interactor = asRecord(untrusted.interactor);
 
+  // context.user vem do cliente Farcaster (mais confiável que untrustedData)
   const fid = readNumber(
+    contextUser.fid,
+    interactor.fid,
     untrusted.fid,
     trusted.fid,
     user.fid,
-    contextUser.fid,
-    interactor.fid,
     root.fid,
   );
 
   const username = readString(
+    contextUser.username,
+    contextUser.displayName,
+    interactor.username,
     untrusted.username,
     user.username,
-    contextUser.username,
-    interactor.username,
     root.username,
     untrusted.displayName,
     user.displayName,
-    contextUser.displayName,
   ) ?? (fid ? `fid${fid}` : "unknown");
 
   return { fid, username };
