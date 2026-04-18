@@ -593,7 +593,7 @@ async function handleRequest(req: NextRequest) {
     return htmlFallback();
   }
 
-  const view  = searchParams.get("view") ?? "intro";
+  const view  = searchParams.get("view") ?? "troll";
   const lang  = (LANGS.includes(searchParams.get("lang") as Lang) ? searchParams.get("lang") : "en") as Lang;
   const score = Math.max(0, parseInt(searchParams.get("s") ?? "0", 10));
   const qi    = Math.max(0, parseInt(searchParams.get("qi") ?? "1", 10));
