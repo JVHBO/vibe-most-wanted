@@ -17,27 +17,33 @@ export const SlotPreview = memo(function SlotPreview() {
   const [landed, setLanded] = useState([false,false,false]);
 
   useEffect(() => {
-    if (isBaseApp) return;
     const t: ReturnType<typeof setTimeout>[] = [];
+    // Slower cycle on Base App to reduce CPU usage
+    const fallDelay = isBaseApp ? 180 : 130;
+    const showDelay = isBaseApp ? 800 : 600;
+    const winDelay  = isBaseApp ? 600 : 400;
+    const winHold   = isBaseApp ? 1400 : 1000;
+    const vanishGap = isBaseApp ? 500 : 350;
+
     if (phase === "fall") {
       setLanded([false,false,false]);
       [0,1,2].forEach(col => {
-        t.push(setTimeout(() => setLanded(p => { const n=[...p]; n[col]=true; return n; }), col * 130));
+        t.push(setTimeout(() => setLanded(p => { const n=[...p]; n[col]=true; return n; }), col * fallDelay));
       });
-      t.push(setTimeout(() => setPhase("show"), 600));
+      t.push(setTimeout(() => setPhase("show"), showDelay));
     } else if (phase === "show") {
-      t.push(setTimeout(() => setPhase("win"), 400));
+      t.push(setTimeout(() => setPhase("win"), winDelay));
     } else if (phase === "win") {
-      t.push(setTimeout(() => setPhase("vanish"), 1000));
+      t.push(setTimeout(() => setPhase("vanish"), winHold));
     } else {
-      t.push(setTimeout(() => { setCi(i => (i+1) % COMBOS.length); setPhase("fall"); }, 350));
+      t.push(setTimeout(() => { setCi(i => (i+1) % COMBOS.length); setPhase("fall"); }, vanishGap));
     }
     return () => t.forEach(clearTimeout);
   }, [isBaseApp, phase]);
 
-  const combo = COMBOS[isBaseApp ? 0 : ci];
-  const isWinPhase = isBaseApp ? true : phase === "win";
-  const landedState = isBaseApp ? [true, true, true] : landed;
+  const combo = COMBOS[ci];
+  const isWinPhase = phase === "win";
+  const landedState = landed;
 
   return (
     <div style={{ position:"absolute", right:0, top:0, bottom:0, width:"55%", display:"flex", alignItems:"center", justifyContent:"center", padding:"4px 6px", opacity: 0.75 }}>
@@ -54,7 +60,7 @@ export const SlotPreview = memo(function SlotPreview() {
               width:22, height:26,
               transform: isVanish ? "translateY(-12px)" : isLanded ? "translateY(0)" : "translateY(-20px)",
               opacity: isVanish ? 0 : isLanded ? 1 : 0,
-              transition: isBaseApp ? undefined : isVanish
+              transition: isVanish
                 ? `transform 0.22s ease-in, opacity 0.22s ease-in`
                 : `transform 0.2s cubic-bezier(.34,1.56,.64,1) ${col*0.05}s, opacity 0.15s ease ${col*0.05}s`,
             }}>

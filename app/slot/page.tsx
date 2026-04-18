@@ -11,6 +11,8 @@ import LoadingSpinner, { PageLoadingSpinner } from "@/components/LoadingSpinner"
 import { useProfile } from "@/contexts/ProfileContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useFarcasterVBMSBalance, useFarcasterTransferVBMS, useFarcasterApproveVBMS } from "@/lib/hooks/useFarcasterVBMS";
+import { useClaimVBMS } from "@/lib/hooks/useVBMSContracts";
+import { getFarcasterProvider as getFarcasterSdkProvider } from "@/lib/utils/miniapp";
 import { CONTRACTS } from "@/lib/contracts";
 import { parseEther } from "viem";
 import { toast } from "sonner";
@@ -239,6 +241,7 @@ export default function SlotPage() {
   const { balance: vbmsBalance, refetch: refetchVBMS } = useFarcasterVBMSBalance(address || '');
   const { approve } = useFarcasterApproveVBMS();
   const { transfer } = useFarcasterTransferVBMS();
+  const { claimVBMS } = useClaimVBMS();
 
   // SlotCoinShop state (must be declared before hooks that use them)
   const [buyCoinsAmount, setBuyCoinsAmount] = useState("1000");
@@ -548,14 +551,37 @@ export default function SlotPage() {
     setErrorMsg(null);
 
     try {
-      // Deduct coins and record withdrawal (VBMS transfer handled off-chain by admin)
-      await convex.mutation(api.slot.withdrawVBMS, { address, amount });
+      // Step 1: Prepare claim via REST (deducts coins + returns signature)
+      const res = await fetch('/api/slot/prepare-withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address, amount }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || tr("error"));
+
+      toast.info("🔐 Aguardando assinatura da carteira...");
+
+      // Step 2: Submit on-chain claim immediately after REST (preserves wallet popup gesture)
+      let signingAddress = address as string;
+      try {
+        const provider = await getFarcasterSdkProvider();
+        if (provider) {
+          const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
+          if (accounts && accounts.length > 0) signingAddress = accounts[0];
+        }
+      } catch (_) { /* use wagmi address */ }
+
+      await claimVBMS(
+        result.amount.toString(),
+        result.nonce as `0x${string}`,
+        result.signature as `0x${string}`
+      );
 
       setWithdrawStep("done");
       toast.success(tr("withdrawSuccess"));
       setShowWithdraw(false);
       setWithdrawAmount("");
-
       refetchVBMS();
     } catch (error: any) {
       console.error("Withdraw error:", error);

@@ -9,7 +9,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation, query, internalMutation, internalAction, internalQuery } from "./_generated/server";
+import { mutation, query, action, internalMutation, internalAction, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
 import {
   resolveSlotSpin,
@@ -511,6 +511,58 @@ export const withdrawVBMS = mutation({
       vbmsMinted: amount,
       newBalance: currentCoins - coinCost,
     };
+  },
+});
+
+// ─── Slot Withdraw: deduct coins + sign VBMS claim ─────────────────────────
+
+export const prepareWithdraw = action({
+  args: { address: v.string(), amount: v.number() },
+  handler: async (ctx, { address, amount }): Promise<{
+    amount: number;
+    nonce: string;
+    signature: string;
+  }> => {
+    // 1. Deduct coins from DB (reuse existing mutation)
+    await ctx.runMutation(internal.slot.withdrawVBMSInternal, { address, amount });
+
+    // 2. Generate nonce + sign
+    const nonce = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
+      address,
+      amount,
+      nonce,
+    });
+
+    return { amount, nonce, signature };
+  },
+});
+
+// Internal version of withdrawVBMS for use by prepareWithdraw action
+export const withdrawVBMSInternal = internalMutation({
+  args: { address: v.string(), amount: v.number() },
+  handler: async (ctx, { address, amount }) => {
+    const profile = await getProfileByAddress(ctx, address);
+    if (!profile) throw new Error("Profile not found");
+    const coinCost = amount;
+    const currentCoins = profile.coins || 0;
+    if (currentCoins < coinCost) throw new Error(`Insufficient coins. Need ${coinCost} coins for ${amount} VBMS`);
+
+    await ctx.db.patch(profile._id, {
+      coins: currentCoins - coinCost,
+      lifetimeSpent: (profile.lifetimeSpent || 0) + coinCost,
+    });
+    await ctx.db.insert("coinTransactions", {
+      address,
+      type: "convert",
+      amount: coinCost,
+      source: "vbms_withdraw",
+      description: `Sacou ${amount} VBMS (${coinCost} coins)`,
+      balanceBefore: currentCoins,
+      balanceAfter: currentCoins - coinCost,
+      timestamp: Date.now(),
+    });
+    return { success: true };
   },
 });
 
