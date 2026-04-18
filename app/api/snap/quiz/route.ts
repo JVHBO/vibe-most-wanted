@@ -99,7 +99,7 @@ const STRINGS: Record<Lang, T> = {
     shareText: (a, u) => a === 1
       ? `I just took the 'Are You Gay?' quiz from @jvhbo and I AM GAY 🏳️‍🌈 (confirmed by science). Take it yourself:`
       : `I took the 'Are You Gay?' quiz from @jvhbo ${a} times. I am GAY x${a} 🏳️‍🌈. The more I try, the gayer I get. Take it:`,
-    congratsText: () => `🎉 Congratulations to me for coming out! 🏳️‍🌈 Science has confirmed it — I am officially GAY. Take the quiz:\n${SNAP_URL}`,
+    congratsText: () => `🏳️‍🌈 Science has confirmed it — I am officially GAY. Take the quiz:\n${SNAP_URL}`,
     leaderboardTitle: "🏳️‍🌈 Hall of Gay",
     leaderboardBack: "← Back",
     heteroLabel: "Hetero (unique)",
@@ -137,7 +137,7 @@ const STRINGS: Record<Lang, T> = {
     shareText: (a, u) => a === 1
       ? `Fiz o quiz 'Você Seria Gay?' do @jvhbo e EU SOU GAY 🏳️‍🌈 (confirmado pela ciência). Faça o seu:`
       : `Fiz o quiz 'Você Seria Gay?' do @jvhbo ${a} vezes. Sou GAY x${a} 🏳️‍🌈. Quanto mais tento, mais gay fico. Faça o seu:`,
-    congratsText: () => `🎉 Parabéns para mim por me assumir! 🏳️‍🌈 A ciência confirmou — eu sou oficialmente GAY. Faça o quiz:\n${SNAP_URL}`,
+    congratsText: () => `🏳️‍🌈 A ciência confirmou — eu sou oficialmente GAY. Faça o quiz:\n${SNAP_URL}`,
     leaderboardTitle: "🏳️‍🌈 Hall of Gay",
     leaderboardBack: "← Voltar",
     heteroLabel: "Hétero (único)",
@@ -175,7 +175,7 @@ const STRINGS: Record<Lang, T> = {
     shareText: (a, u) => a === 1
       ? `Hice el quiz '¿Eres Gay?' de @jvhbo y SOY GAY 🏳️‍🌈 (confirmado por la ciencia). Pruébalo:`
       : `Hice el quiz '¿Eres Gay?' de @jvhbo ${a} veces. Soy GAY x${a} 🏳️‍🌈. Cuanto más intento, más gay soy. Pruébalo:`,
-    congratsText: () => `🎉 ¡Felicidades a mí por salir del clóset! 🏳️‍🌈 La ciencia lo ha confirmado — soy oficialmente GAY. Haz el quiz:\n${SNAP_URL}`,
+    congratsText: () => `🏳️‍🌈 La ciencia lo ha confirmado — soy oficialmente GAY. Haz el quiz:\n${SNAP_URL}`,
     leaderboardTitle: "🏳️‍🌈 Hall of Gay",
     leaderboardBack: "← Volver",
     heteroLabel: "Hetero (único)",
@@ -213,7 +213,7 @@ const STRINGS: Record<Lang, T> = {
     shareText: (a, u) => a === 1
       ? `Je viens de faire le quiz 'Es-tu Gay?' de @jvhbo et JE SUIS GAY 🏳️‍🌈 (confirmé par la science). Essaie le tien:`
       : `J'ai fait le quiz 'Es-tu Gay?' de @jvhbo ${a} fois. Je suis GAY x${a} 🏳️‍🌈. Plus j'essaie, plus je suis gay. Essaie:`,
-    congratsText: () => `🎉 Félicitations à moi d'être sorti du placard ! 🏳️‍🌈 La science le confirme — je suis officiellement GAY. Fais le quiz :\n${SNAP_URL}`,
+    congratsText: () => `🏳️‍🌈 La science le confirme — je suis officiellement GAY. Fais le quiz :\n${SNAP_URL}`,
     leaderboardTitle: "🏳️‍🌈 Hall of Gay",
     leaderboardBack: "← Retour",
     heteroLabel: "Hétéro (unique)",
@@ -251,7 +251,7 @@ const STRINGS: Record<Lang, T> = {
     shareText: (a, u) => a === 1
       ? `@jvhboの「あなたはゲイ?」クイズをやったらゲイでした 🏳️‍🌈（科学的に証明済み）。やってみて:`
       : `@jvhboのクイズを${a}回やりました。ゲイ x${a} 🏳️‍🌈。やればやるほどゲイになる。やってみて:`,
-    congratsText: () => `🎉 カミングアウトおめでとう！🏳️‍🌈 科学が証明しました — 私は公式にゲイです。クイズをやってみて:\n${SNAP_URL}`,
+    congratsText: () => `🏳️‍🌈 科学が証明しました — 私は公式にゲイです。クイズをやってみて:\n${SNAP_URL}`,
     leaderboardTitle: "🏳️‍🌈 ゲイの殿堂",
     leaderboardBack: "← 戻る",
     heteroLabel: "ヘテロ（唯一）",
