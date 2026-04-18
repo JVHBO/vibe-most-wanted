@@ -524,7 +524,9 @@ async function handleRequest(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const accept = req.headers.get("accept") ?? "";
 
-  if (!accept.includes("application/vnd.farcaster.snap")) {
+  // Only GET needs HTML fallback for crawler discovery.
+  // Signed action POSTs may omit the snap Accept header but must still receive snap JSON.
+  if (req.method === "GET" && !accept.includes("application/vnd.farcaster.snap")) {
     return htmlFallback();
   }
 
