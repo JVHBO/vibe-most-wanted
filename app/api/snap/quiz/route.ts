@@ -504,7 +504,7 @@ function viewQGeneric(qi: number, score: number, lang: Lang) {
     : `${SNAP_URL}?view=q&qi=${qi + 1}&s=${score + add}&lang=${lang}`;
 
   const hasC = q.c !== undefined;
-  const hasImage = !!q.imageUrl;
+  const hasImage = !!q.imageUrl && !hasC;
   const children = ["meta", ...(hasImage ? ["img"] : []), "question", "sub", "btn_a", "btn_b", ...(hasC ? ["btn_c"] : [])];
 
   const els: Record<string, object> = {
