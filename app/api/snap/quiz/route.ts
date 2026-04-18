@@ -48,6 +48,7 @@ interface T {
   title: string; sub: string; start: string;
   qof: (n: number, t: number) => string;
   changeLang: string; share: string; retry: string; seeResults: string;
+  basedOnPrevious: (percent: number) => string;
   neynarQ: string; neynarSub: string; neynarPlaceholder: string; neynarNext: string;
   questions: Question[];
   resultTitle: (attempts: number) => string;
@@ -71,6 +72,7 @@ const STRINGS: Record<Lang, T> = {
     share: "🔁 Share this quiz",
     retry: "↩ Try again (gay x2)",
     seeResults: "🏆 See others' results",
+    basedOnPrevious: (p) => `Based on your previous answer: you are ${p}% gay.`,
     congrats: "🎉 Congratulate me!",
     neynarQ: "What do you think about Neynar?",
     neynarSub: "Your answer won't change the result. Or will it? 👀",
@@ -104,6 +106,7 @@ const STRINGS: Record<Lang, T> = {
     share: "🔁 Compartilhar o quiz",
     retry: "↩ Tentar de novo (gay x2)",
     seeResults: "🏆 Ver resultados",
+    basedOnPrevious: (p) => `Baseado na resposta anterior: voce e ${p}% gay.`,
     congrats: "🎉 Parabéns p/ mim!",
     neynarQ: "O que você pensa do Neynar?",
     neynarSub: "Sua resposta não muda o resultado. Ou muda? 👀",
@@ -137,6 +140,7 @@ const STRINGS: Record<Lang, T> = {
     share: "🔁 Compartir el quiz",
     retry: "↩ Intentar de nuevo (gay x2)",
     seeResults: "🏆 Ver resultados",
+    basedOnPrevious: (p) => `Basado en tu respuesta anterior: eres ${p}% gay.`,
     congrats: "🎉 ¡Felicítame!",
     neynarQ: "¿Qué piensas de Neynar?",
     neynarSub: "Tu respuesta no cambia el resultado. ¿O sí? 👀",
@@ -170,6 +174,7 @@ const STRINGS: Record<Lang, T> = {
     share: "🔁 Partager le quiz",
     retry: "↩ Réessayer (gay x2)",
     seeResults: "🏆 Voir les résultats",
+    basedOnPrevious: (p) => `Selon ta reponse precedente : tu es gay a ${p}%.`,
     congrats: "🎉 Félicitez-moi!",
     neynarQ: "Que penses-tu de Neynar?",
     neynarSub: "Ta réponse ne changera pas le résultat. Ou si? 👀",
@@ -203,6 +208,7 @@ const STRINGS: Record<Lang, T> = {
     share: "🔁 Condividi il quiz",
     retry: "↩ Riprova (gay x2)",
     seeResults: "🏆 Vedi i risultati",
+    basedOnPrevious: (p) => `In base alla risposta precedente: sei gay al ${p}%.`,
     congrats: "🎉 Congratulami!",
     neynarQ: "Cosa pensi di Neynar?",
     neynarSub: "La risposta non cambia il risultato. O sì? 👀",
@@ -299,6 +305,27 @@ function htmlFallback() {
 
 function dotBar(filled: number, total: number) {
   return Array.from({ length: total }, (_, i) => i < filled ? "●" : "○").join(" ");
+}
+
+function getGayPercentForStep(step: number, score: number) {
+  const safeScore = Math.max(0, Math.min(score, 4));
+  const stepBase = {
+    2: 14,
+    3: 37,
+    4: 29,
+    5: 63,
+    6: 82,
+  } as const;
+  const scoreBoost = {
+    2: 24,
+    3: 18,
+    4: 12,
+    5: 9,
+    6: 4,
+  } as const;
+  const base = stepBase[step as keyof typeof stepBase] ?? 50;
+  const boost = scoreBoost[step as keyof typeof scoreBoost] ?? 0;
+  return Math.max(0, Math.min(100, base + safeScore * boost));
 }
 
 function asRecord(value: unknown): MaybeRecord {
@@ -400,7 +427,7 @@ function viewQ1(score: number, lang: Lang) {
       root:     { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["prog", "bar", "img", "question", "sub", "btn_a", "btn_b"] },
       prog:     { type: "text", props: { content: s.qof(1, TOTAL_STEPS), size: "xs", color: "muted", align: "center" } },
       bar:      { type: "text", props: { content: dotBar(1, TOTAL_STEPS), size: "sm", align: "center" } },
-      img:      { type: "image", props: { src: IMG_Q1, aspectRatio: "2:1" } },
+      img:      { type: "image", props: { url: IMG_Q1, aspect: "2:1", alt: "Quiz intro image" } },
       question: { type: "text", props: { content: q.q, weight: "bold", size: "md", align: "center" } },
       sub:      { type: "text", props: { content: q.sub, size: "xs", color: "muted", align: "center" } },
       btn_a:    { type: "button", props: { label: q.a, variant: "primary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=qn&s=${score + q.scoreA}&lang=${lang}` } } } },
@@ -412,13 +439,15 @@ function viewQ1(score: number, lang: Lang) {
 // Step 2 — Neynar (text input, image neymar.png)
 function viewQNeynar(score: number, lang: Lang) {
   const s = STRINGS[lang];
+  const percent = getGayPercentForStep(2, score);
   return snap({
     root: "root",
     elements: {
-      root:     { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["prog", "bar", "img", "question", "sub", "input", "btn_next"] },
+      root:     { type: "stack", props: { direction: "vertical", gap: 2, padding: 3 }, children: ["prog", "bar", "analysis", "img", "question", "sub", "input", "btn_next"] },
       prog:     { type: "text", props: { content: s.qof(2, TOTAL_STEPS), size: "xs", color: "muted", align: "center" } },
       bar:      { type: "text", props: { content: dotBar(2, TOTAL_STEPS), size: "sm", align: "center" } },
-      img:      { type: "image", props: { src: IMG_NEYNAR, aspectRatio: "2:1" } },
+      analysis: { type: "text", props: { content: s.basedOnPrevious(percent), size: "xs", color: "muted", align: "center" } },
+      img:      { type: "image", props: { url: IMG_NEYNAR, aspect: "2:1", alt: "Neynar" } },
       question: { type: "text", props: { content: s.neynarQ, weight: "bold", size: "md", align: "center" } },
       sub:      { type: "text", props: { content: s.neynarSub, size: "xs", color: "muted", align: "center" } },
       input:    { type: "text_input", props: { placeholder: s.neynarPlaceholder, id: "neynar_opinion" } },
@@ -434,6 +463,7 @@ function viewQGeneric(qi: number, score: number, lang: Lang) {
   if (!q) return viewResult(score, lang, 0, "unknown");
 
   const step  = qi + 2;
+  const percent = getGayPercentForStep(step, score);
   const isLast = qi === 3;
   const mkUrl  = (add: number) => isLast
     ? `${SNAP_URL}?view=result&s=${score + add}&lang=${lang}`
@@ -441,18 +471,19 @@ function viewQGeneric(qi: number, score: number, lang: Lang) {
 
   const hasC    = q.c !== undefined;
   const isParty = qi === 2;
-  const children = ["prog", "bar", ...(isParty ? ["img"] : []), "question", "sub", "btn_a", "btn_b", ...(hasC ? ["btn_c"] : [])];
+  const children = ["prog", "bar", "analysis", ...(isParty ? ["img"] : []), "question", "sub", "btn_a", "btn_b", ...(hasC ? ["btn_c"] : [])];
 
   const els: Record<string, object> = {
     root:     { type: "stack", props: { direction: "vertical", gap: isParty ? 2 : 3, padding: 3 }, children },
     prog:     { type: "text", props: { content: s.qof(step, TOTAL_STEPS), size: "xs", color: "muted", align: "center" } },
     bar:      { type: "text", props: { content: dotBar(step, TOTAL_STEPS), size: "sm", align: "center" } },
+    analysis: { type: "text", props: { content: s.basedOnPrevious(percent), size: "xs", color: "muted", align: "center" } },
     question: { type: "text", props: { content: q.q, weight: "bold", size: isParty ? "md" : "lg", align: "center" } },
     sub:      { type: "text", props: { content: q.sub, size: "sm", color: "muted", align: "center" } },
     btn_a:    { type: "button", props: { label: q.a, variant: "primary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreA) } } } },
     btn_b:    { type: "button", props: { label: q.b, variant: "secondary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreB) } } } },
   };
-  if (isParty) els["img"] = { type: "image", props: { src: IMG_PARTY, aspectRatio: "2:1" } };
+  if (isParty) els["img"] = { type: "image", props: { url: IMG_PARTY, aspect: "2:1", alt: "Party" } };
   if (hasC)    els["btn_c"] = { type: "button", props: { label: q.c!, variant: "secondary" }, on: { press: { action: "submit", params: { target: mkUrl(q.scoreC ?? 0) } } } };
 
   return snap({ root: "root", elements: els });
