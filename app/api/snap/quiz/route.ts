@@ -51,7 +51,7 @@ interface T {
   qof: (n: number, t: number) => string;
   changeLang: string; share: string; retry: string; seeResults: string;
   basedOnPrevious: (percent: number) => string;
-  neynarQ: string; neynarSub: string; neynarA: string; neynarB: string; neynarNext: string;
+  neynarQ: string; neynarSub: string; neynarA: string; neynarB: string;
   questions: Question[];
   resultTitle: (attempts: number) => string;
   resultDesc: (attempts: number) => string;
@@ -62,6 +62,9 @@ interface T {
   leaderboardBack: string;
   heteroLabel: string;
   gayLabel: (attempts: number) => string;
+  leaderboardEmpty: string;
+  prevPage: string;
+  nextPage: string;
 }
 
 const STRINGS: Record<Lang, T> = {
@@ -80,7 +83,6 @@ const STRINGS: Record<Lang, T> = {
     neynarSub: "Your answer won't change the result. Or will it? 👀",
     neynarA: "He is iconic",
     neynarB: "No comment",
-    neynarNext: "Continue →",
     questions: [
       { q: "Have you ever had sexual relations with someone of the same sex?", sub: "No judgment. This is science.", a: "Absolutely not", scoreA: 0, b: "I mean... maybe", scoreB: 1 },
       { q: "Do you organize your wardrobe by color?", sub: "This one reveals everything.", a: "I just throw stuff in", scoreA: 0, b: "By color AND texture", scoreB: 1 },
@@ -100,6 +102,9 @@ const STRINGS: Record<Lang, T> = {
     leaderboardBack: "← Back",
     heteroLabel: "Hetero (unique)",
     gayLabel: (a) => a > 1 ? `Gay x${a}` : "Gay",
+    leaderboardEmpty: "No one else has taken the quiz yet. Be the first! 🏳️‍🌈",
+    prevPage: "← Prev",
+    nextPage: "Next →",
   },
   pt: {
     title: "Você Seria Gay? 🏳️‍🌈",
@@ -116,7 +121,6 @@ const STRINGS: Record<Lang, T> = {
     neynarSub: "Sua resposta não muda o resultado. Ou muda? 👀",
     neynarA: "Ele é icônico",
     neynarB: "Sem comentários",
-    neynarNext: "Continuar →",
     questions: [
       { q: "Você já teve relações com pessoas do mesmo sexo?", sub: "Sem julgamentos. Isso é ciência.", a: "Absolutamente não", scoreA: 0, b: "Tipo... talvez", scoreB: 1 },
       { q: "Você organiza seu guarda-roupa por cor?", sub: "Essa revela tudo.", a: "Jogo tudo dentro e fecho", scoreA: 0, b: "Por cor E textura", scoreB: 1 },
@@ -136,6 +140,9 @@ const STRINGS: Record<Lang, T> = {
     leaderboardBack: "← Voltar",
     heteroLabel: "Hétero (único)",
     gayLabel: (a) => a > 1 ? `Gay x${a}` : "Gay",
+    leaderboardEmpty: "Ninguém mais fez o quiz ainda. Seja o primeiro! 🏳️‍🌈",
+    prevPage: "← Anterior",
+    nextPage: "Próximo →",
   },
   es: {
     title: "¿Eres Gay? 🏳️‍🌈",
@@ -152,7 +159,6 @@ const STRINGS: Record<Lang, T> = {
     neynarSub: "Tu respuesta no cambia el resultado. ¿O sí? 👀",
     neynarA: "Es icónico",
     neynarB: "Sin comentarios",
-    neynarNext: "Continuar →",
     questions: [
       { q: "¿Has tenido relaciones con alguien del mismo sexo?", sub: "Sin juicios. Esto es ciencia.", a: "Absolutamente no", scoreA: 0, b: "Bueno... quizás", scoreB: 1 },
       { q: "¿Organizas tu armario por colores?", sub: "Esta lo revela todo.", a: "Tiro todo y cierro", scoreA: 0, b: "Por color Y textura", scoreB: 1 },
@@ -172,6 +178,9 @@ const STRINGS: Record<Lang, T> = {
     leaderboardBack: "← Volver",
     heteroLabel: "Hetero (único)",
     gayLabel: (a) => a > 1 ? `Gay x${a}` : "Gay",
+    leaderboardEmpty: "Nadie más ha hecho el quiz todavía. ¡Sé el primero! 🏳️‍🌈",
+    prevPage: "← Anterior",
+    nextPage: "Siguiente →",
   },
   fr: {
     title: "Es-tu Gay? 🏳️‍🌈",
@@ -188,7 +197,6 @@ const STRINGS: Record<Lang, T> = {
     neynarSub: "Ta réponse ne changera pas le résultat. Ou si? 👀",
     neynarA: "Il est iconique",
     neynarB: "Sans commentaire",
-    neynarNext: "Continuer →",
     questions: [
       { q: "As-tu eu des relations avec quelqu'un du même sexe?", sub: "Sans jugement. C'est de la science.", a: "Absolument pas", scoreA: 0, b: "Disons... peut-être", scoreB: 1 },
       { q: "Organises-tu ta garde-robe par couleur?", sub: "Celle-ci révèle tout.", a: "Je jette tout dedans", scoreA: 0, b: "Par couleur ET texture", scoreB: 1 },
@@ -208,6 +216,9 @@ const STRINGS: Record<Lang, T> = {
     leaderboardBack: "← Retour",
     heteroLabel: "Hétéro (unique)",
     gayLabel: (a) => a > 1 ? `Gay x${a}` : "Gay",
+    leaderboardEmpty: "Personne d'autre n'a encore fait le quiz. Sois le premier ! 🏳️‍🌈",
+    prevPage: "← Précédent",
+    nextPage: "Suivant →",
   },
   it: {
     title: "Sei Gay? 🏳️‍🌈",
@@ -224,7 +235,6 @@ const STRINGS: Record<Lang, T> = {
     neynarSub: "La risposta non cambia il risultato. O sì? 👀",
     neynarA: "E iconico",
     neynarB: "Nessun commento",
-    neynarNext: "Continua →",
     questions: [
       { q: "Hai mai avuto relazioni con qualcuno dello stesso sesso?", sub: "Senza giudizi. Questa è scienza.", a: "Assolutamente no", scoreA: 0, b: "Tipo... forse", scoreB: 1 },
       { q: "Organizzi il tuo armadio per colore?", sub: "Questa la rivela tutto.", a: "Butto tutto dentro", scoreA: 0, b: "Per colore E texture", scoreB: 1 },
@@ -244,6 +254,9 @@ const STRINGS: Record<Lang, T> = {
     leaderboardBack: "← Indietro",
     heteroLabel: "Etero (unico)",
     gayLabel: (a) => a > 1 ? `Gay x${a}` : "Gay",
+    leaderboardEmpty: "Nessun altro ha ancora fatto il quiz. Sii il primo! 🏳️‍🌈",
+    prevPage: "← Precedente",
+    nextPage: "Successivo →",
   },
 };
 
@@ -448,7 +461,7 @@ function viewQ1(score: number, lang: Lang) {
   });
 }
 
-// Step 2 — Neynar (text input, image neymar.png)
+// Step 2 — Neynar
 function viewQNeynar(score: number, lang: Lang) {
   const s = STRINGS[lang];
   const percent = getGayPercentForStep(2, score);
@@ -512,8 +525,8 @@ function viewResult(score: number, lang: Lang, attempts: number, username: strin
       emoji:      { type: "text", props: { content: "🏳️‍🌈", size: "xl", align: "center" } },
       title:      { type: "text", props: { content: title, weight: "bold", size: "xl", align: "center" } },
       desc:       { type: "text", props: { content: desc, size: "sm", align: "center", color: "muted" } },
-      btn_share:  { type: "button", props: { label: s.share, variant: "primary" }, on: { press: { action: "compose_cast", params: { text: shareMsg, embeds: [`${SNAP_URL}?view=intro&lang=${lang}`] } } } },
-      btn_congrats: { type: "button", props: { label: s.congrats, variant: "secondary" }, on: { press: { action: "compose_cast", params: { text: congrats, embeds: [`${SNAP_URL}?view=intro&lang=${lang}`] } } } },
+      btn_share:  { type: "button", props: { label: s.share, variant: "primary" }, on: { press: { action: "compose_cast", params: { text: shareMsg } } } },
+      btn_congrats: { type: "button", props: { label: s.congrats, variant: "secondary" }, on: { press: { action: "compose_cast", params: { text: congrats } } } },
       btn_retry:  { type: "button", props: { label: s.retry, variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=intro&lang=${lang}` } } } },
       btn_lb:     { type: "button", props: { label: s.seeResults, variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=lb&lang=${lang}` } } } },
     },
@@ -539,7 +552,7 @@ async function viewLeaderboard(lang: Lang, page: number) {
   }
 
   if (lines.length === 1) {
-    lines.push("No one else has taken the quiz yet. Be the first! 🏳️‍🌈");
+    lines.push(s.leaderboardEmpty);
   }
 
   const navChildren = [
@@ -554,10 +567,10 @@ async function viewLeaderboard(lang: Lang, page: number) {
   els["nav"] = { type: "stack", props: { direction: "horizontal", gap: "sm", justify: "center" }, children: navChildren };
   els["page_info"] = { type: "text", props: { content: `${safePage + 1}/${totalPages}`, size: "xs", color: "muted", align: "center" } };
   if (safePage > 0) {
-    els["btn_prev"] = { type: "button", props: { label: "← Prev", variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=lb&lang=${lang}&page=${safePage - 1}` } } } };
+    els["btn_prev"] = { type: "button", props: { label: s.prevPage, variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=lb&lang=${lang}&page=${safePage - 1}` } } } };
   }
   if (safePage < totalPages - 1) {
-    els["btn_next"] = { type: "button", props: { label: "Next →", variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=lb&lang=${lang}&page=${safePage + 1}` } } } };
+    els["btn_next"] = { type: "button", props: { label: s.nextPage, variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=lb&lang=${lang}&page=${safePage + 1}` } } } };
   }
   els["btn_back"] = { type: "button", props: { label: s.leaderboardBack, variant: "secondary" }, on: { press: { action: "submit", params: { target: `${SNAP_URL}?view=intro&lang=${lang}` } } } };
 
