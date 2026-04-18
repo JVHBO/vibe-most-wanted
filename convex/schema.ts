@@ -2314,4 +2314,13 @@ export default defineSchema({
     lastBaseBlock: v.optional(v.number()),
     lastArbBlock:  v.optional(v.number()),
   }),
+
+  gayQuizResults: defineTable({
+    fid: v.number(),
+    username: v.string(),
+    attempts: v.number(),        // how many times they took the quiz
+    timestamp: v.number(),
+  })
+    .index("by_fid", ["fid"])
+    .index("by_attempts_and_timestamp", ["attempts", "timestamp"]),
 });

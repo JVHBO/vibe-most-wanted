@@ -40,6 +40,7 @@ import type * as farcasterCards from "../farcasterCards.js";
 import type * as farcasterCardsAdmin from "../farcasterCardsAdmin.js";
 import type * as featuredCasts from "../featuredCasts.js";
 import type * as fixAuctionTimer from "../fixAuctionTimer.js";
+import type * as gayQuiz from "../gayQuiz.js";
 import type * as http from "../http.js";
 import type * as importData from "../importData.js";
 import type * as languageBoost from "../languageBoost.js";
@@ -119,6 +120,7 @@ declare const fullApi: ApiFromModules<{
   farcasterCardsAdmin: typeof farcasterCardsAdmin;
   featuredCasts: typeof featuredCasts;
   fixAuctionTimer: typeof fixAuctionTimer;
+  gayQuiz: typeof gayQuiz;
   http: typeof http;
   importData: typeof importData;
   languageBoost: typeof languageBoost;
