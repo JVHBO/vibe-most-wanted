@@ -1,5 +1,5 @@
 {
-  "ignoreCommand": "git diff HEAD~1 --name-only | grep -qvE '^(app|convex|lib|components|hooks|public|next\\.config|package\\.json|vercel\\.json)'",
+  "ignoreCommand": "git diff HEAD~1 --name-only | grep -qvE '^(app|convex|lib|components|hooks|public|contexts|tests|next\\.config|package\\.json|vercel\\.json)'",
   "headers": [
     {
       "source": "/.well-known/farcaster.json",
