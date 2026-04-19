@@ -336,9 +336,9 @@ describe('calculateDeckPower', () => {
       makeCard({ power: 10, collection: 'vibe' }),    // 10 * 2x = 20
       makeCard({ power: 5, collection: 'nothing' }),   // 5 * 0.5x = 2 (floor)
       makeCard({ power: 100, collection: 'vibefid' }), // 100 * 5x = 500
-      makeCard({ power: 50, collection: 'nothing' }),   // 50 * 1x = 50
+      makeCard({ power: 50, collection: 'nothing' }),   // 50 * 0.5x = 25
     ];
-    expect(calculateDeckPower(cards)).toBe(20 + 2 + 500 + 50);
+    expect(calculateDeckPower(cards)).toBe(20 + 2 + 500 + 25);
   });
 });
 
@@ -478,11 +478,11 @@ describe('getDeckStats', () => {
     ];
     const stats = getDeckStats(cards);
     expect(stats.totalCards).toBe(3);
-    // Display powers: 10, 20, 80 (1x multiplier for nothing)
-    expect(stats.totalPower).toBe(110);
-    expect(stats.averagePower).toBe(Math.round(110 / 3));
-    expect(stats.minPower).toBe(10);
-    expect(stats.maxPower).toBe(80);
+    // Display powers: 5, 10, 40 (0.5x multiplier for nothing)
+    expect(stats.totalPower).toBe(55);
+    expect(stats.averagePower).toBe(Math.round(55 / 3));
+    expect(stats.minPower).toBe(5);
+    expect(stats.maxPower).toBe(40);
   });
 
   it('counts rarity distribution', () => {

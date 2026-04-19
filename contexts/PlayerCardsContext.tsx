@@ -450,8 +450,6 @@ export function PlayerCardsProvider({ children }: { children: ReactNode }) {
             if (!wieldData && contractAddr) {
               if (isVibeFID) {
                 collection = 'vibefid';
-              } else if (contractAddr === getCollectionContract('viberuto')?.toLowerCase()) {
-                collection = 'viberuto';
               }
             }
 

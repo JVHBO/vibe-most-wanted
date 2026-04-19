@@ -183,18 +183,6 @@ export const VIBEFID_BOSSES: Record<CardRarity, BossCard> = {
 export const ALL_BOSS_CARDS: Record<CollectionId, Record<CardRarity, BossCard>> = {
   vibe: VBMS_BOSSES,
   vibefid: VIBEFID_BOSSES,
-  // External collections disabled for VMW-only raid rotation
-  gmvbrs: {} as Record<CardRarity, BossCard>,
-  viberuto: {} as Record<CardRarity, BossCard>,
-  meowverse: {} as Record<CardRarity, BossCard>,
-  viberotbangers: {} as Record<CardRarity, BossCard>,
-  poorlydrawnpepes: {} as Record<CardRarity, BossCard>,
-  teampothead: {} as Record<CardRarity, BossCard>,
-  tarot: {} as Record<CardRarity, BossCard>,
-  baseballcabal: {} as Record<CardRarity, BossCard>,
-  vibefx: {} as Record<CardRarity, BossCard>,
-  historyofcomputer: {} as Record<CardRarity, BossCard>,
-  cumioh: {} as Record<CardRarity, BossCard>,
   nothing: {} as Record<CardRarity, BossCard>,
   custom: {} as Record<CardRarity, BossCard>,
 };
