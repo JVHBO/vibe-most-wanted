@@ -70,6 +70,12 @@ export const cleanOldMatchesBatch = internalMutation({
   },
 });
 
+/** ONE BATCH: wipe ALL matches */
+export const wipeAllMatchesBatch = internalMutation({
+  args: {},
+  handler: async (ctx) => wipeBatch(ctx, "matches"),
+});
+
 /** ONE BATCH: delete matches > 30 days */
 export const cleanOldMatchesBatch30 = internalMutation({
   args: {},

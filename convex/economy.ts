@@ -471,31 +471,11 @@ export const previewPvPRewards = query({
     const isToday = dailyLimits.lastResetDate === today;
     const firstPvpBonus = isToday && !dailyLimits.firstPvpBonus ? BONUSES.firstPvp : 0;
 
-    // Check for revenge match (opponent previously defeated player)
     const normalizedPlayerAddress = playerAddress.toLowerCase();
     const normalizedOpponentAddress = opponentAddress.toLowerCase();
-    const lastOpponentVictory = await ctx.db
-      .query("matches")
-      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedOpponentAddress))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("opponentAddress"), normalizedPlayerAddress),
-          q.eq(q.field("result"), "win")
-        )
-      )
-      .order("desc")
-      .first();
-
-    const isRevenge = lastOpponentVictory !== null;
-    let revengeBonus = 0;
-    let rewardWithRevenge = winReward;
-
-    if (isRevenge) {
-      revengeBonus = Math.round(winReward * (REVENGE_BONUS - 1)); // 20% of base reward
-      rewardWithRevenge = Math.round(winReward * REVENGE_BONUS);
-    }
-
-    // Calculate total potential rewards
+    const isRevenge = false;
+    const revengeBonus = 0;
+    const rewardWithRevenge = winReward;
     const totalWinReward = rewardWithRevenge + streakBonus + firstPvpBonus;
 
     return {
@@ -1555,21 +1535,7 @@ export const recordAttackResult = mutation({
     const won = args.result === 'win';
     const rankingMultiplier = calculateAuraMultiplier(playerAura, opponentAura, won);
 
-    // ===== STEP 2.5: Check for revenge match =====
-    // Revenge = opponent previously defeated this player
-    const lastOpponentVictory = await ctx.db
-      .query("matches")
-      .withIndex("by_player", (q) => q.eq("playerAddress", normalizedOpponentAddress))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("opponentAddress"), normalizedPlayerAddress),
-          q.eq(q.field("result"), "win")
-        )
-      )
-      .order("desc")
-      .first();
-
-    const isRevenge = lastOpponentVictory !== null;
+    const isRevenge = false;
 
     // ===== STEP 3: Calculate and award/deduct coins =====
     let newStreak = profile.winStreak || 0;
@@ -1770,22 +1736,7 @@ export const recordAttackResult = mutation({
       }
     }
 
-    // ===== STEP 4: Record match history =====
-    const stripCards = (cards: any[]) => cards.map(c => ({ tokenId: c.tokenId, power: c.power }));
-    const matchId = await ctx.db.insert("matches", {
-      playerAddress: normalizedPlayerAddress,
-      type: "attack",
-      result: args.result,
-      playerPower: args.playerPower,
-      opponentPower: args.opponentPower,
-      opponentAddress: normalizedOpponentAddress,
-      opponentUsername: args.opponentUsername,
-      timestamp: Date.now(),
-      playerCards: stripCards(args.playerCards),
-      opponentCards: stripCards(args.opponentCards),
-      coinsEarned: totalReward,
-      entryFeePaid: args.entryFeePaid,
-    });
+    // ===== STEP 4: Match history removed =====
 
     // ===== STEP 5: Update profile stats (all at once) =====
     const newStats = { ...profile.stats };
@@ -1954,7 +1905,6 @@ export const recordAttackResult = mutation({
     }
 
     console.log("⚛️ ATOMIC: Attack result recorded successfully", {
-      matchId,
       result: args.result,
       coinsAwarded: totalReward,
       newBalance: newCoins,
@@ -1963,7 +1913,6 @@ export const recordAttackResult = mutation({
 
     return {
       success: true,
-      matchId,
       coinsAwarded: totalReward,
       bonuses,
       winStreak: newStreak,
@@ -2122,91 +2071,3 @@ export const awardShareBonus = mutation({
  * Award TESTVBMS coins for poker battles
  * Used when player wins a poker game with TESTVBMS ante
  */
-export const awardPokerCoins = mutation({
-  args: {
-    address: v.string(),
-    matchId: v.id("matches"),
-  },
-  handler: async (ctx, { address, matchId }) => {
-    let profile = await getProfileByAddress(ctx, address);
-
-    if (!profile) {
-      throw new Error("Profile not found");
-    }
-
-    // Get match data
-    const match = await ctx.db.get(matchId);
-    if (!match) {
-      throw new Error("Match not found");
-    }
-
-    // Verify match belongs to this player
-    if (match.playerAddress.toLowerCase() !== address.toLowerCase()) {
-      throw new Error("Unauthorized: Match does not belong to this player");
-    }
-
-    // Check if rewards already claimed
-    if (match.rewardsClaimed) {
-      throw new Error("Rewards already claimed for this match");
-    }
-
-    const amount = match.coinsEarned || 0;
-
-    // Initialize economy if needed
-    if (profile.coins === undefined) {
-      const today = new Date().toISOString().split('T')[0];
-      await ctx.db.patch(profile._id, {
-        coins: 0,
-        lifetimeEarned: 0,
-        lifetimeSpent: 0,
-        dailyLimits: {
-          pveWins: 0,
-          pvpMatches: 0,
-          lastResetDate: today,
-          firstPveBonus: false,
-          firstPvpBonus: false,
-          loginBonus: false,
-          streakBonus: false,
-        },
-        winStreak: 0,
-        lastWinTimestamp: 0,
-      });
-      // Reload profile
-      const updatedProfile = await ctx.db.get(profile._id);
-      if (!updatedProfile) throw new Error("Failed to initialize economy");
-      profile = updatedProfile;
-    }
-
-    // Add TESTVBMS to profile.coins (same pattern as leaderboard)
-    const oldCoins = profile.coins || 0;
-    const newCoins = oldCoins + amount;
-    const lifetimeEarned = (profile.lifetimeEarned || 0) + amount;
-
-    console.log('[awardPokerCoins] Adding coins:', {
-      address: address.toLowerCase(),
-      matchId,
-      oldCoins,
-      amount,
-      newCoins,
-    });
-
-    await ctx.db.patch(profile._id, {
-      coins: newCoins,
-      lifetimeEarned,
-      lastUpdated: Date.now(),
-    });
-
-    // Mark match as claimed
-    await ctx.db.patch(matchId, {
-      rewardsClaimed: true,
-      claimedAt: Date.now(),
-      claimType: "immediate",
-    });
-
-    return {
-      success: true,
-      amount,
-      newBalance: newCoins,
-    };
-  },
-});
