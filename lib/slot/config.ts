@@ -125,6 +125,7 @@ export const SLOT_DEV_ALLOWED_ADDRESSES = [
   "0xddc754417cae5cd97b00b8fc7fcbae5f573216dd",
   "0xcf60075a449dec39843309c74ff7693baa35b824",
   "0x247116c752420ec7fe870d1549a1c2e8d44675c6",
+  "0x89b0e4670c44246cc9c2d86d04c34d91064311ed",
 ] as const;
 
 export const SLOT_CARD_POOL: SlotCardDefinition[] = [

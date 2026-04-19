@@ -15,11 +15,6 @@ const WIELD_BASE_URL = 'https://build.wield.xyz/vibe/boosterbox';
 // NOTE: vibefid = not boosterbox, nothing = Convex only (no contract)
 export const WIELD_COLLECTIONS: Record<string, { contract: string; slug: string }> = {
   vibe: { contract: '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728', slug: 'vibe-most-wanted' },
-  viberotbangers: { contract: '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a', slug: 'vibe-rot-bangers' },
-  meowverse: { contract: '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150', slug: 'meowverse' },
-  gmvbrs: { contract: '0xefe512e73ca7356c20a21aa9433bad5fc9342d46', slug: 'gm-vbrs' },
-  viberuto: { contract: '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f', slug: 'viberuto-packs' },
-  cumioh: { contract: '0xfeabae8bdb41b2ae507972180df02e70148b38e1', slug: 'cu-mi-oh' },
 };
 
 // Cache keys

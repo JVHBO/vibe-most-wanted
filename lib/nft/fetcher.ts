@@ -47,17 +47,6 @@ const WIELD_BASE_URL = 'https://build.wield.xyz/vibe/boosterbox';
 // Mapping of contract addresses to Wield slugs
 const WIELD_SLUGS: Record<string, string> = {
   '0xf14c1dc8ce5fe65413379f76c43fa1460c31e728': 'vibe-most-wanted',
-  '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a': 'vibe-rot-bangers',
-  '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150': 'meowverse',
-  '0xefe512e73ca7356c20a21aa9433bad5fc9342d46': 'gm-vbrs',
-  '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f': 'viberuto',
-  '0xc7f2d8c035b2505f30a5417c0374ac0299d88553': 'vibefx',
-  '0x319b12e8eba0be2eae1112b357ba75c2c178b567': 'history-of-computer',
-  '0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea': 'team-pothead',
-  '0x34d639c63384a00a2d25a58f73bea73856aa0550': 'tarot',
-  '0x3ff41af61d092657189b1d4f7d74d994514724bb': 'baseball-cabal',
-  '0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8': 'poorly-drawn-pepes',
-  '0xfeabae8bdb41b2ae507972180df02e70148b38e1': 'cu-mi-oh',
 };
 
 // Cache for Wield API responses

@@ -25,7 +25,6 @@ export interface SocialQuest {
 // Channel IDs from Farcaster
 export const CHANNEL_IDS = {
   'vibe-most-wanted': 'vibe-most-wanted',
-  'scum': 'scum', // cu-mi-oh channel
   'fidmfers': 'fidmfers',
 } as const;
 
@@ -196,21 +195,6 @@ export const SOCIAL_QUESTS: SocialQuest[] = [
     pfpUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/34b3b41e-6717-4653-ba0f-1d4007824600/original',
   },
 
-  // Cumioh
-  {
-    id: 'follow_degencummunist',
-    type: 'follow',
-    target: 'degencummunist.eth',
-    targetFid: 17355,
-    displayName: 'Follow @degencummunist.eth',
-    description: 'Follow Cumioh creator',
-    reward: 50,
-    icon: '',
-    url: 'https://warpcast.com/degencummunist.eth',
-    group: 'vbms',
-    pfpUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/7a30028d-83f9-46d9-1cc8-43b857638d00/original',
-    bannerUrl: 'https://imagedelivery.net/BXluQx4ige9GuW0Ia56BHw/63798561-7d8c-4e2c-5f28-8e4a9995c000/original',
-  },
 
   // --- ARB Creators ---
   {

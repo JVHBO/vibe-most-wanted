@@ -5,7 +5,7 @@
  * Para adicionar uma nova coleção, basta adicionar uma entrada no objeto COLLECTIONS.
  */
 
-export type CollectionId = 'vibe' | 'gmvbrs' | 'vibefid' | 'viberuto' | 'meowverse' | 'poorlydrawnpepes' | 'teampothead' | 'tarot' | 'baseballcabal' | 'vibefx' | 'historyofcomputer' | 'cumioh' | 'nothing' | 'viberotbangers' | 'custom'; // Adicione novos IDs aqui
+export type CollectionId = 'vibe' | 'vibefid' | 'nothing' | 'custom';
 
 export interface CollectionConfig {
   id: CollectionId;
@@ -17,10 +17,9 @@ export interface CollectionConfig {
   chain: string;
   ownerAddress?: string;
   enabled: boolean;
-  marketplaceUrl?: string; // Link para o marketplace da coleção
-  buttonText?: string; // Texto customizado do botão (ex: "BUY GM VBRS PACKS")
+  marketplaceUrl?: string;
+  buttonText?: string;
 
-  // Configurações específicas de cálculo de power
   powerCalculation?: {
     rarityBase?: {
       mythic?: number;
@@ -41,7 +40,6 @@ export interface CollectionConfig {
     };
   };
 
-  // Metadados adicionais
   metadata?: {
     imageBaseUrl?: string;
     fallbackImage?: string;
@@ -49,10 +47,6 @@ export interface CollectionConfig {
   };
 }
 
-/**
- * Configuração padrão de cálculo de power
- * Usado quando uma coleção não define suas próprias regras
- */
 export const DEFAULT_POWER_CONFIG = {
   rarityBase: {
     mythic: 800,
@@ -73,50 +67,27 @@ export const DEFAULT_POWER_CONFIG = {
   },
 };
 
-/**
- * Configuração de power balanceada para VibeFID
- * Reduz multiplicadores para evitar cartas extremamente OP
- *
- * Exemplos de Power:
- *
- * FID ≤ 5,000 (100% Prize + Pristine):
- *   - Mythic: 600 × 6.0 × 1.8 = 6,480 power
- *   - Legendary: 100 × 6.0 × 1.8 = 1,080 power
- *   - Epic: 50 × 6.0 × 1.8 = 540 power
- *   - Rare: 20 × 6.0 × 1.8 = 216 power
- *   - Common: 10 × 6.0 × 1.8 = 108 power
- *
- * FID 100,000 (probabilístico):
- *   - Mythic + Prize + Pristine (15% × 40%): 600 × 6.0 × 1.8 = 6,480 power
- *   - Mythic + Standard + Mint (50% × 40%): 600 × 2.0 × 1.4 = 1,680 power
- *   - Mythic + None + Lightly Played (35% × 20%): 600 × 1.0 × 1.0 = 600 power
- *   - Common + None + Lightly Played: 10 × 1.0 × 1.0 = 10 power
- */
 export const VIBEFID_POWER_CONFIG = {
   rarityBase: {
-    mythic: 600,    // Aumentado de 200
-    legendary: 100, // Mantido
-    epic: 50,       // Mantido
-    rare: 20,       // Mantido
-    common: 10,     // Mantido
+    mythic: 600,
+    legendary: 100,
+    epic: 50,
+    rare: 20,
+    common: 10,
   },
   wearMultiplier: {
-    pristine: 1.8,  // Padrão do site
-    mint: 1.4,      // Padrão do site
+    pristine: 1.8,
+    mint: 1.4,
     default: 1.0,
   },
   foilMultiplier: {
-    prize: 6.0,     // Aumentado de 3.0
-    standard: 2.0,  // Aumentado de 1.5
+    prize: 6.0,
+    standard: 2.0,
     none: 1.0,
   },
 };
 
-/**
- * Definição de todas as coleções disponíveis
- */
 export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
-  // Coleção original $VBMS
   vibe: {
     id: 'vibe',
     name: 'vibe',
@@ -131,19 +102,6 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     buttonText: 'BUY VBMS PACKS',
   },
 
-  // Coleção GM VBRS — REMOVIDA
-  gmvbrs: {
-    id: 'gmvbrs',
-    name: 'gmvbrs',
-    displayName: 'GM VBRS',
-    description: 'Coleção GM VBRS NFT',
-    contractAddress: '0xefe512e73ca7356c20a21aa9433bad5fc9342d46',
-    chain: 'base-mainnet',
-    enabled: false,
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-  // Collection VibeFID V2 (Base + Arbitrum)
   vibefid: {
     id: 'vibefid',
     name: 'vibefid',
@@ -158,134 +116,12 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: VIBEFID_POWER_CONFIG,
   },
 
-  // Collection Viberuto — REMOVIDA
-  viberuto: {
-    id: 'viberuto',
-    name: 'viberuto',
-    displayName: 'Viberuto',
-    description: 'Collection Viberuto NFT',
-    contractAddress: '0x70b4005a83a0b39325d27cf31bd4a7a30b15069f',
-    chain: 'base-mainnet',
-    enabled: false,
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-  // Collection Meowverse — REMOVIDA
-  meowverse: {
-    id: 'meowverse',
-    name: 'meowverse',
-    displayName: 'Meowverse',
-    description: 'Collection Meowverse NFT',
-    contractAddress: '0xf0bf71bcd1f1aeb1ba6be0afbc38a1abe9aa9150',
-    chain: 'base-mainnet',
-    enabled: false,
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-    // Collection Poorly Drawn Pepes
-  poorlydrawnpepes: {
-    id: 'poorlydrawnpepes',
-    name: 'poorlydrawnpepes',
-    displayName: 'Poorly Drawn Pepes',
-    description: 'Collection Poorly Drawn Pepes NFT',
-    contractAddress: '0x8cb5b730943b25403ccac6d5fd649bd0cbde76d8',
-    chain: 'base-mainnet',
-    enabled: false, // Disabled to reduce Alchemy costs
-    marketplaceUrl: 'https://vibechain.com/market/poorly-drawn-pepes?ref=XCLR1DJ6LQTT',
-    buttonText: 'BUY PDP PACKS',
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-    // Collection Team Pothead
-  teampothead: {
-    id: 'teampothead',
-    name: 'teampothead',
-    displayName: 'Team Pothead',
-    description: 'Collection Team Pothead NFT',
-    contractAddress: '0x1f16007c7f08bf62ad37f8cfaf87e1c0cf8e2aea',
-    chain: 'base-mainnet',
-    enabled: false, // Disabled to reduce Alchemy costs
-    marketplaceUrl: 'https://vibechain.com/market/team-pothead?ref=XCLR1DJ6LQTT',
-    buttonText: 'BUY TMPT PACKS',
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-
-    // Collection Tarot
-  tarot: {
-    id: 'tarot',
-    name: 'tarot',
-    displayName: 'Tarot',
-    description: 'Collection Tarot NFT',
-    contractAddress: '0x34d639c63384a00a2d25a58f73bea73856aa0550',
-    chain: 'base-mainnet',
-    enabled: false, // Disabled to reduce Alchemy costs
-    marketplaceUrl: 'https://vibechain.com/market/tarot?ref=XCLR1DJ6LQTT',
-    buttonText: 'BUY TRT PACKS',
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-    // Collection Baseball Cabal
-  baseballcabal: {
-    id: 'baseballcabal',
-    name: 'baseballcabal',
-    displayName: 'Baseball Cabal',
-    description: 'Collection Baseball Cabal NFT',
-    contractAddress: '0x3ff41af61d092657189b1d4f7d74d994514724bb',
-    chain: 'base-mainnet',
-    enabled: false, // Disabled to reduce Alchemy costs
-    marketplaceUrl: 'https://vibechain.com/market/base-ball-cabal?ref=XCLR1DJ6LQTT',
-    buttonText: 'BUY BBCL PACKS',
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-    // Collection Vibe FX
-  vibefx: {
-    id: 'vibefx',
-    name: 'vibefx',
-    displayName: 'Vibe FX',
-    description: 'Collection Vibe FX NFT',
-    contractAddress: '0xc7f2d8c035b2505f30a5417c0374ac0299d88553',
-    chain: 'base-mainnet',
-    enabled: false, // Disabled to reduce Alchemy costs
-    marketplaceUrl: 'https://vibechain.com/market/vibe-fx?ref=XCLR1DJ6LQTT',
-    buttonText: 'BUY VBFX PACKS',
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-    // Collection History of Computer
-  historyofcomputer: {
-    id: 'historyofcomputer',
-    name: 'historyofcomputer',
-    displayName: 'History of Computer',
-    description: 'Collection History of Computer NFT',
-    contractAddress: '0x319b12e8eba0be2eae1112b357ba75c2c178b567',
-    chain: 'base-mainnet',
-    enabled: false, // Disabled to reduce Alchemy costs
-    marketplaceUrl: 'https://vibechain.com/market/historyofcomputer?ref=XCLR1DJ6LQTT',
-    buttonText: 'BUY HSTR PACKS',
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-  // Collection $CU-MI-OH! — REMOVIDA
-  cumioh: {
-    id: 'cumioh',
-    name: 'cumioh',
-    displayName: '$CU-MI-OH!',
-    description: 'Collection $CU-MI-OH! NFT',
-    contractAddress: '0xfeabae8bdb41b2ae507972180df02e70148b38e1',
-    chain: 'base-mainnet',
-    enabled: false,
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-  // Collection Nothing (Free non-NFT cards)
   nothing: {
     id: 'nothing',
     name: 'nothing',
     displayName: 'Nothing',
     description: 'Free non-NFT cards for playing the game',
-    contractAddress: '', // No contract - these are free cards
+    contractAddress: '',
     chain: 'base-mainnet',
     enabled: true,
     marketplaceUrl: '/shop',
@@ -293,19 +129,6 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 
-  // Collection Vibe Rot Bangers — REMOVIDA
-  viberotbangers: {
-    id: 'viberotbangers',
-    name: 'viberotbangers',
-    displayName: 'Vibe Rot Bangers',
-    description: 'Collection Vibe Rot Bangers NFT',
-    contractAddress: '0x120c612d79a3187a3b8b4f4bb924cebe41eb407a',
-    chain: 'base-mainnet',
-    enabled: false,
-    powerCalculation: DEFAULT_POWER_CONFIG,
-  },
-
-  // Template para nova coleÃ§Ã£o customizada
   custom: {
     id: 'custom',
     name: 'custom',
@@ -314,61 +137,37 @@ export const COLLECTIONS: Record<CollectionId, CollectionConfig> = {
     contractAddress: process.env.NEXT_PUBLIC_CUSTOM_CONTRACT || '',
     chain: process.env.NEXT_PUBLIC_CUSTOM_CHAIN || 'base-mainnet',
     ownerAddress: process.env.NEXT_PUBLIC_CUSTOM_OWNER || '',
-    enabled: false, // Desabilitada por padrão até configurar
+    enabled: false,
     powerCalculation: DEFAULT_POWER_CONFIG,
   },
 };
 
-/**
- * Coleção padrão do sistema
- */
 export const DEFAULT_COLLECTION_ID: CollectionId = 'vibe';
 
-/**
- * Retorna a coleção padrão
- */
 export function getDefaultCollection(): CollectionConfig {
   return COLLECTIONS[DEFAULT_COLLECTION_ID];
 }
 
-/**
- * Retorna uma coleção específica por ID
- */
 export function getCollection(id: CollectionId): CollectionConfig | undefined {
   return COLLECTIONS[id];
 }
 
-/**
- * Retorna todas as coleções habilitadas
- */
 export function getEnabledCollections(): CollectionConfig[] {
   return Object.values(COLLECTIONS).filter(collection => collection.enabled);
 }
 
-/**
- * Retorna todas as coleções (incluindo desabilitadas)
- */
 export function getAllCollections(): CollectionConfig[] {
   return Object.values(COLLECTIONS);
 }
 
-/**
- * Verifica se uma coleção está habilitada
- */
 export function isCollectionEnabled(id: CollectionId): boolean {
   return COLLECTIONS[id]?.enabled ?? false;
 }
 
-/**
- * Retorna o endereço do contrato de uma coleção
- */
 export function getCollectionContract(id: CollectionId): string {
   return COLLECTIONS[id]?.contractAddress || '';
 }
 
-/**
- * Returns ALL contract addresses for a collection (main + additional chains)
- */
 export function getAllCollectionContracts(id: CollectionId): string[] {
   const col = COLLECTIONS[id];
   if (!col) return [];
@@ -377,24 +176,13 @@ export function getAllCollectionContracts(id: CollectionId): string[] {
   return contracts;
 }
 
-/**
- * Check if a contract address belongs to a specific collection (any chain)
- */
 export function isContractForCollection(contractAddress: string, id: CollectionId): boolean {
   const contracts = getAllCollectionContracts(id);
   return contracts.some(c => c.toLowerCase() === contractAddress.toLowerCase());
 }
 
-// VibeFID contracts (Base + Arbitrum) - convenience export
 export const VIBEFID_ALL_CONTRACTS = getAllCollectionContracts('vibefid');
 
-/**
- * Retorna a configuração de power de uma coleção
- */
 export function getCollectionPowerConfig(id: CollectionId) {
   return COLLECTIONS[id]?.powerCalculation || DEFAULT_POWER_CONFIG;
 }
-
-
-
-
