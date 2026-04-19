@@ -635,21 +635,31 @@ export default function SlotPage() {
             ← {tr("back")}
           </Link>
           <div className="flex-1 text-center">
-            <h1 className="text-2xl font-extrabold tracking-tighter" style={{
-              fontFamily: 'var(--font-cinzel)',
-              color: 'transparent',
-              letterSpacing: '-0.05em',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundImage: 'url("/slot-gifs/gen4-turbo-idle-breathing.gif")',
-              backgroundSize: '120% 120%',
-              backgroundPosition: 'center 20%',
-              backgroundRepeat: 'no-repeat',
-              transform: 'scaleY(1.15)',
-              display: 'inline-block',
-            }}>
-              {tr("title")}
-            </h1>
+            <div className="relative inline-block">
+              <img
+                src="/slot-gifs/casino-slot-animation.gif"
+                alt=""
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  inset: '-8px -16px',
+                  width: 'calc(100% + 32px)',
+                  height: 'calc(100% + 16px)',
+                  objectFit: 'cover',
+                  mixBlendMode: 'screen',
+                  opacity: 0.9,
+                  pointerEvents: 'none',
+                  borderRadius: 4,
+                }}
+              />
+              <h1 className="text-2xl font-extrabold tracking-tighter relative" style={{
+                fontFamily: 'var(--font-cinzel)',
+                color: '#c8a84b',
+                letterSpacing: '-0.05em',
+              }}>
+                {tr("title")}
+              </h1>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {/* Slot Settings */}
