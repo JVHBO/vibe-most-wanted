@@ -56,6 +56,8 @@ function buildSnap(frame: number) {
     btnRow.push("btn_next");
   }
   if (!hasNext) {
+    els["congrats"] = { type: "text", props: { content: "🏳️‍🌈 Congrats, you are gay! Send a DM to @JVHBO to receive your Gay Certificate.", weight: "bold", size: "sm", alignment: "center" } };
+    children.splice(1, 0, "congrats");
     els["btn_restart"] = { type: "button", props: { label: "↩ Restart", variant: "secondary" }, on: { press: { action: "submit", params: { target: snapUrl(-1) } } } };
     btnRow.push("btn_restart");
   }
