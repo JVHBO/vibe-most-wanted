@@ -72,12 +72,54 @@ crons.cron(
 );
 
 // ============================================================
-// SLOT CLEANUP — delete slotSpins > 30 days (daily at 03:00 UTC)
+// CLEANUP — dados antigos e tabelas inúteis (diário 03:00 UTC)
 // ============================================================
 crons.cron(
   "clean-old-slot-spins",
   "0 3 * * *",
   internal.cleanup.cleanOldSlotSpinsBatch,
+);
+
+crons.cron(
+  "clean-old-matches",
+  "0 3 * * *",
+  internal.cleanup.cleanOldMatchesBatch30,
+);
+
+crons.cron(
+  "clean-access-tables",
+  "0 4 * * *",
+  internal.cleanup.wipeAccessTablesBatch,
+);
+
+crons.cron(
+  "clean-neynar-history",
+  "0 4 * * *",
+  internal.cleanup.cleanNeynarHistoryBatch,
+);
+
+crons.cron(
+  "clean-roulette-spins",
+  "0 4 * * *",
+  internal.cleanup.cleanRouletteSpinsBatch,
+);
+
+crons.cron(
+  "clean-tcg-history",
+  "0 4 * * *",
+  internal.cleanup.cleanTcgHistoryBatch,
+);
+
+crons.cron(
+  "clean-api-stats",
+  "0 4 * * *",
+  internal.cleanup.cleanApiStatsBatch,
+);
+
+crons.cron(
+  "clean-shame-clicks",
+  "0 0 * * 1",
+  internal.cleanup.wipeShameClicksBatch,
 );
 
 export default crons;

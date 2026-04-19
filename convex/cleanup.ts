@@ -70,6 +70,68 @@ export const cleanOldMatchesBatch = internalMutation({
   },
 });
 
+/** ONE BATCH: delete matches > 30 days */
+export const cleanOldMatchesBatch30 = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return deleteBatchByCreation(ctx, "matches", cutoff);
+  },
+});
+
+/** ONE BATCH: wipe accessAnalytics, accessVisits, accessDebugLogs */
+export const wipeAccessTablesBatch = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const a = await wipeBatch(ctx, "accessAnalytics");
+    const b = await wipeBatch(ctx, "accessVisits");
+    const c = await wipeBatch(ctx, "accessDebugLogs");
+    return { accessAnalytics: a, accessVisits: b, accessDebugLogs: c };
+  },
+});
+
+/** ONE BATCH: delete neynarScoreHistory > 30 days */
+export const cleanNeynarHistoryBatch = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return deleteBatchByCreation(ctx, "neynarScoreHistory", cutoff);
+  },
+});
+
+/** ONE BATCH: delete rouletteSpins > 30 days */
+export const cleanRouletteSpinsBatch = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return deleteBatchByCreation(ctx, "rouletteSpins", cutoff);
+  },
+});
+
+/** ONE BATCH: delete tcgHistory > 30 days */
+export const cleanTcgHistoryBatch = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return deleteBatchByCreation(ctx, "tcgHistory", cutoff);
+  },
+});
+
+/** ONE BATCH: wipe shameClicks */
+export const wipeShameClicksBatch = internalMutation({
+  args: {},
+  handler: async (ctx) => wipeBatch(ctx, "shameClicks"),
+});
+
+/** ONE BATCH: delete apiStats > 30 days */
+export const cleanApiStatsBatch = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    return deleteBatchByCreation(ctx, "apiStats", cutoff);
+  },
+});
+
 /** Already done — kept for re-run safety */
 export const wipeInactiveTables = internalMutation({
   args: {},

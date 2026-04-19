@@ -257,19 +257,8 @@ export const logAccessDebug = mutation({
     isIframe: v.optional(v.boolean()),
     sdkAvailable: v.optional(v.boolean()),
   },
-  handler: async (ctx, args) => {
-    await ctx.db.insert("accessDebugLogs", {
-      address: args.address.toLowerCase(),
-      source: args.source,
-      userAgent: args.userAgent,
-      referrer: args.referrer,
-      currentUrl: args.currentUrl,
-      isIframe: args.isIframe,
-      sdkAvailable: args.sdkAvailable,
-      timestamp: Date.now(),
-    });
-
-    console.log(`🔍 Access debug logged: ${args.source} - ${args.address}`);
+  handler: async (_ctx, _args) => {
+    // disabled — debug logs removed to save storage
   },
 });
 
