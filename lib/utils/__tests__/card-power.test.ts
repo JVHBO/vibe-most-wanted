@@ -18,6 +18,7 @@ import {
   getDeckStats,
 } from '../card-power';
 import type { Card, CardRarity } from '../../types/card';
+import type { CollectionId } from '../../collections';
 
 // Helper to create a Card object for testing
 function makeCard(overrides: Partial<Card> = {}): Card {
@@ -235,8 +236,8 @@ describe('calculateCardPower', () => {
   });
 
   it('uses default config for other collections', () => {
-    expect(calculateCardPower({ rarity: 'Common', collection: 'gmvbrs' })).toBe(5);
-    expect(calculateCardPower({ rarity: 'Common', collection: 'vibe' })).toBe(5);
+    expect(calculateCardPower({ rarity: 'Common', collection: 'nothing' as CollectionId })).toBe(5);
+    expect(calculateCardPower({ rarity: 'Common', collection: 'vibe' as CollectionId })).toBe(5);
   });
 });
 
@@ -335,7 +336,7 @@ describe('calculateDeckPower', () => {
       makeCard({ power: 10, collection: 'vibe' }),    // 10 * 2x = 20
       makeCard({ power: 5, collection: 'nothing' }),   // 5 * 0.5x = 2 (floor)
       makeCard({ power: 100, collection: 'vibefid' }), // 100 * 5x = 500
-      makeCard({ power: 50, collection: 'gmvbrs' }),   // 50 * 1x = 50
+      makeCard({ power: 50, collection: 'nothing' }),   // 50 * 1x = 50
     ];
     expect(calculateDeckPower(cards)).toBe(20 + 2 + 500 + 50);
   });
@@ -347,9 +348,9 @@ describe('calculateDeckPower', () => {
 describe('sortCardsByPower', () => {
   it('sorts descending by default', () => {
     const cards = [
-      makeCard({ power: 10, collection: 'gmvbrs' }),  // display: 10
-      makeCard({ power: 50, collection: 'gmvbrs' }),  // display: 50
-      makeCard({ power: 5, collection: 'gmvbrs' }),   // display: 5
+      makeCard({ power: 10, collection: 'nothing' }),  // display: 10
+      makeCard({ power: 50, collection: 'nothing' }),  // display: 50
+      makeCard({ power: 5, collection: 'nothing' }),   // display: 5
     ];
     const sorted = sortCardsByPower(cards);
     expect(sorted.map(c => c.power)).toEqual([50, 10, 5]);
@@ -357,9 +358,9 @@ describe('sortCardsByPower', () => {
 
   it('sorts ascending when specified', () => {
     const cards = [
-      makeCard({ power: 50, collection: 'gmvbrs' }),
-      makeCard({ power: 5, collection: 'gmvbrs' }),
-      makeCard({ power: 10, collection: 'gmvbrs' }),
+      makeCard({ power: 50, collection: 'nothing' }),
+      makeCard({ power: 5, collection: 'nothing' }),
+      makeCard({ power: 10, collection: 'nothing' }),
     ];
     const sorted = sortCardsByPower(cards, true);
     expect(sorted.map(c => c.power)).toEqual([5, 10, 50]);
@@ -374,11 +375,11 @@ describe('sortCardsByPower', () => {
 
   it('accounts for collection multipliers in sort order', () => {
     // vibe card with power 10 → display 20 (2x)
-    // gmvbrs card with power 15 → display 15 (1x)
+    // nothing card with power 15 → display 15 (1x)
     const vibeCard = makeCard({ power: 10, collection: 'vibe', tokenId: 'a' });
-    const otherCard = makeCard({ power: 15, collection: 'gmvbrs', tokenId: 'b' });
+    const otherCard = makeCard({ power: 15, collection: 'nothing', tokenId: 'b' });
     const sorted = sortCardsByPower([otherCard, vibeCard]);
-    // vibe (20) > gmvbrs (15), so vibe card first
+    // vibe (20) > nothing (15), so vibe card first
     expect(sorted[0].tokenId).toBe('a');
   });
 });
@@ -471,13 +472,13 @@ describe('getDeckStats', () => {
 
   it('calculates correct stats for a deck', () => {
     const cards = [
-      makeCard({ power: 10, rarity: 'Common', collection: 'gmvbrs' }),
-      makeCard({ power: 20, rarity: 'Rare', collection: 'gmvbrs' }),
-      makeCard({ power: 80, rarity: 'Epic', collection: 'gmvbrs' }),
+      makeCard({ power: 10, rarity: 'Common', collection: 'nothing' }),
+      makeCard({ power: 20, rarity: 'Rare', collection: 'nothing' }),
+      makeCard({ power: 80, rarity: 'Epic', collection: 'nothing' }),
     ];
     const stats = getDeckStats(cards);
     expect(stats.totalCards).toBe(3);
-    // Display powers: 10, 20, 80 (1x multiplier for gmvbrs)
+    // Display powers: 10, 20, 80 (1x multiplier for nothing)
     expect(stats.totalPower).toBe(110);
     expect(stats.averagePower).toBe(Math.round(110 / 3));
     expect(stats.minPower).toBe(10);
