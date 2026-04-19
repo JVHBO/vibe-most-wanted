@@ -63,6 +63,15 @@ crons.cron(
 );
 
 // ============================================================
+// SLOT PRICE UPDATE — every 4h via internal action → Vercel endpoint
+// ============================================================
+crons.cron(
+  "update-slot-prices",
+  "0 */4 * * *",
+  internal.slot.updateSlotPricesAction,
+);
+
+// ============================================================
 // SLOT CLEANUP — delete slotSpins > 30 days (daily at 03:00 UTC)
 // ============================================================
 crons.cron(

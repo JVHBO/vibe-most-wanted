@@ -59,10 +59,6 @@
     {
       "path": "/api/cron/save-prices",
       "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/update-slot-prices",
-      "schedule": "0 */4 * * *"
     }
   ]
 }

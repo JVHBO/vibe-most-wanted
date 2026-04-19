@@ -773,6 +773,25 @@ export const pollSlotShopArb = internalAction({
 });
 
 /**
+ * Internal action: call Vercel endpoint to update slot pack prices on-chain
+ */
+export const updateSlotPricesAction = internalAction({
+  args: {},
+  handler: async () => {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://vibemostwanted.xyz";
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) throw new Error("CRON_SECRET not set");
+    const res = await fetch(`${appUrl}/api/cron/update-slot-prices`, {
+      headers: { authorization: `Bearer ${cronSecret}` },
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`update-slot-prices failed: ${res.status} ${text}`);
+    }
+  },
+});
+
+/**
  * Internal query: get poller state
  */
 export const getSlotPollerStateQuery = internalQuery({
