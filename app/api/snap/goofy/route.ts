@@ -93,10 +93,6 @@ export async function OPTIONS() {
 }
 
 export async function GET(req: NextRequest) {
-  const accept = req.headers.get("accept") ?? "";
-  if (!accept.includes("application/vnd.farcaster.snap")) {
-    return NextResponse.redirect(`${APP_URL}`);
-  }
   return NextResponse.json(buildSnap(-1), { headers: HEADERS });
 }
 
