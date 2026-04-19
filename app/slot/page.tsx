@@ -646,16 +646,19 @@ export default function SlotPage() {
                   width: 'calc(100% + 32px)',
                   height: 'calc(100% + 16px)',
                   objectFit: 'cover',
-                  mixBlendMode: 'screen',
-                  opacity: 0.9,
-                  pointerEvents: 'none',
+                  opacity: 0.85,
                   borderRadius: 4,
+                  pointerEvents: 'none',
+                  zIndex: 0,
                 }}
               />
-              <h1 className="text-2xl font-extrabold tracking-tighter relative" style={{
+              <h1 className="relative text-2xl font-extrabold tracking-tighter" style={{
                 fontFamily: 'var(--font-cinzel)',
-                color: '#c8a84b',
+                color: '#FFD400',
                 letterSpacing: '-0.05em',
+                textShadow: '0 0 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
+                zIndex: 1,
+                mixBlendMode: 'screen',
               }}>
                 {tr("title")}
               </h1>
