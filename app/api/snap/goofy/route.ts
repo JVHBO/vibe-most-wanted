@@ -1,15 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://vibemostwanted.xyz";
+const SNAP_URL = `${APP_URL}/api/snap/goofy`;
 const TOTAL_FRAMES = 39;
+const ALTERNATE_LINK = `<${SNAP_URL}>; rel="alternate"; type="application/vnd.farcaster.snap+json", <${SNAP_URL}>; rel="alternate"; type="text/html"`;
 
 const HEADERS = {
   "Content-Type": "application/vnd.farcaster.snap+json",
   "Cache-Control": "no-store",
+  "Vary": "Accept",
+  "Link": ALTERNATE_LINK,
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Accept",
 };
+
+function htmlFallback() {
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"/>
+<meta property="og:title" content="Goofy Romero"/>
+<meta property="og:description" content="Watch the Goofy Romero GIF frame by frame"/>
+<link rel="alternate" type="application/vnd.farcaster.snap+json" href="${SNAP_URL}"/>
+</head><body><script>window.location.href="${APP_URL}"</script></body></html>`;
+  return new NextResponse(html, { status: 200, headers: { "Content-Type": "text/html", "Link": ALTERNATE_LINK, "Cache-Control": "no-store" } });
+}
 
 function frameUrl(i: number) {
   return `${APP_URL}/snap/goofy/frame_${String(i).padStart(2, "0")}_delay-0.05s.jpg`;
@@ -93,6 +106,10 @@ export async function OPTIONS() {
 }
 
 export async function GET(req: NextRequest) {
+  const accept = req.headers.get("accept") ?? "";
+  if (!accept.includes("application/vnd.farcaster.snap")) {
+    return htmlFallback();
+  }
   return NextResponse.json(buildSnap(-1), { headers: HEADERS });
 }
 
