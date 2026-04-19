@@ -556,7 +556,7 @@ export const prepareWithdraw = action({
     await ctx.runMutation(internal.slot.withdrawVBMSInternal, { address, amount });
 
     // 2. Generate nonce + sign
-    const nonce = crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+    const nonce = '0x' + crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
     const signature = await ctx.runAction(internal.vbmsClaim.signClaimMessage, {
       address,
       amount,
